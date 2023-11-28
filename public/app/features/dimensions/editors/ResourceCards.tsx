@@ -21,7 +21,7 @@ interface CellProps {
   };
 }
 
-function Cell(props: CellProps) {
+const MemoizedCell = memo(function Cell(props: CellProps) {
   const { columnIndex, rowIndex, style, data } = props;
   const { cards, columnCount, onChange, selected } = data;
   const singleColumnIndex = columnIndex + rowIndex * columnCount;
@@ -36,18 +36,25 @@ function Cell(props: CellProps) {
           key={card.value}
           className={selected === card.value ? cx(styles.card, styles.selected) : styles.card}
           onClick={() => onChange(card.value)}
+          onKeyDown={(e: React.KeyboardEvent) => {
+            if (e.key === 'Enter') {
+              onChange(card.value);
+            }
+          }}
+          role="button"
+          tabIndex={0}
         >
           {card.imgUrl.endsWith('.svg') ? (
             <SanitizedSVG src={card.imgUrl} className={styles.img} />
           ) : (
-            <img src={card.imgUrl} className={styles.img} />
+            <img src={card.imgUrl} alt="" className={styles.img} />
           )}
           <h6 className={styles.text}>{card.label.slice(0, -4)}</h6>
         </div>
       )}
     </div>
   );
-}
+}, areEqual);
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
@@ -125,7 +132,7 @@ export const ResourceCards = (props: CardProps) => {
             itemData={{ cards, columnCount, onChange, selected: value }}
             className={styles.grid}
           >
-            {memo(Cell, areEqual)}
+            {MemoizedCell}
           </Grid>
         );
       }}

@@ -2,17 +2,69 @@
 aliases:
   - metrics/
   - unified-alerting/fundamentals/
-title: Explore Grafana Alerting
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/
+description: Intro to the key concepts in Alerting and how it works
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
+menuTitle: Introduction
+title: Introduction to Alerting
 weight: 105
 ---
 
-# Explore Grafana Alerting
+# Introduction to Alerting
 
-Whether you're starting or expanding your implementation of Grafana Alerting, learn more about the key concepts and available features that help you create, manage, and take action on your alerts and improve your team’s ability to resolve issues quickly.
+Whether you’re starting or expanding your implementation of Grafana Alerting, learn more about the key concepts and available features that help you create, manage, and take action on your alerts and improve your team’s ability to resolve issues quickly.
 
-- [Data sources](https://grafana.com/docs/grafana/latest/alerting/fundamentals/data-source-alerting/)
-- [Alert rules](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/)
-- [Alerting on numeric data](https://grafana.com/docs/grafana/latest/alerting/fundamentals/evaluate-grafana-alerts/)
-- [Alertmanager](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alertmanager/)
-- [Annotations and labels for alerting rules](https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/)
-- [State and health of alerting rules](https://grafana.com/docs/grafana/latest/alerting/fundamentals/state-and-health/)
+The following diagram gives you an overview of how Grafana Alerting works and introduces you to some of the key concepts that work together and form the core of our flexible and powerful alerting engine.
+
+{{< figure src="/media/docs/alerting/how-alerting-works.png" max-width="750px" caption="How Alerting works" >}}
+
+You can either create your alerting resources (alert rules, notification policies, and so on) directly in the Grafana UI, using provisioning, or in your Grafana Mimir or Loki instances.
+
+**Alert rules**
+
+An alert rule is a set of evaluation criteria for when an alert rule should fire. An alert rule consists of one or more queries and expressions, a condition, and the duration over which the condition needs to be met to start firing.
+
+Add annotations to your alert rule to provide additional information about the alert rule and add labels to uniquely identify your alert rule and configure alert routing. Labels link alert rules to notification policies, so you can easily manage which policy should handle which alerts and who gets notified.
+
+Once alert rules are created, they go through various states and transitions. An alert rule can produce multiple alert instances - one alert instance for each time series.
+
+The alert rule state is determined by the “worst case” state of the alert instances produced and the states can be Normal, Pending, or Firing. For example, if one alert instance is firing, the alert rule state will also be firing.
+
+The alert rule health is determined by the status of the evaluation of the alert rule, which can be Ok, Error, and NoData.
+
+**Alert instances**
+
+For Grafana-managed alert rules, multiple alert instances can be created as a result of one alert rule (also known as a multi-dimensional alerting).
+
+Both Grafana-managed alert and Mimir or Loki-managed alert instances can be in Normal, Pending, Alerting, No Data, Error states.
+
+**Note:** For Mimir or Loki-managed alert rules, alert instances are only created when the threshold condition defined in an alert rule is breached.
+
+Alerting alert instances are grouped by labels according to the notification policy. This controls de-duplication and groups alert instances to send to your contact points.
+
+**Notification policy**
+
+Set where, when, and how firing alert instances get routed.
+
+Each notification policy contains a set of label matchers to indicate which alerts rules or instances it is responsible for. It also has a contact point assigned to it that consists of one or more contact point types, such as Slack or email. Contact points define how your contacts are notified when an alert instance fires.
+
+For more information on notification policies, see [fundamentals of Notification Policies][notification-policies].
+
+**Message templates**
+
+Use message templates for your notifications to create reusable custom templates and use them in contact points.
+
+**Silences and mute timings**
+
+Add silences to stop notifications from one or more alert instances or use mute timings to specify time intervals when you don’t want new notifications to be generated or sent out.
+
+The difference between the two being that a silence only lasts for only a specified window of time whereas a mute timing recurs on a schedule, for example, during a maintenance period.
+
+{{% docs/reference %}}
+[notification-policies]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/notification-policies"
+[notification-policies]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notification-policies"
+{{% /docs/reference %}}

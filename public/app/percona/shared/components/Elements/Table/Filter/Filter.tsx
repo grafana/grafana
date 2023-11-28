@@ -113,6 +113,7 @@ export const Filter = ({ columns, rawData, setFilteredData, hasBackendFiltering 
       initialValues={initialValues}
       onSubmit={onSubmit}
       render={({ handleSubmit, form }) => (
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
         <form
           onSubmit={handleSubmit}
           onKeyPress={(e) => {
@@ -130,6 +131,7 @@ export const Filter = ({ columns, rawData, setFilteredData, hasBackendFiltering 
                 size="xl"
                 onClick={() => setOpenSearchFields((value) => !value)}
                 data-testid="open-search-fields"
+                aria-label='Open search fields'
               />
               {openSearchFields && (
                 <div className={styles.searchFields}>
@@ -139,6 +141,7 @@ export const Filter = ({ columns, rawData, setFilteredData, hasBackendFiltering 
               )}
               {showAdvanceFilter && (
                 <IconButton
+                  aria-label="Toggle advanced filter"
                   className={styles.icon}
                   name="filter"
                   size="xl"
@@ -147,6 +150,7 @@ export const Filter = ({ columns, rawData, setFilteredData, hasBackendFiltering 
                 />
               )}
               <IconButton
+                aria-label="Clear filter"
                 className={styles.icon}
                 name="times"
                 size="xl"
@@ -154,7 +158,15 @@ export const Filter = ({ columns, rawData, setFilteredData, hasBackendFiltering 
                 data-testid="clear-all-button"
               />
               {hasBackendFiltering && (
-                <IconButton className={styles.icon} name="check" size="xl" type="submit" data-testid="submit-button" />
+                <IconButton
+                  // todo: add aria-label
+                  aria-label=""
+                  className={styles.icon}
+                  name="check"
+                  size="xl"
+                  type="submit"
+                  data-testid="submit-button"
+                />
               )}
             </div>
           </div>

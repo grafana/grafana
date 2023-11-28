@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 
@@ -44,9 +43,43 @@ func TestNewInstanceSettings(t *testing.T) {
 				Credentials:             &azcredentials.AzureManagedIdentityCredentials{},
 				Settings:                types.AzureMonitorSettings{},
 				Routes:                  routes[azsettings.AzurePublic],
-				JSONData:                map[string]interface{}{"azureAuthType": "msi"},
+				JSONData:                map[string]any{"azureAuthType": "msi"},
 				DatasourceID:            40,
 				DecryptedSecureJSONData: map[string]string{"key": "value"},
+				Services:                map[string]types.DatasourceService{},
+			},
+			Err: require.NoError,
+		},
+		{
+			name: "creates an instance for customized cloud",
+			settings: backend.DataSourceInstanceSettings{
+				JSONData:                []byte(`{"cloudName":"customizedazuremonitor","customizedRoutes":{"Route":{"URL":"url"}},"azureAuthType":"clientsecret"}`),
+				DecryptedSecureJSONData: map[string]string{"clientSecret": "secret"},
+				ID:                      50,
+			},
+			expectedModel: types.DatasourceInfo{
+				Cloud: "AzureCustomizedCloud",
+				Credentials: &azcredentials.AzureClientSecretCredentials{
+					AzureCloud:   "AzureCustomizedCloud",
+					ClientSecret: "secret",
+				},
+				Settings: types.AzureMonitorSettings{},
+				Routes: map[string]types.AzRoute{
+					"Route": {
+						URL: "url",
+					},
+				},
+				JSONData: map[string]any{
+					"azureAuthType": "clientsecret",
+					"cloudName":     "customizedazuremonitor",
+					"customizedRoutes": map[string]any{
+						"Route": map[string]any{
+							"URL": "url",
+						},
+					},
+				},
+				DatasourceID:            50,
+				DecryptedSecureJSONData: map[string]string{"clientSecret": "secret"},
 				Services:                map[string]types.DatasourceService{},
 			},
 			Err: require.NoError,
@@ -62,7 +95,7 @@ func TestNewInstanceSettings(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			factory := NewInstanceSettings(cfg, &httpclient.Provider{}, map[string]azDatasourceExecutor{})
-			instance, err := factory(tt.settings)
+			instance, err := factory(context.Background(), tt.settings)
 			tt.Err(t, err)
 			if !cmp.Equal(instance, tt.expectedModel) {
 				t.Errorf("Unexpected instance: %v", cmp.Diff(instance, tt.expectedModel))
@@ -78,7 +111,7 @@ type fakeInstance struct {
 	settings types.AzureMonitorSettings
 }
 
-func (f *fakeInstance) Get(pluginContext backend.PluginContext) (instancemgmt.Instance, error) {
+func (f *fakeInstance) Get(_ context.Context, _ backend.PluginContext) (instancemgmt.Instance, error) {
 	return types.DatasourceInfo{
 		Cloud:    f.cloud,
 		Routes:   f.routes,
@@ -87,7 +120,7 @@ func (f *fakeInstance) Get(pluginContext backend.PluginContext) (instancemgmt.In
 	}, nil
 }
 
-func (f *fakeInstance) Do(pluginContext backend.PluginContext, fn instancemgmt.InstanceCallbackFunc) error {
+func (f *fakeInstance) Do(_ context.Context, _ backend.PluginContext, _ instancemgmt.InstanceCallbackFunc) error {
 	return nil
 }
 
@@ -97,11 +130,11 @@ type fakeExecutor struct {
 	expectedURL string
 }
 
-func (f *fakeExecutor) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
+func (f *fakeExecutor) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error) {
+	return nil, nil
 }
 
-func (f *fakeExecutor) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client,
-	url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
+func (f *fakeExecutor) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error) {
 	if client == nil {
 		f.t.Errorf("The HTTP client for %s is missing", f.queryType)
 	} else {
@@ -131,6 +164,12 @@ func Test_newMux(t *testing.T) {
 			expectedURL: routes[azureMonitorPublic][azureLogAnalytics].URL,
 			Err:         require.NoError,
 		},
+		{
+			name:        "creates an Azure Traces executor",
+			queryType:   azureTraces,
+			expectedURL: routes[azureMonitorPublic][azureLogAnalytics].URL,
+			Err:         require.NoError,
+		},
 	}
 
 	for _, tt := range tests {
@@ -155,7 +194,12 @@ func Test_newMux(t *testing.T) {
 			}
 			mux := s.newQueryMux()
 			res, err := mux.QueryData(context.Background(), &backend.QueryDataRequest{
-				PluginContext: backend.PluginContext{},
+				PluginContext: backend.PluginContext{
+					DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+						Name: "datasource_name",
+						UID:  "datasource_UID",
+					},
+				},
 				Queries: []backend.DataQuery{
 					{QueryType: tt.queryType},
 				},
@@ -231,7 +275,7 @@ func TestCheckHealth(t *testing.T) {
 				if !fail {
 					return &http.Response{
 						StatusCode: 200,
-						Body:       io.NopCloser(bytes.NewBufferString("OK")),
+						Body:       io.NopCloser(bytes.NewBufferString("{\"value\": [{\"subscriptionId\": \"abcd-1234\"}]}")),
 						Header:     make(http.Header),
 					}, nil
 				} else {
@@ -391,7 +435,7 @@ func TestCheckHealth(t *testing.T) {
 				Status:  backend.HealthStatusError,
 				Message: "One or more health checks failed. See details below.",
 				JSONDetails: []byte(
-					`{"verboseMessage": "1. Error connecting to Azure Monitor endpoint: health check failed: Get \"https://management.azure.com/subscriptions?api-version=2018-01-01\": not found\n2. Error connecting to Azure Log Analytics endpoint: health check failed: Get \"https://management.azure.com/subscriptions//providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview\": not found\n3. Error connecting to Azure Resource Graph endpoint: health check failed: Post \"https://management.azure.com/providers/Microsoft.ResourceGraph/resources?api-version=2021-06-01-preview\": not found" }`),
+					`{"verboseMessage": "1. Error connecting to Azure Monitor endpoint: health check failed: Get \"https://management.azure.com/subscriptions?api-version=2020-01-01\": not found\n2. Error connecting to Azure Log Analytics endpoint: health check failed: Get \"https://management.azure.com/subscriptions//providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview\": not found\n3. Error connecting to Azure Resource Graph endpoint: health check failed: Post \"https://management.azure.com/providers/Microsoft.ResourceGraph/resources?api-version=2021-06-01-preview\": not found" }`),
 			},
 			customServices: map[string]types.DatasourceService{
 				azureMonitor: {

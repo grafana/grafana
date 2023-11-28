@@ -46,7 +46,7 @@ export const getFieldStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
 }));
 
-export const Field: React.FC<FieldProps> = ({ label, invalid, loading, disabled, required, children, className }) => {
+export const Field: React.FC<React.PropsWithChildren<FieldProps>> = ({ label, invalid, loading, disabled, required, children, className }) => {
   const theme = useTheme();
   let inputId: string | undefined;
   const styles = getFieldStyles(theme);

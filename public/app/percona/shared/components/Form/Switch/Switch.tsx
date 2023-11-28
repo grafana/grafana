@@ -12,7 +12,7 @@ import { LabelCore } from '../LabelCore';
 import { getStyles } from './Switch.styles';
 import { SwitchFieldProps, SwitchFieldRenderProps } from './Switch.types';
 
-export const SwitchField: FC<SwitchFieldProps> = ({
+export const SwitchField: FC<React.PropsWithChildren<SwitchFieldProps>> = ({
   disabled,
   fieldClassName,
   inputProps,
@@ -33,7 +33,7 @@ export const SwitchField: FC<SwitchFieldProps> = ({
 
   return (
     <Field<boolean> {...fieldConfig} type="checkbox" name={name} validate={validate}>
-      {({ input, meta }: SwitchFieldRenderProps) => (
+      {({ input, meta }: SwitchFieldRenderProps<boolean>) => (
         <div className={cx(styles.field, fieldClassName)} data-testid={`${name}-field-container`}>
           <LabelCore
             name={name}

@@ -39,13 +39,13 @@ export default class ElasticsearchLanguageProvider extends LanguageProvider {
             return label.name + ':"' + label.value + '"';
           }
           case AbstractLabelOperator.NotEqual: {
-            return 'NOT ' + label.name + ':"' + label.value + '"';
+            return '-' + label.name + ':"' + label.value + '"';
           }
           case AbstractLabelOperator.EqualRegEx: {
             return label.name + ':/' + label.value + '/';
           }
           case AbstractLabelOperator.NotEqualRegEx: {
-            return 'NOT ' + label.name + ':/' + label.value + '/';
+            return '-' + label.name + ':/' + label.value + '/';
           }
         }
       })

@@ -1,16 +1,10 @@
-import { GoogleAuthType } from '@grafana/google-sdk';
-
-import { MetricKind, QueryType, ValueTypes } from './types';
+import { QueryType, MetricKind, ValueTypes } from './types/query';
 
 // not super excited about using uneven numbers, but this makes it align perfectly with rows that has two fields
 export const INPUT_WIDTH = 71;
 export const LABEL_WIDTH = 19;
 export const INNER_LABEL_WIDTH = 14;
 export const SELECT_WIDTH = 28;
-export const AUTH_TYPES = [
-  { value: 'Google JWT File', key: GoogleAuthType.JWT },
-  { value: 'GCE Default Service Account', key: GoogleAuthType.GCE },
-];
 
 export const ALIGNMENTS = [
   {
@@ -316,6 +310,8 @@ export const SELECTORS = [
 ];
 
 export const QUERY_TYPES = [
-  { label: 'Metrics', value: QueryType.METRICS },
+  { label: 'Builder', value: QueryType.TIME_SERIES_LIST },
+  { label: 'MQL', value: QueryType.TIME_SERIES_QUERY },
   { label: 'Service Level Objectives (SLO)', value: QueryType.SLO },
+  { label: 'PromQL', value: QueryType.PROMQL },
 ];

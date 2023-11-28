@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/login"
 )
 
 // Should be in use in ProvideAuthInfoStore
@@ -62,7 +62,7 @@ func (s *AuthInfoStore) RunMetricsCollection(ctx context.Context) error {
 
 func (s *AuthInfoStore) GetLoginStats(ctx context.Context) (login.LoginStats, error) {
 	var stats login.LoginStats
-	outerErr := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	outerErr := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		rawSQL := `SELECT
 		(SELECT COUNT(*) FROM (` + s.duplicateUserEntriesSQL(ctx) + `) AS d WHERE (d.dup_login IS NOT NULL OR d.dup_email IS NOT NULL)) as duplicate_user_entries,
 		(SELECT COUNT(*) FROM (` + s.mixedCasedUsers(ctx) + `) AS mcu) AS mixed_cased_users
@@ -86,8 +86,8 @@ func (s *AuthInfoStore) GetLoginStats(ctx context.Context) (login.LoginStats, er
 	return stats, nil
 }
 
-func (s *AuthInfoStore) CollectLoginStats(ctx context.Context) (map[string]interface{}, error) {
-	m := map[string]interface{}{}
+func (s *AuthInfoStore) CollectLoginStats(ctx context.Context) (map[string]any, error) {
+	m := map[string]any{}
 
 	loginStats, err := s.GetLoginStats(ctx)
 	if err != nil {

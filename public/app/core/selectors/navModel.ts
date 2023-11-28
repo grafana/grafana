@@ -1,4 +1,8 @@
 import { NavModel, NavModelItem, NavIndex } from '@grafana/data';
+import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
+import { FOLDER_ID } from 'app/features/folders/state/navModel';
+
+import { HOME_NAV_ID } from '../reducers/navModel';
 
 const getNotFoundModel = (): NavModel => {
   const node: NavModelItem = {
@@ -18,7 +22,7 @@ const getNotFoundModel = (): NavModel => {
 export const getNavModel = (navIndex: NavIndex, id: string, fallback?: NavModel, onlyChild = false): NavModel => {
   if (navIndex[id]) {
     const node = navIndex[id];
-    const main = onlyChild ? node : getSectionRoot(node);
+    const main = onlyChild ? node : getRootSectionForNode(node);
     const mainWithActive = enrichNodeWithActiveState(main, id);
 
     return {
@@ -34,8 +38,13 @@ export const getNavModel = (navIndex: NavIndex, id: string, fallback?: NavModel,
   return getNotFoundModel();
 };
 
-function getSectionRoot(node: NavModelItem): NavModelItem {
-  return node.parentItem ? getSectionRoot(node.parentItem) : node;
+export function getRootSectionForNode(node: NavModelItem): NavModelItem {
+  // Don't recurse fully up the folder tree when nested folders is enabled
+  if (newBrowseDashboardsEnabled() && node.id === FOLDER_ID) {
+    return node;
+  } else {
+    return node.parentItem && node.parentItem.id !== HOME_NAV_ID ? getRootSectionForNode(node.parentItem) : node;
+  }
 }
 
 function enrichNodeWithActiveState(node: NavModelItem, activeId: string): NavModelItem {
@@ -54,5 +63,5 @@ function enrichNodeWithActiveState(node: NavModelItem, activeId: string): NavMod
 }
 
 export const getTitleFromNavModel = (navModel: NavModel) => {
-  return navModel.pageTitle ?? `${navModel.main.text}${navModel.node.text ? ': ' + navModel.node.text : ''}`;
+  return `${navModel.main.text}${navModel.node.text ? ': ' + navModel.node.text : ''}`;
 };

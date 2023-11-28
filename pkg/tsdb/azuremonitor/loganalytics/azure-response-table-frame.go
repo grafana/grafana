@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
@@ -43,12 +45,12 @@ func apiErrorToNotice(err *AzureLogAnalyticsAPIError) data.Notice {
 }
 
 // ResponseTableToFrame converts an AzureResponseTable to a data.Frame.
-func ResponseTableToFrame(table *types.AzureResponseTable, refID string, executedQuery string) (*data.Frame, error) {
+func ResponseTableToFrame(table *types.AzureResponseTable, refID string, executedQuery string, queryType dataquery.AzureQueryType, resultFormat dataquery.ResultFormat) (*data.Frame, error) {
 	if len(table.Rows) == 0 {
 		return nil, nil
 	}
 
-	converterFrame, err := converterFrameForTable(table)
+	converterFrame, err := converterFrameForTable(table, queryType, resultFormat)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +66,7 @@ func ResponseTableToFrame(table *types.AzureResponseTable, refID string, execute
 	return converterFrame.Frame, nil
 }
 
-func converterFrameForTable(t *types.AzureResponseTable) (*data.FrameInputConverter, error) {
+func converterFrameForTable(t *types.AzureResponseTable, queryType dataquery.AzureQueryType, resultFormat dataquery.ResultFormat) (*data.FrameInputConverter, error) {
 	converters := []data.FieldConverter{}
 	colNames := make([]string, len(t.Columns))
 	colTypes := make([]string, len(t.Columns)) // for metadata
@@ -75,6 +77,9 @@ func converterFrameForTable(t *types.AzureResponseTable) (*data.FrameInputConver
 		converter, ok := converterMap[col.Type]
 		if !ok {
 			return nil, fmt.Errorf("unsupported analytics column type %v", col.Type)
+		}
+		if queryType == dataquery.AzureQueryTypeAzureTraces && resultFormat == dataquery.ResultFormatTrace && (col.Name == "serviceTags" || col.Name == "tags") {
+			converter = tagsConverter
 		}
 		converters = append(converters, converter)
 	}
@@ -112,9 +117,61 @@ var converterMap = map[string]data.FieldConverter{
 	"number":   decimalConverter,
 }
 
+type KeyValue struct {
+	Value any    `json:"value"`
+	Key   string `json:"key"`
+}
+
+var tagsConverter = data.FieldConverter{
+	OutputFieldType: data.FieldTypeNullableJSON,
+	Converter: func(v any) (any, error) {
+		if v == nil {
+			return nil, nil
+		}
+
+		m := map[string]any{}
+		err := json.Unmarshal([]byte(v.(string)), &m)
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmarshal trace tags: %s", err)
+		}
+
+		parsedTags := []KeyValue{}
+		for k, v := range m {
+			if v == nil {
+				continue
+			}
+
+			switch v.(type) {
+			case float64:
+				if v == 0 {
+					continue
+				}
+			case string:
+				if v == "" {
+					continue
+				}
+			}
+
+			parsedTags = append(parsedTags, KeyValue{Key: k, Value: v})
+		}
+		sort.Slice(parsedTags, func(i, j int) bool {
+			return parsedTags[i].Key < parsedTags[j].Key
+		})
+
+		marshalledTags, err := json.Marshal(parsedTags)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal parsed trace tags: %s", err)
+		}
+
+		jsonTags := json.RawMessage(marshalledTags)
+
+		return &jsonTags, nil
+	},
+}
+
 var stringConverter = data.FieldConverter{
 	OutputFieldType: data.FieldTypeNullableString,
-	Converter: func(v interface{}) (interface{}, error) {
+	Converter: func(v any) (any, error) {
 		var as *string
 		if v == nil {
 			return as, nil
@@ -130,7 +187,7 @@ var stringConverter = data.FieldConverter{
 
 var objectToStringConverter = data.FieldConverter{
 	OutputFieldType: data.FieldTypeNullableString,
-	Converter: func(kustoValue interface{}) (interface{}, error) {
+	Converter: func(kustoValue any) (any, error) {
 		var output *string
 		if kustoValue == nil {
 			return output, nil
@@ -150,7 +207,7 @@ var objectToStringConverter = data.FieldConverter{
 
 var timeConverter = data.FieldConverter{
 	OutputFieldType: data.FieldTypeNullableTime,
-	Converter: func(v interface{}) (interface{}, error) {
+	Converter: func(v any) (any, error) {
 		var at *time.Time
 		if v == nil {
 			return at, nil
@@ -170,7 +227,7 @@ var timeConverter = data.FieldConverter{
 
 var realConverter = data.FieldConverter{
 	OutputFieldType: data.FieldTypeNullableFloat64,
-	Converter: func(v interface{}) (interface{}, error) {
+	Converter: func(v any) (any, error) {
 		var af *float64
 		if v == nil {
 			return af, nil
@@ -203,7 +260,7 @@ var realConverter = data.FieldConverter{
 
 var boolConverter = data.FieldConverter{
 	OutputFieldType: data.FieldTypeNullableBool,
-	Converter: func(v interface{}) (interface{}, error) {
+	Converter: func(v any) (any, error) {
 		var ab *bool
 		if v == nil {
 			return ab, nil
@@ -218,7 +275,7 @@ var boolConverter = data.FieldConverter{
 
 var intConverter = data.FieldConverter{
 	OutputFieldType: data.FieldTypeNullableInt32,
-	Converter: func(v interface{}) (interface{}, error) {
+	Converter: func(v any) (any, error) {
 		var ai *int32
 		if v == nil {
 			return ai, nil
@@ -239,7 +296,7 @@ var intConverter = data.FieldConverter{
 
 var longConverter = data.FieldConverter{
 	OutputFieldType: data.FieldTypeNullableInt64,
-	Converter: func(v interface{}) (interface{}, error) {
+	Converter: func(v any) (any, error) {
 		var ai *int64
 		if v == nil {
 			return ai, nil
@@ -265,7 +322,7 @@ var longConverter = data.FieldConverter{
 // to functions like sdk's data.LongToWide.
 var decimalConverter = data.FieldConverter{
 	OutputFieldType: data.FieldTypeNullableFloat64,
-	Converter: func(v interface{}) (interface{}, error) {
+	Converter: func(v any) (any, error) {
 		var af *float64
 		if v == nil {
 			return af, nil

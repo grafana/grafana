@@ -1,7 +1,6 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { DataSourcePicker } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import {
   Button,
@@ -14,7 +13,8 @@ import {
   InputControl,
   Legend,
 } from '@grafana/ui';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import {
   DashboardInput,
@@ -30,26 +30,26 @@ import { ImportDashboardLibraryPanelsList } from './ImportDashboardLibraryPanels
 interface Props extends Pick<FormAPI<ImportDashboardDTO>, 'register' | 'errors' | 'control' | 'getValues' | 'watch'> {
   uidReset: boolean;
   inputs: DashboardInputs;
-  initialFolderId: number;
+  initialFolderUid: string;
 
   onCancel: () => void;
   onUidReset: () => void;
   onSubmit: FormsOnSubmit<ImportDashboardDTO>;
 }
 
-export const ImportDashboardForm: FC<Props> = ({
+export const ImportDashboardForm = ({
   register,
   errors,
   control,
   getValues,
   uidReset,
   inputs,
-  initialFolderId,
+  initialFolderUid,
   onUidReset,
   onCancel,
   onSubmit,
   watch,
-}) => {
+}: Props) => {
   const [isSubmitted, setSubmitted] = useState(false);
   const watchDataSources = watch('dataSources');
   const watchFolder = watch('folder');
@@ -60,7 +60,7 @@ export const ImportDashboardForm: FC<Props> = ({
   */
   useEffect(() => {
     if (isSubmitted && (errors.title || errors.uid)) {
-      onSubmit(getValues(), {} as any);
+      onSubmit(getValues());
     }
   }, [errors, getValues, isSubmitted, onSubmit]);
   const newLibraryPanels = inputs?.libraryPanels?.filter((i) => i.state === LibraryPanelInputState.New) ?? [];
@@ -73,7 +73,7 @@ export const ImportDashboardForm: FC<Props> = ({
         <Input
           {...register('title', {
             required: 'Name is required',
-            validate: async (v: string) => await validateTitle(v, getValues().folder.id),
+            validate: async (v: string) => await validateTitle(v, getValues().folder.uid),
           })}
           type="text"
           data-testid={selectors.components.ImportDashboardForm.name}
@@ -82,7 +82,7 @@ export const ImportDashboardForm: FC<Props> = ({
       <Field label="Folder">
         <InputControl
           render={({ field: { ref, ...field } }) => (
-            <FolderPicker {...field} enableCreateNew initialFolderId={initialFolderId} />
+            <OldFolderPicker {...field} enableCreateNew initialFolderUid={initialFolderUid} />
           )}
           name="folder"
           control={control}
@@ -113,17 +113,18 @@ export const ImportDashboardForm: FC<Props> = ({
           if (input.pluginId === ExpressionDatasourceRef.type) {
             return null;
           }
-          const dataSourceOption = `dataSources[${index}]`;
+          const dataSourceOption = `dataSources.${index}` as const;
           const current = watchDataSources ?? [];
           return (
             <Field
               label={input.label}
+              description={input.description}
               key={dataSourceOption}
               invalid={errors.dataSources && !!errors.dataSources[index]}
               error={errors.dataSources && errors.dataSources[index] && 'A data source is required'}
             >
               <InputControl
-                name={dataSourceOption as any}
+                name={dataSourceOption}
                 render={({ field: { ref, ...field } }) => (
                   <DataSourcePicker
                     {...field}
@@ -141,7 +142,7 @@ export const ImportDashboardForm: FC<Props> = ({
         })}
       {inputs.constants &&
         inputs.constants.map((input: DashboardInput, index) => {
-          const constantIndex = `constants[${index}]`;
+          const constantIndex = `constants.${index}` as const;
           return (
             <Field
               label={input.label}
@@ -149,7 +150,7 @@ export const ImportDashboardForm: FC<Props> = ({
               invalid={errors.constants && !!errors.constants[index]}
               key={constantIndex}
             >
-              <Input {...register(constantIndex as any, { required: true })} defaultValue={input.value} />
+              <Input {...register(constantIndex, { required: true })} defaultValue={input.value} />
             </Field>
           );
         })}

@@ -1,0 +1,15 @@
+import { LogsTokenTypes } from '../../language/logs/completion/types';
+import { CLOUDWATCH_LOGS_LANGUAGE_DEFINITION_ID } from '../../language/logs/definition';
+export const filterQuery = {
+    query: `filter logGroup `,
+    tokens: [
+        [
+            { offset: 0, type: LogsTokenTypes.Keyword, language: CLOUDWATCH_LOGS_LANGUAGE_DEFINITION_ID },
+            { offset: 6, type: LogsTokenTypes.Whitespace, language: CLOUDWATCH_LOGS_LANGUAGE_DEFINITION_ID },
+            { offset: 7, type: LogsTokenTypes.Identifier, language: CLOUDWATCH_LOGS_LANGUAGE_DEFINITION_ID },
+            { offset: 15, type: LogsTokenTypes.Whitespace, language: CLOUDWATCH_LOGS_LANGUAGE_DEFINITION_ID },
+        ],
+    ],
+    position: { lineNumber: 1, column: 16 },
+};
+//# sourceMappingURL=filterQuery.js.map

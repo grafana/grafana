@@ -35,4 +35,8 @@ export enum DataTransformerID {
   extractFields = 'extractFields',
   groupingToMatrix = 'groupingToMatrix',
   limit = 'limit',
+  partitionByValues = 'partitionByValues',
+  timeSeriesTable = 'timeSeriesTable',
+  formatTime = 'formatTime',
+  formatString = 'formatString',
 }

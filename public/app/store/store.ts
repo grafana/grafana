@@ -25,4 +25,5 @@ export function dispatch(action: any) {
   return store.dispatch(action);
 }
 
+// @PERCONA
 export const useAppDispatch = () => useDispatch();

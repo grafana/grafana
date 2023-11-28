@@ -5,8 +5,9 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"gocloud.dev/blob"
+
+	"github.com/grafana/grafana/pkg/infra/filestorage"
 )
 
 const rootStorageTypeDisk = "disk"
@@ -49,7 +50,7 @@ func newDiskStorage(meta RootStorageMeta, scfg RootStorageConfig) *rootStorageDi
 		path := protocol + cfg.Path
 		bucket, err := blob.OpenBucket(context.Background(), path)
 		if err != nil {
-			grafanaStorageLogger.Warn("error loading storage", "prefix", scfg.Prefix, "err", err)
+			grafanaStorageLogger.Warn("Error loading storage", "prefix", scfg.Prefix, "err", err)
 			meta.Notice = append(meta.Notice, data.Notice{
 				Severity: data.NoticeSeverityError,
 				Text:     "Failed to initialize storage",

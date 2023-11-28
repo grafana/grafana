@@ -6,13 +6,13 @@ import {
   DataLinkBuiltInVars,
   DataQuery,
   DataSourceRef,
-  DataTransformerConfig,
   FieldConfigSource,
   FieldMatcherID,
   FieldType,
   getActiveThreshold,
   getDataSourceRef,
   isDataSourceRef,
+  isEmptyObject,
   MappingType,
   PanelPlugin,
   SpecialValueMatch,
@@ -26,7 +26,9 @@ import {
 import { labelsToFieldsTransformer } from '@grafana/data/src/transformations/transformers/labelsToFields';
 import { mergeTransformer } from '@grafana/data/src/transformations/transformers/merge';
 import { getDataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { DataTransformerConfig } from '@grafana/schema';
 import { AxisPlacement, GraphFieldConfig } from '@grafana/ui';
+import { migrateTableDisplayModeToCellOptions } from '@grafana/ui/src/components/Table/utils';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 import { config } from 'app/core/config';
 import {
@@ -77,7 +79,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades: PanelSchemeUpgradeHandler[] = [];
-    this.dashboard.schemaVersion = 37;
+    this.dashboard.schemaVersion = 38;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -193,7 +195,7 @@ export class DashboardMigrator {
           variable.type = 'query';
         }
         if (variable.allFormat === void 0) {
-          variable.allFormat = 'glob';
+          delete variable.allFormat;
         }
       }
     }
@@ -583,6 +585,9 @@ export class DashboardMigrator {
           continue;
         }
         const { multi, current } = variable;
+        if (isEmptyObject(current)) {
+          continue;
+        }
         variable.current = alignCurrentWithMulti(current, multi);
       }
     }
@@ -622,6 +627,9 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 27) {
+      // remove old repeated panel left-overs
+      this.removeRepeatedPanels();
+
       this.dashboard.templating.list = this.dashboard.templating.list.map((variable) => {
         if (!isConstant(variable)) {
           return variable;
@@ -782,7 +790,7 @@ export class DashboardMigrator {
               if (panelDataSourceWasDefault && target.datasource?.uid !== '__expr__') {
                 // We can have situations when default ds changed and the panel level data source is different from the queries
                 // In this case we use the query level data source as source for truth
-                panel.datasource = target.datasource as DataSourceRef;
+                panel.datasource = target.datasource;
               }
             }
           }
@@ -807,6 +815,40 @@ export class DashboardMigrator {
       });
     }
 
+    // Update old table cell display configuration to the new
+    // format which uses an object for configuration
+    if (oldVersion < 38) {
+      panelUpgrades.push((panel: PanelModel) => {
+        if (panel.type === 'table' && panel.fieldConfig !== undefined) {
+          const displayMode = panel.fieldConfig.defaults?.custom?.displayMode;
+
+          // Update field configuration
+          if (displayMode !== undefined) {
+            // Migrate any options for the panel
+            panel.fieldConfig.defaults.custom.cellOptions = migrateTableDisplayModeToCellOptions(displayMode);
+
+            // Delete the legacy field
+            delete panel.fieldConfig.defaults.custom.displayMode;
+          }
+
+          // Update any overrides referencing the cell display mode
+          if (panel.fieldConfig?.overrides) {
+            for (const override of panel.fieldConfig.overrides) {
+              for (let j = 0; j < override.properties?.length ?? 0; j++) {
+                let overrideDisplayMode = override.properties[j].value;
+                if (override.properties[j].id === 'custom.displayMode') {
+                  override.properties[j].id = 'custom.cellOptions';
+                  override.properties[j].value = migrateTableDisplayModeToCellOptions(overrideDisplayMode);
+                }
+              }
+            }
+          }
+        }
+
+        return panel;
+      });
+    }
+
     if (panelUpgrades.length === 0) {
       return;
     }
@@ -822,6 +864,26 @@ export class DashboardMigrator {
         }
       }
     }
+  }
+
+  private removeRepeatedPanels() {
+    const newPanels = [];
+
+    for (const panel of this.dashboard.panels) {
+      // @ts-expect-error
+      if (panel.repeatPanelId || panel.repeatByRow) {
+        continue;
+      }
+
+      // Filter out repeats in collapsed rows
+      if (panel.type === 'row' && Array.isArray(panel.panels)) {
+        panel.panels = panel.panels.filter((x) => !x.repeatPanelId);
+      }
+
+      newPanels.push(panel);
+    }
+
+    this.dashboard.panels = newPanels;
   }
 
   // Migrates metric queries and/or annotation queries that use more than one statistic.
@@ -1144,7 +1206,7 @@ export function migrateDatasourceNameToRef(
 
   const ds = getDataSourceSrv().getInstanceSettings(nameOrRef);
   if (!ds) {
-    return { uid: nameOrRef as string }; // not found
+    return { uid: nameOrRef ? nameOrRef : undefined }; // not found
   }
 
   return getDataSourceRef(ds);

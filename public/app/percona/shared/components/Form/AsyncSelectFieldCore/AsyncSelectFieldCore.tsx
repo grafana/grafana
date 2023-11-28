@@ -32,7 +32,7 @@ export interface AsyncSelectFieldProps<T>
   getValueForValidators?: GetSelectValueFunction<SelectableValue<T> | null>;
 }
 
-export const AsyncSelectFieldCore: FC<AsyncSelectFieldProps<any>> = ({
+export const AsyncSelectFieldCore: FC<React.PropsWithChildren<AsyncSelectFieldProps<any>>> = ({
   label,
   name,
   required,

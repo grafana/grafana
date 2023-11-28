@@ -7,7 +7,7 @@ export interface PopoverContentProps {
   updatePopperPosition?: () => void;
 }
 
-export type PopoverContent = string | React.ReactElement<any> | ((props: PopoverContentProps) => JSX.Element);
+export type PopoverContent = string | React.ReactElement | ((props: PopoverContentProps) => JSX.Element);
 
 export type TooltipPlacement =
   | 'auto-start'

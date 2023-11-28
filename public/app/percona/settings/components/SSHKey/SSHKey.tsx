@@ -1,7 +1,6 @@
 import { cx } from '@emotion/css';
 import React, { FC, useCallback, useState } from 'react';
 import { Field, Form } from 'react-final-form';
-import { useSelector } from 'react-redux';
 
 import { Button, Spinner, TextArea, useStyles2 } from '@grafana/ui';
 import { OldPage } from 'app/core/components/Page/Page';
@@ -14,12 +13,13 @@ import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaN
 import { updateSettingsAction } from 'app/percona/shared/core/reducers';
 import { getPerconaSettings } from 'app/percona/shared/core/selectors';
 import { useAppDispatch } from 'app/store/store';
+import { useSelector } from 'app/types';
 
 import { SET_SETTINGS_CANCEL_TOKEN } from '../../Settings.constants';
 
 import { getStyles } from './SSHKey.styles';
 
-export const SSHKey: FC = () => {
+export const SSHKey: FC<React.PropsWithChildren<unknown>> = () => {
   const styles = useStyles2(getStyles);
   const settingsStyles = useStyles2(getSettingsStyles);
   const {

@@ -4,7 +4,7 @@ import { IconButton, Spinner } from '@grafana/ui';
 
 import { SilenceBellProps } from './SilenceBell.types';
 
-export const SilenceBell: FC<SilenceBellProps> = ({ silenced, tooltip = '', onClick = () => null }) => {
+export const SilenceBell: FC<React.PropsWithChildren<SilenceBellProps>> = ({ silenced, tooltip = '', onClick = () => null }) => {
   const [loading, setLoading] = useState(false);
   const handleClick = useCallback(async () => {
     setLoading(true);

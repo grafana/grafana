@@ -18,8 +18,8 @@ jest.unmock('app/features/plugins/plugin_loader');
 
 for (const pluginId of panelsToCheckFirst) {
   config.panels[pluginId] = {
-    module: `app/plugins/panel/${pluginId}/module`,
-  } as any;
+    module: `core:plugin/${pluginId}`,
+  } as PanelPluginMeta;
 }
 
 config.panels['text'] = {
@@ -335,6 +335,29 @@ scenario('Given default loki logs data', (ctx) => {
 
   it('should return correct suggestions', () => {
     expect(ctx.names()).toEqual([SuggestionName.Logs, SuggestionName.Table]);
+  });
+});
+
+scenario('Given a preferredVisualisationType', (ctx) => {
+  ctx.setData([
+    toDataFrame({
+      meta: {
+        preferredVisualisationType: 'table',
+      },
+      fields: [
+        {
+          name: 'Trace Id',
+          type: FieldType.number,
+          values: [1, 2, 3],
+          config: {},
+        },
+        { name: 'Trace Group', type: FieldType.string, values: ['traceGroup1', 'traceGroup2', 'traceGroup3'] },
+      ],
+    }),
+  ]);
+
+  it('should return the preferred visualization first', () => {
+    expect(ctx.names()[0]).toEqual(SuggestionName.Table);
   });
 });
 

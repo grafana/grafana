@@ -1,0 +1,192 @@
+import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
+import { isAlertingRule, isAlertingRulerRule, isCloudRuleIdentifier, isGrafanaRuleIdentifier, isGrafanaRulerRule, isPrometheusRuleIdentifier, isRecordingRule, isRecordingRulerRule, } from './rules';
+export function fromRulerRule(ruleSourceName, namespace, groupName, rule) {
+    if (isGrafanaRulerRule(rule)) {
+        return { uid: rule.grafana_alert.uid, ruleSourceName: 'grafana' };
+    }
+    return {
+        ruleSourceName,
+        namespace,
+        groupName,
+        ruleName: isAlertingRulerRule(rule) ? rule.alert : rule.record,
+        rulerRuleHash: hashRulerRule(rule),
+    };
+}
+export function fromRule(ruleSourceName, namespace, groupName, rule) {
+    return {
+        ruleSourceName,
+        namespace,
+        groupName,
+        ruleName: rule.name,
+        ruleHash: hashRule(rule),
+    };
+}
+export function fromCombinedRule(ruleSourceName, rule) {
+    const namespaceName = rule.namespace.name;
+    const groupName = rule.group.name;
+    if (rule.rulerRule) {
+        return fromRulerRule(ruleSourceName, namespaceName, groupName, rule.rulerRule);
+    }
+    if (rule.promRule) {
+        return fromRule(ruleSourceName, namespaceName, groupName, rule.promRule);
+    }
+    throw new Error('Could not create an id for a rule that is missing both `rulerRule` and `promRule`.');
+}
+export function fromRuleWithLocation(rule) {
+    return fromRulerRule(rule.ruleSourceName, rule.namespace, rule.group.name, rule.rule);
+}
+export function equal(a, b) {
+    if (isGrafanaRuleIdentifier(a) && isGrafanaRuleIdentifier(b)) {
+        return a.uid === b.uid;
+    }
+    if (isCloudRuleIdentifier(a) && isCloudRuleIdentifier(b)) {
+        return (a.groupName === b.groupName &&
+            a.namespace === b.namespace &&
+            a.ruleName === b.ruleName &&
+            a.rulerRuleHash === b.rulerRuleHash &&
+            a.ruleSourceName === b.ruleSourceName);
+    }
+    if (isPrometheusRuleIdentifier(a) && isPrometheusRuleIdentifier(b)) {
+        return (a.groupName === b.groupName &&
+            a.namespace === b.namespace &&
+            a.ruleName === b.ruleName &&
+            a.ruleHash === b.ruleHash &&
+            a.ruleSourceName === b.ruleSourceName);
+    }
+    return false;
+}
+const cloudRuleIdentifierPrefix = 'cri';
+const prometheusRuleIdentifierPrefix = 'pri';
+function escapeDollars(value) {
+    return value.replace(/\$/g, '_DOLLAR_');
+}
+function unescapeDollars(value) {
+    return value.replace(/\_DOLLAR\_/g, '$');
+}
+/**
+ * deal with Unix-style path separators "/" (replaced with \x1f – unit separator)
+ * and Windows-style path separators "\" (replaced with \x1e – record separator)
+ * we need this to side-step proxies that automatically decode %2F to prevent path traversal attacks
+ * we'll use some non-printable characters from the ASCII table that will get encoded properly but very unlikely
+ * to ever be used in a rule name or namespace
+ */
+export function escapePathSeparators(value) {
+    return value.replace(/\//g, '\x1f').replace(/\\/g, '\x1e');
+}
+export function unescapePathSeparators(value) {
+    return value.replace(/\x1f/g, '/').replace(/\x1e/g, '\\');
+}
+export function parse(value, decodeFromUri = false) {
+    const source = decodeFromUri ? decodeURIComponent(value) : value;
+    const parts = source.split('$');
+    if (parts.length === 1) {
+        return { uid: value, ruleSourceName: 'grafana' };
+    }
+    if (parts.length === 6) {
+        const [prefix, ruleSourceName, namespace, groupName, ruleName, hash] = parts
+            .map(unescapeDollars)
+            .map(unescapePathSeparators);
+        if (prefix === cloudRuleIdentifierPrefix) {
+            return { ruleSourceName, namespace, groupName, ruleName, rulerRuleHash: hash };
+        }
+        if (prefix === prometheusRuleIdentifierPrefix) {
+            return { ruleSourceName, namespace, groupName, ruleName, ruleHash: hash };
+        }
+    }
+    throw new Error(`Failed to parse rule location: ${value}`);
+}
+export function tryParse(value, decodeFromUri = false) {
+    if (!value) {
+        return;
+    }
+    try {
+        return parse(value, decodeFromUri);
+    }
+    catch (error) {
+        return;
+    }
+}
+export function stringifyIdentifier(identifier) {
+    if (isGrafanaRuleIdentifier(identifier)) {
+        return identifier.uid;
+    }
+    if (isCloudRuleIdentifier(identifier)) {
+        return [
+            cloudRuleIdentifierPrefix,
+            identifier.ruleSourceName,
+            identifier.namespace,
+            identifier.groupName,
+            identifier.ruleName,
+            identifier.rulerRuleHash,
+        ]
+            .map(String)
+            .map(escapeDollars)
+            .map(escapePathSeparators)
+            .join('$');
+    }
+    return [
+        prometheusRuleIdentifierPrefix,
+        identifier.ruleSourceName,
+        identifier.namespace,
+        identifier.groupName,
+        identifier.ruleName,
+        identifier.ruleHash,
+    ]
+        .map(String)
+        .map(escapeDollars)
+        .map(escapePathSeparators)
+        .join('$');
+}
+function hash(value) {
+    let hash = 0;
+    if (value.length === 0) {
+        return hash;
+    }
+    for (let i = 0; i < value.length; i++) {
+        const char = value.charCodeAt(i);
+        hash = (hash << 5) - hash + char;
+        hash = hash & hash; // Convert to 32bit integer
+    }
+    return hash;
+}
+// this is used to identify rules, mimir / loki rules do not have a unique identifier
+export function hashRulerRule(rule) {
+    if (isRecordingRulerRule(rule)) {
+        return hash(JSON.stringify([rule.record, rule.expr, hashLabelsOrAnnotations(rule.labels)])).toString();
+    }
+    else if (isAlertingRulerRule(rule)) {
+        return hash(JSON.stringify([
+            rule.alert,
+            rule.expr,
+            hashLabelsOrAnnotations(rule.annotations),
+            hashLabelsOrAnnotations(rule.labels),
+        ])).toString();
+    }
+    else if (isGrafanaRulerRule(rule)) {
+        return rule.grafana_alert.uid;
+    }
+    else {
+        throw new Error('only recording and alerting ruler rules can be hashed');
+    }
+}
+function hashRule(rule) {
+    if (isRecordingRule(rule)) {
+        return hash(JSON.stringify([rule.type, rule.query, hashLabelsOrAnnotations(rule.labels)])).toString();
+    }
+    if (isAlertingRule(rule)) {
+        return hash(JSON.stringify([
+            rule.type,
+            rule.query,
+            hashLabelsOrAnnotations(rule.annotations),
+            hashLabelsOrAnnotations(rule.labels),
+        ])).toString();
+    }
+    throw new Error('only recording and alerting rules can be hashed');
+}
+function hashLabelsOrAnnotations(item) {
+    return JSON.stringify(Object.entries(item || {}).sort((a, b) => a[0].localeCompare(b[0])));
+}
+export function ruleIdentifierToRuleSourceName(identifier) {
+    return isGrafanaRuleIdentifier(identifier) ? GRAFANA_RULES_SOURCE_NAME : identifier.ruleSourceName;
+}
+//# sourceMappingURL=rule-id.js.map

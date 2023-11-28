@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { PanelPluginMeta } from '@grafana/data';
 import { Button, VerticalGroup } from '@grafana/ui';
@@ -17,9 +17,10 @@ import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
 interface Props {
   panel: PanelModel;
   searchQuery: string;
+  isWidget?: boolean;
 }
 
-export const PanelLibraryOptionsGroup: FC<Props> = ({ panel, searchQuery }) => {
+export const PanelLibraryOptionsGroup = ({ panel, searchQuery, isWidget = false }: Props) => {
   const [showingAddPanelModal, setShowingAddPanelModal] = useState(false);
   const [changeToPanel, setChangeToPanel] = useState<LibraryElementDTO | undefined>(undefined);
   const [panelFilter, setPanelFilter] = useState<string[]>([]);
@@ -43,7 +44,6 @@ export const PanelLibraryOptionsGroup: FC<Props> = ({ panel, searchQuery }) => {
 
   const onAddToPanelLibrary = () => setShowingAddPanelModal(true);
   const onDismissChangeToPanel = () => setChangeToPanel(undefined);
-
   return (
     <VerticalGroup spacing="md">
       {!panel.libraryPanel && (
@@ -54,7 +54,7 @@ export const PanelLibraryOptionsGroup: FC<Props> = ({ panel, searchQuery }) => {
         </VerticalGroup>
       )}
 
-      <PanelTypeFilter onChange={onPanelFilterChange} />
+      <PanelTypeFilter onChange={onPanelFilterChange} isWidget={isWidget} />
 
       <div className={styles.libraryPanelsView}>
         <LibraryPanelsView
@@ -63,6 +63,7 @@ export const PanelLibraryOptionsGroup: FC<Props> = ({ panel, searchQuery }) => {
           panelFilter={panelFilter}
           onClickCard={setChangeToPanel}
           showSecondaryActions
+          isWidget={isWidget}
         />
       </div>
 
@@ -70,7 +71,7 @@ export const PanelLibraryOptionsGroup: FC<Props> = ({ panel, searchQuery }) => {
         <AddLibraryPanelModal
           panel={panel}
           onDismiss={() => setShowingAddPanelModal(false)}
-          initialFolderId={dashboard?.meta.folderId}
+          initialFolderUid={dashboard?.meta.folderUid}
           isOpen={showingAddPanelModal}
         />
       )}

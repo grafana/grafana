@@ -4,12 +4,14 @@ import {
   DataQuery,
   getDataSourceRef,
   isDataSourceRef,
+  isEmptyObject,
   LoadingState,
   TimeRange,
+  TypedVariableModel,
   UrlQueryMap,
   UrlQueryValue,
 } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -19,12 +21,12 @@ import { store } from 'app/store/store';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { appEvents } from '../../../core/core';
 import { getBackendSrv } from '../../../core/services/backend_srv';
-import { Graph } from '../../../core/utils/dag';
+import { Graph, Node } from '../../../core/utils/dag';
 import { AppNotification, StoreState, ThunkResult } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
 import { variableAdapters } from '../adapters';
-import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, VARIABLE_PREFIX } from '../constants';
 import { cleanEditorState } from '../editor/reducer';
 import {
   hasCurrent,
@@ -60,6 +62,7 @@ import {
   ensureStringValues,
   ExtendedUrlQueryMap,
   getCurrentText,
+  getCurrentValue,
   getVariableRefresh,
   hasOngoingTransaction,
   toKeyedVariableIdentifier,
@@ -67,6 +70,7 @@ import {
   toVariablePayload,
 } from '../utils';
 
+import { findVariableNodeInList, isVariableOnTimeRangeConfigured } from './helpers';
 import { toKeyedAction } from './keyedVariablesReducer';
 import { getIfExistsLastKey, getVariable, getVariablesByKey, getVariablesState } from './selectors';
 import {
@@ -256,7 +260,7 @@ export const changeVariableMultiValue = (identifier: KeyedVariableIdentifier, mu
   return (dispatch, getState) => {
     const { rootStateKey: key } = identifier;
     const variable = getVariable(identifier, getState());
-    if (!isMulti(variable)) {
+    if (!isMulti(variable) || isEmptyObject(variable.current)) {
       return;
     }
 
@@ -359,7 +363,7 @@ export const processVariable = (
     const variable = getVariable(identifier, getState());
     await processVariableDependencies(variable, getState());
 
-    const urlValue = queryParams['var-' + variable.name];
+    const urlValue = queryParams[VARIABLE_PREFIX + variable.name];
     if (urlValue !== void 0) {
       const stringUrlValue = ensureStringValues(urlValue);
       await variableAdapters.get(variable.type).setValueFromUrl(variable, stringUrlValue);
@@ -375,6 +379,11 @@ export const processVariable = (
         await dispatch(updateOptions(toKeyedVariableIdentifier(refreshableVariable)));
         return;
       }
+    }
+
+    if (variable.type === 'custom') {
+      await dispatch(updateOptions(toKeyedVariableIdentifier(variable)));
+      return;
     }
 
     // for variables that aren't updated via URL or refresh, let's simulate the same state changes
@@ -522,14 +531,16 @@ export const validateVariableSelectionState = (
 
     // 1. find the current value
     const text = getCurrentText(variableInState);
-    option = variableInState.options?.find((v) => v.text === text);
+    const value = getCurrentValue(variableInState);
+
+    option = variableInState.options?.find((v: VariableOption) => v.text === text || v.value === value);
     if (option) {
       return setValue(variableInState, option);
     }
 
     // 2. find the default value
     if (defaultValue) {
-      option = variableInState.options?.find((v) => v.text === defaultValue);
+      option = variableInState.options?.find((v) => v.text === defaultValue || v.value === defaultValue);
       if (option) {
         return setValue(variableInState, option);
       }
@@ -641,6 +652,126 @@ export interface OnTimeRangeUpdatedDependencies {
   events: typeof appEvents;
 }
 
+const dfs = (node: Node, visited: string[], variables: VariableModel[], variablesRefreshTimeRange: VariableModel[]) => {
+  if (!visited.includes(node.name)) {
+    visited.push(node.name);
+  }
+  node.outputEdges.forEach((e) => {
+    const child = e.outputNode;
+    if (child && !visited.includes(child.name)) {
+      const childVariable = variables.find((v) => v.name === child.name) as QueryVariableModel;
+      // when a variable is refreshed on time range change, we need to add that variable to be refreshed and mark its children as visited
+      if (
+        childVariable &&
+        childVariable.refresh === VariableRefresh.onTimeRangeChanged &&
+        variablesRefreshTimeRange.indexOf(childVariable) === -1
+      ) {
+        variablesRefreshTimeRange.push(childVariable);
+        visited.push(child.name);
+      } else {
+        dfs(child, visited, variables, variablesRefreshTimeRange);
+      }
+    }
+  });
+  return variablesRefreshTimeRange;
+};
+
+// verify if the output edges of a node are not time range dependent
+const areOuputEdgesNotTimeRange = (node: Node, variables: TypedVariableModel[]) => {
+  return node.outputEdges.every((e) => {
+    const childNode = e.outputNode;
+    if (childNode) {
+      const childVariable = findVariableNodeInList(variables, childNode.name);
+      if (childVariable && childVariable.type === 'query') {
+        return childVariable.refresh !== VariableRefresh.onTimeRangeChanged;
+      }
+    }
+    return true;
+  });
+};
+
+/**
+ * This function returns a list of variables that need to be refreshed when the time range changes
+ * It follows this logic
+ * Create a graph based on all template variables.
+ * Loop through all the variables and perform the following checks for each variable:
+ *
+ * -- a) If a variable A is a query variable, it’s time range, and has no dependent nodes
+ * ----- it should be added to the variablesRefreshTimeRange.
+ *
+ * -- b) If a variable A is a query variable, it’s time range, and has dependent nodes (B, C)
+ * ----- 1. add the variable A to variablesRefreshTimeRange
+ * ----- 2. skip all the dependent nodes (B, C).
+ *       Here, we should traverse the tree using DFS (Depth First Search), as the dependent nodes will be updated in cascade when the parent variable is updated.
+ */
+
+export const getVariablesThatNeedRefreshNew = (key: string, state: StoreState): TypedVariableModel[] => {
+  const allVariables = getVariablesByKey(key, state);
+
+  //create dependency graph
+  const g = createGraph(allVariables);
+  // create a list of nodes that were visited
+  const visitedDfs: string[] = [];
+  const variablesRefreshTimeRange: TypedVariableModel[] = [];
+  allVariables.forEach((v) => {
+    const node = g.getNode(v.name);
+    if (visitedDfs.includes(v.name)) {
+      return;
+    }
+    if (node) {
+      const parentVariableNode = findVariableNodeInList(allVariables, node.name);
+      if (!parentVariableNode) {
+        return;
+      }
+      const isVariableTimeRange = isVariableOnTimeRangeConfigured(parentVariableNode);
+      // if variable is time range and has no output edges add it to the list of variables that need refresh
+      if (isVariableTimeRange && node.outputEdges.length === 0) {
+        variablesRefreshTimeRange.push(parentVariableNode);
+      }
+
+      // if variable is time range and other variables depend on it (output edges) add it to the list of variables that need refresh and dont visit its dependents
+      if (
+        isVariableTimeRange &&
+        variablesRefreshTimeRange.includes(parentVariableNode) &&
+        node.outputEdges.length > 0
+      ) {
+        variablesRefreshTimeRange.push(parentVariableNode);
+        dfs(node, visitedDfs, allVariables, variablesRefreshTimeRange);
+      }
+
+      // If is variable time range, has outputEdges, but the output edges are not time range configured, it means this
+      // is the top variable that need to be refreshed
+      if (isVariableTimeRange && node.outputEdges.length > 0 && areOuputEdgesNotTimeRange(node, allVariables)) {
+        if (!variablesRefreshTimeRange.includes(parentVariableNode)) {
+          variablesRefreshTimeRange.push(parentVariableNode);
+        }
+      }
+
+      // if variable is not time range but has dependents (output edges) visit its dependants and repeat the process
+      if (!isVariableTimeRange && node.outputEdges.length > 0) {
+        dfs(node, visitedDfs, allVariables, variablesRefreshTimeRange);
+      }
+    }
+  });
+
+  return variablesRefreshTimeRange;
+};
+
+// old approach of refreshing variables that need refresh
+const getVariablesThatNeedRefreshOld = (key: string, state: StoreState): VariableWithOptions[] => {
+  const allVariables = getVariablesByKey(key, state);
+
+  const variablesThatNeedRefresh = allVariables.filter((variable) => {
+    if (variable.hasOwnProperty('refresh') && variable.hasOwnProperty('options')) {
+      const variableWithRefresh = variable as unknown as QueryVariableModel;
+      return variableWithRefresh.refresh === VariableRefresh.onTimeRangeChanged;
+    }
+    return false;
+  }) as VariableWithOptions[];
+
+  return variablesThatNeedRefresh;
+};
+
 export const onTimeRangeUpdated =
   (
     key: string,
@@ -649,14 +780,15 @@ export const onTimeRangeUpdated =
   ): ThunkResult<Promise<void>> =>
   async (dispatch, getState) => {
     dependencies.templateSrv.updateTimeRange(timeRange);
-    const variablesThatNeedRefresh = getVariablesByKey(key, getState()).filter((variable) => {
-      if (variable.hasOwnProperty('refresh') && variable.hasOwnProperty('options')) {
-        const variableWithRefresh = variable as unknown as QueryVariableModel;
-        return variableWithRefresh.refresh === VariableRefresh.onTimeRangeChanged;
-      }
 
-      return false;
-    }) as VariableWithOptions[];
+    // approach # 2, get variables that need refresh but use the dependency graph to only update the ones that are affected
+    // TODO: remove the VariableWithOptions type once the feature flag is on GA
+    let variablesThatNeedRefresh: VariableWithOptions[] | TypedVariableModel[] = [];
+    if (config.featureToggles.refactorVariablesTimeRange) {
+      variablesThatNeedRefresh = getVariablesThatNeedRefreshNew(key, getState());
+    } else {
+      variablesThatNeedRefresh = getVariablesThatNeedRefreshOld(key, getState());
+    }
 
     const variableIds = variablesThatNeedRefresh.map((variable) => variable.id);
     const promises = variablesThatNeedRefresh.map((variable) =>
@@ -672,7 +804,7 @@ export const onTimeRangeUpdated =
     }
   };
 
-const timeRangeUpdated =
+export const timeRangeUpdated =
   (identifier: KeyedVariableIdentifier): ThunkResult<Promise<void>> =>
   async (dispatch, getState) => {
     const variableInState = getVariable(identifier, getState());
@@ -705,7 +837,7 @@ export const templateVarsChangedInUrl =
     const variables = getVariablesByKey(key, getState());
 
     for (const variable of variables) {
-      const key = `var-${variable.name}`;
+      const key = VARIABLE_PREFIX + variable.name;
       if (!vars.hasOwnProperty(key)) {
         // key not found quick exit
         continue;
@@ -735,7 +867,7 @@ export const templateVarsChangedInUrl =
     }
 
     const filteredVars = variables.filter((v) => {
-      const key = `var-${v.name}`;
+      const key = VARIABLE_PREFIX + v.name;
       return vars.hasOwnProperty(key) && isVariableUrlValueDifferentFromCurrent(v, vars[key].value) && !isAdHoc(v);
     });
     const varGraph = createGraph(variables);
@@ -772,11 +904,11 @@ const getQueryWithVariables = (key: string, getState: () => StoreState): UrlQuer
   const queryParams = locationService.getSearchObject();
 
   const queryParamsNew = Object.keys(queryParams)
-    .filter((key) => key.indexOf('var-') === -1)
-    .reduce((obj, key) => {
+    .filter((key) => key.indexOf(VARIABLE_PREFIX) === -1)
+    .reduce<UrlQueryMap>((obj, key) => {
       obj[key] = queryParams[key];
       return obj;
-    }, {} as UrlQueryMap);
+    }, {});
 
   for (const variable of getVariablesByKey(key, getState())) {
     if (variable.skipUrlSync) {
@@ -784,7 +916,7 @@ const getQueryWithVariables = (key: string, getState: () => StoreState): UrlQuer
     }
 
     const adapter = variableAdapters.get(variable.type);
-    queryParamsNew['var-' + variable.name] = adapter.getValueForUrl(variable);
+    queryParamsNew[VARIABLE_PREFIX + variable.name] = adapter.getValueForUrl(variable);
   }
 
   return queryParamsNew;

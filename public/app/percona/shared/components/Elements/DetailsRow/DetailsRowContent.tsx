@@ -6,7 +6,7 @@ import { useStyles2 } from '@grafana/ui';
 import { getStyles } from './DetailsRow.styles';
 import { DetailsRowContentProps } from './DetailsRow.types';
 
-export const DetailsRowContent: FC<DetailsRowContentProps> = ({ title, fullRow, children }) => {
+export const DetailsRowContent: FC<React.PropsWithChildren<DetailsRowContentProps>> = ({ title, fullRow, children }) => {
   const styles = useStyles2(getStyles);
 
   return (

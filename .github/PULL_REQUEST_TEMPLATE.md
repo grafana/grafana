@@ -14,11 +14,23 @@ Thank you for sending a pull request! Here are some tips:
 
 6. Name your PR as "<FeatureArea>: Describe your change", e.g. Alerting: Prevent race condition. If it's a fix or feature relevant for the changelog describe the user impact in the title. The PR title is used to auto-generate the changelog for issues marked with the "add to changelog" label.
 
+7. If your PR content should be added to the What's New document for the next major or minor release, add the **add to what's new** label to your PR. Note that you should add this label to the main PR that introduces the feature; do not add this label to smaller PRs for the feature.
+
 -->
 
-**What this PR does / why we need it**:
+**What is this feature?**
 
-**Which issue(s) this PR fixes**:
+[Add a brief description of what the feature or update does.]
+
+**Why do we need this feature?**
+
+[Add a description of the problem the feature is trying to solve.]
+
+**Who is this feature for?**
+
+[Add information on what kind of user the feature is for.]
+
+**Which issue(s) does this PR fix?**:
 
 <!--
 
@@ -30,5 +42,9 @@ Usage: "Fixes #<issue number>", or "Fixes (paste link of issue)"
 
 Fixes #
 
-**Special notes for your reviewer**:
+**Special notes for your reviewer:**
 
+Please check that:
+- [ ] It works as expected from a user's perspective.
+- [ ] If this is a pre-GA feature, it is behind a feature toggle.
+- [ ] The docs are updated, and if this is a [notable improvement](https://grafana.com/docs/writers-toolkit/writing-guide/contribute-release-notes/#how-to-determine-if-content-belongs-in-a-whats-new-document), it's added to our [What's New](https://grafana.com/docs/writers-toolkit/writing-guide/contribute-release-notes/) doc.

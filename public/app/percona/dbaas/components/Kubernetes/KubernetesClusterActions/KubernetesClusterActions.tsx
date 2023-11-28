@@ -10,7 +10,7 @@ import { hasActiveOperator } from '../OperatorStatusItem/KubernetesOperatorStatu
 
 import { styles } from './KubernetesClusterActions.styles';
 import { DBClusterActionsProps } from './KubernetesClusterActions.types';
-export const KubernetesClusterActions: FC<DBClusterActionsProps> = ({
+export const KubernetesClusterActions: FC<React.PropsWithChildren<DBClusterActionsProps>> = ({
   kubernetesCluster,
   setSelectedCluster,
   setDeleteModalVisible,

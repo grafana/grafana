@@ -1501,7 +1501,6 @@
   ],
   "refresh": false,
   "schemaVersion": 21,
-  "style": "dark",
   "tags": ["Amazon", "AWS", "CloudWatch", "EC2"],
   "templating": {
     "list": [

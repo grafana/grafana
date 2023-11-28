@@ -5,5 +5,11 @@
 # root_url = %(protocol)s://%(domain)s:10080/grafana/
 
   nginxproxy:
-    build: docker/blocks/auth/nginx_proxy
-    network_mode: host
+    image: nginx:1.24-alpine
+    volumes:
+      - "./docker/blocks/auth/nginx_proxy/nginx.conf:/etc/nginx/nginx.conf"
+      - "./docker/blocks/auth/nginx_proxy/htpasswd:/etc/nginx/htpasswd"
+    ports:
+      - "8090:8090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

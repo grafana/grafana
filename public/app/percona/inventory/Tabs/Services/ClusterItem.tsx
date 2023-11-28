@@ -10,7 +10,7 @@ import { ClusterItemProps } from './Clusters.type';
 import { removeClusterFilters, shouldClusterBeExpanded } from './Clusters.utils';
 import ServicesTable from './ServicesTable';
 
-const ClusterItem: FC<ClusterItemProps> = ({ cluster, onDelete, onSelectionChange }) => {
+const ClusterItem: FC<React.PropsWithChildren<ClusterItemProps>> = ({ cluster, onDelete, onSelectionChange }) => {
   const [isOpen, setIsOpen] = useState(shouldClusterBeExpanded(cluster.name));
   const icon: IconName = cluster.type ? (DATABASE_ICONS[cluster.type] as IconName) : 'database';
 

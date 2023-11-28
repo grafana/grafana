@@ -1,17 +1,18 @@
-import { css } from '@emotion/css';
 import React, { FormEvent, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { DataSourceInstanceSettings, getDataSourceRef, LoadingState, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { DataSourcePicker, getTemplateSrv } from '@grafana/runtime';
-import { InlineField, InlineFieldRow, VerticalGroup } from '@grafana/ui';
+import { getTemplateSrv } from '@grafana/runtime';
+import { Field, Text } from '@grafana/ui';
+import { Box } from '@grafana/ui/src/unstable';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { StoreState } from '../../../types';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
-import { VariableSectionHeader } from '../editor/VariableSectionHeader';
-import { VariableTextField } from '../editor/VariableTextField';
+import { VariableLegend } from '../editor/VariableLegend';
+import { VariableTextAreaField } from '../editor/VariableTextAreaField';
 import { initialVariableEditorState } from '../editor/reducer';
 import { getQueryVariableEditorState } from '../editor/selectors';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
@@ -105,19 +106,19 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
     }
   };
 
-  onRegExChange = (event: FormEvent<HTMLInputElement>) => {
+  onRegExChange = (event: FormEvent<HTMLTextAreaElement>) => {
     this.setState({ regex: event.currentTarget.value });
   };
 
-  onRegExBlur = async (event: FormEvent<HTMLInputElement>) => {
+  onRegExBlur = async (event: FormEvent<HTMLTextAreaElement>) => {
     const regex = event.currentTarget.value;
     if (this.props.variable.regex !== regex) {
       this.props.onPropChange({ propName: 'regex', propValue: regex, updateOptions: true });
     }
   };
 
-  onRefreshChange = (option: SelectableValue<VariableRefresh>) => {
-    this.props.onPropChange({ propName: 'refresh', propValue: option.value });
+  onRefreshChange = (option: VariableRefresh) => {
+    this.props.onPropChange({ propName: 'refresh', propValue: option });
   };
 
   onSortChange = async (option: SelectableValue<VariableSort>) => {
@@ -135,18 +136,34 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
       return null;
     }
 
-    const query = variable.query;
     const datasource = extended.dataSource;
     const VariableQueryEditor = extended.VariableQueryEditor;
 
+    let query = variable.query;
+
+    if (typeof query === 'string') {
+      query = query || (datasource.variables?.getDefaultQuery?.() ?? '');
+    } else {
+      query = {
+        ...datasource.variables?.getDefaultQuery?.(),
+        ...variable.query,
+      };
+    }
+
     if (isLegacyQueryEditor(VariableQueryEditor, datasource)) {
       return (
-        <VariableQueryEditor
-          datasource={datasource}
-          query={query}
-          templateSrv={getTemplateSrv()}
-          onChange={this.onLegacyQueryChange}
-        />
+        <Box marginBottom={2}>
+          <Text element={'h4'}>Query</Text>
+          <Box marginTop={1}>
+            <VariableQueryEditor
+              key={datasource.uid}
+              datasource={datasource}
+              query={query}
+              templateSrv={getTemplateSrv()}
+              onChange={this.onLegacyQueryChange}
+            />
+          </Box>
+        </Box>
       );
     }
 
@@ -154,16 +171,22 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
     if (isQueryEditor(VariableQueryEditor, datasource)) {
       return (
-        <VariableQueryEditor
-          datasource={datasource}
-          query={query}
-          onChange={this.onQueryChange}
-          onRunQuery={() => {}}
-          data={{ series: [], state: LoadingState.Done, timeRange: range }}
-          range={range}
-          onBlur={() => {}}
-          history={[]}
-        />
+        <Box marginBottom={2}>
+          <Text element={'h4'}>Query</Text>
+          <Box marginTop={1}>
+            <VariableQueryEditor
+              key={datasource.uid}
+              datasource={datasource}
+              query={query}
+              onChange={this.onQueryChange}
+              onRunQuery={() => {}}
+              data={{ series: [], state: LoadingState.Done, timeRange: range }}
+              range={range}
+              onBlur={() => {}}
+              history={[]}
+            />
+          </Box>
+        </Box>
       );
     }
 
@@ -172,63 +195,55 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
   render() {
     return (
-      <VerticalGroup spacing="xs">
-        <VariableSectionHeader name="Query Options" />
-        <VerticalGroup spacing="lg">
-          <VerticalGroup spacing="none">
-            <InlineFieldRow>
-              <InlineField label="Data source" labelWidth={20} htmlFor="data-source-picker">
-                <DataSourcePicker
-                  current={this.props.variable.datasource}
-                  onChange={this.onDataSourceChange}
-                  variables={true}
-                />
-              </InlineField>
-              <QueryVariableRefreshSelect onChange={this.onRefreshChange} refresh={this.props.variable.refresh} />
-            </InlineFieldRow>
-            <div
-              className={css`
-                flex-direction: column;
-                width: 100%;
-              `}
-            >
-              {this.renderQueryEditor()}
-            </div>
-            <VariableTextField
-              value={this.state.regex ?? this.props.variable.regex}
-              name="Regex"
-              placeholder="/.*-(?<text>.*)-(?<value>.*)-.*/"
-              onChange={this.onRegExChange}
-              onBlur={this.onRegExBlur}
-              labelWidth={20}
-              interactive={true}
-              tooltip={
-                <div>
-                  Optional, if you want to extract part of a series name or metric node segment. Named capture groups
-                  can be used to separate the display text and value (
-                  <a
-                    className="external-link"
-                    href="https://grafana.com/docs/grafana/latest/variables/filter-variables-with-regex#filter-and-modify-using-named-text-and-value-capture-groups"
-                    target="__blank"
-                  >
-                    see examples
-                  </a>
-                  ).
-                </div>
-              }
-              testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2}
-              grow
-            />
-            <QueryVariableSortSelect onChange={this.onSortChange} sort={this.props.variable.sort} />
-          </VerticalGroup>
-
-          <SelectionOptionsEditor
-            variable={this.props.variable}
-            onPropChange={this.onSelectionOptionsChange}
-            onMultiChanged={this.props.changeVariableMultiValue}
+      <>
+        <VariableLegend>Query options</VariableLegend>
+        <Field label="Data source" htmlFor="data-source-picker">
+          <DataSourcePicker
+            current={this.props.variable.datasource}
+            onChange={this.onDataSourceChange}
+            variables={true}
+            width={30}
           />
-        </VerticalGroup>
-      </VerticalGroup>
+        </Field>
+
+        {this.renderQueryEditor()}
+
+        <VariableTextAreaField
+          value={this.state.regex ?? this.props.variable.regex}
+          name="Regex"
+          description={
+            <div>
+              Optional, if you want to extract part of a series name or metric node segment.
+              <br />
+              Named capture groups can be used to separate the display text and value (
+              <a
+                className="external-link"
+                href="https://grafana.com/docs/grafana/latest/variables/filter-variables-with-regex#filter-and-modify-using-named-text-and-value-capture-groups"
+                target="__blank"
+              >
+                see examples
+              </a>
+              ).
+            </div>
+          }
+          placeholder="/.*-(?<text>.*)-(?<value>.*)-.*/"
+          onChange={this.onRegExChange}
+          onBlur={this.onRegExBlur}
+          testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2}
+          width={52}
+        />
+
+        <QueryVariableSortSelect onChange={this.onSortChange} sort={this.props.variable.sort} />
+
+        <QueryVariableRefreshSelect onChange={this.onRefreshChange} refresh={this.props.variable.refresh} />
+
+        <VariableLegend>Selection options</VariableLegend>
+        <SelectionOptionsEditor
+          variable={this.props.variable}
+          onPropChange={this.onSelectionOptionsChange}
+          onMultiChanged={this.props.changeVariableMultiValue}
+        />
+      </>
     );
   }
 }

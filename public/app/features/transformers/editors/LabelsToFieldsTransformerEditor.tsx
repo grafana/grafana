@@ -6,6 +6,7 @@ import {
   standardTransformers,
   TransformerRegistryItem,
   TransformerUIProps,
+  TransformerCategory,
 } from '@grafana/data';
 import {
   LabelsToFieldsMode,
@@ -19,11 +20,11 @@ const modes: Array<SelectableValue<LabelsToFieldsMode>> = [
   { value: LabelsToFieldsMode.Rows, label: 'Rows' },
 ];
 
-export const LabelsAsFieldsTransformerEditor: React.FC<TransformerUIProps<LabelsToFieldsOptions>> = ({
+export const LabelsAsFieldsTransformerEditor = ({
   input,
   options,
   onChange,
-}) => {
+}: TransformerUIProps<LabelsToFieldsOptions>) => {
   const labelWidth = 20;
 
   const { labelNames, selected } = useMemo(() => {
@@ -126,5 +127,6 @@ export const labelsToFieldsTransformerRegistryItem: TransformerRegistryItem<Labe
   transformation: standardTransformers.labelsToFieldsTransformer,
   name: 'Labels to fields',
   description: `Groups series by time and return labels or tags as fields.
-                Useful for showing time series with labels in a table where each label key becomes a separate column`,
+                Useful for showing time series with labels in a table where each label key becomes a separate column.`,
+  categories: new Set([TransformerCategory.Reformat]),
 };

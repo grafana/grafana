@@ -32,7 +32,7 @@ interface TextareaFieldRenderProps {
   meta: FieldMetaState<string>;
 }
 
-export const TextareaInputField: FC<TextareaInputFieldProps> = React.memo(
+export const TextareaInputField: FC<React.PropsWithChildren<TextareaInputFieldProps>> = React.memo(
   ({
     className,
     disabled = false,

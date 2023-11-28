@@ -1,35 +1,9 @@
 package frontendlogging
 
-// ResolveSourceLocation resolves minified source location to original source location
-func ResolveSourceLocation(store *SourceMapStore, frame *Frame) (*Frame, error) {
-	smap, err := store.getSourceMap(frame.Filename)
-	if err != nil {
-		return nil, err
-	}
-	if smap == nil {
-		return nil, nil
-	}
+import "context"
 
-	file, function, line, col, ok := smap.consumer.Source(frame.Lineno, frame.Colno)
-	if !ok {
-		return nil, nil
-	}
-
-	// unfortunately in many cases go-sourcemap fails to determine the original function name.
-	// not a big issue as long as file, line and column are correct
-	if len(function) == 0 {
-		function = "?"
-	}
-	return &Frame{
-		Filename: file,
-		Lineno:   line,
-		Colno:    col,
-		Function: function,
-	}, nil
-}
-
-// TransformException will attempt to resolved all monified source locations in the stacktrace with original source locations
-func TransformException(ex *Exception, store *SourceMapStore) *Exception {
+// TransformException will attempt to resolve all modified source locations in the stacktrace with original source locations
+func TransformException(ctx context.Context, ex *Exception, store *SourceMapStore) *Exception {
 	if ex.Stacktrace == nil {
 		return ex
 	}
@@ -37,7 +11,7 @@ func TransformException(ex *Exception, store *SourceMapStore) *Exception {
 
 	for _, frame := range ex.Stacktrace.Frames {
 		frame := frame
-		mappedFrame, err := ResolveSourceLocation(store, &frame)
+		mappedFrame, err := store.resolveSourceLocation(ctx, frame)
 		if err != nil {
 			frames = append(frames, frame)
 		} else if mappedFrame != nil {

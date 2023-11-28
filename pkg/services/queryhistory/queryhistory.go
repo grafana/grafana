@@ -2,20 +2,22 @@ package queryhistory
 
 import (
 	"context"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, routeRegister routing.RouteRegister) *QueryHistoryService {
+func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister) *QueryHistoryService {
 	s := &QueryHistoryService{
-		SQLStore:      sqlStore,
+		store:         sqlStore,
 		Cfg:           cfg,
 		RouteRegister: routeRegister,
 		log:           log.New("query-history"),
+		now:           time.Now,
 	}
 
 	// Register routes only when query history is enabled
@@ -33,16 +35,16 @@ type Service interface {
 	PatchQueryCommentInQueryHistory(ctx context.Context, user *user.SignedInUser, UID string, cmd PatchQueryCommentInQueryHistoryCommand) (QueryHistoryDTO, error)
 	StarQueryInQueryHistory(ctx context.Context, user *user.SignedInUser, UID string) (QueryHistoryDTO, error)
 	UnstarQueryInQueryHistory(ctx context.Context, user *user.SignedInUser, UID string) (QueryHistoryDTO, error)
-	MigrateQueriesToQueryHistory(ctx context.Context, user *user.SignedInUser, cmd MigrateQueriesToQueryHistoryCommand) (int, int, error)
 	DeleteStaleQueriesInQueryHistory(ctx context.Context, olderThan int64) (int, error)
 	EnforceRowLimitInQueryHistory(ctx context.Context, limit int, starredQueries bool) (int, error)
 }
 
 type QueryHistoryService struct {
-	SQLStore      *sqlstore.SQLStore
+	store         db.DB
 	Cfg           *setting.Cfg
 	RouteRegister routing.RouteRegister
 	log           log.Logger
+	now           func() time.Time
 }
 
 func (s QueryHistoryService) CreateQueryInQueryHistory(ctx context.Context, user *user.SignedInUser, cmd CreateQueryInQueryHistoryCommand) (QueryHistoryDTO, error) {
@@ -67,10 +69,6 @@ func (s QueryHistoryService) StarQueryInQueryHistory(ctx context.Context, user *
 
 func (s QueryHistoryService) UnstarQueryInQueryHistory(ctx context.Context, user *user.SignedInUser, UID string) (QueryHistoryDTO, error) {
 	return s.unstarQuery(ctx, user, UID)
-}
-
-func (s QueryHistoryService) MigrateQueriesToQueryHistory(ctx context.Context, user *user.SignedInUser, cmd MigrateQueriesToQueryHistoryCommand) (int, int, error) {
-	return s.migrateQueries(ctx, user, cmd)
 }
 
 func (s QueryHistoryService) DeleteStaleQueriesInQueryHistory(ctx context.Context, olderThan int64) (int, error) {

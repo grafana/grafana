@@ -5,7 +5,7 @@ import KubernetesInventory from '../KubernetesInventory';
 
 export type K8sPageMode = 'register' | 'edit' | 'list';
 
-export const K8sRouting: FC = () => {
+export const K8sRouting: FC<React.PropsWithChildren<unknown>> = () => {
   const [mode, setMode] = useState<K8sPageMode>('list');
 
   return (

@@ -17,7 +17,7 @@ const TableCheckbox = ({ className, checked, onChange, title }: TableCheckboxPro
 /**
  * @deprecated Use table in app/percona/shared/components/Elements/Table, merge changes if something is missing
  */
-export const Table: FC<TableProps> = ({
+export const Table: FC<React.PropsWithChildren<TableProps>> = ({
   className,
   columns,
   rowSelection = false,

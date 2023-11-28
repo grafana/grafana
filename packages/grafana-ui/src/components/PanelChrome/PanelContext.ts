@@ -8,12 +8,18 @@ import {
   ThresholdsConfig,
   SplitOpen,
   CoreApp,
+  DataFrame,
+  DataLinkPostProcessor,
 } from '@grafana/data';
 
-import { SeriesVisibilityChangeMode } from '.';
+import { AdHocFilterItem } from '../Table/types';
+
+import { SeriesVisibilityChangeMode } from './types';
 
 /** @alpha */
 export interface PanelContext {
+  /** Identifier for the events scope */
+  eventsScope: string;
   eventBus: EventBus;
 
   /** Dashboard panels sync */
@@ -39,11 +45,23 @@ export interface PanelContext {
   onAnnotationDelete?: (id: string) => void;
 
   /**
+   * Used from visualizations like Table to add ad-hoc filters from cell values
+   */
+  onAddAdHocFilter?: (item: AdHocFilterItem) => void;
+
+  /**
    * Enables modifying thresholds directly from the panel
    *
    * @alpha -- experimental
    */
   canEditThresholds?: boolean;
+
+  /**
+   * Shows threshold indicators on the right-hand side of the panel
+   *
+   * @alpha -- experimental
+   */
+  showThresholds?: boolean;
 
   /**
    * Called when a panel wants to change default thresholds configuration
@@ -55,6 +73,7 @@ export interface PanelContext {
   /**
    * onSplitOpen is used in Explore to open the split view. It can be used in panels which has intercations and used in Explore as well.
    * For example TimeSeries panel.
+   * @deprecated will be removed in the future. It's not needed as visualization can just field.getLinks now
    */
   onSplitOpen?: SplitOpen;
 
@@ -68,9 +87,22 @@ export interface PanelContext {
    * Called when a panel is changing the sort order of the legends.
    */
   onToggleLegendSort?: (sortBy: string) => void;
+
+  /**
+   * Optional, only some contexts support this. This action can be cancelled by user which will result
+   * in a the Promise resolving to a false value.
+   */
+  onUpdateData?: (frames: DataFrame[]) => Promise<boolean>;
+
+  /**
+   * Optional supplier for internal data links. If not provided a link pointing to Explore will be generated.
+   * @internal
+   */
+  dataLinkPostProcessor?: DataLinkPostProcessor;
 }
 
 export const PanelContextRoot = React.createContext<PanelContext>({
+  eventsScope: 'global',
   eventBus: new EventBusSrv(),
 });
 

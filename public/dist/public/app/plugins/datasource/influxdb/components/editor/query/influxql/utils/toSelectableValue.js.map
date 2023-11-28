@@ -1,0 +1,1 @@
+{"version":3,"file":"toSelectableValue.js","sourceRoot":"","sources":["../../../../../../../../../../../app/plugins/datasource/influxdb/components/editor/query/influxql/utils/toSelectableValue.ts"],"names":[],"mappings":"AAEA,MAAM,UAAU,iBAAiB,CAAmB,CAAI;IACtD,OAAO,EAAE,KAAK,EAAE,CAAC,EAAE,KAAK,EAAE,CAAC,EAAE,CAAC;AAChC,CAAC"}

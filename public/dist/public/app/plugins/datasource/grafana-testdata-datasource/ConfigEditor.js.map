@@ -1,0 +1,1 @@
+{"version":3,"file":"ConfigEditor.js","sourceRoot":"","sources":["../../../../../../app/plugins/datasource/grafana-testdata-datasource/ConfigEditor.tsx"],"names":[],"mappings":"AAAA,YAAY;AACZ,OAAO,KAAK,EAAE,EAAE,aAAa,EAAE,MAAM,OAAO,CAAC;AAM7C;;GAEG;AACH,MAAM,OAAO,YAAa,SAAQ,aAAoB;IACpD,MAAM;QACJ,OAAO,gCAAO,CAAC;IACjB,CAAC;CACF"}

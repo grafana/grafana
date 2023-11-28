@@ -40,7 +40,7 @@ import { useEditDBClusterFormSubmit } from './hooks/useEditDBClusterFormSubmit';
 import { useEditDBClusterPageDefaultValues } from './hooks/useEditDBClusterPageDefaultValues';
 import { useEditDBClusterPageResult } from './hooks/useEditDBClusterPageResult';
 
-export const EditDBClusterPage: FC<EditDBClusterPageProps> = () => {
+export const EditDBClusterPage: FC<React.PropsWithChildren<EditDBClusterPageProps>> = () => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const history = useHistory();

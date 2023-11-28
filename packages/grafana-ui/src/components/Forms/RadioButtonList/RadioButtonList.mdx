@@ -1,4 +1,4 @@
-import { Meta, Story, Preview, Props } from '@storybook/addon-docs/blocks';
+import { Meta, Story, Preview, ArgTypes } from '@storybook/blocks';
 import { RadioButtonList } from './RadioButtonList';
 
 <Meta title="MDX|RadioButtonList" component={RadioButtonList} />
@@ -51,6 +51,30 @@ const disabledOptions = ['prometheus', 'elastic'];
 />
 ```
 
+### Options with descriptions
+
+You can add descriptions to the options by passing them to the option's description property.
+Descriptions should be short and concise. Try to avoid multiline text.
+
+```jsx
+import { RadioButtonList } from '@grafana/ui';
+
+const options = [
+  { label: 'Prometheus', value: 'prometheus', description: 'Monitoring system & TSDB' },
+  { label: 'Loki', value: 'loki', description: 'Log aggregation system' },
+];
+
+const disabledOptions = ['prometheus', 'elastic'];
+
+
+<RadioButtonGroup
+  options={options}
+  disabledOptions={disabledOptions}
+  value={...}
+  onChange={...}
+/>
+```
+
 ### Changing layout
 
 The `RadioButtonList` layout uses CSS Grid, so it is effortless to split the list into multiple columns
@@ -69,4 +93,4 @@ import { RadioButtonList } from '@grafana/ui';
 
 ```
 
-<Props of={RadioButtonList} />
+<ArgTypes of={RadioButtonList} />

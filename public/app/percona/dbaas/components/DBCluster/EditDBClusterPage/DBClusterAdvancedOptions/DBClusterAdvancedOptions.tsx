@@ -84,7 +84,7 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({
         }
       : {};
 
-  const parsePositiveInt = useCallback((value) => (value > 0 && Number.isInteger(+value) ? value : undefined), []);
+  const parsePositiveInt = useCallback((value: number) => (value > 0 && Number.isInteger(+value) ? value : 0), []);
 
   const resourcesBarStyles = useMemo(
     () => ({

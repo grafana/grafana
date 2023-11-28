@@ -1,23 +1,25 @@
 import { action } from '@storybook/addon-actions';
-import { ComponentMeta } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React, { useState } from 'react';
 
 import { SegmentInput, Icon, SegmentSection } from '@grafana/ui';
 
-const SegmentFrame = ({ children }: any) => (
+import { SegmentInputProps } from './SegmentInput';
+
+const SegmentFrame = ({ children }: React.PropsWithChildren) => (
   <>
     <SegmentSection label="Segment Name">{children}</SegmentSection>
   </>
 );
 
 export const BasicInput = () => {
-  const [value, setValue] = useState('some text');
+  const [value, setValue] = useState<string | number>('some text');
   return (
     <SegmentFrame>
       <SegmentInput
         value={value}
         onChange={(text) => {
-          setValue(text as string);
+          setValue(text);
           action('Segment value changed')(text);
         }}
       />
@@ -25,20 +27,20 @@ export const BasicInput = () => {
   );
 };
 
-const meta: ComponentMeta<typeof SegmentInput> = {
+const meta: Meta<typeof SegmentInput> = {
   title: 'Data Source/Segment/SegmentInput',
   component: SegmentInput,
 };
 
 export const BasicInputWithPlaceholder = () => {
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState<string | number>('');
   return (
     <SegmentFrame>
       <SegmentInput
         placeholder="add text"
         value={value}
         onChange={(text) => {
-          setValue(text as string);
+          setValue(text);
           action('Segment value changed')(text);
         }}
       />
@@ -47,7 +49,7 @@ export const BasicInputWithPlaceholder = () => {
 };
 
 export const BasicInputWithHtmlAttributes = () => {
-  const [value, setValue] = useState('some text');
+  const [value, setValue] = useState<string | number>('some text');
   return (
     <SegmentFrame>
       <SegmentInput
@@ -55,7 +57,7 @@ export const BasicInputWithHtmlAttributes = () => {
         id="segment-input"
         value={value}
         onChange={(text) => {
-          setValue(text as string);
+          setValue(text);
           action('Segment value changed')(text);
         }}
       />
@@ -63,7 +65,11 @@ export const BasicInputWithHtmlAttributes = () => {
   );
 };
 
-const InputComponent = ({ initialValue }: any) => {
+interface InputComponentProps {
+  initialValue: string | number;
+}
+
+const InputComponent = ({ initialValue }: InputComponentProps) => {
   const [value, setValue] = useState(initialValue);
   return (
     <SegmentInput
@@ -71,7 +77,7 @@ const InputComponent = ({ initialValue }: any) => {
       autofocus
       value={value}
       onChange={(text) => {
-        setValue(text as string);
+        setValue(text);
         action('Segment value changed')(text);
       }}
     />
@@ -79,22 +85,57 @@ const InputComponent = ({ initialValue }: any) => {
 };
 
 export const InputWithAutoFocus = () => {
-  const [inputComponents, setInputComponents] = useState<any>([]);
+  const [inputComponents, setInputComponents] = useState<Array<(props: InputComponentProps) => JSX.Element>>([]);
   return (
     <SegmentFrame>
-      {inputComponents.map((InputComponent: any, i: number) => (
+      {inputComponents.map((InputComponent, i) => (
         <InputComponent initialValue="test" key={i} />
       ))}
-      <a
+      <button
+        type="button"
         className="gf-form-label query-part"
         onClick={() => {
           setInputComponents([...inputComponents, InputComponent]);
         }}
       >
         <Icon name="plus" />
-      </a>
+      </button>
     </SegmentFrame>
   );
+};
+
+export const Basic: StoryFn<React.ComponentType<SegmentInputProps>> = (args: SegmentInputProps) => {
+  const [value, setValue] = useState(args.value);
+
+  const props: SegmentInputProps = {
+    ...args,
+    value,
+    onChange: (value) => {
+      setValue(value);
+      action('onChange fired')({ value });
+    },
+    onExpandedChange: (expanded) => action('onExpandedChange fired')({ expanded }),
+  };
+
+  return (
+    <SegmentSection label="Segment:">
+      <SegmentInput {...props} />
+    </SegmentSection>
+  );
+};
+
+Basic.parameters = {
+  controls: {
+    exclude: ['value', 'onChange', 'Component', 'className', 'onExpandedChange'],
+  },
+};
+
+Basic.args = {
+  value: 'Initial input value',
+  placeholder: 'Placeholder text',
+  disabled: false,
+  autofocus: false,
+  inputPlaceholder: 'Start typing...',
 };
 
 export default meta;

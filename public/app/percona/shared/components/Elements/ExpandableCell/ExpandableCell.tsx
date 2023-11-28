@@ -5,7 +5,7 @@ import { IconButton, useStyles } from '@grafana/ui';
 import { getStyles } from './ExpandableCell.styles';
 import { ExpandableCellProps } from './ExpandableCell.types';
 
-export const ExpandableCell: FC<ExpandableCellProps> = ({
+export const ExpandableCell: FC<React.PropsWithChildren<ExpandableCellProps>> = ({
   row,
   value,
   collapsedIconName = 'arrow-down',

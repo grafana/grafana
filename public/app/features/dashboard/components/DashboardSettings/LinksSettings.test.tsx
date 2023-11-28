@@ -1,7 +1,7 @@
-import { within } from '@testing-library/dom';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
@@ -9,11 +9,14 @@ import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 
+import { configureStore } from '../../../../store/configureStore';
 import { DashboardModel } from '../../state';
+import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { DashboardSettings } from './DashboardSettings';
 
 function setup(dashboard: DashboardModel) {
+  const store = configureStore();
   const sectionNav = {
     main: { text: 'Dashboard' },
     node: {
@@ -24,15 +27,17 @@ function setup(dashboard: DashboardModel) {
   // Need to use DashboardSettings here as it's responsible for fetching the state back from location
   return render(
     <GrafanaContext.Provider value={getGrafanaContextMock()}>
-      <Router history={locationService.getHistory()}>
-        <DashboardSettings editview="links" dashboard={dashboard} sectionNav={sectionNav} pageNav={sectionNav.node} />
-      </Router>
+      <Provider store={store}>
+        <Router history={locationService.getHistory()}>
+          <DashboardSettings editview="links" dashboard={dashboard} sectionNav={sectionNav} pageNav={sectionNav.node} />
+        </Router>
+      </Provider>
     </GrafanaContext.Provider>
   );
 }
 
 function buildTestDashboard() {
-  return new DashboardModel({
+  return createDashboardModelFixture({
     links: [
       {
         asDropdown: false,
@@ -82,7 +87,7 @@ describe('LinksSettings', () => {
   };
 
   test('it renders a header and cta if no links', () => {
-    const linklessDashboard = new DashboardModel({ links: [] });
+    const linklessDashboard = createDashboardModelFixture({ links: [] });
     setup(linklessDashboard);
 
     expect(screen.getByRole('heading', { name: 'Links' })).toBeInTheDocument();
@@ -108,23 +113,23 @@ describe('LinksSettings', () => {
     setup(dashboard);
 
     // Check that we have sorting buttons
-    expect(within(getTableBodyRows()[0]).queryByRole('button', { name: 'arrow-up' })).not.toBeInTheDocument();
-    expect(within(getTableBodyRows()[0]).queryByRole('button', { name: 'arrow-down' })).toBeInTheDocument();
+    expect(within(getTableBodyRows()[0]).queryByRole('button', { name: 'Move link up' })).not.toBeInTheDocument();
+    expect(within(getTableBodyRows()[0]).queryByRole('button', { name: 'Move link down' })).toBeInTheDocument();
 
-    expect(within(getTableBodyRows()[1]).queryByRole('button', { name: 'arrow-up' })).toBeInTheDocument();
-    expect(within(getTableBodyRows()[1]).queryByRole('button', { name: 'arrow-down' })).toBeInTheDocument();
+    expect(within(getTableBodyRows()[1]).queryByRole('button', { name: 'Move link up' })).toBeInTheDocument();
+    expect(within(getTableBodyRows()[1]).queryByRole('button', { name: 'Move link down' })).toBeInTheDocument();
 
-    expect(within(getTableBodyRows()[2]).queryByRole('button', { name: 'arrow-up' })).toBeInTheDocument();
-    expect(within(getTableBodyRows()[2]).queryByRole('button', { name: 'arrow-down' })).not.toBeInTheDocument();
+    expect(within(getTableBodyRows()[2]).queryByRole('button', { name: 'Move link up' })).toBeInTheDocument();
+    expect(within(getTableBodyRows()[2]).queryByRole('button', { name: 'Move link down' })).not.toBeInTheDocument();
 
     // Checking the original order
     assertRowHasText(0, links[0].title);
     assertRowHasText(1, links[1].title);
     assertRowHasText(2, links[2].url);
 
-    await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'arrow-down' })[0]);
-    await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'arrow-down' })[1]);
-    await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'arrow-up' })[0]);
+    await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'Move link down' })[0]);
+    await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'Move link down' })[1]);
+    await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'Move link up' })[0]);
 
     // Checking if it has changed the sorting accordingly
     assertRowHasText(0, links[2].url);

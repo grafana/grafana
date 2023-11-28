@@ -3,15 +3,58 @@ import { defaultsDeep } from 'lodash';
 import React from 'react';
 import { Provider } from 'react-redux';
 
-import { getDefaultTimeRange, LoadingState } from '@grafana/data';
+import { FieldType, getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { PanelDataErrorViewProps } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import { PanelDataErrorView } from './PanelDataErrorView';
 
+jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
+  getDashboardSrv: () => {
+    return {
+      getCurrent: () => undefined,
+    };
+  },
+}));
+
 describe('PanelDataErrorView', () => {
   it('show No data when there is no data', () => {
     renderWithProps();
+
+    expect(screen.getByText('No data')).toBeInTheDocument();
+  });
+
+  it('show No data when there is no data', () => {
+    renderWithProps({
+      data: {
+        state: LoadingState.Done,
+        timeRange: getDefaultTimeRange(),
+        series: [
+          {
+            fields: [
+              {
+                name: 'time',
+                type: FieldType.time,
+                config: {},
+                values: [],
+              },
+            ],
+            length: 0,
+          },
+          {
+            fields: [
+              {
+                name: 'value',
+                type: FieldType.number,
+                config: {},
+                values: [],
+              },
+            ],
+            length: 0,
+          },
+        ],
+      },
+    });
 
     expect(screen.getByText('No data')).toBeInTheDocument();
   });

@@ -1,115 +1,98 @@
-import { css } from '@emotion/css';
-import React, { FC, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { useAsync } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, LinkButton, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
-import { Page } from 'app/core/components/Page/Page';
-import { useCleanup } from 'app/core/hooks/useCleanup';
+import { NavModelItem } from '@grafana/data';
+import { withErrorBoundary } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useDispatch } from 'app/types';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
-import { AlertRuleForm } from './components/rule-editor/AlertRuleForm';
-import { useIsRuleEditable } from './hooks/useIsRuleEditable';
-import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { fetchAllPromBuildInfoAction, fetchEditableRuleAction } from './state/actions';
+import { AlertWarning } from './AlertWarning';
+import { CloneRuleEditor } from './CloneRuleEditor';
+import { ExistingRuleEditor } from './ExistingRuleEditor';
+import { AlertingPageWrapper } from './components/AlertingPageWrapper';
+import { AlertRuleForm } from './components/rule-editor/alert-rule-form/AlertRuleForm';
+import { useURLSearchParams } from './hooks/useURLSearchParams';
+import { fetchRulesSourceBuildInfoAction } from './state/actions';
 import { useRulesAccess } from './utils/accessControlHooks';
-import { initialAsyncRequestState } from './utils/redux';
 import * as ruleId from './utils/rule-id';
 
-interface ExistingRuleEditorProps {
-  identifier: RuleIdentifier;
-}
+type RuleEditorProps = GrafanaRouteComponentProps<{ id?: string; type?: 'recording' | 'alerting' }>;
 
-const ExistingRuleEditor: FC<ExistingRuleEditorProps> = ({ identifier }) => {
-  useCleanup((state) => (state.unifiedAlerting.ruleForm.existingRule = initialAsyncRequestState));
-  const { loading, result, error, dispatched } = useUnifiedAlertingSelector((state) => state.ruleForm.existingRule);
-  const dispatch = useDispatch();
-  const { isEditable } = useIsRuleEditable(ruleId.ruleIdentifierToRuleSourceName(identifier), result?.rule);
-
-  useEffect(() => {
-    if (!dispatched) {
-      dispatch(fetchEditableRuleAction(identifier));
-    }
-  }, [dispatched, dispatch, identifier]);
-
-  if (loading || isEditable === undefined) {
-    return (
-      <Page.Contents>
-        <LoadingPlaceholder text="Loading rule..." />
-      </Page.Contents>
-    );
-  }
-
-  if (error) {
-    return (
-      <Page.Contents>
-        <Alert severity="error" title="Failed to load rule">
-          {error.message}
-        </Alert>
-      </Page.Contents>
-    );
-  }
-
-  if (!result) {
-    return <AlertWarning title="Rule not found">Sorry! This rule does not exist.</AlertWarning>;
-  }
-
-  if (isEditable === false) {
-    return <AlertWarning title="Cannot edit rule">Sorry! You do not have permission to edit this rule.</AlertWarning>;
-  }
-
-  return <AlertRuleForm existing={result} />;
+const defaultPageNav: Partial<NavModelItem> = {
+  icon: 'bell',
+  id: 'alert-rule-view',
 };
 
-type RuleEditorProps = GrafanaRouteComponentProps<{ id?: string }>;
+// sadly we only get the "type" when a new rule is being created, when editing an existing recording rule we can't actually know it from the URL
+const getPageNav = (identifier?: RuleIdentifier, type?: 'recording' | 'alerting') => {
+  if (type === 'recording') {
+    if (identifier) {
+      // this branch should never trigger actually, the type param isn't used when editing rules
+      return { ...defaultPageNav, id: 'alert-rule-edit', text: 'Edit recording rule' };
+    } else {
+      return { ...defaultPageNav, id: 'alert-rule-add', text: 'New recording rule' };
+    }
+  }
 
-const RuleEditor: FC<RuleEditorProps> = ({ match }) => {
+  if (identifier) {
+    // keep this one ambiguous, don't mentiond a specific alert type here
+    return { ...defaultPageNav, id: 'alert-rule-edit', text: 'Edit rule' };
+  } else {
+    return { ...defaultPageNav, id: 'alert-rule-add', text: 'New alert rule' };
+  }
+};
+
+const RuleEditor = ({ match }: RuleEditorProps) => {
   const dispatch = useDispatch();
-  const { id } = match.params;
+  const [searchParams] = useURLSearchParams();
+
+  const { id, type } = match.params;
   const identifier = ruleId.tryParse(id, true);
 
-  const { loading } = useAsync(async () => {
-    await dispatch(fetchAllPromBuildInfoAction());
+  const copyFromId = searchParams.get('copyFrom') ?? undefined;
+  const copyFromIdentifier = ruleId.tryParse(copyFromId);
+
+  const { loading = true } = useAsync(async () => {
+    if (identifier) {
+      await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: identifier.ruleSourceName }));
+    }
+    if (copyFromIdentifier) {
+      await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: copyFromIdentifier.ruleSourceName }));
+    }
   }, [dispatch]);
 
   const { canCreateGrafanaRules, canCreateCloudRules, canEditRules } = useRulesAccess();
 
-  if (!identifier && !canCreateGrafanaRules && !canCreateCloudRules) {
-    return <AlertWarning title="Cannot create rules">Sorry! You are not allowed to create rules.</AlertWarning>;
-  }
+  const getContent = useCallback(() => {
+    if (loading) {
+      return;
+    }
 
-  if (identifier && !canEditRules(identifier.ruleSourceName)) {
-    return <AlertWarning title="Cannot edit rules">Sorry! You are not allowed to edit rules.</AlertWarning>;
-  }
+    if (!identifier && !canCreateGrafanaRules && !canCreateCloudRules) {
+      return <AlertWarning title="Cannot create rules">Sorry! You are not allowed to create rules.</AlertWarning>;
+    }
 
-  if (loading) {
-    return (
-      <Page.Contents>
-        <LoadingPlaceholder text="Loading..." />
-      </Page.Contents>
-    );
-  }
+    if (identifier && !canEditRules(identifier.ruleSourceName)) {
+      return <AlertWarning title="Cannot edit rules">Sorry! You are not allowed to edit rules.</AlertWarning>;
+    }
 
-  if (identifier) {
-    return <ExistingRuleEditor key={id} identifier={identifier} />;
-  }
+    if (identifier) {
+      return <ExistingRuleEditor key={id} identifier={identifier} id={id} />;
+    }
 
-  return <AlertRuleForm />;
+    if (copyFromIdentifier) {
+      return <CloneRuleEditor sourceRuleId={copyFromIdentifier} />;
+    }
+    // new alert rule
+    return <AlertRuleForm />;
+  }, [canCreateCloudRules, canCreateGrafanaRules, canEditRules, copyFromIdentifier, id, identifier, loading]);
+
+  return (
+    <AlertingPageWrapper isLoading={loading} pageId="alert-list" pageNav={getPageNav(identifier, type)}>
+      {getContent()}
+    </AlertingPageWrapper>
+  );
 };
-
-const AlertWarning: FC<{ title: string }> = ({ title, children }) => (
-  <Alert className={useStyles2(warningStyles).warning} severity="warning" title={title}>
-    <p>{children}</p>
-    <LinkButton href="alerting/list">To rule list</LinkButton>
-  </Alert>
-);
-
-const warningStyles = (theme: GrafanaTheme2) => ({
-  warning: css`
-    margin: ${theme.spacing(4)};
-  `,
-});
 
 export default withErrorBoundary(RuleEditor, { style: 'page' });

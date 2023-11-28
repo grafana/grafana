@@ -8,6 +8,11 @@ aliases:
   - ../panels/specify-thresholds/delete-a-threshold/
   - ../panels/thresholds/
 description: This section includes information about using thresholds in your visualizations.
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Configure thresholds
 title: Configure thresholds
 weight: 300
@@ -15,23 +20,23 @@ weight: 300
 
 # Configure thresholds
 
-This section includes information about using thresholds in your visualizations. You'll learn about thresholds and their defaults, how to add or delete a threshold, and adding a threshold to a legacy panel.
+This section includes information about using thresholds in your visualizations. You'll learn about thresholds, their defaults, how to add or delete a threshold, and adding a threshold to a legacy panel.
 
 ## About thresholds
 
 A threshold is a value that you specify for a metric that is visually reflected in a dashboard when the threshold value is met or exceeded.
 
-Thresholds provide one method for you to conditionally style and color your visualizations based on query results. You can apply thresholds to most, but not all, visualizations. For more information about visualizations, refer to [Visualization panels]({{< relref "../visualizations/" >}}).
+Thresholds provide one method for you to conditionally style and color your visualizations based on query results. You can apply thresholds to most, but not all, visualizations. For more information about visualizations, refer to [Visualization panels][].
 
 You can use thresholds to:
 
-- Color grid lines or grid ares areas in the [Time-series visualization]({{< relref "../visualizations/time-series/" >}})
-- Color lines in the [Time-series visualization]({{< relref "../visualizations/time-series#from-thresholds" >}})
-- Color the background or value text in the [Stat visualization]({{< relref "../visualizations/stat/" >}})
-- Color the gauge and threshold markers in the [Gauge visualization]({{< relref "../visualizations/gauge/" >}})
-- Color markers in the [Geomap visualization]({{< relref "../visualizations/geomap/" >}})
-- Color cell text or background in the [Table visualization]({{< relref "../visualizations/table/" >}})
-- Define regions and region colors in the [State timeline visualization]({{< relref "../visualizations/state-timeline/" >}})
+- Color grid lines or grid areas in the [Time-series visualization][]
+- Color lines in the [Time-series visualization][]
+- Color the background or value text in the [Stat visualization][]
+- Color the gauge and threshold markers in the [Gauge visualization][]
+- Color markers in the [Geomap visualization][]
+- Color cell text or background in the [Table visualization][]
+- Define regions and region colors in the [State timeline visualization][]
 
 There are two types of thresholds:
 
@@ -52,7 +57,7 @@ The **Base** value represents minus infinity. It is generally the “good” col
 
 You can add as many thresholds to a panel as you want. Grafana automatically sorts thresholds values from highest to lowest.
 
-Delete a threshold when it is no longer relevant to your business operations. When you delete a threshold, the system removes the threshold from all visualizations that include the threshold.
+Delete a threshold when it is no longer needed. When you delete a threshold, the system removes the threshold from all visualizations that include the threshold.
 
 1. To add a threshold:
 
@@ -83,7 +88,30 @@ In the Graph panel visualization, thresholds enable you to add lines or sections
      - **critical -** Fill and line color are red.
      - **warning -** Fill and line color are yellow.
      - **ok -** Fill and line color are green.
-   - **Fill -** Controls whether the threshold fill is displayed.
-   - **Line -** Controls whether the threshold line is displayed.
-   - **Y-Axis -** Choose **left** or **right**.
+   - **Fill -** Toggle the display of the threshold fill.
+   - **Line -** Toggle the display of the threshold line.
+   - **Y-Axis -** Choose to display the y-axis on either the **left** or **right** of the panel.
 1. Click **Save** to save the changes in the dashboard.
+
+{{% docs/reference %}}
+[Table visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
+[Table visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
+
+[Stat visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/stat"
+[Stat visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/stat"
+
+[Time-series visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series#from-thresholds"
+[Time-series visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series#from-thresholds"
+
+[State timeline visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/state-timeline"
+[State timeline visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/state-timeline"
+
+[Gauge visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/gauge"
+[Gauge visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/gauge"
+
+[Visualization panels]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations"
+[Visualization panels]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations"
+
+[Geomap visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/geomap"
+[Geomap visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/geomap"
+{{% /docs/reference %}}

@@ -1,9 +1,10 @@
+import { cx } from '@emotion/css';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import React, { ReactNode } from 'react';
 import { Plugin } from 'slate';
 import { Editor } from 'slate-react';
 
-import { CoreApp, isDataFrame, QueryEditorProps, QueryHint, TimeRange, toLegacyResponseData } from '@grafana/data';
+import { isDataFrame, QueryEditorProps, QueryHint, TimeRange, toLegacyResponseData } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime/src';
 import {
   BracesPlugin,
@@ -13,6 +14,9 @@ import {
   SuggestionsState,
   TypeaheadInput,
   TypeaheadOutput,
+  Themeable2,
+  withTheme2,
+  clearButtonStyles,
 } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 import {
@@ -74,7 +78,7 @@ export function willApplySuggestion(suggestion: string, { typeaheadContext, type
   return suggestion;
 }
 
-interface PromQueryFieldProps extends QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions> {
+interface PromQueryFieldProps extends QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions>, Themeable2 {
   ExtraFieldElement?: ReactNode;
   'data-testid'?: string;
 }
@@ -96,8 +100,8 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       BracesPlugin(),
       SlatePrism(
         {
-          onlyIn: (node: any) => node.type === 'code_block',
-          getSyntax: (node: any) => 'promql',
+          onlyIn: (node) => 'type' in node && node.type === 'code_block',
+          getSyntax: (node) => 'promql',
         },
         { ...(prismLanguages as LanguageMap), promql: this.props.datasource.languageProvider.syntax }
       ),
@@ -277,6 +281,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       query,
       ExtraFieldElement,
       history = [],
+      theme,
     } = this.props;
 
     const { labelBrowserVisible, syntaxLoaded, hint } = this.state;
@@ -305,7 +310,6 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
                 <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
                   <MonacoQueryFieldWrapper
-                    runQueryOnBlur={this.props.app !== CoreApp.Explore}
                     languageProvider={languageProvider}
                     history={history}
                     onChange={this.onChangeQuery}
@@ -333,9 +337,13 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
                   <div className="prom-query-field-info text-warning">
                     {hint.label}{' '}
                     {hint.fix ? (
-                      <a className="text-link muted" onClick={this.onClickHintFix}>
+                      <button
+                        type="button"
+                        className={cx(clearButtonStyles(theme), 'text-link', 'muted')}
+                        onClick={this.onClickHintFix}
+                      >
                         {hint.fix.label}
-                      </a>
+                      </button>
                     ) : null}
                   </div>
                 </div>
@@ -348,4 +356,4 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   }
 }
 
-export default PromQueryField;
+export default withTheme2(PromQueryField);

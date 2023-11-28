@@ -1,6 +1,6 @@
 import { Property } from 'csstype';
 import { clone } from 'lodash';
-import memoizeOne from 'memoize-one';
+import memoize from 'micro-memoize';
 import { Row } from 'react-table';
 
 import {
@@ -14,8 +14,18 @@ import {
   getDisplayProcessor,
   reduceField,
   GrafanaTheme2,
-  ArrayVector,
+  isDataFrame,
+  isDataFrameWithValue,
+  isTimeSeriesFrame,
+  DisplayValueAlignmentFactors,
+  DisplayValue,
 } from '@grafana/data';
+import {
+  BarGaugeDisplayMode,
+  TableAutoCellOptions,
+  TableCellBackgroundDisplayMode,
+  TableCellDisplayMode,
+} from '@grafana/schema';
 
 import { BarGaugeCell } from './BarGaugeCell';
 import { DefaultCell } from './DefaultCell';
@@ -23,14 +33,18 @@ import { getFooterValue } from './FooterRow';
 import { GeoCell } from './GeoCell';
 import { ImageCell } from './ImageCell';
 import { JSONViewCell } from './JSONViewCell';
+import { RowExpander } from './RowExpander';
+import { SparklineCell } from './SparklineCell';
 import {
   CellComponent,
-  TableCellDisplayMode,
+  TableCellOptions,
   TableFieldOptions,
   FooterItem,
   GrafanaTableColumn,
   TableFooterCalc,
 } from './types';
+
+export const EXPANDER_WIDTH = 50;
 
 export function getTextAlign(field?: Field): Property.JustifyContent {
   if (!field) {
@@ -38,7 +52,7 @@ export function getTextAlign(field?: Field): Property.JustifyContent {
   }
 
   if (field.config.custom) {
-    const custom = field.config.custom as TableFieldOptions;
+    const custom: TableFieldOptions = field.config.custom;
 
     switch (custom.align) {
       case 'right':
@@ -61,15 +75,37 @@ export function getColumns(
   data: DataFrame,
   availableWidth: number,
   columnMinWidth: number,
-  footerValues?: FooterItem[]
+  expander: boolean,
+  footerValues?: FooterItem[],
+  isCountRowsSet?: boolean
 ): GrafanaTableColumn[] {
   const columns: GrafanaTableColumn[] = [];
   let fieldCountWithoutWidth = 0;
 
-  for (const [fieldIndex, field] of data.fields.entries()) {
-    const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
+  if (expander) {
+    columns.push({
+      // Make an expander cell
+      Header: () => null, // No header
+      id: 'expander', // It needs an ID
+      // @ts-expect-error
+      // TODO fix type error here
+      Cell: RowExpander,
+      width: EXPANDER_WIDTH,
+      minWidth: EXPANDER_WIDTH,
+      filter: (_rows: Row[], _id: string, _filterValues?: SelectableValue[]) => {
+        return [];
+      },
+      justifyContent: 'left',
+      field: data.fields[0],
+      sortType: 'basic',
+    });
 
-    if (fieldTableOptions.hidden) {
+    availableWidth -= EXPANDER_WIDTH;
+  }
+
+  for (const [fieldIndex, field] of data.fields.entries()) {
+    const fieldTableOptions: TableFieldOptions = field.config.custom || {};
+    if (fieldTableOptions.hidden || field.type === FieldType.nestedFrames) {
       continue;
     }
 
@@ -82,6 +118,7 @@ export function getColumns(
     const selectSortType = (type: FieldType) => {
       switch (type) {
         case FieldType.number:
+        case FieldType.frame:
           return 'number';
         case FieldType.time:
           return 'basic';
@@ -90,21 +127,21 @@ export function getColumns(
       }
     };
 
-    const Cell = getCellComponent(fieldTableOptions.displayMode, field);
+    const Cell = getCellComponent(fieldTableOptions.cellOptions?.type, field);
     columns.push({
+      // @ts-expect-error
+      // TODO fix type error here
       Cell,
       id: fieldIndex.toString(),
       field: field,
-      Header: getFieldDisplayName(field, data),
-      accessor: (row: any, i: number) => {
-        return field.values.get(i);
-      },
+      Header: fieldTableOptions.hideHeader ? '' : getFieldDisplayName(field, data),
+      accessor: (_row, i) => field.values[i],
       sortType: selectSortType(field.type),
       width: fieldTableOptions.width,
       minWidth: fieldTableOptions.minWidth ?? columnMinWidth,
-      filter: memoizeOne(filterByValue(field)),
+      filter: memoize(filterByValue(field)),
       justifyContent: getTextAlign(field),
-      Footer: getFooterValue(fieldIndex, footerValues),
+      Footer: getFooterValue(fieldIndex, footerValues, isCountRowsSet),
     });
   }
 
@@ -134,15 +171,16 @@ export function getColumns(
 
 export function getCellComponent(displayMode: TableCellDisplayMode, field: Field): CellComponent {
   switch (displayMode) {
+    case TableCellDisplayMode.Custom:
     case TableCellDisplayMode.ColorText:
     case TableCellDisplayMode.ColorBackground:
       return DefaultCell;
     case TableCellDisplayMode.Image:
       return ImageCell;
-    case TableCellDisplayMode.LcdGauge:
-    case TableCellDisplayMode.BasicGauge:
-    case TableCellDisplayMode.GradientGauge:
+    case TableCellDisplayMode.Gauge:
       return BarGaugeCell;
+    case TableCellDisplayMode.Sparkline:
+      return SparklineCell;
     case TableCellDisplayMode.JSONView:
       return JSONViewCell;
   }
@@ -151,10 +189,20 @@ export function getCellComponent(displayMode: TableCellDisplayMode, field: Field
     return GeoCell;
   }
 
+  if (field.type === FieldType.frame) {
+    const firstValue = field.values[0];
+    if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
+      return SparklineCell;
+    }
+
+    return JSONViewCell;
+  }
+
   // Default or Auto
   if (field.type === FieldType.other) {
     return JSONViewCell;
   }
+
   return DefaultCell;
 }
 
@@ -187,7 +235,7 @@ export function calculateUniqueFieldValues(rows: any[], field?: Field) {
     return {};
   }
 
-  const set: Record<string, any> = {};
+  const set: Record<string, string> = {};
 
   for (let index = 0; index < rows.length; index++) {
     const value = rowToFieldValue(rows[index], field);
@@ -202,16 +250,16 @@ export function rowToFieldValue(row: any, field?: Field): string {
     return '';
   }
 
-  const fieldValue = field.values.get(row.index);
+  const fieldValue = field.values[row.index];
   const displayValue = field.display ? field.display(fieldValue) : fieldValue;
   const value = field.display ? formattedValueToString(displayValue) : displayValue;
 
   return value;
 }
 
-export function valuesToOptions(unique: Record<string, any>): SelectableValue[] {
+export function valuesToOptions(unique: Record<string, unknown>): SelectableValue[] {
   return Object.keys(unique)
-    .reduce((all, key) => all.concat({ value: unique[key], label: key }), [] as SelectableValue[])
+    .reduce<SelectableValue[]>((all, key) => all.concat({ value: unique[key], label: key }), [])
     .sort(sortOptions);
 }
 
@@ -247,18 +295,22 @@ export function getFilteredOptions(options: SelectableValue[], filterValues?: Se
   return options.filter((option) => filterValues.some((filtered) => filtered.value === option.value));
 }
 
-export function sortCaseInsensitive(a: Row<any>, b: Row<any>, id: string) {
+export function sortCaseInsensitive(a: Row, b: Row, id: string) {
   return String(a.values[id]).localeCompare(String(b.values[id]), undefined, { sensitivity: 'base' });
 }
 
 // sortNumber needs to have great performance as it is called a lot
-export function sortNumber(rowA: Row<any>, rowB: Row<any>, id: string) {
+export function sortNumber(rowA: Row, rowB: Row, id: string) {
   const a = toNumber(rowA.values[id]);
   const b = toNumber(rowB.values[id]);
   return a === b ? 0 : a > b ? 1 : -1;
 }
 
 function toNumber(value: any): number {
+  if (isDataFrameWithValue(value)) {
+    return value.value ?? Number.NEGATIVE_INFINITY;
+  }
+
   if (value === null || value === undefined || value === '' || isNaN(value)) {
     return Number.NEGATIVE_INFINITY;
   }
@@ -271,27 +323,55 @@ function toNumber(value: any): number {
 }
 
 export function getFooterItems(
-  filterFields: Array<{ field: Field }>,
+  filterFields: Array<{ id: string; field?: Field } | undefined>,
   values: any[number],
   options: TableFooterCalc,
   theme2: GrafanaTheme2
 ): FooterItem[] {
+  /*
+    The FooterItems[] are calculated using both the `headerGroups[0].headers`
+    (filterFields) and `rows` (values) destructured from the useTable() hook.
+    This cacluation is based on the data from each index in `filterFields`
+    array as well as the corresponding index in the `values` array.
+    When the user hides a column through an override, the getColumns()
+    hook is invoked, removes said hidden column, sends the updated column
+    data to the useTable() hook, which then builds `headerGroups[0].headers`
+    without the hidden column. However, it doesn't remove the hidden column
+    from the `row` data, instead it substututes the hidden column row data
+    with an `undefined` value. Therefore, the `row` array length never changes,
+    despite the `headerGroups[0].headers` length changing at every column removal.
+    This makes all footer reduce calculations AFTER the first hidden column
+    in the `headerGroups[0].headers` break, since the indexing of both
+    arrays is no longer in parity.
+
+    So, here we simply recursively test for the "hidden" columns
+    from `headerGroups[0].headers`. Each column has an ID property that corresponds
+    to its own index, therefore if (`filterField.id` !== `String(index)`),
+    we know there is one or more hidden columns; at which point we update
+    the index with an ersatz placeholder with just an `id` property.
+  */
+  addMissingColumnIndex(filterFields);
+
   return filterFields.map((data, i) => {
-    if (data.field.type !== FieldType.number) {
-      // show the reducer in the first column
+    // Then test for numerical data - this will filter out placeholder `filterFields` as well.
+    if (data?.field?.type !== FieldType.number) {
+      // Show the reducer in the first column
       if (i === 0 && options.reducer && options.reducer.length > 0) {
         const reducer = fieldReducers.get(options.reducer[0]);
         return reducer.name;
       }
+      // Render an <EmptyCell />.
       return undefined;
     }
+
     let newField = clone(data.field);
-    newField.values = new ArrayVector(values[i]);
+    newField.values = values[data.id];
     newField.state = undefined;
 
     data.field = newField;
+
     if (options.fields && options.fields.length > 0) {
-      const f = options.fields.find((f) => f === data.field.name);
+      const f = options.fields.find((f) => f === data?.field?.name);
       if (f) {
         return getFormattedValue(data.field, options.reducer, theme2);
       }
@@ -308,6 +388,7 @@ function getFormattedValue(field: Field, reducer: string[], theme: GrafanaTheme2
   return formattedValueToString(fmt(v));
 }
 
+// This strips the raw vales from the `rows` object.
 export function createFooterCalculationValues(rows: Row[]): any[number] {
   const values: any[number] = [];
 
@@ -321,4 +402,134 @@ export function createFooterCalculationValues(rows: Row[]): any[number] {
   }
 
   return values;
+}
+
+const defaultCellOptions: TableAutoCellOptions = { type: TableCellDisplayMode.Auto };
+
+export function getCellOptions(field: Field): TableCellOptions {
+  if (field.config.custom?.displayMode) {
+    return migrateTableDisplayModeToCellOptions(field.config.custom?.displayMode);
+  }
+
+  if (!field.config.custom?.cellOptions) {
+    return defaultCellOptions;
+  }
+
+  return field.config.custom.cellOptions;
+}
+
+/**
+ * Migrates table cell display mode to new object format.
+ *
+ * @param displayMode The display mode of the cell
+ * @returns TableCellOptions object in the correct format
+ * relative to the old display mode.
+ */
+export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDisplayMode): TableCellOptions {
+  switch (displayMode) {
+    // In the case of the gauge we move to a different option
+    case 'basic':
+    case 'gradient-gauge':
+    case 'lcd-gauge':
+      let gaugeMode = BarGaugeDisplayMode.Basic;
+
+      if (displayMode === 'gradient-gauge') {
+        gaugeMode = BarGaugeDisplayMode.Gradient;
+      } else if (displayMode === 'lcd-gauge') {
+        gaugeMode = BarGaugeDisplayMode.Lcd;
+      }
+
+      return {
+        type: TableCellDisplayMode.Gauge,
+        mode: gaugeMode,
+      };
+    // Also true in the case of the color background
+    case 'color-background':
+    case 'color-background-solid':
+      let mode = TableCellBackgroundDisplayMode.Basic;
+
+      // Set the new mode field, somewhat confusingly the
+      // color-background mode is for gradient display
+      if (displayMode === 'color-background') {
+        mode = TableCellBackgroundDisplayMode.Gradient;
+      }
+
+      return {
+        type: TableCellDisplayMode.ColorBackground,
+        mode: mode,
+      };
+    default:
+      return {
+        // @ts-ignore
+        type: displayMode,
+      };
+  }
+}
+
+/**
+ * This recurses through an array of `filterFields` (Array<{ id: string; field?: Field } | undefined>)
+ * and adds back the missing indecies that are removed due to hiding a column through an panel override.
+ * This is necessary to create Array.length parity between the `filterFields` array and the `values` array (any[number]),
+ * since the footer value calculations are based on the corresponding index values of both arrays.
+ *
+ * @remarks
+ * This function uses the splice() method, and therefore mutates the array.
+ *
+ * @param columns - An array of `filterFields` (Array<{ id: string; field?: Field } | undefined>).
+ * @returns void; this function returns nothing; it only mutates values as a side effect.
+ */
+function addMissingColumnIndex(columns: Array<{ id: string; field?: Field } | undefined>): void {
+  const missingIndex = columns.findIndex((field, index) => field?.id !== String(index));
+
+  // Base case
+  if (missingIndex === -1 || columns[missingIndex]?.id === 'expander') {
+    return;
+  }
+
+  // Splice in missing column
+  columns.splice(missingIndex, 0, { id: String(missingIndex) });
+
+  // Recurse
+  addMissingColumnIndex(columns);
+}
+
+/**
+ * Getting gauge or sparkline values to align is very tricky without looking at all values and passing them through display processor.
+ * For very large tables that could pretty expensive. So this is kind of a compromise. We look at the first 1000 rows and cache the longest value.
+ * If we have a cached value we just check if the current value is longer and update the alignmentFactor. This can obviously still lead to
+ * unaligned gauges but it should a lot less common.
+ **/
+export function getAlignmentFactor(
+  field: Field,
+  displayValue: DisplayValue,
+  rowIndex: number
+): DisplayValueAlignmentFactors {
+  let alignmentFactor = field.state?.alignmentFactors;
+
+  if (alignmentFactor) {
+    // check if current alignmentFactor is still the longest
+    if (alignmentFactor.text.length < displayValue.text.length) {
+      alignmentFactor.text = displayValue.text;
+    }
+    return alignmentFactor;
+  } else {
+    // look at the next 1000 rows
+    alignmentFactor = { ...displayValue };
+    const maxIndex = Math.min(field.values.length, rowIndex + 1000);
+
+    for (let i = rowIndex + 1; i < maxIndex; i++) {
+      const nextDisplayValue = field.display!(field.values[i]);
+      if (nextDisplayValue.text.length > alignmentFactor.text.length) {
+        alignmentFactor.text = displayValue.text;
+      }
+    }
+
+    if (field.state) {
+      field.state.alignmentFactors = alignmentFactor;
+    } else {
+      field.state = { alignmentFactors: alignmentFactor };
+    }
+
+    return alignmentFactor;
+  }
 }

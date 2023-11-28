@@ -10,7 +10,10 @@ export class QueryCtrl<T = any> {
   error?: string | null;
   isLastQuery: boolean;
 
-  constructor(public $scope: any, public $injector: auto.IInjectorService) {
+  constructor(
+    public $scope: any,
+    public $injector: auto.IInjectorService
+  ) {
     this.panelCtrl = this.panelCtrl ?? $scope.ctrl.panelCtrl;
     this.target = this.target ?? $scope.ctrl.target;
     this.datasource = this.datasource ?? $scope.ctrl.datasource;

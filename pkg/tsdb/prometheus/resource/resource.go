@@ -18,37 +18,6 @@ type Resource struct {
 	log        log.Logger
 }
 
-// Hop-by-hop headers. These are removed when sent to the backend.
-// http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html
-var hopHeaders = []string{
-	"Connection",
-	"Keep-Alive",
-	"Proxy-Authenticate",
-	"Proxy-Authorization",
-	"Te", // canonicalized version of "TE"
-	"Trailers",
-	"Transfer-Encoding",
-	"Upgrade",
-}
-
-// The following headers will be removed from the request
-var stopHeaders = []string{
-	"cookie",
-	"Cookie",
-}
-
-func delHopHeaders(header http.Header) {
-	for _, h := range hopHeaders {
-		header.Del(h)
-	}
-}
-
-func delStopHeaders(header http.Header) {
-	for _, h := range stopHeaders {
-		header.Del(h)
-	}
-}
-
 func New(
 	httpClient *http.Client,
 	settings backend.DataSourceInstanceSettings,
@@ -60,6 +29,10 @@ func New(
 	}
 	httpMethod, _ := maputil.GetStringOptional(jsonData, "httpMethod")
 
+	if httpMethod == "" {
+		httpMethod = http.MethodPost
+	}
+
 	return &Resource{
 		log:        plog,
 		promClient: client.NewClient(httpClient, httpMethod, settings.URL),
@@ -67,13 +40,16 @@ func New(
 }
 
 func (r *Resource) Execute(ctx context.Context, req *backend.CallResourceRequest) (*backend.CallResourceResponse, error) {
-	delHopHeaders(req.Headers)
-	delStopHeaders(req.Headers)
-
-	r.log.Debug("Sending resource query", "URL", req.URL)
+	r.log.FromContext(ctx).Debug("Sending resource query", "URL", req.URL)
 	resp, err := r.promClient.QueryResource(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("error querying resource: %v", err)
+	}
+
+	// frontend sets the X-Grafana-Cache with the desired response cache control value
+	if len(req.GetHTTPHeaders().Get("X-Grafana-Cache")) > 0 {
+		resp.Header.Set("X-Grafana-Cache", "y")
+		resp.Header.Set("Cache-Control", req.GetHTTPHeaders().Get("X-Grafana-Cache"))
 	}
 
 	defer func() {
@@ -105,16 +81,5 @@ func (r *Resource) DetectVersion(ctx context.Context, req *backend.CallResourceR
 		Path:          "/api/v1/status/buildinfo",
 	}
 
-	resp, err := r.Execute(ctx, newReq)
-
-	if err != nil {
-		return nil, err
-	}
-
-	callResponse := &backend.CallResourceResponse{
-		Status: 200,
-		Body:   resp.Body,
-	}
-
-	return callResponse, nil
+	return r.Execute(ctx, newReq)
 }

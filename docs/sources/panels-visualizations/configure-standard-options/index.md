@@ -9,9 +9,14 @@ aliases:
   - ../panels/working-with-panels/format-standard-fields/
 keywords:
   - panel
-  - dasboard
+  - dashboard
   - standard
   - option
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Configure standard options
 title: Configure standard options
 weight: 2
@@ -19,21 +24,20 @@ weight: 2
 
 # Configure standard options
 
-The data model used in Grafana, namely the [data frame]({{< relref "../../developers/plugins/data-frames/" >}}), is a columnar-oriented table structure that unifies both time series and table query results. Each column within this structure is called a _field_. A field can represent a single time series or table column.
+The data model used in Grafana, namely the [data frame](https://grafana.com/developers/plugin-tools/introduction/data-frames), is a columnar-oriented table structure that unifies both time series and table query results. Each column within this structure is called a _field_. A field can represent a single time series or table column.
 
 Field options allow you to change how the data is displayed in your visualizations. Options and overrides that you apply do not change the data, they change how Grafana displays the data. When you change an option, it is applied to all fields, meaning all series or columns. For example, if you change the unit to percentage, then all fields with numeric values are displayed in percentages.
 
-For a complete list of field formatting options, refer to [Standard options definitions]({{< relref "#standard-options-definitions" >}}).
+For a complete list of field formatting options, refer to [Standard options definitions](#standard-options-definitions).
 
 > You can apply standard options to most built-in Grafana panels. Some older panels and community panels that have not updated to the new panel and data model will be missing either all or some of these field options.
 
-1. Open a dashboard, click the panel title, and click **Edit**.
-
+1. Open a dashboard. Hover over any part of the panel to display the actions menu on the top right corner.
+1. Click the menu and select **Edit**.
 1. In the panel display options pane, locate the **Standard options** section.
-
 1. Select the standard options you want to apply.
 
-   For more information about standard options, refer to [Standard options definitions]({{< relref "#standard-options-definitions" >}}).
+   For more information about standard options, refer to [Standard options definitions](#standard-options-definitions).
 
 1. To preview your change, click outside of the field option box you are editing or press **Enter**.
 
@@ -45,7 +49,9 @@ You can apply standard options to most built-in Grafana panels. Some older panel
 
 Most field options will not affect the visualization until you click outside of the field option box you are editing or press Enter.
 
-> **Note:** We are constantly working to add and expand options for all visualization, so all options might not be available for all visualizations.
+{{% admonition type="note" %}}
+We are constantly working to add and expand options for all visualization, so all options might not be available for all visualizations.
+{{% /admonition %}}
 
 ### Unit
 
@@ -58,6 +64,7 @@ You can use the unit dropdown to also specify custom units, custom prefix or suf
 To select a custom unit enter the unit and select the last `Custom: xxx` option in the dropdown.
 
 - `suffix:<suffix>` for custom unit that should go after value.
+- `prefix:<prefix>` for custom unit that should go before value.
 - `time:<format>` For custom date time formats type for example `time:YYYY-MM-DD`. See [formats](https://momentjs.com/docs/#/displaying/) for the format syntax and options.
 - `si:<base scale><unit characters>` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the
   source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that
@@ -75,11 +82,15 @@ Grafana can sometimes be too aggressive in parsing strings and displaying them a
 
 ### Min
 
-Lets you set the minimum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
+Lets you set the minimum value used in percentage threshold calculations. Leave blank to automatically calculate the minimum.
 
 ### Max
 
-Lets you set the maximum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
+Lets you set the maximum value used in percentage threshold calculations. Leave blank to automatically calculate the maximum.
+
+### Field min/max
+
+By default the calculated min and max will be based on the minimum and maximum, in all series and fields. Turning field min/max on, will calculate the min or max on each field individually, based on the minimum or maximum value of the field.
 
 ### Decimals
 
@@ -89,7 +100,7 @@ To display all decimals, set the unit to `String`.
 
 ### Display name
 
-Lets you set the display title of all fields. You can use [variables]({{< relref "../../dashboards/variables/" >}}) in the field title.
+Lets you set the display title of all fields. You can use [variables][] in the field title.
 
 When multiple stats, fields, or series are shown, this field controls the title in each stat. You can use expressions like `${__field.name}` to use only the series name or the field name in title.
 
@@ -116,20 +127,32 @@ Select one of the following palettes:
 
 <div class="clearfix"></div>
 
-| Color mode                      | Description                                                                                                                                              |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Single color**                | Specify a single color, useful in an override rule                                                                                                       |
-| **From thresholds**             | Informs Grafana to take the color from the matching threshold                                                                                            |
-| **Classic palette**             | Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations |
-| **Green-Yellow-Red (by value)** | Continuous color scheme                                                                                                                                  |
-| **Blue-Yellow-Red (by value)**  | Continuous color scheme                                                                                                                                  |
-| **Blues (by value)**            | Continuous color scheme (panel background to blue)                                                                                                       |
-| **Reds (by value)**             | Continuous color scheme (panel background color to blue)                                                                                                 |
-| **Greens (by value)**           | Continuous color scheme (panel background color to blue)                                                                                                 |
-| **Purple (by value)**           | Continuous color scheme (panel background color to blue)                                                                                                 |
+| Color mode                           | Description                                                                                                                                              |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Single color**                     | Specify a single color, useful in an override rule                                                                                                       |
+| **Shades of a color**                | Selects shades of a single color, useful in an override rule                                                                                             |
+| **From thresholds**                  | Informs Grafana to take the color from the matching threshold                                                                                            |
+| **Classic palette**                  | Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations |
+| **Classic palette (by series name)** | Grafana will assign color based on the name of the series. Useful when the series names to be visualized depend on the available data.                   |
+| **Green-Yellow-Red (by value)**      | Continuous color scheme                                                                                                                                  |
+| **Red-Yellow-Green (by value)**      | Continuous color scheme                                                                                                                                  |
+| **Blue-Yellow-Red (by value)**       | Continuous color scheme                                                                                                                                  |
+| **Yellow-Red (by value)**            | Continuous color scheme                                                                                                                                  |
+| **Blue-Purple (by value)**           | Continuous color scheme                                                                                                                                  |
+| **Yellow-Blue (by value)**           | Continuous color scheme                                                                                                                                  |
+| **Blues (by value)**                 | Continuous color scheme (panel background to blue)                                                                                                       |
+| **Reds (by value)**                  | Continuous color scheme (panel background color to red)                                                                                                  |
+| **Greens (by value)**                | Continuous color scheme (panel background color to green)                                                                                                |
+| **Purples (by value)**               | Continuous color scheme (panel background color to purple)                                                                                               |
 
 {{< figure src="/static/img/docs/v73/color_scheme_dropdown.png" max-width="350px" caption="Color scheme" >}}
 
 ### No value
 
 Enter what Grafana should display if the field value is empty or null. The default value is a hyphen (-).
+
+{{% docs/reference %}}
+
+[variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+[variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+{{% /docs/reference %}}

@@ -9,7 +9,7 @@ import { useTheme2 } from '@grafana/ui';
 import NextButton from './NextButton';
 import PrevButton from './PrevButton';
 
-const Navigation: FC<NavigationProps> = ({ setCurrentStep, steps, currentStep, disableDots, setIsOpen }) => {
+const Navigation: FC<React.PropsWithChildren<NavigationProps>> = ({ setCurrentStep, steps, currentStep, disableDots, setIsOpen }) => {
   const theme = useTheme2();
 
   return (

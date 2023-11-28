@@ -6,13 +6,19 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models/roletype"
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // Typed errors
 var (
-	ErrOrgNotFound  = errors.New("organization not found")
-	ErrOrgNameTaken = errors.New("organization name is taken")
+	ErrOrgNameTaken                            = errors.New("organization name is taken")
+	ErrLastOrgAdmin                            = errors.New("cannot remove last organization admin")
+	ErrOrgUserNotFound                         = errors.New("cannot find the organization user")
+	ErrOrgUserAlreadyAdded                     = errors.New("user is already added to organization")
+	ErrOrgNotFound                             = errutil.NotFound("org.notFound", errutil.WithPublicMessage("organization not found"))
+	ErrCannotChangeRoleForExternallySyncedUser = errutil.Forbidden("org.externallySynced", errutil.WithPublicMessage("cannot change role for externally synced user"))
 )
 
 type Org struct {
@@ -42,9 +48,10 @@ type OrgUser struct {
 type RoleType = roletype.RoleType
 
 const (
-	RoleViewer RoleType = "Viewer"
-	RoleEditor RoleType = "Editor"
-	RoleAdmin  RoleType = "Admin"
+	RoleNone   RoleType = roletype.RoleNone
+	RoleViewer RoleType = roletype.RoleViewer
+	RoleEditor RoleType = roletype.RoleEditor
+	RoleAdmin  RoleType = roletype.RoleAdmin
 )
 
 type CreateOrgCommand struct {
@@ -90,7 +97,7 @@ type OrgDTO struct {
 	Name string `json:"name"`
 }
 
-type GetOrgByIdQuery struct {
+type GetOrgByIDQuery struct {
 	ID int64
 }
 
@@ -120,8 +127,8 @@ type AddOrgUserCommand struct {
 	LoginOrEmail string   `json:"loginOrEmail" binding:"Required"`
 	Role         RoleType `json:"role" binding:"Required"`
 
-	OrgID  int64 `json:"-"`
-	UserID int64 `json:"-"`
+	OrgID  int64 `json:"-" xorm:"org_id"`
+	UserID int64 `json:"-" xorm:"user_id"`
 
 	// internal use: avoid adding service accounts to orgs via user routes
 	AllowAddingServiceAccount bool `json:"-"`
@@ -135,56 +142,69 @@ type UpdateOrgUserCommand struct {
 }
 
 type OrgUserDTO struct {
-	OrgID         int64           `json:"orgId"`
-	UserID        int64           `json:"userId"`
-	Email         string          `json:"email"`
-	Name          string          `json:"name"`
-	AvatarURL     string          `json:"avatarUrl"`
-	Login         string          `json:"login"`
-	Role          string          `json:"role"`
-	LastSeenAt    time.Time       `json:"lastSeenAt"`
-	Updated       time.Time       `json:"-"`
-	Created       time.Time       `json:"-"`
-	LastSeenAtAge string          `json:"lastSeenAtAge"`
-	AccessControl map[string]bool `json:"accessControl,omitempty"`
-	IsDisabled    bool            `json:"isDisabled"`
+	OrgID              int64           `json:"orgId" xorm:"org_id"`
+	UserID             int64           `json:"userId" xorm:"user_id"`
+	Email              string          `json:"email"`
+	Name               string          `json:"name"`
+	AvatarURL          string          `json:"avatarUrl" xorm:"avatar_url"`
+	Login              string          `json:"login"`
+	Role               string          `json:"role"`
+	LastSeenAt         time.Time       `json:"lastSeenAt"`
+	Updated            time.Time       `json:"-"`
+	Created            time.Time       `json:"-"`
+	LastSeenAtAge      string          `json:"lastSeenAtAge"`
+	AccessControl      map[string]bool `json:"accessControl,omitempty"`
+	IsDisabled         bool            `json:"isDisabled"`
+	AuthLabels         []string        `json:"authLabels" xorm:"-"`
+	IsExternallySynced bool            `json:"isExternallySynced"`
 }
 
 type RemoveOrgUserCommand struct {
-	UserID                   int64
-	OrgID                    int64
+	UserID                   int64 `xorm:"user_id"`
+	OrgID                    int64 `xorm:"org_id"`
 	ShouldDeleteOrphanedUser bool
 	UserWasDeleted           bool
 }
 
 type GetOrgUsersQuery struct {
-	UserID int64
-	OrgID  int64
+	UserID int64 `xorm:"user_id"`
+	OrgID  int64 `xorm:"org_id"`
 	Query  string
+	Page   int
 	Limit  int
 	// Flag used to allow oss edition to query users without access control
 	DontEnforceAccessControl bool
 
-	User *user.SignedInUser
+	User identity.Requester
 }
 
 type SearchOrgUsersQuery struct {
-	OrgID int64
-	Query string
-	Page  int
-	Limit int
+	UserID   int64 `xorm:"user_id"`
+	OrgID    int64 `xorm:"org_id"`
+	Query    string
+	Page     int
+	Limit    int
+	SortOpts []model.SortOption
+	// Flag used to allow oss edition to query users without access control
+	DontEnforceAccessControl bool
 
-	User *user.SignedInUser
+	User identity.Requester
 }
 
 type SearchOrgUsersQueryResult struct {
 	TotalCount int64         `json:"totalCount"`
-	OrgUsers   []*OrgUserDTO `json:"OrgUsers"`
+	OrgUsers   []*OrgUserDTO `json:"orgUsers"`
 	Page       int           `json:"page"`
 	PerPage    int           `json:"perPage"`
 }
 
 type ByOrgName []*UserOrgDTO
+
+type OrgDetailsDTO struct {
+	ID      int64   `json:"id"`
+	Name    string  `json:"name"`
+	Address Address `json:"address"`
+}
 
 // Len returns the length of an array of organisations.
 func (o ByOrgName) Len() int {
@@ -204,3 +224,9 @@ func (o ByOrgName) Less(i, j int) bool {
 
 	return o[i].Name < o[j].Name
 }
+
+const (
+	QuotaTargetSrv     string = "org"
+	OrgQuotaTarget     string = "org"
+	OrgUserQuotaTarget string = "org_user"
+)

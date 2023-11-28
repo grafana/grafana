@@ -89,7 +89,18 @@ export const getLocaleData = (): DateTimeLocale => {
   return moment.localeData();
 };
 
-export const isDateTime = (value: any): value is DateTime => {
+export const isDateTimeInput = (value: unknown): value is DateTimeInput => {
+  return (
+    value === null ||
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    value instanceof Date ||
+    (Array.isArray(value) && value.every((v) => typeof v === 'string' || typeof v === 'number')) ||
+    isDateTime(value)
+  );
+};
+
+export const isDateTime = (value: unknown): value is DateTime => {
   return moment.isMoment(value);
 };
 
@@ -117,6 +128,20 @@ export const dateTimeForTimeZone = (
 ): DateTime => {
   if (timezone === 'utc') {
     return toUtc(input, formatInput);
+  }
+
+  if (timezone && timezone !== 'browser') {
+    let result: moment.Moment;
+
+    if (typeof input === 'string' && formatInput) {
+      result = moment.tz(input, formatInput, timezone);
+    } else {
+      result = moment.tz(input, timezone);
+    }
+
+    if (isDateTime(result)) {
+      return result;
+    }
   }
 
   return dateTime(input, formatInput);

@@ -1,0 +1,66 @@
+import { configureStore as reduxConfigureStore, createListenerMiddleware } from '@reduxjs/toolkit';
+import { setupListeners } from '@reduxjs/toolkit/query';
+import { togglesApi } from 'app/features/admin/AdminFeatureTogglesAPI';
+import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
+import { buildInitialState } from '../core/reducers/navModel';
+import { addReducer, createRootReducer } from '../core/reducers/root';
+import { alertingApi } from '../features/alerting/unified/api/alertingApi';
+import { setStore } from './store';
+export function addRootReducer(reducers) {
+    // this is ok now because we add reducers before configureStore is called
+    // in the future if we want to add reducers during runtime
+    // we'll have to solve this in a more dynamic way
+    addReducer(reducers);
+}
+const listenerMiddleware = createListenerMiddleware();
+export function configureStore(initialState) {
+    const store = reduxConfigureStore({
+        reducer: createRootReducer(),
+        middleware: (getDefaultMiddleware) => getDefaultMiddleware({ thunk: true, serializableCheck: false, immutableCheck: false }).concat(listenerMiddleware.middleware, alertingApi.middleware, publicDashboardApi.middleware, browseDashboardsAPI.middleware, togglesApi.middleware),
+        devTools: process.env.NODE_ENV !== 'production',
+        preloadedState: Object.assign({ navIndex: buildInitialState() }, initialState),
+    });
+    // this enables "refetchOnFocus" and "refetchOnReconnect" for RTK Query
+    setupListeners(store.dispatch);
+    setStore(store);
+    return store;
+}
+/*
+function getActionsToIgnoreSerializableCheckOn() {
+  return [
+    'dashboard/setPanelAngularComponent',
+    'dashboard/panelModelAndPluginReady',
+    'dashboard/dashboardInitCompleted',
+    'plugins/panelPluginLoaded',
+    'explore/initializeExplore',
+    'explore/changeRange',
+    'explore/updateDatasourceInstance',
+    'explore/queryStoreSubscription',
+    'explore/queryStreamUpdated',
+  ];
+}
+
+function getPathsToIgnoreMutationAndSerializableCheckOn() {
+  return [
+    'plugins.panels',
+    'dashboard.panels',
+    'dashboard.getModel',
+    'payload.plugin',
+    'panelEditorNew.getPanel',
+    'panelEditorNew.getSourcePanel',
+    'panelEditorNew.getData',
+    'explore.left.queryResponse',
+    'explore.right.queryResponse',
+    'explore.left.datasourceInstance',
+    'explore.right.datasourceInstance',
+    'explore.left.range',
+    'explore.left.eventBridge',
+    'explore.right.eventBridge',
+    'explore.right.range',
+    'explore.left.querySubscription',
+    'explore.right.querySubscription',
+  ];
+}
+*/
+//# sourceMappingURL=configureStore.js.map

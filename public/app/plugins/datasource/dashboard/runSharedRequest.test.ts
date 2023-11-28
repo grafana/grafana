@@ -77,11 +77,11 @@ describe('SharedQueryRunner', () => {
     }).subscribe((v) => {
       try {
         expect(v).toMatchInlineSnapshot(`
-          Object {
+          {
             "annotations": undefined,
-            "series": Array [
-              Object {
-                "fields": Array [],
+            "series": [
+              {
+                "fields": [],
                 "length": 0,
                 "refId": "X",
               },

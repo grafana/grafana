@@ -30,7 +30,7 @@ interface TextFieldRenderProps {
   meta: FieldMetaState<string>;
 }
 
-export const TextInputField: FC<TextInputFieldProps> = React.memo(
+export const TextInputField: FC<React.PropsWithChildren<TextInputFieldProps>> = React.memo(
   ({
     className,
     disabled = false,

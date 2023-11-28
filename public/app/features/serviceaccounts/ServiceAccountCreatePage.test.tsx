@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { ServiceAccountCreatePage, Props } from './ServiceAccountCreatePage';
 
@@ -9,6 +10,7 @@ const patchMock = jest.fn().mockResolvedValue({});
 const putMock = jest.fn().mockResolvedValue({});
 
 jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     post: postMock,
     patch: patchMock,
@@ -54,7 +56,11 @@ const setup = (propOverrides: Partial<Props>) => {
 
   Object.assign(props, propOverrides);
 
-  render(<ServiceAccountCreatePage {...props} />);
+  render(
+    <TestProvider>
+      <ServiceAccountCreatePage {...props} />
+    </TestProvider>
+  );
 };
 
 describe('ServiceAccountCreatePage tests', () => {
@@ -77,7 +83,7 @@ describe('ServiceAccountCreatePage tests', () => {
     await waitFor(() =>
       expect(postMock).toHaveBeenCalledWith('/api/serviceaccounts/', {
         name: 'Data source scavenger',
-        role: 'Viewer',
+        role: 'None',
       })
     );
   });

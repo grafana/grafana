@@ -9,15 +9,15 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/store"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
+	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 )
 
 // DatasourceName is the string constant used as the datasource name in requests
@@ -51,11 +51,11 @@ var (
 	)
 )
 
-func ProvideService(cfg *setting.Cfg, search searchV2.SearchService, store store.StorageService) *Service {
-	return newService(cfg, search, store)
+func ProvideService(search searchV2.SearchService, store store.StorageService) *Service {
+	return newService(search, store)
 }
 
-func newService(cfg *setting.Cfg, search searchV2.SearchService, store store.StorageService) *Service {
+func newService(search searchV2.SearchService, store store.StorageService) *Service {
 	s := &Service{
 		search: search,
 		store:  store,
@@ -74,11 +74,11 @@ type Service struct {
 
 func DataSourceModel(orgId int64) *datasources.DataSource {
 	return &datasources.DataSource{
-		Id:             DatasourceID,
-		Uid:            DatasourceUID,
+		ID:             DatasourceID,
+		UID:            DatasourceUID,
 		Name:           DatasourceName,
 		Type:           "grafana",
-		OrgId:          orgId,
+		OrgID:          orgId,
 		JsonData:       simplejson.New(),
 		SecureJsonData: make(map[string][]byte),
 	}
@@ -165,7 +165,11 @@ func (s *Service) doReadQuery(ctx context.Context, query backend.DataQuery) back
 func (s *Service) doRandomWalk(query backend.DataQuery) backend.DataResponse {
 	response := backend.DataResponse{}
 
-	model := simplejson.New()
+	model, err := testdatasource.GetJSONModel(json.RawMessage{})
+	if err != nil {
+		response.Error = err
+		return response
+	}
 	response.Frames = data.Frames{testdatasource.RandomWalk(query, model, 0)}
 
 	return response

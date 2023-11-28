@@ -114,6 +114,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       formatValue,
       splits,
       values,
+      incrs,
       isTime,
       timeZone,
       theme,
@@ -129,6 +130,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
 
     const gridColor = theme.isDark ? 'rgba(240, 250, 255, 0.09)' : 'rgba(0, 10, 23, 0.09)';
 
+    // TODO: this is pretty flimsy now that scaleKey is composed from multiple parts :/
     if (isBooleanUnit(scaleKey)) {
       splits = [0, 1];
     }
@@ -161,7 +163,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       ticks: Object.assign(
         {
           show: true,
-          stroke: gridColor,
+          stroke: border?.show ? color ?? theme.colors.text.primary : gridColor,
           width: 1 / devicePixelRatio,
           size: 4,
         },
@@ -175,10 +177,15 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
           return this.calculateSpace(self, axisIdx, scaleMin, scaleMax, plotDim);
         }),
       filter,
+      incrs,
     };
 
-    if (border != null) {
-      config.border = border;
+    if (border?.show) {
+      config.border = {
+        stroke: color ?? theme.colors.text.primary,
+        width: 1 / devicePixelRatio,
+        ...border,
+      };
     }
 
     if (label != null && label.length > 0) {

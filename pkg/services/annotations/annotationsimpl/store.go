@@ -8,7 +8,8 @@ import (
 )
 
 type store interface {
-	Add(ctx context.Context, item *annotations.Item) error
+	Add(ctx context.Context, items *annotations.Item) error
+	AddMany(ctx context.Context, items []annotations.Item) error
 	Update(ctx context.Context, item *annotations.Item) error
 	Get(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error)
 	Delete(ctx context.Context, params *annotations.DeleteParams) error

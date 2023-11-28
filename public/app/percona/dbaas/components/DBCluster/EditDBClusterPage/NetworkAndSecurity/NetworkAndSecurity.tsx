@@ -12,7 +12,7 @@ import { Messages } from './NetworkAndSecurity.messages';
 import { getStyles } from './NetworkAndSecurity.styles';
 import { NetworkAndSecurityFields, NetworkAndSecurityProps } from './NetworkAndSecurity.types';
 
-export const NetworkAndSecurity: FC<NetworkAndSecurityProps> = ({ form }) => {
+export const NetworkAndSecurity: FC<React.PropsWithChildren<NetworkAndSecurityProps>> = ({ form }) => {
   const styles = useStyles(getStyles);
   const { expose } = form.getState().values;
 

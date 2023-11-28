@@ -86,7 +86,7 @@ func (r DiffReport) String() string {
 
 // Paths returns the slice of paths of the current DiffReport
 func (r DiffReport) Paths() []string {
-	var result = make([]string, len(r))
+	var result = make([]string, 0, len(r))
 	for _, diff := range r {
 		result = append(result, diff.Path)
 	}
@@ -105,7 +105,7 @@ func (d *Diff) String() string {
 	return fmt.Sprintf("%v:\n\t-: %+v\n\t+: %+v\n", d.Path, describeReflectValue(d.Left), describeReflectValue(d.Right))
 }
 
-func describeReflectValue(v reflect.Value) interface{} {
+func describeReflectValue(v reflect.Value) any {
 	// invalid reflect.Value is produced when two collections (slices\maps) are compared and one misses value.
 	// This way go-cmp indicates that an element was added\removed from a list.
 	if !v.IsValid() {

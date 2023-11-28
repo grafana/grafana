@@ -15,6 +15,8 @@ You can contribute to Grafana in several ways. Here are some examples:
 - Organize meetups and user groups in your local area.
 - Help others by answering questions about Grafana.
 
+**Please note:** We do not currently accept contributions for translations. Please do not submit pull requests translating grafana.json files - they will be rejected. We do accept contributions to mark up phrases for translation. See [Internationalization](contribute/internationalization.md).
+
 For more ways to contribute, check out the [Open Source Guides](https://opensource.guide/how-to-contribute/).
 
 ### Report bugs
@@ -42,7 +44,7 @@ If you believe you've found a security vulnerability, please read our [security 
 
 ### Suggest enhancements
 
-If you have an idea of how to improve Grafana, submit an [enhancement request](https://github.com/grafana/grafana/discussions/new).
+If you have an idea of how to improve Grafana, submit a [feature request](https://github.com/grafana/grafana/issues/new?assignees=&labels=type%2Ffeature-request&projects=&template=1-feature_requests.md).
 
 We want to make Grafana accessible to even more people. Submit an [accessibility issue](https://github.com/grafana/grafana/issues/new?labels=type%3A+accessibility&template=3-accessibility.md) to help us understand what we can improve.
 
@@ -71,7 +73,7 @@ Unsure where to begin contributing to Grafana? Start by browsing issues labeled 
 
 If you're looking to make a code change, see how to set up your environment for [local development](contribute/developer-guide.md).
 
-When you're ready to contribute, it's time to [Create a pull request](/contribute/create-pull-request.md).
+When you're ready to contribute, it's time to [create a pull request](/contribute/create-pull-request.md).
 
 #### Contributor License Agreement (CLA)
 
@@ -80,6 +82,6 @@ Before we can accept your pull request, you need to [sign our CLA](https://grafa
 ## Where do I go from here?
 
 - Set up your [development environment](contribute/developer-guide.md).
-- Learn how to [contribute documentation](contribute/README.md).
-- Get started [developing plugins](https://grafana.com/docs/grafana/latest/developers/plugins/) for Grafana.
+- Learn how to [contribute to our documentation](contribute/documentation/README.md).
+- Get started [developing plugins](https://grafana.com/developers/plugin-tools) for Grafana.
 - Look through the resources in the [contribute](contribute) folder.

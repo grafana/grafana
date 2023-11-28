@@ -1,4 +1,4 @@
-import { Meta, Props } from '@storybook/addon-docs/blocks';
+import { Meta, ArgTypes } from '@storybook/blocks';
 import { ConfirmButton } from './ConfirmButton';
 
 <Meta title="MDX|ConfirmButton" component={ConfirmButton} />
@@ -29,4 +29,22 @@ Apart from the button variant, you can also modify the button size and the butto
 </ConfirmButton>
 ```
 
-<Props of={ConfirmButton} />
+## With a custom button
+
+You can pass a custom button as a child to the `ConfirmButton`. The child will automatically receive the correct `onClick` from `ConfirmButton`.
+
+```jsx
+<ConfirmButton
+  closeOnConfirm
+  size="md"
+  confirmText="Are you sure?"
+  confirmVariant="secondary"
+  onConfirm={() => {
+    console.log('Action confirmed!');
+  }}
+>
+  <Button variant="secondary">Click me</Button>
+</ConfirmButton>
+```
+
+<ArgTypes of={ConfirmButton} />

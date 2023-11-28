@@ -8,9 +8,10 @@ import (
 	"net/url"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -22,19 +23,20 @@ import (
 type PluginProxy struct {
 	ps             *pluginsettings.DTO
 	pluginRoutes   []*plugins.Route
-	ctx            *models.ReqContext
+	ctx            *contextmodel.ReqContext
 	proxyPath      string
 	matchedRoute   *plugins.Route
 	cfg            *setting.Cfg
 	secretsService secrets.Service
 	tracer         tracing.Tracer
 	transport      *http.Transport
+	features       featuremgmt.FeatureToggles
 }
 
 // NewPluginProxy creates a plugin proxy.
-func NewPluginProxy(ps *pluginsettings.DTO, routes []*plugins.Route, ctx *models.ReqContext,
+func NewPluginProxy(ps *pluginsettings.DTO, routes []*plugins.Route, ctx *contextmodel.ReqContext,
 	proxyPath string, cfg *setting.Cfg, secretsService secrets.Service, tracer tracing.Tracer,
-	transport *http.Transport) (*PluginProxy, error) {
+	transport *http.Transport, features featuremgmt.FeatureToggles) (*PluginProxy, error) {
 	return &PluginProxy{
 		ps:             ps,
 		pluginRoutes:   routes,
@@ -44,6 +46,7 @@ func NewPluginProxy(ps *pluginsettings.DTO, routes []*plugins.Route, ctx *models
 		secretsService: secretsService,
 		tracer:         tracer,
 		transport:      transport,
+		features:       features,
 	}, nil
 }
 
@@ -106,8 +109,10 @@ func (proxy *PluginProxy) HandleRequest() {
 
 	proxy.ctx.Req = proxy.ctx.Req.WithContext(ctx)
 
-	span.SetAttributes("user", proxy.ctx.SignedInUser.Login, attribute.Key("user").String(proxy.ctx.SignedInUser.Login))
-	span.SetAttributes("org_id", proxy.ctx.SignedInUser.OrgID, attribute.Key("org_id").Int64(proxy.ctx.SignedInUser.OrgID))
+	span.SetAttributes(
+		attribute.String("user", proxy.ctx.SignedInUser.Login),
+		attribute.Int64("org_id", proxy.ctx.SignedInUser.OrgID),
+	)
 
 	proxy.tracer.Inject(ctx, proxy.ctx.Req.Header, span)
 
@@ -154,7 +159,11 @@ func (proxy PluginProxy) director(req *http.Request) {
 
 	req.Header.Set("X-Grafana-Context", string(ctxJSON))
 
-	applyUserHeader(proxy.cfg.SendUserHeader, req, proxy.ctx.SignedInUser)
+	proxyutil.ApplyUserHeader(proxy.cfg.SendUserHeader, req, proxy.ctx.SignedInUser)
+
+	if proxy.features.IsEnabled(featuremgmt.FlagIdForwarding) {
+		proxyutil.ApplyForwardIDHeader(req, proxy.ctx.SignedInUser)
+	}
 
 	if err := addHeaders(&req.Header, proxy.matchedRoute, data); err != nil {
 		proxy.ctx.JsonApiErr(500, "Failed to render plugin headers", err)
@@ -192,6 +201,6 @@ func (proxy PluginProxy) logRequest() {
 }
 
 type templateData struct {
-	JsonData       map[string]interface{}
+	JsonData       map[string]any
 	SecureJsonData map[string]string
 }

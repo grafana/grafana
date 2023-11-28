@@ -11,7 +11,7 @@ import { OperatorStatusProps } from './OperatorStatus.types';
 
 const { operatorStatus } = Messages.kubernetes;
 
-export const OperatorStatus: FC<OperatorStatusProps> = ({ operator }) => {
+export const OperatorStatus: FC<React.PropsWithChildren<OperatorStatusProps>> = ({ operator }) => {
   const styles = useStyles2(getStyles);
   const { status, availableVersion } = operator;
   const showVersionAvailable = (status === Status.ok || status === Status.unsupported) && !!availableVersion;

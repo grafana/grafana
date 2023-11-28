@@ -5,7 +5,8 @@ import Drop from 'tether-drop';
 import { GrafanaRootScope } from 'app/angular/GrafanaCtrl';
 import coreModule from 'app/angular/core_module';
 
-/** @ngInject */
+coreModule.service('popoverSrv', ['$compile', '$rootScope', '$timeout', popoverSrv]);
+
 function popoverSrv(this: any, $compile: any, $rootScope: GrafanaRootScope, $timeout: any) {
   let openDrop: any = null;
 
@@ -78,5 +79,3 @@ function popoverSrv(this: any, $compile: any, $rootScope: GrafanaRootScope, $tim
     };
   };
 }
-
-coreModule.service('popoverSrv', popoverSrv);

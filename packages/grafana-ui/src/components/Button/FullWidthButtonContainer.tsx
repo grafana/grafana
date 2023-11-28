@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { stylesFactory } from '../../themes';
 
@@ -7,28 +7,28 @@ export interface Props {
   className?: string;
 }
 
-export const FullWidthButtonContainer: FC<Props> = ({ className, children }) => {
+export const FullWidthButtonContainer = ({ className, children }: React.PropsWithChildren<Props>) => {
   const styles = getStyles();
 
   return <div className={cx(styles, className)}>{children}</div>;
 };
 
 const getStyles = stylesFactory(() => {
-  return css`
-    display: flex;
+  return css({
+    display: 'flex',
 
-    button {
-      flex-grow: 1;
-      justify-content: center;
-    }
+    button: {
+      flexGrow: 1,
+      justifyContent: 'center',
+    },
 
-    > * {
-      flex-grow: 1;
-    }
+    '> *': {
+      flexGrow: 1,
+    },
 
-    label {
-      flex-grow: 1;
-      text-align: center;
-    }
-  `;
+    label: {
+      flexGrow: 1,
+      textAlign: 'center',
+    },
+  });
 });

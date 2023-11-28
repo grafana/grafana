@@ -10,11 +10,11 @@ import { Messages } from '../FormParts.messages';
 import { getStyles } from '../FormParts.styles';
 import { MainDetailsFormPartProps } from '../FormParts.types';
 
-export const HAProxyConnectionDetails: FC<MainDetailsFormPartProps> = ({ remoteInstanceCredentials }) => {
+export const HAProxyConnectionDetails: FC<React.PropsWithChildren<MainDetailsFormPartProps>> = ({ remoteInstanceCredentials }) => {
   const styles = useStyles2(getStyles);
 
   const portValidators = useMemo(() => [validators.required, Validators.validatePort], []);
-  const trim = useCallback((value) => (value ? value.trim() : value), []);
+  const trim = useCallback((value?: string) => (value ? value.trim() : value), []);
 
   return (
     <div className={styles.groupWrapper}>

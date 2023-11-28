@@ -1,9 +1,12 @@
 import { UrlQueryMap } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
+import { DashboardModel } from 'app/features/dashboard/state';
+import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { variableAdapters } from '../adapters';
 import { createCustomVariableAdapter } from '../custom/adapter';
+import { createCustomOptionsFromQuery } from '../custom/reducer';
 import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { updateVariableOptions } from '../query/reducer';
@@ -60,7 +63,7 @@ setDataSourceSrv({
       return Promise.resolve([]);
     }),
   }),
-} as any);
+} as unknown as DatasourceSrv);
 
 variableAdapters.setInit(() => [createCustomVariableAdapter(), createQueryVariableAdapter()]);
 
@@ -99,7 +102,7 @@ describe('processVariable', () => {
       .build();
 
     const list = [custom, queryDependsOnCustom, queryNoDepends];
-    const dashboard: any = { templating: { list } };
+    const dashboard = { templating: { list } } as DashboardModel;
     setVariableQueryRunner(new VariableQueryRunner());
 
     return {
@@ -123,9 +126,18 @@ describe('processVariable', () => {
           .whenActionIsDispatched(initDashboardTemplating(key, dashboard))
           .whenAsyncActionIsDispatched(processVariable(toKeyedVariableIdentifier(custom), queryParams), true);
 
-        await tester.thenDispatchedActionsShouldEqual(
-          toKeyedAction(key, variableStateCompleted(toVariablePayload(custom)))
-        );
+        await tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
+          expect(dispatchedActions.length).toEqual(4);
+
+          expect(dispatchedActions[0]).toEqual(toKeyedAction(key, variableStateFetching(toVariablePayload(custom))));
+          expect(dispatchedActions[1]).toEqual(
+            toKeyedAction(key, createCustomOptionsFromQuery(toVariablePayload(custom)))
+          );
+          expect(dispatchedActions[2].type).toEqual('templating/keyed/shared/setCurrentVariableValue');
+          expect(dispatchedActions[3]).toEqual(toKeyedAction(key, variableStateCompleted(toVariablePayload(custom))));
+
+          return true;
+        });
       });
     });
 

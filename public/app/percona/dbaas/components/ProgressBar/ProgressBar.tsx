@@ -8,7 +8,7 @@ import { getStyles } from './ProgressBar.styles';
 import { ProgressBarProps, ProgressBarStatus } from './ProgressBar.types';
 import { getProgressBarPercentage } from './ProgressBar.utils';
 
-export const ProgressBar: FC<ProgressBarProps> = ({ finishedSteps, totalSteps, status, message, dataTestId }) => {
+export const ProgressBar: FC<React.PropsWithChildren<ProgressBarProps>> = ({ finishedSteps, totalSteps, status, message, dataTestId }) => {
   const styles = useStyles(getStyles);
   const progressBarErrorStyles = useMemo(
     () => ({

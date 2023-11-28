@@ -6,10 +6,10 @@ import React from 'react';
 import { IconButton } from '@grafana/ui';
 import usePerconaTour from 'app/percona/shared/core/hooks/tour';
 
-const PrevButton: React.FC<BtnFnProps> = () => {
+const PrevButton: React.FC<React.PropsWithChildren<BtnFnProps>> = () => {
   const { previousStep, isFirstStep } = usePerconaTour();
 
-  return <IconButton onClick={previousStep} name="arrow-left" size="lg" disabled={isFirstStep} />;
+  return <IconButton onClick={previousStep} aria-label='Previous step' name="arrow-left" size="lg" disabled={isFirstStep} />;
 };
 
 export default PrevButton;

@@ -1,13 +1,13 @@
 import React, { FC, useEffect } from 'react';
-import { useSelector } from 'react-redux';
 
 import { getPerconaSettings } from 'app/percona/shared/core/selectors';
 import { EventStore } from 'app/percona/ui-events/EventStore';
 import { UIEventsService } from 'app/percona/ui-events/UIEvents.service';
+import { useSelector } from 'app/types';
 
 export interface UiEventsProps {}
 
-const _Telemetry: FC<UiEventsProps> = ({}) => {
+const _Telemetry: FC<React.PropsWithChildren<UiEventsProps>> = ({}) => {
   const { result } = useSelector(getPerconaSettings);
 
   const telemetryEnabled = !!result?.telemetryEnabled;

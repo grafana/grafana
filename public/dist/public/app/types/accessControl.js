@@ -1,0 +1,109 @@
+// Permission actions
+export var AccessControlAction;
+(function (AccessControlAction) {
+    AccessControlAction["UsersRead"] = "users:read";
+    AccessControlAction["UsersWrite"] = "users:write";
+    AccessControlAction["UsersAuthTokenList"] = "users.authtoken:read";
+    AccessControlAction["UsersAuthTokenUpdate"] = "users.authtoken:write";
+    AccessControlAction["UsersPasswordUpdate"] = "users.password:write";
+    AccessControlAction["UsersDelete"] = "users:delete";
+    AccessControlAction["UsersCreate"] = "users:create";
+    AccessControlAction["UsersEnable"] = "users:enable";
+    AccessControlAction["UsersDisable"] = "users:disable";
+    AccessControlAction["UsersPermissionsUpdate"] = "users.permissions:write";
+    AccessControlAction["UsersLogout"] = "users:logout";
+    AccessControlAction["UsersQuotasList"] = "users.quotas:read";
+    AccessControlAction["UsersQuotasUpdate"] = "users.quotas:write";
+    AccessControlAction["ServiceAccountsRead"] = "serviceaccounts:read";
+    AccessControlAction["ServiceAccountsCreate"] = "serviceaccounts:create";
+    AccessControlAction["ServiceAccountsWrite"] = "serviceaccounts:write";
+    AccessControlAction["ServiceAccountsDelete"] = "serviceaccounts:delete";
+    AccessControlAction["ServiceAccountsPermissionsRead"] = "serviceaccounts.permissions:read";
+    AccessControlAction["ServiceAccountsPermissionsWrite"] = "serviceaccounts.permissions:write";
+    AccessControlAction["OrgsRead"] = "orgs:read";
+    AccessControlAction["OrgsPreferencesRead"] = "orgs.preferences:read";
+    AccessControlAction["OrgsWrite"] = "orgs:write";
+    AccessControlAction["OrgsPreferencesWrite"] = "orgs.preferences:write";
+    AccessControlAction["OrgsCreate"] = "orgs:create";
+    AccessControlAction["OrgsDelete"] = "orgs:delete";
+    AccessControlAction["OrgUsersRead"] = "org.users:read";
+    AccessControlAction["OrgUsersAdd"] = "org.users:add";
+    AccessControlAction["OrgUsersRemove"] = "org.users:remove";
+    AccessControlAction["OrgUsersWrite"] = "org.users:write";
+    AccessControlAction["LDAPUsersRead"] = "ldap.user:read";
+    AccessControlAction["LDAPUsersSync"] = "ldap.user:sync";
+    AccessControlAction["LDAPStatusRead"] = "ldap.status:read";
+    AccessControlAction["DataSourcesExplore"] = "datasources:explore";
+    AccessControlAction["DataSourcesRead"] = "datasources:read";
+    AccessControlAction["DataSourcesCreate"] = "datasources:create";
+    AccessControlAction["DataSourcesWrite"] = "datasources:write";
+    AccessControlAction["DataSourcesDelete"] = "datasources:delete";
+    AccessControlAction["DataSourcesPermissionsRead"] = "datasources.permissions:read";
+    AccessControlAction["DataSourcesCachingRead"] = "datasources.caching:read";
+    AccessControlAction["DataSourcesInsightsRead"] = "datasources.insights:read";
+    AccessControlAction["ActionServerStatsRead"] = "server.stats:read";
+    AccessControlAction["ActionTeamsCreate"] = "teams:create";
+    AccessControlAction["ActionTeamsDelete"] = "teams:delete";
+    AccessControlAction["ActionTeamsRead"] = "teams:read";
+    AccessControlAction["ActionTeamsWrite"] = "teams:write";
+    AccessControlAction["ActionTeamsPermissionsRead"] = "teams.permissions:read";
+    AccessControlAction["ActionTeamsPermissionsWrite"] = "teams.permissions:write";
+    AccessControlAction["ActionRolesList"] = "roles:read";
+    AccessControlAction["ActionTeamsRolesList"] = "teams.roles:read";
+    AccessControlAction["ActionTeamsRolesAdd"] = "teams.roles:add";
+    AccessControlAction["ActionTeamsRolesRemove"] = "teams.roles:remove";
+    AccessControlAction["ActionUserRolesList"] = "users.roles:read";
+    AccessControlAction["ActionUserRolesAdd"] = "users.roles:add";
+    AccessControlAction["ActionUserRolesRemove"] = "users.roles:remove";
+    AccessControlAction["DashboardsRead"] = "dashboards:read";
+    AccessControlAction["DashboardsWrite"] = "dashboards:write";
+    AccessControlAction["DashboardsDelete"] = "dashboards:delete";
+    AccessControlAction["DashboardsCreate"] = "dashboards:create";
+    AccessControlAction["DashboardsPermissionsRead"] = "dashboards.permissions:read";
+    AccessControlAction["DashboardsPermissionsWrite"] = "dashboards.permissions:write";
+    AccessControlAction["DashboardsPublicWrite"] = "dashboards.public:write";
+    AccessControlAction["FoldersRead"] = "folders:read";
+    AccessControlAction["FoldersWrite"] = "folders:write";
+    AccessControlAction["FoldersDelete"] = "folders:delete";
+    AccessControlAction["FoldersCreate"] = "folders:create";
+    AccessControlAction["FoldersPermissionsRead"] = "folders.permissions:read";
+    AccessControlAction["FoldersPermissionsWrite"] = "folders.permissions:write";
+    // Support bundle actions
+    AccessControlAction["ActionSupportBundlesCreate"] = "support.bundles:create";
+    AccessControlAction["ActionSupportBundlesRead"] = "support.bundles:read";
+    AccessControlAction["ActionSupportBundlesDelete"] = "support.bundles:delete";
+    // Alerting rules
+    AccessControlAction["AlertingRuleCreate"] = "alert.rules:create";
+    AccessControlAction["AlertingRuleRead"] = "alert.rules:read";
+    AccessControlAction["AlertingRuleUpdate"] = "alert.rules:write";
+    AccessControlAction["AlertingRuleDelete"] = "alert.rules:delete";
+    // Alerting instances (+silences)
+    AccessControlAction["AlertingInstanceCreate"] = "alert.instances:create";
+    AccessControlAction["AlertingInstanceUpdate"] = "alert.instances:write";
+    AccessControlAction["AlertingInstanceRead"] = "alert.instances:read";
+    // Alerting Notification policies
+    AccessControlAction["AlertingNotificationsRead"] = "alert.notifications:read";
+    AccessControlAction["AlertingNotificationsWrite"] = "alert.notifications:write";
+    // External alerting rule actions.
+    AccessControlAction["AlertingRuleExternalWrite"] = "alert.rules.external:write";
+    AccessControlAction["AlertingRuleExternalRead"] = "alert.rules.external:read";
+    // External alerting instances actions.
+    AccessControlAction["AlertingInstancesExternalWrite"] = "alert.instances.external:write";
+    AccessControlAction["AlertingInstancesExternalRead"] = "alert.instances.external:read";
+    // External alerting notifications actions.
+    AccessControlAction["AlertingNotificationsExternalWrite"] = "alert.notifications.external:write";
+    AccessControlAction["AlertingNotificationsExternalRead"] = "alert.notifications.external:read";
+    // Alerting provisioning actions
+    AccessControlAction["AlertingProvisioningReadSecrets"] = "alert.provisioning.secrets:read";
+    AccessControlAction["AlertingProvisioningRead"] = "alert.provisioning:read";
+    AccessControlAction["AlertingProvisioningWrite"] = "alert.provisioning:write";
+    AccessControlAction["ActionAPIKeysRead"] = "apikeys:read";
+    AccessControlAction["ActionAPIKeysCreate"] = "apikeys:create";
+    AccessControlAction["ActionAPIKeysDelete"] = "apikeys:delete";
+    AccessControlAction["PluginsInstall"] = "plugins:install";
+    AccessControlAction["PluginsWrite"] = "plugins:write";
+    // Settings
+    AccessControlAction["SettingsRead"] = "settings:read";
+    AccessControlAction["SettingsWrite"] = "settings:write";
+})(AccessControlAction || (AccessControlAction = {}));
+//# sourceMappingURL=accessControl.js.map

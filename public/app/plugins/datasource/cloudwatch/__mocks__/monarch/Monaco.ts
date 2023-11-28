@@ -1,6 +1,7 @@
 import { monacoTypes } from '@grafana/ui';
 
-import { Monaco } from '../../monarch/types';
+import { Monaco } from '../../language/monarch/types';
+import * as CloudwatchLogsTestData from '../cloudwatch-logs-test-data';
 import * as SQLTestData from '../cloudwatch-sql-test-data';
 import * as DynamicLabelTestData from '../dynamic-label-test-data';
 import * as MetricMathTestData from '../metric-math-test-data';
@@ -39,6 +40,19 @@ const MonacoMock: Monaco = {
         };
         return TestData[value];
       }
+      if (languageId === 'cloudwatch-logs') {
+        const TestData = {
+          [CloudwatchLogsTestData.emptyQuery.query]: CloudwatchLogsTestData.emptyQuery.tokens,
+          [CloudwatchLogsTestData.whitespaceOnlyQuery.query]: CloudwatchLogsTestData.whitespaceOnlyQuery.tokens,
+          [CloudwatchLogsTestData.commentOnlyQuery.query]: CloudwatchLogsTestData.commentOnlyQuery.tokens,
+          [CloudwatchLogsTestData.singleLineFullQuery.query]: CloudwatchLogsTestData.singleLineFullQuery.tokens,
+          [CloudwatchLogsTestData.multiLineFullQuery.query]: CloudwatchLogsTestData.multiLineFullQuery.tokens,
+          [CloudwatchLogsTestData.filterQuery.query]: CloudwatchLogsTestData.filterQuery.tokens,
+          [CloudwatchLogsTestData.newCommandQuery.query]: CloudwatchLogsTestData.newCommandQuery.tokens,
+          [CloudwatchLogsTestData.sortQuery.query]: CloudwatchLogsTestData.sortQuery.tokens,
+        };
+        return TestData[value];
+      }
       return [];
     },
   },
@@ -52,7 +66,7 @@ const MonacoMock: Monaco = {
       );
     },
     fromPositions: (start: monacoTypes.IPosition, end?: monacoTypes.IPosition) => {
-      return {} as any as monacoTypes.Range;
+      return {} as unknown as monacoTypes.Range;
     },
   },
   languages: {

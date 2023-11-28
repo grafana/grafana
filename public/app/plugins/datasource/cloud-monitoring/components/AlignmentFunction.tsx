@@ -1,20 +1,32 @@
-import React, { FC, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
 import { getAlignmentPickerData } from '../functions';
-import { MetricQuery } from '../types';
+import { PreprocessorType, SLOQuery, TimeSeriesList } from '../types/query';
+import { MetricDescriptor } from '../types/types';
 
 export interface Props {
   inputId: string;
-  onChange: (query: MetricQuery) => void;
-  query: MetricQuery;
+  onChange: (query: TimeSeriesList | SLOQuery) => void;
+  query: TimeSeriesList | SLOQuery;
   templateVariableOptions: Array<SelectableValue<string>>;
+  metricDescriptor?: MetricDescriptor;
+  preprocessor?: PreprocessorType;
 }
 
-export const AlignmentFunction: FC<Props> = ({ inputId, query, templateVariableOptions, onChange }) => {
-  const { valueType, metricKind, perSeriesAligner: psa, preprocessor } = query;
+export const AlignmentFunction = ({
+  inputId,
+  query,
+  templateVariableOptions,
+  onChange,
+  metricDescriptor,
+  preprocessor,
+}: Props) => {
+  const { perSeriesAligner: psa } = query;
+  let { valueType, metricKind } = metricDescriptor || {};
+
   const { perSeriesAligner, alignOptions } = useMemo(
     () => getAlignmentPickerData(valueType, metricKind, psa, preprocessor),
     [valueType, metricKind, psa, preprocessor]

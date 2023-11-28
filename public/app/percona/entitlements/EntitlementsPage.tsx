@@ -21,7 +21,7 @@ import { PageContent } from './components/PageContent/PageContent';
 import { SectionContent } from './components/SectionContent/SectionContent';
 import { Label } from './components/SectionLabel/SectionLabel';
 
-const EntitlementsPage: FC = () => {
+const EntitlementsPage: FC<React.PropsWithChildren<unknown>> = () => {
   const [pendingRequest, setPendingRequest] = useState(true);
   const [data, setData] = useState<Entitlement[]>([]);
   const isConnectedToPortal = useSelector((state: StoreState) => !!state.percona.user.isPlatformUser);

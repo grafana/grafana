@@ -1,6 +1,7 @@
-import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Input, defaultIntervals, Field } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { getTimeSrv } from '../../services/TimeSrv';
 
@@ -11,12 +12,12 @@ export interface Props {
   validateIntervalsFunc?: typeof validateIntervals;
 }
 
-export const AutoRefreshIntervals: FC<Props> = ({
+export const AutoRefreshIntervals = ({
   refreshIntervals,
   onRefreshIntervalChange,
   getIntervalsFunc = getValidIntervals,
   validateIntervalsFunc = validateIntervals,
-}) => {
+}: Props) => {
   const [intervals, setIntervals] = useState<string[]>(getIntervalsFunc(refreshIntervals ?? defaultIntervals));
   const [invalidIntervalsMessage, setInvalidIntervalsMessage] = useState<string | null>(null);
 
@@ -58,8 +59,11 @@ export const AutoRefreshIntervals: FC<Props> = ({
 
   return (
     <Field
-      label="Auto refresh"
-      description="Define the auto refresh intervals that should be available in the auto refresh list."
+      label={t('dashboard-settings.general.auto-refresh-label', 'Auto refresh')}
+      description={t(
+        'dashboard-settings.general.auto-refresh-description',
+        'Define the auto refresh intervals that should be available in the auto refresh list.'
+      )}
       error={invalidIntervalsMessage}
       invalid={!!invalidIntervalsMessage}
     >

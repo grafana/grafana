@@ -1,0 +1,1 @@
+{"version":3,"file":"dataquery.gen.js","sourceRoot":"","sources":["../../../../../../app/plugins/datasource/parca/dataquery.gen.ts"],"names":[],"mappings":"AAAA,mDAAmD;AACnD,EAAE;AACF,gBAAgB;AAChB,gCAAgC;AAChC,iBAAiB;AACjB,mBAAmB;AACnB,yBAAyB;AACzB,EAAE;AACF,yDAAyD;AAMzD,MAAM,CAAC,MAAM,qBAAqB,GAAmB,MAAM,CAAC;AAa5D,MAAM,CAAC,MAAM,YAAY,GAAmB;IAC1C,aAAa,EAAE,IAAI;CACpB,CAAC"}

@@ -1,11 +1,19 @@
-import { Correlation } from '../types';
+import { SupportedTransformationType } from '@grafana/data';
+
+import { CorrelationConfig } from '../types';
 
 export interface FormDTO {
   sourceUID: string;
   targetUID: string;
   label: string;
   description: string;
+  config: CorrelationConfig;
 }
 
-type FormDTOWithoutTarget = Omit<FormDTO, 'targetUID'>;
-export type EditFormDTO = Partial<FormDTOWithoutTarget> & Pick<FormDTO, 'sourceUID'> & { uid: Correlation['uid'] };
+export type EditFormDTO = Omit<FormDTO, 'targetUID' | 'sourceUID'>;
+
+export type TransformationDTO = {
+  type: SupportedTransformationType;
+  expression?: string;
+  mapValue?: string;
+};

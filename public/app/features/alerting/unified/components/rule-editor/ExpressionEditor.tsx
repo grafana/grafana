@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import { noop } from 'lodash';
-import React, { FC, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import { CoreApp, DataQuery, GrafanaTheme2, LoadingState } from '@grafana/data';
+import { CoreApp, DataQuery, DataSourcePluginContextProvider, GrafanaTheme2, LoadingState } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
@@ -16,9 +16,15 @@ export interface ExpressionEditorProps {
   value?: string;
   onChange: (value: string) => void;
   dataSourceName: string; // will be a prometheus or loki datasource
+  showPreviewAlertsButton: boolean;
 }
 
-export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, dataSourceName }) => {
+export const ExpressionEditor = ({
+  value,
+  onChange,
+  dataSourceName,
+  showPreviewAlertsButton = true,
+}: ExpressionEditorProps) => {
   const styles = useStyles2(getStyles);
 
   const { mapToValue, mapToQuery } = useQueryMappers(dataSourceName);
@@ -49,7 +55,9 @@ export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, d
     return null;
   }
 
-  if (error || !dataSource || !dataSource?.components?.QueryEditor) {
+  const dsi = getDataSourceSrv().getInstanceSettings(dataSourceName);
+
+  if (error || !dataSource || !dataSource?.components?.QueryEditor || !dsi) {
     const errorMessage = error?.message || 'Data source plugin does not export any Query Editor component';
     return <div>Could not load query editor due to: {errorMessage}</div>;
   }
@@ -65,26 +73,33 @@ export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, d
 
   return (
     <>
-      <QueryEditor
-        query={dataQuery}
-        queries={[dataQuery]}
-        app={CoreApp.CloudAlerting}
-        onChange={onChangeQuery}
-        onRunQuery={noop}
-        datasource={dataSource}
-      />
-
-      <div className={styles.preview}>
-        <Button type="button" onClick={onRunQueriesClick} disabled={alertPreview?.data.state === LoadingState.Loading}>
-          Preview alerts
-        </Button>
-        {previewLoaded && !previewHasAlerts && (
-          <Alert title="Alerts preview" severity="info" className={styles.previewAlert}>
-            There are no firing alerts for your query.
-          </Alert>
-        )}
-        {previewHasAlerts && <CloudAlertPreview preview={previewDataFrame} />}
-      </div>
+      <DataSourcePluginContextProvider instanceSettings={dsi}>
+        <QueryEditor
+          query={dataQuery}
+          queries={[dataQuery]}
+          app={CoreApp.CloudAlerting}
+          onChange={onChangeQuery}
+          onRunQuery={noop}
+          datasource={dataSource}
+        />
+      </DataSourcePluginContextProvider>
+      {showPreviewAlertsButton && (
+        <div className={styles.preview}>
+          <Button
+            type="button"
+            onClick={onRunQueriesClick}
+            disabled={alertPreview?.data.state === LoadingState.Loading}
+          >
+            Preview alerts
+          </Button>
+          {previewLoaded && !previewHasAlerts && (
+            <Alert title="Alerts preview" severity="info" className={styles.previewAlert}>
+              There are no firing alerts for your query.
+            </Alert>
+          )}
+          {previewHasAlerts && <CloudAlertPreview preview={previewDataFrame} />}
+        </div>
+      )}
     </>
   );
 };
@@ -104,7 +119,7 @@ type QueryMappers<T extends DataQuery = DataQuery> = {
   mapToQuery: (existing: T, value: string | undefined) => T;
 };
 
-function useQueryMappers(dataSourceName: string): QueryMappers {
+export function useQueryMappers(dataSourceName: string): QueryMappers {
   return useMemo(() => {
     const settings = getDataSourceSrv().getInstanceSettings(dataSourceName);
 

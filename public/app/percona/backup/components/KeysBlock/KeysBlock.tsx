@@ -7,7 +7,7 @@ import { Messages } from './KeysBlock.messages';
 import { getStyles } from './KeysBlock.styles';
 import { KeysBlockProps } from './KeysBlock.types';
 
-export const KeysBlock: FC<KeysBlockProps> = ({ accessKey, secretKey }) => {
+export const KeysBlock: FC<React.PropsWithChildren<KeysBlockProps>> = ({ accessKey, secretKey }) => {
   const styles = useStyles(getStyles);
 
   return (

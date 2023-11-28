@@ -1,17 +1,59 @@
 package util
 
 import (
+	"sync"
 	"testing"
 
+	"cuelang.org/go/pkg/strings"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 func TestAllowedCharMatchesUidPattern(t *testing.T) {
-	for _, c := range allowedChars {
+	for _, c := range alphaRunes {
 		if !IsValidShortUID(string(c)) {
 			t.Fatalf("charset for creating new shortids contains chars not present in uid pattern")
 		}
 	}
+}
+
+// Run with "go test -race -run ^TestThreadSafe$ github.com/grafana/grafana/pkg/util"
+func TestThreadSafe(t *testing.T) {
+	// This test was used to showcase the bug, unfortunately there is
+	// no way to enable the -race flag programmatically.
+	t.Skip()
+	// Use 1000 go routines to create 100 UIDs each at roughly the same time.
+	var wg sync.WaitGroup
+	for i := 0; i < 1000; i++ {
+		go func() {
+			for ii := 0; ii < 100; ii++ {
+				_ = GenerateShortUID()
+			}
+			wg.Done()
+		}()
+		wg.Add(1)
+	}
+	wg.Wait()
+}
+
+func TestRandomUIDs(t *testing.T) {
+	for i := 0; i < 100; i++ {
+		v := GenerateShortUID()
+		if !IsValidShortUID(v) {
+			t.Fatalf("charset for creating new shortids contains chars not present in uid pattern")
+		}
+		validation := validation.IsQualifiedName(v)
+		if validation != nil {
+			t.Fatalf("created invalid name: %v", validation)
+		}
+
+		_, err := uuid.Parse(v)
+		require.NoError(t, err)
+
+		//fmt.Println(v)
+	}
+	// t.FailNow()
 }
 
 func TestIsShortUIDTooLong(t *testing.T) {
@@ -22,7 +64,7 @@ func TestIsShortUIDTooLong(t *testing.T) {
 	}{
 		{
 			name:     "when the length of uid is longer than 40 chars then IsShortUIDTooLong should return true",
-			uid:      allowedChars,
+			uid:      string(alphaRunes) + string(alphaRunes),
 			expected: true,
 		},
 		{
@@ -40,6 +82,50 @@ func TestIsShortUIDTooLong(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Equal(t, tt.expected, IsShortUIDTooLong(tt.uid))
+		})
+	}
+}
+
+func TestValidateUID(t *testing.T) {
+	var tests = []struct {
+		name     string
+		uid      string
+		expected error
+	}{
+		{
+			name:     "no error when string is of correct length",
+			uid:      "f8cc010c-ee72-4681-89d2-d46e1bd47d33",
+			expected: nil,
+		},
+		{
+			name:     "error when string is empty",
+			uid:      "",
+			expected: ErrUIDEmpty,
+		},
+		{
+			name:     "error when string is too long",
+			uid:      strings.Repeat("1", MaxUIDLength+1),
+			expected: ErrUIDTooLong,
+		},
+		{
+			name:     "error when string has invalid characters",
+			uid:      "f8cc010c.ee72.4681;89d2+d46e1bd47d33",
+			expected: ErrUIDFormatInvalid,
+		},
+		{
+			name:     "error when string has only whitespaces",
+			uid:      " ",
+			expected: ErrUIDFormatInvalid,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateUID(tt.uid)
+			if tt.expected == nil {
+				require.NoError(t, err)
+			} else {
+				require.ErrorIs(t, err, tt.expected)
+			}
 		})
 	}
 }

@@ -13,7 +13,7 @@ import DeleteRoleModal from '../DeleteRoleModal';
 import { styles } from './OptionsCell.styles';
 import { OptionsCellProps } from './OptionsCell.types';
 
-const OptionsCell: FC<OptionsCellProps> = ({ role }) => {
+const OptionsCell: FC<React.PropsWithChildren<OptionsCellProps>> = ({ role }) => {
   const dispatch = useAppDispatch();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
@@ -62,7 +62,7 @@ const OptionsCell: FC<OptionsCellProps> = ({ role }) => {
     <div className={styles.Cell}>
       <DeleteRoleModal isOpen={deleteModalOpen} onCancel={handleDeleteCancel} role={role} />
       <Dropdown overlay={menu}>
-        <IconButton ariaLabel={Messages.options.iconLabel} name="ellipsis-v" />
+        <IconButton aria-label={Messages.options.iconLabel} name="ellipsis-v" />
       </Dropdown>
     </div>
   );

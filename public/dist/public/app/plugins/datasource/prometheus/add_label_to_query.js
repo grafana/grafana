@@ -1,0 +1,81 @@
+import { parser, VectorSelector } from '@prometheus-io/lezer-promql';
+import { PromQueryModeller } from './querybuilder/PromQueryModeller';
+import { buildVisualQueryFromString } from './querybuilder/parsing';
+/**
+ * Adds label filter to existing query. Useful for query modification for example for ad hoc filters.
+ *
+ * It uses PromQL parser to find instances of metric and labels, alters them and then splices them back into the query.
+ * Ideally we could use the parse -> change -> render is a simple 3 steps but right now building the visual query
+ * object does not support all possible queries.
+ *
+ * So instead this just operates on substrings of the query with labels and operates just on those. This makes this
+ * more robust and can alter even invalid queries, and preserves in general the query structure and whitespace.
+ * @param query
+ * @param key
+ * @param value
+ * @param operator
+ */
+export function addLabelToQuery(query, key, value, operator = '=') {
+    if (!key || !value) {
+        throw new Error('Need label to add to query.');
+    }
+    const vectorSelectorPositions = getVectorSelectorPositions(query);
+    if (!vectorSelectorPositions.length) {
+        return query;
+    }
+    const filter = toLabelFilter(key, value, operator);
+    return addFilter(query, vectorSelectorPositions, filter);
+}
+/**
+ * Parse the string and get all VectorSelector positions in the query together with parsed representation of the vector
+ * selector.
+ * @param query
+ */
+function getVectorSelectorPositions(query) {
+    const tree = parser.parse(query);
+    const positions = [];
+    tree.iterate({
+        enter: ({ to, from, type }) => {
+            if (type.id === VectorSelector) {
+                const visQuery = buildVisualQueryFromString(query.substring(from, to));
+                positions.push({ query: visQuery.query, from, to });
+                return false;
+            }
+        },
+    });
+    return positions;
+}
+function toLabelFilter(key, value, operator) {
+    // We need to make sure that we convert the value back to string because it may be a number
+    const transformedValue = value === Infinity ? '+Inf' : value.toString();
+    return { label: key, op: operator, value: transformedValue };
+}
+function addFilter(query, vectorSelectorPositions, filter) {
+    const modeller = new PromQueryModeller();
+    let newQuery = '';
+    let prev = 0;
+    for (let i = 0; i < vectorSelectorPositions.length; i++) {
+        // This is basically just doing splice on a string for each matched vector selector.
+        const match = vectorSelectorPositions[i];
+        const isLast = i === vectorSelectorPositions.length - 1;
+        const start = query.substring(prev, match.from);
+        const end = isLast ? query.substring(match.to) : '';
+        if (!labelExists(match.query.labels, filter)) {
+            // We don't want to add duplicate labels.
+            match.query.labels.push(filter);
+        }
+        const newLabels = modeller.renderQuery(match.query);
+        newQuery += start + newLabels + end;
+        prev = match.to;
+    }
+    return newQuery;
+}
+/**
+ * Check if label exists in the list of labels but ignore the operator.
+ * @param labels
+ * @param filter
+ */
+function labelExists(labels, filter) {
+    return labels.find((label) => label.label === filter.label && label.value === filter.value);
+}
+//# sourceMappingURL=add_label_to_query.js.map

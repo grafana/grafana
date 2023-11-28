@@ -1,24 +1,23 @@
 import { SerializedError } from '@reduxjs/toolkit';
-import { render, waitFor } from '@testing-library/react';
+import { prettyDOM, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
-import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
+import { TestProvider } from 'test/helpers/TestProvider';
+import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { contextSrv } from 'app/core/services/context_srv';
-import { configureStore } from 'app/store/configureStore';
+import { DataSourceSrv, locationService, logInfo, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
+import { backendSrv } from 'app/core/services/backend_srv';
+import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
+import * as actions from 'app/features/alerting/unified/state/actions';
 import { AccessControlAction } from 'app/types';
 import { PromAlertingRuleState, PromApplication } from 'app/types/unified-alerting-dto';
 
+import { LogMessages } from './Analytics';
 import RuleList from './RuleList';
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRules } from './api/prometheus';
 import { deleteNamespace, deleteRulerRulesGroup, fetchRulerRules, setRulerRuleGroup } from './api/ruler';
 import {
-  disableRBAC,
-  enableRBAC,
   grantUserPermissions,
   mockDataSource,
   MockDataSourceSrv,
@@ -36,7 +35,10 @@ import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 jest.mock('./api/buildInfo');
 jest.mock('./api/prometheus');
 jest.mock('./api/ruler');
+jest.mock('../../../core/hooks/useMediaQueryChange');
+jest.spyOn(ruleActionButtons, 'matchesWidth').mockReturnValue(false);
 jest.mock('app/core/core', () => ({
+  ...jest.requireActual('app/core/core'),
   appEvents: {
     subscribe: () => {
       return { unsubscribe: () => {} };
@@ -44,11 +46,20 @@ jest.mock('app/core/core', () => ({
     emit: () => {},
   },
 }));
+jest.mock('@grafana/runtime', () => {
+  const original = jest.requireActual('@grafana/runtime');
+  return {
+    ...original,
+    logInfo: jest.fn(),
+  };
+});
 
 jest.spyOn(config, 'getAllDataSources');
+jest.spyOn(actions, 'rulesInSameGroupHaveInvalidFor').mockReturnValue([]);
 
 const mocks = {
   getAllDataSourcesMock: jest.mocked(config.getAllDataSources),
+  rulesInSameGroupHaveInvalidForMock: jest.mocked(actions.rulesInSameGroupHaveInvalidFor),
 
   api: {
     discoverFeatures: jest.mocked(discoverFeatures),
@@ -61,15 +72,12 @@ const mocks = {
 };
 
 const renderRuleList = () => {
-  const store = configureStore();
   locationService.push('/');
 
   return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <RuleList />
-      </Router>
-    </Provider>
+    <TestProvider>
+      <RuleList />
+    </TestProvider>
   );
 };
 
@@ -106,29 +114,43 @@ const ui = {
   rulesFilterInput: byTestId('search-query-input'),
   moreErrorsButton: byRole('button', { name: /more errors/ }),
   editCloudGroupIcon: byTestId('edit-group'),
-
   newRuleButton: byRole('link', { name: 'New alert rule' }),
-
+  moreButton: byRole('button', { name: 'More' }),
+  exportButton: byRole('menuitem', {
+    name: /export all grafana\-managed rules/i,
+  }),
   editGroupModal: {
-    namespaceInput: byLabelText('Namespace'),
-    ruleGroupInput: byLabelText('Rule group'),
-    intervalInput: byLabelText('Rule group evaluation interval'),
-    saveButton: byRole('button', { name: /Save changes/ }),
+    dialog: byRole('dialog'),
+    namespaceInput: byRole('textbox', { name: /^Namespace/ }),
+    ruleGroupInput: byRole('textbox', { name: /Evaluation group/ }),
+    intervalInput: byRole('textbox', {
+      name: /Evaluation interval How often is the rule evaluated. Applies to every rule within the group./i,
+    }),
+    saveButton: byRole('button', { name: /Save/ }),
   },
 };
 
+beforeAll(() => {
+  setBackendSrv(backendSrv);
+});
+
 describe('RuleList', () => {
   beforeEach(() => {
-    contextSrv.isEditor = true;
+    grantUserPermissions([
+      AccessControlAction.AlertingRuleRead,
+      AccessControlAction.AlertingRuleUpdate,
+      AccessControlAction.AlertingRuleExternalRead,
+      AccessControlAction.AlertingRuleExternalWrite,
+    ]);
+    mocks.rulesInSameGroupHaveInvalidForMock.mockReturnValue([]);
   });
 
   afterEach(() => {
     jest.resetAllMocks();
-    setDataSourceSrv(undefined as any);
+    setDataSourceSrv(undefined as unknown as DataSourceSrv);
   });
 
   it('load & show rule groups from multiple cloud data sources', async () => {
-    disableRBAC();
     mocks.getAllDataSourcesMock.mockReturnValue(Object.values(dataSources));
 
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
@@ -199,6 +221,8 @@ describe('RuleList', () => {
       }
       return Promise.reject(new Error(`unexpected datasourceName: ${dataSourceName}`));
     });
+
+    mocks.api.fetchRulerRules.mockRejectedValue({ status: 500, data: { message: 'Server error' } });
 
     await renderRuleList();
 
@@ -303,8 +327,15 @@ describe('RuleList', () => {
 
     const groups = await ui.ruleGroup.findAll();
     expect(groups).toHaveLength(2);
-    expect(groups[0]).toHaveTextContent('1 rule');
-    expect(groups[1]).toHaveTextContent('4 rules: 1 firing, 1 pending');
+
+    await waitFor(() => expect(groups[0]).toHaveTextContent(/firing|pending|normal/));
+    await waitFor(() => expect(groups[1]).toHaveTextContent(/firing|pending|normal/));
+
+    expect(groups[0]).toHaveTextContent('1 firing');
+    expect(groups[1]).toHaveTextContent('1 firing');
+    expect(groups[1]).toHaveTextContent('1 pending');
+    expect(groups[1]).toHaveTextContent('1 recording');
+    expect(groups[1]).toHaveTextContent('1 normal');
 
     // expand second group to see rules table
     expect(ui.rulesTable.query()).not.toBeInTheDocument();
@@ -334,7 +365,7 @@ describe('RuleList', () => {
 
     const ruleDetails = ui.expandedContent.get(ruleRows[1]);
 
-    expect(ruleDetails).toHaveTextContent('Labelsseverity=warningfoo=bar');
+    expect(ruleDetails).toHaveTextContent('Labels severitywarning foobar');
     expect(ruleDetails).toHaveTextContent('Expressiontopk ( 5 , foo ) [ 5m ]');
     expect(ruleDetails).toHaveTextContent('messagegreat alert');
     expect(ruleDetails).toHaveTextContent('Matching instances');
@@ -345,8 +376,8 @@ describe('RuleList', () => {
     const instanceRows = byTestId('row').getAll(instancesTable);
     expect(instanceRows).toHaveLength(2);
 
-    expect(instanceRows![0]).toHaveTextContent('Firingfoo=barseverity=warning2021-03-18 08:47:05');
-    expect(instanceRows![1]).toHaveTextContent('Firingfoo=bazseverity=error2021-03-18 08:47:05');
+    expect(instanceRows![0]).toHaveTextContent('Firing foobar severitywarning2021-03-18 08:47:05');
+    expect(instanceRows![1]).toHaveTextContent('Firing foobaz severityerror2021-03-18 08:47:05');
 
     // expand details of an instance
     await userEvent.click(ui.ruleCollapseToggle.get(instanceRows![0]));
@@ -467,14 +498,15 @@ describe('RuleList', () => {
     });
 
     await renderRuleList();
+
     const groups = await ui.ruleGroup.findAll();
     expect(groups).toHaveLength(2);
 
     const filterInput = ui.rulesFilterInput.get();
-    await userEvent.type(filterInput, '{{foo="bar"}');
+    await userEvent.type(filterInput, 'label:foo=bar{Enter}');
 
     // Input is debounced so wait for it to be visible
-    await waitFor(() => expect(filterInput).toHaveValue('{foo="bar"}'));
+    await waitFor(() => expect(filterInput).toHaveValue('label:foo=bar'));
     // Group doesn't contain matching labels
     await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(1));
 
@@ -486,21 +518,21 @@ describe('RuleList', () => {
     await userEvent.click(ui.ruleCollapseToggle.get(ruleRows[0]));
     const ruleDetails = ui.expandedContent.get(ruleRows[0]);
 
-    expect(ruleDetails).toHaveTextContent('Labelsseverity=warningfoo=bar');
+    expect(ruleDetails).toHaveTextContent('Labels severitywarning foobar');
 
     // Check for different label matchers
     await userEvent.clear(filterInput);
-    await userEvent.type(filterInput, '{{foo!="bar",foo!="baz"}');
+    await userEvent.type(filterInput, 'label:foo!=bar label:foo!=baz{Enter}');
     // Group doesn't contain matching labels
     await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(1));
     await waitFor(() => expect(ui.ruleGroup.get()).toHaveTextContent('group-2'));
 
     await userEvent.clear(filterInput);
-    await userEvent.type(filterInput, '{{foo=~"b.+"}');
+    await userEvent.type(filterInput, 'label:"foo=~b.+"{Enter}');
     await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(2));
 
     await userEvent.clear(filterInput);
-    await userEvent.type(filterInput, '{{region="US"}');
+    await userEvent.type(filterInput, 'label:region=US{Enter}');
     await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(1));
     await waitFor(() => expect(ui.ruleGroup.get()).toHaveTextContent('group-2'));
   });
@@ -535,14 +567,19 @@ describe('RuleList', () => {
 
         expect(await ui.rulesFilterInput.find()).toHaveValue('');
 
+        await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(3));
+
         const groups = await ui.ruleGroup.findAll();
         expect(groups).toHaveLength(3);
 
         // open edit dialog
         await userEvent.click(ui.editCloudGroupIcon.get(groups[0]));
 
-        expect(ui.editGroupModal.namespaceInput.get()).toHaveValue('namespace1');
-        expect(ui.editGroupModal.ruleGroupInput.get()).toHaveValue('group1');
+        await waitFor(() => expect(ui.editGroupModal.dialog.get()).toBeInTheDocument());
+        prettyDOM(ui.editGroupModal.dialog.get());
+
+        expect(ui.editGroupModal.namespaceInput.get()).toHaveDisplayValue('namespace1');
+        expect(ui.editGroupModal.ruleGroupInput.get()).toHaveDisplayValue('group1');
         await fn();
       });
     }
@@ -646,10 +683,38 @@ describe('RuleList', () => {
   });
 
   describe('RBAC Enabled', () => {
+    describe('Export button', () => {
+      it('Export button should be visible when the user has alert read permissions', async () => {
+        grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.FoldersRead]);
+
+        mocks.getAllDataSourcesMock.mockReturnValue([]);
+        setDataSourceSrv(new MockDataSourceSrv({}));
+        mocks.api.fetchRules.mockResolvedValue([
+          mockPromRuleNamespace({
+            name: 'foofolder',
+            dataSourceName: GRAFANA_RULES_SOURCE_NAME,
+            groups: [
+              mockPromRuleGroup({
+                name: 'grafana-group',
+                rules: [
+                  mockPromAlertingRule({
+                    query: '[]',
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ]);
+        mocks.api.fetchRulerRules.mockResolvedValue({});
+
+        renderRuleList();
+
+        await userEvent.click(ui.moreButton.get());
+        expect(ui.exportButton.get()).toBeInTheDocument();
+      });
+    });
     describe('Grafana Managed Alerts', () => {
       it('New alert button should be visible when the user has alert rule create and folder read permissions and no rules exists', async () => {
-        enableRBAC();
-
         grantUserPermissions([
           AccessControlAction.FoldersRead,
           AccessControlAction.AlertingRuleCreate,
@@ -668,8 +733,6 @@ describe('RuleList', () => {
       });
 
       it('New alert button should be visible when the user has alert rule create and folder read permissions and rules already exists', async () => {
-        enableRBAC();
-
         grantUserPermissions([
           AccessControlAction.FoldersRead,
           AccessControlAction.AlertingRuleCreate,
@@ -690,8 +753,6 @@ describe('RuleList', () => {
 
     describe('Cloud Alerts', () => {
       it('New alert button should be visible when the user has the alert rule external write and datasource read permissions and no rules exists', async () => {
-        enableRBAC();
-
         grantUserPermissions([
           // AccessControlAction.AlertingRuleRead,
           AccessControlAction.DataSourcesRead,
@@ -718,8 +779,6 @@ describe('RuleList', () => {
       });
 
       it('New alert button should be visible when the user has the alert rule external write and data source read permissions and rules already exists', async () => {
-        enableRBAC();
-
         grantUserPermissions([
           AccessControlAction.DataSourcesRead,
           AccessControlAction.AlertingRuleExternalRead,
@@ -743,6 +802,35 @@ describe('RuleList', () => {
         await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(1));
         expect(ui.newRuleButton.get()).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Analytics', () => {
+    it('Sends log info when creating an alert rule from a scratch', async () => {
+      grantUserPermissions([
+        AccessControlAction.FoldersRead,
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.AlertingRuleRead,
+      ]);
+
+      mocks.getAllDataSourcesMock.mockReturnValue([]);
+      setDataSourceSrv(new MockDataSourceSrv({}));
+      mocks.api.fetchRules.mockResolvedValue([]);
+      mocks.api.fetchRulerRules.mockResolvedValue({});
+
+      renderRuleList();
+
+      await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(1));
+
+      const button = screen.getByText('New alert rule');
+
+      button.addEventListener('click', (event) => event.preventDefault(), false);
+
+      expect(button).toBeEnabled();
+
+      await userEvent.click(button);
+
+      expect(logInfo).toHaveBeenCalledWith(LogMessages.alertRuleFromScratch);
     });
   });
 });

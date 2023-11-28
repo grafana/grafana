@@ -20,7 +20,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { store } from 'app/store/store';
 import { AppNotificationTimeout } from 'app/types';
 
-import { ThrottlingErrorMessage } from '../components/ThrottlingErrorMessage';
+import { ThrottlingErrorMessage } from '../components/Errors/ThrottlingErrorMessage';
 import memoizedDebounce from '../memoizedDebounce';
 import { migrateMetricQuery } from '../migrations/metricQueryMigrations';
 import {
@@ -70,7 +70,7 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
       .filter(this.filterMetricQuery)
       .map((q: CloudWatchMetricsQuery): MetricQuery => {
         const migratedQuery = migrateMetricQuery(q);
-        const migratedAndIterpolatedQuery = this.replaceMetricQueryVars(migratedQuery, options);
+        const migratedAndIterpolatedQuery = this.replaceMetricQueryVars(migratedQuery, options.scopedVars);
 
         return {
           timezoneUTCOffset,
@@ -99,12 +99,16 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
   interpolateMetricsQueryVariables(
     query: CloudWatchMetricsQuery,
     scopedVars: ScopedVars
-  ): Pick<CloudWatchMetricsQuery, 'alias' | 'metricName' | 'namespace' | 'period' | 'dimensions' | 'sqlExpression'> {
+  ): Pick<
+    CloudWatchMetricsQuery,
+    'alias' | 'metricName' | 'namespace' | 'period' | 'dimensions' | 'sqlExpression' | 'expression'
+  > {
     return {
       alias: this.replaceVariableAndDisplayWarningIfMulti(query.alias, scopedVars),
       metricName: this.replaceVariableAndDisplayWarningIfMulti(query.metricName, scopedVars),
       namespace: this.replaceVariableAndDisplayWarningIfMulti(query.namespace, scopedVars),
       period: this.replaceVariableAndDisplayWarningIfMulti(query.period, scopedVars),
+      expression: this.templateSrv.replace(query.expression, scopedVars),
       sqlExpression: this.replaceVariableAndDisplayWarningIfMulti(query.sqlExpression, scopedVars),
       dimensions: this.convertDimensionFormat(query.dimensions ?? {}, scopedVars),
     };
@@ -113,12 +117,12 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
   performTimeSeriesQuery(request: MetricRequest, { from, to }: TimeRange): Observable<DataQueryResponse> {
     return this.awsRequest(this.dsQueryEndpoint, request).pipe(
       map((res) => {
-        const dataframes: DataFrame[] = toDataQueryResponse({ data: res }).data;
+        const dataframes: DataFrame[] = toDataQueryResponse(res).data;
         if (!dataframes || dataframes.length <= 0) {
           return { data: [] };
         }
 
-        const lastError = findLast(res.results, (v) => !!v.error);
+        const lastError = findLast(res.data.results, (v) => !!v.error);
 
         dataframes.forEach((frame) => {
           frame.fields.forEach((field) => {
@@ -174,35 +178,25 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
     return filterMetricsQuery(query);
   }
 
-  replaceMetricQueryVars(
-    query: CloudWatchMetricsQuery,
-    options: DataQueryRequest<CloudWatchQuery>
-  ): CloudWatchMetricsQuery {
-    query.region = this.templateSrv.replace(this.getActualRegion(query.region), options.scopedVars);
-    query.namespace = this.replaceVariableAndDisplayWarningIfMulti(
-      query.namespace,
-      options.scopedVars,
-      true,
-      'namespace'
-    );
-    query.metricName = this.replaceVariableAndDisplayWarningIfMulti(
-      query.metricName,
-      options.scopedVars,
-      true,
-      'metric name'
-    );
-    query.dimensions = this.convertDimensionFormat(query.dimensions ?? {}, options.scopedVars);
-    query.statistic = this.templateSrv.replace(query.statistic, options.scopedVars);
-    query.period = String(this.getPeriod(query, options)); // use string format for period in graph query, and alerting
-    query.id = this.templateSrv.replace(query.id, options.scopedVars);
-    query.expression = this.templateSrv.replace(query.expression, options.scopedVars);
-    query.sqlExpression = this.templateSrv.replace(query.sqlExpression, options.scopedVars, 'raw');
+  replaceMetricQueryVars(query: CloudWatchMetricsQuery, scopedVars: ScopedVars): CloudWatchMetricsQuery {
+    query.region = this.templateSrv.replace(this.getActualRegion(query.region), scopedVars);
+    query.namespace = this.replaceVariableAndDisplayWarningIfMulti(query.namespace, scopedVars, true, 'namespace');
+    query.metricName = this.replaceVariableAndDisplayWarningIfMulti(query.metricName, scopedVars, true, 'metric name');
+    query.dimensions = this.convertDimensionFormat(query.dimensions ?? {}, scopedVars);
+    query.statistic = this.templateSrv.replace(query.statistic, scopedVars);
+    query.period = String(this.getPeriod(query, scopedVars)); // use string format for period in graph query, and alerting
+    query.id = this.templateSrv.replace(query.id, scopedVars);
+    query.expression = this.templateSrv.replace(query.expression, scopedVars);
+    query.sqlExpression = this.templateSrv.replace(query.sqlExpression, scopedVars, 'raw');
+    if (query.accountId) {
+      query.accountId = this.templateSrv.replace(query.accountId, scopedVars);
+    }
 
     return query;
   }
 
-  getPeriod(target: CloudWatchMetricsQuery, options: DataQueryRequest<CloudWatchQuery>) {
-    let period = this.templateSrv.replace(target.period, options.scopedVars);
+  getPeriod(target: CloudWatchMetricsQuery, scopedVars: ScopedVars) {
+    let period = this.templateSrv.replace(target.period, scopedVars);
     if (period && period.toLowerCase() !== 'auto') {
       let p: number;
       if (/^\d+$/.test(period)) {

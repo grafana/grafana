@@ -1,11 +1,9 @@
 package metrics
 
-import (
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
-)
+import "github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 
-func MigrateDimensionFilters(filters []types.AzureMonitorDimensionFilter) []types.AzureMonitorDimensionFilter {
-	var newFilters []types.AzureMonitorDimensionFilter
+func MigrateDimensionFilters(filters []dataquery.AzureMetricDimension) []dataquery.AzureMetricDimension {
+	var newFilters []dataquery.AzureMetricDimension
 	for _, filter := range filters {
 		newFilter := filter
 		// Ignore the deprecation check as this is a migration

@@ -23,9 +23,9 @@ import { FlattenService } from '../Inventory.types';
 import DeleteServiceModal from '../components/DeleteServiceModal';
 import DeleteServicesModal from '../components/DeleteServicesModal';
 
-import { getAgentsMonitoringStatus } from './Services.utils';
 import Clusters from './Services/Clusters';
 import ServicesTable from './Services/ServicesTable';
+import { getAgentsMonitoringStatus } from './Services.utils';
 import { getStyles } from './Tabs.styles';
 
 export const Services = () => {

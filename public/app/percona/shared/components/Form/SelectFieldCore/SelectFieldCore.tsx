@@ -28,7 +28,7 @@ export interface SelectFieldProps<T>
   getValueForValidators?: GetSelectValueFunction<T | SelectableValue<T> | null>;
 }
 
-export const SelectField: FC<SelectFieldProps<any>> = ({
+export const SelectField: FC<React.PropsWithChildren<SelectFieldProps<any>>> = ({
   label,
   name,
   required,

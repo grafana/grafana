@@ -1,6 +1,6 @@
-import { FieldType, DataFrame } from '../types';
+import { DataFrame } from '../types';
 
-import { ArrayDataFrame } from './ArrayDataFrame';
+import { ArrayDataFrame, arrayToDataFrame } from './ArrayDataFrame';
 import { toDataFrameDTO } from './processDataFrame';
 
 describe('Array DataFrame', () => {
@@ -15,39 +15,19 @@ describe('Array DataFrame', () => {
   const frame = new ArrayDataFrame(input);
   frame.name = 'Hello';
   frame.refId = 'Z';
-  frame.setFieldType('phantom', FieldType.string, (v) => '🦥');
   const field = frame.fields.find((f) => f.name === 'value');
   field!.config.unit = 'kwh';
 
-  test('Should support functional methods', () => {
-    const expectedNames = input.map((row) => row.name);
-
-    // Check map
-    expect(frame.map((row) => row.name)).toEqual(expectedNames);
-
-    let names: string[] = [];
-    for (const row of frame) {
-      names.push(row.name);
-    }
-    expect(names).toEqual(expectedNames);
-
-    names = [];
-    frame.forEach((row) => {
-      names.push(row.name);
-    });
-    expect(names).toEqual(expectedNames);
-  });
-
   test('Should convert an array of objects to a dataframe', () => {
     expect(toDataFrameDTO(frame)).toMatchInlineSnapshot(`
-      Object {
-        "fields": Array [
-          Object {
-            "config": Object {},
+      {
+        "fields": [
+          {
+            "config": {},
             "labels": undefined,
             "name": "name",
             "type": "string",
-            "values": Array [
+            "values": [
               "first",
               "second",
               "third",
@@ -55,14 +35,14 @@ describe('Array DataFrame', () => {
               "5th (Null)",
             ],
           },
-          Object {
-            "config": Object {
+          {
+            "config": {
               "unit": "kwh",
             },
             "labels": undefined,
             "name": "value",
             "type": "number",
-            "values": Array [
+            "values": [
               1,
               2,
               3,
@@ -70,30 +50,17 @@ describe('Array DataFrame', () => {
               null,
             ],
           },
-          Object {
-            "config": Object {},
+          {
+            "config": {},
             "labels": undefined,
             "name": "time",
             "type": "time",
-            "values": Array [
+            "values": [
               123,
               456,
               789,
               1000,
               1100,
-            ],
-          },
-          Object {
-            "config": Object {},
-            "labels": undefined,
-            "name": "phantom",
-            "type": "string",
-            "values": Array [
-              "🦥",
-              "🦥",
-              "🦥",
-              "🦥",
-              "🦥",
             ],
           },
         ],
@@ -112,5 +79,26 @@ describe('Array DataFrame', () => {
     expect(copy.fields).toEqual(frame.fields);
     expect(copy.length).toEqual(frame.length);
     expect(copy.length).toEqual(input.length);
+  });
+
+  test('Handles any array input', () => {
+    const f = arrayToDataFrame([1, 2, 3]);
+    expect(f).toMatchInlineSnapshot(`
+      {
+        "fields": [
+          {
+            "config": {},
+            "name": "Value",
+            "type": "number",
+            "values": [
+              1,
+              2,
+              3,
+            ],
+          },
+        ],
+        "length": 3,
+      }
+    `);
   });
 });

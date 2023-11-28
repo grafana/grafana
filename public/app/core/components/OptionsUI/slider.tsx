@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { Global } from '@emotion/react';
-import SliderComponent from 'rc-slider';
+import Slider from 'rc-slider';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { FieldConfigEditorProps, GrafanaTheme2, SliderFieldConfigSettings } from '@grafana/data';
@@ -9,11 +9,9 @@ import { getStyles } from '@grafana/ui/src/components/Slider/styles';
 
 import { NumberInput } from './NumberInput';
 
-export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFieldConfigSettings>> = ({
-  value,
-  onChange,
-  item,
-}) => {
+type Props = FieldConfigEditorProps<number, SliderFieldConfigSettings>;
+
+export const SliderValueEditor = ({ value, onChange, item }: Props) => {
   // Input reference
   const inputRef = useRef<HTMLSpanElement>(null);
 
@@ -30,7 +28,6 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
   const inputWidthDefault = 75;
   const isHorizontal = true;
   const theme = useTheme2();
-  const SliderWithTooltip = SliderComponent;
   const [sliderValue, setSliderValue] = useState<number>(value ?? min);
   const [inputWidth, setInputWidth] = useState<number>(inputWidthDefault);
 
@@ -60,11 +57,12 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
   }, [max, step]);
 
   const onSliderChange = useCallback(
-    (v: number) => {
-      setSliderValue(v);
+    (v: number | number[]) => {
+      const value = typeof v === 'number' ? v : v[0];
+      setSliderValue(value);
 
       if (onChange) {
-        onChange(v);
+        onChange(value);
       }
     },
     [setSliderValue, onChange]
@@ -97,7 +95,7 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
       {/** Slider tooltip's parent component is body and therefore we need Global component to do css overrides for it. */}
       <Global styles={styles.slider} />
       <label className={cx(styles.sliderInput, ...sliderInputClassNames)}>
-        <SliderWithTooltip
+        <Slider
           min={min}
           max={max}
           step={step}
@@ -133,7 +131,7 @@ function getTextWidth(text: string, font: string): number | null {
 const getStylesSlider = (theme: GrafanaTheme2, width: number) => {
   return {
     numberInputWrapper: css`
-      margin-left: 10px;
+      margin-left: ${theme.spacing(3)};
       max-height: 32px;
       max-width: ${width}px;
       min-width: ${width}px;

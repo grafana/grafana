@@ -1,0 +1,1 @@
+{"version":3,"file":"InfluxStartPage.js","sourceRoot":"","sources":["../../../../../../../../../../app/plugins/datasource/influxdb/components/editor/query/influxql/InfluxStartPage.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,MAAM,OAAO,CAAC;AAE1B,OAAO,EAAE,gBAAgB,EAAE,MAAM,oBAAoB,CAAC;AAEtD,MAAM,UAAU,eAAe;IAC7B,OAAO,oBAAC,gBAAgB,OAAG,CAAC;AAC9B,CAAC"}

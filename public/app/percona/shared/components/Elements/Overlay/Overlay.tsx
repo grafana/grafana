@@ -6,7 +6,7 @@ import { Spinner } from '@grafana/ui';
 import { styles } from './Overlay.styles';
 import { OverlayProps } from './Overlay.types';
 
-export const Overlay: FC<OverlayProps> = ({
+export const Overlay: FC<React.PropsWithChildren<OverlayProps>> = ({
   children,
   className,
   overlayClassName,

@@ -1,0 +1,1 @@
+{"version":3,"file":"Pagination.messages.js","sourceRoot":"","sources":["../../../../../../../../../app/percona/shared/components/Elements/Table/Pagination/Pagination.messages.ts"],"names":[],"mappings":"AAAA,MAAM,CAAC,MAAM,QAAQ,GAAG;IACtB,WAAW,EAAE,iBAAiB;IAC9B,uBAAuB,EAAE,CAAC,UAAkB,EAAE,WAAmB,EAAE,UAAkB,EAAE,EAAE,CACvF,WAAW,UAAU,IAAI,WAAW,OAAO,UAAU,QAAQ;CAChE,CAAC"}

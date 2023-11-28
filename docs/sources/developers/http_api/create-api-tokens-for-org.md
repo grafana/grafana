@@ -2,6 +2,7 @@
 aliases:
   - ../../http_api/create-api-tokens-for-org/
   - ../../tutorials/api_org_token_howto/
+canonical: /docs/grafana/latest/developers/http_api/create-api-tokens-for-org/
 keywords:
   - grafana
   - tutorials
@@ -9,6 +10,10 @@ keywords:
   - Token
   - Org
   - Organization
+labels:
+  products:
+    - enterprise
+    - oss
 title: 'API Tutorial: Create API tokens and dashboards for an organization'
 weight: 150
 ---

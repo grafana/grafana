@@ -1,7 +1,9 @@
 import { css, cx } from '@emotion/css';
-import React, { InputHTMLAttributes, FunctionComponent } from 'react';
+import React, { InputHTMLAttributes } from 'react';
 
 import { InlineFormLabel } from '../FormLabel/FormLabel';
+import { Field } from '../Forms/Field';
+import { InlineField } from '../Forms/InlineField';
 import { PopoverContent } from '../Tooltip';
 
 export interface Props extends InputHTMLAttributes<HTMLInputElement> {
@@ -23,8 +25,10 @@ const defaultProps = {
 /**
  * Default form field including label used in Grafana UI. Default input element is simple <input />. You can also pass
  * custom inputEl if required in which case inputWidth and inputProps are ignored.
+ * @deprecated Please use the {@link Field} component, {@link https://developers.grafana.com/ui/latest/index.html?path=/story/forms-field--simple See Storybook}.
+ * For inline fields, use {@link InlineField}, {@link https://developers.grafana.com/ui/latest/index.html?path=/story/forms-inlinefield--basic See Storybook}.
  */
-export const FormField: FunctionComponent<Props> = ({
+export const FormField = ({
   label,
   tooltip,
   labelWidth,
@@ -33,7 +37,7 @@ export const FormField: FunctionComponent<Props> = ({
   className,
   interactive,
   ...inputProps
-}) => {
+}: Props) => {
   const styles = getStyles();
   return (
     <div className={cx(styles.formField, className)}>
@@ -41,7 +45,12 @@ export const FormField: FunctionComponent<Props> = ({
         {label}
       </InlineFormLabel>
       {inputEl || (
-        <input type="text" className={`gf-form-input ${inputWidth ? `width-${inputWidth}` : ''}`} {...inputProps} />
+        <input
+          type="text"
+          className={`gf-form-input ${inputWidth ? `width-${inputWidth}` : ''}`}
+          {...inputProps}
+          disabled={inputProps.disabled}
+        />
       )}
     </div>
   );
@@ -52,12 +61,12 @@ FormField.defaultProps = defaultProps;
 
 const getStyles = () => {
   return {
-    formField: css`
-      display: flex;
-      flex-direction: row;
-      align-items: flex-start;
-      text-align: left;
-      position: relative;
-    `,
+    formField: css({
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      textAlign: 'left',
+      position: 'relative',
+    }),
   };
 };

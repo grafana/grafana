@@ -2,12 +2,12 @@ package rendering
 
 import (
 	"context"
+	"encoding/gob"
 	"errors"
 	"fmt"
 	"math"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -19,17 +19,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func init() {
-	remotecache.Register(&RenderUser{})
-}
-
 var _ Service = (*RenderingService)(nil)
-
-const ServiceName = "RenderingService"
 
 type RenderingService struct {
 	log               log.Logger
@@ -46,11 +41,12 @@ type RenderingService struct {
 
 	perRequestRenderKeyProvider renderKeyProvider
 	Cfg                         *setting.Cfg
+	features                    *featuremgmt.FeatureManager
 	RemoteCacheService          *remotecache.RemoteCache
 	RendererPluginManager       plugins.RendererManager
 }
 
-func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm plugins.RendererManager) (*RenderingService, error) {
+func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager, remoteCache *remotecache.RemoteCache, rm plugins.RendererManager) (*RenderingService, error) {
 	// ensure ImagesDir exists
 	err := os.MkdirAll(cfg.ImagesDir, 0700)
 	if err != nil {
@@ -87,12 +83,23 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 		domain = "localhost"
 	}
 
-	s := &RenderingService{
-		perRequestRenderKeyProvider: &perRequestRenderKeyProvider{
+	var renderKeyProvider renderKeyProvider
+	if features.IsEnabled(featuremgmt.FlagRenderAuthJWT) {
+		renderKeyProvider = &jwtRenderKeyProvider{
+			log:       logger,
+			authToken: []byte(cfg.RendererAuthToken),
+			keyExpiry: cfg.RendererRenderKeyLifeTime,
+		}
+	} else {
+		renderKeyProvider = &perRequestRenderKeyProvider{
 			cache:     remoteCache,
 			log:       logger,
-			keyExpiry: 5 * time.Minute,
-		},
+			keyExpiry: cfg.RendererRenderKeyLifeTime,
+		}
+	}
+
+	s := &RenderingService{
+		perRequestRenderKeyProvider: renderKeyProvider,
 		capabilities: []Capability{
 			{
 				name:             FullHeightImages,
@@ -108,12 +115,16 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 			},
 		},
 		Cfg:                   cfg,
+		features:              features,
 		RemoteCacheService:    remoteCache,
 		RendererPluginManager: rm,
 		log:                   logger,
 		domain:                domain,
 		sanitizeURL:           sanitizeURL,
 	}
+
+	gob.Register(&RenderUser{})
+
 	return s, nil
 }
 
@@ -170,16 +181,6 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		rs.sanitizeSVGAction = rs.sanitizeSVGViaPlugin
 		<-ctx.Done()
 
-		// On Windows, Chromium is generating a debug.log file that breaks signature check on next restart
-		debugFilePath := path.Join(rs.pluginInfo.PluginDir, "chrome-win/debug.log")
-		if _, err := os.Stat(debugFilePath); err == nil {
-			err = os.Remove(debugFilePath)
-			if err != nil {
-				rs.log.Warn("Couldn't remove debug.log file, the renderer plugin will not be able to pass the signature check until this file is deleted",
-					"err", err)
-			}
-		}
-
 		return nil
 	}
 
@@ -215,7 +216,7 @@ func (rs *RenderingService) RenderErrorImage(theme models.Theme, err error) (*Re
 		theme = models.ThemeDark
 	}
 	imgUrl := "public/img/rendering_%s_%s.png"
-	if errors.Is(err, ErrTimeout) {
+	if errors.Is(err, ErrTimeout) || errors.Is(err, ErrServerTimeout) {
 		imgUrl = fmt.Sprintf(imgUrl, "timeout", theme)
 	} else {
 		imgUrl = fmt.Sprintf(imgUrl, "error", theme)

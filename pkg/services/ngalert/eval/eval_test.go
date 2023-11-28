@@ -7,17 +7,22 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	ptr "github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestEvaluateExecutionResult(t *testing.T) {
@@ -30,8 +35,8 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "zero valued single instance is single Normal state result",
 			execResults: ExecutionResults{
-				Results: []*data.Frame{
-					data.NewFrame("", data.NewField("", nil, []*float64{ptr.Float64(0)})),
+				Condition: []*data.Frame{
+					data.NewFrame("", data.NewField("", nil, []*float64{util.Pointer(0.0)})),
 				},
 			},
 			expectResultLength: 1,
@@ -44,8 +49,8 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "non-zero valued single instance is single Alerting state result",
 			execResults: ExecutionResults{
-				Results: []*data.Frame{
-					data.NewFrame("", data.NewField("", nil, []*float64{ptr.Float64(1)})),
+				Condition: []*data.Frame{
+					data.NewFrame("", data.NewField("", nil, []*float64{util.Pointer(1.0)})),
 				},
 			},
 			expectResultLength: 1,
@@ -58,7 +63,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "nil value single instance is single a NoData state result",
 			execResults: ExecutionResults{
-				Results: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("", data.NewField("", nil, []*float64{nil})),
 				},
 			},
@@ -95,7 +100,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "frame with no fields produces a NoData state result",
 			execResults: ExecutionResults{
-				Results: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame(""),
 				},
 			},
@@ -109,7 +114,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "empty field produces a NoData state result",
 			execResults: ExecutionResults{
-				Results: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("", data.NewField("", nil, []*float64{})),
 				},
 			},
@@ -123,7 +128,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "empty field with labels produces a NoData state result with labels",
 			execResults: ExecutionResults{
-				Results: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("", data.NewField("", data.Labels{"a": "b"}, []*float64{})),
 				},
 			},
@@ -138,9 +143,9 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "malformed frame (unequal lengths) produces Error state result",
 			execResults: ExecutionResults{
-				Results: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("",
-						data.NewField("", nil, []*float64{ptr.Float64(23)}),
+						data.NewField("", nil, []*float64{util.Pointer(23.0)}),
 						data.NewField("", nil, []*float64{}),
 					),
 				},
@@ -156,7 +161,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "too many fields produces Error state result",
 			execResults: ExecutionResults{
-				Results: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("",
 						data.NewField("", nil, []*float64{}),
 						data.NewField("", nil, []*float64{}),
@@ -174,9 +179,9 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "more than one row produces Error state result",
 			execResults: ExecutionResults{
-				Results: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("",
-						data.NewField("", nil, []*float64{ptr.Float64(2), ptr.Float64(3)}),
+						data.NewField("", nil, []*float64{util.Pointer(2.0), util.Pointer(3.0)}),
 					),
 				},
 			},
@@ -191,7 +196,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "time fields (looks like time series) returns error",
 			execResults: ExecutionResults{
-				Results: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("",
 						data.NewField("", nil, []time.Time{}),
 					),
@@ -208,7 +213,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "non []*float64 field will produce Error state result",
 			execResults: ExecutionResults{
-				Results: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("",
 						data.NewField("", nil, []float64{2}),
 					),
@@ -225,12 +230,12 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "duplicate labels produce a single Error state result",
 			execResults: ExecutionResults{
-				Results: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("",
-						data.NewField("", nil, []*float64{ptr.Float64(1)}),
+						data.NewField("", nil, []*float64{util.Pointer(1.0)}),
 					),
 					data.NewFrame("",
-						data.NewField("", nil, []*float64{ptr.Float64(2)}),
+						data.NewField("", nil, []*float64{util.Pointer(2.0)}),
 					),
 				},
 			},
@@ -245,7 +250,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "error that produce duplicate empty labels produce a single Error state result",
 			execResults: ExecutionResults{
-				Results: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("",
 						data.NewField("", data.Labels{"a": "b"}, []float64{2}),
 					),
@@ -265,12 +270,12 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "certain errors will produce multiple mixed Error and other state results",
 			execResults: ExecutionResults{
-				Results: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("",
 						data.NewField("", nil, []float64{3}),
 					),
 					data.NewFrame("",
-						data.NewField("", data.Labels{"a": "b"}, []*float64{ptr.Float64(2)}),
+						data.NewField("", data.Labels{"a": "b"}, []*float64{util.Pointer(2.0)}),
 					),
 				},
 			},
@@ -352,15 +357,20 @@ func TestEvaluateExecutionResultsNoData(t *testing.T) {
 }
 
 func TestValidate(t *testing.T) {
+	type services struct {
+		cache        *fakes.FakeCacheService
+		pluginsStore *pluginstore.FakePluginStore
+	}
+
 	testCases := []struct {
 		name      string
-		condition func(service *fakes.FakeCacheService) models.Condition
+		condition func(services services) models.Condition
 		error     bool
 	}{
 		{
 			name:  "fail if no expressions",
 			error: true,
-			condition: func(service *fakes.FakeCacheService) models.Condition {
+			condition: func(_ services) models.Condition {
 				return models.Condition{
 					Condition: "A",
 					Data:      []models.AlertQuery{},
@@ -370,17 +380,25 @@ func TestValidate(t *testing.T) {
 		{
 			name:  "fail if condition RefID does not exist",
 			error: true,
-			condition: func(service *fakes.FakeCacheService) models.Condition {
-				ds := models.GenerateAlertQuery()
-				service.DataSources = append(service.DataSources, &datasources.DataSource{
-					Uid: ds.DatasourceUID,
+			condition: func(services services) models.Condition {
+				dsQuery := models.GenerateAlertQuery()
+				ds := &datasources.DataSource{
+					UID:  dsQuery.DatasourceUID,
+					Type: util.GenerateShortUID(),
+				}
+				services.cache.DataSources = append(services.cache.DataSources, ds)
+				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, pluginstore.Plugin{
+					JSONData: plugins.JSONData{
+						ID:      ds.Type,
+						Backend: true,
+					},
 				})
 
 				return models.Condition{
 					Condition: "C",
 					Data: []models.AlertQuery{
-						ds,
-						models.CreateClassicConditionExpression("B", ds.RefID, "last", "gt", rand.Int()),
+						dsQuery,
+						models.CreateClassicConditionExpression("B", dsQuery.RefID, "last", "gt", rand.Int()),
 					},
 				}
 			},
@@ -388,17 +406,24 @@ func TestValidate(t *testing.T) {
 		{
 			name:  "fail if condition RefID is empty",
 			error: true,
-			condition: func(service *fakes.FakeCacheService) models.Condition {
-				ds := models.GenerateAlertQuery()
-				service.DataSources = append(service.DataSources, &datasources.DataSource{
-					Uid: ds.DatasourceUID,
+			condition: func(services services) models.Condition {
+				dsQuery := models.GenerateAlertQuery()
+				ds := &datasources.DataSource{
+					UID:  dsQuery.DatasourceUID,
+					Type: util.GenerateShortUID(),
+				}
+				services.cache.DataSources = append(services.cache.DataSources, ds)
+				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, pluginstore.Plugin{
+					JSONData: plugins.JSONData{
+						ID:      ds.Type,
+						Backend: true,
+					},
 				})
-
 				return models.Condition{
 					Condition: "",
 					Data: []models.AlertQuery{
-						ds,
-						models.CreateClassicConditionExpression("B", ds.RefID, "last", "gt", rand.Int()),
+						dsQuery,
+						models.CreateClassicConditionExpression("B", dsQuery.RefID, "last", "gt", rand.Int()),
 					},
 				}
 			},
@@ -406,13 +431,68 @@ func TestValidate(t *testing.T) {
 		{
 			name:  "fail if datasource with UID does not exists",
 			error: true,
-			condition: func(service *fakes.FakeCacheService) models.Condition {
-				ds := models.GenerateAlertQuery()
+			condition: func(services services) models.Condition {
+				dsQuery := models.GenerateAlertQuery()
 				// do not update the cache service
 				return models.Condition{
-					Condition: ds.RefID,
+					Condition: dsQuery.RefID,
 					Data: []models.AlertQuery{
-						ds,
+						dsQuery,
+					},
+				}
+			},
+		},
+		{
+			name:  "fail if datasource cannot be found in plugin store",
+			error: true,
+			condition: func(services services) models.Condition {
+				dsQuery := models.GenerateAlertQuery()
+				ds := &datasources.DataSource{
+					UID:  dsQuery.DatasourceUID,
+					Type: util.GenerateShortUID(),
+				}
+				services.cache.DataSources = append(services.cache.DataSources, ds)
+				// do not update the plugin store
+				return models.Condition{
+					Condition: dsQuery.RefID,
+					Data: []models.AlertQuery{
+						dsQuery,
+					},
+				}
+			},
+		},
+		{
+			name:  "fail if datasource is not backend one",
+			error: true,
+			condition: func(services services) models.Condition {
+				dsQuery1 := models.GenerateAlertQuery()
+				dsQuery2 := models.GenerateAlertQuery()
+				ds1 := &datasources.DataSource{
+					UID:  dsQuery1.DatasourceUID,
+					Type: util.GenerateShortUID(),
+				}
+				ds2 := &datasources.DataSource{
+					UID:  dsQuery2.DatasourceUID,
+					Type: util.GenerateShortUID(),
+				}
+				services.cache.DataSources = append(services.cache.DataSources, ds1, ds2)
+				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, pluginstore.Plugin{
+					JSONData: plugins.JSONData{
+						ID:      ds1.Type,
+						Backend: false,
+					},
+				}, pluginstore.Plugin{
+					JSONData: plugins.JSONData{
+						ID:      ds2.Type,
+						Backend: true,
+					},
+				})
+				// do not update the plugin store
+				return models.Condition{
+					Condition: dsQuery1.RefID,
+					Data: []models.AlertQuery{
+						dsQuery1,
+						dsQuery2,
 					},
 				}
 			},
@@ -420,17 +500,25 @@ func TestValidate(t *testing.T) {
 		{
 			name:  "pass if datasource exists and condition is correct",
 			error: false,
-			condition: func(service *fakes.FakeCacheService) models.Condition {
-				ds := models.GenerateAlertQuery()
-				service.DataSources = append(service.DataSources, &datasources.DataSource{
-					Uid: ds.DatasourceUID,
+			condition: func(services services) models.Condition {
+				dsQuery := models.GenerateAlertQuery()
+				ds := &datasources.DataSource{
+					UID:  dsQuery.DatasourceUID,
+					Type: util.GenerateShortUID(),
+				}
+				services.cache.DataSources = append(services.cache.DataSources, ds)
+				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, pluginstore.Plugin{
+					JSONData: plugins.JSONData{
+						ID:      ds.Type,
+						Backend: true,
+					},
 				})
 
 				return models.Condition{
 					Condition: "B",
 					Data: []models.AlertQuery{
-						ds,
-						models.CreateClassicConditionExpression("B", ds.RefID, "last", "gt", rand.Int()),
+						dsQuery,
+						models.CreateClassicConditionExpression("B", dsQuery.RefID, "last", "gt", rand.Int()),
 					},
 				}
 			},
@@ -442,11 +530,16 @@ func TestValidate(t *testing.T) {
 
 		t.Run(testCase.name, func(t *testing.T) {
 			cacheService := &fakes.FakeCacheService{}
-			condition := testCase.condition(cacheService)
+			store := &pluginstore.FakePluginStore{}
+			condition := testCase.condition(services{
+				cache:        cacheService,
+				pluginsStore: store,
+			})
 
-			evaluator := NewEvaluator(&setting.Cfg{ExpressionsEnabled: true}, log.New("test"), cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil))
+			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, &featuremgmt.FeatureManager{}, nil, tracing.InitializeTracerForTest()), store)
+			evalCtx := NewContext(context.Background(), u)
 
-			err := evaluator.Validate(context.Background(), u, condition)
+			err := evaluator.Validate(evalCtx, condition)
 			if testCase.error {
 				require.Error(t, err)
 			} else {
@@ -454,4 +547,232 @@ func TestValidate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestEvaluate(t *testing.T) {
+	cases := []struct {
+		name     string
+		cond     models.Condition
+		resp     backend.QueryDataResponse
+		expected Results
+		error    string
+	}{{
+		name: "is no data with no frames",
+		cond: models.Condition{
+			Data: []models.AlertQuery{{
+				RefID:         "A",
+				DatasourceUID: "test",
+			}, {
+				RefID:         "B",
+				DatasourceUID: expr.DatasourceUID,
+			}, {
+				RefID:         "C",
+				DatasourceUID: expr.OldDatasourceUID,
+			}, {
+				RefID:         "D",
+				DatasourceUID: expr.MLDatasourceUID,
+			}},
+		},
+		resp: backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": {Frames: nil},
+				"B": {Frames: []*data.Frame{{Fields: nil}}},
+				"C": {Frames: nil},
+				"D": {Frames: []*data.Frame{{Fields: nil}}},
+			},
+		},
+		expected: Results{{
+			State: NoData,
+			Instance: data.Labels{
+				"datasource_uid": "test",
+				"ref_id":         "A",
+			},
+		}},
+	}, {
+		name: "is no data for one frame with no fields",
+		cond: models.Condition{
+			Data: []models.AlertQuery{{
+				RefID:         "A",
+				DatasourceUID: "test",
+			}},
+		},
+		resp: backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": {Frames: []*data.Frame{{Fields: nil}}},
+			},
+		},
+		expected: Results{{
+			State: NoData,
+			Instance: data.Labels{
+				"datasource_uid": "test",
+				"ref_id":         "A",
+			},
+		}},
+	}, {
+		name: "results contains captured values for exact label matches",
+		cond: models.Condition{
+			Condition: "B",
+		},
+		resp: backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": {
+					Frames: []*data.Frame{{
+						RefID: "A",
+						Fields: []*data.Field{
+							data.NewField(
+								"Value",
+								data.Labels{"foo": "bar"},
+								[]*float64{util.Pointer(10.0)},
+							),
+						},
+					}},
+				},
+				"B": {
+					Frames: []*data.Frame{{
+						RefID: "B",
+						Fields: []*data.Field{
+							data.NewField(
+								"Value",
+								data.Labels{"foo": "bar"},
+								[]*float64{util.Pointer(1.0)},
+							),
+						},
+					}},
+				},
+			},
+		},
+		expected: Results{{
+			State: Alerting,
+			Instance: data.Labels{
+				"foo": "bar",
+			},
+			Values: map[string]NumberValueCapture{
+				"A": {
+					Var:    "A",
+					Labels: data.Labels{"foo": "bar"},
+					Value:  util.Pointer(10.0),
+				},
+				"B": {
+					Var:    "B",
+					Labels: data.Labels{"foo": "bar"},
+					Value:  util.Pointer(1.0),
+				},
+			},
+			EvaluationString: "[ var='A' labels={foo=bar} value=10 ], [ var='B' labels={foo=bar} value=1 ]",
+		}},
+	}, {
+		name: "results contains captured values for subset of labels",
+		cond: models.Condition{
+			Condition: "B",
+		},
+		resp: backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": {
+					Frames: []*data.Frame{{
+						RefID: "A",
+						Fields: []*data.Field{
+							data.NewField(
+								"Value",
+								data.Labels{"foo": "bar"},
+								[]*float64{util.Pointer(10.0)},
+							),
+						},
+					}},
+				},
+				"B": {
+					Frames: []*data.Frame{{
+						RefID: "B",
+						Fields: []*data.Field{
+							data.NewField(
+								"Value",
+								data.Labels{"foo": "bar", "bar": "baz"},
+								[]*float64{util.Pointer(1.0)},
+							),
+						},
+					}},
+				},
+			},
+		},
+		expected: Results{{
+			State: Alerting,
+			Instance: data.Labels{
+				"foo": "bar",
+				"bar": "baz",
+			},
+			Values: map[string]NumberValueCapture{
+				"A": {
+					Var:    "A",
+					Labels: data.Labels{"foo": "bar"},
+					Value:  util.Pointer(10.0),
+				},
+				"B": {
+					Var:    "B",
+					Labels: data.Labels{"foo": "bar", "bar": "baz"},
+					Value:  util.Pointer(1.0),
+				},
+			},
+			EvaluationString: "[ var='A' labels={foo=bar} value=10 ], [ var='B' labels={bar=baz, foo=bar} value=1 ]",
+		}},
+	}}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			ev := conditionEvaluator{
+				pipeline: nil,
+				expressionService: &fakeExpressionService{
+					hook: func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
+						return &tc.resp, nil
+					},
+				},
+				condition: tc.cond,
+			}
+			results, err := ev.Evaluate(context.Background(), time.Now())
+			if tc.error != "" {
+				require.EqualError(t, err, tc.error)
+			} else {
+				require.NoError(t, err)
+				require.Len(t, results, len(tc.expected))
+				for i := range results {
+					tc.expected[i].EvaluatedAt = results[i].EvaluatedAt
+					tc.expected[i].EvaluationDuration = results[i].EvaluationDuration
+					assert.Equal(t, tc.expected[i], results[i])
+				}
+			}
+		})
+	}
+}
+
+func TestEvaluateRaw(t *testing.T) {
+	t.Run("should timeout if request takes too long", func(t *testing.T) {
+		unexpectedResponse := &backend.QueryDataResponse{}
+
+		e := conditionEvaluator{
+			pipeline: nil,
+			expressionService: &fakeExpressionService{
+				hook: func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
+					ts := time.Now()
+					for time.Since(ts) <= 10*time.Second {
+						if ctx.Err() != nil {
+							return nil, ctx.Err()
+						}
+						time.Sleep(10 * time.Millisecond)
+					}
+					return unexpectedResponse, nil
+				},
+			},
+			condition:   models.Condition{},
+			evalTimeout: 10 * time.Millisecond,
+		}
+
+		_, err := e.EvaluateRaw(context.Background(), time.Now())
+		require.ErrorIs(t, err, context.DeadlineExceeded)
+	})
+}
+
+type fakeExpressionService struct {
+	hook func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error)
+}
+
+func (f fakeExpressionService) ExecutePipeline(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
+	return f.hook(ctx, now, pipeline)
 }

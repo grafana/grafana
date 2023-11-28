@@ -11,6 +11,9 @@ interface Props {
   min?: number;
   max?: number;
   step?: number;
+  width?: number;
+  fieldDisabled?: boolean;
+  suffix?: React.ReactNode;
 }
 
 interface State {
@@ -107,6 +110,9 @@ export class NumberInput extends PureComponent<Props, State> {
         onBlur={this.updateValue}
         onKeyPress={this.onKeyPress}
         placeholder={this.props.placeholder}
+        disabled={this.props.fieldDisabled}
+        width={this.props.width}
+        suffix={this.props.suffix}
       />
     );
   }

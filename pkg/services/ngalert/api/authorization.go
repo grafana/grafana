@@ -24,17 +24,6 @@ func (api *API) authorize(method, path string) web.Handler {
 	authorize := ac.Middleware(api.AccessControl)
 	var eval ac.Evaluator = nil
 
-	// Most routes follow this general authorization approach as a fallback. Exceptions are overridden directly in the below block.
-	var fallback web.Handler
-	switch method {
-	case http.MethodPost, http.MethodPut, http.MethodDelete:
-		fallback = middleware.ReqEditorRole
-	case http.MethodGet:
-		fallback = middleware.ReqSignedIn
-	default:
-		fallback = middleware.ReqSignedIn
-	}
-
 	switch method + path {
 	// Alert Rules
 
@@ -47,10 +36,14 @@ func (api *API) authorize(method, path string) web.Handler {
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead, dashboards.ScopeFoldersProvider.GetResourceScopeName(ac.Parameter(":Namespace")))
 	case http.MethodGet + "/api/ruler/grafana/api/v1/rules/{Namespace}":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead, dashboards.ScopeFoldersProvider.GetResourceScopeName(ac.Parameter(":Namespace")))
-	case http.MethodGet + "/api/ruler/grafana/api/v1/rules":
+	case http.MethodGet + "/api/ruler/grafana/api/v1/rules",
+		http.MethodGet + "/api/ruler/grafana/api/v1/export/rules":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
+	case http.MethodPost + "/api/ruler/grafana/api/v1/rules/{Namespace}/export":
+		scope := dashboards.ScopeFoldersProvider.GetResourceScopeName(ac.Parameter(":Namespace"))
+		// more granular permissions are enforced by the handler via "authorizeRuleChanges"
+		eval = ac.EvalPermission(ac.ActionAlertingRuleRead, scope)
 	case http.MethodPost + "/api/ruler/grafana/api/v1/rules/{Namespace}":
-		fallback = middleware.ReqSignedIn // if RBAC is disabled then we need to delegate permission check to folder because its permissions can allow editing for Viewer role
 		scope := dashboards.ScopeFoldersProvider.GetResourceScopeName(ac.Parameter(":Namespace"))
 		// more granular permissions are enforced by the handler via "authorizeRuleChanges"
 		eval = ac.EvalAny(
@@ -58,6 +51,9 @@ func (api *API) authorize(method, path string) web.Handler {
 			ac.EvalPermission(ac.ActionAlertingRuleCreate, scope),
 			ac.EvalPermission(ac.ActionAlertingRuleDelete, scope),
 		)
+	// Grafana rule state history paths
+	case http.MethodGet + "/api/v1/rules/history":
+		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
 
 	// Grafana, Prometheus-compatible Paths
 	case http.MethodGet + "/api/prometheus/grafana/api/v1/rules":
@@ -65,11 +61,13 @@ func (api *API) authorize(method, path string) web.Handler {
 
 	// Grafana Rules Testing Paths
 	case http.MethodPost + "/api/v1/rule/test/grafana":
-		fallback = middleware.ReqSignedIn
+		// additional authorization is done in the request handler
+		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
+	// Grafana Rules Testing Paths
+	case http.MethodPost + "/api/v1/rule/backtest":
 		// additional authorization is done in the request handler
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
 	case http.MethodPost + "/api/v1/eval":
-		fallback = middleware.ReqSignedIn
 		// additional authorization is done in the request handler
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
 
@@ -93,7 +91,6 @@ func (api *API) authorize(method, path string) web.Handler {
 
 	// Lotex Rules testing
 	case http.MethodPost + "/api/v1/rule/test/{DatasourceUID}":
-		fallback = middleware.ReqSignedIn
 		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
 
 	// Alert Instances and Silences
@@ -147,17 +144,21 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodDelete + "/api/alertmanager/grafana/config/api/v1/alerts": // reset alertmanager config to the default
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsWrite)
 	case http.MethodGet + "/api/alertmanager/grafana/config/api/v1/alerts":
-		fallback = middleware.ReqEditorRole
+		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
+	case http.MethodGet + "/api/alertmanager/grafana/config/history":
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
 	case http.MethodGet + "/api/alertmanager/grafana/api/v2/status":
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
 	case http.MethodPost + "/api/alertmanager/grafana/config/api/v1/alerts":
 		// additional authorization is done in the request handler
 		eval = ac.EvalAny(ac.EvalPermission(ac.ActionAlertingNotificationsWrite))
+	case http.MethodPost + "/api/alertmanager/grafana/config/history/{id}/_activate":
+		eval = ac.EvalAny(ac.EvalPermission(ac.ActionAlertingNotificationsWrite))
 	case http.MethodGet + "/api/alertmanager/grafana/config/api/v1/receivers":
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
 	case http.MethodPost + "/api/alertmanager/grafana/config/api/v1/receivers/test":
-		fallback = middleware.ReqEditorRole
+		eval = ac.EvalPermission(ac.ActionAlertingNotificationsWrite)
+	case http.MethodPost + "/api/alertmanager/grafana/config/api/v1/templates/test":
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsWrite)
 
 	// External Alertmanager Paths
@@ -188,16 +189,27 @@ func (api *API) authorize(method, path string) web.Handler {
 		return middleware.ReqOrgAdmin
 
 	// Grafana-only Provisioning Read Paths
+	case http.MethodGet + "/api/v1/provisioning/policies/export",
+		http.MethodGet + "/api/v1/provisioning/contact-points/export":
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingNotificationsRead),       // organization scope
+			ac.EvalPermission(ac.ActionAlertingProvisioningRead),        // organization scope
+			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets), // organization scope
+		)
+
 	case http.MethodGet + "/api/v1/provisioning/policies",
 		http.MethodGet + "/api/v1/provisioning/contact-points",
 		http.MethodGet + "/api/v1/provisioning/templates",
 		http.MethodGet + "/api/v1/provisioning/templates/{name}",
 		http.MethodGet + "/api/v1/provisioning/mute-timings",
 		http.MethodGet + "/api/v1/provisioning/mute-timings/{name}",
+		http.MethodGet + "/api/v1/provisioning/alert-rules",
 		http.MethodGet + "/api/v1/provisioning/alert-rules/{UID}",
-		http.MethodGet + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}":
-		fallback = middleware.ReqOrgAdmin
-		eval = ac.EvalPermission(ac.ActionAlertingProvisioningRead) // organization scope
+		http.MethodGet + "/api/v1/provisioning/alert-rules/export",
+		http.MethodGet + "/api/v1/provisioning/alert-rules/{UID}/export",
+		http.MethodGet + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}",
+		http.MethodGet + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export":
+		eval = ac.EvalAny(ac.EvalPermission(ac.ActionAlertingProvisioningRead), ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets)) // organization scope
 
 	case http.MethodPut + "/api/v1/provisioning/policies",
 		http.MethodDelete + "/api/v1/provisioning/policies",
@@ -213,12 +225,11 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodPut + "/api/v1/provisioning/alert-rules/{UID}",
 		http.MethodDelete + "/api/v1/provisioning/alert-rules/{UID}",
 		http.MethodPut + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}":
-		fallback = middleware.ReqOrgAdmin
 		eval = ac.EvalPermission(ac.ActionAlertingProvisioningWrite) // organization scope
 	}
 
 	if eval != nil {
-		return authorize(fallback, eval)
+		return authorize(eval)
 	}
 
 	panic(fmt.Sprintf("no authorization handler for method [%s] of endpoint [%s]", method, path))

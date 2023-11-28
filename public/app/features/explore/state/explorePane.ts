@@ -1,42 +1,34 @@
 import { createAction, PayloadAction } from '@reduxjs/toolkit';
-import { isEqual } from 'lodash';
 import { AnyAction } from 'redux';
 
 import {
-  EventBusExtended,
-  DataQuery,
-  ExploreUrlState,
   TimeRange,
   HistoryItem,
   DataSourceApi,
   ExplorePanelsState,
   PreferredVisualisationType,
-  DataSourceRef,
+  RawTimeRange,
+  ExploreCorrelationHelperData,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
-import {
-  DEFAULT_RANGE,
-  getQueryKeys,
-  parseUrlState,
-  ensureQueries,
-  generateNewKeyAndAddRefIdIfMissing,
-  getTimeRangeFromUrl,
-} from 'app/core/utils/explore';
-import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
-import { ThunkResult } from 'app/types';
-import { ExploreGraphStyle, ExploreId, ExploreItemState } from 'app/types/explore';
+import { DataQuery, DataSourceRef } from '@grafana/schema';
+import { getQueryKeys } from 'app/core/utils/explore';
+import { CorrelationData } from 'app/features/correlations/useCorrelations';
+import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
+import { getTimeZone } from 'app/features/profile/state/selectors';
+import { createAsyncThunk, ThunkResult } from 'app/types';
+import { ExploreItemState } from 'app/types/explore';
 
 import { datasourceReducer } from './datasource';
 import { historyReducer } from './history';
-import { richHistorySearchFiltersUpdatedAction, richHistoryUpdatedAction, stateSave } from './main';
-import { queryReducer, runQueries, setQueriesAction } from './query';
+import { richHistorySearchFiltersUpdatedAction, richHistoryUpdatedAction } from './main';
+import { queryReducer, runQueries } from './query';
 import { timeReducer, updateTime } from './time';
 import {
   makeExplorePaneState,
   loadAndInitDatasource,
   createEmptyQueryResponse,
-  getUrlStateFromPaneState,
-  storeGraphStyle,
+  getRange,
+  getDatasourceUIDs,
 } from './utils';
 // Types
 
@@ -49,9 +41,8 @@ import {
  * The width will be used to calculate graph intervals (number of datapoints).
  */
 export interface ChangeSizePayload {
-  exploreId: ExploreId;
+  exploreId: string;
   width: number;
-  height: number;
 }
 export const changeSizeAction = createAction<ChangeSizePayload>('explore/changeSize');
 
@@ -59,17 +50,17 @@ export const changeSizeAction = createAction<ChangeSizePayload>('explore/changeS
  * Tracks the state of explore panels that gets synced with the url.
  */
 interface ChangePanelsState {
-  exploreId: ExploreId;
+  exploreId: string;
   panelsState: ExplorePanelsState;
 }
 const changePanelsStateAction = createAction<ChangePanelsState>('explore/changePanels');
 export function changePanelState(
-  exploreId: ExploreId,
+  exploreId: string,
   panel: PreferredVisualisationType,
   panelState: ExplorePanelsState[PreferredVisualisationType]
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
-    const exploreItem = getState().explore[exploreId];
+    const exploreItem = getState().explore.panes[exploreId];
     if (exploreItem === undefined) {
       return;
     }
@@ -83,55 +74,61 @@ export function changePanelState(
         },
       })
     );
-    dispatch(stateSave());
   };
 }
+
+/**
+ * Tracks the state of correlation helper data in the panel
+ */
+interface ChangeCorrelationHelperData {
+  exploreId: string;
+  correlationEditorHelperData?: ExploreCorrelationHelperData;
+}
+export const changeCorrelationHelperData = createAction<ChangeCorrelationHelperData>(
+  'explore/changeCorrelationHelperData'
+);
 
 /**
  * Initialize Explore state with state from the URL and the React component.
  * Call this only on components for with the Explore state has not been initialized.
  */
-export interface InitializeExplorePayload {
-  exploreId: ExploreId;
-  containerWidth: number;
-  eventBridge: EventBusExtended;
+interface InitializeExplorePayload {
+  exploreId: string;
   queries: DataQuery[];
   range: TimeRange;
   history: HistoryItem[];
   datasourceInstance?: DataSourceApi;
 }
-export const initializeExploreAction = createAction<InitializeExplorePayload>('explore/initializeExplore');
+const initializeExploreAction = createAction<InitializeExplorePayload>('explore/initializeExploreAction');
 
 export interface SetUrlReplacedPayload {
-  exploreId: ExploreId;
+  exploreId: string;
 }
 export const setUrlReplacedAction = createAction<SetUrlReplacedPayload>('explore/setUrlReplaced');
+
+export interface SaveCorrelationsPayload {
+  exploreId: string;
+  correlations: CorrelationData[];
+}
+export const saveCorrelationsAction = createAction<SaveCorrelationsPayload>('explore/saveCorrelationsAction');
 
 /**
  * Keep track of the Explore container size, in particular the width.
  * The width will be used to calculate graph intervals (number of datapoints).
  */
-export function changeSize(
-  exploreId: ExploreId,
-  { height, width }: { height: number; width: number }
-): PayloadAction<ChangeSizePayload> {
-  return changeSizeAction({ exploreId, height, width });
+export function changeSize(exploreId: string, { width }: { width: number }): PayloadAction<ChangeSizePayload> {
+  return changeSizeAction({ exploreId, width });
 }
 
-interface ChangeGraphStylePayload {
-  exploreId: ExploreId;
-  graphStyle: ExploreGraphStyle;
+export interface InitializeExploreOptions {
+  exploreId: string;
+  datasource: DataSourceRef | string | undefined;
+  queries: DataQuery[];
+  range: RawTimeRange;
+  panelsState?: ExplorePanelsState;
+  correlationHelperData?: ExploreCorrelationHelperData;
+  position?: number;
 }
-
-const changeGraphStyleAction = createAction<ChangeGraphStylePayload>('explore/changeGraphStyle');
-
-export function changeGraphStyle(exploreId: ExploreId, graphStyle: ExploreGraphStyle): ThunkResult<void> {
-  return async (dispatch, getState) => {
-    storeGraphStyle(graphStyle);
-    dispatch(changeGraphStyleAction({ exploreId, graphStyle }));
-  };
-}
-
 /**
  * Initialize Explore state with state from the URL and the React component.
  * Call this only on components for with the Explore state has not been initialized.
@@ -140,21 +137,16 @@ export function changeGraphStyle(exploreId: ExploreId, graphStyle: ExploreGraphS
  * and can be either a string that is the name or uid, or a datasourceRef
  * This is to maximize compatability with how datasources are accessed from the URL param.
  */
-export function initializeExplore(
-  exploreId: ExploreId,
-  datasource: DataSourceRef | string,
-  queries: DataQuery[],
-  range: TimeRange,
-  containerWidth: number,
-  eventBridge: EventBusExtended,
-  panelsState?: ExplorePanelsState
-): ThunkResult<void> {
-  return async (dispatch, getState) => {
-    const exploreDatasources = getDataSourceSrv().getList();
+export const initializeExplore = createAsyncThunk(
+  'explore/initializeExplore',
+  async (
+    { exploreId, datasource, queries, range, panelsState, correlationHelperData }: InitializeExploreOptions,
+    { dispatch, getState, fulfillWithValue }
+  ) => {
     let instance = undefined;
     let history: HistoryItem[] = [];
 
-    if (exploreDatasources.length >= 1) {
+    if (datasource) {
       const orgId = getState().user.orgId;
       const loadResult = await loadAndInitDatasource(orgId, datasource);
       instance = loadResult.instance;
@@ -164,10 +156,8 @@ export function initializeExplore(
     dispatch(
       initializeExploreAction({
         exploreId,
-        containerWidth,
-        eventBridge,
         queries,
-        range,
+        range: getRange(range, getTimeZone(getState().user)),
         datasourceInstance: instance,
         history,
       })
@@ -175,75 +165,30 @@ export function initializeExplore(
     if (panelsState !== undefined) {
       dispatch(changePanelsStateAction({ exploreId, panelsState }));
     }
+
     dispatch(updateTime({ exploreId }));
 
     if (instance) {
-      // We do not want to add the url to browser history on init because when the pane is initialised it's because
-      // we already have something in the url. Adding basically the same state as additional history item prevents
-      // user to go back to previous url.
-      dispatch(runQueries(exploreId, { replaceUrl: true }));
-    }
-  };
-}
+      const datasourceUIDs = getDatasourceUIDs(instance.uid, queries);
+      const correlations = await getCorrelationsBySourceUIDs(datasourceUIDs);
+      dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlations.correlations || [] }));
 
-/**
- * Reacts to changes in URL state that we need to sync back to our redux state. Computes diff of newUrlQuery vs current
- * state and runs update actions for relevant parts.
- */
-export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): ThunkResult<void> {
-  return async (dispatch, getState) => {
-    const itemState = getState().explore[exploreId]!;
-    if (!itemState.initialized) {
-      return;
+      dispatch(runQueries({ exploreId }));
     }
 
-    // Get diff of what should be updated
-    const newUrlState = parseUrlState(newUrlQuery);
-    const update = urlDiff(newUrlState, getUrlStateFromPaneState(itemState));
-
-    const { containerWidth, eventBridge } = itemState;
-
-    // datasource will either be name or UID here
-    const { datasource, queries, range: urlRange, panelsState } = newUrlState;
-    const refreshQueries: DataQuery[] = [];
-
-    for (let index = 0; index < queries.length; index++) {
-      const query = queries[index];
-      refreshQueries.push(generateNewKeyAndAddRefIdIfMissing(query, refreshQueries, index));
-    }
-
-    const timeZone = getTimeZone(getState().user);
-    const fiscalYearStartMonth = getFiscalYearStartMonth(getState().user);
-    const range = getTimeRangeFromUrl(urlRange, timeZone, fiscalYearStartMonth);
-
-    // commit changes based on the diff of new url vs old url
-
-    if (update.datasource) {
-      const initialQueries = await ensureQueries(queries);
-      await dispatch(
-        initializeExplore(exploreId, datasource, initialQueries, range, containerWidth, eventBridge, panelsState)
+    // initialize new pane with helper data
+    if (correlationHelperData !== undefined && getState().explore.correlationEditorDetails?.editorMode) {
+      dispatch(
+        changeCorrelationHelperData({
+          exploreId,
+          correlationEditorHelperData: correlationHelperData,
+        })
       );
-      return;
     }
 
-    if (update.range) {
-      dispatch(updateTime({ exploreId, rawRange: range.raw }));
-    }
-
-    if (update.queries) {
-      dispatch(setQueriesAction({ exploreId, queries: refreshQueries }));
-    }
-
-    if (update.panelsState && panelsState !== undefined) {
-      dispatch(changePanelsStateAction({ exploreId, panelsState }));
-    }
-
-    // always run queries when refresh is needed
-    if (update.queries || update.range) {
-      dispatch(runQueries(exploreId));
-    }
-  };
-}
+    return fulfillWithValue({ exploreId, state: getState().explore.panes[exploreId]! });
+  }
+);
 
 /**
  * Reducer for an Explore area, to be used by the global Explore reducer.
@@ -281,60 +226,39 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
     return { ...state, containerWidth };
   }
 
-  if (changeGraphStyleAction.match(action)) {
-    const { graphStyle } = action.payload;
-    return { ...state, graphStyle };
-  }
-
   if (changePanelsStateAction.match(action)) {
     const { panelsState } = action.payload;
     return { ...state, panelsState };
   }
 
+  if (changeCorrelationHelperData.match(action)) {
+    const { correlationEditorHelperData } = action.payload;
+    return { ...state, correlationEditorHelperData };
+  }
+
+  if (saveCorrelationsAction.match(action)) {
+    return {
+      ...state,
+      correlations: action.payload.correlations,
+    };
+  }
+
   if (initializeExploreAction.match(action)) {
-    const { containerWidth, eventBridge, queries, range, datasourceInstance, history } = action.payload;
+    const { queries, range, datasourceInstance, history } = action.payload;
 
     return {
       ...state,
-      containerWidth,
-      eventBridge,
       range,
       queries,
       initialized: true,
       queryKeys: getQueryKeys(queries),
       datasourceInstance,
       history,
-      datasourceMissing: !datasourceInstance,
       queryResponse: createEmptyQueryResponse(),
       cache: [],
+      correlations: [],
     };
   }
 
   return state;
-};
-
-/**
- * Compare 2 explore urls and return a map of what changed. Used to update the local state with all the
- * side effects needed.
- */
-export const urlDiff = (
-  oldUrlState: ExploreUrlState | undefined,
-  currentUrlState: ExploreUrlState | undefined
-): {
-  datasource: boolean;
-  queries: boolean;
-  range: boolean;
-  panelsState: boolean;
-} => {
-  const datasource = !isEqual(currentUrlState?.datasource, oldUrlState?.datasource);
-  const queries = !isEqual(currentUrlState?.queries, oldUrlState?.queries);
-  const range = !isEqual(currentUrlState?.range || DEFAULT_RANGE, oldUrlState?.range || DEFAULT_RANGE);
-  const panelsState = !isEqual(currentUrlState?.panelsState, oldUrlState?.panelsState);
-
-  return {
-    datasource,
-    queries,
-    range,
-    panelsState,
-  };
 };

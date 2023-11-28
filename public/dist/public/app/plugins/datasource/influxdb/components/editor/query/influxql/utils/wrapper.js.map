@@ -1,0 +1,1 @@
+{"version":3,"file":"wrapper.js","sourceRoot":"","sources":["../../../../../../../../../../../app/plugins/datasource/influxdb/components/editor/query/influxql/utils/wrapper.ts"],"names":[],"mappings":"AAEA,MAAM,UAAU,SAAS,CAAC,CAAqB;IAC7C,OAAO,MAAM,CAAC,CAAC,IAAI,IAAI,CAAC;AAC1B,CAAC;AAED,MAAM,UAAU,QAAQ,CAAC,CAAqB;IAC5C,OAAO,IAAI,CAAC,CAAC,IAAI,EAAE,CAAC;AACtB,CAAC"}

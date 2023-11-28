@@ -1,0 +1,52 @@
+import { cloneDeep } from 'lodash';
+import React from 'react';
+import { useAsync } from 'react-use';
+import { locationService } from '@grafana/runtime/src';
+import { Alert, LoadingPlaceholder } from '@grafana/ui/src';
+import { useDispatch } from '../../../types';
+import { AlertRuleForm } from './components/rule-editor/alert-rule-form/AlertRuleForm';
+import { fetchEditableRuleAction } from './state/actions';
+import { generateCopiedName } from './utils/duplicate';
+import { rulerRuleToFormValues } from './utils/rule-form';
+import { getRuleName, isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './utils/rules';
+import { createUrl } from './utils/url';
+export function CloneRuleEditor({ sourceRuleId }) {
+    const dispatch = useDispatch();
+    const { loading, value: rule, error, } = useAsync(() => dispatch(fetchEditableRuleAction(sourceRuleId)).unwrap(), [sourceRuleId]);
+    if (loading) {
+        return React.createElement(LoadingPlaceholder, { text: "Loading the rule" });
+    }
+    if (rule) {
+        const ruleClone = cloneRuleDefinition(rule);
+        const formPrefill = rulerRuleToFormValues(ruleClone);
+        return React.createElement(AlertRuleForm, { prefill: formPrefill });
+    }
+    if (error) {
+        return (React.createElement(Alert, { title: "Error", severity: "error" }, error.message));
+    }
+    return (React.createElement(Alert, { title: "Cannot copy the rule. The rule does not exist", buttonContent: "Go back to alert list", onRemove: () => locationService.replace(createUrl('/alerting/list')) }));
+}
+function changeRuleName(rule, newName) {
+    if (isGrafanaRulerRule(rule)) {
+        rule.grafana_alert.title = newName;
+    }
+    if (isAlertingRulerRule(rule)) {
+        rule.alert = newName;
+    }
+    if (isRecordingRulerRule(rule)) {
+        rule.record = newName;
+    }
+}
+export function cloneRuleDefinition(rule) {
+    const ruleClone = cloneDeep(rule);
+    changeRuleName(ruleClone.rule, generateCopiedName(getRuleName(ruleClone.rule), ruleClone.group.rules.map(getRuleName)));
+    if (isGrafanaRulerRule(ruleClone.rule)) {
+        ruleClone.rule.grafana_alert.uid = '';
+        // Provisioned alert rules have provisioned alert group which cannot be used in UI
+        if (Boolean(ruleClone.rule.grafana_alert.provenance)) {
+            ruleClone.group = { name: '', rules: ruleClone.group.rules };
+        }
+    }
+    return ruleClone;
+}
+//# sourceMappingURL=CloneRuleEditor.js.map

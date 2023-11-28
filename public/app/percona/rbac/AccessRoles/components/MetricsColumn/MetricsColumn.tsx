@@ -4,7 +4,7 @@ import { Icon, Tooltip } from '@grafana/ui';
 
 import { Messages } from '../../AccessRole.messages';
 
-const MetricsColumn: FC = () => (
+const MetricsColumn: FC<React.PropsWithChildren<unknown>> = () => (
   <span>
     {Messages.metrics.column}
     <Tooltip content={Messages.metrics.tooltip} theme="info">

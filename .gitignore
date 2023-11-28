@@ -17,9 +17,10 @@ vendor/
 /docs/menu.yaml
 /requests
 tsconfig.tsbuildinfo
+__debug_bin*
 
 # Yarn
-.yarn/*
+.yarn/
 !.yarn/patches
 !.yarn/releases
 !.yarn/plugins
@@ -36,6 +37,9 @@ tsconfig.tsbuildinfo
 
 # Enterprise reporting fonts
 /public/fonts/dejavu
+
+# Swagger intermediate file
+/public/api-spec.json
 
 # Enterprise devenv
 /devenv/docker/blocks/grafana-enterprise
@@ -79,10 +83,14 @@ public/css/*.min.css
 /devenv/docker-compose.override.yaml
 /devenv/.env
 /devenv/docker/blocks/tempo/tempo-data/
+/devenv/docker/ha-test-unified-alerting/logs/webhook/dumps/
+/devenv/docker/ha-test-unified-alerting/logs/webhook/webhook-listener.log
 
 conf/custom.ini
-/conf/provisioning/**/custom.yaml
-/conf/provisioning/**/dev.yaml
+
+/conf/provisioning/**/*.yaml
+!/conf/provisioning/**/sample.yaml
+
 /conf/ldap_dev.toml
 /conf/ldap_freeipa.toml
 profile.cov
@@ -94,6 +102,8 @@ profile.cov
 /pkg/cmd/grafana-server/grafana-server
 /pkg/cmd/grafana-server/debug
 /pkg/extensions/*
+/pkg/build/cmd/artifactspage.go
+/pkg/build/cmd/artifactspage.tmpl.html
 /pkg/server/wireexts_enterprise.go
 /pkg/cmd/grafana-cli/runner/wireexts_enterprise.go
 !/pkg/extensions/main.go
@@ -105,6 +115,7 @@ debug.test
 /packaging/**/*.tar.gz
 /packaging/**/*.tar.gz.sha256
 pkg/cmd/grafana-server/__debug_bin
+pkg/services/quota/quotaimpl/storage/storage.json
 
 # Ignore OSX indexing
 .DS_Store
@@ -117,6 +128,7 @@ pkg/cmd/grafana-server/__debug_bin
 *.orig
 
 /devenv/bulk-dashboards/*.json
+/devenv/bulk-folders/*/*.json
 /devenv/bulk_alerting_dashboards/*.json
 /devenv/datasources_bulk.yaml
 /devenv/bulk_alerting_dashboards/bulk_alerting_datasources.yaml
@@ -126,6 +138,7 @@ pkg/cmd/grafana-server/__debug_bin
 !.yarn/patches/*.patch
 
 # Ignoring frontend packages specifics
+/packages/grafana-ui/.yarn/.cache
 /packages/**/dist
 /packages/**/compiled
 /packages/**/.rpt2_cache
@@ -133,7 +146,7 @@ pkg/cmd/grafana-server/__debug_bin
 /packages/**/package.tgz
 /packages/grafana-toolkit/sass
 ## CI places the packages in a different location
-/npm-artifacts/*.tgz
+/npm-artifacts
 
 # Ignore frontend build manifest
 manifest.json
@@ -155,6 +168,8 @@ compilation-stats.json
 /e2e/benchmarks/**/results/*
 /e2e/benchmarks/**/results
 /e2e/build_results.zip
+/e2e/extensions
+/e2e/extensions-suite
 
 # grafana server
 /scripts/grafana-server/server.log
@@ -169,18 +184,23 @@ compilation-stats.json
 # auto generated frontend docs
 /docs/sources/packages_api
 
-# auto generated Go files
-*_gen.go
-!pkg/services/featuremgmt/toggles_gen.go
-!pkg/coremodel/**/*_gen.go
-!pkg/framework/**/*_gen.go
-!pkg/plugins/pfs/**/*_gen.go
-!public/app/plugins/**/*_gen.go
+# wire generated files
+**/wire_gen.go
 
 # Auto-generated internationalization files
 public/locales/_build/
-public/locales/**/*.js
+public/locales/*/*.js
+public/locales/*/grafana_old.json
+
+# Auto-generated swagger intermediate file
+public/api-spec.json
 
 deployment_tools_config.json
 
 .betterer.cache
+
+# Temporary file for backporting PRs
+.pr-body.txt
+
+# Core plugin builds
+public/app/plugins/**/dist/

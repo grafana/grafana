@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
 
-import { FieldType, toDataFrame } from '@grafana/data';
+import { FieldType, PanelData, toDataFrame } from '@grafana/data';
 
 import { queryBuilder } from '../shared/testing/builders';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
@@ -80,8 +80,7 @@ describe('operators', () => {
       ],
     });
 
-    // it.each wouldn't work here as we need the done callback
-    [
+    it.each([
       { series: null, expected: [] },
       { series: undefined, expected: [] },
       { series: [], expected: [] },
@@ -127,32 +126,28 @@ describe('operators', () => {
           { text: 'C', value: 'C', expandable: true },
         ],
       },
-    ].map((scenario) => {
-      it(`when called with series:${JSON.stringify(scenario.series, null, 0)}`, async () => {
-        const { series, expected } = scenario;
-        const panelData: any = { series };
-        const observable = of(panelData).pipe(toMetricFindValues());
-
-        await expect(observable).toEmitValuesWith((received) => {
-          const value = received[0];
-          expect(value).toEqual(expected);
-        });
-      });
+      {
+        series: [[{ id: 'foo' }, { id: 'bar' }]],
+        expected: [
+          { text: 'foo', value: 'foo' },
+          { text: 'bar', value: 'bar' },
+        ],
+      },
+    ])('%# when called with: %j', ({ series, expected }) => {
+      const panelData = { series } as PanelData;
+      expect(toMetricFindValues(panelData)).toEqual(expected);
     });
 
     describe('when called without metric find values and string fields', () => {
-      it('then the observable throws', async () => {
+      it('then the observable throws', () => {
         const frameWithTimeField = toDataFrame({
           fields: [{ name: 'time', type: FieldType.time, values: [1, 2, 3] }],
         });
 
-        const panelData: any = { series: [frameWithTimeField] };
-        const observable = of(panelData).pipe(toMetricFindValues());
-
-        await expect(observable).toEmitValuesWith((received) => {
-          const value = received[0];
-          expect(value).toEqual(new Error("Couldn't find any field of type string in the results."));
-        });
+        const panelData = { series: [frameWithTimeField] } as PanelData;
+        expect(() => toMetricFindValues(panelData)).toThrow(
+          new Error("Couldn't find any field of type string in the results.")
+        );
       });
     });
   });

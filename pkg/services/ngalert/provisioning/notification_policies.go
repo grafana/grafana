@@ -37,12 +37,12 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 	q := models.GetLatestAlertmanagerConfigurationQuery{
 		OrgID: orgID,
 	}
-	err := nps.amStore.GetLatestAlertmanagerConfiguration(ctx, &q)
+	alertManagerConfig, err := nps.amStore.GetLatestAlertmanagerConfiguration(ctx, &q)
 	if err != nil {
 		return definitions.Route{}, err
 	}
 
-	cfg, err := deserializeAlertmanagerConfig([]byte(q.Result.AlertmanagerConfiguration))
+	cfg, err := deserializeAlertmanagerConfig([]byte(alertManagerConfig.AlertmanagerConfiguration))
 	if err != nil {
 		return definitions.Route{}, err
 	}
@@ -57,7 +57,7 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 	}
 
 	result := *cfg.AlertmanagerConfig.Route
-	result.Provenance = provenance
+	result.Provenance = definitions.Provenance(provenance)
 
 	return result, nil
 }
@@ -126,7 +126,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
 	defaultCfg, err := deserializeAlertmanagerConfig([]byte(nps.settings.DefaultConfiguration))
 	if err != nil {
-		nps.log.Error("failed to parse default alertmanager config: %w", err)
+		nps.log.Error("Failed to parse default alertmanager config: %w", err)
 		return definitions.Route{}, fmt.Errorf("failed to parse default alertmanager config: %w", err)
 	}
 	route := defaultCfg.AlertmanagerConfig.Route

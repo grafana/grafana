@@ -16,17 +16,25 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
-func TestDashboardQuota(t *testing.T) {
+func TestIntegrationDashboardQuota(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	// enable quota and set low dashboard quota
 	// Setup Grafana and its Database
 	dashboardQuota := int64(1)
@@ -100,12 +108,22 @@ func createUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserComma
 	store.Cfg.AutoAssignOrg = true
 	store.Cfg.AutoAssignOrgId = 1
 
-	u, err := store.CreateUser(context.Background(), cmd)
+	quotaService := quotaimpl.ProvideService(store, store.Cfg)
+	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
+	require.NoError(t, err)
+	usrSvc, err := userimpl.ProvideService(store, orgService, store.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	require.NoError(t, err)
+
+	u, err := usrSvc.Create(context.Background(), &cmd)
 	require.NoError(t, err)
 	return u.ID
 }
 
-func TestUpdatingProvisionionedDashboards(t *testing.T) {
+func TestIntegrationUpdatingProvisionionedDashboards(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
@@ -154,7 +172,7 @@ providers:
 		})
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		dashboardList := &models.HitList{}
+		dashboardList := &model.HitList{}
 		err = json.Unmarshal(b, dashboardList)
 		require.NoError(t, err)
 		assert.Equal(t, 1, dashboardList.Len())
@@ -203,7 +221,7 @@ providers:
 				dashboardData, err := simplejson.NewJson([]byte(tc.dashboardData))
 				require.NoError(t, err)
 				buf := &bytes.Buffer{}
-				err = json.NewEncoder(buf).Encode(models.SaveDashboardCommand{
+				err = json.NewEncoder(buf).Encode(dashboards.SaveDashboardCommand{
 					Dashboard: dashboardData,
 				})
 				require.NoError(t, err)

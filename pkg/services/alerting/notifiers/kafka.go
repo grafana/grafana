@@ -1,14 +1,13 @@
 package notifiers
 
 import (
-	"strconv"
-
 	"fmt"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
@@ -80,7 +79,7 @@ func (kn *KafkaNotifier) Notify(evalContext *alerting.EvalContext) error {
 	kn.log.Info("Notifying Kafka", "alert_state", state)
 
 	recordJSON := simplejson.New()
-	records := make([]interface{}, 1)
+	records := make([]any, 1)
 
 	bodyJSON := simplejson.New()
 	// get alert state in the kafka output issue #11401
@@ -98,7 +97,7 @@ func (kn *KafkaNotifier) Notify(evalContext *alerting.EvalContext) error {
 	bodyJSON.Set("client_url", ruleURL)
 
 	if kn.NeedsImage() && evalContext.ImagePublicURL != "" {
-		contexts := make([]interface{}, 1)
+		contexts := make([]any, 1)
 		imageJSON := simplejson.New()
 		imageJSON.Set("type", "image")
 		imageJSON.Set("src", evalContext.ImagePublicURL)
@@ -114,7 +113,7 @@ func (kn *KafkaNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	topicURL := kn.Endpoint + "/topics/" + kn.Topic
 
-	cmd := &models.SendWebhookSync{
+	cmd := &notifications.SendWebhookSync{
 		Url:        topicURL,
 		Body:       string(body),
 		HttpMethod: "POST",

@@ -1,11 +1,13 @@
 import classNames from 'classnames';
+import { indexOf } from 'lodash';
 import React from 'react';
 import { Unsubscribable } from 'rxjs';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
-import { Icon } from '@grafana/ui';
+import { Icon, TextLink } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/types';
 
 import { ShowConfirmModalEvent } from '../../../../types/events';
 import { DashboardModel } from '../../state/DashboardModel';
@@ -17,7 +19,7 @@ export interface DashboardRowProps {
   dashboard: DashboardModel;
 }
 
-export class DashboardRow extends React.Component<DashboardRowProps, any> {
+export class DashboardRow extends React.Component<DashboardRowProps> {
   sub?: Unsubscribable;
 
   componentDidMount() {
@@ -36,6 +38,33 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
 
   onToggle = () => {
     this.props.dashboard.toggleRow(this.props.panel);
+  };
+
+  getWarning = () => {
+    const panels = !!this.props.panel.panels?.length
+      ? this.props.panel.panels
+      : this.props.dashboard.getRowPanels(indexOf(this.props.dashboard.panels, this.props.panel));
+    const isAnyPanelUsingDashboardDS = panels.some((p) => p.datasource?.uid === SHARED_DASHBOARD_QUERY);
+    if (isAnyPanelUsingDashboardDS) {
+      return (
+        <div>
+          <p>
+            Panels in this row use the {SHARED_DASHBOARD_QUERY} data source. These panels will reference the panel in
+            the original row, not the ones in the repeated rows.
+          </p>
+          <TextLink
+            external
+            href={
+              'https://grafana.com/docs/grafana/next/dashboards/build-dashboards/create-dashboard/#configure-repeating-rows'
+            }
+          >
+            Learn more
+          </TextLink>
+        </div>
+      );
+    }
+
+    return undefined;
   };
 
   onUpdate = (title: string, repeat?: string | null) => {
@@ -76,8 +105,9 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
 
     return (
       <div className={classes} data-testid="dashboard-row-container">
-        <a
+        <button
           className="dashboard-row__title pointer"
+          type="button"
           data-testid={selectors.components.DashboardRow.title(title)}
           onClick={this.onToggle}
         >
@@ -86,20 +116,24 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
           <span className="dashboard-row__panel_count">
             ({count} {panels})
           </span>
-        </a>
+        </button>
         {canEdit && (
           <div className="dashboard-row__actions">
             <RowOptionsButton
               title={this.props.panel.title}
               repeat={this.props.panel.repeat}
               onUpdate={this.onUpdate}
+              warning={this.getWarning()}
             />
-            <a className="pointer" onClick={this.onDelete} role="button" aria-label="Delete row">
+            <button type="button" className="pointer" onClick={this.onDelete} aria-label="Delete row">
               <Icon name="trash-alt" />
-            </a>
+            </button>
           </div>
         )}
         {this.props.panel.collapsed === true && (
+          /* disabling the a11y rules here as the button handles keyboard interactions */
+          /* this is just to provide a better experience for mouse users */
+          /* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */
           <div className="dashboard-row__toggle-target" onClick={this.onToggle}>
             &nbsp;
           </div>

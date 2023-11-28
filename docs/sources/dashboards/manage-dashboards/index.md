@@ -9,7 +9,6 @@ aliases:
   - dashboard-folders/
   - dashboard-manage/
   - export-import/
-  - time-range-controls/
 keywords:
   - grafana
   - dashboard
@@ -21,16 +20,17 @@ keywords:
   - troubleshoot
   - time range
   - scripting
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Manage dashboards
 title: Manage dashboards
 weight: 8
 ---
 
 # Manage dashboards
-
-A dashboard is a set of one or more [panels]({{< relref "../../panels-visualizations/" >}}) that visually presents your data in one or more rows.
-
-For more information about creating dashboards, refer to [Add and organize panels](../add-organize-panels).
 
 This topic includes techniques you can use to manage your Grafana dashboards, including:
 
@@ -39,65 +39,81 @@ This topic includes techniques you can use to manage your Grafana dashboards, in
 - [Organizing dashboards](#organize-a-dashboard)
 - [Troubleshooting dashboards](#troubleshoot-dashboards)
 
+For more information about creating dashboards, refer to [Add and organize panels](../add-organize-panels).
+
+## Browse dashboards
+
+On the **Dashboards** page, you can browse and manage folders and dashboards. This includes the options to:
+
+- Create folders and dashboards
+- Move dashboards between folders
+- Delete multiple dashboards and folders
+- Navigate to a folder
+- Manage folder permissions. For more information, refer to [Dashboard permissions](https://grafana.com/docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/#dashboard-permissions).
+
+{{% admonition type="note" %}}
+As of Grafana 10.2, there is no longer a special **General** folder. Dashboards without a folder are now shown at the top level alongside folders.
+{{% /admonition %}}
+
 ## Create a dashboard folder
 
 Folders help you organize and group dashboards, which is useful when you have many dashboards or multiple teams using the same Grafana instance.
 
-**Before you begin:**
-
-- Ensure that you have Grafana Admin or Super Admin permissions. For more information about dashboard permissions, refer to [Dashboard permissions]({{< relref "../../administration/roles-and-permissions/#dashboard-permissions" >}}).
+> **Before you begin:** Ensure you have Editor permissions or greater to create folders. For more information about dashboard permissions, refer to [Dashboard permissions][].
 
 **To create a dashboard folder:**
 
-1. Sign in to Grafana and on the side menu, click **Dashboards > New folder**.
+1. Click **Dashboards** in the main menu.
+1. On the **Dashboards** page, click **New** and select **New folder** in the drop-down.
 1. Enter a unique name and click **Create**.
 
 When you save a dashboard, you can either select a folder for the dashboard to be saved in or create a new folder.
 
-## Manage dashboards
+{{% admonition type="note" %}}
+Alerts cannot be placed in folders with slashes (\ /) in the name. If you wish to place alerts in the folder, do not use slashes in the folder name.
+{{% /admonition %}}
 
-{{< figure src="/static/img/docs/v50/manage_dashboard_menu.png" max-width="300px" class="docs-image--right" >}}
+**To edit the name of a folder:**
 
-On the **Manage dashboards and folders** page, you can:
+1. Click **Dashboards** in the main menu.
+1. Navigate to the folder by selecting it in the list, or searching for it.
+1. Click the pencil icon labelled **Edit title** in the header and update the name of the folder.
 
-- create a folder
-- create a dashboard
-- move dashboards into folders
-- delete multiple dashboards
-- navigate to a folder page where you can assign folder and dashboard permissions
+The new folder name is automatically saved.
 
-### Dashboard folder page
+### Folder permissions
 
-You can complete the following tasks on the **Dashboard Folder** page:
+You can assign permissions to a folder. Any permissions you assign are inherited by the dashboards in the folder. You can assign permissions to organization roles, teams, and users.
 
-- Move or delete dashboards in a folder
-- Rename a folder (available under the **Settings** tab)
-- Assign permissions to folders (which are inherited by the dashboards in the folder)
+**To modify permissions for a folder:**
 
-To navigate to the dashboard folder page, click the cog appears when you hover over a folder in the dashboard search result list or the **Manage dashboards and folders** page.
+1. Click **Dashboards** in the main menu.
+1. Navigate to the folder by selecting it in the list, or searching for it.
+1. On the folder's page, click **Folder actions** and select **Manage permissions** in the drop-down.
+1. Update the permissions as desired.
 
-### Dashboard permissions
+Changes are saved automatically.
 
-You can assign permissions to a folder. Any permissions you assign are inherited by the dashboards in the folder. An Access Control List (ACL) is used where **Organization Role**, **Team** and a **User** can be assigned permissions.
-
-For more information about dashboard permissions, refer to [Dashboard permissions]({{< relref "../../administration/roles-and-permissions/#dashboard-permissions" >}}).
+For more information about dashboard permissions, refer to [Dashboard permissions][].
 
 ## Export and import dashboards
 
-You can use the Grafana UI or the [HTTP API]({{< relref "../../developers/http_api/dashboard/#create-update-dashboard" >}}) to export and import dashboards.
+You can use the Grafana UI or the [HTTP API][] to export and import dashboards.
 
 ### Export a dashboard
 
 The dashboard export action creates a Grafana JSON file that contains everything you need, including layout, variables, styles, data sources, queries, and so on, so that you can later import the dashboard.
 
+1. Click **Dashboards** in the main menu.
 1. Open the dashboard you want to export.
-2. Click the **Share** icon.
-3. Click **Export**.
-4. Click **Save to file**.
+1. Click the **Share** icon in the top navigation bar.
+1. Click **Export**.
+
+   If you're exporting the dashboard to use in another instance, with different data source UIDs, enable the **Export for sharing externally** switch.
+
+1. Click **Save to file**.
 
 Grafana downloads a JSON file to your local machine.
-
-{{< figure src="/static/img/docs/export/export-modal.png" max-width="800px" >}}
 
 #### Make a dashboard portable
 
@@ -107,17 +123,16 @@ A template variable of the type `Constant` will automatically be hidden in the d
 
 ### Import a dashboard
 
-1. Click **Dashboards > Import** in the side menu.
-
-   {{< figure src="/static/img/docs/v70/import_step1.png" max-width="700px" >}}
-
+1. Click **Dashboards** in the left-side menu.
+1. Click **New** and select **Import** in the dropdown menu.
 1. Perform one of the following steps:
 
    - Upload a dashboard JSON file
    - Paste a [Grafana.com](https://grafana.com) dashboard URL
    - Paste dashboard JSON text directly into the text area
 
-{{< figure src="/static/img/docs/v70/import_step2_grafana.com.png"  max-width="700px" >}}
+<!--{{< figure src="/static/img/docs/v70/import_step2_grafana.com.png"  max-width="700px" >}}
+-->
 
 The import process enables you to change the name of the dashboard, pick the data source you want the dashboard to use, and specify any metric prefixes (if the dashboard uses any).
 
@@ -125,7 +140,7 @@ The import process enables you to change the name of the dashboard, pick the dat
 
 Find dashboards for common server applications at [Grafana.com/dashboards](https://grafana.com/dashboards).
 
-{{< figure src="/static/img/docs/v50/gcom_dashboard_list.png" max-width="700px" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-gcom-dashboards.png" >}}
 
 ## Troubleshoot dashboards
 
@@ -166,3 +181,14 @@ In this graph, we set graph to show bars instead of lines and set the **No value
 ### More examples
 
 You can find more examples in `public/dashboards/` directory of your Grafana installation.
+
+{{% docs/reference %}}
+[Dashboard permissions]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions#dashboard-permissions"
+[Dashboard permissions]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions#dashboard-permissions"
+
+[panels]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations"
+[panels]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations"
+
+[HTTP API]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api"
+[HTTP API]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api"
+{{% /docs/reference %}}

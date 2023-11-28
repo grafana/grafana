@@ -6,19 +6,18 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/blugelabs/bluge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/searchV2/extract"
-	"github.com/grafana/grafana/pkg/services/store"
-
-	"github.com/blugelabs/bluge"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/store/entity"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type testDashboardLoader struct {
@@ -31,11 +30,11 @@ func (t *testDashboardLoader) LoadDashboards(_ context.Context, _ int64, _ strin
 
 var testLogger = log.New("index-test-logger")
 
-var testAllowAllFilter = func(uid string) bool {
+var testAllowAllFilter = func(kind entityKind, uid, parent string) bool {
 	return true
 }
 
-var testDisallowAllFilter = func(uid string) bool {
+var testDisallowAllFilter = func(kind entityKind, uid, parent string) bool {
 	return false
 }
 
@@ -113,15 +112,15 @@ var testDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "test",
+		summary: &entity.EntitySummary{
+			Name: "test",
 		},
 	},
 	{
 		id:  2,
 		uid: "2",
-		info: &extract.DashboardInfo{
-			Title: "boom",
+		summary: &entity.EntitySummary{
+			Name: "boom",
 		},
 	},
 }
@@ -162,8 +161,8 @@ func TestDashboardIndexUpdates(t *testing.T) {
 		err := index.updateDashboard(context.Background(), testOrgID, orgIdx, dashboard{
 			id:  3,
 			uid: "3",
-			info: &extract.DashboardInfo{
-				Title: "created",
+			summary: &entity.EntitySummary{
+				Name: "created",
 			},
 		})
 		require.NoError(t, err)
@@ -181,8 +180,8 @@ func TestDashboardIndexUpdates(t *testing.T) {
 		err := index.updateDashboard(context.Background(), testOrgID, orgIdx, dashboard{
 			id:  2,
 			uid: "2",
-			info: &extract.DashboardInfo{
-				Title: "nginx",
+			summary: &entity.EntitySummary{
+				Name: "nginx",
 			},
 		})
 		require.NoError(t, err)
@@ -197,15 +196,15 @@ var testSortDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "a-test",
+		summary: &entity.EntitySummary{
+			Name: "a-test",
 		},
 	},
 	{
 		id:  2,
 		uid: "2",
-		info: &extract.DashboardInfo{
-			Title: "z-test",
+		summary: &entity.EntitySummary{
+			Name: "z-test",
 		},
 	},
 }
@@ -288,15 +287,15 @@ var testPrefixDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "Archer Data System",
+		summary: &entity.EntitySummary{
+			Name: "Archer Data System",
 		},
 	},
 	{
 		id:  2,
 		uid: "2",
-		info: &extract.DashboardInfo{
-			Title: "Document Sync repo",
+		summary: &entity.EntitySummary{
+			Name: "Document Sync repo",
 		},
 	},
 }
@@ -366,8 +365,8 @@ var longPrefixDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "Eyjafjallajökull Eruption data",
+		summary: &entity.EntitySummary{
+			Name: "Eyjafjallajökull Eruption data",
 		},
 	},
 }
@@ -385,15 +384,15 @@ var scatteredTokensDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "Three can keep a secret, if two of them are dead (Benjamin Franklin)",
+		summary: &entity.EntitySummary{
+			Name: "Three can keep a secret, if two of them are dead (Benjamin Franklin)",
 		},
 	},
 	{
 		id:  3,
 		uid: "2",
-		info: &extract.DashboardInfo{
-			Title: "A secret is powerful when it is empty (Umberto Eco)",
+		summary: &entity.EntitySummary{
+			Name: "A secret is powerful when it is empty (Umberto Eco)",
 		},
 	},
 }
@@ -418,25 +417,19 @@ var dashboardsWithFolders = []dashboard{
 		id:       1,
 		uid:      "1",
 		isFolder: true,
-		info: &extract.DashboardInfo{
-			Title: "My folder",
+		summary: &entity.EntitySummary{
+			Name: "My folder",
 		},
 	},
 	{
 		id:       2,
 		uid:      "2",
 		folderID: 1,
-		info: &extract.DashboardInfo{
-			Title: "Dashboard in folder 1",
-			Panels: []extract.PanelInfo{
-				{
-					ID:    1,
-					Title: "Panel 1",
-				},
-				{
-					ID:    2,
-					Title: "Panel 2",
-				},
+		summary: &entity.EntitySummary{
+			Name: "Dashboard in folder 1",
+			Nested: []*entity.EntitySummary{
+				newNestedPanel(1, 2, "Panel 1"),
+				newNestedPanel(2, 2, "Panel 2"),
 			},
 		},
 	},
@@ -444,26 +437,20 @@ var dashboardsWithFolders = []dashboard{
 		id:       3,
 		uid:      "3",
 		folderID: 1,
-		info: &extract.DashboardInfo{
-			Title: "Dashboard in folder 2",
-			Panels: []extract.PanelInfo{
-				{
-					ID:    3,
-					Title: "Panel 3",
-				},
+		summary: &entity.EntitySummary{
+			Name: "Dashboard in folder 2",
+			Nested: []*entity.EntitySummary{
+				newNestedPanel(3, 3, "Panel 3"),
 			},
 		},
 	},
 	{
 		id:  4,
 		uid: "4",
-		info: &extract.DashboardInfo{
-			Title: "One more dash",
-			Panels: []extract.PanelInfo{
-				{
-					ID:    3,
-					Title: "Panel 4",
-				},
+		summary: &entity.EntitySummary{
+			Name: "One more dash",
+			Nested: []*entity.EntitySummary{
+				newNestedPanel(4, 4, "Panel 4"),
 			},
 		},
 	},
@@ -517,20 +504,23 @@ var dashboardsWithPanels = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "My Dash",
-			Panels: []extract.PanelInfo{
-				{
-					ID:    1,
-					Title: "Panel 1",
-				},
-				{
-					ID:    2,
-					Title: "Panel 2",
-				},
+		summary: &entity.EntitySummary{
+			Name: "My Dash",
+			Nested: []*entity.EntitySummary{
+				newNestedPanel(1, 1, "Panel 1"),
+				newNestedPanel(2, 1, "Panel 2"),
 			},
 		},
 	},
+}
+
+func newNestedPanel(id, dashId int64, name string) *entity.EntitySummary {
+	summary := &entity.EntitySummary{
+		Kind: "panel",
+		UID:  fmt.Sprintf("%d#%d", dashId, id),
+	}
+	summary.Name = name
+	return summary
 }
 
 func TestDashboardIndex_Panels(t *testing.T) {
@@ -562,15 +552,15 @@ var punctuationSplitNgramDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "heat-torkel",
+		summary: &entity.EntitySummary{
+			Name: "heat-torkel",
 		},
 	},
 	{
 		id:  2,
 		uid: "2",
-		info: &extract.DashboardInfo{
-			Title: "topology heatmap",
+		summary: &entity.EntitySummary{
+			Name: "topology heatmap",
 		},
 	},
 }
@@ -595,8 +585,8 @@ var camelCaseNgramDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "heatTorkel",
+		summary: &entity.EntitySummary{
+			Name: "heatTorkel",
 		},
 	},
 }
@@ -617,8 +607,8 @@ func dashboardsWithTitles(names ...string) []dashboard {
 		out = append(out, dashboard{
 			id:  no,
 			uid: fmt.Sprintf("%d", no),
-			info: &extract.DashboardInfo{
-				Title: name,
+			summary: &entity.EntitySummary{
+				Name: name,
 			},
 		})
 	}

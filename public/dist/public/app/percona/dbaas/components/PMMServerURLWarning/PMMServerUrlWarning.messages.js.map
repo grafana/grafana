@@ -1,0 +1,1 @@
+{"version":3,"file":"PMMServerUrlWarning.messages.js","sourceRoot":"","sources":["../../../../../../../app/percona/dbaas/components/PMMServerURLWarning/PMMServerUrlWarning.messages.ts"],"names":[],"mappings":"AAAA,MAAM,CAAC,MAAM,QAAQ,GAAG;IACtB,OAAO,EAAE,oBAAoB;IAC7B,UAAU,EAAE,CAAC,OAAe,EAAE,EAAE,CAAC,0CAA0C,OAAO,IAAI;IACtF,SAAS,EAAE,uDAAuD;IAClE,gBAAgB,EAAE,mBAAmB;CACtC,CAAC"}

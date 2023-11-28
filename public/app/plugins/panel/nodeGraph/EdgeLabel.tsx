@@ -4,6 +4,7 @@ import React, { memo } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
+import { nodeR } from './Node';
 import { EdgeDatum, NodeDatum } from './types';
 import { shortenLine } from './utils';
 
@@ -29,10 +30,15 @@ interface Props {
 }
 export const EdgeLabel = memo(function EdgeLabel(props: Props) {
   const { edge } = props;
-  // Not great typing but after we do layout these properties are full objects not just references
-  const { source, target } = edge as { source: NodeDatum; target: NodeDatum };
+  // Not great typing, but after we do layout these properties are full objects not just references
+  const { source, target, sourceNodeRadius, targetNodeRadius } = edge as {
+    source: NodeDatum;
+    target: NodeDatum;
+    sourceNodeRadius: number;
+    targetNodeRadius: number;
+  };
 
-  // As the nodes have some radius we want edges to end outside of the node circle.
+  // As the nodes have some radius we want edges to end outside the node circle.
   const line = shortenLine(
     {
       x1: source.x!,
@@ -40,7 +46,8 @@ export const EdgeLabel = memo(function EdgeLabel(props: Props) {
       x2: target.x!,
       y2: target.y!,
     },
-    90
+    sourceNodeRadius || nodeR,
+    targetNodeRadius || nodeR
   );
 
   const middle = {
@@ -49,15 +56,32 @@ export const EdgeLabel = memo(function EdgeLabel(props: Props) {
   };
   const styles = useStyles2(getStyles);
 
+  const stats = [edge.mainStat, edge.secondaryStat].filter((x) => x);
+  const height = stats.length > 1 ? '30' : '15';
+  const middleOffset = stats.length > 1 ? 15 : 7.5;
+  let offset = stats.length > 1 ? -5 : 2.5;
+
+  const contents: JSX.Element[] = [];
+  stats.forEach((stat, index) => {
+    contents.push(
+      <text key={index} className={styles.text} x={middle.x} y={middle.y + offset} textAnchor={'middle'}>
+        {stat}
+      </text>
+    );
+    offset += 15;
+  });
+
   return (
     <g className={styles.mainGroup}>
-      <rect className={styles.background} x={middle.x - 40} y={middle.y - 15} width="80" height="30" rx="5" />
-      <text className={styles.text} x={middle.x} y={middle.y - 5} textAnchor={'middle'}>
-        {edge.mainStat}
-      </text>
-      <text className={styles.text} x={middle.x} y={middle.y + 10} textAnchor={'middle'}>
-        {edge.secondaryStat}
-      </text>
+      <rect
+        className={styles.background}
+        x={middle.x - 40}
+        y={middle.y - middleOffset}
+        width="80"
+        height={height}
+        rx="5"
+      />
+      {contents}
     </g>
   );
 });

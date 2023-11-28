@@ -1,0 +1,22 @@
+import { ArgTypes } from '@storybook/blocks';
+import { RenderUserContentAsHTML } from './RenderUserContentAsHTML';
+
+<Meta title="MDX|RenderUserContentAsHTML" component={RenderUserContentAsHTML} />
+
+# RenderUserContentAsHTML
+
+Abstraction layer component for sanitizing and rendering an html content.
+
+### When to use
+
+This should be use as replacement for `dangerouslySetInnerHTML` as this centralizes the sanitation of contents over the app.
+
+### Usage
+
+```jsx
+<RenderUserContentAsHTML content="sample content" />
+```
+
+### Props
+
+<ArgTypes of={RenderUserContentAsHTML} />

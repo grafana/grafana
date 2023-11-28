@@ -3,9 +3,9 @@ import { reducerTester } from 'test/core/redux/reducerTester';
 import { defaultBucketAgg } from 'app/plugins/datasource/elasticsearch/queryDef';
 import { ElasticsearchQuery } from 'app/plugins/datasource/elasticsearch/types';
 
+import { BucketAggregation, DateHistogram } from '../../../../types';
 import { changeMetricType } from '../../MetricAggregationsEditor/state/actions';
 import { initQuery } from '../../state';
-import { BucketAggregation, DateHistogram } from '../aggregations';
 import { bucketAggregationConfig } from '../utils';
 
 import {
@@ -114,10 +114,10 @@ describe('Bucket Aggregations Reducer', () => {
 
       reducerTester<ElasticsearchQuery['bucketAggs']>()
         .givenReducer(createReducer('@timestamp'), initialState)
-        // If the new metric aggregation is `isSingleMetric` we should remove all bucket aggregations.
+        // If the new metric aggregation is non-metric, we should remove all bucket aggregations.
         .whenActionIsDispatched(changeMetricType({ id: 'Some id', type: 'raw_data' }))
         .thenStatePredicateShouldEqual((newState) => newState?.length === 0)
-        // Switching back to another aggregation that is NOT `isSingleMetric` should bring back a bucket aggregation
+        // Switching back to another aggregation that is metric should bring back a bucket aggregation
         .whenActionIsDispatched(changeMetricType({ id: 'Some id', type: 'max' }))
         .thenStatePredicateShouldEqual((newState) => newState?.length === 1)
         // When none of the above is true state shouldn't change.
@@ -139,7 +139,7 @@ describe('Bucket Aggregations Reducer', () => {
       type: 'date_histogram',
     };
 
-    const expectedSettings: typeof firstAggregation['settings'] = {
+    const expectedSettings: (typeof firstAggregation)['settings'] = {
       min_doc_count: '1',
     };
 

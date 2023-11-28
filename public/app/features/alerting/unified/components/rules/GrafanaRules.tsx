@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { LoadingPlaceholder, Pagination, Spinner, useStyles2 } from '@grafana/ui';
@@ -22,7 +22,7 @@ interface Props {
   expandAll: boolean;
 }
 
-export const GrafanaRules: FC<Props> = ({ namespaces, expandAll }) => {
+export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
   const styles = useStyles2(getStyles);
   const [queryParams] = useQueryParams();
 
@@ -34,8 +34,8 @@ export const GrafanaRules: FC<Props> = ({ namespaces, expandAll }) => {
   const loading = prom.loading || ruler.loading;
   const hasResult = !!prom.result || !!ruler.result;
 
-  const wantsGroupedView = queryParams['view'] === 'grouped';
-  const namespacesFormat = wantsGroupedView ? namespaces : flattenGrafanaManagedRules(namespaces);
+  const wantsListView = queryParams['view'] === 'list';
+  const namespacesFormat = wantsListView ? flattenGrafanaManagedRules(namespaces) : namespaces;
 
   const groupsWithNamespaces = useCombinedGroupNamespace(namespacesFormat);
 
@@ -58,7 +58,7 @@ export const GrafanaRules: FC<Props> = ({ namespaces, expandAll }) => {
           key={`${namespace.name}-${group.name}`}
           namespace={namespace}
           expandAll={expandAll}
-          viewMode={wantsGroupedView ? 'grouped' : 'list'}
+          viewMode={wantsListView ? 'list' : 'grouped'}
         />
       ))}
       {hasResult && namespacesFormat?.length === 0 && <p>No rules found.</p>}
@@ -81,6 +81,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   sectionHeader: css`
     display: flex;
     justify-content: space-between;
+    margin-bottom: ${theme.spacing(1)};
   `,
   wrapper: css`
     margin-bottom: ${theme.spacing(4)};

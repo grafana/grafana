@@ -21,6 +21,7 @@ const prepareDashboardMock = (panel: any) => {
   const json = {
     title: 'name',
     panels: [panel],
+    tags: ['tag1', 'tag2'],
   };
 
   return {
@@ -37,6 +38,7 @@ const renderAndSubmitForm = async (
 ) => {
   render(
     <SaveDashboardAsForm
+      isLoading={false}
       dashboard={dashboard as DashboardModel}
       onCancel={() => {}}
       onSuccess={() => {}}
@@ -66,6 +68,7 @@ describe('SaveDashboardAsForm', () => {
       expect(savedDashboardModel.id).toBe(null);
       expect(savedDashboardModel.title).toBe('name');
       expect(savedDashboardModel.editable).toBe(true);
+      expect(savedDashboardModel.tags).toEqual(['tag1', 'tag2']);
     });
 
     it("appends 'Copy' to the name when the dashboard isnt new", async () => {
@@ -79,6 +82,8 @@ describe('SaveDashboardAsForm', () => {
       expect(spy).toBeCalledTimes(1);
       const savedDashboardModel = spy.mock.calls[0][0];
       expect(savedDashboardModel.title).toBe('name Copy');
+      // when copying a dashboard, the tags should be empty
+      expect(savedDashboardModel.tags).toEqual([]);
     });
   });
 

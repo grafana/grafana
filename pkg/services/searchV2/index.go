@@ -13,17 +13,19 @@ import (
 	"sync"
 	"time"
 
+	"github.com/blugelabs/bluge"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
-	"github.com/grafana/grafana/pkg/services/searchV2/extract"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/store/entity"
+	kdash "github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/setting"
-	"go.opentelemetry.io/otel/attribute"
-
-	"github.com/blugelabs/bluge"
 )
 
 type dashboardLoader interface {
@@ -52,7 +54,9 @@ type dashboard struct {
 	slug     string
 	created  time.Time
 	updated  time.Time
-	info     *extract.DashboardInfo
+
+	// Use generic structure
+	summary *entity.EntitySummary
 }
 
 // buildSignal is sent when search index is accessed in organization for which
@@ -435,13 +439,13 @@ func (i *searchIndex) reportSizeOfIndexDiskBackup(orgID int64) {
 	// create a temp directory to store the index
 	tmpDir, err := os.MkdirTemp("", "grafana.dashboard_index")
 	if err != nil {
-		i.logger.Error("can't create temp dir", "error", err)
+		i.logger.Error("Can't create temp dir", "error", err)
 		return
 	}
 	defer func() {
 		err := os.RemoveAll(tmpDir)
 		if err != nil {
-			i.logger.Error("can't remove temp dir", "error", err, "tmpDir", tmpDir)
+			i.logger.Error("Can't remove temp dir", "error", err, "tmpDir", tmpDir)
 			return
 		}
 	}()
@@ -449,13 +453,13 @@ func (i *searchIndex) reportSizeOfIndexDiskBackup(orgID int64) {
 	cancelCh := make(chan struct{})
 	err = reader.Backup(tmpDir, cancelCh)
 	if err != nil {
-		i.logger.Error("can't create index disk backup", "error", err)
+		i.logger.Error("Can't create index disk backup", "error", err)
 		return
 	}
 
 	size, err := dirSize(tmpDir)
 	if err != nil {
-		i.logger.Error("can't calculate dir size", "error", err)
+		i.logger.Error("Can't calculate dir size", "error", err)
 		return
 	}
 
@@ -463,8 +467,9 @@ func (i *searchIndex) reportSizeOfIndexDiskBackup(orgID int64) {
 }
 
 func (i *searchIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, error) {
-	spanCtx, span := i.tracer.Start(ctx, "searchV2 buildOrgIndex")
-	span.SetAttributes("org_id", orgID, attribute.Key("org_id").Int64(orgID))
+	spanCtx, span := i.tracer.Start(ctx, "searchV2 buildOrgIndex", trace.WithAttributes(
+		attribute.Int64("org_id", orgID),
+	))
 
 	started := time.Now()
 	ctx, cancel := context.WithTimeout(spanCtx, time.Minute)
@@ -486,9 +491,10 @@ func (i *searchIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, erro
 
 	dashboardExtender := i.extender.GetDashboardExtender(orgID)
 
-	_, initOrgIndexSpan := i.tracer.Start(ctx, "searchV2 buildOrgIndex init org index")
-	initOrgIndexSpan.SetAttributes("org_id", orgID, attribute.Key("org_id").Int64(orgID))
-	initOrgIndexSpan.SetAttributes("dashboardCount", len(dashboards), attribute.Key("dashboardCount").Int(len(dashboards)))
+	_, initOrgIndexSpan := i.tracer.Start(ctx, "searchV2 buildOrgIndex init org index", trace.WithAttributes(
+		attribute.Int64("org_id", orgID),
+		attribute.Int("dashboardCount", len(dashboards)),
+	))
 
 	index, err := initOrgIndex(dashboards, i.logger, dashboardExtender)
 
@@ -582,14 +588,10 @@ func (i *searchIndex) reIndexFromScratch(ctx context.Context) {
 	}
 }
 
-func (i *searchIndex) withCtxData(ctx context.Context, params ...interface{}) []interface{} {
+func (i *searchIndex) withCtxData(ctx context.Context, params ...any) []any {
 	traceID := tracing.TraceIDFromContext(ctx, false)
 	if traceID != "" {
 		params = append(params, "traceID", traceID)
-	}
-
-	if i.features.IsEnabled(featuremgmt.FlagDatabaseMetrics) {
-		params = append(params, "db_call_count", log.TotalDBCallCount(ctx))
 	}
 
 	return params
@@ -599,7 +601,7 @@ func (i *searchIndex) applyIndexUpdates(ctx context.Context, lastEventID int64) 
 	ctx = log.InitCounter(ctx)
 	events, err := i.eventStore.GetAllEventsAfter(ctx, lastEventID)
 	if err != nil {
-		i.logger.Error("can't load events", "error", err)
+		i.logger.Error("Can't load events", "error", err)
 		return lastEventID
 	}
 	if len(events) == 0 {
@@ -609,7 +611,7 @@ func (i *searchIndex) applyIndexUpdates(ctx context.Context, lastEventID int64) 
 	for _, e := range events {
 		err := i.applyEventOnIndex(ctx, e)
 		if err != nil {
-			i.logger.Error("can't apply event", "error", err)
+			i.logger.Error("Can't apply event", "error", err)
 			return lastEventID
 		}
 		lastEventID = e.Id
@@ -619,22 +621,22 @@ func (i *searchIndex) applyIndexUpdates(ctx context.Context, lastEventID int64) 
 }
 
 func (i *searchIndex) applyEventOnIndex(ctx context.Context, e *store.EntityEvent) error {
-	i.logger.Debug("processing event", "event", e)
+	i.logger.Debug("Processing event", "event", e)
 
 	if !strings.HasPrefix(e.EntityId, "database/") {
-		i.logger.Warn("unknown storage", "entityId", e.EntityId)
+		i.logger.Warn("Unknown storage", "entityId", e.EntityId)
 		return nil
 	}
 	// database/org/entityType/path*
 	parts := strings.SplitN(strings.TrimPrefix(e.EntityId, "database/"), "/", 3)
 	if len(parts) != 3 {
-		i.logger.Error("can't parse entityId", "entityId", e.EntityId)
+		i.logger.Error("Can't parse entityId", "entityId", e.EntityId)
 		return nil
 	}
 	orgIDStr := parts[0]
 	orgID, err := strconv.ParseInt(orgIDStr, 10, 64)
 	if err != nil {
-		i.logger.Error("can't extract org ID", "entityId", e.EntityId)
+		i.logger.Error("Can't extract org ID", "entityId", e.EntityId)
 		return nil
 	}
 	kind := store.EntityType(parts[1])
@@ -759,7 +761,7 @@ func (i *searchIndex) updateDashboard(ctx context.Context, orgID int64, index *o
 
 	var folderUID string
 	if dash.folderID == 0 {
-		folderUID = "general"
+		folderUID = folder.GeneralFolderUID
 	} else {
 		var err error
 		folderUID, err = i.folderIdLookup(ctx, dash.folderID)
@@ -774,13 +776,12 @@ func (i *searchIndex) updateDashboard(ctx context.Context, orgID int64, index *o
 		return err
 	}
 
-	var actualPanelIDs []string
-
 	if location != "" {
 		location += "/"
 	}
 	location += dash.uid
 	panelDocs := getDashboardPanelDocs(dash, location)
+	actualPanelIDs := make([]string, 0, len(panelDocs))
 	for _, panelDoc := range panelDocs {
 		actualPanelIDs = append(actualPanelIDs, string(panelDoc.ID().Term()))
 		batch.Update(panelDoc.ID(), panelDoc)
@@ -803,20 +804,96 @@ func (i *searchIndex) updateDashboard(ctx context.Context, orgID int64, index *o
 }
 
 type sqlDashboardLoader struct {
-	sql      *sqlstore.SQLStore
+	sql      db.DB
 	logger   log.Logger
 	tracer   tracing.Tracer
 	settings setting.SearchSettings
 }
 
-func newSQLDashboardLoader(sql *sqlstore.SQLStore, tracer tracing.Tracer, settings setting.SearchSettings) *sqlDashboardLoader {
+func newSQLDashboardLoader(sql db.DB, tracer tracing.Tracer, settings setting.SearchSettings) *sqlDashboardLoader {
 	return &sqlDashboardLoader{sql: sql, logger: log.New("sqlDashboardLoader"), tracer: tracer, settings: settings}
 }
 
-func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, dashboardUID string) ([]dashboard, error) {
-	ctx, span := l.tracer.Start(ctx, "sqlDashboardLoader LoadDashboards")
-	span.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
+type dashboardsRes struct {
+	dashboards []*dashboardQueryResult
+	err        error
+}
 
+func (l sqlDashboardLoader) loadAllDashboards(ctx context.Context, limit int, orgID int64, dashboardUID string) chan *dashboardsRes {
+	ch := make(chan *dashboardsRes, 3)
+
+	go func() {
+		defer close(ch)
+
+		var lastID int64
+		for {
+			select {
+			case <-ctx.Done():
+				err := ctx.Err()
+				if err != nil {
+					ch <- &dashboardsRes{
+						dashboards: nil,
+						err:        err,
+					}
+				}
+				return
+			default:
+			}
+
+			dashboardQueryCtx, dashboardQuerySpan := l.tracer.Start(ctx, "sqlDashboardLoader dashboardQuery", trace.WithAttributes(
+				attribute.Int64("orgID", orgID),
+				attribute.String("dashboardUID", dashboardUID),
+				attribute.Int64("lastID", lastID),
+			))
+
+			rows := make([]*dashboardQueryResult, 0)
+			err := l.sql.WithDbSession(dashboardQueryCtx, func(sess *db.Session) error {
+				sess.Table("dashboard").
+					Where("org_id = ?", orgID)
+
+				if lastID > 0 {
+					sess.Where("id > ?", lastID)
+				}
+
+				if dashboardUID != "" {
+					sess.Where("uid = ?", dashboardUID)
+				}
+
+				sess.Cols("id", "uid", "is_folder", "folder_id", "data", "slug", "created", "updated")
+
+				sess.OrderBy("id ASC")
+				sess.Limit(limit)
+
+				return sess.Find(&rows)
+			})
+
+			dashboardQuerySpan.End()
+
+			if err != nil || len(rows) < limit || dashboardUID != "" {
+				ch <- &dashboardsRes{
+					dashboards: rows,
+					err:        err,
+				}
+				break
+			}
+
+			ch <- &dashboardsRes{
+				dashboards: rows,
+			}
+
+			if len(rows) > 0 {
+				lastID = rows[len(rows)-1].Id
+			}
+		}
+	}()
+
+	return ch
+}
+
+func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, dashboardUID string) ([]dashboard, error) {
+	ctx, span := l.tracer.Start(ctx, "sqlDashboardLoader LoadDashboards", trace.WithAttributes(
+		attribute.Int64("orgID", orgID),
+	))
 	defer span.End()
 
 	var dashboards []dashboard
@@ -825,77 +902,48 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 
 	if dashboardUID == "" {
 		limit = l.settings.DashboardLoadingBatchSize
-		dashboards = make([]dashboard, 0, limit+1)
-
-		// Add the root folder ID (does not exist in SQL).
-		dashboards = append(dashboards, dashboard{
-			id:       0,
-			uid:      "",
-			isFolder: true,
-			folderID: 0,
-			slug:     "",
-			created:  time.Now(),
-			updated:  time.Now(),
-			info: &extract.DashboardInfo{
-				ID:    0,
-				Title: "General",
-			},
-		})
+		dashboards = make([]dashboard, 0, limit)
 	}
 
-	loadDatasourceCtx, loadDatasourceSpan := l.tracer.Start(ctx, "sqlDashboardLoader LoadDatasourceLookup")
-	loadDatasourceSpan.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
+	loadDatasourceCtx, loadDatasourceSpan := l.tracer.Start(ctx, "sqlDashboardLoader LoadDatasourceLookup", trace.WithAttributes(
+		attribute.Int64("orgID", orgID),
+	))
 
 	// key will allow name or uid
-	lookup, err := dslookup.LoadDatasourceLookup(loadDatasourceCtx, orgID, l.sql)
+	lookup, err := kdash.LoadDatasourceLookup(loadDatasourceCtx, orgID, l.sql)
 	if err != nil {
 		loadDatasourceSpan.End()
 		return dashboards, err
 	}
 	loadDatasourceSpan.End()
 
-	var lastID int64
+	loadingDashboardCtx, cancelLoadingDashboardCtx := context.WithCancel(ctx)
+	defer cancelLoadingDashboardCtx()
+
+	dashboardsChannel := l.loadAllDashboards(loadingDashboardCtx, limit, orgID, dashboardUID)
 
 	for {
-		dashboardQueryCtx, dashboardQuerySpan := l.tracer.Start(ctx, "sqlDashboardLoader dashboardQuery")
-		dashboardQuerySpan.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
-		dashboardQuerySpan.SetAttributes("dashboardUID", dashboardUID, attribute.Key("dashboardUID").String(dashboardUID))
-		dashboardQuerySpan.SetAttributes("lastID", lastID, attribute.Key("lastID").Int64(lastID))
-
-		rows := make([]dashboardQueryResult, 0, limit)
-
-		err = l.sql.WithDbSession(dashboardQueryCtx, func(sess *sqlstore.DBSession) error {
-			sess.Table("dashboard").
-				Where("org_id = ?", orgID)
-
-			if lastID > 0 {
-				sess.Where("id > ?", lastID)
-			}
-
-			if dashboardUID != "" {
-				sess.Where("uid = ?", dashboardUID)
-			}
-
-			sess.Cols("id", "uid", "is_folder", "folder_id", "data", "slug", "created", "updated")
-
-			sess.OrderBy("id ASC")
-			sess.Limit(limit)
-
-			return sess.Find(&rows)
-		})
-
-		if err != nil {
-			dashboardQuerySpan.End()
-			return nil, err
+		res, ok := <-dashboardsChannel
+		if res != nil && res.err != nil {
+			l.logger.Error("Error when loading dashboards", "error", err, "orgID", orgID, "dashboardUID", dashboardUID)
+			break
 		}
-		dashboardQuerySpan.End()
 
-		_, readDashboardSpan := l.tracer.Start(ctx, "sqlDashboardLoader readDashboard")
-		readDashboardSpan.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
-		readDashboardSpan.SetAttributes("dashboardCount", len(rows), attribute.Key("dashboardCount").Int(len(rows)))
+		if res == nil || !ok {
+			break
+		}
+
+		rows := res.dashboards
+
+		_, readDashboardSpan := l.tracer.Start(ctx, "sqlDashboardLoader readDashboard", trace.WithAttributes(
+			attribute.Int64("orgID", orgID),
+			attribute.Int("dashboardCount", len(rows)),
+		))
+
+		reader := kdash.NewStaticDashboardSummaryBuilder(lookup, false)
 
 		for _, row := range rows {
-			info, err := extract.ReadDashboard(bytes.NewReader(row.Data), lookup)
+			summary, _, err := reader(ctx, row.Uid, row.Data)
 			if err != nil {
 				l.logger.Warn("Error indexing dashboard data", "error", err, "dashboardId", row.Id, "dashboardSlug", row.Slug)
 				// But append info anyway for now, since we possibly extracted useful information.
@@ -908,24 +956,19 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 				slug:     row.Slug,
 				created:  row.Created,
 				updated:  row.Updated,
-				info:     info,
+				summary:  summary,
 			})
-			lastID = row.Id
 		}
 		readDashboardSpan.End()
-
-		if len(rows) < limit || dashboardUID != "" {
-			break
-		}
 	}
 
 	return dashboards, err
 }
 
-func newFolderIDLookup(sql *sqlstore.SQLStore) folderUIDLookup {
+func newFolderIDLookup(sql db.DB) folderUIDLookup {
 	return func(ctx context.Context, folderID int64) (string, error) {
 		uid := ""
-		err := sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		err := sql.WithDbSession(ctx, func(sess *db.Session) error {
 			res, err := sess.Query("SELECT uid FROM dashboard WHERE id=?", folderID)
 			if err != nil {
 				return err

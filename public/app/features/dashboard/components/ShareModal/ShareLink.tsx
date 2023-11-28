@@ -1,14 +1,14 @@
-import { Trans, t } from '@lingui/macro';
 import React, { PureComponent } from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { reportInteraction } from '@grafana/runtime/src';
 import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, Switch } from '@grafana/ui';
 import config from 'app/core/config';
+import { t, Trans } from 'app/core/internationalization';
 
 import { ThemePicker } from './ThemePicker';
+import { trackDashboardSharingActionPerType } from './analytics';
 import { ShareModalTabProps } from './types';
-import { buildImageUrl, buildShareUrl } from './utils';
+import { buildImageUrl, buildShareUrl, shareDashboardType } from './utils';
 
 export interface Props extends ShareModalTabProps {}
 
@@ -33,7 +33,6 @@ export class ShareLink extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    reportInteraction('grafana_dashboards_link_share_viewed');
     this.buildUrl();
   }
 
@@ -74,6 +73,10 @@ export class ShareLink extends PureComponent<Props, State> {
     return this.state.shareUrl;
   };
 
+  onCopy() {
+    trackDashboardSharingActionPerType('copy_link', shareDashboardType.link);
+  }
+
   render() {
     const { panel, dashboard } = this.props;
     const isRelativeTime = dashboard ? dashboard.time.to === 'now' : false;
@@ -84,30 +87,21 @@ export class ShareLink extends PureComponent<Props, State> {
     const differentLocalhostDomains =
       isPMM && config.appUrl.includes('localhost') && !window.location.host.includes('localhost');
 
-    const timeRangeLabelTranslation = t({
-      id: 'share-modal.link.time-range-label',
-      message: `Lock time range`,
-    });
+    const timeRangeLabelTranslation = t('share-modal.link.time-range-label', `Lock time range`);
 
-    const timeRangeDescriptionTranslation = t({
-      id: 'share-modal.link.time-range-description',
-      message: `Transforms the current relative time range to an absolute time range`,
-    });
+    const timeRangeDescriptionTranslation = t(
+      'share-modal.link.time-range-description',
+      `Transforms the current relative time range to an absolute time range`
+    );
 
-    const shortenURLTranslation = t({
-      id: 'share-modal.link.shorten-url',
-      message: `Shorten URL`,
-    });
+    const shortenURLTranslation = t('share-modal.link.shorten-url', `Shorten URL`);
 
-    const linkURLTranslation = t({
-      id: 'share-modal.link.link-url',
-      message: `Link URL`,
-    });
+    const linkURLTranslation = t('share-modal.link.link-url', `Link URL`);
 
     return (
       <>
         <p className="share-modal-info-text">
-          <Trans id="share-modal.link.info-text">
+          <Trans i18nKey="share-modal.link.info-text">
             Create a direct link to this dashboard or panel, customized with the options below.
           </Trans>
         </p>
@@ -143,8 +137,8 @@ export class ShareLink extends PureComponent<Props, State> {
               value={shareUrl}
               readOnly
               addonAfter={
-                <ClipboardButton icon="copy" variant="primary" getText={this.getShareUrl}>
-                  <Trans id="share-modal.link.copy-link-button">Copy</Trans>
+                <ClipboardButton icon="copy" variant="primary" getText={this.getShareUrl} onClipboardCopy={this.onCopy}>
+                  <Trans i18nKey="share-modal.link.copy-link-button">Copy</Trans>
                 </ClipboardButton>
               }
             />
@@ -158,7 +152,7 @@ export class ShareLink extends PureComponent<Props, State> {
                 <a href={imageUrl} target="_blank" rel="noreferrer" aria-label={selectors.linkToRenderedImage}>
                   <Icon name="camera" />
                   &nbsp;
-                  <Trans id="share-modal.link.rendered-image">Direct link rendered image</Trans>
+                  <Trans i18nKey="share-modal.link.rendered-image">Direct link rendered image</Trans>
                 </a>
               </div>
             )}
@@ -166,10 +160,10 @@ export class ShareLink extends PureComponent<Props, State> {
             {!isDashboardSaved && (
               <Alert
                 severity="info"
-                title={t({ id: 'share-modal.link.save-alert', message: `Dashboard is not saved` })}
+                title={t('share-modal.link.save-alert', 'Dashboard is not saved')}
                 bottomSpacing={0}
               >
-                <Trans id="share-modal.link.save-dashboard">
+                <Trans i18nKey="share-modal.link.save-dashboard">
                   To render a panel image, you must save the dashboard first.
                 </Trans>
               </Alert>
@@ -180,7 +174,7 @@ export class ShareLink extends PureComponent<Props, State> {
         {panel && !config.rendererAvailable && (
           <Alert
             severity="info"
-            title={t({ id: 'share-modal.link.render-alert', message: `Image renderer plugin not installed` })}
+            title={t('share-modal.link.render-alert', 'Image renderer plugin not installed')}
             bottomSpacing={0}
           >
             <Trans id="share-modal.link.render-instructions">

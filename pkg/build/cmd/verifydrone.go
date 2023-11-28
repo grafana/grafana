@@ -10,9 +10,7 @@ import (
 
 	"github.com/drone/drone-cli/drone/lint"
 	"github.com/drone/drone-cli/drone/starlark"
-
 	"github.com/google/go-cmp/cmp"
-
 	cliv1 "github.com/urfave/cli"
 	"github.com/urfave/cli/v2"
 	"gopkg.in/yaml.v3"
@@ -70,7 +68,7 @@ func VerifyDrone(c *cli.Context) error {
 	return nil
 }
 
-func readConfig(fpath string) ([]map[string]interface{}, error) {
+func readConfig(fpath string) ([]map[string]any, error) {
 	//nolint:gosec
 	f, err := os.Open(fpath)
 	if err != nil {
@@ -84,9 +82,9 @@ func readConfig(fpath string) ([]map[string]interface{}, error) {
 
 	// The YAML stream may contain multiple pipeline configurations, read them all
 	dec := yaml.NewDecoder(f)
-	var c []map[string]interface{}
+	var c []map[string]any
 	for {
-		var m map[string]interface{}
+		var m map[string]any
 		if err := dec.Decode(&m); err != nil {
 			if errors.Is(err, io.EOF) {
 				break

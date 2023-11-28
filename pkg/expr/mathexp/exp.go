@@ -5,9 +5,12 @@ import (
 	"math"
 	"reflect"
 	"runtime"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/expr/mathexp/parse"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 // Expr holds a parsed math command expression.
@@ -23,7 +26,11 @@ type State struct {
 	// Could hold more properties that change behavior around:
 	//  - Unions (How many result A and many Result B in case A + B are joined)
 	//  - NaN/Null behavior
-	RefID string
+	RefID     string
+	Drops     map[string]map[string][]data.Labels // binary node text -> LH/RH -> Drop Labels
+	DropCount int64
+
+	tracer tracing.Tracer
 }
 
 // Vars holds the results of datasource queries or other expression commands.
@@ -43,11 +50,13 @@ func New(expr string, funcs ...map[string]parse.Func) (*Expr, error) {
 }
 
 // Execute applies a parse expression to the context and executes it
-func (e *Expr) Execute(refID string, vars Vars) (r Results, err error) {
+func (e *Expr) Execute(refID string, vars Vars, tracer tracing.Tracer) (r Results, err error) {
 	s := &State{
 		Expr:  e,
 		Vars:  vars,
 		RefID: refID,
+
+		tracer: tracer,
 	}
 	return e.executeState(s)
 }
@@ -55,6 +64,7 @@ func (e *Expr) Execute(refID string, vars Vars) (r Results, err error) {
 func (e *Expr) executeState(s *State) (r Results, err error) {
 	defer errRecover(&err, s)
 	r, err = s.walk(e.Tree.Root)
+	s.addDropNotices(&r)
 	return
 }
 
@@ -192,20 +202,64 @@ type Union struct {
 // within a collection of Series or Numbers. The Unions are used with binary
 // operations. The labels of the Union will the taken from result with a greater
 // number of tags.
-func union(aResults, bResults Results) []*Union {
+func (e *State) union(aResults, bResults Results, biNode *parse.BinaryNode) []*Union {
 	unions := []*Union{}
+	appendUnions := func(u *Union) {
+		unions = append(unions, u)
+	}
+
+	aVar := biNode.Args[0].String()
+	bVar := biNode.Args[1].String()
+
+	aMatched := make([]bool, len(aResults.Values))
+	bMatched := make([]bool, len(bResults.Values))
+	collectDrops := func() {
+		check := func(v string, matchArray []bool, r *Results) {
+			for i, b := range matchArray {
+				if b {
+					continue
+				}
+				if e.Drops == nil {
+					e.Drops = make(map[string]map[string][]data.Labels)
+				}
+				if e.Drops[biNode.String()] == nil {
+					e.Drops[biNode.String()] = make(map[string][]data.Labels)
+				}
+
+				if r.Values[i].Type() == parse.TypeNoData {
+					continue
+				}
+
+				e.DropCount++
+				e.Drops[biNode.String()][v] = append(e.Drops[biNode.String()][v], r.Values[i].GetLabels())
+			}
+		}
+		check(aVar, aMatched, &aResults)
+		check(bVar, bMatched, &bResults)
+	}
+
 	aValueLen := len(aResults.Values)
 	bValueLen := len(bResults.Values)
 	if aValueLen == 0 || bValueLen == 0 {
 		return unions
 	}
+
 	if aValueLen == 1 || bValueLen == 1 {
-		if aResults.Values[0].Type() == parse.TypeNoData || bResults.Values[0].Type() == parse.TypeNoData {
+		aNoData := aResults.Values[0].Type() == parse.TypeNoData
+		bNoData := bResults.Values[0].Type() == parse.TypeNoData
+		if aNoData || bNoData {
+			appendUnions(&Union{
+				Labels: nil,
+				A:      aResults.Values[0],
+				B:      bResults.Values[0],
+			})
+			collectDrops()
 			return unions
 		}
 	}
-	for _, a := range aResults.Values {
-		for _, b := range bResults.Values {
+
+	for iA, a := range aResults.Values {
+		for iB, b := range bResults.Values {
 			var labels data.Labels
 			aLabels := a.GetLabels()
 			bLabels := b.GetLabels()
@@ -230,25 +284,30 @@ func union(aResults, bResults Results) []*Union {
 				A:      a,
 				B:      b,
 			}
-			unions = append(unions, u)
+			appendUnions(u)
+			aMatched[iA] = true
+			bMatched[iB] = true
 		}
 	}
+
 	if len(unions) == 0 && len(aResults.Values) == 1 && len(bResults.Values) == 1 {
 		// In the case of only 1 thing on each side of the operator, we combine them
 		// and strip the tags.
 		// This isn't ideal for understanding behavior, but will make more stuff work when
 		// combining different datasources without munging.
 		// This choice is highly questionable in the long term.
-		unions = append(unions, &Union{
+		appendUnions(&Union{
 			A: aResults.Values[0],
 			B: bResults.Values[0],
 		})
 	}
+
+	collectDrops()
 	return unions
 }
 
 func (e *State) walkBinary(node *parse.BinaryNode) (Results, error) {
-	res := Results{Values{}}
+	res := Results{Values: Values{}}
 	ar, err := e.walk(node.Args[0])
 	if err != nil {
 		return res, err
@@ -257,7 +316,7 @@ func (e *State) walkBinary(node *parse.BinaryNode) (Results, error) {
 	if err != nil {
 		return res, err
 	}
-	unions := union(ar, br)
+	unions := e.union(ar, br, node)
 	for _, uni := range unions {
 		var value Value
 		switch at := uni.A.(type) {
@@ -285,6 +344,8 @@ func (e *State) walkBinary(node *parse.BinaryNode) (Results, error) {
 			// Scalar op Series
 			case Series:
 				value, err = e.biSeriesNumber(uni.Labels, node.OpStr, bt, aFloat, false)
+			case NoData:
+				value = uni.B
 			default:
 				return res, fmt.Errorf("not implemented: binary %v on %T and %T", node.OpStr, uni.A, uni.B)
 			}
@@ -301,6 +362,8 @@ func (e *State) walkBinary(node *parse.BinaryNode) (Results, error) {
 			// case Series op Series
 			case Series:
 				value, err = e.biSeriesSeries(uni.Labels, node.OpStr, at, bt)
+			case NoData:
+				value = uni.B
 			default:
 				return res, fmt.Errorf("not implemented: binary %v on %T and %T", node.OpStr, uni.A, uni.B)
 			}
@@ -315,9 +378,13 @@ func (e *State) walkBinary(node *parse.BinaryNode) (Results, error) {
 				value, err = e.biScalarNumber(uni.Labels, node.OpStr, at, bFloat, true)
 			case Series:
 				value, err = e.biSeriesNumber(uni.Labels, node.OpStr, bt, aFloat, false)
+			case NoData:
+				value = uni.B
 			default:
 				return res, fmt.Errorf("not implemented: binary %v on %T and %T", node.OpStr, uni.A, uni.B)
 			}
+		case NoData:
+			value = uni.A
 		default:
 			return res, fmt.Errorf("not implemented: binary %v on %T and %T", node.OpStr, uni.A, uni.B)
 		}
@@ -493,7 +560,7 @@ func (e *State) walkFunc(node *parse.FuncNode) (Results, error) {
 	var err error
 	var in []reflect.Value
 	for _, a := range node.Args {
-		var v interface{}
+		var v any
 		switch t := a.(type) {
 		case *parse.StringNode:
 			v = t.Text
@@ -528,4 +595,60 @@ func (e *State) walkFunc(node *parse.FuncNode) (Results, error) {
 		}
 	}
 	return res, nil
+}
+
+func (e *State) addDropNotices(r *Results) {
+	nT := strings.Builder{}
+
+	if e.DropCount > 0 && len(r.Values) > 0 {
+		itemsPerNodeLimit := 5 // Limit on dropped items shown per each node in the binary node
+
+		nT.WriteString(fmt.Sprintf("%v items dropped from union(s)", e.DropCount))
+		if len(e.Drops) > 0 {
+			nT.WriteString(": ")
+
+			biNodeDropCount := 0
+			for biNodeText, biNodeDrops := range e.Drops {
+				nT.WriteString(fmt.Sprintf(`["%s": `, biNodeText))
+
+				nodeCount := 0
+				for inputNode, droppedItems := range biNodeDrops {
+					nT.WriteString(fmt.Sprintf("(%s: ", inputNode))
+
+					itemCount := 0
+					for _, item := range droppedItems {
+						nT.WriteString(fmt.Sprintf("{%s}", item))
+
+						itemCount++
+						if itemCount == itemsPerNodeLimit {
+							nT.WriteString(fmt.Sprintf("...%v more...", len(droppedItems)-itemsPerNodeLimit))
+							break
+						}
+						if itemCount < len(droppedItems) {
+							nT.WriteString(" ")
+						}
+					}
+
+					nT.WriteString(")")
+
+					nodeCount++
+					if nodeCount < len(biNodeDrops) {
+						nT.WriteString(" ")
+					}
+				}
+
+				nT.WriteString("]")
+
+				biNodeDropCount++
+				if biNodeDropCount < len(biNodeDrops) {
+					nT.WriteString(" ")
+				}
+			}
+		}
+
+		r.Values[0].AddNotice(data.Notice{
+			Severity: data.NoticeSeverityWarning,
+			Text:     nT.String(),
+		})
+	}
 }

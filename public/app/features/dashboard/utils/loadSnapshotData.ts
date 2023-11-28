@@ -1,8 +1,14 @@
-import { applyFieldOverrides, ArrayDataFrame, getDefaultTimeRange, LoadingState, PanelData } from '@grafana/data';
+import {
+  applyFieldOverrides,
+  arrayToDataFrame,
+  getDefaultTimeRange,
+  getProcessedDataFrames,
+  LoadingState,
+  PanelData,
+} from '@grafana/data';
 import { config } from 'app/core/config';
 
 import { SnapshotWorker } from '../../query/state/DashboardQueryRunner/SnapshotWorker';
-import { getProcessedDataFrames } from '../../query/state/runRequest';
 import { getTimeSrv } from '../services/TimeSrv';
 import { DashboardModel, PanelModel } from '../state';
 
@@ -13,7 +19,7 @@ export function loadSnapshotData(panel: PanelModel, dashboard: DashboardModel): 
   const worker = new SnapshotWorker();
   const options = { dashboard, range: getDefaultTimeRange() };
   const annotationEvents = worker.canWork(options) ? worker.getAnnotationsInSnapshot(dashboard, panel.id) : [];
-  const annotations = [new ArrayDataFrame(annotationEvents)];
+  const annotations = [arrayToDataFrame(annotationEvents)];
   const timeData = applyPanelTimeOverrides(panel, getTimeSrv().timeRange());
 
   return {
@@ -30,6 +36,7 @@ export function loadSnapshotData(panel: PanelModel, dashboard: DashboardModel): 
       theme: config.theme2,
       timeZone: dashboard.getTimezone(),
     }),
+    structureRev: 1,
     annotations,
   };
 }

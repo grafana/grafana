@@ -81,9 +81,14 @@ export default class LokiCheatSheet extends PureComponent<QueryEditorHelpProps<L
     };
 
     return (
-      <div className="cheat-sheet-item__example" key={expr} onClick={(e) => onClick({ refId: 'A', expr })}>
+      <button
+        type="button"
+        className="cheat-sheet-item__example"
+        key={expr}
+        onClick={(e) => onClick({ refId: 'A', expr })}
+      >
         <code>{expr}</code>
-      </div>
+      </button>
     );
   }
 
@@ -97,8 +102,8 @@ export default class LokiCheatSheet extends PureComponent<QueryEditorHelpProps<L
         <div className="cheat-sheet-item">
           <div className="cheat-sheet-item__title">See your logs</div>
           <div className="cheat-sheet-item__label">
-            Start by selecting a log stream from the Log browser, or alternatively you can write a stream selector into
-            the query field.
+            Start by selecting a log stream from the Label browser, or alternatively you can write a stream selector
+            into the query field.
           </div>
           {hasUserExamples ? (
             <div>

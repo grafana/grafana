@@ -3,10 +3,12 @@ import React, { HTMLAttributes, useCallback, useRef, useState } from 'react';
 import { usePopper } from 'react-popper';
 
 import { GrafanaTheme2, dateTimeFormat, systemDateFormats, TimeZone } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Portal, useStyles2, usePanelContext } from '@grafana/ui';
 import { getTooltipContainerStyles } from '@grafana/ui/src/themes/mixins';
 
 import { getCommonAnnotationStyles } from '../styles';
+import { AnnotationsDataFrameViewDTO } from '../types';
 
 import { AnnotationEditorForm } from './AnnotationEditorForm';
 import { AnnotationTooltip } from './AnnotationTooltip';
@@ -43,7 +45,7 @@ export function AnnotationMarker({ annotation, timeZone, width }: Props) {
   const [tooltipRef, setTooltipRef] = useState<HTMLDivElement | null>(null);
   const [editorRef, setEditorRef] = useState<HTMLDivElement | null>(null);
 
-  const popoverRenderTimeout = useRef<NodeJS.Timer>();
+  const popoverRenderTimeout = useRef<NodeJS.Timeout>();
 
   const popper = usePopper(markerRef, tooltipRef, POPPER_CONFIG);
   const editorPopper = usePopper(markerRef, editorRef, POPPER_CONFIG);
@@ -100,7 +102,6 @@ export function AnnotationMarker({ annotation, timeZone, width }: Props) {
       />
     );
   }, [canEditAnnotations, canDeleteAnnotations, onAnnotationDelete, onAnnotationEdit, timeFormatter, annotation]);
-
   const isRegionAnnotation = Boolean(annotation.isRegion) && width > MIN_REGION_ANNOTATION_WIDTH;
 
   let left = `${width / 2}px`;
@@ -126,6 +127,7 @@ export function AnnotationMarker({ annotation, timeZone, width }: Props) {
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         className={!isRegionAnnotation ? styles.markerWrapper : undefined}
+        data-testid={selectors.pages.Dashboard.Annotations.marker}
       >
         {marker}
       </div>

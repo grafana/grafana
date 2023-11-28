@@ -9,7 +9,7 @@ import { Messages } from './TestEmailSettings.messages';
 import { getStyles } from './TestEmailSettings.styles';
 import { TestEmailSettingsProps } from './TestEmailSettings.types';
 
-export const TestEmailSettings: FC<TestEmailSettingsProps> = ({ onTest, onInput = () => null, initialValue = '' }) => {
+export const TestEmailSettings: FC<React.PropsWithChildren<TestEmailSettingsProps>> = ({ onTest, onInput = () => null, initialValue = '' }) => {
   const [testingSettings, setTestingSettings] = useState(false);
   const styles = useStyles(getStyles);
 

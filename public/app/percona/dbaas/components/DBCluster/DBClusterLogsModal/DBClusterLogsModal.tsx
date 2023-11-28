@@ -13,7 +13,7 @@ import { DBClusterLogsModalProps } from './DBClusterLogsModal.types';
 import { toggleLogs, transformLogs } from './DBClusterLogsModal.utils';
 import { PodLogs } from './PodLogs/PodLogs';
 
-export const DBClusterLogsModal: FC<DBClusterLogsModalProps> = ({ dbCluster, isVisible, setVisible }) => {
+export const DBClusterLogsModal: FC<React.PropsWithChildren<DBClusterLogsModalProps>> = ({ dbCluster, isVisible, setVisible }) => {
   const styles = useStyles(getStyles);
   const [loading, setLoading] = useState(false);
   const [logs, setLogs] = useState<DBClusterLogs>({ pods: [] });

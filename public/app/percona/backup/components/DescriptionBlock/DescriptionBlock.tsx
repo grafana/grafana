@@ -6,7 +6,7 @@ import { Messages } from './DescriptionBlock.messages';
 import { getStyles } from './DescriptionBlock.styles';
 import { DescriptionBlockProps } from './DescriptionBlock.types';
 
-export const DescriptionBlock: FC<DescriptionBlockProps> = ({ description, dataTestId }) => {
+export const DescriptionBlock: FC<React.PropsWithChildren<DescriptionBlockProps>> = ({ description, dataTestId }) => {
   const styles = useStyles(getStyles);
 
   return (

@@ -8,8 +8,10 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // wait until channel closed with timeout.
@@ -70,9 +72,11 @@ func TestStreamManager_SubmitStream_Send(t *testing.T) {
 		},
 	}
 
-	mockContextGetter.EXPECT().GetPluginContext(context.Background(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, user *user.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error) {
-		require.Equal(t, int64(2), user.UserID)
-		require.Equal(t, int64(1), user.OrgID)
+	mockContextGetter.EXPECT().GetPluginContext(context.Background(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, user identity.Requester, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error) {
+		userID, err := identity.IntIdentifier(user.GetNamespacedID())
+		require.NoError(t, err)
+		require.Equal(t, int64(2), userID)
+		require.Equal(t, int64(1), user.GetOrgID())
 		require.Equal(t, testPluginContext.PluginID, pluginID)
 		require.Equal(t, testPluginContext.DataSourceInstanceSettings.UID, datasourceUID)
 		return testPluginContext, true, nil
@@ -82,7 +86,7 @@ func TestStreamManager_SubmitStream_Send(t *testing.T) {
 
 	mockStreamRunner := NewMockStreamRunner(mockCtrl)
 	mockStreamRunner.EXPECT().RunStream(
-		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		gomock.Any(), gomock.Any(), gomock.Any(),
 	).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 		require.Equal(t, "test", req.Path)
 		close(startedCh)
@@ -132,13 +136,13 @@ func TestStreamManager_SubmitStream_DifferentOrgID(t *testing.T) {
 	mockPacketSender.EXPECT().PublishLocal("1/test", gomock.Any()).Times(1)
 	mockPacketSender.EXPECT().PublishLocal("2/test", gomock.Any()).Times(1)
 
-	mockContextGetter.EXPECT().GetPluginContext(context.Background(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, user *user.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error) {
+	mockContextGetter.EXPECT().GetPluginContext(context.Background(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, user identity.Requester, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error) {
 		return backend.PluginContext{}, true, nil
 	}).Times(0)
 
 	mockStreamRunner1 := NewMockStreamRunner(mockCtrl)
 	mockStreamRunner1.EXPECT().RunStream(
-		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		gomock.Any(), gomock.Any(), gomock.Any(),
 	).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 		require.Equal(t, "test", req.Path)
 		close(startedCh1)
@@ -151,7 +155,7 @@ func TestStreamManager_SubmitStream_DifferentOrgID(t *testing.T) {
 
 	mockStreamRunner2 := NewMockStreamRunner(mockCtrl)
 	mockStreamRunner2.EXPECT().RunStream(
-		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		gomock.Any(), gomock.Any(), gomock.Any(),
 	).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 		require.Equal(t, "test", req.Path)
 		close(startedCh2)
@@ -204,14 +208,14 @@ func TestStreamManager_SubmitStream_CloseNoSubscribers(t *testing.T) {
 	startedCh := make(chan struct{})
 	doneCh := make(chan struct{})
 
-	mockContextGetter.EXPECT().GetPluginContext(context.Background(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, user *user.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error) {
+	mockContextGetter.EXPECT().GetPluginContext(context.Background(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, user identity.Requester, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error) {
 		return backend.PluginContext{}, true, nil
 	}).Times(0)
 
 	mockNumSubscribersGetter.EXPECT().GetNumLocalSubscribers("1/test").Return(0, nil).Times(3)
 
 	mockStreamRunner := NewMockStreamRunner(mockCtrl)
-	mockStreamRunner.EXPECT().RunStream(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+	mockStreamRunner.EXPECT().RunStream(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 		close(startedCh)
 		<-ctx.Done()
 		close(doneCh)
@@ -253,9 +257,11 @@ func TestStreamManager_SubmitStream_ErrorRestartsRunStream(t *testing.T) {
 		},
 	}
 
-	mockContextGetter.EXPECT().GetPluginContext(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, user *user.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error) {
-		require.Equal(t, int64(2), user.UserID)
-		require.Equal(t, int64(1), user.OrgID)
+	mockContextGetter.EXPECT().GetPluginContext(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, user identity.Requester, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error) {
+		userID, err := identity.IntIdentifier(user.GetNamespacedID())
+		require.NoError(t, err)
+		require.Equal(t, int64(2), userID)
+		require.Equal(t, int64(1), user.GetOrgID())
 		require.Equal(t, testPluginContext.PluginID, pluginID)
 		require.Equal(t, testPluginContext.DataSourceInstanceSettings.UID, datasourceUID)
 		return testPluginContext, true, nil
@@ -263,7 +269,7 @@ func TestStreamManager_SubmitStream_ErrorRestartsRunStream(t *testing.T) {
 
 	mockStreamRunner := NewMockStreamRunner(mockCtrl)
 	mockStreamRunner.EXPECT().RunStream(
-		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		gomock.Any(), gomock.Any(), gomock.Any(),
 	).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 		if currentErrors >= numErrors {
 			return nil
@@ -295,13 +301,13 @@ func TestStreamManager_SubmitStream_NilErrorStopsRunStream(t *testing.T) {
 		_ = manager.Run(ctx)
 	}()
 
-	mockContextGetter.EXPECT().GetPluginContext(context.Background(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, user *user.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error) {
+	mockContextGetter.EXPECT().GetPluginContext(context.Background(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, user identity.Requester, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error) {
 		return backend.PluginContext{}, true, nil
 	}).Times(0)
 
 	mockStreamRunner := NewMockStreamRunner(mockCtrl)
 	mockStreamRunner.EXPECT().RunStream(
-		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		gomock.Any(), gomock.Any(), gomock.Any(),
 	).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 		return nil
 	}).Times(1)
@@ -336,9 +342,12 @@ func TestStreamManager_HandleDatasourceUpdate(t *testing.T) {
 		},
 	}
 
-	mockContextGetter.EXPECT().GetPluginContext(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, user *user.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error) {
-		require.Equal(t, int64(2), user.UserID)
-		require.Equal(t, int64(1), user.OrgID)
+	mockContextGetter.EXPECT().GetPluginContext(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, user identity.Requester, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error) {
+		userID, err := identity.IntIdentifier(user.GetNamespacedID())
+		require.NoError(t, err)
+
+		require.Equal(t, int64(2), userID)
+		require.Equal(t, int64(1), user.GetOrgID())
 		require.Equal(t, testPluginContext.PluginID, pluginID)
 		require.Equal(t, testPluginContext.DataSourceInstanceSettings.UID, datasourceUID)
 		return testPluginContext, true, nil
@@ -351,7 +360,7 @@ func TestStreamManager_HandleDatasourceUpdate(t *testing.T) {
 
 	mockStreamRunner := NewMockStreamRunner(mockCtrl)
 	mockStreamRunner.EXPECT().RunStream(
-		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		gomock.Any(), gomock.Any(), gomock.Any(),
 	).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 		if isFirstCall {
 			// first RunStream will wait till context done.
@@ -402,9 +411,11 @@ func TestStreamManager_HandleDatasourceDelete(t *testing.T) {
 		},
 	}
 
-	mockContextGetter.EXPECT().GetPluginContext(context.Background(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, user *user.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error) {
-		require.Equal(t, int64(2), user.UserID)
-		require.Equal(t, int64(1), user.OrgID)
+	mockContextGetter.EXPECT().GetPluginContext(context.Background(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, user identity.Requester, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error) {
+		userID, err := identity.IntIdentifier(user.GetNamespacedID())
+		require.NoError(t, err)
+		require.Equal(t, int64(2), userID)
+		require.Equal(t, int64(1), user.GetOrgID())
 		require.Equal(t, testPluginContext.PluginID, pluginID)
 		require.Equal(t, testPluginContext.DataSourceInstanceSettings.UID, datasourceUID)
 		return testPluginContext, true, nil
@@ -414,7 +425,7 @@ func TestStreamManager_HandleDatasourceDelete(t *testing.T) {
 
 	mockStreamRunner := NewMockStreamRunner(mockCtrl)
 	mockStreamRunner.EXPECT().RunStream(
-		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		gomock.Any(), gomock.Any(), gomock.Any(),
 	).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 		close(doneCh)
 		<-ctx.Done()

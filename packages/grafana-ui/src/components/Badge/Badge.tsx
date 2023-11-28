@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { HTMLAttributes, useCallback } from 'react';
+import React, { HTMLAttributes } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -7,8 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { IconName } from '../../types';
 import { Icon } from '../Icon/Icon';
-import { HorizontalGroup } from '../Layout/Layout';
-import { Tooltip } from '../Tooltip';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 export type BadgeColor = 'blue' | 'red' | 'green' | 'orange' | 'purple';
 
@@ -20,13 +19,11 @@ export interface BadgeProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export const Badge = React.memo<BadgeProps>(({ icon, color, text, tooltip, className, ...otherProps }) => {
-  const styles = useStyles2(useCallback((theme) => getStyles(theme, color), [color]));
+  const styles = useStyles2(getStyles, color);
   const badge = (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
-      <HorizontalGroup align="center" spacing="xs">
-        {icon && <Icon name={icon} size="sm" />}
-        <span>{text}</span>
-      </HorizontalGroup>
+      {icon && <Icon name={icon} size="sm" />}
+      {text}
     </div>
   );
 
@@ -46,32 +43,30 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
   let borderColor = '';
   let bgColor = '';
   let textColor = '';
-  bgColor = tinycolor(sourceColor).setAlpha(0.15).toString();
 
   if (theme.isDark) {
-    borderColor = tinycolor(sourceColor).darken(30).toString();
+    bgColor = tinycolor(sourceColor).setAlpha(0.15).toString();
+    borderColor = tinycolor(sourceColor).setAlpha(0.25).toString();
     textColor = tinycolor(sourceColor).lighten(15).toString();
   } else {
-    borderColor = tinycolor(sourceColor).lighten(20).toString();
-    textColor = tinycolor(sourceColor).darken(15).toString();
+    bgColor = tinycolor(sourceColor).setAlpha(0.15).toString();
+    borderColor = tinycolor(sourceColor).setAlpha(0.25).toString();
+    textColor = tinycolor(sourceColor).darken(20).toString();
   }
 
   return {
-    wrapper: css`
-      font-size: ${theme.typography.size.sm};
-      display: inline-flex;
-      padding: 1px 4px;
-      border-radius: 3px;
-      background: ${bgColor};
-      border: 1px solid ${borderColor};
-      color: ${textColor};
-      font-weight: ${theme.typography.fontWeightRegular};
-
-      > span {
-        position: relative;
-        top: 1px;
-        margin-left: 2px;
-      }
-    `,
+    wrapper: css({
+      display: 'inline-flex',
+      padding: '1px 4px',
+      borderRadius: theme.shape.radius.default,
+      background: bgColor,
+      border: `1px solid ${borderColor}`,
+      color: textColor,
+      fontWeight: theme.typography.fontWeightRegular,
+      gap: '2px',
+      fontSize: theme.typography.bodySmall.fontSize,
+      lineHeight: theme.typography.bodySmall.lineHeight,
+      alignItems: 'center',
+    }),
   };
 };

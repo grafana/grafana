@@ -1,0 +1,39 @@
+import { Meta, ArgTypes } from '@storybook/blocks';
+import { Box } from './Box';
+
+<Meta title="MDX|Box" component={Box} />
+
+# Box
+
+The Box Component is the most basic layout component. It can be used to build more complex components and layouts with properties
+that use our design tokens instead of using CSS.
+
+### Usage
+
+#### When to use
+
+Use it whenever you would use custom CSS.
+
+#### When not to use
+
+If you need layout styles, use the Stack, Flex or Grid components instead.
+
+### How to add a prop to Box
+
+1. Make sure you absolutely need this prop. If in doubt, ask someone from the design system team.
+2. Add the prop to the `BoxProps` interface in `Box.tsx`.
+   - Make sure it is strictly typed, making use of design tokens if needed. Instead of `[propName]: number`, use `[propName]: ThemeSpacingTokens`;
+   - If it is a CSS prop, you should make it responsive. To do so, instead of defining it as `[propName]: ThemeSpacingTokens`,
+     define it as `[propName]: ResponsiveProp<ThemeSpacingTokens>`.
+3. Add it to the CSS array in `getStyles` in `Box.tsx`.
+   - If it is a `ResponsiveProp`, you should use the `getResponsiveStyle` helper function
+   ```
+    getResponsiveStyle(theme, [propName], (val) => ({
+        [cssProp]: theme.spacing(val),
+    })),
+   ```
+4. Add it to the `Box` story in `Box.internal.story.tsx`, by explicity adding it to `Basic.argTypes`
+
+### Props
+
+<ArgTypes of={Box} />

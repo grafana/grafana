@@ -1,0 +1,172 @@
+import { sortBy } from 'lodash';
+import { GrafanaEdition } from '@grafana/data/src/types/config';
+import { config } from '@grafana/runtime';
+import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
+import { alertInstanceKey } from 'app/features/alerting/unified/utils/rules';
+import { SortOrder } from 'app/plugins/panel/alertlist/types';
+import { GrafanaAlertState, PromAlertingRuleState, mapStateWithReasonToBaseState, } from 'app/types/unified-alerting-dto';
+import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
+import { getRulesSourceName, isCloudRulesSource } from './datasource';
+import { getMatcherQueryParams } from './matchers';
+import * as ruleId from './rule-id';
+import { createAbsoluteUrl, createUrl } from './url';
+export function createViewLink(ruleSource, rule, returnTo) {
+    const sourceName = getRulesSourceName(ruleSource);
+    const identifier = ruleId.fromCombinedRule(sourceName, rule);
+    const paramId = encodeURIComponent(ruleId.stringifyIdentifier(identifier));
+    const paramSource = encodeURIComponent(sourceName);
+    return createUrl(`/alerting/${paramSource}/${paramId}/view`, { returnTo });
+}
+export function createExploreLink(datasource, query) {
+    const { uid, type } = datasource;
+    return createUrl(`/explore`, {
+        left: JSON.stringify({
+            datasource: datasource.uid,
+            queries: [{ refId: 'A', datasource: { uid, type }, expr: query }],
+            range: { from: 'now-1h', to: 'now' },
+        }),
+    });
+}
+export function createContactPointLink(contactPoint, alertManagerSourceName = '') {
+    return createUrl(`/alerting/notifications/receivers/${encodeURIComponent(contactPoint)}/edit`, {
+        alertmanager: alertManagerSourceName,
+    });
+}
+export function createMuteTimingLink(muteTimingName, alertManagerSourceName = '') {
+    return createUrl('/alerting/routes/mute-timing/edit', {
+        muteName: muteTimingName,
+        alertmanager: alertManagerSourceName,
+    });
+}
+export function createShareLink(ruleSource, rule) {
+    if (isCloudRulesSource(ruleSource)) {
+        return createAbsoluteUrl(`/alerting/${encodeURIComponent(ruleSource.name)}/${encodeURIComponent(escapePathSeparators(rule.name))}/find`);
+    }
+    return window.location.href.split('?')[0];
+}
+export function arrayToRecord(items) {
+    return items.reduce((rec, { key, value }) => {
+        rec[key] = value;
+        return rec;
+    }, {});
+}
+export const getFiltersFromUrlParams = (queryParams) => {
+    const queryString = queryParams['queryString'] === undefined ? undefined : String(queryParams['queryString']);
+    const alertState = queryParams['alertState'] === undefined ? undefined : String(queryParams['alertState']);
+    const dataSource = queryParams['dataSource'] === undefined ? undefined : String(queryParams['dataSource']);
+    const ruleType = queryParams['ruleType'] === undefined ? undefined : String(queryParams['ruleType']);
+    const groupBy = queryParams['groupBy'] === undefined ? undefined : String(queryParams['groupBy']).split(',');
+    return { queryString, alertState, dataSource, groupBy, ruleType };
+};
+export const getNotificationPoliciesFilters = (searchParams) => {
+    var _a, _b;
+    return {
+        queryString: (_a = searchParams.get('queryString')) !== null && _a !== void 0 ? _a : undefined,
+        contactPoint: (_b = searchParams.get('contactPoint')) !== null && _b !== void 0 ? _b : undefined,
+    };
+};
+export const getSilenceFiltersFromUrlParams = (queryParams) => {
+    const queryString = queryParams['queryString'] === undefined ? undefined : String(queryParams['queryString']);
+    const silenceState = queryParams['silenceState'] === undefined ? undefined : String(queryParams['silenceState']);
+    return { queryString, silenceState };
+};
+export function recordToArray(record) {
+    return Object.entries(record).map(([key, value]) => ({ key, value }));
+}
+export function makeAMLink(path, alertManagerName, options) {
+    const search = new URLSearchParams(options);
+    if (alertManagerName) {
+        search.append(ALERTMANAGER_NAME_QUERY_KEY, alertManagerName);
+    }
+    return `${path}?${search.toString()}`;
+}
+export const escapeQuotes = (input) => input.replace(/\"/g, '\\"');
+export function wrapWithQuotes(input) {
+    const alreadyWrapped = input.startsWith('"') && input.endsWith('"');
+    return alreadyWrapped ? escapeQuotes(input) : `"${escapeQuotes(input)}"`;
+}
+export function makeRuleBasedSilenceLink(alertManagerSourceName, rule) {
+    // we wrap the name of the alert with quotes since it might contain starting and trailing spaces
+    const labels = Object.assign({ alertname: rule.name }, rule.labels);
+    return makeLabelBasedSilenceLink(alertManagerSourceName, labels);
+}
+export function makeLabelBasedSilenceLink(alertManagerSourceName, labels) {
+    const silenceUrlParams = new URLSearchParams();
+    silenceUrlParams.append('alertmanager', alertManagerSourceName);
+    const matcherParams = getMatcherQueryParams(labels);
+    matcherParams.forEach((value, key) => silenceUrlParams.append(key, value));
+    return createUrl('/alerting/silence/new', silenceUrlParams);
+}
+export function makeDataSourceLink(dataSource) {
+    return createUrl(`/datasources/edit/${dataSource.uid}`);
+}
+export function makeFolderLink(folderUID) {
+    return createUrl(`/dashboards/f/${folderUID}`);
+}
+export function makeFolderSettingsLink(folder) {
+    return createUrl(`/dashboards/f/${folder.uid}/${folder.title}/settings`);
+}
+export function makeDashboardLink(dashboardUID) {
+    return createUrl(`/d/${encodeURIComponent(dashboardUID)}`);
+}
+export function makePanelLink(dashboardUID, panelId) {
+    return createUrl(`/d/${encodeURIComponent(dashboardUID)}`, { viewPanel: panelId });
+}
+// keep retrying fn if it's error passes shouldRetry(error) and timeout has not elapsed yet
+export function retryWhile(fn, shouldRetry, timeout, // milliseconds, how long to keep retrying
+pause = 1000 // milliseconds, pause between retries
+) {
+    const start = new Date().getTime();
+    const makeAttempt = () => fn().catch((e) => {
+        if (shouldRetry(e) && new Date().getTime() - start < timeout) {
+            return new Promise((resolve) => setTimeout(resolve, pause)).then(makeAttempt);
+        }
+        throw e;
+    });
+    return makeAttempt();
+}
+const alertStateSortScore = {
+    [GrafanaAlertState.Alerting]: 1,
+    [PromAlertingRuleState.Firing]: 1,
+    [GrafanaAlertState.Error]: 1,
+    [GrafanaAlertState.Pending]: 2,
+    [PromAlertingRuleState.Pending]: 2,
+    [PromAlertingRuleState.Inactive]: 2,
+    [GrafanaAlertState.NoData]: 3,
+    [GrafanaAlertState.Normal]: 4,
+};
+export function sortAlerts(sortOrder, alerts) {
+    // Make sure to handle tie-breaks because API returns alert instances in random order every time
+    if (sortOrder === SortOrder.Importance) {
+        return sortBy(alerts, (alert) => [
+            alertStateSortScore[mapStateWithReasonToBaseState(alert.state)],
+            alertInstanceKey(alert).toLocaleLowerCase(),
+        ]);
+    }
+    else if (sortOrder === SortOrder.TimeAsc) {
+        return sortBy(alerts, (alert) => [
+            new Date(alert.activeAt) || new Date(),
+            alertInstanceKey(alert).toLocaleLowerCase(),
+        ]);
+    }
+    else if (sortOrder === SortOrder.TimeDesc) {
+        return sortBy(alerts, (alert) => [
+            new Date(alert.activeAt) || new Date(),
+            alertInstanceKey(alert).toLocaleLowerCase(),
+        ]).reverse();
+    }
+    const result = sortBy(alerts, (alert) => alertInstanceKey(alert).toLocaleLowerCase());
+    if (sortOrder === SortOrder.AlphaDesc) {
+        result.reverse();
+    }
+    return result;
+}
+export function isOpenSourceEdition() {
+    const buildInfo = config.buildInfo;
+    return buildInfo.edition === GrafanaEdition.OpenSource;
+}
+export function isLocalDevEnv() {
+    const buildInfo = config.buildInfo;
+    return buildInfo.env === 'development';
+}
+//# sourceMappingURL=misc.js.map

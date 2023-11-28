@@ -89,6 +89,9 @@ export const parseBody = (options: BackendSrvRequest, isAppJson: boolean) => {
   if (!options.data || typeof options.data === 'string') {
     return options.data;
   }
+  if (options.data instanceof Blob) {
+    return options.data;
+  }
 
   return isAppJson ? JSON.stringify(options.data) : new URLSearchParams(options.data);
 };

@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/live/livecontext"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
+	"github.com/grafana/grafana/pkg/services/live/livecontext"
+	"github.com/grafana/grafana/pkg/services/live/model"
 )
 
 type BuiltinDataOutput struct {
@@ -33,7 +33,7 @@ func (s *BuiltinDataOutput) OutputData(ctx context.Context, vars Vars, data []by
 	if err != nil {
 		return nil, err
 	}
-	_, status, err := handler.OnPublish(ctx, u, models.PublishEvent{
+	_, status, err := handler.OnPublish(ctx, u, model.PublishEvent{
 		Channel: vars.Channel,
 		Data:    data,
 	})

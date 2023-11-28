@@ -14,7 +14,7 @@ import { Messages } from '../../AccessRole.messages';
 import { DeleteRoleFormValues, DeleteRoleModalProps } from './DeleteRoleModal.types';
 import { getDefaultFormValues, getOptions, isRoleAssigned } from './DeleteRoleModal.utils';
 
-const DeleteRoleModal: FC<DeleteRoleModalProps> = ({ role, isOpen, onCancel }) => {
+const DeleteRoleModal: FC<React.PropsWithChildren<DeleteRoleModalProps>> = ({ role, isOpen, onCancel }) => {
   const dispatch = useAppDispatch();
   const { roles } = useSelector(getAccessRoles);
   const defaultRole = useSelector(getDefaultRole);

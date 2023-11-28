@@ -10,7 +10,7 @@ import getAlertingTourSteps from 'app/percona/tour/steps/alerting';
 import getProductTourSteps from 'app/percona/tour/steps/product';
 import { useSelector } from 'app/types';
 
-const PerconaTourBootstrapper: React.FC = () => {
+const PerconaTourBootstrapper: React.FC<React.PropsWithChildren<unknown>> = () => {
   const { startTour, setSteps } = usePerconaTour();
   const location = useLocation();
   const user = useSelector(getPerconaUser);

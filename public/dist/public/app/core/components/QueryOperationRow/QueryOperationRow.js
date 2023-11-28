@@ -1,0 +1,85 @@
+import { css } from '@emotion/css';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Draggable } from 'react-beautiful-dnd';
+import { useUpdateEffect } from 'react-use';
+import { reportInteraction } from '@grafana/runtime';
+import { ReactUtils, useStyles2 } from '@grafana/ui';
+import { QueryOperationRowHeader } from './QueryOperationRowHeader';
+export function QueryOperationRow({ children, actions, title, headerElement, onClose, onOpen, isOpen, disabled, draggable, collapsable, index, id, expanderMessages, }) {
+    const [isContentVisible, setIsContentVisible] = useState(isOpen !== undefined ? isOpen : true);
+    const styles = useStyles2(getQueryOperationRowStyles);
+    const onRowToggle = useCallback(() => {
+        setIsContentVisible(!isContentVisible);
+    }, [isContentVisible, setIsContentVisible]);
+    // Force QueryOperationRow expansion when `isOpen` prop updates in parent component.
+    // `undefined` can be deliberately passed value here, but we only want booleans to trigger the effect.
+    useEffect(() => {
+        if (typeof isOpen === 'boolean') {
+            setIsContentVisible(isOpen);
+        }
+    }, [isOpen]);
+    const reportDragMousePosition = useCallback((e) => {
+        // When drag detected react-beautiful-dnd will preventDefault the event
+        // Ref: https://github.com/atlassian/react-beautiful-dnd/blob/master/docs/guides/how-we-use-dom-events.md#a-mouse-drag-has-started-and-the-user-is-now-dragging
+        if (e.defaultPrevented) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            // report relative mouse position within the header element
+            reportInteraction('query_row_reorder_drag_position', {
+                x: x / rect.width,
+                y: y / rect.height,
+                width: rect.width,
+                height: rect.height,
+            });
+        }
+    }, []);
+    useUpdateEffect(() => {
+        if (isContentVisible) {
+            if (onOpen) {
+                onOpen();
+            }
+        }
+        else {
+            if (onClose) {
+                onClose();
+            }
+        }
+    }, [isContentVisible]);
+    const renderPropArgs = {
+        isOpen: isContentVisible,
+        onOpen: () => {
+            setIsContentVisible(true);
+        },
+        onClose: () => {
+            setIsContentVisible(false);
+        },
+    };
+    const actionsElement = actions && ReactUtils.renderOrCallToRender(actions, renderPropArgs);
+    const headerElementRendered = headerElement && ReactUtils.renderOrCallToRender(headerElement, renderPropArgs);
+    if (draggable) {
+        return (React.createElement(Draggable, { draggableId: id, index: index }, (provided) => {
+            return (React.createElement(React.Fragment, null,
+                React.createElement("div", Object.assign({ ref: provided.innerRef, className: styles.wrapper }, provided.draggableProps),
+                    React.createElement("div", null,
+                        React.createElement(QueryOperationRowHeader, { id: id, actionsElement: actionsElement, disabled: disabled, draggable: true, collapsable: collapsable, dragHandleProps: provided.dragHandleProps, headerElement: headerElementRendered, isContentVisible: isContentVisible, onRowToggle: onRowToggle, reportDragMousePosition: reportDragMousePosition, title: title, expanderMessages: expanderMessages })),
+                    isContentVisible && React.createElement("div", { className: styles.content }, children))));
+        }));
+    }
+    return (React.createElement("div", { className: styles.wrapper },
+        React.createElement(QueryOperationRowHeader, { id: id, actionsElement: actionsElement, disabled: disabled, draggable: false, collapsable: collapsable, headerElement: headerElementRendered, isContentVisible: isContentVisible, onRowToggle: onRowToggle, reportDragMousePosition: reportDragMousePosition, title: title, expanderMessages: expanderMessages }),
+        isContentVisible && React.createElement("div", { className: styles.content }, children)));
+}
+const getQueryOperationRowStyles = (theme) => {
+    return {
+        wrapper: css `
+      margin-bottom: ${theme.spacing(2)};
+    `,
+        content: css `
+      margin-top: ${theme.spacing(0.5)};
+      margin-left: ${theme.spacing(3)};
+    `,
+    };
+};
+QueryOperationRow.displayName = 'QueryOperationRow';
+//# sourceMappingURL=QueryOperationRow.js.map

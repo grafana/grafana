@@ -25,12 +25,12 @@ import {
 import { LocalFields } from './LocalFields';
 import { S3Fields } from './S3Fields';
 
-const TypeField: FC<TypeFieldProps> = ({ values }) => {
+const TypeField: FC<React.PropsWithChildren<TypeFieldProps>> = ({ values }) => {
   const { type, client, endpoint, accessKey, secretKey, bucketName } = values;
   const fieldMap = {
     [LocationType.S3]: (
       // eslint-disable-next-line jsx-a11y/no-access-key
-      <S3Fields endpoint={endpoint} bucketName={bucketName} accessKey={accessKey} secretKey={secretKey} />
+      (<S3Fields endpoint={endpoint} bucketName={bucketName} accessKey={accessKey} secretKey={secretKey} />)
     ),
     [LocationType.CLIENT]: <LocalFields name="client" path={client} />,
   };
@@ -51,7 +51,7 @@ const typeOptions: Array<SelectableValue<LocationType>> = [
 
 const { Form } = withTypes<AddStorageLocationFormProps>();
 
-export const AddStorageLocationModal: FC<AddStorageLocationModalProps> = ({
+export const AddStorageLocationModal: FC<React.PropsWithChildren<AddStorageLocationModalProps>> = ({
   isVisible,
   location = null,
   waitingLocationValidation = false,

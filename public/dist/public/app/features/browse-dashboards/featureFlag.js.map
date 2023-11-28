@@ -1,0 +1,1 @@
+{"version":3,"file":"featureFlag.js","sourceRoot":"","sources":["../../../../../app/features/browse-dashboards/featureFlag.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,MAAM,EAAE,MAAM,kBAAkB,CAAC;AAE1C,MAAM,UAAU,0BAA0B;IACxC,OAAO,MAAM,CAAC,cAAc,CAAC,aAAa,IAAI,MAAM,CAAC,cAAc,CAAC,mBAAmB,CAAC;AAC1F,CAAC"}

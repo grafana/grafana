@@ -12,7 +12,7 @@ import { KubernetesOperatorStatus as Status, KubernetesOperatorStatusProps } fro
 import { getStatusLink } from './KubernetesOperatorStatus.utils';
 import { OperatorStatus } from './OperatorStatus/OperatorStatus';
 
-export const KubernetesOperatorStatus: FC<KubernetesOperatorStatusProps> = ({
+export const KubernetesOperatorStatus: FC<React.PropsWithChildren<KubernetesOperatorStatusProps>> = ({
   operator,
   databaseType,
   kubernetes,

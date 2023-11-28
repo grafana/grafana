@@ -1,0 +1,1 @@
+{"version":3,"file":"DeprecationWarning.messages.js","sourceRoot":"","sources":["../../../../../../../app/percona/dbaas/components/DeprecationWarning/DeprecationWarning.messages.ts"],"names":[],"mappings":"AAAA,MAAM,CAAC,MAAM,QAAQ,GAAG;IACtB,KAAK,EAAE,oBAAoB;IAC3B,OAAO,EAAE,uDAAuD;IAChE,OAAO,EAAE,SAAS;IAClB,WAAW,EAAE,0BAA0B;IACvC,KAAK,EAAE,iBAAiB;IACxB,GAAG,EAAE,GAAG;CACT,CAAC"}

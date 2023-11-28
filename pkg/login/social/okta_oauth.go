@@ -1,20 +1,23 @@
 package social
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/go-jose/go-jose/v3/jwt"
 	"golang.org/x/oauth2"
-	"gopkg.in/square/go-jose.v2/jwt"
+
+	"github.com/grafana/grafana/pkg/models/roletype"
 )
 
 type SocialOkta struct {
 	*SocialBase
-	apiUrl        string
-	allowedGroups []string
+	apiUrl          string
+	allowedGroups   []string
+	skipOrgRoleSync bool
 }
 
 type OktaUserInfoJson struct {
@@ -44,11 +47,7 @@ func (claims *OktaClaims) extractEmail() string {
 	return claims.Email
 }
 
-func (s *SocialOkta) Type() int {
-	return int(models.OKTA)
-}
-
-func (s *SocialOkta) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
+func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	idToken := token.Extra("id_token")
 	if idToken == nil {
 		return nil, fmt.Errorf("no id_token found")
@@ -70,7 +69,7 @@ func (s *SocialOkta) UserInfo(client *http.Client, token *oauth2.Token) (*BasicU
 	}
 
 	var data OktaUserInfoJson
-	err = s.extractAPI(&data, client)
+	err = s.extractAPI(ctx, &data, client)
 	if err != nil {
 		return nil, err
 	}
@@ -80,14 +79,21 @@ func (s *SocialOkta) UserInfo(client *http.Client, token *oauth2.Token) (*BasicU
 		return nil, errMissingGroupMembership
 	}
 
-	role, grafanaAdmin := s.extractRoleAndAdmin(data.rawJSON, groups, true)
-	if s.roleAttributeStrict && !role.IsValid() {
-		return nil, ErrInvalidBasicRole
-	}
+	var role roletype.RoleType
+	var isGrafanaAdmin *bool
+	if !s.skipOrgRoleSync {
+		var grafanaAdmin bool
+		role, grafanaAdmin, err = s.extractRoleAndAdmin(data.rawJSON, groups)
+		if err != nil {
+			return nil, err
+		}
 
-	var isGrafanaAdmin *bool = nil
-	if s.allowAssignGrafanaAdmin {
-		isGrafanaAdmin = &grafanaAdmin
+		if s.allowAssignGrafanaAdmin {
+			isGrafanaAdmin = &grafanaAdmin
+		}
+	}
+	if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
+		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
 	return &BasicUserInfo{
@@ -101,8 +107,8 @@ func (s *SocialOkta) UserInfo(client *http.Client, token *oauth2.Token) (*BasicU
 	}, nil
 }
 
-func (s *SocialOkta) extractAPI(data *OktaUserInfoJson, client *http.Client) error {
-	rawUserInfoResponse, err := s.httpGet(client, s.apiUrl)
+func (s *SocialOkta) extractAPI(ctx context.Context, data *OktaUserInfoJson, client *http.Client) error {
+	rawUserInfoResponse, err := s.httpGet(ctx, client, s.apiUrl)
 	if err != nil {
 		s.log.Debug("Error getting user info response", "url", s.apiUrl, "error", err)
 		return fmt.Errorf("error getting user info response: %w", err)

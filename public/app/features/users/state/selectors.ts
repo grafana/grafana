@@ -9,4 +9,3 @@ export const getUsers = (state: UsersState) => {
 };
 
 export const getUsersSearchQuery = (state: UsersState) => state.searchQuery;
-export const getUsersSearchPage = (state: UsersState) => state.searchPage;

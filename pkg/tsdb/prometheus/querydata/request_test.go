@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"math"
 	"net/http"
@@ -13,15 +14,21 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/buffered"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	p "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds/dataquery"
+
+	"github.com/grafana/kindsys"
+
+	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata"
 )
 
 func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
@@ -59,13 +66,15 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 		}
 
-		tctx, err := setup(true)
+		tctx, err := setup()
 		require.NoError(t, err)
 
 		qm := models.QueryModel{
-			LegendFormat:  "legend {{app}}",
-			UtcOffsetSec:  0,
-			ExemplarQuery: true,
+			LegendFormat: "legend {{app}}",
+			UtcOffsetSec: 0,
+			PrometheusDataQuery: dataquery.PrometheusDataQuery{
+				Exemplar: kindsys.Ptr(true),
+			},
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -110,7 +119,9 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		qm := models.QueryModel{
 			LegendFormat: "legend {{app}}",
 			UtcOffsetSec: 0,
-			RangeQuery:   true,
+			PrometheusDataQuery: dataquery.PrometheusDataQuery{
+				Range: kindsys.Ptr(true),
+			},
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -121,7 +132,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 			JSON: b,
 		}
-		tctx, err := setup(true)
+		tctx, err := setup()
 		require.NoError(t, err)
 		res, err := execute(tctx, query, result)
 		require.NoError(t, err)
@@ -132,7 +143,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		require.Equal(t, "Time", res[0].Fields[0].Name)
 		require.Len(t, res[0].Fields[1].Labels, 2)
 		require.Equal(t, "app=Application, tag2=tag2", res[0].Fields[1].Labels.String())
-		require.Equal(t, "legend Application", res[0].Fields[1].Name)
+		require.Equal(t, "legend Application", res[0].Name)
 
 		// Ensure the timestamps are UTC zoned
 		testValue := res[0].Fields[0].At(0)
@@ -157,7 +168,9 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		qm := models.QueryModel{
 			LegendFormat: "",
 			UtcOffsetSec: 0,
-			RangeQuery:   true,
+			PrometheusDataQuery: dataquery.PrometheusDataQuery{
+				Range: kindsys.Ptr(true),
+			},
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -168,7 +181,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 			JSON: b,
 		}
-		tctx, err := setup(true)
+		tctx, err := setup()
 		require.NoError(t, err)
 		res, err := execute(tctx, query, result)
 
@@ -178,8 +191,8 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		require.Equal(t, time.Unix(1, 0).UTC(), res[0].Fields[0].At(0))
 		require.Equal(t, time.Unix(4, 0).UTC(), res[0].Fields[0].At(1))
 		require.Equal(t, res[0].Fields[1].Len(), 2)
-		require.Equal(t, float64(1), *res[0].Fields[1].At(0).(*float64))
-		require.Equal(t, float64(4), *res[0].Fields[1].At(1).(*float64))
+		require.Equal(t, float64(1), res[0].Fields[1].At(0).(float64))
+		require.Equal(t, float64(4), res[0].Fields[1].At(1).(float64))
 	})
 
 	t.Run("matrix response with from alerting missed data points should be parsed correctly", func(t *testing.T) {
@@ -200,7 +213,9 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		qm := models.QueryModel{
 			LegendFormat: "",
 			UtcOffsetSec: 0,
-			RangeQuery:   true,
+			PrometheusDataQuery: dataquery.PrometheusDataQuery{
+				Range: kindsys.Ptr(true),
+			},
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -211,7 +226,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 			JSON: b,
 		}
-		tctx, err := setup(true)
+		tctx, err := setup()
 		require.NoError(t, err)
 		res, err := execute(tctx, query, result)
 
@@ -222,7 +237,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		require.Equal(t, res[0].Fields[0].Name, "Time")
 		require.Len(t, res[0].Fields[1].Labels, 2)
 		require.Equal(t, res[0].Fields[1].Labels.String(), "app=Application, tag2=tag2")
-		require.Equal(t, "{app=\"Application\", tag2=\"tag2\"}", res[0].Fields[1].Name)
+		require.Equal(t, "{app=\"Application\", tag2=\"tag2\"}", res[0].Name)
 	})
 
 	t.Run("matrix response with NaN value should be changed to null", func(t *testing.T) {
@@ -241,7 +256,9 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		qm := models.QueryModel{
 			LegendFormat: "",
 			UtcOffsetSec: 0,
-			RangeQuery:   true,
+			PrometheusDataQuery: dataquery.PrometheusDataQuery{
+				Range: kindsys.Ptr(true),
+			},
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -253,13 +270,13 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			JSON: b,
 		}
 
-		tctx, err := setup(true)
+		tctx, err := setup()
 		require.NoError(t, err)
 		res, err := execute(tctx, query, result)
 		require.NoError(t, err)
 
-		require.Equal(t, "{app=\"Application\"}", res[0].Fields[1].Name)
-		require.True(t, math.IsNaN(*res[0].Fields[1].At(0).(*float64)))
+		require.Equal(t, "{app=\"Application\"}", res[0].Name)
+		require.True(t, math.IsNaN(res[0].Fields[1].At(0).(float64)))
 	})
 
 	t.Run("vector response should be parsed normally", func(t *testing.T) {
@@ -276,14 +293,16 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		qm := models.QueryModel{
 			LegendFormat: "legend {{app}}",
 			UtcOffsetSec: 0,
-			InstantQuery: true,
+			PrometheusDataQuery: dataquery.PrometheusDataQuery{
+				Instant: kindsys.Ptr(true),
+			},
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
 		query := backend.DataQuery{
 			JSON: b,
 		}
-		tctx, err := setup(true)
+		tctx, err := setup()
 		require.NoError(t, err)
 		res, err := execute(tctx, query, qr)
 		require.NoError(t, err)
@@ -295,7 +314,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		require.Equal(t, res[0].Fields[0].Name, "Time")
 		require.Len(t, res[0].Fields[1].Labels, 2)
 		require.Equal(t, res[0].Fields[1].Labels.String(), "app=Application, tag2=tag2")
-		require.Equal(t, "legend Application", res[0].Fields[1].Name)
+		require.Equal(t, "legend Application", res[0].Name)
 
 		// Ensure the timestamps are UTC zoned
 		testValue := res[0].Fields[0].At(0)
@@ -315,14 +334,16 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		qm := models.QueryModel{
 			LegendFormat: "",
 			UtcOffsetSec: 0,
-			InstantQuery: true,
+			PrometheusDataQuery: dataquery.PrometheusDataQuery{
+				Instant: kindsys.Ptr(true),
+			},
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
 		query := backend.DataQuery{
 			JSON: b,
 		}
-		tctx, err := setup(true)
+		tctx, err := setup()
 		require.NoError(t, err)
 		res, err := execute(tctx, query, qr)
 		require.NoError(t, err)
@@ -342,16 +363,21 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 
 type queryResult struct {
 	Type   p.ValueType `json:"resultType"`
-	Result interface{} `json:"result"`
+	Result any         `json:"result"`
 }
 
-func execute(tctx *testContext, query backend.DataQuery, qr interface{}) (data.Frames, error) {
+func executeWithHeaders(tctx *testContext, query backend.DataQuery, qr any, headers map[string]string) (data.Frames, error) {
 	req := backend.QueryDataRequest{
 		Queries: []backend.DataQuery{query},
-		Headers: map[string]string{},
+		Headers: headers,
 	}
 
-	promRes, err := toAPIResponse(qr) //nolint:bodyclose // fixed in main
+	promRes, err := toAPIResponse(qr)
+	defer func() {
+		if err := promRes.Body.Close(); err != nil {
+			fmt.Println(fmt.Errorf("response body close error: %v", err))
+		}
+	}()
 	if err != nil {
 		return nil, err
 	}
@@ -365,12 +391,16 @@ func execute(tctx *testContext, query backend.DataQuery, qr interface{}) (data.F
 	return res.Responses[req.Queries[0].RefID].Frames, nil
 }
 
+func execute(tctx *testContext, query backend.DataQuery, qr any) (data.Frames, error) {
+	return executeWithHeaders(tctx, query, qr, map[string]string{})
+}
+
 type apiResponse struct {
 	Status string          `json:"status"`
 	Data   json.RawMessage `json:"data"`
 }
 
-func toAPIResponse(d interface{}) (*http.Response, error) {
+func toAPIResponse(d any) (*http.Response, error) {
 	b, err := json.Marshal(d)
 	if err != nil {
 		return nil, err
@@ -397,7 +427,7 @@ type testContext struct {
 	queryData    *querydata.QueryData
 }
 
-func setup(wideFrames bool) (*testContext, error) {
+func setup() (*testContext, error) {
 	tracer := tracing.InitializeTracerForTest()
 	httpProvider := &fakeHttpClientProvider{
 		opts: sdkhttpclient.Options{
@@ -413,9 +443,9 @@ func setup(wideFrames bool) (*testContext, error) {
 		JSONData: json.RawMessage(`{"timeInterval": "15s"}`),
 	}
 
-	features := &fakeFeatureToggles{flags: map[string]bool{"prometheusStreamingJSONParser": true, "prometheusWideSeries": wideFrames}}
+	features := &fakeFeatureToggles{flags: map[string]bool{"prometheusBufferedClient": false}}
 
-	opts, err := buffered.CreateTransportOptions(settings, &setting.Cfg{}, &fakeLogger{})
+	opts, err := client.CreateTransportOptions(context.Background(), settings, &setting.Cfg{}, &logtest.Fake{})
 	if err != nil {
 		return nil, err
 	}
@@ -425,7 +455,7 @@ func setup(wideFrames bool) (*testContext, error) {
 		return nil, err
 	}
 
-	queryData, _ := querydata.New(httpClient, features, tracer, settings, &fakeLogger{})
+	queryData, _ := querydata.New(httpClient, features, tracer, settings, &logtest.Fake{})
 
 	return &testContext{
 		httpProvider: httpProvider,
@@ -444,6 +474,7 @@ func (f *fakeFeatureToggles) IsEnabled(feature string) bool {
 type fakeHttpClientProvider struct {
 	httpclient.Provider
 	opts sdkhttpclient.Options
+	req  *http.Request
 	res  *http.Response
 }
 
@@ -467,5 +498,6 @@ func (p *fakeHttpClientProvider) setResponse(res *http.Response) {
 }
 
 func (p *fakeHttpClientProvider) RoundTrip(req *http.Request) (*http.Response, error) {
+	p.req = req
 	return p.res, nil
 }

@@ -5,6 +5,7 @@ import (
 	"net/url"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
@@ -21,7 +22,7 @@ func CustomQueryParameters(logger log.Logger) sdkhttpclient.Middleware {
 			return next
 		}
 
-		data, ok := grafanaData.(map[string]interface{})
+		data, ok := grafanaData.(map[string]any)
 		if !ok {
 			return next
 		}

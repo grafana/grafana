@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-
 	"path"
 	"path/filepath"
 	"strings"
@@ -178,8 +177,8 @@ func publishPackages(cfg packaging.PublishConfig) error {
 		Version:     cfg.Version,
 		ReleaseDate: time.Now().UTC(),
 		Builds:      builds,
-		Stable:      cfg.ReleaseMode.Mode == config.TagMode && !cfg.ReleaseMode.IsBeta && !cfg.ReleaseMode.IsTest,
-		Beta:        cfg.ReleaseMode.IsBeta,
+		Stable:      cfg.ReleaseMode.Mode == config.TagMode && !cfg.ReleaseMode.IsPreview && !cfg.ReleaseMode.IsTest,
+		Beta:        cfg.ReleaseMode.IsPreview,
 		Nightly:     cfg.ReleaseMode.Mode == config.CronjobMode,
 	}
 	if cfg.ReleaseMode.Mode == config.TagMode || r.Beta {
@@ -233,7 +232,7 @@ func getSHA256(u string) ([]byte, error) {
 	return sha256, nil
 }
 
-func postRequest(cfg packaging.PublishConfig, pth string, obj interface{}, descr string) error {
+func postRequest(cfg packaging.PublishConfig, pth string, obj any, descr string) error {
 	var sfx string
 	switch cfg.Edition {
 	case config.EditionOSS:

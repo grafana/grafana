@@ -10,7 +10,12 @@ keywords:
   - documentation
   - '7.4'
   - release notes
-title: What's New in Grafana v7.4
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
+title: What's new in Grafana v7.4
 weight: -31
 ---
 
@@ -36,7 +41,7 @@ Apart from major performance improvements, the new Time series panel implements 
 
 The following documentation topics were added for this feature:
 
-- [Time series panel]({{< relref "../panels-visualizations/visualizations/time-series/" >}})
+- [Time series panel]({{< relref "../panels-visualizations/visualizations/time-series" >}})
 - [Graph time series as lines]({{< relref "../panels-visualizations/visualizations/time-series#line-style" >}})
 - [Graph time series as bars]({{< relref "../panels-visualizations/visualizations/time-series#bar-alignment" >}})
 - [Graph time series as points]({{< relref "../panels-visualizations/visualizations/time-series#show-points" >}})
@@ -48,9 +53,9 @@ _Node graph_ is a new panel type that can visualize directed graphs or network i
 
 All the information and stats shown in the Node graph beta are driven by the data provided in the response from the data source. The first data source that is using this panel is AWS X-Ray, for displaying their service map data.
 
-For more details about how to use the X-Ray service map feature, see the [X-Ray plugin documentation](https://grafana.com/grafana/plugins/grafana-x-ray-datasource).
+For more details about how to use the X-Ray service map feature, see the [X-Ray plugin documentation](/grafana/plugins/grafana-x-ray-datasource).
 
-For more information, refer to [Node graph panel]({{< relref "../panels-visualizations/visualizations/node-graph/" >}}).
+For more information, refer to [Node graph panel]({{< relref "../panels-visualizations/visualizations/node-graph" >}}).
 
 ### New transformations
 
@@ -60,7 +65,7 @@ The following transformations were added in Grafana 7.4.
 
 The _Sort by_ transformation allows you to sort data before sending it to the visualization.
 
-For more information, refer to [Sort by]({{< relref "../panels-visualizations/query-transform-data/transform-data/#sort-by" >}}).
+For more information, refer to [Sort by]({{< relref "../panels-visualizations/query-transform-data/transform-data#sort-by" >}}).
 
 #### Filter data by value transform
 
@@ -68,13 +73,13 @@ The new _Filter data by value_ transformation allows you to filter your data dir
 
 This transformation is very useful if your data source does not natively filter by values. You might also use this to narrow values to display if you are using a shared query.
 
-For more information, refer to [Filter data by value]({{< relref "../panels-visualizations/query-transform-data/transform-data/#filter-data-by-value" >}}).
+For more information, refer to [Filter data by value]({{< relref "../panels-visualizations/query-transform-data/transform-data#filter-data-by-value" >}}).
 
 ### New override option
 
 On the Overrides tab, you can now set properties for fields returned by a specific query.
 
-For more information, refer to [About field overrides]({{< relref "../panels-visualizations/configure-overrides/" >}}).
+For more information, refer to [About field overrides]({{< relref "../panels-visualizations/configure-overrides" >}}).
 
 ### Exemplar support
 
@@ -84,7 +89,7 @@ Grafana graphs now support Prometheus _exemplars_. They are displayed as diamond
 
 {{< figure src="/static/img/docs/v74/exemplars.png" max-width="900px" caption="Exemplar example" >}}
 
-For more information, refer to [Exemplars]({{< relref "../fundamentals/exemplars/" >}}).
+For more information, refer to [Exemplars]({{< relref "../fundamentals/exemplars" >}}).
 
 ### Trace to logs
 
@@ -92,20 +97,20 @@ You can now navigate from a span in a trace view directly to logs relevant for t
 
 The following topics were updated as a result of this feature:
 
-- [Explore]({{< relref "../explore/trace-integration/" >}})
-- [Jaeger]({{< relref "../datasources/jaeger/#trace-to-logs" >}})
-- [Tempo]({{< relref "../datasources/tempo/#trace-to-logs" >}})
-- [Zipkin]({{< relref "../datasources/zipkin/#trace-to-logs" >}})
+- [Explore]({{< relref "../explore/trace-integration" >}})
+- [Jaeger]({{< relref "../datasources/jaeger#configure-trace-to-logs" >}})
+- [Tempo]({{< relref "../datasources/tempo#configure-trace-to-logs" >}})
+- [Zipkin]({{< relref "../datasources/zipkin#configure-trace-to-logs" >}})
 
 ### Server-side expressions
 
 _Server-side expressions_ is an experimental feature that allows you to manipulate data returned from backend data source queries. Expressions allow you to manipulate data with math and other operations when the data source is a backend data source or a **--Mixed--** data source.
 
-The main use case is for [multi-dimensional]({{< relref "../fundamentals/timeseries-dimensions/" >}}) data sources used with the upcoming next generation alerting, but expressions can be used with backend data sources and visualization as well.
+The main use case is for [multi-dimensional]({{< relref "../fundamentals/timeseries-dimensions" >}}) data sources used with the upcoming next generation alerting, but expressions can be used with backend data sources and visualization as well.
 
 > **Note:** Queries built with this feature might break with minor version upgrades until Grafana 8 is released. This feature does not work with the current Grafana Alerting.
 
-For more information, refer to [Write expression queries]({{< relref "../panels-visualizations/query-transform-data/expression-queries/" >}}). [About queries]({{< relref "../panels-visualizations/query-transform-data/#about-queries" >}}) was also updated as a result of this feature.
+For more information, refer to [Write expression queries]({{< relref "../panels-visualizations/query-transform-data/expression-queries" >}}). [About queries]({{< relref "../panels-visualizations/query-transform-data#about-queries" >}}) was also updated as a result of this feature.
 
 ### Alert notification query label interpolation
 
@@ -121,13 +126,13 @@ CSP support is disabled by default, to enable it you must set `content_security_
 
 You can lock down what can be done in the frontend code. Lock down what can be loaded, what JavaScript is executed. Not compatible with some plugins.
 
-[content_security_policy]({{< relref "../setup-grafana/configure-grafana/#content_security_policy" >}}) and [content_security_policy_template]({{< relref "../setup-grafana/configure-grafana/#content_security_policy_template" >}}) were added to [Configuration]({{< relref "../setup-grafana/configure-grafana/" >}}) as a result of this change.
+[content_security_policy]({{< relref "../setup-grafana/configure-grafana#content_security_policy" >}}) and [content_security_policy_template]({{< relref "../setup-grafana/configure-grafana#content_security_policy_template" >}}) were added to [Configuration]({{< relref "../setup-grafana/configure-grafana" >}}) as a result of this change.
 
 ### Hide users in UI
 
 You can now use the `hidden_users` configuration setting to hide specific users in the UI. For example, this feature can be used to hide users that are used for automation purposes.
 
-[Configuration]({{< relref "../setup-grafana/configure-grafana/#hidden_users" >}}) has been updated for this feature.
+[Configuration]({{< relref "../setup-grafana/configure-grafana#hidden_users" >}}) has been updated for this feature.
 
 ### Elasticsearch data source updates
 
@@ -140,13 +145,13 @@ Grafana 7.4 includes the following enhancements
 
 > **Note:** We have deprecated browser access mode. It will be removed in a future release.
 
-For more information, refer to the [Elasticsearch docs]({{< relref "../datasources/elasticsearch/" >}}).
+For more information, refer to the [Elasticsearch docs]({{< relref "../datasources/elasticsearch" >}}).
 
 ### Azure Monitor updates
 
 The Azure Monitor query type was renamed to Metrics and Azure Logs Analytics was renamed to Logs to match the service names in Azure and align the concepts with the rest of Grafana.
 
-[Azure Monitor]({{< relref "../datasources/azuremonitor/" >}}) was updated to reflect this change.
+[Azure Monitor]({{< relref "../datasources/azure-monitor" >}}) was updated to reflect this change.
 
 ### MQL support added for Google Cloud Monitoring
 
@@ -156,7 +161,7 @@ Unlike the visual query builder, MQL allows you to control the time range and pe
 
 MQL uses a set of operations and functions. Operations are linked together using the common pipe mechanism, where the output of one operation becomes the input to the next. Linking operations makes it possible to build up complex queries incrementally.
 
-Once query type Metrics is selected in the Cloud Monitoring query editor, you can toggle between the editor modes for visual query builder and MQL. For more information, refer to the [Google Cloud Monitoring docs]({{< relref "../datasources/google-cloud-monitoring/#out-of-the-box-dashboards" >}}).
+Once query type Metrics is selected in the Cloud Monitoring query editor, you can toggle between the editor modes for visual query builder and MQL. For more information, refer to the [Google Cloud Monitoring docs]({{< relref "../datasources/google-cloud-monitoring#import-pre-configured-dashboards" >}}).
 
 Many thanks to [mtanda](https://github.com/mtanda) this contribution!
 
@@ -168,21 +173,21 @@ Google Cloud Monitoring data source ships with pre-configured dashboards for som
 
 If you want to customize a dashboard, we recommend that you save it under a different name. Otherwise the dashboard will be overwritten when a new version of the dashboard is released.
 
-For more information, refer to the [Google Cloud Monitoring docs]({{< relref "../datasources/google-cloud-monitoring/#out-of-the-box-dashboards" >}}).
+For more information, refer to the [Google Cloud Monitoring docs]({{< relref "../datasources/google-cloud-monitoring#import-pre-configured-dashboards" >}}).
 
 ### Query Editor Help
 
 The feature previously referred to as DataSource Start Pages or Cheat Sheets has been renamed to Query Editor Help, and is now supported in panel query editors (depending on the data source), as well as in Explore.
 
-[Queries]({{< relref "../panels-visualizations/query-transform-data/#manage-queries" >}}) was updated as a result of this feature.
+[Queries]({{< relref "../panels-visualizations/query-transform-data#manage-queries" >}}) was updated as a result of this feature.
 
-For more information on adding a query editor help component to your plugin, refer to [Add a query editor help component]({{< relref "../developers/plugins/add-query-editor-help/" >}}).
+For more information on adding a query editor help component to your plugin, refer to [Add a query editor help component](/developers/plugin-tools/create-a-plugin/extend-a-plugin/add-query-editor-help).
 
 ### Variable inspector
 
 The variables list has an additional column indicating whether variables are referenced in queries and panel names or not. The dependencies graph provides an easy way to check variable dependencies. You can click on a variable name within the graph to make updates to the variable as needed.
 
-For more information, refer to [Inspect variables and their dependencies]({{< relref "../dashboards/variables/inspect-variable/" >}}).
+For more information, refer to [Inspect variables and their dependencies]({{< relref "../dashboards/variables/inspect-variable" >}}).
 
 ## Grafana Enterprise features
 
@@ -190,7 +195,7 @@ These features are included in the Grafana Enterprise edition.
 
 ### Licensing changes
 
-When determining a user’s role for billing purposes, a user who has the ability to edit and save dashboards is considered an Editor. This includes any user who is an Editor or Admin at the Org level, and who has granted Admin or Edit permissions via [Dashboard permissions]({{< relref "../administration/user-management/manage-dashboard-permissions/" >}}).
+When determining a user’s role for billing purposes, a user who has the ability to edit and save dashboards is considered an Editor. This includes any user who is an Editor or Admin at the Org level, and who has granted Admin or Edit permissions via [Dashboard permissions]({{< relref "../administration/user-management/manage-dashboard-permissions" >}}).
 
 After the number of Viewers or Editors has reached its license limit, only Admins will see a banner in Grafana indicating that the license limit has been reached. Previously, all users saw the banner.
 
@@ -202,27 +207,27 @@ Refer to [Licensing restrictions]({{< relref "../administration/enterprise-licen
 
 You can now export usage insights logs to Loki and query them from Grafana. Usage insights logs include dashboard visits, data source views, queries and errors, and more.
 
-For more information, refer to [Export logs of usage insights]({{< relref "../setup-grafana/configure-security/export-logs/" >}}).
+For more information, refer to [Export logs of usage insights]({{< relref "../setup-grafana/configure-security/export-logs" >}}).
 
 ### New audit log events
 
-New log out events are logged based on when a token expires or is revoked, as well as [SAML Single Logout]({{< relref "../setup-grafana/configure-security/configure-authentication/saml/#single-logout" >}}). A `tokenId` field was added to all audit logs to help understand which session was logged out of.
+New log out events are logged based on when a token expires or is revoked, as well as [SAML Single Logout]({{< relref "../setup-grafana/configure-security/configure-authentication/saml#single-logout" >}}). A `tokenId` field was added to all audit logs to help understand which session was logged out of.
 
 Also, a counter for audit log writing actions with status (success / failure) and logger (loki / file / console) labels was added.
 
-[Auditing]({{< relref "../setup-grafana/configure-security/audit-grafana/" >}}) was updated to reflect these changes.
+[Auditing]({{< relref "../setup-grafana/configure-security/audit-grafana" >}}) was updated to reflect these changes.
 
 ### Reports support Unicode
 
 You can now select a font, other than the default, for Unicode-based scripts. As a result, an automatically generated PDF of a dashboard, which contains for example Chinese or Cyrillic text, can display them. Because the size of a report increases as additional fonts are added, this feature is not on by default.
 
-[Reporting]({{< relref "../dashboards/share-dashboards-panels/#rendering-configuration" >}}) was updated as a result of this change.
+[Reporting]({{< relref "../dashboards/share-dashboards-panels#rendering-configuration" >}}) was updated as a result of this change.
 
 ### Request security
 
 Request security introduces ways to limit requests from the Grafana server, and it targets requests that are generated by users.
 
-For more information, refer to [Request security]({{< relref "../setup-grafana/configure-security/configure-request-security/" >}}).
+For more information, refer to [Request security]({{< relref "../setup-grafana/configure-security/configure-request-security" >}}).
 
 ## Breaking changes
 
@@ -237,10 +242,6 @@ In order not to break all angular panel plugins and data sources we have some cu
 ### Fixes Constant variable persistence confusion
 
 In order to minimize the confusion with Constant variable usage, we've removed the ability to make Constant variables visible. This change will also migrate all existing visible Constant variables to Textbox variables because which we think this is a more appropriate type of variable for this use case.
-
-## Upgrading
-
-See [upgrade notes]({{< relref "../setup-grafana/upgrade-grafana/" >}}).
 
 ## Changelog
 

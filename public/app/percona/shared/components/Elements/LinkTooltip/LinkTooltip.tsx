@@ -14,7 +14,7 @@ export interface LinkTooltipProps {
   className?: string;
 }
 
-export const LinkTooltip: FC<LinkTooltipProps> = ({
+export const LinkTooltip: FC<React.PropsWithChildren<LinkTooltipProps>> = ({
   tooltipContent,
   link,
   linkText,

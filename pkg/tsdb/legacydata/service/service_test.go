@@ -8,54 +8,56 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	pluginFakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 func TestHandleRequest(t *testing.T) {
-	cfg := &setting.Cfg{}
-
 	t.Run("Should invoke plugin manager QueryData when handling request for query", func(t *testing.T) {
-		origOAuthIsOAuthPassThruEnabledFunc := oAuthIsOAuthPassThruEnabledFunc
-		oAuthIsOAuthPassThruEnabledFunc = func(oAuthTokenService oauthtoken.OAuthTokenService, ds *datasources.DataSource) bool {
-			return false
-		}
-
-		t.Cleanup(func() {
-			oAuthIsOAuthPassThruEnabledFunc = origOAuthIsOAuthPassThruEnabledFunc
-		})
-
 		client := &fakePluginsClient{}
 		var actualReq *backend.QueryDataRequest
 		client.QueryDataHandlerFunc = func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 			actualReq = req
 			return backend.NewQueryDataResponse(), nil
 		}
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := db.InitTestDB(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		datasourcePermissions := acmock.NewMockedPermissionsService()
-		dsService := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), datasourcePermissions)
-		s := ProvideService(client, nil, dsService)
+		quotaService := quotatest.New(false, nil)
+		dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, sqlStore.Cfg, featuremgmt.WithFeatures(), acmock.New(), datasourcePermissions, quotaService)
+		require.NoError(t, err)
 
-		ds := &datasources.DataSource{Id: 12, Type: "unregisteredType", JsonData: simplejson.New()}
+		pCtxProvider := plugincontext.ProvideService(sqlStore.Cfg, localcache.ProvideService(), &pluginstore.FakePluginStore{
+			PluginList: []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test"}}},
+		}, dsService, pluginSettings.ProvideService(sqlStore, secretsService), pluginFakes.NewFakeLicensingService(), &config.Cfg{})
+		s := ProvideService(client, nil, dsService, pCtxProvider)
+
+		ds := &datasources.DataSource{ID: 12, Type: "test", JsonData: simplejson.New()}
 		req := legacydata.DataQuery{
 			TimeRange: &legacydata.DataTimeRange{},
 			Queries: []legacydata.DataSubQuery{
-				{RefID: "A", DataSource: &datasources.DataSource{Id: 1, Type: "test"}, Model: simplejson.New()},
-				{RefID: "B", DataSource: &datasources.DataSource{Id: 1, Type: "test"}, Model: simplejson.New()},
+				{RefID: "A", Model: simplejson.New()},
+				{RefID: "B", Model: simplejson.New()},
 			},
+			User: &user.SignedInUser{},
 		}
 		res, err := s.HandleRequest(context.Background(), ds, req)
 		require.NoError(t, err)

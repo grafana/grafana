@@ -10,7 +10,7 @@ import { Messages } from './Credentials.messages';
 import { getStyles } from './Credentials.styles';
 import { CredentialsProps, RDSCredentialsForm } from './Credentials.types';
 
-const Credentials: FC<CredentialsProps> = ({ discover }) => {
+const Credentials: FC<React.PropsWithChildren<CredentialsProps>> = ({ discover }) => {
   const styles = useStyles(getStyles);
 
   const onSubmit = useCallback(

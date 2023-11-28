@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../../http_api/annotations/
+canonical: /docs/grafana/latest/developers/http_api/annotations/
 description: Grafana Annotations HTTP API
 keywords:
   - grafana
@@ -10,14 +11,18 @@ keywords:
   - annotation
   - annotations
   - comment
+labels:
+  products:
+    - enterprise
+    - oss
 title: Annotations HTTP API
 ---
 
 # Annotations API
 
-This is the API documentation for the new Grafana Annotations feature released in Grafana 4.6. Annotations are saved in the Grafana database (sqlite, mysql or postgres). Annotations can be organization annotations that can be shown on any dashboard by configuring an annotation data source - they are filtered by tags. Or they can be tied to a panel on a dashboard and are then only shown on that panel.
+Annotations are saved in the Grafana database (sqlite, mysql or postgres). Annotations can be organization annotations that can be shown on any dashboard by configuring an annotation data source - they are filtered by tags. Or they can be tied to a panel on a dashboard and are then only shown on that panel.
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../administration/roles-and-permissions/access-control/custom-role-actions-scopes/" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
 
 ## Find Annotations
 

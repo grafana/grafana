@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/promql"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 // swagger:route Post /api/v1/rule/test/grafana testing RouteTestRuleGrafanaConfig
@@ -24,7 +24,9 @@ import (
 //     - application/json
 //
 //     Responses:
-//       200: TestRuleResponse
+//       200: TestGrafanaRuleResponse
+//       400: ValidationError
+//       404: NotFound
 
 // swagger:route Post /api/v1/rule/test/{DatasourceUID} testing RouteTestRuleConfig
 //
@@ -53,13 +55,26 @@ import (
 //     Responses:
 //       200: EvalQueriesResponse
 
+// swagger:route Post /api/v1/rule/backtest testing BacktestConfig
+//
+// Test rule
+//
+//     Consumes:
+//     - application/json
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       200: BacktestResult
+
 // swagger:parameters RouteTestReceiverConfig
 type TestReceiverRequest struct {
 	// in:body
 	Body ExtendedReceiver
 }
 
-// swagger:parameters RouteTestRuleConfig RouteTestRuleGrafanaConfig
+// swagger:parameters RouteTestRuleConfig
 type TestRuleRequest struct {
 	// in:body
 	Body TestRulePayload
@@ -73,6 +88,38 @@ type TestRulePayload struct {
 	GrafanaManagedCondition *EvalAlertConditionCommand `json:"grafana_condition,omitempty"`
 }
 
+// swagger:response TestGrafanaRuleResponse
+type TestGrafanaRuleResponse struct {
+	// in:body
+	Body []amv2.PostableAlert
+}
+
+// swagger:parameters RouteTestRuleGrafanaConfig
+type TestGrafanaRuleRequest struct {
+	// in:body
+	Body PostableExtendedRuleNodeExtended
+}
+
+// swagger:model
+type PostableExtendedRuleNodeExtended struct {
+	// required: true
+	Rule PostableExtendedRuleNode `json:"rule"`
+	// example: okrd3I0Vz
+	NamespaceUID string `json:"folderUid"`
+	// example: project_x
+	NamespaceTitle string `json:"folderTitle"`
+	// example: eval_group_1
+	RuleGroup string `json:"ruleGroup"`
+}
+
+func (n *PostableExtendedRuleNodeExtended) UnmarshalJSON(b []byte) error {
+	type plain PostableExtendedRuleNodeExtended
+	if err := json.Unmarshal(b, (*plain)(n)); err != nil {
+		return err
+	}
+	return nil
+}
+
 // swagger:parameters RouteEvalQueries
 type EvalQueriesRequest struct {
 	// in:body
@@ -81,8 +128,8 @@ type EvalQueriesRequest struct {
 
 // swagger:model
 type EvalQueriesPayload struct {
-	Data []models.AlertQuery `json:"data"`
-	Now  time.Time           `json:"now"`
+	Data []AlertQuery `json:"data"`
+	Now  time.Time    `json:"now"`
 }
 
 func (p *TestRulePayload) UnmarshalJSON(b []byte) error {
@@ -160,3 +207,29 @@ type Failure ResponseDetails
 type ResponseDetails struct {
 	Msg string `json:"msg"`
 }
+
+// swagger:parameters BacktestConfig
+type BacktestConfigRequest struct {
+	// in:body
+	Body BacktestConfig
+}
+
+// swagger:model
+type BacktestConfig struct {
+	From     time.Time      `json:"from"`
+	To       time.Time      `json:"to"`
+	Interval model.Duration `json:"interval,omitempty"`
+
+	Condition string         `json:"condition"`
+	Data      []AlertQuery   `json:"data"`
+	For       model.Duration `json:"for,omitempty"`
+
+	Title       string            `json:"title"`
+	Labels      map[string]string `json:"labels,omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty"`
+
+	NoDataState NoDataState `json:"no_data_state"`
+}
+
+// swagger:model
+type BacktestResult data.Frame

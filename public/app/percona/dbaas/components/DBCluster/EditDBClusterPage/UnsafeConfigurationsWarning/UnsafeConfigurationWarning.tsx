@@ -4,7 +4,7 @@ import { Alert, useStyles } from '@grafana/ui/src';
 
 import { getStyles } from './UnsafeConfigurationWarning.styles';
 
-export const UnsafeConfigurationWarning: FC = () => {
+export const UnsafeConfigurationWarning: FC<React.PropsWithChildren<unknown>> = () => {
   const styles = useStyles(getStyles);
 
   return (

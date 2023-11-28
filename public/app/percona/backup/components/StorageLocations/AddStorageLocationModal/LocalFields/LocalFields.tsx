@@ -8,6 +8,6 @@ import { LocalFieldsProps } from './LocalFields.types';
 
 const required = [validators.required];
 
-export const LocalFields: FC<LocalFieldsProps> = ({ name, path }) => (
+export const LocalFields: FC<React.PropsWithChildren<LocalFieldsProps>> = ({ name, path }) => (
   <TextInputField name={name} validators={required} label={Messages.path} initialValue={path} />
 );

@@ -9,6 +9,11 @@ export interface PromVisualQuery {
   labels: QueryBuilderLabelFilter[];
   operations: QueryBuilderOperation[];
   binaryQueries?: PromVisualQueryBinary[];
+  // metrics explorer additional settings
+  useBackend?: boolean;
+  disableTextWrap?: boolean;
+  includeNullMetadata?: boolean;
+  fullMetaSearch?: boolean;
 }
 
 export type PromVisualQueryBinary = VisualQueryBinary<PromVisualQuery>;
@@ -48,6 +53,7 @@ export enum PromOperationId {
   CountValues = 'count_values',
   DayOfMonth = 'day_of_month',
   DayOfWeek = 'day_of_week',
+  DayOfYear = 'day_of_year',
   DaysInMonth = 'days_in_month',
   Deg = 'deg',
   Delta = 'delta',
@@ -119,7 +125,15 @@ export enum PromOperationId {
   LessOrEqual = '__less_or_equal',
 }
 
+export enum PromQueryPatternType {
+  Rate = 'rate',
+  Histogram = 'histogram',
+  Binary = 'binary',
+}
+
 export interface PromQueryPattern {
   name: string;
   operations: QueryBuilderOperation[];
+  type: PromQueryPatternType;
+  binaryQueries?: PromVisualQueryBinary[];
 }

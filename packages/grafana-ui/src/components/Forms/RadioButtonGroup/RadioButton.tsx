@@ -45,7 +45,7 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
     const styles = getRadioButtonStyles(theme, size, fullWidth);
 
     return (
-      <>
+      <div className={styles.radioOption}>
         <input
           type="radio"
           className={styles.radio}
@@ -55,13 +55,13 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
           id={id}
           checked={active}
           name={name}
-          aria-label={ariaLabel}
+          aria-label={ariaLabel || description}
           ref={ref}
         />
-        <label className={styles.radioLabel} htmlFor={id} title={description}>
+        <label className={styles.radioLabel} htmlFor={id} title={description || ariaLabel}>
           {children}
         </label>
-      </>
+      </div>
     );
   }
 );
@@ -77,53 +77,54 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme2, size: RadioBut
   const labelHeight = height * theme.spacing.gridSize - 4 - 2;
 
   return {
-    radio: css`
-      position: absolute;
-      opacity: 0;
-      z-index: -1000;
+    radioOption: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+      position: 'relative',
+      flex: fullWidth ? `1 0 0` : 'none',
+      textAlign: 'center',
+    }),
+    radio: css({
+      position: 'absolute',
+      opacity: 0,
+      zIndex: -1000,
+      width: '100% !important',
+      height: '100%',
 
-      &:checked + label {
-        color: ${theme.colors.text.primary};
-        font-weight: ${theme.typography.fontWeightMedium};
-        background: ${theme.colors.action.selected};
-        z-index: 3;
-      }
+      '&:checked + label': {
+        color: theme.colors.text.primary,
+        fontWeight: theme.typography.fontWeightMedium,
+        background: theme.colors.action.selected,
+        zIndex: 3,
+      },
 
-      &:focus + label,
-      &:focus-visible + label {
-        ${getFocusStyles(theme)};
-      }
+      '&:focus + label, &:focus-visible + label': getFocusStyles(theme),
 
-      &:focus:not(:focus-visible) + label {
-        ${getMouseFocusStyles(theme)}
-      }
+      '&:focus:not(:focus-visible) + label': getMouseFocusStyles(theme),
 
-      &:disabled + label {
-        color: ${theme.colors.text.disabled};
-        cursor: not-allowed;
-      }
-    `,
-    radioLabel: css`
-      display: inline-block;
-      position: relative;
-      font-size: ${fontSize};
-      height: ${labelHeight}px;
+      '&:disabled + label': {
+        color: theme.colors.text.disabled,
+        cursor: 'not-allowed',
+      },
+    }),
+    radioLabel: css({
+      fontSize,
+      height: `${labelHeight}px`,
       // Deduct border from line-height for perfect vertical centering on windows and linux
-      line-height: ${labelHeight}px;
-      color: ${textColor};
-      padding: ${theme.spacing(0, padding)};
-      border-radius: ${theme.shape.borderRadius()};
-      background: ${theme.colors.background.primary};
-      cursor: pointer;
-      z-index: 1;
-      flex: ${fullWidth ? `1 0 0` : 'none'};
-      text-align: center;
-      user-select: none;
-      white-space: nowrap;
+      lineHeight: `${labelHeight}px`,
+      color: textColor,
+      padding: theme.spacing(0, padding),
+      borderRadius: theme.shape.radius.default,
+      background: theme.colors.background.primary,
+      cursor: 'pointer',
+      zIndex: 1,
+      userSelect: 'none',
+      whiteSpace: 'nowrap',
+      flexGrow: 1,
 
-      &:hover {
-        color: ${textColorHover};
-      }
-    `,
+      '&:hover': {
+        color: textColorHover,
+      },
+    }),
   };
 });

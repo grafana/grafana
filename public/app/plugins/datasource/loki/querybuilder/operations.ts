@@ -2,7 +2,7 @@ import {
   createAggregationOperation,
   createAggregationOperationWithParam,
 } from '../../prometheus/querybuilder/shared/operationUtils';
-import { QueryBuilderOperationDef } from '../../prometheus/querybuilder/shared/types';
+import { QueryBuilderOperationDef, QueryBuilderOperationParamValue } from '../../prometheus/querybuilder/shared/types';
 
 import { binaryScalarOperations } from './binaryScalarOperations';
 import { UnwrapParamEditor } from './components/UnwrapParamEditor';
@@ -15,7 +15,7 @@ import {
   labelFilterRenderer,
   pipelineRenderer,
 } from './operationUtils';
-import { LokiOperationId, LokiOperationOrder, LokiVisualQueryOperationCategory } from './types';
+import { LokiOperationId, LokiOperationOrder, lokiOperators, LokiVisualQueryOperationCategory } from './types';
 
 export function getOperationDefinitions(): QueryBuilderOperationDef[] {
   const aggregations = [
@@ -49,6 +49,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
 
   const rangeOperations = [
     createRangeOperation(LokiOperationId.Rate),
+    createRangeOperation(LokiOperationId.RateCounter),
     createRangeOperation(LokiOperationId.CountOverTime),
     createRangeOperation(LokiOperationId.SumOverTime),
     createRangeOperation(LokiOperationId.BytesRate),
@@ -90,7 +91,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       defaultParams: [],
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
-      orderRank: LokiOperationOrder.LineFormats,
+      orderRank: LokiOperationOrder.Parsers,
       renderer: (model, def, innerExpr) => `${innerExpr} | json ${model.params.join(', ')}`.trim(),
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
@@ -99,11 +100,36 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     {
       id: LokiOperationId.Logfmt,
       name: 'Logfmt',
-      params: [],
-      defaultParams: [],
+      params: [
+        {
+          name: 'Strict',
+          type: 'boolean',
+          optional: true,
+          description:
+            'With strict parsing enabled, the logfmt parser immediately stops scanning the log line and returns early with an error when it encounters any poorly formatted key/value pair.',
+        },
+        {
+          name: 'Keep empty',
+          type: 'boolean',
+          optional: true,
+          description:
+            'The logfmt parser retains standalone keys (keys without a value) as labels with its value set to empty string. ',
+        },
+        {
+          name: 'Expression',
+          type: 'string',
+          optional: true,
+          restParam: true,
+          minWidth: 18,
+          placeholder: 'field_name',
+          description:
+            'Using expressions with your logfmt parser will extract and rename (if provided) only the specified fields to labels. You can specify one or more expressions in this way.',
+        },
+      ],
+      defaultParams: [false, false],
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
-      orderRank: LokiOperationOrder.LineFormats,
+      orderRank: LokiOperationOrder.Parsers,
       renderer: pipelineRenderer,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
@@ -125,7 +151,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       defaultParams: [''],
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
-      orderRank: LokiOperationOrder.LineFormats,
+      orderRank: LokiOperationOrder.Parsers,
       renderer: (model, def, innerExpr) => `${innerExpr} | regexp \`${model.params[0]}\``,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
@@ -147,7 +173,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       defaultParams: [''],
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
-      orderRank: LokiOperationOrder.LineFormats,
+      orderRank: LokiOperationOrder.Parsers,
       renderer: (model, def, innerExpr) => `${innerExpr} | pattern \`${model.params[0]}\``,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
@@ -160,7 +186,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       defaultParams: [],
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
-      orderRank: LokiOperationOrder.LineFormats,
+      orderRank: LokiOperationOrder.Parsers,
       renderer: pipelineRenderer,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
@@ -182,7 +208,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       defaultParams: [''],
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
-      orderRank: LokiOperationOrder.LineFormats,
+      orderRank: LokiOperationOrder.PipeOperations,
       renderer: (model, def, innerExpr) => `${innerExpr} | line_format \`${model.params[0]}\``,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
@@ -203,7 +229,7 @@ Example: \`{{.status_code}} - {{.message}}\`
       defaultParams: ['', ''],
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
-      orderRank: LokiOperationOrder.LineFormats,
+      orderRank: LokiOperationOrder.PipeOperations,
       renderer: (model, def, innerExpr) => `${innerExpr} | label_format ${model.params[1]}=${model.params[0]}`,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
@@ -260,6 +286,50 @@ Example: \`\`error_level=\`level\` \`\`
       explainHandler: (op) => `Return log lines that does not contain string \`${op.params[0]}\`.`,
     },
     {
+      id: LokiOperationId.LineContainsCaseInsensitive,
+      name: 'Line contains case insensitive',
+      params: [
+        {
+          name: 'String',
+          type: 'string',
+          hideName: true,
+          placeholder: 'Text to find',
+          description: 'Find log lines that contains this text',
+          minWidth: 33,
+          runQueryOnEnter: true,
+        },
+      ],
+      defaultParams: [''],
+      alternativesKey: 'line filter',
+      category: LokiVisualQueryOperationCategory.LineFilters,
+      orderRank: LokiOperationOrder.LineFilters,
+      renderer: getLineFilterRenderer('|~', true),
+      addOperationHandler: addLokiOperation,
+      explainHandler: (op) => `Return log lines that match regex \`(?i)${op.params[0]}\`.`,
+    },
+    {
+      id: LokiOperationId.LineContainsNotCaseInsensitive,
+      name: 'Line does not contain case insensitive',
+      params: [
+        {
+          name: 'String',
+          type: 'string',
+          hideName: true,
+          placeholder: 'Text to exclude',
+          description: 'Find log lines that does not contain this text',
+          minWidth: 40,
+          runQueryOnEnter: true,
+        },
+      ],
+      defaultParams: [''],
+      alternativesKey: 'line filter',
+      category: LokiVisualQueryOperationCategory.LineFilters,
+      orderRank: LokiOperationOrder.LineFilters,
+      renderer: getLineFilterRenderer('!~', true),
+      addOperationHandler: addLokiOperation,
+      explainHandler: (op) => `Return log lines that does not match regex \`(?i)${op.params[0]}\`.`,
+    },
+    {
       id: LokiOperationId.LineMatchesRegex,
       name: 'Line contains regex match',
       params: [
@@ -279,7 +349,7 @@ Example: \`\`error_level=\`level\` \`\`
       orderRank: LokiOperationOrder.LineFilters,
       renderer: getLineFilterRenderer('|~'),
       addOperationHandler: addLokiOperation,
-      explainHandler: (op) => `Return log lines that match regex \`${op.params[0]}\`.`,
+      explainHandler: (op) => `Return log lines that match a \`RE2\` regex pattern. \`${op.params[0]}\`.`,
     },
     {
       id: LokiOperationId.LineMatchesRegexNot,
@@ -301,13 +371,18 @@ Example: \`\`error_level=\`level\` \`\`
       orderRank: LokiOperationOrder.LineFilters,
       renderer: getLineFilterRenderer('!~'),
       addOperationHandler: addLokiOperation,
-      explainHandler: (op) => `Return log lines that does not match regex \`${op.params[0]}\`.`,
+      explainHandler: (op) => `Return log lines that doesn't match a \`RE2\` regex pattern. \`${op.params[0]}\`.`,
     },
     {
       id: LokiOperationId.LineFilterIpMatches,
       name: 'IP line filter expression',
       params: [
-        { name: 'Operator', type: 'string', options: ['|=', '!='] },
+        {
+          name: 'Operator',
+          type: 'string',
+          minWidth: 16,
+          options: [lokiOperators.contains, lokiOperators.doesNotContain],
+        },
         {
           name: 'Pattern',
           type: 'string',
@@ -328,14 +403,28 @@ Example: \`\`error_level=\`level\` \`\`
       id: LokiOperationId.LabelFilter,
       name: 'Label filter expression',
       params: [
-        { name: 'Label', type: 'string' },
-        { name: 'Operator', type: 'string', options: ['=', '!=', ' =~', '!~', '>', '<', '>=', '<='] },
-        { name: 'Value', type: 'string' },
+        { name: 'Label', type: 'string', minWidth: 14 },
+        {
+          name: 'Operator',
+          type: 'string',
+          minWidth: 14,
+          options: [
+            lokiOperators.equals,
+            lokiOperators.doesNotEqual,
+            lokiOperators.matchesRegex,
+            lokiOperators.doesNotMatchRegex,
+            lokiOperators.greaterThan,
+            lokiOperators.lessThan,
+            lokiOperators.greaterThanOrEqual,
+            lokiOperators.lessThanOrEqual,
+          ],
+        },
+        { name: 'Value', type: 'string', minWidth: 14 },
       ],
       defaultParams: ['', '=', ''],
       alternativesKey: 'label filter',
       category: LokiVisualQueryOperationCategory.LabelFilters,
-      orderRank: LokiOperationOrder.LabelFilters,
+      orderRank: LokiOperationOrder.PipeOperations,
       renderer: labelFilterRenderer,
       addOperationHandler: addLokiOperation,
       explainHandler: () => `Label expression filter allows filtering using original and extracted labels.`,
@@ -344,14 +433,19 @@ Example: \`\`error_level=\`level\` \`\`
       id: LokiOperationId.LabelFilterIpMatches,
       name: 'IP label filter expression',
       params: [
-        { name: 'Label', type: 'string' },
-        { name: 'Operator', type: 'string', options: ['=', '!='] },
-        { name: 'Value', type: 'string' },
+        { name: 'Label', type: 'string', minWidth: 14 },
+        {
+          name: 'Operator',
+          type: 'string',
+          minWidth: 14,
+          options: [lokiOperators.equals, lokiOperators.doesNotEqual],
+        },
+        { name: 'Value', type: 'string', minWidth: 14 },
       ],
       defaultParams: ['', '=', ''],
       alternativesKey: 'label filter',
       category: LokiVisualQueryOperationCategory.LabelFilters,
-      orderRank: LokiOperationOrder.LabelFilters,
+      orderRank: LokiOperationOrder.PipeOperations,
       renderer: (model, def, innerExpr) =>
         `${innerExpr} | ${model.params[0]} ${model.params[1]} ip(\`${model.params[2]}\`)`,
       addOperationHandler: addLokiOperation,
@@ -405,6 +499,67 @@ Example: \`\`error_level=\`level\` \`\`
         }`;
       },
     },
+    {
+      id: LokiOperationId.Decolorize,
+      name: 'Decolorize',
+      params: [],
+      defaultParams: [],
+      alternativesKey: 'format',
+      category: LokiVisualQueryOperationCategory.Formats,
+      orderRank: LokiOperationOrder.PipeOperations,
+      renderer: (op, def, innerExpr) => `${innerExpr} | decolorize`,
+      addOperationHandler: addLokiOperation,
+      explainHandler: () => `This will remove ANSI color codes from log lines.`,
+    },
+    {
+      id: LokiOperationId.Drop,
+      name: 'Drop',
+      params: [
+        // As drop can support both labels (e.g. job) and expressions (e.g. job="grafana"), we
+        // use input and not LabelParamEditor.
+        {
+          name: 'Label',
+          type: 'string',
+          restParam: true,
+          optional: true,
+          minWidth: 18,
+          placeholder: 'job="grafana"',
+          description: 'Specify labels or expressions to drop.',
+        },
+      ],
+      defaultParams: [''],
+      alternativesKey: 'format',
+      category: LokiVisualQueryOperationCategory.Formats,
+      orderRank: LokiOperationOrder.PipeOperations,
+      renderer: (op, def, innerExpr) => `${innerExpr} | drop ${op.params.join(',')}`,
+      addOperationHandler: addLokiOperation,
+      explainHandler: () => 'The drop expression will drop the given labels in the pipeline.',
+    },
+    {
+      id: LokiOperationId.Keep,
+      name: 'Keep',
+      params: [
+        // As keep can support both labels (e.g. job) and expressions (e.g. job="grafana"), we
+        // use input and not LabelParamEditor.
+        {
+          name: 'Label',
+          type: 'string',
+          restParam: true,
+          optional: true,
+          minWidth: 18,
+          placeholder: 'job="grafana"',
+          description: 'Specify labels or expressions to keep.',
+        },
+      ],
+      defaultParams: [''],
+      alternativesKey: 'format',
+      category: LokiVisualQueryOperationCategory.Formats,
+      orderRank: LokiOperationOrder.PipeOperations,
+      renderer: (op, def, innerExpr) => `${innerExpr} | keep ${op.params.join(',')}`,
+      addOperationHandler: addLokiOperation,
+      explainHandler: () =>
+        'The keep expression will keep only the specified labels in the pipeline and drop all the other labels.',
+    },
     ...binaryScalarOperations,
     {
       id: LokiOperationId.NestedQuery,
@@ -418,4 +573,33 @@ Example: \`\`error_level=\`level\` \`\`
   ];
 
   return list;
+}
+
+// Keeping a local copy as an optimization measure.
+const definitions = getOperationDefinitions();
+
+/**
+ * Given an operator, return the corresponding explain.
+ * For usage within the Query Editor.
+ */
+export function explainOperator(id: LokiOperationId | string): string {
+  const definition = definitions.find((operation) => operation.id === id);
+
+  const explain = definition?.explainHandler?.({ id: '', params: ['<value>'] }) || '';
+
+  // Strip markdown links
+  return explain.replace(/\[(.*)\]\(.*\)/g, '$1');
+}
+
+export function getDefinitionById(id: string): QueryBuilderOperationDef | undefined {
+  return definitions.find((x) => x.id === id);
+}
+
+export function checkParamsAreValid(def: QueryBuilderOperationDef, params: QueryBuilderOperationParamValue[]): boolean {
+  // For now we only check if the operation has all the required params.
+  if (params.length < def.params.filter((param) => !param.optional).length) {
+    return false;
+  }
+
+  return true;
 }

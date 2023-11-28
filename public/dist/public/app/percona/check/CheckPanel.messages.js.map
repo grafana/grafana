@@ -1,0 +1,1 @@
+{"version":3,"file":"CheckPanel.messages.js","sourceRoot":"","sources":["../../../../../app/percona/check/CheckPanel.messages.ts"],"names":[],"mappings":"AAAA,MAAM,CAAC,MAAM,QAAQ,GAAG;IACtB,iBAAiB,EAAE,QAAQ;IAC3B,cAAc,EAAE,KAAK;IACrB,QAAQ,EAAE,UAAU;IACpB,QAAQ,EAAE,kBAAkB;IAC5B,WAAW,EAAE,eAAe;IAC5B,QAAQ,EAAE,WAAW;CACtB,CAAC"}

@@ -16,7 +16,7 @@ interface LabelsBuilderProps {
   onChange: (value: string) => void;
 }
 
-const LabelsBuilder: FC<LabelsBuilderProps> = ({ value, onChange }) => {
+const LabelsBuilder: FC<React.PropsWithChildren<LabelsBuilderProps>> = ({ value, onChange }) => {
   const source = getDataSourceSrv().getInstanceSettings();
   const datasource = source ? new PrometheusDatasource(source) : undefined;
   const [query, setQuery] = useState<PromQuery>({

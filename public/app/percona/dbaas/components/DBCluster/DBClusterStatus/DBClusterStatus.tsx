@@ -17,7 +17,7 @@ import { getStyles } from './DBClusterStatus.styles';
 import { DBClusterStatusProps } from './DBClusterStatus.types';
 import { getProgressMessage, getShowProgressBarValue } from './DBClusterStatus.utils';
 
-export const DBClusterStatus: FC<DBClusterStatusProps> = ({ dbCluster, setLogsModalVisible }) => {
+export const DBClusterStatus: FC<React.PropsWithChildren<DBClusterStatusProps>> = ({ dbCluster, setLogsModalVisible }) => {
   const dispatch = useDispatch();
   const { message, finishedSteps, totalSteps } = dbCluster;
   const status = dbCluster.status || Status.unknown;
@@ -79,6 +79,7 @@ export const DBClusterStatus: FC<DBClusterStatusProps> = ({ dbCluster, setLogsMo
       )}
       {showMessage && showProgressBar && (
         <div className={styles.logsWrapper}>
+          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/anchor-is-valid, jsx-a11y/click-events-have-key-events */}
           <a className={styles.logsLabel} onClick={() => openLogs()}>
             {Messages.dbcluster.table.status.logs}
           </a>

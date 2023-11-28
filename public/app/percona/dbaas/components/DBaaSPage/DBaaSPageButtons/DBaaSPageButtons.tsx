@@ -7,7 +7,7 @@ import { Messages } from './DBaaSPageButtons.messages';
 import { getStyles } from './DBaaSPageButtons.styles';
 import { DBaaSPageButtonsProps } from './DBaaSPageButtons.types';
 
-export const DBaaSPageButtons: FC<DBaaSPageButtonsProps> = ({ pageName, cancelUrl, submitBtnProps }) => {
+export const DBaaSPageButtons: FC<React.PropsWithChildren<DBaaSPageButtonsProps>> = ({ pageName, cancelUrl, submitBtnProps }) => {
   const { buttonMessage, ...props } = submitBtnProps;
   const styles = useStyles(getStyles);
   return (

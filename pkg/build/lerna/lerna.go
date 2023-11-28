@@ -47,7 +47,7 @@ func GetLernaVersion(grafanaDir string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to read %q: %w", lernaJSONPath, err)
 	}
-	pkgObj := map[string]interface{}{}
+	pkgObj := map[string]any{}
 	if err := json.Unmarshal(lernaJSONB, &pkgObj); err != nil {
 		return "", fmt.Errorf("failed decoding %q: %w", lernaJSONPath, err)
 	}

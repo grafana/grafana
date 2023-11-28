@@ -1,6 +1,6 @@
 import { ValidationRule } from 'react-hook-form';
 
-import { durationToMilliseconds, parseDuration } from '@grafana/data';
+import { parseDuration, durationToMilliseconds } from '@grafana/data';
 import { describeInterval } from '@grafana/data/src/datetime/rangeutil';
 
 import { TimeOptions } from '../types/time';
@@ -29,10 +29,6 @@ export const timeOptions = Object.entries(TimeOptions).map(([key, value]) => ({
   label: key[0].toUpperCase() + key.slice(1),
   value: value,
 }));
-
-export function parseDurationToMilliseconds(duration: string) {
-  return durationToMilliseconds(parseDuration(duration));
-}
 
 export function isValidPrometheusDuration(duration: string): boolean {
   try {
@@ -102,9 +98,41 @@ export function parsePrometheusDuration(duration: string): number {
   return totalDuration;
 }
 
+export const safeParseDurationstr = (duration: string): number => {
+  try {
+    return parsePrometheusDuration(duration);
+  } catch (e) {
+    return 0;
+  }
+};
+
+export const isNullDate = (date: string) => {
+  return date.includes('0001-01-01T00');
+};
+
+// Format given time span in MS to the largest single unit duration string up to hours.
+export function msToSingleUnitDuration(rangeMs: number): string {
+  if (rangeMs % (1000 * 60 * 60) === 0) {
+    return rangeMs / (1000 * 60 * 60) + 'h';
+  }
+  if (rangeMs % (1000 * 60) === 0) {
+    return rangeMs / (1000 * 60) + 'm';
+  }
+  if (rangeMs % 1000 === 0) {
+    return rangeMs / 1000 + 's';
+  }
+  return rangeMs.toFixed() + 'ms';
+}
+
 // @PERCONA
 // 1h, 10m or 0 (without units)
 export const durationValidationPattern: ValidationRule<RegExp> = {
   value: new RegExp(`^(\\d+(${Object.values(TimeOptions).join('|')})|0)$`),
   message: INVALID_FORMAT_MESSAGE,
 };
+
+// @PERCONA
+// backport from previous version
+export function parseDurationToMilliseconds(duration: string) {
+  return durationToMilliseconds(parseDuration(duration));
+}

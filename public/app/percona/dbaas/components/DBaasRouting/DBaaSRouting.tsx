@@ -12,7 +12,7 @@ import { K8S_INVENTORY_URL } from '../Kubernetes/EditK8sClusterPage/EditK8sClust
 
 import { getStyles } from './DBaasRouting.styles';
 
-export const DBaaSRouting: FC = () => {
+export const DBaaSRouting: FC<React.PropsWithChildren<unknown>> = () => {
   const styles = useStyles(getStyles);
   const [kubernetes, kubernetesLoading] = useKubernetesList();
 

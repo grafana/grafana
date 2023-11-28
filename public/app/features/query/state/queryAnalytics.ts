@@ -1,6 +1,5 @@
 import { PanelData, LoadingState, DataSourceApi, CoreApp, urlUtil } from '@grafana/data';
 import { reportMetaAnalytics, MetaAnalyticsEventName, DataRequestEventPayload } from '@grafana/runtime';
-import { getConfig } from 'app/core/config';
 
 import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
 
@@ -26,13 +25,14 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
       source: data.request.app,
       datasourceName: datasource.name,
       datasourceId: datasource.id,
+      datasourceUid: datasource.uid,
       datasourceType: datasource.type,
       dataSize: 0,
       duration: data.request.endTime! - data.request.startTime,
     };
 
-    if (data.request.app === CoreApp.Explore) {
-      enrichWithExploreInfo(eventData, data);
+    if (data.request.app === CoreApp.Explore || data.request.app === CoreApp.Correlations) {
+      enrichWithInfo(eventData, data);
     } else {
       enrichWithDashboardInfo(eventData, data);
     }
@@ -49,7 +49,7 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
     done = true;
   };
 
-  function enrichWithExploreInfo(eventData: DataRequestEventPayload, data: PanelData) {
+  function enrichWithInfo(eventData: DataRequestEventPayload, data: PanelData) {
     const totalQueries = Object.keys(data.series).length;
     eventData.totalQueries = totalQueries;
   }
@@ -66,7 +66,6 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
     const cachedQueries = Object.values(queryCacheStatus).filter((val) => val === true).length;
 
     eventData.panelId = data.request!.panelId;
-    eventData.dashboardId = data.request!.dashboardId;
     eventData.totalQueries = totalQueries;
     eventData.cachedQueries = cachedQueries;
 
@@ -76,10 +75,6 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
       eventData.dashboardName = dashboard.title;
       eventData.dashboardUid = dashboard.uid;
       eventData.folderName = dashboard.meta.folderTitle;
-
-      if (getConfig().isPublicDashboardView) {
-        eventData.publicDashboardUid = dashboard.meta.publicDashboardUid;
-      }
     }
 
     if (data.error) {

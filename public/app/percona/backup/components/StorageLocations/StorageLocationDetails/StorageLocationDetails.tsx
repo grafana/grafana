@@ -10,7 +10,7 @@ import { isS3Location } from '../StorageLocations.utils';
 import { getStyles } from './StorageLocationDetails.styles';
 import { StorageLocationDetailsProps } from './StorageLocationDetails.types';
 
-export const StorageLocationDetails: FC<StorageLocationDetailsProps> = ({ location }) => {
+export const StorageLocationDetails: FC<React.PropsWithChildren<StorageLocationDetailsProps>> = ({ location }) => {
   const { description } = location;
   const styles = useStyles(getStyles);
 

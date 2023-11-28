@@ -1,0 +1,67 @@
+{
+  "name": "pppp",
+  "fields": {
+    "schemaVersion": 38
+  },
+  "nested": [
+    {
+      "uid": "with-library-panels#1",
+      "kind": "panel",
+      "name": "green pie",
+      "fields": {
+        "type": ""
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "librarypanel",
+          "ID": "a7975b7a-fb53-4ab7-951d-15810953b54f"
+        },
+        {
+          "family": "plugin",
+          "type": "panel"
+        }
+      ]
+    },
+    {
+      "uid": "with-library-panels#2",
+      "kind": "panel",
+      "name": "green pie",
+      "fields": {
+        "type": ""
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "librarypanel",
+          "ID": "e1d5f519-dabd-47c6-9ad7-83d181ce1cee"
+        },
+        {
+          "family": "plugin",
+          "type": "panel"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "family": "ds"
+    },
+    {
+      "family": "librarypanel",
+      "ID": "a7975b7a-fb53-4ab7-951d-15810953b54f"
+    },
+    {
+      "family": "librarypanel",
+      "ID": "e1d5f519-dabd-47c6-9ad7-83d181ce1cee"
+    },
+    {
+      "family": "plugin",
+      "type": "panel"
+    }
+  ]
+}

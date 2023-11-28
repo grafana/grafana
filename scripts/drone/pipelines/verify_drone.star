@@ -22,7 +22,6 @@ def verify_drone(trigger, ver_mode):
     ]
     return pipeline(
         name = "{}-verify-drone".format(ver_mode),
-        edition = "oss",
         trigger = trigger,
         services = [],
         steps = steps,

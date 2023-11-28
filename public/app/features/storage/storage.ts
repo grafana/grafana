@@ -1,15 +1,14 @@
 import { DataFrame, dataFrameFromJSON, DataFrameJSON, getDisplayProcessor } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { DashboardDTO } from 'app/types';
 
-import { UploadReponse, StorageInfo, ItemOptions, WriteValueRequest, WriteValueResponse } from './types';
+import { UploadResponse, StorageInfo, ItemOptions, WriteValueRequest, WriteValueResponse } from './types';
 
 // Likely should be built into the search interface!
 export interface GrafanaStorage {
   get: <T = any>(path: string) => Promise<T>;
   list: (path: string) => Promise<DataFrame | undefined>;
-  upload: (folder: string, file: File, overwriteExistingFile: boolean) => Promise<UploadReponse>;
+  upload: (folder: string, file: File, overwriteExistingFile: boolean) => Promise<UploadResponse>;
   createFolder: (path: string) => Promise<{ error?: string }>;
   delete: (path: { isFolder: boolean; path: string }) => Promise<{ error?: string }>;
 
@@ -19,13 +18,7 @@ export interface GrafanaStorage {
   /** Called before save */
   getOptions: (path: string) => Promise<ItemOptions>;
 
-  /**
-   * Temporary shim that will return a DashboardDTO shape for files in storage
-   * Longer term, this will call an "Entity API" that is eventually backed by storage
-   */
-  getDashboard: (path: string) => Promise<DashboardDTO>;
-
-  /** Saves dashbaords */
+  /** Saves dashboards */
   write: (path: string, options: WriteValueRequest) => Promise<WriteValueResponse>;
 }
 
@@ -99,7 +92,7 @@ class SimpleStorage implements GrafanaStorage {
     return req.isFolder ? this.deleteFolder({ path: req.path, force: true }) : this.deleteFile({ path: req.path });
   }
 
-  async upload(folder: string, file: File, overwriteExistingFile: boolean): Promise<UploadReponse> {
+  async upload(folder: string, file: File, overwriteExistingFile: boolean): Promise<UploadResponse> {
     const formData = new FormData();
     formData.append('folder', folder);
     formData.append('file', file);
@@ -109,7 +102,7 @@ class SimpleStorage implements GrafanaStorage {
       body: formData,
     });
 
-    let body = (await res.json()) as UploadReponse;
+    let body: UploadResponse = await res.json();
     if (!body) {
       body = {} as any;
     }
@@ -119,36 +112,6 @@ class SimpleStorage implements GrafanaStorage {
       body.err = true;
     }
     return body;
-  }
-
-  // Temporary shim that can be loaded into the existing dashboard page structure
-  async getDashboard(path: string): Promise<DashboardDTO> {
-    if (!config.featureToggles.dashboardsFromStorage) {
-      return Promise.reject('Dashboards from storage is not enabled');
-    }
-
-    if (!path.endsWith('.json')) {
-      path += '.json';
-    }
-
-    if (!path.startsWith('content/')) {
-      path = `content/${path}`;
-    }
-
-    const result = await backendSrv.get(`/api/storage/read/${path}`);
-    result.uid = path;
-    delete result.id; // Saved with the dev dashboards!
-
-    return {
-      meta: {
-        uid: path,
-        slug: path,
-        canEdit: true,
-        canSave: true,
-        canStar: false, // needs id
-      },
-      dashboard: result,
-    };
   }
 
   async write(path: string, options: WriteValueRequest): Promise<WriteValueResponse> {

@@ -9,7 +9,7 @@ import { Messages } from './ScheduledBackupsDetails.messages';
 import { getStyles } from './ScheduledBackupsDetails.styles';
 import { ScheduledBackupDetailsProps } from './ScheduledBackupsDetails.types';
 
-export const ScheduledBackupDetails: FC<ScheduledBackupDetailsProps> = ({
+export const ScheduledBackupDetails: FC<React.PropsWithChildren<ScheduledBackupDetailsProps>> = ({
   name,
   description,
   dataModel,

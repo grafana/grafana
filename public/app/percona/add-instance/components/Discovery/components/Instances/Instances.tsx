@@ -6,7 +6,7 @@ import { styles } from './Instances.styles';
 import { InstancesTableProps } from './Instances.types';
 import { getInstancesColumns } from './InstancesColumns';
 
-const Instances: FC<InstancesTableProps> = (props) => {
+const Instances: FC<React.PropsWithChildren<InstancesTableProps>> = (props) => {
   const { instances, selectInstance, credentials, loading } = props;
 
   const columns = getInstancesColumns(credentials, selectInstance);

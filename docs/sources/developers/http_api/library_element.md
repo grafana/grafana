@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../../http_api/library_element/
+canonical: /docs/grafana/latest/developers/http_api/library_element/
 description: Grafana Library Element HTTP API
 keywords:
   - grafana
@@ -8,6 +9,10 @@ keywords:
   - documentation
   - api
   - library-element
+labels:
+  products:
+    - enterprise
+    - oss
 title: 'Library Element HTTP API '
 ---
 
@@ -29,14 +34,14 @@ Returns a list of all library elements the authenticated user has permission to 
 
 Query parameters:
 
-- **searchString** – Part of the name or description searched for.
-- **kind** – Kind of element to search for. Use `1` for library panels or `2` for library variables.
-- **sortDirection** – Sort order of elements. Use `alpha-asc` for ascending and `alpha-desc` for descending sort order.
-- **typeFilter** – A comma separated list of types to filter the elements by.
-- **excludeUid** – Element UID to exclude from search results.
-- **folderFilter** – A comma separated list of folder ID(s) to filter the elements by.
-- **perPage** – The number of results per page; default is 100.
-- **page** – The page for a set of records, given that only `perPage` records are returned at a time. Numbering starts at `1`.
+- `searchString`: Part of the name or description searched for.
+- `kind`: Kind of element to search for. Use `1` for library panels or `2` for library variables.
+- `sortDirection`: Sort order of elements. Use `alpha-asc` for ascending and `alpha-desc` for descending sort order.
+- `typeFilter`: A comma separated list of types to filter the elements by.
+- `excludeUid`: Element UID to exclude from search results.
+- `folderFilter`: A comma separated list of folder IDs to filter the elements by.
+- `perPage`: The number of results per page; default is 100.
+- `page`: The page for a set of records, given that only `perPage` records are returned at a time. Numbering starts at `1`.
 
 **Example Request**:
 
@@ -97,8 +102,8 @@ Content-Type: application/json
 
 Status Codes:
 
-- **200** – Found
-- **401** – Unauthorized
+- `200`: Found
+- `401`: Unauthorized
 
 ## Get library element by uid
 
@@ -156,9 +161,9 @@ Content-Type: application/json
 
 Status Codes:
 
-- **200** – Found
-- **401** – Unauthorized
-- **404** – Library element not found
+- `200`: Found
+- `401`: Unauthorized
+- `404`: Library element not found
 
 ## Get library element by name
 
@@ -218,9 +223,9 @@ Content-Type: application/json
 
 Status Codes:
 
-- **200** – Found
-- **401** – Unauthorized
-- **404** – Library element not found
+- `200`: Found
+- `401`: Unauthorized
+- `404`: Library element not found
 
 ## Get library element connections
 
@@ -264,9 +269,9 @@ Content-Type: application/json
 
 Status Codes:
 
-- **200** – Found
-- **401** – Unauthorized
-- **404** – Library element not found
+- `200`: Found
+- `401`: Unauthorized
+- `404`: Library element not found
 
 ## Create library element
 
@@ -276,12 +281,12 @@ Creates a new library element.
 
 JSON Body schema:
 
-- **folderId** – ID of the folder where the library element is stored. It is deprecated since Grafana v9
-- **folderUid** – Optional, the UID of the folder where the library element is stored, empty string when it is General folder
-- **name** – Optional, the name of the library element.
-- **model** – The JSON model for the library element.
-- **kind** – Kind of element to create, Use `1` for library panels or `2` for library variables.
-- **uid** – Optional, the [unique identifier](/http_api/library_element/#identifier-id-vs-unique-identifier-uid).
+- `folderId`: ID of the folder where the library element is stored. It is deprecated since Grafana v9
+- `folderUid`: Optional, the UID of the folder where the library element is stored, empty string when it is at the root level.
+- `name`: Optional, the name of the library element.
+- `model`: The JSON model for the library element.
+- `kind`: Kind of element to create, Use `1` for library panels or `2` for library variables.
+- `uid`: Optional, the [unique identifier](/http_api/library_element/#identifier-id-vs-unique-identifier-uid).
 
 **Example Request**:
 
@@ -342,10 +347,10 @@ Content-Type: application/json
 
 Status Codes:
 
-- **200** – Created
-- **400** – Errors (for example, name or UID already exists, invalid JSON, missing or invalid fields, and so on).
-- **401** – Unauthorized
-- **403** – Access denied
+- `200`: Created
+- `400`: Errors (for example, name or UID already exists, invalid JSON, missing or invalid fields, and so on).
+- `401`: Unauthorized
+- `403`: Access denied
 
 ## Update library element
 
@@ -355,13 +360,13 @@ Updates an existing library element identified by uid.
 
 JSON Body schema:
 
-- **folderId** – ID of the folder where the library element is stored. It is deprecated since Grafana v9
-- **folderUid** – UID of the folder where the library element is stored, empty string when it is General folder.
-- **name** – Name of the library element.
-- **model** – The JSON model for the library element.
-- **kind** – Kind of element to create. Use `1` for library panels or `2` for library variables.
-- **version** – Version of the library element you are updating.
-- **uid** – Optional, the [unique identifier](/http_api/library_element/#identifier-id-vs-unique-identifier-uid).
+- `folderId`: ID of the folder where the library element is stored. It is deprecated since Grafana v9
+- `folderUid`: UID of the folder where the library element is stored, empty string when it is at the root level.
+- `name`: Name of the library element.
+- `model`: The JSON model for the library element.
+- `kind`: Kind of element to create. Use `1` for library panels or `2` for library variables.
+- `version`: Version of the library element you are updating.
+- `uid`: Optional, the [unique identifier](/http_api/library_element/#identifier-id-vs-unique-identifier-uid).
 
 **Example Request**:
 
@@ -423,12 +428,12 @@ Content-Type: application/json
 
 Status Codes:
 
-- **200** – Updated
-- **400** – Errors (for example, name or UID already exists, invalid JSON, missing or invalid fields, and so on).
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Library element not found
-- **412** – Version mismatch
+- `200`: Updated
+- `400`: Errors (for example, name or UID already exists, invalid JSON, missing or invalid fields, and so on).
+- `401`: Unauthorized
+- `403`: Access denied
+- `404`: Library element not found
+- `412`: Version mismatch
 
 ## Delete library element
 
@@ -436,7 +441,9 @@ Status Codes:
 
 Deletes an existing library element as specified by the UID. This operation cannot be reverted.
 
-> **Note:** You cannot delete a library element that is connected. This operation cannot be reverted.
+{{% admonition type="note" %}}
+You cannot delete a library element that is connected. This operation cannot be reverted.
+{{% /admonition %}}
 
 **Example Request**:
 
@@ -462,8 +469,8 @@ Content-Type: application/json
 
 Status Codes:
 
-- **200** – Deleted
-- **401** – Unauthorized
-- **400** – Bad request
-- **403** – Access denied
-- **404** – Library element not found
+- `200`: Deleted
+- `401`: Unauthorized
+- `400`: Bad request
+- `403`: Access denied
+- `404`: Library element not found

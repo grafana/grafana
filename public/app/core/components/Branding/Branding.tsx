@@ -9,8 +9,10 @@ export interface BrandComponentProps {
   children?: JSX.Element | JSX.Element[];
 }
 
-const LoginLogo: FC<BrandComponentProps & { logo?: string }> = ({ className }) => {
-  return <img className={className} src="public/img/icons/mono/pmm-logo.svg" alt="PMM" />;
+export const LoginLogo: FC<BrandComponentProps & { logo?: string }> = ({ className, logo }) => {
+  // return <img className={className} src={`${logo ? logo : 'public/img/grafana_icon.svg'}`} alt="Grafana" />;
+  // @PERCONA
+  return <img className={className} src={`${logo ? logo : 'public/img/icons/mono/pmm-logo.svg'}`} alt="PMM" />;
 };
 
 const LoginBackground: FC<BrandComponentProps> = ({ className, children }) => {
@@ -19,7 +21,7 @@ const LoginBackground: FC<BrandComponentProps> = ({ className, children }) => {
   const background = css`
     &:before {
       content: '';
-      position: absolute;
+      position: fixed;
       left: 0;
       right: 0;
       bottom: 0;
@@ -43,6 +45,8 @@ const LoginBackground: FC<BrandComponentProps> = ({ className, children }) => {
 };
 
 const MenuLogo: FC<BrandComponentProps> = ({ className }) => {
+  // return <img className={className} src="public/img/grafana_icon.svg" alt="Grafana" />;
+  // @PERCONA
   return <img className={className} src="public/img/pmm-app-rounded-icon.svg" alt="PMM" />;
 };
 
@@ -59,6 +63,13 @@ export class Branding {
   static LoginBackground = LoginBackground;
   static MenuLogo = MenuLogo;
   static LoginBoxBackground = LoginBoxBackground;
+  // static AppTitle = 'Grafana';
+  // static LoginTitle = 'Welcome to Grafana';
+  // static HideEdition = false;
+  // static GetLoginSubTitle = (): null | string => {
+  //   return null;
+  // };
+  // @PERCONA
   static AppTitle = 'Percona Monitoring and Management';
   static LoginTitle = 'Percona Monitoring and Management';
   static GetLoginSubTitle = () => {

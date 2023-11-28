@@ -5,7 +5,7 @@ import { Button, useStyles } from '@grafana/ui';
 import { getStyles } from './AddClusterButton.styles';
 import { AddClusterButtonProps } from './AddClusterButton.types';
 
-export const AddClusterButton: FC<AddClusterButtonProps> = ({ label, disabled, action, ...props }) => {
+export const AddClusterButton: FC<React.PropsWithChildren<AddClusterButtonProps>> = ({ label, disabled, action, ...props }) => {
   const styles = useStyles(getStyles);
 
   return (

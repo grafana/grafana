@@ -24,7 +24,7 @@ import { getStyles } from './FailedChecksTab.styles';
 import { stripServiceId } from './FailedChecksTab.utils';
 import { Failures } from './Failures/Failures';
 
-export const FailedChecksTab: FC = () => {
+export const FailedChecksTab: FC<React.PropsWithChildren<unknown>> = () => {
   const [fetchAlertsPending, setFetchAlertsPending] = useState(true);
   const navModel = usePerconaNavModel('advisors-insights');
   const [data, setData] = useState<FailedCheckSummary[]>([]);

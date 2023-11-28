@@ -6,10 +6,12 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/process"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/hashicorp/go-plugin"
+
+	"github.com/grafana/grafana/pkg/infra/process"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 type pluginClient interface {
@@ -32,12 +34,12 @@ type grpcPlugin struct {
 
 // newPlugin allocates and returns a new gRPC (external) backendplugin.Plugin.
 func newPlugin(descriptor PluginDescriptor) backendplugin.PluginFactoryFunc {
-	return func(pluginID string, logger log.Logger, env []string) (backendplugin.Plugin, error) {
+	return func(pluginID string, logger log.Logger, env func() []string) (backendplugin.Plugin, error) {
 		return &grpcPlugin{
 			descriptor: descriptor,
 			logger:     logger,
 			clientFactory: func() *plugin.Client {
-				return plugin.NewClient(newClientConfig(descriptor.executablePath, env, logger, descriptor.versionedPlugins))
+				return plugin.NewClient(newClientConfig(descriptor.executablePath, descriptor.executableArgs, env(), logger, descriptor.versionedPlugins))
 			},
 		}, nil
 	}
@@ -51,7 +53,7 @@ func (p *grpcPlugin) Logger() log.Logger {
 	return p.logger
 }
 
-func (p *grpcPlugin) Start(ctx context.Context) error {
+func (p *grpcPlugin) Start(_ context.Context) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
@@ -75,7 +77,7 @@ func (p *grpcPlugin) Start(ctx context.Context) error {
 
 	elevated, err := process.IsRunningWithElevatedPrivileges()
 	if err != nil {
-		p.logger.Debug("Error checking plugin process execution privilege", "err", err)
+		p.logger.Debug("Error checking plugin process execution privilege", "error", err)
 	}
 	if elevated {
 		p.logger.Warn("Plugin process is running with elevated privileges. This is not recommended")
@@ -84,7 +86,7 @@ func (p *grpcPlugin) Start(ctx context.Context) error {
 	return nil
 }
 
-func (p *grpcPlugin) Stop(ctx context.Context) error {
+func (p *grpcPlugin) Stop(_ context.Context) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
@@ -108,8 +110,8 @@ func (p *grpcPlugin) Exited() bool {
 }
 
 func (p *grpcPlugin) Decommission() error {
-	p.mutex.RLock()
-	defer p.mutex.RUnlock()
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
 
 	p.decommissioned = true
 
@@ -117,7 +119,13 @@ func (p *grpcPlugin) Decommission() error {
 }
 
 func (p *grpcPlugin) IsDecommissioned() bool {
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
 	return p.decommissioned
+}
+
+func (p *grpcPlugin) Target() backendplugin.Target {
+	return backendplugin.TargetLocal
 }
 
 func (p *grpcPlugin) getPluginClient() (pluginClient, bool) {
@@ -134,7 +142,7 @@ func (p *grpcPlugin) getPluginClient() (pluginClient, bool) {
 func (p *grpcPlugin) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 	pluginClient, ok := p.getPluginClient()
 	if !ok {
-		return nil, backendplugin.ErrPluginUnavailable
+		return nil, plugins.ErrPluginUnavailable
 	}
 	return pluginClient.CollectMetrics(ctx, req)
 }
@@ -142,7 +150,7 @@ func (p *grpcPlugin) CollectMetrics(ctx context.Context, req *backend.CollectMet
 func (p *grpcPlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	pluginClient, ok := p.getPluginClient()
 	if !ok {
-		return nil, backendplugin.ErrPluginUnavailable
+		return nil, plugins.ErrPluginUnavailable
 	}
 	return pluginClient.CheckHealth(ctx, req)
 }
@@ -150,7 +158,7 @@ func (p *grpcPlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRe
 func (p *grpcPlugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	pluginClient, ok := p.getPluginClient()
 	if !ok {
-		return nil, backendplugin.ErrPluginUnavailable
+		return nil, plugins.ErrPluginUnavailable
 	}
 
 	return pluginClient.QueryData(ctx, req)
@@ -159,7 +167,7 @@ func (p *grpcPlugin) QueryData(ctx context.Context, req *backend.QueryDataReques
 func (p *grpcPlugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	pluginClient, ok := p.getPluginClient()
 	if !ok {
-		return backendplugin.ErrPluginUnavailable
+		return plugins.ErrPluginUnavailable
 	}
 	return pluginClient.CallResource(ctx, req, sender)
 }
@@ -167,7 +175,7 @@ func (p *grpcPlugin) CallResource(ctx context.Context, req *backend.CallResource
 func (p *grpcPlugin) SubscribeStream(ctx context.Context, request *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	pluginClient, ok := p.getPluginClient()
 	if !ok {
-		return nil, backendplugin.ErrPluginUnavailable
+		return nil, plugins.ErrPluginUnavailable
 	}
 	return pluginClient.SubscribeStream(ctx, request)
 }
@@ -175,7 +183,7 @@ func (p *grpcPlugin) SubscribeStream(ctx context.Context, request *backend.Subsc
 func (p *grpcPlugin) PublishStream(ctx context.Context, request *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
 	pluginClient, ok := p.getPluginClient()
 	if !ok {
-		return nil, backendplugin.ErrPluginUnavailable
+		return nil, plugins.ErrPluginUnavailable
 	}
 	return pluginClient.PublishStream(ctx, request)
 }
@@ -183,7 +191,7 @@ func (p *grpcPlugin) PublishStream(ctx context.Context, request *backend.Publish
 func (p *grpcPlugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	pluginClient, ok := p.getPluginClient()
 	if !ok {
-		return backendplugin.ErrPluginUnavailable
+		return plugins.ErrPluginUnavailable
 	}
 	return pluginClient.RunStream(ctx, req, sender)
 }

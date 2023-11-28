@@ -1,0 +1,25 @@
+import { createSelector } from '@reduxjs/toolkit';
+import { groupAdvisorsIntoCategories } from '../services/advisors/Advisors.utils';
+export const getPerconaSettings = (state) => state.percona.settings;
+export const getPerconaSettingFlag = (setting) => (state) => { var _a; return !!((_a = state.percona.settings.result) === null || _a === void 0 ? void 0 : _a[setting]); };
+export const getPerconaUser = (state) => state.percona.user;
+export const getDBaaS = (state) => state.percona.dbaas;
+export const getKubernetes = (state) => state.percona.kubernetes;
+export const getDeleteKubernetes = (state) => state.percona.deleteKubernetes;
+export const getAddKubernetes = (state) => state.percona.addKubernetes;
+export const getUpdateDbCluster = (state) => state.percona.updateDBCluster;
+export const getAddDbCluster = (state) => state.percona.addDBCluster;
+export const getPerconaDBClusters = (state) => state.percona.dbClusters;
+export const getPerconaServer = (state) => state.percona.server;
+export const getTemplates = (state) => state.percona.templates;
+export const getServices = (state) => state.percona.services;
+export const getNodes = (state) => state.percona.nodes;
+export const getBackupLocations = (state) => state.percona.backupLocations;
+export const getTour = (state) => state.percona.tour;
+export const getAccessRoles = (state) => state.percona.roles;
+export const getUsers = (state) => state.users;
+export const getUsersInfo = (state) => state.percona.users;
+export const getDefaultRole = (state) => state.percona.roles.roles.find((r) => { var _a; return r.roleId === ((_a = state.percona.settings.result) === null || _a === void 0 ? void 0 : _a.defaultRoleId); });
+export const getAdvisors = (state) => state.percona.advisors;
+export const getCategorizedAdvisors = createSelector([getAdvisors], (advisors) => groupAdvisorsIntoCategories(advisors.result || []));
+//# sourceMappingURL=selectors.js.map

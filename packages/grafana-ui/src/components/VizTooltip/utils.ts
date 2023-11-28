@@ -1,3 +1,6 @@
+import { HeaderLabelValueStyles } from './VizTooltipHeaderLabelValue';
+import { ColorIndicator } from './types';
+
 export const calculateTooltipPosition = (
   xPos = 0,
   yPos = 0,
@@ -37,4 +40,29 @@ export const calculateTooltipPosition = (
     y = yPos + yOffset;
   }
   return { x, y };
+};
+
+export const getColorIndicatorClass = (colorIndicator: string, styles: HeaderLabelValueStyles) => {
+  switch (colorIndicator) {
+    case ColorIndicator.value:
+      return styles.value;
+    case ColorIndicator.series:
+      return styles.series;
+    case ColorIndicator.hexagon:
+      return styles.hexagon;
+    case ColorIndicator.pie_1_4:
+      return styles.pie_1_4;
+    case ColorIndicator.pie_2_4:
+      return styles.pie_2_4;
+    case ColorIndicator.pie_3_4:
+      return styles.pie_3_4;
+    case ColorIndicator.marker_sm:
+      return styles.marker_sm;
+    case ColorIndicator.marker_md:
+      return styles.marker_md;
+    case ColorIndicator.marker_lg:
+      return styles.marker_lg;
+    default:
+      return styles.value;
+  }
 };

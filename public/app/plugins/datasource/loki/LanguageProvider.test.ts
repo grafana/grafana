@@ -1,13 +1,19 @@
 import Plain from 'slate-plain-serializer';
 
-import { AbstractLabelOperator } from '@grafana/data';
+import { AbstractLabelOperator, DataFrame } from '@grafana/data';
 import { TypeaheadInput } from '@grafana/ui';
-import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import LanguageProvider, { LokiHistoryItem } from './LanguageProvider';
 import { LokiDatasource } from './datasource';
 import { createLokiDatasource, createMetadataRequest } from './mocks';
+import {
+  extractLogParserFromDataFrame,
+  extractLabelKeysFromDataFrame,
+  extractUnwrapLabelKeysFromDataFrame,
+} from './responseUtils';
 import { LokiQueryType } from './types';
+
+jest.mock('./responseUtils');
 
 jest.mock('app/store/store', () => ({
   store: {
@@ -268,6 +274,40 @@ describe('Request URL', () => {
   });
 });
 
+describe('fetchLabels', () => {
+  it('should return labels', async () => {
+    const datasourceWithLabels = setup({ other: [] });
+
+    const instance = new LanguageProvider(datasourceWithLabels);
+    const labels = await instance.fetchLabels();
+    expect(labels).toEqual(['other']);
+  });
+
+  it('should set labels', async () => {
+    const datasourceWithLabels = setup({ other: [] });
+
+    const instance = new LanguageProvider(datasourceWithLabels);
+    await instance.fetchLabels();
+    expect(instance.labelKeys).toEqual(['other']);
+  });
+
+  it('should return empty array', async () => {
+    const datasourceWithLabels = setup({});
+
+    const instance = new LanguageProvider(datasourceWithLabels);
+    const labels = await instance.fetchLabels();
+    expect(labels).toEqual([]);
+  });
+
+  it('should set empty array', async () => {
+    const datasourceWithLabels = setup({});
+
+    const instance = new LanguageProvider(datasourceWithLabels);
+    await instance.fetchLabels();
+    expect(instance.labelKeys).toEqual([]);
+  });
+});
+
 describe('Query imports', () => {
   const datasource = setup({});
 
@@ -295,6 +335,60 @@ describe('Query imports', () => {
           { name: 'label4', operator: AbstractLabelOperator.NotEqualRegEx, value: 'value4' },
         ],
       });
+    });
+  });
+
+  describe('getParserAndLabelKeys()', () => {
+    let datasource: LokiDatasource, languageProvider: LanguageProvider;
+    const extractLogParserFromDataFrameMock = jest.mocked(extractLogParserFromDataFrame);
+    const extractedLabelKeys = ['extracted', 'label'];
+    const unwrapLabelKeys = ['unwrap', 'labels'];
+
+    beforeEach(() => {
+      datasource = createLokiDatasource();
+      languageProvider = new LanguageProvider(datasource);
+      jest.mocked(extractLabelKeysFromDataFrame).mockReturnValue(extractedLabelKeys);
+      jest.mocked(extractUnwrapLabelKeysFromDataFrame).mockReturnValue(unwrapLabelKeys);
+    });
+
+    it('identifies selectors with JSON parser data', async () => {
+      jest.spyOn(datasource, 'getDataSamples').mockResolvedValue([{}] as DataFrame[]);
+      extractLogParserFromDataFrameMock.mockReturnValueOnce({ hasLogfmt: false, hasJSON: true, hasPack: false });
+
+      expect(await languageProvider.getParserAndLabelKeys('{place="luna"}')).toEqual({
+        extractedLabelKeys,
+        unwrapLabelKeys,
+        hasJSON: true,
+        hasLogfmt: false,
+        hasPack: false,
+      });
+    });
+
+    it('identifies selectors with Logfmt parser data', async () => {
+      jest.spyOn(datasource, 'getDataSamples').mockResolvedValue([{}] as DataFrame[]);
+      extractLogParserFromDataFrameMock.mockReturnValueOnce({ hasLogfmt: true, hasJSON: false, hasPack: false });
+
+      expect(await languageProvider.getParserAndLabelKeys('{place="luna"}')).toEqual({
+        extractedLabelKeys,
+        unwrapLabelKeys,
+        hasJSON: false,
+        hasLogfmt: true,
+        hasPack: false,
+      });
+    });
+
+    it('correctly processes empty data', async () => {
+      jest.spyOn(datasource, 'getDataSamples').mockResolvedValue([]);
+      extractLogParserFromDataFrameMock.mockClear();
+
+      expect(await languageProvider.getParserAndLabelKeys('{place="luna"}')).toEqual({
+        extractedLabelKeys: [],
+        unwrapLabelKeys: [],
+        hasJSON: false,
+        hasLogfmt: false,
+        hasPack: false,
+      });
+      expect(extractLogParserFromDataFrameMock).not.toHaveBeenCalled();
     });
   });
 });
@@ -334,7 +428,7 @@ function setup(
   labelsAndValues: Record<string, string[]>,
   series?: Record<string, Array<Record<string, string>>>
 ): LokiDatasource {
-  const datasource = createLokiDatasource({} as unknown as TemplateSrv);
+  const datasource = createLokiDatasource();
 
   const rangeMock = {
     start: 1560153109000,

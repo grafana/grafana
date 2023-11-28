@@ -11,7 +11,8 @@ import { initTemplateSrv } from '../../../../../test/helpers/initTemplateSrv';
 import { Echo } from '../../../../core/services/echo/Echo';
 import { variableAdapters } from '../../../variables/adapters';
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
-import { DashboardModel, PanelModel } from '../../state';
+import { PanelModel } from '../../state';
+import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { Props, ShareLink } from './ShareLink';
 
@@ -42,16 +43,6 @@ function mockLocationHref(href: string) {
   };
 }
 
-function setUTCTimeZone() {
-  (window as any).Intl.DateTimeFormat = () => {
-    return {
-      resolvedOptions: () => {
-        return { timeZone: 'UTC' };
-      },
-    };
-  };
-}
-
 const mockUid = 'abc123';
 jest.mock('@grafana/runtime', () => {
   const original = jest.requireActual('@grafana/runtime');
@@ -78,13 +69,26 @@ describe('ShareModal', () => {
   });
 
   beforeEach(() => {
-    setUTCTimeZone();
+    const defaultTimeRange = getDefaultTimeRange();
+    jest.spyOn(window.Intl, 'DateTimeFormat').mockImplementation(() => {
+      return {
+        resolvedOptions: () => {
+          return { timeZone: 'UTC' };
+        },
+      } as Intl.DateTimeFormat;
+    });
     mockLocationHref('http://server/#!/test');
     config.rendererAvailable = true;
     config.bootData.user.orgId = 1;
     props = {
       panel: new PanelModel({ id: 22, options: {}, fieldConfig: { defaults: {}, overrides: [] } }),
-      dashboard: new DashboardModel({ time: getDefaultTimeRange(), id: 1 }),
+      dashboard: createDashboardModelFixture({
+        time: {
+          from: defaultTimeRange.from.toISOString(),
+          to: defaultTimeRange.to.toISOString(),
+        },
+        id: 1,
+      }),
     };
   });
 
@@ -175,7 +179,7 @@ describe('when appUrl is set in the grafana config', () => {
   });
 
   it('should render the correct link', async () => {
-    const mockDashboard = new DashboardModel({
+    const mockDashboard = createDashboardModelFixture({
       uid: 'mockDashboardUid',
       id: 1,
     });

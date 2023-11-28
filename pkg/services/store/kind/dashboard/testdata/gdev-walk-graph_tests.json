@@ -1,0 +1,419 @@
+{
+  "name": "Panel Tests - Graph",
+  "labels": {
+    "gdev": "",
+    "graph": "",
+    "panel-tests": ""
+  },
+  "fields": {
+    "schemaVersion": 16
+  },
+  "nested": [
+    {
+      "uid": "graph_tests.json#1",
+      "kind": "panel",
+      "name": "No Data Points Warning",
+      "fields": {
+        "type": "graph"
+      },
+      "references": [
+        {
+          "family": "ds",
+          "ID": "gdev-testdata"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#2",
+      "kind": "panel",
+      "name": "Datapoints Outside Range Warning",
+      "fields": {
+        "type": "graph"
+      },
+      "references": [
+        {
+          "family": "ds",
+          "ID": "gdev-testdata"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#3",
+      "kind": "panel",
+      "name": "Random walk series",
+      "fields": {
+        "type": "graph"
+      },
+      "references": [
+        {
+          "family": "ds",
+          "ID": "gdev-testdata"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#4",
+      "kind": "panel",
+      "name": "Millisecond res x-axis and tooltip",
+      "fields": {
+        "type": "graph"
+      },
+      "references": [
+        {
+          "family": "ds",
+          "ID": "gdev-testdata"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#6",
+      "kind": "panel",
+      "fields": {
+        "type": "text"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "text"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#5",
+      "kind": "panel",
+      "name": "2 yaxis and axis labels",
+      "fields": {
+        "type": "graph"
+      },
+      "references": [
+        {
+          "family": "ds",
+          "ID": "gdev-testdata"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#7",
+      "kind": "panel",
+      "fields": {
+        "type": "text"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "text"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#8",
+      "kind": "panel",
+      "name": "null value connected",
+      "fields": {
+        "type": "graph"
+      },
+      "references": [
+        {
+          "family": "ds",
+          "ID": "gdev-testdata"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#10",
+      "kind": "panel",
+      "name": "null value null as zero",
+      "fields": {
+        "type": "graph"
+      },
+      "references": [
+        {
+          "family": "ds",
+          "ID": "gdev-testdata"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#13",
+      "kind": "panel",
+      "fields": {
+        "type": "text"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "text"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#9",
+      "kind": "panel",
+      "name": "Stacking value ontop of nulls",
+      "fields": {
+        "type": "graph"
+      },
+      "references": [
+        {
+          "family": "ds",
+          "ID": "gdev-testdata"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#14",
+      "kind": "panel",
+      "fields": {
+        "type": "text"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "text"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#12",
+      "kind": "panel",
+      "name": "Stacking all series null segment",
+      "fields": {
+        "type": "graph"
+      },
+      "references": [
+        {
+          "family": "ds",
+          "ID": "gdev-testdata"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#15",
+      "kind": "panel",
+      "fields": {
+        "type": "text"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "text"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#21",
+      "kind": "panel",
+      "name": "Null between points",
+      "fields": {
+        "type": "graph"
+      },
+      "references": [
+        {
+          "family": "ds",
+          "ID": "gdev-testdata"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#22",
+      "kind": "panel",
+      "fields": {
+        "type": "text"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "text"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#20",
+      "kind": "panel",
+      "name": "Legend Table Single Series Should Take Minimum Height",
+      "fields": {
+        "type": "graph"
+      },
+      "references": [
+        {
+          "family": "ds",
+          "ID": "gdev-testdata"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#16",
+      "kind": "panel",
+      "name": "Legend Table No Scroll Visible",
+      "fields": {
+        "type": "graph"
+      },
+      "references": [
+        {
+          "family": "ds",
+          "ID": "gdev-testdata"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#17",
+      "kind": "panel",
+      "name": "Legend Table Should Scroll",
+      "fields": {
+        "type": "graph"
+      },
+      "references": [
+        {
+          "family": "ds",
+          "ID": "gdev-testdata"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#18",
+      "kind": "panel",
+      "name": "Legend Table No Scroll Visible",
+      "fields": {
+        "type": "graph"
+      },
+      "references": [
+        {
+          "family": "ds",
+          "ID": "gdev-testdata"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#19",
+      "kind": "panel",
+      "name": "Legend Table No Scroll Visible",
+      "fields": {
+        "type": "graph"
+      },
+      "references": [
+        {
+          "family": "ds",
+          "ID": "gdev-testdata"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "graph"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "family": "ds"
+    },
+    {
+      "family": "ds",
+      "ID": "gdev-testdata"
+    },
+    {
+      "family": "plugin",
+      "type": "panel",
+      "ID": "graph"
+    },
+    {
+      "family": "plugin",
+      "type": "panel",
+      "ID": "text"
+    }
+  ]
+}

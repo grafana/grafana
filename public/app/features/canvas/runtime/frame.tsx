@@ -6,6 +6,7 @@ import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
+import { updateConnectionsForSource } from '../../../plugins/panel/canvas/utils';
 import { CanvasElementItem } from '../element';
 import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
@@ -35,7 +36,11 @@ export class FrameState extends ElementState {
   elements: ElementState[] = [];
   scene: Scene;
 
-  constructor(public options: CanvasFrameOptions, scene: Scene, public parent?: FrameState) {
+  constructor(
+    public options: CanvasFrameOptions,
+    scene: Scene,
+    public parent?: FrameState
+  ) {
     super(frameItemDummy, options, parent);
 
     this.scene = scene;
@@ -114,6 +119,7 @@ export class FrameState extends ElementState {
     switch (action) {
       case LayerActionID.Delete:
         this.elements = this.elements.filter((e) => e !== element);
+        updateConnectionsForSource(element, this.scene);
         this.scene.byName.delete(element.options.name);
         this.scene.save();
         this.reinitializeMoveable();
@@ -128,7 +134,7 @@ export class FrameState extends ElementState {
         if (shiftItemsOnDuplicate) {
           const { constraint, placement: oldPlacement } = element.options;
           const { vertical, horizontal } = constraint ?? {};
-          const placement = { ...oldPlacement } ?? ({} as Placement);
+          const placement: Placement = { ...oldPlacement } ?? {};
 
           switch (vertical) {
             case VerticalConstraint.Top:
@@ -203,6 +209,9 @@ export class FrameState extends ElementState {
           opts.placement = placement;
         }
 
+        // Clear connections on duplicate
+        opts.connections = undefined;
+
         const copy = new ElementState(element.item, opts, this);
         copy.updateData(this.scene.context);
         if (updateName) {
@@ -210,8 +219,16 @@ export class FrameState extends ElementState {
         }
         this.elements.push(copy);
         this.scene.byName.set(copy.options.name, copy);
+
+        // Update scene byName map for original element (to avoid stale references (e.g. for connections))
+        this.scene.byName.set(element.options.name, element);
+
         this.scene.save();
         this.reinitializeMoveable();
+
+        setTimeout(() => {
+          this.scene.targetsToSelect.add(copy.div!);
+        });
         break;
       case LayerActionID.MoveTop:
       case LayerActionID.MoveBottom:

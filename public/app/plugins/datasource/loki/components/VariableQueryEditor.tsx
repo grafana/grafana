@@ -1,4 +1,4 @@
-import React, { FC, FormEvent, useState, useEffect } from 'react';
+import React, { FormEvent, useState, useEffect } from 'react';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
@@ -16,7 +16,7 @@ export type Props = QueryEditorProps<LokiDatasource, LokiQuery, LokiOptions, Lok
 
 const refId = 'LokiVariableQueryEditor-VariableQuery';
 
-export const LokiVariableQueryEditor: FC<Props> = ({ onChange, query, datasource }) => {
+export const LokiVariableQueryEditor = ({ onChange, query, datasource }: Props) => {
   const [type, setType] = useState<number | undefined>(undefined);
   const [label, setLabel] = useState('');
   const [labelOptions, setLabelOptions] = useState<Array<SelectableValue<string>>>([]);
@@ -31,10 +31,6 @@ export const LokiVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
     setType(variableQuery.type);
     setLabel(variableQuery.label || '');
     setStream(variableQuery.stream || '');
-
-    if (variableQuery.label) {
-      setLabelOptions([{ label: variableQuery.label, value: variableQuery.label }]);
-    }
   }, [query]);
 
   useEffect(() => {
@@ -74,36 +70,45 @@ export const LokiVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
   };
 
   return (
-    <InlineFieldRow>
-      <InlineField label="Query type" labelWidth={20}>
-        <Select
-          aria-label="Query type"
-          onChange={onQueryTypeChange}
-          onBlur={handleBlur}
-          value={type}
-          options={variableOptions}
-          width={16}
-        />
-      </InlineField>
+    <>
+      <InlineFieldRow>
+        <InlineField label="Query type" labelWidth={20}>
+          <Select
+            aria-label="Query type"
+            onChange={onQueryTypeChange}
+            onBlur={handleBlur}
+            value={type}
+            options={variableOptions}
+            width={16}
+          />
+        </InlineField>
+        {type === QueryType.LabelValues && (
+          <>
+            <InlineField label="Label" labelWidth={20}>
+              <Select
+                aria-label="Label"
+                onChange={onLabelChange}
+                onBlur={handleBlur}
+                value={{ label: label, value: label }}
+                options={labelOptions}
+                width={16}
+                allowCustomValue
+              />
+            </InlineField>
+          </>
+        )}
+      </InlineFieldRow>
       {type === QueryType.LabelValues && (
-        <>
-          <InlineField label="Label" labelWidth={20}>
-            <Select
-              aria-label="Label"
-              onChange={onLabelChange}
-              onBlur={handleBlur}
-              value={label}
-              options={labelOptions}
-              width={16}
-              allowCustomValue
-            />
-          </InlineField>
+        <InlineFieldRow>
           <InlineField
             label="Stream selector"
             labelWidth={20}
+            grow={true}
             tooltip={
               <div>
-                Optional. If defined, a list of values for the label in the specified log stream selector is returned.
+                {
+                  'Optional. If defined, a list of values for the specified log stream selector is returned. For example: {label="value"} or {label="$variable"}'
+                }
               </div>
             }
           >
@@ -114,11 +119,10 @@ export const LokiVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
               value={stream}
               onChange={onStreamChange}
               onBlur={handleBlur}
-              width={22}
             />
           </InlineField>
-        </>
+        </InlineFieldRow>
       )}
-    </InlineFieldRow>
+    </>
   );
 };

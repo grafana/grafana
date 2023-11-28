@@ -2,17 +2,21 @@ package featuremgmt
 
 import (
 	"bytes"
+	"encoding/csv"
 	"fmt"
 	"html/template"
+	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
-	"unicode"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/grafana/grafana/pkg/services/featuremgmt/strcase"
+	"github.com/olekukonko/tablewriter"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt/strcase"
 )
 
 func TestFeatureToggleFiles(t *testing.T) {
@@ -20,10 +24,37 @@ func TestFeatureToggleFiles(t *testing.T) {
 		"httpclientprovider_azure_auth": true,
 		"service-accounts":              true,
 		"database_metrics":              true,
-		"live-config":                   true,
-		"live-pipeline":                 true,
 		"live-service-web-worker":       true,
+		"k8s":                           true, // Camel case does not like this one
 	}
+
+	t.Run("check registry constraints", func(t *testing.T) {
+		for _, flag := range standardFeatureFlags {
+			if flag.Expression == "true" && !(flag.Stage == FeatureStageGeneralAvailability || flag.Stage == FeatureStageDeprecated) {
+				t.Errorf("only FeatureStageGeneralAvailability or FeatureStageDeprecated features can be enabled by default.  See: %s", flag.Name)
+			}
+			if flag.RequiresDevMode && flag.Stage != FeatureStageExperimental {
+				t.Errorf("only alpha features can require dev mode.  See: %s", flag.Name)
+			}
+			if flag.Stage == FeatureStageUnknown {
+				t.Errorf("standard toggles should not have an unknown state.  See: %s", flag.Name)
+			}
+			if flag.Description != strings.TrimSpace(flag.Description) {
+				t.Errorf("flag Description should not start/end with spaces.  See: %s", flag.Name)
+			}
+			if flag.Name != strings.TrimSpace(flag.Name) {
+				t.Errorf("flag Name should not start/end with spaces.  See: %s", flag.Name)
+			}
+		}
+	})
+
+	t.Run("all new features should have an owner", func(t *testing.T) {
+		for _, flag := range standardFeatureFlags {
+			if flag.Owner == "" {
+				t.Errorf("feature %s does not have an owner. please fill the FeatureFlag.Owner property", flag.Name)
+			}
+		}
+	})
 
 	t.Run("verify files", func(t *testing.T) {
 		// Typescript files
@@ -36,6 +67,18 @@ func TestFeatureToggleFiles(t *testing.T) {
 		verifyAndGenerateFile(t,
 			"toggles_gen.go",
 			generateRegistry(t),
+		)
+
+		// Docs files
+		verifyAndGenerateFile(t,
+			"../../../docs/sources/setup-grafana/configure-grafana/feature-toggles/index.md",
+			generateDocsMD(),
+		)
+
+		// CSV Analytics
+		verifyAndGenerateFile(t,
+			"toggles_gen.csv",
+			generateCSV(),
 		)
 	})
 
@@ -90,13 +133,15 @@ func generateTypeScript() string {
  * conf/custom.ini to enable features under development or not yet available in
  * stable version.
  *
- * Only enabled values will be returned in this interface
+ * Only enabled values will be returned in this interface.
+ *
+ * NOTE: the possible values may change between versions without notice, although
+ * this may cause compilation issues when depending on removed feature keys, the
+ * runtime state will continue to work.
  *
  * @public
  */
 export interface FeatureToggles {
-  [name: string]: boolean | undefined; // support any string value
-
 `
 	for _, flag := range standardFeatureFlags {
 		buf += "  " + getTypeScriptKey(flag.Name) + "?: boolean;\n"
@@ -111,18 +156,6 @@ func getTypeScriptKey(key string) string {
 		return "['" + key + "']"
 	}
 	return key
-}
-
-func isLetterOrNumber(c rune) bool {
-	return !unicode.IsLetter(c) && !unicode.IsNumber(c)
-}
-
-func asCamelCase(key string) string {
-	parts := strings.FieldsFunc(key, isLetterOrNumber)
-	for idx, part := range parts {
-		parts[idx] = strings.Title(part)
-	}
-	return strings.Join(parts, "")
 }
 
 func generateRegistry(t *testing.T) string {
@@ -156,7 +189,7 @@ package featuremgmt
 const (`)
 
 	for _, flag := range standardFeatureFlags {
-		data.CamelCase = asCamelCase(flag.Name)
+		data.CamelCase = strcase.ToCamel(flag.Name)
 		data.Flag = flag
 		data.Ext = ""
 
@@ -169,4 +202,144 @@ const (`)
 	buff.WriteString(")\n")
 
 	return buff.String()
+}
+
+func generateCSV() string {
+	var buf bytes.Buffer
+
+	w := csv.NewWriter(&buf)
+	if err := w.Write([]string{
+		"Name",
+		"Stage",           //flag.Stage.String(),
+		"Owner",           //string(flag.Owner),
+		"requiresDevMode", //strconv.FormatBool(flag.RequiresDevMode),
+		"RequiresLicense", //strconv.FormatBool(flag.RequiresLicense),
+		"RequiresRestart", //strconv.FormatBool(flag.RequiresRestart),
+		"FrontendOnly",    //strconv.FormatBool(flag.FrontendOnly),
+	}); err != nil {
+		log.Fatalln("error writing record to csv:", err)
+	}
+
+	for _, flag := range standardFeatureFlags {
+		if err := w.Write([]string{
+			flag.Name,
+			flag.Stage.String(),
+			string(flag.Owner),
+			strconv.FormatBool(flag.RequiresDevMode),
+			strconv.FormatBool(flag.RequiresLicense),
+			strconv.FormatBool(flag.RequiresRestart),
+			strconv.FormatBool(flag.FrontendOnly),
+		}); err != nil {
+			log.Fatalln("error writing record to csv:", err)
+		}
+	}
+
+	w.Flush()
+	return buf.String()
+}
+
+func generateDocsMD() string {
+	hasDeprecatedFlags := false
+
+	buf := `---
+aliases:
+  - /docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/
+description: Learn about feature toggles, which you can enable or disable.
+title: Configure feature toggles
+weight: 150
+---
+
+<!-- DO NOT EDIT THIS PAGE, it is machine generated by running the test in -->
+<!-- https://github.com/grafana/grafana/blob/main/pkg/services/featuremgmt/toggles_gen_test.go#L19 -->
+
+# Configure feature toggles
+
+You use feature toggles, also known as feature flags, to enable or disable features in Grafana. You can turn on feature toggles to try out new functionality in development or test environments.
+
+This page contains a list of available feature toggles. To learn how to turn on feature toggles, refer to our [Configure Grafana documentation]({{< relref "../_index.md#feature_toggles" >}}). Feature toggles are also available to Grafana Cloud Advanced customers. If you use Grafana Cloud Advanced, you can open a support ticket and specify the feature toggles and stack for which you want them enabled.
+
+## Feature toggles
+
+Some features are enabled by default. You can disable these feature by setting the feature flag to "false" in the configuration.
+
+` + writeToggleDocsTable(func(flag FeatureFlag) bool {
+		return flag.Stage == FeatureStageGeneralAvailability
+	}, true)
+
+	buf += `
+## Preview feature toggles
+
+` + writeToggleDocsTable(func(flag FeatureFlag) bool {
+		return flag.Stage == FeatureStagePublicPreview
+	}, false)
+
+	if hasDeprecatedFlags {
+		buf += `
+## Deprecated feature toggles
+
+When features are slated for removal, they will be marked as Deprecated first.
+
+	` + writeToggleDocsTable(func(flag FeatureFlag) bool {
+			return flag.Stage == FeatureStageDeprecated
+		}, false)
+	}
+
+	buf += `
+## Experimental feature toggles
+
+These features are early in their development lifecycle and so are not yet supported in Grafana Cloud.
+Experimental features might be changed or removed without prior notice.
+
+` + writeToggleDocsTable(func(flag FeatureFlag) bool {
+		return flag.Stage == FeatureStageExperimental && !flag.RequiresDevMode
+	}, false)
+
+	buf += `
+## Development feature toggles
+
+The following toggles require explicitly setting Grafana's [app mode]({{< relref "../_index.md#app_mode" >}}) to 'development' before you can enable this feature toggle. These features tend to be experimental.
+
+` + writeToggleDocsTable(func(flag FeatureFlag) bool {
+		return flag.RequiresDevMode
+	}, false)
+	return buf
+}
+
+func writeToggleDocsTable(include func(FeatureFlag) bool, showEnableByDefault bool) string {
+	data := [][]string{}
+
+	for _, flag := range standardFeatureFlags {
+		if include(flag) && !flag.HideFromDocs {
+			row := []string{"`" + flag.Name + "`", flag.Description}
+			if showEnableByDefault {
+				on := ""
+				if flag.Expression == "true" {
+					on = "Yes"
+				}
+				row = append(row, on)
+			}
+			data = append(data, row)
+		}
+	}
+
+	header := []string{"Feature toggle name", "Description"}
+	if showEnableByDefault {
+		header = append(header, "Enabled by default")
+	}
+
+	sb := &strings.Builder{}
+	table := tablewriter.NewWriter(sb)
+	table.SetHeader(header)
+	table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
+	table.SetCenterSeparator("|")
+	table.SetAutoFormatHeaders(false)
+	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+	table.SetAutoWrapText(false)
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
+	table.AppendBulk(data) // Add Bulk Data
+	table.Render()
+
+	// Markdown table formatting (from prittier)
+	v := strings.ReplaceAll(sb.String(), "|--", "| -")
+	return strings.ReplaceAll(v, "--|", "- |")
 }

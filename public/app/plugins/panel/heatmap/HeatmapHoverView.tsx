@@ -1,12 +1,22 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-import { DataFrameType, Field, FieldType, formattedValueToString, getFieldDisplayName, LinkModel } from '@grafana/data';
+import {
+  DataFrameType,
+  Field,
+  FieldType,
+  formattedValueToString,
+  getFieldDisplayName,
+  LinkModel,
+  TimeRange,
+  getLinksSupplier,
+  InterpolateFunction,
+  ScopedVars,
+} from '@grafana/data';
+import { HeatmapCellLayout } from '@grafana/schema';
 import { LinkButton, VerticalGroup } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
-import { HeatmapCellLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
-
-import { DataHoverView } from '../geomap/components/DataHoverView';
+import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
 import { HeatmapData } from './fields';
 import { HeatmapHoverEvent } from './utils';
@@ -15,22 +25,25 @@ type Props = {
   data: HeatmapData;
   hover: HeatmapHoverEvent;
   showHistogram?: boolean;
+  timeRange: TimeRange;
+  replaceVars: InterpolateFunction;
+  scopedVars: ScopedVars[];
 };
 
 export const HeatmapHoverView = (props: Props) => {
   if (props.hover.seriesIdx === 2) {
-    return <DataHoverView data={props.data.exemplars} rowIndex={props.hover.dataIdx} />;
+    return <DataHoverView data={props.data.exemplars} rowIndex={props.hover.dataIdx} header={'Exemplar'} />;
   }
   return <HeatmapHoverCell {...props} />;
 };
 
-const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
+const HeatmapHoverCell = ({ data, hover, showHistogram, scopedVars, replaceVars }: Props) => {
   const index = hover.dataIdx;
   const xField = data.heatmap?.fields[0];
   const yField = data.heatmap?.fields[1];
   const countField = data.heatmap?.fields[2];
 
-  const xDisp = (v: any) => {
+  const xDisp = (v: number) => {
     if (xField?.display) {
       return formattedValueToString(xField.display(v));
     }
@@ -42,22 +55,56 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
     return `${v}`;
   };
 
-  const xVals = xField?.values.toArray();
-  const yVals = yField?.values.toArray();
-  const countVals = countField?.values.toArray();
+  const xVals = xField?.values;
+  const yVals = yField?.values;
+  const countVals = countField?.values;
 
   // labeled buckets
   const meta = readHeatmapRowsCustomMeta(data.heatmap);
-  const yDispSrc = meta.yOrdinalDisplay ?? yVals;
-  const yDisp = yField?.display ? (v: any) => formattedValueToString(yField.display!(v)) : (v: any) => `${v}`;
+  const yDisp = yField?.display ? (v: string) => formattedValueToString(yField.display!(v)) : (v: string) => `${v}`;
 
   const yValueIdx = index % data.yBucketCount! ?? 0;
 
-  const yMinIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx - 1 : yValueIdx;
-  const yMaxIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx : yValueIdx + 1;
+  let yBucketMin: string;
+  let yBucketMax: string;
 
-  const yBucketMin = yDispSrc?.[yMinIdx];
-  const yBucketMax = yDispSrc?.[yMaxIdx];
+  let nonNumericOrdinalDisplay: string | undefined = undefined;
+
+  if (meta.yOrdinalDisplay) {
+    const yMinIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx - 1 : yValueIdx;
+    const yMaxIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx : yValueIdx + 1;
+    yBucketMin = yMinIdx < 0 ? meta.yMinDisplay! : `${meta.yOrdinalDisplay[yMinIdx]}`;
+    yBucketMax = `${meta.yOrdinalDisplay[yMaxIdx]}`;
+
+    // e.g. "pod-xyz123"
+    if (!meta.yOrdinalLabel || Number.isNaN(+meta.yOrdinalLabel[0])) {
+      nonNumericOrdinalDisplay = data.yLayout === HeatmapCellLayout.le ? yBucketMax : yBucketMin;
+    }
+  } else {
+    const value = yVals?.[yValueIdx];
+
+    if (data.yLayout === HeatmapCellLayout.le) {
+      yBucketMax = `${value}`;
+
+      if (data.yLog) {
+        let logFn = data.yLog === 2 ? Math.log2 : Math.log10;
+        let exp = logFn(value) - 1 / data.yLogSplit!;
+        yBucketMin = `${data.yLog ** exp}`;
+      } else {
+        yBucketMin = `${value - data.yBucketSize!}`;
+      }
+    } else {
+      yBucketMin = `${value}`;
+
+      if (data.yLog) {
+        let logFn = data.yLog === 2 ? Math.log2 : Math.log10;
+        let exp = logFn(value) + 1 / data.yLogSplit!;
+        yBucketMax = `${data.yLog ** exp}`;
+      } else {
+        yBucketMax = `${value + data.yBucketSize!}`;
+      }
+    }
+  }
 
   let xBucketMin: number;
   let xBucketMax: number;
@@ -77,12 +124,22 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
   const linkLookup = new Set<string>();
 
   for (const field of visibleFields ?? []) {
-    // TODO: Currently always undefined? (getLinks)
-    if (field.getLinks) {
-      const v = field.values.get(index);
-      const disp = field.display ? field.display(v) : { text: `${v}`, numeric: +v };
+    const hasLinks = field.config.links && field.config.links.length > 0;
 
-      field.getLinks({ calculatedValue: disp, valueRowIndex: index }).forEach((link) => {
+    if (hasLinks && data.heatmap) {
+      const appropriateScopedVars = scopedVars.find(
+        (scopedVar) =>
+          scopedVar && scopedVar.__dataContext && scopedVar.__dataContext.value.field.name === nonNumericOrdinalDisplay
+      );
+
+      field.getLinks = getLinksSupplier(data.heatmap, field, appropriateScopedVars || {}, replaceVars);
+    }
+
+    if (field.getLinks) {
+      const value = field.values[index];
+      const display = field.display ? field.display(value) : { text: `${value}`, numeric: +value };
+
+      field.getLinks({ calculatedValue: display, valueRowIndex: index }).forEach((link) => {
         const key = `${link.title}/${link.href}`;
         if (!linkLookup.has(key)) {
           links.push(link);
@@ -174,7 +231,11 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
     );
   }
 
-  const renderYBuckets = () => {
+  const renderYBucket = () => {
+    if (nonNumericOrdinalDisplay) {
+      return <div>Name: {nonNumericOrdinalDisplay}</div>;
+    }
+
     switch (data.yLayout) {
       case HeatmapCellLayout.unknown:
         return <div>{yDisp(yBucketMin)}</div>;
@@ -190,7 +251,7 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
     <>
       <div>
         <div>{xDisp(xBucketMin)}</div>
-        <div>{xDisp(xBucketMax)}</div>
+        {data.xLayout !== HeatmapCellLayout.unknown && <div>{xDisp(xBucketMax)}</div>}
       </div>
       {showHistogram && (
         <canvas
@@ -201,7 +262,7 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
         />
       )}
       <div>
-        {renderYBuckets()}
+        {renderYBucket()}
         <div>
           {getFieldDisplayName(countField!, data.heatmap)}: {data.display!(count)}
         </div>

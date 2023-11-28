@@ -1,16 +1,17 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import React, { ReactNode, PropsWithChildren } from 'react';
+import userEvent from '@testing-library/user-event';
+import React, { PropsWithChildren } from 'react';
 import { from } from 'rxjs';
 
 import { getDefaultTimeRange } from '@grafana/data';
 
 import { ElasticDatasource } from '../../../datasource';
-import { defaultBucketAgg, defaultMetricAgg } from '../../../queryDef';
+import { defaultBucketAgg } from '../../../queryDef';
 import { ElasticsearchQuery } from '../../../types';
 import { ElasticsearchProvider } from '../ElasticsearchQueryContext';
 
+import { Average, Count, UniqueCount } from './../../../types';
 import { MetricEditor } from './MetricEditor';
-import { Average, UniqueCount } from './aggregations';
 
 describe('Metric Editor', () => {
   it('Should display a "None" option for "field" if the metric supports inline script', async () => {
@@ -86,46 +87,46 @@ describe('Metric Editor', () => {
     expect(screen.queryByText('None')).not.toBeInTheDocument();
   });
 
-  describe('Top Metrics Aggregation', () => {
-    const setupTopMetricsScreen = (xpack: boolean) => {
-      const query: ElasticsearchQuery = {
-        refId: 'A',
-        query: '',
-        metrics: [defaultMetricAgg('1')],
-        bucketAggs: [defaultBucketAgg('2')],
-      };
-
-      const getFields: ElasticDatasource['getFields'] = jest.fn(() => from([[]]));
-
-      const esVersion = '7.7.0';
-
-      const wrapper = ({ children }: { children?: ReactNode }) => (
-        <ElasticsearchProvider
-          datasource={{ getFields, esVersion, xpack } as ElasticDatasource}
-          query={query}
-          range={getDefaultTimeRange()}
-          onChange={() => {}}
-          onRunQuery={() => {}}
-        >
-          {children}
-        </ElasticsearchProvider>
-      );
-
-      render(<MetricEditor value={defaultMetricAgg('1')} />, { wrapper });
-
-      act(() => {
-        fireEvent.click(screen.getByText('Count'));
-      });
+  it('Should not list special metrics', async () => {
+    const count: Count = {
+      id: '1',
+      type: 'count',
     };
 
-    it('Should include top metrics aggregation when X-Pack is enabled', () => {
-      setupTopMetricsScreen(true);
-      expect(screen.getByText('Top Metrics')).toBeInTheDocument();
+    const query: ElasticsearchQuery = {
+      refId: 'A',
+      query: '',
+      metrics: [count],
+      bucketAggs: [],
+    };
+
+    const getDatabaseVersion: ElasticDatasource['getDatabaseVersion'] = jest.fn(() => Promise.resolve(null));
+
+    const wrapper = ({ children }: PropsWithChildren<{}>) => (
+      <ElasticsearchProvider
+        datasource={{ getDatabaseVersion } as ElasticDatasource}
+        query={query}
+        range={getDefaultTimeRange()}
+        onChange={() => {}}
+        onRunQuery={() => {}}
+      >
+        {children}
+      </ElasticsearchProvider>
+    );
+
+    render(<MetricEditor value={count} />, { wrapper });
+
+    act(() => {
+      userEvent.click(screen.getByText('Count'));
     });
 
-    it('Should NOT include top metrics aggregation where X-Pack is disabled', () => {
-      setupTopMetricsScreen(false);
-      expect(screen.queryByText('Top Metrics')).toBe(null);
-    });
+    // we check if the list-of-options is visible by
+    // checking for an item to exist
+    expect(await screen.findByText('Extended Stats')).toBeInTheDocument();
+
+    // now we make sure the should-not-be-shown items are not shown
+    expect(screen.queryByText('Logs')).toBeNull();
+    expect(screen.queryByText('Raw Data')).toBeNull();
+    expect(screen.queryByText('Raw Document (deprecated)')).toBeNull();
   });
 });

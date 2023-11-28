@@ -1,0 +1,4 @@
+import React from 'react';
+import { EmptyBlock } from 'app/percona/shared/components/Elements/EmptyBlock';
+export const TableContent = ({ hasData, emptyMessage, emptyMessageClassName, loading, children, }) => hasData ? (React.createElement(React.Fragment, null, children)) : emptyMessageClassName ? (React.createElement("div", { "data-testid": "table-no-data", className: emptyMessageClassName }, !loading && React.createElement("h1", null, emptyMessage))) : (React.createElement(EmptyBlock, { dataTestId: "table-no-data" }, !loading && (typeof emptyMessage === 'string' ? React.createElement("h1", null, emptyMessage) : emptyMessage)));
+//# sourceMappingURL=TableContent.js.map

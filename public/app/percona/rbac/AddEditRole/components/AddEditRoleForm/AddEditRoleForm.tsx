@@ -13,7 +13,7 @@ import { Messages } from './AddEditRoleForm.messages';
 import { getStyles } from './AddEditRoleForm.styles';
 import { AddEditRoleFormProps } from './AddEditRoleForm.types';
 
-const AddEditRoleForm: FC<AddEditRoleFormProps> = ({
+const AddEditRoleForm: FC<React.PropsWithChildren<AddEditRoleFormProps>> = ({
   initialValues,
   isLoading,
   title,

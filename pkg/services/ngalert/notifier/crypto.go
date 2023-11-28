@@ -19,6 +19,7 @@ type Crypto interface {
 	Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error)
 
 	getDecryptedSecret(r *definitions.PostableGrafanaReceiver, key string) (string, error)
+	ProcessSecureSettings(ctx context.Context, orgId int64, recvs []*definitions.PostableApiReceiver) error
 }
 
 // alertmanagerCrypto implements decryption of Alertmanager configuration and encryption of arbitrary payloads based on Grafana's encryptions.
@@ -36,11 +37,52 @@ func NewCrypto(secrets secrets.Service, configs configurationStore, log log.Logg
 	}
 }
 
+// ProcessSecureSettings encrypts new secure settings and loads existing secure settings from the database.
+func (c *alertmanagerCrypto) ProcessSecureSettings(ctx context.Context, orgId int64, recvs []*definitions.PostableApiReceiver) error {
+	// First, we encrypt the new or updated secure settings. Then, we load the existing secure settings from the database
+	// and add back any that weren't updated.
+	// We perform these steps in this order to ensure the hash of the secure settings remains stable when no secure
+	// settings were modified.
+	if err := EncryptReceiverConfigs(recvs, func(ctx context.Context, payload []byte) ([]byte, error) {
+		return c.Encrypt(ctx, payload, secrets.WithoutScope())
+	}); err != nil {
+		return fmt.Errorf("failed to encrypt receivers: %w", err)
+	}
+
+	if err := c.LoadSecureSettings(ctx, orgId, recvs); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// EncryptReceiverConfigs encrypts all SecureSettings in the given receivers.
+func EncryptReceiverConfigs(c []*definitions.PostableApiReceiver, encrypt definitions.EncryptFn) error {
+	// encrypt secure settings for storing them in DB
+	for _, r := range c {
+		switch r.Type() {
+		case definitions.GrafanaReceiverType:
+			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+				for k, v := range gr.SecureSettings {
+					encryptedData, err := encrypt(context.Background(), []byte(v))
+					if err != nil {
+						return fmt.Errorf("failed to encrypt secure settings: %w", err)
+					}
+					gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(encryptedData)
+				}
+			}
+		default:
+		}
+	}
+	return nil
+}
+
 // LoadSecureSettings adds the corresponding unencrypted secrets stored to the list of input receivers.
 func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definitions.PostableApiReceiver) error {
 	// Get the last known working configuration.
 	query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: orgId}
-	if err := c.configs.GetLatestAlertmanagerConfiguration(ctx, &query); err != nil {
+	amConfig, err := c.configs.GetLatestAlertmanagerConfiguration(ctx, &query)
+	if err != nil {
 		// If we don't have a configuration there's nothing for us to know and we should just continue saving the new one.
 		if !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			return fmt.Errorf("failed to get latest configuration: %w", err)
@@ -48,11 +90,11 @@ func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64
 	}
 
 	currentReceiverMap := make(map[string]*definitions.PostableGrafanaReceiver)
-	if query.Result != nil {
-		currentConfig, err := Load([]byte(query.Result.AlertmanagerConfiguration))
+	if amConfig != nil {
+		currentConfig, err := Load([]byte(amConfig.AlertmanagerConfiguration))
 		// If the current config is un-loadable, treat it as if it never existed. Providing a new, valid config should be able to "fix" this state.
 		if err != nil {
-			c.log.Warn("last known alertmanager configuration was invalid. Overwriting...")
+			c.log.Warn("Last known alertmanager configuration was invalid. Overwriting...")
 		} else {
 			currentReceiverMap = currentConfig.GetGrafanaReceiverMap()
 		}
@@ -73,19 +115,13 @@ func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64
 
 			// Frontend sends only the secure settings that have to be updated
 			// Therefore we have to copy from the last configuration only those secure settings not included in the request
-			for key := range cgmr.SecureSettings {
+			for key, encryptedValue := range cgmr.SecureSettings {
 				_, ok := gr.SecureSettings[key]
 				if !ok {
-					decryptedValue, err := c.getDecryptedSecret(cgmr, key)
-					if err != nil {
-						return fmt.Errorf("failed to decrypt stored secure setting: %s: %w", key, err)
-					}
-
 					if receivers[i].PostableGrafanaReceivers.GrafanaManagedReceivers[j].SecureSettings == nil {
 						receivers[i].PostableGrafanaReceivers.GrafanaManagedReceivers[j].SecureSettings = make(map[string]string, len(cgmr.SecureSettings))
 					}
-
-					receivers[i].PostableGrafanaReceivers.GrafanaManagedReceivers[j].SecureSettings[key] = decryptedValue
+					receivers[i].PostableGrafanaReceivers.GrafanaManagedReceivers[j].SecureSettings[key] = encryptedValue
 				}
 			}
 		}

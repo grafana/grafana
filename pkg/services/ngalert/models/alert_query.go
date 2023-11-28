@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/expr"
 )
 
@@ -27,7 +26,7 @@ func (d Duration) MarshalJSON() ([]byte, error) {
 }
 
 func (d *Duration) UnmarshalJSON(b []byte) error {
-	var v interface{}
+	var v any
 	if err := json.Unmarshal(b, &v); err != nil {
 		return err
 	}
@@ -40,12 +39,12 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 	}
 }
 
-func (d Duration) MarshalYAML() (interface{}, error) {
+func (d Duration) MarshalYAML() (any, error) {
 	return time.Duration(d).Seconds(), nil
 }
 
-func (d *Duration) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var v interface{}
+func (d *Duration) UnmarshalYAML(unmarshal func(any) error) error {
+	var v any
 	if err := unmarshal(&v); err != nil {
 		return err
 	}
@@ -70,10 +69,10 @@ func (rtr *RelativeTimeRange) isValid() bool {
 	return rtr.From > rtr.To
 }
 
-func (rtr *RelativeTimeRange) ToTimeRange(now time.Time) backend.TimeRange {
-	return backend.TimeRange{
-		From: now.Add(-time.Duration(rtr.From)),
-		To:   now.Add(-time.Duration(rtr.To)),
+func (rtr *RelativeTimeRange) ToTimeRange() expr.TimeRange {
+	return expr.RelativeTimeRange{
+		From: -time.Duration(rtr.From),
+		To:   -time.Duration(rtr.To),
 	}
 }
 
@@ -95,11 +94,15 @@ type AlertQuery struct {
 	// JSON is the raw JSON query and includes the above properties as well as custom properties.
 	Model json.RawMessage `json:"model"`
 
-	modelProps map[string]interface{}
+	modelProps map[string]any
+}
+
+func (aq *AlertQuery) String() string {
+	return fmt.Sprintf("refID: %s, queryType: %s, datasourceUID: %s", aq.RefID, aq.QueryType, aq.DatasourceUID)
 }
 
 func (aq *AlertQuery) setModelProps() error {
-	aq.modelProps = make(map[string]interface{})
+	aq.modelProps = make(map[string]any)
 	err := json.Unmarshal(aq.Model, &aq.modelProps)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal query model: %w", err)
@@ -110,7 +113,7 @@ func (aq *AlertQuery) setModelProps() error {
 
 // IsExpression returns true if the alert query is an expression.
 func (aq *AlertQuery) IsExpression() (bool, error) {
-	return expr.IsDataSource(aq.DatasourceUID), nil
+	return expr.NodeTypeFromDatasourceUID(aq.DatasourceUID) == expr.TypeCMDNode, nil
 }
 
 // setMaxDatapoints sets the model maxDataPoints if it's missing or invalid

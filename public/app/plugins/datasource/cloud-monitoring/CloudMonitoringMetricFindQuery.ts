@@ -11,7 +11,8 @@ import {
   getLabelKeys,
   getMetricTypesByService,
 } from './functions';
-import { CloudMonitoringVariableQuery, MetricDescriptor, MetricFindQueryTypes, MetricKind, ValueTypes } from './types';
+import { ValueTypes, MetricFindQueryTypes } from './types/query';
+import { CloudMonitoringVariableQuery, MetricDescriptor } from './types/types';
 
 export default class CloudMonitoringMetricFindQuery {
   constructor(private datasource: CloudMonitoringDatasource) {}
@@ -151,7 +152,7 @@ export default class CloudMonitoringMetricFindQuery {
       return [];
     }
 
-    return getAggregationOptionsByMetric(descriptor.valueType as ValueTypes, descriptor.metricKind as MetricKind).map(
+    return getAggregationOptionsByMetric(descriptor.valueType as ValueTypes, descriptor.metricKind).map(
       this.toFindQueryResult
     );
   }

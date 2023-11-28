@@ -1,0 +1,16 @@
+export const MetricMathTokenTypes = {
+    Parenthesis: 'delimiter.parenthesis.cloudwatch-MetricMath',
+    Whitespace: 'white.cloudwatch-MetricMath',
+    Keyword: 'keyword.cloudwatch-MetricMath',
+    Delimiter: 'delimiter.cloudwatch-MetricMath',
+    Operator: 'operator.cloudwatch-MetricMath',
+    Identifier: 'identifier.cloudwatch-MetricMath',
+    Type: 'type.cloudwatch-MetricMath',
+    Function: 'predefined.cloudwatch-MetricMath',
+    Number: 'number.cloudwatch-MetricMath',
+    String: 'string.cloudwatch-MetricMath',
+    Variable: 'variable.cloudwatch-MetricMath',
+    Comment: 'comment.cloudwatch-MetricMath',
+    Regexp: 'regexp.cloudwatch-MetricMath',
+};
+//# sourceMappingURL=types.js.map

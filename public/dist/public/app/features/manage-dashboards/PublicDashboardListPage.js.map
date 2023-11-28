@@ -1,0 +1,1 @@
+{"version":3,"file":"PublicDashboardListPage.js","sourceRoot":"","sources":["../../../../../app/features/manage-dashboards/PublicDashboardListPage.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,MAAM,OAAO,CAAC;AAE1B,OAAO,EAAE,wBAAwB,EAAE,MAAM,gEAAgE,CAAC;AAE1G,MAAM,CAAC,MAAM,uBAAuB,GAAG,CAAC,EAAE,EAAE,EAAE;IAC5C,OAAO,oBAAC,wBAAwB,OAAG,CAAC;AACtC,CAAC,CAAC;AAEF,eAAe,uBAAuB,CAAC"}

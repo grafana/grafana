@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/models"
+
+	"github.com/grafana/grafana/pkg/services/live/model"
 )
 
 type MultipleSubscriber struct {
@@ -21,16 +22,16 @@ func (s *MultipleSubscriber) Type() string {
 	return SubscriberTypeMultiple
 }
 
-func (s *MultipleSubscriber) Subscribe(ctx context.Context, vars Vars, data []byte) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
-	finalReply := models.SubscribeReply{}
+func (s *MultipleSubscriber) Subscribe(ctx context.Context, vars Vars, data []byte) (model.SubscribeReply, backend.SubscribeStreamStatus, error) {
+	finalReply := model.SubscribeReply{}
 
 	for _, s := range s.Subscribers {
 		reply, status, err := s.Subscribe(ctx, vars, data)
 		if err != nil {
-			return models.SubscribeReply{}, 0, err
+			return model.SubscribeReply{}, 0, err
 		}
 		if status != backend.SubscribeStreamStatusOK {
-			return models.SubscribeReply{}, status, nil
+			return model.SubscribeReply{}, status, nil
 		}
 		if finalReply.Data == nil {
 			finalReply.Data = reply.Data

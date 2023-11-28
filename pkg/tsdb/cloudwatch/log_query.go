@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
+const cloudWatchTSFormat = "2006-01-02 15:04:05.000"
+
 func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*data.Frame, error) {
 	if response == nil {
 		return nil, fmt.Errorf("response is nil, cannot convert log results to data frames")
@@ -36,7 +38,7 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 
 	rowCount := len(nonEmptyRows)
 
-	fieldValues := make(map[string]interface{})
+	fieldValues := make(map[string]any)
 
 	// Maintaining a list of field names in the order returned from CloudWatch
 	// as just iterating over fieldValues would not give a consistent order
@@ -71,9 +73,14 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 				timeField[i] = &parsedTime
 			} else if numericField, ok := fieldValues[*resultField.Field].([]*float64); ok {
 				parsedFloat, err := strconv.ParseFloat(*resultField.Value, 64)
+
 				if err != nil {
-					return nil, err
+					// This can happen if a field has a mix of numeric and non-numeric values.
+					// In that case, we change the field from a numeric field to a string field.
+					fieldValues[*resultField.Field] = changeToStringField(rowCount, nonEmptyRows[:i+1], *resultField.Field)
+					continue
 				}
+
 				numericField[i] = &parsedFloat
 			} else {
 				fieldValues[*resultField.Field].([]*string)[i] = resultField.Value
@@ -90,7 +97,7 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 		} else if fieldName == logStreamIdentifierInternal || fieldName == logIdentifierInternal {
 			newFields[len(newFields)-1].SetConfig(
 				&data.FieldConfig{
-					Custom: map[string]interface{}{
+					Custom: map[string]any{
 						"hidden": true,
 					},
 				},
@@ -133,7 +140,7 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 	}
 
 	if response.Status != nil {
-		frame.Meta.Custom = map[string]interface{}{
+		frame.Meta.Custom = map[string]any{
 			"Status": *response.Status,
 		}
 	}
@@ -143,8 +150,22 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 	return frame, nil
 }
 
-func groupResults(results *data.Frame, groupingFieldNames []string) ([]*data.Frame, error) {
+func changeToStringField(lengthOfValues int, rows [][]*cloudwatchlogs.ResultField, logEventField string) []*string {
+	fieldValuesAsStrings := make([]*string, lengthOfValues)
+	for i, resultFields := range rows {
+		for _, field := range resultFields {
+			if *field.Field == logEventField {
+				fieldValuesAsStrings[i] = field.Value
+			}
+		}
+	}
+
+	return fieldValuesAsStrings
+}
+
+func groupResults(results *data.Frame, groupingFieldNames []string, fromSyncQuery bool) ([]*data.Frame, error) {
 	groupingFields := make([]*data.Field, 0)
+	removeFieldIndices := make([]int, 0)
 
 	for i, field := range results.Fields {
 		for _, groupingField := range groupingFieldNames {
@@ -157,6 +178,10 @@ func groupResults(results *data.Frame, groupingFieldNames []string) ([]*data.Fra
 					}
 					results.Fields[i] = newField
 					field = newField
+				}
+				// For expressions and alerts to work properly we need to remove non-time grouping fields
+				if fromSyncQuery && !field.Type().Time() {
+					removeFieldIndices = append(removeFieldIndices, i)
 				}
 
 				groupingFields = append(groupingFields, field)
@@ -172,14 +197,31 @@ func groupResults(results *data.Frame, groupingFieldNames []string) ([]*data.Fra
 	groupedDataFrames := make(map[string]*data.Frame)
 	for i := 0; i < rowLength; i++ {
 		groupKey := generateGroupKey(groupingFields, i)
+		// if group key doesn't exist create it
 		if _, exists := groupedDataFrames[groupKey]; !exists {
 			newFrame := results.EmptyCopy()
 			newFrame.Name = groupKey
 			newFrame.Meta = results.Meta
+			if fromSyncQuery {
+				// remove grouping indices
+				newFrame.Fields = removeFieldsByIndex(newFrame.Fields, removeFieldIndices)
+
+				// set the group key as the display name for sync queries
+				for i := 1; i < len(newFrame.Fields); i++ {
+					valueField := newFrame.Fields[i]
+					if valueField.Config == nil {
+						valueField.Config = &data.FieldConfig{}
+					}
+					valueField.Config.DisplayNameFromDS = groupKey
+				}
+			}
+
 			groupedDataFrames[groupKey] = newFrame
 		}
 
-		groupedDataFrames[groupKey].AppendRow(results.RowCopy(i)...)
+		// add row to frame
+		row := copyRowWithoutValues(results, i, removeFieldIndices)
+		groupedDataFrames[groupKey].AppendRow(row...)
 	}
 
 	newDataFrames := make([]*data.Frame, 0, len(groupedDataFrames))
@@ -188,6 +230,40 @@ func groupResults(results *data.Frame, groupingFieldNames []string) ([]*data.Fra
 	}
 
 	return newDataFrames, nil
+}
+
+// remove fields at the listed indices
+func removeFieldsByIndex(fields []*data.Field, removeIndices []int) []*data.Field {
+	newGroupingFields := make([]*data.Field, 0)
+	removeIndicesIndex := 0
+	for i, field := range fields {
+		if removeIndicesIndex < len(removeIndices) && i == removeIndices[removeIndicesIndex] {
+			removeIndicesIndex++
+			if removeIndicesIndex > len(removeIndices) {
+				newGroupingFields = append(newGroupingFields, fields[i+1:]...)
+				break
+			}
+			continue
+		}
+		newGroupingFields = append(newGroupingFields, field)
+	}
+	return newGroupingFields
+}
+
+// copy a row without the listed values
+func copyRowWithoutValues(f *data.Frame, rowIdx int, removeIndices []int) []any {
+	vals := make([]any, len(f.Fields)-len(removeIndices))
+	valsIdx := 0
+	removeIndicesIndex := 0
+	for i := range f.Fields {
+		if removeIndicesIndex < len(removeIndices) && i == removeIndices[removeIndicesIndex] {
+			removeIndicesIndex++
+			continue
+		}
+		vals[valsIdx] = f.CopyAt(i, rowIdx)
+		valsIdx++
+	}
+	return vals
 }
 
 func generateGroupKey(fields []*data.Field, row int) string {

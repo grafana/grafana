@@ -3,13 +3,17 @@ package fakes
 import (
 	"archive/zip"
 	"context"
+	"fmt"
+	"io/fs"
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
@@ -35,22 +39,22 @@ func (i *FakePluginInstaller) Remove(ctx context.Context, pluginID string) error
 }
 
 type FakeLoader struct {
-	LoadFunc   func(_ context.Context, _ plugins.Class, paths []string) ([]*plugins.Plugin, error)
-	UnloadFunc func(_ context.Context, _ string) error
+	LoadFunc   func(_ context.Context, _ plugins.PluginSource) ([]*plugins.Plugin, error)
+	UnloadFunc func(_ context.Context, _ *plugins.Plugin) (*plugins.Plugin, error)
 }
 
-func (l *FakeLoader) Load(ctx context.Context, class plugins.Class, paths []string) ([]*plugins.Plugin, error) {
+func (l *FakeLoader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
 	if l.LoadFunc != nil {
-		return l.LoadFunc(ctx, class, paths)
+		return l.LoadFunc(ctx, src)
 	}
 	return nil, nil
 }
 
-func (l *FakeLoader) Unload(ctx context.Context, pluginID string) error {
+func (l *FakeLoader) Unload(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	if l.UnloadFunc != nil {
-		return l.UnloadFunc(ctx, pluginID)
+		return l.UnloadFunc(ctx, p)
 	}
-	return nil
+	return nil, nil
 }
 
 type FakePluginClient struct {
@@ -123,7 +127,7 @@ func (pc *FakePluginClient) CollectMetrics(ctx context.Context, req *backend.Col
 		return pc.CollectMetricsHandlerFunc(ctx, req)
 	}
 
-	return nil, backendplugin.ErrMethodNotImplemented
+	return nil, plugins.ErrMethodNotImplemented
 }
 
 func (pc *FakePluginClient) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
@@ -131,7 +135,7 @@ func (pc *FakePluginClient) CheckHealth(ctx context.Context, req *backend.CheckH
 		return pc.CheckHealthHandlerFunc(ctx, req)
 	}
 
-	return nil, backendplugin.ErrMethodNotImplemented
+	return nil, plugins.ErrMethodNotImplemented
 }
 
 func (pc *FakePluginClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -139,7 +143,7 @@ func (pc *FakePluginClient) QueryData(ctx context.Context, req *backend.QueryDat
 		return pc.QueryDataHandlerFunc(ctx, req)
 	}
 
-	return nil, backendplugin.ErrMethodNotImplemented
+	return nil, plugins.ErrMethodNotImplemented
 }
 
 func (pc *FakePluginClient) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
@@ -147,43 +151,19 @@ func (pc *FakePluginClient) CallResource(ctx context.Context, req *backend.CallR
 		return pc.CallResourceHandlerFunc(ctx, req, sender)
 	}
 
-	return backendplugin.ErrMethodNotImplemented
+	return plugins.ErrMethodNotImplemented
 }
 
 func (pc *FakePluginClient) SubscribeStream(_ context.Context, _ *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	return nil, backendplugin.ErrMethodNotImplemented
+	return nil, plugins.ErrMethodNotImplemented
 }
 
 func (pc *FakePluginClient) PublishStream(_ context.Context, _ *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	return nil, backendplugin.ErrMethodNotImplemented
+	return nil, plugins.ErrMethodNotImplemented
 }
 
 func (pc *FakePluginClient) RunStream(_ context.Context, _ *backend.RunStreamRequest, _ *backend.StreamSender) error {
-	return backendplugin.ErrMethodNotImplemented
-}
-
-type FakePluginStore struct {
-	Store map[string]plugins.PluginDTO
-}
-
-func NewFakePluginStore() *FakePluginStore {
-	return &FakePluginStore{
-		Store: make(map[string]plugins.PluginDTO),
-	}
-}
-
-func (f *FakePluginStore) Plugin(_ context.Context, id string) (plugins.PluginDTO, bool) {
-	p, exists := f.Store[id]
-	return p, exists
-}
-
-func (f *FakePluginStore) Plugins(_ context.Context, _ ...plugins.Type) []plugins.PluginDTO {
-	var res []plugins.PluginDTO
-	for _, p := range f.Store {
-		res = append(res, p)
-	}
-
-	return res
+	return plugins.ErrMethodNotImplemented
 }
 
 type FakePluginRegistry struct {
@@ -202,8 +182,7 @@ func (f *FakePluginRegistry) Plugin(_ context.Context, id string) (*plugins.Plug
 }
 
 func (f *FakePluginRegistry) Plugins(_ context.Context) []*plugins.Plugin {
-	var res []*plugins.Plugin
-
+	res := make([]*plugins.Plugin, 0, len(f.Store))
 	for _, p := range f.Store {
 		res = append(res, p)
 	}
@@ -222,9 +201,9 @@ func (f *FakePluginRegistry) Remove(_ context.Context, id string) error {
 }
 
 type FakePluginRepo struct {
-	GetPluginArchiveFunc         func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginArchive, error)
-	GetPluginArchiveByURLFunc    func(_ context.Context, archiveURL string, _ repo.CompatOpts) (*repo.PluginArchive, error)
-	GetPluginDownloadOptionsFunc func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginDownloadOptions, error)
+	GetPluginArchiveFunc      func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginArchive, error)
+	GetPluginArchiveByURLFunc func(_ context.Context, archiveURL string, _ repo.CompatOpts) (*repo.PluginArchive, error)
+	GetPluginArchiveInfoFunc  func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginArchiveInfo, error)
 }
 
 // GetPluginArchive fetches the requested plugin archive.
@@ -245,54 +224,32 @@ func (r *FakePluginRepo) GetPluginArchiveByURL(ctx context.Context, archiveURL s
 	return &repo.PluginArchive{}, nil
 }
 
-// GetPluginDownloadOptions fetches information for downloading the requested plugin.
-func (r *FakePluginRepo) GetPluginDownloadOptions(ctx context.Context, pluginID, version string, opts repo.CompatOpts) (*repo.PluginDownloadOptions, error) {
-	if r.GetPluginDownloadOptionsFunc != nil {
-		return r.GetPluginDownloadOptionsFunc(ctx, pluginID, version, opts)
+// GetPluginArchiveInfo fetches information for downloading the requested plugin.
+func (r *FakePluginRepo) GetPluginArchiveInfo(ctx context.Context, pluginID, version string, opts repo.CompatOpts) (*repo.PluginArchiveInfo, error) {
+	if r.GetPluginArchiveInfoFunc != nil {
+		return r.GetPluginArchiveInfoFunc(ctx, pluginID, version, opts)
 	}
-	return &repo.PluginDownloadOptions{}, nil
+	return &repo.PluginArchiveInfo{}, nil
 }
 
 type FakePluginStorage struct {
-	Store        map[string]struct{}
-	AddFunc      func(_ context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error)
-	RegisterFunc func(_ context.Context, pluginID, pluginDir string) error
-	RemoveFunc   func(_ context.Context, pluginID string) error
+	ExtractFunc func(_ context.Context, pluginID string, dirNameFunc storage.DirNameGeneratorFunc, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error)
 }
 
 func NewFakePluginStorage() *FakePluginStorage {
-	return &FakePluginStorage{
-		Store: map[string]struct{}{},
-	}
+	return &FakePluginStorage{}
 }
 
-func (s *FakePluginStorage) Register(ctx context.Context, pluginID, pluginDir string) error {
-	s.Store[pluginID] = struct{}{}
-	if s.RegisterFunc != nil {
-		return s.RegisterFunc(ctx, pluginID, pluginDir)
-	}
-	return nil
-}
-
-func (s *FakePluginStorage) Add(ctx context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
-	s.Store[pluginID] = struct{}{}
-	if s.AddFunc != nil {
-		return s.AddFunc(ctx, pluginID, z)
+func (s *FakePluginStorage) Extract(ctx context.Context, pluginID string, dirNameFunc storage.DirNameGeneratorFunc, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+	if s.ExtractFunc != nil {
+		return s.ExtractFunc(ctx, pluginID, dirNameFunc, z)
 	}
 	return &storage.ExtractedPluginArchive{}, nil
 }
 
-func (s *FakePluginStorage) Remove(ctx context.Context, pluginID string) error {
-	delete(s.Store, pluginID)
-	if s.RemoveFunc != nil {
-		return s.RemoveFunc(ctx, pluginID)
-	}
-	return nil
-}
-
 type FakeProcessManager struct {
-	StartFunc func(_ context.Context, pluginID string) error
-	StopFunc  func(_ context.Context, pluginID string) error
+	StartFunc func(_ context.Context, p *plugins.Plugin) error
+	StopFunc  func(_ context.Context, p *plugins.Plugin) error
 	Started   map[string]int
 	Stopped   map[string]int
 }
@@ -304,78 +261,323 @@ func NewFakeProcessManager() *FakeProcessManager {
 	}
 }
 
-func (m *FakeProcessManager) Start(ctx context.Context, pluginID string) error {
-	m.Started[pluginID]++
+func (m *FakeProcessManager) Start(ctx context.Context, p *plugins.Plugin) error {
+	m.Started[p.ID]++
 	if m.StartFunc != nil {
-		return m.StartFunc(ctx, pluginID)
+		return m.StartFunc(ctx, p)
 	}
 	return nil
 }
 
-func (m *FakeProcessManager) Stop(ctx context.Context, pluginID string) error {
-	m.Stopped[pluginID]++
+func (m *FakeProcessManager) Stop(ctx context.Context, p *plugins.Plugin) error {
+	m.Stopped[p.ID]++
 	if m.StopFunc != nil {
-		return m.StopFunc(ctx, pluginID)
+		return m.StopFunc(ctx, p)
 	}
 	return nil
 }
 
 type FakeBackendProcessProvider struct {
-	Requested map[string]int
-	Invoked   map[string]int
+	Requested          map[string]int
+	Invoked            map[string]int
+	BackendFactoryFunc func(context.Context, *plugins.Plugin) backendplugin.PluginFactoryFunc
 }
 
 func NewFakeBackendProcessProvider() *FakeBackendProcessProvider {
-	return &FakeBackendProcessProvider{
+	f := &FakeBackendProcessProvider{
 		Requested: make(map[string]int),
 		Invoked:   make(map[string]int),
 	}
+	f.BackendFactoryFunc = func(ctx context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
+		f.Requested[p.ID]++
+		return func(pluginID string, _ log.Logger, _ func() []string) (backendplugin.Plugin, error) {
+			f.Invoked[pluginID]++
+			return &FakePluginClient{}, nil
+		}
+	}
+	return f
 }
 
-func (pr *FakeBackendProcessProvider) BackendFactory(_ context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
-	pr.Requested[p.ID]++
-	return func(pluginID string, _ log.Logger, _ []string) (backendplugin.Plugin, error) {
-		pr.Invoked[pluginID]++
-		return &FakePluginClient{}, nil
-	}
+func (pr *FakeBackendProcessProvider) BackendFactory(ctx context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
+	return pr.BackendFactoryFunc(ctx, p)
 }
 
 type FakeLicensingService struct {
-	TokenRaw string
+	LicenseEdition string
+	TokenRaw       string
+	LicensePath    string
+	LicenseAppURL  string
 }
 
 func NewFakeLicensingService() *FakeLicensingService {
 	return &FakeLicensingService{}
 }
 
-func (t *FakeLicensingService) Expiry() int64 {
-	return 0
+func (s *FakeLicensingService) Edition() string {
+	return s.LicenseEdition
 }
 
-func (t *FakeLicensingService) Edition() string {
+func (s *FakeLicensingService) Path() string {
+	return s.LicensePath
+}
+
+func (s *FakeLicensingService) AppURL() string {
+	return s.LicenseAppURL
+}
+
+func (s *FakeLicensingService) Environment() []string {
+	return []string{fmt.Sprintf("GF_ENTERPRISE_LICENSE_TEXT=%s", s.TokenRaw)}
+}
+
+type FakeRoleRegistry struct {
+	ExpectedErr error
+}
+
+func NewFakeRoleRegistry() *FakeRoleRegistry {
+	return &FakeRoleRegistry{}
+}
+
+func (f *FakeRoleRegistry) DeclarePluginRoles(_ context.Context, _ string, _ string, _ []plugins.RoleRegistration) error {
+	return f.ExpectedErr
+}
+
+type FakePluginFiles struct {
+	OpenFunc   func(name string) (fs.File, error)
+	RemoveFunc func() error
+
+	base string
+}
+
+func NewFakePluginFiles(base string) *FakePluginFiles {
+	return &FakePluginFiles{
+		base: base,
+	}
+}
+
+func (f *FakePluginFiles) Open(name string) (fs.File, error) {
+	if f.OpenFunc != nil {
+		return f.OpenFunc(name)
+	}
+	return nil, nil
+}
+
+func (f *FakePluginFiles) Base() string {
+	return f.base
+}
+
+func (f *FakePluginFiles) Files() ([]string, error) {
+	return []string{}, nil
+}
+
+func (f *FakePluginFiles) Remove() error {
+	if f.RemoveFunc != nil {
+		return f.RemoveFunc()
+	}
+	return nil
+}
+
+type FakeSourceRegistry struct {
+	ListFunc func(_ context.Context) []plugins.PluginSource
+}
+
+func (s *FakeSourceRegistry) List(ctx context.Context) []plugins.PluginSource {
+	if s.ListFunc != nil {
+		return s.ListFunc(ctx)
+	}
+	return []plugins.PluginSource{}
+}
+
+type FakePluginSource struct {
+	PluginClassFunc      func(ctx context.Context) plugins.Class
+	PluginURIsFunc       func(ctx context.Context) []string
+	DefaultSignatureFunc func(ctx context.Context) (plugins.Signature, bool)
+}
+
+func (s *FakePluginSource) PluginClass(ctx context.Context) plugins.Class {
+	if s.PluginClassFunc != nil {
+		return s.PluginClassFunc(ctx)
+	}
 	return ""
 }
 
-func (t *FakeLicensingService) StateInfo() string {
-	return ""
+func (s *FakePluginSource) PluginURIs(ctx context.Context) []string {
+	if s.PluginURIsFunc != nil {
+		return s.PluginURIsFunc(ctx)
+	}
+	return []string{}
 }
 
-func (t *FakeLicensingService) ContentDeliveryPrefix() string {
-	return ""
+func (s *FakePluginSource) DefaultSignature(ctx context.Context) (plugins.Signature, bool) {
+	if s.DefaultSignatureFunc != nil {
+		return s.DefaultSignatureFunc(ctx)
+	}
+	return plugins.Signature{}, false
 }
 
-func (t *FakeLicensingService) LicenseURL(_ bool) string {
-	return ""
+type FakePluginFileStore struct {
+	FileFunc func(ctx context.Context, pluginID, filename string) (*plugins.File, error)
 }
 
-func (t *FakeLicensingService) Environment() map[string]string {
-	return map[string]string{"GF_ENTERPRISE_LICENSE_TEXT": t.TokenRaw}
+func (f *FakePluginFileStore) File(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
+	if f.FileFunc != nil {
+		return f.FileFunc(ctx, pluginID, filename)
+	}
+	return nil, nil
 }
 
-func (*FakeLicensingService) EnabledFeatures() map[string]bool {
-	return map[string]bool{}
+type FakeAuthService struct {
+	Result *auth.ExternalService
 }
 
-func (*FakeLicensingService) FeatureEnabled(_ string) bool {
-	return false
+func (f *FakeAuthService) RegisterExternalService(ctx context.Context, name string, svc *plugindef.ExternalServiceRegistration) (*auth.ExternalService, error) {
+	return f.Result, nil
+}
+
+type FakeDiscoverer struct {
+	DiscoverFunc func(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error)
+}
+
+func (f *FakeDiscoverer) Discover(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error) {
+	if f.DiscoverFunc != nil {
+		return f.DiscoverFunc(ctx, src)
+	}
+	return []*plugins.FoundBundle{}, nil
+}
+
+type FakeBootstrapper struct {
+	BootstrapFunc func(ctx context.Context, src plugins.PluginSource, bundles []*plugins.FoundBundle) ([]*plugins.Plugin, error)
+}
+
+func (f *FakeBootstrapper) Bootstrap(ctx context.Context, src plugins.PluginSource, bundles []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
+	if f.BootstrapFunc != nil {
+		return f.BootstrapFunc(ctx, src, bundles)
+	}
+	return []*plugins.Plugin{}, nil
+}
+
+type FakeValidator struct {
+	ValidateFunc func(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error)
+}
+
+func (f *FakeValidator) Validate(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
+	if f.ValidateFunc != nil {
+		return f.ValidateFunc(ctx, ps)
+	}
+	return []*plugins.Plugin{}, nil
+}
+
+type FakeInitializer struct {
+	IntializeFunc func(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error)
+}
+
+func (f *FakeInitializer) Initialize(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
+	if f.IntializeFunc != nil {
+		return f.IntializeFunc(ctx, ps)
+	}
+	return []*plugins.Plugin{}, nil
+}
+
+type FakeTerminator struct {
+	TerminateFunc func(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error)
+}
+
+func (f *FakeTerminator) Terminate(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+	if f.TerminateFunc != nil {
+		return f.TerminateFunc(ctx, p)
+	}
+	return nil, nil
+}
+
+type FakeBackendPlugin struct {
+	Managed bool
+
+	StartCount     int
+	StopCount      int
+	Decommissioned bool
+	Running        bool
+
+	// ExitedCheckDoneOrStopped is used to signal that the Exited() or Stop() method has been called.
+	ExitedCheckDoneOrStopped chan struct{}
+
+	mutex sync.RWMutex
+	backendplugin.Plugin
+}
+
+func NewFakeBackendPlugin(managed bool) *FakeBackendPlugin {
+	return &FakeBackendPlugin{
+		Managed:                  managed,
+		ExitedCheckDoneOrStopped: make(chan struct{}),
+	}
+}
+
+func (p *FakeBackendPlugin) Start(_ context.Context) error {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+	p.Running = true
+	p.StartCount++
+	return nil
+}
+
+func (p *FakeBackendPlugin) Stop(_ context.Context) error {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+	p.Running = false
+	p.StopCount++
+	go func() { p.ExitedCheckDoneOrStopped <- struct{}{} }()
+	return nil
+}
+
+func (p *FakeBackendPlugin) Decommission() error {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+	p.Decommissioned = true
+	return nil
+}
+
+func (p *FakeBackendPlugin) IsDecommissioned() bool {
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
+	return p.Decommissioned
+}
+
+func (p *FakeBackendPlugin) IsManaged() bool {
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
+	return p.Managed
+}
+
+func (p *FakeBackendPlugin) Exited() bool {
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
+	go func() { p.ExitedCheckDoneOrStopped <- struct{}{} }()
+	return !p.Running
+}
+
+func (p *FakeBackendPlugin) Kill() {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+	p.Running = false
+}
+
+type FakeFeatureToggles struct {
+	features map[string]bool
+}
+
+func NewFakeFeatureToggles(features ...string) *FakeFeatureToggles {
+	m := make(map[string]bool)
+	for _, f := range features {
+		m[f] = true
+	}
+
+	return &FakeFeatureToggles{
+		features: m,
+	}
+}
+
+func (f *FakeFeatureToggles) GetEnabled(_ context.Context) map[string]bool {
+	return f.features
+}
+
+func (f *FakeFeatureToggles) IsEnabled(feature string) bool {
+	return f.features[feature]
 }

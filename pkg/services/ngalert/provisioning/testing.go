@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	mock "github.com/stretchr/testify/mock"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 const defaultAlertmanagerConfigJSON = `
@@ -41,13 +42,11 @@ const defaultAlertmanagerConfigJSON = `
 			"name": "a new receiver",
 			"grafana_managed_receiver_configs": [{
 				"uid": "",
-				"name": "email receiver",
-				"type": "email",
+				"name": "slack receiver",
+				"type": "slack",
 				"disableResolveMessage": false,
-				"settings": {
-					"addresses": "\u003canother@email.com\u003e"
-				},
-				"secureFields": {}
+				"settings": {},
+				"secureSettings": {"url":"secure url"}
 			}]
 		}]
 	}
@@ -59,10 +58,10 @@ type fakeAMConfigStore struct {
 	lastSaveCommand *models.SaveAlertmanagerConfigurationCmd
 }
 
-func newFakeAMConfigStore() *fakeAMConfigStore {
+func newFakeAMConfigStore(config string) *fakeAMConfigStore {
 	return &fakeAMConfigStore{
 		config: models.AlertConfiguration{
-			AlertmanagerConfiguration: defaultAlertmanagerConfigJSON,
+			AlertmanagerConfiguration: config,
 			ConfigurationVersion:      "v1",
 			Default:                   true,
 			OrgID:                     1,
@@ -71,11 +70,11 @@ func newFakeAMConfigStore() *fakeAMConfigStore {
 	}
 }
 
-func (f *fakeAMConfigStore) GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error {
-	query.Result = &f.config
-	query.Result.OrgID = query.OrgID
-	query.Result.ConfigurationHash = fmt.Sprintf("%x", md5.Sum([]byte(f.config.AlertmanagerConfiguration)))
-	return nil
+func (f *fakeAMConfigStore) GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) (*models.AlertConfiguration, error) {
+	result := &f.config
+	result.OrgID = query.OrgID
+	result.ConfigurationHash = fmt.Sprintf("%x", md5.Sum([]byte(f.config.AlertmanagerConfiguration)))
+	return result, nil
 }
 
 func (f *fakeAMConfigStore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
@@ -147,11 +146,7 @@ func (n *NopTransactionManager) InTransaction(ctx context.Context, work func(ctx
 }
 
 func (m *MockAMConfigStore_Expecter) GetsConfig(ac models.AlertConfiguration) *MockAMConfigStore_Expecter {
-	m.GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
-		Run(func(ctx context.Context, q *models.GetLatestAlertmanagerConfigurationQuery) {
-			q.Result = &ac
-		}).
-		Return(nil)
+	m.GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(&ac, nil)
 	return m
 }
 
@@ -171,6 +166,7 @@ func (m *MockAMConfigStore_Expecter) SaveSucceedsIntercept(intercepted *models.S
 
 func (m *MockProvisioningStore_Expecter) GetReturns(p models.Provenance) *MockProvisioningStore_Expecter {
 	m.GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(p, nil)
+	m.GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 	return m
 }
 

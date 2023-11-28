@@ -7,7 +7,12 @@ import { DataSourceInstanceSettings, MetricFindValue } from '@grafana/data/src';
 import { PrometheusDatasource } from '../../datasource';
 import { PromOptions } from '../../types';
 
-import { formatPrometheusLabelFilters, formatPrometheusLabelFiltersToString, MetricSelect } from './MetricSelect';
+import {
+  formatPrometheusLabelFilters,
+  formatPrometheusLabelFiltersToString,
+  MetricSelect,
+  Props,
+} from './MetricSelect';
 
 const instanceSettings = {
   url: 'proxied',
@@ -44,7 +49,7 @@ dataSourceMock.metricFindQuery = jest.fn((query: string) => {
   );
 });
 
-const props = {
+const props: Props = {
   labelsFilters: [],
   datasource: dataSourceMock,
   query: {
@@ -54,6 +59,7 @@ const props = {
   },
   onChange: jest.fn(),
   onGetMetrics: jest.fn().mockResolvedValue(mockValues),
+  metricLookupDisabled: false,
 };
 
 describe('MetricSelect', () => {
@@ -64,6 +70,18 @@ describe('MetricSelect', () => {
     await waitFor(() => expect(screen.getByText('unique_metric')).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText('more_unique_metric')).toBeInTheDocument());
     await waitFor(() => expect(screen.getAllByLabelText('Select option')).toHaveLength(3));
+  });
+
+  it('truncates list of metrics to 1000', async () => {
+    const manyMockValues = [...Array(1001).keys()].map((idx: number) => {
+      return { label: 'random_metric' + idx };
+    });
+
+    props.onGetMetrics = jest.fn().mockResolvedValue(manyMockValues);
+
+    render(<MetricSelect {...props} />);
+    await openMetricSelect();
+    await waitFor(() => expect(screen.getAllByLabelText('Select option')).toHaveLength(1000));
   });
 
   it('shows option to set custom value when typing', async () => {

@@ -1,0 +1,99 @@
+import { includes, filter } from 'lodash';
+import { rangeUtil } from '@grafana/data';
+export default class TimeGrainConverter {
+    static createISO8601Duration(timeGrain, timeGrainUnit) {
+        const timeIntervals = ['hour', 'minute', 'h', 'm'];
+        if (includes(timeIntervals, timeGrainUnit)) {
+            return `PT${timeGrain}${timeGrainUnit[0].toUpperCase()}`;
+        }
+        return `P${timeGrain}${timeGrainUnit[0].toUpperCase()}`;
+    }
+    static createISO8601DurationFromInterval(interval) {
+        const timeGrain = +interval.slice(0, interval.length - 1);
+        const unit = interval[interval.length - 1];
+        if (interval.indexOf('ms') > -1) {
+            return TimeGrainConverter.createISO8601Duration(1, 'm');
+        }
+        if (interval[interval.length - 1] === 's') {
+            let toMinutes = (timeGrain * 60) % 60;
+            if (toMinutes < 1) {
+                toMinutes = 1;
+            }
+            return TimeGrainConverter.createISO8601Duration(toMinutes, 'm');
+        }
+        return TimeGrainConverter.createISO8601Duration(timeGrain, unit);
+    }
+    static findClosestTimeGrain(interval, allowedTimeGrains) {
+        const timeGrains = filter(allowedTimeGrains, (o) => o !== 'auto');
+        let closest = timeGrains[0];
+        const intervalMs = rangeUtil.intervalToMs(interval);
+        for (let i = 0; i < timeGrains.length; i++) {
+            // abs (num - val) < abs (num - curr):
+            if (intervalMs > rangeUtil.intervalToMs(timeGrains[i])) {
+                if (i + 1 < timeGrains.length) {
+                    closest = timeGrains[i + 1];
+                }
+                else {
+                    closest = timeGrains[i];
+                }
+            }
+        }
+        return closest;
+    }
+    static createTimeGrainFromISO8601Duration(duration) {
+        let offset = 1;
+        if (duration.substring(0, 2) === 'PT') {
+            offset = 2;
+        }
+        const value = duration.substring(offset, duration.length - 1);
+        const unit = duration.substring(duration.length - 1);
+        return value + ' ' + TimeGrainConverter.timeUnitToText(+value, unit);
+    }
+    static timeUnitToText(value, unit) {
+        let text = '';
+        if (unit === 'S') {
+            text = 'second';
+        }
+        if (unit === 'M') {
+            text = 'minute';
+        }
+        if (unit === 'H') {
+            text = 'hour';
+        }
+        if (unit === 'D') {
+            text = 'day';
+        }
+        if (value > 1) {
+            return text + 's';
+        }
+        return text;
+    }
+    static createKbnUnitFromISO8601Duration(duration) {
+        if (duration === 'auto') {
+            return 'auto';
+        }
+        let offset = 1;
+        if (duration.substring(0, 2) === 'PT') {
+            offset = 2;
+        }
+        const value = duration.substring(offset, duration.length - 1);
+        const unit = duration.substring(duration.length - 1);
+        return value + TimeGrainConverter.timeUnitToKbn(+value, unit);
+    }
+    static timeUnitToKbn(value, unit) {
+        if (unit === 'S') {
+            return 's';
+        }
+        if (unit === 'M') {
+            return 'm';
+        }
+        if (unit === 'H') {
+            return 'h';
+        }
+        if (unit === 'D') {
+            return 'd';
+        }
+        return '';
+    }
+}
+//# sourceMappingURL=time_grain_converter.js.map

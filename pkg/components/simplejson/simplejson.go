@@ -20,11 +20,11 @@ func Version() string {
 }
 
 type Json struct {
-	data interface{}
+	data any
 }
 
 func (j *Json) FromDB(data []byte) error {
-	j.data = make(map[string]interface{})
+	j.data = make(map[string]any)
 
 	dec := json.NewDecoder(bytes.NewBuffer(data))
 	dec.UseNumber()
@@ -39,7 +39,7 @@ func (j *Json) ToDB() ([]byte, error) {
 	return j.Encode()
 }
 
-func (j *Json) Scan(val interface{}) error {
+func (j *Json) Scan(val any) error {
 	switch v := val.(type) {
 	case []byte:
 		if len(v) == 0 {
@@ -85,17 +85,17 @@ func MustJson(body []byte) *Json {
 // New returns a pointer to a new, empty `Json` object
 func New() *Json {
 	return &Json{
-		data: make(map[string]interface{}),
+		data: make(map[string]any),
 	}
 }
 
 // NewFromAny returns a pointer to a new `Json` object with provided data.
-func NewFromAny(data interface{}) *Json {
+func NewFromAny(data any) *Json {
 	return &Json{data: data}
 }
 
 // Interface returns the underlying data
-func (j *Json) Interface() interface{} {
+func (j *Json) Interface() any {
 	return j.data
 }
 
@@ -116,7 +116,7 @@ func (j *Json) MarshalJSON() ([]byte, error) {
 
 // Set modifies `Json` map by `key` and `value`
 // Useful for changing single key/value in a `Json` object easily.
-func (j *Json) Set(key string, val interface{}) {
+func (j *Json) Set(key string, val any) {
 	m, err := j.Map()
 	if err != nil {
 		return
@@ -126,37 +126,37 @@ func (j *Json) Set(key string, val interface{}) {
 
 // SetPath modifies `Json`, recursively checking/creating map keys for the supplied path,
 // and then finally writing in the value
-func (j *Json) SetPath(branch []string, val interface{}) {
+func (j *Json) SetPath(branch []string, val any) {
 	if len(branch) == 0 {
 		j.data = val
 		return
 	}
 
-	// in order to insert our branch, we need map[string]interface{}
-	if _, ok := (j.data).(map[string]interface{}); !ok {
+	// in order to insert our branch, we need map[string]any
+	if _, ok := (j.data).(map[string]any); !ok {
 		// have to replace with something suitable
-		j.data = make(map[string]interface{})
+		j.data = make(map[string]any)
 	}
-	curr := j.data.(map[string]interface{})
+	curr := j.data.(map[string]any)
 
 	for i := 0; i < len(branch)-1; i++ {
 		b := branch[i]
 		// key exists?
 		if _, ok := curr[b]; !ok {
-			n := make(map[string]interface{})
+			n := make(map[string]any)
 			curr[b] = n
 			curr = n
 			continue
 		}
 
 		// make sure the value is the right sort of thing
-		if _, ok := curr[b].(map[string]interface{}); !ok {
+		if _, ok := curr[b].(map[string]any); !ok {
 			// have to replace with something suitable
-			n := make(map[string]interface{})
+			n := make(map[string]any)
 			curr[b] = n
 		}
 
-		curr = curr[b].(map[string]interface{})
+		curr = curr[b].(map[string]any)
 	}
 
 	// add remaining k/v
@@ -238,7 +238,7 @@ func (j *Json) CheckGetIndex(index int) (*Json, bool) {
 
 // SetIndex modifies `Json` array by `index` and `value`
 // for `index` in its `array` representation
-func (j *Json) SetIndex(index int, val interface{}) {
+func (j *Json) SetIndex(index int, val any) {
 	a, err := j.Array()
 	if err == nil {
 		if len(a) > index {
@@ -266,19 +266,19 @@ func (j *Json) CheckGet(key string) (*Json, bool) {
 }
 
 // Map type asserts to `map`
-func (j *Json) Map() (map[string]interface{}, error) {
-	if m, ok := (j.data).(map[string]interface{}); ok {
+func (j *Json) Map() (map[string]any, error) {
+	if m, ok := (j.data).(map[string]any); ok {
 		return m, nil
 	}
-	return nil, errors.New("type assertion to map[string]interface{} failed")
+	return nil, errors.New("type assertion to map[string]any failed")
 }
 
 // Array type asserts to an `array`
-func (j *Json) Array() ([]interface{}, error) {
-	if a, ok := (j.data).([]interface{}); ok {
+func (j *Json) Array() ([]any, error) {
+	if a, ok := (j.data).([]any); ok {
 		return a, nil
 	}
-	return nil, errors.New("type assertion to []interface{} failed")
+	return nil, errors.New("type assertion to []any failed")
 }
 
 // Bool type asserts to `bool`
@@ -326,15 +326,15 @@ func (j *Json) StringArray() ([]string, error) {
 	return retArr, nil
 }
 
-// MustArray guarantees the return of a `[]interface{}` (with optional default)
+// MustArray guarantees the return of a `[]any` (with optional default)
 //
 // useful when you want to iterate over array values in a succinct manner:
 //
 //	for i, v := range js.Get("results").MustArray() {
 //		fmt.Println(i, v)
 //	}
-func (j *Json) MustArray(args ...[]interface{}) []interface{} {
-	var def []interface{}
+func (j *Json) MustArray(args ...[]any) []any {
+	var def []any
 
 	switch len(args) {
 	case 0:
@@ -352,15 +352,15 @@ func (j *Json) MustArray(args ...[]interface{}) []interface{} {
 	return def
 }
 
-// MustMap guarantees the return of a `map[string]interface{}` (with optional default)
+// MustMap guarantees the return of a `map[string]any` (with optional default)
 //
 // useful when you want to iterate over map values in a succinct manner:
 //
 //	for k, v := range js.Get("dictionary").MustMap() {
 //		fmt.Println(k, v)
 //	}
-func (j *Json) MustMap(args ...map[string]interface{}) map[string]interface{} {
-	var def map[string]interface{}
+func (j *Json) MustMap(args ...map[string]any) map[string]any {
+	var def map[string]any
 
 	switch len(args) {
 	case 0:
@@ -549,13 +549,13 @@ func (j *Json) MustUint64(args ...uint64) uint64 {
 }
 
 // MarshalYAML implements yaml.Marshaller.
-func (j *Json) MarshalYAML() (interface{}, error) {
+func (j *Json) MarshalYAML() (any, error) {
 	return j.data, nil
 }
 
 // UnmarshalYAML implements yaml.Unmarshaller.
-func (j *Json) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var data interface{}
+func (j *Json) UnmarshalYAML(unmarshal func(any) error) error {
+	var data any
 	if err := unmarshal(&data); err != nil {
 		return err
 	}

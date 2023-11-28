@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   Button,
   ClipboardButton,
@@ -33,12 +34,20 @@ interface Props {
 }
 
 export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateToken, onClose }: Props) => {
-  let tomorrow = new Date();
+  const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const maxExpirationDate = new Date();
+  if (config.tokenExpirationDayLimit !== undefined && config.tokenExpirationDayLimit > -1) {
+    maxExpirationDate.setDate(maxExpirationDate.getDate() + config.tokenExpirationDayLimit + 1);
+  } else {
+    maxExpirationDate.setDate(8640000000000000);
+  }
+  const defaultExpirationDate = config.tokenExpirationDayLimit !== undefined && config.tokenExpirationDayLimit > 0;
 
   const [defaultTokenName, setDefaultTokenName] = useState('');
   const [newTokenName, setNewTokenName] = useState('');
-  const [isWithExpirationDate, setIsWithExpirationDate] = useState(false);
+  const [isWithExpirationDate, setIsWithExpirationDate] = useState(defaultExpirationDate);
   const [newTokenExpirationDate, setNewTokenExpirationDate] = useState<Date | string>(tomorrow);
   const [isExpirationDateValid, setIsExpirationDateValid] = useState(newTokenExpirationDate !== '');
   const styles = useStyles2(getStyles);
@@ -66,7 +75,7 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
   const onCloseInternal = () => {
     setNewTokenName('');
     setDefaultTokenName('');
-    setIsWithExpirationDate(false);
+    setIsWithExpirationDate(defaultExpirationDate);
     setNewTokenExpirationDate(tomorrow);
     setIsExpirationDateValid(newTokenExpirationDate !== '');
     onClose();
@@ -115,6 +124,7 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
                 value={newTokenExpirationDate}
                 placeholder=""
                 minDate={tomorrow}
+                maxDate={maxExpirationDate}
               />
             </Field>
           )}
@@ -128,7 +138,7 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
         <>
           <Field
             label="Token"
-            description="Copy the token now as you will not be able to see it again. Loosing a token requires creating a new one."
+            description="Copy the token now as you will not be able to see it again. Losing a token requires creating a new one."
           >
             <div className={styles.modalTokenRow}>
               <Input name="tokenValue" value={token} readOnly />

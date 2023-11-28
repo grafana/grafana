@@ -1,12 +1,12 @@
-import { DateHistogram } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
+import { metricAggregationConfig, pipelineOptions } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import {
+  ElasticsearchQuery,
   ExtendedStat,
   MetricAggregation,
   MovingAverageModelOption,
   MetricAggregationType,
-} from './components/QueryEditor/MetricAggregationsEditor/aggregations';
-import { metricAggregationConfig, pipelineOptions } from './components/QueryEditor/MetricAggregationsEditor/utils';
-import { ElasticsearchQuery } from './types';
+  DateHistogram,
+} from './types';
 
 export const extendedStats: ExtendedStat[] = [
   { label: 'Avg', value: 'avg' },
@@ -31,6 +31,8 @@ export const highlightTags = {
   pre: '@HIGHLIGHT@',
   post: '@/HIGHLIGHT@',
 };
+
+export const defaultGeoHashPrecisionString = '3';
 
 export function defaultMetricAgg(id = '1'): MetricAggregation {
   return { type: 'count', id };

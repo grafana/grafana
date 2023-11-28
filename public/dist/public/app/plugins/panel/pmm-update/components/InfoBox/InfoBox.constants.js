@@ -1,0 +1,2 @@
+export const PMM_ADVANCED_SETTINGS_URL = '/graph/settings/advanced-settings';
+//# sourceMappingURL=InfoBox.constants.js.map

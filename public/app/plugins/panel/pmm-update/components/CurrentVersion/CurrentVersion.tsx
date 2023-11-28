@@ -15,6 +15,7 @@ export const CurrentVersion: FC<CurrentVersionProps> = ({ installedVersionDetail
 
   return (
     <section className={styles.currentVersion}>
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <span onClick={handleToggleShowFullVersion}>
         {Messages.currentVersion}:&nbsp;
         <span>

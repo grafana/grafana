@@ -9,7 +9,7 @@ import { DBClusterConnectionItem } from '../DBClusterConnection/DBClusterConnect
 import { getStyles } from './DBClusterParameters.styles';
 import { DBClusterParametersProps } from './DBClusterParameters.types';
 
-export const DBClusterParameters: FC<DBClusterParametersProps> = ({ dbCluster }) => {
+export const DBClusterParameters: FC<React.PropsWithChildren<DBClusterParametersProps>> = ({ dbCluster }) => {
   const styles = useStyles(getStyles);
   const { status } = dbCluster;
   const {

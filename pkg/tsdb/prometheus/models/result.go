@@ -1,6 +1,10 @@
 package models
 
-import "github.com/grafana/grafana-plugin-sdk-go/data"
+import (
+	"time"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+)
 
 type ResultType string
 
@@ -39,4 +43,12 @@ func ResultTypeFromFrame(frame *data.Frame) ResultType {
 
 func (r ResultType) String() string {
 	return string(r)
+}
+
+type Exemplar struct {
+	SeriesLabels map[string]string
+	Fields       []*data.Field
+	RowIdx       int
+	Value        float64
+	Timestamp    time.Time
 }

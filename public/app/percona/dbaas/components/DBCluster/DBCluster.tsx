@@ -23,6 +23,7 @@ import { fetchDBClustersAction } from '../../../shared/core/reducers/dbaas/dbClu
 import { selectDBCluster, selectKubernetesCluster } from '../../../shared/core/reducers/dbaas/dbaas';
 import { useUpdateOfKubernetesList } from '../../hooks/useKubernetesList';
 import { AddClusterButton } from '../AddClusterButton/AddClusterButton';
+import DbaasDeprecationWarning from '../DeprecationWarning';
 import { isKubernetesListUnavailable } from '../Kubernetes/Kubernetes.utils';
 import { KubernetesClusterStatus } from '../Kubernetes/KubernetesClusterStatus/KubernetesClusterStatus.types';
 
@@ -43,7 +44,7 @@ import { RECHECK_INTERVAL } from './EditDBClusterPage/DBClusterAdvancedOptions/D
 import { DB_CLUSTER_CREATION_URL } from './EditDBClusterPage/EditDBClusterPage.constants';
 import { UpdateDBClusterModal } from './UpdateDBClusterModal/UpdateDBClusterModal';
 
-export const DBCluster: FC = () => {
+export const DBCluster: FC<React.PropsWithChildren<unknown>> = () => {
   const styles = useStyles(getStyles);
   const history = useHistory();
   const dispatch = useAppDispatch();
@@ -166,7 +167,7 @@ export const DBCluster: FC = () => {
     [addDisabled]
   );
 
-  const getRowKey = useCallback(({ original }) => `${original.kubernetesClusterName}${original.clusterName}`, []);
+  const getRowKey = useCallback(({ original }: any) => `${original.kubernetesClusterName}${original.clusterName}`, []);
 
   useEffect(() => {
     if (!deleteModalVisible && !logsModalVisible && !updateModalVisible) {
@@ -215,6 +216,7 @@ export const DBCluster: FC = () => {
       <OldPage.Contents>
         <TechnicalPreview />
         <FeatureLoader featureName={DBaaSMessages.dbaas} featureSelector={featureSelector}>
+          <DbaasDeprecationWarning />
           <div>
             <div className={styles.actionPanel}>
               <AddNewClusterButton />

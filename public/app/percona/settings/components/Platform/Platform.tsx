@@ -20,7 +20,7 @@ import { Messages } from './Platform.messages';
 import { PlatformService } from './Platform.service';
 import { ConnectRenderProps } from './types';
 
-export const Platform: FC = () => {
+export const Platform: FC<React.PropsWithChildren<unknown>> = () => {
   const navModel = usePerconaNavModel('settings-percona-platform');
   const settingsStyles = useStyles2(getSettingsStyles);
   const { result } = useSelector(getPerconaSettings);

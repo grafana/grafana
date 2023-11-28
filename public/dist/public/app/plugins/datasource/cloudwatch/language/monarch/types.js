@@ -1,0 +1,105 @@
+export var StatementPosition;
+(function (StatementPosition) {
+    StatementPosition[StatementPosition["Unknown"] = 0] = "Unknown";
+    // sql
+    StatementPosition[StatementPosition["SelectKeyword"] = 1] = "SelectKeyword";
+    StatementPosition[StatementPosition["AfterSelectKeyword"] = 2] = "AfterSelectKeyword";
+    StatementPosition[StatementPosition["AfterSelectFuncFirstArgument"] = 3] = "AfterSelectFuncFirstArgument";
+    StatementPosition[StatementPosition["AfterFromKeyword"] = 4] = "AfterFromKeyword";
+    StatementPosition[StatementPosition["SchemaFuncFirstArgument"] = 5] = "SchemaFuncFirstArgument";
+    StatementPosition[StatementPosition["SchemaFuncExtraArgument"] = 6] = "SchemaFuncExtraArgument";
+    StatementPosition[StatementPosition["FromKeyword"] = 7] = "FromKeyword";
+    StatementPosition[StatementPosition["AfterFrom"] = 8] = "AfterFrom";
+    StatementPosition[StatementPosition["WhereKey"] = 9] = "WhereKey";
+    StatementPosition[StatementPosition["WhereComparisonOperator"] = 10] = "WhereComparisonOperator";
+    StatementPosition[StatementPosition["WhereValue"] = 11] = "WhereValue";
+    StatementPosition[StatementPosition["AfterWhereValue"] = 12] = "AfterWhereValue";
+    StatementPosition[StatementPosition["AfterGroupByKeywords"] = 13] = "AfterGroupByKeywords";
+    StatementPosition[StatementPosition["AfterGroupBy"] = 14] = "AfterGroupBy";
+    StatementPosition[StatementPosition["AfterOrderByKeywords"] = 15] = "AfterOrderByKeywords";
+    StatementPosition[StatementPosition["AfterOrderByFunction"] = 16] = "AfterOrderByFunction";
+    StatementPosition[StatementPosition["AfterOrderByDirection"] = 17] = "AfterOrderByDirection";
+    // metric math
+    StatementPosition[StatementPosition["PredefinedFunction"] = 18] = "PredefinedFunction";
+    StatementPosition[StatementPosition["SearchFuncSecondArg"] = 19] = "SearchFuncSecondArg";
+    StatementPosition[StatementPosition["SearchFuncThirdArg"] = 20] = "SearchFuncThirdArg";
+    StatementPosition[StatementPosition["PredefinedFuncSecondArg"] = 21] = "PredefinedFuncSecondArg";
+    StatementPosition[StatementPosition["AfterFunction"] = 22] = "AfterFunction";
+    StatementPosition[StatementPosition["WithinString"] = 23] = "WithinString";
+    // logs
+    StatementPosition[StatementPosition["NewCommand"] = 24] = "NewCommand";
+    StatementPosition[StatementPosition["Comment"] = 25] = "Comment";
+    StatementPosition[StatementPosition["DedupKeyword"] = 26] = "DedupKeyword";
+    StatementPosition[StatementPosition["AfterDedupKeyword"] = 27] = "AfterDedupKeyword";
+    StatementPosition[StatementPosition["DisplayKeyword"] = 28] = "DisplayKeyword";
+    StatementPosition[StatementPosition["AfterDisplayKeyword"] = 29] = "AfterDisplayKeyword";
+    StatementPosition[StatementPosition["FieldsKeyword"] = 30] = "FieldsKeyword";
+    StatementPosition[StatementPosition["AfterFieldsKeyword"] = 31] = "AfterFieldsKeyword";
+    StatementPosition[StatementPosition["FilterKeyword"] = 32] = "FilterKeyword";
+    StatementPosition[StatementPosition["AfterFilterKeyword"] = 33] = "AfterFilterKeyword";
+    StatementPosition[StatementPosition["FilterArg"] = 34] = "FilterArg";
+    StatementPosition[StatementPosition["LimitKeyword"] = 35] = "LimitKeyword";
+    StatementPosition[StatementPosition["AfterLimitKeyword"] = 36] = "AfterLimitKeyword";
+    StatementPosition[StatementPosition["ParseKeyword"] = 37] = "ParseKeyword";
+    StatementPosition[StatementPosition["AfterParseKeyword"] = 38] = "AfterParseKeyword";
+    StatementPosition[StatementPosition["SortKeyword"] = 39] = "SortKeyword";
+    StatementPosition[StatementPosition["AfterSortKeyword"] = 40] = "AfterSortKeyword";
+    StatementPosition[StatementPosition["SortArg"] = 41] = "SortArg";
+    StatementPosition[StatementPosition["StatsKeyword"] = 42] = "StatsKeyword";
+    StatementPosition[StatementPosition["AfterStatsKeyword"] = 43] = "AfterStatsKeyword";
+    StatementPosition[StatementPosition["AsKeyword"] = 44] = "AsKeyword";
+    StatementPosition[StatementPosition["AfterAsKeyword"] = 45] = "AfterAsKeyword";
+    StatementPosition[StatementPosition["ByKeyword"] = 46] = "ByKeyword";
+    StatementPosition[StatementPosition["AfterByKeyword"] = 47] = "AfterByKeyword";
+    StatementPosition[StatementPosition["InKeyword"] = 48] = "InKeyword";
+    StatementPosition[StatementPosition["AfterInKeyword"] = 49] = "AfterInKeyword";
+    StatementPosition[StatementPosition["LikeKeyword"] = 50] = "LikeKeyword";
+    StatementPosition[StatementPosition["AfterLikeKeyword"] = 51] = "AfterLikeKeyword";
+    StatementPosition[StatementPosition["Function"] = 52] = "Function";
+    StatementPosition[StatementPosition["FunctionArg"] = 53] = "FunctionArg";
+    StatementPosition[StatementPosition["CommandArg"] = 54] = "CommandArg";
+    StatementPosition[StatementPosition["AfterCommand"] = 55] = "AfterCommand";
+    StatementPosition[StatementPosition["ArithmeticOperator"] = 56] = "ArithmeticOperator";
+    StatementPosition[StatementPosition["ArithmeticOperatorArg"] = 57] = "ArithmeticOperatorArg";
+    StatementPosition[StatementPosition["BooleanOperator"] = 58] = "BooleanOperator";
+    StatementPosition[StatementPosition["BooleanOperatorArg"] = 59] = "BooleanOperatorArg";
+    StatementPosition[StatementPosition["ComparisonOperator"] = 60] = "ComparisonOperator";
+    StatementPosition[StatementPosition["ComparisonOperatorArg"] = 61] = "ComparisonOperatorArg";
+})(StatementPosition || (StatementPosition = {}));
+export var SuggestionKind;
+(function (SuggestionKind) {
+    SuggestionKind[SuggestionKind["SelectKeyword"] = 0] = "SelectKeyword";
+    SuggestionKind[SuggestionKind["FunctionsWithArguments"] = 1] = "FunctionsWithArguments";
+    SuggestionKind[SuggestionKind["Metrics"] = 2] = "Metrics";
+    SuggestionKind[SuggestionKind["FromKeyword"] = 3] = "FromKeyword";
+    SuggestionKind[SuggestionKind["SchemaKeyword"] = 4] = "SchemaKeyword";
+    SuggestionKind[SuggestionKind["Namespaces"] = 5] = "Namespaces";
+    SuggestionKind[SuggestionKind["LabelKeys"] = 6] = "LabelKeys";
+    SuggestionKind[SuggestionKind["WhereKeyword"] = 7] = "WhereKeyword";
+    SuggestionKind[SuggestionKind["GroupByKeywords"] = 8] = "GroupByKeywords";
+    SuggestionKind[SuggestionKind["OrderByKeywords"] = 9] = "OrderByKeywords";
+    SuggestionKind[SuggestionKind["FunctionsWithoutArguments"] = 10] = "FunctionsWithoutArguments";
+    SuggestionKind[SuggestionKind["LimitKeyword"] = 11] = "LimitKeyword";
+    SuggestionKind[SuggestionKind["SortOrderDirectionKeyword"] = 12] = "SortOrderDirectionKeyword";
+    SuggestionKind[SuggestionKind["ComparisonOperators"] = 13] = "ComparisonOperators";
+    SuggestionKind[SuggestionKind["LabelValues"] = 14] = "LabelValues";
+    SuggestionKind[SuggestionKind["LogicalOperators"] = 15] = "LogicalOperators";
+    // metricmath,
+    SuggestionKind[SuggestionKind["KeywordArguments"] = 16] = "KeywordArguments";
+    SuggestionKind[SuggestionKind["Operators"] = 17] = "Operators";
+    SuggestionKind[SuggestionKind["Statistic"] = 18] = "Statistic";
+    SuggestionKind[SuggestionKind["Period"] = 19] = "Period";
+    // logs
+    SuggestionKind[SuggestionKind["Command"] = 20] = "Command";
+    SuggestionKind[SuggestionKind["Function"] = 21] = "Function";
+    SuggestionKind[SuggestionKind["InKeyword"] = 22] = "InKeyword";
+})(SuggestionKind || (SuggestionKind = {}));
+export var CompletionItemPriority;
+(function (CompletionItemPriority) {
+    CompletionItemPriority["High"] = "a";
+    CompletionItemPriority["MediumHigh"] = "d";
+    CompletionItemPriority["Medium"] = "g";
+    CompletionItemPriority["MediumLow"] = "k";
+    CompletionItemPriority["Low"] = "q";
+})(CompletionItemPriority || (CompletionItemPriority = {}));
+//# sourceMappingURL=types.js.map

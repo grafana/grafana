@@ -34,7 +34,6 @@ export {
   LegendDisplayMode,
   type VizLegendOptions,
   type OptionsWithLegend,
-  type TableFieldOptions,
   TableCellDisplayMode,
   type FieldTextAlignment,
   type VizTextDisplayOptions,

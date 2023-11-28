@@ -8,7 +8,7 @@ import { withSelectStyles } from '../withSelectStyles/withSelectStyles';
 
 import { AsyncSelectFieldProps } from './AsyncSelectField.types';
 
-const AsyncSelectFieldWrapper: FC<AsyncSelectFieldProps<any>> = ({ label, name, className, ...props }) => (
+const AsyncSelectFieldWrapper: FC<React.PropsWithChildren<AsyncSelectFieldProps<any>>> = ({ label, name, className, ...props }) => (
   <>
     <Label label={label} dataTestId={`${name}-select-label`} />
     <AsyncSelect className={className} {...props} />

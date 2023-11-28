@@ -1,28 +1,26 @@
 package social
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/org"
-
 	"golang.org/x/oauth2"
+
+	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 type SocialGrafanaCom struct {
 	*SocialBase
 	url                  string
 	allowedOrganizations []string
+	skipOrgRoleSync      bool
 }
 
 type OrgRecord struct {
 	Login string `json:"login"`
-}
-
-func (s *SocialGrafanaCom) Type() int {
-	return int(models.GRAFANA_COM)
 }
 
 func (s *SocialGrafanaCom) IsEmailAllowed(email string) bool {
@@ -45,7 +43,8 @@ func (s *SocialGrafanaCom) IsOrganizationMember(organizations []OrgRecord) bool 
 	return false
 }
 
-func (s *SocialGrafanaCom) UserInfo(client *http.Client, _ *oauth2.Token) (*BasicUserInfo, error) {
+// UserInfo is used for login credentials for the user
+func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ *oauth2.Token) (*BasicUserInfo, error) {
 	var data struct {
 		Id    int         `json:"id"`
 		Name  string      `json:"name"`
@@ -55,7 +54,8 @@ func (s *SocialGrafanaCom) UserInfo(client *http.Client, _ *oauth2.Token) (*Basi
 		Orgs  []OrgRecord `json:"orgs"`
 	}
 
-	response, err := s.httpGet(client, s.url+"/api/oauth2/user")
+	response, err := s.httpGet(ctx, client, s.url+"/api/oauth2/user")
+
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
@@ -65,16 +65,23 @@ func (s *SocialGrafanaCom) UserInfo(client *http.Client, _ *oauth2.Token) (*Basi
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
 
+	// on login we do not want to display the role from the external provider
+	var role roletype.RoleType
+	if !s.skipOrgRoleSync {
+		role = org.RoleType(data.Role)
+	}
 	userInfo := &BasicUserInfo{
 		Id:    fmt.Sprintf("%d", data.Id),
 		Name:  data.Name,
 		Login: data.Login,
 		Email: data.Email,
-		Role:  org.RoleType(data.Role),
+		Role:  role,
 	}
 
 	if !s.IsOrganizationMember(data.Orgs) {
-		return nil, ErrMissingOrganizationMembership
+		return nil, ErrMissingOrganizationMembership.Errorf(
+			"User is not a member of any of the allowed organizations: %v. Returned Organizations: %v",
+			s.allowedOrganizations, data.Orgs)
 	}
 
 	return userInfo, nil

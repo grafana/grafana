@@ -48,13 +48,18 @@ export interface AdHocVariableFilter {
   key: string;
   operator: string;
   value: string;
-  condition: string;
+  /** @deprecated  */
+  condition?: string;
 }
 
 export interface AdHocVariableModel extends BaseVariableModel {
   type: 'adhoc';
   datasource: DataSourceRef | null;
   filters: AdHocVariableFilter[];
+  /**
+   * Filters that are always applied to the lookup of keys. Not shown in the AdhocFilterBuilder UI.
+   */
+  baseFilters?: AdHocVariableFilter[];
 }
 
 export interface VariableOption {
@@ -109,7 +114,7 @@ export interface VariableWithMultiSupport extends VariableWithOptions {
 }
 
 export interface VariableWithOptions extends BaseVariableModel {
-  current: VariableOption;
+  current: VariableOption | Record<string, never>;
   options: VariableOption[];
   query: string;
 }
@@ -144,10 +149,11 @@ export interface SystemVariable<TProps extends { toString: () => string }> exten
   current: { value: TProps };
 }
 
-export interface BaseVariableModel extends VariableModel {
+export interface BaseVariableModel {
   name: string;
   label?: string;
   id: string;
+  type: VariableType;
   rootStateKey: string | null;
   global: boolean;
   hide: VariableHide;

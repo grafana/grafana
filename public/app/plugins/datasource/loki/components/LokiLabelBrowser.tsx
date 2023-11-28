@@ -110,8 +110,10 @@ export function facetLabels(
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     background-color: ${theme.colors.background.secondary};
-    padding: ${theme.spacing(2)};
     width: 100%;
+  `,
+  wrapperPadding: css`
+    padding: ${theme.spacing(2)};
   `,
   list: css`
     margin-top: ${theme.spacing(1)};
@@ -124,25 +126,31 @@ const getStyles = (theme: GrafanaTheme2) => ({
     & + & {
       margin: ${theme.spacing(2, 0)};
     }
+
     position: relative;
+  `,
+  footerSectionStyles: css`
+    padding: ${theme.spacing(1)};
+    background-color: ${theme.colors.background.primary};
+    position: sticky;
+    bottom: -${theme.spacing(3)}; /* offset the padding on modal */
+    left: 0;
   `,
   selector: css`
     font-family: ${theme.typography.fontFamilyMonospace};
     margin-bottom: ${theme.spacing(1)};
+    width: 100%;
   `,
   status: css`
-    padding: ${theme.spacing(0.5)};
+    margin-bottom: ${theme.spacing(1)};
     color: ${theme.colors.text.secondary};
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    /* using absolute positioning because flex interferes with ellipsis */
-    position: absolute;
-    width: 50%;
-    right: 0;
-    text-align: right;
     transition: opacity 100ms linear;
     opacity: 0;
+    font-size: ${theme.typography.bodySmall.fontSize};
+    height: calc(${theme.typography.bodySmall.fontSize} + 10px);
   `,
   statusShowing: css`
     opacity: 1;
@@ -192,7 +200,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
   };
 
   onClickRunLogsQuery = () => {
-    reportInteraction('grafana_loki_log_browser_closed', {
+    reportInteraction('grafana_loki_label_browser_closed', {
       app: this.props.app,
       closeType: 'showLogsButton',
     });
@@ -201,20 +209,16 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
   };
 
   onClickRunMetricsQuery = () => {
-    reportInteraction('grafana_loki_log_browser_closed', {
+    reportInteraction('grafana_loki_label_browser_closed', {
       app: this.props.app,
       closeType: 'showLogsRateButton',
     });
     const selector = buildSelector(this.state.labels);
-    const query = `rate(${selector}[$__interval])`;
+    const query = `rate(${selector}[$__auto])`;
     this.props.onChange(query);
   };
 
   onClickClear = () => {
-    reportInteraction('grafana_loki_log_browser_closed', {
-      app: this.props.app,
-      closeType: 'clearButton',
-    });
     this.setState((state) => {
       const labels: SelectableLabel[] = state.labels.map((label) => ({
         ...label,
@@ -367,7 +371,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
   async fetchSeries(selector: string, lastFacetted?: string) {
     const { languageProvider } = this.props;
     if (lastFacetted) {
-      this.updateLabelState(lastFacetted, { loading: true }, `Facetting labels for ${selector}`);
+      this.updateLabelState(lastFacetted, { loading: true }, `Loading labels for ${selector}`);
     }
     try {
       const possibleLabels = await languageProvider.fetchSeriesLabels(selector, true);
@@ -443,83 +447,93 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
     }
 
     return (
-      <div className={styles.wrapper}>
-        <div className={styles.section}>
-          <Label description="Which labels would you like to consider for your search?">
-            1. Select labels to search in
-          </Label>
-          <div className={styles.list}>
-            {labels.map((label) => (
-              <LokiLabel
-                key={label.name}
-                name={label.name}
-                loading={label.loading}
-                active={label.selected}
-                hidden={label.hidden}
-                facets={label.facets}
-                onClick={this.onClickLabel}
+      <>
+        <div className={styles.wrapper}>
+          <div className={cx(styles.section, styles.wrapperPadding)}>
+            <Label description="Which labels would you like to consider for your search?">
+              1. Select labels to search in
+            </Label>
+            <div className={styles.list}>
+              {labels.map((label) => (
+                <LokiLabel
+                  key={label.name}
+                  name={label.name}
+                  loading={label.loading}
+                  active={label.selected}
+                  hidden={label.hidden}
+                  facets={label.facets}
+                  onClick={this.onClickLabel}
+                />
+              ))}
+            </div>
+          </div>
+          <div className={cx(styles.section, styles.wrapperPadding)}>
+            <Label description="Choose the label values that you would like to use for the query. Use the search field to find values across selected labels.">
+              2. Find values for the selected labels
+            </Label>
+            <div>
+              <Input
+                onChange={this.onChangeSearch}
+                aria-label="Filter expression for values"
+                value={searchTerm}
+                placeholder={'Enter a label value'}
               />
-            ))}
-          </div>
-        </div>
-        <div className={styles.section}>
-          <Label description="Choose the label values that you would like to use for the query. Use the search field to find values across selected labels.">
-            2. Find values for the selected labels
-          </Label>
-          <div>
-            <Input onChange={this.onChangeSearch} aria-label="Filter expression for values" value={searchTerm} />
-          </div>
-          <div className={styles.valueListArea}>
-            {selectedLabels.map((label) => (
-              <div role="list" key={label.name} className={styles.valueListWrapper}>
-                <div className={styles.valueTitle} aria-label={`Values for ${label.name}`}>
-                  <LokiLabel
-                    name={label.name}
-                    loading={label.loading}
-                    active={label.selected}
-                    hidden={label.hidden}
-                    //If no facets, we want to show number of all label values
-                    facets={label.facets || label.values?.length}
-                    onClick={this.onClickLabel}
-                  />
+            </div>
+            <div className={styles.valueListArea}>
+              {selectedLabels.map((label) => (
+                <div role="list" key={label.name} className={styles.valueListWrapper}>
+                  <div className={styles.valueTitle} aria-label={`Values for ${label.name}`}>
+                    <LokiLabel
+                      name={label.name}
+                      loading={label.loading}
+                      active={label.selected}
+                      hidden={label.hidden}
+                      //If no facets, we want to show number of all label values
+                      facets={label.facets || label.values?.length}
+                      onClick={this.onClickLabel}
+                    />
+                  </div>
+                  <FixedSizeList
+                    height={200}
+                    itemCount={label.values?.length || 0}
+                    itemSize={28}
+                    itemKey={(i) => (label.values as FacettableValue[])[i].name}
+                    width={200}
+                    className={styles.valueList}
+                  >
+                    {({ index, style }) => {
+                      const value = label.values?.[index];
+                      if (!value) {
+                        return null;
+                      }
+                      return (
+                        <div style={style}>
+                          <LokiLabel
+                            name={label.name}
+                            value={value?.name}
+                            active={value?.selected}
+                            highlightParts={value?.highlightParts}
+                            onClick={this.onClickValue}
+                            searchTerm={searchTerm}
+                          />
+                        </div>
+                      );
+                    }}
+                  </FixedSizeList>
                 </div>
-                <FixedSizeList
-                  height={200}
-                  itemCount={label.values?.length || 0}
-                  itemSize={28}
-                  itemKey={(i) => (label.values as FacettableValue[])[i].name}
-                  width={200}
-                  className={styles.valueList}
-                >
-                  {({ index, style }) => {
-                    const value = label.values?.[index];
-                    if (!value) {
-                      return null;
-                    }
-                    return (
-                      <div style={style}>
-                        <LokiLabel
-                          name={label.name}
-                          value={value?.name}
-                          active={value?.selected}
-                          highlightParts={value?.highlightParts}
-                          onClick={this.onClickValue}
-                          searchTerm={searchTerm}
-                        />
-                      </div>
-                    );
-                  }}
-                </FixedSizeList>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
-        <div className={styles.section}>
+        <div className={styles.footerSectionStyles}>
           <Label>3. Resulting selector</Label>
-          <div aria-label="selector" className={styles.selector}>
+          <pre aria-label="selector" className={styles.selector}>
             {selector}
-          </div>
+          </pre>
           {validationStatus && <div className={styles.validationStatus}>{validationStatus}</div>}
+          <div className={cx(styles.status, (status || error) && styles.statusShowing)}>
+            <span className={error ? styles.error : ''}>{error || status}</span>
+          </div>
           <HorizontalGroup>
             <Button aria-label="Use selector as logs button" disabled={empty} onClick={this.onClickRunLogsQuery}>
               Show logs
@@ -543,12 +557,9 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
             <Button aria-label="Selector clear button" variant="secondary" onClick={this.onClickClear}>
               Clear
             </Button>
-            <div className={cx(styles.status, (status || error) && styles.statusShowing)}>
-              <span className={error ? styles.error : ''}>{error || status}</span>
-            </div>
           </HorizontalGroup>
         </div>
-      </div>
+      </>
     );
   }
 }

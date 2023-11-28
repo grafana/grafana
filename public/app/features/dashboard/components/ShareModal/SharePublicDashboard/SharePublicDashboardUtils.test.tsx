@@ -1,12 +1,40 @@
+import { DataSourceRef, DataQuery } from '@grafana/data/src/types/query';
+import { DataSourceWithBackend } from '@grafana/runtime';
 import { updateConfig } from 'app/core/config';
+import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { VariableModel } from 'app/features/variables/types';
 
 import {
   PublicDashboard,
   dashboardHasTemplateVariables,
-  generatePublicDashboardUrl,
   publicDashboardPersisted,
+  generatePublicDashboardUrl,
+  getUnsupportedDashboardDatasources,
 } from './SharePublicDashboardUtils';
+
+const mockDS = mockDataSource({
+  name: 'mock-ds',
+  type: 'mock-ds-type',
+});
+
+jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
+  return {
+    getDataSourceSrv: () => ({
+      get: () =>
+        Promise.resolve(
+          new DataSourceWithBackend({
+            ...mockDS,
+            meta: {
+              ...mockDS.meta,
+              alerting: true,
+              backend: true,
+            },
+          })
+        ),
+    }),
+  };
+});
 
 describe('dashboardHasTemplateVariables', () => {
   it('false', () => {
@@ -28,7 +56,7 @@ describe('generatePublicDashboardUrl', () => {
     updateConfig({ appUrl });
     let pubdash = { accessToken } as PublicDashboard;
 
-    expect(generatePublicDashboardUrl(pubdash)).toEqual(`${appUrl}public-dashboards/${accessToken}`);
+    expect(generatePublicDashboardUrl(pubdash.accessToken!)).toEqual(`${appUrl}public-dashboards/${accessToken}`);
   });
 });
 
@@ -43,5 +71,40 @@ describe('publicDashboardPersisted', () => {
     expect(publicDashboardPersisted(pubdash)).toBe(false);
     pubdash = {} as PublicDashboard;
     expect(publicDashboardPersisted(pubdash)).toBe(false);
+  });
+});
+
+describe('getUnsupportedDashboardDatasources', () => {
+  it('itIsSupported', async () => {
+    const pm = {
+      targets: [
+        {
+          datasource: { type: 'prometheus' } as DataSourceRef,
+        } as DataQuery,
+        {
+          datasource: { type: '__expr__' } as DataSourceRef,
+        } as DataQuery,
+        {
+          datasource: { type: 'datasource' } as DataSourceRef,
+        } as DataQuery,
+      ] as DataQuery[],
+    } as PanelModel;
+    const panelArray: PanelModel[] = [pm];
+    const unsupportedDataSources = await getUnsupportedDashboardDatasources(panelArray);
+    expect(unsupportedDataSources).toEqual([]);
+  });
+
+  it('itIsNotSupported', async () => {
+    const pm = {
+      targets: [
+        {
+          datasource: { type: 'blah' } as DataSourceRef,
+        } as DataQuery,
+      ] as DataQuery[],
+    } as PanelModel;
+    const panelArray: PanelModel[] = [pm];
+    const unsupportedDataSources = await getUnsupportedDashboardDatasources(panelArray);
+
+    expect(unsupportedDataSources).toEqual(['blah']);
   });
 });

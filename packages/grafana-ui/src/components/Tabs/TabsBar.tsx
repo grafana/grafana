@@ -3,7 +3,7 @@ import React, { ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { stylesFactory, useTheme2 } from '../../themes';
+import { useStyles2 } from '../../themes';
 
 export interface Props {
   /** Children should be a single <Tab /> or an array of <Tab /> */
@@ -16,36 +16,44 @@ export interface Props {
   dataTestId?: string;
 }
 
-const getTabsBarStyles = stylesFactory((theme: GrafanaTheme2, hideBorder = false, vertical = false) => {
-  return {
-    tabsWrapper:
-      !hideBorder &&
-      css`
-        border-bottom: 1px solid ${theme.colors.border.weak};
-      `,
-    tabs: css`
-      position: relative;
-      display: flex;
-      ${!!vertical ? 'height' : 'min-height'}: ${theme.components.menuTabs.height}px;
-      flex-direction: ${!!vertical ? 'column' : 'row'};
-      flex-wrap: ${!!vertical ? 'no-wrap' : 'wrap'};
-    `,
-  };
+export const TabsBar = React.forwardRef<HTMLDivElement, Props>(({
+  children,
+  className,
+  hideBorder = false,
+  // @PERCONA
+  vertical = false,
+  dataTestId = ''
+}, ref) => {
+  const styles = useStyles2(theme => getStyles(theme, vertical));
+
+  return (
+    <div className={cx(styles.tabsWrapper, hideBorder && styles.noBorder, className)} ref={ref}>
+      <div data-testid={dataTestId} className={styles.tabs} role="tablist">
+        {children}
+      </div>
+    </div>
+  );
 });
 
-export const TabsBar = React.forwardRef<HTMLDivElement, Props>(
-  ({ children, className, hideBorder, vertical = false, dataTestId = '' }, ref) => {
-    const theme = useTheme2();
-    const tabsStyles = getTabsBarStyles(theme, hideBorder, vertical);
+const getStyles = (theme: GrafanaTheme2, vertical: boolean) => ({
+  tabsWrapper: css({
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    overflowX: 'auto',
+  }),
+  noBorder: css({
+    borderBottom: 0,
+  }),
+  tabs: css({
+    position: 'relative',
+    display: 'flex',
+    height: `${theme.components.menuTabs.height}px`,
+    alignItems: 'center',
 
-    return (
-      <div className={cx(tabsStyles.tabsWrapper, className)} ref={ref}>
-        <div data-testid={dataTestId} className={tabsStyles.tabs} role="tablist">
-          {children}
-        </div>
-      </div>
-    );
-  }
-);
+    // @PERCONA
+    [!!vertical ? 'height' : 'minHeight']: `${theme.components.menuTabs.height}px`,
+    flexDirection: !!vertical ? 'column' : 'row',
+    flexWrap: !!vertical ? 'nowrap' : 'wrap',
+  }),
+});
 
 TabsBar.displayName = 'TabsBar';

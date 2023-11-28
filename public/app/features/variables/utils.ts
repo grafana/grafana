@@ -1,24 +1,25 @@
 import { isArray, isEqual } from 'lodash';
 
-import { ScopedVars, UrlQueryMap, UrlQueryValue, VariableType } from '@grafana/data';
+import { LegacyMetricFindQueryOptions, ScopedVars, UrlQueryMap, UrlQueryValue, VariableType } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { safeStringifyValue } from 'app/core/utils/explore';
 
 import { getState } from '../../store/store';
 import { StoreState } from '../../types';
-import { getTimeSrv } from '../dashboard/services/TimeSrv';
+import { TimeSrv } from '../dashboard/services/TimeSrv';
 
 import { variableAdapters } from './adapters';
-import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from './constants';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, VARIABLE_PREFIX } from './constants';
 import { getVariablesState } from './state/selectors';
 import { KeyedVariableIdentifier, VariableIdentifier, VariablePayload } from './state/types';
 import { QueryVariableModel, TransactionStatus, VariableModel, VariableRefresh, VariableWithOptions } from './types';
 
 /*
  * This regex matches 3 types of variable reference with an optional format specifier
- * \$(\w+)                          $var1
- * \[\[(\w+?)(?::(\w+))?\]\]        [[var2]] or [[var2:fmt2]]
- * \${(\w+)(?::(\w+))?}             ${var3} or ${var3:fmt3}
+ * There are 6 capture groups that replace will return
+ * \$(\w+)                                    $var1
+ * \[\[(\w+?)(?::(\w+))?\]\]                  [[var2]] or [[var2:fmt2]]
+ * \${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}   ${var3} or ${var3.fieldPath} or ${var3:fmt3} (or ${var3.fieldPath:fmt3} but that is not a separate capture group)
  */
 export const variableRegex = /\$(\w+)|\[\[(\w+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}/g;
 
@@ -26,38 +27,6 @@ export const variableRegex = /\$(\w+)|\[\[(\w+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^
 export const variableRegexExec = (variableString: string) => {
   variableRegex.lastIndex = 0;
   return variableRegex.exec(variableString);
-};
-
-export const SEARCH_FILTER_VARIABLE = '__searchFilter';
-
-export const containsSearchFilter = (query: string | unknown): boolean =>
-  query && typeof query === 'string' ? query.indexOf(SEARCH_FILTER_VARIABLE) !== -1 : false;
-
-export interface SearchFilterOptions {
-  searchFilter?: string;
-}
-
-export const getSearchFilterScopedVar = (args: {
-  query: string;
-  wildcardChar: string;
-  options?: SearchFilterOptions;
-}): ScopedVars => {
-  const { query, wildcardChar } = args;
-  if (!containsSearchFilter(query)) {
-    return {};
-  }
-
-  let { options } = args;
-
-  options = options || { searchFilter: '' };
-  const value = options.searchFilter ? `${options.searchFilter}${wildcardChar}` : `${wildcardChar}`;
-
-  return {
-    __searchFilter: {
-      value,
-      text: '',
-    },
-  };
 };
 
 export function containsVariable(...args: any[]) {
@@ -162,8 +131,14 @@ export function getTemplatedRegex(variable: QueryVariableModel, templateSrv = ge
   return templateSrv.replace(variable.regex, {}, 'regex');
 }
 
-export function getLegacyQueryOptions(variable: QueryVariableModel, searchFilter?: string, timeSrv = getTimeSrv()) {
-  const queryOptions: any = { range: undefined, variable, searchFilter };
+export function getLegacyQueryOptions(
+  variable: QueryVariableModel,
+  searchFilter: string | undefined,
+  timeSrv: TimeSrv,
+  scopedVars: ScopedVars | undefined
+): LegacyMetricFindQueryOptions {
+  const queryOptions: LegacyMetricFindQueryOptions = { range: undefined, variable, searchFilter, scopedVars };
+
   if (variable.refresh === VariableRefresh.onTimeRangeChanged || variable.refresh === VariableRefresh.onDashboardLoad) {
     queryOptions.range = timeSrv.timeRange();
   }
@@ -193,9 +168,10 @@ export function getVariableTypes(): Array<{ label: string; value: VariableType }
   return variableAdapters
     .list()
     .filter((v) => v.id !== 'system')
-    .map(({ id, name }) => ({
+    .map(({ id, name, description }) => ({
       label: name,
       value: id,
+      description,
     }));
 }
 
@@ -223,7 +199,7 @@ export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): Ex
   const changes: ExtendedUrlQueryMap = {};
 
   for (const key in query) {
-    if (!key.startsWith('var-')) {
+    if (!key.startsWith(VARIABLE_PREFIX)) {
       continue;
     }
 
@@ -237,7 +213,7 @@ export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): Ex
   }
 
   for (const key in old) {
-    if (!key.startsWith('var-')) {
+    if (!key.startsWith(VARIABLE_PREFIX)) {
       continue;
     }
 
@@ -256,7 +232,7 @@ export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): Ex
   return count ? changes : undefined;
 }
 
-export function ensureStringValues(value: any | any[]): string | string[] {
+export function ensureStringValues(value: unknown | unknown[]): string | string[] {
   if (Array.isArray(value)) {
     return value.map(String);
   }

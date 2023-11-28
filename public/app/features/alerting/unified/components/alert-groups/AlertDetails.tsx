@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { LinkButton, useStyles2 } from '@grafana/ui';
@@ -7,7 +7,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AlertmanagerAlert, AlertState } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
-import { getInstancesPermissions } from '../../utils/access-control';
+import { AlertmanagerAction } from '../../hooks/useAbilities';
 import { isGrafanaRulesSource } from '../../utils/datasource';
 import { makeAMLink, makeLabelBasedSilenceLink } from '../../utils/misc';
 import { AnnotationDetailsField } from '../AnnotationDetailsField';
@@ -18,9 +18,8 @@ interface AmNotificationsAlertDetailsProps {
   alert: AlertmanagerAlert;
 }
 
-export const AlertDetails: FC<AmNotificationsAlertDetailsProps> = ({ alert, alertManagerSourceName }) => {
+export const AlertDetails = ({ alert, alertManagerSourceName }: AmNotificationsAlertDetailsProps) => {
   const styles = useStyles2(getStyles);
-  const instancePermissions = getInstancesPermissions(alertManagerSourceName);
 
   // For Grafana Managed alerts the Generator URL redirects to the alert rule edit page, so update permission is required
   // For external alert manager the Generator URL redirects to an external service which we don't control
@@ -32,8 +31,8 @@ export const AlertDetails: FC<AmNotificationsAlertDetailsProps> = ({ alert, aler
   return (
     <>
       <div className={styles.actionsRow}>
-        <Authorize actions={[instancePermissions.update, instancePermissions.create]} fallback={contextSrv.isEditor}>
-          {alert.status.state === AlertState.Suppressed && (
+        {alert.status.state === AlertState.Suppressed && (
+          <Authorize actions={[AlertmanagerAction.CreateSilence, AlertmanagerAction.UpdateSilence]}>
             <LinkButton
               href={`${makeAMLink(
                 '/alerting/silences',
@@ -45,8 +44,10 @@ export const AlertDetails: FC<AmNotificationsAlertDetailsProps> = ({ alert, aler
             >
               Manage silences
             </LinkButton>
-          )}
-          {alert.status.state === AlertState.Active && (
+          </Authorize>
+        )}
+        {alert.status.state === AlertState.Active && (
+          <Authorize actions={[AlertmanagerAction.CreateSilence]}>
             <LinkButton
               href={makeLabelBasedSilenceLink(alertManagerSourceName, alert.labels)}
               className={styles.button}
@@ -55,8 +56,8 @@ export const AlertDetails: FC<AmNotificationsAlertDetailsProps> = ({ alert, aler
             >
               Silence
             </LinkButton>
-          )}
-        </Authorize>
+          </Authorize>
+        )}
         {isSeeSourceButtonEnabled && alert.generatorURL && (
           <LinkButton className={styles.button} href={alert.generatorURL} icon={'chart-line'} size={'sm'}>
             See source

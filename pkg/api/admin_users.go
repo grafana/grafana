@@ -7,10 +7,17 @@ import (
 	"strconv"
 	"strings"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -33,7 +40,7 @@ import (
 // 403: forbiddenError
 // 412: preconditionFailedError
 // 500: internalServerError
-func (hs *HTTPServer) AdminCreateUser(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AdminCreateUser(c *contextmodel.ReqContext) response.Response {
 	form := dtos.AdminCreateUserForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -50,35 +57,28 @@ func (hs *HTTPServer) AdminCreateUser(c *models.ReqContext) response.Response {
 		OrgID:    form.OrgId,
 	}
 
-	if len(cmd.Login) == 0 {
-		cmd.Login = cmd.Email
-		if len(cmd.Login) == 0 {
-			return response.Error(400, "Validation error, need specify either username or email", nil)
-		}
-	}
-
 	if len(cmd.Password) < 4 {
 		return response.Error(400, "Password is missing or too short", nil)
 	}
 
-	usr, err := hs.Login.CreateUser(cmd)
+	usr, err := hs.userService.Create(c.Req.Context(), &cmd)
 	if err != nil {
-		if errors.Is(err, models.ErrOrgNotFound) {
-			return response.Error(400, err.Error(), nil)
+		if errors.Is(err, org.ErrOrgNotFound) {
+			return response.Error(http.StatusBadRequest, err.Error(), nil)
 		}
 
 		if errors.Is(err, user.ErrUserAlreadyExists) {
-			return response.Error(412, fmt.Sprintf("User with email '%s' or username '%s' already exists", form.Email, form.Login), err)
+			return response.Error(http.StatusPreconditionFailed, fmt.Sprintf("User with email '%s' or username '%s' already exists", form.Email, form.Login), err)
 		}
 
-		return response.Error(500, "failed to create user", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to create user", err)
 	}
 
 	metrics.MApiAdminUserCreate.Inc()
 
-	result := models.UserIdDTO{
+	result := user.AdminCreateUserResponse{
 		Message: "User created",
-		Id:      usr.ID,
+		ID:      usr.ID,
 	}
 
 	return response.JSON(http.StatusOK, result)
@@ -99,7 +99,7 @@ func (hs *HTTPServer) AdminCreateUser(c *models.ReqContext) response.Response {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) AdminUpdateUserPassword(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AdminUpdateUserPassword(c *contextmodel.ReqContext) response.Response {
 	form := dtos.AdminUpdateUserPasswordForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -151,7 +151,7 @@ func (hs *HTTPServer) AdminUpdateUserPassword(c *models.ReqContext) response.Res
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) AdminUpdateUserPermissions(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AdminUpdateUserPermissions(c *contextmodel.ReqContext) response.Response {
 	form := dtos.AdminUpdateUserPermissionsForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -161,7 +161,18 @@ func (hs *HTTPServer) AdminUpdateUserPermissions(c *models.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	err = hs.SQLStore.UpdateUserPermissions(userID, form.IsGrafanaAdmin)
+	getAuthQuery := login.GetAuthInfoQuery{UserId: userID}
+	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil && authInfo != nil {
+		oAuthAndAllowAssignGrafanaAdmin := false
+		if oauthInfo := hs.SocialService.GetOAuthInfoProvider(strings.TrimPrefix(authInfo.AuthModule, "oauth_")); oauthInfo != nil {
+			oAuthAndAllowAssignGrafanaAdmin = oauthInfo.AllowAssignGrafanaAdmin
+		}
+		if login.IsGrafanaAdminExternallySynced(hs.Cfg, authInfo.AuthModule, oAuthAndAllowAssignGrafanaAdmin) {
+			return response.Error(http.StatusForbidden, "Cannot change Grafana Admin role for externally synced user", nil)
+		}
+	}
+
+	err = hs.userService.UpdatePermissions(c.Req.Context(), userID, form.IsGrafanaAdmin)
 	if err != nil {
 		if errors.Is(err, user.ErrLastGrafanaAdmin) {
 			return response.Error(400, user.ErrLastGrafanaAdmin.Error(), nil)
@@ -188,7 +199,7 @@ func (hs *HTTPServer) AdminUpdateUserPermissions(c *models.ReqContext) response.
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) AdminDeleteUser(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AdminDeleteUser(c *contextmodel.ReqContext) response.Response {
 	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
@@ -200,6 +211,65 @@ func (hs *HTTPServer) AdminDeleteUser(c *models.ReqContext) response.Response {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(404, user.ErrUserNotFound.Error(), nil)
 		}
+		return response.Error(500, "Failed to delete user", err)
+	}
+
+	g, ctx := errgroup.WithContext(c.Req.Context())
+	g.Go(func() error {
+		if err := hs.starService.DeleteByUser(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := hs.orgService.DeleteUserFromAll(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := hs.DashboardService.DeleteACLByUser(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := hs.preferenceService.DeleteByUser(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := hs.teamService.RemoveUsersMemberships(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := hs.authInfoService.DeleteUserAuthInfo(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := hs.AuthTokenService.RevokeAllUserTokens(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := hs.QuotaService.DeleteQuotaForUser(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := hs.accesscontrolService.DeleteUserPermissions(ctx, accesscontrol.GlobalOrgID, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err := g.Wait(); err != nil {
 		return response.Error(500, "Failed to delete user", err)
 	}
 
@@ -221,15 +291,15 @@ func (hs *HTTPServer) AdminDeleteUser(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) AdminDisableUser(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AdminDisableUser(c *contextmodel.ReqContext) response.Response {
 	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
 	// External users shouldn't be disabled from API
-	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
-	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authInfoQuery); !errors.Is(err, user.ErrUserNotFound) {
+	authInfoQuery := &login.GetAuthInfoQuery{UserId: userID}
+	if _, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authInfoQuery); !errors.Is(err, user.ErrUserNotFound) {
 		return response.Error(500, "Could not disable external user", nil)
 	}
 
@@ -264,15 +334,15 @@ func (hs *HTTPServer) AdminDisableUser(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) AdminEnableUser(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AdminEnableUser(c *contextmodel.ReqContext) response.Response {
 	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
 	// External users shouldn't be disabled from API
-	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
-	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authInfoQuery); !errors.Is(err, user.ErrUserNotFound) {
+	authInfoQuery := &login.GetAuthInfoQuery{UserId: userID}
+	if _, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authInfoQuery); !errors.Is(err, user.ErrUserNotFound) {
 		return response.Error(500, "Could not enable external user", nil)
 	}
 
@@ -302,14 +372,21 @@ func (hs *HTTPServer) AdminEnableUser(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) AdminLogoutUser(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AdminLogoutUser(c *contextmodel.ReqContext) response.Response {
 	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	if c.UserID == userID {
-		return response.Error(400, "You cannot logout yourself", nil)
+	namespace, identifier := c.SignedInUser.GetNamespacedID()
+	if namespace == identity.NamespaceUser {
+		activeUserID, err := identity.IntIdentifier(namespace, identifier)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed to parse active user id", err)
+		}
+		if activeUserID == userID {
+			return response.Error(http.StatusBadRequest, "You cannot logout yourself", nil)
+		}
 	}
 
 	return hs.logoutUserFromAllDevicesInternal(c.Req.Context(), userID)
@@ -328,7 +405,7 @@ func (hs *HTTPServer) AdminLogoutUser(c *models.ReqContext) response.Response {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) AdminGetUserAuthTokens(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AdminGetUserAuthTokens(c *contextmodel.ReqContext) response.Response {
 	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
@@ -353,8 +430,8 @@ func (hs *HTTPServer) AdminGetUserAuthTokens(c *models.ReqContext) response.Resp
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) AdminRevokeUserAuthToken(c *models.ReqContext) response.Response {
-	cmd := models.RevokeAuthTokenCmd{}
+func (hs *HTTPServer) AdminRevokeUserAuthToken(c *contextmodel.ReqContext) response.Response {
+	cmd := auth.RevokeAuthTokenCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -414,7 +491,7 @@ type AdminLogoutUserParams struct {
 type AdminRevokeUserAuthTokenParams struct {
 	// in:body
 	// required:true
-	Body models.RevokeAuthTokenCmd `json:"body"`
+	Body auth.RevokeAuthTokenCmd `json:"body"`
 	// in:path
 	// required:true
 	UserID int64 `json:"user_id"`
@@ -440,11 +517,11 @@ type AdminUpdateUserPermissionsParams struct {
 // swagger:response adminCreateUserResponse
 type AdminCreateUserResponseResponse struct {
 	// in:body
-	Body models.UserIdDTO `json:"body"`
+	Body user.AdminCreateUserResponse `json:"body"`
 }
 
 // swagger:response adminGetUserAuthTokensResponse
 type AdminGetUserAuthTokensResponse struct {
 	// in:body
-	Body []*models.UserToken `json:"body"`
+	Body []*auth.UserToken `json:"body"`
 }

@@ -1,6 +1,11 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
-//  Frame[0] {}
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
+//  }
 //  Name: test
 //  Dimensions: 2 Fields by 2 Rows
 //  +-----------------------------------------+-------------------------+
@@ -15,11 +20,17 @@
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
 {
+  "status": 200,
   "frames": [
     {
       "schema": {
         "name": "test",
-        "meta": {},
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ]
+        },
         "fields": [
           {
             "name": "Time",
@@ -53,6 +64,13 @@
             1.4,
             6.6
           ]
+        ],
+        "nanos": [
+          [
+            814545,
+            214724
+          ],
+          null
         ]
       }
     }

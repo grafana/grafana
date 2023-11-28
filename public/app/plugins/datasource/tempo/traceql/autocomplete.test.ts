@@ -1,37 +1,54 @@
-import { DataSourceInstanceSettings, PluginType } from '@grafana/data/src';
+import { DataSourceInstanceSettings, PluginMetaInfo, PluginType } from '@grafana/data';
 import { monacoTypes } from '@grafana/ui';
 
+import { emptyTags, v1Tags, v2Tags } from '../SearchTraceQLEditor/utils.test';
 import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
-import { TempoJsonData } from '../types';
+import { Scope, TempoJsonData } from '../types';
 
 import { CompletionProvider } from './autocomplete';
+import { intrinsics, scopes } from './traceql';
+
+const emptyPosition = {} as monacoTypes.Position;
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  reportInteraction: jest.fn(),
 }));
 
 describe('CompletionProvider', () => {
-  it('suggests tags, intrinsics and scopes', async () => {
-    const { provider, model } = setup('{}', 1, defaultTags);
-    const result = await provider.provideCompletionItems(model as any, {} as any);
+  it('suggests tags, intrinsics and scopes (API v1)', async () => {
+    const { provider, model } = setup('{}', 1, v1Tags);
+    const result = await provider.provideCompletionItems(model, emptyPosition);
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
-      ...CompletionProvider.scopes.map((s) => expect.objectContaining({ label: s, insertText: s })),
-      ...CompletionProvider.intrinsics.map((s) => expect.objectContaining({ label: s, insertText: s })),
+      ...scopes.map((s) => expect.objectContaining({ label: s, insertText: s })),
+      ...intrinsics.map((s) => expect.objectContaining({ label: s, insertText: s })),
       expect.objectContaining({ label: 'bar', insertText: '.bar' }),
       expect.objectContaining({ label: 'foo', insertText: '.foo' }),
+      expect.objectContaining({ label: 'status', insertText: '.status' }),
     ]);
   });
 
-  it('suggests tag names with quotes', async () => {
-    const { provider, model } = setup('{foo=}', 5, defaultTags);
+  it('suggests tags, intrinsics and scopes (API v2)', async () => {
+    const { provider, model } = setup('{}', 1, undefined, v2Tags);
+    const result = await provider.provideCompletionItems(model, emptyPosition);
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
+      ...scopes.map((s) => expect.objectContaining({ label: s, insertText: s })),
+      ...intrinsics.map((s) => expect.objectContaining({ label: s, insertText: s })),
+      expect.objectContaining({ label: 'cluster', insertText: '.cluster' }),
+      expect.objectContaining({ label: 'container', insertText: '.container' }),
+      expect.objectContaining({ label: 'db', insertText: '.db' }),
+    ]);
+  });
 
-    jest.spyOn(provider.languageProvider, 'getOptions').mockImplementation(
+  it('does not wrap the tag value in quotes if the type in the response is something other than "string"', async () => {
+    const { provider, model } = setup('{.foo=}', 6, v1Tags);
+
+    jest.spyOn(provider.languageProvider, 'getOptionsV2').mockImplementation(
       () =>
         new Promise((resolve) => {
           resolve([
             {
+              type: 'int',
               value: 'foobar',
               label: 'foobar',
             },
@@ -39,16 +56,38 @@ describe('CompletionProvider', () => {
         })
     );
 
-    const result = await provider.provideCompletionItems(model as any, {} as any);
+    const result = await provider.provideCompletionItems(model, emptyPosition);
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
+      expect.objectContaining({ label: 'foobar', insertText: 'foobar' }),
+    ]);
+  });
+
+  it('wraps the tag value in quotes if the type in the response is set to "string"', async () => {
+    const { provider, model } = setup('{.foo=}', 6, v1Tags);
+
+    jest.spyOn(provider.languageProvider, 'getOptionsV2').mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolve([
+            {
+              type: 'string',
+              value: 'foobar',
+              label: 'foobar',
+            },
+          ]);
+        })
+    );
+
+    const result = await provider.provideCompletionItems(model, emptyPosition);
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
       expect.objectContaining({ label: 'foobar', insertText: '"foobar"' }),
     ]);
   });
 
-  it('suggests tag names without quotes', async () => {
-    const { provider, model } = setup('{foo="}', 6, defaultTags);
+  it('inserts the tag value without quotes if the user has entered quotes', async () => {
+    const { provider, model } = setup('{.foo="}', 6, v1Tags);
 
-    jest.spyOn(provider.languageProvider, 'getOptions').mockImplementation(
+    jest.spyOn(provider.languageProvider, 'getOptionsV2').mockImplementation(
       () =>
         new Promise((resolve) => {
           resolve([
@@ -60,84 +99,260 @@ describe('CompletionProvider', () => {
         })
     );
 
-    const result = await provider.provideCompletionItems(model as any, {} as any);
+    const result = await provider.provideCompletionItems(model, emptyPosition);
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
       expect.objectContaining({ label: 'foobar', insertText: 'foobar' }),
     ]);
   });
 
   it('suggests nothing without tags', async () => {
-    const { provider, model } = setup('{foo="}', 7, []);
-    const result = await provider.provideCompletionItems(model as any, {} as any);
+    const { provider, model } = setup('{.foo="}', 8, emptyTags);
+    const result = await provider.provideCompletionItems(model, emptyPosition);
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([]);
   });
 
-  it('suggests tags on empty input', async () => {
-    const { provider, model } = setup('', 0, defaultTags);
-    const result = await provider.provideCompletionItems(model as any, {} as any);
+  it('suggests tags on empty input (API v1)', async () => {
+    const { provider, model } = setup('', 0, v1Tags);
+    const result = await provider.provideCompletionItems(model, emptyPosition);
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
-      ...CompletionProvider.scopes.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}` })),
-      ...CompletionProvider.intrinsics.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}` })),
+      ...scopes.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}` })),
+      ...intrinsics.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}` })),
       expect.objectContaining({ label: 'bar', insertText: '{ .bar' }),
       expect.objectContaining({ label: 'foo', insertText: '{ .foo' }),
+      expect.objectContaining({ label: 'status', insertText: '{ .status' }),
     ]);
   });
 
-  it('suggests operators after a space after the tag name', async () => {
-    const { provider, model } = setup('{ foo }', 6, defaultTags);
-    const result = await provider.provideCompletionItems(model as any, {} as any);
+  it('suggests tags on empty input (API v2)', async () => {
+    const { provider, model } = setup('', 0, undefined, v2Tags);
+    const result = await provider.provideCompletionItems(model, emptyPosition);
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
+      ...scopes.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}` })),
+      ...intrinsics.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}` })),
+      expect.objectContaining({ label: 'cluster', insertText: '{ .cluster' }),
+      expect.objectContaining({ label: 'container', insertText: '{ .container' }),
+      expect.objectContaining({ label: 'db', insertText: '{ .db' }),
+    ]);
+  });
+
+  it('only suggests tags after typing the global attribute scope (API v1)', async () => {
+    const { provider, model } = setup('{.}', 2, v1Tags);
+    const result = await provider.provideCompletionItems(model, emptyPosition);
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
-      CompletionProvider.operators.map((s) => expect.objectContaining({ label: s, insertText: s }))
+      v1Tags.map((s) => expect.objectContaining({ label: s, insertText: s }))
     );
   });
 
-  it('suggests tags after a scope', async () => {
-    const { provider, model } = setup('{ resource. }', 11, defaultTags);
-    const result = await provider.provideCompletionItems(model as any, {} as any);
-    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
-      ...CompletionProvider.intrinsics.map((s) => expect.objectContaining({ label: s, insertText: s })),
-      ...defaultTags.map((s) => expect.objectContaining({ label: s, insertText: s })),
-    ]);
+  it('only suggests tags after typing the global attribute scope (API v2)', async () => {
+    const { provider, model } = setup('{.}', 2, undefined, v2Tags);
+    const result = await provider.provideCompletionItems(model, emptyPosition);
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
+      ['cluster', 'container', 'db'].map((s) => expect.objectContaining({ label: s, insertText: s }))
+    );
+  });
+
+  it('suggests tags after a scope (API v1)', async () => {
+    const { provider, model } = setup('{ resource. }', 11, v1Tags);
+    const result = await provider.provideCompletionItems(model, emptyPosition);
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
+      v1Tags.map((s) => expect.objectContaining({ label: s, insertText: s }))
+    );
+  });
+
+  it('suggests correct tags after the resource scope (API v2)', async () => {
+    const { provider, model } = setup('{ resource. }', 11, undefined, v2Tags);
+    const result = await provider.provideCompletionItems(model, emptyPosition);
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
+      ['cluster', 'container'].map((s) => expect.objectContaining({ label: s, insertText: s }))
+    );
+  });
+
+  it('suggests correct tags after the span scope (API v2)', async () => {
+    const { provider, model } = setup('{ span. }', 7, undefined, v2Tags);
+    const result = await provider.provideCompletionItems(model, emptyPosition);
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
+      ['db'].map((s) => expect.objectContaining({ label: s, insertText: s }))
+    );
   });
 
   it('suggests logical operators and close bracket after the value', async () => {
-    const { provider, model } = setup('{foo=300 }', 9, defaultTags);
-    const result = await provider.provideCompletionItems(model as any, {} as any);
+    const { provider, model } = setup('{.foo=300 }', 10, v1Tags);
+    const result = await provider.provideCompletionItems(model, emptyPosition);
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
+      [...CompletionProvider.logicalOps, ...CompletionProvider.arithmeticOps, ...CompletionProvider.comparisonOps].map(
+        (s) => expect.objectContaining({ label: s.label, insertText: s.insertText })
+      )
+    );
+  });
+
+  it('suggests spanset combining operators after spanset selector', async () => {
+    const { provider, model } = setup('{.foo=300} ', 11);
+    const result = await provider.provideCompletionItems(model, emptyPosition);
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
+      CompletionProvider.spansetOps.map((s) => expect.objectContaining({ label: s.label, insertText: s.insertText }))
+    );
+  });
+
+  it.each([
+    ['{.foo=300} | ', 13],
+    ['{.foo=300} && {.bar=200} | ', 27],
+    ['{.foo=300} && {.bar=300} && {.foo=300} | ', 41],
+  ])(
+    'suggests operators that go after `|` (aggregators, selectorts, ...) - %s, %i',
+    async (input: string, offset: number) => {
+      const { provider, model } = setup(input, offset, undefined, v2Tags);
+      const result = await provider.provideCompletionItems(model, emptyPosition);
+      expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
+        ...CompletionProvider.functions.map((s) =>
+          expect.objectContaining({ label: s.label, insertText: s.insertText, documentation: s.documentation })
+        ),
+        ...scopes.map((s) => expect.objectContaining({ label: s, insertText: s })),
+        ...intrinsics.map((s) => expect.objectContaining({ label: s, insertText: s })),
+        expect.objectContaining({ label: 'cluster', insertText: '.cluster' }),
+        expect.objectContaining({ label: 'container', insertText: '.container' }),
+        expect.objectContaining({ label: 'db', insertText: '.db' }),
+      ]);
+    }
+  );
+
+  it.each([
+    ['{.foo=300} | avg(.value) ', 25],
+    ['{.foo=300} && {.foo=300} | avg(.value) ', 39],
+  ])(
+    'suggests comparison operators after aggregator (avg, max, ...) - %s, %i',
+    async (input: string, offset: number) => {
+      const { provider, model } = setup(input, offset);
+      const result = await provider.provideCompletionItems(model, emptyPosition);
+      expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
+        CompletionProvider.comparisonOps.map((s) =>
+          expect.objectContaining({ label: s.label, insertText: s.insertText })
+        )
+      );
+    }
+  );
+
+  it.each([
+    ['{.foo=300} | avg(.value) = ', 27],
+    ['{.foo=300} && {.foo=300} | avg(.value) = ', 41],
+  ])('does not suggest after aggregator and comparison operator - %s, %i', async (input: string, offset: number) => {
+    const { provider, model } = setup(input, offset);
+    const result = await provider.provideCompletionItems(model, emptyPosition);
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([]);
+  });
+
+  it('suggests when `}` missing', async () => {
+    const { provider, model } = setup('{ span.http.status_code ', 24);
+    const result = await provider.provideCompletionItems(model, emptyPosition);
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
+      [...CompletionProvider.comparisonOps, ...CompletionProvider.logicalOps].map((s) =>
+        expect.objectContaining({ label: s.label, insertText: s.insertText })
+      )
+    );
+  });
+
+  it.each([
+    ['{ .foo }', 7],
+    ['{.foo   300}', 6],
+    ['{.foo   300}', 7],
+    ['{.foo   300}', 8],
+    ['{.foo  300 && .bar = 200}', 6],
+    ['{.foo  300 && .bar = 200}', 7],
+    ['{.foo  300 && .bar  200}', 19],
+    ['{.foo  300 && .bar  200}', 20],
+    ['{ .foo = 1 && .bar }', 19],
+    ['{ .foo = 1 && .bar  }', 19],
+  ])('suggests with incomplete spanset - %s, %i', async (input: string, offset: number) => {
+    const { provider, model } = setup(input, offset);
+    const result = await provider.provideCompletionItems(model, emptyPosition);
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
+      [...CompletionProvider.comparisonOps, ...CompletionProvider.logicalOps, ...CompletionProvider.arithmeticOps].map(
+        (s) => expect.objectContaining({ label: s.label, insertText: s.insertText })
+      )
+    );
+  });
+
+  it.each([
+    ['{ .foo }', 6],
+    ['{.foo   300}', 5],
+    ['{.foo  300 && .bar = 200}', 5],
+    ['{ .foo = 1 && .bar }', 18],
+  ])('suggests with incomplete spanset with no space before cursor - %s, %i', async (input: string, offset: number) => {
+    const { provider, model } = setup(input, offset);
+    const result = await provider.provideCompletionItems(model, emptyPosition);
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([]);
+  });
+
+  it.each([
+    ['{ span.d }', 8],
+    ['{ span.db }', 9],
+  ])('suggests to complete attribute - %s, %i', async (input: string, offset: number) => {
+    const { provider, model } = setup(input, offset, undefined, v2Tags);
+    const result = await provider.provideCompletionItems(model, emptyPosition);
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
-      ...CompletionProvider.logicalOps.map((s) => expect.objectContaining({ label: s, insertText: s })),
-      expect.objectContaining({ label: '}', insertText: '}' }),
+      expect.objectContaining({ label: 'db', insertText: 'db' }),
     ]);
   });
 
-  it('suggests tag values after a space inside a string', async () => {
-    const { provider, model } = setup('{foo="bar test " }', 15, defaultTags);
+  it.each([
+    ['{.foo=1}  {.bar=2}', 8],
+    ['{.foo=1}  {.bar=2}', 9],
+    ['{.foo=1}  {.bar=2}', 10],
+  ])(
+    'suggests spanset combining operators in an incomplete, multi-spanset query - %s, %i',
+    async (input: string, offset: number) => {
+      const { provider, model } = setup(input, offset);
+      const result = await provider.provideCompletionItems(model, emptyPosition);
+      expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
+        CompletionProvider.spansetOps.map((completionItem) =>
+          expect.objectContaining({
+            detail: completionItem.detail,
+            documentation: completionItem.documentation,
+            insertText: completionItem.insertText,
+            label: completionItem.label,
+          })
+        )
+      );
+    }
+  );
 
-    jest.spyOn(provider.languageProvider, 'getOptions').mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          resolve([
-            {
-              value: 'foobar',
-              label: 'foobar',
-            },
-          ]);
-        })
+  it.each([
+    // After spanset
+    ['{ span.http.status_code = 200 &&  }', 33],
+    ['{ span.http.status_code = 200 ||  }', 33],
+    ['{ span.http.status_code = 200 &&   }', 34],
+    ['{ span.http.status_code = 200 ||   }', 34],
+    ['{ span.http.status_code = 200 &&   }', 35],
+    ['{ span.http.status_code = 200 ||   }', 35],
+    ['{ .foo = 200 } &&  ', 18],
+    ['{ .foo = 200 } &&  ', 19],
+    ['{ .foo = 200 } || ', 18],
+    ['{ .foo = 200 } >> ', 18],
+    // Between spansets
+    ['{ .foo = 1 } &&  { .bar = 2 }', 16],
+    // Inside `()`
+    ['{.foo=1} | avg()', 15],
+    ['{.foo=1} | avg() < 1s', 15],
+    ['{.foo=1} | max() = 3', 15],
+    ['{.foo=1} | by()', 14],
+    ['{.foo=1} | select()', 18],
+  ])('suggests attributes - %s, %i', async (input: string, offset: number) => {
+    const { provider, model } = setup(input, offset);
+    const result = await provider.provideCompletionItems(model, emptyPosition);
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
+      [...scopes, ...intrinsics].map((s) => expect.objectContaining({ label: s }))
     );
-    const result = await provider.provideCompletionItems(model as any, {} as any);
-    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
-      expect.objectContaining({ label: 'foobar', insertText: 'foobar' }),
-    ]);
   });
 });
 
-const defaultTags = ['bar', 'foo'];
-
-function setup(value: string, offset: number, tags?: string[]) {
+function setup(value: string, offset: number, tagsV1?: string[], tagsV2?: Scope[]) {
   const ds = new TempoDatasource(defaultSettings);
-  const provider = new CompletionProvider({ languageProvider: new TempoLanguageProvider(ds) });
-  if (tags) {
-    provider.setTags(tags);
+  const lp = new TempoLanguageProvider(ds);
+  if (tagsV1) {
+    lp.setV1Tags(tagsV1);
+  } else if (tagsV2) {
+    lp.setV2Tags(tagsV2);
   }
+  const provider = new CompletionProvider({ languageProvider: lp });
   const model = makeModel(value, offset);
   provider.monaco = {
     Range: {
@@ -158,7 +373,7 @@ function setup(value: string, offset: number, tags?: string[]) {
     },
   } as any;
 
-  return { provider, model };
+  return { provider, model } as unknown as { provider: CompletionProvider; model: monacoTypes.editor.ITextModel };
 }
 
 function makeModel(value: string, offset: number) {
@@ -186,7 +401,7 @@ const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
     id: 'tempo',
     name: 'tempo',
     type: PluginType.datasource,
-    info: {} as any,
+    info: {} as PluginMetaInfo,
     module: '',
     baseUrl: '',
   },

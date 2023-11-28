@@ -11,7 +11,7 @@ import { getStyles } from './FilterSection.styles';
 import { FilterSectionProps } from './FilterSection.types';
 
 export const withFilterTypes =
-  <T extends object>(initialValues?: Partial<T>): FC<FilterSectionProps<T>> =>
+  <T extends object>(initialValues?: Partial<T>): FC<React.PropsWithChildren<FilterSectionProps<T>>> =>
   ({ children, onApply, isOpen, className = '' }) => {
     const styles = useStyles2(getStyles);
     const [sectionIsOpen, setSectionIsOpen] = useState(!!isOpen);

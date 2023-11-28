@@ -8,7 +8,7 @@ import { LabeledFieldProps } from 'app/percona/shared/helpers/types';
 
 import { withSelectStyles } from '../withSelectStyles/withSelectStyles';
 
-const SelectFieldWrapper: FC<LabeledFieldProps & SelectCommonProps<any>> = ({
+const SelectFieldWrapper: FC<React.PropsWithChildren<LabeledFieldProps & SelectCommonProps<any>>> = ({
   label,
   name,
   required,

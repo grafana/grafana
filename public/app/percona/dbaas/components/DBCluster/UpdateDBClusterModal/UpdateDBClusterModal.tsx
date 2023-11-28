@@ -12,7 +12,7 @@ import { UpdateDBClusterModalProps } from './UpdateDBClusterModal.types';
 
 const { title, confirm, cancel, buildUpdateDatabaseMessage } = Messages;
 
-export const UpdateDBClusterModal: FC<UpdateDBClusterModalProps> = ({
+export const UpdateDBClusterModal: FC<React.PropsWithChildren<UpdateDBClusterModalProps>> = ({
   dbCluster,
   isVisible,
   setVisible,

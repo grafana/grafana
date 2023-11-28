@@ -35,7 +35,7 @@ export interface DropdownProps {
   className?: string;
 }
 
-export const Dropdown: FC<DropdownProps> = memo(function Dropdown({ className, children, toggle: Toggle }) {
+export const Dropdown: FC<React.PropsWithChildren<DropdownProps>> = memo(function Dropdown({ className, children, toggle: Toggle }) {
   const styles = useStyles2(getStyles);
 
   const [visible, setVisible] = useState(false);
@@ -151,6 +151,7 @@ export const Dropdown: FC<DropdownProps> = memo(function Dropdown({ className, c
         data-testid="dropdown-menu-container"
       >
         {visible ? (
+          // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
           <div
             className={cx(styles.dropdownMenu, className)}
             style={popperStyles.offset}

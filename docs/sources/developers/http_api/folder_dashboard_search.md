@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../../http_api/folder_dashboard_search/
+canonical: /docs/grafana/latest/developers/http_api/folder_dashboard_search/
 description: Grafana Folder/Dashboard Search HTTP API
 keywords:
   - grafana
@@ -10,6 +11,10 @@ keywords:
   - search
   - folder
   - dashboard
+labels:
+  products:
+    - enterprise
+    - oss
 title: Folder/Dashboard Search HTTP API
 ---
 
@@ -19,7 +24,7 @@ title: Folder/Dashboard Search HTTP API
 
 `GET /api/search/`
 
-> Note: When using [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control/" >}}), search results will contain only dashboards and folders which you have access to.
+> Note: When using [Role-based access control]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control" >}}), search results will contain only dashboards and folders which you have access to.
 
 Query parameters:
 
@@ -34,7 +39,7 @@ Query parameters:
 - **limit** – Limit the number of returned results (max is 5000; default is 1000)
 - **page** – Use this parameter to access hits beyond limit. Numbering starts at 1. limit param acts as page size. Only available in Grafana v6.2+.
 
-**Example request for retrieving folders and dashboards of the general folder**:
+**Example request for retrieving folders and dashboards at the root level**:
 
 ```http
 GET /api/search?folderIds=0&query=&starred=false HTTP/1.1
@@ -43,7 +48,7 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
 
-**Example response for retrieving folders and dashboards of the general folder**:
+**Example response for retrieving folders and dashboards at the root level**:
 
 ```http
 HTTP/1.1 200

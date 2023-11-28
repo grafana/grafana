@@ -28,11 +28,11 @@ Annotations:
 {{ end }}
 `;
 
-export const groupLabelsLoopSnippet = getKeyValueTemplate('GroupLabels');
-export const commonLabelsLoopSnippet = getKeyValueTemplate('CommonLabels');
-export const commonAnnotationsLoopSnippet = getKeyValueTemplate('CommonAnnotations');
-export const labelsLoopSnippet = getKeyValueTemplate('Labels');
-export const annotationsLoopSnippet = getKeyValueTemplate('Annotations');
+export const groupLabelsLoopSnippet = getKeyValueTemplate('GroupLabels.SortedPairs');
+export const commonLabelsLoopSnippet = getKeyValueTemplate('CommonLabels.SortedPairs');
+export const commonAnnotationsLoopSnippet = getKeyValueTemplate('CommonAnnotations.SortedPairs');
+export const labelsLoopSnippet = getKeyValueTemplate('Labels.SortedPairs');
+export const annotationsLoopSnippet = getKeyValueTemplate('Annotations.SortedPairs');
 
 function getKeyValueTemplate(arrayName: string) {
   return `

@@ -14,7 +14,7 @@ import { RDSCredentialsForm } from './components/Credentials/Credentials.types';
 import { DiscoveryDocs } from './components/DiscoveryDocs/DiscoveryDocs';
 import Instances from './components/Instances/Instances';
 
-const Discovery: FC<DiscoverySearchPanelProps> = ({ onSubmit, selectInstance }) => {
+const Discovery: FC<React.PropsWithChildren<DiscoverySearchPanelProps>> = ({ onSubmit, selectInstance }) => {
   const styles = useStyles(getStyles);
 
   const [instances, setInstances] = useState<Instance[]>([]);

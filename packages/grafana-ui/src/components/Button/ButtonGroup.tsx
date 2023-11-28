@@ -22,20 +22,18 @@ export const ButtonGroup = forwardRef<HTMLDivElement, Props>(({ className, child
 ButtonGroup.displayName = 'ButtonGroup';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    display: flex;
+  wrapper: css({
+    display: 'flex',
 
-    > .button-group:not(:first-child) > button,
-    > button:not(:first-child) {
-      border-top-left-radius: 0;
-      border-bottom-left-radius: 0;
-    }
+    '> .button-group:not(:first-child) > button, > button:not(:first-child)': {
+      borderTopLeftRadius: 0,
+      borderBottomLeftRadius: 0,
+    },
 
-    > .button-group:not(:last-child) > button,
-    > button:not(:last-child) {
-      border-top-right-radius: 0;
-      border-bottom-right-radius: 0;
-      border-right-width: 0;
-    }
-  `,
+    '> .button-group:not(:last-child) > button, > button:not(:last-child)': {
+      borderTopRightRadius: 0,
+      borderBottomRightRadius: 0,
+      borderRightWidth: 0,
+    },
+  }),
 });

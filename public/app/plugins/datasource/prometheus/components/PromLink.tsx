@@ -1,9 +1,10 @@
 import { map } from 'lodash';
-import React, { FC, useEffect, useState, memo } from 'react';
+import React, { useEffect, useState, memo } from 'react';
 
 import { DataQueryRequest, PanelData, ScopedVars, textUtil, rangeUtil } from '@grafana/data';
 
 import { PrometheusDatasource } from '../datasource';
+import { getPrometheusTime } from '../language_utils';
 import { PromQuery } from '../types';
 
 interface Props {
@@ -12,7 +13,7 @@ interface Props {
   panelData?: PanelData;
 }
 
-const PromLink: FC<Props> = ({ panelData, query, datasource }) => {
+const PromLink = ({ panelData, query, datasource }: Props) => {
   const [href, setHref] = useState('');
 
   useEffect(() => {
@@ -26,8 +27,8 @@ const PromLink: FC<Props> = ({ panelData, query, datasource }) => {
           request: { range, interval, scopedVars },
         } = panelData;
 
-        const start = datasource.getPrometheusTime(range.from, false);
-        const end = datasource.getPrometheusTime(range.to, true);
+        const start = getPrometheusTime(range.from, false);
+        const end = getPrometheusTime(range.to, true);
         const rangeDiff = Math.ceil(end - start);
         const endTime = range.to.utc().format('YYYY-MM-DD HH:mm');
 

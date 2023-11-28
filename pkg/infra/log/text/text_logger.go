@@ -6,7 +6,7 @@ import (
 	"io"
 	"reflect"
 
-	gokitlog "github.com/go-kit/kit/log"
+	gokitlog "github.com/go-kit/log"
 )
 
 type textLogger struct {

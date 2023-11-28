@@ -1,44 +1,45 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { mockToolkitActionCreator } from 'test/core/redux/mocks';
+import { TestProvider } from 'test/helpers/TestProvider';
 
-import { contextSrv, User } from 'app/core/services/context_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 
-import { OrgRole, Team } from '../../types';
+import { Team } from '../../types';
 
 import { Props, TeamList } from './TeamList';
 import { getMockTeam, getMultipleMockTeams } from './__mocks__/teamMocks';
-import { setSearchQuery, setTeamsSearchPage } from './state/reducers';
 
-jest.mock('app/core/config', () => ({
-  ...jest.requireActual('app/core/config'),
-  featureToggles: { accesscontrol: false },
+jest.mock('app/core/core', () => ({
+  contextSrv: {
+    hasPermission: (action: string) => true,
+    licensedAccessControlEnabled: () => false,
+  },
 }));
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
     teams: [] as Team[],
+    noTeams: false,
     loadTeams: jest.fn(),
     deleteTeam: jest.fn(),
-    setSearchQuery: mockToolkitActionCreator(setSearchQuery),
-    setTeamsSearchPage: mockToolkitActionCreator(setTeamsSearchPage),
-    searchQuery: '',
-    searchPage: 1,
-    teamsCount: 0,
+    changePage: jest.fn(),
+    changeQuery: jest.fn(),
+    changeSort: jest.fn(),
+    query: '',
+    totalPages: 0,
+    page: 0,
     hasFetched: false,
-    editorsCanAdmin: false,
-    signedInUser: {
-      id: 1,
-      orgRole: OrgRole.Viewer,
-    } as User,
+    perPage: 10,
   };
 
   Object.assign(props, propOverrides);
 
-  contextSrv.user = props.signedInUser;
-
-  render(<TeamList {...props} />);
+  render(
+    <TestProvider>
+      <TeamList {...props} />
+    </TestProvider>
+  );
 };
 
 describe('TeamList', () => {
@@ -47,39 +48,29 @@ describe('TeamList', () => {
     expect(screen.getAllByRole('row')).toHaveLength(6); // 5 teams plus table header row
   });
 
-  describe('when feature toggle editorsCanAdmin is turned on', () => {
-    describe('and signed in user is not viewer', () => {
-      it('should enable the new team button', () => {
-        setup({
-          teams: getMultipleMockTeams(1),
-          teamsCount: 1,
-          hasFetched: true,
-          editorsCanAdmin: true,
-          signedInUser: {
-            id: 1,
-            orgRole: OrgRole.Editor,
-          } as User,
-        });
-
-        expect(screen.getByRole('link', { name: /new team/i })).not.toHaveStyle('pointer-events: none');
+  describe('when user has access to create a team', () => {
+    it('should enable the new team button', () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      setup({
+        teams: getMultipleMockTeams(1),
+        totalCount: 1,
+        hasFetched: true,
       });
+
+      expect(screen.getByRole('link', { name: /new team/i })).not.toHaveStyle('pointer-events: none');
     });
+  });
 
-    describe('and signed in user is a viewer', () => {
-      it('should disable the new team button', () => {
-        setup({
-          teams: getMultipleMockTeams(1),
-          teamsCount: 1,
-          hasFetched: true,
-          editorsCanAdmin: true,
-          signedInUser: {
-            id: 1,
-            orgRole: OrgRole.Viewer,
-          } as User,
-        });
-
-        expect(screen.getByRole('link', { name: /new team/i })).toHaveStyle('pointer-events: none');
+  describe('when user does not have access to create a team', () => {
+    it('should disable the new team button', () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      setup({
+        teams: getMultipleMockTeams(1),
+        totalCount: 1,
+        hasFetched: true,
       });
+
+      expect(screen.getByRole('link', { name: /new team/i })).toHaveStyle('pointer-events: none');
     });
   });
 });
@@ -87,7 +78,8 @@ describe('TeamList', () => {
 it('should call delete team', async () => {
   const mockDelete = jest.fn();
   const mockTeam = getMockTeam();
-  setup({ deleteTeam: mockDelete, teams: [mockTeam], teamsCount: 1, hasFetched: true });
+  jest.spyOn(contextSrv, 'hasPermissionInMetadata').mockReturnValue(true);
+  setup({ deleteTeam: mockDelete, teams: [mockTeam], totalCount: 1, hasFetched: true });
   await userEvent.click(screen.getByRole('button', { name: `Delete team ${mockTeam.name}` }));
   await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
   await waitFor(() => {

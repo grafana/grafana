@@ -1,7 +1,9 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { FieldType } from '../../types/dataFrame';
+import { getFieldDisplayName } from '../../field';
+import { DataFrame, FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { ArrayVector } from '../../vector';
+import { fieldMatchers } from '../matchers';
+import { FieldMatcherID } from '../matchers/ids';
 
 import { calculateFieldTransformer } from './calculateField';
 import { JoinMode } from './joinByField';
@@ -28,50 +30,52 @@ describe('align frames', () => {
       ],
     });
 
+    // the following does not work for tabular joins where the joined on field value is duplicated
+    // the time will never have a duplicated time which is joined on
     it('should perform an outer join', () => {
       const out = joinDataFrames({ frames: [series1, series2] })!;
       expect(
         out.fields.map((f) => ({
           name: f.name,
-          values: f.values.toArray(),
+          values: f.values,
         }))
       ).toMatchInlineSnapshot(`
-        Array [
-          Object {
+        [
+          {
             "name": "TheTime",
-            "values": Array [
+            "values": [
               1000,
               1500,
               2000,
             ],
           },
-          Object {
+          {
             "name": "A",
-            "values": Array [
+            "values": [
               1,
               undefined,
               100,
             ],
           },
-          Object {
+          {
             "name": "A",
-            "values": Array [
+            "values": [
               2,
               20,
               200,
             ],
           },
-          Object {
+          {
             "name": "B",
-            "values": Array [
+            "values": [
               3,
               30,
               300,
             ],
           },
-          Object {
+          {
             "name": "C",
-            "values": Array [
+            "values": [
               "first",
               "second",
               "third",
@@ -86,43 +90,126 @@ describe('align frames', () => {
       expect(
         out.fields.map((f) => ({
           name: f.name,
-          values: f.values.toArray(),
+          values: f.values,
         }))
       ).toMatchInlineSnapshot(`
-        Array [
-          Object {
+        [
+          {
             "name": "TheTime",
-            "values": Array [
+            "values": [
               1000,
               2000,
             ],
           },
-          Object {
+          {
             "name": "A",
-            "values": Array [
+            "values": [
               1,
               100,
             ],
           },
-          Object {
+          {
             "name": "A",
-            "values": Array [
+            "values": [
               2,
               200,
             ],
           },
-          Object {
+          {
             "name": "B",
-            "values": Array [
+            "values": [
               3,
               300,
             ],
           },
-          Object {
+          {
             "name": "C",
-            "values": Array [
+            "values": [
               "first",
               "third",
+            ],
+          },
+        ]
+      `);
+    });
+  });
+
+  describe('join tabular data by chosen field', () => {
+    // join on gender where there are multiple values, duplicate values which can increase the rows
+
+    const tableData1 = toDataFrame({
+      fields: [
+        { name: 'gender', type: FieldType.string, values: ['MALE', 'MALE', 'MALE', 'FEMALE', 'FEMALE', 'FEMALE'] },
+        {
+          name: 'day',
+          type: FieldType.string,
+          values: ['Wednesday', 'Tuesday', 'Monday', 'Wednesday', 'Tuesday', 'Monday'],
+        },
+        { name: 'count', type: FieldType.number, values: [18, 72, 13, 17, 71, 7] },
+      ],
+    });
+    const tableData2 = toDataFrame({
+      fields: [
+        { name: 'gender', type: FieldType.string, values: ['MALE', 'FEMALE'] },
+        { name: 'count', type: FieldType.number, values: [103, 95] },
+      ],
+    });
+
+    it('should perform an outer join with duplicated values to join on', () => {
+      const out = joinDataFrames({
+        frames: [tableData1, tableData2],
+        joinBy: fieldMatchers.get(FieldMatcherID.byName).get('gender'),
+        mode: JoinMode.outerTabular,
+      })!;
+      expect(
+        out.fields.map((f) => ({
+          name: f.name,
+          values: f.values,
+        }))
+      ).toMatchInlineSnapshot(`
+        [
+          {
+            "name": "gender",
+            "values": [
+              "MALE",
+              "MALE",
+              "MALE",
+              "FEMALE",
+              "FEMALE",
+              "FEMALE",
+            ],
+          },
+          {
+            "name": "day",
+            "values": [
+              "Wednesday",
+              "Tuesday",
+              "Monday",
+              "Wednesday",
+              "Tuesday",
+              "Monday",
+            ],
+          },
+          {
+            "name": "count",
+            "values": [
+              18,
+              72,
+              13,
+              17,
+              71,
+              7,
+            ],
+          },
+          {
+            "name": "count",
+            "values": [
+              103,
+              103,
+              103,
+              95,
+              95,
+              95,
             ],
           },
         ]
@@ -150,48 +237,48 @@ describe('align frames', () => {
     expect(
       out.fields.map((f) => ({
         name: f.name,
-        values: f.values.toArray(),
+        values: f.values,
         state: f.state,
       }))
     ).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "name": "TheTime",
-          "state": Object {
-            "origin": Object {
+          "state": {
+            "origin": {
               "fieldIndex": 0,
               "frameIndex": 0,
             },
           },
-          "values": Array [
+          "values": [
             1000,
             1500,
             2000,
           ],
         },
-        Object {
+        {
           "name": "A1",
-          "state": Object {
-            "origin": Object {
+          "state": {
+            "origin": {
               "fieldIndex": 1,
               "frameIndex": 0,
             },
           },
-          "values": Array [
+          "values": [
             1,
             15,
             2,
           ],
         },
-        Object {
+        {
           "name": "A2",
-          "state": Object {
-            "origin": Object {
+          "state": {
+            "origin": {
               "fieldIndex": 1,
               "frameIndex": 1,
             },
           },
-          "values": Array [
+          "values": [
             1,
             undefined,
             2,
@@ -208,20 +295,20 @@ describe('align frames', () => {
         state: f.state,
       }))
     ).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "name": "TheTime",
-          "state": Object {
-            "origin": Object {
+          "state": {
+            "origin": {
               "fieldIndex": 0,
               "frameIndex": 0,
             },
           },
         },
-        Object {
+        {
           "name": "A1",
-          "state": Object {
-            "origin": Object {
+          "state": {
+            "origin": {
               "fieldIndex": 1,
               "frameIndex": 0,
             },
@@ -243,21 +330,21 @@ describe('align frames', () => {
     expect(
       out.fields.map((f) => ({
         name: f.name,
-        values: f.values.toArray(),
+        values: f.values,
       }))
     ).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "name": "TheTime",
-          "values": Array [
+          "values": [
             1500,
             2000,
             6000,
           ],
         },
-        Object {
+        {
           "name": "A1",
-          "values": Array [
+          "values": [
             15,
             22,
             1,
@@ -267,10 +354,68 @@ describe('align frames', () => {
     `);
   });
 
+  it('maintains naming convention after join', () => {
+    const series1 = toDataFrame({
+      name: 'Muta',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1000, 2000] },
+        { name: 'Value', type: FieldType.number, values: [1, 100] },
+      ],
+    });
+    expect(getFieldDisplayNames([series1])).toMatchInlineSnapshot(`
+      [
+        "Time",
+        "Muta",
+      ]
+    `);
+    expect(getFieldNames([series1])).toMatchInlineSnapshot(`
+      [
+        "Time",
+        "Value",
+      ]
+    `);
+
+    const series2 = toDataFrame({
+      name: 'Muta',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1000] },
+        { name: 'Value', type: FieldType.number, values: [150] },
+      ],
+    });
+    expect(getFieldDisplayNames([series2])).toMatchInlineSnapshot(`
+      [
+        "Time",
+        "Muta",
+      ]
+    `);
+    expect(getFieldNames([series2])).toMatchInlineSnapshot(`
+      [
+        "Time",
+        "Value",
+      ]
+    `);
+
+    const out = joinDataFrames({ frames: [series1, series2] })!;
+    expect(getFieldDisplayNames([out])).toMatchInlineSnapshot(`
+      [
+        "Time",
+        "Muta 1",
+        "Muta 2",
+      ]
+    `);
+    expect(getFieldNames([out])).toMatchInlineSnapshot(`
+      [
+        "Time",
+        "Muta",
+        "Muta",
+      ]
+    `);
+  });
+
   it('supports duplicate times', () => {
     //----------
     // NOTE!!!
-    // * ideally we would *keep* dupicate fields
+    // * ideally we would *keep* duplicate fields
     //----------
     const series1 = toDataFrame({
       fields: [
@@ -290,27 +435,27 @@ describe('align frames', () => {
     expect(
       out.fields.map((f) => ({
         name: f.name,
-        values: f.values.toArray(),
+        values: f.values,
       }))
     ).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "name": "TheTime",
-          "values": Array [
+          "values": [
             1000,
             2000,
           ],
         },
-        Object {
+        {
           "name": "A",
-          "values": Array [
+          "values": [
             1,
             100,
           ],
         },
-        Object {
+        {
           "name": "A",
-          "values": Array [
+          "values": [
             200,
             undefined,
           ],
@@ -321,42 +466,48 @@ describe('align frames', () => {
 
   describe('check ascending data', () => {
     it('simple ascending', () => {
-      const v = new ArrayVector([1, 2, 3, 4, 5]);
+      const v = [1, 2, 3, 4, 5];
       expect(isLikelyAscendingVector(v)).toBeTruthy();
     });
     it('simple ascending with null', () => {
-      const v = new ArrayVector([null, 2, 3, 4, null]);
+      const v = [null, 2, 3, 4, null];
       expect(isLikelyAscendingVector(v)).toBeTruthy();
     });
     it('single value', () => {
-      const v = new ArrayVector([null, null, null, 4, null]);
+      const v = [null, null, null, 4, null];
       expect(isLikelyAscendingVector(v)).toBeTruthy();
-      expect(isLikelyAscendingVector(new ArrayVector([4]))).toBeTruthy();
-      expect(isLikelyAscendingVector(new ArrayVector([]))).toBeTruthy();
+      expect(isLikelyAscendingVector([4])).toBeTruthy();
+      expect(isLikelyAscendingVector([])).toBeTruthy();
     });
 
     it('middle values', () => {
-      const v = new ArrayVector([null, null, 5, 4, null]);
+      const v = [null, null, 5, 4, null];
       expect(isLikelyAscendingVector(v)).toBeFalsy();
     });
 
     it('decending', () => {
-      expect(isLikelyAscendingVector(new ArrayVector([7, 6, null]))).toBeFalsy();
-      expect(isLikelyAscendingVector(new ArrayVector([7, 8, 6]))).toBeFalsy();
+      expect(isLikelyAscendingVector([7, 6, null])).toBeFalsy();
+      expect(isLikelyAscendingVector([7, 8, 6])).toBeFalsy();
     });
 
     it('ascending first/last', () => {
-      expect(isLikelyAscendingVector(new ArrayVector([10, 20, 30, 5, 15, 7, 43, 29, 11]), 3)).toBeFalsy();
-      expect(
-        isLikelyAscendingVector(new ArrayVector([null, 10, 20, 30, 5, null, 15, 7, 43, 29, 11, null]), 3)
-      ).toBeFalsy();
+      expect(isLikelyAscendingVector([10, 20, 30, 5, 15, 7, 43, 29, 11], 3)).toBeFalsy();
+      expect(isLikelyAscendingVector([null, 10, 20, 30, 5, null, 15, 7, 43, 29, 11, null], 3)).toBeFalsy();
     });
 
     it('null stuffs', () => {
-      expect(isLikelyAscendingVector(new ArrayVector([null, null, 1]), 3)).toBeTruthy();
-      expect(isLikelyAscendingVector(new ArrayVector([1, null, null]), 3)).toBeTruthy();
-      expect(isLikelyAscendingVector(new ArrayVector([null, null, null]), 3)).toBeTruthy();
-      expect(isLikelyAscendingVector(new ArrayVector([null, 1, null]), 3)).toBeTruthy();
+      expect(isLikelyAscendingVector([null, null, 1], 3)).toBeTruthy();
+      expect(isLikelyAscendingVector([1, null, null], 3)).toBeTruthy();
+      expect(isLikelyAscendingVector([null, null, null], 3)).toBeTruthy();
+      expect(isLikelyAscendingVector([null, 1, null], 3)).toBeTruthy();
     });
   });
 });
+
+function getFieldDisplayNames(data: DataFrame[]): string[] {
+  return data.flatMap((frame) => frame.fields.map((f) => getFieldDisplayName(f, frame, data)));
+}
+
+function getFieldNames(data: DataFrame[]): string[] {
+  return data.flatMap((frame) => frame.fields.map((f) => f.name));
+}

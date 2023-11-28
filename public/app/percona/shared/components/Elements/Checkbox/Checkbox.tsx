@@ -16,7 +16,7 @@ export interface BaseCheckboxProps extends FieldInputAttrs, LabeledFieldProps {
   noError?: boolean;
 }
 
-export const BaseCheckbox: FC<BaseCheckboxProps> = ({
+export const BaseCheckbox: FC<React.PropsWithChildren<BaseCheckboxProps>> = ({
   name,
   inputId = `input-${name}-id`,
   fieldClassName,

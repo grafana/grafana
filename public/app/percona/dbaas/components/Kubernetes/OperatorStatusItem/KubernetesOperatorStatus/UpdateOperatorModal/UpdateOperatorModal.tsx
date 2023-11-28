@@ -12,7 +12,7 @@ import { UpdateOperatorModalProps } from './UpdateOperatorModal.types';
 
 const { title, confirm, cancel, buildUpdateOperatorMessage } = Messages.kubernetes.updateOperatorModal;
 
-export const UpdateOperatorModal: FC<UpdateOperatorModalProps> = ({
+export const UpdateOperatorModal: FC<React.PropsWithChildren<UpdateOperatorModalProps>> = ({
   kubernetesClusterName,
   selectedOperator,
   isVisible,

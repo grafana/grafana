@@ -1,9 +1,10 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
+import { config } from '@grafana/runtime';
 import { Tooltip, Icon, Button } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
-import { Page } from 'app/core/components/PageNew/Page';
+import { Page } from 'app/core/components/Page/Page';
 import AddPermission from 'app/core/components/PermissionList/AddPermission';
 import PermissionList from 'app/core/components/PermissionList/PermissionList';
 import PermissionsInfo from 'app/core/components/PermissionList/PermissionsInfo';
@@ -90,17 +91,18 @@ export class DashboardPermissionsUnconnected extends PureComponent<Props, State>
   render() {
     const { permissions, dashboard, sectionNav } = this.props;
     const { isAdding } = this.state;
+    const pageNav = config.featureToggles.dockedMegaMenu ? sectionNav.node.parentItem : undefined;
 
     if (dashboard.meta.hasUnsavedFolderChange) {
       return (
-        <Page navModel={sectionNav}>
+        <Page navModel={sectionNav} pageNav={pageNav}>
           <h5>You have changed a folder, please save to view permissions.</h5>
         </Page>
       );
     }
 
     return (
-      <Page navModel={sectionNav}>
+      <Page navModel={sectionNav} pageNav={pageNav}>
         <div className="page-action-bar">
           <Tooltip placement="auto" content={<PermissionsInfo />}>
             <Icon className="icon--has-hover page-sub-heading-icon" name="question-circle" />

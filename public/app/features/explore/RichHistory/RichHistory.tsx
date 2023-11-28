@@ -2,9 +2,9 @@ import { debounce } from 'lodash';
 import React, { PureComponent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { Themeable, withTheme, TabbedContainer, TabConfig } from '@grafana/ui';
+import { Themeable2, TabbedContainer, TabConfig, withTheme2 } from '@grafana/ui';
 import { SortOrder, RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistory';
-import { RichHistoryQuery, ExploreId } from 'app/types/explore';
+import { RichHistoryQuery } from 'app/types/explore';
 
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
 
@@ -26,20 +26,20 @@ export const getSortOrderOptions = () =>
     { label: 'Data source Z-A', value: SortOrder.DatasourceZA },
   ].filter((option) => supportedFeatures().availableFilters.includes(option.value));
 
-export interface RichHistoryProps extends Themeable {
+export interface RichHistoryProps extends Themeable2 {
   richHistory: RichHistoryQuery[];
   richHistoryTotal?: number;
   richHistorySettings: RichHistorySettings;
   richHistorySearchFilters?: RichHistorySearchFilters;
   updateHistorySettings: (settings: RichHistorySettings) => void;
-  updateHistorySearchFilters: (exploreId: ExploreId, filters: RichHistorySearchFilters) => void;
-  loadRichHistory: (exploreId: ExploreId) => void;
-  loadMoreRichHistory: (exploreId: ExploreId) => void;
-  clearRichHistoryResults: (exploreId: ExploreId) => void;
+  updateHistorySearchFilters: (exploreId: string, filters: RichHistorySearchFilters) => void;
+  loadRichHistory: (exploreId: string) => void;
+  loadMoreRichHistory: (exploreId: string) => void;
+  clearRichHistoryResults: (exploreId: string) => void;
   deleteRichHistory: () => void;
   activeDatasourceInstance: string;
   firstTab: Tabs;
-  exploreId: ExploreId;
+  exploreId: string;
   height: number;
   onClose: () => void;
 }
@@ -90,7 +90,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
   toggleActiveDatasourceOnly = () =>
     this.updateSettings({ activeDatasourceOnly: !this.props.richHistorySettings.activeDatasourceOnly });
 
-  componentDidUpdate(prevProps: Readonly<RichHistoryProps>, prevState: Readonly<{}>, snapshot?: any) {
+  componentDidUpdate(prevProps: Readonly<RichHistoryProps>) {
     if (prevProps.richHistory !== this.props.richHistory) {
       this.setState({
         loading: false,
@@ -176,4 +176,4 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
   }
 }
 
-export const RichHistory = withTheme(UnThemedRichHistory);
+export const RichHistory = withTheme2(UnThemedRichHistory);

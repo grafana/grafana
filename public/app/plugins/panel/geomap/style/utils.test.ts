@@ -1,7 +1,7 @@
-import { ResourceDimensionMode } from 'app/features/dimensions';
+import { ResourceDimensionMode } from '@grafana/schema';
 
-import { StyleConfig } from './types';
-import { getStyleConfigState } from './utils';
+import { HorizontalAlign, VerticalAlign, StyleConfig, SymbolAlign } from './types';
+import { getDisplacement, getStyleConfigState } from './utils';
 
 describe('style utils', () => {
   it('should fill in default values', async () => {
@@ -31,19 +31,23 @@ describe('style utils', () => {
     };
 
     const state = await getStyleConfigState(cfg);
-    state.config = null as any; // not interesting in the snapshot
+    state.config = null as unknown as StyleConfig; // not interesting in the snapshot
     expect(state.hasText).toBe(false);
     expect(state).toMatchInlineSnapshot(`
-      Object {
-        "base": Object {
+      {
+        "base": {
           "color": "#37872D",
           "lineWidth": 1,
           "opacity": 0.4,
           "rotation": 0,
           "size": 5,
+          "symbolAlign": {
+            "horizontal": "center",
+            "vertical": "center",
+          },
         },
         "config": null,
-        "fields": Object {
+        "fields": {
           "color": "Price",
           "size": "Count",
         },
@@ -51,5 +55,23 @@ describe('style utils', () => {
         "maker": [Function],
       }
     `);
+  });
+  it('should return correct displacement array for top left', async () => {
+    const symbolAlign: SymbolAlign = { horizontal: HorizontalAlign.Left, vertical: VerticalAlign.Top };
+    const radius = 10;
+    const displacement = getDisplacement(symbolAlign, radius);
+    expect(displacement).toEqual([-10, 10]);
+  });
+  it('should return correct displacement array for bottom right', async () => {
+    const symbolAlign: SymbolAlign = { horizontal: HorizontalAlign.Right, vertical: VerticalAlign.Bottom };
+    const radius = 10;
+    const displacement = getDisplacement(symbolAlign, radius);
+    expect(displacement).toEqual([10, -10]);
+  });
+  it('should return correct displacement array for center center', async () => {
+    const symbolAlign: SymbolAlign = { horizontal: HorizontalAlign.Center, vertical: VerticalAlign.Center };
+    const radius = 10;
+    const displacement = getDisplacement(symbolAlign, radius);
+    expect(displacement).toEqual([0, 0]);
   });
 });

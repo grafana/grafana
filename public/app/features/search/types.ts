@@ -1,6 +1,8 @@
 import { Action } from 'redux';
 
-import { SelectableValue, WithAccessControlMetadata } from '@grafana/data';
+import { WithAccessControlMetadata } from '@grafana/data';
+
+import { QueryResponse } from './service';
 
 export enum DashboardSearchItemType {
   DashDB = 'dash-db',
@@ -9,83 +11,102 @@ export enum DashboardSearchItemType {
 }
 
 /**
- * @deprecated
+ * @deprecated Use DashboardSearchItem and use UIDs instead of IDs
+ * DTO type for search API result items, but with deprecated IDs
+ * This type was previously also used heavily for views, so contains lots of
+ * extraneous properties
  */
-export interface DashboardSection {
-  id?: number;
-  uid?: string;
-  title: string;
-  expanded?: boolean;
-  url: string;
-  icon?: string;
-  score?: number;
-  checked?: boolean;
-  items: DashboardSectionItem[];
-  toggle?: (section: DashboardSection) => Promise<DashboardSection>;
-  selected?: boolean;
-  type: DashboardSearchItemType;
-  slug?: string;
-  itemsFetching?: boolean;
-}
-
-/**
- * @deprecated
- */
-export interface DashboardSectionItem {
-  checked?: boolean;
+export interface DashboardSearchHit extends WithAccessControlMetadata {
   folderId?: number;
   folderTitle?: string;
   folderUid?: string;
   folderUrl?: string;
   id?: number;
-  isStarred: boolean;
-  selected?: boolean;
   tags: string[];
   title: string;
   type: DashboardSearchItemType;
-  icon?: string; // used for grid view
-  uid?: string;
-  uri: string;
+  uid: string;
   url: string;
   sortMeta?: number;
   sortMetaName?: string;
 }
 
 /**
- * @deprecated - It uses dashboard ID which is depreacted in favor of dashboard UID. Please, use DashboardSearchItem instead.
+ * DTO type for search API result items
+ * This should not be used directly - use GrafanaSearcher instead and get a DashboardQueryResult
  */
-export interface DashboardSearchHit extends DashboardSectionItem, DashboardSection, WithAccessControlMetadata {}
-
-export interface DashboardSearchItem
-  extends Omit<
-    DashboardSearchHit,
-    'id' | 'uid' | 'expanded' | 'selected' | 'checked' | 'folderId' | 'icon' | 'sortMeta' | 'sortMetaName'
-  > {
+export interface DashboardSearchItem {
   uid: string;
+  title: string;
+  uri: string;
+  url: string;
+  type: string; // dash-db, dash-home
+  tags: string[];
+  isStarred: boolean;
+
+  // Only on dashboards in folders results
+  folderUid?: string;
+  folderTitle?: string;
+  folderUrl?: string;
+}
+
+export type DashboardViewItemKind = 'folder' | 'dashboard' | 'panel';
+
+/**
+ * Type used in the folder view components
+ */
+export interface DashboardViewItem {
+  kind: DashboardViewItemKind;
+  uid: string;
+  title: string;
+  url?: string;
+  tags?: string[];
+
+  icon?: string;
+
+  parentUID?: string;
+  /** @deprecated Not used in new Browse UI */
+  parentTitle?: string;
+  /** @deprecated Not used in new Browse UI */
+  parentKind?: string;
+
+  // Used only for psuedo-folders, such as Starred or Recent
+  /** @deprecated Not used in new Browse UI */
+  itemsUIDs?: string[];
+
+  // For enterprise sort options
+  sortMeta?: number | string; // value sorted by
+  sortMetaName?: string; // name of the value being sorted e.g. 'Views'
 }
 
 export interface SearchAction extends Action {
   payload?: any;
 }
 
-export interface DashboardQuery {
+export type EventTrackingNamespace = 'manage_dashboards' | 'dashboard_search';
+
+export interface SearchState {
   query: string;
   tag: string[];
   starred: boolean;
   explain?: boolean; // adds debug info
   datasource?: string;
-  sort: SelectableValue | null;
-  // Save sorting data between layouts
-  prevSort: SelectableValue | null;
+  panel_type?: string;
+  sort?: string;
+  prevSort?: string; // Save sorting data between layouts
   layout: SearchLayout;
+  result?: QueryResponse;
+  loading?: boolean;
+  folderUid?: string;
+  includePanels?: boolean;
+  eventTrackingNamespace: EventTrackingNamespace;
 }
 
-export type OnToggleChecked = (item: DashboardSectionItem | DashboardSection) => void;
+export type OnToggleChecked = (item: DashboardViewItem) => void;
 
 export enum SearchLayout {
   List = 'list',
   Folders = 'folders',
-  Grid = 'grid', // preview
 }
 
 export interface SearchQueryParams {

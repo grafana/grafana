@@ -1,52 +1,58 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 
 const dataSourceName = 'PromExemplar';
 const addDataSource = () => {
   e2e.flows.addDataSource({
     type: 'Prometheus',
-    expectedAlertMessage: 'Error reading Prometheus',
+    expectedAlertMessage: 'Prometheus',
     name: dataSourceName,
     form: () => {
       e2e.components.DataSource.Prometheus.configPage.exemplarsAddButton().click();
       e2e.components.DataSource.Prometheus.configPage.internalLinkSwitch().check({ force: true });
-      e2e.components.DataSource.DataSourceHttpSettings.urlInput().type('http://prom-url:9090');
+      e2e.components.DataSource.Prometheus.configPage.connectionSettings().type('http://prom-url:9090');
       e2e.components.DataSourcePicker.inputV2().click({ force: true }).should('have.focus');
 
-      e2e().contains('gdev-tempo').scrollIntoView().should('be.visible').click();
+      cy.contains('gdev-tempo').scrollIntoView().should('be.visible').click();
     },
   });
 };
 
 describe('Exemplars', () => {
   beforeEach(() => {
-    e2e.flows.login('admin', 'admin');
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
 
-    e2e()
-      .request({ url: `${e2e.env('BASE_URL')}/api/datasources/name/${dataSourceName}`, failOnStatusCode: false })
-      .then((response) => {
-        if (response.isOkStatusCode) {
-          return;
-        }
-        addDataSource();
-      });
+    cy.request({
+      url: `${Cypress.env('BASE_URL')}/api/datasources/name/${dataSourceName}`,
+      failOnStatusCode: false,
+    }).then((response) => {
+      if (response.isOkStatusCode) {
+        return;
+      }
+      addDataSource();
+    });
   });
 
   it('should be able to navigate to configured data source', () => {
-    let intercept = 'prometheus';
-    e2e().intercept('/api/ds/query', (req) => {
-      if (intercept === 'prometheus') {
-        // For second intercept, we want to send tempo response
-        intercept = 'tempo';
-        req.reply({ fixture: 'exemplars-query-response.json' });
-      } else {
-        req.reply({ fixture: 'tempo-response.json' });
+    cy.intercept(
+      {
+        pathname: '/api/ds/query',
+      },
+      (req) => {
+        const datasourceType = req.body.queries[0].datasource.type;
+        if (datasourceType === 'prometheus') {
+          req.reply({ fixture: 'exemplars-query-response.json' });
+        } else if (datasourceType === 'tempo') {
+          req.reply({ fixture: 'tempo-response.json' });
+        } else {
+          req.reply({});
+        }
       }
-    });
+    );
 
     e2e.pages.Explore.visit();
 
     e2e.components.DataSourcePicker.container().should('be.visible').click();
-    e2e().contains(dataSourceName).scrollIntoView().should('be.visible').click();
+    cy.contains(dataSourceName).scrollIntoView().should('be.visible').click();
 
     // Switch to code editor
     cy.contains('label', 'Code').click();
@@ -64,8 +70,10 @@ describe('Exemplars', () => {
     e2e.components.TimePicker.applyTimeRange().click();
     e2e.components.QueryField.container().should('be.visible').type('exemplar-query_bucket{shift}{enter}');
 
+    cy.get(`[data-testid="time-series-zoom-to-data"]`).click();
+
     e2e.components.DataSource.Prometheus.exemplarMarker().first().trigger('mouseover');
-    e2e().contains('Query with gdev-tempo').click();
+    cy.contains('Query with gdev-tempo').click();
     e2e.components.TraceViewer.spanBar().should('have.length', 11);
   });
 });

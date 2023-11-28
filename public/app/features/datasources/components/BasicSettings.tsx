@@ -3,6 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { InlineField, InlineSwitch, Input, Badge, useStyles2 } from '@grafana/ui';
 
 export interface Props {
@@ -11,12 +12,21 @@ export interface Props {
   onNameChange: (name: string) => void;
   onDefaultChange: (value: boolean) => void;
   alertingSupported: boolean;
+  disabled?: boolean;
 }
 
-export function BasicSettings({ dataSourceName, isDefault, onDefaultChange, onNameChange, alertingSupported }: Props) {
+export function BasicSettings({
+  dataSourceName,
+  isDefault,
+  onDefaultChange,
+  onNameChange,
+  alertingSupported,
+  disabled,
+}: Props) {
   return (
     <>
-      {<AlertingEnabled enabled={alertingSupported} />}
+      {!config.featureToggles.dataSourcePageHeader && <AlertingEnabled enabled={alertingSupported} />}
+
       <div className="gf-form-group" aria-label="Datasource settings page basic settings">
         <div className="gf-form-inline">
           {/* Name */}
@@ -26,6 +36,7 @@ export function BasicSettings({ dataSourceName, isDefault, onDefaultChange, onNa
               tooltip="The name is used when you select the data source in panels. The default data source is
               'preselected in new panels."
               grow
+              disabled={disabled}
             >
               <Input
                 id="basic-settings-name"
@@ -40,7 +51,7 @@ export function BasicSettings({ dataSourceName, isDefault, onDefaultChange, onNa
           </div>
 
           {/* Is Default */}
-          <InlineField label="Default" labelWidth={8}>
+          <InlineField label="Default" labelWidth={8} disabled={disabled}>
             <InlineSwitch
               id="basic-settings-default"
               value={isDefault}

@@ -8,7 +8,7 @@ import { Messages } from './ScheduledBackupsActions.messages';
 import { getStyles } from './ScheduledBackupsActions.styles';
 import { ScheduledBackupsActionsProps } from './ScheduledBackupsActions.types';
 
-export const ScheduledBackupsActions: FC<ScheduledBackupsActionsProps> = ({
+export const ScheduledBackupsActions: FC<React.PropsWithChildren<ScheduledBackupsActionsProps>> = ({
   row,
   backup,
   onEdit = () => {},

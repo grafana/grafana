@@ -14,7 +14,7 @@ import { DBClusterConnectionProps } from './DBClusterConnection.types';
 import { DBClusterConnectionItem } from './DBClusterConnectionItem/DBClusterConnectionItem';
 import { DBClusterConnectionPassword } from './DBClusterConnectionPassword/DBClusterConnectionPassword';
 
-export const DBClusterConnection: FC<DBClusterConnectionProps> = ({ dbCluster }) => {
+export const DBClusterConnection: FC<React.PropsWithChildren<DBClusterConnectionProps>> = ({ dbCluster }) => {
   const styles = useStyles(getStyles);
   const [loading, setLoading] = useState(true);
   const [connection, setConnection] = useState<ConnectionParams>(INITIAL_CONNECTION);

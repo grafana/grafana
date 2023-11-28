@@ -1,12 +1,11 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 
-e2e.scenario({
-  describeName: 'Query editor',
-  itName: 'Undo should work in query editor for prometheus.',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Query editor', () => {
+  beforeEach(() => {
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
+  });
+
+  it('Undo should work in query editor for prometheus -- test CI.', () => {
     e2e.pages.Explore.visit();
     e2e.components.DataSourcePicker.container().should('be.visible').click();
 
@@ -30,10 +29,6 @@ e2e.scenario({
 
     cy.contains(queryText).should('be.visible');
 
-    cy.get('body').click();
-
-    cy.contains('label', 'Builder').click();
-
-    cy.get('[data-testid="operations.0.wrapper"]').should('be.visible');
-  },
+    e2e.components.Alert.alertV2('error').should('not.be.visible');
+  });
 });

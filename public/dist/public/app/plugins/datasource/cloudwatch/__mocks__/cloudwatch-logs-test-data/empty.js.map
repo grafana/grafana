@@ -1,0 +1,1 @@
+{"version":3,"file":"empty.js","sourceRoot":"","sources":["../../../../../../../../app/plugins/datasource/cloudwatch/__mocks__/cloudwatch-logs-test-data/empty.ts"],"names":[],"mappings":"AAAA,MAAM,CAAC,MAAM,UAAU,GAAG;IACxB,KAAK,EAAE,EAAE;IACT,MAAM,EAAE,EAAE;IACV,QAAQ,EAAE,EAAE,UAAU,EAAE,CAAC,EAAE,MAAM,EAAE,CAAC,EAAE;CACvC,CAAC"}

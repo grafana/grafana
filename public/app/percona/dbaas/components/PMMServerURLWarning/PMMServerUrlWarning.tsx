@@ -7,7 +7,7 @@ import { Card, useStyles } from '@grafana/ui';
 import { Messages } from './PMMServerUrlWarning.messages';
 import { getStyles } from './PMMServerUrlWarning.styles';
 
-export const PMMServerUrlWarning: FC<PMMServerUrlWarningProps> = ({ className }) => {
+export const PMMServerUrlWarning: FC<React.PropsWithChildren<PMMServerUrlWarningProps>> = ({ className }) => {
   const styles = useStyles(getStyles);
   return (
     <Card className={cx(styles.alert, className)} data-testid="pmm-server-url-warning">

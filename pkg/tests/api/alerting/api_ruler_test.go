@@ -1,39 +1,55 @@
 package alerting
 
 import (
+	"context"
+	"embed"
 	"encoding/json"
 	"fmt"
 	"io"
 	"math/rand"
 	"net/http"
+	"path"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/expr"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/uuid"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	datasourceService "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func TestAlertRulePermissions(t *testing.T) {
+//go:embed test-data/*.*
+var testData embed.FS
+
+func TestIntegrationAlertRulePermissions(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	// Setup Grafana and its Database
-	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
 	})
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	permissionsStore := resourcepermissions.NewStore(store)
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, p)
+	permissionsStore := resourcepermissions.NewStore(store, featuremgmt.WithFeatures())
 
 	// Create a user to make authenticated requests
 	userID := createUser(t, store, user.CreateUserCommand{
@@ -49,228 +65,264 @@ func TestAlertRulePermissions(t *testing.T) {
 	// Create the namespace we'll save our alerts to.
 	apiClient.CreateFolder(t, "folder2", "folder2")
 
+	postGroupRaw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1-post.json"))
+	require.NoError(t, err)
+	var group1 apimodels.PostableRuleGroupConfig
+	require.NoError(t, json.Unmarshal(postGroupRaw, &group1))
+
 	// Create rule under folder1
-	createRule(t, apiClient, "folder1")
+	_, status, response := apiClient.PostRulesGroupWithStatus(t, "folder1", &group1)
+	require.Equalf(t, http.StatusAccepted, status, response)
+
+	postGroupRaw, err = testData.ReadFile(path.Join("test-data", "rulegroup-2-post.json"))
+	require.NoError(t, err)
+	var group2 apimodels.PostableRuleGroupConfig
+	require.NoError(t, json.Unmarshal(postGroupRaw, &group2))
 
 	// Create rule under folder2
-	createRule(t, apiClient, "folder2")
+	_, status, response = apiClient.PostRulesGroupWithStatus(t, "folder2", &group2)
+	require.Equalf(t, http.StatusAccepted, status, response)
 
 	// With the rules created, let's make sure that rule definitions are stored.
-	{
-		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
-		// nolint:gosec
-		resp, err := http.Get(u)
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			err := resp.Body.Close()
+	allRules, status, _ := apiClient.GetAllRulesWithStatus(t)
+	require.Equal(t, http.StatusOK, status)
+	status, allExportRaw := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
+		ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
+	})
+	require.Equal(t, http.StatusOK, status)
+	var allExport apimodels.AlertingFileExport
+	require.NoError(t, json.Unmarshal([]byte(allExportRaw), &allExport))
+
+	t.Run("when user has all permissions", func(t *testing.T) {
+		t.Run("Get all returns all rules", func(t *testing.T) {
+			var group1, group2 apimodels.GettableRuleGroupConfig
+
+			getGroup1Raw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1-get.json"))
 			require.NoError(t, err)
-		})
-		b, err := io.ReadAll(resp.Body)
-		require.NoError(t, err)
+			require.NoError(t, json.Unmarshal(getGroup1Raw, &group1))
+			getGroup2Raw, err := testData.ReadFile(path.Join("test-data", "rulegroup-2-get.json"))
+			require.NoError(t, err)
+			require.NoError(t, json.Unmarshal(getGroup2Raw, &group2))
 
-		assert.Equal(t, resp.StatusCode, 200)
-
-		body, _ := rulesNamespaceWithoutVariableValues(t, b)
-		expectedGetNamespaceResponseBody := `
-		{
-		   "folder1":[
-			  {
-				 "name":"arulegroup",
-				 "interval":"1m",
-				 "rules":[
-					{
-						"annotations": {
-							"annotation1": "val1"
-					   },
-					   "expr":"",
-					   "for": "2m",
-					   "labels": {
-							"label1": "val1"
-					   },
-					   "grafana_alert":{
-						  "id":1,
-						  "orgId":1,
-						  "title":"rule under folder folder1",
-						  "condition":"A",
-						  "data":[
-		                     {
-		                        "refId":"A",
-		                        "queryType":"",
-		                        "relativeTimeRange":{
-		                           "from":18000,
-		                           "to":10800
-		                        },
-		                        "datasourceUid":"__expr__",
-								"model":{
-		                           "expression":"2 + 3 \u003E 1",
-		                           "intervalMs":1000,
-		                           "maxDataPoints":43200,
-		                           "type":"math"
-		                        }
-		                     }
-		                  ],
-						  "updated":"2021-02-21T01:10:30Z",
-						  "intervalSeconds":60,
-						  "version":1,
-						  "uid":"uid",
-						  "namespace_uid":"nsuid",
-						  "namespace_id":1,
-						  "rule_group":"arulegroup",
-						  "no_data_state":"NoData",
-						  "exec_err_state":"Alerting"
-					   }
-					}
-				 ]
-			  }
-		   ],
-		"folder2":[
-			{
-			   "name":"arulegroup",
-			   "interval":"1m",
-			   "rules":[
-				  {
-					  "annotations": {
-						  "annotation1": "val1"
-					 },
-					 "expr":"",
-					 "for": "2m",
-					 "labels": {
-						  "label1": "val1"
-					 },
-					 "grafana_alert":{
-						"id":2,
-						"orgId":1,
-						"title":"rule under folder folder2",
-						"condition":"A",
-						"data":[
-		                     {
-		                        "refId":"A",
-		                        "queryType":"",
-		                        "relativeTimeRange":{
-		                           "from":18000,
-		                           "to":10800
-		                        },
-		                        "datasourceUid":"__expr__",
-								"model":{
-		                           "expression":"2 + 3 \u003E 1",
-		                           "intervalMs":1000,
-		                           "maxDataPoints":43200,
-		                           "type":"math"
-		                        }
-		                     }
-		                  ],
-						"updated":"2021-02-21T01:10:30Z",
-						"intervalSeconds":60,
-						"version":1,
-						"uid":"uid",
-						"namespace_uid":"nsuid",
-						"namespace_id":2,
-						"rule_group":"arulegroup",
-						"no_data_state":"NoData",
-						"exec_err_state":"Alerting"
-					 }
-				  }
-			   ]
+			expected := apimodels.NamespaceConfigResponse{
+				"folder1": []apimodels.GettableRuleGroupConfig{
+					group1,
+				},
+				"folder2": []apimodels.GettableRuleGroupConfig{
+					group2,
+				},
 			}
-		 ]
-		}`
-		assert.JSONEq(t, expectedGetNamespaceResponseBody, body)
 
+			pathsToIgnore := []string{
+				"GrafanaManagedAlert.Updated",
+				"GrafanaManagedAlert.UID",
+				"GrafanaManagedAlert.ID",
+				"GrafanaManagedAlert.Data.Model",
+				"GrafanaManagedAlert.NamespaceUID",
+				"GrafanaManagedAlert.NamespaceID",
+			}
+
+			// compare expected and actual and ignore the dynamic fields
+			diff := cmp.Diff(expected, allRules, cmp.FilterPath(func(path cmp.Path) bool {
+				for _, s := range pathsToIgnore {
+					if strings.Contains(path.String(), s) {
+						return true
+					}
+				}
+				return false
+			}, cmp.Ignore()))
+
+			require.Empty(t, diff)
+
+			for _, rule := range allRules["folder1"][0].Rules {
+				assert.Equal(t, "folder1", rule.GrafanaManagedAlert.NamespaceUID)
+				assert.Equal(t, int64(1), rule.GrafanaManagedAlert.NamespaceID)
+			}
+			for _, rule := range allRules["folder2"][0].Rules {
+				assert.Equal(t, "folder2", rule.GrafanaManagedAlert.NamespaceUID)
+				assert.Equal(t, int64(2), rule.GrafanaManagedAlert.NamespaceID)
+			}
+		})
+
+		t.Run("Get by folder returns groups in folder", func(t *testing.T) {
+			rules, status, _ := apiClient.GetAllRulesGroupInFolderWithStatus(t, "folder1")
+			require.Equal(t, http.StatusAccepted, status)
+			require.Contains(t, rules, "folder1")
+			require.Len(t, rules["folder1"], 1)
+			require.Equal(t, allRules["folder1"], rules["folder1"])
+		})
+
+		t.Run("Get group returns a single group", func(t *testing.T) {
+			rules := apiClient.GetRulesGroup(t, "folder2", allRules["folder2"][0].Name)
+			cmp.Diff(allRules["folder2"][0], rules.GettableRuleGroupConfig)
+		})
+
+		t.Run("Export returns all rules", func(t *testing.T) {
+			var group1File, group2File apimodels.AlertingFileExport
+			getGroup1Raw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1-export.json"))
+			require.NoError(t, err)
+			require.NoError(t, json.Unmarshal(getGroup1Raw, &group1File))
+			getGroup2Raw, err := testData.ReadFile(path.Join("test-data", "rulegroup-2-export.json"))
+			require.NoError(t, err)
+			require.NoError(t, json.Unmarshal(getGroup2Raw, &group2File))
+
+			group1File.Groups = append(group1File.Groups, group2File.Groups...)
+			expected := group1File
+
+			pathsToIgnore := []string{
+				"Groups.Rules.UID",
+				"Groups.Folder",
+			}
+
+			// compare expected and actual and ignore the dynamic fields
+			diff := cmp.Diff(expected, allExport, cmp.FilterPath(func(path cmp.Path) bool {
+				for _, s := range pathsToIgnore {
+					if strings.Contains(path.String(), s) {
+						return true
+					}
+				}
+				return false
+			}, cmp.Ignore()))
+
+			require.Empty(t, diff)
+
+			require.Equal(t, "folder1", allExport.Groups[0].Folder)
+			require.Equal(t, "folder2", allExport.Groups[1].Folder)
+		})
+
+		t.Run("Export from one folder", func(t *testing.T) {
+			expected := allExport.Groups[0]
+			status, exportRaw := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
+				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
+				FolderUID:         []string{"folder1"},
+			})
+			require.Equal(t, http.StatusOK, status)
+			var export apimodels.AlertingFileExport
+			require.NoError(t, json.Unmarshal([]byte(exportRaw), &export))
+
+			require.Len(t, export.Groups, 1)
+			require.Equal(t, expected, export.Groups[0])
+		})
+
+		t.Run("Export from one group", func(t *testing.T) {
+			expected := allExport.Groups[0]
+			status, exportRaw := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
+				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
+				FolderUID:         []string{"folder1"},
+				GroupName:         expected.Name,
+			})
+			require.Equal(t, http.StatusOK, status)
+			var export apimodels.AlertingFileExport
+			require.NoError(t, json.Unmarshal([]byte(exportRaw), &export))
+
+			require.Len(t, export.Groups, 1)
+			require.Equal(t, expected, export.Groups[0])
+		})
+
+		t.Run("Export single rule", func(t *testing.T) {
+			expected := allExport.Groups[0]
+			expected.Rules = []apimodels.AlertRuleExport{
+				expected.Rules[0],
+			}
+			status, exportRaw := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
+				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
+				RuleUID:           expected.Rules[0].UID,
+			})
+
+			require.Equal(t, http.StatusOK, status)
+			var export apimodels.AlertingFileExport
+			t.Log(exportRaw)
+			require.NoError(t, json.Unmarshal([]byte(exportRaw), &export))
+
+			require.Len(t, export.Groups, 1)
+			require.Equal(t, expected, export.Groups[0])
+		})
+	})
+
+	t.Run("when permissions for folder2 removed", func(t *testing.T) {
 		// remove permissions from folder2
 		removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, "folder2")
 		apiClient.ReloadCachedPermissions(t)
 
-		// make sure that folder2 is not included in the response
-		// nolint:gosec
-		resp, err = http.Get(u)
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			err := resp.Body.Close()
-			require.NoError(t, err)
+		t.Run("Get all returns all rules", func(t *testing.T) {
+			newAll, status, _ := apiClient.GetAllRulesWithStatus(t)
+			require.Equal(t, http.StatusOK, status)
+			require.NotContains(t, newAll, "folder2")
+			require.Contains(t, newAll, "folder1")
 		})
-		b, err = io.ReadAll(resp.Body)
-		require.NoError(t, err)
 
-		assert.Equal(t, resp.StatusCode, 200)
-
-		body, _ = rulesNamespaceWithoutVariableValues(t, b)
-		expectedGetNamespaceResponseBody = `
-		{
-		   "folder1":[
-			  {
-				 "name":"arulegroup",
-				 "interval":"1m",
-				 "rules":[
-					{
-						"annotations": {
-							"annotation1": "val1"
-					   },
-					   "expr":"",
-					   "for": "2m",
-					   "labels": {
-							"label1": "val1"
-					   },
-					   "grafana_alert":{
-						  "id":1,
-						  "orgId":1,
-						  "title":"rule under folder folder1",
-						  "condition":"A",
-						  "data":[
-		                     {
-		                        "refId":"A",
-		                        "queryType":"",
-		                        "relativeTimeRange":{
-		                           "from":18000,
-		                           "to":10800
-		                        },
-		                        "datasourceUid":"__expr__",
-								"model":{
-		                           "expression":"2 + 3 \u003E 1",
-		                           "intervalMs":1000,
-		                           "maxDataPoints":43200,
-		                           "type":"math"
-		                        }
-		                     }
-		                  ],
-						  "updated":"2021-02-21T01:10:30Z",
-						  "intervalSeconds":60,
-						  "version":1,
-						  "uid":"uid",
-						  "namespace_uid":"nsuid",
-						  "namespace_id":1,
-						  "rule_group":"arulegroup",
-						  "no_data_state":"NoData",
-						  "exec_err_state":"Alerting"
-					   }
-					}
-				 ]
-			  }
-		   ]
-		}`
-		assert.JSONEq(t, expectedGetNamespaceResponseBody, body)
-	}
-
-	// Remove permissions from folder1.
-	removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, "folder1")
-	apiClient.ReloadCachedPermissions(t)
-	{
-		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
-		// nolint:gosec
-		resp, err := http.Get(u)
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			err := resp.Body.Close()
-			require.NoError(t, err)
+		t.Run("Get by folder returns groups in folder", func(t *testing.T) {
+			_, status, _ := apiClient.GetAllRulesGroupInFolderWithStatus(t, "folder2")
+			require.Equal(t, http.StatusForbidden, status)
 		})
-		b, err := io.ReadAll(resp.Body)
-		require.NoError(t, err)
 
-		assert.Equal(t, resp.StatusCode, 200)
-		require.JSONEq(t, `{}`, string(b))
-	}
+		t.Run("Get group returns a single group", func(t *testing.T) {
+			u := fmt.Sprintf("%s/api/ruler/grafana/api/v1/rules/folder2/arulegroup", apiClient.url)
+			// nolint:gosec
+			resp, err := http.Get(u)
+			require.NoError(t, err)
+			defer func() {
+				_ = resp.Body.Close()
+			}()
+			assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+		})
+
+		t.Run("Export returns all rules", func(t *testing.T) {
+			status, exportRaw := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
+				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
+			})
+			require.Equal(t, http.StatusOK, status)
+			var export apimodels.AlertingFileExport
+			require.NoError(t, json.Unmarshal([]byte(exportRaw), &export))
+
+			require.Equal(t, http.StatusOK, status)
+			require.Len(t, export.Groups, 1)
+			require.Equal(t, "folder1", export.Groups[0].Folder)
+		})
+
+		t.Run("Export from one folder", func(t *testing.T) {
+			status, _ := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
+				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
+				FolderUID:         []string{"folder2"},
+			})
+			assert.Equal(t, http.StatusUnauthorized, status)
+		})
+
+		t.Run("Export from one group", func(t *testing.T) {
+			status, _ := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
+				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
+				FolderUID:         []string{"folder2"},
+				GroupName:         "arulegroup",
+			})
+			assert.Equal(t, http.StatusForbidden, status)
+		})
+
+		t.Run("Export single rule", func(t *testing.T) {
+			uid := allRules["folder2"][0].Rules[0].GrafanaManagedAlert.UID
+			status, _ := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
+				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
+				RuleUID:           uid,
+			})
+			require.Equal(t, http.StatusForbidden, status)
+		})
+
+		t.Run("when all permissions are revoked", func(t *testing.T) {
+			removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, "folder1")
+			apiClient.ReloadCachedPermissions(t)
+
+			rules, status, _ := apiClient.GetAllRulesWithStatus(t)
+			require.Equal(t, http.StatusOK, status)
+			require.Empty(t, rules)
+
+			status, _ = apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
+				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
+			})
+			require.Equal(t, http.StatusNotFound, status)
+		})
+	})
 }
 
-func createRule(t *testing.T, client apiClient, folder string) {
+func createRule(t *testing.T, client apiClient, folder string) (apimodels.PostableRuleGroupConfig, string) {
 	t.Helper()
 
 	interval, err := model.ParseDuration("1m")
@@ -289,12 +341,12 @@ func createRule(t *testing.T, client apiClient, folder string) {
 				GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 					Title:     fmt.Sprintf("rule under folder %s", folder),
 					Condition: "A",
-					Data: []ngmodels.AlertQuery{
+					Data: []apimodels.AlertQuery{
 						{
 							RefID: "A",
-							RelativeTimeRange: ngmodels.RelativeTimeRange{
-								From: ngmodels.Duration(time.Duration(5) * time.Hour),
-								To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+							RelativeTimeRange: apimodels.RelativeTimeRange{
+								From: apimodels.Duration(time.Duration(5) * time.Hour),
+								To:   apimodels.Duration(time.Duration(3) * time.Hour),
 							},
 							DatasourceUID: expr.DatasourceUID,
 							Model: json.RawMessage(`{
@@ -307,12 +359,93 @@ func createRule(t *testing.T, client apiClient, folder string) {
 			},
 		},
 	}
-	status, body := client.PostRulesGroup(t, folder, &rules)
+	resp, status, _ := client.PostRulesGroupWithStatus(t, folder, &rules)
 	assert.Equal(t, http.StatusAccepted, status)
-	require.JSONEq(t, `{"message":"rule group updated successfully"}`, body)
+	require.Len(t, resp.Created, 1)
+	return rules, resp.Created[0]
 }
 
-func TestAlertRuleConflictingTitle(t *testing.T) {
+func TestAlertRulePostExport(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
+	// Setup Grafana and its Database
+	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+	})
+
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, p)
+	permissionsStore := resourcepermissions.NewStore(store, featuremgmt.WithFeatures())
+
+	// Create a user to make authenticated requests
+	userID := createUser(t, store, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleEditor),
+		Password:       "password",
+		Login:          "grafana",
+	})
+
+	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
+
+	// Create the namespace we'll save our alerts to.
+	apiClient.CreateFolder(t, "folder1", "folder1")
+
+	var group1 apimodels.PostableRuleGroupConfig
+
+	group1Raw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1-post.json"))
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(group1Raw, &group1))
+
+	t.Run("should return in export format", func(t *testing.T) {
+		var expected, actual apimodels.AlertingFileExport
+		getGroup1Raw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1-export.json"))
+		require.NoError(t, err)
+		require.NoError(t, json.Unmarshal(getGroup1Raw, &expected))
+
+		status, actualRaw := apiClient.PostRulesExportWithStatus(t, "folder1", &group1, &apimodels.ExportQueryParams{
+			Download: false,
+			Format:   "json",
+		})
+		require.Equal(t, http.StatusOK, status)
+		require.NoError(t, json.Unmarshal([]byte(actualRaw), &actual))
+
+		pathsToIgnore := []string{
+			"Groups.Rules.UID",
+			"Groups.Folder",
+			"Data.Model", // Model is not amended with default values
+		}
+
+		// compare expected and actual and ignore the dynamic fields
+		diff := cmp.Diff(expected, actual, cmp.FilterPath(func(path cmp.Path) bool {
+			for _, s := range pathsToIgnore {
+				if strings.Contains(path.String(), s) {
+					return true
+				}
+			}
+			return false
+		}, cmp.Ignore()))
+
+		require.Empty(t, diff)
+
+		require.Equal(t, actual.Groups[0].Folder, "folder1")
+	})
+
+	t.Run("should return 403 when no access to folder", func(t *testing.T) {
+		removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, "folder1")
+		apiClient.ReloadCachedPermissions(t)
+
+		status, _ := apiClient.PostRulesExportWithStatus(t, "folder1", &group1, &apimodels.ExportQueryParams{
+			Download: false,
+			Format:   "json",
+		})
+		require.Equal(t, http.StatusForbidden, status)
+	})
+}
+
+func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -341,9 +474,9 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 
 	rules := newTestingRuleConfig(t)
 
-	status, body := apiClient.PostRulesGroup(t, "folder1", &rules)
+	respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, "folder1", &rules)
 	assert.Equal(t, http.StatusAccepted, status)
-	require.JSONEq(t, `{"message":"rule group updated successfully"}`, body)
+	require.Len(t, respModel.Created, len(rules.Rules))
 
 	// fetch the created rules, so we can get the uid's and trigger
 	// and update by reusing the uid's
@@ -351,39 +484,62 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 	require.Len(t, createdRuleGroup.Rules, 2)
 
 	t.Run("trying to create alert with same title under same folder should fail", func(t *testing.T) {
-		rules := newTestingRuleConfig(t)
+		rulesWithUID := convertGettableRuleGroupToPostable(createdRuleGroup)
+		rulesWithUID.Rules = append(rulesWithUID.Rules, rules.Rules[0]) // Create new copy of first rule.
 
-		status, body := apiClient.PostRulesGroup(t, "folder1", &rules)
+		_, status, body := apiClient.PostRulesGroupWithStatus(t, "folder1", &rulesWithUID)
 		assert.Equal(t, http.StatusInternalServerError, status)
 
-		var res map[string]interface{}
+		var res map[string]any
 		require.NoError(t, json.Unmarshal([]byte(body), &res))
 		require.Equal(t, "failed to update rule group: failed to add rules: a conflicting alert rule is found: rule title under the same organisation and folder should be unique", res["message"])
 	})
 
 	t.Run("trying to update an alert to the title of an existing alert in the same folder should fail", func(t *testing.T) {
-		rules := newTestingRuleConfig(t)
-		rules.Rules[0].GrafanaManagedAlert.UID = createdRuleGroup.Rules[0].GrafanaManagedAlert.UID
-		rules.Rules[1].GrafanaManagedAlert.UID = createdRuleGroup.Rules[1].GrafanaManagedAlert.UID
-		rules.Rules[1].GrafanaManagedAlert.Title = "AlwaysFiring"
+		rulesWithUID := convertGettableRuleGroupToPostable(createdRuleGroup)
+		rulesWithUID.Rules[1].GrafanaManagedAlert.Title = "AlwaysFiring"
 
-		status, body := apiClient.PostRulesGroup(t, "folder1", &rules)
+		_, status, body := apiClient.PostRulesGroupWithStatus(t, "folder1", &rulesWithUID)
 		assert.Equal(t, http.StatusInternalServerError, status)
 
-		var res map[string]interface{}
+		var res map[string]any
 		require.NoError(t, json.Unmarshal([]byte(body), &res))
 		require.Equal(t, "failed to update rule group: failed to update rules: a conflicting alert rule is found: rule title under the same organisation and folder should be unique", res["message"])
 	})
 
 	t.Run("trying to create alert with same title under another folder should succeed", func(t *testing.T) {
 		rules := newTestingRuleConfig(t)
-		status, body := apiClient.PostRulesGroup(t, "folder2", &rules)
+		resp, status, _ := apiClient.PostRulesGroupWithStatus(t, "folder2", &rules)
 		assert.Equal(t, http.StatusAccepted, status)
-		require.JSONEq(t, `{"message":"rule group updated successfully"}`, body)
+		require.Len(t, resp.Created, len(rules.Rules))
+	})
+
+	t.Run("trying to swap titles of existing alerts in the same folder should work", func(t *testing.T) {
+		rulesWithUID := convertGettableRuleGroupToPostable(createdRuleGroup)
+		title0 := rulesWithUID.Rules[0].GrafanaManagedAlert.Title
+		title1 := rulesWithUID.Rules[1].GrafanaManagedAlert.Title
+		rulesWithUID.Rules[0].GrafanaManagedAlert.Title = title1
+		rulesWithUID.Rules[1].GrafanaManagedAlert.Title = title0
+
+		resp, status, _ := apiClient.PostRulesGroupWithStatus(t, "folder1", &rulesWithUID)
+		assert.Equal(t, http.StatusAccepted, status)
+		require.Len(t, resp.Updated, 2)
+	})
+
+	t.Run("trying to update titles of existing alerts in a chain in the same folder should work", func(t *testing.T) {
+		rulesWithUID := convertGettableRuleGroupToPostable(createdRuleGroup)
+		rulesWithUID.Rules[0].GrafanaManagedAlert.Title = rulesWithUID.Rules[1].GrafanaManagedAlert.Title
+		rulesWithUID.Rules[1].GrafanaManagedAlert.Title = "something new"
+
+		resp, status, _ := apiClient.PostRulesGroupWithStatus(t, "folder1", &rulesWithUID)
+		assert.Equal(t, http.StatusAccepted, status)
+		require.Len(t, resp.Updated, len(rulesWithUID.Rules))
 	})
 }
 
-func TestRulerRulesFilterByDashboard(t *testing.T) {
+func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
 		DisableAnonymous:     true,
@@ -425,12 +581,12 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						Title:     "AlwaysFiring",
 						Condition: "A",
-						Data: []ngmodels.AlertQuery{
+						Data: []apimodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: ngmodels.RelativeTimeRange{
-									From: ngmodels.Duration(time.Duration(5) * time.Hour),
-									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: apimodels.RelativeTimeRange{
+									From: apimodels.Duration(time.Duration(5) * time.Hour),
+									To:   apimodels.Duration(time.Duration(3) * time.Hour),
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
@@ -445,12 +601,12 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						Title:     "AlwaysFiringButSilenced",
 						Condition: "A",
-						Data: []ngmodels.AlertQuery{
+						Data: []apimodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: ngmodels.RelativeTimeRange{
-									From: ngmodels.Duration(time.Duration(5) * time.Hour),
-									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: apimodels.RelativeTimeRange{
+									From: apimodels.Duration(time.Duration(5) * time.Hour),
+									To:   apimodels.Duration(time.Duration(3) * time.Hour),
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
@@ -465,9 +621,9 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 				},
 			},
 		}
-		status, body := apiClient.PostRulesGroup(t, "default", &rules)
+		resp, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
 		assert.Equal(t, http.StatusAccepted, status)
-		require.JSONEq(t, `{"message":"rule group updated successfully"}`, body)
+		require.Len(t, resp.Created, len(rules.Rules))
 	}
 
 	expectedAllJSON := fmt.Sprintf(`
@@ -504,6 +660,7 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 				}],
 				"updated": "2021-02-21T01:10:30Z",
 				"intervalSeconds": 60,
+				"is_paused": false,
 				"version": 1,
 				"uid": "uid",
 				"namespace_uid": "nsuid",
@@ -537,6 +694,7 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 				}],
 				"updated": "2021-02-21T01:10:30Z",
 				"intervalSeconds": 60,
+				"is_paused": false,
 				"version": 1,
 				"uid": "uid",
 				"namespace_uid": "nsuid",
@@ -582,6 +740,7 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 				}],
 				"updated": "2021-02-21T01:10:30Z",
 				"intervalSeconds": 60,
+				"is_paused": false,
 				"version": 1,
 				"uid": "uid",
 				"namespace_uid": "nsuid",
@@ -696,7 +855,7 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		var res map[string]interface{}
+		var res map[string]any
 		require.NoError(t, json.Unmarshal(b, &res))
 		require.Equal(t, `invalid panel_id: strconv.ParseInt: parsing "invalid": invalid syntax`, res["message"])
 	}
@@ -714,13 +873,15 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		var res map[string]interface{}
+		var res map[string]any
 		require.NoError(t, json.Unmarshal(b, &res))
 		require.Equal(t, "panel_id must be set with dashboard_uid", res["message"])
 	}
 }
 
-func TestRuleGroupSequence(t *testing.T) {
+func TestIntegrationRuleGroupSequence(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -744,9 +905,9 @@ func TestRuleGroupSequence(t *testing.T) {
 	group1 := generateAlertRuleGroup(5, alertRuleGen())
 	group2 := generateAlertRuleGroup(5, alertRuleGen())
 
-	status, _ := client.PostRulesGroup(t, folder1Title, &group1)
+	_, status, _ := client.PostRulesGroupWithStatus(t, folder1Title, &group1)
 	require.Equal(t, http.StatusAccepted, status)
-	status, _ = client.PostRulesGroup(t, folder1Title, &group2)
+	_, status, _ = client.PostRulesGroupWithStatus(t, folder1Title, &group2)
 	require.Equal(t, http.StatusAccepted, status)
 
 	t.Run("should persist order of the rules in a group", func(t *testing.T) {
@@ -769,7 +930,7 @@ func TestRuleGroupSequence(t *testing.T) {
 		for _, rule := range postableGroup1.Rules {
 			expectedUids = append(expectedUids, rule.GrafanaManagedAlert.UID)
 		}
-		status, _ := client.PostRulesGroup(t, folder1Title, &postableGroup1)
+		_, status, _ := client.PostRulesGroupWithStatus(t, folder1Title, &postableGroup1)
 		require.Equal(t, http.StatusAccepted, status)
 
 		group1Get = client.GetRulesGroup(t, folder1Title, group1.Name)
@@ -795,7 +956,7 @@ func TestRuleGroupSequence(t *testing.T) {
 		for _, rule := range postableGroup1.Rules {
 			expectedUids = append(expectedUids, rule.GrafanaManagedAlert.UID)
 		}
-		status, _ := client.PostRulesGroup(t, folder1Title, &postableGroup1)
+		_, status, _ := client.PostRulesGroupWithStatus(t, folder1Title, &postableGroup1)
 		require.Equal(t, http.StatusAccepted, status)
 
 		group1Get = client.GetRulesGroup(t, folder1Title, group1.Name)
@@ -816,7 +977,9 @@ func TestRuleGroupSequence(t *testing.T) {
 	})
 }
 
-func TestRuleUpdate(t *testing.T) {
+func TestIntegrationRuleUpdate(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -825,13 +988,39 @@ func TestRuleUpdate(t *testing.T) {
 		AppModeProduction:     true,
 	})
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	permissionsStore := resourcepermissions.NewStore(store, featuremgmt.WithFeatures())
 
 	// Create a user to make authenticated requests
-	createUser(t, store, user.CreateUserCommand{
+	userID := createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
 	})
+
+	if setting.IsEnterprise {
+		// add blanket access to data sources.
+		_, err := permissionsStore.SetUserResourcePermission(context.Background(),
+			1,
+			accesscontrol.User{ID: userID},
+			resourcepermissions.SetResourcePermissionCommand{
+				Actions: []string{
+					datasources.ActionQuery,
+				},
+				Resource:          datasources.ScopeRoot,
+				ResourceID:        "*",
+				ResourceAttribute: "uid",
+			}, nil)
+		require.NoError(t, err)
+	}
+
+	// Create a user to make authenticated requests
+	createUser(t, store, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "admin",
+		Login:          "admin",
+	})
+
+	adminClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
 	client := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 	folder1Title := "folder1"
@@ -842,7 +1031,7 @@ func TestRuleUpdate(t *testing.T) {
 		expected := model.Duration(10 * time.Second)
 		group.Rules[0].ApiRuleNode.For = &expected
 
-		status, body := client.PostRulesGroup(t, folder1Title, &group)
+		_, status, body := client.PostRulesGroupWithStatus(t, folder1Title, &group)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 		getGroup := client.GetRulesGroup(t, folder1Title, group.Name)
 		require.Equal(t, expected, *getGroup.Rules[0].ApiRuleNode.For)
@@ -850,11 +1039,90 @@ func TestRuleUpdate(t *testing.T) {
 		group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
 		expected = 0
 		group.Rules[0].ApiRuleNode.For = &expected
-		status, body = client.PostRulesGroup(t, folder1Title, &group)
+		_, status, body = client.PostRulesGroupWithStatus(t, folder1Title, &group)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 
 		getGroup = client.GetRulesGroup(t, folder1Title, group.Name)
 		require.Equal(t, expected, *getGroup.Rules[0].ApiRuleNode.For)
+	})
+	t.Run("when data source missing", func(t *testing.T) {
+		var groupName string
+		{
+			ds1 := adminClient.CreateTestDatasource(t)
+			group := generateAlertRuleGroup(3, alertRuleGen(withDatasourceQuery(ds1.Body.Datasource.UID)))
+
+			_, status, body := client.PostRulesGroupWithStatus(t, folder1Title, &group)
+			require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+
+			getGroup := client.GetRulesGroup(t, folder1Title, group.Name)
+			group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
+
+			require.Len(t, group.Rules, 3)
+
+			adminClient.DeleteDatasource(t, ds1.Body.Datasource.UID)
+
+			// expire datasource caching
+			<-time.After(datasourceService.DefaultCacheTTL + 1*time.Second) // TODO delete when TTL could be configured
+
+			groupName = group.Name
+		}
+
+		t.Run("noop should not fail", func(t *testing.T) {
+			getGroup := client.GetRulesGroup(t, folder1Title, groupName)
+			group := convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
+
+			_, status, body := client.PostRulesGroupWithStatus(t, folder1Title, &group)
+			require.Equalf(t, http.StatusAccepted, status, "failed to post noop rule group. Response: %s", body)
+		})
+		t.Run("should not let update rule if it does not fix datasource", func(t *testing.T) {
+			getGroup := client.GetRulesGroup(t, folder1Title, groupName)
+			group := convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
+
+			group.Rules[0].GrafanaManagedAlert.Title = uuid.NewString()
+			resp, status, body := client.PostRulesGroupWithStatus(t, folder1Title, &group)
+
+			if status == http.StatusAccepted {
+				assert.Len(t, resp.Deleted, 1)
+				getGroup = client.GetRulesGroup(t, folder1Title, group.Name)
+				assert.NotEqualf(t, group.Rules[0].GrafanaManagedAlert.Title, getGroup.Rules[0].GrafanaManagedAlert.Title, "group was updated")
+			}
+			require.Equalf(t, http.StatusBadRequest, status, "expected BadRequest. Response: %s", body)
+			assert.Contains(t, body, "data source not found")
+		})
+		t.Run("should let delete broken rule", func(t *testing.T) {
+			getGroup := client.GetRulesGroup(t, folder1Title, groupName)
+			group := convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
+
+			// remove the last rule.
+			group.Rules = group.Rules[0 : len(group.Rules)-1]
+			resp, status, body := client.PostRulesGroupWithStatus(t, folder1Title, &group)
+			require.Equalf(t, http.StatusAccepted, status, "failed to delete last rule from group. Response: %s", body)
+			assert.Len(t, resp.Deleted, 1)
+
+			getGroup = client.GetRulesGroup(t, folder1Title, group.Name)
+			group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
+			require.Len(t, group.Rules, 2)
+		})
+		t.Run("should let fix single rule", func(t *testing.T) {
+			getGroup := client.GetRulesGroup(t, folder1Title, groupName)
+			group := convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
+
+			ds2 := adminClient.CreateTestDatasource(t)
+			withDatasourceQuery(ds2.Body.Datasource.UID)(&group.Rules[0])
+			resp, status, body := client.PostRulesGroupWithStatus(t, folder1Title, &group)
+			require.Equalf(t, http.StatusAccepted, status, "failed to post noop rule group. Response: %s", body)
+			assert.Len(t, resp.Deleted, 0)
+			assert.Len(t, resp.Updated, 2)
+			assert.Len(t, resp.Created, 0)
+
+			getGroup = client.GetRulesGroup(t, folder1Title, group.Name)
+			group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
+			require.Equal(t, ds2.Body.Datasource.UID, group.Rules[0].GrafanaManagedAlert.Data[0].DatasourceUID)
+		})
+		t.Run("should let delete group", func(t *testing.T) {
+			status, body := client.DeleteRulesGroup(t, folder1Title, groupName)
+			require.Equalf(t, http.StatusAccepted, status, "failed to post noop rule group. Response: %s", body)
+		})
 	})
 }
 
@@ -873,12 +1141,12 @@ func newTestingRuleConfig(t *testing.T) apimodels.PostableRuleGroupConfig {
 		GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 			Title:     "AlwaysFiring",
 			Condition: "A",
-			Data: []ngmodels.AlertQuery{
+			Data: []apimodels.AlertQuery{
 				{
 					RefID: "A",
-					RelativeTimeRange: ngmodels.RelativeTimeRange{
-						From: ngmodels.Duration(time.Duration(5) * time.Hour),
-						To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+					RelativeTimeRange: apimodels.RelativeTimeRange{
+						From: apimodels.Duration(time.Duration(5) * time.Hour),
+						To:   apimodels.Duration(time.Duration(3) * time.Hour),
 					},
 					DatasourceUID: expr.DatasourceUID,
 					Model: json.RawMessage(`{
@@ -900,12 +1168,12 @@ func newTestingRuleConfig(t *testing.T) apimodels.PostableRuleGroupConfig {
 		GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 			Title:     "AlwaysFiring2",
 			Condition: "A",
-			Data: []ngmodels.AlertQuery{
+			Data: []apimodels.AlertQuery{
 				{
 					RefID: "A",
-					RelativeTimeRange: ngmodels.RelativeTimeRange{
-						From: ngmodels.Duration(time.Duration(5) * time.Hour),
-						To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+					RelativeTimeRange: apimodels.RelativeTimeRange{
+						From: apimodels.Duration(time.Duration(5) * time.Hour),
+						To:   apimodels.Duration(time.Duration(3) * time.Hour),
 					},
 					DatasourceUID: expr.DatasourceUID,
 					Model: json.RawMessage(`{
@@ -923,5 +1191,132 @@ func newTestingRuleConfig(t *testing.T) apimodels.PostableRuleGroupConfig {
 			firstRule,
 			secondRule,
 		},
+	}
+}
+
+func TestIntegrationRulePause(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
+	// Setup Grafana and its Database
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+	})
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+
+	// Create a user to make authenticated requests
+	createUser(t, store, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleEditor),
+		Password:       "password",
+		Login:          "grafana",
+	})
+
+	client := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
+	folder1Title := "folder1"
+	client.CreateFolder(t, util.GenerateShortUID(), folder1Title)
+
+	t.Run("should create a paused rule if isPaused is true", func(t *testing.T) {
+		group := generateAlertRuleGroup(1, alertRuleGen())
+		expectedIsPaused := true
+		group.Rules[0].GrafanaManagedAlert.IsPaused = &expectedIsPaused
+
+		resp, status, body := client.PostRulesGroupWithStatus(t, folder1Title, &group)
+		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+		require.Len(t, resp.Created, 1)
+		getGroup := client.GetRulesGroup(t, folder1Title, group.Name)
+		require.Equalf(t, http.StatusAccepted, status, "failed to get rule group. Response: %s", body)
+		require.Equal(t, expectedIsPaused, getGroup.Rules[0].GrafanaManagedAlert.IsPaused)
+	})
+
+	t.Run("should create a unpaused rule if isPaused is false", func(t *testing.T) {
+		group := generateAlertRuleGroup(1, alertRuleGen())
+		expectedIsPaused := false
+		group.Rules[0].GrafanaManagedAlert.IsPaused = &expectedIsPaused
+
+		resp, status, body := client.PostRulesGroupWithStatus(t, folder1Title, &group)
+		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+		require.Len(t, resp.Created, 1)
+		getGroup := client.GetRulesGroup(t, folder1Title, group.Name)
+		require.Equalf(t, http.StatusAccepted, status, "failed to get rule group. Response: %s", body)
+		require.Equal(t, expectedIsPaused, getGroup.Rules[0].GrafanaManagedAlert.IsPaused)
+	})
+
+	t.Run("should create a unpaused rule if isPaused is not present", func(t *testing.T) {
+		group := generateAlertRuleGroup(1, alertRuleGen())
+		group.Rules[0].GrafanaManagedAlert.IsPaused = nil
+
+		resp, status, body := client.PostRulesGroupWithStatus(t, folder1Title, &group)
+		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+		require.Len(t, resp.Created, 1)
+		getGroup := client.GetRulesGroup(t, folder1Title, group.Name)
+		require.Equalf(t, http.StatusAccepted, status, "failed to get rule group. Response: %s", body)
+		require.False(t, getGroup.Rules[0].GrafanaManagedAlert.IsPaused)
+	})
+
+	getBooleanPointer := func(b bool) *bool { return &b }
+	testCases := []struct {
+		description          string
+		isPausedInDb         bool
+		isPausedInBody       *bool
+		expectedIsPausedInDb bool
+	}{
+		{
+			description:          "should pause rule if there is a paused rule in DB and isPaused is true",
+			isPausedInDb:         true,
+			isPausedInBody:       getBooleanPointer(true),
+			expectedIsPausedInDb: true,
+		},
+		{
+			description:          "should unpause rule if there is a paused rule in DB and isPaused is false",
+			isPausedInDb:         true,
+			isPausedInBody:       getBooleanPointer(false),
+			expectedIsPausedInDb: false,
+		},
+		{
+			description:          "should keep rule paused if there is a paused rule in DB and isPaused is not present",
+			isPausedInDb:         true,
+			isPausedInBody:       nil,
+			expectedIsPausedInDb: true,
+		},
+		{
+			description:          "should pause rule if there is an unpaused rule in DB and isPaused is true",
+			isPausedInDb:         false,
+			isPausedInBody:       getBooleanPointer(true),
+			expectedIsPausedInDb: true,
+		},
+		{
+			description:          "should unpause rule if there is an unpaused rule in DB and isPaused is false",
+			isPausedInDb:         false,
+			isPausedInBody:       getBooleanPointer(false),
+			expectedIsPausedInDb: false,
+		},
+		{
+			description:          "should keep rule unpaused if there is an unpaused rule in DB and isPaused is not present",
+			isPausedInDb:         false,
+			isPausedInBody:       nil,
+			expectedIsPausedInDb: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.description, func(t *testing.T) {
+			group := generateAlertRuleGroup(1, alertRuleGen())
+			group.Rules[0].GrafanaManagedAlert.IsPaused = &tc.isPausedInDb
+
+			_, status, body := client.PostRulesGroupWithStatus(t, folder1Title, &group)
+			require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+			getGroup := client.GetRulesGroup(t, folder1Title, group.Name)
+			require.Equalf(t, http.StatusAccepted, status, "failed to get rule group. Response: %s", body)
+
+			group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
+			group.Rules[0].GrafanaManagedAlert.IsPaused = tc.isPausedInBody
+			_, status, body = client.PostRulesGroupWithStatus(t, folder1Title, &group)
+			require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+
+			getGroup = client.GetRulesGroup(t, folder1Title, group.Name)
+			require.Equal(t, tc.expectedIsPausedInDb, getGroup.Rules[0].GrafanaManagedAlert.IsPaused)
+		})
 	}
 }

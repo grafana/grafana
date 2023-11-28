@@ -5,19 +5,21 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestAnnotationCleanUp(t *testing.T) {
-	fakeSQL := sqlstore.InitTestDB(t)
+	fakeSQL := db.InitTestDB(t)
 
 	t.Cleanup(func() {
-		err := fakeSQL.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+		err := fakeSQL.WithDbSession(context.Background(), func(session *db.Session) error {
 			_, err := session.Exec("DELETE FROM annotation")
 			return err
 		})
@@ -90,7 +92,7 @@ func TestAnnotationCleanUp(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.AnnotationCleanupJobBatchSize = 1
-			cleaner := ProvideCleanupService(fakeSQL, cfg)
+			cleaner := ProvideCleanupService(fakeSQL, cfg, featuremgmt.WithFeatures())
 			affectedAnnotations, affectedAnnotationTags, err := cleaner.Run(context.Background(), test.cfg)
 			require.NoError(t, err)
 
@@ -111,10 +113,10 @@ func TestAnnotationCleanUp(t *testing.T) {
 }
 
 func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
-	fakeSQL := sqlstore.InitTestDB(t)
+	fakeSQL := db.InitTestDB(t)
 
 	t.Cleanup(func() {
-		err := fakeSQL.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+		err := fakeSQL.WithDbSession(context.Background(), func(session *db.Session) error {
 			_, err := session.Exec("DELETE FROM annotation")
 			return err
 		})
@@ -123,89 +125,94 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 
 	// create some test annotations
 	a := annotations.Item{
-		DashboardId: 1,
-		OrgId:       1,
-		UserId:      1,
-		PanelId:     1,
-		AlertId:     10,
+		DashboardID: 1,
+		OrgID:       1,
+		UserID:      1,
+		PanelID:     1,
+		AlertID:     10,
 		Text:        "",
 		Created:     time.Now().AddDate(-10, 0, -10).UnixNano() / int64(time.Millisecond),
 	}
 
-	session := fakeSQL.NewSession(context.Background())
-	defer session.Close()
+	err := fakeSQL.WithDbSession(context.Background(), func(sess *db.Session) error {
+		_, err := sess.Insert(a)
+		require.NoError(t, err, "cannot insert annotation")
+		_, err = sess.Insert(a)
+		require.NoError(t, err, "cannot insert annotation")
 
-	_, err := session.Insert(a)
-	require.NoError(t, err, "cannot insert annotation")
-	_, err = session.Insert(a)
-	require.NoError(t, err, "cannot insert annotation")
+		a.AlertID = 20
+		_, err = sess.Insert(a)
+		require.NoError(t, err, "cannot insert annotation")
 
-	a.AlertId = 20
-	_, err = session.Insert(a)
-	require.NoError(t, err, "cannot insert annotation")
+		// run the clean up task to keep one annotation.
+		cfg := setting.NewCfg()
+		cfg.AnnotationCleanupJobBatchSize = 1
+		cleaner := &xormRepositoryImpl{cfg: cfg, log: log.New("test-logger"), db: fakeSQL, features: featuremgmt.WithFeatures()}
+		_, err = cleaner.CleanAnnotations(context.Background(), setting.AnnotationCleanupSettings{MaxCount: 1}, alertAnnotationType)
+		require.NoError(t, err)
 
-	// run the clean up task to keep one annotation.
-	cfg := setting.NewCfg()
-	cfg.AnnotationCleanupJobBatchSize = 1
-	cleaner := &xormRepositoryImpl{cfg: cfg, log: log.New("test-logger"), db: fakeSQL}
-	_, err = cleaner.CleanAnnotations(context.Background(), setting.AnnotationCleanupSettings{MaxCount: 1}, alertAnnotationType)
+		// assert that the last annotations were kept
+		countNew, err := sess.Where("alert_id = 20").Count(&annotations.Item{})
+		require.NoError(t, err)
+		require.Equal(t, int64(1), countNew, "the last annotations should be kept")
+
+		countOld, err := sess.Where("alert_id = 10").Count(&annotations.Item{})
+		require.NoError(t, err)
+		require.Equal(t, int64(0), countOld, "the two first annotations should have been deleted")
+
+		return nil
+	})
 	require.NoError(t, err)
-
-	// assert that the last annotations were kept
-	countNew, err := session.Where("alert_id = 20").Count(&annotations.Item{})
-	require.NoError(t, err)
-	require.Equal(t, int64(1), countNew, "the last annotations should be kept")
-
-	countOld, err := session.Where("alert_id = 10").Count(&annotations.Item{})
-	require.NoError(t, err)
-	require.Equal(t, int64(0), countOld, "the two first annotations should have been deleted")
 }
 
-func assertAnnotationCount(t *testing.T, fakeSQL *sqlstore.SQLStore, sql string, expectedCount int64) {
+func assertAnnotationCount(t *testing.T, fakeSQL db.DB, sql string, expectedCount int64) {
 	t.Helper()
 
-	session := fakeSQL.NewSession(context.Background())
-	defer session.Close()
-	count, err := session.Where(sql).Count(&annotations.Item{})
+	err := fakeSQL.WithDbSession(context.Background(), func(sess *db.Session) error {
+		count, err := sess.Where(sql).Count(&annotations.Item{})
+		require.NoError(t, err)
+		require.Equal(t, expectedCount, count)
+		return nil
+	})
 	require.NoError(t, err)
-	require.Equal(t, expectedCount, count)
 }
 
-func assertAnnotationTagCount(t *testing.T, fakeSQL *sqlstore.SQLStore, expectedCount int64) {
+func assertAnnotationTagCount(t *testing.T, fakeSQL db.DB, expectedCount int64) {
 	t.Helper()
 
-	session := fakeSQL.NewSession(context.Background())
-	defer session.Close()
-
-	count, err := session.SQL("select count(*) from annotation_tag").Count()
+	err := fakeSQL.WithDbSession(context.Background(), func(sess *db.Session) error {
+		count, err := sess.SQL("select count(*) from annotation_tag").Count()
+		require.NoError(t, err)
+		require.Equal(t, expectedCount, count)
+		return nil
+	})
 	require.NoError(t, err)
-	require.Equal(t, expectedCount, count)
 }
 
-func createTestAnnotations(t *testing.T, sqlstore *sqlstore.SQLStore, expectedCount int, oldAnnotations int) {
+func createTestAnnotations(t *testing.T, store db.DB, expectedCount int, oldAnnotations int) {
 	t.Helper()
 
 	cutoffDate := time.Now()
 
 	for i := 0; i < expectedCount; i++ {
 		a := &annotations.Item{
-			DashboardId: 1,
-			OrgId:       1,
-			UserId:      1,
-			PanelId:     1,
+			DashboardID: 1,
+			OrgID:       1,
+			UserID:      1,
+			PanelID:     1,
 			Text:        "",
 		}
 
 		// mark every third as an API annotation
 		// that does not belong to a dashboard
 		if i%3 == 1 {
-			a.DashboardId = 0
+			a.DashboardID = 0
 		}
 
 		// mark every third annotation as an alert annotation
 		if i%3 == 0 {
-			a.AlertId = 10
-			a.DashboardId = 2
+			a.AlertID = 10
+			a.DashboardID = 2
 		}
 
 		// create epoch as int annotations.go line 40
@@ -216,16 +223,19 @@ func createTestAnnotations(t *testing.T, sqlstore *sqlstore.SQLStore, expectedCo
 			a.Created = cutoffDate.AddDate(-10, 0, -10).UnixNano() / int64(time.Millisecond)
 		}
 
-		_, err := sqlstore.NewSession(context.Background()).Insert(a)
-		require.NoError(t, err, "should be able to save annotation", err)
+		err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
+			_, err := sess.Insert(a)
+			require.NoError(t, err, "should be able to save annotation", err)
 
-		// mimick the SQL annotation Save logic by writing records to the annotation_tag table
-		// we need to ensure they get deleted when we clean up annotations
-		sess := sqlstore.NewSession(context.Background())
-		for tagID := range []int{1, 2} {
-			_, err = sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", a.Id, tagID)
-			require.NoError(t, err, "should be able to save annotation tag ID", err)
-		}
+			// mimick the SQL annotation Save logic by writing records to the annotation_tag table
+			// we need to ensure they get deleted when we clean up annotations
+			for tagID := range []int{1, 2} {
+				_, err = sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", a.ID, tagID)
+				require.NoError(t, err, "should be able to save annotation tag ID", err)
+			}
+			return err
+		})
+		require.NoError(t, err)
 	}
 }
 

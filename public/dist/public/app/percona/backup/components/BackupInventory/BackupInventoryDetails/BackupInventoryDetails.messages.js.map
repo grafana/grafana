@@ -1,0 +1,1 @@
+{"version":3,"file":"BackupInventoryDetails.messages.js","sourceRoot":"","sources":["../../../../../../../../app/percona/backup/components/BackupInventory/BackupInventoryDetails/BackupInventoryDetails.messages.ts"],"names":[],"mappings":"AAAA,MAAM,CAAC,MAAM,QAAQ,GAAG;IACtB,UAAU,EAAE,aAAa;IACzB,UAAU,EAAE,cAAc;IAC1B,SAAS,EAAE,YAAY;IACvB,MAAM,EAAE,QAAQ;CACjB,CAAC"}

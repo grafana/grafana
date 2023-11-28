@@ -17,14 +17,14 @@ func TestCfg_ReadUnifiedAlertingSettings(t *testing.T) {
 
 	// It sets the correct defaults.
 	{
-		require.Equal(t, 60*time.Second, cfg.UnifiedAlerting.AdminConfigPollInterval)
-		require.Equal(t, 60*time.Second, cfg.UnifiedAlerting.AlertmanagerConfigPollInterval)
+		require.Equal(t, time.Minute, cfg.UnifiedAlerting.AdminConfigPollInterval)
+		require.Equal(t, time.Minute, cfg.UnifiedAlerting.AlertmanagerConfigPollInterval)
 		require.Equal(t, 15*time.Second, cfg.UnifiedAlerting.HAPeerTimeout)
 		require.Equal(t, "0.0.0.0:9094", cfg.UnifiedAlerting.HAListenAddr)
 		require.Equal(t, "", cfg.UnifiedAlerting.HAAdvertiseAddr)
 		require.Len(t, cfg.UnifiedAlerting.HAPeers, 0)
 		require.Equal(t, 200*time.Millisecond, cfg.UnifiedAlerting.HAGossipInterval)
-		require.Equal(t, 60*time.Second, cfg.UnifiedAlerting.HAPushPullInterval)
+		require.Equal(t, time.Minute, cfg.UnifiedAlerting.HAPushPullInterval)
 	}
 
 	// With peers set, it correctly parses them.
@@ -39,6 +39,39 @@ func TestCfg_ReadUnifiedAlertingSettings(t *testing.T) {
 		require.Len(t, cfg.UnifiedAlerting.HAPeers, 3)
 		require.ElementsMatch(t, []string{"hostname1:9090", "hostname2:9090", "hostname3:9090"}, cfg.UnifiedAlerting.HAPeers)
 	}
+
+	t.Run("should read 'scheduler_tick_interval'", func(t *testing.T) {
+		tmp := cfg.IsFeatureToggleEnabled
+		t.Cleanup(func() {
+			cfg.IsFeatureToggleEnabled = tmp
+		})
+		cfg.IsFeatureToggleEnabled = func(key string) bool { return key == "configurableSchedulerTick" }
+
+		s, err := cfg.Raw.NewSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = s.NewKey("scheduler_tick_interval", "1m")
+		require.NoError(t, err)
+		_, err = s.NewKey("min_interval", "3m")
+		require.NoError(t, err)
+
+		require.NoError(t, cfg.ReadUnifiedAlertingSettings(cfg.Raw))
+		require.Equal(t, time.Minute, cfg.UnifiedAlerting.BaseInterval)
+		require.Equal(t, 3*time.Minute, cfg.UnifiedAlerting.MinInterval)
+
+		t.Run("and fail if it is wrong", func(t *testing.T) {
+			_, err = s.NewKey("scheduler_tick_interval", "test")
+			require.NoError(t, err)
+
+			require.Error(t, cfg.ReadUnifiedAlertingSettings(cfg.Raw))
+		})
+
+		t.Run("and use default if not specified", func(t *testing.T) {
+			s.DeleteKey("scheduler_tick_interval")
+			require.NoError(t, cfg.ReadUnifiedAlertingSettings(cfg.Raw))
+
+			require.Equal(t, SchedulerBaseInterval, cfg.UnifiedAlerting.BaseInterval)
+		})
+	})
 }
 
 func TestUnifiedAlertingSettings(t *testing.T) {
@@ -66,7 +99,7 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 			verifyCfg: func(t *testing.T, cfg Cfg) {
 				require.Equal(t, 120*time.Second, cfg.UnifiedAlerting.AdminConfigPollInterval)
 				require.Equal(t, int64(6), cfg.UnifiedAlerting.MaxAttempts)
-				require.Equal(t, 60*time.Second, cfg.UnifiedAlerting.MinInterval)
+				require.Equal(t, time.Minute, cfg.UnifiedAlerting.MinInterval)
 				require.Equal(t, false, cfg.UnifiedAlerting.ExecuteAlerts)
 				require.Equal(t, 90*time.Second, cfg.UnifiedAlerting.EvaluationTimeout)
 				require.Equal(t, SchedulerBaseInterval, cfg.UnifiedAlerting.BaseInterval)

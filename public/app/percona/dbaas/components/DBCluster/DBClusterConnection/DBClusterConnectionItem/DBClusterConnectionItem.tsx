@@ -5,7 +5,7 @@ import { useStyles } from '@grafana/ui';
 import { getStyles } from './DBClusterConnectionItem.styles';
 import { DBClusterConnectionItemProps } from './DBClusterConnectionItem.types';
 
-export const DBClusterConnectionItem: FC<DBClusterConnectionItemProps> = ({ label, value, dataTestId }) => {
+export const DBClusterConnectionItem: FC<React.PropsWithChildren<DBClusterConnectionItemProps>> = ({ label, value, dataTestId }) => {
   const styles = useStyles(getStyles);
 
   return (

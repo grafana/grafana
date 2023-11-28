@@ -12,7 +12,7 @@ import {
 import { Messages } from './StatusInfo.messages';
 import { getStyles } from './StatusInfo.styles';
 
-export const StatusInfo: FC = () => {
+export const StatusInfo: FC<React.PropsWithChildren<unknown>> = () => {
   const styles = useStyles2(getStyles);
 
   return (

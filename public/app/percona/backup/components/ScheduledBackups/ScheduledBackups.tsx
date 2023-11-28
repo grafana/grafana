@@ -33,7 +33,7 @@ import { ScheduledBackup } from './ScheduledBackups.types';
 import { ScheduledBackupsActions } from './ScheduledBackupsActions';
 import { ScheduledBackupDetails } from './ScheduledBackupsDetails';
 
-export const ScheduledBackups: FC = () => {
+export const ScheduledBackups: FC<React.PropsWithChildren<unknown>> = () => {
   const [data, setData] = useState<ScheduledBackup[]>([]);
   const [pending, setPending] = useState(true);
   const [actionPending, setActionPending] = useState(false);
@@ -142,22 +142,22 @@ export const ScheduledBackups: FC = () => {
       {
         Header: Messages.scheduledBackups.table.columns.vendor,
         accessor: 'vendor',
-        Cell: ({ value }) => DATABASE_LABELS[value],
+        Cell: ({ value }) => <>{DATABASE_LABELS[value]}</>,
       },
       {
         Header: Messages.scheduledBackups.table.columns.frequency,
         accessor: 'cronExpression',
-        Cell: ({ value }) => cronstrue.toString(value, { use24HourTimeFormat: true }),
+        Cell: ({ value }) => <>{cronstrue.toString(value, { use24HourTimeFormat: true })}</>,
       },
       {
         Header: Messages.scheduledBackups.table.columns.retention,
         accessor: 'retention',
-        Cell: ({ value }) => retentionValue(value),
+        Cell: ({ value }) => <>{retentionValue(value)}</>,
       },
       {
         Header: Messages.scheduledBackups.table.columns.type,
         accessor: 'mode',
-        Cell: ({ value }) => formatBackupMode(value),
+        Cell: ({ value }) => <>{formatBackupMode(value)}</>,
       },
       {
         Header: Messages.scheduledBackups.table.columns.location,
@@ -171,7 +171,7 @@ export const ScheduledBackups: FC = () => {
       {
         Header: Messages.scheduledBackups.table.columns.lastBackup,
         accessor: 'lastBackup',
-        Cell: ({ value }) => (value ? <DetailedDate date={value} /> : ''),
+        Cell: ({ value }) => <>{value ? <DetailedDate date={value} /> : ''}</>,
         width: '200px',
       },
       {

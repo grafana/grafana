@@ -154,116 +154,114 @@ export const Table: FC<TableProps> = ({
     }
   }, [onRowSelection, selectedFlatRows]);
 
-  return (
-    <>
-      <Overlay dataTestId="table-loading" isPending={pendingRequest} overlayClassName={overlayClassName}>
-        {showFilter && (
-          <Filter
-            columns={columns}
-            rawData={rawData}
-            setFilteredData={setFilteredData}
-            hasBackendFiltering={hasBackendFiltering}
-            tableKey={tableKey}
-          />
-        )}
-        <div className={style.tableWrap} data-testid="table-outer-wrapper">
-          <div className={style.table} data-testid="table-inner-wrapper">
-            <TableContent
-              loading={pendingRequest}
-              hasData={hasData}
-              emptyMessage={emptyMessage}
-              emptyMessageClassName={emptyMessageClassName}
-            >
-              <table {...getTableProps()} data-testid="table">
-                <thead data-testid="table-thead">
-                  {headerGroups.map((headerGroup) => (
-                    /* eslint-disable-next-line react/jsx-key */
-                    <tr data-testid="table-tbody-tr" {...headerGroup.getHeaderGroupProps()}>
-                      {headerGroup.headers.map((column) => (
-                        /* eslint-disable-next-line react/jsx-key */
-                        <th
-                          className={style.tableHeader(column.width)}
-                          {...column.getHeaderProps([
-                            {
-                              className: column.className,
-                              style: column.style,
-                            },
-                            getColumnProps(column),
-                            getHeaderProps(column),
-                          ])}
-                        >
-                          {column.render('Header')}
-                          {!!column.tooltipInfo && (
-                            <Tooltip interactive content={column.tooltipInfo} placement="bottom-end">
-                              <Icon tabIndex={0} name="info-circle" size="sm" className={style.infoIcon} />
-                            </Tooltip>
-                          )}
-                        </th>
-                      ))}
-                    </tr>
-                  ))}
-                </thead>
-                <tbody {...getTableBodyProps()} data-testid="table-tbody">
-                  {children
-                    ? children(showPagination ? page : rows, tableInstance)
-                    : (showPagination ? page : rows).map((row) => {
-                        prepareRow(row);
-                        return (
-                          <React.Fragment key={row.id}>
-                            <tr data-testid="table-tbody-tr" {...row.getRowProps(getRowProps(row))}>
-                              {row.cells.map((cell) => {
-                                return (
-                                  <td
-                                    title={
-                                      typeof cell.value === 'string' || typeof cell.value === 'number'
-                                        ? cell.value.toString()
-                                        : undefined
-                                    }
-                                    {...cell.getCellProps([
-                                      {
-                                        className: cx(
-                                          cell.column.className,
-                                          style.tableCell(!!cell.column.noHiddenOverflow),
-                                          cell.column?.Header === 'Summary' ? style.summaryWrap : undefined
-                                        ),
-                                        style: cell.column.style,
-                                      },
-                                      getCellProps(cell),
-                                    ])}
-                                    key={cell.column.id}
-                                  >
-                                    {cell.render('Cell')}
-                                  </td>
-                                );
-                              })}
-                            </tr>
-                            {row.isExpanded ? (
-                              <tr>
-                                <td colSpan={visibleColumns.length}>{renderExpandedRow(row)}</td>
-                              </tr>
-                            ) : null}
-                          </React.Fragment>
-                        );
-                      })}
-                </tbody>
-              </table>
-            </TableContent>
-          </div>
-        </div>
-      </Overlay>
-      {showPagination && hasData && (
-        <Pagination
-          pagesPerView={pagesPerView}
-          pageCount={pageCount}
-          initialPageIndex={pageIndex}
-          totalItems={totalItems}
-          pageSizeOptions={PAGE_SIZES}
-          pageSize={pageSize}
-          nrRowsOnCurrentPage={page.length}
-          onPageChange={(pageIndex) => onPageChanged(pageIndex)}
-          onPageSizeChange={(pageSize) => onPageSizeChanged(pageSize)}
+  return (<>
+    <Overlay dataTestId="table-loading" isPending={pendingRequest} overlayClassName={overlayClassName}>
+      {showFilter && (
+        <Filter
+          columns={columns}
+          rawData={rawData}
+          setFilteredData={setFilteredData}
+          hasBackendFiltering={hasBackendFiltering}
+          tableKey={tableKey}
         />
       )}
-    </>
-  );
+      <div className={style.tableWrap} data-testid="table-outer-wrapper">
+        <div className={style.table} data-testid="table-inner-wrapper">
+          <TableContent
+            loading={pendingRequest}
+            hasData={hasData}
+            emptyMessage={emptyMessage}
+            emptyMessageClassName={emptyMessageClassName}
+          >
+            <table {...getTableProps()} data-testid="table">
+              <thead data-testid="table-thead">
+                {headerGroups.map((headerGroup) => (
+                  /* eslint-disable-next-line react/jsx-key */
+                  (<tr data-testid="table-tbody-tr" {...headerGroup.getHeaderGroupProps()}>
+                    {headerGroup.headers.map((column) => (
+                      /* eslint-disable-next-line react/jsx-key */
+                      (<th
+                        className={style.tableHeader(column.width)}
+                        {...column.getHeaderProps([
+                          {
+                            className: column.className,
+                            style: column.style,
+                          },
+                          getColumnProps(column),
+                          getHeaderProps(column),
+                        ])}
+                      >
+                        {column.render('Header')}
+                        {!!column.tooltipInfo && (
+                          <Tooltip interactive content={column.tooltipInfo} placement="bottom-end">
+                            <Icon tabIndex={0} name="info-circle" size="sm" className={style.infoIcon} />
+                          </Tooltip>
+                        )}
+                      </th>)
+                    ))}
+                  </tr>)
+                ))}
+              </thead>
+              <tbody {...getTableBodyProps()} data-testid="table-tbody">
+                {children
+                  ? children(showPagination ? page : rows, tableInstance)
+                  : (showPagination ? page : rows).map((row) => {
+                      prepareRow(row);
+                      return (
+                        <React.Fragment key={row.id}>
+                          <tr data-testid="table-tbody-tr" {...row.getRowProps(getRowProps(row))}>
+                            {row.cells.map((cell) => {
+                              return (
+                                <td
+                                  title={
+                                    typeof cell.value === 'string' || typeof cell.value === 'number'
+                                      ? cell.value.toString()
+                                      : undefined
+                                  }
+                                  {...cell.getCellProps([
+                                    {
+                                      className: cx(
+                                        cell.column.className,
+                                        style.tableCell(!!cell.column.noHiddenOverflow),
+                                        cell.column?.Header === 'Summary' ? style.summaryWrap : undefined
+                                      ),
+                                      style: cell.column.style,
+                                    },
+                                    getCellProps(cell),
+                                  ])}
+                                  key={cell.column.id}
+                                >
+                                  {cell.render('Cell')}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                          {row.isExpanded ? (
+                            <tr>
+                              <td colSpan={visibleColumns.length}>{renderExpandedRow(row)}</td>
+                            </tr>
+                          ) : null}
+                        </React.Fragment>
+                      );
+                    })}
+              </tbody>
+            </table>
+          </TableContent>
+        </div>
+      </div>
+    </Overlay>
+    {showPagination && hasData && (
+      <Pagination
+        pagesPerView={pagesPerView}
+        pageCount={pageCount}
+        initialPageIndex={pageIndex}
+        totalItems={totalItems}
+        pageSizeOptions={PAGE_SIZES}
+        pageSize={pageSize}
+        nrRowsOnCurrentPage={page.length}
+        onPageChange={(pageIndex) => onPageChanged(pageIndex)}
+        onPageSizeChange={(pageSize) => onPageSizeChanged(pageSize)}
+      />
+    )}
+  </>);
 };

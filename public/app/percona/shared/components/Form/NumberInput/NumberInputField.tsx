@@ -26,7 +26,7 @@ interface NumberFieldRenderProps {
   meta: FieldMetaState<number>;
 }
 
-export const NumberInputField: FC<NumberInputFieldProps> = React.memo(
+export const NumberInputField: FC<React.PropsWithChildren<NumberInputFieldProps>> = React.memo(
   ({
     className,
     disabled = false,

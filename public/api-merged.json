@@ -18,14 +18,34 @@
       "url": "https://grafana.com",
       "email": "hello@grafana.com"
     },
-    "license": {
-      "name": "GNU Affero General Public License v3.0",
-      "url": "https://www.gnu.org/licenses/agpl-3.0.en.html"
-    },
     "version": "0.0.1"
   },
   "basePath": "/api",
   "paths": {
+    "/access-control/assignments/search": {
+      "post": {
+        "description": "Returns the result of the search through access-control role assignments.\n\nYou need to have a permission with action `teams.roles:read` on scope `teams:*`\nand a permission with action `users.roles:read` on scope `users:*`.",
+        "tags": [
+          "enterprise"
+        ],
+        "summary": "Debug permissions.",
+        "operationId": "searchResult",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/searchResultResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/access-control/roles": {
       "get": {
         "description": "Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.\n\nYou need to have a permission with action `roles:read` and scope `roles:*`.",
@@ -1404,7 +1424,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/UpdateUserQuotaCmd"
+              "$ref": "#/definitions/UpdateQuotaCmd"
             }
           },
           {
@@ -2446,6 +2466,21 @@
       }
     },
     "/api/v1/provisioning/alert-rules": {
+      "get": {
+        "tags": [
+          "provisioning"
+        ],
+        "summary": "Get all the alert rules.",
+        "operationId": "RouteGetAlertRules",
+        "responses": {
+          "200": {
+            "description": "ProvisionedAlertRules",
+            "schema": {
+              "$ref": "#/definitions/ProvisionedAlertRules"
+            }
+          }
+        }
+      },
       "post": {
         "consumes": [
           "application/json"
@@ -2462,6 +2497,11 @@
             "schema": {
               "$ref": "#/definitions/ProvisionedAlertRule"
             }
+          },
+          {
+            "type": "string",
+            "name": "X-Disable-Provenance",
+            "in": "header"
           }
         ],
         "responses": {
@@ -2476,6 +2516,63 @@
             "schema": {
               "$ref": "#/definitions/ValidationError"
             }
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/alert-rules/export": {
+      "get": {
+        "tags": [
+          "provisioning"
+        ],
+        "summary": "Export all alert rules in provisioning file format.",
+        "operationId": "RouteGetAlertRulesExport",
+        "parameters": [
+          {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to initiate a download of the file or not.",
+            "name": "download",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "yaml",
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "name": "format",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "UIDs of folders from which to export rules",
+            "name": "folderUid",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Name of group of rules to export. Must be specified only together with a single folder UID",
+            "name": "group",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "UID of alert rule to export. If specified, parameters folderUid and group must be empty.",
+            "name": "ruleUid",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlertingFileExport",
+            "schema": {
+              "$ref": "#/definitions/AlertingFileExport"
+            }
+          },
+          "404": {
+            "description": " Not found."
           }
         }
       }
@@ -2531,6 +2628,11 @@
             "schema": {
               "$ref": "#/definitions/ProvisionedAlertRule"
             }
+          },
+          {
+            "type": "string",
+            "name": "X-Disable-Provenance",
+            "in": "header"
           }
         ],
         "responses": {
@@ -2566,6 +2668,54 @@
         "responses": {
           "204": {
             "description": " The alert rule was deleted successfully."
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/alert-rules/{UID}/export": {
+      "get": {
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "text/yaml"
+        ],
+        "tags": [
+          "provisioning"
+        ],
+        "summary": "Export an alert rule in provisioning file format.",
+        "operationId": "RouteGetAlertRuleExport",
+        "parameters": [
+          {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to initiate a download of the file or not.",
+            "name": "download",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "yaml",
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "name": "format",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Alert rule UID",
+            "name": "UID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlertingFileExport",
+            "schema": {
+              "$ref": "#/definitions/AlertingFileExport"
+            }
+          },
+          "404": {
+            "description": " Not found."
           }
         }
       }
@@ -2623,6 +2773,58 @@
             "description": "ValidationError",
             "schema": {
               "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/contact-points/export": {
+      "get": {
+        "tags": [
+          "provisioning"
+        ],
+        "summary": "Export all contact points in provisioning file format.",
+        "operationId": "RouteGetContactpointsExport",
+        "parameters": [
+          {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to initiate a download of the file or not.",
+            "name": "download",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "yaml",
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "name": "format",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether any contained secure settings should be decrypted or left redacted. Redacted settings will contain RedactedValue instead. Currently, only org admin can view decrypted secure settings.",
+            "name": "decrypt",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Filter by name",
+            "name": "name",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlertingFileExport",
+            "schema": {
+              "$ref": "#/definitions/AlertingFileExport"
+            }
+          },
+          "403": {
+            "description": "PermissionDenied",
+            "schema": {
+              "$ref": "#/definitions/PermissionDenied"
             }
           }
         }
@@ -2769,6 +2971,59 @@
             "schema": {
               "$ref": "#/definitions/ValidationError"
             }
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export": {
+      "get": {
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "text/yaml"
+        ],
+        "tags": [
+          "provisioning"
+        ],
+        "summary": "Export an alert rule group in provisioning file format.",
+        "operationId": "RouteGetAlertRuleGroupExport",
+        "parameters": [
+          {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to initiate a download of the file or not.",
+            "name": "download",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "yaml",
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "name": "format",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "FolderUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Group",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlertingFileExport",
+            "schema": {
+              "$ref": "#/definitions/AlertingFileExport"
+            }
+          },
+          "404": {
+            "description": " Not found."
           }
         }
       }
@@ -2982,18 +3237,41 @@
         }
       }
     },
+    "/api/v1/provisioning/policies/export": {
+      "get": {
+        "tags": [
+          "provisioning"
+        ],
+        "summary": "Export the notification policy tree in provisioning file format.",
+        "operationId": "RouteGetPolicyTreeExport",
+        "responses": {
+          "200": {
+            "description": "AlertingFileExport",
+            "schema": {
+              "$ref": "#/definitions/AlertingFileExport"
+            }
+          },
+          "404": {
+            "description": "NotFound",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
+          }
+        }
+      }
+    },
     "/api/v1/provisioning/templates": {
       "get": {
         "tags": [
           "provisioning"
         ],
-        "summary": "Get all message templates.",
+        "summary": "Get all notification templates.",
         "operationId": "RouteGetTemplates",
         "responses": {
           "200": {
-            "description": "MessageTemplates",
+            "description": "NotificationTemplates",
             "schema": {
-              "$ref": "#/definitions/MessageTemplates"
+              "$ref": "#/definitions/NotificationTemplates"
             }
           },
           "404": {
@@ -3007,7 +3285,7 @@
         "tags": [
           "provisioning"
         ],
-        "summary": "Get a message template.",
+        "summary": "Get a notification template.",
         "operationId": "RouteGetTemplate",
         "parameters": [
           {
@@ -3020,9 +3298,9 @@
         ],
         "responses": {
           "200": {
-            "description": "MessageTemplate",
+            "description": "NotificationTemplate",
             "schema": {
-              "$ref": "#/definitions/MessageTemplate"
+              "$ref": "#/definitions/NotificationTemplate"
             }
           },
           "404": {
@@ -3037,7 +3315,7 @@
         "tags": [
           "provisioning"
         ],
-        "summary": "Updates an existing template.",
+        "summary": "Updates an existing notification template.",
         "operationId": "RoutePutTemplate",
         "parameters": [
           {
@@ -3051,15 +3329,15 @@
             "name": "Body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/MessageTemplateContent"
+              "$ref": "#/definitions/NotificationTemplateContent"
             }
           }
         ],
         "responses": {
           "202": {
-            "description": "MessageTemplate",
+            "description": "NotificationTemplate",
             "schema": {
-              "$ref": "#/definitions/MessageTemplate"
+              "$ref": "#/definitions/NotificationTemplate"
             }
           },
           "400": {
@@ -3094,7 +3372,7 @@
     },
     "/auth/keys": {
       "get": {
-        "description": "Will return auth keys.",
+        "description": "Will return auth keys.\n\nDeprecated: true.\n\nDeprecated. Please use GET /api/serviceaccounts and GET /api/serviceaccounts/{id}/tokens instead\nsee https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.",
         "tags": [
           "api_keys"
         ],
@@ -3134,6 +3412,7 @@
         ],
         "summary": "Creates an API key.",
         "operationId": "addAPIkey",
+        "deprecated": true,
         "parameters": [
           {
             "name": "Body",
@@ -3168,11 +3447,13 @@
     },
     "/auth/keys/{id}": {
       "delete": {
+        "description": "Deletes an API key.\nDeprecated. See: https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.",
         "tags": [
           "api_keys"
         ],
         "summary": "Delete API key.",
         "operationId": "deleteAPIkey",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -3996,6 +4277,35 @@
         ],
         "summary": "Gets all correlations.",
         "operationId": "getCorrelations",
+        "parameters": [
+          {
+            "maximum": 1000,
+            "type": "integer",
+            "format": "int64",
+            "default": 100,
+            "description": "Limit the maximum number of correlations to return per page",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1,
+            "description": "Page index for starting fetching correlations",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "Source datasource UID filter to be applied to correlations",
+            "name": "sourceUID",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/responses/getCorrelationsResponse"
@@ -4776,7 +5086,7 @@
     },
     "/datasources/{datasourceId}/disable-permissions": {
       "post": {
-        "description": "Disables permissions for the data source with the given id. All existing permissions will be removed and anyone will be able to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
+        "description": "Disables permissions for the data source with the given id. All existing permissions will be removed and anyone will be able to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.",
         "tags": [
           "datasource_permissions",
           "enterprise"
@@ -4815,7 +5125,7 @@
     },
     "/datasources/{datasourceId}/enable-permissions": {
       "post": {
-        "description": "Enables permissions for the data source with the given id.\nNo one except Org Admins will be able to query the data source until permissions have been added\nwhich permit certain users or teams to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
+        "description": "Enables permissions for the data source with the given id.\nNo one except Org Admins will be able to query the data source until permissions have been added\nwhich permit certain users or teams to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.",
         "tags": [
           "datasource_permissions",
           "enterprise"
@@ -4854,7 +5164,7 @@
     },
     "/datasources/{datasourceId}/permissions": {
       "get": {
-        "description": "Gets all existing permissions for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
+        "description": "Gets all existing permissions for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.\nDeprecated. Please use GET /api/access-control/datasources/:uid",
         "tags": [
           "datasource_permissions",
           "enterprise"
@@ -4888,7 +5198,7 @@
         }
       },
       "post": {
-        "description": "You need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
+        "description": "You need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.\nDeprecated. Please use POST /api/access-control/datasources/:uid/users/:id, /api/access-control/datasources/:uid/teams/:id or /api/access-control/datasources/:uid/buildInRoles/:id",
         "tags": [
           "datasource_permissions",
           "enterprise"
@@ -4947,7 +5257,7 @@
     },
     "/datasources/{datasourceId}/permissions/{permissionId}": {
       "delete": {
-        "description": "Removes the permission with the given permissionId for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:delete` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
+        "description": "Removes the permission with the given permissionId for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:delete` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.\nDeprecated. Please use POST /api/access-control/datasources/:uid/users/:id, /api/access-control/datasources/:uid/teams/:id or /api/access-control/datasources/:uid/buildInRoles/:id",
         "tags": [
           "datasource_permissions",
           "enterprise"
@@ -5219,7 +5529,7 @@
     },
     "/folders": {
       "get": {
-        "description": "Returns all folders that the authenticated user has permission to view.",
+        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders that the authenticated user has permission to view.\nIf the parameter is not supplied then it returns immediate subfolders under the root\nthat the authenticated user has permission to view.",
         "tags": [
           "folders"
         ],
@@ -5241,6 +5551,12 @@
             "description": "Page index for starting fetching folders",
             "name": "page",
             "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "The parent folder UID",
+            "name": "parentUid",
+            "in": "query"
           }
         ],
         "responses": {
@@ -5259,6 +5575,7 @@
         }
       },
       "post": {
+        "description": "If nested folders are enabled then it additionally expects the parent folder UID.",
         "tags": [
           "folders"
         ],
@@ -5298,12 +5615,13 @@
     },
     "/folders/id/{folder_id}": {
       "get": {
-        "description": "Returns the folder identified by id.",
+        "description": "Returns the folder identified by id. This is deprecated.\nPlease refer to [updated API](#/folders/getFolderByUID) instead",
         "tags": [
           "folders"
         ],
         "summary": "Get folder by id.",
         "operationId": "getFolderByID",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -5413,7 +5731,7 @@
         }
       },
       "delete": {
-        "description": "Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.",
+        "description": "Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.\nIf nested folders are enabled then it also deletes all the subfolders.",
         "tags": [
           "folders"
         ],
@@ -5440,6 +5758,82 @@
           },
           "400": {
             "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/folders/{folder_uid}/counts": {
+      "get": {
+        "tags": [
+          "folders"
+        ],
+        "summary": "Gets the count of each descendant of a folder by kind. The folder is identified by UID.",
+        "operationId": "getFolderDescendantCounts",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "folder_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getFolderDescendantCountsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/folders/{folder_uid}/move": {
+      "post": {
+        "tags": [
+          "folders"
+        ],
+        "summary": "Move folder.",
+        "operationId": "moveFolder",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "folder_uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MoveFolderCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/folderResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -6319,6 +6713,33 @@
         }
       }
     },
+    "/org/quotas": {
+      "get": {
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `orgs.quotas:read` and scope `org:id:1` (orgIDScope).",
+        "tags": [
+          "getCurrentOrg"
+        ],
+        "summary": "Fetch Organization quota.",
+        "operationId": "getCurrentOrgQuota",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getQuotaResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/org/users": {
       "get": {
         "description": "Returns all org users within the current organization. Accessible to users with org admin role.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users:read` with scope `users:*`.",
@@ -6842,7 +7263,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/UpdateOrgQuotaCmd"
+              "$ref": "#/definitions/UpdateQuotaCmd"
             }
           },
           {
@@ -6942,6 +7363,44 @@
         "responses": {
           "200": {
             "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/orgs/{org_id}/users/search": {
+      "get": {
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users:read` with scope `users:*`.",
+        "tags": [
+          "orgs"
+        ],
+        "summary": "Search Users in Organization.",
+        "operationId": "searchOrgUsers",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "org_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/searchOrgUsersResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -7218,40 +7677,6 @@
         }
       }
     },
-    "/playlists/{uid}/dashboards": {
-      "get": {
-        "tags": [
-          "playlists"
-        ],
-        "summary": "Get playlist dashboards.",
-        "operationId": "getPlaylistDashboards",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getPlaylistDashboardsResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/playlists/{uid}/items": {
       "get": {
         "tags": [
@@ -7389,40 +7814,6 @@
         "responses": {
           "200": {
             "$ref": "#/responses/getQueryHistoryResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/query-history/migrate": {
-      "post": {
-        "description": "Adds multiple queries to query history.",
-        "tags": [
-          "query_history"
-        ],
-        "summary": "Migrate queries to query history.",
-        "operationId": "migrateQueries",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/MigrateQueriesToQueryHistoryCommand"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getQueryHistoryMigrationResponse"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -8280,7 +8671,7 @@
           "saml",
           "enterprise"
         ],
-        "summary": "It performs assertion Consumer Service (ACS).",
+        "summary": "It performs Assertion Consumer Service (ACS).",
         "operationId": "postACS",
         "parameters": [
           {
@@ -8419,7 +8810,7 @@
               "type": "integer",
               "format": "int64"
             },
-            "description": "List of dashboard id’s to search for",
+            "description": "List of dashboard id’s to search for\nThis is deprecated: users should use the `dashboardUIDs` query parameter instead",
             "name": "dashboardIds",
             "in": "query"
           },
@@ -8438,8 +8829,17 @@
               "type": "integer",
               "format": "int64"
             },
-            "description": "List of folder id’s to search in for dashboards",
+            "description": "List of folder id’s to search in for dashboards\nIf it's `0` then it will query for the top level folders\nThis is deprecated: users should use the `folderUIDs` query parameter instead",
             "name": "folderIds",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of folder UID’s to search in for dashboards\nIf it's an empty string then it will query for the top level folders",
+            "name": "folderUIDs",
             "in": "query"
           },
           {
@@ -9171,6 +9571,48 @@
             "$ref": "#/responses/internalServerError"
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "sync_team_groups",
+          "enterprise"
+        ],
+        "summary": "Remove External Group.",
+        "operationId": "removeTeamGroupApiQuery",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "groupId",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "teamId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
       }
     },
     "/teams/{teamId}/groups/{groupId}": {
@@ -9181,6 +9623,7 @@
         ],
         "summary": "Remove External Group.",
         "operationId": "removeTeamGroupApi",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -9908,6 +10351,74 @@
         }
       }
     },
+    "/user/stars/dashboard/uid/{dashboard_uid}": {
+      "post": {
+        "description": "Stars the given Dashboard for the actual user.",
+        "tags": [
+          "signed_in_user"
+        ],
+        "summary": "Star a dashboard.",
+        "operationId": "starDashboardByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dashboard_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "Deletes the starring of the given Dashboard for the actual user.",
+        "tags": [
+          "signed_in_user"
+        ],
+        "summary": "Unstar a dashboard.",
+        "operationId": "unstarDashboardByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dashboard_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/user/stars/dashboard/{dashboard_id}": {
       "post": {
         "description": "Stars the given Dashboard for the actual user.",
@@ -9916,6 +10427,7 @@
         ],
         "summary": "Star a dashboard.",
         "operationId": "starDashboard",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -9949,6 +10461,7 @@
         ],
         "summary": "Unstar a dashboard.",
         "operationId": "unstarDashboard",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -10122,7 +10635,7 @@
         "operationId": "searchUsersWithPaging",
         "responses": {
           "200": {
-            "$ref": "#/responses/searchUsersResponse"
+            "$ref": "#/responses/searchUsersWithPagingResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -10330,27 +10843,6 @@
         }
       }
     },
-    "AddBuiltInRoleCommand": {
-      "type": "object",
-      "properties": {
-        "builtInRole": {
-          "type": "string",
-          "enum": [
-            "Viewer",
-            " Editor",
-            " Admin",
-            " Grafana Admin"
-          ]
-        },
-        "global": {
-          "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to create organization local assignment. Refer to the Built-in role assignments for more information.",
-          "type": "boolean"
-        },
-        "roleUid": {
-          "type": "string"
-        }
-      }
-    },
     "AddCommand": {
       "type": "object",
       "properties": {
@@ -10360,6 +10852,7 @@
         "role": {
           "type": "string",
           "enum": [
+            "None",
             "Viewer",
             "Editor",
             "Admin"
@@ -10431,6 +10924,7 @@
         "role": {
           "type": "string",
           "enum": [
+            "None",
             "Viewer",
             "Editor",
             "Admin"
@@ -10450,6 +10944,7 @@
         "role": {
           "type": "string",
           "enum": [
+            "None",
             "Viewer",
             "Editor",
             "Admin"
@@ -10497,6 +10992,25 @@
         }
       }
     },
+    "AddTeamRoleCommand": {
+      "type": "object",
+      "properties": {
+        "roleUid": {
+          "type": "string"
+        }
+      }
+    },
+    "AddUserRoleCommand": {
+      "type": "object",
+      "properties": {
+        "global": {
+          "type": "boolean"
+        },
+        "roleUid": {
+          "type": "string"
+        }
+      }
+    },
     "Address": {
       "type": "object",
       "properties": {
@@ -10537,6 +11051,18 @@
           "format": "int64"
         },
         "password": {
+          "type": "string"
+        }
+      }
+    },
+    "AdminCreateUserResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "message": {
           "type": "string"
         }
       }
@@ -10882,6 +11408,28 @@
         }
       }
     },
+    "AlertQueryExport": {
+      "type": "object",
+      "title": "AlertQueryExport is the provisioned export of models.AlertQuery.",
+      "properties": {
+        "datasourceUid": {
+          "type": "string"
+        },
+        "model": {
+          "type": "object",
+          "additionalProperties": false
+        },
+        "queryType": {
+          "type": "string"
+        },
+        "refId": {
+          "type": "string"
+        },
+        "relativeTimeRange": {
+          "$ref": "#/definitions/RelativeTimeRange"
+        }
+      }
+    },
     "AlertResponse": {
       "type": "object",
       "required": [
@@ -10902,17 +11450,77 @@
         }
       }
     },
+    "AlertRuleExport": {
+      "type": "object",
+      "title": "AlertRuleExport is the provisioned file export of models.AlertRule.",
+      "properties": {
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "condition": {
+          "type": "string"
+        },
+        "dasboardUid": {
+          "type": "string"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertQueryExport"
+          }
+        },
+        "execErrState": {
+          "type": "string",
+          "enum": [
+            "OK",
+            "Alerting",
+            "Error"
+          ]
+        },
+        "for": {
+          "$ref": "#/definitions/Duration"
+        },
+        "isPaused": {
+          "type": "boolean"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "noDataState": {
+          "type": "string",
+          "enum": [
+            "Alerting",
+            "NoData",
+            "OK"
+          ]
+        },
+        "panelId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "title": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
     "AlertRuleGroup": {
       "type": "object",
       "properties": {
         "folderUid": {
-          "type": "string",
-          "x-go-name": "FolderUID"
+          "type": "string"
         },
         "interval": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "Interval"
+          "format": "int64"
         },
         "rules": {
           "type": "array",
@@ -10921,22 +11529,43 @@
           }
         },
         "title": {
-          "type": "string",
-          "x-go-name": "Title"
+          "type": "string"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+      }
+    },
+    "AlertRuleGroupExport": {
+      "type": "object",
+      "title": "AlertRuleGroupExport is the provisioned file export of AlertRuleGroupV1.",
+      "properties": {
+        "folder": {
+          "type": "string"
+        },
+        "interval": {
+          "$ref": "#/definitions/Duration"
+        },
+        "name": {
+          "type": "string"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertRuleExport"
+          }
+        }
+      }
     },
     "AlertRuleGroupMetadata": {
       "type": "object",
       "properties": {
         "interval": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "Interval"
+          "format": "int64"
         }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+      }
     },
     "AlertStateInfoDTO": {
       "type": "object",
@@ -11018,6 +11647,34 @@
         }
       }
     },
+    "AlertingFileExport": {
+      "type": "object",
+      "title": "AlertingFileExport is the full provisioned file export.",
+      "properties": {
+        "apiVersion": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "contactPoints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ContactPointExport"
+          }
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertRuleGroupExport"
+          }
+        },
+        "policies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NotificationPolicyExport"
+          }
+        }
+      }
+    },
     "AlertingRule": {
       "description": "adapted from cortex",
       "type": "object",
@@ -11028,9 +11685,13 @@
         "type",
         "state",
         "annotations",
-        "alerts"
+        "activeAt"
       ],
       "properties": {
+        "activeAt": {
+          "type": "string",
+          "format": "date-time"
+        },
         "alerts": {
           "type": "array",
           "items": {
@@ -11071,6 +11732,20 @@
           "description": "State can be \"pending\", \"firing\", \"inactive\".",
           "type": "string"
         },
+        "totals": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "totalsFiltered": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
         "type": {
           "$ref": "#/definitions/RuleType"
         }
@@ -11086,6 +11761,10 @@
             "internal",
             "external"
           ]
+        },
+        "numExternalAlertmanagers": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -11128,12 +11807,17 @@
           "type": "integer",
           "format": "int64"
         },
+        "lastUsedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
         "name": {
           "type": "string"
         },
         "role": {
           "type": "string",
           "enum": [
+            "None",
             "Viewer",
             "Editor",
             "Admin"
@@ -11185,6 +11869,60 @@
         }
       }
     },
+    "BacktestConfig": {
+      "type": "object",
+      "properties": {
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "condition": {
+          "type": "string"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertQuery"
+          }
+        },
+        "for": {
+          "$ref": "#/definitions/Duration"
+        },
+        "from": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "interval": {
+          "$ref": "#/definitions/Duration"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "no_data_state": {
+          "type": "string",
+          "enum": [
+            "Alerting",
+            "NoData",
+            "OK"
+          ]
+        },
+        "title": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "BacktestResult": {
+      "$ref": "#/definitions/Frame"
+    },
     "BasicAuth": {
       "type": "object",
       "title": "BasicAuth contains basic HTTP authentication credentials.",
@@ -11196,6 +11934,26 @@
           "type": "string"
         },
         "username": {
+          "type": "string"
+        }
+      }
+    },
+    "BrandingOptionsDTO": {
+      "type": "object",
+      "properties": {
+        "emailFooterLink": {
+          "type": "string"
+        },
+        "emailFooterMode": {
+          "type": "string"
+        },
+        "emailFooterText": {
+          "type": "string"
+        },
+        "emailLogoUrl": {
+          "type": "string"
+        },
+        "reportLogoUrl": {
           "type": "string"
         }
       }
@@ -11262,16 +12020,141 @@
         }
       }
     },
+    "ConfigDTO": {
+      "description": "ConfigDTO is model representation in transfer",
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dashboardId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dashboardName": {
+          "type": "string"
+        },
+        "dashboardUid": {
+          "type": "string"
+        },
+        "dashboards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DashboardDTO"
+          }
+        },
+        "enableCsv": {
+          "type": "boolean"
+        },
+        "enableDashboardUrl": {
+          "type": "boolean"
+        },
+        "formats": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Type"
+          }
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "message": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "options": {
+          "$ref": "#/definitions/ReportOptionsDTO"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "recipients": {
+          "type": "string"
+        },
+        "replyTo": {
+          "type": "string"
+        },
+        "scaleFactor": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "schedule": {
+          "$ref": "#/definitions/ScheduleDTO"
+        },
+        "state": {
+          "$ref": "#/definitions/State"
+        },
+        "templateVars": {
+          "type": "object"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "ContactPointExport": {
+      "type": "object",
+      "title": "ContactPointExport is the provisioned file export of alerting.ContactPointV1.",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "receivers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ReceiverExport"
+          }
+        }
+      }
+    },
     "ContactPoints": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/EmbeddedContactPoint"
       }
     },
+    "CookiePreferences": {
+      "type": "object",
+      "title": "CookiePreferences defines model for CookiePreferences.",
+      "properties": {
+        "analytics": {
+          "type": "object",
+          "additionalProperties": false
+        },
+        "functional": {
+          "type": "object",
+          "additionalProperties": false
+        },
+        "performance": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      }
+    },
+    "CookieType": {
+      "type": "string"
+    },
     "Correlation": {
       "description": "Correlation is the model for correlations definitions",
       "type": "object",
       "properties": {
+        "config": {
+          "$ref": "#/definitions/CorrelationConfig"
+        },
         "description": {
           "description": "Description of the correlation",
           "type": "string",
@@ -11281,6 +12164,16 @@
           "description": "Label identifying the correlation",
           "type": "string",
           "example": "My Label"
+        },
+        "orgId": {
+          "description": "OrgID of the data source the correlation originates from",
+          "type": "integer",
+          "format": "int64",
+          "example": 1
+        },
+        "provisioned": {
+          "description": "Provisioned True if the correlation was created during provisioning",
+          "type": "boolean"
         },
         "sourceUID": {
           "description": "UID of the data source the correlation originates from",
@@ -11298,6 +12191,84 @@
           "example": "50xhMlg9k"
         }
       }
+    },
+    "CorrelationConfig": {
+      "type": "object",
+      "required": [
+        "field",
+        "type",
+        "target"
+      ],
+      "properties": {
+        "field": {
+          "description": "Field used to attach the correlation link",
+          "type": "string",
+          "example": "message"
+        },
+        "target": {
+          "description": "Target data query",
+          "type": "object",
+          "additionalProperties": false,
+          "example": {
+            "prop1": "value1",
+            "prop2": "value"
+          }
+        },
+        "transformations": {
+          "$ref": "#/definitions/Transformations"
+        },
+        "type": {
+          "$ref": "#/definitions/CorrelationConfigType"
+        }
+      }
+    },
+    "CorrelationConfigType": {
+      "type": "string"
+    },
+    "CorrelationConfigUpdateDTO": {
+      "type": "object",
+      "properties": {
+        "field": {
+          "description": "Field used to attach the correlation link",
+          "type": "string",
+          "example": "message"
+        },
+        "target": {
+          "description": "Target data query",
+          "type": "object",
+          "additionalProperties": false,
+          "example": {
+            "prop1": "value1",
+            "prop2": "value"
+          }
+        },
+        "transformations": {
+          "description": "Source data transformations",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Transformation"
+          },
+          "example": [
+            {
+              "type": "logfmt"
+            },
+            {
+              "expression": "(Superman|Batman)",
+              "type": "regex",
+              "variable": "name"
+            }
+          ]
+        },
+        "type": {
+          "$ref": "#/definitions/CorrelationConfigType"
+        }
+      }
+    },
+    "CounterResetHint": {
+      "description": "or alternatively that we are dealing with a gauge histogram, where counter resets do not apply.",
+      "type": "integer",
+      "format": "uint8",
+      "title": "CounterResetHint contains the known information about a counter reset,"
     },
     "CreateAlertNotificationCommand": {
       "type": "object",
@@ -11338,6 +12309,9 @@
       "description": "CreateCorrelationCommand is the command for creating a correlation",
       "type": "object",
       "properties": {
+        "config": {
+          "$ref": "#/definitions/CorrelationConfig"
+        },
         "description": {
           "description": "Optional description of the correlation",
           "type": "string",
@@ -11348,8 +12322,12 @@
           "type": "string",
           "example": "My label"
         },
+        "provisioned": {
+          "description": "True if correlation was created with provisioning. This makes it read-only.",
+          "type": "boolean"
+        },
         "targetUID": {
-          "description": "Target data source UID to which the correlation is created",
+          "description": "Target data source UID to which the correlation is created. required if config.type = query",
           "type": "string",
           "example": "PE1C5CBDA0504A6A3"
         }
@@ -11374,9 +12352,6 @@
         "dashboard"
       ],
       "properties": {
-        "Result": {
-          "$ref": "#/definitions/DashboardSnapshot"
-        },
         "dashboard": {
           "$ref": "#/definitions/Json"
         },
@@ -11406,8 +12381,15 @@
       }
     },
     "CreateFolderCommand": {
+      "description": "CreateFolderCommand captures the information required by the folder service\nto create a folder.",
       "type": "object",
       "properties": {
+        "description": {
+          "type": "string"
+        },
+        "parentUid": {
+          "type": "string"
+        },
         "title": {
           "type": "string"
         },
@@ -11451,6 +12433,64 @@
         }
       }
     },
+    "CreateOrUpdateConfigCmd": {
+      "type": "object",
+      "properties": {
+        "dashboardId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dashboardUid": {
+          "type": "string"
+        },
+        "dashboards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DashboardDTO"
+          }
+        },
+        "enableCsv": {
+          "type": "boolean"
+        },
+        "enableDashboardUrl": {
+          "type": "boolean"
+        },
+        "formats": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Type"
+          }
+        },
+        "message": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "options": {
+          "$ref": "#/definitions/ReportOptionsDTO"
+        },
+        "recipients": {
+          "type": "string"
+        },
+        "replyTo": {
+          "type": "string"
+        },
+        "scaleFactor": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "schedule": {
+          "$ref": "#/definitions/ScheduleDTO"
+        },
+        "state": {
+          "$ref": "#/definitions/State"
+        },
+        "templateVars": {
+          "type": "object"
+        }
+      }
+    },
     "CreateOrgCommand": {
       "type": "object",
       "properties": {
@@ -11468,7 +12508,7 @@
         "items": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/PlaylistItemDTO"
+            "$ref": "#/definitions/PlaylistItem"
           }
         },
         "name": {
@@ -11493,6 +12533,42 @@
         }
       }
     },
+    "CreateRoleForm": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "global": {
+          "type": "boolean"
+        },
+        "group": {
+          "type": "string"
+        },
+        "hidden": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Permission"
+          }
+        },
+        "uid": {
+          "type": "string"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "CreateServiceAccountForm": {
       "type": "object",
       "properties": {
@@ -11507,6 +12583,7 @@
         "role": {
           "type": "string",
           "enum": [
+            "None",
             "Viewer",
             "Editor",
             "Admin"
@@ -11526,6 +12603,53 @@
         }
       }
     },
+    "CustomPermissionsRecordDTO": {
+      "type": "object",
+      "properties": {
+        "customPermissions": {
+          "type": "string"
+        },
+        "granteeName": {
+          "type": "string"
+        },
+        "granteeType": {
+          "type": "string"
+        },
+        "granteeUrl": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "isFolder": {
+          "type": "boolean"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "orgRole": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "usersCount": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "DashboardACLInfoDTO": {
       "type": "object",
       "properties": {
@@ -11540,6 +12664,9 @@
         "folderId": {
           "type": "integer",
           "format": "int64"
+        },
+        "folderUid": {
+          "type": "string"
         },
         "inherited": {
           "type": "boolean"
@@ -11556,6 +12683,7 @@
         "role": {
           "type": "string",
           "enum": [
+            "None",
             "Viewer",
             "Editor",
             "Admin"
@@ -11614,6 +12742,7 @@
         "role": {
           "type": "string",
           "enum": [
+            "None",
             "Viewer",
             "Editor",
             "Admin"
@@ -11626,6 +12755,20 @@
         "userId": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "DashboardDTO": {
+      "type": "object",
+      "properties": {
+        "dashboard": {
+          "$ref": "#/definitions/DashboardReportDTO"
+        },
+        "reportVariables": {
+          "type": "object"
+        },
+        "timeRange": {
+          "$ref": "#/definitions/TimeRangeDTO"
         }
       }
     },
@@ -11691,9 +12834,6 @@
         "isFolder": {
           "type": "boolean"
         },
-        "isHome": {
-          "type": "boolean"
-        },
         "isSnapshot": {
           "type": "boolean"
         },
@@ -11704,9 +12844,6 @@
           "type": "boolean"
         },
         "provisionedExternalId": {
-          "type": "string"
-        },
-        "publicDashboardAccessToken": {
           "type": "string"
         },
         "publicDashboardEnabled": {
@@ -11745,61 +12882,18 @@
         }
       }
     },
-    "DashboardSnapshot": {
-      "description": "DashboardSnapshot model",
+    "DashboardReportDTO": {
       "type": "object",
       "properties": {
-        "Created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "Dashboard": {
-          "$ref": "#/definitions/Json"
-        },
-        "DashboardEncrypted": {
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "format": "uint8"
-          }
-        },
-        "DeleteKey": {
-          "type": "string"
-        },
-        "Expires": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "External": {
-          "type": "boolean"
-        },
-        "ExternalDeleteUrl": {
-          "type": "string"
-        },
-        "ExternalUrl": {
-          "type": "string"
-        },
-        "Id": {
+        "id": {
           "type": "integer",
           "format": "int64"
         },
-        "Key": {
+        "name": {
           "type": "string"
         },
-        "Name": {
+        "uid": {
           "type": "string"
-        },
-        "OrgId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Updated": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "UserId": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -11857,47 +12951,8 @@
         }
       }
     },
-    "DashboardVersionDTO": {
-      "type": "object",
-      "properties": {
-        "created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "createdBy": {
-          "description": "Since we get created by with left join user table, this can be null technically,\nbut in reality it will always be set, when database is not corrupted.",
-          "type": "string"
-        },
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardUid": {
-          "type": "string"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "message": {
-          "type": "string"
-        },
-        "parentVersion": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "restoredFrom": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "version": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "DashboardVersionMeta": {
-      "description": "DashboardVersionMeta extends the dashboard version model with the names\nassociated with the UserIds, overriding the field with the same name from\nthe DashboardVersion model.",
+      "description": "DashboardVersionMeta extends the DashboardVersionDTO with the names\nassociated with the UserIds, overriding the field with the same name from\nthe DashboardVersionDTO model.",
       "type": "object",
       "properties": {
         "created": {
@@ -11942,6 +12997,9 @@
       "description": "DataLink define what",
       "type": "object",
       "properties": {
+        "internal": {
+          "$ref": "#/definitions/InternalDataLink"
+        },
         "targetBlank": {
           "type": "boolean"
         },
@@ -11959,11 +13017,14 @@
       "title": "DataResponse contains the results from a DataQuery.",
       "properties": {
         "Error": {
-          "description": "Error is a property to be set if the the corresponding DataQuery has an error.",
+          "description": "Error is a property to be set if the corresponding DataQuery has an error.",
           "type": "string"
         },
         "Frames": {
           "$ref": "#/definitions/Frames"
+        },
+        "Status": {
+          "$ref": "#/definitions/Status"
         }
       }
     },
@@ -12093,7 +13154,85 @@
         }
       }
     },
+    "DataSourcePermissionRuleDTO": {
+      "type": "object",
+      "properties": {
+        "builtInRole": {
+          "type": "string"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "datasourceId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "isManaged": {
+          "type": "boolean"
+        },
+        "permission": {
+          "$ref": "#/definitions/DsPermissionType"
+        },
+        "permissionName": {
+          "type": "string"
+        },
+        "team": {
+          "type": "string"
+        },
+        "teamAvatarUrl": {
+          "type": "string"
+        },
+        "teamEmail": {
+          "type": "string"
+        },
+        "teamId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "userAvatarUrl": {
+          "type": "string"
+        },
+        "userEmail": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userLogin": {
+          "type": "string"
+        }
+      }
+    },
+    "DataSourcePermissionsDTO": {
+      "type": "object",
+      "properties": {
+        "datasourceId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DataSourcePermissionRuleDTO"
+          }
+        }
+      }
+    },
     "DataTopic": {
+      "description": "nolint:revive",
       "type": "string",
       "title": "DataTopic is used to identify which topic the frame should be assigned to."
     },
@@ -12103,6 +13242,42 @@
         "message": {
           "type": "string",
           "example": "Correlation deleted"
+        }
+      }
+    },
+    "DeleteTokenCommand": {
+      "type": "object",
+      "properties": {
+        "instance": {
+          "type": "string"
+        }
+      }
+    },
+    "DescendantCounts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "format": "int64"
+      }
+    },
+    "DiscordConfig": {
+      "type": "object",
+      "title": "DiscordConfig configures notifications via Discord.",
+      "properties": {
+        "http_config": {
+          "$ref": "#/definitions/HTTPClientConfig"
+        },
+        "message": {
+          "type": "string"
+        },
+        "send_resolved": {
+          "type": "boolean"
+        },
+        "title": {
+          "type": "string"
+        },
+        "webhook_url": {
+          "$ref": "#/definitions/SecretURL"
         }
       }
     },
@@ -12127,7 +13302,7 @@
       "type": "string"
     },
     "DsPermissionType": {
-      "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\nEnum: 0,1",
+      "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\n`2` - Edit\nEnum: 0,1,2",
       "type": "integer",
       "format": "int64"
     },
@@ -12242,7 +13417,44 @@
         "uid": {
           "description": "UID is the unique identifier of the contact point. The UID can be\nset by the user.",
           "type": "string",
+          "maxLength": 40,
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9\\-\\_]+$",
           "example": "my_external_reference"
+        }
+      }
+    },
+    "EnumFieldConfig": {
+      "description": "Enum field config\nVector values are used as lookup keys into the enum fields",
+      "type": "object",
+      "properties": {
+        "color": {
+          "description": "Color is the color value for a given index (empty is undefined)",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "description": {
+          "description": "Description of the enum state",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "icon": {
+          "description": "Icon supports setting an icon for a given index value",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "text": {
+          "description": "Value is the string display value for a given index",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
@@ -12322,6 +13534,9 @@
       }
     },
     "EvalQueriesResponse": {},
+    "ExplorePanelsState": {
+      "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
+    },
     "ExtendedReceiver": {
       "type": "object",
       "properties": {
@@ -12351,6 +13566,18 @@
         },
         "wechat_configs": {
           "$ref": "#/definitions/WechatConfig"
+        }
+      }
+    },
+    "FailedUser": {
+      "description": "FailedUser holds the information of an user that failed",
+      "type": "object",
+      "properties": {
+        "Error": {
+          "type": "string"
+        },
+        "Login": {
+          "type": "string"
         }
       }
     },
@@ -12401,7 +13628,7 @@
           "type": "string"
         },
         "displayNameFromDS": {
-          "description": "DisplayNameFromDS overrides Grafana default naming in a better way that allows users to override it easily.",
+          "description": "DisplayNameFromDS overrides Grafana default naming strategy.",
           "type": "string"
         },
         "filterable": {
@@ -12440,6 +13667,9 @@
         "thresholds": {
           "$ref": "#/definitions/ThresholdsConfig"
         },
+        "type": {
+          "$ref": "#/definitions/FieldTypeConfig"
+        },
         "unit": {
           "description": "Numeric Options",
           "type": "string"
@@ -12447,6 +13677,15 @@
         "writeable": {
           "description": "Writeable indicates that the datasource knows how to update this value",
           "type": "boolean"
+        }
+      }
+    },
+    "FieldTypeConfig": {
+      "description": "FieldTypeConfig has type specific configs, only one should be active at a time",
+      "type": "object",
+      "properties": {
+        "enum": {
+          "$ref": "#/definitions/EnumFieldConfig"
         }
       }
     },
@@ -12459,6 +13698,56 @@
           "items": {
             "$ref": "#/definitions/TagsDTO"
           }
+        }
+      }
+    },
+    "FloatHistogram": {
+      "description": "A FloatHistogram is needed by PromQL to handle operations that might result\nin fractional counts. Since the counts in a histogram are unlikely to be too\nlarge to be represented precisely by a float64, a FloatHistogram can also be\nused to represent a histogram with integer counts and thus serves as a more\ngeneralized representation.",
+      "type": "object",
+      "title": "FloatHistogram is similar to Histogram but uses float64 for all\ncounts. Additionally, bucket counts are absolute and not deltas.",
+      "properties": {
+        "Count": {
+          "description": "Total number of observations. Must be zero or positive.",
+          "type": "number",
+          "format": "double"
+        },
+        "CounterResetHint": {
+          "$ref": "#/definitions/CounterResetHint"
+        },
+        "PositiveBuckets": {
+          "description": "Observation counts in buckets. Each represents an absolute count and\nmust be zero or positive.",
+          "type": "array",
+          "items": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "PositiveSpans": {
+          "description": "Spans for positive and negative buckets (see Span below).",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Span"
+          }
+        },
+        "Schema": {
+          "description": "Currently valid schema numbers are -4 \u003c= n \u003c= 8.  They are all for\nbase-2 bucket schemas, where 1 is a bucket boundary in each case, and\nthen each power of two is divided into 2^n logarithmic buckets.  Or\nin other words, each bucket boundary is the previous boundary times\n2^(2^-n).",
+          "type": "integer",
+          "format": "int32"
+        },
+        "Sum": {
+          "description": "Sum of observations. This is also used as the stale marker.",
+          "type": "number",
+          "format": "double"
+        },
+        "ZeroCount": {
+          "description": "Observations falling into the zero bucket. Must be zero or positive.",
+          "type": "number",
+          "format": "double"
+        },
+        "ZeroThreshold": {
+          "description": "Width of the zero bucket.",
+          "type": "number",
+          "format": "double"
         }
       }
     },
@@ -12494,6 +13783,17 @@
           "type": "integer",
           "format": "int64"
         },
+        "parentUid": {
+          "description": "only used if nested folders are enabled",
+          "type": "string"
+        },
+        "parents": {
+          "description": "the parent folders starting from the root going down",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Folder"
+          }
+        },
         "title": {
           "type": "string"
         },
@@ -12519,12 +13819,12 @@
     "FolderSearchHit": {
       "type": "object",
       "properties": {
-        "accessControl": {
-          "$ref": "#/definitions/Metadata"
-        },
         "id": {
           "type": "integer",
           "format": "int64"
+        },
+        "parentUid": {
+          "type": "string"
         },
         "title": {
           "type": "string"
@@ -12540,7 +13840,7 @@
       "title": "Frame is a columnar data structure where each column is a Field.",
       "properties": {
         "Fields": {
-          "description": "Fields are the columns of a frame.\nAll Fields must be of the same the length when marshalling the Frame for transmission.",
+          "description": "Fields are the columns of a frame.\nAll Fields must be of the same the length when marshalling the Frame for transmission.\nThere should be no `nil` entries in the Fields slice (making them pointers was a mistake).",
           "type": "array",
           "items": {
             "$ref": "#/definitions/Field"
@@ -12600,6 +13900,10 @@
           "description": "PathSeparator defines the separator pattern to decode a hierarchy. The default separator is '/'.",
           "type": "string"
         },
+        "preferredVisualisationPluginId": {
+          "description": "PreferredVisualizationPluginId sets the panel plugin id to use to render the data when using Explore. If\nthe plugin cannot be found will fall back to PreferredVisualization.",
+          "type": "string"
+        },
         "preferredVisualisationType": {
           "$ref": "#/definitions/VisType"
         },
@@ -12612,6 +13916,9 @@
         },
         "type": {
           "$ref": "#/definitions/FrameType"
+        },
+        "typeVersion": {
+          "$ref": "#/definitions/FrameTypeVersion"
         }
       }
     },
@@ -12619,8 +13926,16 @@
       "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
       "type": "string"
     },
+    "FrameTypeVersion": {
+      "type": "array",
+      "title": "FrameType is a 2 number version (Major / Minor).",
+      "items": {
+        "type": "integer",
+        "format": "uint64"
+      }
+    },
     "Frames": {
-      "description": "It is the main data container within a backend.DataResponse.",
+      "description": "It is the main data container within a backend.DataResponse.\nThere should be no `nil` entries in the Frames slice (making them pointers was a mistake).",
       "type": "array",
       "title": "Frames is a slice of Frame pointers.",
       "items": {
@@ -12687,8 +14002,7 @@
           "type": "object",
           "additionalProperties": {
             "$ref": "#/definitions/Provenance"
-          },
-          "x-go-name": "MuteTimeProvenances"
+          }
         },
         "mute_time_intervals": {
           "type": "array",
@@ -12717,6 +14031,12 @@
     "GettableApiReceiver": {
       "type": "object",
       "properties": {
+        "discord_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DiscordConfig"
+          }
+        },
         "email_configs": {
           "type": "array",
           "items": {
@@ -12763,6 +14083,12 @@
             "$ref": "#/definitions/SNSConfig"
           }
         },
+        "teams_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MSTeamsConfig"
+          }
+        },
         "telegram_configs": {
           "type": "array",
           "items": {
@@ -12773,6 +14099,12 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/VictorOpsConfig"
+          }
+        },
+        "webex_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WebexConfig"
           }
         },
         "webhook_configs": {
@@ -12840,7 +14172,7 @@
           }
         },
         "settings": {
-          "$ref": "#/definitions/Json"
+          "$ref": "#/definitions/RawMessage"
         },
         "type": {
           "type": "string"
@@ -12889,6 +14221,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "is_paused": {
+          "type": "boolean"
+        },
         "namespace_id": {
           "type": "integer",
           "format": "int64"
@@ -12930,15 +14265,37 @@
         }
       }
     },
+    "GettableHistoricUserConfig": {
+      "type": "object",
+      "properties": {
+        "alertmanager_config": {
+          "$ref": "#/definitions/GettableApiAlertingConfig"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "last_applied": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "template_file_provenances": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Provenance"
+          }
+        },
+        "template_files": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "GettableNGalertConfig": {
       "type": "object",
       "properties": {
-        "alertmanagers": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
         "alertmanagersChoice": {
           "type": "string",
           "enum": [
@@ -13078,7 +14435,13 @@
         "victorops_api_key": {
           "$ref": "#/definitions/Secret"
         },
+        "victorops_api_key_file": {
+          "type": "string"
+        },
         "victorops_api_url": {
+          "$ref": "#/definitions/URL"
+        },
+        "webex_api_url": {
           "$ref": "#/definitions/URL"
         },
         "wechat_api_corp_id": {
@@ -13117,14 +14480,34 @@
           "description": "FollowRedirects specifies whether the client should follow HTTP 3xx redirects.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
           "type": "boolean"
         },
+        "no_proxy": {
+          "description": "NoProxy contains addresses that should not use a proxy.",
+          "type": "string"
+        },
         "oauth2": {
           "$ref": "#/definitions/OAuth2"
+        },
+        "proxy_connect_header": {
+          "$ref": "#/definitions/Header"
+        },
+        "proxy_from_environment": {
+          "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
+          "type": "boolean"
         },
         "proxy_url": {
           "$ref": "#/definitions/URL"
         },
         "tls_config": {
           "$ref": "#/definitions/TLSConfig"
+        }
+      }
+    },
+    "Header": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/Secret"
         }
       }
     },
@@ -13269,6 +14652,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "folderUid": {
+          "type": "string"
+        },
         "imported": {
           "type": "boolean"
         },
@@ -13346,6 +14732,48 @@
       "format": "int64",
       "title": "InspectType is a type for the Inspect property of a Notice."
     },
+    "InternalDataLink": {
+      "description": "InternalDataLink definition to allow Explore links to be constructed in the backend",
+      "type": "object",
+      "properties": {
+        "datasourceName": {
+          "type": "string"
+        },
+        "datasourceUid": {
+          "type": "string"
+        },
+        "panelsState": {
+          "$ref": "#/definitions/ExplorePanelsState"
+        },
+        "query": {},
+        "timeRange": {
+          "$ref": "#/definitions/TimeRange"
+        },
+        "transformations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LinkTransformationConfig"
+          }
+        }
+      }
+    },
+    "Item": {
+      "type": "object",
+      "title": "Item defines model for Item.",
+      "properties": {
+        "title": {
+          "description": "Title is an unused property -- it will be removed in the future",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/ItemType"
+        },
+        "value": {
+          "description": "Value depends on type and describes the playlist item.\n\ndashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future. (deprecated)\ndashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.\ndashboard_by_uid: The value is the dashboard UID",
+          "type": "string"
+        }
+      }
+    },
     "ItemDTO": {
       "type": "object",
       "properties": {
@@ -13420,6 +14848,10 @@
         }
       }
     },
+    "ItemType": {
+      "type": "string",
+      "title": "Type of the item."
+    },
     "Json": {
       "type": "object"
     },
@@ -13468,7 +14900,7 @@
           "type": "string",
           "format": "date-time"
         },
-        "DashboardId": {
+        "DashboardID": {
           "type": "integer",
           "format": "int64"
         },
@@ -13489,7 +14921,7 @@
           "type": "integer",
           "format": "int64"
         },
-        "Id": {
+        "ID": {
           "type": "integer",
           "format": "int64"
         },
@@ -13503,11 +14935,11 @@
           "type": "string",
           "format": "date-time"
         },
-        "OrgId": {
+        "OrgID": {
           "type": "integer",
           "format": "int64"
         },
-        "PanelId": {
+        "PanelID": {
           "type": "integer",
           "format": "int64"
         },
@@ -13616,6 +15048,10 @@
           "type": "integer",
           "format": "int64"
         },
+        "schemaVersion": {
+          "type": "integer",
+          "format": "int64"
+        },
         "type": {
           "type": "string"
         },
@@ -13660,7 +15096,7 @@
     },
     "LibraryElementDTOMetaUser": {
       "type": "object",
-      "title": "LibraryElementDTOMetaUser is the meta information for user that creates/changes the library element.",
+      "title": "LibraryElementDTOMetaUser defines model for LibraryElementDTOMetaUser.",
       "properties": {
         "avatarUrl": {
           "type": "string"
@@ -13713,6 +15149,43 @@
         "totalCount": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "LinkTransformationConfig": {
+      "type": "object",
+      "properties": {
+        "expression": {
+          "type": "string"
+        },
+        "field": {
+          "type": "string"
+        },
+        "mapValue": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/SupportedTransformationTypes"
+        }
+      }
+    },
+    "MSTeamsConfig": {
+      "type": "object",
+      "properties": {
+        "http_config": {
+          "$ref": "#/definitions/HTTPClientConfig"
+        },
+        "send_resolved": {
+          "type": "boolean"
+        },
+        "text": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "webhook_url": {
+          "$ref": "#/definitions/SecretURL"
         }
       }
     },
@@ -13770,34 +15243,6 @@
         "$ref": "#/definitions/Matcher"
       }
     },
-    "MessageTemplate": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "provenance": {
-          "$ref": "#/definitions/Provenance"
-        },
-        "template": {
-          "type": "string"
-        }
-      }
-    },
-    "MessageTemplateContent": {
-      "type": "object",
-      "properties": {
-        "template": {
-          "type": "string"
-        }
-      }
-    },
-    "MessageTemplates": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/MessageTemplate"
-      }
-    },
     "Metadata": {
       "description": "Metadata contains user accesses for a given resource\nEx: map[string]bool{\"create\":true, \"delete\": true}",
       "type": "object",
@@ -13820,9 +15265,6 @@
           "description": "From Start time in epoch timestamps in milliseconds or relative using Grafana time units.",
           "type": "string",
           "example": "now-1h"
-        },
-        "publicDashboardAccessToken": {
-          "type": "string"
         },
         "queries": {
           "description": "queries.refId – Specifies an identifier of the query. Is optional and default to “A”.\nqueries.datasourceId – Specifies the data source to be queried. Each query in the request must have an unique datasourceId.\nqueries.maxDataPoints - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100.\nqueries.intervalMs - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.",
@@ -13850,16 +15292,12 @@
         }
       }
     },
-    "MigrateQueriesToQueryHistoryCommand": {
-      "description": "MigrateQueriesToQueryHistoryCommand is the command used for migration of old queries into query history",
+    "MoveFolderCommand": {
+      "description": "MoveFolderCommand captures the information required by the folder service\nto move a folder.",
       "type": "object",
       "properties": {
-        "queries": {
-          "description": "Array of queries to store in query history.",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/QueryToMigrate"
-          }
+        "parentUid": {
+          "type": "string"
         }
       }
     },
@@ -13885,8 +15323,7 @@
       "type": "array",
       "items": {
         "$ref": "#/definitions/MuteTimeInterval"
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+      }
     },
     "NamespaceConfigResponse": {
       "type": "object",
@@ -13894,34 +15331,6 @@
         "type": "array",
         "items": {
           "$ref": "#/definitions/GettableRuleGroupConfig"
-        }
-      }
-    },
-    "NavLink": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "target": {
-          "type": "string"
-        },
-        "text": {
-          "type": "string"
-        },
-        "url": {
-          "type": "string"
-        }
-      }
-    },
-    "NavbarPreference": {
-      "type": "object",
-      "properties": {
-        "savedItems": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/NavLink"
-          }
         }
       }
     },
@@ -13970,6 +15379,47 @@
       "type": "integer",
       "format": "int64",
       "title": "NoticeSeverity is a type for the Severity property of a Notice."
+    },
+    "NotificationPolicyExport": {
+      "type": "object",
+      "title": "NotificationPolicyExport is the provisioned file export of alerting.NotificiationPolicyV1.",
+      "properties": {
+        "Policy": {
+          "$ref": "#/definitions/RouteExport"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "NotificationTemplate": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
+        "template": {
+          "type": "string"
+        }
+      }
+    },
+    "NotificationTemplateContent": {
+      "type": "object",
+      "properties": {
+        "template": {
+          "type": "string"
+        }
+      }
+    },
+    "NotificationTemplates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/NotificationTemplate"
+      }
     },
     "NotificationTestCommand": {
       "type": "object",
@@ -14034,6 +15484,17 @@
           "additionalProperties": {
             "type": "string"
           }
+        },
+        "no_proxy": {
+          "description": "NoProxy contains addresses that should not use a proxy.",
+          "type": "string"
+        },
+        "proxy_connect_header": {
+          "$ref": "#/definitions/Header"
+        },
+        "proxy_from_environment": {
+          "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
+          "type": "boolean"
         },
         "proxy_url": {
           "$ref": "#/definitions/URL"
@@ -14168,6 +15629,12 @@
             "type": "boolean"
           }
         },
+        "authLabels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "avatarUrl": {
           "type": "string"
         },
@@ -14175,6 +15642,9 @@
           "type": "string"
         },
         "isDisabled": {
+          "type": "boolean"
+        },
+        "isExternallySynced": {
           "type": "boolean"
         },
         "lastSeenAt": {
@@ -14249,13 +15719,22 @@
         "routing_key": {
           "$ref": "#/definitions/Secret"
         },
+        "routing_key_file": {
+          "type": "string"
+        },
         "send_resolved": {
           "type": "boolean"
         },
         "service_key": {
           "$ref": "#/definitions/Secret"
         },
+        "service_key_file": {
+          "type": "string"
+        },
         "severity": {
+          "type": "string"
+        },
+        "source": {
           "type": "string"
         },
         "url": {
@@ -14293,6 +15772,9 @@
     "PatchAnnotationsCmd": {
       "type": "object",
       "properties": {
+        "data": {
+          "$ref": "#/definitions/Json"
+        },
         "id": {
           "type": "integer",
           "format": "int64"
@@ -14359,6 +15841,12 @@
     "PatchPrefsCmd": {
       "type": "object",
       "properties": {
+        "cookies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CookieType"
+          }
+        },
         "homeDashboardId": {
           "description": "The numerical :id of a favorited dashboard",
           "type": "integer",
@@ -14368,11 +15856,8 @@
         "homeDashboardUID": {
           "type": "string"
         },
-        "locale": {
+        "language": {
           "type": "string"
-        },
-        "navbar": {
-          "$ref": "#/definitions/NavbarPreference"
         },
         "queryHistory": {
           "$ref": "#/definitions/QueryHistoryPreference"
@@ -14426,6 +15911,26 @@
         }
       }
     },
+    "Permission": {
+      "type": "object",
+      "title": "Permission is the model for access control permissions.",
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
     "PermissionDenied": {
       "type": "object"
     },
@@ -14443,30 +15948,6 @@
         },
         "interval": {
           "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        }
-      }
-    },
-    "PlaylistDTO": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "interval": {
-          "type": "string"
-        },
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/PlaylistItemDTO"
-          }
         },
         "name": {
           "type": "string"
@@ -14507,18 +15988,18 @@
         "$ref": "#/definitions/PlaylistDashboard"
       }
     },
-    "PlaylistItemDTO": {
+    "PlaylistItem": {
       "type": "object",
       "properties": {
-        "id": {
+        "Id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "PlaylistId": {
           "type": "integer",
           "format": "int64"
         },
         "order": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "playlistid": {
           "type": "integer",
           "format": "int64"
         },
@@ -14540,9 +16021,13 @@
       }
     },
     "Point": {
+      "description": "If H is not nil, then this is a histogram point and only (T, H) is valid.\nIf H is nil, then only (T, V) is valid.",
       "type": "object",
       "title": "Point represents a single data point for a given timestamp.",
       "properties": {
+        "H": {
+          "$ref": "#/definitions/FloatHistogram"
+        },
         "T": {
           "type": "integer",
           "format": "int64"
@@ -14647,6 +16132,12 @@
     "PostableApiReceiver": {
       "type": "object",
       "properties": {
+        "discord_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DiscordConfig"
+          }
+        },
         "email_configs": {
           "type": "array",
           "items": {
@@ -14693,6 +16184,12 @@
             "$ref": "#/definitions/SNSConfig"
           }
         },
+        "teams_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MSTeamsConfig"
+          }
+        },
         "telegram_configs": {
           "type": "array",
           "items": {
@@ -14703,6 +16200,12 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/VictorOpsConfig"
+          }
+        },
+        "webex_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WebexConfig"
           }
         },
         "webhook_configs": {
@@ -14751,6 +16254,29 @@
         }
       }
     },
+    "PostableExtendedRuleNodeExtended": {
+      "type": "object",
+      "required": [
+        "rule"
+      ],
+      "properties": {
+        "folderTitle": {
+          "type": "string",
+          "example": "project_x"
+        },
+        "folderUid": {
+          "type": "string",
+          "example": "okrd3I0Vz"
+        },
+        "rule": {
+          "$ref": "#/definitions/PostableExtendedRuleNode"
+        },
+        "ruleGroup": {
+          "type": "string",
+          "example": "eval_group_1"
+        }
+      }
+    },
     "PostableGrafanaReceiver": {
       "type": "object",
       "properties": {
@@ -14767,7 +16293,7 @@
           }
         },
         "settings": {
-          "$ref": "#/definitions/Json"
+          "$ref": "#/definitions/RawMessage"
         },
         "type": {
           "type": "string"
@@ -14808,6 +16334,9 @@
             "Error"
           ]
         },
+        "is_paused": {
+          "type": "boolean"
+        },
         "no_data_state": {
           "type": "string",
           "enum": [
@@ -14827,12 +16356,6 @@
     "PostableNGalertConfig": {
       "type": "object",
       "properties": {
-        "alertmanagers": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
         "alertmanagersChoice": {
           "type": "string",
           "enum": [
@@ -14874,32 +16397,16 @@
         }
       }
     },
-    "Prefs": {
+    "PrometheusRemoteWriteTargetJSON": {
       "type": "object",
       "properties": {
-        "homeDashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "homeDashboardUID": {
+        "data_source_uid": {
           "type": "string"
         },
-        "locale": {
+        "id": {
           "type": "string"
         },
-        "navbar": {
-          "$ref": "#/definitions/NavbarPreference"
-        },
-        "queryHistory": {
-          "$ref": "#/definitions/QueryHistoryPreference"
-        },
-        "theme": {
-          "type": "string"
-        },
-        "timezone": {
-          "type": "string"
-        },
-        "weekStart": {
+        "remote_write_path": {
           "type": "string"
         }
       }
@@ -14988,9 +16495,9 @@
         "execErrState": {
           "type": "string",
           "enum": [
+            "OK",
             "Alerting",
-            "Error",
-            "OK"
+            "Error"
           ]
         },
         "folderUID": {
@@ -15003,6 +16510,10 @@
         "id": {
           "type": "integer",
           "format": "int64"
+        },
+        "isPaused": {
+          "type": "boolean",
+          "example": false
         },
         "labels": {
           "type": "object",
@@ -15041,7 +16552,10 @@
           "example": "Always firing"
         },
         "uid": {
-          "type": "string"
+          "type": "string",
+          "maxLength": 40,
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9-_]+$"
         },
         "updated": {
           "type": "string",
@@ -15050,9 +16564,37 @@
         }
       }
     },
+    "ProvisionedAlertRules": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ProvisionedAlertRule"
+      }
+    },
+    "ProxyConfig": {
+      "type": "object",
+      "properties": {
+        "no_proxy": {
+          "description": "NoProxy contains addresses that should not use a proxy.",
+          "type": "string"
+        },
+        "proxy_connect_header": {
+          "$ref": "#/definitions/Header"
+        },
+        "proxy_from_environment": {
+          "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
+          "type": "boolean"
+        },
+        "proxy_url": {
+          "$ref": "#/definitions/URL"
+        }
+      }
+    },
     "PushoverConfig": {
       "type": "object",
       "properties": {
+        "device": {
+          "type": "string"
+        },
         "expire": {
           "type": "string"
         },
@@ -15083,6 +16625,9 @@
         "token": {
           "$ref": "#/definitions/Secret"
         },
+        "token_file": {
+          "type": "string"
+        },
         "url": {
           "type": "string"
         },
@@ -15091,6 +16636,9 @@
         },
         "user_key": {
           "$ref": "#/definitions/Secret"
+        },
+        "user_key_file": {
+          "type": "string"
         }
       }
     },
@@ -15142,22 +16690,6 @@
         },
         "message": {
           "type": "string"
-        }
-      }
-    },
-    "QueryHistoryMigrationResponse": {
-      "type": "object",
-      "properties": {
-        "message": {
-          "type": "string"
-        },
-        "starredCount": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "totalCount": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -15237,7 +16769,7 @@
           "type": "string"
         },
         "displayNameFromDS": {
-          "description": "DisplayNameFromDS overrides Grafana default naming in a better way that allows users to override it easily.",
+          "description": "DisplayNameFromDS overrides Grafana default naming strategy.",
           "type": "string"
         },
         "filterable": {
@@ -15276,6 +16808,9 @@
         "thresholds": {
           "$ref": "#/definitions/ThresholdsConfig"
         },
+        "type": {
+          "$ref": "#/definitions/FieldTypeConfig"
+        },
         "unit": {
           "description": "Numeric Options",
           "type": "string"
@@ -15290,31 +16825,43 @@
         }
       }
     },
-    "QueryToMigrate": {
+    "QuotaDTO": {
       "type": "object",
       "properties": {
-        "comment": {
-          "type": "string"
-        },
-        "createdAt": {
+        "limit": {
           "type": "integer",
           "format": "int64"
         },
-        "datasourceUid": {
+        "org_id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "target": {
           "type": "string"
         },
-        "queries": {
-          "$ref": "#/definitions/Json"
+        "used": {
+          "type": "integer",
+          "format": "int64"
         },
-        "starred": {
-          "type": "boolean"
+        "user_id": {
+          "type": "integer",
+          "format": "int64"
         }
       }
+    },
+    "RawMessage": {
+      "type": "object"
     },
     "Receiver": {
       "type": "object",
       "title": "Receiver configuration provides configuration on how to contact a receiver.",
       "properties": {
+        "discord_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DiscordConfig"
+          }
+        },
         "email_configs": {
           "type": "array",
           "items": {
@@ -15355,6 +16902,12 @@
             "$ref": "#/definitions/SNSConfig"
           }
         },
+        "teams_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MSTeamsConfig"
+          }
+        },
         "telegram_configs": {
           "type": "array",
           "items": {
@@ -15365,6 +16918,12 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/VictorOpsConfig"
+          }
+        },
+        "webex_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WebexConfig"
           }
         },
         "webhook_configs": {
@@ -15378,6 +16937,24 @@
           "items": {
             "$ref": "#/definitions/WechatConfig"
           }
+        }
+      }
+    },
+    "ReceiverExport": {
+      "type": "object",
+      "title": "ReceiverExport is the provisioned file export of alerting.ReceiverV1.",
+      "properties": {
+        "disableResolveMessage": {
+          "type": "boolean"
+        },
+        "settings": {
+          "$ref": "#/definitions/RawMessage"
+        },
+        "type": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
         }
       }
     },
@@ -15440,6 +17017,41 @@
         },
         "to": {
           "$ref": "#/definitions/Duration"
+        }
+      }
+    },
+    "ReportEmailDTO": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "emails": {
+          "description": "Comma-separated list of emails to which to send the report to.",
+          "type": "string"
+        },
+        "id": {
+          "description": "Send the report to the emails specified in the report. Required if emails is not present.",
+          "type": "string",
+          "format": "int64"
+        },
+        "useEmailsFromReport": {
+          "description": "Send the report to the emails specified in the report. Required if emails is not present.",
+          "type": "boolean"
+        }
+      }
+    },
+    "ReportOptionsDTO": {
+      "type": "object",
+      "properties": {
+        "layout": {
+          "type": "string"
+        },
+        "orientation": {
+          "type": "string"
+        },
+        "timeRange": {
+          "$ref": "#/definitions/TimeRangeDTO"
         }
       }
     },
@@ -15608,6 +17220,61 @@
         }
       }
     },
+    "RouteExport": {
+      "description": "RouteExport is the provisioned file export of definitions.Route. This is needed to hide fields that aren't useable in\nprovisioning file format. An alternative would be to define a custom MarshalJSON and MarshalYAML that excludes them.",
+      "type": "object",
+      "properties": {
+        "continue": {
+          "type": "boolean"
+        },
+        "group_by": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "group_interval": {
+          "type": "string"
+        },
+        "group_wait": {
+          "type": "string"
+        },
+        "match": {
+          "description": "Deprecated. Remove before v1.0 release.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "match_re": {
+          "$ref": "#/definitions/MatchRegexps"
+        },
+        "matchers": {
+          "$ref": "#/definitions/Matchers"
+        },
+        "mute_time_intervals": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "object_matchers": {
+          "$ref": "#/definitions/ObjectMatchers"
+        },
+        "receiver": {
+          "type": "string"
+        },
+        "repeat_interval": {
+          "type": "string"
+        },
+        "routes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RouteExport"
+          }
+        }
+      }
+    },
     "Rule": {
       "description": "adapted from cortex",
       "type": "object",
@@ -15657,6 +17324,13 @@
           "items": {
             "$ref": "#/definitions/RuleGroup"
           }
+        },
+        "totals": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
+          }
         }
       }
     },
@@ -15692,6 +17366,13 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/AlertingRule"
+          }
+        },
+        "totals": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       }
@@ -15785,6 +17466,9 @@
       "type": "object",
       "title": "Sample is a single sample belonging to a metric.",
       "properties": {
+        "H": {
+          "$ref": "#/definitions/FloatHistogram"
+        },
         "Metric": {
           "$ref": "#/definitions/Labels"
         },
@@ -15830,7 +17514,50 @@
         }
       }
     },
-    "SearchServiceAccountsResult": {
+    "ScheduleDTO": {
+      "type": "object",
+      "properties": {
+        "day": {
+          "type": "string"
+        },
+        "dayOfMonth": {
+          "type": "string"
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "frequency": {
+          "type": "string"
+        },
+        "hour": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "intervalAmount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "intervalFrequency": {
+          "type": "string"
+        },
+        "minute": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "timeZone": {
+          "type": "string"
+        },
+        "workdaysOnly": {
+          "type": "boolean"
+        }
+      }
+    },
+    "SearchOrgServiceAccountsResult": {
       "description": "swagger: model",
       "type": "object",
       "properties": {
@@ -15850,6 +17577,73 @@
         },
         "totalCount": {
           "description": "It can be used for pagination of the user list\nE.g. if totalCount is equal to 100 users and\nthe perpage parameter is set to 10 then there are 10 pages of users.",
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "SearchOrgUsersQueryResult": {
+      "type": "object",
+      "properties": {
+        "orgUsers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OrgUserDTO"
+          }
+        },
+        "page": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "perPage": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "totalCount": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "SearchResult": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SearchResultItem"
+          }
+        }
+      }
+    },
+    "SearchResultItem": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "basicRole": {
+          "type": "string"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "roleName": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "teamId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "version": {
           "type": "integer",
           "format": "int64"
         }
@@ -16074,6 +17868,26 @@
         }
       }
     },
+    "SettingsDTO": {
+      "type": "object",
+      "properties": {
+        "branding": {
+          "$ref": "#/definitions/BrandingOptionsDTO"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "SigV4Config": {
       "description": "SigV4Config is the configuration for signing remote write requests with\nAWS's SigV4 verification process. Empty values will be retrieved using the\nAWS default credentials chain.",
       "type": "object",
@@ -16245,6 +18059,61 @@
     "SmtpNotEnabled": {
       "$ref": "#/definitions/ResponseDetails"
     },
+    "Span": {
+      "type": "object",
+      "title": "A Span defines a continuous sequence of buckets.",
+      "properties": {
+        "Length": {
+          "description": "Length of the span.",
+          "type": "integer",
+          "format": "uint32"
+        },
+        "Offset": {
+          "description": "Gap to previous span (always positive), or starting index for the 1st\nspan (which can be negative).",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "Spec": {
+      "type": "object",
+      "title": "Spec defines model for Spec.",
+      "properties": {
+        "cookiePreferences": {
+          "$ref": "#/definitions/CookiePreferences"
+        },
+        "homeDashboardUID": {
+          "description": "UID for the home dashboard",
+          "type": "string"
+        },
+        "language": {
+          "description": "Selected language (beta)",
+          "type": "string"
+        },
+        "queryHistory": {
+          "$ref": "#/definitions/QueryHistoryPreference"
+        },
+        "theme": {
+          "description": "Theme light, dark, empty is default",
+          "type": "string"
+        },
+        "timezone": {
+          "description": "The timezone selection\nTODO: this should use the timezone defined in common",
+          "type": "string"
+        },
+        "weekStart": {
+          "description": "WeekStart day of the week (sunday, monday, etc)",
+          "type": "string"
+        }
+      }
+    },
+    "State": {
+      "type": "string"
+    },
+    "Status": {
+      "type": "integer",
+      "format": "int64"
+    },
     "Success": {
       "$ref": "#/definitions/ResponseDetails"
     },
@@ -16256,12 +18125,56 @@
         }
       }
     },
+    "SupportedTransformationTypes": {
+      "type": "string"
+    },
+    "SyncResult": {
+      "type": "object",
+      "title": "SyncResult holds the result of a sync with LDAP. This gives us information on which users were updated and how.",
+      "properties": {
+        "Elapsed": {
+          "$ref": "#/definitions/Duration"
+        },
+        "FailedUsers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FailedUser"
+          }
+        },
+        "MissingUserIds": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "Started": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "UpdatedUserIds": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      }
+    },
     "TLSConfig": {
       "type": "object",
       "title": "TLSConfig configures the options for TLS connections.",
       "properties": {
+        "ca": {
+          "description": "Text of the CA cert to use for the targets.",
+          "type": "string"
+        },
         "ca_file": {
           "description": "The CA cert to use for the targets.",
+          "type": "string"
+        },
+        "cert": {
+          "description": "Text of the client cert file for the targets.",
           "type": "string"
         },
         "cert_file": {
@@ -16272,9 +18185,15 @@
           "description": "Disable target certificate validation.",
           "type": "boolean"
         },
+        "key": {
+          "$ref": "#/definitions/Secret"
+        },
         "key_file": {
           "description": "The client key file for the targets.",
           "type": "string"
+        },
+        "max_version": {
+          "$ref": "#/definitions/TLSVersion"
         },
         "min_version": {
           "$ref": "#/definitions/TLSVersion"
@@ -16334,6 +18253,33 @@
         },
         "permission": {
           "$ref": "#/definitions/PermissionType"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "TeamGroupDTO": {
+      "type": "object",
+      "properties": {
+        "groupId": {
+          "type": "string"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "teamId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "TeamGroupMapping": {
+      "type": "object",
+      "properties": {
+        "groupId": {
+          "type": "string"
         }
       }
     },
@@ -16372,6 +18318,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "teamUID": {
+          "type": "string"
+        },
         "userId": {
           "type": "integer",
           "format": "int64"
@@ -16406,6 +18355,9 @@
         },
         "token": {
           "$ref": "#/definitions/Secret"
+        },
+        "token_file": {
+          "type": "string"
         }
       }
     },
@@ -16452,6 +18404,7 @@
         "role": {
           "type": "string",
           "enum": [
+            "None",
             "Viewer",
             "Editor",
             "Admin"
@@ -16565,6 +18518,77 @@
         }
       }
     },
+    "TestTemplatesConfigBodyParams": {
+      "type": "object",
+      "properties": {
+        "alerts": {
+          "description": "Alerts to use as data when testing the template.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/postableAlert"
+          }
+        },
+        "name": {
+          "description": "Name of the template file.",
+          "type": "string"
+        },
+        "template": {
+          "description": "Template string to test.",
+          "type": "string"
+        }
+      }
+    },
+    "TestTemplatesErrorResult": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "description": "Kind of template error that occurred.",
+          "type": "string",
+          "enum": [
+            "invalid_template",
+            "execution_error"
+          ]
+        },
+        "message": {
+          "description": "Error message.",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name of the associated template for this error. Will be empty if the Kind is \"invalid_template\".",
+          "type": "string"
+        }
+      }
+    },
+    "TestTemplatesResult": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "Name of the associated template definition for this result.",
+          "type": "string"
+        },
+        "text": {
+          "description": "Interpolated value of the template.",
+          "type": "string"
+        }
+      }
+    },
+    "TestTemplatesResults": {
+      "type": "object",
+      "properties": {
+        "errors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TestTemplatesErrorResult"
+          }
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TestTemplatesResult"
+          }
+        }
+      }
+    },
     "Threshold": {
       "description": "Threshold a single step on the threshold list",
       "type": "object",
@@ -16640,17 +18664,114 @@
       }
     },
     "TimeRange": {
-      "description": "For example, 4:00PM to End of the day would Begin at 1020 and End at 1440.",
+      "description": "Redefining this to avoid an import cycle",
       "type": "object",
-      "title": "TimeRange represents a range of minutes within a 1440 minute day, exclusive of the End minute. A day consists of 1440 minutes.",
       "properties": {
-        "EndMinute": {
+        "from": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "to": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "TimeRangeDTO": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        }
+      }
+    },
+    "Token": {
+      "type": "object",
+      "properties": {
+        "account": {
+          "type": "string"
+        },
+        "company": {
+          "type": "string"
+        },
+        "details_url": {
+          "type": "string"
+        },
+        "exp": {
           "type": "integer",
           "format": "int64"
         },
-        "StartMinute": {
+        "iat": {
           "type": "integer",
           "format": "int64"
+        },
+        "included_users": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "iss": {
+          "type": "string"
+        },
+        "jti": {
+          "type": "string"
+        },
+        "lexp": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "lic_exp_warn_days": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "lid": {
+          "type": "string"
+        },
+        "limit_by": {
+          "type": "string"
+        },
+        "max_concurrent_user_sessions": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "nbf": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "prod": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "slug": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/TokenStatus"
+        },
+        "sub": {
+          "type": "string"
+        },
+        "tok_exp_warn_days": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "trial": {
+          "type": "boolean"
+        },
+        "trial_exp": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "update_days": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "usage_billing": {
+          "type": "boolean"
         }
       }
     },
@@ -16696,6 +18817,37 @@
         }
       }
     },
+    "TokenStatus": {
+      "type": "integer",
+      "format": "int64"
+    },
+    "Transformation": {
+      "type": "object",
+      "properties": {
+        "expression": {
+          "type": "string"
+        },
+        "field": {
+          "type": "string"
+        },
+        "mapValue": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "regex",
+            "logfmt"
+          ]
+        }
+      }
+    },
+    "Transformations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Transformation"
+      }
+    },
     "TrimDashboardCommand": {
       "type": "object",
       "properties": {
@@ -16717,6 +18869,9 @@
           "$ref": "#/definitions/Json"
         }
       }
+    },
+    "Type": {
+      "type": "string"
     },
     "URL": {
       "type": "object",
@@ -16834,6 +18989,9 @@
     "UpdateAnnotationsCmd": {
       "type": "object",
       "properties": {
+        "data": {
+          "$ref": "#/definitions/Json"
+        },
         "id": {
           "type": "integer",
           "format": "int64"
@@ -16861,6 +19019,9 @@
       "description": "UpdateCorrelationCommand is the command for updating a correlation",
       "type": "object",
       "properties": {
+        "config": {
+          "$ref": "#/definitions/CorrelationConfigUpdateDTO"
+        },
         "description": {
           "description": "Optional description of the correlation",
           "type": "string",
@@ -16949,18 +19110,23 @@
       }
     },
     "UpdateFolderCommand": {
+      "description": "UpdateFolderCommand captures the information required by the folder service\nto update a folder. Use Move to update a folder's parent folder.",
       "type": "object",
       "properties": {
+        "description": {
+          "description": "NewDescription it's an optional parameter used for overriding the existing folder description",
+          "type": "string"
+        },
         "overwrite": {
+          "description": "Overwrite only used by the legacy folder implementation",
           "type": "boolean"
         },
         "title": {
-          "type": "string"
-        },
-        "uid": {
+          "description": "NewTitle it's an optional parameter used for overriding the existing folder title",
           "type": "string"
         },
         "version": {
+          "description": "Version only used by the legacy folder implementation",
           "type": "integer",
           "format": "int64"
         }
@@ -16997,24 +19163,13 @@
         }
       }
     },
-    "UpdateOrgQuotaCmd": {
-      "type": "object",
-      "properties": {
-        "limit": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "target": {
-          "type": "string"
-        }
-      }
-    },
     "UpdateOrgUserCommand": {
       "type": "object",
       "properties": {
         "role": {
           "type": "string",
           "enum": [
+            "None",
             "Viewer",
             "Editor",
             "Admin"
@@ -17031,7 +19186,7 @@
         "items": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/PlaylistItemDTO"
+            "$ref": "#/definitions/PlaylistItem"
           }
         },
         "name": {
@@ -17045,6 +19200,12 @@
     "UpdatePrefsCmd": {
       "type": "object",
       "properties": {
+        "cookies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CookieType"
+          }
+        },
         "homeDashboardId": {
           "description": "The numerical :id of a favorited dashboard",
           "type": "integer",
@@ -17054,11 +19215,8 @@
         "homeDashboardUID": {
           "type": "string"
         },
-        "locale": {
+        "language": {
           "type": "string"
-        },
-        "navbar": {
-          "$ref": "#/definitions/NavbarPreference"
         },
         "queryHistory": {
           "$ref": "#/definitions/QueryHistoryPreference"
@@ -17067,7 +19225,8 @@
           "type": "string",
           "enum": [
             "light",
-            "dark"
+            "dark",
+            "system"
           ]
         },
         "timezone": {
@@ -17079,6 +19238,51 @@
         },
         "weekStart": {
           "type": "string"
+        }
+      }
+    },
+    "UpdateQuotaCmd": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "target": {
+          "type": "string"
+        }
+      }
+    },
+    "UpdateRoleCommand": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "global": {
+          "type": "boolean"
+        },
+        "group": {
+          "type": "string"
+        },
+        "hidden": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Permission"
+          }
+        },
+        "version": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -17094,10 +19298,15 @@
         "role": {
           "type": "string",
           "enum": [
+            "None",
             "Viewer",
             "Editor",
             "Admin"
           ]
+        },
+        "serviceAccountId": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -17107,7 +19316,7 @@
         "Email": {
           "type": "string"
         },
-        "Id": {
+        "ID": {
           "type": "integer",
           "format": "int64"
         },
@@ -17141,30 +19350,6 @@
         }
       }
     },
-    "UpdateUserQuotaCmd": {
-      "type": "object",
-      "properties": {
-        "limit": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "target": {
-          "type": "string"
-        }
-      }
-    },
-    "UserIdDTO": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "message": {
-          "type": "string"
-        }
-      }
-    },
     "UserLookupDTO": {
       "type": "object",
       "properties": {
@@ -17193,6 +19378,7 @@
         "role": {
           "type": "string",
           "enum": [
+            "None",
             "Viewer",
             "Editor",
             "Admin"
@@ -17235,7 +19421,13 @@
         "isExternal": {
           "type": "boolean"
         },
+        "isExternallySynced": {
+          "type": "boolean"
+        },
         "isGrafanaAdmin": {
+          "type": "boolean"
+        },
+        "isGrafanaAdminExternallySynced": {
           "type": "boolean"
         },
         "login": {
@@ -17254,26 +19446,6 @@
         "updatedAt": {
           "type": "string",
           "format": "date-time"
-        }
-      }
-    },
-    "UserQuotaDTO": {
-      "type": "object",
-      "properties": {
-        "limit": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "target": {
-          "type": "string"
-        },
-        "used": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "user_id": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -17407,7 +19579,7 @@
           "$ref": "#/definitions/Secret"
         },
         "api_key_file": {
-          "$ref": "#/definitions/Secret"
+          "type": "string"
         },
         "api_url": {
           "$ref": "#/definitions/URL"
@@ -17445,6 +19617,27 @@
       "type": "string",
       "title": "VisType is used to indicate how the data should be visualized in explore."
     },
+    "WebexConfig": {
+      "type": "object",
+      "title": "WebexConfig configures notifications via Webex.",
+      "properties": {
+        "api_url": {
+          "$ref": "#/definitions/URL"
+        },
+        "http_config": {
+          "$ref": "#/definitions/HTTPClientConfig"
+        },
+        "message": {
+          "type": "string"
+        },
+        "room_id": {
+          "type": "string"
+        },
+        "send_resolved": {
+          "type": "boolean"
+        }
+      }
+    },
     "WebhookConfig": {
       "type": "object",
       "title": "WebhookConfig configures notifications via a generic webhook.",
@@ -17461,7 +19654,10 @@
           "type": "boolean"
         },
         "url": {
-          "$ref": "#/definitions/URL"
+          "$ref": "#/definitions/SecretURL"
+        },
+        "url_file": {
+          "type": "string"
         }
       }
     },
@@ -17522,6 +19718,7 @@
       }
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -17712,6 +19909,7 @@
       }
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -17760,16 +19958,12 @@
       }
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
-      },
-      "x-go-name": "GettableSilences",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "integration": {
-      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",
@@ -17913,6 +20107,7 @@
       }
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -17950,9 +20145,10 @@
       }
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": [
+        "active",
+        "integrations",
         "name"
       ],
       "properties": {
@@ -18063,8 +20259,32 @@
     }
   },
   "responses": {
+    "GettableHistoricUserConfigs": {
+      "description": "(empty)",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/GettableHistoricUserConfig"
+        }
+      }
+    },
     "SMTPNotEnabledError": {
       "description": "(empty)"
+    },
+    "StateHistory": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/Frame"
+      }
+    },
+    "TestGrafanaRuleResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/postableAlert"
+        }
+      }
     },
     "acceptedResponse": {
       "description": "AcceptedResponse",
@@ -18072,10 +20292,25 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
+    "addPermissionResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "permissionId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      }
+    },
     "adminCreateUserResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/UserIdDTO"
+        "$ref": "#/definitions/AdminCreateUserResponse"
       }
     },
     "adminGetSettingsResponse": {
@@ -18119,6 +20354,16 @@
       "description": "ConflictError",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "contentResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "array",
+        "items": {
+          "type": "integer",
+          "format": "uint8"
+        }
       }
     },
     "createCorrelationResponse": {
@@ -18216,6 +20461,27 @@
         "$ref": "#/definitions/Playlist"
       }
     },
+    "createReportResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "createRoleResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/RoleDTO"
+      }
+    },
     "createServiceAccountResponse": {
       "description": "(empty)",
       "schema": {
@@ -18260,7 +20526,7 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/DashboardVersionDTO"
+          "$ref": "#/definitions/DashboardVersionMeta"
         }
       }
     },
@@ -18400,6 +20666,12 @@
         }
       }
     },
+    "getAccessControlStatusResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/Status"
+      }
+    },
     "getAlertNotificationChannelResponse": {
       "description": "(empty)",
       "schema": {
@@ -18436,6 +20708,21 @@
         "type": "array",
         "items": {
           "$ref": "#/definitions/AlertListItemDTO"
+        }
+      }
+    },
+    "getAllPermissionseResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/DataSourcePermissionsDTO"
+      }
+    },
+    "getAllRolesResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/RoleDTO"
         }
       }
     },
@@ -18487,31 +20774,16 @@
     "getCurrentOrgResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/Correlation"
-      }
-    },
-    "getCorrelationsBySourceUIDResponse": {
-      "description": "(empty)",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/Correlation"
-        }
-      }
-    },
-    "getCorrelationsResponse": {
-      "description": "(empty)",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/Correlation"
-        }
-      }
-    },
-    "getCurrentOrgResponse": {
-      "description": "(empty)",
-      "schema": {
         "$ref": "#/definitions/OrgDetailsDTO"
+      }
+    },
+    "getCustomPermissionsReportResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/CustomPermissionsRecordDTO"
+        }
       }
     },
     "getDashboardPermissionsListResponse": {
@@ -18573,6 +20845,12 @@
         "$ref": "#/definitions/DataSourceList"
       }
     },
+    "getFolderDescendantCountsResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/DescendantCounts"
+      }
+    },
     "getFolderPermissionListResponse": {
       "description": "(empty)",
       "schema": {
@@ -18613,6 +20891,12 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/LibraryElementSearchResponse"
+      }
+    },
+    "getLicenseTokenResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/Token"
       }
     },
     "getOrgByIDResponse": {
@@ -18674,32 +20958,26 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/PlaylistItemDTO"
+          "$ref": "#/definitions/Item"
         }
       }
     },
     "getPlaylistResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/PlaylistDTO"
+        "$ref": "#/definitions/Spec"
       }
     },
     "getPreferencesResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/Prefs"
+        "$ref": "#/definitions/Spec"
       }
     },
     "getQueryHistoryDeleteQueryResponse": {
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/QueryHistoryDeleteQueryResponse"
-      }
-    },
-    "getQueryHistoryMigrationResponse": {
-      "description": "(empty)",
-      "schema": {
-        "$ref": "#/definitions/QueryHistoryMigrationResponse"
       }
     },
     "getQueryHistoryResponse": {
@@ -18719,7 +20997,7 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/UserQuotaDTO"
+          "$ref": "#/definitions/QuotaDTO"
         }
       }
     },
@@ -18791,10 +21069,28 @@
         }
       }
     },
+    "getStatusResponse": {
+      "description": "(empty)"
+    },
+    "getSyncStatusResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/ActiveSyncStatusDTO"
+      }
+    },
     "getTeamByIDResponse": {
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/TeamDTO"
+      }
+    },
+    "getTeamGroupsApiResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/TeamGroupDTO"
+        }
       }
     },
     "getTeamMembersResponse": {
@@ -18858,6 +21154,36 @@
       "description": "InternalServerError is a general error indicating something went wrong internally.",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "listBuiltinRolesResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RoleDTO"
+          }
+        }
+      }
+    },
+    "listRecordingRulesResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/RecordingRuleJSON"
+        }
+      }
+    },
+    "listRolesResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/RoleDTO"
+        }
       }
     },
     "listSortOptionsResponse": {
@@ -19020,6 +21346,9 @@
         }
       }
     },
+    "postRenewLicenseTokenResponse": {
+      "description": "(empty)"
+    },
     "preconditionFailedError": {
       "description": "PreconditionFailedError",
       "schema": {
@@ -19041,6 +21370,24 @@
         }
       }
     },
+    "recordingRuleResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/RecordingRuleJSON"
+      }
+    },
+    "recordingRuleWriteTargetResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/PrometheusRemoteWriteTargetJSON"
+      }
+    },
+    "refreshLicenseStatsResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/ActiveUserStats"
+      }
+    },
     "retrieveServiceAccountResponse": {
       "description": "(empty)",
       "schema": {
@@ -19059,7 +21406,13 @@
     "searchOrgServiceAccountsWithPagingResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/SearchServiceAccountsResult"
+        "$ref": "#/definitions/SearchOrgServiceAccountsResult"
+      }
+    },
+    "searchOrgUsersResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/SearchOrgUsersQueryResult"
       }
     },
     "searchOrgsResponse": {
@@ -19083,6 +21436,12 @@
         "$ref": "#/definitions/HitList"
       }
     },
+    "searchResultResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/SearchResult"
+      }
+    },
     "searchTeamsResponse": {
       "description": "(empty)",
       "schema": {
@@ -19090,6 +21449,15 @@
       }
     },
     "searchUsersResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/UserSearchHitDTO"
+        }
+      }
+    },
+    "searchUsersWithPagingResponse": {
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/SearchUserQueryResult"
@@ -19134,7 +21502,7 @@
     "updatePlaylistResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/PlaylistDTO"
+        "$ref": "#/definitions/Spec"
       }
     },
     "updateServiceAccountResponse": {
@@ -19163,6 +21531,17 @@
       "schema": {
         "$ref": "#/definitions/UserProfileDTO"
       }
+    },
+    "validateDashboardResponse": {
+      "description": "(empty)",
+      "headers": {
+        "isValid": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
     }
   },
   "securityDefinitions": {
@@ -19189,7 +21568,7 @@
       "name": "datasources"
     },
     {
-      "description": "Folders are identified by the identifier (id) and the unique identifier (uid).\nThe identifier (id) of a folder is an auto-incrementing numeric value and is only unique per Grafana install.\nThe unique identifier (uid) of a folder can be used for uniquely identify folders between multiple Grafana installs. It’s automatically generated if not provided when creating a folder. The uid allows having consistent URLs for accessing folders and when syncing folders between multiple Grafana installs. This means that changing the title of a folder will not break any bookmarked links to that folder.\nThe uid can have a maximum length of 40 characters.\n\nThe General folder (id=0) is special and is not part of the Folder API which means that you cannot use this API for retrieving information about the General folder.",
+      "description": "Folders are identified by the identifier (id) and the unique identifier (uid).\nThe identifier (id) of a folder is an auto-incrementing numeric value and is only unique per Grafana install.\nThe unique identifier (uid) of a folder can be used for uniquely identify folders between multiple Grafana installs. It’s automatically generated if not provided when creating a folder. The uid allows having consistent URLs for accessing folders and when syncing folders between multiple Grafana installs. This means that changing the title of a folder will not break any bookmarked links to that folder.\nThe uid can have a maximum length of 40 characters.",
       "name": "folders"
     },
     {

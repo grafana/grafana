@@ -21,7 +21,7 @@ import { getStyles } from './EditInstance.styles';
 import { EditInstanceFormValues, EditInstanceRouteParams } from './EditInstance.types';
 import { getInitialValues, getService, toPayload } from './EditInstance.utils';
 
-const EditInstancePage: React.FC = () => {
+const EditInstancePage: React.FC<React.PropsWithChildren<unknown>> = () => {
   const history = useHistory();
   const dispatch = useAppDispatch();
   const { serviceId } = useParams<EditInstanceRouteParams>();

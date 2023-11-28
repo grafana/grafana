@@ -10,13 +10,14 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
 // To run this test, set runMssqlTests=true
@@ -34,7 +35,7 @@ func TestMSSQL(t *testing.T) {
 	// change to true to run the MSSQL tests
 	const runMssqlTests = false
 
-	if !(sqlstore.IsTestDBMSSQL() || runMssqlTests) {
+	if !(db.IsTestDBMSSQL() || runMssqlTests) {
 		t.Skip()
 	}
 
@@ -48,9 +49,7 @@ func TestMSSQL(t *testing.T) {
 		return x, nil
 	}
 
-	queryResultTransformer := mssqlQueryResultTransformer{
-		log: logger,
-	}
+	queryResultTransformer := mssqlQueryResultTransformer{}
 	dsInfo := sqleng.DataSourceInfo{}
 	config := sqleng.DataPluginConfiguration{
 		DriverName:        "mssql",
@@ -59,7 +58,7 @@ func TestMSSQL(t *testing.T) {
 		MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
 		RowLimit:          1000000,
 	}
-	endpoint, err := sqleng.NewQueryDataHandler(config, &queryResultTransformer, newMssqlMacroEngine(), logger)
+	endpoint, err := sqleng.NewQueryDataHandler(setting.NewCfg(), config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 	require.NoError(t, err)
 
 	sess := x.NewSession()
@@ -401,9 +400,9 @@ func TestMSSQL(t *testing.T) {
 		err = sess.CreateTable(metric_values{})
 		require.NoError(t, err)
 
-		rand.Seed(time.Now().Unix())
+		rng := rand.New(rand.NewSource(time.Now().Unix()))
 		rnd := func(min, max int64) int64 {
-			return rand.Int63n(max-min) + min
+			return rng.Int63n(max-min) + min
 		}
 
 		var tInitial time.Time
@@ -786,9 +785,7 @@ func TestMSSQL(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Run("When doing a metric query using stored procedure should return correct result", func(t *testing.T) {
-				queryResultTransformer := mssqlQueryResultTransformer{
-					log: logger,
-				}
+				queryResultTransformer := mssqlQueryResultTransformer{}
 				dsInfo := sqleng.DataSourceInfo{}
 				config := sqleng.DataPluginConfiguration{
 					DriverName:        "mssql",
@@ -797,7 +794,7 @@ func TestMSSQL(t *testing.T) {
 					MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
 					RowLimit:          1000000,
 				}
-				endpoint, err := sqleng.NewQueryDataHandler(config, &queryResultTransformer, newMssqlMacroEngine(), logger)
+				endpoint, err := sqleng.NewQueryDataHandler(setting.NewCfg(), config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 				require.NoError(t, err)
 				query := &backend.QueryDataRequest{
 					Queries: []backend.DataQuery{
@@ -937,7 +934,7 @@ func TestMSSQL(t *testing.T) {
 		}
 
 		events := []*event{}
-		for _, t := range genTimeRangeByInterval(fromStart.Add(-20*time.Minute), 60*time.Minute, 25*time.Minute) {
+		for _, t := range genTimeRangeByInterval(fromStart.Add(-20*time.Minute), time.Hour, 25*time.Minute) {
 			events = append(events, &event{
 				TimeSec:     t.Unix(),
 				Description: "Someone deployed something",
@@ -1193,9 +1190,7 @@ func TestMSSQL(t *testing.T) {
 		})
 
 		t.Run("When row limit set to 1", func(t *testing.T) {
-			queryResultTransformer := mssqlQueryResultTransformer{
-				log: logger,
-			}
+			queryResultTransformer := mssqlQueryResultTransformer{}
 			dsInfo := sqleng.DataSourceInfo{}
 			config := sqleng.DataPluginConfiguration{
 				DriverName:        "mssql",
@@ -1205,7 +1200,7 @@ func TestMSSQL(t *testing.T) {
 				RowLimit:          1,
 			}
 
-			handler, err := sqleng.NewQueryDataHandler(config, &queryResultTransformer, newMssqlMacroEngine(), logger)
+			handler, err := sqleng.NewQueryDataHandler(setting.NewCfg(), config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 			require.NoError(t, err)
 
 			t.Run("When doing a table query that returns 2 rows should limit the result to 1 row", func(t *testing.T) {
@@ -1269,12 +1264,54 @@ func TestMSSQL(t *testing.T) {
 			})
 		})
 	})
+
+	t.Run("Given an empty table", func(t *testing.T) {
+		type emptyObj struct {
+			EmptyKey string
+			EmptyVal int64
+		}
+
+		exists, err := sess.IsTableExist(emptyObj{})
+		require.NoError(t, err)
+		if exists {
+			err := sess.DropTable(emptyObj{})
+			require.NoError(t, err)
+		}
+		err = sess.CreateTable(emptyObj{})
+		require.NoError(t, err)
+
+		t.Run("When no rows are returned, should return an empty frame", func(t *testing.T) {
+			query := &backend.QueryDataRequest{
+				Queries: []backend.DataQuery{
+					{
+						JSON: []byte(`{
+							"rawSql": "SELECT empty_key, empty_val FROM empty_obj",
+							"format": "table"
+						}`),
+						RefID: "A",
+						TimeRange: backend.TimeRange{
+							From: time.Now(),
+							To:   time.Now().Add(1 * time.Minute),
+						},
+					},
+				},
+			}
+
+			resp, err := endpoint.QueryData(context.Background(), query)
+			require.NoError(t, err)
+			queryResult := resp.Responses["A"]
+
+			frames := queryResult.Frames
+			require.Len(t, frames, 1)
+			require.Equal(t, 0, frames[0].Rows())
+			require.NotNil(t, frames[0].Fields)
+			require.Empty(t, frames[0].Fields)
+		})
+	})
 }
 
 func TestTransformQueryError(t *testing.T) {
-	transformer := &mssqlQueryResultTransformer{
-		log: log.New("test"),
-	}
+	transformer := &mssqlQueryResultTransformer{}
 
 	randomErr := fmt.Errorf("random error")
 
@@ -1288,7 +1325,7 @@ func TestTransformQueryError(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		resultErr := transformer.TransformQueryError(tc.err)
+		resultErr := transformer.TransformQueryError(logger, tc.err)
 		assert.ErrorIs(t, resultErr, tc.expectedErr)
 	}
 }
@@ -1423,7 +1460,7 @@ func TestGenerateConnectionString(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			connStr, err := generateConnectionString(tc.dataSource)
+			connStr, err := generateConnectionString(tc.dataSource, nil, nil)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expConnStr, connStr)
 		})

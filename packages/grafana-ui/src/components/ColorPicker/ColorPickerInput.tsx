@@ -59,9 +59,17 @@ export const ColorPickerInput = forwardRef<HTMLInputElement, ColorPickerInputPro
               className={cx(paletteStyles.root, styles.picker)}
             />
           )}
-          <div onClick={() => setIsOpen(true)}>
-            <ColorInput {...inputProps} theme={theme} color={currentColor} onChange={setColor} ref={ref} isClearable />
-          </div>
+          <ColorInput
+            {...inputProps}
+            theme={theme}
+            color={currentColor}
+            onChange={setColor}
+            buttonAriaLabel="Open color picker"
+            onClick={() => setIsOpen(true)}
+            onBlur={() => setIsOpen(false)}
+            ref={ref}
+            isClearable
+          />
         </div>
       </ClickOutsideWrapper>
     );
@@ -72,19 +80,19 @@ ColorPickerInput.displayName = 'ColorPickerInput';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    wrapper: css`
-      position: relative;
-    `,
-    picker: css`
-      &.react-colorful {
-        position: absolute;
-        width: 100%;
-        z-index: 11;
-        bottom: 36px;
-      }
-    `,
-    inner: css`
-      position: absolute;
-    `,
+    wrapper: css({
+      position: 'relative',
+    }),
+    picker: css({
+      '&.react-colorful': {
+        position: 'absolute',
+        width: '100%',
+        zIndex: 11,
+        bottom: '36px',
+      },
+    }),
+    inner: css({
+      position: 'absolute',
+    }),
   };
 };

@@ -8,22 +8,21 @@ import (
 
 	"xorm.io/xorm"
 
-	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
-var dashboardPermissionTranslation = map[models.PermissionType][]string{
-	models.PERMISSION_VIEW: {
+var dashboardPermissionTranslation = map[dashboards.PermissionType][]string{
+	dashboards.PERMISSION_VIEW: {
 		dashboards.ActionDashboardsRead,
 	},
-	models.PERMISSION_EDIT: {
+	dashboards.PERMISSION_EDIT: {
 		dashboards.ActionDashboardsRead,
 		dashboards.ActionDashboardsWrite,
 		dashboards.ActionDashboardsDelete,
 	},
-	models.PERMISSION_ADMIN: {
+	dashboards.PERMISSION_ADMIN: {
 		dashboards.ActionDashboardsRead,
 		dashboards.ActionDashboardsWrite,
 		dashboards.ActionDashboardsCreate,
@@ -33,17 +32,17 @@ var dashboardPermissionTranslation = map[models.PermissionType][]string{
 	},
 }
 
-var folderPermissionTranslation = map[models.PermissionType][]string{
-	models.PERMISSION_VIEW: append(dashboardPermissionTranslation[models.PERMISSION_VIEW], []string{
+var folderPermissionTranslation = map[dashboards.PermissionType][]string{
+	dashboards.PERMISSION_VIEW: append(dashboardPermissionTranslation[dashboards.PERMISSION_VIEW], []string{
 		dashboards.ActionFoldersRead,
 	}...),
-	models.PERMISSION_EDIT: append(dashboardPermissionTranslation[models.PERMISSION_EDIT], []string{
+	dashboards.PERMISSION_EDIT: append(dashboardPermissionTranslation[dashboards.PERMISSION_EDIT], []string{
 		dashboards.ActionDashboardsCreate,
 		dashboards.ActionFoldersRead,
 		dashboards.ActionFoldersWrite,
 		dashboards.ActionFoldersDelete,
 	}...),
-	models.PERMISSION_ADMIN: append(dashboardPermissionTranslation[models.PERMISSION_ADMIN], []string{
+	dashboards.PERMISSION_ADMIN: append(dashboardPermissionTranslation[dashboards.PERMISSION_ADMIN], []string{
 		dashboards.ActionFoldersRead,
 		dashboards.ActionFoldersWrite,
 		dashboards.ActionFoldersDelete,
@@ -76,31 +75,31 @@ func (m dashboardPermissionsMigrator) Exec(sess *xorm.Session, migrator *migrato
 	m.sess = sess
 	m.dialect = migrator.Dialect
 
-	var dashboards []dashboard
-	if err := m.sess.SQL("SELECT id, is_folder, folder_id, org_id, has_acl FROM dashboard").Find(&dashboards); err != nil {
+	var dashs []dashboard
+	if err := m.sess.SQL("SELECT id, is_folder, folder_id, org_id, has_acl FROM dashboard").Find(&dashs); err != nil {
 		return fmt.Errorf("failed to list dashboards: %w", err)
 	}
 
-	var acl []models.DashboardACL
+	var acl []dashboards.DashboardACL
 	if err := m.sess.Find(&acl); err != nil {
 		return fmt.Errorf("failed to list dashboard ACL: %w", err)
 	}
 
-	aclMap := make(map[int64][]models.DashboardACL, len(acl))
+	aclMap := make(map[int64][]dashboards.DashboardACL, len(acl))
 	for _, p := range acl {
 		aclMap[p.DashboardID] = append(aclMap[p.DashboardID], p)
 	}
 
-	if err := m.migratePermissions(dashboards, aclMap, migrator); err != nil {
+	if err := m.migratePermissions(dashs, aclMap, migrator); err != nil {
 		return fmt.Errorf("failed to migrate permissions: %w", err)
 	}
 
 	return nil
 }
 
-func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard, aclMap map[int64][]models.DashboardACL, migrator *migrator.Migrator) error {
+func (m dashboardPermissionsMigrator) migratePermissions(dashes []dashboard, aclMap map[int64][]dashboards.DashboardACL, migrator *migrator.Migrator) error {
 	permissionMap := map[int64]map[string][]*ac.Permission{}
-	for _, d := range dashboards {
+	for _, d := range dashes {
 		if d.ID == -1 {
 			continue
 		}
@@ -112,16 +111,17 @@ func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard,
 		if (d.IsFolder || d.FolderID == 0) && len(acls) == 0 && !d.HasAcl {
 			permissionMap[d.OrgID]["managed:builtins:editor:permissions"] = append(
 				permissionMap[d.OrgID]["managed:builtins:editor:permissions"],
-				m.mapPermission(d.ID, models.PERMISSION_EDIT, d.IsFolder)...,
+				m.mapPermission(d.ID, dashboards.PERMISSION_EDIT, d.IsFolder)...,
 			)
 			permissionMap[d.OrgID]["managed:builtins:viewer:permissions"] = append(
 				permissionMap[d.OrgID]["managed:builtins:viewer:permissions"],
-				m.mapPermission(d.ID, models.PERMISSION_VIEW, d.IsFolder)...,
+				m.mapPermission(d.ID, dashboards.PERMISSION_VIEW, d.IsFolder)...,
 			)
 		} else {
-			for _, a := range acls {
-				permissionMap[d.OrgID][getRoleName(a)] = append(
-					permissionMap[d.OrgID][getRoleName(a)],
+			for _, a := range deduplicateAcl(acls) {
+				roleName := getRoleName(a)
+				permissionMap[d.OrgID][roleName] = append(
+					permissionMap[d.OrgID][roleName],
 					m.mapPermission(d.ID, a.Permission, d.IsFolder)...,
 				)
 			}
@@ -192,7 +192,7 @@ func (m dashboardPermissionsMigrator) setPermissions(allRoles []*ac.Role, permis
 	return nil
 }
 
-func (m dashboardPermissionsMigrator) mapPermission(id int64, p models.PermissionType, isFolder bool) []*ac.Permission {
+func (m dashboardPermissionsMigrator) mapPermission(id int64, p dashboards.PermissionType, isFolder bool) []*ac.Permission {
 	if isFolder {
 		actions := folderPermissionTranslation[p]
 		scope := dashboards.ScopeFoldersProvider.GetResourceScope(strconv.FormatInt(id, 10))
@@ -212,7 +212,7 @@ func (m dashboardPermissionsMigrator) mapPermission(id int64, p models.Permissio
 	return permissions
 }
 
-func getRoleName(p models.DashboardACL) string {
+func getRoleName(p dashboards.DashboardACL) string {
 	if p.UserID != 0 {
 		return fmt.Sprintf("managed:users:%d:permissions", p.UserID)
 	}
@@ -220,6 +220,39 @@ func getRoleName(p models.DashboardACL) string {
 		return fmt.Sprintf("managed:teams:%d:permissions", p.TeamID)
 	}
 	return fmt.Sprintf("managed:builtins:%s:permissions", strings.ToLower(string(*p.Role)))
+}
+
+func deduplicateAcl(acl []dashboards.DashboardACL) []dashboards.DashboardACL {
+	output := make([]dashboards.DashboardACL, 0, len(acl))
+	uniqueACL := map[string]dashboards.DashboardACL{}
+	for _, item := range acl {
+		// acl items with userID or teamID is enforced to be unique by sql constraint, so we can skip those
+		if item.UserID > 0 || item.TeamID > 0 {
+			output = append(output, item)
+			continue
+		}
+
+		// better to make sure so we don't panic
+		if item.Role == nil {
+			continue
+		}
+
+		current, ok := uniqueACL[string(*item.Role)]
+		if !ok {
+			uniqueACL[string(*item.Role)] = item
+			continue
+		}
+
+		if current.Permission < item.Permission {
+			uniqueACL[string(*item.Role)] = item
+		}
+	}
+
+	for _, item := range uniqueACL {
+		output = append(output, item)
+	}
+
+	return output
 }
 
 var _ migrator.CodeMigration = new(dashboardUidPermissionMigrator)
@@ -312,7 +345,7 @@ func (m *managedFolderAlertActionsMigrator) SQL(dialect migrator.Dialect) string
 }
 
 func (m *managedFolderAlertActionsMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
-	var ids []interface{}
+	var ids []any
 	if err := sess.SQL("SELECT id FROM role WHERE name LIKE 'managed:%'").Find(&ids); err != nil {
 		return err
 	}
@@ -424,7 +457,7 @@ func (m *managedFolderAlertActionsRepeatMigrator) SQL(dialect migrator.Dialect) 
 }
 
 func (m *managedFolderAlertActionsRepeatMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
-	var ids []interface{}
+	var ids []any
 	if err := sess.SQL("SELECT id FROM role WHERE name LIKE 'managed:%'").Find(&ids); err != nil {
 		return err
 	}
@@ -522,16 +555,121 @@ func (m *managedFolderAlertActionsRepeatMigrator) Exec(sess *xorm.Session, mg *m
 	return nil
 }
 
+const managedFolderLibraryPanelActionsMigratorID = "managed folder permissions library panel actions migration"
+
+func AddManagedFolderLibraryPanelActionsMigration(mg *migrator.Migrator) {
+	mg.AddMigration(managedFolderLibraryPanelActionsMigratorID, &managedFolderLibraryPanelActionsMigrator{})
+}
+
+type managedFolderLibraryPanelActionsMigrator struct {
+	migrator.MigrationBase
+}
+
+func (m *managedFolderLibraryPanelActionsMigrator) SQL(dialect migrator.Dialect) string {
+	return CodeMigrationSQL
+}
+
+// TODO: Refactor with alerts migration
+func (m *managedFolderLibraryPanelActionsMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	var ids []any
+	if err := sess.SQL("SELECT id FROM role WHERE name LIKE 'managed:%'").Find(&ids); err != nil {
+		return err
+	}
+
+	if len(ids) == 0 {
+		return nil
+	}
+
+	var permissions []ac.Permission
+	if err := sess.SQL("SELECT role_id, action, scope FROM permission WHERE role_id IN(?"+strings.Repeat(" ,?", len(ids)-1)+") AND scope LIKE 'folders:%'", ids...).Find(&permissions); err != nil {
+		return err
+	}
+
+	mapped := make(map[int64]map[string][]ac.Permission, len(ids)-1)
+	for _, p := range permissions {
+		if mapped[p.RoleID] == nil {
+			mapped[p.RoleID] = make(map[string][]ac.Permission)
+		}
+		mapped[p.RoleID][p.Scope] = append(mapped[p.RoleID][p.Scope], p)
+	}
+
+	var toAdd []ac.Permission
+	now := time.Now()
+
+	for id, a := range mapped {
+		for scope, p := range a {
+			if hasFolderView(p) {
+				if !hasAction(ac.ActionLibraryPanelsRead, p) {
+					toAdd = append(toAdd, ac.Permission{
+						RoleID:  id,
+						Updated: now,
+						Created: now,
+						Scope:   scope,
+						Action:  ac.ActionLibraryPanelsRead,
+					})
+				}
+			}
+
+			if hasFolderAdmin(p) || hasFolderEdit(p) {
+				if !hasAction(ac.ActionLibraryPanelsCreate, p) {
+					toAdd = append(toAdd, ac.Permission{
+						RoleID:  id,
+						Updated: now,
+						Created: now,
+						Scope:   scope,
+						Action:  ac.ActionLibraryPanelsCreate,
+					})
+				}
+				if !hasAction(ac.ActionLibraryPanelsDelete, p) {
+					toAdd = append(toAdd, ac.Permission{
+						RoleID:  id,
+						Updated: now,
+						Created: now,
+						Scope:   scope,
+						Action:  ac.ActionLibraryPanelsDelete,
+					})
+				}
+				if !hasAction(ac.ActionLibraryPanelsWrite, p) {
+					toAdd = append(toAdd, ac.Permission{
+						RoleID:  id,
+						Updated: now,
+						Created: now,
+						Scope:   scope,
+						Action:  ac.ActionLibraryPanelsWrite,
+					})
+				}
+			}
+		}
+	}
+
+	if len(toAdd) == 0 {
+		return nil
+	}
+
+	err := batch(len(toAdd), batchSize, func(start, end int) error {
+		if _, err := sess.InsertMulti(toAdd[start:end]); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func hasFolderAdmin(permissions []ac.Permission) bool {
-	return hasActions(folderPermissionTranslation[models.PERMISSION_ADMIN], permissions)
+	return hasActions(folderPermissionTranslation[dashboards.PERMISSION_ADMIN], permissions)
 }
 
 func hasFolderEdit(permissions []ac.Permission) bool {
-	return hasActions(folderPermissionTranslation[models.PERMISSION_EDIT], permissions)
+	return hasActions(folderPermissionTranslation[dashboards.PERMISSION_EDIT], permissions)
 }
 
 func hasFolderView(permissions []ac.Permission) bool {
-	return hasActions(folderPermissionTranslation[models.PERMISSION_VIEW], permissions)
+	return hasActions(folderPermissionTranslation[dashboards.PERMISSION_VIEW], permissions)
 }
 
 func hasActions(actions []string, permissions []ac.Permission) bool {

@@ -1,9 +1,11 @@
 import { css, cx } from '@emotion/css';
 import { omit } from 'lodash';
-import React, { InputHTMLAttributes, FunctionComponent } from 'react';
+import React, { InputHTMLAttributes } from 'react';
 
 import { Button } from '../Button/Button';
 import { FormField } from '../FormField/FormField';
+import { Field } from '../Forms/Field';
+import { SecretInput } from '../SecretInput';
 import { PopoverContent } from '../Tooltip';
 
 export interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onReset'> {
@@ -23,23 +25,26 @@ export interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onRe
 
 const getSecretFormFieldStyles = () => {
   return {
-    noRadiusInput: css`
-      border-bottom-right-radius: 0 !important;
-      border-top-right-radius: 0 !important;
-    `,
-    noRadiusButton: css`
-      border-bottom-left-radius: 0 !important;
-      border-top-left-radius: 0 !important;
-    `,
+    noRadiusInput: css({
+      borderBottomRightRadius: '0 !important',
+      borderTopRightRadius: '0 !important',
+    }),
+    noRadiusButton: css({
+      borderBottomLeftRadius: '0 !important',
+      borderTopLeftRadius: '0 !important',
+    }),
   };
 };
+
 /**
  * Form field that has 2 states configured and not configured. If configured it will not show its contents and adds
  * a reset button that will clear the input and makes it accessible. In non configured state it behaves like normal
  * form field. This is used for passwords or anything that is encrypted on the server and is later returned encrypted
  * to the user (like datasource passwords).
+ *
+ * @deprecated Please use the {@link SecretInput} component with a {@link Field} instead, {@link https://developers.grafana.com/ui/latest/index.html?path=/story/forms-secretinput--basic as seen in Storybook}
  */
-export const SecretFormField: FunctionComponent<Props> = ({
+export const SecretFormField = ({
   label = 'Password',
   labelWidth,
   inputWidth = 12,

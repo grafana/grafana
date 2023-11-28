@@ -1,33 +1,32 @@
 package httpclientprovider
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/mwitkow/go-conntrack"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/mwitkow/go-conntrack"
 )
 
 var newProviderFunc = sdkhttpclient.NewProvider
 
 // New creates a new HTTP client provider with pre-configured middlewares.
-func New(cfg *setting.Cfg, validator models.PluginRequestValidator, tracer tracing.Tracer) *sdkhttpclient.Provider {
+func New(cfg *setting.Cfg, validator validations.PluginRequestValidator, tracer tracing.Tracer) *sdkhttpclient.Provider {
 	logger := log.New("httpclient")
-	userAgent := fmt.Sprintf("Grafana/%s", cfg.BuildVersion)
 
 	middlewares := []sdkhttpclient.Middleware{
 		TracingMiddleware(logger, tracer),
 		DataSourceMetricsMiddleware(),
-		SetUserAgentMiddleware(userAgent),
+		sdkhttpclient.ContextualMiddleware(),
+		SetUserAgentMiddleware(cfg.DataProxyUserAgent),
 		sdkhttpclient.BasicAuthenticationMiddleware(),
 		sdkhttpclient.CustomHeadersMiddleware(),
-		sdkhttpclient.ContextualMiddleware(),
 		ResponseLimitMiddleware(cfg.ResponseLimit),
 		RedirectLimitMiddleware(validator),
 	}
@@ -50,10 +49,10 @@ func New(cfg *setting.Cfg, validator models.PluginRequestValidator, tracer traci
 				return
 			}
 			datasourceLabelName, err := metricutil.SanitizeLabelName(datasourceName)
-
 			if err != nil {
 				return
 			}
+
 			newConntrackRoundTripper(datasourceLabelName, transport)
 		},
 	})

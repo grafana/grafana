@@ -12,12 +12,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds/dataquery"
+	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 )
 
@@ -36,14 +35,10 @@ func TestRangeResponses(t *testing.T) {
 	}
 
 	for _, test := range tt {
-		enableWideSeries := false
 		queryFileName := filepath.Join("../testdata", test.filepath+".query.json")
 		responseFileName := filepath.Join("../testdata", test.filepath+".result.json")
-		goldenFileName := test.filepath + ".result.streaming.golden"
-		t.Run(test.name, goldenScenario(test.name, queryFileName, responseFileName, goldenFileName, enableWideSeries))
-		enableWideSeries = true
-		goldenFileName = test.filepath + ".result.streaming-wide.golden"
-		t.Run(test.name, goldenScenario(test.name, queryFileName, responseFileName, goldenFileName, enableWideSeries))
+		goldenFileName := test.filepath + ".result.golden"
+		t.Run(test.name, goldenScenario(test.name, queryFileName, responseFileName, goldenFileName))
 	}
 }
 
@@ -56,18 +51,14 @@ func TestExemplarResponses(t *testing.T) {
 	}
 
 	for _, test := range tt {
-		enableWideSeries := false
 		queryFileName := filepath.Join("../testdata", test.filepath+".query.json")
 		responseFileName := filepath.Join("../testdata", test.filepath+".result.json")
 		goldenFileName := test.filepath + ".result.golden"
-		t.Run(test.name, goldenScenario(test.name, queryFileName, responseFileName, goldenFileName, enableWideSeries))
-		enableWideSeries = true
-		goldenFileName = test.filepath + ".result.streaming-wide.golden"
-		t.Run(test.name, goldenScenario(test.name, queryFileName, responseFileName, goldenFileName, enableWideSeries))
+		t.Run(test.name, goldenScenario(test.name, queryFileName, responseFileName, goldenFileName))
 	}
 }
 
-func goldenScenario(name, queryFileName, responseFileName, goldenFileName string, wide bool) func(t *testing.T) {
+func goldenScenario(name, queryFileName, responseFileName, goldenFileName string) func(t *testing.T) {
 	return func(t *testing.T) {
 		query, err := loadStoredQuery(queryFileName)
 		require.NoError(t, err)
@@ -76,7 +67,7 @@ func goldenScenario(name, queryFileName, responseFileName, goldenFileName string
 		responseBytes, err := os.ReadFile(responseFileName)
 		require.NoError(t, err)
 
-		result, err := runQuery(responseBytes, query, wide)
+		result, err := runQuery(responseBytes, query)
 		require.NoError(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -117,12 +108,14 @@ func loadStoredQuery(fileName string) (*backend.QueryDataRequest, error) {
 	}
 
 	qm := models.QueryModel{
-		RangeQuery:    sq.RangeQuery,
-		ExemplarQuery: sq.ExemplarQuery,
-		Expr:          sq.Expr,
-		Interval:      fmt.Sprintf("%ds", sq.Step),
-		IntervalMS:    sq.Step * 1000,
-		LegendFormat:  sq.LegendFormat,
+		PrometheusDataQuery: dataquery.PrometheusDataQuery{
+			Range:    &sq.RangeQuery,
+			Exemplar: &sq.ExemplarQuery,
+			Expr:     sq.Expr,
+		},
+		Interval:     fmt.Sprintf("%ds", sq.Step),
+		IntervalMs:   sq.Step * 1000,
+		LegendFormat: sq.LegendFormat,
 	}
 
 	data, err := json.Marshal(&qm)
@@ -145,8 +138,8 @@ func loadStoredQuery(fileName string) (*backend.QueryDataRequest, error) {
 	}, nil
 }
 
-func runQuery(response []byte, q *backend.QueryDataRequest, wide bool) (*backend.QueryDataResponse, error) {
-	tCtx, err := setup(wide)
+func runQuery(response []byte, q *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	tCtx, err := setup()
 	if err != nil {
 		return nil, err
 	}
@@ -157,12 +150,3 @@ func runQuery(response []byte, q *backend.QueryDataRequest, wide bool) (*backend
 	tCtx.httpProvider.setResponse(res)
 	return tCtx.queryData.Execute(context.Background(), q)
 }
-
-type fakeLogger struct {
-	log.Logger
-}
-
-func (fl *fakeLogger) Debug(testMessage string, ctx ...interface{}) {}
-func (fl *fakeLogger) Info(testMessage string, ctx ...interface{})  {}
-func (fl *fakeLogger) Warn(testMessage string, ctx ...interface{})  {}
-func (fl *fakeLogger) Error(testMessage string, ctx ...interface{}) {}

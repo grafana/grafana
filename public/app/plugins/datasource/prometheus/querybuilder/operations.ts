@@ -101,6 +101,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       renderer: (model, def, innerExpr) => innerExpr,
       addOperationHandler: addNestedQueryHandler,
     },
+    createFunction({ id: PromOperationId.Abs }),
     createFunction({ id: PromOperationId.Absent }),
     createFunction({
       id: PromOperationId.Acos,
@@ -161,6 +162,10 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     }),
     createFunction({
       id: PromOperationId.DayOfWeek,
+      category: PromVisualQueryOperationCategory.Time,
+    }),
+    createFunction({
+      id: PromOperationId.DayOfYear,
       category: PromVisualQueryOperationCategory.Time,
     }),
     createFunction({

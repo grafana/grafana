@@ -76,13 +76,11 @@ const (
 
 // swagger:model
 type PostableNGalertConfig struct {
-	Alertmanagers       []string            `json:"alertmanagers"`
 	AlertmanagersChoice AlertmanagersChoice `json:"alertmanagersChoice"`
 }
 
 // swagger:model
 type GettableNGalertConfig struct {
-	Alertmanagers       []string            `json:"alertmanagers"`
 	AlertmanagersChoice AlertmanagersChoice `json:"alertmanagersChoice"`
 }
 
@@ -94,5 +92,6 @@ type GettableAlertmanagers struct {
 
 // swagger:model
 type AlertingStatus struct {
-	AlertmanagersChoice AlertmanagersChoice `json:"alertmanagersChoice"`
+	AlertmanagersChoice      AlertmanagersChoice `json:"alertmanagersChoice"`
+	NumExternalAlertmanagers int                 `json:"numExternalAlertmanagers"`
 }

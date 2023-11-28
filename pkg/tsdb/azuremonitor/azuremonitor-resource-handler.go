@@ -7,8 +7,9 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azlog"
+
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
@@ -22,21 +23,22 @@ func getTarget(original string) (target string, err error) {
 	return
 }
 
-type httpServiceProxy struct{}
+type httpServiceProxy struct {
+}
 
-func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *http.Client) http.ResponseWriter {
+func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error) {
 	res, err := cli.Do(req)
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
 		_, err = rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
 		if err != nil {
-			azlog.Error("Unable to write HTTP response", "error", err)
+			return nil, fmt.Errorf("unable to write HTTP response: %v", err)
 		}
-		return nil
+		return nil, err
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			azlog.Warn("Failed to close response body", "err", err)
+			backend.Logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
@@ -45,14 +47,14 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 		rw.WriteHeader(http.StatusInternalServerError)
 		_, err = rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
 		if err != nil {
-			azlog.Error("Unable to write HTTP response", "error", err)
+			return nil, fmt.Errorf("unable to write HTTP response: %v", err)
 		}
-		return nil
+		return nil, err
 	}
 	rw.WriteHeader(res.StatusCode)
 	_, err = rw.Write(body)
 	if err != nil {
-		azlog.Error("Unable to write HTTP response", "error", err)
+		return nil, fmt.Errorf("unable to write HTTP response: %v", err)
 	}
 
 	for k, v := range res.Header {
@@ -62,15 +64,15 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 		}
 	}
 	// Returning the response write for testing purposes
-	return rw
+	return rw, nil
 }
 
 func (s *Service) getDataSourceFromHTTPReq(req *http.Request) (types.DatasourceInfo, error) {
 	ctx := req.Context()
 	pluginContext := httpadapter.PluginConfigFromContext(ctx)
-	i, err := s.im.Get(pluginContext)
+	i, err := s.im.Get(ctx, pluginContext)
 	if err != nil {
-		return types.DatasourceInfo{}, nil
+		return types.DatasourceInfo{}, err
 	}
 	ds, ok := i.(types.DatasourceInfo)
 	if !ok {
@@ -83,13 +85,13 @@ func writeResponse(rw http.ResponseWriter, code int, msg string) {
 	rw.WriteHeader(http.StatusBadRequest)
 	_, err := rw.Write([]byte(msg))
 	if err != nil {
-		azlog.Error("Unable to write HTTP response", "error", err)
+		backend.Logger.Error("Unable to write HTTP response", "error", err)
 	}
 }
 
 func (s *Service) handleResourceReq(subDataSource string) func(rw http.ResponseWriter, req *http.Request) {
 	return func(rw http.ResponseWriter, req *http.Request) {
-		azlog.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
+		backend.Logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
 
 		newPath, err := getTarget(req.URL.Path)
 		if err != nil {
@@ -113,12 +115,16 @@ func (s *Service) handleResourceReq(subDataSource string) func(rw http.ResponseW
 		req.URL.Host = serviceURL.Host
 		req.URL.Scheme = serviceURL.Scheme
 
-		s.executors[subDataSource].ResourceRequest(rw, req, service.HTTPClient)
+		rw, err = s.executors[subDataSource].ResourceRequest(rw, req, service.HTTPClient)
+		if err != nil {
+			writeResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
+			return
+		}
 	}
 }
 
 // newResourceMux provides route definitions shared with the frontend.
-// Check: /public/app/plugins/datasource/grafana-azure-monitor-datasource/utils/common.ts <routeNames>
+// Check: /public/app/plugins/datasource/azuremonitor/utils/common.ts <routeNames>
 func (s *Service) newResourceMux() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/azuremonitor/", s.handleResourceReq(azureMonitor))

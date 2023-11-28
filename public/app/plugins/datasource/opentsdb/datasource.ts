@@ -1,6 +1,6 @@
-import angular from 'angular';
 import {
   clone,
+  cloneDeep,
   compact,
   each,
   every,
@@ -30,7 +30,7 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 
 import { AnnotationEditor } from './components/AnnotationEditor';
 import { prepareAnnotation } from './migrations';
-import { OpenTsdbOptions, OpenTsdbQuery } from './types';
+import { OpenTsdbFilter, OpenTsdbOptions, OpenTsdbQuery } from './types';
 
 export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenTsdbOptions> {
   type: any;
@@ -46,7 +46,10 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
   aggregatorsPromise: any;
   filterTypesPromise: any;
 
-  constructor(instanceSettings: any, private readonly templateSrv: TemplateSrv = getTemplateSrv()) {
+  constructor(
+    instanceSettings: any,
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
+  ) {
     super(instanceSettings);
     this.type = 'opentsdb';
     this.url = instanceSettings.url;
@@ -242,7 +245,8 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     return getBackendSrv().fetch(options);
   }
 
-  suggestTagKeys(metric: string | number) {
+  suggestTagKeys(query: OpenTsdbQuery) {
+    const metric = query.metric ?? '';
     return Promise.resolve(this.tagKeys[metric] || []);
   }
 
@@ -488,19 +492,12 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     return label;
   }
 
-  convertTargetToQuery(target: any, options: any, tsdbVersion: number) {
+  convertTargetToQuery(target: OpenTsdbQuery, options: DataQueryRequest<OpenTsdbQuery>, tsdbVersion: number) {
     if (!target.metric || target.hide) {
       return null;
     }
 
-    const query: any = {
-      metric: this.templateSrv.replace(target.metric, options.scopedVars, 'pipe'),
-      aggregator: 'avg',
-    };
-
-    if (target.aggregator) {
-      query.aggregator = this.templateSrv.replace(target.aggregator);
-    }
+    const query = this.interpolateVariablesInQuery(target, options.scopedVars);
 
     if (target.shouldComputeRate) {
       query.rate = true;
@@ -536,31 +533,21 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
       }
     }
 
-    if (target.filters && target.filters.length > 0) {
-      query.filters = angular.copy(target.filters);
-      if (query.filters) {
-        for (const filterKey in query.filters) {
-          query.filters[filterKey].filter = this.templateSrv.replace(
-            query.filters[filterKey].filter,
-            options.scopedVars,
-            'pipe'
-          );
-        }
-      }
-    } else {
-      query.tags = angular.copy(target.tags);
-      if (query.tags) {
-        for (const tagKey in query.tags) {
-          query.tags[tagKey] = this.templateSrv.replace(query.tags[tagKey], options.scopedVars, 'pipe');
-        }
-      }
-    }
-
     if (target.explicitTags) {
       query.explicitTags = true;
     }
 
     return query;
+  }
+
+  interpolateVariablesInFilters(query: OpenTsdbQuery, scopedVars: ScopedVars) {
+    query.filters = query.filters?.map((filter: OpenTsdbFilter): OpenTsdbFilter => {
+      filter.tagk = this.templateSrv.replace(filter.tagk, scopedVars, 'pipe');
+
+      filter.filter = this.templateSrv.replace(filter.filter, scopedVars, 'pipe');
+
+      return filter;
+    });
   }
 
   mapMetricsToTargets(metrics: any, options: any, tsdbVersion: number) {
@@ -592,10 +579,30 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
       return queries;
     }
 
-    return queries.map((query) => ({
-      ...query,
-      metric: this.templateSrv.replace(query.metric, scopedVars),
-    }));
+    return queries.map((query) => this.interpolateVariablesInQuery(query, scopedVars));
+  }
+
+  interpolateVariablesInQuery(target: OpenTsdbQuery, scopedVars: ScopedVars): any {
+    const query = cloneDeep(target);
+
+    query.metric = this.templateSrv.replace(target.metric, scopedVars, 'pipe');
+
+    query.aggregator = 'avg';
+    if (target.aggregator) {
+      query.aggregator = this.templateSrv.replace(target.aggregator);
+    }
+
+    if (query.filters && query.filters.length > 0) {
+      this.interpolateVariablesInFilters(query, scopedVars);
+    } else {
+      if (query.tags) {
+        for (const tagKey in query.tags) {
+          query.tags[tagKey] = this.templateSrv.replace(query.tags[tagKey], scopedVars, 'pipe');
+        }
+      }
+    }
+
+    return query;
   }
 
   convertToTSDBTime(date: any, roundUp: any, timezone: any) {

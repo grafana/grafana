@@ -28,8 +28,8 @@ func (ss *sqlxStore) Get(ctx context.Context, query *dashver.GetDashboardVersion
 	return &version, err
 }
 
-func (ss *sqlxStore) GetBatch(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand, perBatch int, versionsToKeep int) ([]interface{}, error) {
-	var versionIds []interface{}
+func (ss *sqlxStore) GetBatch(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand, perBatch int, versionsToKeep int) ([]any, error) {
+	var versionIds []any
 	versionIdsToDeleteQuery := `SELECT id
 	FROM dashboard_version, (
 		SELECT dashboard_id, count(version) as count, min(version) as min
@@ -45,7 +45,7 @@ func (ss *sqlxStore) GetBatch(ctx context.Context, cmd *dashver.DeleteExpiredVer
 
 // This service is used by cleanup which need to belong to the same transaction
 // Here we need to make sure that the transaction is shared between services
-func (ss *sqlxStore) DeleteBatch(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand, versionIdsToDelete []interface{}) (int64, error) {
+func (ss *sqlxStore) DeleteBatch(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand, versionIdsToDelete []any) (int64, error) {
 	var deleted int64
 	err := ss.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
 		deleteExpiredSQL := `DELETE FROM dashboard_version WHERE id IN (?` + strings.Repeat(",?", len(versionIdsToDelete)-1) + `)`
@@ -59,18 +59,17 @@ func (ss *sqlxStore) DeleteBatch(ctx context.Context, cmd *dashver.DeleteExpired
 	return deleted, err
 }
 
-func (ss *sqlxStore) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) ([]*dashver.DashboardVersionDTO, error) {
-	var dashboardVersion []*dashver.DashboardVersionDTO
+func (ss *sqlxStore) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) ([]*dashver.DashboardVersion, error) {
+	var dashboardVersion []*dashver.DashboardVersion
 	qr := `SELECT dashboard_version.id,
 				dashboard_version.dashboard_id,
 				dashboard_version.parent_version,
 				dashboard_version.restored_from,
 				dashboard_version.version,
 				dashboard_version.created,
-				dashboard_version.message,
-				"user".login as created_by_login
+				dashboard_version.created_by,
+				dashboard_version.message
 			FROM dashboard_version
-			LEFT JOIN "user" ON "user".id = dashboard_version.created_by
 			LEFT JOIN dashboard ON dashboard.id = dashboard_version.dashboard_id
 			WHERE dashboard_version.dashboard_id=? AND dashboard.org_id=?
 			ORDER BY dashboard_version.version DESC

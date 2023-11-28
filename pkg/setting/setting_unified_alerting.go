@@ -8,11 +8,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/prometheus/alertmanager/cluster"
 	"gopkg.in/ini.v1"
+
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
@@ -20,7 +19,8 @@ const (
 	alertmanagerDefaultPeerTimeout        = 15 * time.Second
 	alertmanagerDefaultGossipInterval     = cluster.DefaultGossipInterval
 	alertmanagerDefaultPushPullInterval   = cluster.DefaultPushPullInterval
-	alertmanagerDefaultConfigPollInterval = 60 * time.Second
+	alertmanagerDefaultConfigPollInterval = time.Minute
+	alertmanagerRedisDefaultMaxConns      = 5
 	// To start, the alertmanager needs at least one route defined.
 	// TODO: we should move this to Grafana settings and define this as the default.
 	alertmanagerDefaultConfiguration = `{
@@ -45,11 +45,13 @@ const (
 }
 `
 	evaluatorDefaultEvaluationTimeout       = 30 * time.Second
-	schedulerDefaultAdminConfigPollInterval = 60 * time.Second
+	schedulerDefaultAdminConfigPollInterval = time.Minute
 	schedulereDefaultExecuteAlerts          = true
 	schedulerDefaultMaxAttempts             = 3
 	schedulerDefaultLegacyMinInterval       = 1
 	screenshotsDefaultCapture               = false
+	screenshotsDefaultCaptureTimeout        = 10 * time.Second
+	screenshotsMaxCaptureTimeout            = 30 * time.Second
 	screenshotsDefaultMaxConcurrent         = 5
 	screenshotsDefaultUploadImageStorage    = false
 	// SchedulerBaseInterval base interval of the scheduler. Controls how often the scheduler fetches database for new changes as well as schedules evaluation of a rule
@@ -58,6 +60,7 @@ const (
 	SchedulerBaseInterval = 10 * time.Second
 	// DefaultRuleEvaluationInterval indicates a default interval of for how long a rule should be evaluated to change state from Pending to Alerting
 	DefaultRuleEvaluationInterval = SchedulerBaseInterval * 6 // == 60 seconds
+	stateHistoryDefaultEnabled    = true
 )
 
 type UnifiedAlertingSettings struct {
@@ -69,6 +72,14 @@ type UnifiedAlertingSettings struct {
 	HAPeerTimeout                  time.Duration
 	HAGossipInterval               time.Duration
 	HAPushPullInterval             time.Duration
+	HALabel                        string
+	HARedisAddr                    string
+	HARedisPeerName                string
+	HARedisPrefix                  string
+	HARedisUsername                string
+	HARedisPassword                string
+	HARedisDB                      int
+	HARedisMaxConns                int
 	MaxAttempts                    int64
 	MinInterval                    time.Duration
 	EvaluationTimeout              time.Duration
@@ -83,16 +94,46 @@ type UnifiedAlertingSettings struct {
 	DefaultRuleEvaluationInterval time.Duration
 	Screenshots                   UnifiedAlertingScreenshotSettings
 	ReservedLabels                UnifiedAlertingReservedLabelSettings
+	StateHistory                  UnifiedAlertingStateHistorySettings
+	RemoteAlertmanager            RemoteAlertmanagerSettings
+	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
+	MaxStateSaveConcurrency int
+}
+
+// RemoteAlertmanagerSettings contains the configuration needed
+// to disable the internal Alertmanager and use an external one instead.
+type RemoteAlertmanagerSettings struct {
+	Enable   bool
+	URL      string
+	TenantID string
+	Password string
 }
 
 type UnifiedAlertingScreenshotSettings struct {
 	Capture                    bool
+	CaptureTimeout             time.Duration
 	MaxConcurrentScreenshots   int64
 	UploadExternalImageStorage bool
 }
 
 type UnifiedAlertingReservedLabelSettings struct {
 	DisabledLabels map[string]struct{}
+}
+
+type UnifiedAlertingStateHistorySettings struct {
+	Enabled       bool
+	Backend       string
+	LokiRemoteURL string
+	LokiReadURL   string
+	LokiWriteURL  string
+	LokiTenantID  string
+	// LokiBasicAuthUsername and LokiBasicAuthPassword are used for basic auth
+	// if one of them is set.
+	LokiBasicAuthPassword string
+	LokiBasicAuthUsername string
+	MultiPrimary          string
+	MultiSecondaries      []string
+	ExternalLabels        map[string]string
 }
 
 // IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
@@ -117,7 +158,7 @@ func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, 
 	// than disable it. This issue can be found here
 	hasEnabled := section.Key("enabled").Value() != ""
 	if !hasEnabled {
-		// TODO: Remove in Grafana v9
+		// TODO: Remove in Grafana v10
 		if cfg.IsFeatureToggleEnabled("ngalert") {
 			cfg.Logger.Warn("ngalert feature flag is deprecated: use unified alerting enabled setting instead")
 			// feature flag overrides the legacy alerting setting
@@ -204,6 +245,14 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	}
 	uaCfg.HAListenAddr = ua.Key("ha_listen_address").MustString(alertmanagerDefaultClusterAddr)
 	uaCfg.HAAdvertiseAddr = ua.Key("ha_advertise_address").MustString("")
+	uaCfg.HALabel = ua.Key("ha_label").MustString("")
+	uaCfg.HARedisAddr = ua.Key("ha_redis_address").MustString("")
+	uaCfg.HARedisPeerName = ua.Key("ha_redis_peer_name").MustString("")
+	uaCfg.HARedisPrefix = ua.Key("ha_redis_prefix").MustString("")
+	uaCfg.HARedisUsername = ua.Key("ha_redis_username").MustString("")
+	uaCfg.HARedisPassword = ua.Key("ha_redis_password").MustString("")
+	uaCfg.HARedisDB = ua.Key("ha_redis_db").MustInt(0)
+	uaCfg.HARedisMaxConns = ua.Key("ha_redis_max_conns").MustInt(alertmanagerRedisDefaultMaxConns)
 	peers := ua.Key("ha_peers").MustString("")
 	uaCfg.HAPeers = make([]string, 0)
 	if peers != "" {
@@ -251,6 +300,27 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	uaCfg.BaseInterval = SchedulerBaseInterval
 
+	// The base interval of the scheduler for evaluating alerts.
+	// 1. It is used by the internal scheduler's timer to tick at this interval.
+	// 2. to spread evaluations of rules that need to be evaluated at the current tick T. In other words, the evaluation of rules at the tick T will be evenly spread in the interval from T to T+scheduler_tick_interval.
+	//    For example, if there are 100 rules that need to be evaluated at tick T, and the base interval is 10s, rules will be evaluated every 100ms.
+	// 3. It increases delay between rule updates and state reset.
+	// NOTE:
+	// 1. All alert rule intervals should be times of this interval. Otherwise, the rules will not be evaluated. It is not recommended to set it lower than 10s or odd numbers. Recommended: 10s, 30s, 1m
+	// 2. The increasing of the interval will affect how slow alert rule updates will reset the state, and therefore reset notification. Higher the interval - slower propagation of the changes.
+	baseInterval, err := gtime.ParseDuration(valueAsString(ua, "scheduler_tick_interval", SchedulerBaseInterval.String()))
+	if cfg.IsFeatureToggleEnabled("configurableSchedulerTick") { // use literal to avoid cycle imports
+		if err != nil {
+			return fmt.Errorf("failed to parse setting 'scheduler_tick_interval' as duration: %w", err)
+		}
+		if baseInterval != SchedulerBaseInterval {
+			cfg.Logger.Warn("Scheduler tick interval is changed to non-default", "interval", baseInterval, "default", SchedulerBaseInterval)
+		}
+		uaCfg.BaseInterval = baseInterval
+	} else if baseInterval != SchedulerBaseInterval {
+		cfg.Logger.Warn("Scheduler tick interval is changed to non-default but the feature flag is not enabled. Using default.", "interval", baseInterval, "default", SchedulerBaseInterval)
+	}
+
 	uaMinInterval, err := gtime.ParseDuration(valueAsString(ua, "min_interval", uaCfg.BaseInterval.String()))
 	if err != nil || uaMinInterval == uaCfg.BaseInterval { // unified option is invalid duration or equals the default
 		// if the legacy option is invalid, fallback to 10 (unified alerting min interval default)
@@ -277,10 +347,26 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		uaCfg.DefaultRuleEvaluationInterval = uaMinInterval
 	}
 
+	remoteAlertmanager := iniFile.Section("remote.alertmanager")
+	uaCfgRemoteAM := RemoteAlertmanagerSettings{
+		Enable:   remoteAlertmanager.Key("enabled").MustBool(false),
+		URL:      remoteAlertmanager.Key("url").MustString(""),
+		TenantID: remoteAlertmanager.Key("tenant").MustString(""),
+		Password: remoteAlertmanager.Key("password").MustString(""),
+	}
+	uaCfg.RemoteAlertmanager = uaCfgRemoteAM
+
 	screenshots := iniFile.Section("unified_alerting.screenshots")
 	uaCfgScreenshots := uaCfg.Screenshots
 
 	uaCfgScreenshots.Capture = screenshots.Key("capture").MustBool(screenshotsDefaultCapture)
+
+	captureTimeout := screenshots.Key("capture_timeout").MustDuration(screenshotsDefaultCaptureTimeout)
+	if captureTimeout > screenshotsMaxCaptureTimeout {
+		return fmt.Errorf("value of setting 'capture_timeout' cannot exceed %s", screenshotsMaxCaptureTimeout)
+	}
+	uaCfgScreenshots.CaptureTimeout = captureTimeout
+
 	uaCfgScreenshots.MaxConcurrentScreenshots = screenshots.Key("max_concurrent_screenshots").MustInt64(screenshotsDefaultMaxConcurrent)
 	uaCfgScreenshots.UploadExternalImageStorage = screenshots.Key("upload_external_image_storage").MustBool(screenshotsDefaultUploadImageStorage)
 	uaCfg.Screenshots = uaCfgScreenshots
@@ -294,10 +380,37 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	}
 	uaCfg.ReservedLabels = uaCfgReservedLabels
 
+	stateHistory := iniFile.Section("unified_alerting.state_history")
+	stateHistoryLabels := iniFile.Section("unified_alerting.state_history.external_labels")
+	uaCfgStateHistory := UnifiedAlertingStateHistorySettings{
+		Enabled:               stateHistory.Key("enabled").MustBool(stateHistoryDefaultEnabled),
+		Backend:               stateHistory.Key("backend").MustString("annotations"),
+		LokiRemoteURL:         stateHistory.Key("loki_remote_url").MustString(""),
+		LokiReadURL:           stateHistory.Key("loki_remote_read_url").MustString(""),
+		LokiWriteURL:          stateHistory.Key("loki_remote_write_url").MustString(""),
+		LokiTenantID:          stateHistory.Key("loki_tenant_id").MustString(""),
+		LokiBasicAuthUsername: stateHistory.Key("loki_basic_auth_username").MustString(""),
+		LokiBasicAuthPassword: stateHistory.Key("loki_basic_auth_password").MustString(""),
+		MultiPrimary:          stateHistory.Key("primary").MustString(""),
+		MultiSecondaries:      splitTrim(stateHistory.Key("secondaries").MustString(""), ","),
+		ExternalLabels:        stateHistoryLabels.KeysHash(),
+	}
+	uaCfg.StateHistory = uaCfgStateHistory
+
+	uaCfg.MaxStateSaveConcurrency = ua.Key("max_state_save_concurrency").MustInt(1)
+
 	cfg.UnifiedAlerting = uaCfg
 	return nil
 }
 
 func GetAlertmanagerDefaultConfiguration() string {
 	return alertmanagerDefaultConfiguration
+}
+
+func splitTrim(s string, sep string) []string {
+	spl := strings.Split(s, sep)
+	for i := range spl {
+		spl[i] = strings.TrimSpace(spl[i])
+	}
+	return spl
 }

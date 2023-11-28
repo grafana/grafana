@@ -42,7 +42,7 @@ export const SelectFieldAdapter = ({
   );
 };
 
-export const AsyncSelectFieldAdapter: FC<any> = ({
+export const AsyncSelectFieldAdapter: FC<React.PropsWithChildren<any>> = ({
   input,
   className,
   loading,

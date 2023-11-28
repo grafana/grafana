@@ -4,7 +4,7 @@ import { Controller } from 'react-hook-form';
 import { LabelsFieldProps } from './LabelsField.types';
 import LabelsBuilder from './components/LabelsBuilder';
 
-const LabelsField: FC<LabelsFieldProps> = ({ control }) => (
+const LabelsField: FC<React.PropsWithChildren<LabelsFieldProps>> = ({ control }) => (
   <Controller
     name="filter"
     control={control}

@@ -10,6 +10,10 @@ keywords:
   - aws
   - marketplace
   - activate
+labels:
+  products:
+    - enterprise
+    - oss
 title: Activate a Grafana Enterprise license from AWS on an instance deployed outside
   of AWS
 weight: 300
@@ -127,4 +131,4 @@ Choose one of the following options to update the [license_validation_type]({{< 
 
 To activate Grafana Enterprise features, start (or restart) Grafana.
 
-For information about restarting Grafana, refer to [Restart Grafana]({{< relref "../../../../setup-grafana/restart-grafana/" >}}).
+For information about restarting Grafana, refer to [Restart Grafana]({{< relref "../../../../setup-grafana/start-restart-grafana/" >}}).

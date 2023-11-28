@@ -1,0 +1,1 @@
+{"version":3,"file":"extra.js","sourceRoot":"","sources":["../../../../../../../packages/grafana-ui/src/themes/GlobalStyles/extra.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,GAAG,EAAE,MAAM,gBAAgB,CAAC;AAIrC,MAAM,UAAU,cAAc,CAAC,KAAoB;IACjD,OAAO,GAAG,CAAC;QACT,gDAAgD;QAChD,kCAAkC,EAAE;YAClC,WAAW,EAAE,KAAK,CAAC,MAAM,CAAC,IAAI;SAC/B;KACF,CAAC,CAAC;AACL,CAAC"}

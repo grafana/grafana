@@ -11,7 +11,7 @@ import { Messages } from './Status.messages';
 import { getStyles } from './Status.styles';
 import { StatusProps } from './Status.types';
 
-export const Status: FC<StatusProps> = ({ status, showLogsAction = false, onLogClick = () => null }) => {
+export const Status: FC<React.PropsWithChildren<StatusProps>> = ({ status, showLogsAction = false, onLogClick = () => null }) => {
   const statusMsg = formatStatus(status);
   const theme = useTheme2();
   const styles = getStyles(theme, status);
@@ -36,6 +36,7 @@ export const Status: FC<StatusProps> = ({ status, showLogsAction = false, onLogC
         </span>
       )}
       {showLogsAction && (
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/interactive-supports-focus
         <span role="button" className={styles.logs} onClick={onLogClick}>
           {Messages.logs}
         </span>

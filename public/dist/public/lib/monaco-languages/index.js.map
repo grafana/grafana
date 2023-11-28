@@ -1,0 +1,1 @@
+{"version":3,"file":"index.js","sourceRoot":"","sources":["../../../../lib/monaco-languages/index.ts"],"names":[],"mappings":"AAAA,OAAO,SAAS,MAAM,SAAS,CAAC;AAEhC,MAAM,CAAC,OAAO,UAAU,yBAAyB;IAC/C,MAAM,KAAK,GAAG,EAAE,EAAE,EAAE,OAAO,EAAE,IAAI,EAAE,OAAO,EAAE,IAAI,EAAE,SAAS,EAAE,CAAC;IAC9D,OAAO,CAAC,KAAK,CAAC,CAAC;AACjB,CAAC"}

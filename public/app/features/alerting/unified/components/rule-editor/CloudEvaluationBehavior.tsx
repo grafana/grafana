@@ -1,18 +1,19 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme } from '@grafana/data';
-import { Field, Input, InputControl, Select, useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Field, Input, InputControl, Select, useStyles2 } from '@grafana/ui';
 
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { timeOptions } from '../../utils/time';
 
+import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
 import { PreviewRule } from './PreviewRule';
 import { RuleEditorSection } from './RuleEditorSection';
 
-export const CloudEvaluationBehavior: FC = () => {
-  const styles = useStyles(getStyles);
+export const CloudEvaluationBehavior = () => {
+  const styles = useStyles2(getStyles);
   const {
     register,
     control,
@@ -21,15 +22,14 @@ export const CloudEvaluationBehavior: FC = () => {
   } = useFormContext<RuleFormValues>();
 
   const type = watch('type');
-
-  // cloud recording rules do not have alert conditions
-  if (type === RuleFormType.cloudRecording) {
-    return null;
-  }
+  const dataSourceName = watch('dataSourceName');
 
   return (
-    <RuleEditorSection stepNo={2} title="Alert evaluation behavior">
-      <Field label="For" description="Expression has to be true for this long for the alert to be fired.">
+    <RuleEditorSection stepNo={3} title="Set evaluation behavior">
+      <Field
+        label="Pending period"
+        description="Period in which an alert rule can be in breach of the condition until the alert rule fires."
+      >
         <div className={styles.flexRow}>
           <Field invalid={!!errors.forTime?.message} error={errors.forTime?.message} className={styles.inlineField}>
             <Input
@@ -52,12 +52,16 @@ export const CloudEvaluationBehavior: FC = () => {
           />
         </div>
       </Field>
+      {type === RuleFormType.cloudAlerting && dataSourceName && (
+        <GroupAndNamespaceFields rulesSourceName={dataSourceName} />
+      )}
+
       <PreviewRule />
     </RuleEditorSection>
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   inlineField: css`
     margin-bottom: 0;
   `,
@@ -68,6 +72,6 @@ const getStyles = (theme: GrafanaTheme) => ({
     align-items: flex-start;
   `,
   timeUnit: css`
-    margin-left: ${theme.spacing.xs};
+    margin-left: ${theme.spacing(0.5)};
   `,
 });

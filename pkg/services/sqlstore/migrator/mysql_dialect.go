@@ -9,7 +9,6 @@ import (
 
 	"github.com/VividCortex/mysqlerr"
 	"github.com/go-sql-driver/mysql"
-	"github.com/golang-migrate/migrate/v4/database"
 	"xorm.io/xorm"
 )
 
@@ -17,10 +16,9 @@ type MySQLDialect struct {
 	BaseDialect
 }
 
-func NewMysqlDialect(engine *xorm.Engine) Dialect {
+func NewMysqlDialect() Dialect {
 	d := MySQLDialect{}
 	d.BaseDialect.dialect = &d
-	d.BaseDialect.engine = engine
 	d.BaseDialect.driverName = MySQL
 	return &d
 }
@@ -42,6 +40,10 @@ func (db *MySQLDialect) BooleanStr(value bool) string {
 		return "1"
 	}
 	return "0"
+}
+
+func (db *MySQLDialect) BatchSize() int {
+	return 1000
 }
 
 func (db *MySQLDialect) SQLType(c *Column) string {
@@ -87,7 +89,11 @@ func (db *MySQLDialect) SQLType(c *Column) string {
 
 	switch c.Type {
 	case DB_Char, DB_Varchar, DB_NVarchar, DB_TinyText, DB_Text, DB_MediumText, DB_LongText:
-		res += " CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+		if c.IsLatin {
+			res += " CHARACTER SET latin1 COLLATE latin1_bin"
+		} else {
+			res += " CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+		}
 	}
 
 	return res
@@ -105,14 +111,14 @@ func (db *MySQLDialect) UpdateTableSQL(tableName string, columns []*Column) stri
 	return "ALTER TABLE " + db.Quote(tableName) + " " + strings.Join(statements, ", ") + ";"
 }
 
-func (db *MySQLDialect) IndexCheckSQL(tableName, indexName string) (string, []interface{}) {
-	args := []interface{}{tableName, indexName}
+func (db *MySQLDialect) IndexCheckSQL(tableName, indexName string) (string, []any) {
+	args := []any{tableName, indexName}
 	sql := "SELECT 1 FROM " + db.Quote("INFORMATION_SCHEMA") + "." + db.Quote("STATISTICS") + " WHERE " + db.Quote("TABLE_SCHEMA") + " = DATABASE() AND " + db.Quote("TABLE_NAME") + "=? AND " + db.Quote("INDEX_NAME") + "=?"
 	return sql, args
 }
 
-func (db *MySQLDialect) ColumnCheckSQL(tableName, columnName string) (string, []interface{}) {
-	args := []interface{}{tableName, columnName}
+func (db *MySQLDialect) ColumnCheckSQL(tableName, columnName string) (string, []any) {
+	args := []any{tableName, columnName}
 	sql := "SELECT 1 FROM " + db.Quote("INFORMATION_SCHEMA") + "." + db.Quote("COLUMNS") + " WHERE " + db.Quote("TABLE_SCHEMA") + " = DATABASE() AND " + db.Quote("TABLE_NAME") + "=? AND " + db.Quote("COLUMN_NAME") + "=?"
 	return sql, args
 }
@@ -125,12 +131,12 @@ func (db *MySQLDialect) RenameColumn(table Table, column *Column, newName string
 	)
 }
 
-func (db *MySQLDialect) CleanDB() error {
-	tables, err := db.engine.DBMetas()
+func (db *MySQLDialect) CleanDB(engine *xorm.Engine) error {
+	tables, err := engine.DBMetas()
 	if err != nil {
 		return err
 	}
-	sess := db.engine.NewSession()
+	sess := engine.NewSession()
 	defer sess.Close()
 
 	for _, table := range tables {
@@ -153,12 +159,12 @@ func (db *MySQLDialect) CleanDB() error {
 
 // TruncateDBTables truncates all the tables.
 // A special case is the dashboard_acl table where we keep the default permissions.
-func (db *MySQLDialect) TruncateDBTables() error {
-	tables, err := db.engine.DBMetas()
+func (db *MySQLDialect) TruncateDBTables(engine *xorm.Engine) error {
+	tables, err := engine.DBMetas()
 	if err != nil {
 		return err
 	}
-	sess := db.engine.NewSession()
+	sess := engine.NewSession()
 	defer sess.Close()
 
 	for _, table := range tables {
@@ -257,11 +263,6 @@ func (db *MySQLDialect) Lock(cfg LockCfg) error {
 	query := "SELECT GET_LOCK(?, ?)"
 	var success sql.NullBool
 
-	lockName, err := db.getLockName()
-	if err != nil {
-		return fmt.Errorf("failed to generate lock name: %w", err)
-	}
-
 	// trying to obtain the lock with the specific name
 	// the lock is exclusive per session and is released explicitly by executing RELEASE_LOCK() or implicitly when the session terminates
 	// it returns 1 if the lock was obtained successfully,
@@ -269,7 +270,7 @@ func (db *MySQLDialect) Lock(cfg LockCfg) error {
 	// or NULL if an error occurred
 	// starting from MySQL 5.7 it is even possible for a given session to acquire multiple locks for the same name
 	// however other sessions cannot acquire a lock with that name until the acquiring session releases all its locks for the name.
-	_, err = cfg.Session.SQL(query, lockName, cfg.Timeout).Get(&success)
+	_, err := cfg.Session.SQL(query, cfg.Key, cfg.Timeout).Get(&success)
 	if err != nil {
 		return err
 	}
@@ -283,16 +284,11 @@ func (db *MySQLDialect) Unlock(cfg LockCfg) error {
 	query := "SELECT RELEASE_LOCK(?)"
 	var success sql.NullBool
 
-	lockName, err := db.getLockName()
-	if err != nil {
-		return fmt.Errorf("failed to generate lock name: %w", err)
-	}
-
 	// trying to release the lock with the specific name
 	// it returns 1 if the lock was released,
 	// 0 if the lock was not established by this thread (in which case the lock is not released),
 	// and NULL if the named lock did not exist (it was never obtained by a call to GET_LOCK() or if it has previously been released)
-	_, err = cfg.Session.SQL(query, lockName).Get(&success)
+	_, err := cfg.Session.SQL(query, cfg.Key).Get(&success)
 	if err != nil {
 		return err
 	}
@@ -302,16 +298,11 @@ func (db *MySQLDialect) Unlock(cfg LockCfg) error {
 	return nil
 }
 
-func (db *MySQLDialect) getLockName() (string, error) {
-	cfg, err := mysql.ParseDSN(db.engine.DataSourceName())
+func (db *MySQLDialect) GetDBName(dsn string) (string, error) {
+	cfg, err := mysql.ParseDSN(dsn)
 	if err != nil {
 		return "", err
 	}
 
-	s, err := database.GenerateAdvisoryLockId(cfg.DBName)
-	if err != nil {
-		return "", fmt.Errorf("failed to generate advisory lock key: %w", err)
-	}
-
-	return s, nil
+	return cfg.DBName, nil
 }

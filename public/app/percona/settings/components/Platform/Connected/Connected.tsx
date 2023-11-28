@@ -20,7 +20,7 @@ import { Messages } from './Connected.messages';
 import { getStyles } from './Connected.styles';
 import { ModalBody } from './ModalBody/ModalBody';
 
-export const Connected: FC = () => {
+export const Connected: FC<React.PropsWithChildren<unknown>> = () => {
   const styles = useStyles2(getStyles);
   const [disconnecting, setDisconnecting] = useState(false);
   const [showModal, setShowModal] = useState(false);

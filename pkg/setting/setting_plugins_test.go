@@ -41,3 +41,20 @@ func TestPluginSettings(t *testing.T) {
 	require.Equal(t, ps["plugin2"]["key3"], "value3")
 	require.Equal(t, ps["plugin2"]["key4"], "value4")
 }
+
+func Test_readPluginSettings(t *testing.T) {
+	t.Run("should parse disable_plugins", func(t *testing.T) {
+		cfg := NewCfg()
+		sec, err := cfg.Raw.NewSection("plugins")
+		require.NoError(t, err)
+		_, err = sec.NewKey("disable_plugins", "plugin1,plugin2")
+		require.NoError(t, err)
+		_, err = sec.NewKey("plugin_catalog_hidden_plugins", "plugin3")
+		require.NoError(t, err)
+
+		err = cfg.readPluginSettings(cfg.Raw)
+		require.NoError(t, err)
+		require.Equal(t, []string{"plugin1", "plugin2"}, cfg.DisablePlugins)
+		require.Equal(t, []string{"plugin3", "plugin1", "plugin2"}, cfg.PluginCatalogHiddenPlugins)
+	})
+}

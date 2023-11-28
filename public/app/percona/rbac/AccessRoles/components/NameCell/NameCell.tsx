@@ -7,7 +7,7 @@ import { Messages } from '../../AccessRole.messages';
 import { getStyles } from './NameCell.styles';
 import { NameCellProps } from './NameCell.types';
 
-const NameCell: FC<NameCellProps> = ({ role }) => {
+const NameCell: FC<React.PropsWithChildren<NameCellProps>> = ({ role }) => {
   const styles = useStyles2(getStyles);
 
   return (

@@ -18,12 +18,7 @@ interface DataLinksInlineEditorProps {
   data: DataFrame[];
 }
 
-export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({
-  links,
-  onChange,
-  getSuggestions,
-  data,
-}) => {
+export const DataLinksInlineEditor = ({ links, onChange, getSuggestions, data }: DataLinksInlineEditorProps) => {
   const theme = useTheme2();
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [isNew, setIsNew] = useState(false);
@@ -117,8 +112,8 @@ export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({
 
 const getDataLinksInlineEditorStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    wrapper: css`
-      margin-bottom: ${theme.spacing(2)};
-    `,
+    wrapper: css({
+      marginBottom: theme.spacing(2),
+    }),
   };
 });

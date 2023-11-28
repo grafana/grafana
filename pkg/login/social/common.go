@@ -1,6 +1,7 @@
 package social
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,7 +13,7 @@ import (
 )
 
 var (
-	errMissingGroupMembership = Error{"user not a member of one of the required groups"}
+	errMissingGroupMembership = &Error{"user not a member of one of the required groups"}
 )
 
 type httpGetResponse struct {
@@ -42,10 +43,15 @@ func isEmailAllowed(email string, allowedDomains []string) bool {
 	return valid
 }
 
-func (s *SocialBase) httpGet(client *http.Client, url string) (response httpGetResponse, err error) {
-	r, err := client.Get(url)
-	if err != nil {
-		return
+func (s *SocialBase) httpGet(ctx context.Context, client *http.Client, url string) (*httpGetResponse, error) {
+	req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if errReq != nil {
+		return nil, errReq
+	}
+
+	r, errDo := client.Do(req)
+	if errDo != nil {
+		return nil, errDo
 	}
 
 	defer func() {
@@ -54,24 +60,23 @@ func (s *SocialBase) httpGet(client *http.Client, url string) (response httpGetR
 		}
 	}()
 
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		return
+	body, errRead := io.ReadAll(r.Body)
+	if errRead != nil {
+		return nil, errRead
 	}
 
-	response = httpGetResponse{body, r.Header}
+	response := &httpGetResponse{body, r.Header}
 
 	if r.StatusCode >= 300 {
-		err = fmt.Errorf(string(response.Body))
-		return
+		return nil, fmt.Errorf("unsuccessful response status code %d: %s", r.StatusCode, string(response.Body))
 	}
+
 	s.log.Debug("HTTP GET", "url", url, "status", r.Status, "response_body", string(response.Body))
 
-	err = nil
-	return
+	return response, nil
 }
 
-func (s *SocialBase) searchJSONForAttr(attributePath string, data []byte) (interface{}, error) {
+func (s *SocialBase) searchJSONForAttr(attributePath string, data []byte) (any, error) {
 	if attributePath == "" {
 		return "", errors.New("no attribute path specified")
 	}
@@ -80,7 +85,7 @@ func (s *SocialBase) searchJSONForAttr(attributePath string, data []byte) (inter
 		return "", errors.New("empty user info JSON response provided")
 	}
 
-	var buf interface{}
+	var buf any
 	if err := json.Unmarshal(data, &buf); err != nil {
 		return "", fmt.Errorf("%v: %w", "failed to unmarshal user info JSON response", err)
 	}
@@ -113,7 +118,7 @@ func (s *SocialBase) searchJSONForStringArrayAttr(attributePath string, data []b
 		return []string{}, err
 	}
 
-	ifArr, ok := val.([]interface{})
+	ifArr, ok := val.([]any)
 	if !ok {
 		return []string{}, nil
 	}

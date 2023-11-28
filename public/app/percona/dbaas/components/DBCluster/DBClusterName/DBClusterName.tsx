@@ -6,7 +6,7 @@ import { DASHBOARD_URL_MAP } from './DBClusterName.constants';
 import { getStyles } from './DBClusterName.styles';
 import { DBClusterNameProps } from './DBClusterName.types';
 
-export const DBClusterName: FC<DBClusterNameProps> = ({ dbCluster: { clusterName, databaseType } }) => {
+export const DBClusterName: FC<React.PropsWithChildren<DBClusterNameProps>> = ({ dbCluster: { clusterName, databaseType } }) => {
   const styles = useStyles(getStyles);
   const getDashboardUrl = DASHBOARD_URL_MAP[databaseType];
 

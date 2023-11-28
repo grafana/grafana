@@ -37,7 +37,7 @@ describe('transform abstract query to elasticsearch query', () => {
 
     expect(result).toEqual({
       ...baseLogsQuery,
-      query: 'label1:"value1" AND NOT label2:"value2" AND label3:/value3/ AND NOT label4:/value4/',
+      query: 'label1:"value1" AND -label2:"value2" AND label3:/value3/ AND -label4:/value4/',
       refId: abstractQuery.refId,
     });
   });

@@ -4,7 +4,7 @@ import { Collapse } from '@grafana/ui';
 
 import { ContainerLogsProps } from './ContainerLogs.types';
 
-export const ContainerLogs: FC<ContainerLogsProps> = ({ containerLogs }) => {
+export const ContainerLogs: FC<React.PropsWithChildren<ContainerLogsProps>> = ({ containerLogs }) => {
   const { name, isOpen: isContainerOpen, logs } = containerLogs;
   const [isOpen, setIsOpen] = useState(isContainerOpen);
 

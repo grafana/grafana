@@ -1,7 +1,6 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { DataTransformerConfig, FieldType, MatcherConfig } from '../../types';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { ArrayVector } from '../../vector';
 import { ValueMatcherID } from '../matchers/ids';
 import { BasicValueMatcherOptions } from '../matchers/valueMatchers/types';
 import { transformDataFrame } from '../transformDataFrame';
@@ -14,12 +13,24 @@ import {
 } from './filterByValue';
 import { DataTransformerID } from './ids';
 
+let transformationSupport = false;
+
+jest.mock('./utils', () => {
+  const actual = jest.requireActual('./utils');
+  return {
+    ...actual,
+    transformationsVariableSupport: () => {
+      return transformationSupport;
+    },
+  };
+});
+
 const seriesAWithSingleField = toDataFrame({
   name: 'A',
   length: 7,
   fields: [
-    { name: 'time', type: FieldType.time, values: new ArrayVector([1000, 2000, 3000, 4000, 5000, 6000, 7000]) },
-    { name: 'numbers', type: FieldType.number, values: new ArrayVector([1, 2, 3, 4, 5, 6, 7]) },
+    { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000, 5000, 6000, 7000] },
+    { name: 'numbers', type: FieldType.number, values: [1, 2, 3, 4, 5, 6, 7] },
   ],
 });
 
@@ -56,13 +67,13 @@ describe('FilterByValue transformer', () => {
         {
           name: 'time',
           type: FieldType.time,
-          values: new ArrayVector([6000, 7000]),
+          values: [6000, 7000],
           state: {},
         },
         {
           name: 'numbers',
           type: FieldType.number,
-          values: new ArrayVector([6, 7]),
+          values: [6, 7],
           state: {},
         },
       ]);
@@ -97,13 +108,100 @@ describe('FilterByValue transformer', () => {
         {
           name: 'time',
           type: FieldType.time,
-          values: new ArrayVector([1000, 2000, 3000, 4000, 5000]),
+          values: [1000, 2000, 3000, 4000, 5000],
           state: {},
         },
         {
           name: 'numbers',
           type: FieldType.number,
-          values: new ArrayVector([1, 2, 3, 4, 5]),
+          values: [1, 2, 3, 4, 5],
+          state: {},
+        },
+      ]);
+    });
+  });
+
+  it('should interpolate dashboard variables', async () => {
+    transformationSupport = true;
+
+    const lower: MatcherConfig<BasicValueMatcherOptions<string | number>> = {
+      id: ValueMatcherID.lower,
+      options: { value: 'thiswillinterpolateto6' },
+    };
+
+    const cfg: DataTransformerConfig<FilterByValueTransformerOptions> = {
+      id: DataTransformerID.filterByValue,
+      options: {
+        type: FilterByValueType.exclude,
+        match: FilterByValueMatch.all,
+        filters: [
+          {
+            fieldName: 'numbers',
+            config: lower,
+          },
+        ],
+      },
+    };
+
+    const ctxmock = { interpolate: jest.fn(() => '6') };
+
+    await expect(transformDataFrame([cfg], [seriesAWithSingleField], ctxmock)).toEmitValuesWith((received) => {
+      const processed = received[0];
+
+      expect(processed.length).toEqual(1);
+      expect(processed[0].fields).toEqual([
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: [6000, 7000],
+          state: {},
+        },
+        {
+          name: 'numbers',
+          type: FieldType.number,
+          values: [6, 7],
+          state: {},
+        },
+      ]);
+    });
+    transformationSupport = false;
+  });
+
+  it('should not interpolate dashboard variables when feature toggle is off', async () => {
+    const lower: MatcherConfig<BasicValueMatcherOptions<number | string>> = {
+      id: ValueMatcherID.lower,
+      options: { value: 'notinterpolating' },
+    };
+
+    const cfg: DataTransformerConfig<FilterByValueTransformerOptions> = {
+      id: DataTransformerID.filterByValue,
+      options: {
+        type: FilterByValueType.exclude,
+        match: FilterByValueMatch.all,
+        filters: [
+          {
+            fieldName: 'numbers',
+            config: lower,
+          },
+        ],
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith((received) => {
+      const processed = received[0];
+
+      expect(processed.length).toEqual(1);
+      expect(processed[0].fields).toEqual([
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: [1000, 2000, 3000, 4000, 5000, 6000, 7000],
+          state: {},
+        },
+        {
+          name: 'numbers',
+          type: FieldType.number,
+          values: [1, 2, 3, 4, 5, 6, 7],
           state: {},
         },
       ]);
@@ -147,13 +245,13 @@ describe('FilterByValue transformer', () => {
         {
           name: 'time',
           type: FieldType.time,
-          values: new ArrayVector([1000, 2000, 3000, 4000, 7000]),
+          values: [1000, 2000, 3000, 4000, 7000],
           state: {},
         },
         {
           name: 'numbers',
           type: FieldType.number,
-          values: new ArrayVector([1, 2, 3, 4, 7]),
+          values: [1, 2, 3, 4, 7],
           state: {},
         },
       ]);
@@ -197,13 +295,13 @@ describe('FilterByValue transformer', () => {
         {
           name: 'time',
           type: FieldType.time,
-          values: new ArrayVector([4000, 5000]),
+          values: [4000, 5000],
           state: {},
         },
         {
           name: 'numbers',
           type: FieldType.number,
-          values: new ArrayVector([4, 5]),
+          values: [4, 5],
           state: {},
         },
       ]);

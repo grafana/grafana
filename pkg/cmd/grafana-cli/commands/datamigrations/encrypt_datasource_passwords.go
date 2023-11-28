@@ -6,10 +6,10 @@ import (
 	"fmt"
 
 	"github.com/fatih/color"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -27,8 +27,8 @@ var (
 
 // EncryptDatasourcePasswords migrates unencrypted secrets on datasources
 // to the secureJson Column.
-func EncryptDatasourcePasswords(c utils.CommandLine, sqlStore *sqlstore.SQLStore) error {
-	return sqlStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+func EncryptDatasourcePasswords(c utils.CommandLine, sqlStore db.DB) error {
+	return sqlStore.WithDbSession(context.Background(), func(session *db.Session) error {
 		passwordsUpdated, err := migrateColumn(session, "password")
 		if err != nil {
 			return err
@@ -61,7 +61,7 @@ func EncryptDatasourcePasswords(c utils.CommandLine, sqlStore *sqlstore.SQLStore
 	})
 }
 
-func migrateColumn(session *sqlstore.DBSession, column string) (int, error) {
+func migrateColumn(session *db.Session, column string) (int, error) {
 	var rows []map[string][]byte
 
 	session.Cols("id", column, "secure_json_data")
@@ -81,7 +81,7 @@ func migrateColumn(session *sqlstore.DBSession, column string) (int, error) {
 	return rowsUpdated, err
 }
 
-func updateRows(session *sqlstore.DBSession, rows []map[string][]byte, passwordFieldName string) (int, error) {
+func updateRows(session *db.Session, rows []map[string][]byte, passwordFieldName string) (int, error) {
 	var rowsUpdated int
 
 	for _, row := range rows {
@@ -95,7 +95,7 @@ func updateRows(session *sqlstore.DBSession, rows []map[string][]byte, passwordF
 			return 0, fmt.Errorf("%v: %w", "marshaling newSecureJsonData failed", err)
 		}
 
-		newRow := map[string]interface{}{"secure_json_data": data, passwordFieldName: ""}
+		newRow := map[string]any{"secure_json_data": data, passwordFieldName: ""}
 		session.Table("data_source")
 		session.Where("id = ?", string(row["id"]))
 		// Setting both columns while having value only for secure_json_data should clear the [passwordFieldName] column
@@ -111,20 +111,20 @@ func updateRows(session *sqlstore.DBSession, rows []map[string][]byte, passwordF
 	return rowsUpdated, nil
 }
 
-func getUpdatedSecureJSONData(row map[string][]byte, passwordFieldName string) (map[string]interface{}, error) {
+func getUpdatedSecureJSONData(row map[string][]byte, passwordFieldName string) (map[string]any, error) {
 	encryptedPassword, err := util.Encrypt(row[passwordFieldName], setting.SecretKey)
 	if err != nil {
 		return nil, err
 	}
 
-	var secureJSONData map[string]interface{}
+	var secureJSONData map[string]any
 
 	if len(row["secure_json_data"]) > 0 {
 		if err := json.Unmarshal(row["secure_json_data"], &secureJSONData); err != nil {
 			return nil, err
 		}
 	} else {
-		secureJSONData = map[string]interface{}{}
+		secureJSONData = map[string]any{}
 	}
 
 	jsonFieldName := util.ToCamelCase(passwordFieldName)

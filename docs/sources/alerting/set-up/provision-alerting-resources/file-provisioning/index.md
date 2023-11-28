@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../../provision-alerting-resources/file-provisioning/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/
 description: Create and manage resources using file provisioning
 keywords:
   - grafana
@@ -8,6 +9,11 @@ keywords:
   - alerting resources
   - file provisioning
   - provisioning
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Create and manage alerting resources using file provisioning
 weight: 100
 ---
@@ -22,20 +28,20 @@ Details on how to set up the files and which fields are required for each object
 
 **Note:**
 
-Provisioning takes place during the initial set up of your Grafana system, but you can re-run it at any time using the [Grafana Alerting provisioning API](https://grafana.com/docs/grafana/latest/developers/http_api/admin/#reload-provisioning-configurations).
+Provisioning takes place during the initial set up of your Grafana system, but you can re-run it at any time using the [Grafana Admin API][reload-provisioning-configurations].
 
 ### Provision alert rules
 
 Create or delete alert rules in your Grafana instance(s).
 
-1. Create an alert rule in Grafana.
-1. Use the [Alerting provisioning API](https://grafana.com/docs/grafana/latest/developers/http_api/admin/#reload-provisioning-configurations) to extract the alert rule.
+1. Create alert rules in Grafana.
+1. Use the [Alerting provisioning API][alerting_provisioning] export endpoints to download a provisioning file for your alert rules.
 1. Copy the contents into a YAML or JSON configuration file in the default provisioning directory or in your configured directory.
 
    Example configuration files can be found below.
 
 1. Ensure that your files are in the right directory on the node running the Grafana server, so that they deploy alongside your Grafana instance(s).
-1. Delete the alert rule in Grafana.
+1. Delete the alert rules in Grafana that will be provisioned.
 
    **Note:**
 
@@ -59,14 +65,14 @@ groups:
     interval: 60s
     # <list, required> list of rules that are part of the rule group
     rules:
-      # <string, required> unique identifier for the rule
+      # <string, required> unique identifier for the rule. Should not exceed 40 symbols. Only letters, numbers, - (hyphen), and _ (underscore) allowed.
       - uid: my_id_1
         # <string, required> title of the rule that will be displayed in the UI
         title: my_first_rule
         # <string, required> which query should be used for the condition
         condition: A
         # <list, required> list of query objects that should be executed on each
-        #                  evaluation - should be obtained trough the API
+        #                  evaluation - should be obtained through the API
         data:
           - refId: A
             datasourceUid: '__expr__'
@@ -131,11 +137,13 @@ deleteRules:
 
 Create or delete contact points in your Grafana instance(s).
 
-1. Create a YAML or JSON configuration file.
+1. Create a contact point in Grafana.
+1. Use the [Alerting provisioning API][alerting_provisioning] export endpoints to download a provisioning file for your contact point.
+1. Copy the contents into a YAML or JSON configuration file in the default provisioning directory or in your configured directory.
 
    Example configuration files can be found below.
 
-1. Add the file(s) to your GitOps workflow, so that they deploy alongside your Grafana instance(s).
+1. Ensure that your files are in the right directory on the node running the Grafana server, so that they deploy alongside your Grafana instance(s).
 
 Here is an example of a configuration file for creating contact points.
 
@@ -150,10 +158,12 @@ contactPoints:
     # <string, required> name of the contact point
     name: cp_1
     receivers:
-      # <string, required> unique identifier for the receiver
+      # <string, required> unique identifier for the receiver. Should not exceed 40 symbols. Only letters, numbers, - (hyphen), and _ (underscore) allowed.
       - uid: first_uid
         # <string, required> type of the receiver
         type: prometheus-alertmanager
+        # <bool, optional> Disable the additional [Incident Resolved] follow-up alert, default = false
+        disableResolveMessage: false
         # <object, required> settings for the specific receiver type
         settings:
           url: http://test:9000
@@ -176,7 +186,7 @@ deleteContactPoints:
 #### Settings
 
 Here are some examples of settings you can use for the different
-contact point types.
+contact point integrations.
 
 ##### Alertmanager
 
@@ -237,7 +247,7 @@ settings:
     {{ template "default.title" . }}
 ```
 
-##### Google Hangouts Chat
+##### Google Chat
 
 ```yaml
 type: googlechat
@@ -313,7 +323,7 @@ settings:
 ```yaml
 type: pagerduty
 settings:
-  # <string, required>
+  # <string, required> the 32-character Events API key https://support.pagerduty.com/docs/api-access-keys#events-api-keys
   integrationKey: XXX
   # <string> options: critical, error, warning, info
   severity: critical
@@ -484,15 +494,17 @@ settings:
 
 ### Provision notification policies
 
-Create or reset notification policies in your Grafana instance(s).
+Create or reset the notification policy tree in your Grafana instance(s).
 
-1. Create a YAML or JSON configuration file.
+1. Create a notification policy in Grafana.
+1. Use the [Alerting provisioning API][alerting_provisioning] export endpoints to download a provisioning file for your notification policy.
+1. Copy the contents into a YAML or JSON configuration file in the default provisioning directory or in your configured directory.
 
    Example configuration files can be found below.
 
-2. Add the file(s) to your GitOps workflow, so that they deploy alongside your Grafana instance(s).
+1. Ensure that your files are in the right directory on the node running the Grafana server, so that they deploy alongside your Grafana instance(s).
 
-Here is an example of a configuration file for creating notification policiies.
+Here is an example of a configuration file for creating notification policies.
 
 ```yaml
 # config file version
@@ -516,10 +528,17 @@ policies:
     #        a very low alert volume or your upstream notification system performs
     #        its own grouping.
     group_by: ['...']
-    # <list> a list of matchers that an alert has to fulfill to match the node
+    # <list> a list of prometheus-like matchers that an alert rule has to fulfill to match the node (allowed chars
+    #        [a-zA-Z_:])
     matchers:
       - alertname = Watchdog
+      - service_id_X = serviceX
       - severity =~ "warning|critical"
+    # <list> a list of grafana-like matchers that an alert rule has to fulfill to match the node
+    object_matchers:
+      - ['alertname', '=', 'CPUUsage']
+      - ['service_id-X', '=', 'serviceX']
+      - ['severity', '=~', 'warning|critical']
     # <list> Times when the route should be muted. These must match the name of a
     #        mute time interval.
     #        Additionally, the root node cannot have any mute times.
@@ -535,16 +554,20 @@ policies:
     # <duration> How long to wait before sending a notification about new alerts that
     #            are added to a group of alerts for which an initial notification has
     #            already been sent. (Usually ~5m or more), default = 5m
-    group_internval: 5m
+    group_interval: 5m
     # <duration>  How long to wait before sending a notification again if it has already
     #             been sent successfully for an alert. (Usually ~3h or more), default = 4h
     repeat_interval: 4h
-    # <list> Zero or more child routes
+    # <list> Zero or more child policies. The schema is the same as the root policy.
     # routes:
-    # ...
+    #   # Another recursively nested policy...
+    #   - receiver: another-receiver
+    #     matchers:
+    #       - ...
+    #     ...
 ```
 
-Here is an example of a configuration file for resetting notification policies.
+Here is an example of a configuration file for resetting the policy tree back to its default value:
 
 ```yaml
 # config file version
@@ -554,6 +577,12 @@ apiVersion: 1
 resetPolicies:
   - 1
 ```
+
+**Note:**
+
+In Grafana, the entire notification policy tree is considered a single, large resource. Add new specific policies as sub-policies under the root policy. Since specific policies may depend on each other, you cannot provision subsets of the policy tree; the entire tree must be defined in a single place.
+
+Since the policy tree is a single resource, applying it will overwrite a policy tree created through any other means.
 
 ### Provision templates
 
@@ -623,6 +652,7 @@ muteTimes:
       - times:
           - start_time: '06:00'
             end_time: '23:59'
+            location: 'UTC'
         weekdays: ['monday:wednesday', 'saturday', 'sunday']
         months: ['1:3', 'may:august', 'december']
         years: ['2020:2022', '2030']
@@ -696,4 +726,12 @@ spec:
             name: grafana-alerting
 ```
 
-This eliminates the need for a persistent database to use Grafana Alerting in Kubernetes; all your provisioned resources appear after each restart or re-deployment.
+This eliminates the need for a persistent database to use Grafana Alerting in Kubernetes; all your provisioned resources appear after each restart or re-deployment. Grafana still requires a database for normal operation, you do not need to persist the contents of the database between restarts if all objects are provisioned using files.
+
+{{% docs/reference %}}
+[alerting_provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api/alerting_provisioning"
+[alerting_provisioning]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api/alerting_provisioning"
+
+[reload-provisioning-configurations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api/admin#reload-provisioning-configurations"
+[reload-provisioning-configurations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api/admin#reload-provisioning-configurations"
+{{% /docs/reference %}}

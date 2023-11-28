@@ -31,6 +31,36 @@ import {
   GraphGradientMode,
 } from '@grafana/schema';
 
+// unit lookup needed to determine if we want power-of-2 or power-of-10 axis ticks
+// see categories.ts is @grafana/data
+const IEC_UNITS = new Set([
+  'bytes',
+  'bits',
+  'kbytes',
+  'mbytes',
+  'gbytes',
+  'tbytes',
+  'pbytes',
+  'binBps',
+  'binbps',
+  'KiBs',
+  'Kibits',
+  'MiBs',
+  'Mibits',
+  'GiBs',
+  'Gibits',
+  'TiBs',
+  'Tibits',
+  'PiBs',
+  'Pibits',
+]);
+
+const BIN_INCRS = Array(53);
+
+for (let i = 0; i < BIN_INCRS.length; i++) {
+  BIN_INCRS[i] = 2 ** i;
+}
+
 import { buildScaleKey } from '../GraphNG/utils';
 import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConfigBuilder';
 import { getScaleGradientFn } from '../uPlot/config/gradientFills';
@@ -57,6 +87,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   renderers,
   tweakScale = (opts) => opts,
   tweakAxis = (opts) => opts,
+  eventsScope = '__global_',
 }) => {
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
@@ -74,8 +105,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   if (!xField) {
     return builder; // empty frame with no options
   }
-
-  let seriesIndex = 0;
 
   const xScaleKey = 'x';
   let xScaleUnit = '_x';
@@ -153,6 +182,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       scaleKey: xScaleKey,
       orientation: ScaleOrientation.Horizontal,
       direction: ScaleDirection.Right,
+      range: (u, dataMin, dataMax) => [xField.config.min ?? dataMin, xField.config.max ?? dataMax],
     });
 
     builder.addAxis({
@@ -162,6 +192,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       label: xField.config.custom?.axisLabel,
       theme,
       grid: { show: xField.config.custom?.axisGridShow },
+      formatValue: (v, decimals) => formattedValueToString(xField.display!(v, decimals)),
     });
   }
 
@@ -173,22 +204,19 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   for (let i = 1; i < frame.fields.length; i++) {
     const field = frame.fields[i];
 
-    const config = {
+    const config: FieldConfig<GraphFieldConfig> = {
       ...field.config,
       custom: {
         ...defaultConfig,
         ...field.config.custom,
       },
-    } as FieldConfig<GraphFieldConfig>;
+    };
 
     const customConfig: GraphFieldConfig = config.custom!;
 
-    if (field === xField || field.type !== FieldType.number) {
+    if (field === xField || (field.type !== FieldType.number && field.type !== FieldType.enum)) {
       continue;
     }
-
-    // TODO: skip this for fields with custom renderers?
-    field.state!.seriesIndex = seriesIndex++;
 
     let fmt = field.display ?? defaultFormatter;
     if (field.config.custom?.stacking?.mode === StackingMode.Percent) {
@@ -203,7 +231,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
         theme,
       });
     }
-    const scaleKey = buildScaleKey(config);
+    const scaleKey = buildScaleKey(config, field.type);
     const colorMode = getFieldColorModeForField(field);
     const scaleColor = getFieldSeriesColor(field, theme);
     const seriesColor = scaleColor.color;
@@ -229,6 +257,16 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
                   dataMin = dataMin < 0 ? -1 : 0;
                   dataMax = dataMax > 0 ? 1 : 0;
                   return [dataMin, dataMax];
+                }
+              : field.type === FieldType.enum
+              ? (u: uPlot, dataMin: number, dataMax: number) => {
+                  // this is the exhaustive enum (stable)
+                  let len = field.config.type!.enum!.text!.length;
+
+                  return [-1, len];
+
+                  // these are only values that are present
+                  // return [dataMin - 1, dataMax + 1]
                 }
               : undefined,
           decimals: field.config.decimals,
@@ -256,20 +294,31 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
         }
       }
 
-      let axisColorOpts = {};
+      const axisDisplayOptions = {
+        border: {
+          show: customConfig.axisBorderShow || false,
+          width: 1 / devicePixelRatio,
+          stroke: axisColor || theme.colors.text.primary,
+        },
+        ticks: {
+          show: customConfig.axisBorderShow || false,
+          stroke: axisColor || theme.colors.text.primary,
+        },
+        color: axisColor || theme.colors.text.primary,
+      };
 
-      if (axisColor) {
-        axisColorOpts = {
-          border: {
-            show: true,
-            width: 1,
-            stroke: axisColor,
-          },
-          ticks: {
-            stroke: axisColor,
-          },
-          color: customConfig.axisColorMode === AxisColorMode.Series ? axisColor : undefined,
-        };
+      let incrs: uPlot.Axis.Incrs | undefined;
+
+      // TODO: these will be dynamic with frame updates, so need to accept getYTickLabels()
+      let values: uPlot.Axis.Values | undefined;
+      let splits: uPlot.Axis.Splits | undefined;
+
+      if (IEC_UNITS.has(config.unit!)) {
+        incrs = BIN_INCRS;
+      } else if (field.type === FieldType.enum) {
+        let text = field.config.type!.enum!.text!;
+        splits = text.map((v: string, i: number) => i);
+        values = text;
       }
 
       builder.addAxis(
@@ -279,12 +328,15 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             label: customConfig.axisLabel,
             size: customConfig.axisWidth,
             placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
-            formatValue: (v, decimals) => formattedValueToString(fmt(v, config.decimals ?? decimals)),
+            formatValue: (v, decimals) => formattedValueToString(fmt(v, decimals)),
             theme,
             grid: { show: customConfig.axisGridShow },
             decimals: field.config.decimals,
             distr: customConfig.scaleDistribution?.type,
-            ...axisColorOpts,
+            splits,
+            values,
+            incrs,
+            ...axisDisplayOptions,
           },
           field
         )
@@ -296,7 +348,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 
     let pointsFilter: uPlot.Series.Points.Filter = () => null;
 
-    if (customConfig.spanNulls !== true && showPoints !== VisibilityMode.Always) {
+    if (customConfig.spanNulls !== true) {
       pointsFilter = (u, seriesIdx, show, gaps) => {
         let filtered = [];
 
@@ -434,40 +486,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       dynamicSeriesColor = (seriesIdx) => getFieldSeriesColor(alignedFrame.fields[seriesIdx], theme).color;
     }
 
-    // this adds leading and trailing gaps when datasets have leading and trailing nulls
-    // it will cause additional unnecessary clips, but we also use adjacent gaps to show single points
-    // when not connecting across gaps, e.g. null,100,null,null,50,50,50,null,50,null,null
-    const gapsRefiner: uPlot.Series.GapsRefiner = (u, seriesIdx, idx0, idx1, gaps) => {
-      let yData = u.data[seriesIdx];
-
-      // @ts-ignore
-      let xData = u._data[0];
-
-      // scan to first and last non-null vals
-      let first = idx0,
-        last = idx1;
-
-      while (first <= last && yData[first] == null) {
-        first++;
-      }
-
-      while (last > first && yData[last] == null) {
-        last--;
-      }
-
-      if (first !== idx0) {
-        gaps.unshift([u.bbox.left, Math.round(u.valToPos(xData[first]!, 'x', true))]);
-      }
-
-      if (last !== idx1) {
-        gaps.push([Math.round(u.valToPos(xData[last]!, 'x', true)), u.bbox.left + u.bbox.width]);
-      }
-
-      return gaps;
-    };
-
     builder.addSeries({
-      gapsRefiner,
       pathBuilder,
       pointsBuilder,
       scaleKey,
@@ -597,9 +616,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       },
       data: frame,
     };
+
     const hoverEvent = new DataHoverEvent(payload);
     cursor.sync = {
-      key: '__global_',
+      key: eventsScope,
       filters: {
         pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
           if (sync && sync() === DashboardCursorSync.Off) {

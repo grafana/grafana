@@ -26,7 +26,7 @@ export interface LibraryPanelsSearchProps {
   showFolderFilter?: boolean;
   showSecondaryActions?: boolean;
   currentPanelId?: string;
-  currentFolderId?: number;
+  currentFolderUID?: string;
   perPage?: number;
 }
 
@@ -34,21 +34,21 @@ export const LibraryPanelsSearch = ({
   onClick,
   variant = LibraryPanelsSearchVariant.Spacious,
   currentPanelId,
-  currentFolderId,
+  currentFolderUID,
   perPage = DEFAULT_PER_PAGE_PAGINATION,
   showPanelFilter = false,
   showFolderFilter = false,
   showSort = false,
   showSecondaryActions = false,
 }: LibraryPanelsSearchProps): JSX.Element => {
-  const styles = useStyles2(useCallback((theme) => getStyles(theme, variant), [variant]));
+  const styles = useStyles2(getStyles, variant);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   useDebounce(() => setDebouncedSearchQuery(searchQuery), 200, [searchQuery]);
 
   const [sortDirection, setSortDirection] = useState<SelectableValue<string>>({});
-  const [folderFilter, setFolderFilter] = useState<string[]>(currentFolderId ? [String(currentFolderId)] : []);
+  const [folderFilter, setFolderFilter] = useState<string[]>(currentFolderUID ? [currentFolderUID] : []);
   const [panelFilter, setPanelFilter] = useState<string[]>([]);
 
   const sortOrFiltersVisible = showSort || showPanelFilter || showFolderFilter;
@@ -149,13 +149,13 @@ const SearchControls = React.memo(
     onFolderFilterChange,
     onPanelFilterChange,
   }: SearchControlsProps) => {
-    const styles = useStyles2(useCallback((theme) => getRowStyles(theme, variant), [variant]));
+    const styles = useStyles2(getRowStyles, variant);
     const panelFilterChanged = useCallback(
       (plugins: PanelPluginMeta[]) => onPanelFilterChange(plugins.map((p) => p.id)),
       [onPanelFilterChange]
     );
     const folderFilterChanged = useCallback(
-      (folders: FolderInfo[]) => onFolderFilterChange(folders.map((f) => String(f.id))),
+      (folders: FolderInfo[]) => onFolderFilterChange(folders.map((f) => f.uid ?? '')),
       [onFolderFilterChange]
     );
 

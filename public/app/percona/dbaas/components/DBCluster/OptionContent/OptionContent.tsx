@@ -10,7 +10,7 @@ interface OptionContentProps {
   dataTestId?: string;
 }
 
-export const OptionContent: FC<OptionContentProps> = ({ title, description, tags, disabledTags, dataTestId }) => (
+export const OptionContent: FC<React.PropsWithChildren<OptionContentProps>> = ({ title, description, tags, disabledTags, dataTestId }) => (
   <div className={styles.optionWrapper} data-testid={dataTestId}>
     <div className={styles.optionText}>
       <span className={styles.optionTitle}>{title}</span>

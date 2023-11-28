@@ -1,4 +1,5 @@
 import { TransformerRegistryItem } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { filterByValueTransformRegistryItem } from './FilterByValueTransformer/FilterByValueTransformerEditor';
 import { heatmapTransformRegistryItem } from './calculateHeatmap/HeatmapTransformerEditor';
@@ -8,6 +9,8 @@ import { concatenateTransformRegistryItem } from './editors/ConcatenateTransform
 import { convertFieldTypeTransformRegistryItem } from './editors/ConvertFieldTypeTransformerEditor';
 import { filterFieldsByNameTransformRegistryItem } from './editors/FilterByNameTransformerEditor';
 import { filterFramesByRefIdTransformRegistryItem } from './editors/FilterByRefIdTransformerEditor';
+import { formatStringTransformerRegistryItem } from './editors/FormatStringTransformerEditor';
+import { formatTimeTransformerRegistryItem } from './editors/FormatTimeTransformerEditor';
 import { groupByTransformRegistryItem } from './editors/GroupByTransformerEditor';
 import { groupingToMatrixTransformRegistryItem } from './editors/GroupingToMatrixTransformerEditor';
 import { histogramTransformRegistryItem } from './editors/HistogramTransformerEditor';
@@ -23,9 +26,11 @@ import { sortByTransformRegistryItem } from './editors/SortByTransformerEditor';
 import { extractFieldsTransformRegistryItem } from './extractFields/ExtractFieldsTransformerEditor';
 import { joinByLabelsTransformRegistryItem } from './joinByLabels/JoinByLabelsTransformerEditor';
 import { fieldLookupTransformRegistryItem } from './lookupGazetteer/FieldLookupTransformerEditor';
+import { partitionByValuesTransformRegistryItem } from './partitionByValues/PartitionByValuesEditor';
 import { prepareTimeseriesTransformerRegistryItem } from './prepareTimeSeries/PrepareTimeSeriesEditor';
 import { rowsToFieldsTransformRegistryItem } from './rowsToFields/RowsToFieldsTransformerEditor';
 import { spatialTransformRegistryItem } from './spatial/SpatialTransformerEditor';
+import { timeSeriesTableTransformRegistryItem } from './timeSeriesTable/TimeSeriesTableTransformEditor';
 
 export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> => {
   return [
@@ -55,5 +60,9 @@ export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> =
     groupingToMatrixTransformRegistryItem,
     limitTransformRegistryItem,
     joinByLabelsTransformRegistryItem,
+    partitionByValuesTransformRegistryItem,
+    ...(config.featureToggles.formatString ? [formatStringTransformerRegistryItem] : []),
+    formatTimeTransformerRegistryItem,
+    timeSeriesTableTransformRegistryItem,
   ];
 };

@@ -6,17 +6,16 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
-func ProvideDashboardUpdater(bus bus.Bus, pluginStore plugins.Store, pluginDashboardService plugindashboards.Service,
+func ProvideDashboardUpdater(bus bus.Bus, pluginStore pluginstore.Store, pluginDashboardService plugindashboards.Service,
 	dashboardImportService dashboardimport.Service, pluginSettingsService pluginsettings.Service,
 	dashboardPluginService dashboards.PluginService, dashboardService dashboards.DashboardService) *DashboardUpdater {
 	du := newDashboardUpdater(bus, pluginStore, pluginDashboardService, dashboardImportService,
@@ -25,7 +24,7 @@ func ProvideDashboardUpdater(bus bus.Bus, pluginStore plugins.Store, pluginDashb
 	return du
 }
 
-func newDashboardUpdater(bus bus.Bus, pluginStore plugins.Store,
+func newDashboardUpdater(bus bus.Bus, pluginStore pluginstore.Store,
 	pluginDashboardService plugindashboards.Service, dashboardImportService dashboardimport.Service,
 	pluginSettingsService pluginsettings.Service, dashboardPluginService dashboards.PluginService,
 	dashboardService dashboards.DashboardService) *DashboardUpdater {
@@ -44,7 +43,7 @@ func newDashboardUpdater(bus bus.Bus, pluginStore plugins.Store,
 }
 
 type DashboardUpdater struct {
-	pluginStore            plugins.Store
+	pluginStore            pluginstore.Store
 	pluginDashboardService plugindashboards.Service
 	dashboardImportService dashboardimport.Service
 	pluginSettingsService  pluginsettings.Service
@@ -76,7 +75,7 @@ func (du *DashboardUpdater) updateAppDashboards() {
 	}
 }
 
-func (du *DashboardUpdater) syncPluginDashboards(ctx context.Context, plugin plugins.PluginDTO, orgID int64) {
+func (du *DashboardUpdater) syncPluginDashboards(ctx context.Context, plugin pluginstore.Plugin, orgID int64) {
 	du.logger.Info("Syncing plugin dashboards to DB", "pluginId", plugin.ID)
 
 	// Get plugin dashboards
@@ -132,7 +131,7 @@ func (du *DashboardUpdater) syncPluginDashboards(ctx context.Context, plugin plu
 	}
 }
 
-func (du *DashboardUpdater) handlePluginStateChanged(ctx context.Context, event *models.PluginStateChangedEvent) error {
+func (du *DashboardUpdater) handlePluginStateChanged(ctx context.Context, event *pluginsettings.PluginStateChangedEvent) error {
 	du.logger.Info("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
 
 	if event.Enabled {
@@ -143,14 +142,15 @@ func (du *DashboardUpdater) handlePluginStateChanged(ctx context.Context, event 
 
 		du.syncPluginDashboards(ctx, p, event.OrgId)
 	} else {
-		query := models.GetDashboardsByPluginIdQuery{PluginId: event.PluginId, OrgId: event.OrgId}
-		if err := du.dashboardPluginService.GetDashboardsByPluginID(ctx, &query); err != nil {
+		query := dashboards.GetDashboardsByPluginIDQuery{PluginID: event.PluginId, OrgID: event.OrgId}
+		queryResult, err := du.dashboardPluginService.GetDashboardsByPluginID(ctx, &query)
+		if err != nil {
 			return err
 		}
 
-		for _, dash := range query.Result {
+		for _, dash := range queryResult {
 			du.logger.Info("Deleting plugin dashboard", "pluginId", event.PluginId, "dashboard", dash.Slug)
-			if err := du.dashboardService.DeleteDashboard(ctx, dash.Id, dash.OrgId); err != nil {
+			if err := du.dashboardService.DeleteDashboard(ctx, dash.ID, dash.OrgID); err != nil {
 				return err
 			}
 		}

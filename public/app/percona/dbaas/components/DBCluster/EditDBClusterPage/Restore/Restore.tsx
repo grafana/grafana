@@ -14,7 +14,7 @@ import { RestoreService } from './Restore.service';
 import { getStyles } from './Restore.styles';
 import { RestoreFields, RestoreFromProps } from './Restore.types';
 
-export const Restore: FC<RestoreFromProps> = ({ form }) => {
+export const Restore: FC<React.PropsWithChildren<RestoreFromProps>> = ({ form }) => {
   const styles = useStyles(getStyles);
 
   const [enableRestore, setEnableRestore] = useState(false);

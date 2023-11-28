@@ -10,7 +10,7 @@ import { StoreState } from 'app/types';
 import Contact from './Contact';
 import { ContactService } from './Contact.service';
 
-const MockWrapper: FC = ({ children }) => {
+const MockWrapper: FC<React.PropsWithChildren<unknown>> = ({ children }) => {
   return (
     <Provider
       store={configureStore({

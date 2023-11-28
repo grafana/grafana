@@ -2,6 +2,7 @@ import { Template } from 'app/percona/integrated-alerting/components/AlertRuleTe
 import { Severity } from 'app/percona/shared/core';
 import { AlertQuery, GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
+import { Folder } from '../components/rule-editor/RuleFolderPicker';
 import { FiltersForm } from '../components/rule-editor/TemplateStep/TemplateStep.types';
 
 export enum RuleFormType {
@@ -10,14 +11,6 @@ export enum RuleFormType {
   cloudRecording = 'cloud-recording',
   // @PERCONA
   templated = 'templated',
-}
-
-// @PERCONA
-// Added uid here as optional
-export interface RuleForm {
-  title: string;
-  id: number;
-  uid?: string;
 }
 
 export interface RuleFormValues {
@@ -35,14 +28,17 @@ export interface RuleFormValues {
   condition: string | null; // refId of the query that gets alerted on
   noDataState: GrafanaAlertStateDecision;
   execErrState: GrafanaAlertStateDecision;
-  folder: RuleForm | null;
+  folder: Folder | null;
   evaluateEvery: string;
   evaluateFor: string;
+  isPaused?: boolean;
 
   // cortex / loki rules
   namespace: string;
   forTime: number;
   forTimeUnit: string;
+  keepFiringForTime?: number;
+  keepFiringForTimeUnit?: string;
   expression: string;
 
   // @PERCONA

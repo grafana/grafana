@@ -1,0 +1,37 @@
+import React from 'react';
+import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
+const fields = [
+    { label: 'Step', id: 'timeStep', placeholder: '60', tooltip: 'The number of seconds between datapoints.' },
+    {
+        label: 'On Count',
+        id: 'onCount',
+        placeholder: '3',
+        tooltip: 'The number of values within a cycle, at the start of the cycle, that should have the onValue.',
+    },
+    { label: 'Off Count', id: 'offCount', placeholder: '6', tooltip: 'The number of offValues within the cycle.' },
+    {
+        label: 'On Value',
+        id: 'onValue',
+        placeholder: '1',
+        tooltip: 'The value for "on values", may be an int, float, or null.',
+    },
+    {
+        label: 'Off Value',
+        id: 'offValue',
+        placeholder: '1',
+        tooltip: 'The value for "off values", may be a int, float, or null.',
+    },
+];
+export const PredictablePulseEditor = ({ onChange, query }) => {
+    // Convert values to numbers before saving
+    const onInputChange = (e) => {
+        const { name, value } = e.target;
+        onChange({ target: { name, value: Number(value) } });
+    };
+    return (React.createElement(InlineFieldRow, null, fields.map(({ label, id, placeholder, tooltip }) => {
+        var _a;
+        return (React.createElement(InlineField, { label: label, labelWidth: 14, key: id, tooltip: tooltip },
+            React.createElement(Input, { width: 32, type: "number", name: id, id: `pulseWave.${id}-${query.refId}`, value: (_a = query.pulseWave) === null || _a === void 0 ? void 0 : _a[id], placeholder: placeholder, onChange: onInputChange })));
+    })));
+};
+//# sourceMappingURL=PredictablePulseEditor.js.map

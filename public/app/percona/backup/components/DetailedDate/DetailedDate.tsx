@@ -8,7 +8,7 @@ import { DAY_FORMAT, HOUR_FORMAT } from './DetailedDate.constants';
 import { getStyles } from './DetailedDate.styles';
 import { DetailedDateProps } from './DetailedDate.types';
 
-export const DetailedDate: FC<DetailedDateProps> = ({
+export const DetailedDate: FC<React.PropsWithChildren<DetailedDateProps>> = ({
   date,
   dayFormat = DAY_FORMAT,
   hourFormat = HOUR_FORMAT,

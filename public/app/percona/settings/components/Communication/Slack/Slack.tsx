@@ -15,7 +15,7 @@ export interface SlackProps {
   updateSettings: (body: SlackPayload, callback: LoadingCallback) => void;
 }
 
-export const Slack: FC<SlackProps> = ({ updateSettings, settings }) => {
+export const Slack: FC<React.PropsWithChildren<SlackProps>> = ({ updateSettings, settings }) => {
   const settingsStyles = useStyles2(getSettingsStyles);
   const [loading, setLoading] = useState(false);
 

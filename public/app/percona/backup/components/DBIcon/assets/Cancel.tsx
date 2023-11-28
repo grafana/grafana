@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 
 import { IconProps } from '../DBIcon.types';
 
-export const Cancel: FC<IconProps> = ({ size = 22, ...rest }) => (
+export const Cancel: FC<React.PropsWithChildren<IconProps>> = ({ size = 22, ...rest }) => (
   <svg width={size} height={size} viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" {...rest}>
     <path
       fillRule="evenodd"

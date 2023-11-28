@@ -1,7 +1,9 @@
-import { dateTime, locationUtil, PanelModel, TimeRange, urlUtil } from '@grafana/data';
+import { dateTime, locationUtil, TimeRange, urlUtil, rangeUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { createShortLink } from 'app/core/utils/shortLinks';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+
+import { PanelModel } from '../../state';
 
 export interface BuildParamsArgs {
   useCurrentTimeRange: boolean;
@@ -21,9 +23,17 @@ export function buildParams({
   orgId = config.bootData.user.orgId,
 }: BuildParamsArgs): URLSearchParams {
   const searchParams = new URLSearchParams(search);
+  const relative = panel?.timeFrom;
 
-  searchParams.set('from', String(range.from.valueOf()));
-  searchParams.set('to', String(range.to.valueOf()));
+  // Use panel's relative time if it's set
+  if (relative) {
+    const { from, to } = rangeUtil.describeTextRange(relative);
+    searchParams.set('from', from);
+    searchParams.set('to', to);
+  } else {
+    searchParams.set('from', String(range.from.valueOf()));
+    searchParams.set('to', String(range.to.valueOf()));
+  }
   searchParams.set('orgId', String(orgId));
 
   if (!useCurrentTimeRange) {
@@ -121,11 +131,11 @@ export function getLocalTimeZone() {
   const utcOffset = '&tz=UTC' + encodeURIComponent(dateTime().format('Z'));
 
   // Older browser does not the internationalization API
-  if (!(window as any).Intl) {
+  if (!window.Intl) {
     return utcOffset;
   }
 
-  const dateFormat = (window as any).Intl.DateTimeFormat();
+  const dateFormat = window.Intl.DateTimeFormat();
   if (!dateFormat.resolvedOptions) {
     return utcOffset;
   }
@@ -137,3 +147,16 @@ export function getLocalTimeZone() {
 
   return '&tz=' + encodeURIComponent(options.timeZone);
 }
+
+export const shareDashboardType: {
+  [key: string]: string;
+} = {
+  link: 'link',
+  snapshot: 'snapshot',
+  export: 'export',
+  embed: 'embed',
+  libraryPanel: 'library_panel',
+  pdf: 'pdf',
+  report: 'report',
+  publicDashboard: 'public_dashboard',
+};

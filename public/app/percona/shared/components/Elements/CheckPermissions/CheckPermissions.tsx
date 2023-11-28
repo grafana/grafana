@@ -9,7 +9,7 @@ import { Messages } from './CheckPermissions.messages';
 import { getStyles } from './CheckPermissions.styles';
 import { CheckPermissionsProps } from './CheckPermissions.types';
 
-export const CheckPermissions: FC<CheckPermissionsProps> = ({
+export const CheckPermissions: FC<React.PropsWithChildren<CheckPermissionsProps>> = ({
   children,
   onSettingsLoadSuccess,
   onSettingsLoadError,

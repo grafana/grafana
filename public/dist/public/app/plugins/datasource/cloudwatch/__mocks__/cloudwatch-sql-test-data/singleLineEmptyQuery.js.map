@@ -1,0 +1,1 @@
+{"version":3,"file":"singleLineEmptyQuery.js","sourceRoot":"","sources":["../../../../../../../../app/plugins/datasource/cloudwatch/__mocks__/cloudwatch-sql-test-data/singleLineEmptyQuery.ts"],"names":[],"mappings":"AAEA,MAAM,CAAC,MAAM,oBAAoB,GAAG;IAClC,KAAK,EAAE,EAAE;IACT,MAAM,EAAE,EAA2B;CACpC,CAAC"}

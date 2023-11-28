@@ -12,14 +12,16 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -33,7 +35,7 @@ var (
 
 type DataSourceProxy struct {
 	ds                 *datasources.DataSource
-	ctx                *models.ReqContext
+	ctx                *contextmodel.ReqContext
 	targetUrl          *url.URL
 	proxyPath          string
 	matchedRoute       *plugins.Route
@@ -43,6 +45,7 @@ type DataSourceProxy struct {
 	oAuthTokenService  oauthtoken.OAuthTokenService
 	dataSourcesService datasources.DataSourceService
 	tracer             tracing.Tracer
+	features           featuremgmt.FeatureToggles
 }
 
 type httpClient interface {
@@ -50,11 +53,11 @@ type httpClient interface {
 }
 
 // NewDataSourceProxy creates a new Datasource proxy
-func NewDataSourceProxy(ds *datasources.DataSource, pluginRoutes []*plugins.Route, ctx *models.ReqContext,
+func NewDataSourceProxy(ds *datasources.DataSource, pluginRoutes []*plugins.Route, ctx *contextmodel.ReqContext,
 	proxyPath string, cfg *setting.Cfg, clientProvider httpclient.Provider,
 	oAuthTokenService oauthtoken.OAuthTokenService, dsService datasources.DataSourceService,
-	tracer tracing.Tracer) (*DataSourceProxy, error) {
-	targetURL, err := datasource.ValidateURL(ds.Type, ds.Url)
+	tracer tracing.Tracer, features featuremgmt.FeatureToggles) (*DataSourceProxy, error) {
+	targetURL, err := datasource.ValidateURL(ds.Type, ds.URL)
 	if err != nil {
 		return nil, err
 	}
@@ -70,6 +73,7 @@ func NewDataSourceProxy(ds *datasources.DataSource, pluginRoutes []*plugins.Rout
 		oAuthTokenService:  oAuthTokenService,
 		dataSourcesService: dsService,
 		tracer:             tracer,
+		features:           features,
 	}, nil
 }
 
@@ -120,6 +124,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 				Body:          io.NopCloser(strings.NewReader(msg)),
 				ContentLength: int64(len(msg)),
 				Header:        http.Header{},
+				Request:       resp.Request,
 			}
 		}
 		return nil
@@ -138,10 +143,12 @@ func (proxy *DataSourceProxy) HandleRequest() {
 
 	proxy.ctx.Req = proxy.ctx.Req.WithContext(ctx)
 
-	span.SetAttributes("datasource_name", proxy.ds.Name, attribute.Key("datasource_name").String(proxy.ds.Name))
-	span.SetAttributes("datasource_type", proxy.ds.Type, attribute.Key("datasource_type").String(proxy.ds.Type))
-	span.SetAttributes("user", proxy.ctx.SignedInUser.Login, attribute.Key("user").String(proxy.ctx.SignedInUser.Login))
-	span.SetAttributes("org_id", proxy.ctx.SignedInUser.OrgID, attribute.Key("org_id").Int64(proxy.ctx.SignedInUser.OrgID))
+	span.SetAttributes(
+		attribute.String("datasource_name", proxy.ds.Name),
+		attribute.String("datasource_type", proxy.ds.Type),
+		attribute.String("user", proxy.ctx.SignedInUser.Login),
+		attribute.Int64("org_id", proxy.ctx.SignedInUser.OrgID),
+	)
 
 	proxy.addTraceFromHeaderValue(span, "X-Panel-Id", "panel_id")
 	proxy.addTraceFromHeaderValue(span, "X-Dashboard-Id", "dashboard_id")
@@ -151,11 +158,11 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	reverseProxy.ServeHTTP(proxy.ctx.Resp, proxy.ctx.Req)
 }
 
-func (proxy *DataSourceProxy) addTraceFromHeaderValue(span tracing.Span, headerName string, tagName string) {
+func (proxy *DataSourceProxy) addTraceFromHeaderValue(span trace.Span, headerName string, tagName string) {
 	panelId := proxy.ctx.Req.Header.Get(headerName)
 	dashId, err := strconv.Atoi(panelId)
 	if err == nil {
-		span.SetAttributes(tagName, dashId, attribute.Key(tagName).Int(dashId))
+		span.SetAttributes(attribute.Int(tagName, dashId))
 	}
 }
 
@@ -222,12 +229,12 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		req.Header.Set("Authorization", dsAuth)
 	}
 
-	applyUserHeader(proxy.cfg.SendUserHeader, req, proxy.ctx.SignedInUser)
+	proxyutil.ApplyUserHeader(proxy.cfg.SendUserHeader, req, proxy.ctx.SignedInUser)
 
 	proxyutil.ClearCookieHeader(req, proxy.ds.AllowedCookies(), []string{proxy.cfg.LoginCookieName})
-	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
+	req.Header.Set("User-Agent", proxy.cfg.DataProxyUserAgent)
 
-	jsonData := make(map[string]interface{})
+	jsonData := make(map[string]any)
 	if proxy.ds.JsonData != nil {
 		jsonData, err = proxy.ds.JsonData.Map()
 		if err != nil {
@@ -244,7 +251,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		}
 
 		ApplyRoute(req.Context(), req, proxy.proxyPath, proxy.matchedRoute, DSInfo{
-			ID:                      proxy.ds.Id,
+			ID:                      proxy.ds.ID,
 			Updated:                 proxy.ds.Updated,
 			JSONData:                jsonData,
 			DecryptedSecureJSONData: decryptedValues,
@@ -260,6 +267,10 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 				req.Header.Set("X-ID-Token", idToken)
 			}
 		}
+	}
+
+	if proxy.features.IsEnabled(featuremgmt.FlagIdForwarding) {
+		proxyutil.ApplyForwardIDHeader(req, proxy.ctx.SignedInUser)
 	}
 }
 
@@ -343,7 +354,7 @@ func (proxy *DataSourceProxy) logRequest() {
 		"body", body)
 }
 
-func checkWhiteList(c *models.ReqContext, host string) bool {
+func checkWhiteList(c *contextmodel.ReqContext, host string) bool {
 	if host != "" && len(setting.DataProxyWhiteList) > 0 {
 		if _, exists := setting.DataProxyWhiteList[host]; !exists {
 			c.JsonApiErr(403, "Data proxy hostname and ip are not included in whitelist", nil)

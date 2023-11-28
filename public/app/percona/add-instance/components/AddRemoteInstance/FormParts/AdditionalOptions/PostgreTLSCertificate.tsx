@@ -5,7 +5,7 @@ import { TextareaInputField } from 'app/percona/shared/components/Form/TextareaI
 import { Messages } from '../FormParts.messages';
 import { FormPartProps } from '../FormParts.types';
 
-export const PostgreTLSCertificate: FC<FormPartProps> = ({ form }) => {
+export const PostgreTLSCertificate: FC<React.PropsWithChildren<FormPartProps>> = ({ form }) => {
   const values = form.getState().values;
   const tlsFlag = values && values['tls'];
 

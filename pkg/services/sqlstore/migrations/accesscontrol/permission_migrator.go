@@ -133,7 +133,7 @@ func (m *permissionMigrator) createRoles(roles []*accesscontrol.Role) ([]*access
 	ts := time.Now()
 	createdRoles := make([]*accesscontrol.Role, 0, len(roles))
 	valueStrings := make([]string, len(roles))
-	args := make([]interface{}, 0, len(roles)*5)
+	args := make([]any, 0, len(roles)*5)
 
 	for i, r := range roles {
 		uid, err := GenerateManagedRoleUID(r.OrgID, r.Name)
@@ -160,7 +160,7 @@ func (m *permissionMigrator) createRolesMySQL(roles []*accesscontrol.Role) ([]*a
 	createdRoles := make([]*accesscontrol.Role, 0, len(roles))
 
 	where := make([]string, len(roles))
-	args := make([]interface{}, 0, len(roles)*2)
+	args := make([]any, 0, len(roles)*2)
 
 	for i := range roles {
 		uid, err := GenerateManagedRoleUID(roles[i].OrgID, roles[i].Name)

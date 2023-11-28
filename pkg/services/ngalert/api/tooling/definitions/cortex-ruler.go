@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"github.com/prometheus/common/model"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 // swagger:route Get /api/ruler/grafana/api/v1/rules ruler RouteGetGrafanaRulesConfig
@@ -20,6 +18,18 @@ import (
 //     Responses:
 //       202: NamespaceConfigResponse
 //
+
+// swagger:route Get /api/ruler/grafana/api/v1/export/rules ruler RouteGetRulesForExport
+//
+// List rules in provisioning format
+//
+//     Consumes:
+//     - application/json
+//     - application/yaml
+//
+//     Responses:
+//       200: AlertingFileExport
+//       404: description: Not found.
 
 // swagger:route Get /api/ruler/{DatasourceUID}/api/v1/rules ruler RouteGetRulesConfig
 //
@@ -41,8 +51,20 @@ import (
 //     - application/yaml
 //
 //     Responses:
-//       202: Ack
+//       202: UpdateRuleGroupResponse
 //
+
+// swagger:route POST /api/ruler/grafana/api/v1/rules/{Namespace}/export ruler RoutePostRulesGroupForExport
+//
+// Converts submitted rule group to provisioning format
+//
+//     Consumes:
+//     - application/json
+//     - application/yaml
+//
+//     Responses:
+//       200: AlertingFileExport
+//       404: description: Not found.
 
 // swagger:route POST /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RoutePostNameRulesConfig
 //
@@ -128,7 +150,7 @@ import (
 //       202: Ack
 //       404: NotFound
 
-// swagger:parameters RoutePostNameRulesConfig RoutePostNameGrafanaRulesConfig
+// swagger:parameters RoutePostNameRulesConfig RoutePostNameGrafanaRulesConfig RoutePostRulesGroupForExport
 type NamespaceConfig struct {
 	// in:path
 	Namespace string
@@ -260,12 +282,13 @@ func (c *GettableRuleGroupConfig) validate() error {
 }
 
 type ApiRuleNode struct {
-	Record      string            `yaml:"record,omitempty" json:"record,omitempty"`
-	Alert       string            `yaml:"alert,omitempty" json:"alert,omitempty"`
-	Expr        string            `yaml:"expr" json:"expr"`
-	For         *model.Duration   `yaml:"for,omitempty" json:"for,omitempty"`
-	Labels      map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
-	Annotations map[string]string `yaml:"annotations,omitempty" json:"annotations,omitempty"`
+	Record        string            `yaml:"record,omitempty" json:"record,omitempty"`
+	Alert         string            `yaml:"alert,omitempty" json:"alert,omitempty"`
+	Expr          string            `yaml:"expr" json:"expr"`
+	For           *model.Duration   `yaml:"for,omitempty" json:"for,omitempty"`
+	KeepFiringFor *model.Duration   `yaml:"keep_firing_for,omitempty" json:"keep_firing_for,omitempty"`
+	Labels        map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
+	Annotations   map[string]string `yaml:"annotations,omitempty" json:"annotations,omitempty"`
 }
 
 type RuleType int
@@ -370,10 +393,11 @@ const (
 type PostableGrafanaRule struct {
 	Title        string              `json:"title" yaml:"title"`
 	Condition    string              `json:"condition" yaml:"condition"`
-	Data         []models.AlertQuery `json:"data" yaml:"data"`
+	Data         []AlertQuery        `json:"data" yaml:"data"`
 	UID          string              `json:"uid" yaml:"uid"`
 	NoDataState  NoDataState         `json:"no_data_state" yaml:"no_data_state"`
 	ExecErrState ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`
+	IsPaused     *bool               `json:"is_paused" yaml:"is_paused"`
 }
 
 // swagger:model
@@ -382,7 +406,7 @@ type GettableGrafanaRule struct {
 	OrgID           int64               `json:"orgId" yaml:"orgId"`
 	Title           string              `json:"title" yaml:"title"`
 	Condition       string              `json:"condition" yaml:"condition"`
-	Data            []models.AlertQuery `json:"data" yaml:"data"`
+	Data            []AlertQuery        `json:"data" yaml:"data"`
 	Updated         time.Time           `json:"updated" yaml:"updated"`
 	IntervalSeconds int64               `json:"intervalSeconds" yaml:"intervalSeconds"`
 	Version         int64               `json:"version" yaml:"version"`
@@ -392,5 +416,81 @@ type GettableGrafanaRule struct {
 	RuleGroup       string              `json:"rule_group" yaml:"rule_group"`
 	NoDataState     NoDataState         `json:"no_data_state" yaml:"no_data_state"`
 	ExecErrState    ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`
-	Provenance      models.Provenance   `json:"provenance,omitempty" yaml:"provenance,omitempty"`
+	Provenance      Provenance          `json:"provenance,omitempty" yaml:"provenance,omitempty"`
+	IsPaused        bool                `json:"is_paused" yaml:"is_paused"`
+}
+
+// AlertQuery represents a single query associated with an alert definition.
+type AlertQuery struct {
+	// RefID is the unique identifier of the query, set by the frontend call.
+	RefID string `json:"refId"`
+	// QueryType is an optional identifier for the type of query.
+	// It can be used to distinguish different types of queries.
+	QueryType string `json:"queryType"`
+	// RelativeTimeRange is the relative Start and End of the query as sent by the frontend.
+	RelativeTimeRange RelativeTimeRange `json:"relativeTimeRange"`
+
+	// Grafana data source unique identifier; it should be '__expr__' for a Server Side Expression operation.
+	DatasourceUID string `json:"datasourceUid"`
+
+	// JSON is the raw JSON query and includes the above properties as well as custom properties.
+	Model json.RawMessage `json:"model"`
+}
+
+// RelativeTimeRange is the per query start and end time
+// for requests.
+type RelativeTimeRange struct {
+	From Duration `json:"from" yaml:"from"`
+	To   Duration `json:"to" yaml:"to"`
+}
+
+// Duration is a type used for marshalling durations.
+type Duration time.Duration
+
+func (d Duration) String() string {
+	return time.Duration(d).String()
+}
+
+func (d Duration) MarshalJSON() ([]byte, error) {
+	return json.Marshal(time.Duration(d).Seconds())
+}
+
+func (d *Duration) UnmarshalJSON(b []byte) error {
+	var v any
+	if err := json.Unmarshal(b, &v); err != nil {
+		return err
+	}
+	switch value := v.(type) {
+	case float64:
+		*d = Duration(time.Duration(value) * time.Second)
+		return nil
+	default:
+		return fmt.Errorf("invalid duration %v", v)
+	}
+}
+
+func (d Duration) MarshalYAML() (any, error) {
+	return time.Duration(d).Seconds(), nil
+}
+
+func (d *Duration) UnmarshalYAML(unmarshal func(any) error) error {
+	var v any
+	if err := unmarshal(&v); err != nil {
+		return err
+	}
+	switch value := v.(type) {
+	case int:
+		*d = Duration(time.Duration(value) * time.Second)
+		return nil
+	default:
+		return fmt.Errorf("invalid duration %v", v)
+	}
+}
+
+// swagger:model
+type UpdateRuleGroupResponse struct {
+	Message string   `json:"message"`
+	Created []string `json:"created,omitempty"`
+	Updated []string `json:"updated,omitempty"`
+	Deleted []string `json:"deleted,omitempty"`
 }

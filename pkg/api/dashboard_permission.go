@@ -2,16 +2,17 @@ package api
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -40,7 +41,7 @@ import (
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetDashboardPermissionList(c *contextmodel.ReqContext) response.Response {
 	var dashID int64
 	var err error
 	dashUID := web.Params(c.Req)[":uid"]
@@ -51,39 +52,29 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.
 		}
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgID, dashID, dashUID)
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), dashID, dashUID)
 	if rsp != nil {
 		return rsp
 	}
 
-	if dashID == 0 {
-		dashID = dash.Id
-	}
-
-	g := guardian.New(c.Req.Context(), dashID, c.OrgID, c.SignedInUser)
-
-	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
-		return dashboardGuardianResponse(err)
-	}
-
-	acl, err := g.GetACLWithoutDuplicates()
+	acl, err := hs.getDashboardACL(c.Req.Context(), c.SignedInUser, dash)
 	if err != nil {
 		return response.Error(500, "Failed to get dashboard permissions", err)
 	}
 
-	filteredACLs := make([]*models.DashboardACLInfoDTO, 0, len(acl))
+	filteredACLs := make([]*dashboards.DashboardACLInfoDTO, 0, len(acl))
 	for _, perm := range acl {
-		if perm.UserId > 0 && dtos.IsHiddenUser(perm.UserLogin, c.SignedInUser, hs.Cfg) {
+		if perm.UserID > 0 && dtos.IsHiddenUser(perm.UserLogin, c.SignedInUser, hs.Cfg) {
 			continue
 		}
 
-		perm.UserAvatarUrl = dtos.GetGravatarUrl(perm.UserEmail)
+		perm.UserAvatarURL = dtos.GetGravatarUrl(perm.UserEmail)
 
-		if perm.TeamId > 0 {
-			perm.TeamAvatarUrl = dtos.GetGravatarUrlWithDefault(perm.TeamEmail, perm.Team)
+		if perm.TeamID > 0 {
+			perm.TeamAvatarURL = dtos.GetGravatarUrlWithDefault(perm.TeamEmail, perm.Team)
 		}
 		if perm.Slug != "" {
-			perm.Url = models.GetDashboardFolderUrl(perm.IsFolder, perm.Uid, perm.Slug)
+			perm.URL = dashboards.GetDashboardFolderURL(perm.IsFolder, perm.UID, perm.Slug)
 		}
 
 		filteredACLs = append(filteredACLs, perm)
@@ -123,7 +114,7 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateDashboardPermissions(c *contextmodel.ReqContext) response.Response {
 	var dashID int64
 	var err error
 	apiCmd := dtos.UpdateDashboardACLCommand{}
@@ -142,24 +133,15 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 		}
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgID, dashID, dashUID)
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), dashID, dashUID)
 	if rsp != nil {
 		return rsp
 	}
 
-	if dashUID != "" {
-		dashID = dash.Id
-	}
-
-	g := guardian.New(c.Req.Context(), dashID, c.OrgID, c.SignedInUser)
-	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
-		return dashboardGuardianResponse(err)
-	}
-
-	var items []*models.DashboardACL
+	items := make([]*dashboards.DashboardACL, 0, len(apiCmd.Items))
 	for _, item := range apiCmd.Items {
-		items = append(items, &models.DashboardACL{
-			OrgID:       c.OrgID,
+		items = append(items, &dashboards.DashboardACL{
+			OrgID:       c.SignedInUser.GetOrgID(),
 			DashboardID: dashID,
 			UserID:      item.UserID,
 			TeamID:      item.TeamID,
@@ -170,48 +152,104 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 		})
 	}
 
-	hiddenACL, err := g.GetHiddenACL(hs.Cfg)
+	acl, err := hs.getDashboardACL(c.Req.Context(), c.SignedInUser, dash)
 	if err != nil {
-		return response.Error(500, "Error while retrieving hidden permissions", err)
-	}
-	items = append(items, hiddenACL...)
-
-	if okToUpdate, err := g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, items); err != nil || !okToUpdate {
-		if err != nil {
-			if errors.Is(err, guardian.ErrGuardianPermissionExists) || errors.Is(err, guardian.ErrGuardianOverride) {
-				return response.Error(400, err.Error(), err)
-			}
-
-			return response.Error(500, "Error while checking dashboard permissions", err)
-		}
-
-		return response.Error(403, "Cannot remove own admin permission for a folder", nil)
+		return response.Error(http.StatusInternalServerError, "Error while checking dashboard permissions", err)
 	}
 
-	if !hs.AccessControl.IsDisabled() {
-		old, err := g.GetACL()
-		if err != nil {
-			return response.Error(500, "Error while checking dashboard permissions", err)
-		}
-		if err := hs.updateDashboardAccessControl(c.Req.Context(), dash.OrgId, dash.Uid, false, items, old); err != nil {
-			return response.Error(500, "Failed to update permissions", err)
-		}
-		return response.Success("Dashboard permissions updated")
-	}
+	items = append(items, hs.filterHiddenACL(c.SignedInUser, acl)...)
 
-	if err := hs.DashboardService.UpdateDashboardACL(c.Req.Context(), dashID, items); err != nil {
-		if errors.Is(err, models.ErrDashboardACLInfoMissing) ||
-			errors.Is(err, models.ErrDashboardPermissionDashboardEmpty) {
-			return response.Error(409, err.Error(), err)
-		}
-		return response.Error(500, "Failed to create permission", err)
+	if err := hs.updateDashboardAccessControl(c.Req.Context(), dash.OrgID, dash.UID, false, items, acl); err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to update permissions", err)
 	}
 
 	return response.Success("Dashboard permissions updated")
 }
 
+var dashboardPermissionMap = map[string]dashboards.PermissionType{
+	"View":  dashboards.PERMISSION_VIEW,
+	"Edit":  dashboards.PERMISSION_EDIT,
+	"Admin": dashboards.PERMISSION_ADMIN,
+}
+
+func (hs *HTTPServer) getDashboardACL(ctx context.Context, user identity.Requester, dashboard *dashboards.Dashboard) ([]*dashboards.DashboardACLInfoDTO, error) {
+	permissions, err := hs.dashboardPermissionsService.GetPermissions(ctx, user, dashboard.UID)
+	if err != nil {
+		return nil, err
+	}
+
+	acl := make([]*dashboards.DashboardACLInfoDTO, 0, len(permissions))
+	for _, p := range permissions {
+		if !p.IsManaged {
+			continue
+		}
+
+		var role *org.RoleType
+		if p.BuiltInRole != "" {
+			tmp := org.RoleType(p.BuiltInRole)
+			role = &tmp
+		}
+
+		permission := dashboardPermissionMap[hs.dashboardPermissionsService.MapActions(p)]
+
+		acl = append(acl, &dashboards.DashboardACLInfoDTO{
+			OrgID:          dashboard.OrgID,
+			DashboardID:    dashboard.ID,
+			FolderID:       dashboard.FolderID,
+			Created:        p.Created,
+			Updated:        p.Updated,
+			UserID:         p.UserId,
+			UserLogin:      p.UserLogin,
+			UserEmail:      p.UserEmail,
+			TeamID:         p.TeamId,
+			TeamEmail:      p.TeamEmail,
+			Team:           p.Team,
+			Role:           role,
+			Permission:     permission,
+			PermissionName: permission.String(),
+			UID:            dashboard.UID,
+			Title:          dashboard.Title,
+			Slug:           dashboard.Slug,
+			IsFolder:       dashboard.IsFolder,
+			URL:            dashboard.GetURL(),
+			Inherited:      false,
+		})
+	}
+
+	return acl, nil
+}
+
+func (hs *HTTPServer) filterHiddenACL(user identity.Requester, acl []*dashboards.DashboardACLInfoDTO) []*dashboards.DashboardACL {
+	var hiddenACL []*dashboards.DashboardACL
+
+	if user.GetIsGrafanaAdmin() {
+		return hiddenACL
+	}
+
+	for _, item := range acl {
+		if item.Inherited || item.UserLogin == user.GetLogin() {
+			continue
+		}
+
+		if _, hidden := hs.Cfg.HiddenUsers[item.UserLogin]; hidden {
+			hiddenACL = append(hiddenACL, &dashboards.DashboardACL{
+				OrgID:       item.OrgID,
+				DashboardID: item.DashboardID,
+				UserID:      item.UserID,
+				TeamID:      item.TeamID,
+				Role:        item.Role,
+				Permission:  item.Permission,
+				Created:     item.Created,
+				Updated:     item.Updated,
+			})
+		}
+	}
+
+	return hiddenACL
+}
+
 // updateDashboardAccessControl is used for api backward compatibility
-func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID int64, uid string, isFolder bool, items []*models.DashboardACL, old []*models.DashboardACLInfoDTO) error {
+func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID int64, uid string, isFolder bool, items []*dashboards.DashboardACL, old []*dashboards.DashboardACLInfoDTO) error {
 	commands := []accesscontrol.SetResourcePermissionCommand{}
 	for _, item := range items {
 		permissions := item.Permission.String()
@@ -231,11 +269,11 @@ func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID in
 	for _, o := range old {
 		shouldRemove := true
 		for _, item := range items {
-			if item.UserID != 0 && item.UserID == o.UserId {
+			if item.UserID != 0 && item.UserID == o.UserID {
 				shouldRemove = false
 				break
 			}
-			if item.TeamID != 0 && item.TeamID == o.TeamId {
+			if item.TeamID != 0 && item.TeamID == o.TeamID {
 				shouldRemove = false
 				break
 			}
@@ -251,8 +289,8 @@ func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID in
 			}
 
 			commands = append(commands, accesscontrol.SetResourcePermissionCommand{
-				UserID:      o.UserId,
-				TeamID:      o.TeamId,
+				UserID:      o.UserID,
+				TeamID:      o.TeamID,
 				BuiltinRole: role,
 				Permission:  "",
 			})
@@ -275,11 +313,11 @@ func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID in
 func validatePermissionsUpdate(apiCmd dtos.UpdateDashboardACLCommand) error {
 	for _, item := range apiCmd.Items {
 		if item.UserID > 0 && item.TeamID > 0 {
-			return models.ErrPermissionsWithUserAndTeamNotAllowed
+			return dashboards.ErrPermissionsWithUserAndTeamNotAllowed
 		}
 
 		if (item.UserID > 0 || item.TeamID > 0) && item.Role != nil {
-			return models.ErrPermissionsWithRoleNotAllowed
+			return dashboards.ErrPermissionsWithRoleNotAllowed
 		}
 	}
 	return nil
@@ -321,5 +359,5 @@ type UpdateDashboardPermissionsByUIDParams struct {
 // swagger:response getDashboardPermissionsListResponse
 type GetDashboardPermissionsResponse struct {
 	// in: body
-	Body []*models.DashboardACLInfoDTO `json:"body"`
+	Body []*dashboards.DashboardACLInfoDTO `json:"body"`
 }

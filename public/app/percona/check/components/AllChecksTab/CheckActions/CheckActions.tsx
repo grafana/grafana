@@ -8,7 +8,7 @@ import { Messages } from '../AllChecksTab.messages';
 import { getStyles } from './CheckActions.styles';
 import { CheckActionsProps } from './CheckActions.types';
 
-export const CheckActions: FC<CheckActionsProps> = ({
+export const CheckActions: FC<React.PropsWithChildren<CheckActionsProps>> = ({
   check,
   onChangeCheck,
   onIntervalChangeClick,
@@ -51,7 +51,12 @@ export const CheckActions: FC<CheckActionsProps> = ({
       >
         {!!check.disabled ? Messages.enable : Messages.disable}
       </LoaderButton>
-      <IconButton title={Messages.changeIntervalButtonTitle} name="pen" onClick={handleIntervalChangeClick} />
+      <IconButton
+        title={Messages.changeIntervalButtonTitle}
+        aria-label={Messages.changeIntervalButtonTitle}
+        name="pen"
+        onClick={handleIntervalChangeClick}
+      />
     </div>
   );
 };

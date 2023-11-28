@@ -52,7 +52,7 @@ export function VariableEditorListRow({
             ...provided.draggableProps.style,
           }}
         >
-          <td className={styles.column}>
+          <td role="gridcell" className={styles.column}>
             <Button
               size="xs"
               fill="text"
@@ -67,6 +67,7 @@ export function VariableEditorListRow({
             </Button>
           </td>
           <td
+            role="gridcell"
             className={styles.definitionColumn}
             onClick={(event) => {
               event.preventDefault();
@@ -77,42 +78,33 @@ export function VariableEditorListRow({
             {definition}
           </td>
 
-          <td className={styles.column}>
-            <VariableCheckIndicator passed={passed} />
-          </td>
-
-          <td className={styles.column}>
-            <VariableUsagesButton id={variable.id} isAdhoc={isAdHoc(variable)} usages={usagesNetwork} />
-          </td>
-
-          <td className={styles.column}>
-            <IconButton
-              onClick={(event) => {
-                event.preventDefault();
-                reportInteraction('Duplicate variable');
-                propsOnDuplicate(identifier);
-              }}
-              name="copy"
-              title="Duplicate variable"
-              aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowDuplicateButtons(variable.name)}
-            />
-          </td>
-
-          <td className={styles.column}>
-            <IconButton
-              onClick={(event) => {
-                event.preventDefault();
-                reportInteraction('Delete variable');
-                propsOnDelete(identifier);
-              }}
-              name="trash-alt"
-              title="Remove variable"
-              aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowRemoveButtons(variable.name)}
-            />
-          </td>
-          <td className={styles.column}>
-            <div {...provided.dragHandleProps} className={styles.dragHandle}>
-              <Icon name="draggabledots" size="lg" />
+          <td role="gridcell" className={styles.column}>
+            <div className={styles.icons}>
+              <VariableCheckIndicator passed={passed} />
+              <VariableUsagesButton id={variable.id} isAdhoc={isAdHoc(variable)} usages={usagesNetwork} />
+              <IconButton
+                onClick={(event) => {
+                  event.preventDefault();
+                  reportInteraction('Duplicate variable');
+                  propsOnDuplicate(identifier);
+                }}
+                name="copy"
+                tooltip="Duplicate variable"
+                aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowDuplicateButtons(variable.name)}
+              />
+              <IconButton
+                onClick={(event) => {
+                  event.preventDefault();
+                  reportInteraction('Delete variable');
+                  propsOnDelete(identifier);
+                }}
+                name="trash-alt"
+                tooltip="Remove variable"
+                aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowRemoveButtons(variable.name)}
+              />
+              <div {...provided.dragHandleProps} className={styles.dragHandle}>
+                <Icon name="draggabledots" size="lg" />
+              </div>
             </div>
           </td>
         </tr>
@@ -165,6 +157,7 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     dragHandle: css`
       cursor: grab;
+      margin-left: ${theme.spacing(1)};
     `,
     column: css`
       width: 1%;
@@ -184,9 +177,16 @@ function getStyles(theme: GrafanaTheme2) {
     `,
     iconPassed: css`
       color: ${theme.v1.palette.greenBase};
+      margin-right: ${theme.spacing(2)};
     `,
     iconFailed: css`
       color: ${theme.v1.palette.orange};
+      margin-right: ${theme.spacing(2)};
+    `,
+    icons: css`
+      display: flex;
+      gap: ${theme.spacing(2)};
+      align-items: center;
     `,
   };
 }

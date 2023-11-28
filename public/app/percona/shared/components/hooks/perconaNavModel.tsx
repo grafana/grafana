@@ -1,7 +1,6 @@
-import { useSelector } from 'react-redux';
-
 import { NavModel } from '@grafana/data';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { useSelector } from 'app/types';
 import { StoreState } from 'app/types/store';
 
 export const usePerconaNavModel = (id: string): NavModel => {

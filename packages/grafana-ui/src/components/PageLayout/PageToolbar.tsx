@@ -1,15 +1,16 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { Link, ToolbarButtonRow } from '..';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { IconName } from '../../types';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
+import { Link } from '../Link/Link';
+import { ToolbarButtonRow } from '../ToolbarButton/ToolbarButtonRow';
 
 export interface Props {
   pageIcon?: IconName;
@@ -24,10 +25,16 @@ export interface Props {
   className?: string;
   isFullscreen?: boolean;
   'aria-label'?: string;
+  buttonOverflowAlignment?: 'left' | 'right';
+  /**
+   * Forces left items to be visible on small screens.
+   * By default left items are hidden on small screens.
+   */
+  forceShowLeftItems?: boolean;
 }
 
 /** @alpha */
-export const PageToolbar: FC<Props> = React.memo(
+export const PageToolbar = React.memo(
   ({
     title,
     section,
@@ -42,13 +49,15 @@ export const PageToolbar: FC<Props> = React.memo(
     className,
     /** main nav-container aria-label **/
     'aria-label': ariaLabel,
-  }) => {
+    buttonOverflowAlignment = 'right',
+    forceShowLeftItems = false,
+  }: Props) => {
     const styles = useStyles2(getStyles);
 
     /**
      * .page-toolbar css class is used for some legacy css view modes (TV/Kiosk) and
      * media queries for mobile view when toolbar needs left padding to make room
-     * for mobile menu icon. This logic hopefylly can be changed when we move to a full react
+     * for mobile menu icon. This logic hopefully can be changed when we move to a full react
      * app and change how the app side menu & mobile menu is rendered.
      */
     const mainStyle = cx(
@@ -56,6 +65,7 @@ export const PageToolbar: FC<Props> = React.memo(
       styles.toolbar,
       {
         ['page-toolbar--fullscreen']: isFullscreen,
+        [styles.noPageIcon]: !pageIcon,
       },
       className
     );
@@ -105,7 +115,7 @@ export const PageToolbar: FC<Props> = React.memo(
               </>
             )}
 
-            {(title || leftItems?.length) && (
+            {(title || Boolean(leftItems?.length)) && (
               <div className={styles.titleWrapper}>
                 {title && (
                   <h1 className={styles.h1Styles}>
@@ -124,7 +134,10 @@ export const PageToolbar: FC<Props> = React.memo(
                 )}
 
                 {leftItems?.map((child, index) => (
-                  <div className={styles.leftActionItem} key={index}>
+                  <div
+                    className={cx(styles.leftActionItem, { [styles.forceShowLeftActionItems]: forceShowLeftItems })}
+                    key={index}
+                  >
                     {child}
                   </div>
                 ))}
@@ -132,7 +145,9 @@ export const PageToolbar: FC<Props> = React.memo(
             )}
           </nav>
         </div>
-        <ToolbarButtonRow alignment="right">{React.Children.toArray(children).filter(Boolean)}</ToolbarButtonRow>
+        <ToolbarButtonRow alignment={buttonOverflowAlignment}>
+          {React.Children.toArray(children).filter(Boolean)}
+        </ToolbarButtonRow>
       </nav>
     );
   }
@@ -146,87 +161,96 @@ const getStyles = (theme: GrafanaTheme2) => {
   const focusStyle = getFocusStyles(theme);
 
   return {
-    pre: css`
-      white-space: pre;
-    `,
-    toolbar: css`
-      align-items: center;
-      background: ${theme.colors.background.canvas};
-      display: flex;
-      gap: ${theme.spacing(2)};
-      justify-content: space-between;
-      padding: ${theme.spacing(1.5, 2)};
-    `,
-    leftWrapper: css`
-      display: flex;
-      flex-wrap: nowrap;
-      max-width: 70%;
-    `,
-    pageIcon: css`
-      display: none;
-      ${theme.breakpoints.up('sm')} {
-        display: flex;
-        padding-right: ${theme.spacing(1)};
-        align-items: center;
-      }
-    `,
-    truncateText: css`
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    `,
-    titleWrapper: css`
-      display: flex;
-      margin: 0;
-      min-width: 0;
-    `,
-    navElement: css`
-      display: flex;
-      align-items: center;
-      min-width: 0;
-    `,
-    h1Styles: css`
-      margin: 0;
-      line-height: inherit;
-      flex-grow: 1;
-      min-width: 0;
-    `,
-    parentIcon: css`
-      margin-left: ${theme.spacing(0.5)};
-    `,
-    titleText: css`
-      display: flex;
-      font-size: ${typography.size.lg};
-      margin: 0;
-      max-width: 300px;
-      border-radius: 2px;
-    `,
-    titleLink: css`
-      &:focus-visible {
-        ${focusStyle}
-      }
-    `,
-    titleDivider: css`
-      padding: ${spacing(0, 0.5, 0, 0.5)};
-      display: none;
-      ${theme.breakpoints.up('md')} {
-        display: unset;
-      }
-    `,
-    parentLink: css`
-      display: none;
-      ${theme.breakpoints.up('md')} {
-        display: unset;
-        flex: 1;
-      }
-    `,
-    leftActionItem: css`
-      display: none;
-      ${theme.breakpoints.up('md')} {
-        align-items: center;
-        display: flex;
-        padding-left: ${spacing(0.5)};
-      }
-    `,
+    pre: css({
+      whiteSpace: 'pre',
+    }),
+    toolbar: css({
+      alignItems: 'center',
+      background: theme.colors.background.canvas,
+      display: 'flex',
+      gap: theme.spacing(2),
+      justifyContent: 'space-between',
+      padding: theme.spacing(1.5, 2),
+
+      [theme.breakpoints.down('md')]: {
+        paddingLeft: '53px',
+      },
+    }),
+    noPageIcon: css({
+      [theme.breakpoints.down('md')]: {
+        paddingLeft: theme.spacing(2),
+      },
+    }),
+    leftWrapper: css({
+      display: 'flex',
+      flexWrap: 'nowrap',
+      maxWidth: '70%',
+    }),
+    pageIcon: css({
+      display: 'none',
+      [theme.breakpoints.up('sm')]: {
+        display: 'flex',
+        paddingRight: theme.spacing(1),
+        alignItems: 'center',
+      },
+    }),
+    truncateText: css({
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    }),
+    titleWrapper: css({
+      display: 'flex',
+      margin: 0,
+      minWidth: 0,
+    }),
+    navElement: css({
+      display: 'flex',
+      alignItems: 'center',
+      minWidth: 0,
+    }),
+    h1Styles: css({
+      margin: spacing(0, 1, 0, 0),
+      lineHeight: 'inherit',
+      flexGrow: 1,
+      minWidth: 0,
+    }),
+    parentIcon: css({
+      marginLeft: theme.spacing(0.5),
+    }),
+    titleText: css({
+      display: 'flex',
+      fontSize: typography.size.lg,
+      margin: 0,
+      borderRadius: theme.shape.radius.default,
+    }),
+    titleLink: css({
+      '&:focus-visible': focusStyle,
+    }),
+    titleDivider: css({
+      padding: spacing(0, 0.5, 0, 0.5),
+      display: 'none',
+      [theme.breakpoints.up('md')]: {
+        display: 'unset',
+      },
+    }),
+    parentLink: css({
+      display: 'none',
+      [theme.breakpoints.up('md')]: {
+        display: 'unset',
+        flex: 1,
+      },
+    }),
+    leftActionItem: css({
+      display: 'none',
+      alignItems: 'center',
+      paddingRight: spacing(0.5),
+      [theme.breakpoints.up('md')]: {
+        display: 'flex',
+      },
+    }),
+    forceShowLeftActionItems: css({
+      display: 'flex',
+    }),
   };
 };

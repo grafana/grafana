@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import { ViewRangeTimeUpdate, ViewRange } from '@jaegertracing/jaeger-ui-components';
+import { ViewRangeTimeUpdate, ViewRange } from './components';
 
 /**
  * Controls state of the zoom function that can be used through minimap in header or on the timeline. ViewRange contains

@@ -12,6 +12,7 @@ import { LoadingState, PreferredVisualisationType } from './data';
 import { DataFrame, FieldType } from './dataFrame';
 import { DataQueryError, DataQueryRequest, DataQueryTimings } from './datasource';
 import { FieldConfigSource } from './fieldOverrides';
+import { IconName } from './icon';
 import { OptionEditorConfig } from './options';
 import { PluginMeta } from './plugin';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
@@ -56,10 +57,18 @@ export interface PanelData {
   timings?: DataQueryTimings;
 
   /** Any query errors */
+  errors?: DataQueryError[];
+  /**
+   * Single error for legacy reasons
+   * @deprecated use errors instead -- will be removed in Grafana 10+
+   */
   error?: DataQueryError;
 
   /** Contains the range from the request or a shifted time range if a request uses relative time */
   timeRange: TimeRange;
+
+  /** traceIds collected during the processing of the requests */
+  traceIds?: string[];
 }
 
 export interface PanelProps<T = any> {
@@ -126,9 +135,12 @@ export interface PanelEditorProps<T = any> {
 }
 
 /**
- * Called when a panel is first loaded with current panel model
+ * Called when a panel is first loaded with current panel model to migrate panel options if needed.
+ * Can return panel options, or a Promise that resolves to panel options for async migrations
  */
-export type PanelMigrationHandler<TOptions = any> = (panel: PanelModel<TOptions>) => Partial<TOptions>;
+export type PanelMigrationHandler<TOptions = any> = (
+  panel: PanelModel<TOptions>
+) => Partial<TOptions> | Promise<Partial<TOptions>>;
 
 /**
  * Called before a panel is initialized. Allows panel inspection for any updates before changing the panel type.
@@ -154,9 +166,9 @@ export interface PanelOptionsEditorConfig<TOptions, TSettings = any, TValue = an
  * @internal
  */
 export interface PanelMenuItem {
-  type?: 'submenu' | 'divider';
+  type?: 'submenu' | 'divider' | 'group';
   text: string;
-  iconClassName?: string;
+  iconClassName?: IconName;
   onClick?: (event: React.MouseEvent<any>) => void;
   shortcut?: string;
   href?: string;

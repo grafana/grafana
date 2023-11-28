@@ -1,16 +1,15 @@
 import { css } from '@emotion/css';
-import React, { FC, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
-import { GrafanaTheme2, dateMath } from '@grafana/data';
+import { dateMath, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Icon, useStyles2, Link, Button } from '@grafana/ui';
+import { CollapsableSection, Icon, Link, LinkButton, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { contextSrv } from 'app/core/services/context_srv';
 import { AlertmanagerAlert, Silence, SilenceState } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
+import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { expireSilenceAction } from '../../state/actions';
-import { getInstancesPermissions } from '../../utils/access-control';
 import { parseMatchers } from '../../utils/alertmanager';
 import { getSilenceFiltersFromUrlParams, makeAMLink } from '../../utils/misc';
 import { Authorize } from '../Authorize';
@@ -36,75 +35,108 @@ interface Props {
   alertManagerSourceName: string;
 }
 
-const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSourceName }) => {
+const SilencesTable = ({ silences, alertManagerAlerts, alertManagerSourceName }: Props) => {
   const styles = useStyles2(getStyles);
   const [queryParams] = useQueryParams();
-  const filteredSilences = useFilteredSilences(silences);
-  const permissions = getInstancesPermissions(alertManagerSourceName);
+  const filteredSilencesNotExpired = useFilteredSilences(silences, false);
+  const filteredSilencesExpired = useFilteredSilences(silences, true);
 
-  const { silenceState } = getSilenceFiltersFromUrlParams(queryParams);
+  const { silenceState: silenceStateInParams } = getSilenceFiltersFromUrlParams(queryParams);
+  const showExpiredFromUrl = silenceStateInParams === SilenceState.Expired;
 
-  const showExpiredSilencesBanner =
-    !!filteredSilences.length && (silenceState === undefined || silenceState === SilenceState.Expired);
-
-  const columns = useColumns(alertManagerSourceName);
-
-  const items = useMemo((): SilenceTableItemProps[] => {
+  const itemsNotExpired = useMemo((): SilenceTableItemProps[] => {
     const findSilencedAlerts = (id: string) => {
       return alertManagerAlerts.filter((alert) => alert.status.silencedBy.includes(id));
     };
-    return filteredSilences.map((silence) => {
+    return filteredSilencesNotExpired.map((silence) => {
       const silencedAlerts = findSilencedAlerts(silence.id);
       return {
         id: silence.id,
         data: { ...silence, silencedAlerts },
       };
     });
-  }, [filteredSilences, alertManagerAlerts]);
+  }, [filteredSilencesNotExpired, alertManagerAlerts]);
+
+  const itemsExpired = useMemo((): SilenceTableItemProps[] => {
+    const findSilencedAlerts = (id: string) => {
+      return alertManagerAlerts.filter((alert) => alert.status.silencedBy.includes(id));
+    };
+    return filteredSilencesExpired.map((silence) => {
+      const silencedAlerts = findSilencedAlerts(silence.id);
+      return {
+        id: silence.id,
+        data: { ...silence, silencedAlerts },
+      };
+    });
+  }, [filteredSilencesExpired, alertManagerAlerts]);
 
   return (
     <div data-testid="silences-table">
       {!!silences.length && (
-        <>
+        <Stack direction="column">
           <SilencesFilter />
-          <Authorize actions={[permissions.create]} fallback={contextSrv.isEditor}>
+          <Authorize actions={[AlertmanagerAction.CreateSilence]}>
             <div className={styles.topButtonContainer}>
-              <Link href={makeAMLink('/alerting/silence/new', alertManagerSourceName)}>
-                <Button className={styles.addNewSilence} icon="plus">
-                  New Silence
-                </Button>
-              </Link>
+              <LinkButton href={makeAMLink('/alerting/silence/new', alertManagerSourceName)} icon="plus">
+                Add Silence
+              </LinkButton>
             </div>
           </Authorize>
-          {!!items.length ? (
-            <>
-              <DynamicTable
-                items={items}
-                cols={columns}
-                isExpandable
-                renderExpandedContent={({ data }) => <SilenceDetails silence={data} />}
+          <SilenceList
+            items={itemsNotExpired}
+            alertManagerSourceName={alertManagerSourceName}
+            dataTestId="not-expired-table"
+          />
+          {itemsExpired.length > 0 && (
+            <CollapsableSection label={`Expired silences (${itemsExpired.length})`} isOpen={showExpiredFromUrl}>
+              <div className={styles.callout}>
+                <Icon className={styles.calloutIcon} name="info-circle" />
+                <span>Expired silences are automatically deleted after 5 days.</span>
+              </div>
+              <SilenceList
+                items={itemsExpired}
+                alertManagerSourceName={alertManagerSourceName}
+                dataTestId="expired-table"
               />
-              {showExpiredSilencesBanner && (
-                <div className={styles.callout}>
-                  <Icon className={styles.calloutIcon} name="info-circle" />
-                  <span>Expired silences are automatically deleted after 5 days.</span>
-                </div>
-              )}
-            </>
-          ) : (
-            'No matching silences found'
+            </CollapsableSection>
           )}
-        </>
+        </Stack>
       )}
       {!silences.length && <NoSilencesSplash alertManagerSourceName={alertManagerSourceName} />}
     </div>
   );
 };
 
-const useFilteredSilences = (silences: Silence[]) => {
+function SilenceList({
+  items,
+  alertManagerSourceName,
+  dataTestId,
+}: {
+  items: SilenceTableItemProps[];
+  alertManagerSourceName: string;
+  dataTestId: string;
+}) {
+  const columns = useColumns(alertManagerSourceName);
+  if (!!items.length) {
+    return (
+      <DynamicTable
+        pagination={{ itemsPerPage: 25 }}
+        items={items}
+        cols={columns}
+        isExpandable
+        dataTestId={dataTestId}
+        renderExpandedContent={({ data }) => <SilenceDetails silence={data} />}
+      />
+    );
+  } else {
+    return <>No matching silences found</>;
+  }
+}
+
+const useFilteredSilences = (silences: Silence[], expired = false) => {
   const [queryParams] = useQueryParams();
   return useMemo(() => {
-    const { queryString, silenceState } = getSilenceFiltersFromUrlParams(queryParams);
+    const { queryString } = getSilenceFiltersFromUrlParams(queryParams);
     const silenceIdsString = queryParams?.silenceIds;
     return silences.filter((silence) => {
       if (typeof silenceIdsString === 'string') {
@@ -115,28 +147,27 @@ const useFilteredSilences = (silences: Silence[]) => {
       }
       if (queryString) {
         const matchers = parseMatchers(queryString);
-        const matchersMatch = matchers.every((matcher) =>
-          silence.matchers?.some(
-            ({ name, value, isEqual, isRegex }) =>
-              matcher.name === name &&
-              matcher.value === value &&
-              matcher.isEqual === isEqual &&
-              matcher.isRegex === isRegex
-          )
+        const matchersMatch = matchers.every(
+          (matcher) =>
+            silence.matchers?.some(
+              ({ name, value, isEqual, isRegex }) =>
+                matcher.name === name &&
+                matcher.value === value &&
+                matcher.isEqual === isEqual &&
+                matcher.isRegex === isRegex
+            )
         );
         if (!matchersMatch) {
           return false;
         }
       }
-      if (silenceState) {
-        const stateMatches = silence.status.state === silenceState;
-        if (!stateMatches) {
-          return false;
-        }
+      if (expired) {
+        return silence.status.state === SilenceState.Expired;
+      } else {
+        return silence.status.state !== SilenceState.Expired;
       }
-      return true;
     });
-  }, [queryParams, silences]);
+  }, [queryParams, silences, expired]);
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -151,12 +182,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   callout: css`
     background-color: ${theme.colors.background.secondary};
     border-top: 3px solid ${theme.colors.info.border};
-    border-radius: 2px;
+    border-radius: ${theme.shape.radius.default};
     height: 62px;
     display: flex;
     flex-direction: row;
     align-items: center;
-    margin-top: ${theme.spacing(2)};
 
     & > * {
       margin-left: ${theme.spacing(1)};
@@ -173,12 +203,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
 function useColumns(alertManagerSourceName: string) {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
-  const permissions = getInstancesPermissions(alertManagerSourceName);
+  const [updateSupported, updateAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateSilence);
+
   return useMemo((): SilenceTableColumnProps[] => {
     const handleExpireSilenceClick = (id: string) => {
       dispatch(expireSilenceAction(alertManagerSourceName, id));
     };
-    const showActions = contextSrv.hasAccess(permissions.update, contextSrv.isEditor);
     const columns: SilenceTableColumnProps[] = [
       {
         id: 'state',
@@ -186,7 +216,7 @@ function useColumns(alertManagerSourceName: string) {
         renderCell: function renderStateTag({ data: { status } }) {
           return <SilenceStateTag state={status.state} />;
         },
-        size: '88px',
+        size: 4,
       },
       {
         id: 'matchers',
@@ -194,7 +224,7 @@ function useColumns(alertManagerSourceName: string) {
         renderCell: function renderMatchers({ data: { matchers } }) {
           return <Matchers matchers={matchers || []} />;
         },
-        size: 9,
+        size: 10,
       },
       {
         id: 'alerts',
@@ -202,7 +232,7 @@ function useColumns(alertManagerSourceName: string) {
         renderCell: function renderSilencedAlerts({ data: { silencedAlerts } }) {
           return <span data-testid="alerts">{silencedAlerts.length}</span>;
         },
-        size: 1,
+        size: 4,
       },
       {
         id: 'schedule',
@@ -215,15 +245,14 @@ function useColumns(alertManagerSourceName: string) {
             <>
               {' '}
               {startsAtDate?.format(dateDisplayFormat)} {'-'}
-              <br />
               {endsAtDate?.format(dateDisplayFormat)}
             </>
           );
         },
-        size: '150px',
+        size: 7,
       },
     ];
-    if (showActions) {
+    if (updateSupported && updateAllowed) {
       columns.push({
         id: 'actions',
         label: 'Actions',
@@ -250,11 +279,10 @@ function useColumns(alertManagerSourceName: string) {
             </Stack>
           );
         },
-        size: '147px',
+        size: 5,
       });
     }
     return columns;
-  }, [alertManagerSourceName, dispatch, styles, permissions]);
+  }, [alertManagerSourceName, dispatch, styles.editButton, updateAllowed, updateSupported]);
 }
-
 export default SilencesTable;

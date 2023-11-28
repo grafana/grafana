@@ -6,7 +6,7 @@ import { ChunkedLogsViewer } from '../../ChunkedLogsViewer/ChunkedLogsViewer';
 
 import { BackupLogsModalProps } from './BackupLogsModal.types';
 
-export const BackupLogsModal: FC<BackupLogsModalProps> = ({ title, isVisible, onClose, getLogChunks }) => {
+export const BackupLogsModal: FC<React.PropsWithChildren<BackupLogsModalProps>> = ({ title, isVisible, onClose, getLogChunks }) => {
   return (
     <Modal title={title} isVisible={isVisible} onClose={onClose}>
       <ChunkedLogsViewer getLogChunks={getLogChunks} />

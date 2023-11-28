@@ -6,7 +6,7 @@ import React, { FC } from 'react';
 
 import { useTheme2 } from '@grafana/ui';
 
-const Badge: FC<BadgeProps> = ({ children }) => {
+const Badge: FC<React.PropsWithChildren<BadgeProps>> = ({ children }) => {
   const theme = useTheme2();
 
   return (

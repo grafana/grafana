@@ -1,5 +1,5 @@
 import { TourProvider } from '@reactour/tour';
-import React from 'react';
+import React, { PropsWithChildren } from 'react';
 
 import { config } from '@grafana/runtime';
 import { getTheme } from '@grafana/ui';
@@ -8,7 +8,7 @@ import usePerconaTour from 'app/percona/shared/core/hooks/tour';
 import Close from './components/Close';
 import Navigation from './components/Navigation';
 
-const PerconaTourProvider: React.FC = ({ children }) => {
+const PerconaTourProvider: React.FC<React.PropsWithChildren<PropsWithChildren>> = ({ children }) => {
   const { tour, steps, endTour } = usePerconaTour();
 
   return (

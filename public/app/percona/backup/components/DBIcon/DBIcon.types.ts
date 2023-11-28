@@ -12,5 +12,5 @@ export interface IconProps {
 }
 
 export type DBIconMap = {
-  [key in DBIconType]: React.FC<IconProps>;
+  [key in DBIconType]: React.FC<React.PropsWithChildren<IconProps>>;
 };

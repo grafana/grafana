@@ -13,8 +13,8 @@
       "description": "Shows list of alerts and their current status",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/alertlist/img/icn-singlestat-panel.svg",
-        "large": "public/app/plugins/panel/alertlist/img/icn-singlestat-panel.svg"
+        "small": "/public/app/plugins/panel/alertlist/img/icn-singlestat-panel.svg",
+        "large": "/public/app/plugins/panel/alertlist/img/icn-singlestat-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -33,7 +33,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Alertmanager",
@@ -54,8 +55,8 @@
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/alertmanager/img/logo.svg",
-        "large": "public/app/plugins/datasource/alertmanager/img/logo.svg"
+        "small": "/public/app/plugins/datasource/alertmanager/img/logo.svg",
+        "large": "/public/app/plugins/datasource/alertmanager/img/logo.svg"
       },
       "build": {},
       "screenshots": null,
@@ -74,7 +75,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Annotations list",
@@ -90,8 +92,8 @@
       "description": "List annotations",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/annolist/img/icn-annolist-panel.svg",
-        "large": "public/app/plugins/panel/annolist/img/icn-annolist-panel.svg"
+        "small": "/public/app/plugins/panel/annolist/img/icn-annolist-panel.svg",
+        "large": "/public/app/plugins/panel/annolist/img/icn-annolist-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -110,7 +112,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Azure Monitor",
@@ -135,22 +138,22 @@
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/grafana-azure-monitor-datasource/img/logo.jpg",
-        "large": "public/app/plugins/datasource/grafana-azure-monitor-datasource/img/logo.jpg"
+        "small": "/public/app/plugins/datasource/azuremonitor/img/logo.jpg",
+        "large": "/public/app/plugins/datasource/azuremonitor/img/logo.jpg"
       },
       "build": {},
       "screenshots": [
         {
           "name": "Azure Contoso Loans",
-          "path": "public/app/plugins/datasource/grafana-azure-monitor-datasource/img/contoso_loans_grafana_dashboard.png"
+          "path": "/public/app/plugins/datasource/azuremonitor/img/contoso_loans_grafana_dashboard.png"
         },
         {
           "name": "Azure Monitor Network",
-          "path": "public/app/plugins/datasource/grafana-azure-monitor-datasource/img/azure_monitor_network.png"
+          "path": "/public/app/plugins/datasource/azuremonitor/img/azure_monitor_network.png"
         },
         {
           "name": "Azure Monitor CPU",
-          "path": "public/app/plugins/datasource/grafana-azure-monitor-datasource/img/azure_monitor_cpu.png"
+          "path": "/public/app/plugins/datasource/azuremonitor/img/azure_monitor_cpu.png"
         }
       ],
       "version": "1.0.0",
@@ -168,7 +171,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Bar chart",
@@ -184,8 +188,8 @@
       "description": "Categorical charts with group support",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/barchart/img/barchart.svg",
-        "large": "public/app/plugins/panel/barchart/img/barchart.svg"
+        "small": "/public/app/plugins/panel/barchart/img/barchart.svg",
+        "large": "/public/app/plugins/panel/barchart/img/barchart.svg"
       },
       "build": {},
       "screenshots": null,
@@ -201,10 +205,11 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/barchart/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Bar gauge",
@@ -220,8 +225,8 @@
       "description": "Horizontal and vertical gauges",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/bargauge/img/icon_bar_gauge.svg",
-        "large": "public/app/plugins/panel/bargauge/img/icon_bar_gauge.svg"
+        "small": "/public/app/plugins/panel/bargauge/img/icon_bar_gauge.svg",
+        "large": "/public/app/plugins/panel/bargauge/img/icon_bar_gauge.svg"
       },
       "build": {},
       "screenshots": null,
@@ -240,7 +245,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Candlestick",
@@ -256,8 +262,8 @@
       "description": "",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/candlestick/img/candlestick.svg",
-        "large": "public/app/plugins/panel/candlestick/img/candlestick.svg"
+        "small": "/public/app/plugins/panel/candlestick/img/candlestick.svg",
+        "large": "/public/app/plugins/panel/candlestick/img/candlestick.svg"
       },
       "build": {},
       "screenshots": null,
@@ -273,10 +279,11 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/candlestick/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Canvas",
@@ -292,8 +299,8 @@
       "description": "Explicit element placement",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/canvas/img/icn-canvas.svg",
-        "large": "public/app/plugins/panel/canvas/img/icn-canvas.svg"
+        "small": "/public/app/plugins/panel/canvas/img/icn-canvas.svg",
+        "large": "/public/app/plugins/panel/canvas/img/icn-canvas.svg"
       },
       "build": {},
       "screenshots": null,
@@ -309,10 +316,11 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/canvas/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "CloudWatch",
@@ -328,8 +336,8 @@
       "description": "Data source for Amazon AWS monitoring service",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
-        "large": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png"
+        "small": "/public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
+        "large": "/public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png"
       },
       "build": {},
       "screenshots": null,
@@ -348,7 +356,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Dashboard list",
@@ -364,8 +373,8 @@
       "description": "List of dynamic links to other dashboards",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/dashlist/img/icn-dashlist-panel.svg",
-        "large": "public/app/plugins/panel/dashlist/img/icn-dashlist-panel.svg"
+        "small": "/public/app/plugins/panel/dashlist/img/icn-dashlist-panel.svg",
+        "large": "/public/app/plugins/panel/dashlist/img/icn-dashlist-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -384,7 +393,45 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Datagrid",
+    "type": "panel",
+    "id": "datagrid",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": null,
+      "logos": {
+        "small": "/public/app/plugins/panel/datagrid/img/icn-table-panel.svg",
+        "large": "/public/app/plugins/panel/datagrid/img/icn-table-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/datagrid/",
+    "category": "",
+    "state": "beta",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Elasticsearch",
@@ -405,8 +452,8 @@
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/elasticsearch/img/elasticsearch.svg",
-        "large": "public/app/plugins/datasource/elasticsearch/img/elasticsearch.svg"
+        "small": "/public/app/plugins/datasource/elasticsearch/img/elasticsearch.svg",
+        "large": "/public/app/plugins/datasource/elasticsearch/img/elasticsearch.svg"
       },
       "build": {},
       "screenshots": null,
@@ -425,7 +472,45 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Flame Graph",
+    "type": "panel",
+    "id": "flamegraph",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": null,
+      "logos": {
+        "small": "/public/app/plugins/panel/flamegraph/img/icn-flamegraph.svg",
+        "large": "/public/app/plugins/panel/flamegraph/img/icn-flamegraph.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/flamegraph/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Gauge",
@@ -441,8 +526,8 @@
       "description": "Standard gauge visualization",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/gauge/img/icon_gauge.svg",
-        "large": "public/app/plugins/panel/gauge/img/icon_gauge.svg"
+        "small": "/public/app/plugins/panel/gauge/img/icon_gauge.svg",
+        "large": "/public/app/plugins/panel/gauge/img/icon_gauge.svg"
       },
       "build": {},
       "screenshots": null,
@@ -461,7 +546,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Geomap",
@@ -477,8 +563,8 @@
       "description": "Geomap panel",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/geomap/img/icn-geomap.svg",
-        "large": "public/app/plugins/panel/geomap/img/icn-geomap.svg"
+        "small": "/public/app/plugins/panel/geomap/img/icn-geomap.svg",
+        "large": "/public/app/plugins/panel/geomap/img/icn-geomap.svg"
       },
       "build": {},
       "screenshots": null,
@@ -497,7 +583,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Getting Started",
@@ -513,8 +600,8 @@
       "description": "",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/gettingstarted/img/icn-dashlist-panel.svg",
-        "large": "public/app/plugins/panel/gettingstarted/img/icn-dashlist-panel.svg"
+        "small": "/public/app/plugins/panel/gettingstarted/img/icn-dashlist-panel.svg",
+        "large": "/public/app/plugins/panel/gettingstarted/img/icn-dashlist-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -533,7 +620,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Google Cloud Monitoring",
@@ -549,8 +637,8 @@
       "description": "Data source for Google's monitoring service (formerly named Stackdriver)",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/datasource/cloud-monitoring/img/cloud_monitoring_logo.svg",
-        "large": "public/app/plugins/datasource/cloud-monitoring/img/cloud_monitoring_logo.svg"
+        "small": "/public/app/plugins/datasource/cloud-monitoring/img/cloud_monitoring_logo.svg",
+        "large": "/public/app/plugins/datasource/cloud-monitoring/img/cloud_monitoring_logo.svg"
       },
       "build": {},
       "screenshots": null,
@@ -569,7 +657,50 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Grafana Pyroscope",
+    "type": "datasource",
+    "id": "grafana-pyroscope-datasource",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://www.grafana.com"
+      },
+      "description": "Data source for Grafana Pyroscope, horizontally-scalable, highly-available, multi-tenant continuous profiling aggregation system.",
+      "links": [
+        {
+          "name": "GitHub Project",
+          "url": "https://github.com/grafana/pyroscope"
+        }
+      ],
+      "logos": {
+        "small": "/public/app/plugins/datasource/grafana-pyroscope-datasource/img/grafana_pyroscope_icon.svg",
+        "large": "/public/app/plugins/datasource/grafana-pyroscope-datasource/img/grafana_pyroscope_icon.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/grafana-pyroscope-datasource/",
+    "category": "profiling",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Graph (old)",
@@ -585,8 +716,8 @@
       "description": "The old default graph panel",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/graph/img/icn-graph-panel.svg",
-        "large": "public/app/plugins/panel/graph/img/icn-graph-panel.svg"
+        "small": "/public/app/plugins/panel/graph/img/icn-graph-panel.svg",
+        "large": "/public/app/plugins/panel/graph/img/icn-graph-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -605,7 +736,8 @@
     "state": "deprecated",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Graphite",
@@ -630,8 +762,8 @@
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/graphite/img/graphite_logo.png",
-        "large": "public/app/plugins/datasource/graphite/img/graphite_logo.png"
+        "small": "/public/app/plugins/datasource/graphite/img/graphite_logo.png",
+        "large": "/public/app/plugins/datasource/graphite/img/graphite_logo.png"
       },
       "build": {},
       "screenshots": null,
@@ -650,7 +782,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Heatmap",
@@ -666,8 +799,8 @@
       "description": "Like a histogram over time",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/heatmap/img/icn-heatmap-panel.svg",
-        "large": "public/app/plugins/panel/heatmap/img/icn-heatmap-panel.svg"
+        "small": "/public/app/plugins/panel/heatmap/img/icn-heatmap-panel.svg",
+        "large": "/public/app/plugins/panel/heatmap/img/icn-heatmap-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -686,52 +819,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
-  },
-  {
-    "name": "Heatmap (legacy)",
-    "type": "panel",
-    "id": "heatmap-old",
-    "enabled": true,
-    "pinned": false,
-    "info": {
-      "author": {
-        "name": "Grafana Labs",
-        "url": "https://grafana.com"
-      },
-      "description": "Legacy heatmap panel based on angular, d3, and flot",
-      "links": [
-        {
-          "name": "Brendan Gregg - Heatmaps",
-          "url": "http://www.brendangregg.com/heatmaps.html"
-        },
-        {
-          "name": "Brendan Gregg - Latency Heatmaps",
-          "url": " http://www.brendangregg.com/HeatMaps/latency.html"
-        }
-      ],
-      "logos": {
-        "small": "public/app/plugins/panel/heatmap-old/img/icn-heatmap-panel.svg",
-        "large": "public/app/plugins/panel/heatmap-old/img/icn-heatmap-panel.svg"
-      },
-      "build": {},
-      "screenshots": null,
-      "version": "",
-      "updated": ""
-    },
-    "dependencies": {
-      "grafanaDependency": "",
-      "grafanaVersion": "*",
-      "plugins": []
-    },
-    "latestVersion": "",
-    "hasUpdate": false,
-    "defaultNavUrl": "/plugins/heatmap-old/",
-    "category": "",
-    "state": "deprecated",
-    "signature": "internal",
-    "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Histogram",
@@ -747,8 +836,8 @@
       "description": "",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/histogram/img/histogram.svg",
-        "large": "public/app/plugins/panel/histogram/img/histogram.svg"
+        "small": "/public/app/plugins/panel/histogram/img/histogram.svg",
+        "large": "/public/app/plugins/panel/histogram/img/histogram.svg"
       },
       "build": {},
       "screenshots": null,
@@ -764,10 +853,11 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/histogram/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "InfluxDB",
@@ -783,8 +873,8 @@
       "description": "Open source time series database",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/datasource/influxdb/img/influxdb_logo.svg",
-        "large": "public/app/plugins/datasource/influxdb/img/influxdb_logo.svg"
+        "small": "/public/app/plugins/datasource/influxdb/img/influxdb_logo.svg",
+        "large": "/public/app/plugins/datasource/influxdb/img/influxdb_logo.svg"
       },
       "build": {},
       "screenshots": null,
@@ -803,7 +893,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Jaeger",
@@ -828,8 +919,8 @@
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/jaeger/img/jaeger_logo.svg",
-        "large": "public/app/plugins/datasource/jaeger/img/jaeger_logo.svg"
+        "small": "/public/app/plugins/datasource/jaeger/img/jaeger_logo.svg",
+        "large": "/public/app/plugins/datasource/jaeger/img/jaeger_logo.svg"
       },
       "build": {},
       "screenshots": null,
@@ -848,7 +939,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Logs",
@@ -864,8 +956,8 @@
       "description": "",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/logs/img/icn-logs-panel.svg",
-        "large": "public/app/plugins/panel/logs/img/icn-logs-panel.svg"
+        "small": "/public/app/plugins/panel/logs/img/icn-logs-panel.svg",
+        "large": "/public/app/plugins/panel/logs/img/icn-logs-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -884,7 +976,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Loki",
@@ -909,8 +1002,8 @@
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/loki/img/loki_icon.svg",
-        "large": "public/app/plugins/datasource/loki/img/loki_icon.svg"
+        "small": "/public/app/plugins/datasource/loki/img/loki_icon.svg",
+        "large": "/public/app/plugins/datasource/loki/img/loki_icon.svg"
       },
       "build": {},
       "screenshots": null,
@@ -929,7 +1022,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Microsoft SQL Server",
@@ -945,8 +1039,8 @@
       "description": "Data source for Microsoft SQL Server compatible databases",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/datasource/mssql/img/sql_server_logo.svg",
-        "large": "public/app/plugins/datasource/mssql/img/sql_server_logo.svg"
+        "small": "/public/app/plugins/datasource/mssql/img/sql_server_logo.svg",
+        "large": "/public/app/plugins/datasource/mssql/img/sql_server_logo.svg"
       },
       "build": {},
       "screenshots": null,
@@ -965,7 +1059,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "MySQL",
@@ -981,8 +1076,8 @@
       "description": "Data source for MySQL databases",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/datasource/mysql/img/mysql_logo.svg",
-        "large": "public/app/plugins/datasource/mysql/img/mysql_logo.svg"
+        "small": "/public/app/plugins/datasource/mysql/img/mysql_logo.svg",
+        "large": "/public/app/plugins/datasource/mysql/img/mysql_logo.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1001,7 +1096,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "News",
@@ -1017,8 +1113,8 @@
       "description": "RSS feed reader",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/news/img/news.svg",
-        "large": "public/app/plugins/panel/news/img/news.svg"
+        "small": "/public/app/plugins/panel/news/img/news.svg",
+        "large": "/public/app/plugins/panel/news/img/news.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1037,7 +1133,8 @@
     "state": "beta",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Node Graph",
@@ -1053,8 +1150,8 @@
       "description": "",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/nodeGraph/img/icn-node-graph.svg",
-        "large": "public/app/plugins/panel/nodeGraph/img/icn-node-graph.svg"
+        "small": "/public/app/plugins/panel/nodeGraph/img/icn-node-graph.svg",
+        "large": "/public/app/plugins/panel/nodeGraph/img/icn-node-graph.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1070,10 +1167,11 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/nodeGraph/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "OpenTSDB",
@@ -1089,8 +1187,8 @@
       "description": "Open source time series database",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/datasource/opentsdb/img/opentsdb_logo.png",
-        "large": "public/app/plugins/datasource/opentsdb/img/opentsdb_logo.png"
+        "small": "/public/app/plugins/datasource/opentsdb/img/opentsdb_logo.png",
+        "large": "/public/app/plugins/datasource/opentsdb/img/opentsdb_logo.png"
       },
       "build": {},
       "screenshots": null,
@@ -1109,7 +1207,50 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Parca",
+    "type": "datasource",
+    "id": "parca",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://www.grafana.com"
+      },
+      "description": "Continuous profiling for analysis of CPU and memory usage, down to the line number and throughout time. Saving infrastructure cost, improving performance, and increasing reliability.",
+      "links": [
+        {
+          "name": "GitHub Project",
+          "url": "https://github.com/parca-dev/parca"
+        }
+      ],
+      "logos": {
+        "small": "/public/app/plugins/datasource/parca/img/logo-small.svg",
+        "large": "/public/app/plugins/datasource/parca/img/logo-small.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/parca/",
+    "category": "profiling",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Pie chart",
@@ -1125,8 +1266,8 @@
       "description": "The new core pie chart visualization",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/piechart/img/icon_piechart.svg",
-        "large": "public/app/plugins/panel/piechart/img/icon_piechart.svg"
+        "small": "/public/app/plugins/panel/piechart/img/icon_piechart.svg",
+        "large": "/public/app/plugins/panel/piechart/img/icon_piechart.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1145,7 +1286,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "PostgreSQL",
@@ -1161,8 +1303,8 @@
       "description": "Data source for PostgreSQL and compatible databases",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/datasource/postgres/img/postgresql_logo.svg",
-        "large": "public/app/plugins/datasource/postgres/img/postgresql_logo.svg"
+        "small": "/public/app/plugins/datasource/postgres/img/postgresql_logo.svg",
+        "large": "/public/app/plugins/datasource/postgres/img/postgresql_logo.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1181,7 +1323,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Prometheus",
@@ -1202,8 +1345,8 @@
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/prometheus/img/prometheus_logo.svg",
-        "large": "public/app/plugins/datasource/prometheus/img/prometheus_logo.svg"
+        "small": "/public/app/plugins/datasource/prometheus/img/prometheus_logo.svg",
+        "large": "/public/app/plugins/datasource/prometheus/img/prometheus_logo.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1222,7 +1365,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Stat",
@@ -1238,8 +1382,8 @@
       "description": "Big stat values \u0026 sparklines",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/stat/img/icn-singlestat-panel.svg",
-        "large": "public/app/plugins/panel/stat/img/icn-singlestat-panel.svg"
+        "small": "/public/app/plugins/panel/stat/img/icn-singlestat-panel.svg",
+        "large": "/public/app/plugins/panel/stat/img/icn-singlestat-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1258,7 +1402,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "State timeline",
@@ -1274,8 +1419,8 @@
       "description": "State changes and durations",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/state-timeline/img/timeline.svg",
-        "large": "public/app/plugins/panel/state-timeline/img/timeline.svg"
+        "small": "/public/app/plugins/panel/state-timeline/img/timeline.svg",
+        "large": "/public/app/plugins/panel/state-timeline/img/timeline.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1291,10 +1436,11 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/state-timeline/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Status history",
@@ -1310,8 +1456,8 @@
       "description": "Periodic status history",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/status-history/img/status.svg",
-        "large": "public/app/plugins/panel/status-history/img/status.svg"
+        "small": "/public/app/plugins/panel/status-history/img/status.svg",
+        "large": "/public/app/plugins/panel/status-history/img/status.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1327,10 +1473,11 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/status-history/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Table",
@@ -1346,8 +1493,8 @@
       "description": "Supports many column styles",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/table/img/icn-table-panel.svg",
-        "large": "public/app/plugins/panel/table/img/icn-table-panel.svg"
+        "small": "/public/app/plugins/panel/table/img/icn-table-panel.svg",
+        "large": "/public/app/plugins/panel/table/img/icn-table-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1366,7 +1513,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Table (old)",
@@ -1382,8 +1530,8 @@
       "description": "Table Panel for Grafana",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/table-old/img/icn-table-panel.svg",
-        "large": "public/app/plugins/panel/table-old/img/icn-table-panel.svg"
+        "small": "/public/app/plugins/panel/table-old/img/icn-table-panel.svg",
+        "large": "/public/app/plugins/panel/table-old/img/icn-table-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1402,7 +1550,8 @@
     "state": "deprecated",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Tempo",
@@ -1423,8 +1572,8 @@
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/tempo/img/tempo_logo.svg",
-        "large": "public/app/plugins/datasource/tempo/img/tempo_logo.svg"
+        "small": "/public/app/plugins/datasource/tempo/img/tempo_logo.svg",
+        "large": "/public/app/plugins/datasource/tempo/img/tempo_logo.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1443,12 +1592,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
-    "name": "TestData DB",
+    "name": "TestData",
     "type": "datasource",
-    "id": "testdata",
+    "id": "grafana-testdata-datasource",
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1459,8 +1609,8 @@
       "description": "Generates test data in different forms",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/datasource/testdata/img/testdata.svg",
-        "large": "public/app/plugins/datasource/testdata/img/testdata.svg"
+        "small": "/public/app/plugins/datasource/grafana-testdata-datasource/img/testdata.svg",
+        "large": "/public/app/plugins/datasource/grafana-testdata-datasource/img/testdata.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1474,12 +1624,13 @@
     },
     "latestVersion": "",
     "hasUpdate": false,
-    "defaultNavUrl": "/plugins/testdata/",
+    "defaultNavUrl": "/plugins/grafana-testdata-datasource/",
     "category": "",
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Text",
@@ -1495,8 +1646,8 @@
       "description": "Supports markdown and html content",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/text/img/icn-text-panel.svg",
-        "large": "public/app/plugins/panel/text/img/icn-text-panel.svg"
+        "small": "/public/app/plugins/panel/text/img/icn-text-panel.svg",
+        "large": "/public/app/plugins/panel/text/img/icn-text-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1515,7 +1666,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Time series",
@@ -1531,8 +1683,8 @@
       "description": "Time based line, area and bar charts",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/timeseries/img/icn-timeseries-panel.svg",
-        "large": "public/app/plugins/panel/timeseries/img/icn-timeseries-panel.svg"
+        "small": "/public/app/plugins/panel/timeseries/img/icn-timeseries-panel.svg",
+        "large": "/public/app/plugins/panel/timeseries/img/icn-timeseries-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1551,7 +1703,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Traces",
@@ -1567,8 +1720,8 @@
       "description": "",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/traces/img/traces-panel.svg",
-        "large": "public/app/plugins/panel/traces/img/traces-panel.svg"
+        "small": "/public/app/plugins/panel/traces/img/traces-panel.svg",
+        "large": "/public/app/plugins/panel/traces/img/traces-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1584,10 +1737,48 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/traces/",
     "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Trend",
+    "type": "panel",
+    "id": "trend",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Like timeseries, but when x != time",
+      "links": null,
+      "logos": {
+        "small": "/public/app/plugins/panel/trend/img/trend.svg",
+        "large": "/public/app/plugins/panel/trend/img/trend.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/trend/",
+    "category": "",
     "state": "beta",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Welcome",
@@ -1603,8 +1794,8 @@
       "description": "",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/welcome/img/icn-dashlist-panel.svg",
-        "large": "public/app/plugins/panel/welcome/img/icn-dashlist-panel.svg"
+        "small": "/public/app/plugins/panel/welcome/img/icn-dashlist-panel.svg",
+        "large": "/public/app/plugins/panel/welcome/img/icn-dashlist-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1623,7 +1814,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "XY Chart",
@@ -1639,8 +1831,8 @@
       "description": "",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/xychart/img/icn-xychart.svg",
-        "large": "public/app/plugins/panel/xychart/img/icn-xychart.svg"
+        "small": "/public/app/plugins/panel/xychart/img/icn-xychart.svg",
+        "large": "/public/app/plugins/panel/xychart/img/icn-xychart.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1659,7 +1851,8 @@
     "state": "beta",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Zipkin",
@@ -1680,8 +1873,8 @@
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/zipkin/img/zipkin-logo.svg",
-        "large": "public/app/plugins/datasource/zipkin/img/zipkin-logo.svg"
+        "small": "/public/app/plugins/datasource/zipkin/img/zipkin-logo.svg",
+        "large": "/public/app/plugins/datasource/zipkin/img/zipkin-logo.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1700,6 +1893,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   }
 ]

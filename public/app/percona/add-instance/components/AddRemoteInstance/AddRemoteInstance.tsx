@@ -38,7 +38,7 @@ import {
 import { ExternalServiceConnectionDetails } from './FormParts/ExternalServiceConnectionDetails/ExternalServiceConnectionDetails';
 import { HAProxyConnectionDetails } from './FormParts/HAProxyConnectionDetails/HAProxyConnectionDetails';
 
-const AddRemoteInstance: FC<AddRemoteInstanceProps> = ({
+const AddRemoteInstance: FC<React.PropsWithChildren<AddRemoteInstanceProps>> = ({
   instance: { type, credentials },
   onSubmit: submitWrapper,
 }) => {

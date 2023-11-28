@@ -6,7 +6,7 @@ import { Select } from '@grafana/ui';
 
 import { SELECTORS } from '../constants';
 import CloudMonitoringDatasource from '../datasource';
-import { SLOQuery } from '../types';
+import { SLOQuery } from '../types/query';
 
 export interface Props {
   refId: string;

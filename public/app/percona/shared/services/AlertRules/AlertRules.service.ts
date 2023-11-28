@@ -16,7 +16,7 @@ export const AlertRulesService = {
         status: e.response?.status || 400,
         data: e.response?.data,
         config: {
-          url: e.config.url || '',
+          url: e.config?.url || '',
         },
       };
 

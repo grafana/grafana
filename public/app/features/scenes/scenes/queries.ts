@@ -1,6 +1,10 @@
-import { SceneQueryRunner } from '../querying/SceneQueryRunner';
+import { QueryRunnerState, SceneQueryRunner } from '@grafana/scenes';
+import { TestData } from '@grafana-plugins/grafana-testdata-datasource/dataquery.gen';
 
-export function getQueryRunnerWithRandomWalkQuery() {
+export function getQueryRunnerWithRandomWalkQuery(
+  overrides?: Partial<TestData>,
+  queryRunnerOverrides?: Partial<QueryRunnerState>
+) {
   return new SceneQueryRunner({
     queries: [
       {
@@ -10,7 +14,9 @@ export function getQueryRunnerWithRandomWalkQuery() {
           type: 'testdata',
         },
         scenarioId: 'random_walk',
+        ...overrides,
       },
     ],
+    ...queryRunnerOverrides,
   });
 }

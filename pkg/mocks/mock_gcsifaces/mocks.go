@@ -10,9 +10,10 @@ import (
 
 	storage "cloud.google.com/go/storage"
 	gomock "github.com/golang/mock/gomock"
-	gcsifaces "github.com/grafana/grafana/pkg/ifaces/gcsifaces"
 	google "golang.org/x/oauth2/google"
 	jwt "golang.org/x/oauth2/jwt"
+
+	gcsifaces "github.com/grafana/grafana/pkg/ifaces/gcsifaces"
 )
 
 // MockStorageClient is a mock of StorageClient interface
@@ -47,7 +48,7 @@ func (m *MockStorageClient) Bucket(name string) gcsifaces.StorageBucket {
 }
 
 // Bucket indicates an expected call of Bucket
-func (mr *MockStorageClientMockRecorder) Bucket(name interface{}) *gomock.Call {
+func (mr *MockStorageClientMockRecorder) Bucket(name any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Bucket", reflect.TypeOf((*MockStorageClient)(nil).Bucket), name)
 }
@@ -62,7 +63,7 @@ func (m *MockStorageClient) FindDefaultCredentials(ctx context.Context, scope st
 }
 
 // FindDefaultCredentials indicates an expected call of FindDefaultCredentials
-func (mr *MockStorageClientMockRecorder) FindDefaultCredentials(ctx, scope interface{}) *gomock.Call {
+func (mr *MockStorageClientMockRecorder) FindDefaultCredentials(ctx, scope any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindDefaultCredentials", reflect.TypeOf((*MockStorageClient)(nil).FindDefaultCredentials), ctx, scope)
 }
@@ -77,7 +78,7 @@ func (m *MockStorageClient) JWTConfigFromJSON(keyJSON []byte) (*jwt.Config, erro
 }
 
 // JWTConfigFromJSON indicates an expected call of JWTConfigFromJSON
-func (mr *MockStorageClientMockRecorder) JWTConfigFromJSON(keyJSON interface{}) *gomock.Call {
+func (mr *MockStorageClientMockRecorder) JWTConfigFromJSON(keyJSON any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "JWTConfigFromJSON", reflect.TypeOf((*MockStorageClient)(nil).JWTConfigFromJSON), keyJSON)
 }
@@ -92,7 +93,7 @@ func (m *MockStorageClient) SignedURL(bucket, name string, opts *storage.SignedU
 }
 
 // SignedURL indicates an expected call of SignedURL
-func (mr *MockStorageClientMockRecorder) SignedURL(bucket, name, opts interface{}) *gomock.Call {
+func (mr *MockStorageClientMockRecorder) SignedURL(bucket, name, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SignedURL", reflect.TypeOf((*MockStorageClient)(nil).SignedURL), bucket, name, opts)
 }
@@ -129,7 +130,7 @@ func (m *MockStorageBucket) Object(key string) gcsifaces.StorageObject {
 }
 
 // Object indicates an expected call of Object
-func (mr *MockStorageBucketMockRecorder) Object(key interface{}) *gomock.Call {
+func (mr *MockStorageBucketMockRecorder) Object(key any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Object", reflect.TypeOf((*MockStorageBucket)(nil).Object), key)
 }
@@ -166,7 +167,7 @@ func (m *MockStorageObject) NewWriter(ctx context.Context) gcsifaces.StorageWrit
 }
 
 // NewWriter indicates an expected call of NewWriter
-func (mr *MockStorageObjectMockRecorder) NewWriter(ctx interface{}) *gomock.Call {
+func (mr *MockStorageObjectMockRecorder) NewWriter(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewWriter", reflect.TypeOf((*MockStorageObject)(nil).NewWriter), ctx)
 }
@@ -204,7 +205,7 @@ func (m *MockStorageWriter) Write(p []byte) (int, error) {
 }
 
 // Write indicates an expected call of Write
-func (mr *MockStorageWriterMockRecorder) Write(p interface{}) *gomock.Call {
+func (mr *MockStorageWriterMockRecorder) Write(p any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Write", reflect.TypeOf((*MockStorageWriter)(nil).Write), p)
 }
@@ -230,7 +231,7 @@ func (m *MockStorageWriter) SetACL(acl string) {
 }
 
 // SetACL indicates an expected call of SetACL
-func (mr *MockStorageWriterMockRecorder) SetACL(acl interface{}) *gomock.Call {
+func (mr *MockStorageWriterMockRecorder) SetACL(acl any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetACL", reflect.TypeOf((*MockStorageWriter)(nil).SetACL), acl)
 }

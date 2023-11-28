@@ -6,6 +6,7 @@ import { Provider } from 'react-redux';
 import { configureStore } from 'app/store/configureStore';
 
 import { DashboardModel } from '../../state';
+import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { SaveDashboardDrawer } from './SaveDashboardDrawer';
 
@@ -21,16 +22,10 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-jest.mock('app/core/services/backend_srv', () => ({
-  backendSrv: {
-    getDashboardByUid: jest.fn().mockResolvedValue({ dashboard: {} }),
-  },
-}));
-
 const store = configureStore();
 const mockPost = jest.fn();
 const buildMocks = () => ({
-  dashboard: new DashboardModel({
+  dashboard: createDashboardModelFixture({
     uid: 'mockDashboardUid',
     version: 1,
   }),
@@ -75,7 +70,7 @@ describe('SaveDashboardDrawer', () => {
     expect(screen.getByRole('button', { name: /overwrite/i })).toBeInTheDocument();
   });
 
-  it('should render corresponding save modal once the errror is handled', async () => {
+  it('should render corresponding save modal once the error is handled', async () => {
     const { onDismiss, dashboard, error } = buildMocks();
     mockPost.mockRejectedValueOnce(error);
 

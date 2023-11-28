@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { ClipboardButton, CodeEditor, Modal } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 export interface ViewJsonModalProps {
   json: string;
@@ -17,7 +18,7 @@ export function ViewJsonModal({ json, onDismiss }: ViewJsonModalProps): JSX.Elem
       </AutoSizer>
       <Modal.ButtonRow>
         <ClipboardButton icon="copy" getText={getClipboardText}>
-          Copy to Clipboard
+          <Trans i18nKey="share-modal.view-json.copy-button">Copy to Clipboard</Trans>
         </ClipboardButton>
       </Modal.ButtonRow>
     </Modal>

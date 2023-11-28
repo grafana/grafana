@@ -3,9 +3,10 @@ import { each, template } from 'lodash';
 import { RawTimeRange, PanelPluginMeta, dateMath } from '@grafana/data';
 import { GrafanaRootScope } from 'app/angular/GrafanaCtrl';
 import config from 'app/core/config';
+import { ContextSrv } from 'app/core/services/context_srv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
-import { angularMocks, sinon } from '../lib/common';
+import { angularMocks } from '../lib/common';
 
 export function ControllerTestContext(this: any) {
   const self = this;
@@ -55,8 +56,8 @@ export function ControllerTestContext(this: any) {
         return self.isUtc ? 'utc' : 'browser';
       };
 
-      $rootScope.appEvent = sinon.spy();
-      $rootScope.onAppEvent = sinon.spy();
+      $rootScope.appEvent = jest.fn();
+      $rootScope.onAppEvent = jest.fn();
       $rootScope.colors = [];
 
       for (let i = 0; i < 50; i++) {
@@ -84,8 +85,8 @@ export function ControllerTestContext(this: any) {
       self.scope.dashboard = { meta: {} };
       self.scope.dashboardMeta = {};
       self.scope.dashboardViewState = DashboardViewStateStub();
-      self.scope.appEvent = sinon.spy();
-      self.scope.onAppEvent = sinon.spy();
+      self.scope.appEvent = jest.fn();
+      self.scope.onAppEvent = jest.fn();
 
       $rootScope.colors = [];
       for (let i = 0; i < 50; i++) {
@@ -133,7 +134,7 @@ export class TimeSrvStub {
   }
 }
 
-export class ContextSrvStub {
+export class ContextSrvStub extends ContextSrv {
   isGrafanaVisible = jest.fn();
 
   getValidInterval() {

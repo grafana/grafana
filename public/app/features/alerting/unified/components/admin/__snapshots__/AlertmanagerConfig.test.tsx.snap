@@ -1,0 +1,20 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Admin config Editable alertmanager config 1`] = `
+[
+  "CloudManager",
+  {
+    "alertmanager_config": {
+      "receivers": [
+        {
+          "name": "default ",
+        },
+      ],
+      "route": {
+        "receiver": "old one",
+      },
+    },
+    "template_files": {},
+  },
+]
+`;

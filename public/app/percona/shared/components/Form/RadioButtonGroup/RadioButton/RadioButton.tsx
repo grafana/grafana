@@ -6,7 +6,7 @@ import { generateId } from 'app/percona/shared/helpers/utils';
 import { getStylesFn } from './RadioButton.styles';
 import { RadioButtonProps } from './RadioButton.types';
 
-export const RadioButton: FC<RadioButtonProps> = ({
+export const RadioButton: FC<React.PropsWithChildren<RadioButtonProps>> = ({
   checked = false,
   children,
   disabled = false,

@@ -6,20 +6,21 @@ import appEvents from 'app/core/app_events';
 import { assignRoleAction } from 'app/percona/shared/core/reducers/roles/roles';
 import { getAccessRoles, getUsersInfo } from 'app/percona/shared/core/selectors';
 import { useAppDispatch } from 'app/store/store';
-import { OrgUser, useSelector } from 'app/types';
+import { OrgUser, UserDTO, useSelector } from 'app/types';
 
 import { Messages } from './AccessRoleCell.messages';
 import { idsToOptions, toOptions } from './AccessRoleCell.utils';
 
 interface AccessRoleCellProps {
-  user: OrgUser;
+  user: OrgUser | UserDTO;
 }
 
-const AccessRoleCell: FC<AccessRoleCellProps> = ({ user }) => {
+const AccessRoleCell: FC<React.PropsWithChildren<AccessRoleCellProps>> = ({ user }) => {
+  const userId = useMemo(() => ('userId' in user ? user.userId : user.id), [user]);
   const dispatch = useAppDispatch();
   const { roles, isLoading: rolesLoading } = useSelector(getAccessRoles);
   const { usersMap, isLoading: usersLoading } = useSelector(getUsersInfo);
-  const roleIds = useMemo<number[]>(() => usersMap[user.userId]?.roleIds || [], [usersMap, user.userId]);
+  const roleIds = useMemo<number[]>(() => usersMap[userId]?.roleIds || [], [usersMap, userId]);
   const options = useMemo<Array<SelectableValue<number>>>(() => toOptions(roles), [roles]);
   const [value, setValue] = useState<Array<SelectableValue<number>>>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -37,7 +38,7 @@ const AccessRoleCell: FC<AccessRoleCellProps> = ({ user }) => {
     const ids = roleIds.map((v) => v.value as number);
     const payload = {
       roleIds: ids,
-      userId: user.userId,
+      userId: userId,
     };
     await dispatch(assignRoleAction(payload));
     appEvents.emit(AppEvents.alertSuccess, [Messages.success.title(user.name || user.login), Messages.success.body]);

@@ -44,7 +44,7 @@ const serviceTypeOptions: Array<SelectableValue<ServiceTypeSelect>> = [
   },
 ];
 
-export const RestoreBackupModal: FC<RestoreBackupModalProps> = ({
+export const RestoreBackupModal: FC<React.PropsWithChildren<RestoreBackupModalProps>> = ({
   backup,
   isVisible,
   noService = false,
@@ -149,7 +149,7 @@ export const RestoreBackupModal: FC<RestoreBackupModalProps> = ({
   }, [hoursFromEndDate, hoursFromStartDate, isSameEndDate, isSameStartDate]);
 
   const calculateDisableMinutes = useCallback(
-    (hour) => {
+    (hour: number) => {
       const disabledMinutes = [];
       for (let i = 0; i < 60; i++) {
         if (isSameStartDate && hour === hoursFromStartDate) {
@@ -169,7 +169,7 @@ export const RestoreBackupModal: FC<RestoreBackupModalProps> = ({
   );
 
   const calculateDisableSeconds = useCallback(
-    (hour, minute) => {
+    (hour: number, minute: number) => {
       const disabledSeconds = [];
 
       for (let i = 0; i < 60; i++) {

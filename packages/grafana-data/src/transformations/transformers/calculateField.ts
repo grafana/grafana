@@ -3,11 +3,9 @@ import { map } from 'rxjs/operators';
 
 import { getTimeField } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field';
-import { DataFrame, DataTransformerInfo, Field, FieldType, NullValueMode, Vector } from '../../types';
+import { DataFrame, DataTransformerInfo, Field, FieldType, NullValueMode } from '../../types';
 import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators';
-import { ArrayVector, BinaryOperationVector, ConstantVector } from '../../vector';
-import { AsNumberVector } from '../../vector/AsNumberVector';
-import { RowVector } from '../../vector/RowVector';
+import { UnaryOperationID, unaryOperators } from '../../utils/unaryOperators';
 import { doStandardCalcs, fieldReducers, ReducerID } from '../fieldReducer';
 import { getFieldMatcher } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
@@ -19,6 +17,8 @@ import { noopTransformer } from './noop';
 export enum CalculateFieldMode {
   ReduceRow = 'reduceRow',
   BinaryOperation = 'binary',
+  UnaryOperation = 'unary',
+  Index = 'index',
 }
 
 export interface ReduceOptions {
@@ -27,10 +27,19 @@ export interface ReduceOptions {
   nullValueMode?: NullValueMode;
 }
 
+export interface UnaryOptions {
+  operator: UnaryOperationID;
+  fieldName: string;
+}
+
 export interface BinaryOptions {
   left: string;
   operator: BinaryOperationID;
   right: string;
+}
+
+export interface IndexOptions {
+  asPercentile: boolean;
 }
 
 const defaultReduceOptions: ReduceOptions = {
@@ -43,6 +52,11 @@ const defaultBinaryOptions: BinaryOptions = {
   right: '',
 };
 
+const defaultUnaryOptions: UnaryOptions = {
+  operator: UnaryOperationID.Abs,
+  fieldName: '',
+};
+
 export interface CalculateFieldTransformerOptions {
   // True/False or auto
   timeSeries?: boolean;
@@ -51,6 +65,8 @@ export interface CalculateFieldTransformerOptions {
   // Only one should be filled
   reduce?: ReduceOptions;
   binary?: BinaryOptions;
+  unary?: UnaryOptions;
+  index?: IndexOptions;
 
   // Remove other fields
   replaceFields?: boolean;
@@ -60,7 +76,7 @@ export interface CalculateFieldTransformerOptions {
   // TODO: config?: FieldConfig; or maybe field overrides? since the UI exists
 }
 
-type ValuesCreator = (data: DataFrame) => Vector;
+type ValuesCreator = (data: DataFrame) => unknown[] | undefined;
 
 export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransformerOptions> = {
   id: DataTransformerID.calculateField,
@@ -72,11 +88,15 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
       reducer: ReducerID.sum,
     },
   },
-  operator: (options, replace) => (outerSource) => {
+  operator: (options, ctx) => (outerSource) => {
     const operator =
-      options && options.timeSeries !== false ? ensureColumnsTransformer.operator(null) : noopTransformer.operator({});
+      options && options.timeSeries !== false
+        ? ensureColumnsTransformer.operator(null, ctx)
+        : noopTransformer.operator({}, ctx);
 
-    options.alias = replace ? replace(options.alias) : options.alias;
+    if (options.alias != null) {
+      options.alias = ctx.interpolate(options.alias);
+    }
 
     return outerSource.pipe(
       operator,
@@ -86,15 +106,37 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
 
         if (mode === CalculateFieldMode.ReduceRow) {
           creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions), data);
+        } else if (mode === CalculateFieldMode.UnaryOperation) {
+          creator = getUnaryCreator(defaults(options.unary, defaultUnaryOptions), data);
         } else if (mode === CalculateFieldMode.BinaryOperation) {
-          const binaryOptions = replace
-            ? {
-                ...options.binary,
-                left: replace ? replace(options.binary?.left) : options.binary?.left,
-                right: replace ? replace(options.binary?.right) : options.binary?.right,
-              }
-            : options.binary;
+          const binaryOptions = {
+            ...options.binary,
+            left: ctx.interpolate(options.binary?.left!),
+            right: ctx.interpolate(options.binary?.right!),
+          };
+
           creator = getBinaryCreator(defaults(binaryOptions, defaultBinaryOptions), data);
+        } else if (mode === CalculateFieldMode.Index) {
+          return data.map((frame) => {
+            const indexArr = [...Array(frame.length).keys()];
+
+            if (options.index?.asPercentile) {
+              for (let i = 0; i < indexArr.length; i++) {
+                indexArr[i] = indexArr[i] / indexArr.length;
+              }
+            }
+
+            const f = {
+              name: options.alias ?? 'Row',
+              type: FieldType.number,
+              values: indexArr,
+              config: options.index?.asPercentile ? { unit: 'percentunit' } : {},
+            };
+            return {
+              ...frame,
+              fields: options.replaceFields ? [f] : [...frame.fields, f],
+            };
+          });
         }
 
         // Nothing configured
@@ -164,7 +206,7 @@ function getReduceRowCreator(options: ReduceOptions, allFrames: DataFrame[]): Va
 
   return (frame: DataFrame) => {
     // Find the columns that should be examined
-    const columns: Vector[] = [];
+    const columns = [];
     for (const field of frame.fields) {
       if (matcher(field, frame, allFrames)) {
         columns.push(field.values);
@@ -172,26 +214,31 @@ function getReduceRowCreator(options: ReduceOptions, allFrames: DataFrame[]): Va
     }
 
     // Prepare a "fake" field for the row
-    const iter = new RowVector(columns);
+    const size = columns.length;
     const row: Field = {
       name: 'temp',
-      values: iter,
+      values: new Array(size),
       type: FieldType.number,
       config: {},
     };
     const vals: number[] = [];
 
     for (let i = 0; i < frame.length; i++) {
-      iter.rowIndex = i;
-      const val = reducer(row, ignoreNulls, nullAsZero)[options.reducer];
-      vals.push(val);
+      for (let j = 0; j < size; j++) {
+        row.values[j] = columns[j][i];
+      }
+      vals.push(reducer(row, ignoreNulls, nullAsZero)[options.reducer]);
     }
 
-    return new ArrayVector(vals);
+    return vals;
   };
 }
 
-function findFieldValuesWithNameOrConstant(frame: DataFrame, name: string, allFrames: DataFrame[]): Vector | undefined {
+function findFieldValuesWithNameOrConstant(
+  frame: DataFrame,
+  name: string,
+  allFrames: DataFrame[]
+): number[] | undefined {
   if (!name) {
     return undefined;
   }
@@ -199,7 +246,7 @@ function findFieldValuesWithNameOrConstant(frame: DataFrame, name: string, allFr
   for (const f of frame.fields) {
     if (name === getFieldDisplayName(f, frame, allFrames)) {
       if (f.type === FieldType.boolean) {
-        return new AsNumberVector(f.values);
+        return f.values.map((v) => (v ? 1 : 0));
       }
       return f.values;
     }
@@ -207,7 +254,7 @@ function findFieldValuesWithNameOrConstant(frame: DataFrame, name: string, allFr
 
   const v = parseFloat(name);
   if (!isNaN(v)) {
-    return new ConstantVector(v, frame.length);
+    return new Array(frame.length).fill(v);
   }
 
   return undefined;
@@ -220,10 +267,39 @@ function getBinaryCreator(options: BinaryOptions, allFrames: DataFrame[]): Value
     const left = findFieldValuesWithNameOrConstant(frame, options.left, allFrames);
     const right = findFieldValuesWithNameOrConstant(frame, options.right, allFrames);
     if (!left || !right || !operator) {
-      return undefined as unknown as Vector;
+      return undefined;
     }
 
-    return new BinaryOperationVector(left, right, operator.operation);
+    const arr = new Array(left.length);
+    for (let i = 0; i < arr.length; i++) {
+      arr[i] = operator.operation(left[i], right[i]);
+    }
+    return arr;
+  };
+}
+
+function getUnaryCreator(options: UnaryOptions, allFrames: DataFrame[]): ValuesCreator {
+  const operator = unaryOperators.getIfExists(options.operator);
+
+  return (frame: DataFrame) => {
+    let value: number[] = [];
+
+    for (const f of frame.fields) {
+      if (options.fieldName === getFieldDisplayName(f, frame, allFrames) && f.type === FieldType.number) {
+        value = f.values;
+      }
+    }
+
+    if (!value.length || !operator) {
+      return undefined;
+    }
+
+    const arr = new Array(value.length);
+    for (let i = 0; i < arr.length; i++) {
+      arr[i] = operator.operation(value[i]);
+    }
+
+    return arr;
   };
 }
 
@@ -232,16 +308,29 @@ export function getNameFromOptions(options: CalculateFieldTransformerOptions) {
     return options.alias;
   }
 
-  if (options.mode === CalculateFieldMode.BinaryOperation) {
-    const { binary } = options;
-    return `${binary?.left ?? ''} ${binary?.operator ?? ''} ${binary?.right ?? ''}`;
-  }
-
-  if (options.mode === CalculateFieldMode.ReduceRow) {
-    const r = fieldReducers.getIfExists(options.reduce?.reducer);
-    if (r) {
-      return r.name;
+  switch (options.mode) {
+    case CalculateFieldMode.UnaryOperation: {
+      const { unary } = options;
+      return `${unary?.operator ?? ''}${unary?.fieldName ? `(${unary.fieldName})` : ''}`;
     }
+    case CalculateFieldMode.BinaryOperation: {
+      const { binary } = options;
+      const alias = `${binary?.left ?? ''} ${binary?.operator ?? ''} ${binary?.right ?? ''}`;
+
+      //Remove $ signs as they will be interpolated and cause issues. Variables can still be used
+      //in alias but shouldn't in the autogenerated name
+      return alias.replace(/\$/g, '');
+    }
+    case CalculateFieldMode.ReduceRow:
+      {
+        const r = fieldReducers.getIfExists(options.reduce?.reducer);
+        if (r) {
+          return r.name;
+        }
+      }
+      break;
+    case CalculateFieldMode.Index:
+      return 'Row';
   }
 
   return 'math';

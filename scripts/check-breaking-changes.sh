@@ -4,6 +4,7 @@
 PACKAGES=$(ls -d ./packages/*/)
 EXIT_CODE=0
 GITHUB_MESSAGE=""
+SKIP_PACKAGES=("grafana-eslint-rules" "grafana-plugin-configs")
 
 # Loop through the packages
 while IFS=" " read -r -a package; do
@@ -16,7 +17,7 @@ while IFS=" " read -r -a package; do
     CURRENT="./pr/$PACKAGE_PATH"
 
     # Temporarily skipping these packages as they don't have any exposed static typing
-    if [[ "$PACKAGE_PATH" == 'grafana-toolkit' || "$PACKAGE_PATH" == 'jaeger-ui-components' ]]; then
+    if [[ ${SKIP_PACKAGES[@]} =~ "$PACKAGE_PATH" ]]; then
         continue
     fi
 
@@ -38,18 +39,18 @@ while IFS=" " read -r -a package; do
     STATUS=$?
 
     # Final exit code
-    # (non-zero if any of the packages failed the checks) 
+    # (non-zero if any of the packages failed the checks)
     if [ $STATUS -gt 0 ]
     then
         EXIT_CODE=1
-        GITHUB_MESSAGE="${GITHUB_MESSAGE}**\\\`${PACKAGE_PATH}\\\`** has possible breaking changes ([more info](${GITHUB_JOB_LINK}#step:${GITHUB_STEP_NUMBER}:1))<br />"    
+        GITHUB_MESSAGE="${GITHUB_MESSAGE}**\\\`${PACKAGE_PATH}\\\`** has possible breaking changes ([more info](${GITHUB_JOB_LINK}#step:${GITHUB_STEP_NUMBER}:1))<br />"
     fi
 
 done <<< "$PACKAGES"
 
 # "Export" the message to an environment variable that can be used across Github Actions steps
-echo "::set-output name=is_breaking::$EXIT_CODE"
-echo "::set-output name=message::$GITHUB_MESSAGE"
+echo "is_breaking=$EXIT_CODE" >> "$GITHUB_OUTPUT"
+echo "message=$GITHUB_MESSAGE" >> "$GITHUB_OUTPUT"
 
 # We will exit the workflow accordingly at another step
 exit 0

@@ -24,7 +24,7 @@ import { EmailProps, FormEmailSettings } from './Email.types';
 import { cleanupFormValues, getInitialValues } from './Email.utils';
 import { TestEmailSettings } from './TestEmailSettings/TestEmailSettings';
 
-export const Email: FC<EmailProps> = ({ updateSettings, settings, testSettings }) => {
+export const Email: FC<React.PropsWithChildren<EmailProps>> = ({ updateSettings, settings, testSettings }) => {
   const testRef = useRef<HTMLDivElement | null>(null);
   const applyRef = useRef<HTMLDivElement | null>(null);
   const testEmailRef = useRef(settings.test_email);

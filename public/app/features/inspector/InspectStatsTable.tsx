@@ -17,7 +17,7 @@ interface InspectStatsTableProps {
   stats: QueryResultMetaStat[];
 }
 
-export const InspectStatsTable: React.FC<InspectStatsTableProps> = ({ timeZone, name, stats }) => {
+export const InspectStatsTable = ({ timeZone, name, stats }: InspectStatsTableProps) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
 

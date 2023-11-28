@@ -1,10 +1,10 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Gauge Panel Migrations from 6.1.1 1`] = `
-Object {
+{
   "orientation": "auto",
-  "reduceOptions": Object {
-    "calcs": Array [
+  "reduceOptions": {
+    "calcs": [
       "last",
     ],
     "limit": undefined,

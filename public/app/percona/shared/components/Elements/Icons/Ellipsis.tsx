@@ -3,7 +3,7 @@ import React, { FC } from 'react';
 import { getStyles } from './Ellipsis.styles';
 import { SvgProps } from './Icons.types';
 
-export const Ellipsis: FC<SvgProps> = ({ className, ...rest }) => {
+export const Ellipsis: FC<React.PropsWithChildren<SvgProps>> = ({ className, ...rest }) => {
   const styles = getStyles();
 
   return (

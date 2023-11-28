@@ -7,7 +7,7 @@ import { ServiceAgentStatus } from '../../Inventory.types';
 import { getStyles } from './StatusBadge.styles';
 import { StatusBadgeProps } from './StatusBadge.types';
 
-export const StatusBadge: FC<StatusBadgeProps> = ({ agents, type, strippedId }) => {
+export const StatusBadge: FC<React.PropsWithChildren<StatusBadgeProps>> = ({ agents, type, strippedId }) => {
   const styles = useStyles2(getStyles);
 
   if (!agents.length) {

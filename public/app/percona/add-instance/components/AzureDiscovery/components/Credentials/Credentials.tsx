@@ -11,7 +11,7 @@ import { Messages } from './Credentials.messages';
 import { getStyles } from './Credentials.styles';
 import { AzureCredentialsForm, CredentialsProps } from './Credentials.types';
 
-const Credentials: FC<CredentialsProps> = ({ onSetCredentials, selectInstance }) => {
+const Credentials: FC<React.PropsWithChildren<CredentialsProps>> = ({ onSetCredentials, selectInstance }) => {
   const styles = useStyles(getStyles);
 
   const onSubmit = useCallback((values: AzureCredentialsForm) => {

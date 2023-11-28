@@ -9,7 +9,7 @@ import { getStyles } from './Failures.styles';
 import { FailuresProps } from './Failures.types';
 import { failureToSeverity } from './Failures.utils';
 
-export const Failures: FC<FailuresProps> = ({ counts }) => {
+export const Failures: FC<React.PropsWithChildren<FailuresProps>> = ({ counts }) => {
   const styles = useStyles2(getStyles);
   return (
     <ul className={styles.list}>

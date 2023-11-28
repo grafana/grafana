@@ -23,7 +23,7 @@ import { StorageLocation } from './StorageLocations.types';
 import { formatLocationList, formatToRawLocation } from './StorageLocations.utils';
 import { StorageLocationsActions } from './StorageLocationsActions';
 
-export const StorageLocations: FC = () => {
+export const StorageLocations: FC<React.PropsWithChildren<unknown>> = () => {
   const [pending, setPending] = useState(true);
   const [validatingLocation, setValidatingLocation] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);

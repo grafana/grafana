@@ -16,7 +16,7 @@ import { GET_KUBERNETES_CONFIG_CANCEL_TOKEN } from './ViewClusterConfigModal.con
 import { getStyles } from './ViewClusterConfigModal.styles';
 import { ViewKubernetesClusterModalProps } from './ViewClusterConfigModal.types';
 
-export const ViewClusterConfigModal: FC<ViewKubernetesClusterModalProps> = ({
+export const ViewClusterConfigModal: FC<React.PropsWithChildren<ViewKubernetesClusterModalProps>> = ({
   isVisible,
   setVisible,
   selectedCluster,

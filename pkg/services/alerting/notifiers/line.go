@@ -6,8 +6,8 @@ import (
 	"net/url"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -82,7 +82,7 @@ func (ln *LineNotifier) createAlert(evalContext *alerting.EvalContext) error {
 		form.Add("imageFullsize", evalContext.ImagePublicURL)
 	}
 
-	cmd := &models.SendWebhookSync{
+	cmd := &notifications.SendWebhookSync{
 		Url:        lineNotifyURL,
 		HttpMethod: "POST",
 		HttpHeader: map[string]string{

@@ -13,7 +13,7 @@ import { DeleteModalFormProps, DeleteModalProps } from './DeleteModal.types';
 const { defaultTitle, defaultMessage, defaultConfirm, defaultCancel } = Messages;
 const { Form } = withTypes<DeleteModalFormProps>();
 
-export const DeleteModal: FC<DeleteModalProps> = ({
+export const DeleteModal: FC<React.PropsWithChildren<DeleteModalProps>> = ({
   title,
   message,
   confirm,

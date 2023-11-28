@@ -1,8 +1,8 @@
 import React, { FC } from 'react';
-import { useSelector } from 'react-redux';
 
 import { useStyles } from '@grafana/ui';
 import { getPerconaUser } from 'app/percona/shared/core/selectors';
+import { useSelector } from 'app/types';
 
 import { PermissionLoader } from '../PermissionLoader';
 
@@ -11,7 +11,7 @@ import { Messages } from './FeatureLoader.messages';
 import { getStyles } from './FeatureLoader.styles';
 import { FeatureLoaderProps } from './FeatureLoader.types';
 
-export const FeatureLoader: FC<FeatureLoaderProps> = ({
+export const FeatureLoader: FC<React.PropsWithChildren<FeatureLoaderProps>> = ({
   featureName = '',
   featureSelector = () => true,
   messagedataTestId = 'settings-link',

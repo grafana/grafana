@@ -5,14 +5,16 @@ import (
 	"os"
 
 	"github.com/fatih/color"
+	"github.com/urfave/cli/v2"
+
 	gcli "github.com/grafana/grafana/pkg/cmd/grafana-cli/commands"
 	gsrv "github.com/grafana/grafana/pkg/cmd/grafana-server/commands"
-	"github.com/urfave/cli/v2"
 )
 
 // The following variables cannot be constants, since they can be overridden through the -X link flag
 var version = "9.2.0"
-var commit = "NA"
+var commit = gcli.DefaultCommitValue
+var enterpriseCommit = gcli.DefaultCommitValue
 var buildBranch = "main"
 var buildstamp string
 
@@ -29,23 +31,10 @@ func main() {
 		Version: version,
 		Commands: []*cli.Command{
 			gcli.CLICommand(version),
-			{
-				Name:  "server",
-				Usage: "server <server options>",
-				Action: func(context *cli.Context) error {
-					os.Exit(gsrv.RunServer(gsrv.ServerOptions{
-						Version:     version,
-						Commit:      commit,
-						BuildBranch: buildBranch,
-						BuildStamp:  buildstamp,
-						Args:        context.Args().Slice(),
-					}))
-					return nil
-				},
-				SkipFlagParsing: true,
-			},
+			gsrv.ServerCommand(version, commit, enterpriseCommit, buildBranch, buildstamp),
 		},
-		CommandNotFound: cmdNotFound,
+		CommandNotFound:      cmdNotFound,
+		EnableBashCompletion: true,
 	}
 
 	if err := app.Run(os.Args); err != nil {

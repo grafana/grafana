@@ -12,7 +12,7 @@ import { DeleteRuleTemplateModalProps } from './DeleteRuleTemplateModal.types';
 
 const { title, getDeleteMessage, getDeleteSuccess } = Messages;
 
-export const DeleteRuleTemplateModal: FC<DeleteRuleTemplateModalProps> = ({
+export const DeleteRuleTemplateModal: FC<React.PropsWithChildren<DeleteRuleTemplateModalProps>> = ({
   template,
   isVisible,
   setVisible,

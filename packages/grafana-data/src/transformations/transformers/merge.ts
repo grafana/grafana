@@ -3,8 +3,7 @@ import { map } from 'rxjs/operators';
 
 import { MutableDataFrame } from '../../dataframe';
 import { DataFrame, Field } from '../../types/dataFrame';
-import { DataTransformerInfo } from '../../types/transformations';
-import { ArrayVector } from '../../vector/ArrayVector';
+import { DataTransformerInfo, TransformationApplicabilityLevels } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
 
@@ -20,6 +19,14 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
   name: 'Merge series/tables',
   description: 'Merges multiple series/tables into a single serie/table',
   defaultOptions: {},
+  isApplicable: (data: DataFrame[]) => {
+    return data.length > 1
+      ? TransformationApplicabilityLevels.Applicable
+      : TransformationApplicabilityLevels.NotApplicable;
+  },
+  isApplicableDescription: (data: DataFrame[]) => {
+    return `The merge transformation requires at least 2 data series to work. There is currently ${data.length} data series.`;
+  },
   operator: (options) => (source) =>
     source.pipe(
       map((dataFrames) => {
@@ -117,7 +124,7 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
 const copyFieldStructure = (field: Field): Field => {
   return {
     ...omit(field, ['values', 'state', 'labels', 'config']),
-    values: new ArrayVector(),
+    values: [],
     config: {
       ...omit(field.config, 'displayName'),
     },
@@ -139,7 +146,7 @@ const createKeyFactory = (
 
   return (frameIndex: number, valueIndex: number): string => {
     return factoryIndex[frameIndex].reduce((key: string, fieldIndex: number) => {
-      return key + data[frameIndex].fields[fieldIndex].values.get(valueIndex);
+      return key + data[frameIndex].fields[fieldIndex].values[valueIndex];
     }, '');
   };
 };
@@ -174,7 +181,7 @@ const createValueMapper = (
         continue;
       }
 
-      value[fieldName] = field.values.get(valueIndex);
+      value[fieldName] = field.values[valueIndex];
     }
 
     return value;

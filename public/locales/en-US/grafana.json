@@ -1,0 +1,1138 @@
+{
+  "_comment": "This file is the source of truth for English strings. Edit this to change plurals and other phrases for the UI.",
+  "access-control": {
+    "add-permission": {
+      "role-label": "Role",
+      "serviceaccount-label": "Service Account",
+      "team-label": "Team",
+      "title": "Add permission for",
+      "user-label": "User"
+    },
+    "add-permissions": {
+      "save": "Save"
+    },
+    "permission-list": {
+      "permission": "Permission"
+    },
+    "permissions": {
+      "add-label": "Add a permission",
+      "no-permissions": "There are no permissions",
+      "permissions-change-warning": "This will change permissions for this folder and all its descendants. In total, this will affect:",
+      "role": "Role",
+      "serviceaccount": "Service Account",
+      "team": "Team",
+      "title": "Permissions",
+      "user": "User"
+    }
+  },
+  "browse-dashboards": {
+    "action": {
+      "cancel-button": "Cancel",
+      "cannot-move-folders": "Folders can not be moved",
+      "delete-button": "Delete",
+      "delete-modal-invalid-text": "One or more folders contain library panels or alert rules. Delete these first in order to proceed.",
+      "delete-modal-invalid-title": "Cannot delete folder",
+      "delete-modal-text": "This action will delete the following content:",
+      "delete-modal-title": "Delete",
+      "deleting": "Deleting...",
+      "manage-permissions-button": "Manage permissions",
+      "move-button": "Move",
+      "move-modal-alert": "Moving this item may change its permissions.",
+      "move-modal-field-label": "Folder name",
+      "move-modal-text": "This action will move the following content:",
+      "move-modal-title": "Move",
+      "moving": "Moving...",
+      "new-folder-name-required-phrase": "Folder name is required."
+    },
+    "counts": {
+      "alertRule_one": "{{count}} alert rule",
+      "alertRule_other": "{{count}} alert rules",
+      "dashboard_one": "{{count}} dashboard",
+      "dashboard_other": "{{count}} dashboards",
+      "folder_one": "{{count}} folder",
+      "folder_other": "{{count}} folders",
+      "libraryPanel_one": "{{count}} library panel",
+      "libraryPanel_other": "{{count}} library panels",
+      "total_one": "{{count}} item",
+      "total_other": "{{count}} items"
+    },
+    "dashboards-tree": {
+      "collapse-folder-button": "Collapse folder {{title}}",
+      "expand-folder-button": "Expand folder {{title}}",
+      "name-column": "Name",
+      "select-all-header-checkbox": "Select all",
+      "select-checkbox": "Select",
+      "tags-column": "Tags"
+    },
+    "folder-actions-button": {
+      "delete": "Delete",
+      "folder-actions": "Folder actions",
+      "manage-permissions": "Manage permissions",
+      "move": "Move"
+    },
+    "folder-picker": {
+      "accessible-label": "Select folder: {{ label }} currently selected",
+      "button-label": "Select folder",
+      "empty-message": "No folders found",
+      "error-title": "Error loading folders",
+      "search-placeholder": "Search folders",
+      "unknown-error": "Unknown error"
+    },
+    "manage-folder-nav": {
+      "alert-rules": "Alert rules",
+      "dashboards": "Dashboards",
+      "panels": "Panels",
+      "permissions": "Permissions",
+      "settings": "Settings"
+    },
+    "new-folder-form": {
+      "cancel-label": "Cancel",
+      "create-label": "Create",
+      "name-label": "Folder name"
+    },
+    "no-results": {
+      "clear": "Clear search and filters",
+      "text": "No results found for your query."
+    }
+  },
+  "clipboard-button": {
+    "inline-toast": {
+      "success": "Copied"
+    }
+  },
+  "command-palette": {
+    "action": {
+      "change-theme": "Change theme...",
+      "dark-theme": "Dark",
+      "light-theme": "Light"
+    },
+    "search-box": {
+      "placeholder": "Search or jump to..."
+    },
+    "section": {
+      "actions": "Actions",
+      "dashboard-search-results": "Dashboards",
+      "folder-search-results": "Folders",
+      "pages": "Pages",
+      "preferences": "Preferences",
+      "recent-dashboards": "Recent dashboards"
+    }
+  },
+  "common": {
+    "locale": {
+      "default": "Default"
+    },
+    "save": "Save"
+  },
+  "connections": {
+    "connect-data": {
+      "category-header-label": "Data sources"
+    },
+    "search": {
+      "placeholder": "Search all"
+    }
+  },
+  "correlations": {
+    "add-new": "Add new",
+    "alert": {
+      "error-message": "An unknown error occurred while fetching correlation data. Please try again.",
+      "title": "Error fetching correlation data"
+    },
+    "list": {
+      "delete": "delete correlation",
+      "label": "Label",
+      "loading": "loading...",
+      "read-only": "Read only",
+      "source": "Source",
+      "target": "Target"
+    },
+    "page-content": "To enable Correlations, add it in the Grafana config:",
+    "page-heading": "Correlations are disabled",
+    "sub-title": "Define how data living in different data sources relates to each other. Read more in the <2>documentation<1></1></2>"
+  },
+  "dashboard": {
+    "add-menu": {
+      "import": "Import from library",
+      "paste-panel": "Paste panel",
+      "row": "Row",
+      "visualization": "Visualization",
+      "widget": "Widget"
+    },
+    "empty": {
+      "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
+      "add-library-panel-button": "Add library panel",
+      "add-library-panel-header": "Add a library panel",
+      "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
+      "add-visualization-button": "Add visualization",
+      "add-visualization-header": "Start your new dashboard by adding a visualization",
+      "add-widget-body": "Create lists, markdowns and other widgets",
+      "add-widget-button": "Add widget",
+      "add-widget-header": "Add a widget",
+      "import-a-dashboard-body": "Import dashboard from file or <1>grafana.com</1>.",
+      "import-a-dashboard-header": "Import a dashboard",
+      "import-dashboard-button": "Import dashboard"
+    },
+    "inspect": {
+      "data-tab": "Data",
+      "error-tab": "Error",
+      "json-tab": "JSON",
+      "meta-tab": "Meta data",
+      "query-tab": "Query",
+      "stats-tab": "Stats",
+      "subtitle": "{{queryCount}} queries with total query time of {{formatted}}",
+      "title": "Inspect: {{panelTitle}}"
+    },
+    "inspect-data": {
+      "data-options": "Data options",
+      "dataframe-aria-label": "Select dataframe",
+      "dataframe-label": "Show data frame",
+      "download-csv": "Download CSV",
+      "download-excel-description": "Adds header to CSV for use with Excel",
+      "download-excel-label": "Download for Excel",
+      "download-logs": "Download logs",
+      "download-service": "Download service graph",
+      "download-traces": "Download traces",
+      "excel-header": "Excel header",
+      "formatted": "Formatted data",
+      "formatted-data-description": "Table data is formatted with options defined in the Field and Override tabs.",
+      "formatted-data-label": "Formatted data",
+      "panel-transforms": "Panel transforms",
+      "series-to-columns": "Series joined by time",
+      "transformation": "Series joined by time",
+      "transformations-description": "Table data is displayed with transformations defined in the panel Transform tab.",
+      "transformations-label": "Apply panel transformations"
+    },
+    "inspect-json": {
+      "dataframe-description": "Raw data without transformations and field config applied. ",
+      "dataframe-label": "DataFrame JSON (from Query)",
+      "panel-data-description": "The raw model passed to the panel visualization",
+      "panel-data-label": "Panel data",
+      "panel-json-description": "The model saved in the dashboard JSON that configures how everything works.",
+      "panel-json-label": "Panel JSON",
+      "select-source": "Select source",
+      "unknown": "Unknown Object: {{show}}"
+    },
+    "inspect-meta": {
+      "no-inspector": "No Metadata Inspector"
+    },
+    "inspect-stats": {
+      "data-title": "Data source stats",
+      "data-traceids": "Trace IDs",
+      "processing-time": "Data processing time",
+      "queries": "Number of queries",
+      "request-time": "Total request time",
+      "rows": "Total number rows",
+      "table-title": "Stats"
+    },
+    "toolbar": {
+      "add": "Add",
+      "add-panel": "Add panel",
+      "mark-favorite": "Mark as favorite",
+      "open-original": "Open original dashboard",
+      "playlist-next": "Go to next dashboard",
+      "playlist-previous": "Go to previous dashboard",
+      "playlist-stop": "Stop playlist",
+      "refresh": "Refresh dashboard",
+      "save": "Save dashboard",
+      "settings": "Dashboard settings",
+      "share": "Share dashboard",
+      "unmark-favorite": "Unmark as favorite"
+    },
+    "validation": {
+      "invalid-dashboard-id": "Could not find a valid Grafana.com ID",
+      "invalid-json": "Not valid JSON",
+      "tags-expected-array": "tags expected array",
+      "tags-expected-strings": "tags expected array of strings"
+    }
+  },
+  "dashboard-import": {
+    "file-dropzone": {
+      "primary-text": "Upload dashboard JSON file",
+      "secondary-text": "Drag and drop here or click to browse"
+    },
+    "form-actions": {
+      "cancel": "Cancel",
+      "load": "Load"
+    },
+    "gcom-field": {
+      "label": "Find and import dashboards for common applications at <1></1>",
+      "load-button": "Load",
+      "placeholder": "Grafana.com dashboard URL or ID",
+      "validation-required": "A Grafana dashboard URL or ID is required"
+    },
+    "json-field": {
+      "label": "Import via dashboard JSON model",
+      "validation-required": "Need a dashboard JSON model"
+    }
+  },
+  "dashboard-settings": {
+    "annotations": {
+      "title": "Annotations"
+    },
+    "dashboard-delete-button": "Delete Dashboard",
+    "general": {
+      "auto-refresh-description": "Define the auto refresh intervals that should be available in the auto refresh list.",
+      "auto-refresh-label": "Auto refresh",
+      "description-label": "Description",
+      "editable-description": "Set to read-only to disable all editing. Reload the dashboard for changes to take effect",
+      "editable-label": "Editable",
+      "folder-label": "Folder",
+      "panel-options-graph-tooltip-description": "Controls tooltip and hover highlight behavior across different panels. Reload the dashboard for changes to take effect",
+      "panel-options-graph-tooltip-label": "Graph tooltip",
+      "panel-options-label": "Panel options",
+      "tags-label": "Tags",
+      "title": "General",
+      "title-label": "Title"
+    },
+    "json-editor": {
+      "save-button": "Save changes",
+      "subtitle": "The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel settings, layout, queries, and so on.",
+      "title": "JSON Model"
+    },
+    "links": {
+      "title": "Links"
+    },
+    "permissions": {
+      "title": "Permissions"
+    },
+    "settings": {
+      "title": "Settings"
+    },
+    "time-picker": {
+      "hide-time-picker": "Hide time picker",
+      "now-delay-description": "Exclude recent data that may be incomplete.",
+      "now-delay-label": "Now delay",
+      "refresh-live-dashboards-description": "Continuously re-draw panels where the time range references 'now'",
+      "refresh-live-dashboards-label": "Refresh live dashboards",
+      "time-options-label": "Time options",
+      "time-zone-label": "Time zone",
+      "week-start-label": "Week start"
+    },
+    "variables": {
+      "title": "Variables"
+    },
+    "versions": {
+      "title": "Versions"
+    }
+  },
+  "data-source-picker": {
+    "add-new-data-source": "Configure a new data source",
+    "built-in-list": {
+      "description-dashboard": "Reuse query results from other visualizations",
+      "description-grafana": "Discover visualizations using mock data",
+      "description-mixed": "Use multiple data sources"
+    },
+    "list": {
+      "no-data-source-message": "No data sources found"
+    },
+    "modal": {
+      "configure-new-data-source": "Open a new tab and configure a data source",
+      "input-placeholder": "Select data source",
+      "title": "Select data source"
+    },
+    "open-advanced-button": "Open advanced data source picker"
+  },
+  "data-sources": {
+    "datasource-add-button": {
+      "label": "Add new data source"
+    }
+  },
+  "explore": {
+    "add-to-dashboard": "Add to dashboard",
+    "table": {
+      "no-data": "0 series returned",
+      "title": "Table",
+      "title-with-name": "Table - {{name}}"
+    },
+    "toolbar": {
+      "aria-label": "Explore toolbar",
+      "copy-shortened-link": "Copy shortened link",
+      "refresh-picker-cancel": "Cancel",
+      "refresh-picker-run": "Run query",
+      "split-close": "Close",
+      "split-close-tooltip": "Close split pane",
+      "split-narrow": "Narrow pane",
+      "split-title": "Split",
+      "split-tooltip": "Split the pane",
+      "split-widen": "Widen pane"
+    }
+  },
+  "folder-picker": {
+    "loading": "Loading folders..."
+  },
+  "grafana-ui": {
+    "modal": {
+      "close-tooltip": "Close"
+    },
+    "segment-async": {
+      "error": "Failed to load options",
+      "loading": "Loading options...",
+      "no-options": "No options found"
+    },
+    "select": {
+      "no-options-label": "No options found",
+      "placeholder": "Choose"
+    }
+  },
+  "graph": {
+    "container": {
+      "content": "Rendering too many series in a single panel may impact performance and make data harder to read. Consider refining your queries.",
+      "show-all-series": "Show all {{length}}",
+      "show-only-series": "Showing only {{MAX_NUMBER_OF_TIME_SERIES}} series",
+      "title": "Graph"
+    }
+  },
+  "help-modal": {
+    "shortcuts-category": {
+      "dashboard": "Dashboard",
+      "focused-panel": "Focused Panel",
+      "global": "Global",
+      "time-range": "Time Range"
+    },
+    "shortcuts-description": {
+      "change-theme": "Change theme",
+      "collapse-all-rows": "Collapse all rows",
+      "dashboard-settings": "Dashboard settings",
+      "duplicate-panel": "Duplicate Panel",
+      "exit-edit/setting-views": "Exit edit/setting views",
+      "expand-all-rows": "Expand all rows",
+      "go-to-dashboards": "Go to Dashboards",
+      "go-to-explore": "Go to Explore",
+      "go-to-home-dashboard": "Go to Home Dashboard",
+      "go-to-profile": "Go to Profile",
+      "make-time-range-permanent": "Make time range absolute/permanent",
+      "move-time-range-back": "Move time range back",
+      "move-time-range-forward": "Move time range forward",
+      "open-search": "Open search",
+      "open-shared-modal": "Open Panel Share Modal",
+      "refresh-all-panels": "Refresh all panels",
+      "remove-panel": "Remove Panel",
+      "save-dashboard": "Save dashboard",
+      "show-all-shortcuts": "Show all keyboard shortcuts",
+      "toggle-active-mode": "Toggle in-active / view mode",
+      "toggle-all-panel-legends": "Toggle all panel legends",
+      "toggle-auto-fit": "Toggle auto fit panels (experimental feature)",
+      "toggle-exemplars": "Toggle exemplars in all panel",
+      "toggle-graph-crosshair": "Toggle shared graph crosshair",
+      "toggle-kiosk": "Toggle kiosk mode (hides top nav)",
+      "toggle-panel-edit": "Toggle panel edit view",
+      "toggle-panel-fullscreen": "Toggle panel fullscreen view",
+      "toggle-panel-legend": "Toggle panel legend",
+      "zoom-out-time-range": "Zoom out time range"
+    },
+    "title": "Shortcuts"
+  },
+  "inspector": {
+    "query": {
+      "collapse-all": "Collapse all",
+      "copy-to-clipboard": "Copy to clipboard",
+      "description": "Query inspector allows you to view raw request and response. To collect this data Grafana needs to issue a new query. Click refresh button below to trigger a new query.",
+      "expand-all": "Expand all",
+      "no-data": "No request and response collected yet. Hit refresh button",
+      "refresh": "Refresh"
+    }
+  },
+  "library-panel": {
+    "add-modal": {
+      "cancel": "Cancel",
+      "create": "Create library panel",
+      "error": "Library panel with this name already exists",
+      "folder": "Save in folder",
+      "folder-description": "Library panel permissions are derived from the folder permissions",
+      "name": "Library panel name"
+    },
+    "add-widget": {
+      "title": "Add panel from panel library"
+    }
+  },
+  "library-panels": {
+    "modal": {
+      "body_one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
+      "body_other": "This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:",
+      "button-cancel": "<0>Cancel</0>",
+      "button-view-panel1": "View panel in {{label}}...",
+      "button-view-panel2": "View panel in dashboard...",
+      "panel-not-linked": "Panel is not linked to a dashboard. Add the panel to a dashboard and retry.",
+      "select-no-options-message": "No dashboards found",
+      "select-placeholder": "Start typing to search for dashboard",
+      "title": "View panel in dashboard"
+    },
+    "save": {
+      "error": "Error saving library panel: \"{{errorMsg}}\"",
+      "success": "Library panel saved"
+    }
+  },
+  "login": {
+    "error": {
+      "blocked": "You have exceeded the number of login attempts for this user. Please try again later.",
+      "invalid-user-or-password": "Invalid username or password",
+      "title": "Login failed",
+      "unknown": "Unknown error occurred"
+    }
+  },
+  "nav": {
+    "add-new-connections": {
+      "title": "Add new connection"
+    },
+    "admin": {
+      "subtitle": "Manage server-wide settings and access to resources such as organizations, users, and licenses",
+      "title": "Server admin"
+    },
+    "alerting": {
+      "subtitle": "Learn about problems in your systems moments after they occur",
+      "title": "Alerting"
+    },
+    "alerting-admin": {
+      "title": "Admin"
+    },
+    "alerting-am-routes": {
+      "subtitle": "Determine how alerts are routed to contact points",
+      "title": "Notification policies"
+    },
+    "alerting-channels": {
+      "title": "Notification channels"
+    },
+    "alerting-groups": {
+      "subtitle": "See grouped alerts from an Alertmanager instance",
+      "title": "Groups"
+    },
+    "alerting-home": {
+      "title": "Home"
+    },
+    "alerting-legacy": {
+      "title": "Alerting (legacy)"
+    },
+    "alerting-list": {
+      "subtitle": "Rules that determine whether an alert will fire",
+      "title": "Alert rules"
+    },
+    "alerting-receivers": {
+      "subtitle": "Choose how to notify your contact points when an alert instance fires",
+      "title": "Contact points"
+    },
+    "alerting-silences": {
+      "subtitle": "Stop notifications from one or more alerting rules",
+      "title": "Silences"
+    },
+    "alerts-and-incidents": {
+      "subtitle": "Alerting and incident management apps",
+      "title": "Alerts & IRM"
+    },
+    "api-keys": {
+      "subtitle": "Manage and create API keys that are used to interact with Grafana HTTP APIs",
+      "title": "API keys"
+    },
+    "application": {
+      "title": "Application (preview)"
+    },
+    "apps": {
+      "subtitle": "App plugins that extend the Grafana experience",
+      "title": "Apps"
+    },
+    "authentication": {
+      "title": "Authentication"
+    },
+    "config": {
+      "title": "Administration"
+    },
+    "config-access": {
+      "subtitle": "Configure access for individual users, teams, and service accounts",
+      "title": "Users and access"
+    },
+    "config-general": {
+      "subtitle": "Manage default preferences and settings across Grafana",
+      "title": "General"
+    },
+    "config-plugins": {
+      "subtitle": "Install plugins and define the relationships between data",
+      "title": "Plugins and data"
+    },
+    "connect-data": {
+      "title": "Connect data"
+    },
+    "connections": {
+      "subtitle": "Browse and create new connections",
+      "title": "Connections"
+    },
+    "correlations": {
+      "subtitle": "Add and configure correlations",
+      "title": "Correlations"
+    },
+    "create": {
+      "title": "Create"
+    },
+    "create-alert": {
+      "title": "Create alert rule"
+    },
+    "create-dashboard": {
+      "title": "Dashboard"
+    },
+    "create-folder": {
+      "title": "Folder"
+    },
+    "create-import": {
+      "title": "Import dashboard"
+    },
+    "dashboards": {
+      "subtitle": "Create and manage dashboards to visualize your data",
+      "title": "Dashboards"
+    },
+    "data-sources": {
+      "subtitle": "View and manage your connected data source connections",
+      "title": "Data sources"
+    },
+    "datasources": {
+      "subtitle": "Add and configure data sources",
+      "title": "Data sources"
+    },
+    "detect": {
+      "title": "Detect"
+    },
+    "explore": {
+      "title": "Explore"
+    },
+    "frontend": {
+      "title": "Frontend"
+    },
+    "global-orgs": {
+      "subtitle": "Isolated instances of Grafana running on the same server",
+      "title": "Organizations"
+    },
+    "global-users": {
+      "subtitle": "Manage users in Grafana",
+      "title": "Users"
+    },
+    "grafana-quaderno": {
+      "title": "Grafana Quaderno"
+    },
+    "help": {
+      "title": "Help"
+    },
+    "help/community": "Community",
+    "help/documentation": "Documentation",
+    "help/keyboard-shortcuts": "Keyboard shortcuts",
+    "help/support": "Support",
+    "home": {
+      "title": "Home"
+    },
+    "incidents": {
+      "title": "Incidents"
+    },
+    "infrastructure": {
+      "title": "Integrations"
+    },
+    "kubernetes": {
+      "title": "Kubernetes"
+    },
+    "library-panels": {
+      "subtitle": "Reusable panels that can be added to multiple dashboards",
+      "title": "Library panels"
+    },
+    "machine-learning": {
+      "title": "Machine learning"
+    },
+    "manage-folder": {
+      "subtitle": "Manage folder dashboards and permissions"
+    },
+    "monitoring": {
+      "subtitle": "Monitoring and infrastructure apps",
+      "title": "Observability"
+    },
+    "new": {
+      "title": "New"
+    },
+    "new-dashboard": {
+      "title": "New dashboard"
+    },
+    "new-folder": {
+      "title": "New folder"
+    },
+    "observability": {
+      "title": "Observability"
+    },
+    "oncall": {
+      "title": "OnCall"
+    },
+    "org-settings": {
+      "subtitle": "Manage preferences across an organization",
+      "title": "Default preferences"
+    },
+    "performance-testing": {
+      "title": "Performance testing"
+    },
+    "playlists": {
+      "subtitle": "Groups of dashboards that are displayed in a sequence",
+      "title": "Playlists"
+    },
+    "plugins": {
+      "subtitle": "Extend the Grafana experience with plugins",
+      "title": "Plugins"
+    },
+    "profile/notifications": {
+      "title": "Notification history"
+    },
+    "profile/password": {
+      "title": "Change password"
+    },
+    "profile/settings": {
+      "title": "Profile"
+    },
+    "profiles": {
+      "title": "Profiles"
+    },
+    "public": {
+      "title": "Public dashboards"
+    },
+    "recorded-queries": {
+      "title": "Recorded queries"
+    },
+    "reporting": {
+      "title": "Reporting"
+    },
+    "scenes": {
+      "title": "Scenes"
+    },
+    "search": {
+      "placeholderCommandPalette": "Search or jump to..."
+    },
+    "search-dashboards": {
+      "title": "Search dashboards"
+    },
+    "server-settings": {
+      "subtitle": "View the settings defined in your Grafana config",
+      "title": "Settings"
+    },
+    "service-accounts": {
+      "subtitle": "Use service accounts to run automated workloads in Grafana",
+      "title": "Service accounts"
+    },
+    "sign-out": {
+      "title": "Sign out"
+    },
+    "slo": {
+      "title": "SLO"
+    },
+    "snapshots": {
+      "subtitle": "Interactive, publically available, point-in-time representations of dashboards",
+      "title": "Snapshots"
+    },
+    "starred": {
+      "title": "Starred"
+    },
+    "starred-empty": {
+      "title": "Your starred dashboards will appear here"
+    },
+    "statistics-and-licensing": {
+      "title": "Statistics and licensing"
+    },
+    "storage": {
+      "subtitle": "Manage file storage",
+      "title": "Storage"
+    },
+    "support-bundles": {
+      "subtitle": "Download support bundles",
+      "title": "Support bundles"
+    },
+    "synthetics": {
+      "title": "Synthetics"
+    },
+    "teams": {
+      "subtitle": "Groups of users that have common dashboard and permission needs",
+      "title": "Teams"
+    },
+    "upgrading": {
+      "title": "Stats and license"
+    },
+    "users": {
+      "subtitle": "Invite and assign roles to users",
+      "title": "Users"
+    }
+  },
+  "navigation": {
+    "kiosk": {
+      "tv-alert": "Press ESC to exit kiosk mode"
+    },
+    "megamenu": {
+      "close": "Close menu",
+      "dock": "Dock menu",
+      "undock": "Undock menu"
+    },
+    "toolbar": {
+      "enable-kiosk": "Enable kiosk mode",
+      "toggle-menu": "Toggle menu",
+      "toggle-search-bar": "Toggle top search bar"
+    }
+  },
+  "news": {
+    "title": "Latest from the blog"
+  },
+  "notifications": {
+    "starred-dashboard": "Dashboard starred",
+    "unstarred-dashboard": "Dashboard unstarred"
+  },
+  "panel": {
+    "header-menu": {
+      "copy": "Copy",
+      "create-library-panel": "Create library panel",
+      "duplicate": "Duplicate",
+      "edit": "Edit",
+      "explore": "Explore",
+      "get-help": "Get help",
+      "hide-legend": "Hide legend",
+      "inspect": "Inspect",
+      "inspect-data": "Data",
+      "inspect-json": "Panel JSON",
+      "more": "More...",
+      "query": "Query",
+      "remove": "Remove",
+      "share": "Share",
+      "show-legend": "Show legend",
+      "unlink-library-panel": "Unlink library panel",
+      "view": "View"
+    }
+  },
+  "playlist-edit": {
+    "error-prefix": "Error loading playlist:",
+    "form": {
+      "add-tag-label": "Add by tag",
+      "add-tag-placeholder": "Select a tag",
+      "add-title-label": "Add by title",
+      "cancel": "Cancel",
+      "heading": "Add dashboards",
+      "interval-label": "Interval",
+      "interval-placeholder": "5m",
+      "interval-required": "Interval is required",
+      "name-label": "Name",
+      "name-placeholder": "Name",
+      "name-required": "Name is required",
+      "save": "Save",
+      "table-delete": "Delete playlist item",
+      "table-drag": "Drag and drop to reorder",
+      "table-empty": "Playlist is empty. Add dashboards below.",
+      "table-heading": "Dashboards"
+    },
+    "sub-title": "A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.",
+    "title": "Edit playlist"
+  },
+  "playlist-page": {
+    "card": {
+      "delete": "Delete playlist",
+      "edit": "Edit playlist",
+      "start": "Start playlist",
+      "tooltip": "Share playlist"
+    },
+    "create-button": {
+      "title": "New playlist"
+    },
+    "delete-modal": {
+      "body": "Are you sure you want to delete {{name}} playlist?",
+      "confirm-text": "Delete"
+    },
+    "empty": {
+      "button": "Create Playlist",
+      "pro-tip": "You can use playlists to cycle dashboards on TVs without user control",
+      "pro-tip-link-title": "Learn more",
+      "title": "There are no playlists created yet"
+    }
+  },
+  "profile": {
+    "change-password": {
+      "cancel-button": "Cancel",
+      "cannot-change-password-message": "Password cannot be changed here.",
+      "change-password-button": "Change Password",
+      "confirm-password-label": "Confirm password",
+      "confirm-password-required": "New password confirmation is required",
+      "ldap-auth-proxy-message": "You cannot change password when signed in with LDAP or auth proxy.",
+      "new-password-label": "New password",
+      "new-password-required": "New password is required",
+      "new-password-same-as-old": "New password can't be the same as the old one.",
+      "old-password-label": "Old password",
+      "old-password-required": "Old password is required",
+      "passwords-must-match": "Passwords must match"
+    }
+  },
+  "refresh-picker": {
+    "aria-label": {
+      "choose-interval": "Auto refresh turned off. Choose refresh time interval",
+      "duration-selected": "Choose refresh time interval with current interval {{durationAriaLabel}} selected"
+    },
+    "auto-option": {
+      "aria-label": "",
+      "label": ""
+    },
+    "live-option": {
+      "aria-label": "Turn on live streaming",
+      "label": "Live"
+    },
+    "off-option": {
+      "aria-label": "Turn off auto refresh",
+      "label": "Off"
+    },
+    "tooltip": {
+      "interval-selected": "Set auto refresh interval",
+      "turned-off": "Auto refresh off"
+    }
+  },
+  "search": {
+    "actions": {
+      "include-panels": "Include panels",
+      "remove-datasource-filter": "Datasource: {{datasource}}",
+      "sort-placeholder": "Sort",
+      "starred": "Starred",
+      "view-as-folders": "View by folders",
+      "view-as-list": "View as list"
+    },
+    "dashboard-actions": {
+      "import": "Import",
+      "new": "New",
+      "new-dashboard": "New dashboard",
+      "new-folder": "New folder"
+    },
+    "folder-view": {
+      "go-to-folder": "Go to folder",
+      "select-folder": "Select folder"
+    },
+    "result-kind": {
+      "dashboard": "Dashboard",
+      "folder": "Folder",
+      "panel": "Panel"
+    },
+    "results-table": {
+      "datasource-header": "Data source",
+      "location-header": "Location",
+      "name-header": "Name",
+      "tags-header": "Tags",
+      "type-dashboard": "Dashboard",
+      "type-folder": "Folder",
+      "type-header": "Type"
+    },
+    "search-input": {
+      "include-panels-placeholder": "Search for dashboards, folders, and panels",
+      "placeholder": "Search for dashboards and folders"
+    }
+  },
+  "search-view": {
+    "no-results": {
+      "clear": "Clear search and filters",
+      "text": "No results found for your query."
+    }
+  },
+  "share-modal": {
+    "dashboard": {
+      "title": "Share"
+    },
+    "embed": {
+      "copy": "Copy to clipboard",
+      "html": "Embed HTML",
+      "html-description": "The HTML code below can be pasted and included in another web page. Unless anonymous access is enabled, the user viewing that page need to be signed into Grafana for the graph to load.",
+      "info": "Generate HTML for embedding an iframe with this panel.",
+      "time-range": "Current time range",
+      "time-range-description": "Transforms the current relative time range to an absolute time range"
+    },
+    "export": {
+      "back-button": "Back to export config",
+      "cancel-button": "Cancel",
+      "info-text": "Export this dashboard.",
+      "save-button": "Save to file",
+      "share-default-label": "Export with default values removed",
+      "share-externally-label": "Export for sharing externally",
+      "view-button": "View JSON"
+    },
+    "library": {
+      "info": "Create library panel."
+    },
+    "link": {
+      "copy-link-button": "Copy",
+      "info-text": "Create a direct link to this dashboard or panel, customized with the options below.",
+      "link-url": "Link URL",
+      "render-alert": "Image renderer plugin not installed",
+      "render-instructions": "To render a panel image, you must install the <1>Grafana image renderer plugin</1>. Please contact your Grafana administrator to install the plugin.",
+      "rendered-image": "Direct link rendered image",
+      "save-alert": "Dashboard is not saved",
+      "save-dashboard": "To render a panel image, you must save the dashboard first.",
+      "shorten-url": "Shorten URL",
+      "time-range-description": "Transforms the current relative time range to an absolute time range",
+      "time-range-label": "Lock time range"
+    },
+    "panel": {
+      "title": "Share Panel"
+    },
+    "snapshot": {
+      "cancel-button": "Cancel",
+      "copy-link-button": "Copy",
+      "delete-button": "Delete snapshot.",
+      "deleted-message": "The snapshot has been deleted. If you have already accessed it once, then it might take up to an hour before before it is removed from browser caches or CDN caches.",
+      "expire": "Expire",
+      "expire-day": "1 Day",
+      "expire-hour": "1 Hour",
+      "expire-never": "Never",
+      "expire-week": "7 Days",
+      "info-text-1": "A snapshot is an instant way to share an interactive dashboard publicly. When created, we strip sensitive data like queries (metric, template, and annotation) and panel links, leaving only the visible metric data and series names embedded in your dashboard.",
+      "info-text-2": "Keep in mind, your snapshot <1>can be viewed by anyone</1> that has the link and can access the URL. Share wisely.",
+      "local-button": "Local Snapshot",
+      "mistake-message": "Did you make a mistake? ",
+      "name": "Snapshot name",
+      "timeout": "Timeout (seconds)",
+      "timeout-description": "You might need to configure the timeout value if it takes a long time to collect your dashboard metrics.",
+      "url-label": "Snapshot URL"
+    },
+    "tab-title": {
+      "embed": "Embed",
+      "export": "Export",
+      "library-panel": "Library panel",
+      "link": "Link",
+      "snapshot": "Snapshot"
+    },
+    "theme-picker": {
+      "current": "Current",
+      "dark": "Dark",
+      "field-name": "Theme",
+      "light": "Light"
+    },
+    "view-json": {
+      "copy-button": "Copy to Clipboard"
+    }
+  },
+  "share-playlist": {
+    "checkbox-description": "Panel heights will be adjusted to fit screen size",
+    "checkbox-label": "Autofit",
+    "copy-link-button": "Copy",
+    "link-url-label": "Link URL",
+    "mode": "Mode",
+    "mode-kiosk": "Kiosk",
+    "mode-normal": "Normal",
+    "mode-tv": "TV",
+    "title": "Share playlist"
+  },
+  "shared": {
+    "preferences": {
+      "theme": {
+        "dark-label": "Dark",
+        "light-label": "Light",
+        "system-label": "System preference"
+      }
+    }
+  },
+  "shared-dashboard": {
+    "fields": {
+      "timezone-label": "Timezone"
+    }
+  },
+  "shared-preferences": {
+    "fields": {
+      "home-dashboard-label": "Home Dashboard",
+      "home-dashboard-placeholder": "Default dashboard",
+      "locale-label": "Language",
+      "locale-placeholder": "Choose language",
+      "theme-label": "Interface theme",
+      "week-start-label": "Week start"
+    },
+    "theme": {
+      "default-label": "Default"
+    },
+    "title": "Preferences"
+  },
+  "snapshot": {
+    "external-badge": "External",
+    "name-column-header": "Name",
+    "url-column-header": "Snapshot url",
+    "view-button": "View"
+  },
+  "tag-filter": {
+    "loading": "Loading...",
+    "no-tags": "No tags found",
+    "placeholder": "Filter by tag"
+  },
+  "time-picker": {
+    "absolute": {
+      "recent-title": "Recently used absolute ranges",
+      "title": "Absolute time range"
+    },
+    "calendar": {
+      "apply-button": "Apply time range",
+      "cancel-button": "Cancel",
+      "select-time": "Select a time range"
+    },
+    "content": {
+      "empty-recent-list-docs": "<0><0>Read the documentation</0><1> to find out more about how to enter custom time ranges.</1></0>",
+      "empty-recent-list-info": "It looks like you haven't used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here.",
+      "filter-placeholder": "Search quick ranges"
+    },
+    "footer": {
+      "change-settings-button": "Change time settings",
+      "fiscal-year-option": "Fiscal year",
+      "fiscal-year-start": "Fiscal year start month",
+      "time-zone-option": "Time zone",
+      "time-zone-selection": "Time zone selection"
+    },
+    "range-content": {
+      "apply-button": "Apply time range",
+      "default-error": "Please enter a past date or \"now\"",
+      "fiscal-year": "Fiscal year",
+      "from-input": "From",
+      "range-error": "\"From\" can't be after \"To\"",
+      "to-input": "To"
+    },
+    "range-picker": {
+      "backwards-time-aria-label": "Move time range backwards",
+      "current-time-selected": "Time range selected: {{currentTimeRange}}",
+      "forwards-time-aria-label": "Move time range forwards",
+      "to": "to",
+      "zoom-out-button": "Zoom out time range",
+      "zoom-out-tooltip": "Time range zoom out <1></1> CTRL+Z"
+    },
+    "time-range": {
+      "aria-role": "Time range selection",
+      "default-title": "Time ranges",
+      "example-title": "Example time ranges",
+      "specify": "Specify time range <1></1>"
+    },
+    "zone": {
+      "select-aria-label": "Time zone picker",
+      "select-search-input": "Type to search (country, city, abbreviation)"
+    }
+  },
+  "user-orgs": {
+    "current-org-button": "Current",
+    "name-column": "Name",
+    "role-column": "Role",
+    "select-org-button": "Select organisation",
+    "title": "Organizations"
+  },
+  "user-profile": {
+    "fields": {
+      "email-error": "Email is required",
+      "email-label": "Email",
+      "name-error": "Name is required",
+      "name-label": "Name",
+      "username-label": "Username"
+    }
+  },
+  "user-session": {
+    "browser-column": "Browser & OS",
+    "created-at-column": "Logged on",
+    "ip-column": "IP address",
+    "revoke": "Revoke user session",
+    "seen-at-column": "Last seen"
+  },
+  "user-sessions": {
+    "loading": "Loading sessions..."
+  },
+  "variable": {
+    "adhoc": {
+      "placeholder": "Select value"
+    },
+    "dropdown": {
+      "placeholder": "Enter variable value"
+    },
+    "picker": {
+      "link-all": "All",
+      "option-all": "All",
+      "option-selected-values": "Selected",
+      "option-tooltip": "Clear selections"
+    },
+    "textbox": {
+      "placeholder": "Enter variable value"
+    }
+  }
+}

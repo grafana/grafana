@@ -7,7 +7,7 @@ import { Messages } from './RestoreHistoryActions.messages';
 import { getStyles } from './RestoreHistoryActions.styles';
 import { BackupInventoryActionsProps } from './RestoreHistoryActions.types';
 
-export const RestoreHistoryActions: FC<BackupInventoryActionsProps> = ({ row }) => {
+export const RestoreHistoryActions: FC<React.PropsWithChildren<BackupInventoryActionsProps>> = ({ row }) => {
   const styles = useStyles2(getStyles);
 
   return (

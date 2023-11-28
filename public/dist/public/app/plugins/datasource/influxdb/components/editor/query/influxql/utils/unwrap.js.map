@@ -1,0 +1,1 @@
+{"version":3,"file":"unwrap.js","sourceRoot":"","sources":["../../../../../../../../../../../app/plugins/datasource/influxdb/components/editor/query/influxql/utils/unwrap.ts"],"names":[],"mappings":"AAAA,MAAM,UAAU,MAAM,CAAI,KAA2B;IACnD,IAAI,KAAK,IAAI,IAAI,EAAE;QACjB,MAAM,IAAI,KAAK,CAAC,2BAA2B,CAAC,CAAC;KAC9C;IACD,OAAO,KAAK,CAAC;AACf,CAAC"}

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import React, { useRef, useState, useLayoutEffect } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -32,6 +32,7 @@ export const DashboardLinksDashboard = (props: Props) => {
     setDropdownCssClass(getDropdownLocationCssClass(listRef.current));
   }, [resolvedLinks]);
 
+  // @PERCONA
   // TODO: PMM-7736 remove it ASAP after migration transition period is finished
   if (link.title === 'PMM') {
     if (isPmmAdmin(config.bootData.user)) {
@@ -125,7 +126,7 @@ interface LinkElementProps {
   children: JSX.Element;
 }
 
-const LinkElement: React.FC<LinkElementProps> = (props) => {
+const LinkElement = (props: LinkElementProps) => {
   const { link, children, ...rest } = props;
 
   return (

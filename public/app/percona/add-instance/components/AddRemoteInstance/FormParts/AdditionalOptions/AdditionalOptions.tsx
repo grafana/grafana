@@ -20,7 +20,7 @@ import { MongodbTLSCertificate } from './MongodbTLSCertificate';
 import { MysqlTLSCertificate } from './MysqlTLSCertificate';
 import { PostgreTLSCertificate } from './PostgreTLSCertificate';
 
-export const AdditionalOptionsFormPart: FC<AdditionalOptionsFormPartProps> = ({
+export const AdditionalOptionsFormPart: FC<React.PropsWithChildren<AdditionalOptionsFormPartProps>> = ({
   instanceType,
   remoteInstanceCredentials,
   form,
@@ -41,7 +41,7 @@ export const AdditionalOptionsFormPart: FC<AdditionalOptionsFormPartProps> = ({
   );
 };
 
-export const PostgreSQLAdditionalOptions: FC<PostgreSQLAdditionalOptionsProps> = ({ isRDS, isAzure }) => (
+export const PostgreSQLAdditionalOptions: FC<React.PropsWithChildren<PostgreSQLAdditionalOptionsProps>> = ({ isRDS, isAzure }) => (
   <>
     <h4>{Messages.form.labels.trackingOptions}</h4>
     <RadioButtonGroupField

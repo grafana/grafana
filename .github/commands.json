@@ -11,7 +11,7 @@
     "type":"comment",
     "name":"duplicate",
     "allowUsers":[],
-    "action":"updateLabels",
+    "action":"close",
     "addLabel":"type/duplicate"
   },
   {
@@ -50,14 +50,6 @@
     "action":"close",
     "addLabel":"not implemented",
     "comment":"This feature request has been open for a long time with few received upvotes or comments, so we are closing it. We're trying to limit open GitHub issues in order to better track planned work and features.  \r\n\r\nThis doesn't mean that we'll never ever implement it or that we will never accept a PR for it. A closed issue can still attract upvotes and act as a ticket to track feature demand\/interest. \r\n\r\nThank You to you for taking the time to create this issue!"
-  },
-  {
-    "type":"label",
-    "name":"oss-user-essentials",
-    "action":"addToProject",
-    "addToProject":{
-      "url":"https://github.com/orgs/grafana/projects/78"
-    }
   },
   {
     "type":"label",
@@ -157,6 +149,22 @@
   },
   {
     "type":"label",
+    "name":"datasource/grafana-pyroscope",
+    "action":"addToProject",
+    "addToProject":{
+      "url":"https://github.com/orgs/grafana/projects/221"
+    }
+  },
+  {
+    "type":"label",
+    "name":"datasource/Parca",
+    "action":"addToProject",
+    "addToProject":{
+      "url":"https://github.com/orgs/grafana/projects/221"
+    }
+  },
+  {
+    "type":"label",
     "name":"datasource/Elasticsearch",
     "action":"addToProject",
     "addToProject":{
@@ -188,27 +196,11 @@
     }
   },
   {
-    "type":"label",
-    "name":"oss-user-essentials",
-    "action":"removeFromProject",
-    "removeFromProject":{
-      "url":"https://github.com/orgs/grafana/projects/78"
-    }
-  },
-  {
-    "type":"label",
-    "name":"oss-user-essentials",
-    "action":"removeFromProject",
-    "removeFromProject":{
-      "url":"https://github.com/grafana/grafana/projects/33"
-    }
-  },
-  {
     "type": "label",
-    "name": "team/grafana-partners",
+    "name": "team/operator-experience",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/87"
+      "url": "https://github.com/orgs/grafana/projects/336"
     }
   },
   {
@@ -297,6 +289,158 @@
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/86"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/internationalization",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/78"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/candlestick",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/canvas",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/barchart",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/bargauge",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/gauge",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/geomap",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/graph",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/heatmap",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/histogram",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/icon",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/piechart",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/stat",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/state-timeline",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/status-history",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/timeseries",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/xychart",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/trend",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/table",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/72"
     }
   }
 ]

@@ -9,12 +9,12 @@ export const PMM_DBAAS_PAGE: NavModelItem = {
   icon: 'database',
   section: NavSection.Core,
   url: `${config.appSubUrl}/dbaas`,
-  breadcrumbs: [
-    {
-      title: 'DBaaS',
-      url: `${config.appSubUrl}/dbaas`,
-    },
-  ],
+  // breadcrumbs: [
+  //   {
+  //     title: 'DBaaS',
+  //     url: `${config.appSubUrl}/dbaas`,
+  //   },
+  // ],
   children: [
     {
       id: 'dbclusters',
@@ -38,12 +38,12 @@ export const PMM_BACKUP_PAGE: NavModelItem = {
   subTitle: 'Percona Backups',
   url: `${config.appSubUrl}/backup`,
   section: NavSection.Core,
-  breadcrumbs: [
-    {
-      title: 'Backup',
-      url: `${config.appSubUrl}/backup`,
-    },
-  ],
+  // breadcrumbs: [
+  //   {
+  //     title: 'Backup',
+  //     url: `${config.appSubUrl}/backup`,
+  //   },
+  // ],
   children: [
     {
       id: 'backup-inventory',
@@ -89,12 +89,12 @@ export const PMM_INVENTORY_PAGE: NavModelItem = {
   text: 'PMM Inventory',
   url: `${config.appSubUrl}/inventory`,
   subTitle: 'Percona PMM Inventory',
-  breadcrumbs: [
-    {
-      title: 'PMM Inventory',
-      url: `${config.appSubUrl}/inventory`,
-    },
-  ],
+  // breadcrumbs: [
+  //   {
+  //     title: 'PMM Inventory',
+  //     url: `${config.appSubUrl}/inventory`,
+  //   },
+  // ],
   children: [
     {
       id: 'inventory-services',
@@ -205,12 +205,12 @@ export const getPmmSettingsPage = (alertingEnabled = false): NavModelItem => {
     text: 'Settings',
     url: `${config.appSubUrl}/settings`,
     subTitle: 'Percona Settings',
-    breadcrumbs: [
-      {
-        title: 'Settings',
-        url: `${config.appSubUrl}/settings`,
-      },
-    ],
+    // breadcrumbs: [
+    //   {
+    //     title: 'Settings',
+    //     url: `${config.appSubUrl}/settings`,
+    //   },
+    // ],
     children,
   };
 

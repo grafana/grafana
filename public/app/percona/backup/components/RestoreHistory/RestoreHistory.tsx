@@ -29,7 +29,7 @@ import { RestoreHistoryActions } from './RestoreHistoryActions';
 import { RestoreHistoryDetails } from './RestoreHistoryDetails';
 import { RestoreLogsModal } from './RestoreLogsModal/RestoreLogsModal';
 
-export const RestoreHistory: FC = () => {
+export const RestoreHistory: FC<React.PropsWithChildren<unknown>> = () => {
   const [pending, setPending] = useState(true);
   const [logsModalVisible, setLogsModalVisible] = useState(false);
   const [data, setData] = useState<Restore[]>([]);

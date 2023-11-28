@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
+import { DraggableProvided } from 'react-beautiful-dnd';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { FlexItem } from '@grafana/experimental';
@@ -13,7 +14,7 @@ export interface Props {
   def: QueryBuilderOperationDef;
   index: number;
   queryModeller: VisualQueryModeller;
-  dragHandleProps: any;
+  dragHandleProps?: DraggableProvided['dragHandleProps'];
   onChange: (index: number, update: QueryBuilderOperation) => void;
   onRemove: (index: number) => void;
 }
@@ -109,15 +110,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(0.5, 0.5, 0.5, 1),
       display: 'flex',
       alignItems: 'center',
-      '&:hover .operation-header-show-on-hover': css({
-        opacity: 1,
-      }),
     }),
     operationHeaderButtons: css({
-      opacity: 0,
-      transition: theme.transitions.create(['opacity'], {
-        duration: theme.transitions.duration.short,
-      }),
+      opacity: 1,
     }),
     selectWrapper: css({
       paddingRight: theme.spacing(2),

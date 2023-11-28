@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
@@ -8,6 +9,7 @@ import { setDataSourceSrv } from '@grafana/runtime';
 import { DerivedField } from './DerivedField';
 
 const mockList = jest.fn();
+const validateMock = jest.fn();
 
 describe('DerivedField', () => {
   beforeEach(() => {
@@ -54,10 +56,18 @@ describe('DerivedField', () => {
     };
     // Render and wait for the Name field to be visible
     // using findBy to wait for asynchronous operations to complete
-    render(<DerivedField value={value} onChange={() => {}} onDelete={() => {}} suggestions={[]} />);
+    render(
+      <DerivedField
+        validateName={validateMock}
+        value={value}
+        onChange={() => {}}
+        onDelete={() => {}}
+        suggestions={[]}
+      />
+    );
     expect(await screen.findByText('Name')).toBeInTheDocument();
 
-    expect(screen.getByLabelText(selectors.components.DataSourcePicker.inputV2)).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.DataSourcePicker.container)).toBeInTheDocument();
   });
 
   it('shows url link if uid is not set', async () => {
@@ -68,10 +78,18 @@ describe('DerivedField', () => {
     };
     // Render and wait for the Name field to be visible
     // using findBy to wait for asynchronous operations to complete
-    render(<DerivedField value={value} onChange={() => {}} onDelete={() => {}} suggestions={[]} />);
+    render(
+      <DerivedField
+        validateName={validateMock}
+        value={value}
+        onChange={() => {}}
+        onDelete={() => {}}
+        suggestions={[]}
+      />
+    );
     expect(await screen.findByText('Name')).toBeInTheDocument();
 
-    expect(screen.queryByLabelText(selectors.components.DataSourcePicker.inputV2)).not.toBeInTheDocument();
+    expect(await screen.queryByTestId(selectors.components.DataSourcePicker.container)).not.toBeInTheDocument();
   });
 
   it('shows only tracing datasources for internal link', async () => {
@@ -82,12 +100,35 @@ describe('DerivedField', () => {
     };
     // Render and wait for the Name field to be visible
     // using findBy to wait for asynchronous operations to complete
-    render(<DerivedField value={value} onChange={() => {}} onDelete={() => {}} suggestions={[]} />);
+    render(
+      <DerivedField
+        validateName={validateMock}
+        value={value}
+        onChange={() => {}}
+        onDelete={() => {}}
+        suggestions={[]}
+      />
+    );
     expect(await screen.findByText('Name')).toBeInTheDocument();
     expect(mockList).toHaveBeenCalledWith(
       expect.objectContaining({
         tracing: true,
       })
     );
+  });
+
+  it('validates the field name', async () => {
+    const value = {
+      matcherRegex: '',
+      name: 'field-name',
+      datasourceUid: 'test',
+    };
+    const validate = jest.fn().mockReturnValue(false);
+    render(
+      <DerivedField validateName={validate} value={value} onChange={() => {}} onDelete={() => {}} suggestions={[]} />
+    );
+    userEvent.click(await screen.findByDisplayValue(value.name));
+
+    expect(await screen.findByText('The name is already in use')).toBeInTheDocument();
   });
 });

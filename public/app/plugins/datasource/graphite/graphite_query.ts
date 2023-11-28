@@ -6,7 +6,7 @@ import { arrayMove } from 'app/core/utils/arrayMove';
 
 import { GraphiteDatasource } from './datasource';
 import { FuncInstance } from './gfunc';
-import { Parser } from './parser';
+import { AstNode, Parser } from './parser';
 import { GraphiteSegment } from './types';
 
 export type GraphiteTagOperator = '=' | '=~' | '!=' | '!=~';
@@ -41,7 +41,6 @@ export default class GraphiteQuery {
   templateSrv: any;
   scopedVars: any;
 
-  /** @ngInject */
   constructor(datasource: any, target: any, templateSrv?: TemplateSrv, scopedVars?: ScopedVars) {
     this.datasource = datasource;
     this.target = target;
@@ -111,6 +110,10 @@ export default class GraphiteQuery {
         const innerFunc = this.datasource.createFuncInstance(astNode.name, {
           withDefaultParams: false,
         });
+
+        // bug fix for parsing multiple functions as params
+        handleMultipleSeriesByTagsParams(astNode);
+
         each(astNode.params, (param) => {
           this.parseTargetRecursive(param, innerFunc);
         });
@@ -212,19 +215,10 @@ export default class GraphiteQuery {
     let targetWithNestedQueries = target.target;
 
     // Use ref count to track circular references
-    function countTargetRefs(targetsByRefId: any, refId: string) {
-      let refCount = 0;
-      each(targetsByRefId, (t, id) => {
-        if (id !== refId) {
-          const match = nestedSeriesRefRegex.exec(t.target);
-          const count = match && match.length ? match.length - 1 : 0;
-          refCount += count;
-        }
-      });
-      targetsByRefId[refId].refCount = refCount;
-    }
     each(targetsByRefId, (t, id) => {
-      countTargetRefs(targetsByRefId, id);
+      const regex = RegExp(`\#(${id})`, 'g');
+      const refMatches = targetWithNestedQueries.match(regex);
+      t.refCount = refMatches?.length ?? 0;
     });
 
     // Keep interpolating until there are no query references
@@ -335,4 +329,41 @@ export default class GraphiteQuery {
 
 function renderTagString(tag: { key: any; operator?: any; value?: any }) {
   return tag.key + tag.operator + tag.value;
+}
+
+/**
+ * mutates the second seriesByTag function into a string to fix a parsing bug
+ * @param astNode
+ * @param innerFunc
+ */
+function handleMultipleSeriesByTagsParams(astNode: AstNode) {
+  // if function has two params that are function seriesByTags keep the second as a string otherwise we have a parsing error
+  if (astNode.params && astNode.params.length >= 2) {
+    let count = 0;
+    astNode.params = astNode.params.map((p: AstNode) => {
+      if (p.type === 'function') {
+        count += 1;
+      }
+
+      if (count === 2 && p.type === 'function' && p.name === 'seriesByTag') {
+        // convert second function to a string
+        const stringParams =
+          p.params &&
+          p.params.reduce((acc: string, p: AstNode, idx: number, paramsArr: AstNode[]) => {
+            if (idx === 0 || idx !== paramsArr.length - 1) {
+              return `${acc}'${p.value}',`;
+            }
+
+            return `${acc}'${p.value}'`;
+          }, '');
+
+        return {
+          type: 'string',
+          value: `${p.name}(${stringParams})`,
+        };
+      }
+
+      return p;
+    });
+  }
 }

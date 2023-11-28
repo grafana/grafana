@@ -1,25 +1,28 @@
 import React from 'react';
-import { Redirect } from 'react-router-dom';
+import { Redirect, RouteComponentProps } from 'react-router-dom';
 
-import { NavLandingPage } from 'app/core/components/AppChrome/NavLandingPage';
-import ErrorPage from 'app/core/components/ErrorPage/ErrorPage';
+import { isTruthy } from '@grafana/data';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
+import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
+import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
-import { getRoutes as getDataConnectionsRoutes } from 'app/features/data-connections/routes';
+import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
+import { ConnectionsRedirectNotice } from 'app/features/connections/components/ConnectionsRedirectNotice';
+import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
+import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/routes';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
-import { getLiveRoutes } from 'app/features/live/pages/routes';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
+import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
-import { ServiceAccountPage } from 'app/features/serviceaccounts/ServiceAccountPage';
 import { AccessControlAction, DashboardRoutes } from 'app/types';
 
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';
-import { getPublicDashboardRoutes } from '../features/dashboard/routes';
+import { getEmbeddedDashboardRoutes, getPublicDashboardRoutes } from '../features/dashboard/routes';
 import { DBAAS_URL } from '../percona/dbaas/DBaaS.constants';
 import {
   DB_CLUSTER_CREATION_URL,
@@ -28,37 +31,14 @@ import {
 } from '../percona/dbaas/components/DBCluster/EditDBClusterPage/EditDBClusterPage.constants';
 import { K8S_INVENTORY_URL } from '../percona/dbaas/components/Kubernetes/EditK8sClusterPage/EditK8sClusterPage.constants';
 
-import { pluginHasRootPage } from './utils';
 
 export const extraRoutes: RouteDescriptor[] = [];
 
 export function getAppRoutes(): RouteDescriptor[] {
-  const topnavRoutes: RouteDescriptor[] = config.featureToggles.topnav
-    ? [
-        {
-          path: '/apps',
-          component: () => <NavLandingPage navId="apps" />,
-        },
-        {
-          path: '/a/:pluginId',
-          exact: true,
-          component: (props) => {
-            const hasRoot = pluginHasRootPage(props.match.params.pluginId, config.bootData.navTree);
-            const hasQueryParams = Object.keys(props.queryParams).length > 0;
-            if (hasRoot || hasQueryParams) {
-              const AppRootPage = SafeDynamicImport(
-                () => import(/* webpackChunkName: "AppRootPage" */ 'app/features/plugins/components/AppRootPage')
-              );
-              return <AppRootPage {...props} />;
-            } else {
-              return <NavLandingPage navId={`plugin-page-${props.match.params.pluginId}`} />;
-            }
-          },
-        },
-      ]
-    : [];
-
   return [
+    // Based on the Grafana configuration standalone plugin pages can even override and extend existing core pages, or they can register new routes under existing ones.
+    // In order to make it possible we need to register them first due to how `<Switch>` is evaluating routes. (This will be unnecessary once/when we upgrade to React Router v6 and start using `<Routes>` instead.)
+    ...getAppPluginRoutes(),
     {
       path: '/',
       pageClass: 'page-dashboard',
@@ -76,17 +56,25 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/dashboard/:type/:slug',
+      path: '/dashboard/new',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
       pageClass: 'page-dashboard',
-      routeName: DashboardRoutes.Normal,
+      routeName: DashboardRoutes.New,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
       ),
     },
     {
-      path: '/dashboard/new',
+      path: '/dashboard/new-with-ds/:datasourceUid',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/NewDashboardWithDS')
+      ),
+    },
+    {
+      path: '/dashboard/:type/:slug',
       pageClass: 'page-dashboard',
-      routeName: DashboardRoutes.New,
+      routeName: DashboardRoutes.Normal,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
       ),
@@ -121,36 +109,30 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboard/import',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardImport"*/ 'app/features/manage-dashboards/DashboardImportPage')
       ),
     },
     {
       path: DATASOURCES_ROUTES.List,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DataSourcesListPage"*/ 'app/features/datasources/pages/DataSourcesListPage')
-      ),
+      component: () => <Redirect to={CONNECTIONS_ROUTES.DataSources} />,
     },
     {
       path: DATASOURCES_ROUTES.Edit,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "EditDataSourcePage"*/ '../features/datasources/pages/EditDataSourcePage')
+      component: (props: RouteComponentProps<{ uid: string }>) => (
+        <Redirect to={CONNECTIONS_ROUTES.DataSourcesEdit.replace(':uid', props.match.params.uid)} />
       ),
     },
     {
       path: DATASOURCES_ROUTES.Dashboards,
-      component: SafeDynamicImport(
-        () =>
-          import(
-            /* webpackChunkName: "DataSourceDashboards"*/ 'app/features/datasources/pages/DataSourceDashboardsPage'
-          )
+      component: (props: RouteComponentProps<{ uid: string }>) => (
+        <Redirect to={CONNECTIONS_ROUTES.DataSourcesDashboards.replace(':uid', props.match.params.uid)} />
       ),
     },
     {
       path: DATASOURCES_ROUTES.New,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "NewDataSourcePage"*/ '../features/datasources/pages/NewDataSourcePage')
-      ),
+      component: () => <Redirect to={CONNECTIONS_ROUTES.DataSourcesNew} />,
     },
     {
       path: '/datasources/correlations',
@@ -170,23 +152,18 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboards/folder/new',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.FoldersCreate]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "NewDashboardsFolder"*/ 'app/features/folders/components/NewDashboardsFolder')
       ),
     },
-    {
+    !newBrowseDashboardsEnabled() && {
       path: '/dashboards/f/:uid/:slug/permissions',
-      component:
-        config.rbacEnabled && contextSrv.hasPermission(AccessControlAction.FoldersPermissionsRead)
-          ? SafeDynamicImport(
-              () =>
-                import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/AccessControlFolderPermissions')
-            )
-          : SafeDynamicImport(
-              () => import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/FolderPermissions')
-            ),
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/AccessControlFolderPermissions')
+      ),
     },
-    {
+    !newBrowseDashboardsEnabled() && {
       path: '/dashboards/f/:uid/:slug/settings',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "FolderSettingsPage"*/ 'app/features/folders/FolderSettingsPage')
@@ -207,25 +184,36 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/explore',
       pageClass: 'page-explore',
-      roles: () =>
-        contextSrv.evaluatePermission(
-          () => (config.viewersCanEdit ? [] : ['Editor', 'Admin']),
-          [AccessControlAction.DataSourcesExplore]
-        ),
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
       component: SafeDynamicImport(() =>
         config.exploreEnabled
-          ? import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper')
+          ? import(/* webpackChunkName: "explore" */ 'app/features/explore/ExplorePage')
           : import(/* webpackChunkName: "explore-feature-toggle-page" */ 'app/features/explore/FeatureTogglePage')
       ),
     },
-    ...topnavRoutes,
     {
-      path: '/a/:pluginId',
-      exact: false,
-      // Someday * and will get a ReactRouter under that path!
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "AppRootPage" */ 'app/features/plugins/components/AppRootPage')
-      ),
+      path: '/apps',
+      component: () => <NavLandingPage navId="apps" />,
+    },
+    {
+      path: '/alerts-and-incidents',
+      component: () => <NavLandingPage navId="alerts-and-incidents" />,
+    },
+    {
+      path: '/monitoring',
+      component: () => <NavLandingPage navId="monitoring" />,
+    },
+    {
+      path: '/admin/general',
+      component: () => <NavLandingPage navId="cfg/general" />,
+    },
+    {
+      path: '/admin/plugins',
+      component: () => <NavLandingPage navId="cfg/plugins" />,
+    },
+    {
+      path: '/admin/access',
+      component: () => <NavLandingPage navId="cfg/access" />,
     },
     {
       path: '/org',
@@ -251,7 +239,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/apikeys',
-      roles: () => contextSrv.evaluatePermission(() => ['Admin'], [AccessControlAction.ActionAPIKeysRead]),
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.ActionAPIKeysRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "ApiKeysPage" */ 'app/features/api-keys/ApiKeysPage')
       ),
@@ -259,10 +247,10 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/org/serviceaccounts',
       roles: () =>
-        contextSrv.evaluatePermission(
-          () => ['Admin'],
-          [AccessControlAction.ServiceAccountsRead, AccessControlAction.ServiceAccountsCreate]
-        ),
+        contextSrv.evaluatePermission([
+          AccessControlAction.ServiceAccountsRead,
+          AccessControlAction.ServiceAccountsCreate,
+        ]),
       component: SafeDynamicImport(
         () =>
           import(/* webpackChunkName: "ServiceAccountsPage" */ 'app/features/serviceaccounts/ServiceAccountsListPage')
@@ -279,44 +267,41 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/serviceaccounts/:id',
-      component: ServiceAccountPage,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "ServiceAccountPage" */ 'app/features/serviceaccounts/ServiceAccountPage')
+      ),
     },
     {
       path: '/org/teams',
       roles: () =>
-        contextSrv.evaluatePermission(
-          () => (config.editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']),
-          [AccessControlAction.ActionTeamsRead, AccessControlAction.ActionTeamsCreate]
-        ),
+        contextSrv.evaluatePermission([AccessControlAction.ActionTeamsRead, AccessControlAction.ActionTeamsCreate]),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "TeamList" */ 'app/features/teams/TeamList')),
     },
     {
       path: '/org/teams/new',
-      roles: () =>
-        contextSrv.evaluatePermission(
-          () => (config.editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']),
-          [AccessControlAction.ActionTeamsCreate]
-        ),
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.ActionTeamsCreate]),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "CreateTeam" */ 'app/features/teams/CreateTeam')),
     },
     {
       path: '/org/teams/edit/:id/:page?',
       roles: () =>
-        contextSrv.evaluatePermission(
-          () => (config.editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']),
-          [AccessControlAction.ActionTeamsRead, AccessControlAction.ActionTeamsCreate]
-        ),
+        contextSrv.evaluatePermission([AccessControlAction.ActionTeamsRead, AccessControlAction.ActionTeamsCreate]),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "TeamPages" */ 'app/features/teams/TeamPages')),
     },
     // ADMIN
     {
       path: '/admin',
-      component: () => (config.featureToggles.topnav ? <NavLandingPage navId="cfg" /> : <Redirect to="/admin/users" />),
+      component: () => <NavLandingPage navId="cfg" header={<ConnectionsRedirectNotice />} />,
     },
     {
-      path: '/admin/server',
-      component: () =>
-        config.featureToggles.topnav ? <NavLandingPage navId="admin" /> : <Redirect to="/admin/users" />,
+      path: '/admin/authentication',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.SettingsWrite]),
+      component:
+        config.licenseInfo.enabledFeatures?.saml || config.ldapEnabled
+          ? SafeDynamicImport(
+              () => import(/* webpackChunkName: "AdminAuthentication" */ 'app/features/auth-config/AuthConfigPage')
+            )
+          : () => <Redirect to="/admin" />,
     },
     {
       path: '/admin/settings',
@@ -331,7 +316,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/admin/users',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "UserListAdminPage" */ 'app/features/admin/UserListAdminPage')
+        () => import(/* webpackChunkName: "UserListPage" */ 'app/features/admin/UserListPage')
       ),
     },
     {
@@ -357,6 +342,14 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/admin/featuretoggles',
+      component: config.featureToggles.featureToggleAdminPage
+        ? SafeDynamicImport(
+            () => import(/* webpackChunkName: "AdminFeatureTogglesPage" */ 'app/features/admin/AdminFeatureTogglesPage')
+          )
+        : () => <Redirect to="/admin" />,
+    },
+    {
       path: '/admin/storage/:path*',
       roles: () => ['Admin'],
       component: SafeDynamicImport(
@@ -370,14 +363,14 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/admin/ldap',
+      path: '/admin/authentication/ldap',
       component: LdapPage,
     },
     // LOGIN / SIGNUP
     {
       path: '/login',
       component: LoginPage,
-      pageClass: 'login-page sidemenu-hidden',
+      pageClass: 'login-page',
       chromeless: true,
     },
     {
@@ -385,7 +378,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "SignupInvited" */ 'app/features/invites/SignupInvited')
       ),
-      pageClass: 'sidemenu-hidden',
       chromeless: true,
     },
     {
@@ -395,7 +387,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         : SafeDynamicImport(
             () => import(/* webpackChunkName "VerifyEmailPage"*/ 'app/core/components/Signup/VerifyEmailPage')
           ),
-      pageClass: 'login-page sidemenu-hidden',
+      pageClass: 'login-page',
       chromeless: true,
     },
     {
@@ -403,12 +395,11 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: config.disableUserSignUp
         ? () => <Redirect to="/login" />
         : SafeDynamicImport(() => import(/* webpackChunkName "SignupPage"*/ 'app/core/components/Signup/SignupPage')),
-      pageClass: 'sidemenu-hidden login-page',
+      pageClass: 'login-page',
       chromeless: true,
     },
     {
       path: '/user/password/send-reset-email',
-      pageClass: 'sidemenu-hidden',
       chromeless: true,
       component: SafeDynamicImport(
         () =>
@@ -423,7 +414,7 @@ export function getAppRoutes(): RouteDescriptor[] {
             /* webpackChunkName: "ChangePasswordPage" */ 'app/core/components/ForgottenPassword/ChangePasswordPage'
           )
       ),
-      pageClass: 'sidemenu-hidden login-page',
+      pageClass: 'login-page',
       chromeless: true,
     },
     {
@@ -471,15 +462,23 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/dashboards/f/:uid/:slug/library-panels',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "FolderLibraryPanelsPage"*/ 'app/features/folders/FolderLibraryPanelsPage')
+        newBrowseDashboardsEnabled()
+          ? () =>
+              import(
+                /* webpackChunkName: "FolderLibraryPanelsPage"*/ 'app/features/browse-dashboards/BrowseFolderLibraryPanelsPage'
+              )
+          : () =>
+              import(/* webpackChunkName: "FolderLibraryPanelsPage"*/ 'app/features/folders/FolderLibraryPanelsPage')
       ),
     },
     {
       path: '/dashboards/f/:uid/:slug/alerting',
-      roles: () =>
-        contextSrv.evaluatePermission(() => ['Viewer', 'Editor', 'Admin'], [AccessControlAction.AlertingRuleRead]),
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.AlertingRuleRead]),
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "FolderAlerting"*/ 'app/features/folders/FolderAlerting')
+        newBrowseDashboardsEnabled()
+          ? () =>
+              import(/* webpackChunkName: "FolderAlerting"*/ 'app/features/browse-dashboards/BrowseFolderAlertingPage')
+          : () => import(/* webpackChunkName: "FolderAlerting"*/ 'app/features/folders/FolderAlerting')
       ),
     },
     {
@@ -820,41 +819,38 @@ export function getAppRoutes(): RouteDescriptor[] {
           import(/* webpackChunkName: "EnvironmentOverview" */ 'app/percona/environment-overview/EnvironmentOverview')
       ),
     },
-    ...getBrowseStorageRoutes(),
     ...getDynamicDashboardRoutes(),
     ...getPluginCatalogRoutes(),
-    ...getLiveRoutes(),
+    ...getSupportBundleRoutes(),
     ...getAlertingRoutes(),
     ...getProfileRoutes(),
     ...extraRoutes,
     ...getPublicDashboardRoutes(),
     ...getDataConnectionsRoutes(),
+    ...getEmbeddedDashboardRoutes(),
     {
       path: '/*',
-      component: ErrorPage,
+      component: PageNotFound,
     },
-    // TODO[Router]
-    // ...playlistRoutes,
-  ];
+  ].filter(isTruthy);
 }
 
-export function getBrowseStorageRoutes(cfg = config): RouteDescriptor[] {
-  if (!cfg.featureToggles.dashboardsFromStorage) {
+export function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {
+  if (!cfg.supportBundlesEnabled) {
     return [];
   }
+
   return [
     {
-      path: '/g/:slug*.json', // suffix will eventually include dashboard
-      pageClass: 'page-dashboard',
-      routeName: DashboardRoutes.Path,
+      path: '/support-bundles',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
+        () => import(/* webpackChunkName: "SupportBundles" */ 'app/features/support-bundles/SupportBundles')
       ),
     },
     {
-      path: '/g/:slug*',
+      path: '/support-bundles/create',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "StorageFolderPage" */ '../features/storage/StorageFolderPage')
+        () => import(/* webpackChunkName: "SupportBundlesCreate" */ 'app/features/support-bundles/SupportBundlesCreate')
       ),
     },
   ];
@@ -868,6 +864,25 @@ export function getDynamicDashboardRoutes(cfg = config): RouteDescriptor[] {
     {
       path: '/scenes',
       component: SafeDynamicImport(() => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/SceneListPage')),
+    },
+    {
+      path: '/scenes/dashboard/:uid',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "scenes"*/ 'app/features/dashboard-scene/pages/DashboardScenePage')
+      ),
+    },
+    {
+      path: '/scenes/dashboard/:uid/panel-edit/:panelId',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "scenes"*/ 'app/features/dashboard-scene/pages/PanelEditPage')
+      ),
+    },
+    {
+      path: '/scenes/grafana-monitoring',
+      exact: false,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/apps/GrafanaMonitoringApp')
+      ),
     },
     {
       path: '/scenes/:name',

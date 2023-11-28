@@ -10,7 +10,7 @@ import { Messages } from './StorageLocationsActions.messages';
 import { getStyles } from './StorageLocationsActions.styles';
 import { StorageLocatationsActionProps } from './StorageLocationsActions.types';
 
-export const StorageLocationsActions: FC<StorageLocatationsActionProps> = ({ row, location, onUpdate, onDelete }) => {
+export const StorageLocationsActions: FC<React.PropsWithChildren<StorageLocatationsActionProps>> = ({ row, location, onUpdate, onDelete }) => {
   const styles = useStyles2(getStyles);
   const handleUpdateClick = () => onUpdate(location);
   const onDeleteClick = () => onDelete(location);

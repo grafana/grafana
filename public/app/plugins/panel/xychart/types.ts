@@ -1,7 +1,6 @@
 import { DataFrame, Field, FieldColorMode } from '@grafana/data';
-import { LineStyle, VisibilityMode } from '@grafana/schema';
+import { LineStyle, ScaleDimensionConfig, VisibilityMode } from '@grafana/schema';
 import { VizLegendItem } from '@grafana/ui';
-import { ScaleDimensionConfig } from 'app/features/dimensions';
 
 /**
  * @internal
@@ -16,13 +15,6 @@ export interface ScatterHoverEvent {
 }
 
 export type ScatterHoverCallback = (evt?: ScatterHoverEvent) => void;
-
-export interface LegendInfo {
-  color: CanvasRenderingContext2D['strokeStyle'];
-  text: string;
-  symbol: string;
-  openEditor?: (evt: any) => void;
-}
 
 // Using field where we will need formatting/scale/axis info
 // Use raw or DimensionValues when the values can be used directly

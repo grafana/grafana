@@ -1,22 +1,24 @@
-import React, { FunctionComponent, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField } from '@grafana/experimental';
 import { RadioButtonGroup } from '@grafana/ui';
 
 import { getAlignmentPickerData } from '../functions';
-import { MetricDescriptor, MetricKind, MetricQuery, PreprocessorType, ValueTypes } from '../types';
+import { PreprocessorType, TimeSeriesList, MetricKind, ValueTypes } from '../types/query';
+import { MetricDescriptor } from '../types/types';
 
 const NONE_OPTION = { label: 'None', value: PreprocessorType.None };
 
 export interface Props {
   metricDescriptor?: MetricDescriptor;
-  onChange: (query: MetricQuery) => void;
-  query: MetricQuery;
+  onChange: (query: TimeSeriesList) => void;
+  query: TimeSeriesList;
 }
 
-export const Preprocessor: FunctionComponent<Props> = ({ query, metricDescriptor, onChange }) => {
+export const Preprocessor = ({ query, metricDescriptor, onChange }: Props) => {
   const options = useOptions(metricDescriptor);
+
   return (
     <EditorField
       label="Pre-processing"
@@ -24,7 +26,8 @@ export const Preprocessor: FunctionComponent<Props> = ({ query, metricDescriptor
     >
       <RadioButtonGroup
         onChange={(value: PreprocessorType) => {
-          const { valueType, metricKind, perSeriesAligner: psa } = query;
+          const { perSeriesAligner: psa } = query;
+          const { valueType, metricKind } = metricDescriptor ?? {};
           const { perSeriesAligner } = getAlignmentPickerData(valueType, metricKind, psa, value);
           onChange({ ...query, preprocessor: value, perSeriesAligner });
         }}

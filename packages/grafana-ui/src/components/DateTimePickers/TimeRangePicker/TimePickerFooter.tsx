@@ -1,13 +1,16 @@
 import { css, cx } from '@emotion/css';
 import { isString } from 'lodash';
-import React, { FC, useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { getTimeZoneInfo, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { Field, RadioButtonGroup, Select } from '../..';
 import { stylesFactory, useTheme2 } from '../../../themes';
+import { t, Trans } from '../../../utils/i18n';
 import { Button } from '../../Button';
+import { Field } from '../../Forms/Field';
+import { RadioButtonGroup } from '../../Forms/RadioButtonGroup/RadioButtonGroup';
+import { Select } from '../../Select/Select';
 import { TimeZonePicker } from '../TimeZonePicker';
 import { TimeZoneDescription } from '../TimeZonePicker/TimeZoneDescription';
 import { TimeZoneOffset } from '../TimeZonePicker/TimeZoneOffset';
@@ -22,7 +25,7 @@ interface Props {
   onChangeFiscalYearStartMonth?: (month: number) => void;
 }
 
-export const TimePickerFooter: FC<Props> = (props) => {
+export const TimePickerFooter = (props: Props) => {
   const {
     timeZone,
     fiscalYearStartMonth,
@@ -58,7 +61,10 @@ export const TimePickerFooter: FC<Props> = (props) => {
 
   return (
     <div>
-      <section aria-label="Time zone selection" className={style.container}>
+      <section
+        aria-label={t('time-picker.footer.time-zone-selection', 'Time zone selection')}
+        className={style.container}
+      >
         <div className={style.timeZoneContainer}>
           <div className={style.timeZone}>
             <TimeZoneTitle title={info.name} />
@@ -69,7 +75,7 @@ export const TimePickerFooter: FC<Props> = (props) => {
         </div>
         <div className={style.spacer} />
         <Button variant="secondary" onClick={onToggleChangeTimeSettings} size="sm">
-          Change time settings
+          <Trans i18nKey="time-picker.footer.change-settings-button">Change time settings</Trans>
         </Button>
       </section>
       {isEditing ? (
@@ -78,8 +84,8 @@ export const TimePickerFooter: FC<Props> = (props) => {
             <RadioButtonGroup
               value={editMode}
               options={[
-                { label: 'Time zone', value: 'tz' },
-                { label: 'Fiscal year', value: 'fy' },
+                { label: t('time-picker.footer.time-zone-option', 'Time zone'), value: 'tz' },
+                { label: t('time-picker.footer.fiscal-year-option', 'Fiscal year'), value: 'fy' },
               ]}
               onChange={setEditMode}
             ></RadioButtonGroup>
@@ -99,6 +105,7 @@ export const TimePickerFooter: FC<Props> = (props) => {
                   }
                 }}
                 onBlur={onToggleChangeTimeSettings}
+                menuShouldPortal={false}
               />
             </section>
           ) : (
@@ -106,7 +113,10 @@ export const TimePickerFooter: FC<Props> = (props) => {
               aria-label={selectors.components.TimeZonePicker.containerV2}
               className={cx(style.timeZoneContainer, style.timeSettingContainer)}
             >
-              <Field className={style.fiscalYearField} label={'Fiscal year start month'}>
+              <Field
+                className={style.fiscalYearField}
+                label={t('time-picker.footer.fiscal-year-start', 'Fiscal year start month')}
+              >
                 <Select
                   value={fiscalYearStartMonth}
                   menuShouldPortal={false}
@@ -128,42 +138,41 @@ export const TimePickerFooter: FC<Props> = (props) => {
 
 const getStyle = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    container: css`
-      border-top: 1px solid ${theme.colors.border.weak};
-      padding: 11px;
-      display: flex;
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: center;
-    `,
-    editContainer: css`
-      border-top: 1px solid ${theme.colors.border.weak};
-      padding: 11px;
-      justify-content: space-between;
-      align-items: center;
-      padding: 7px;
-    `,
-    spacer: css`
-      margin-left: 7px;
-    `,
-    timeSettingContainer: css`
-      padding-top: ${theme.spacing(1)};
-    `,
-    fiscalYearField: css`
-      margin-bottom: 0px;
-    `,
-    timeZoneContainer: css`
-      display: flex;
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: center;
-      flex-grow: 1;
-    `,
-    timeZone: css`
-      display: flex;
-      flex-direction: row;
-      align-items: baseline;
-      flex-grow: 1;
-    `,
+    container: css({
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      padding: '11px',
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    }),
+    editContainer: css({
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      padding: '11px',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    }),
+    spacer: css({
+      marginLeft: '7px',
+    }),
+    timeSettingContainer: css({
+      paddingTop: theme.spacing(1),
+    }),
+    fiscalYearField: css({
+      marginBottom: 0,
+    }),
+    timeZoneContainer: css({
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      flexGrow: 1,
+    }),
+    timeZone: css({
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      flexGrow: 1,
+    }),
   };
 });

@@ -3,8 +3,9 @@ package droneutil_test
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/build/droneutil"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/build/droneutil"
 )
 
 func TestGetDroneEvent(t *testing.T) {

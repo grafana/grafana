@@ -1,21 +1,22 @@
+import { defaultsDeep } from 'lodash';
 import { Observable, of, throwError } from 'rxjs';
 import { delay, take } from 'rxjs/operators';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 import {
-  ArrayVector,
   DataFrame,
   DataFrameJSON,
-  DataSourceApi,
   Field,
   FieldType,
   getDefaultRelativeTimeRange,
   LoadingState,
   rangeUtil,
+  DataSourceInstanceSettings,
 } from '@grafana/data';
-import { DataSourceSrv, FetchResponse } from '@grafana/runtime';
+import { DataSourceSrv, FetchResponse, DataSourceWithBackend } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { BackendSrv } from 'app/core/services/backend_srv';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { AlertingQueryResponse, AlertingQueryRunner } from './AlertingQueryRunner';
 
@@ -44,6 +45,7 @@ describe('AlertingQueryRunner', () => {
         A: {
           annotations: [],
           state: LoadingState.Done,
+          errors: [],
           series: [
             expectDataFrameWithValues({
               time: [1620051612238, 1620051622238, 1620051632238],
@@ -59,6 +61,7 @@ describe('AlertingQueryRunner', () => {
         B: {
           annotations: [],
           state: LoadingState.Done,
+          errors: [],
           series: [
             expectDataFrameWithValues({
               time: [1620051612238, 1620051622238],
@@ -135,6 +138,7 @@ describe('AlertingQueryRunner', () => {
         A: {
           annotations: [],
           state: LoadingState.Done,
+          errors: [],
           series: [
             expectDataFrameWithValues({
               time: [1620051612238, 1620051622238, 1620051632238],
@@ -150,6 +154,7 @@ describe('AlertingQueryRunner', () => {
         B: {
           annotations: [],
           state: LoadingState.Done,
+          errors: [],
           series: [
             expectDataFrameWithValues({
               time: [1620051612238, 1620051622238],
@@ -189,7 +194,7 @@ describe('AlertingQueryRunner', () => {
     });
   });
 
-  it('should not execute if a query fails filterQuery check', async () => {
+  it('should not execute if all queries fail filterQuery check', async () => {
     const runner = new AlertingQueryRunner(
       mockBackendSrv({
         fetch: () => throwError(new Error("shouldn't happen")),
@@ -210,6 +215,39 @@ describe('AlertingQueryRunner', () => {
       expect(data.B.series).toHaveLength(0);
     });
   });
+
+  it('should skip hidden queries', async () => {
+    const results = createFetchResponse<AlertingQueryResponse>({
+      results: {
+        B: { frames: [createDataFrameJSON([1, 2, 3])] },
+      },
+    });
+
+    const runner = new AlertingQueryRunner(
+      mockBackendSrv({
+        fetch: () => of(results),
+      }),
+      mockDataSourceSrv({ filterQuery: (model: AlertDataQuery) => model.hide !== true })
+    );
+
+    const data = runner.get();
+    runner.run([
+      createQuery('A', {
+        model: {
+          refId: 'A',
+          hide: true,
+        },
+      }),
+      createQuery('B'),
+    ]);
+
+    await expect(data.pipe(take(1))).toEmitValuesWith((values) => {
+      const [loading, _data] = values;
+
+      expect(loading.A).toBeUndefined();
+      expect(loading.B.state).toEqual(LoadingState.Done);
+    });
+  });
 });
 
 type MockBackendSrvConfig = {
@@ -223,9 +261,15 @@ const mockBackendSrv = ({ fetch }: MockBackendSrvConfig): BackendSrv => {
   } as unknown as BackendSrv;
 };
 
-const mockDataSourceSrv = (dsApi?: Partial<DataSourceApi>) => {
+interface MockOpts {
+  filterQuery?: (query: DataQuery) => boolean;
+}
+
+const mockDataSourceSrv = (opts?: MockOpts) => {
+  const ds = new DataSourceWithBackend({} as unknown as DataSourceInstanceSettings);
+  ds.filterQuery = opts?.filterQuery;
   return {
-    get: () => Promise.resolve(dsApi ?? {}),
+    get: () => Promise.resolve(ds),
   } as unknown as DataSourceSrv;
 };
 
@@ -238,7 +282,7 @@ const expectDataFrameWithValues = ({ time, values }: { time: number[]; values: n
         name: 'time',
         state: null,
         type: FieldType.time,
-        values: new ArrayVector(time),
+        values: time,
       } as Field,
       {
         config: {},
@@ -246,7 +290,7 @@ const expectDataFrameWithValues = ({ time, values }: { time: number[]; values: n
         name: 'value',
         state: null,
         type: FieldType.number,
-        values: new ArrayVector(values),
+        values: values,
       } as Field,
     ],
     length: values.length,
@@ -270,12 +314,12 @@ const createDataFrameJSON = (values: number[]): DataFrameJSON => {
   };
 };
 
-const createQuery = (refId: string): AlertQuery => {
-  return {
+const createQuery = (refId: string, options?: Partial<AlertQuery>): AlertQuery => {
+  return defaultsDeep(options, {
     refId,
     queryType: '',
     datasourceUid: '',
     model: { refId },
     relativeTimeRange: getDefaultRelativeTimeRange(),
-  };
+  });
 };

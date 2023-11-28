@@ -20,9 +20,11 @@ export interface Props<T> extends HTMLAttributes<HTMLButtonElement> {
   options: Array<SelectableValue<T>>;
   value?: SelectableValue<T>;
   onChange: (item: SelectableValue<T>) => void;
+  /** @deprecated use tooltip instead, tooltipContent is not being processed in ToolbarButton*/
   tooltipContent?: PopoverContent;
   narrow?: boolean;
   variant?: ToolbarButtonVariant;
+  tooltip?: string;
 }
 
 /**
@@ -54,7 +56,7 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
         {...buttonProps}
         {...restProps}
       >
-        {value?.label || value?.value}
+        {value?.label || (value?.value != null ? String(value?.value) : null)}
       </ToolbarButton>
       {state.isOpen && (
         <div className={styles.menuWrapper}>
@@ -64,11 +66,11 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
                 tabIndex=-1 is needed here to support highlighting text within the menu when using FocusScope
                 see https://github.com/adobe/react-spectrum/issues/1604#issuecomment-781574668
               */}
-              <Menu tabIndex={-1} onClose={state.close} {...menuProps}>
+              <Menu tabIndex={-1} onClose={state.close} {...menuProps} autoFocus={!!menuProps.autoFocus}>
                 {options.map((item) => (
                   <MenuItem
                     key={`${item.value}`}
-                    label={(item.label || item.value) as string}
+                    label={item.label ?? String(item.value)}
                     onClick={() => onChangeInternal(item)}
                     active={item.value === value?.value}
                     ariaChecked={item.value === value?.value}
@@ -91,15 +93,15 @@ export const ButtonSelect = React.memo(ButtonSelectComponent) as typeof ButtonSe
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    wrapper: css`
-      position: relative;
-      display: inline-flex;
-    `,
-    menuWrapper: css`
-      position: absolute;
-      z-index: ${theme.zIndex.dropdown};
-      top: ${theme.spacing(4)};
-      right: 0;
-    `,
+    wrapper: css({
+      position: 'relative',
+      display: 'inline-flex',
+    }),
+    menuWrapper: css({
+      position: 'absolute',
+      zIndex: theme.zIndex.dropdown,
+      top: theme.spacing(4),
+      right: 0,
+    }),
   };
 };

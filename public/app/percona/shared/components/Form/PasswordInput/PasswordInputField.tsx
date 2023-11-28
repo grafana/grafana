@@ -30,7 +30,7 @@ interface PasswordFieldRenderProps {
   meta: FieldMetaState<string>;
 }
 
-export const PasswordInputField: FC<PasswordInputFieldProps> = React.memo(
+export const PasswordInputField: FC<React.PropsWithChildren<PasswordInputFieldProps>> = React.memo(
   ({
     className,
     disabled = false,

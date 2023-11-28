@@ -3,10 +3,11 @@ package main
 import (
 	"log"
 
+	"github.com/urfave/cli/v2"
+
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/docker"
 	"github.com/grafana/grafana/pkg/build/gcloud"
-	"github.com/urfave/cli/v2"
 )
 
 func BuildDocker(c *cli.Context) error {
@@ -40,7 +41,7 @@ func BuildDocker(c *cli.Context) error {
 		useUbuntu)
 
 	for _, arch := range buildConfig.Docker.Architectures {
-		if _, err := docker.BuildImage(version, arch, ".", useUbuntu, shouldSave, edition); err != nil {
+		if _, err := docker.BuildImage(version, arch, ".", useUbuntu, shouldSave, edition, metadata.ReleaseMode.Mode); err != nil {
 			return cli.Exit(err.Error(), 1)
 		}
 	}

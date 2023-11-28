@@ -2,14 +2,12 @@ import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { CardContainer, LinkButton, useStyles2 } from '@grafana/ui';
 import { AccessControlAction } from 'app/types';
 
 import { contextSrv } from '../../core/services/context_srv';
 import { Loader } from '../plugins/admin/components/Loader';
 
-import { CrawlerStatus } from './CrawlerStatus';
 import { getServerStats, ServerStat } from './state/apis';
 
 export const ServerStats = () => {
@@ -17,11 +15,11 @@ export const ServerStats = () => {
   const [isLoading, setIsLoading] = useState(false);
   const styles = useStyles2(getStyles);
 
-  const hasAccessToDataSources = contextSrv.hasAccess(AccessControlAction.DataSourcesRead, contextSrv.isGrafanaAdmin);
-  const hasAccessToAdminUsers = contextSrv.hasAccess(AccessControlAction.UsersRead, contextSrv.isGrafanaAdmin);
+  const hasAccessToDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesRead);
+  const hasAccessToAdminUsers = contextSrv.hasPermission(AccessControlAction.UsersRead);
 
   useEffect(() => {
-    if (contextSrv.hasAccess(AccessControlAction.ActionServerStatsRead, contextSrv.isGrafanaAdmin)) {
+    if (contextSrv.hasPermission(AccessControlAction.ActionServerStatsRead)) {
       setIsLoading(true);
       getServerStats().then((stats) => {
         setStats(stats);
@@ -30,7 +28,7 @@ export const ServerStats = () => {
     }
   }, []);
 
-  if (!contextSrv.hasAccess(AccessControlAction.ActionServerStatsRead, contextSrv.isGrafanaAdmin)) {
+  if (!contextSrv.hasPermission(AccessControlAction.ActionServerStatsRead)) {
     return null;
   }
 
@@ -96,8 +94,6 @@ export const ServerStats = () => {
       ) : (
         <p className={styles.notFound}>No stats found.</p>
       )}
-
-      {config.featureToggles.dashboardPreviews && config.featureToggles.dashboardPreviewsAdmin && <CrawlerStatus />}
     </>
   );
 };

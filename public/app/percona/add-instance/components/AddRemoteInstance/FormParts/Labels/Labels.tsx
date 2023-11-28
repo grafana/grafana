@@ -10,7 +10,7 @@ import { getStyles } from '../FormParts.styles';
 
 import { LabelsProps } from './Labels.types';
 
-export const LabelsFormPart: FC<LabelsProps> = ({ showNodeFields = true }) => {
+export const LabelsFormPart: FC<React.PropsWithChildren<LabelsProps>> = ({ showNodeFields = true }) => {
   const styles = useStyles2(getStyles);
   const customLabelsValidators = useMemo(() => [Validators.validateKeyValue], []);
 

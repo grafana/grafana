@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
 
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, FilterInput, MultiSelect, RangeSlider, Select, stylesFactory, useTheme } from '@grafana/ui';
+import { Button, FilterInput, MultiSelect, RangeSlider, Select, useStyles2 } from '@grafana/ui';
 import {
   createDatasourcesList,
   mapNumbertoTimeInSlider,
@@ -12,12 +12,12 @@ import {
   RichHistorySearchFilters,
   RichHistorySettings,
 } from 'app/core/utils/richHistory';
-import { ExploreId, RichHistoryQuery } from 'app/types/explore';
+import { RichHistoryQuery } from 'app/types/explore';
 
 import { getSortOrderOptions } from './RichHistory';
 import RichHistoryCard from './RichHistoryCard';
 
-export interface Props {
+export interface RichHistoryQueriesTabProps {
   queries: RichHistoryQuery[];
   totalQueries: number;
   loading: boolean;
@@ -27,25 +27,23 @@ export interface Props {
   loadMoreRichHistory: () => void;
   richHistorySettings: RichHistorySettings;
   richHistorySearchFilters?: RichHistorySearchFilters;
-  exploreId: ExploreId;
+  exploreId: string;
   height: number;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
-  const bgColor = theme.isLight ? theme.palette.gray5 : theme.palette.dark4;
-
+const getStyles = (theme: GrafanaTheme2, height: number) => {
   return {
     container: css`
       display: flex;
     `,
     labelSlider: css`
-      font-size: ${theme.typography.size.sm};
+      font-size: ${theme.typography.bodySmall.fontSize};
       &:last-of-type {
-        margin-top: ${theme.spacing.lg};
+        margin-top: ${theme.spacing(3)};
       }
       &:first-of-type {
-        font-weight: ${theme.typography.weight.semibold};
-        margin-bottom: ${theme.spacing.md};
+        font-weight: ${theme.typography.fontWeightMedium};
+        margin-bottom: ${theme.spacing(2)};
       }
     `,
     containerContent: css`
@@ -54,7 +52,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
     `,
     containerSlider: css`
       width: 129px;
-      margin-right: ${theme.spacing.sm};
+      margin-right: ${theme.spacing(1)};
     `,
     fixedSlider: css`
       position: fixed;
@@ -63,7 +61,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
       bottom: 10px;
       height: ${height - 180}px;
       width: 129px;
-      padding: ${theme.spacing.sm} 0;
+      padding: ${theme.spacing(1)} 0;
     `,
     selectors: css`
       display: flex;
@@ -71,16 +69,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
       flex-wrap: wrap;
     `,
     filterInput: css`
-      margin-bottom: ${theme.spacing.sm};
+      margin-bottom: ${theme.spacing(1)};
     `,
     multiselect: css`
       width: 100%;
-      margin-bottom: ${theme.spacing.sm};
-      .gf-form-select-box__multi-value {
-        background-color: ${bgColor};
-        padding: ${theme.spacing.xxs} ${theme.spacing.xs} ${theme.spacing.xxs} ${theme.spacing.sm};
-        border-radius: ${theme.border.radius.sm};
-      }
+      margin-bottom: ${theme.spacing(1)};
     `,
     sort: css`
       width: 170px;
@@ -89,36 +82,36 @@ const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
       display: flex;
       align-items: flex-start;
       justify-content: flex-start;
-      margin-top: ${theme.spacing.lg};
+      margin-top: ${theme.spacing(3)};
       h4 {
         margin: 0 10px 0 0;
       }
     `,
     heading: css`
-      font-size: ${theme.typography.heading.h4};
-      margin: ${theme.spacing.md} ${theme.spacing.xxs} ${theme.spacing.sm} ${theme.spacing.xxs};
+      font-size: ${theme.typography.h4.fontSize};
+      margin: ${theme.spacing(2, 0.25, 1, 0.25)};
     `,
     footer: css`
       height: 60px;
-      margin: ${theme.spacing.lg} auto;
+      margin: ${theme.spacing(3)} auto;
       display: flex;
       justify-content: center;
-      font-weight: ${theme.typography.weight.light};
-      font-size: ${theme.typography.size.sm};
+      font-weight: ${theme.typography.fontWeightLight};
+      font-size: ${theme.typography.bodySmall.fontSize};
       a {
-        font-weight: ${theme.typography.weight.semibold};
-        margin-left: ${theme.spacing.xxs};
+        font-weight: ${theme.typography.fontWeightMedium};
+        margin-left: ${theme.spacing(0.25)};
       }
     `,
     queries: css`
-      font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.weight.regular};
-      margin-left: ${theme.spacing.xs};
+      font-size: ${theme.typography.bodySmall.fontSize};
+      font-weight: ${theme.typography.fontWeightRegular};
+      margin-left: ${theme.spacing(0.5)};
     `,
   };
-});
+};
 
-export function RichHistoryQueriesTab(props: Props) {
+export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
   const {
     queries,
     totalQueries,
@@ -133,8 +126,7 @@ export function RichHistoryQueriesTab(props: Props) {
     activeDatasourceInstance,
   } = props;
 
-  const theme = useTheme();
-  const styles = getStyles(theme, height);
+  const styles = useStyles2(getStyles, height);
 
   const listOfDatasources = createDatasourcesList();
 
@@ -194,7 +186,7 @@ export function RichHistoryQueriesTab(props: Props) {
         </div>
       </div>
 
-      <div className={styles.containerContent}>
+      <div className={styles.containerContent} data-testid="query-history-queries-tab">
         <div className={styles.selectors}>
           {!richHistorySettings.activeDatasourceOnly && (
             <MultiSelect
@@ -212,6 +204,7 @@ export function RichHistoryQueriesTab(props: Props) {
           )}
           <div className={styles.filterInput}>
             <FilterInput
+              escapeRegex={false}
               placeholder="Search queries"
               value={richHistorySearchFilters.search}
               onChange={(search: string) => updateFilters({ search })}
@@ -240,17 +233,8 @@ export function RichHistoryQueriesTab(props: Props) {
                     {mappedQueriesToHeadings[heading].length} queries
                   </span>
                 </div>
-                {mappedQueriesToHeadings[heading].map((q: RichHistoryQuery) => {
-                  const idx = listOfDatasources.findIndex((d) => d.uid === q.datasourceUid);
-                  return (
-                    <RichHistoryCard
-                      query={q}
-                      key={q.id}
-                      exploreId={exploreId}
-                      dsImg={idx === -1 ? 'public/img/icn-datasource.svg' : listOfDatasources[idx].imgUrl}
-                      isRemoved={idx === -1}
-                    />
-                  );
+                {mappedQueriesToHeadings[heading].map((q) => {
+                  return <RichHistoryCard query={q} key={q.id} exploreId={exploreId} />;
                 })}
               </div>
             );

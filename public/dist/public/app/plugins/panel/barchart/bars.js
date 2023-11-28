@@ -1,0 +1,493 @@
+import uPlot from 'uplot';
+import { alpha } from '@grafana/data/src/themes/colorManipulator';
+import { StackingMode, VisibilityMode, ScaleOrientation, } from '@grafana/schema';
+import { measureText } from '@grafana/ui';
+import { formatTime } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
+import { preparePlotData2 } from '@grafana/ui/src/components/uPlot/utils';
+import { distribute, SPACE_BETWEEN } from './distribute';
+import { findRect, intersects, pointWithin, Quadtree } from './quadtree';
+const groupDistr = SPACE_BETWEEN;
+const barDistr = SPACE_BETWEEN;
+// min.max font size for value label
+const VALUE_MIN_FONT_SIZE = 8;
+const VALUE_MAX_FONT_SIZE = 30;
+// % of width/height of the bar that value should fit in when measuring size
+const BAR_FONT_SIZE_RATIO = 0.65;
+// distance between label and a bar in % of bar width
+const LABEL_OFFSET_FACTOR_VT = 0.1;
+const LABEL_OFFSET_FACTOR_HZ = 0.15;
+// max distance
+const LABEL_OFFSET_MAX_VT = 5;
+const LABEL_OFFSET_MAX_HZ = 10;
+// text baseline middle runs through the middle of lowercase letters
+// since bar values are numbers and uppercase-like, we want the middle of uppercase
+// this is a cheap fudge factor that skips expensive and inconsistent cross-browser measuring
+const MIDDLE_BASELINE_SHIFT = 0.1;
+/**
+ * @internal
+ */
+function calculateFontSizeWithMetrics(text, width, height, lineHeight, maxSize) {
+    // calculate width in 14px
+    const textSize = measureText(text, 14);
+    // how much bigger than 14px can we make it while staying within our width constraints
+    const fontSizeBasedOnWidth = (width / (textSize.width + 2)) * 14;
+    const fontSizeBasedOnHeight = height / lineHeight;
+    // final fontSize
+    const optimalSize = Math.min(fontSizeBasedOnHeight, fontSizeBasedOnWidth);
+    return {
+        fontSize: Math.min(optimalSize, maxSize !== null && maxSize !== void 0 ? maxSize : optimalSize),
+        textMetrics: textSize,
+    };
+}
+/**
+ * @internal
+ */
+export function getConfig(opts, theme) {
+    var _a, _b, _c;
+    const { xOri, xDir: dir, rawValue, getColor, formatValue, formatShortValue, fillOpacity = 1, showValue, xSpacing = 0, } = opts;
+    const isXHorizontal = xOri === ScaleOrientation.Horizontal;
+    const hasAutoValueSize = !Boolean((_a = opts.text) === null || _a === void 0 ? void 0 : _a.valueSize);
+    const isStacked = opts.stacking !== StackingMode.None;
+    const pctStacked = opts.stacking === StackingMode.Percent;
+    let { groupWidth, barWidth, barRadius = 0 } = opts;
+    if (isStacked) {
+        [groupWidth, barWidth] = [barWidth, groupWidth];
+    }
+    let qt;
+    let hRect;
+    // for distr: 2 scales, the splits array should contain indices into data[0] rather than values
+    const xSplits = (u) => Array.from(u.data[0].map((v, i) => i));
+    const hFilter = xSpacing === 0
+        ? undefined
+        : (u, splits) => {
+            // hSpacing?
+            const dim = u.bbox.width;
+            const _dir = dir * (isXHorizontal ? 1 : -1);
+            let dataLen = splits.length;
+            let lastIdx = dataLen - 1;
+            let skipMod = 0;
+            let cssDim = dim / uPlot.pxRatio;
+            let maxTicks = Math.abs(Math.floor(cssDim / xSpacing));
+            skipMod = dataLen < maxTicks ? 0 : Math.ceil(dataLen / maxTicks);
+            let splits2 = splits.map((v, i) => {
+                let shouldSkip = skipMod !== 0 && (xSpacing > 0 ? i : lastIdx - i) % skipMod > 0;
+                return shouldSkip ? null : v;
+            });
+            return _dir === 1 ? splits2 : splits2.reverse();
+        };
+    // the splits passed into here are data[0] values looked up by the indices returned from splits()
+    const xValues = (u, splits, axisIdx, foundSpace, foundIncr) => {
+        if (opts.xTimeAuto) {
+            // bit of a hack:
+            // temporarily set x scale range to temporal (as expected by formatTime()) rather than ordinal
+            let xScale = u.scales.x;
+            let oMin = xScale.min;
+            let oMax = xScale.max;
+            xScale.min = u.data[0][0];
+            xScale.max = u.data[0][u.data[0].length - 1];
+            let vals = formatTime(u, splits, axisIdx, foundSpace, foundIncr);
+            // revert
+            xScale.min = oMin;
+            xScale.max = oMax;
+            return vals;
+        }
+        return splits.map((v) => (isXHorizontal ? formatShortValue(0, v) : formatValue(0, v)));
+    };
+    // this expands the distr: 2 scale so that the indicies of each data[0] land at the proper justified positions
+    const xRange = (u, min, max) => {
+        min = 0;
+        max = Math.max(1, u.data[0].length - 1);
+        let pctOffset = 0;
+        // how far in is the first tick in % of full dimension
+        distribute(u.data[0].length, groupWidth, groupDistr, 0, (di, lftPct, widPct) => {
+            pctOffset = lftPct + widPct / 2;
+        });
+        // expand scale range by equal amounts on both ends
+        let rn = max - min;
+        if (pctOffset === 0.5) {
+            min -= rn;
+        }
+        else {
+            let upScale = 1 / (1 - pctOffset * 2);
+            let offset = (upScale * rn - rn) / 2;
+            min -= offset;
+            max += offset;
+        }
+        return [min, max];
+    };
+    let distrTwo = (groupCount, barCount) => {
+        let out = Array.from({ length: barCount }, () => ({
+            offs: Array(groupCount).fill(0),
+            size: Array(groupCount).fill(0),
+        }));
+        distribute(groupCount, groupWidth, groupDistr, null, (groupIdx, groupOffPct, groupDimPct) => {
+            distribute(barCount, barWidth, barDistr, null, (barIdx, barOffPct, barDimPct) => {
+                out[barIdx].offs[groupIdx] = groupOffPct + groupDimPct * barOffPct;
+                out[barIdx].size[groupIdx] = groupDimPct * barDimPct;
+            });
+        });
+        return out;
+    };
+    let distrOne = (groupCount, barCount) => {
+        let out = Array.from({ length: barCount }, () => ({
+            offs: Array(groupCount).fill(0),
+            size: Array(groupCount).fill(0),
+        }));
+        distribute(groupCount, groupWidth, groupDistr, null, (groupIdx, groupOffPct, groupDimPct) => {
+            distribute(barCount, barWidth, barDistr, null, (barIdx, barOffPct, barDimPct) => {
+                out[barIdx].offs[groupIdx] = groupOffPct;
+                out[barIdx].size[groupIdx] = groupDimPct;
+            });
+        });
+        return out;
+    };
+    const LABEL_OFFSET_FACTOR = isXHorizontal ? LABEL_OFFSET_FACTOR_VT : LABEL_OFFSET_FACTOR_HZ;
+    const LABEL_OFFSET_MAX = isXHorizontal ? LABEL_OFFSET_MAX_VT : LABEL_OFFSET_MAX_HZ;
+    let barsPctLayout = [];
+    let barsColors = [];
+    let scaleFactor = 1;
+    let labels;
+    let fontSize = (_c = (_b = opts.text) === null || _b === void 0 ? void 0 : _b.valueSize) !== null && _c !== void 0 ? _c : VALUE_MAX_FONT_SIZE;
+    let labelOffset = LABEL_OFFSET_MAX;
+    // minimum available space for labels between bar end and plotting area bound (in canvas pixels)
+    let vSpace = Infinity;
+    let hSpace = Infinity;
+    let useMappedColors = getColor != null;
+    let mappedColorDisp = useMappedColors
+        ? {
+            fill: {
+                unit: 3,
+                values: (u, seriesIdx) => barsColors[seriesIdx].fill,
+            },
+            stroke: {
+                unit: 3,
+                values: (u, seriesIdx) => barsColors[seriesIdx].stroke,
+            },
+        }
+        : {};
+    let barsBuilder = uPlot.paths.bars({
+        radius: pctStacked
+            ? 0
+            : !isStacked
+                ? barRadius
+                : (u, seriesIdx) => {
+                    let isTopmostSeries = seriesIdx === u.data.length - 1;
+                    return isTopmostSeries ? [barRadius, 0] : [0, 0];
+                },
+        disp: Object.assign({ x0: {
+                unit: 2,
+                values: (u, seriesIdx) => barsPctLayout[seriesIdx].offs,
+            }, size: {
+                unit: 2,
+                values: (u, seriesIdx) => barsPctLayout[seriesIdx].size,
+            } }, mappedColorDisp),
+        // collect rendered bar geometry
+        each: (u, seriesIdx, dataIdx, lft, top, wid, hgt) => {
+            var _a;
+            // we get back raw canvas coords (included axes & padding)
+            // translate to the plotting area origin
+            lft -= u.bbox.left;
+            top -= u.bbox.top;
+            let val = u.data[seriesIdx][dataIdx];
+            // accum min space abvailable for labels
+            if (isXHorizontal) {
+                vSpace = Math.min(vSpace, val < 0 ? u.bbox.height - (top + hgt) : top);
+                hSpace = wid;
+            }
+            else {
+                vSpace = hgt;
+                hSpace = Math.min(hSpace, val < 0 ? lft : u.bbox.width - (lft + wid));
+            }
+            let barRect = { x: lft, y: top, w: wid, h: hgt, sidx: seriesIdx, didx: dataIdx };
+            if (opts.fullHighlight) {
+                if (opts.xOri === ScaleOrientation.Horizontal) {
+                    barRect.y = 0;
+                    barRect.h = u.bbox.height;
+                }
+                else {
+                    barRect.x = 0;
+                    barRect.w = u.bbox.width;
+                }
+            }
+            qt.add(barRect);
+            if (showValue !== VisibilityMode.Never) {
+                const raw = rawValue(seriesIdx, dataIdx);
+                let divider = 1;
+                if (pctStacked && alignedTotals[seriesIdx][dataIdx]) {
+                    divider = alignedTotals[seriesIdx][dataIdx];
+                }
+                const v = divider === 0 ? 0 : raw / divider;
+                // Format Values and calculate label offsets
+                const text = formatValue(seriesIdx, v);
+                labelOffset = Math.min(labelOffset, Math.round(LABEL_OFFSET_FACTOR * (isXHorizontal ? wid : hgt)));
+                if (labels[dataIdx] === undefined) {
+                    labels[dataIdx] = {};
+                }
+                labels[dataIdx][seriesIdx] = { text: text, value: rawValue(seriesIdx, dataIdx), hidden: false };
+                // Calculate font size when it's set to be automatic
+                if (hasAutoValueSize) {
+                    const { fontSize: calculatedSize, textMetrics } = calculateFontSizeWithMetrics(labels[dataIdx][seriesIdx].text, hSpace * (isXHorizontal ? BAR_FONT_SIZE_RATIO : 1) - (isXHorizontal ? 0 : labelOffset), vSpace * (isXHorizontal ? 1 : BAR_FONT_SIZE_RATIO) - (isXHorizontal ? labelOffset : 0), 1);
+                    // Save text metrics
+                    labels[dataIdx][seriesIdx].textMetrics = textMetrics;
+                    // Retrieve the new font size and use it
+                    let autoFontSize = Math.round(Math.min(fontSize, VALUE_MAX_FONT_SIZE, calculatedSize));
+                    // Calculate the scaling factor for bouding boxes
+                    // Take into account the fact that calculateFontSize
+                    // uses 14px measurement so we need to adjust the scale factor
+                    scaleFactor = (autoFontSize / fontSize) * (autoFontSize / 14);
+                    // Update the end font-size
+                    fontSize = autoFontSize;
+                }
+                else {
+                    labels[dataIdx][seriesIdx].textMetrics = measureText(labels[dataIdx][seriesIdx].text, fontSize);
+                }
+                let middleShift = isXHorizontal ? 0 : -Math.round(MIDDLE_BASELINE_SHIFT * fontSize);
+                let value = rawValue(seriesIdx, dataIdx);
+                if (((_a = opts.negY) === null || _a === void 0 ? void 0 : _a[seriesIdx]) && value != null) {
+                    value *= -1;
+                }
+                if (value != null) {
+                    // Calculate final co-ordinates for text position
+                    const x = u.bbox.left + (isXHorizontal ? lft + wid / 2 : value < 0 ? lft - labelOffset : lft + wid + labelOffset);
+                    const y = u.bbox.top +
+                        (isXHorizontal ? (value < 0 ? top + hgt + labelOffset : top - labelOffset) : top + hgt / 2 - middleShift);
+                    // Retrieve textMetrics with necessary default values
+                    // These _shouldn't_ be undefined at this point
+                    // but they _could_ be.
+                    const { textMetrics = {
+                        width: 1,
+                        actualBoundingBoxAscent: 1,
+                        actualBoundingBoxDescent: 1,
+                    }, } = labels[dataIdx][seriesIdx];
+                    // Adjust bounding boxes based on text scale
+                    // factor and orientation (which changes the baseline)
+                    let xAdjust = 0, yAdjust = 0;
+                    if (isXHorizontal) {
+                        // Adjust for baseline which is "top" in this case
+                        xAdjust = (textMetrics.width * scaleFactor) / 2;
+                        // yAdjust only matters when the value isn't negative
+                        yAdjust =
+                            value > 0
+                                ? (textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor
+                                : 0;
+                    }
+                    else {
+                        // Adjust from the baseline which is "middle" in this case
+                        yAdjust = ((textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor) / 2;
+                        // Adjust for baseline being "right" in the x direction
+                        xAdjust = value < 0 ? textMetrics.width * scaleFactor : 0;
+                    }
+                    // Construct final bounding box for the label text
+                    labels[dataIdx][seriesIdx].x = x;
+                    labels[dataIdx][seriesIdx].y = y;
+                    labels[dataIdx][seriesIdx].bbox = {
+                        x: x - xAdjust,
+                        y: y - yAdjust,
+                        w: textMetrics.width * scaleFactor,
+                        h: (textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor,
+                    };
+                }
+            }
+        },
+    });
+    const init = (u) => {
+        let over = u.over;
+        over.style.overflow = 'hidden';
+        u.root.querySelectorAll('.u-cursor-pt').forEach((el) => {
+            el.style.borderRadius = '0';
+            if (opts.fullHighlight) {
+                el.style.zIndex = '-1';
+            }
+        });
+    };
+    const cursor = {
+        x: false,
+        y: false,
+        drag: {
+            x: false,
+            y: false,
+        },
+        dataIdx: (u, seriesIdx) => {
+            if (seriesIdx === 1) {
+                hRect = null;
+                let cx = u.cursor.left * uPlot.pxRatio;
+                let cy = u.cursor.top * uPlot.pxRatio;
+                qt.get(cx, cy, 1, 1, (o) => {
+                    if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
+                        if (isStacked) {
+                            // choose the smallest hovered rect (when stacked bigger ones overlap smaller ones)
+                            if (hRect == null || o.h * o.w < hRect.h * hRect.w) {
+                                hRect = o;
+                            }
+                        }
+                        else {
+                            hRect = o;
+                        }
+                    }
+                });
+            }
+            return hRect && seriesIdx === hRect.sidx ? hRect.didx : null;
+        },
+        points: {
+            fill: 'rgba(255,255,255,0.4)',
+            bbox: (u, seriesIdx) => {
+                let isHovered = hRect && seriesIdx === hRect.sidx;
+                let heightReduce = 0;
+                let widthReduce = 0;
+                // get height of bar rect at same index of the series below the hovered one
+                if (isStacked && isHovered) {
+                    const rect = hRect && hRect.sidx > 1 && findRect(qt, hRect.sidx - 1, hRect.didx);
+                    if (rect) {
+                        if (isXHorizontal) {
+                            heightReduce = rect.h;
+                        }
+                        else {
+                            widthReduce = rect.w;
+                        }
+                    }
+                }
+                return {
+                    left: isHovered ? (hRect.x + widthReduce) / uPlot.pxRatio : -10,
+                    top: isHovered ? hRect.y / uPlot.pxRatio : -10,
+                    width: isHovered ? (hRect.w - widthReduce) / uPlot.pxRatio : 0,
+                    height: isHovered ? (hRect.h - heightReduce) / uPlot.pxRatio : 0,
+                };
+            },
+        },
+    };
+    // Build bars
+    const drawClear = (u) => {
+        var _a, _b;
+        qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
+        qt.clear();
+        // clear the path cache to force drawBars() to rebuild new quadtree
+        u.series.forEach((s) => {
+            // @ts-ignore
+            s._paths = null;
+        });
+        if (isStacked) {
+            barsPctLayout = [null, ...distrOne(u.data[0].length, u.data.length - 1)];
+        }
+        else {
+            barsPctLayout = [null, ...distrTwo(u.data[0].length, u.data.length - 1)];
+        }
+        if (useMappedColors) {
+            barsColors = [null];
+            // map per-bar colors
+            for (let i = 1; i < u.data.length; i++) {
+                let colors = u.data[i].map((value, valueIdx) => {
+                    if (value != null) {
+                        return getColor(i, valueIdx, value);
+                    }
+                    return null;
+                });
+                barsColors.push({
+                    fill: fillOpacity < 1 ? colors.map((c) => (c != null ? alpha(c, fillOpacity) : null)) : colors,
+                    stroke: colors,
+                });
+            }
+        }
+        labels = {};
+        fontSize = (_b = (_a = opts.text) === null || _a === void 0 ? void 0 : _a.valueSize) !== null && _b !== void 0 ? _b : VALUE_MAX_FONT_SIZE;
+        labelOffset = LABEL_OFFSET_MAX;
+        vSpace = hSpace = Infinity;
+    };
+    // uPlot hook to draw the labels on the bar chart.
+    const draw = (u) => {
+        var _a;
+        if (showValue === VisibilityMode.Never || fontSize < VALUE_MIN_FONT_SIZE) {
+            return;
+        }
+        u.ctx.save();
+        u.ctx.fillStyle = theme.colors.text.primary;
+        u.ctx.font = `${fontSize}px ${theme.typography.fontFamily}`;
+        let curAlign = undefined, curBaseline = undefined;
+        for (const didx in labels) {
+            // exclude first label from overlap testing
+            let first = true;
+            for (const sidx in labels[didx]) {
+                const label = labels[didx][sidx];
+                const { text, x = 0, y = 0 } = label;
+                let { value } = label;
+                if (((_a = opts.negY) === null || _a === void 0 ? void 0 : _a[sidx]) && value != null) {
+                    value *= -1;
+                }
+                let align = isXHorizontal ? 'center' : value !== null && value < 0 ? 'right' : 'left';
+                let baseline = isXHorizontal
+                    ? value !== null && value < 0
+                        ? 'top'
+                        : 'alphabetic'
+                    : 'middle';
+                if (align !== curAlign) {
+                    u.ctx.textAlign = curAlign = align;
+                }
+                if (baseline !== curBaseline) {
+                    u.ctx.textBaseline = curBaseline = baseline;
+                }
+                if (showValue === VisibilityMode.Always) {
+                    u.ctx.fillText(text, x, y);
+                }
+                else if (showValue === VisibilityMode.Auto) {
+                    let { bbox } = label;
+                    let intersectsLabel = false;
+                    if (bbox == null) {
+                        intersectsLabel = true;
+                        label.hidden = true;
+                    }
+                    else if (!first) {
+                        // Test for any collisions
+                        for (const subsidx in labels[didx]) {
+                            if (subsidx === sidx) {
+                                continue;
+                            }
+                            const label2 = labels[didx][subsidx];
+                            const { bbox: bbox2, hidden } = label2;
+                            if (!hidden && bbox2 && intersects(bbox, bbox2)) {
+                                intersectsLabel = true;
+                                label.hidden = true;
+                                break;
+                            }
+                        }
+                    }
+                    first = false;
+                    !intersectsLabel && u.ctx.fillText(text, x, y);
+                }
+            }
+        }
+        u.ctx.restore();
+    };
+    // handle hover interaction with quadtree probing
+    const interpolateTooltip = (updateActiveSeriesIdx, updateActiveDatapointIdx, updateTooltipPosition, u) => {
+        if (hRect) {
+            updateActiveSeriesIdx(hRect.sidx);
+            updateActiveDatapointIdx(hRect.didx);
+            updateTooltipPosition();
+        }
+        else {
+            updateTooltipPosition(true);
+        }
+    };
+    let alignedTotals = null;
+    function prepData(frames, stackingGroups) {
+        alignedTotals = null;
+        return preparePlotData2(frames[0], stackingGroups, ({ totals }) => {
+            alignedTotals = totals;
+        });
+    }
+    return {
+        cursor,
+        // scale & axis opts
+        xRange,
+        xValues,
+        xSplits,
+        hFilter,
+        barsBuilder,
+        // hooks
+        init,
+        drawClear,
+        draw,
+        interpolateTooltip,
+        prepData,
+    };
+}
+//# sourceMappingURL=bars.js.map

@@ -2,44 +2,25 @@ import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 // Utils
-import { rangeUtil } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
-import { InlineField, InlineSwitch, VerticalGroup } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
-import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { InlineField, InlineSwitch, VerticalGroup, Modal, Button } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { WarningBlock } from 'app/percona/shared/components/Elements/WarningBlock';
-import { AccessControlAction, ApiKey, NewApiKey, StoreState } from 'app/types';
-import { ShowModalReactEvent } from 'app/types/events';
+import { AccessControlAction, ApiKey, ApikeyMigrationResult, StoreState } from 'app/types';
 
-import { APIKeysMigratedCard } from './APIKeysMigratedCard';
 import { Messages } from './ApiKeys.messages';
 import { getStyles } from './ApiKeys.styles';
 import { ApiKeysActionBar } from './ApiKeysActionBar';
-import { ApiKeysAddedModal } from './ApiKeysAddedModal';
-import { ApiKeysController } from './ApiKeysController';
-import { ApiKeysForm } from './ApiKeysForm';
 import { ApiKeysTable } from './ApiKeysTable';
 import { MigrateToServiceAccountsCard } from './MigrateToServiceAccountsCard';
-import {
-  addApiKey,
-  deleteApiKey,
-  migrateApiKey,
-  migrateAll,
-  loadApiKeys,
-  toggleIncludeExpired,
-  getApiKeysMigrationStatus,
-  hideApiKeys,
-} from './state/actions';
+import { deleteApiKey, migrateApiKey, migrateAll, loadApiKeys, toggleIncludeExpired } from './state/actions';
 import { setSearchQuery } from './state/reducers';
 import { getApiKeys, getApiKeysCount, getIncludeExpired, getIncludeExpiredDisabled } from './state/selectors';
 
 function mapStateToProps(state: StoreState) {
-  const canCreate = contextSrv.hasAccess(AccessControlAction.ActionAPIKeysCreate, true);
-
+  const canCreate = contextSrv.hasPermission(AccessControlAction.ActionAPIKeysCreate);
   return {
     apiKeys: getApiKeys(state.apiKeys),
     searchQuery: state.apiKeys.searchQuery,
@@ -49,7 +30,7 @@ function mapStateToProps(state: StoreState) {
     includeExpired: getIncludeExpired(state.apiKeys),
     includeExpiredDisabled: getIncludeExpiredDisabled(state.apiKeys),
     canCreate: canCreate,
-    apiKeysMigrated: state.apiKeys.apiKeysMigrated,
+    migrationResult: state.apiKeys.migrationResult,
   };
 }
 
@@ -64,9 +45,6 @@ const mapDispatchToProps = {
   migrateAll,
   setSearchQuery,
   toggleIncludeExpired,
-  addApiKey,
-  getApiKeysMigrationStatus,
-  hideApiKeys,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -76,17 +54,19 @@ interface OwnProps {}
 export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 interface State {
-  isAdding: boolean;
+  showMigrationResult: boolean;
 }
 
 export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
+    this.state = {
+      showMigrationResult: false,
+    };
   }
 
   componentDidMount() {
     this.fetchApiKeys();
-    this.props.getApiKeysMigrationStatus();
   }
 
   async fetchApiKeys() {
@@ -95,10 +75,6 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
 
   onDeleteApiKey = (key: ApiKey) => {
     this.props.deleteApiKey(key.id!);
-  };
-
-  onMigrateAll = () => {
-    this.props.migrateAll();
   };
 
   onMigrateApiKey = (key: ApiKey) => {
@@ -113,49 +89,19 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
     this.props.toggleIncludeExpired();
   };
 
-  onAddApiKey = (newApiKey: NewApiKey) => {
-    const openModal = (apiKey: string) => {
-      const rootPath = window.location.origin + config.appSubUrl;
-
-      appEvents.publish(
-        new ShowModalReactEvent({
-          props: {
-            apiKey,
-            rootPath,
-          },
-          component: ApiKeysAddedModal,
-        })
-      );
-    };
-
-    const secondsToLive = newApiKey.secondsToLive;
+  onMigrateApiKeys = async () => {
     try {
-      const secondsToLiveAsNumber = secondsToLive ? rangeUtil.intervalToSeconds(secondsToLive) : null;
-      const apiKey: ApiKey = {
-        ...newApiKey,
-        secondsToLive: secondsToLiveAsNumber,
-      };
-      this.props.addApiKey(apiKey, openModal);
-      this.setState((prevState: State) => {
-        return {
-          ...prevState,
-          isAdding: false,
-        };
+      await this.props.migrateAll();
+      this.setState({
+        showMigrationResult: true,
       });
     } catch (err) {
       console.error(err);
     }
   };
 
-  onHideApiKeys = async () => {
-    try {
-      await this.props.hideApiKeys();
-      let serviceAccountsUrl = '/org/serviceaccounts';
-      locationService.push(serviceAccountsUrl);
-      window.location.reload();
-    } catch (err) {
-      console.error(err);
-    }
+  dismissModal = async () => {
+    this.setState({ showMigrationResult: false });
   };
 
   render() {
@@ -168,7 +114,7 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
       includeExpired,
       includeExpiredDisabled,
       canCreate,
-      apiKeysMigrated,
+      migrationResult,
     } = this.props;
 
     const styles = getStyles(config.theme);
@@ -181,68 +127,121 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
       );
     }
 
+    const showTable = apiKeysCount > 0;
     return (
       <Page {...defaultPageProps}>
         <Page.Contents isLoading={false}>
-          <ApiKeysController>
-            {({ isAdding, toggleIsAdding }) => {
-              const showCTA = !isAdding && apiKeysCount === 0 && !apiKeysMigrated;
-              const showTable = apiKeysCount > 0;
-              return (
-                <>
-                  {!apiKeysMigrated && <MigrateToServiceAccountsCard onMigrate={this.onMigrateAll} />}
-                  {apiKeysMigrated && <APIKeysMigratedCard onHideApiKeys={this.onHideApiKeys} />}
-                  {showCTA ? (
-                    <EmptyListCTA
-                      title="You haven't added any API keys yet."
-                      buttonIcon="key-skeleton-alt"
-                      onClick={toggleIsAdding}
-                      buttonTitle="New API key"
-                      proTip="Remember, you can provide view-only API access to other applications."
-                      buttonDisabled={!canCreate}
-                    />
-                  ) : null}
-                  {showTable ? (
-                    <ApiKeysActionBar
-                      searchQuery={searchQuery}
-                      disabled={isAdding || !canCreate}
-                      onAddClick={toggleIsAdding}
-                      onSearchChange={this.onSearchQueryChange}
-                    />
-                  ) : null}
-                  <ApiKeysForm
-                    show={isAdding}
-                    onClose={toggleIsAdding}
-                    onKeyAdded={this.onAddApiKey}
-                    disabled={!canCreate}
-                  />
-                  {showTable ? (
-                    <VerticalGroup>
-                      <InlineField disabled={includeExpiredDisabled} label="Include expired keys">
-                        <InlineSwitch id="showExpired" value={includeExpired} onChange={this.onIncludeExpiredChange} />
-                      </InlineField>
-                      <WarningBlock
-                        className={styles.deleteWarning}
-                        message={Messages.apiKeysDeleteWarning}
-                        type="warning"
-                      />
-                      <ApiKeysTable
-                        apiKeys={apiKeys}
-                        timeZone={timeZone}
-                        onDelete={this.onDeleteApiKey}
-                        onMigrate={this.onMigrateApiKey}
-                      />
-                    </VerticalGroup>
-                  ) : null}
-                </>
-              );
-            }}
-          </ApiKeysController>
+          <>
+            <MigrateToServiceAccountsCard onMigrate={this.onMigrateApiKeys} apikeysCount={apiKeysCount} />
+            {showTable ? (
+              <ApiKeysActionBar
+                searchQuery={searchQuery}
+                disabled={!canCreate}
+                onSearchChange={this.onSearchQueryChange}
+              />
+            ) : null}
+            {showTable ? (
+              <VerticalGroup>
+                <InlineField disabled={includeExpiredDisabled} label="Include expired keys">
+                  <InlineSwitch id="showExpired" value={includeExpired} onChange={this.onIncludeExpiredChange} />
+                </InlineField>
+                {/* @PERCONA */}
+                <WarningBlock className={styles.deleteWarning} message={Messages.apiKeysDeleteWarning} type="warning" />
+                <ApiKeysTable
+                  apiKeys={apiKeys}
+                  timeZone={timeZone}
+                  onMigrate={this.onMigrateApiKey}
+                  onDelete={this.onDeleteApiKey}
+                />
+              </VerticalGroup>
+            ) : null}
+          </>
         </Page.Contents>
+        {migrationResult && (
+          <MigrationSummary
+            visible={this.state.showMigrationResult}
+            data={migrationResult}
+            onDismiss={this.dismissModal}
+          />
+        )}
       </Page>
     );
   }
 }
+export type MigrationSummaryProps = {
+  visible: boolean;
+  data: ApikeyMigrationResult;
+  onDismiss: () => void;
+};
+
+const styles: { [key: string]: React.CSSProperties } = {
+  migrationSummary: {
+    padding: '20px',
+  },
+  infoText: {
+    color: '#007bff',
+  },
+  summaryDetails: {
+    marginTop: '20px',
+  },
+  summaryParagraph: {
+    margin: '10px 0',
+  },
+};
+
+export const MigrationSummary: React.FC<MigrationSummaryProps> = ({ visible, data, onDismiss }) => {
+  return (
+    <Modal title="Migration summary" isOpen={visible} closeOnBackdropClick={true} onDismiss={onDismiss}>
+      {data.failedApikeyIDs.length === 0 && (
+        <div style={styles.migrationSummary}>
+          <p>Migration Successful!</p>
+          <p>
+            <strong>Total: </strong>
+            {data.total}
+          </p>
+          <p>
+            <strong>Migrated: </strong>
+            {data.migrated}
+          </p>
+        </div>
+      )}
+      {data.failedApikeyIDs.length !== 0 && (
+        <div style={styles.migrationSummary}>
+          <p>
+            Migration Complete! Please note, while there might be a few API keys flagged as `failed migrations`, rest
+            assured, all of your API keys are fully functional and operational. Please try again or contact support.
+          </p>
+          <hr />
+          <p>
+            <strong>Total: </strong>
+            {data.total}
+          </p>
+          <p>
+            <strong>Migrated: </strong>
+            {data.migrated}
+          </p>
+          <p>
+            <strong>Failed: </strong>
+            {data.failed}
+          </p>
+          <p>
+            <strong>Failed Api Key IDs: </strong>
+            {data.failedApikeyIDs.join(', ')}
+          </p>
+          <p>
+            <strong>Failed Details: </strong>
+            {data.failedDetails.join(', ')}
+          </p>
+        </div>
+      )}
+      <Modal.ButtonRow>
+        <Button variant="secondary" onClick={onDismiss}>
+          Close
+        </Button>
+      </Modal.ButtonRow>
+    </Modal>
+  );
+};
 
 const ApiKeysPage = connector(ApiKeysPageUnconnected);
 export default ApiKeysPage;

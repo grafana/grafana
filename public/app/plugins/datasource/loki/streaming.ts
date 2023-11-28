@@ -1,8 +1,14 @@
 import { map, Observable, defer, mergeMap } from 'rxjs';
 
-import { DataFrameJSON, DataQueryRequest, DataQueryResponse, LiveChannelScope, LoadingState } from '@grafana/data';
+import {
+  DataFrameJSON,
+  DataQueryRequest,
+  DataQueryResponse,
+  LiveChannelScope,
+  LoadingState,
+  StreamingDataFrame,
+} from '@grafana/data';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
-import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 
 import { LokiDatasource } from './datasource';
 import { LokiQuery } from './types';

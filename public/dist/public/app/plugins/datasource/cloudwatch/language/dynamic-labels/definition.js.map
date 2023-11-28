@@ -1,0 +1,1 @@
+{"version":3,"file":"definition.js","sourceRoot":"","sources":["../../../../../../../../app/plugins/datasource/cloudwatch/language/dynamic-labels/definition.ts"],"names":[],"mappings":"AAEA,MAAM,yCAAyC,GAAuB;IACpE,EAAE,EAAE,0BAA0B;IAC9B,UAAU,EAAE,EAAE;IACd,OAAO,EAAE,EAAE;IACX,SAAS,EAAE,EAAE;IACb,MAAM,EAAE,GAAG,EAAE,CAAC,MAAM,CAAC,YAAY,CAAC;CACnC,CAAC;AACF,eAAe,yCAAyC,CAAC"}

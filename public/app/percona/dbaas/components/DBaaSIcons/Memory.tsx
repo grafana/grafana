@@ -1,6 +1,6 @@
 import React, { FC, SVGProps } from 'react';
 
-export const Memory: FC<SVGProps<SVGSVGElement>> = (props) => (
+export const Memory: FC<React.PropsWithChildren<SVGProps<SVGSVGElement>>> = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22" fill="none" {...props}>
     <path
       d="M13.75 4.8125H8.25C7.8703 4.8125 7.5625 5.1203 7.5625 5.5V16.5C7.5625 16.8797 7.8703 17.1875 8.25 17.1875H13.75C14.1297 17.1875 14.4375 16.8797 14.4375 16.5V5.5C14.4375 5.1203 14.1297 4.8125 13.75 4.8125Z"

@@ -2,10 +2,10 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 
-import { DataQuery } from '@grafana/data';
-import { setDataSourceSrv } from '@grafana/runtime';
+import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { configureStore } from 'app/store/configureStore';
-import { ExploreId, ExploreState } from 'app/types';
+import { ExploreState } from 'app/types';
 
 import { UserState } from '../profile/state/reducers';
 
@@ -46,21 +46,23 @@ function setup(queries: DataQuery[]) {
     get(uid?: string) {
       return Promise.resolve(uid ? datasources[uid] || defaultDs : defaultDs);
     },
-  } as any);
+  } as DataSourceSrv);
 
   const leftState = makeExplorePaneState();
   const initialState: ExploreState = {
-    left: {
-      ...leftState,
-      richHistory: [],
-      datasourceInstance: datasources['someDs-uid'],
-      queries,
+    panes: {
+      left: {
+        ...leftState,
+        richHistory: [],
+        datasourceInstance: datasources['someDs-uid'],
+        queries,
+        correlations: [],
+      },
     },
+    correlationEditorDetails: { editorMode: false, dirty: false, isExiting: false },
     syncedTimes: false,
-    right: undefined,
     richHistoryStorageFull: false,
     richHistoryLimitExceededWarningShown: false,
-    richHistoryMigrationFailed: false,
   };
   const store = configureStore({ explore: initialState, user: { orgId: 1 } as UserState });
 
@@ -76,7 +78,7 @@ describe('Explore QueryRows', () => {
 
     render(
       <Provider store={store}>
-        <QueryRows exploreId={ExploreId.left} />
+        <QueryRows exploreId={'left'} />
       </Provider>
     );
 

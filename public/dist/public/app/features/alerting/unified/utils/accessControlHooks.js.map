@@ -1,0 +1,1 @@
+{"version":3,"file":"accessControlHooks.js","sourceRoot":"","sources":["../../../../../../../app/features/alerting/unified/utils/accessControlHooks.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,OAAO,EAAE,MAAM,OAAO,CAAC;AAEhC,OAAO,EAAE,cAAc,EAAE,MAAM,kBAAkB,CAAC;AAElD,MAAM,UAAU,cAAc;IAC5B,OAAO,OAAO,CAAC,GAAG,EAAE,CAAC,cAAc,EAAE,EAAE,EAAE,CAAC,CAAC;AAC7C,CAAC"}

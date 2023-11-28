@@ -16,7 +16,7 @@ const Icons: DBIconMap = {
   cancel: Cancel,
 };
 
-export const DBIcon: FC<DBIconProps> = ({ type, size, tooltipText, disabled, ...rest }) => {
+export const DBIcon: FC<React.PropsWithChildren<DBIconProps>> = ({ type, size, tooltipText, disabled, ...rest }) => {
   const styles = useStyles(getStyles);
 
   if (!Icons[type]) {

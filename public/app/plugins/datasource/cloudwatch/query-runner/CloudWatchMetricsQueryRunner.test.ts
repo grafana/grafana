@@ -13,8 +13,10 @@ import {
   limitVariable,
   dimensionVariable,
   periodIntervalVariable,
+  accountIdVariable,
 } from '../__mocks__/CloudWatchDataSource';
 import { setupMockedMetricsQueryRunner } from '../__mocks__/MetricsQueryRunner';
+import { validMetricSearchBuilderQuery } from '../__mocks__/queries';
 import { MetricQueryType, MetricEditorMode, CloudWatchMetricsQuery, DataQueryError } from '../types';
 
 describe('CloudWatchMetricsQueryRunner', () => {
@@ -177,7 +179,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
           expect(getFrameDisplayName(result.data[0])).toBe(
             data.results.A.series?.length && data.results.A.series[0].target
           );
-          expect(result.data[0].fields[1].values.buffer[0]).toBe(
+          expect(result.data[0].fields[1].values[0]).toBe(
             data.results.A.series?.length && data.results.A.series[0].datapoints[0][0]
           );
         });
@@ -331,7 +333,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
         expect(getFrameDisplayName(result.data[0])).toBe(
           data.results.A.series?.length && data.results.A.series[0].target
         );
-        expect(result.data[0].fields[1].values.buffer[0]).toBe(
+        expect(result.data[0].fields[1].values[0]).toBe(
           data.results.A.series?.length && data.results.A.series[0].datapoints[0][0]
         );
       });
@@ -339,6 +341,24 @@ describe('CloudWatchMetricsQueryRunner', () => {
   });
 
   describe('template variable interpolation', () => {
+    it('replaceMetricQueryVars interpolates account id if its part of the query', async () => {
+      const { runner } = setupMockedMetricsQueryRunner({
+        variables: [accountIdVariable],
+      });
+
+      const result = runner.replaceMetricQueryVars({ ...validMetricSearchBuilderQuery, accountId: '$accountId' }, {});
+      expect(result.accountId).toBe(accountIdVariable.current.value);
+    });
+
+    it('replaceMetricQueryVars should not change account id if its not part of the query', async () => {
+      const { runner } = setupMockedMetricsQueryRunner({
+        variables: [accountIdVariable],
+      });
+
+      const result = runner.replaceMetricQueryVars({ ...validMetricSearchBuilderQuery, accountId: undefined }, {});
+      expect(result.accountId).toBeUndefined();
+    });
+
     it('interpolates variables correctly', async () => {
       const { runner, fetchMock, request } = setupMockedMetricsQueryRunner({
         variables: [namespaceVariable, metricVariable, labelsVariable, limitVariable],
@@ -467,7 +487,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
         });
       });
 
-      it('should generate the correct query in the case of one multilple template variables', async () => {
+      it('should generate the correct query in the case of one multiple template variables', async () => {
         const { runner, fetchMock, request } = setupMockedMetricsQueryRunner({ variables: [var1, var2, var3, var4] });
         const queries: CloudWatchMetricsQuery[] = [
           {
@@ -493,8 +513,8 @@ describe('CloudWatchMetricsQueryRunner', () => {
           runner.handleMetricQueries(queries, {
             ...request,
             scopedVars: {
-              var1: { selected: true, value: 'var1-foo', text: '' },
-              var2: { selected: true, value: 'var2-foo', text: '' },
+              var1: { value: 'var1-foo', text: '' },
+              var2: { value: 'var2-foo', text: '' },
             },
           })
         ).toEmitValuesWith(() => {
@@ -504,7 +524,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
         });
       });
 
-      it('should generate the correct query in the case of multilple multi template variables', async () => {
+      it('should generate the correct query in the case of multiple multi template variables', async () => {
         const { runner, fetchMock, request } = setupMockedMetricsQueryRunner({ variables: [var1, var2, var3, var4] });
         const queries: CloudWatchMetricsQuery[] = [
           {
@@ -533,7 +553,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
         });
       });
 
-      it('should generate the correct query for multilple template variables, lack scopedVars', async () => {
+      it('should generate the correct query for multiple template variables, lack scopedVars', async () => {
         const { runner, fetchMock, request } = setupMockedMetricsQueryRunner({ variables: [var1, var2, var3, var4] });
         const queries: CloudWatchMetricsQuery[] = [
           {
@@ -559,7 +579,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
           runner.handleMetricQueries(queries, {
             ...request,
             scopedVars: {
-              var1: { selected: true, value: 'var1-foo', text: '' },
+              var1: { value: 'var1-foo', text: '' },
             },
           })
         ).toEmitValuesWith(() => {
@@ -674,18 +694,20 @@ describe('CloudWatchMetricsQueryRunner', () => {
       );
     });
   });
-
   describe('interpolateMetricsQueryVariables', () => {
-    it('interpolates dimensions correctly', () => {
+    it('interpolates values correctly', () => {
       const testQuery = {
         id: 'a',
         refId: 'a',
         region: 'us-east-2',
         namespace: '',
+        expression: 'ABS($datasource)',
+        sqlExpression: 'select SUM(CPUUtilization) from $datasource',
         dimensions: { InstanceId: '$dimension' },
       };
       const { runner } = setupMockedMetricsQueryRunner({ variables: [dimensionVariable], mockGetVariableName: false });
       const result = runner.interpolateMetricsQueryVariables(testQuery, {
+        datasource: { text: 'foo', value: 'foo' },
         dimension: { text: 'foo', value: 'foo' },
       });
       expect(result).toStrictEqual({
@@ -693,7 +715,8 @@ describe('CloudWatchMetricsQueryRunner', () => {
         metricName: '',
         namespace: '',
         period: '',
-        sqlExpression: '',
+        sqlExpression: 'select SUM(CPUUtilization) from foo',
+        expression: 'ABS(foo)',
         dimensions: { InstanceId: ['foo'] },
       });
     });

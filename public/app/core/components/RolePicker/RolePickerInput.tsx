@@ -35,7 +35,7 @@ export const RolePickerInput = ({
   onQueryChange,
   ...rest
 }: InputProps): JSX.Element => {
-  const styles = useStyles2((theme) => getRolePickerInputStyles(theme, false, !!isFocused, !!disabled, false));
+  const styles = useStyles2(getRolePickerInputStyles, false, !!isFocused, !!disabled, false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -49,18 +49,24 @@ export const RolePickerInput = ({
     onQueryChange(query);
   };
 
-  const numberOfRoles = appliedRoles.length;
+  const showBasicRoleOnLabel = showBasicRole && basicRole !== 'None';
 
   return !isFocused ? (
+    // TODO: fix keyboard a11y
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div className={cx(styles.wrapper, styles.selectedRoles)} onMouseDown={onOpen}>
-      {showBasicRole && <ValueContainer>{basicRole}</ValueContainer>}
-      <RolesLabel appliedRoles={appliedRoles} numberOfRoles={numberOfRoles} showBuiltInRole={showBasicRole} />
+      {showBasicRoleOnLabel && <ValueContainer>{basicRole}</ValueContainer>}
+      <RolesLabel
+        appliedRoles={appliedRoles}
+        numberOfRoles={appliedRoles.length}
+        showBuiltInRole={showBasicRoleOnLabel}
+      />
     </div>
   ) : (
     <div className={styles.wrapper}>
-      {showBasicRole && <ValueContainer>{basicRole}</ValueContainer>}
+      {showBasicRoleOnLabel && <ValueContainer>{basicRole}</ValueContainer>}
       {appliedRoles.map((role) => (
-        <ValueContainer key={role.uid}>{role.displayName}</ValueContainer>
+        <ValueContainer key={role.uid}>{role.displayName || role.name}</ValueContainer>
       ))}
 
       {!disabled && (
@@ -99,9 +105,7 @@ export const RolesLabel = ({ showBuiltInRole, numberOfRoles, appliedRoles }: Rol
         <Tooltip
           content={
             <div className={styles.tooltip}>
-              {appliedRoles?.map((role) => (
-                <p key={role.uid}>{role.displayName}</p>
-              ))}
+              {appliedRoles?.map((role) => <p key={role.uid}>{role.displayName}</p>)}
             </div>
           }
         >

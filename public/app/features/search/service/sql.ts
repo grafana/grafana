@@ -1,4 +1,4 @@
-import { ArrayVector, DataFrame, DataFrameView, FieldType, getDisplayProcessor, SelectableValue } from '@grafana/data';
+import { DataFrame, DataFrameView, FieldType, getDisplayProcessor, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -20,6 +20,7 @@ interface APIQuery {
   // DashboardIds []int64
   dashboardUID?: string[];
   folderIds?: number[];
+  folderUIDs?: string[];
   sort?: string;
   starred?: boolean;
 }
@@ -42,24 +43,19 @@ export class SQLSearcher implements GrafanaSearcher {
   private async composeQuery(apiQuery: APIQuery, searchOptions: SearchQuery): Promise<APIQuery> {
     const query = await replaceCurrentFolderQuery(searchOptions);
 
-    if (query.query === '*') {
-      if (query.kind?.length === 1 && TYPE_KIND_MAP[query.kind[0]]) {
-        apiQuery.type = TYPE_KIND_MAP[query.kind[0]];
-      }
-    } else if (query.query?.length) {
+    if (query.query?.length && query.query !== '*') {
       apiQuery.query = query.query;
+    }
+
+    // search v1 supports only one kind
+    if (query.kind?.length === 1 && TYPE_KIND_MAP[query.kind[0]]) {
+      apiQuery.type = TYPE_KIND_MAP[query.kind[0]];
     }
 
     if (query.uid) {
       apiQuery.dashboardUID = query.uid;
     } else if (query.location?.length) {
-      let info = this.locationInfo[query.location];
-      if (!info) {
-        // This will load all folder folders
-        await this.doAPIQuery({ type: DashboardSearchItemType.DashFolder, limit: 999 });
-        info = this.locationInfo[query.location];
-      }
-      apiQuery.folderIds = [info?.folderId ?? 0];
+      apiQuery.folderUIDs = [query.location];
     }
 
     return apiQuery;
@@ -70,11 +66,29 @@ export class SQLSearcher implements GrafanaSearcher {
       throw new Error('facets not supported!');
     }
 
+    if (query.from !== undefined) {
+      if (!query.limit) {
+        throw new Error('Must specify non-zero limit parameter when using from');
+      }
+
+      if ((query.from / query.limit) % 1 !== 0) {
+        throw new Error('From parameter must be a multiple of limit');
+      }
+    }
+
+    const limit = query.limit ?? (query.from !== undefined ? 1 : DEFAULT_MAX_VALUES);
+    const page =
+      query.from !== undefined
+        ? // prettier-ignore
+          (query.from / limit) + 1 // pages are 1-indexed, so need to +1 to get there
+        : undefined;
+
     const q = await this.composeQuery(
       {
-        limit: query.limit ?? DEFAULT_MAX_VALUES, // default 1k max values
+        limit: limit,
         tag: query.tags,
         sort: query.sort,
+        page,
       },
       query
     );
@@ -148,7 +162,7 @@ export class SQLSearcher implements GrafanaSearcher {
       const k = hit.type === 'dash-folder' ? 'folder' : 'dashboard';
       kind.push(k);
       name.push(hit.title);
-      uid.push(hit.uid!);
+      uid.push(hit.uid);
       url.push(hit.url);
       tags.push(hit.tags);
       sortBy.push(hit.sortMeta!);
@@ -171,7 +185,7 @@ export class SQLSearcher implements GrafanaSearcher {
           folderId: hit.folderId,
         };
       } else if (k === 'folder') {
-        this.locationInfo[hit.uid!] = {
+        this.locationInfo[hit.uid] = {
           kind: k,
           name: hit.title!,
           url: hit.url,
@@ -182,12 +196,12 @@ export class SQLSearcher implements GrafanaSearcher {
 
     const data: DataFrame = {
       fields: [
-        { name: 'kind', type: FieldType.string, config: {}, values: new ArrayVector(kind) },
-        { name: 'name', type: FieldType.string, config: {}, values: new ArrayVector(name) },
-        { name: 'uid', type: FieldType.string, config: {}, values: new ArrayVector(uid) },
-        { name: 'url', type: FieldType.string, config: {}, values: new ArrayVector(url) },
-        { name: 'tags', type: FieldType.other, config: {}, values: new ArrayVector(tags) },
-        { name: 'location', type: FieldType.string, config: {}, values: new ArrayVector(location) },
+        { name: 'kind', type: FieldType.string, config: {}, values: kind },
+        { name: 'name', type: FieldType.string, config: {}, values: name },
+        { name: 'uid', type: FieldType.string, config: {}, values: uid },
+        { name: 'url', type: FieldType.string, config: {}, values: url },
+        { name: 'tags', type: FieldType.other, config: {}, values: tags },
+        { name: 'location', type: FieldType.string, config: {}, values: location },
       ],
       length: name.length,
       meta: {
@@ -206,7 +220,7 @@ export class SQLSearcher implements GrafanaSearcher {
         name: sortMetaName, // Used in display
         type: FieldType.number,
         config: {},
-        values: new ArrayVector(sortBy),
+        values: sortBy,
       });
     }
 

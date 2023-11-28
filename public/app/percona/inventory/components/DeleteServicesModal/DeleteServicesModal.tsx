@@ -11,7 +11,7 @@ import { useAppDispatch } from 'app/store/store';
 import { Messages } from './DeleteServicesModal.messages';
 import { DeleteServicesModalProps } from './DeleteServicesModal.types';
 
-const DeleteServicesModal: FC<DeleteServicesModalProps> = ({ isOpen, onDismiss, onSuccess, services }) => {
+const DeleteServicesModal: FC<React.PropsWithChildren<DeleteServicesModalProps>> = ({ isOpen, onDismiss, onSuccess, services }) => {
   const [forceModeActive, setForceActive] = useState(false);
   const dispatch = useAppDispatch();
 

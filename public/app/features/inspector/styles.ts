@@ -1,9 +1,15 @@
 import { css } from '@emotion/css';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 
+/** @deprecated */
 export const getPanelInspectorStyles = stylesFactory(() => {
+  return getPanelInspectorStyles2(config.theme2);
+});
+
+export const getPanelInspectorStyles2 = (theme: GrafanaTheme2) => {
   return {
     wrap: css`
       display: flex;
@@ -11,6 +17,7 @@ export const getPanelInspectorStyles = stylesFactory(() => {
       height: 100%;
       width: 100%;
       flex: 1 1 0;
+      min-height: 0;
     `,
     toolbar: css`
       display: flex;
@@ -18,15 +25,14 @@ export const getPanelInspectorStyles = stylesFactory(() => {
       flex-grow: 0;
       align-items: center;
       justify-content: flex-end;
-      margin-bottom: ${config.theme.spacing.sm};
+      margin-bottom: ${theme.v1.spacing.sm};
     `,
     toolbarItem: css`
-      margin-left: ${config.theme.spacing.md};
+      margin-left: ${theme.v1.spacing.md};
     `,
     content: css`
       flex-grow: 1;
       height: 100%;
-      overflow: scroll;
     `,
     editor: css`
       font-family: monospace;
@@ -49,18 +55,18 @@ export const getPanelInspectorStyles = stylesFactory(() => {
       }
     `,
     options: css`
-      padding-top: ${config.theme.spacing.sm};
+      padding-top: ${theme.v1.spacing.sm};
     `,
     dataDisplayOptions: css`
       flex-grow: 1;
       min-width: 300px;
-      margin-right: ${config.theme.spacing.sm};
+      margin-right: ${theme.v1.spacing.sm};
     `,
     selects: css`
       display: flex;
       > * {
-        margin-right: ${config.theme.spacing.sm};
+        margin-right: ${theme.v1.spacing.sm};
       }
     `,
   };
-});
+};

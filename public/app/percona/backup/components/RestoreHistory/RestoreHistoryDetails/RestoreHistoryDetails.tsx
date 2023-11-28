@@ -9,7 +9,7 @@ import { Messages } from './RestoreHistoryDetails.Messages';
 import { getStyles } from './RestoreHistoryDetails.styles';
 import { RestoreHistoryDetailsProps } from './RestoreHistoryDetails.types';
 
-export const RestoreHistoryDetails: FC<RestoreHistoryDetailsProps> = ({ name, dataModel, pitrTimestamp }) => {
+export const RestoreHistoryDetails: FC<React.PropsWithChildren<RestoreHistoryDetailsProps>> = ({ name, dataModel, pitrTimestamp }) => {
   const styles = useStyles(getStyles);
   const dataModelMsg = formatDataModel(dataModel);
 

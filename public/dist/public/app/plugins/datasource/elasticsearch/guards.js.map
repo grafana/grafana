@@ -1,0 +1,1 @@
+{"version":3,"file":"guards.js","sourceRoot":"","sources":["../../../../../../app/plugins/datasource/elasticsearch/guards.ts"],"names":[],"mappings":"AAEA,MAAM,UAAU,2BAA2B,CAAC,MAAyB;IACnE,IAAI,CAAC,MAAM,IAAI,OAAO,MAAM,KAAK,QAAQ,EAAE;QACzC,OAAO,KAAK,CAAC;KACd;IACD,OAAO,MAAM,IAAI,MAAM,CAAC;AAC1B,CAAC"}

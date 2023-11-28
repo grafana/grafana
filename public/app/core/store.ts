@@ -32,7 +32,7 @@ export class Store {
   }
 
   /* Returns true when successfully stored, throws error if not successfully stored */
-  setObject(key: string, value: any) {
+  setObject(key: string, value: unknown) {
     let json;
     try {
       json = JSON.stringify(value);

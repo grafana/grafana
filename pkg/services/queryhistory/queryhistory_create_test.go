@@ -3,8 +3,9 @@ package queryhistory
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 func TestIntegrationCreateQueryInQueryHistory(t *testing.T) {
@@ -15,7 +16,7 @@ func TestIntegrationCreateQueryInQueryHistory(t *testing.T) {
 		func(t *testing.T, sc scenarioContext) {
 			command := CreateQueryInQueryHistoryCommand{
 				DatasourceUID: "NCzh67i",
-				Queries: simplejson.NewFromAny(map[string]interface{}{
+				Queries: simplejson.NewFromAny(map[string]any{
 					"expr": "test",
 				}),
 			}

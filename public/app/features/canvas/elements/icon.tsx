@@ -2,16 +2,11 @@ import { css } from '@emotion/css';
 import { isString } from 'lodash';
 import React, { CSSProperties } from 'react';
 
+import { ColorDimensionConfig, ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
-import {
-  ColorDimensionConfig,
-  ResourceDimensionConfig,
-  ResourceDimensionMode,
-  getPublicOrAbsoluteUrl,
-} from 'app/features/dimensions';
+import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
-import { APIEditorConfig, callApi } from 'app/plugins/panel/canvas/editor/APIEditor';
 
 import { CanvasElementItem, CanvasElementProps, defaultBgColor } from '../element';
 import { LineConfig } from '../types';
@@ -20,7 +15,6 @@ export interface IconConfig {
   path?: ResourceDimensionConfig;
   fill?: ColorDimensionConfig;
   stroke?: LineConfig;
-  api?: APIEditorConfig;
 }
 
 interface IconData {
@@ -28,7 +22,6 @@ interface IconData {
   fill: string;
   strokeColor?: string;
   stroke?: number;
-  api?: APIEditorConfig;
 }
 
 // When a stoke is defined, we want the path to be in page units
@@ -44,12 +37,6 @@ export function IconDisplay(props: CanvasElementProps) {
     return null;
   }
 
-  const onClick = () => {
-    if (data?.api) {
-      callApi(data.api);
-    }
-  };
-
   const svgStyle: CSSProperties = {
     fill: data?.fill,
     stroke: data?.strokeColor,
@@ -59,12 +46,7 @@ export function IconDisplay(props: CanvasElementProps) {
   };
 
   return (
-    <SanitizedSVG
-      onClick={onClick}
-      src={data.path}
-      style={svgStyle}
-      className={svgStyle.strokeWidth ? svgStrokePathClass : undefined}
-    />
+    <SanitizedSVG src={data.path} style={svgStyle} className={svgStyle.strokeWidth ? svgStrokePathClass : undefined} />
   );
 }
 
@@ -76,12 +58,6 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
   display: IconDisplay,
 
   getNewOptions: (options) => ({
-    placement: {
-      width: 100,
-      height: 100,
-      top: 0,
-      left: 0,
-    },
     ...options,
     config: {
       path: {
@@ -94,6 +70,12 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
       color: {
         fixed: 'transparent',
       },
+    },
+    placement: {
+      width: options?.placement?.width ?? 100,
+      height: options?.placement?.height ?? 100,
+      top: options?.placement?.top ?? 100,
+      left: options?.placement?.left ?? 100,
     },
   }),
 
@@ -110,7 +92,6 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
     const data: IconData = {
       path,
       fill: cfg.fill ? ctx.getColor(cfg.fill).value() : defaultBgColor,
-      api: cfg?.api ?? undefined,
     };
 
     if (cfg.stroke?.width && cfg.stroke.color) {
@@ -171,12 +152,5 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
     //   },
     //   showIf: (cfg) => Boolean(cfg?.config?.stroke?.width),
     // })
-    // .addCustomEditor({
-    //   category,
-    //   id: 'apiSelector',
-    //   path: 'config.api',
-    //   name: 'API',
-    //   editor: APIEditor,
-    // });
   },
 };

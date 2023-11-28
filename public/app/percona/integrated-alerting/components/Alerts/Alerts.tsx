@@ -40,7 +40,7 @@ const {
   triggered,
 } = columns;
 
-export const Alerts: FC = () => {
+export const Alerts: FC<React.PropsWithChildren<unknown>> = () => {
   const dispatch = useAppDispatch();
   const style = useStyles2(getStyles);
   const navModel = useNavModel('integrated-alerting-alerts');
@@ -73,7 +73,7 @@ export const Alerts: FC = () => {
       {
         Header: 'Summary',
         accessor: 'annotations',
-        Cell: ({ value: { summary } }) => summary || '',
+        Cell: ({ value: { summary } }) => <>{summary || ''}</>,
         width: '30%',
       },
       {
@@ -92,13 +92,13 @@ export const Alerts: FC = () => {
       {
         Header: activeSinceColumn,
         accessor: 'startsAt',
-        Cell: ({ value }) => (value ? format(new Date(value), 'yyyy-MM-dd HH:mm:ss') : null),
+        Cell: ({ value }) => <>{value ? format(new Date(value), 'yyyy-MM-dd HH:mm:ss') : null}</>,
         width: '10%',
       },
       {
         Header: lastNotifiedColumn,
         accessor: 'updatedAt',
-        Cell: ({ value }) => (value ? format(new Date(value), 'yyyy-MM-dd HH:mm:ss') : null),
+        Cell: ({ value }) => <>{value ? format(new Date(value), 'yyyy-MM-dd HH:mm:ss') : null}</>,
         width: '10%',
       },
       {

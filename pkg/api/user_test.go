@@ -16,30 +16,39 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/socialtest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	authinfostore "github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	settings := setting.NewCfg()
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
+	sqlStore.Cfg = settings
 	hs := &HTTPServer{
 		Cfg:           settings,
 		SQLStore:      sqlStore,
-		AccessControl: acmock.New(),
+		AccessControl: acimpl.ProvideAccessControl(settings),
 	}
 
 	mockResult := user.SearchUserQueryResult{
@@ -49,8 +58,9 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		},
 		TotalCount: 2,
 	}
-	mock := mockstore.NewSQLStoreMock()
+	mock := dbtest.NewFakeDB()
 	userMock := usertest.NewUserServiceFake()
+
 	loggedInUserScenario(t, "When calling GET on", "api/users/1", "api/users/:id", func(sc *scenarioContext) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
 		secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
@@ -61,6 +71,12 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			&usagestats.UsageStatsMock{},
 		)
 		hs.authInfoService = srv
+		orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotatest.New(false, nil))
+		require.NoError(t, err)
+		require.NoError(t, err)
+		userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sc.cfg, nil, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
+		require.NoError(t, err)
+		hs.userService = userSvc
 
 		createUserCmd := user.CreateUserCommand{
 			Email:   fmt.Sprint("user", "@test.com"),
@@ -68,8 +84,8 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			Login:   "loginuser",
 			IsAdmin: true,
 		}
-		user, err := sqlStore.CreateUser(context.Background(), createUserCmd)
-		require.Nil(t, err)
+		usr, err := userSvc.Create(context.Background(), &createUserCmd)
+		require.NoError(t, err)
 
 		sc.handlerFunc = hs.GetUserByID
 
@@ -80,11 +96,11 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			TokenType:    "Bearer",
 		}
 		idToken := "testidtoken"
-		token = token.WithExtra(map[string]interface{}{"id_token": idToken})
-		login := "loginuser"
-		query := &models.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test", UserLookupParams: models.UserLookupParams{Login: &login}}
-		cmd := &models.UpdateAuthInfoCommand{
-			UserId:     user.ID,
+		token = token.WithExtra(map[string]any{"id_token": idToken})
+		userlogin := "loginuser"
+		query := &login.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test", UserLookupParams: login.UserLookupParams{Login: &userlogin}}
+		cmd := &login.UpdateAuthInfoCommand{
+			UserId:     usr.ID,
 			AuthId:     query.AuthId,
 			AuthModule: query.AuthModule,
 			OAuthToken: token,
@@ -92,28 +108,28 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		err = srv.UpdateAuthInfo(context.Background(), cmd)
 		require.NoError(t, err)
 		avatarUrl := dtos.GetGravatarUrl("@test.com")
-		sc.fakeReqWithParams("GET", sc.url, map[string]string{"id": fmt.Sprintf("%v", user.ID)}).exec()
+		sc.fakeReqWithParams("GET", sc.url, map[string]string{"id": fmt.Sprintf("%v", usr.ID)}).exec()
 
-		expected := models.UserProfileDTO{
-			Id:             1,
+		expected := user.UserProfileDTO{
+			ID:             1,
 			Email:          "user@test.com",
 			Name:           "user",
 			Login:          "loginuser",
-			OrgId:          1,
+			OrgID:          1,
 			IsGrafanaAdmin: true,
 			AuthLabels:     []string{},
 			CreatedAt:      fakeNow,
 			UpdatedAt:      fakeNow,
-			AvatarUrl:      avatarUrl,
+			AvatarURL:      avatarUrl,
 		}
 
-		var resp models.UserProfileDTO
+		var resp user.UserProfileDTO
 		require.Equal(t, http.StatusOK, sc.resp.Code)
 		err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 		require.NoError(t, err)
 		resp.CreatedAt = fakeNow
 		resp.UpdatedAt = fakeNow
-		resp.AvatarUrl = avatarUrl
+		resp.AvatarURL = avatarUrl
 		require.EqualValues(t, expected, resp)
 	}, mock)
 
@@ -124,7 +140,11 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			Login:   "admin",
 			IsAdmin: true,
 		}
-		_, err := sqlStore.CreateUser(context.Background(), createUserCmd)
+		orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotatest.New(false, nil))
+		require.NoError(t, err)
+		userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sc.cfg, nil, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
+		require.NoError(t, err)
+		_, err = userSvc.Create(context.Background(), &createUserCmd)
 		require.Nil(t, err)
 
 		sc.handlerFunc = hs.GetUserByLoginOrEmail
@@ -135,7 +155,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		hs.userService = userMock
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"loginOrEmail": "admin@test.com"}).exec()
 
-		var resp models.UserProfileDTO
+		var resp user.UserProfileDTO
 		require.Equal(t, http.StatusOK, sc.resp.Code)
 		err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 		require.NoError(t, err)
@@ -198,9 +218,128 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	}, mock)
 }
 
+func Test_GetUserByID(t *testing.T) {
+	testcases := []struct {
+		name                         string
+		authModule                   string
+		allowAssignGrafanaAdmin      bool
+		authEnabled                  bool
+		skipOrgRoleSync              bool
+		expectedIsGrafanaAdminSynced bool
+	}{
+		{
+			name:                         "Should return IsGrafanaAdminExternallySynced = false for an externally synced OAuth user if Grafana Admin role is not synced",
+			authModule:                   login.GenericOAuthModule,
+			authEnabled:                  true,
+			allowAssignGrafanaAdmin:      false,
+			skipOrgRoleSync:              false,
+			expectedIsGrafanaAdminSynced: false,
+		},
+		{
+			name:                         "Should return IsGrafanaAdminExternallySynced = false for an externally synced OAuth user if OAuth provider is not enabled",
+			authModule:                   login.GenericOAuthModule,
+			authEnabled:                  false,
+			allowAssignGrafanaAdmin:      true,
+			skipOrgRoleSync:              false,
+			expectedIsGrafanaAdminSynced: false,
+		},
+		{
+			name:                         "Should return IsGrafanaAdminExternallySynced = false for an externally synced OAuth user if org roles are not being synced",
+			authModule:                   login.GenericOAuthModule,
+			authEnabled:                  true,
+			allowAssignGrafanaAdmin:      true,
+			skipOrgRoleSync:              true,
+			expectedIsGrafanaAdminSynced: false,
+		},
+		{
+			name:                         "Should return IsGrafanaAdminExternallySynced = true for an externally synced OAuth user",
+			authModule:                   login.GenericOAuthModule,
+			authEnabled:                  true,
+			allowAssignGrafanaAdmin:      true,
+			skipOrgRoleSync:              false,
+			expectedIsGrafanaAdminSynced: true,
+		},
+		{
+			name:                         "Should return IsGrafanaAdminExternallySynced = false for an externally synced JWT user if Grafana Admin role is not synced",
+			authModule:                   login.JWTModule,
+			authEnabled:                  true,
+			allowAssignGrafanaAdmin:      false,
+			skipOrgRoleSync:              false,
+			expectedIsGrafanaAdminSynced: false,
+		},
+		{
+			name:                         "Should return IsGrafanaAdminExternallySynced = false for an externally synced JWT user if JWT provider is not enabled",
+			authModule:                   login.JWTModule,
+			authEnabled:                  false,
+			allowAssignGrafanaAdmin:      true,
+			skipOrgRoleSync:              false,
+			expectedIsGrafanaAdminSynced: false,
+		},
+		{
+			name:                         "Should return IsGrafanaAdminExternallySynced = false for an externally synced JWT user if org roles are not being synced",
+			authModule:                   login.JWTModule,
+			authEnabled:                  true,
+			allowAssignGrafanaAdmin:      true,
+			skipOrgRoleSync:              true,
+			expectedIsGrafanaAdminSynced: false,
+		},
+		{
+			name:                         "Should return IsGrafanaAdminExternallySynced = true for an externally synced JWT user",
+			authModule:                   login.JWTModule,
+			authEnabled:                  true,
+			allowAssignGrafanaAdmin:      true,
+			skipOrgRoleSync:              false,
+			expectedIsGrafanaAdminSynced: true,
+		},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			userAuth := &login.UserAuth{AuthModule: tc.authModule}
+			authInfoService := &logintest.AuthInfoServiceFake{ExpectedUserAuth: userAuth}
+			socialService := &socialtest.FakeSocialService{}
+			userService := &usertest.FakeUserService{ExpectedUserProfileDTO: &user.UserProfileDTO{}}
+			cfg := setting.NewCfg()
+
+			switch tc.authModule {
+			case login.GenericOAuthModule:
+				socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{AllowAssignGrafanaAdmin: tc.allowAssignGrafanaAdmin, Enabled: tc.authEnabled}
+				cfg.GenericOAuthAuthEnabled = tc.authEnabled
+				cfg.GenericOAuthSkipOrgRoleSync = tc.skipOrgRoleSync
+			case login.JWTModule:
+				cfg.JWTAuthEnabled = tc.authEnabled
+				cfg.JWTAuthSkipOrgRoleSync = tc.skipOrgRoleSync
+				cfg.JWTAuthAllowAssignGrafanaAdmin = tc.allowAssignGrafanaAdmin
+			}
+
+			hs := &HTTPServer{
+				Cfg:             cfg,
+				authInfoService: authInfoService,
+				SocialService:   socialService,
+				userService:     userService,
+			}
+
+			sc := setupScenarioContext(t, "/api/users/1")
+			sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+				sc.context = c
+				return hs.GetUserByID(c)
+			})
+
+			sc.m.Get("/api/users/:id", sc.defaultHandler)
+			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+
+			var resp user.UserProfileDTO
+			require.Equal(t, http.StatusOK, sc.resp.Code)
+			err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.expectedIsGrafanaAdminSynced, resp.IsGrafanaAdminExternallySynced)
+		})
+	}
+}
+
 func TestHTTPServer_UpdateUser(t *testing.T) {
 	settings := setting.NewCfg()
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 
 	hs := &HTTPServer{
 		Cfg:           settings,
@@ -221,7 +360,7 @@ func TestHTTPServer_UpdateUser(t *testing.T) {
 		routePattern: "/api/users/:id",
 		cmd:          updateUserCommand,
 		fn: func(sc *scenarioContext) {
-			sc.authInfoService.ExpectedUserAuth = &models.UserAuth{}
+			sc.authInfoService.ExpectedUserAuth = &login.UserAuth{}
 			sc.fakeReqWithParams("PUT", sc.url, map[string]string{"id": "1"}).exec()
 			assert.Equal(t, 403, sc.resp.Code)
 		},
@@ -243,7 +382,7 @@ func updateUserScenario(t *testing.T, ctx updateUserContext, hs *HTTPServer) {
 		sc.authInfoService = &logintest.AuthInfoServiceFake{}
 		hs.authInfoService = sc.authInfoService
 
-		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(ctx.cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
@@ -261,7 +400,7 @@ func updateUserScenario(t *testing.T, ctx updateUserContext, hs *HTTPServer) {
 
 func TestHTTPServer_UpdateSignedInUser(t *testing.T) {
 	settings := setting.NewCfg()
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 
 	hs := &HTTPServer{
 		Cfg:           settings,
@@ -282,7 +421,7 @@ func TestHTTPServer_UpdateSignedInUser(t *testing.T) {
 		routePattern: "/api/users/",
 		cmd:          updateUserCommand,
 		fn: func(sc *scenarioContext) {
-			sc.authInfoService.ExpectedUserAuth = &models.UserAuth{}
+			sc.authInfoService.ExpectedUserAuth = &login.UserAuth{}
 			sc.fakeReqWithParams("PUT", sc.url, map[string]string{"id": "1"}).exec()
 			assert.Equal(t, 403, sc.resp.Code)
 		},
@@ -296,7 +435,7 @@ func updateSignedInUserScenario(t *testing.T, ctx updateUserContext, hs *HTTPSer
 		sc.authInfoService = &logintest.AuthInfoServiceFake{}
 		hs.authInfoService = sc.authInfoService
 
-		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(ctx.cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c

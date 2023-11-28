@@ -4,12 +4,11 @@ import (
 	"os"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func init() {
@@ -82,10 +81,10 @@ func (en *EmailNotifier) Notify(evalContext *alerting.EvalContext) error {
 		error = evalContext.Error.Error()
 	}
 
-	cmd := &models.SendEmailCommandSync{
-		SendEmailCommand: models.SendEmailCommand{
+	cmd := &notifications.SendEmailCommandSync{
+		SendEmailCommand: notifications.SendEmailCommand{
 			Subject: evalContext.GetNotificationTitle(),
-			Data: map[string]interface{}{
+			Data: map[string]any{
 				"Title":         evalContext.GetNotificationTitle(),
 				"State":         evalContext.Rule.State,
 				"Name":          evalContext.Rule.Name,

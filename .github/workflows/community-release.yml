@@ -1,0 +1,25 @@
+name: Create community release post
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        description: 'Needs to match, exactly, the name of a milestone. The version to be released please respect: major.minor.patch, major.minor.patch-preview or major.minor.patch-preview<number> format. example: 7.4.3, 7.4.3-preview or 7.4.3-preview1'
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Generate token"
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+      - name: Run community-release (manually invoked)
+        uses: grafana/grafana-github-actions-go/community-release@main
+        with:
+          token: ${{ steps.generate_token.outputs.token }}
+          version: ${{ inputs.version }}
+          metrics_api_key: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
+          community_api_key: ${{ secrets.GRAFANABOT_FORUM_KEY }}
+          community_api_username: grafanabot

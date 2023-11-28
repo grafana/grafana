@@ -14,7 +14,7 @@ export interface ChipProps {
   className?: string;
 }
 
-export const Chip: FC<ChipProps> = ({ text, isRemovable = false, onRemove = () => null, className }) => {
+export const Chip: FC<React.PropsWithChildren<ChipProps>> = ({ text, isRemovable = false, onRemove = () => null, className }) => {
   const styles = useStyles2(getStyles);
   const [show, setShow] = useState(true);
 

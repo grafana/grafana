@@ -18,7 +18,7 @@ We recommend using [Homebrew](https://brew.sh/) for installing any missing depen
 ```
 brew install git
 brew install go
-brew install node@16
+brew install node@18
 npm install -g yarn
 ```
 
@@ -44,6 +44,25 @@ For [VSCode](https://yarnpkg.com/getting-started/editor-sdks#vscode) and [Vim](h
 it's as easy as running `yarn dlx @yarnpkg/sdks vscode` or `yarn dlx @yarnpkg/sdks vim`, respectively.
 
 More information can be found [here](https://yarnpkg.com/getting-started/editor-sdks).
+
+### Configure precommit hooks
+
+We use pre-commit hooks (via [lefthook](https://github.com/evilmartians/lefthook)) to lint, fix, and format code as you commit your changes. Previously the Grafana repository automatically installed these hook when you did `yarn install`, but they are now opt in for all contributors
+
+Install the lefthook precommit hooks with:
+
+```sh
+make lefthook-install
+```
+
+To remove precommit hooks, run
+
+```sh
+make lefthook-uninstall
+```
+
+> [!NOTE]  
+> Contributors working on the frontend are highly encouraged to install the precommit hooks, even if your IDE formats on save, so the `.betterer.results` file is kept up to sync.
 
 ## Build Grafana
 
@@ -149,13 +168,13 @@ go test -covermode=atomic -tags=integration ./pkg/...
 To run PostgreSQL and MySQL integration tests locally, you need to start the docker blocks for MySQL and/or PostgreSQL test data sources by running `make devenv sources=mysql_tests,postgres_tests`. When your test data sources are running, you can execute integration tests by running:
 
 ```bash
-GRAFANA_TEST_DB=mysql go test -covermode=atomic -tags=integration ./pkg/...
+make test-go-integration-mysql
 ```
 
 and/or
 
 ```bash
-GRAFANA_TEST_DB=postgres go test -covermode=atomic -tags=integration ./pkg/...
+make test-go-integration-postgres
 ```
 
 ### Run end-to-end tests
@@ -290,3 +309,4 @@ If that happens to you, chances are you've already set a lower limit and your sh
 - Read our [style guides](/contribute/style-guides).
 - Learn how to [Create a pull request](/contribute/create-pull-request.md).
 - Read about the [architecture](architecture).
+- Read through the [backend documentation](/contribute/backend/README.md).

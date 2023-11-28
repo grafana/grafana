@@ -23,7 +23,7 @@ import { SERVICE_CHECKS_CANCEL_TOKEN, SERVICE_CHECKS_TABLE_ID } from './ServiceC
 import { Messages } from './ServiceChecks.messages';
 import { getStyles } from './ServiceChecks.styles';
 
-export const ServiceChecks: FC<GrafanaRouteComponentProps<{ service: string }>> = ({ match }) => {
+export const ServiceChecks: FC<React.PropsWithChildren<GrafanaRouteComponentProps<{ service: string }>>> = ({ match }) => {
   const serviceId = formatServiceId(match.params.service);
   const [pageSize, setPageSize] = useStoredTablePageSize(SERVICE_CHECKS_TABLE_ID);
   const [pageIndex, setPageindex] = useState(0);

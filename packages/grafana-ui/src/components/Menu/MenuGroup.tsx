@@ -25,7 +25,7 @@ export interface MenuGroupProps extends Partial<MenuItemsGroup> {
 }
 
 /** @internal */
-export const MenuGroup: React.FC<MenuGroupProps> = ({ label, ariaLabel, children }) => {
+export const MenuGroup = ({ label, ariaLabel, children }: MenuGroupProps) => {
   const styles = useStyles2(getStyles);
   const labelID = `group-label-${uniqueId()}`;
 
@@ -45,10 +45,10 @@ MenuGroup.displayName = 'MenuGroup';
 /** @internal */
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    groupLabel: css`
-      color: ${theme.colors.text.secondary};
-      font-size: ${theme.typography.size.sm};
-      padding: ${theme.spacing(0.5, 1)};
-    `,
+    groupLabel: css({
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.size.sm,
+      padding: theme.spacing(0.5, 1),
+    }),
   };
 };

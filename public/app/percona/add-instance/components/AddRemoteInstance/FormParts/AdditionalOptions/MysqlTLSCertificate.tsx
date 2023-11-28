@@ -5,7 +5,7 @@ import { TextareaInputField } from 'app/percona/shared/components/Form/TextareaI
 import { Messages } from '../FormParts.messages';
 import { FormPartProps } from '../FormParts.types';
 
-export const MysqlTLSCertificate: FC<FormPartProps> = ({ form }) => {
+export const MysqlTLSCertificate: FC<React.PropsWithChildren<FormPartProps>> = ({ form }) => {
   const tlsFlag = form.getState().values && form.getState().values['tls'];
 
   return (

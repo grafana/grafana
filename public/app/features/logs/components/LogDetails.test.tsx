@@ -1,20 +1,29 @@
 import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { Field, LogLevel, LogRowModel, MutableDataFrame, createTheme } from '@grafana/data';
+import { Field, LogLevel, LogRowModel, MutableDataFrame, createTheme, FieldType } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { LogDetails, Props } from './LogDetails';
 import { createLogRow } from './__mocks__/logRow';
+import { getLogRowStyles } from './getLogRowStyles';
 
 const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowModel>) => {
+  const theme = createTheme();
+  const styles = getLogRowStyles(theme);
   const props: Props = {
+    displayedFields: [],
     showDuplicates: false,
     wrapLogMessage: false,
     row: createLogRow({ logLevel: LogLevel.error, timeEpochMs: 1546297200000, ...rowOverrides }),
     getRows: () => [],
     onClickFilterLabel: () => {},
     onClickFilterOutLabel: () => {},
-    theme: createTheme(),
+    onClickShowField: () => {},
+    onClickHideField: () => {},
+    theme,
+    styles,
     ...(propOverrides || {}),
   };
 
@@ -31,7 +40,7 @@ describe('LogDetails', () => {
   describe('when labels are present', () => {
     it('should render heading', () => {
       setup(undefined, { labels: { key1: 'label1', key2: 'label2' } });
-      expect(screen.getAllByLabelText('Log labels')).toHaveLength(1);
+      expect(screen.getAllByLabelText('Fields')).toHaveLength(1);
     });
     it('should render labels', () => {
       setup(undefined, { labels: { key1: 'label1', key2: 'label2' } });
@@ -39,6 +48,63 @@ describe('LogDetails', () => {
       expect(screen.getByRole('cell', { name: 'label1' })).toBeInTheDocument();
       expect(screen.getByRole('cell', { name: 'key2' })).toBeInTheDocument();
       expect(screen.getByRole('cell', { name: 'label2' })).toBeInTheDocument();
+    });
+    it('should render filter controls when the callbacks are provided', () => {
+      setup(
+        {
+          onClickFilterLabel: () => {},
+          onClickFilterOutLabel: () => {},
+        },
+        { labels: { key1: 'label1' } }
+      );
+      expect(screen.getByLabelText('Filter for value')).toBeInTheDocument();
+      expect(screen.getByLabelText('Filter out value')).toBeInTheDocument();
+    });
+    describe('With toggleLabelsInLogsUI=true', () => {
+      beforeAll(() => {
+        config.featureToggles.toggleLabelsInLogsUI = true;
+      });
+      afterAll(() => {
+        config.featureToggles.toggleLabelsInLogsUI = false;
+      });
+      it('should provide the log row to Explore filter functions', async () => {
+        const onClickFilterLabelMock = jest.fn();
+        const onClickFilterOutLabelMock = jest.fn();
+        const isFilterLabelActiveMock = jest.fn().mockResolvedValue(true);
+        const mockRow = createLogRow({
+          logLevel: LogLevel.error,
+          timeEpochMs: 1546297200000,
+          labels: { key1: 'label1' },
+        });
+
+        setup({
+          onClickFilterLabel: onClickFilterLabelMock,
+          onClickFilterOutLabel: onClickFilterOutLabelMock,
+          isFilterLabelActive: isFilterLabelActiveMock,
+          row: mockRow,
+        });
+
+        expect(isFilterLabelActiveMock).toHaveBeenCalledWith('key1', 'label1', mockRow.dataFrame.refId);
+
+        await userEvent.click(screen.getByLabelText('Filter for value in query A'));
+        expect(onClickFilterLabelMock).toHaveBeenCalledTimes(1);
+        expect(onClickFilterLabelMock).toHaveBeenCalledWith('key1', 'label1', mockRow.dataFrame.refId);
+
+        await userEvent.click(screen.getByLabelText('Filter out value in query A'));
+        expect(onClickFilterOutLabelMock).toHaveBeenCalledTimes(1);
+        expect(onClickFilterOutLabelMock).toHaveBeenCalledWith('key1', 'label1', mockRow.dataFrame.refId);
+      });
+    });
+    it('should not render filter controls when the callbacks are not provided', () => {
+      setup(
+        {
+          onClickFilterLabel: undefined,
+          onClickFilterOutLabel: undefined,
+        },
+        { labels: { key1: 'label1' } }
+      );
+      expect(screen.queryByLabelText('Filter for value')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Filter out value')).not.toBeInTheDocument();
     });
   });
   describe('when log row has error', () => {
@@ -48,29 +114,15 @@ describe('LogDetails', () => {
       expect(screen.getByLabelText('Log level').classList.toString()).not.toContain('logs-row__level');
     });
   });
-  describe('when row entry has parsable fields', () => {
-    it('should render heading ', () => {
-      setup(undefined, { entry: 'test=successful' });
-      expect(screen.getAllByTitle('Ad-hoc statistics')).toHaveLength(1);
-    });
-    it('should render detected fields', () => {
-      setup(undefined, { entry: 'test=successful' });
-      expect(screen.getByRole('cell', { name: 'test' })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: 'successful' })).toBeInTheDocument();
-    });
-  });
   describe('when row entry have parsable fields and labels are present', () => {
     it('should render all headings', () => {
       setup(undefined, { entry: 'test=successful', labels: { key: 'label' } });
-      expect(screen.getAllByLabelText('Log labels')).toHaveLength(1);
-      expect(screen.getAllByLabelText('Detected fields')).toHaveLength(1);
+      expect(screen.getAllByLabelText('Fields')).toHaveLength(1);
     });
     it('should render all labels and detected fields', () => {
       setup(undefined, { entry: 'test=successful', labels: { key: 'label' } });
       expect(screen.getByRole('cell', { name: 'key' })).toBeInTheDocument();
       expect(screen.getByRole('cell', { name: 'label' })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: 'test' })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: 'successful' })).toBeInTheDocument();
     });
   });
   describe('when row entry and labels are not present', () => {
@@ -89,6 +141,7 @@ describe('LogDetails', () => {
     const entry = 'traceId=1234 msg="some message"';
     const dataFrame = new MutableDataFrame({
       fields: [
+        { name: 'timestamp', config: {}, type: FieldType.time, values: [1] },
         { name: 'entry', values: [entry] },
         // As we have traceId in message already this will shadow it.
         {
@@ -105,7 +158,7 @@ describe('LogDetails', () => {
           if (field.config && field.config.links) {
             return field.config.links.map((link) => {
               return {
-                href: link.url.replace('${__value.text}', field.values.get(rowIndex)),
+                href: link.url.replace('${__value.text}', field.values[rowIndex]),
                 title: link.title,
                 target: '_blank',
                 origin: field,

@@ -1,24 +1,16 @@
-import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
+import { AnyAction, createAction } from '@reduxjs/toolkit';
 
-import {
-  AbsoluteTimeRange,
-  dateTimeForTimeZone,
-  LoadingState,
-  RawTimeRange,
-  sortLogsResult,
-  TimeRange,
-} from '@grafana/data';
+import { AbsoluteTimeRange, dateTimeForTimeZone, LoadingState, RawTimeRange, TimeRange } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
 import { getTimeRange, refreshIntervalToSortOrder, stopQueryState } from 'app/core/utils/explore';
+import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { sortLogsResult } from 'app/features/logs/utils';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
-import { ExploreItemState, ThunkResult } from 'app/types';
-import { ExploreId } from 'app/types/explore';
+import { ExploreItemState, ThunkDispatch, ThunkResult } from 'app/types';
 
-import { getTimeSrv } from '../../dashboard/services/TimeSrv';
-import { TimeModel } from '../../dashboard/state/TimeModel';
-
-import { syncTimesAction, stateSave } from './main';
+import { syncTimesAction } from './main';
 import { runQueries } from './query';
 
 //
@@ -26,60 +18,50 @@ import { runQueries } from './query';
 //
 
 export interface ChangeRangePayload {
-  exploreId: ExploreId;
+  exploreId: string;
   range: TimeRange;
   absoluteRange: AbsoluteTimeRange;
 }
+
 export const changeRangeAction = createAction<ChangeRangePayload>('explore/changeRange');
 
 /**
  * Change the time range of Explore. Usually called from the Timepicker or a graph interaction.
  */
 export interface ChangeRefreshIntervalPayload {
-  exploreId: ExploreId;
+  exploreId: string;
   refreshInterval: string;
 }
-export const changeRefreshIntervalAction = createAction<ChangeRefreshIntervalPayload>('explore/changeRefreshInterval');
+
+export const changeRefreshInterval = createAction<ChangeRefreshIntervalPayload>('explore/changeRefreshInterval');
 
 export const updateTimeRange = (options: {
-  exploreId: ExploreId;
+  exploreId: string;
   rawRange?: RawTimeRange;
   absoluteRange?: AbsoluteTimeRange;
 }): ThunkResult<void> => {
   return (dispatch, getState) => {
     const { syncedTimes } = getState().explore;
     if (syncedTimes) {
-      dispatch(updateTime({ ...options, exploreId: ExploreId.left }));
-      // When running query by updating time range, we want to preserve cache.
-      // Cached results are currently used in Logs pagination.
-      dispatch(runQueries(ExploreId.left, { preserveCache: true }));
-      dispatch(updateTime({ ...options, exploreId: ExploreId.right }));
-      dispatch(runQueries(ExploreId.right, { preserveCache: true }));
+      Object.keys(getState().explore.panes).forEach((exploreId) => {
+        dispatch(updateTime({ ...options, exploreId }));
+        dispatch(runQueries({ exploreId: exploreId, preserveCache: true }));
+      });
     } else {
       dispatch(updateTime({ ...options }));
-      dispatch(runQueries(options.exploreId, { preserveCache: true }));
+      dispatch(runQueries({ exploreId: options.exploreId, preserveCache: true }));
     }
   };
 };
 
-/**
- * Change the refresh interval of Explore. Called from the Refresh picker.
- */
-export function changeRefreshInterval(
-  exploreId: ExploreId,
-  refreshInterval: string
-): PayloadAction<ChangeRefreshIntervalPayload> {
-  return changeRefreshIntervalAction({ exploreId, refreshInterval });
-}
-
 export const updateTime = (config: {
-  exploreId: ExploreId;
+  exploreId: string;
   rawRange?: RawTimeRange;
   absoluteRange?: AbsoluteTimeRange;
 }): ThunkResult<void> => {
   return (dispatch, getState) => {
     const { exploreId, absoluteRange: absRange, rawRange: actionRange } = config;
-    const itemState = getState().explore[exploreId]!;
+    const itemState = getState().explore.panes[exploreId]!;
     const timeZone = getTimeZone(getState().user);
     const fiscalYearStartMonth = getFiscalYearStartMonth(getState().user);
     const { range: rangeInState } = itemState;
@@ -98,21 +80,17 @@ export const updateTime = (config: {
 
     const range = getTimeRange(timeZone, rawRange, fiscalYearStartMonth);
     const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
-    const timeModel: TimeModel = {
-      time: range.raw,
-      refresh: false,
+
+    // @deprecated - set because some internal plugins read the range this way; please use QueryEditorProps.range instead
+    getTimeSrv().init({
       timepicker: {},
       getTimezone: () => timeZone,
-      timeRangeUpdated: (rawTimeRange: RawTimeRange) => {
-        dispatch(updateTimeRange({ exploreId: exploreId, rawRange: rawTimeRange }));
-      },
-    };
-
-    // We need to re-initialize TimeSrv because it might have been triggered by the other Explore pane (when split)
-    getTimeSrv().init(timeModel);
+      timeRangeUpdated(timeRange) {},
+      time: range.raw,
+    });
     // After re-initializing TimeSrv we need to update the time range in Template service for interpolation
     // of __from and __to variables
-    getTemplateSrv().updateTimeRange(getTimeSrv().timeRange());
+    getTemplateSrv().updateTimeRange(range);
 
     dispatch(changeRangeAction({ exploreId, range, absoluteRange }));
   };
@@ -122,18 +100,37 @@ export const updateTime = (config: {
  * Syncs time interval, if they are not synced on both panels in a split mode.
  * Unsyncs time interval, if they are synced on both panels in a split mode.
  */
-export function syncTimes(exploreId: ExploreId): ThunkResult<void> {
+export function syncTimes(exploreId: string): ThunkResult<void> {
   return (dispatch, getState) => {
-    if (exploreId === ExploreId.left) {
-      const leftState = getState().explore.left;
-      dispatch(updateTimeRange({ exploreId: ExploreId.right, rawRange: leftState.range.raw }));
-    } else {
-      const rightState = getState().explore.right!;
-      dispatch(updateTimeRange({ exploreId: ExploreId.left, rawRange: rightState.range.raw }));
-    }
+    const range = getState().explore.panes[exploreId]!.range.raw;
+
+    Object.keys(getState().explore.panes)
+      .filter((key) => key !== exploreId)
+      .forEach((exploreId) => {
+        dispatch(updateTimeRange({ exploreId, rawRange: range }));
+      });
+
     const isTimeSynced = getState().explore.syncedTimes;
     dispatch(syncTimesAction({ syncedTimes: !isTimeSynced }));
-    dispatch(stateSave());
+  };
+}
+
+function modifyExplorePanesTimeRange(
+  modifier: (
+    exploreId: string,
+    exploreItemState: ExploreItemState,
+    currentTimeRange: TimeRange,
+    dispatch: ThunkDispatch
+  ) => void
+): ThunkResult<void> {
+  return (dispatch, getState) => {
+    const timeZone = getTimeZone(getState().user);
+    const fiscalYearStartMonth = getFiscalYearStartMonth(getState().user);
+
+    Object.entries(getState().explore.panes).forEach(([exploreId, exploreItemState]) => {
+      const range = getTimeRange(timeZone, exploreItemState!.range.raw, fiscalYearStartMonth);
+      modifier(exploreId, exploreItemState!, range, dispatch);
+    });
   };
 }
 
@@ -143,21 +140,24 @@ export function syncTimes(exploreId: ExploreId): ThunkResult<void> {
  * Useful to produce a bookmarkable URL that points to the same data.
  */
 export function makeAbsoluteTime(): ThunkResult<void> {
-  return (dispatch, getState) => {
-    const timeZone = getTimeZone(getState().user);
-    const fiscalYearStartMonth = getFiscalYearStartMonth(getState().user);
-    const leftState = getState().explore.left;
-    const leftRange = getTimeRange(timeZone, leftState.range.raw, fiscalYearStartMonth);
-    const leftAbsoluteRange: AbsoluteTimeRange = { from: leftRange.from.valueOf(), to: leftRange.to.valueOf() };
-    dispatch(updateTime({ exploreId: ExploreId.left, absoluteRange: leftAbsoluteRange }));
-    const rightState = getState().explore.right!;
-    if (rightState) {
-      const rightRange = getTimeRange(timeZone, rightState.range.raw, fiscalYearStartMonth);
-      const rightAbsoluteRange: AbsoluteTimeRange = { from: rightRange.from.valueOf(), to: rightRange.to.valueOf() };
-      dispatch(updateTime({ exploreId: ExploreId.right, absoluteRange: rightAbsoluteRange }));
-    }
-    dispatch(stateSave());
-  };
+  return modifyExplorePanesTimeRange((exploreId, exploreItemState, range, dispatch) => {
+    const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
+    dispatch(updateTimeRange({ exploreId, absoluteRange }));
+  });
+}
+
+export function shiftTime(direction: number): ThunkResult<void> {
+  return modifyExplorePanesTimeRange((exploreId, exploreItemState, range, dispatch) => {
+    const shiftedRange = getShiftedTimeRange(direction, range);
+    dispatch(updateTimeRange({ exploreId, absoluteRange: shiftedRange }));
+  });
+}
+
+export function zoomOut(scale: number): ThunkResult<void> {
+  return modifyExplorePanesTimeRange((exploreId, exploreItemState, range, dispatch) => {
+    const zoomedRange = getZoomedTimeRange(range, scale);
+    dispatch(updateTimeRange({ exploreId, absoluteRange: zoomedRange }));
+  });
 }
 
 /**
@@ -169,7 +169,7 @@ export function makeAbsoluteTime(): ThunkResult<void> {
 // the frozen state.
 // https://github.com/reduxjs/redux-toolkit/issues/242
 export const timeReducer = (state: ExploreItemState, action: AnyAction): ExploreItemState => {
-  if (changeRefreshIntervalAction.match(action)) {
+  if (changeRefreshInterval.match(action)) {
     const { refreshInterval } = action.payload;
     const live = RefreshPicker.isLive(refreshInterval);
     const sortOrder = refreshIntervalToSortOrder(refreshInterval);
@@ -188,7 +188,6 @@ export const timeReducer = (state: ExploreItemState, action: AnyAction): Explore
       },
       isLive: live,
       isPaused: live ? false : state.isPaused,
-      loading: live,
       logsResult,
     };
   }

@@ -2,16 +2,16 @@ import { FieldColorModeId, FieldConfigSource, PanelModel } from '@grafana/data';
 import { BigValueTextMode, BigValueGraphMode, BigValueColorMode } from '@grafana/schema';
 import { sharedSingleStatPanelChangedHandler } from '@grafana/ui';
 
-import { PanelOptions } from './models.gen';
+import { Options } from './panelcfg.gen';
 
 // This is called when the panel changes from another panel
 export const statPanelChangedHandler = (
-  panel: PanelModel<Partial<PanelOptions>> | any,
+  panel: PanelModel<Partial<Options>> | any,
   prevPluginId: string,
   prevOptions: any
 ) => {
   // This handles most config changes
-  const options = sharedSingleStatPanelChangedHandler(panel, prevPluginId, prevOptions) as PanelOptions;
+  const options: Options = sharedSingleStatPanelChangedHandler(panel, prevPluginId, prevOptions);
 
   // Changing from angular singlestat
   if (prevOptions.angular && (prevPluginId === 'singlestat' || prevPluginId === 'grafana-singlestat-panel')) {

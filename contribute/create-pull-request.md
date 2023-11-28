@@ -8,6 +8,7 @@ We know you're excited to create your first pull request. Before we get started,
 
 - Learn how to start [Contributing to Grafana](/CONTRIBUTING.md).
 - Make sure your code follows the relevant [style guides](/contribute/style-guides).
+- It's recommended you [set up precommit hooks](/contribute/developer-guide.md) to auto-format when you commit
 
 ## Your first pull request
 
@@ -72,7 +73,7 @@ We make use of a tool called [**Betterer**](https://phenomnomnominal.github.io/b
 
 ## Backend-specific guidelines
 
-Please refer to the [backend style guidelines](/contribute/style-guides/backend.md).
+Please refer to the [backend style guidelines](/contribute/backend/style-guide.md).
 
 ## Code review
 

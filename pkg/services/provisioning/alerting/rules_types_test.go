@@ -4,10 +4,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/provisioning/values"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
 
 func TestRuleGroup(t *testing.T) {
@@ -60,7 +61,7 @@ func TestRuleGroup(t *testing.T) {
 		rg.Interval = interval
 		rgMapped, err := rg.MapToModel()
 		require.NoError(t, err)
-		require.Equal(t, 48*time.Hour, rgMapped.Interval)
+		require.Equal(t, int64(48*time.Hour/time.Second), rgMapped.Interval)
 	})
 	t.Run("a rule group with an empty org id should default to 1", func(t *testing.T) {
 		rg := validRuleGroupV1(t)

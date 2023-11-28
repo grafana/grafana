@@ -2,8 +2,8 @@ import { css, cx } from '@emotion/css';
 import React, { useMemo, useReducer } from 'react';
 import { useDebounce } from 'react-use';
 
-import { GrafanaTheme, LoadingState } from '@grafana/data';
-import { Pagination, useStyles } from '@grafana/ui';
+import { GrafanaTheme2, LoadingState } from '@grafana/data';
+import { Pagination, useStyles2 } from '@grafana/ui';
 
 import { LibraryElementDTO } from '../../types';
 import { LibraryPanelCard } from '../LibraryPanelCard/LibraryPanelCard';
@@ -21,9 +21,10 @@ interface LibraryPanelViewProps {
   panelFilter?: string[];
   folderFilter?: string[];
   perPage?: number;
+  isWidget?: boolean;
 }
 
-export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
+export const LibraryPanelsView = ({
   className,
   onClickCard,
   searchString,
@@ -33,8 +34,9 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
   showSecondaryActions,
   currentPanelId: currentPanel,
   perPage: propsPerPage = 40,
-}) => {
-  const styles = useStyles(getPanelViewStyles);
+  isWidget,
+}: LibraryPanelViewProps) => {
+  const styles = useStyles2(getPanelViewStyles);
   const [{ libraryPanels, page, perPage, numberOfPages, loadingState, currentPanelId }, dispatch] = useReducer(
     libraryPanelsViewReducer,
     {
@@ -51,17 +53,27 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
           searchString,
           sortDirection,
           panelFilter,
-          folderFilter,
+          folderFilterUIDs: folderFilter,
           page,
           perPage,
           currentPanelId,
+          isWidget,
         })
       ),
     300,
     [searchString, sortDirection, panelFilter, folderFilter, page, asyncDispatch]
   );
   const onDelete = ({ uid }: LibraryElementDTO) =>
-    asyncDispatch(deleteLibraryPanel(uid, { searchString, page, perPage }));
+    asyncDispatch(
+      deleteLibraryPanel(uid, {
+        searchString,
+        sortDirection,
+        panelFilter,
+        folderFilterUIDs: folderFilter,
+        page,
+        perPage,
+      })
+    );
   const onPageChange = (page: number) => asyncDispatch(changePage({ page }));
 
   return (
@@ -97,7 +109,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
   );
 };
 
-const getPanelViewStyles = (theme: GrafanaTheme) => {
+const getPanelViewStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
       display: flex;
@@ -107,7 +119,7 @@ const getPanelViewStyles = (theme: GrafanaTheme) => {
     libraryPanelList: css`
       max-width: 100%;
       display: grid;
-      grid-gap: ${theme.spacing.sm};
+      grid-gap: ${theme.spacing(1)};
     `,
     searchHeader: css`
       display: flex;
@@ -118,7 +130,7 @@ const getPanelViewStyles = (theme: GrafanaTheme) => {
     `,
     pagination: css`
       align-self: center;
-      margin-top: ${theme.spacing.sm};
+      margin-top: ${theme.spacing(1)};
     `,
     noPanelsFound: css`
       label: noPanelsFound;

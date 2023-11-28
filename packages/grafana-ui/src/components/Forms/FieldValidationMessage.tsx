@@ -19,9 +19,10 @@ export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaThem
       padding: ${theme.spacing(0.5, 1)};
       color: ${theme.colors.error.contrastText};
       background: ${theme.colors.error.main};
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
       position: relative;
       display: inline-block;
+      align-self: flex-start;
 
       a {
         color: ${theme.colors.error.contrastText};
@@ -34,45 +35,47 @@ export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaThem
     `;
 
   return {
-    vertical: css`
-      ${baseStyle}
-      margin: ${theme.spacing(0.5, 0, 0, 0)};
+    vertical: css(baseStyle, {
+      margin: theme.spacing(0.5, 0, 0, 0),
 
-      &:before {
-        content: '';
-        position: absolute;
-        left: 9px;
-        top: -5px;
-        width: 0;
-        height: 0;
-        border-width: 0 4px 5px 4px;
-        border-color: transparent transparent ${theme.colors.error.main} transparent;
-        border-style: solid;
-      }
-    `,
-    horizontal: css`
-      ${baseStyle}
-      margin-left: 10px;
+      '&:before': {
+        content: '""',
+        position: 'absolute',
+        left: '9px',
+        top: '-5px',
+        width: 0,
+        height: 0,
+        borderWidth: '0 4px 5px 4px',
+        borderColor: `transparent transparent ${theme.colors.error.main} transparent`,
+        borderStyle: 'solid',
+      },
+    }),
+    horizontal: css(baseStyle, {
+      marginLeft: '10px',
 
-      &:before {
-        content: '';
-        position: absolute;
-        left: -5px;
-        top: 9px;
-        width: 0;
-        height: 0;
-        border-width: 4px 5px 4px 0;
-        border-color: transparent #e02f44 transparent transparent;
-        border-style: solid;
-      }
-    `,
-    fieldValidationMessageIcon: css`
-      margin-right: ${theme.spacing()};
-    `,
+      '&:before': {
+        content: '""',
+        position: 'absolute',
+        left: '-5px',
+        top: '9px',
+        width: 0,
+        height: 0,
+        borderWidth: '4px 5px 4px 0',
+        borderColor: 'transparent #e02f44 transparent transparent',
+        borderStyle: 'solid',
+      },
+    }),
+    fieldValidationMessageIcon: css({
+      marginRight: theme.spacing(),
+    }),
   };
 });
 
-export const FieldValidationMessage: React.FC<FieldValidationMessageProps> = ({ children, horizontal, className }) => {
+export const FieldValidationMessage = ({
+  children,
+  horizontal,
+  className,
+}: React.PropsWithChildren<FieldValidationMessageProps>) => {
   const theme = useTheme2();
   const styles = getFieldValidationMessageStyles(theme);
   const cssName = cx(horizontal ? styles.horizontal : styles.vertical, className);

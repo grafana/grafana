@@ -1,0 +1,231 @@
+import { LabelParamEditor } from '../../prometheus/querybuilder/components/LabelParamEditor';
+import { getAggregationExplainer, getLastLabelRemovedHandler, getOnLabelAddedHandler, getPromAndLokiOperationDisplayName, } from '../../prometheus/querybuilder/shared/operationUtils';
+import { FUNCTIONS } from '../syntax';
+import { LokiOperationId, LokiOperationOrder, LokiVisualQueryOperationCategory } from './types';
+export function createRangeOperation(name, isRangeOperationWithGrouping) {
+    const params = [getRangeVectorParamDef()];
+    const defaultParams = ['$__auto'];
+    let paramChangedHandler = undefined;
+    if (name === LokiOperationId.QuantileOverTime) {
+        defaultParams.push('0.95');
+        params.push({
+            name: 'Quantile',
+            type: 'number',
+        });
+    }
+    if (isRangeOperationWithGrouping) {
+        params.push({
+            name: 'By label',
+            type: 'string',
+            restParam: true,
+            optional: true,
+        });
+        paramChangedHandler = getOnLabelAddedHandler(`__${name}_by`);
+    }
+    return {
+        id: name,
+        name: getPromAndLokiOperationDisplayName(name),
+        params: params,
+        defaultParams,
+        alternativesKey: 'range function',
+        category: LokiVisualQueryOperationCategory.RangeFunctions,
+        orderRank: LokiOperationOrder.RangeVectorFunction,
+        renderer: operationWithRangeVectorRenderer,
+        addOperationHandler: addLokiOperation,
+        paramChangedHandler,
+        explainHandler: (op, def) => {
+            var _a, _b;
+            let opDocs = (_b = (_a = FUNCTIONS.find((x) => x.insertText === op.id)) === null || _a === void 0 ? void 0 : _a.documentation) !== null && _b !== void 0 ? _b : '';
+            if (op.params[0] === '$__auto') {
+                return `${opDocs} \`$__auto\` is a variable that will be replaced with the [value of step](https://grafana.com/docs/grafana/next/datasources/loki/query-editor/#options) for range queries and with the value of the selected time range (calculated to - from) for instant queries.`;
+            }
+            else {
+                return `${opDocs} The [range vector](https://grafana.com/docs/loki/latest/logql/metric_queries/#range-vector-aggregation) is set to \`${op.params[0]}\`.`;
+            }
+        },
+    };
+}
+export function createRangeOperationWithGrouping(name) {
+    const rangeOperation = createRangeOperation(name, true);
+    // Copy range operation params without the last param
+    const params = rangeOperation.params.slice(0, -1);
+    const operations = [
+        rangeOperation,
+        {
+            id: `__${name}_by`,
+            name: `${getPromAndLokiOperationDisplayName(name)} by`,
+            params: [
+                ...params,
+                {
+                    name: 'Label',
+                    type: 'string',
+                    restParam: true,
+                    optional: true,
+                    editor: LabelParamEditor,
+                },
+            ],
+            defaultParams: [...rangeOperation.defaultParams, ''],
+            alternativesKey: 'range function with grouping',
+            category: LokiVisualQueryOperationCategory.RangeFunctions,
+            renderer: getRangeAggregationWithGroupingRenderer(name, 'by'),
+            paramChangedHandler: getLastLabelRemovedHandler(name),
+            explainHandler: getAggregationExplainer(name, 'by'),
+            addOperationHandler: addLokiOperation,
+            hideFromList: true,
+        },
+        {
+            id: `__${name}_without`,
+            name: `${getPromAndLokiOperationDisplayName(name)} without`,
+            params: [
+                ...params,
+                {
+                    name: 'Label',
+                    type: 'string',
+                    restParam: true,
+                    optional: true,
+                    editor: LabelParamEditor,
+                },
+            ],
+            defaultParams: [...rangeOperation.defaultParams, ''],
+            alternativesKey: 'range function with grouping',
+            category: LokiVisualQueryOperationCategory.RangeFunctions,
+            renderer: getRangeAggregationWithGroupingRenderer(name, 'without'),
+            paramChangedHandler: getLastLabelRemovedHandler(name),
+            explainHandler: getAggregationExplainer(name, 'without'),
+            addOperationHandler: addLokiOperation,
+            hideFromList: true,
+        },
+    ];
+    return operations;
+}
+export function getRangeAggregationWithGroupingRenderer(aggregation, grouping) {
+    return function aggregationRenderer(model, def, innerExpr) {
+        const restParamIndex = def.params.findIndex((param) => param.restParam);
+        const params = model.params.slice(0, restParamIndex);
+        const restParams = model.params.slice(restParamIndex);
+        if (params.length === 2 && aggregation === LokiOperationId.QuantileOverTime) {
+            return `${aggregation}(${params[1]}, ${innerExpr} [${params[0]}]) ${grouping} (${restParams.join(', ')})`;
+        }
+        return `${aggregation}(${innerExpr} [${params[0]}]) ${grouping} (${restParams.join(', ')})`;
+    };
+}
+function operationWithRangeVectorRenderer(model, def, innerExpr) {
+    var _a, _b, _c;
+    const params = (_a = model.params) !== null && _a !== void 0 ? _a : [];
+    const rangeVector = (_b = params[0]) !== null && _b !== void 0 ? _b : '$__auto';
+    // QuantileOverTime is only range vector with more than one param
+    if (params.length === 2 && model.id === LokiOperationId.QuantileOverTime) {
+        const quantile = params[1];
+        return `${model.id}(${quantile}, ${innerExpr} [${rangeVector}])`;
+    }
+    return `${model.id}(${innerExpr} [${(_c = params[0]) !== null && _c !== void 0 ? _c : '$__auto'}])`;
+}
+export function labelFilterRenderer(model, def, innerExpr) {
+    const integerOperators = ['<', '<=', '>', '>='];
+    if (integerOperators.includes(String(model.params[1]))) {
+        return `${innerExpr} | ${model.params[0]} ${model.params[1]} ${model.params[2]}`;
+    }
+    return `${innerExpr} | ${model.params[0]} ${model.params[1]} \`${model.params[2]}\``;
+}
+export function isConflictingFilter(operation, queryOperations) {
+    const operationIsNegative = operation.params[1].toString().startsWith('!');
+    const candidates = queryOperations.filter((queryOperation) => queryOperation.id === LokiOperationId.LabelFilter &&
+        queryOperation.params[0] === operation.params[0] &&
+        queryOperation.params[2] === operation.params[2]);
+    const conflict = candidates.some((candidate) => {
+        if (operationIsNegative && candidate.params[1].toString().startsWith('!') === false) {
+            return true;
+        }
+        if (operationIsNegative === false && candidate.params[1].toString().startsWith('!')) {
+            return true;
+        }
+        return false;
+    });
+    return conflict;
+}
+export function pipelineRenderer(model, def, innerExpr) {
+    switch (model.id) {
+        case LokiOperationId.Logfmt:
+            const [strict = false, keepEmpty = false, ...labels] = model.params;
+            return `${innerExpr} | logfmt${strict ? ' --strict' : ''}${keepEmpty ? ' --keep-empty' : ''} ${labels.join(', ')}`.trim();
+        default:
+            return `${innerExpr} | ${model.id}`;
+    }
+}
+function isRangeVectorFunction(def) {
+    return def.category === LokiVisualQueryOperationCategory.RangeFunctions;
+}
+function getIndexOfOrLast(operations, queryModeller, condition) {
+    const index = operations.findIndex((x) => {
+        const opDef = queryModeller.getOperationDef(x.id);
+        if (!opDef) {
+            return false;
+        }
+        return condition(opDef);
+    });
+    return index === -1 ? operations.length : index;
+}
+export function addLokiOperation(def, query, modeller) {
+    const newOperation = {
+        id: def.id,
+        params: def.defaultParams,
+    };
+    const operations = [...query.operations];
+    const existingRangeVectorFunction = operations.find((x) => {
+        const opDef = modeller.getOperationDef(x.id);
+        if (!opDef) {
+            return false;
+        }
+        return isRangeVectorFunction(opDef);
+    });
+    switch (def.category) {
+        case LokiVisualQueryOperationCategory.Aggregations:
+        case LokiVisualQueryOperationCategory.Functions:
+            // If we are adding a function but we have not range vector function yet add one
+            if (!existingRangeVectorFunction) {
+                const placeToInsert = getIndexOfOrLast(operations, modeller, (def) => def.category === LokiVisualQueryOperationCategory.Functions);
+                operations.splice(placeToInsert, 0, { id: LokiOperationId.Rate, params: ['$__auto'] });
+            }
+            operations.push(newOperation);
+            break;
+        case LokiVisualQueryOperationCategory.RangeFunctions:
+            // If adding a range function and range function is already added replace it
+            if (existingRangeVectorFunction) {
+                const index = operations.indexOf(existingRangeVectorFunction);
+                operations[index] = newOperation;
+                break;
+            }
+        // Add range functions after any formats, line filters and label filters
+        default:
+            const placeToInsert = getIndexOfOrLast(operations, modeller, (x) => { var _a, _b; return ((_a = def.orderRank) !== null && _a !== void 0 ? _a : 100) < ((_b = x.orderRank) !== null && _b !== void 0 ? _b : 100); });
+            operations.splice(placeToInsert, 0, newOperation);
+            break;
+    }
+    return Object.assign(Object.assign({}, query), { operations });
+}
+export function addNestedQueryHandler(def, query) {
+    var _a;
+    return Object.assign(Object.assign({}, query), { binaryQueries: [
+            ...((_a = query.binaryQueries) !== null && _a !== void 0 ? _a : []),
+            {
+                operator: '/',
+                query,
+            },
+        ] });
+}
+export function getLineFilterRenderer(operation, caseInsensitive) {
+    return function lineFilterRenderer(model, def, innerExpr) {
+        if (caseInsensitive) {
+            return `${innerExpr} ${operation} \`(?i)${model.params[0]}\``;
+        }
+        return `${innerExpr} ${operation} \`${model.params[0]}\``;
+    };
+}
+function getRangeVectorParamDef() {
+    return {
+        name: 'Range',
+        type: 'string',
+        options: ['$__auto', '1m', '5m', '10m', '1h', '24h'],
+    };
+}
+//# sourceMappingURL=operationUtils.js.map

@@ -19,10 +19,9 @@ import {
   LibraryPanelsSearchVariant,
 } from '../../../library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
 import { LibraryElementDTO } from '../../../library-panels/types';
-import { toPanelModelLibraryPanel } from '../../../library-panels/utils';
 import { DashboardModel, PanelModel } from '../../state';
 
-export type PanelPluginInfo = { id: any; defaults: { gridPos: { w: any; h: any }; title: any } };
+export type PanelPluginInfo = { id: number; defaults: { gridPos: { w: number; h: number }; title: string } };
 
 export interface OwnProps {
   panel: PanelModel;
@@ -76,7 +75,9 @@ export const AddPanelWidgetUnconnected = ({ panel, dashboard }: Props) => {
     const newPanel: Partial<PanelModel> = {
       type: 'timeseries',
       title: 'Panel Title',
+      datasource: panel.datasource,
       gridPos: { x: gridPos.x, y: gridPos.y, w: gridPos.w, h: gridPos.h },
+      isNew: true,
     };
 
     dashboard.addPanel(newPanel);
@@ -88,7 +89,7 @@ export const AddPanelWidgetUnconnected = ({ panel, dashboard }: Props) => {
   const onPasteCopiedPanel = (panelPluginInfo: PanelPluginInfo) => {
     const { gridPos } = panel;
 
-    const newPanel: any = {
+    const newPanel = {
       type: panelPluginInfo.id,
       title: 'Panel Title',
       gridPos: {
@@ -113,10 +114,10 @@ export const AddPanelWidgetUnconnected = ({ panel, dashboard }: Props) => {
   const onAddLibraryPanel = (panelInfo: LibraryElementDTO) => {
     const { gridPos } = panel;
 
-    const newPanel: PanelModel = {
+    const newPanel = {
       ...panelInfo.model,
       gridPos,
-      libraryPanel: toPanelModelLibraryPanel(panelInfo),
+      libraryPanel: panelInfo,
     };
 
     dashboard.addPanel(newPanel);
@@ -124,7 +125,7 @@ export const AddPanelWidgetUnconnected = ({ panel, dashboard }: Props) => {
   };
 
   const onCreateNewRow = () => {
-    const newRow: any = {
+    const newRow = {
       type: 'row',
       title: 'Row title',
       gridPos: { x: 0, y: 0 },
@@ -207,22 +208,22 @@ interface AddPanelWidgetHandleProps {
   styles: AddPanelStyles;
 }
 
-const AddPanelWidgetHandle: React.FC<AddPanelWidgetHandleProps> = ({ children, onBack, onCancel, styles }) => {
+const AddPanelWidgetHandle = ({ children, onBack, onCancel, styles }: AddPanelWidgetHandleProps) => {
   return (
     <div className={cx(styles.headerRow, 'grid-drag-handle')}>
       {onBack && (
         <div className={styles.backButton}>
-          <IconButton aria-label="Go back" name="arrow-left" onClick={onBack} size="xl" />
+          <IconButton name="arrow-left" onClick={onBack} size="xl" tooltip="Go back" />
         </div>
       )}
       {!onBack && (
         <div className={styles.backButton}>
-          <Icon name="panel-add" size="md" />
+          <Icon name="panel-add" size="xl" />
         </div>
       )}
       {children && <span>{children}</span>}
       <div className="flex-grow-1" />
-      <IconButton aria-label="Close 'Add Panel' widget" name="times" onClick={onCancel} />
+      <IconButton aria-label="Close 'Add Panel' widget" name="times" onClick={onCancel} tooltip="Close widget" />
     </div>
   );
 };
@@ -231,10 +232,10 @@ const getStyles = (theme: GrafanaTheme2) => {
   const pulsate = keyframes`
     0% {box-shadow: 0 0 0 2px ${theme.colors.background.canvas}, 0 0 0px 4px ${theme.colors.primary.main};}
     50% {box-shadow: 0 0 0 2px ${theme.components.dashboard.background}, 0 0 0px 4px ${tinycolor(
-    theme.colors.primary.main
-  )
-    .darken(20)
-    .toHexString()};}
+      theme.colors.primary.main
+    )
+      .darken(20)
+      .toHexString()};}
     100% {box-shadow: 0 0 0 2px ${theme.components.dashboard.background}, 0 0 0px 4px  ${theme.colors.primary.main};}
   `;
 
@@ -248,7 +249,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflow: hidden;
       outline: 2px dotted transparent;
       outline-offset: 2px;
-      box-shadow: 0 0 0 2px black, 0 0 0px 4px #1f60c4;
+      box-shadow:
+        0 0 0 2px black,
+        0 0 0px 4px #1f60c4;
       animation: ${pulsate} 2s ease infinite;
     `,
     actionsWrapper: css`

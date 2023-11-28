@@ -17,7 +17,7 @@ import { ChangeCheckIntervalFormValues, ChangeCheckIntervalModalProps } from './
 
 const { Form } = withTypes<ChangeCheckIntervalFormValues>();
 
-export const ChangeCheckIntervalModal: FC<ChangeCheckIntervalModalProps> = ({ check, onClose, onIntervalChanged }) => {
+export const ChangeCheckIntervalModal: FC<React.PropsWithChildren<ChangeCheckIntervalModalProps>> = ({ check, onClose, onIntervalChanged }) => {
   const styles = useStyles(getStyles);
   const { summary, name, interval } = check;
 

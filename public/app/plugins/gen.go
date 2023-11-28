@@ -1,137 +1,122 @@
 //go:build ignore
 // +build ignore
 
+//go:generate go run gen.go
+
 package main
 
 import (
-	"errors"
+	"context"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/codegen"
+	"github.com/grafana/codejen"
+	"github.com/grafana/kindsys"
+
+	corecodegen "github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
+	"github.com/grafana/grafana/pkg/plugins/codegen"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/thema"
 )
 
 var skipPlugins = map[string]bool{
-	"canvas":         true,
-	"heatmap":        true,
-	"heatmap-old":    true,
-	"candlestick":    true,
-	"state-timeline": true,
-	"status-history": true,
-	"table":          true,
-	"timeseries":     true,
-	"influxdb":       true, // plugin.json fails validation (defaultMatchFormat)
-	"mixed":          true, // plugin.json fails validation (mixed)
-	"opentsdb":       true, // plugin.json fails validation (defaultMatchFormat)
+	"influxdb": true, // plugin.json fails validation (defaultMatchFormat)
+	"mixed":    true, // plugin.json fails validation (mixed)
+	"opentsdb": true, // plugin.json fails validation (defaultMatchFormat)
 }
 
 const sep = string(filepath.Separator)
 
-// Generate TypeScript for all plugin models.cue
 func main() {
 	if len(os.Args) > 1 {
-		fmt.Fprintf(os.Stderr, "plugin thema code generator does not currently accept any arguments\n, got %q", os.Args)
-		os.Exit(1)
+		log.Fatal(fmt.Errorf("plugin thema code generator does not currently accept any arguments\n, got %q", os.Args))
 	}
 
 	cwd, err := os.Getwd()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "could not get working directory: %s", err)
-		os.Exit(1)
+		log.Fatal(fmt.Errorf("could not get working directory: %s", err))
 	}
-	grootp := strings.Split(cwd, sep)
-	groot := filepath.Join(sep, filepath.Join(grootp[:len(grootp)-3]...))
+	groot := filepath.Clean(filepath.Join(cwd, "../../.."))
+	rt := cuectx.GrafanaThemaRuntime()
 
-	wd := codegen.NewWriteDiffer()
-	lib := cuectx.ProvideThemaLibrary()
-
-	type ptreepath struct {
-		Path string
-		Tree *codegen.PluginTree
-	}
-	var ptrees []codegen.TreeAndPath
-	for _, typ := range []string{"datasource", "panel"} {
-		dir := filepath.Join(cwd, typ)
-		treeor, err := codegen.ExtractPluginTrees(os.DirFS(dir), lib)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "extracting plugin trees failed for %s: %s\n", dir, err)
-			os.Exit(1)
-		}
-
-		for name, option := range treeor {
-			if skipPlugins[name] {
-				continue
-			}
-
-			if option.Tree != nil {
-				ptrees = append(ptrees, codegen.TreeAndPath{
-					Path: filepath.Join(typ, name),
-					Tree: option.Tree,
-				})
-			} else if !errors.Is(option.Err, pfs.ErrNoRootFile) {
-				fmt.Fprintf(os.Stderr, "error parsing plugin directory %s: %s\n", filepath.Join(dir, name), option.Err)
-				os.Exit(1)
-			}
-		}
-	}
-
-	// Ensure ptrees are sorted, so that visit order is deterministic. Otherwise
-	// having multiple core plugins with errors can cause confusing error
-	// flip-flopping
-	sort.Slice(ptrees, func(i, j int) bool {
-		return ptrees[i].Path < ptrees[j].Path
+	pluginKindGen := codejen.JennyListWithNamer(func(d *pfs.PluginDecl) string {
+		return d.PluginMeta.Id
 	})
 
-	var wdm codegen.WriteDiffer
-	for _, ptp := range ptrees {
-		wdm, err = ptp.Tree.GenerateTS(ptp.Path)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "generating typescript failed for %s: %s\n", ptp.Path, err)
-			os.Exit(1)
-		}
-		wd.Merge(wdm)
+	pluginKindGen.Append(
+		codegen.PluginTreeListJenny(),
+		codegen.PluginGoTypesJenny("pkg/tsdb"),
+		codegen.PluginTSTypesJenny("public/app/plugins", adaptToPipeline(corecodegen.TSTypesJenny{})),
+		kind2pd(rt, corecodegen.DocsJenny(
+			filepath.Join("docs", "sources", "developers", "kinds", "composable"),
+		)),
+		codegen.PluginTSEachMajor(rt),
+	)
 
-		relp, _ := filepath.Rel(groot, ptp.Path)
-		wdm, err = ptp.Tree.GenerateGo(ptp.Path, codegen.GoGenConfig{
-			Types: isDatasource(ptp.Tree),
-			// TODO false until we decide on a consistent codegen format for core and external plugins
-			ThemaBindings: false,
-			DocPathPrefix: relp,
-		})
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "generating Go failed for %s: %s\n", ptp.Path, err)
-			os.Exit(1)
-		}
-		wd.Merge(wdm)
+	schifs := kindsys.SchemaInterfaces(rt.Context())
+	schifnames := make([]string, 0, len(schifs))
+	for _, schif := range schifs {
+		schifnames = append(schifnames, strings.ToLower(schif.Name()))
 	}
+	pluginKindGen.AddPostprocessors(corecodegen.SlashHeaderMapper("public/app/plugins/gen.go"), splitSchiffer(schifnames))
 
-	wdm, err = codegen.GenPluginTreeList(ptrees, "github.com/grafana/grafana/public/app/plugins", filepath.Join(groot, "pkg", "plugins", "pfs", "corelist", "loadlist_gen.go"), false)
+	declParser := pfs.NewDeclParser(rt, skipPlugins)
+	decls, err := declParser.Parse(os.DirFS(cwd))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "generating plugin loader registry failed: %s\n", err)
-		os.Exit(1)
+		log.Fatalln(fmt.Errorf("parsing plugins in dir failed %s: %s", cwd, err))
 	}
-	wd.Merge(wdm)
+
+	jfs, err := pluginKindGen.GenerateFS(decls...)
+	if err != nil {
+		log.Fatalln(fmt.Errorf("error writing files to disk: %s", err))
+	}
 
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
-		err = wd.Verify()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "generated code is out of sync with inputs:\n%s\nrun `make gen-cue` to regenerate\n\n", err)
-			os.Exit(1)
+		if err = jfs.Verify(context.Background(), groot); err != nil {
+			log.Fatal(fmt.Errorf("generated code is out of sync with inputs:\n%s\nrun `make gen-cue` to regenerate", err))
 		}
-	} else {
-		err = wd.Write()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "error while writing generated code to disk:\n%s\n", err)
-			os.Exit(1)
-		}
+	} else if err = jfs.Write(context.Background(), groot); err != nil {
+		log.Fatal(fmt.Errorf("error while writing generated code to disk:\n%s", err))
 	}
 }
 
-func isDatasource(pt *codegen.PluginTree) bool {
-	return string((*pfs.Tree)(pt).RootPlugin().Meta().Type) == "datasource"
+func adaptToPipeline(j codejen.OneToOne[corecodegen.SchemaForGen]) codejen.OneToOne[*pfs.PluginDecl] {
+	return codejen.AdaptOneToOne(j, func(pd *pfs.PluginDecl) corecodegen.SchemaForGen {
+		return corecodegen.SchemaForGen{
+			Name:    strings.ReplaceAll(pd.PluginMeta.Name, " ", ""),
+			Schema:  pd.Lineage.Latest(),
+			IsGroup: pd.SchemaInterface.IsGroup(),
+		}
+	})
+}
+
+func kind2pd(rt *thema.Runtime, j codejen.OneToOne[kindsys.Kind]) codejen.OneToOne[*pfs.PluginDecl] {
+	return codejen.AdaptOneToOne(j, func(pd *pfs.PluginDecl) kindsys.Kind {
+		kd, err := kindsys.BindComposable(rt, pd.KindDecl)
+		if err != nil {
+			return nil
+		}
+		return kd
+	})
+}
+
+func splitSchiffer(names []string) codejen.FileMapper {
+	for i := range names {
+		names[i] = names[i] + "/"
+	}
+	return func(f codejen.File) (codejen.File, error) {
+		// TODO it's terrible that this has to exist, CODEJEN NEEDS TO BE BETTER
+		path := filepath.ToSlash(f.RelativePath)
+		for _, name := range names {
+			if idx := strings.Index(path, name); idx != -1 {
+				f.RelativePath = fmt.Sprintf("%s/%s", path[:idx], path[idx:])
+				break
+			}
+		}
+		return f, nil
+	}
 }

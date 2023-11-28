@@ -4,21 +4,24 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
 )
 
-func SetupTestDataSourceSecretMigrationService(t *testing.T, sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, secretsStore secretskvs.SecretsKVStore, compatibility bool) *DataSourceSecretMigrationService {
+func SetupTestDataSourceSecretMigrationService(t *testing.T, sqlStore db.DB, kvStore kvstore.KVStore, secretsStore secretskvs.SecretsKVStore, compatibility bool) *DataSourceSecretMigrationService {
 	t.Helper()
 	cfg := &setting.Cfg{}
 	features := featuremgmt.WithFeatures()
@@ -26,14 +29,16 @@ func SetupTestDataSourceSecretMigrationService(t *testing.T, sqlStore *sqlstore.
 		features = featuremgmt.WithFeatures(featuremgmt.FlagDisableSecretsCompatibility, true)
 	}
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
-	dsService := dsservice.ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New().WithDisabled(), acmock.NewMockedPermissionsService())
+	quotaService := quotatest.New(false, nil)
+	dsService, err := dsservice.ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService)
+	require.NoError(t, err)
 	migService := ProvideDataSourceMigrationService(dsService, kvStore, features)
 	return migService
 }
 
 func TestMigrate(t *testing.T) {
 	t.Run("should migrate from legacy to unified without compatibility", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := db.InitTestDB(t)
 		kvStore := kvstore.ProvideService(sqlStore)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
@@ -41,12 +46,12 @@ func TestMigrate(t *testing.T) {
 		ds := dsservice.CreateStore(sqlStore, log.NewNopLogger())
 		dataSourceName := "Test"
 		dataSourceOrg := int64(1)
-		err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			OrgId:  dataSourceOrg,
+		_, err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID:  dataSourceOrg,
 			Name:   dataSourceName,
 			Type:   datasources.DS_MYSQL,
 			Access: datasources.DS_ACCESS_DIRECT,
-			Url:    "http://test",
+			URL:    "http://test",
 			EncryptedSecureJsonData: map[string][]byte{
 				"password": []byte("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"),
 			},
@@ -54,11 +59,11 @@ func TestMigrate(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Check if the secret json data was added
-		query := &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
-		err = ds.GetDataSource(context.Background(), query)
+		query := &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
+		dataSource, err := ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
-		assert.NotNil(t, query.Result)
-		assert.NotEmpty(t, query.Result.SecureJsonData)
+		assert.NotNil(t, dataSource)
+		assert.NotEmpty(t, dataSource.SecureJsonData)
 
 		// Check if the migration status key is empty
 		value, exist, err := kvStore.Get(context.Background(), 0, secretskvs.DataSourceSecretType, secretMigrationStatusKey)
@@ -77,11 +82,11 @@ func TestMigrate(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Check if the secure json data was deleted
-		query = &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
-		err = ds.GetDataSource(context.Background(), query)
+		query = &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
+		dataSource, err = ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
-		assert.NotNil(t, query.Result)
-		assert.Empty(t, query.Result.SecureJsonData)
+		assert.NotNil(t, dataSource)
+		assert.Empty(t, dataSource.SecureJsonData)
 
 		// Check if the secret was added to the secret store
 		value, exist, err = secretsStore.Get(context.Background(), dataSourceOrg, dataSourceName, secretskvs.DataSourceSecretType)
@@ -97,7 +102,7 @@ func TestMigrate(t *testing.T) {
 	})
 
 	t.Run("should migrate from legacy to unified with compatibility", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := db.InitTestDB(t)
 		kvStore := kvstore.ProvideService(sqlStore)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
@@ -107,12 +112,12 @@ func TestMigrate(t *testing.T) {
 		dataSourceOrg := int64(1)
 
 		// Add test data source
-		err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			OrgId:  dataSourceOrg,
+		_, err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID:  dataSourceOrg,
 			Name:   dataSourceName,
 			Type:   datasources.DS_MYSQL,
 			Access: datasources.DS_ACCESS_DIRECT,
-			Url:    "http://test",
+			URL:    "http://test",
 			EncryptedSecureJsonData: map[string][]byte{
 				"password": []byte("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"),
 			},
@@ -120,11 +125,11 @@ func TestMigrate(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Check if the secret json data was added
-		query := &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
-		err = ds.GetDataSource(context.Background(), query)
+		query := &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
+		dataSource, err := ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
-		assert.NotNil(t, query.Result)
-		assert.NotEmpty(t, query.Result.SecureJsonData)
+		assert.NotNil(t, dataSource)
+		assert.NotEmpty(t, dataSource.SecureJsonData)
 
 		// Check if the migration status key is empty
 		value, exist, err := kvStore.Get(context.Background(), 0, secretskvs.DataSourceSecretType, secretMigrationStatusKey)
@@ -143,11 +148,11 @@ func TestMigrate(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Check if the secure json data was maintained for compatibility
-		query = &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
-		err = ds.GetDataSource(context.Background(), query)
+		query = &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
+		dataSource, err = ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
-		assert.NotNil(t, query.Result)
-		assert.NotEmpty(t, query.Result.SecureJsonData)
+		assert.NotNil(t, dataSource)
+		assert.NotEmpty(t, dataSource.SecureJsonData)
 
 		// Check if the secret was added to the secret store
 		value, exist, err = secretsStore.Get(context.Background(), dataSourceOrg, dataSourceName, secretskvs.DataSourceSecretType)
@@ -163,7 +168,7 @@ func TestMigrate(t *testing.T) {
 	})
 
 	t.Run("should replicate from unified to legacy for compatibility", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := db.InitTestDB(t)
 
 		kvStore := kvstore.ProvideService(sqlStore)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
@@ -175,12 +180,12 @@ func TestMigrate(t *testing.T) {
 		dataSourceOrg := int64(1)
 
 		// Add test data source
-		err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			OrgId:  dataSourceOrg,
+		_, err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID:  dataSourceOrg,
 			Name:   dataSourceName,
 			Type:   datasources.DS_MYSQL,
 			Access: datasources.DS_ACCESS_DIRECT,
-			Url:    "http://test",
+			URL:    "http://test",
 			EncryptedSecureJsonData: map[string][]byte{
 				"password": []byte("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"),
 			},
@@ -188,11 +193,11 @@ func TestMigrate(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Check if the secret json data was added
-		query := &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
-		err = ds.GetDataSource(context.Background(), query)
+		query := &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
+		dataSource, err := ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
-		assert.NotNil(t, query.Result)
-		assert.NotEmpty(t, query.Result.SecureJsonData)
+		assert.NotNil(t, dataSource)
+		assert.NotEmpty(t, dataSource.SecureJsonData)
 
 		// Check if the migration status key is empty
 		value, exist, err := kvStore.Get(context.Background(), 0, secretskvs.DataSourceSecretType, secretMigrationStatusKey)
@@ -211,11 +216,11 @@ func TestMigrate(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Check if the secure json data was deleted
-		query = &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
-		err = ds.GetDataSource(context.Background(), query)
+		query = &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
+		dataSource, err = ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
-		assert.NotNil(t, query.Result)
-		assert.Empty(t, query.Result.SecureJsonData)
+		assert.NotNil(t, dataSource)
+		assert.Empty(t, dataSource.SecureJsonData)
 
 		// Check if the secret was added to the secret store
 		value, exist, err = secretsStore.Get(context.Background(), dataSourceOrg, dataSourceName, secretskvs.DataSourceSecretType)
@@ -235,11 +240,11 @@ func TestMigrate(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Check if the secure json data was re-added for compatibility
-		query = &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
-		err = ds.GetDataSource(context.Background(), query)
+		query = &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
+		dataSource, err = ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
-		assert.NotNil(t, query.Result)
-		assert.NotEmpty(t, query.Result.SecureJsonData)
+		assert.NotNil(t, dataSource)
+		assert.NotEmpty(t, dataSource.SecureJsonData)
 
 		// Check if the secret was added to the secret store
 		value, exist, err = secretsStore.Get(context.Background(), dataSourceOrg, dataSourceName, secretskvs.DataSourceSecretType)
@@ -255,7 +260,7 @@ func TestMigrate(t *testing.T) {
 	})
 
 	t.Run("should delete from legacy to remove compatibility", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := db.InitTestDB(t)
 		kvStore := kvstore.ProvideService(sqlStore)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
@@ -266,12 +271,12 @@ func TestMigrate(t *testing.T) {
 		dataSourceOrg := int64(1)
 
 		// Add test data source
-		err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			OrgId:  dataSourceOrg,
+		_, err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID:  dataSourceOrg,
 			Name:   dataSourceName,
 			Type:   datasources.DS_MYSQL,
 			Access: datasources.DS_ACCESS_DIRECT,
-			Url:    "http://test",
+			URL:    "http://test",
 			EncryptedSecureJsonData: map[string][]byte{
 				"password": []byte("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"),
 			},
@@ -279,11 +284,11 @@ func TestMigrate(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Check if the secret json data was added
-		query := &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
-		err = ds.GetDataSource(context.Background(), query)
+		query := &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
+		dataSource, err := ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
-		assert.NotNil(t, query.Result)
-		assert.NotEmpty(t, query.Result.SecureJsonData)
+		assert.NotNil(t, dataSource)
+		assert.NotEmpty(t, dataSource.SecureJsonData)
 
 		// Check if the migration status key is empty
 		value, exist, err := kvStore.Get(context.Background(), 0, secretskvs.DataSourceSecretType, secretMigrationStatusKey)
@@ -302,11 +307,11 @@ func TestMigrate(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Check if the secure json data was maintained for compatibility
-		query = &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
-		err = ds.GetDataSource(context.Background(), query)
+		query = &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
+		dataSource, err = ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
-		assert.NotNil(t, query.Result)
-		assert.NotEmpty(t, query.Result.SecureJsonData)
+		assert.NotNil(t, dataSource)
+		assert.NotEmpty(t, dataSource.SecureJsonData)
 
 		// Check if the secret was added to the secret store
 		value, exist, err = secretsStore.Get(context.Background(), dataSourceOrg, dataSourceName, secretskvs.DataSourceSecretType)
@@ -326,11 +331,11 @@ func TestMigrate(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Check if the secure json data was deleted
-		query = &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
-		err = ds.GetDataSource(context.Background(), query)
+		query = &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
+		dataSource, err = ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
-		assert.NotNil(t, query.Result)
-		assert.Empty(t, query.Result.SecureJsonData)
+		assert.NotNil(t, dataSource)
+		assert.Empty(t, dataSource.SecureJsonData)
 
 		// Check if the secret was added to the secret store
 		value, exist, err = secretsStore.Get(context.Background(), dataSourceOrg, dataSourceName, secretskvs.DataSourceSecretType)

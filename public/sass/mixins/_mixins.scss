@@ -1,3 +1,5 @@
+@use 'sass:color';
+
 @mixin clearfix() {
   &::after {
     content: '';
@@ -254,10 +256,10 @@
 // Add an alphatransparency value to any background or border color (via Elyse Holladay)
 #translucent {
   @mixin background($color: $white, $alpha: 1) {
-    background-color: hsla(hue($color), saturation($color), lightness($color), $alpha);
+    background-color: hsla(color.hue($color), color.saturation($color), color.lightness($color), $alpha);
   }
   @mixin border($color: $white, $alpha: 1) {
-    border-color: hsla(hue($color), saturation($color), lightness($color), $alpha);
+    border-color: hsla(color.hue($color), color.saturation($color), color.lightness($color), $alpha);
     @include background-clip(padding-box);
   }
 }
@@ -278,7 +280,7 @@
 }
 
 @mixin gradient-vertical($startColor: #555, $endColor: #333) {
-  background-color: mix($startColor, $endColor, 60%);
+  background-color: color.mix($startColor, $endColor, 60%);
   background-image: linear-gradient(to bottom, $startColor, $endColor); // Standard, IE10
   background-repeat: repeat-x;
 }
@@ -290,13 +292,13 @@
 }
 
 @mixin gradient-horizontal-three-colors($startColor: #00b3ee, $midColor: #7a43b6, $colorStop: 50%, $endColor: #c3325f) {
-  background-color: mix($midColor, $endColor, 80%);
+  background-color: color.mix($midColor, $endColor, 80%);
   background-image: linear-gradient(to right, $startColor, $midColor $colorStop, $endColor);
   background-repeat: no-repeat;
 }
 
 @mixin gradient-vertical-three-colors($startColor: #00b3ee, $midColor: #7a43b6, $colorStop: 50%, $endColor: #c3325f) {
-  background-color: mix($midColor, $endColor, 80%);
+  background-color: color.mix($midColor, $endColor, 80%);
   background-image: linear-gradient($startColor, $midColor $colorStop, $endColor);
   background-repeat: no-repeat;
 }

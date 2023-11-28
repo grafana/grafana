@@ -1,0 +1,39 @@
+// Node.closest() polyfill
+if (typeof window !== 'undefined' && 'Element' in window && !Element.prototype.closest) {
+    Element.prototype.closest = function (s) {
+        const matches = (this.document || this.ownerDocument).querySelectorAll(s);
+        let el = this;
+        let i;
+        // eslint-disable-next-line
+        do {
+            i = matches.length;
+            // eslint-disable-next-line
+            while (--i >= 0 && matches.item(i) !== el) { }
+            el = el.parentElement;
+        } while (i < 0 && el);
+        return el;
+    };
+}
+export function getPreviousCousin(node, selector) {
+    let sibling = node.parentElement.previousSibling;
+    let el;
+    while (sibling) {
+        el = sibling.querySelector(selector);
+        if (el) {
+            return el;
+        }
+        sibling = sibling.previousSibling;
+    }
+    return undefined;
+}
+export function getNextCharacter(global) {
+    const selection = (global || window).getSelection();
+    if (!selection || !selection.anchorNode) {
+        return null;
+    }
+    const range = selection.getRangeAt(0);
+    const text = selection.anchorNode.textContent;
+    const offset = range.startOffset;
+    return text.slice(offset, offset + 1);
+}
+//# sourceMappingURL=dom.js.map

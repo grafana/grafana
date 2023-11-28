@@ -5,13 +5,16 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type fullAccessControl interface {
 	accesscontrol.AccessControl
 	accesscontrol.Service
+	plugins.RoleRegistry
 	RegisterFixedRoles(context.Context) error
 }
 
@@ -19,19 +22,21 @@ type Calls struct {
 	Evaluate                       []interface{}
 	GetUserPermissions             []interface{}
 	ClearUserPermissionCache       []interface{}
-	IsDisabled                     []interface{}
 	DeclareFixedRoles              []interface{}
+	DeclarePluginRoles             []interface{}
 	GetUserBuiltInRoles            []interface{}
 	RegisterFixedRoles             []interface{}
 	RegisterAttributeScopeResolver []interface{}
 	DeleteUserPermissions          []interface{}
+	SearchUsersPermissions         []interface{}
+	SearchUserPermissions          []interface{}
+	SaveExternalServiceRole        []interface{}
+	DeleteExternalServiceRole      []interface{}
 }
 
 type Mock struct {
 	// Unless an override is provided, permissions will be returned by GetUserPermissions
 	permissions []accesscontrol.Permission
-	// Unless an override is provided, disabled will be returned by IsDisabled
-	disabled bool
 	// Unless an override is provided, builtInRoles will be returned by GetUserBuiltInRoles
 	builtInRoles []string
 
@@ -39,15 +44,19 @@ type Mock struct {
 	Calls Calls
 
 	// Override functions
-	EvaluateFunc                       func(context.Context, *user.SignedInUser, accesscontrol.Evaluator) (bool, error)
-	GetUserPermissionsFunc             func(context.Context, *user.SignedInUser, accesscontrol.Options) ([]accesscontrol.Permission, error)
-	ClearUserPermissionCacheFunc       func(*user.SignedInUser)
-	IsDisabledFunc                     func() bool
+	EvaluateFunc                       func(context.Context, identity.Requester, accesscontrol.Evaluator) (bool, error)
+	GetUserPermissionsFunc             func(context.Context, identity.Requester, accesscontrol.Options) ([]accesscontrol.Permission, error)
+	ClearUserPermissionCacheFunc       func(identity.Requester)
 	DeclareFixedRolesFunc              func(...accesscontrol.RoleRegistration) error
-	GetUserBuiltInRolesFunc            func(user *user.SignedInUser) []string
+	DeclarePluginRolesFunc             func(context.Context, string, string, []plugins.RoleRegistration) error
+	GetUserBuiltInRolesFunc            func(user identity.Requester) []string
 	RegisterFixedRolesFunc             func() error
 	RegisterScopeAttributeResolverFunc func(string, accesscontrol.ScopeAttributeResolver)
 	DeleteUserPermissionsFunc          func(context.Context, int64) error
+	SearchUsersPermissionsFunc         func(context.Context, identity.Requester, int64, accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error)
+	SearchUserPermissionsFunc          func(ctx context.Context, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error)
+	SaveExternalServiceRoleFunc        func(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error
+	DeleteExternalServiceRoleFunc      func(ctx context.Context, externalServiceID string) error
 
 	scopeResolvers accesscontrol.Resolvers
 }
@@ -55,10 +64,10 @@ type Mock struct {
 // Ensure the mock stays in line with the interface
 var _ fullAccessControl = New()
 
+// Deprecated: use fake service and real access control evaluator instead
 func New() *Mock {
 	mock := &Mock{
 		Calls:          Calls{},
-		disabled:       false,
 		permissions:    []accesscontrol.Permission{},
 		builtInRoles:   []string{},
 		scopeResolvers: accesscontrol.NewResolvers(log.NewNopLogger()),
@@ -76,11 +85,6 @@ func (m *Mock) WithPermissions(permissions []accesscontrol.Permission) *Mock {
 	return m
 }
 
-func (m *Mock) WithDisabled() *Mock {
-	m.disabled = true
-	return m
-}
-
 func (m *Mock) WithBuiltInRoles(builtInRoles []string) *Mock {
 	m.builtInRoles = builtInRoles
 	return m
@@ -88,7 +92,7 @@ func (m *Mock) WithBuiltInRoles(builtInRoles []string) *Mock {
 
 // Evaluate evaluates access to the given resource.
 // This mock uses GetUserPermissions to then call the evaluator Evaluate function.
-func (m *Mock) Evaluate(ctx context.Context, usr *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+func (m *Mock) Evaluate(ctx context.Context, usr identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
 	m.Calls.Evaluate = append(m.Calls.Evaluate, []interface{}{ctx, usr, evaluator})
 	// Use override if provided
 	if m.EvaluateFunc != nil {
@@ -96,11 +100,9 @@ func (m *Mock) Evaluate(ctx context.Context, usr *user.SignedInUser, evaluator a
 	}
 
 	var permissions map[string][]string
-	if usr.Permissions != nil && usr.Permissions[usr.OrgID] != nil {
-		permissions = usr.Permissions[usr.OrgID]
-	}
+	permissions = usr.GetPermissions()
 
-	if permissions == nil {
+	if len(permissions) == 0 {
 		userPermissions, err := m.GetUserPermissions(ctx, usr, accesscontrol.Options{ReloadCache: true})
 		if err != nil {
 			return false, err
@@ -112,7 +114,7 @@ func (m *Mock) Evaluate(ctx context.Context, usr *user.SignedInUser, evaluator a
 		return true, nil
 	}
 
-	resolvedEvaluator, err := evaluator.MutateScopes(ctx, m.scopeResolvers.GetScopeAttributeMutator(usr.OrgID))
+	resolvedEvaluator, err := evaluator.MutateScopes(ctx, m.scopeResolvers.GetScopeAttributeMutator(usr.GetOrgID()))
 	if err != nil {
 		if errors.Is(err, accesscontrol.ErrResolverNotFound) {
 			return false, nil
@@ -125,7 +127,7 @@ func (m *Mock) Evaluate(ctx context.Context, usr *user.SignedInUser, evaluator a
 
 // GetUserPermissions returns user permissions.
 // This mock return m.permissions unless an override is provided.
-func (m *Mock) GetUserPermissions(ctx context.Context, user *user.SignedInUser, opts accesscontrol.Options) ([]accesscontrol.Permission, error) {
+func (m *Mock) GetUserPermissions(ctx context.Context, user identity.Requester, opts accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	m.Calls.GetUserPermissions = append(m.Calls.GetUserPermissions, []interface{}{ctx, user, opts})
 	// Use override if provided
 	if m.GetUserPermissionsFunc != nil {
@@ -135,24 +137,12 @@ func (m *Mock) GetUserPermissions(ctx context.Context, user *user.SignedInUser, 
 	return m.permissions, nil
 }
 
-func (m *Mock) ClearUserPermissionCache(user *user.SignedInUser) {
+func (m *Mock) ClearUserPermissionCache(user identity.Requester) {
 	m.Calls.ClearUserPermissionCache = append(m.Calls.ClearUserPermissionCache, []interface{}{user})
 	// Use override if provided
 	if m.ClearUserPermissionCacheFunc != nil {
 		m.ClearUserPermissionCacheFunc(user)
 	}
-}
-
-// Middleware checks if service disabled or not to switch to fallback authorization.
-// This mock return m.disabled unless an override is provided.
-func (m *Mock) IsDisabled() bool {
-	m.Calls.IsDisabled = append(m.Calls.IsDisabled, struct{}{})
-	// Use override if provided
-	if m.IsDisabledFunc != nil {
-		return m.IsDisabledFunc()
-	}
-	// Otherwise return the Disabled bool
-	return m.disabled
 }
 
 // DeclareFixedRoles allow the caller to declare, to the service, fixed roles and their
@@ -178,6 +168,18 @@ func (m *Mock) RegisterFixedRoles(ctx context.Context) error {
 	return nil
 }
 
+// DeclarePluginRoles allow the caller to declare, to the service, plugin roles and their
+// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
+// This mock returns no error unless an override is provided.
+func (m *Mock) DeclarePluginRoles(ctx context.Context, ID, name string, regs []plugins.RoleRegistration) error {
+	m.Calls.DeclarePluginRoles = append(m.Calls.DeclarePluginRoles, []interface{}{ctx, ID, name, regs})
+	// Use override if provided
+	if m.DeclarePluginRolesFunc != nil {
+		return m.DeclarePluginRolesFunc(ctx, ID, name, regs)
+	}
+	return nil
+}
+
 func (m *Mock) RegisterScopeAttributeResolver(scopePrefix string, resolver accesscontrol.ScopeAttributeResolver) {
 	m.scopeResolvers.AddScopeAttributeResolver(scopePrefix, resolver)
 	m.Calls.RegisterAttributeScopeResolver = append(m.Calls.RegisterAttributeScopeResolver, []struct{}{})
@@ -192,6 +194,44 @@ func (m *Mock) DeleteUserPermissions(ctx context.Context, orgID, userID int64) e
 	// Use override if provided
 	if m.DeleteUserPermissionsFunc != nil {
 		return m.DeleteUserPermissionsFunc(ctx, userID)
+	}
+	return nil
+}
+
+// SearchUsersPermissions returns all users' permissions filtered by an action prefix
+func (m *Mock) SearchUsersPermissions(ctx context.Context, usr identity.Requester, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
+	user := usr.(*user.SignedInUser)
+	m.Calls.SearchUsersPermissions = append(m.Calls.SearchUsersPermissions, []interface{}{ctx, user, options})
+	// Use override if provided
+	if m.SearchUsersPermissionsFunc != nil {
+		return m.SearchUsersPermissionsFunc(ctx, user, usr.GetOrgID(), options)
+	}
+	return nil, nil
+}
+
+func (m *Mock) SearchUserPermissions(ctx context.Context, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error) {
+	m.Calls.SearchUserPermissions = append(m.Calls.SearchUserPermissions, []interface{}{ctx, orgID, searchOptions})
+	// Use override if provided
+	if m.SearchUserPermissionsFunc != nil {
+		return m.SearchUserPermissionsFunc(ctx, orgID, searchOptions)
+	}
+	return nil, nil
+}
+
+func (m *Mock) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error {
+	m.Calls.SaveExternalServiceRole = append(m.Calls.SaveExternalServiceRole, []interface{}{ctx, cmd})
+	// Use override if provided
+	if m.SaveExternalServiceRoleFunc != nil {
+		return m.SaveExternalServiceRoleFunc(ctx, cmd)
+	}
+	return nil
+}
+
+func (m *Mock) DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error {
+	m.Calls.DeleteExternalServiceRole = append(m.Calls.DeleteExternalServiceRole, []interface{}{ctx, externalServiceID})
+	// Use override if provided
+	if m.DeleteExternalServiceRoleFunc != nil {
+		return m.DeleteExternalServiceRoleFunc(ctx, externalServiceID)
 	}
 	return nil
 }

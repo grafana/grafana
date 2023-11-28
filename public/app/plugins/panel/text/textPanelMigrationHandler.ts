@@ -1,16 +1,16 @@
 import { PanelModel } from '@grafana/data';
 
-import { TextMode, PanelOptions } from './models.gen';
+import { TextMode, Options } from './panelcfg.gen';
 
-export const textPanelMigrationHandler = (panel: PanelModel<PanelOptions>): Partial<PanelOptions> => {
+export const textPanelMigrationHandler = (panel: PanelModel<Options>): Partial<Options> => {
   const previousVersion = parseFloat(panel.pluginVersion || '6.1');
   let options = panel.options;
 
   // Migrates old Angular based text panel props to new props
   if (panel.hasOwnProperty('content') && panel.hasOwnProperty('mode')) {
-    const oldTextPanel: any = panel as any;
+    const oldTextPanel: any = panel;
     const content = oldTextPanel.content;
-    const mode = oldTextPanel.mode as TextMode;
+    const mode: TextMode = oldTextPanel.mode;
 
     delete oldTextPanel.content;
     delete oldTextPanel.mode;

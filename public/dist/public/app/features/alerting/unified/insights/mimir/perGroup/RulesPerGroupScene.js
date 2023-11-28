@@ -1,0 +1,32 @@
+import React from 'react';
+import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
+import { BigValueGraphMode } from '@grafana/schema';
+import { PANEL_STYLES } from '../../../home/Insights';
+import { InsightsRatingModal } from '../../RatingModal';
+export function getRulesPerGroupScene(datasource, panelTitle) {
+    const query = new SceneQueryRunner({
+        datasource,
+        queries: [
+            {
+                refId: 'A',
+                expr: `sum(grafanacloud_instance_rule_group_rules{rule_group="$rule_group"})`,
+                range: true,
+                legendFormat: 'number of rules',
+            },
+        ],
+    });
+    return new SceneFlexItem(Object.assign(Object.assign({}, PANEL_STYLES), { body: PanelBuilders.stat()
+            .setTitle(panelTitle)
+            .setDescription('The current and historical number of alert rules in the rule group')
+            .setData(query)
+            .setUnit('none')
+            .setOption('graphMode', BigValueGraphMode.Area)
+            .setOverrides((b) => b.matchFieldsByQuery('A').overrideColor({
+            mode: 'fixed',
+            fixedColor: 'blue',
+        }))
+            .setNoValue('0')
+            .setHeaderActions(React.createElement(InsightsRatingModal, { panel: panelTitle }))
+            .build() }));
+}
+//# sourceMappingURL=RulesPerGroupScene.js.map

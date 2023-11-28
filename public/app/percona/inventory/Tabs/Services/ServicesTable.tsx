@@ -34,7 +34,7 @@ interface ServicesTableProps {
   tableKey?: string;
 }
 
-const ServicesTable: FC<ServicesTableProps> = ({
+const ServicesTable: FC<React.PropsWithChildren<ServicesTableProps>> = ({
   isLoading,
   flattenServices,
   onSelectionChange,

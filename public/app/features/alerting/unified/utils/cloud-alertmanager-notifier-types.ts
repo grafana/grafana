@@ -1,26 +1,6 @@
-import { NotificationChannelOption, NotifierDTO } from 'app/types';
+import { CloudNotifierType, NotificationChannelOption, NotifierDTO } from 'app/types';
 
-function option(
-  propertyName: string,
-  label: string,
-  description: string,
-  rest: Partial<NotificationChannelOption> = {}
-): NotificationChannelOption {
-  return {
-    propertyName,
-    label,
-    description,
-    element: 'input',
-    inputType: '',
-    required: false,
-    secure: false,
-    placeholder: '',
-    validationRule: '',
-    showWhen: { field: '', is: '' },
-    dependsOn: '',
-    ...rest,
-  };
-}
+import { option } from './notifier-types';
 
 const basicAuthOption: NotificationChannelOption = option(
   'basic_auth',
@@ -69,7 +49,7 @@ const httpConfigOption: NotificationChannelOption = option(
   }
 );
 
-export const cloudNotifierTypes: NotifierDTO[] = [
+export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
   {
     name: 'Email',
     description: 'Send notification over SMTP',
@@ -77,7 +57,12 @@ export const cloudNotifierTypes: NotifierDTO[] = [
     info: '',
     heading: 'Email settings',
     options: [
-      option('to', 'To', 'The email address to send notifications to.', { required: true }),
+      option(
+        'to',
+        'To',
+        'The email address to send notifications to. You can enter multiple addresses using a "," separator',
+        { required: true }
+      ),
       option('from', 'From', 'The sender address.'),
       option('smarthost', 'SMTP host', 'The SMTP host through which emails are sent.'),
       option('hello', 'Hello', 'The hostname to identify to the SMTP server.'),
@@ -330,6 +315,198 @@ export const cloudNotifierTypes: NotifierDTO[] = [
       httpConfigOption,
     ],
   },
+  {
+    name: 'Discord',
+    description: 'Sends notifications to Discord',
+    type: 'discord',
+    info: '',
+    heading: 'Discord settings',
+    options: [
+      option('title', 'Title', 'Templated title of the message', {
+        placeholder: '{{ template "discord.default.title" . }}',
+      }),
+      option(
+        'message',
+        'Message Content',
+        'Mention a group using @ or a user using <@ID> when notifying in a channel',
+        { placeholder: '{{ template "discord.default.message" . }}' }
+      ),
+      option('webhook_url', 'Webhook URL', '', { placeholder: 'Discord webhook URL', required: true }),
+      httpConfigOption,
+    ],
+  },
+  {
+    name: 'Cisco Webex Teams',
+    description: 'Sends notifications to Cisco Webex Teams',
+    type: 'webex',
+    info: '',
+    heading: 'Cisco Webex Teams settings',
+    options: [
+      option('api_url', 'API URL', 'The Webex Teams API URL', {
+        placeholder: 'https://webexapis.com/v1/messages',
+      }),
+      option('room_id', 'Room ID', 'ID of the Webex Teams room where to send the messages', {
+        required: true,
+      }),
+      option('message', 'Message', 'Message template', {
+        placeholder: '{{ template "webex.default.message" .}}',
+      }),
+      {
+        ...httpConfigOption,
+        required: true,
+      },
+    ],
+  },
+  {
+    name: 'Telegram',
+    description: 'Sends notifications to Telegram',
+    type: 'telegram',
+    info: '',
+    heading: 'Telegram settings',
+    options: [
+      option('api_url', 'API URL', 'The Telegram API URL', {
+        placeholder: 'https://api.telegram.org',
+      }),
+      option('bot_token', 'Bot token', 'Telegram bot token', {
+        required: true,
+      }),
+      option('chat_id', 'Chat ID', 'ID of the chat where to send the messages', {
+        required: true,
+        setValueAs: (value) => (typeof value === 'string' ? parseInt(value, 10) : 0),
+      }),
+      option('message', 'Message', 'Message template', {
+        placeholder: '{{ template "webex.default.message" .}}',
+      }),
+      option('disable_notifications', 'Disable notifications', 'Disable telegram notifications', {
+        element: 'checkbox',
+      }),
+      option('parse_mode', 'Parse mode', 'Parse mode for telegram message', {
+        element: 'select',
+        defaultValue: { label: 'MarkdownV2', value: 'MarkdownV2' },
+        selectOptions: [
+          { label: 'MarkdownV2', value: 'MarkdownV2' },
+          { label: 'Markdown', value: 'Markdown' },
+          { label: 'HTML', value: 'HTML' },
+          { label: 'plain text', value: '' },
+        ],
+      }),
+      httpConfigOption,
+    ],
+  },
+  {
+    name: 'Amazon SNS',
+    description: 'Sends notifications to Amazon SNS',
+    type: 'sns',
+    info: '',
+    heading: 'Amazon SNS settings',
+    options: [
+      option('api_url', 'API URL', 'The Amazon SNS API URL'),
+      option(
+        'sigv4',
+        'SigV4 authentication',
+        "Configures AWS's Signature Verification 4 signing process to sign requests",
+        {
+          element: 'subform',
+          subformOptions: [
+            option(
+              'region',
+              'Region',
+              'The AWS region. If blank, the region from the default credentials chain is used'
+            ),
+            option(
+              'access_key',
+              'Access key',
+              'The AWS API access_key. If blank the environment variable "AWS_ACCESS_KEY_ID" is used'
+            ),
+            option(
+              'secret_key',
+              'Secret key',
+              'The AWS API secret_key. If blank the environment variable "AWS_ACCESS_SECRET_ID" is used'
+            ),
+            option('profile', 'Profile', 'Named AWS profile used to authenticate'),
+            option('role_arn', 'Rule ARN', 'AWS Role ARN, an alternative to using AWS API keys'),
+          ],
+        }
+      ),
+      option(
+        'topic_arn',
+        'SNS topic ARN',
+        "If you don't specify this value, you must specify a value for the phone_number or target_arn. If you are using a FIFO SNS topic you should set a message group interval longer than 5 minutes to prevent messages with the same group key being deduplicated by the SNS default deduplication window"
+      ),
+      option(
+        'phone_number',
+        'Phone number',
+        "Phone number if message is delivered via SMS in E.164 format. If you don't specify this value, you must specify a value for the topic_arn or target_arn"
+      ),
+      option(
+        'target_arn',
+        'Target ARN',
+        "The  mobile platform endpoint ARN if message is delivered via mobile notifications. If you don't specify this value, you must specify a value for the topic_arn or phone_number"
+      ),
+
+      option('subject', 'Subject', 'Subject line when the message is delivered to email endpoints', {
+        placeholder: '{{ template "sns.default.subject" .}}',
+      }),
+      option('message', 'Message', 'The message content of the SNS notification', {
+        placeholder: '{{ template "sns.default.message" .}}',
+      }),
+      option('attributes', 'Attributes', 'SNS message attributes', {
+        element: 'key_value_map',
+      }),
+      httpConfigOption,
+    ],
+  },
+  {
+    name: 'WeChat',
+    description: 'Sends notifications to WeChat',
+    type: 'wechat',
+    info: '',
+    heading: 'WeChat settings',
+    options: [
+      option('api_url', 'API URL', 'The WeChat API URL'),
+      option('api_secret', 'API Secret', 'The API key to use when talking to the WeChat API'),
+      option('corp_id', 'Corp ID', 'The corp id for authentication'),
+      option('message', 'Message', 'API request data as defined by the WeChat API', {
+        placeholder: '{{ template "wechat.default.message" . }}',
+      }),
+      option('message_type', 'Message type', 'Type of the message type', {
+        element: 'select',
+        defaultValue: { label: 'Text', value: 'text' },
+        selectOptions: [
+          { label: 'Text', value: 'text' },
+          { label: 'Markdown', value: 'markdown' },
+        ],
+      }),
+      option('agent_id', 'Agent ID', '', {
+        placeholder: '{{ template "wechat.default.agent_id" . }}',
+      }),
+      option('to_user', 'to user', '', {
+        placeholder: '{{ template "wechat.default.to_user" . }}',
+      }),
+      option('to_party', 'to party', '', {
+        placeholder: '{{ template "wechat.default.to_party" . }}',
+      }),
+      option('to_tag', 'to tag', '', {
+        placeholder: '{{ template "wechat.default.to_tag" . }}',
+      }),
+    ],
+  },
+  {
+    name: 'Microsoft Teams',
+    description: 'Sends notifications to Microsoft Teams',
+    type: 'msteams',
+    info: '',
+    heading: 'Microsoft Teams settings',
+    options: [
+      option('webhook_url', 'Webhook URL', 'The incoming webhook URL.'),
+      option('title', 'Title', 'Message title template.', {
+        placeholder: '{{ template "teams.default.title" . }}',
+      }),
+      option('text', 'Text', 'Message body template.', {
+        placeholder: '{{ template "teams.default.text" . }}',
+      }),
+    ],
+  },
 ];
 
 export const globalConfigOptions: NotificationChannelOption[] = [
@@ -372,6 +549,8 @@ export const globalConfigOptions: NotificationChannelOption[] = [
   option('wechat_api_url', 'WeChat API URL', '', { placeholder: 'https://qyapi.weixin.qq.com/cgi-bin/' }),
   option('wechat_api_secret', 'WeChat API secret', ''),
   option('wechat_api_corp_id', 'WeChat API corp id', ''),
+  option('webex_api_url', 'Cisco Webex Teams API URL', ''),
+  option('telegram_api_url', 'The Telegram API URL', ''),
   httpConfigOption,
   option(
     'resolve_timeout',

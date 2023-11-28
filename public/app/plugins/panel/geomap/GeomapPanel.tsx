@@ -11,9 +11,9 @@ import { fromLonLat } from 'ol/proj';
 import React, { Component, ReactNode } from 'react';
 import { Subscription } from 'rxjs';
 
-import { DataHoverEvent, GrafanaTheme, PanelData, PanelProps } from '@grafana/data';
+import { DataHoverEvent, PanelData, PanelProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { PanelContext, PanelContextRoot, stylesFactory } from '@grafana/ui';
+import { PanelContext, PanelContextRoot } from '@grafana/ui';
 import { PanelEditExitedEvent } from 'app/types/events';
 
 import { GeomapOverlay, OverlayProps } from './GeomapOverlay';
@@ -23,20 +23,20 @@ import { MeasureOverlay } from './components/MeasureOverlay';
 import { MeasureVectorLayer } from './components/MeasureVectorLayer';
 import { GeomapHoverPayload } from './event';
 import { getGlobalStyles } from './globalStyles';
-import { defaultMarkersConfig, MARKERS_LAYER_ID } from './layers/data/markersLayer';
+import { defaultMarkersConfig } from './layers/data/markersLayer';
 import { DEFAULT_BASEMAP_CONFIG } from './layers/registry';
-import { ControlsOptions, GeomapPanelOptions, MapLayerState, MapViewConfig, TooltipMode } from './types';
+import { ControlsOptions, Options, MapLayerState, MapViewConfig, TooltipMode } from './types';
 import { getActions } from './utils/actions';
 import { getLayersExtent } from './utils/getLayersExtent';
 import { applyLayerFilter, initLayer } from './utils/layers';
-import { pointerClickListener, pointerMoveListener, setTooltipListeners } from './utils/tootltip';
+import { pointerClickListener, pointerMoveListener, setTooltipListeners } from './utils/tooltip';
 import { updateMap, getNewOpenLayersMap, notifyPanelEditor } from './utils/utils';
 import { centerPointRegistry, MapCenterID } from './view';
 
 // Allows multiple panels to share the same view instance
 let sharedView: View | undefined = undefined;
 
-type Props = PanelProps<GeomapPanelOptions>;
+type Props = PanelProps<Options>;
 interface State extends OverlayProps {
   ttip?: GeomapHoverPayload;
   ttipOpen: boolean;
@@ -45,6 +45,7 @@ interface State extends OverlayProps {
 }
 
 export class GeomapPanel extends Component<Props, State> {
+  declare context: React.ContextType<typeof PanelContextRoot>;
   static contextType = PanelContextRoot;
   panelContext: PanelContext | undefined = undefined;
   private subs = new Subscription();
@@ -52,7 +53,6 @@ export class GeomapPanel extends Component<Props, State> {
   globalCSS = getGlobalStyles(config.theme2);
 
   mouseWheelZoom?: MouseWheelZoom;
-  style = getStyles(config.theme);
   hoverPayload: GeomapHoverPayload = { point: {}, pageX: -1, pageY: -1 };
   readonly hoverEvent = new DataHoverEvent(this.hoverPayload);
 
@@ -82,6 +82,8 @@ export class GeomapPanel extends Component<Props, State> {
     for (const lyr of this.layers) {
       lyr.handler.dispose?.();
     }
+    // Ensure map is disposed
+    this.map?.dispose();
   }
 
   shouldComponentUpdate(nextProps: Props) {
@@ -144,7 +146,7 @@ export class GeomapPanel extends Component<Props, State> {
    *
    * NOTE: changes to basemap and layers are handled independently
    */
-  optionsChanged(options: GeomapPanelOptions) {
+  optionsChanged(options: Options) {
     const oldOptions = this.props.options;
     if (options.view !== oldOptions.view) {
       const [updatedSharedView, view] = this.initMapView(options.view, sharedView);
@@ -157,31 +159,6 @@ export class GeomapPanel extends Component<Props, State> {
 
     if (options.controls !== oldOptions.controls) {
       this.initControls(options.controls ?? { showZoom: true, showAttribution: true });
-    }
-
-    // TODO: Clean this approach up / potentially support multiple marker layers?
-    // See https://github.com/grafana/grafana/issues/51185 for more details.
-    for (const layer of options.layers) {
-      if (layer.type === MARKERS_LAYER_ID) {
-        const oldLayer = this.props.options.layers.find((lyr) => lyr.name === layer.name);
-        const newLayerColorField = layer.config.style.color.field;
-        const oldLayerColorField = oldLayer?.config.style.color.field;
-        if (layer.config.style.color.field && newLayerColorField !== oldLayerColorField) {
-          const colorFieldData = this.props.data.series[0].fields.find((field) => field.name === newLayerColorField);
-          if (colorFieldData) {
-            // override Standard Options min/max value with color field calc min/max
-            this.props.onFieldConfigChange({
-              ...this.props.fieldConfig,
-              defaults: {
-                ...this.props.fieldConfig.defaults,
-                min: colorFieldData.state?.calcs?.min,
-                max: colorFieldData.state?.calcs?.max,
-              },
-            });
-            break;
-          }
-        }
-      }
     }
   }
 
@@ -208,15 +185,15 @@ export class GeomapPanel extends Component<Props, State> {
   }
 
   initMapRef = async (div: HTMLDivElement) => {
+    if (!div) {
+      // Do not initialize new map or dispose old map
+      return;
+    }
     this.mapDiv = div;
     if (this.map) {
       this.map.dispose();
     }
 
-    if (!div) {
-      this.map = undefined;
-      return;
-    }
     const { options } = this.props;
 
     const map = getNewOpenLayersMap(this, options, div);
@@ -265,11 +242,11 @@ export class GeomapPanel extends Component<Props, State> {
     this.setState({ ttipOpen: false, ttip: undefined });
   };
 
-  pointerClickListener = (evt: MapBrowserEvent<UIEvent>) => {
+  pointerClickListener = (evt: MapBrowserEvent<MouseEvent>) => {
     pointerClickListener(evt, this);
   };
 
-  pointerMoveListener = (evt: MapBrowserEvent<UIEvent>) => {
+  pointerMoveListener = (evt: MapBrowserEvent<MouseEvent>) => {
     pointerMoveListener(evt, this);
   };
 
@@ -407,8 +384,8 @@ export class GeomapPanel extends Component<Props, State> {
     return (
       <>
         <Global styles={this.globalCSS} />
-        <div className={this.style.wrap} onMouseLeave={this.clearTooltip}>
-          <div className={this.style.map} ref={this.initMapRef}></div>
+        <div className={styles.wrap} onMouseLeave={this.clearTooltip}>
+          <div className={styles.map} ref={this.initMapRef}></div>
           <GeomapOverlay
             bottomLeft={legends}
             topRight1={topRight1}
@@ -422,16 +399,16 @@ export class GeomapPanel extends Component<Props, State> {
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
-  wrap: css`
-    position: relative;
-    width: 100%;
-    height: 100%;
-  `,
-  map: css`
-    position: absolute;
-    z-index: 0;
-    width: 100%;
-    height: 100%;
-  `,
-}));
+const styles = {
+  wrap: css({
+    position: 'relative',
+    width: '100%',
+    height: '100%',
+  }),
+  map: css({
+    position: 'absolute',
+    zIndex: 0,
+    width: '100%',
+    height: '100%',
+  }),
+};

@@ -7,7 +7,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/flux"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/fsql"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
@@ -17,28 +21,32 @@ const (
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult,
 	error) {
-	dsInfo, err := s.getDSInfo(req.PluginContext)
+	logger := logger.FromContext(ctx)
+	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
-		return getHealthCheckMessage(s, "error getting datasource info", err)
+		return getHealthCheckMessage(logger, "error getting datasource info", err)
 	}
 
 	if dsInfo == nil {
-		return getHealthCheckMessage(s, "", errors.New("invalid datasource info received"))
+		return getHealthCheckMessage(logger, "", errors.New("invalid datasource info received"))
 	}
 
 	switch dsInfo.Version {
 	case influxVersionFlux:
-		return CheckFluxHealth(ctx, dsInfo, s, req)
+		return CheckFluxHealth(ctx, dsInfo, req)
 	case influxVersionInfluxQL:
-		return CheckInfluxQLHealth(ctx, dsInfo, s)
+		return CheckInfluxQLHealth(ctx, dsInfo)
+	case influxVersionSQL:
+		return CheckSQLHealth(ctx, dsInfo, req)
 	default:
-		return getHealthCheckMessage(s, "", errors.New("unknown influx version"))
+		return getHealthCheckMessage(logger, "", errors.New("unknown influx version"))
 	}
 }
 
-func CheckFluxHealth(ctx context.Context, dsInfo *models.DatasourceInfo, s *Service,
+func CheckFluxHealth(ctx context.Context, dsInfo *models.DatasourceInfo,
 	req *backend.CheckHealthRequest) (*backend.CheckHealthResult,
 	error) {
+	logger := logger.FromContext(ctx)
 	ds, err := flux.Query(ctx, dsInfo, backend.QueryDataRequest{
 		PluginContext: req.PluginContext,
 		Queries: []backend.DataQuery{
@@ -56,59 +64,89 @@ func CheckFluxHealth(ctx context.Context, dsInfo *models.DatasourceInfo, s *Serv
 	})
 
 	if err != nil {
-		return getHealthCheckMessage(s, "error performing flux query", err)
+		return getHealthCheckMessage(logger, "error performing flux query", err)
 	}
 	if res, ok := ds.Responses[refID]; ok {
 		if res.Error != nil {
-			return getHealthCheckMessage(s, "error reading buckets", res.Error)
+			return getHealthCheckMessage(logger, "error reading buckets", res.Error)
 		}
 		if len(res.Frames) > 0 && len(res.Frames[0].Fields) > 0 {
-			return getHealthCheckMessage(s, fmt.Sprintf("%d buckets found", res.Frames[0].Fields[0].Len()), nil)
+			return getHealthCheckMessage(logger, fmt.Sprintf("%d buckets found", res.Frames[0].Fields[0].Len()), nil)
 		}
 	}
 
-	return getHealthCheckMessage(s, "", errors.New("error getting flux query buckets"))
+	return getHealthCheckMessage(logger, "", errors.New("error getting flux query buckets"))
 }
 
-func CheckInfluxQLHealth(ctx context.Context, dsInfo *models.DatasourceInfo, s *Service) (*backend.CheckHealthResult, error) {
-	queryString := "SHOW measurements"
-	hcRequest, err := s.createRequest(ctx, dsInfo, queryString)
+func CheckInfluxQLHealth(ctx context.Context, dsInfo *models.DatasourceInfo) (*backend.CheckHealthResult, error) {
+	logger := logger.FromContext(ctx)
+
+	resp, err := influxql.Query(ctx, dsInfo, &backend.QueryDataRequest{
+		Queries: []backend.DataQuery{
+			{
+				RefID:     refID,
+				QueryType: "health",
+				JSON:      []byte(`{"query": "SHOW measurements", "rawQuery": true}`),
+			},
+		},
+	})
 	if err != nil {
-		return getHealthCheckMessage(s, "error creating influxDB healthcheck request", err)
+		return getHealthCheckMessage(logger, "error performing influxQL query", err)
 	}
 
-	res, err := dsInfo.HTTPClient.Do(hcRequest)
-	if err != nil {
-		return getHealthCheckMessage(s, "error performing influxQL query", err)
-	}
-
-	defer func() {
-		if err := res.Body.Close(); err != nil {
-			s.glog.Warn("failed to close response body", "err", err)
-		}
-	}()
-
-	if res.StatusCode/100 != 2 {
-		return getHealthCheckMessage(s, "", fmt.Errorf("error reading InfluxDB. Status Code: %d", res.StatusCode))
-	}
-	resp := s.responseParser.Parse(res.Body, []Query{{
-		RefID:       refID,
-		UseRawQuery: true,
-		RawQuery:    queryString,
-	}})
 	if res, ok := resp.Responses[refID]; ok {
 		if res.Error != nil {
-			return getHealthCheckMessage(s, "error reading influxDB", res.Error)
+			return getHealthCheckMessage(logger, "error reading influxDB", res.Error)
 		}
+
+		if len(res.Frames) == 0 {
+			return getHealthCheckMessage(logger, "0 measurements found", nil)
+		}
+
 		if len(res.Frames) > 0 && len(res.Frames[0].Fields) > 0 {
-			return getHealthCheckMessage(s, fmt.Sprintf("%d measurements found", res.Frames[0].Fields[0].Len()), nil)
+			return getHealthCheckMessage(logger, fmt.Sprintf("%d measurements found", res.Frames[0].Fields[0].Len()), nil)
 		}
 	}
 
-	return getHealthCheckMessage(s, "", errors.New("error connecting influxDB influxQL"))
+	return getHealthCheckMessage(logger, "", errors.New("error connecting influxDB influxQL"))
 }
 
-func getHealthCheckMessage(s *Service, message string, err error) (*backend.CheckHealthResult, error) {
+func CheckSQLHealth(ctx context.Context, dsInfo *models.DatasourceInfo, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	ds, err := fsql.Query(ctx, dsInfo, backend.QueryDataRequest{
+		PluginContext: req.PluginContext,
+		Queries: []backend.DataQuery{
+			{
+				RefID:         refID,
+				JSON:          []byte(`{ "rawSql": "select 1", "format": "table" }`),
+				Interval:      1 * time.Minute,
+				MaxDataPoints: 423,
+				TimeRange: backend.TimeRange{
+					From: time.Now().AddDate(0, 0, -1),
+					To:   time.Now(),
+				},
+			},
+		},
+	})
+
+	if err != nil {
+		return getHealthCheckMessage(logger, "error performing sql query", err)
+	}
+
+	res := ds.Responses[refID]
+	if res.Error != nil {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: fmt.Sprintf("ERROR: %s", res.Error),
+		}, nil
+	}
+
+	return &backend.CheckHealthResult{
+		Status:  backend.HealthStatusOk,
+		Message: "OK",
+	}, nil
+}
+
+func getHealthCheckMessage(logger log.Logger, message string, err error) (*backend.CheckHealthResult, error) {
 	if err == nil {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusOk,
@@ -116,7 +154,7 @@ func getHealthCheckMessage(s *Service, message string, err error) (*backend.Chec
 		}, nil
 	}
 
-	s.glog.Warn("error performing influxdb healthcheck", "err", err.Error())
+	logger.Warn("Error performing influxdb healthcheck", "err", err.Error())
 	errorMessage := fmt.Sprintf("%s %s", err.Error(), message)
 
 	return &backend.CheckHealthResult{

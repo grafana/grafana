@@ -1,6 +1,6 @@
 import { isString as _isString } from 'lodash';
 
-import { TimeRange, AppEvents, rangeUtil, dateMath, PanelModel as IPanelModel } from '@grafana/data';
+import { TimeRange, AppEvents, rangeUtil, dateMath, PanelModel as IPanelModel, dateTimeAsMoment } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
@@ -75,7 +75,7 @@ export const addLibraryPanel = (dashboard: DashboardModel, panel: PanelModel) =>
       component: AddLibraryPanelModal,
       props: {
         panel,
-        initialFolderId: dashboard.meta.folderId,
+        initialFolderUid: dashboard.meta.folderUid,
         isOpen: true,
       },
     })
@@ -126,11 +126,13 @@ export function applyPanelTimeOverrides(panel: PanelModel, timeRange: TimeRange)
     }
 
     if (_isString(timeRange.raw.from)) {
-      const timeFromDate = dateMath.parse(timeFromInfo.from)!;
+      const fromTimezone = dateTimeAsMoment(timeRange.from).tz();
+      const toTimezone = dateTimeAsMoment(timeRange.to).tz();
+      const timeFromDate = dateMath.parse(timeFromInfo.from, undefined, fromTimezone)!;
       newTimeData.timeInfo = timeFromInfo.display;
       newTimeData.timeRange = {
         from: timeFromDate,
-        to: dateMath.parse(timeFromInfo.to)!,
+        to: dateMath.parse(timeFromInfo.to, undefined, toTimezone)!,
         raw: {
           from: timeFromInfo.from,
           to: timeFromInfo.to,
@@ -180,4 +182,16 @@ export function calculateInnerPanelHeight(panel: PanelModel, containerHeight: nu
   const chromePadding = panel.plugin && panel.plugin.noPadding ? 0 : config.theme.panelPadding * 2;
   const headerHeight = panel.hasTitle() ? config.theme.panelHeaderHeight : 0;
   return containerHeight - headerHeight - chromePadding - PANEL_BORDER;
+}
+
+export function calculateNewPanelGridPos(dashboard: DashboardModel): PanelModel['gridPos'] {
+  // Move all panels down by the height of the "add panel" widget.
+  // This is to work around an issue with react-grid-layout that can mess up the layout
+  // in certain configurations. (See https://github.com/react-grid-layout/react-grid-layout/issues/1787)
+  const addPanelWidgetHeight = 8;
+  for (const panel of dashboard.panelIterator()) {
+    panel.gridPos.y += addPanelWidgetHeight;
+  }
+
+  return { x: 0, y: 0, w: 12, h: addPanelWidgetHeight };
 }

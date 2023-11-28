@@ -9,7 +9,7 @@ import { getStyles } from './Pagination.styles';
 import { PaginationProps } from './Pagination.types';
 import { getShownPages, getLeftItemNumber, getRightItemNumber } from './Pagination.utils';
 
-export const Pagination: FC<PaginationProps> = ({
+export const Pagination: FC<React.PropsWithChildren<PaginationProps>> = ({
   pageCount = 1,
   initialPageIndex = 0,
   pageSize,

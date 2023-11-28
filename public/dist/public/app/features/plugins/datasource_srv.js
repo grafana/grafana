@@ -1,0 +1,294 @@
+import { __awaiter } from "tslib";
+import { AppEvents, DataSourceApi, } from '@grafana/data';
+import { getBackendSrv, getDataSourceSrv as getDataSourceService, getLegacyAngularInjector, getTemplateSrv, } from '@grafana/runtime';
+import { ExpressionDatasourceRef, isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import appEvents from 'app/core/app_events';
+import config from 'app/core/config';
+import { dataSource as expressionDatasource, instanceSettings as expressionInstanceSettings, } from 'app/features/expressions/ExpressionDatasource';
+import { ExpressionDatasourceUID } from 'app/features/expressions/types';
+import { importDataSourcePlugin } from './plugin_loader';
+export class DatasourceSrv {
+    constructor(templateSrv = getTemplateSrv()) {
+        this.templateSrv = templateSrv;
+        this.datasources = {}; // UID
+        this.settingsMapByName = {};
+        this.settingsMapByUid = {};
+        this.settingsMapById = {};
+        this.defaultName = ''; // actually UID
+    }
+    init(settingsMapByName, defaultName) {
+        this.datasources = {};
+        this.settingsMapByUid = {};
+        this.settingsMapByName = settingsMapByName;
+        this.defaultName = defaultName;
+        for (const dsSettings of Object.values(settingsMapByName)) {
+            if (!dsSettings.uid) {
+                dsSettings.uid = dsSettings.name; // -- Grafana --, -- Mixed etc
+            }
+            this.settingsMapByUid[dsSettings.uid] = dsSettings;
+            this.settingsMapById[dsSettings.id] = dsSettings;
+        }
+        // Preload expressions
+        this.datasources[ExpressionDatasourceRef.type] = expressionDatasource;
+        this.datasources[ExpressionDatasourceUID] = expressionDatasource;
+        this.settingsMapByUid[ExpressionDatasourceRef.uid] = expressionInstanceSettings;
+        this.settingsMapByUid[ExpressionDatasourceUID] = expressionInstanceSettings;
+    }
+    getDataSourceSettingsByUid(uid) {
+        return this.settingsMapByUid[uid];
+    }
+    getInstanceSettings(ref, scopedVars) {
+        var _a, _b, _c, _d;
+        let nameOrUid = getNameOrUid(ref);
+        // Expressions has a new UID as __expr__ See: https://github.com/grafana/grafana/pull/62510/
+        // But we still have dashboards/panels with old expression UID (-100)
+        // To support both UIDs until we migrate them all to new one, this check is necessary
+        if (isExpressionReference(nameOrUid)) {
+            return expressionInstanceSettings;
+        }
+        if (nameOrUid === 'default' || nameOrUid == null) {
+            return (_a = this.settingsMapByUid[this.defaultName]) !== null && _a !== void 0 ? _a : this.settingsMapByName[this.defaultName];
+        }
+        // Complex logic to support template variable data source names
+        // For this we just pick the current or first data source in the variable
+        if (nameOrUid[0] === '$') {
+            const interpolatedName = this.templateSrv.replace(nameOrUid, scopedVars, variableInterpolation);
+            let dsSettings;
+            if (interpolatedName === 'default') {
+                dsSettings = this.settingsMapByName[this.defaultName];
+            }
+            else {
+                dsSettings = (_b = this.settingsMapByUid[interpolatedName]) !== null && _b !== void 0 ? _b : this.settingsMapByName[interpolatedName];
+            }
+            if (!dsSettings) {
+                return undefined;
+            }
+            // Return an instance with un-interpolated values for name and uid
+            return Object.assign(Object.assign({}, dsSettings), { isDefault: false, name: nameOrUid, uid: nameOrUid, rawRef: { type: dsSettings.type, uid: dsSettings.uid } });
+        }
+        return (_d = (_c = this.settingsMapByUid[nameOrUid]) !== null && _c !== void 0 ? _c : this.settingsMapByName[nameOrUid]) !== null && _d !== void 0 ? _d : this.settingsMapById[nameOrUid];
+    }
+    get(ref, scopedVars) {
+        let nameOrUid = getNameOrUid(ref);
+        if (!nameOrUid) {
+            return this.get(this.defaultName);
+        }
+        if (isExpressionReference(ref)) {
+            return Promise.resolve(this.datasources[ExpressionDatasourceUID]);
+        }
+        // Check if nameOrUid matches a uid and then get the name
+        const byName = this.settingsMapByName[nameOrUid];
+        if (byName) {
+            nameOrUid = byName.uid;
+        }
+        // This check is duplicated below, this is here mainly as performance optimization to skip interpolation
+        if (this.datasources[nameOrUid]) {
+            return Promise.resolve(this.datasources[nameOrUid]);
+        }
+        // Interpolation here is to support template variable in data source selection
+        nameOrUid = this.templateSrv.replace(nameOrUid, scopedVars, variableInterpolation);
+        if (nameOrUid === 'default' && this.defaultName !== 'default') {
+            return this.get(this.defaultName);
+        }
+        if (this.datasources[nameOrUid]) {
+            return Promise.resolve(this.datasources[nameOrUid]);
+        }
+        return this.loadDatasource(nameOrUid);
+    }
+    loadDatasource(key) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.datasources[key]) {
+                return Promise.resolve(this.datasources[key]);
+            }
+            // find the metadata
+            const instanceSettings = this.getInstanceSettings(key);
+            if (!instanceSettings) {
+                return Promise.reject({ message: `Datasource ${key} was not found` });
+            }
+            try {
+                const dsPlugin = yield importDataSourcePlugin(instanceSettings.meta);
+                // check if its in cache now
+                if (this.datasources[key]) {
+                    return this.datasources[key];
+                }
+                // If there is only one constructor argument it is instanceSettings
+                const useAngular = dsPlugin.DataSourceClass.length !== 1;
+                let instance;
+                if (useAngular) {
+                    instance = getLegacyAngularInjector().instantiate(dsPlugin.DataSourceClass, {
+                        instanceSettings,
+                    });
+                }
+                else {
+                    instance = new dsPlugin.DataSourceClass(instanceSettings);
+                }
+                instance.components = dsPlugin.components;
+                // Some old plugins does not extend DataSourceApi so we need to manually patch them
+                if (!(instance instanceof DataSourceApi)) {
+                    const anyInstance = instance;
+                    anyInstance.name = instanceSettings.name;
+                    anyInstance.id = instanceSettings.id;
+                    anyInstance.type = instanceSettings.type;
+                    anyInstance.meta = instanceSettings.meta;
+                    anyInstance.uid = instanceSettings.uid;
+                    instance.getRef = DataSourceApi.prototype.getRef;
+                }
+                // store in instance cache
+                this.datasources[key] = instance;
+                this.datasources[instance.uid] = instance;
+                return instance;
+            }
+            catch (err) {
+                if (err instanceof Error) {
+                    appEvents.emit(AppEvents.alertError, [instanceSettings.name + ' plugin failed', err.toString()]);
+                }
+                return Promise.reject({ message: `Datasource: ${key} was not found` });
+            }
+        });
+    }
+    getAll() {
+        return Object.values(this.settingsMapByName);
+    }
+    getList(filters = {}) {
+        const base = Object.values(this.settingsMapByName).filter((x) => {
+            if (x.meta.id === 'grafana' || x.meta.id === 'mixed' || x.meta.id === 'dashboard') {
+                return false;
+            }
+            if (filters.metrics && !x.meta.metrics) {
+                return false;
+            }
+            if (filters.tracing && !x.meta.tracing) {
+                return false;
+            }
+            if (filters.logs && x.meta.category !== 'logging' && !x.meta.logs) {
+                return false;
+            }
+            if (filters.annotations && !x.meta.annotations) {
+                return false;
+            }
+            if (filters.alerting && !x.meta.alerting) {
+                return false;
+            }
+            if (filters.pluginId && x.meta.id !== filters.pluginId) {
+                return false;
+            }
+            if (filters.filter && !filters.filter(x)) {
+                return false;
+            }
+            if (filters.type && (Array.isArray(filters.type) ? !filters.type.includes(x.type) : filters.type !== x.type)) {
+                return false;
+            }
+            if (!filters.all &&
+                x.meta.metrics !== true &&
+                x.meta.annotations !== true &&
+                x.meta.tracing !== true &&
+                x.meta.logs !== true &&
+                x.meta.alerting !== true) {
+                return false;
+            }
+            return true;
+        });
+        if (filters.variables) {
+            for (const variable of this.templateSrv.getVariables()) {
+                if (variable.type !== 'datasource') {
+                    continue;
+                }
+                let dsValue = variable.current.value === 'default' ? this.defaultName : variable.current.value;
+                if (Array.isArray(dsValue) && dsValue.length === 1) {
+                    // Support for multi-value variables with only one selected datasource
+                    dsValue = dsValue[0];
+                }
+                const dsSettings = !Array.isArray(dsValue) && (this.settingsMapByName[dsValue] || this.settingsMapByUid[dsValue]);
+                if (dsSettings) {
+                    const key = `$\{${variable.name}\}`;
+                    base.push(Object.assign(Object.assign({}, dsSettings), { isDefault: false, name: key, uid: key }));
+                }
+            }
+        }
+        const sorted = base.sort((a, b) => {
+            if (a.name.toLowerCase() > b.name.toLowerCase()) {
+                return 1;
+            }
+            if (a.name.toLowerCase() < b.name.toLowerCase()) {
+                return -1;
+            }
+            return 0;
+        });
+        if (!filters.pluginId && !filters.alerting) {
+            if (filters.mixed) {
+                const mixedInstanceSettings = this.getInstanceSettings('-- Mixed --');
+                if (mixedInstanceSettings) {
+                    base.push(mixedInstanceSettings);
+                }
+            }
+            if (filters.dashboard) {
+                const dashboardInstanceSettings = this.getInstanceSettings('-- Dashboard --');
+                if (dashboardInstanceSettings) {
+                    base.push(dashboardInstanceSettings);
+                }
+            }
+            if (!filters.tracing) {
+                const grafanaInstanceSettings = this.getInstanceSettings('-- Grafana --');
+                if (grafanaInstanceSettings) {
+                    base.push(grafanaInstanceSettings);
+                }
+            }
+        }
+        return sorted;
+    }
+    /**
+     * @deprecated use getList
+     * */
+    getExternal() {
+        return this.getList();
+    }
+    /**
+     * @deprecated use getList
+     * */
+    getAnnotationSources() {
+        return this.getList({ annotations: true, variables: true }).map((x) => {
+            return {
+                name: x.name,
+                value: x.name,
+                meta: x.meta,
+            };
+        });
+    }
+    /**
+     * @deprecated use getList
+     * */
+    getMetricSources(options) {
+        return this.getList({ metrics: true, variables: !(options === null || options === void 0 ? void 0 : options.skipVariables) }).map((x) => {
+            return {
+                name: x.name,
+                value: x.name,
+                meta: x.meta,
+            };
+        });
+    }
+    reload() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const settings = yield getBackendSrv().get('/api/frontend/settings');
+            config.datasources = settings.datasources;
+            config.defaultDatasource = settings.defaultDatasource;
+            this.init(settings.datasources, settings.defaultDatasource);
+        });
+    }
+}
+export function getNameOrUid(ref) {
+    if (isExpressionReference(ref)) {
+        return ExpressionDatasourceRef.uid;
+    }
+    const isString = typeof ref === 'string';
+    return isString ? ref : ref === null || ref === void 0 ? void 0 : ref.uid;
+}
+export function variableInterpolation(value) {
+    if (Array.isArray(value)) {
+        return value[0];
+    }
+    return value;
+}
+export const getDatasourceSrv = () => {
+    return getDataSourceService();
+};
+//# sourceMappingURL=datasource_srv.js.map

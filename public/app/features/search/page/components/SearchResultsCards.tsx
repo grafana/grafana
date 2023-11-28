@@ -1,6 +1,6 @@
 /* eslint-disable react/jsx-no-undef */
 import { css } from '@emotion/css';
-import React, { useEffect, useRef, useCallback, useState } from 'react';
+import React, { useEffect, useRef, useCallback, useState, CSSProperties } from 'react';
 import { FixedSizeList } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 
@@ -9,8 +9,7 @@ import { useStyles2 } from '@grafana/ui';
 
 import { SearchItem } from '../../components/SearchItem';
 import { useSearchKeyboardNavigation } from '../../hooks/useSearchKeyboardSelection';
-import { SearchResultMeta } from '../../service';
-import { DashboardSearchItemType, DashboardSectionItem } from '../../types';
+import { queryResultToViewItem } from '../../service/utils';
 
 import { SearchResultsProps } from './SearchResultsTable';
 
@@ -41,46 +40,20 @@ export const SearchResultsCards = React.memo(
     }, [response, listEl]);
 
     const RenderRow = useCallback(
-      ({ index: rowIndex, style }) => {
-        const meta = response.view.dataFrame.meta?.custom as SearchResultMeta;
-
+      ({ index: rowIndex, style }: { index: number; style: CSSProperties }) => {
         let className = '';
         if (rowIndex === highlightIndex.y) {
           className += ' ' + styles.selectedRow;
         }
 
         const item = response.view.get(rowIndex);
-        let v: DashboardSectionItem = {
-          uid: item.uid,
-          title: item.name,
-          url: item.url,
-          uri: item.url,
-          type: item.kind === 'folder' ? DashboardSearchItemType.DashFolder : DashboardSearchItemType.DashDB,
-          id: 666, // do not use me!
-          isStarred: false,
-          tags: item.tags ?? [],
-        };
+        const searchItem = queryResultToViewItem(item, response.view);
+        const isSelected = selectionToggle && selection?.(searchItem.kind, searchItem.uid);
 
-        if (item.location) {
-          const first = item.location.split('/')[0];
-          const finfo = meta.locationInfo[first];
-          if (finfo) {
-            v.folderUid = item.location;
-            v.folderTitle = finfo.name;
-          }
-        }
-
-        if (selection && selectionToggle) {
-          const type = v.type === DashboardSearchItemType.DashFolder ? 'folder' : 'dashboard';
-          v = {
-            ...v,
-            checked: selection(type, v.uid!),
-          };
-        }
         return (
           <div style={style} key={item.uid} className={className} role="row">
             <SearchItem
-              item={v}
+              item={searchItem}
               onTagSelected={onTagSelected}
               onToggleChecked={(item) => {
                 if (selectionToggle) {
@@ -89,6 +62,7 @@ export const SearchResultsCards = React.memo(
               }}
               editable={Boolean(selection != null)}
               onClickItem={onClickItem}
+              isSelected={isSelected}
             />
           </div>
         );

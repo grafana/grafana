@@ -10,13 +10,16 @@ import (
 
 	"github.com/gchaincl/sqlhooks"
 	"github.com/go-sql-driver/mysql"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/lib/pq"
 	"github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"xorm.io/core"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 var (
@@ -66,12 +69,12 @@ type databaseQueryWrapper struct {
 type databaseQueryWrapperKey struct{}
 
 // Before hook will print the query with its args and return the context with the timestamp
-func (h *databaseQueryWrapper) Before(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
+func (h *databaseQueryWrapper) Before(ctx context.Context, query string, args ...any) (context.Context, error) {
 	return context.WithValue(ctx, databaseQueryWrapperKey{}, time.Now()), nil
 }
 
 // After hook will get the timestamp registered on the Before hook and print the elapsed time
-func (h *databaseQueryWrapper) After(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
+func (h *databaseQueryWrapper) After(ctx context.Context, query string, args ...any) (context.Context, error) {
 	h.instrument(ctx, "success", query, nil)
 
 	return ctx, nil
@@ -95,13 +98,14 @@ func (h *databaseQueryWrapper) instrument(ctx context.Context, status string, qu
 
 	ctx = log.IncDBCallCounter(ctx)
 
-	_, span := h.tracer.Start(ctx, "database query")
+	_, span := h.tracer.Start(ctx, "database query", trace.WithTimestamp(begin))
 	defer span.End()
 
-	span.AddEvents([]string{"query", "status"}, []tracing.EventValue{{Str: query}, {Str: status}})
+	span.AddEvent("query", trace.WithAttributes(attribute.String("query", query)))
+	span.AddEvent("status", trace.WithAttributes(attribute.String("status", status)))
 
 	if err != nil {
-		span.AddEvents([]string{"error"}, []tracing.EventValue{{Str: err.Error()}})
+		span.RecordError(err)
 	}
 
 	ctxLogger := h.log.FromContext(ctx)
@@ -109,7 +113,7 @@ func (h *databaseQueryWrapper) instrument(ctx context.Context, status string, qu
 }
 
 // OnError will be called if any error happens
-func (h *databaseQueryWrapper) OnError(ctx context.Context, err error, query string, args ...interface{}) error {
+func (h *databaseQueryWrapper) OnError(ctx context.Context, err error, query string, args ...any) error {
 	// Not a user error: driver is telling sql package that an
 	// optional interface method is not implemented. There is
 	// nothing to instrument here.

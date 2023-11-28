@@ -7,7 +7,7 @@ import ClusterItem from './ClusterItem';
 import { ClustersProps, ServicesCluster } from './Clusters.type';
 import { getClustersFromServices } from './Clusters.utils';
 
-const Clusters: FC<ClustersProps> = ({ services, onDelete, onSelectionChange }) => {
+const Clusters: FC<React.PropsWithChildren<ClustersProps>> = ({ services, onDelete, onSelectionChange }) => {
   const clusters = useMemo(() => getClustersFromServices(services), [services]);
   const [selection, setSelection] = useState({});
 

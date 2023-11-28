@@ -5,16 +5,15 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/validations"
-
-	"github.com/stretchr/testify/require"
 )
 
 func presenceComparerInt(a, b int64) bool {
@@ -101,12 +100,12 @@ func TestVictoropsNotifier(t *testing.T) {
 			payload, err := victoropsNotifier.buildEventPayload(evalContext)
 			require.Nil(t, err)
 
-			diff := cmp.Diff(map[string]interface{}{
+			diff := cmp.Diff(map[string]any{
 				"alert_url":           "",
 				"entity_display_name": "[Alerting] someRule",
 				"entity_id":           "someRule",
 				"message_type":        "WARNING",
-				"metrics":             map[string]interface{}{},
+				"metrics":             map[string]any{},
 				"monitoring_tool":     "Grafana v",
 				"state_message":       "someMessage",
 				"state_start_time":    int64(-1),
@@ -149,12 +148,12 @@ func TestVictoropsNotifier(t *testing.T) {
 			payload, err := victoropsNotifier.buildEventPayload(evalContext)
 			require.Nil(t, err)
 
-			diff := cmp.Diff(map[string]interface{}{
+			diff := cmp.Diff(map[string]any{
 				"alert_url":           "",
 				"entity_display_name": "[OK] someRule",
 				"entity_id":           "someRule",
 				"message_type":        "RECOVERY",
-				"metrics":             map[string]interface{}{},
+				"metrics":             map[string]any{},
 				"monitoring_tool":     "Grafana v",
 				"state_message":       "someMessage",
 				"state_start_time":    int64(-1),

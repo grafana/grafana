@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
-import { Button, ModalsController, CollapsableSection, HorizontalGroup, useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, ModalsController, CollapsableSection, HorizontalGroup, useStyles2 } from '@grafana/ui';
 
 import { DecoratedRevisionModel } from '../DashboardSettings/VersionsSettings';
 
@@ -15,12 +15,12 @@ type DiffViewProps = {
   isNewLatest: boolean;
   newInfo: DecoratedRevisionModel;
   baseInfo: DecoratedRevisionModel;
-  diffData: { lhs: any; rhs: any };
+  diffData: { lhs: unknown; rhs: unknown };
 };
 
-export const VersionHistoryComparison: React.FC<DiffViewProps> = ({ baseInfo, newInfo, diffData, isNewLatest }) => {
+export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLatest }: DiffViewProps) => {
   const diff = jsonDiff(diffData.lhs, diffData.rhs);
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   return (
     <div>
@@ -68,13 +68,13 @@ export const VersionHistoryComparison: React.FC<DiffViewProps> = ({ baseInfo, ne
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   spacer: css`
-    margin-bottom: ${theme.spacing.xl};
+    margin-bottom: ${theme.spacing(4)};
   `,
   versionInfo: css`
-    color: ${theme.colors.textWeak};
-    font-size: ${theme.typography.size.sm};
+    color: ${theme.colors.text.secondary};
+    font-size: ${theme.typography.bodySmall.fontSize};
   `,
   noMarginBottom: css`
     margin-bottom: 0;

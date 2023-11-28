@@ -3,12 +3,12 @@ package dtos
 import (
 	"crypto/md5"
 	"fmt"
-	"net/http"
 	"regexp"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -30,11 +30,11 @@ type LoginCommand struct {
 type CurrentUser struct {
 	IsSignedIn                 bool               `json:"isSignedIn"`
 	Id                         int64              `json:"id"`
-	ExternalUserId             string             `json:"externalUserId"`
 	Login                      string             `json:"login"`
 	Email                      string             `json:"email"`
 	Name                       string             `json:"name"`
-	LightTheme                 bool               `json:"lightTheme"`
+	Theme                      string             `json:"theme"`
+	LightTheme                 bool               `json:"lightTheme"` // deprecated, use theme instead
 	OrgCount                   int                `json:"orgCount"`
 	OrgId                      int64              `json:"orgId"`
 	OrgName                    string             `json:"orgName"`
@@ -44,9 +44,17 @@ type CurrentUser struct {
 	Timezone                   string             `json:"timezone"`
 	WeekStart                  string             `json:"weekStart"`
 	Locale                     string             `json:"locale"`
+	Language                   string             `json:"language"`
 	HelpFlags1                 user.HelpFlags1    `json:"helpFlags1"`
 	HasEditPermissionInFolders bool               `json:"hasEditPermissionInFolders"`
+	AuthenticatedBy            string             `json:"authenticatedBy"`
 	Permissions                UserPermissionsMap `json:"permissions,omitempty"`
+	Analytics                  AnalyticsSettings  `json:"analytics"`
+}
+
+type AnalyticsSettings struct {
+	Identifier         string `json:"identifier"`
+	IntercomIdentifier string `json:"intercomIdentifier,omitempty"`
 }
 
 type UserPermissionsMap map[string]bool
@@ -70,10 +78,6 @@ type MetricRequest struct {
 	Queries []*simplejson.Json `json:"queries"`
 	// required: false
 	Debug bool `json:"debug"`
-
-	PublicDashboardAccessToken string `json:"publicDashboardAccessToken"`
-
-	HTTPRequest *http.Request `json:"-"`
 }
 
 func (mr *MetricRequest) GetUniqueDatasourceTypes() []string {
@@ -87,7 +91,7 @@ func (mr *MetricRequest) GetUniqueDatasourceTypes() []string {
 		}
 	}
 
-	res := make([]string, 0)
+	res := make([]string, 0, len(dsTypes))
 	for dsType := range dsTypes {
 		res = append(res, dsType)
 	}
@@ -97,11 +101,10 @@ func (mr *MetricRequest) GetUniqueDatasourceTypes() []string {
 
 func (mr *MetricRequest) CloneWithQueries(queries []*simplejson.Json) MetricRequest {
 	return MetricRequest{
-		From:        mr.From,
-		To:          mr.To,
-		Queries:     queries,
-		Debug:       mr.Debug,
-		HTTPRequest: mr.HTTPRequest,
+		From:    mr.From,
+		To:      mr.To,
+		Queries: queries,
+		Debug:   mr.Debug,
 	}
 }
 
@@ -140,8 +143,8 @@ func GetGravatarUrlWithDefault(text string, defaultText string) string {
 	return GetGravatarUrl(text)
 }
 
-func IsHiddenUser(userLogin string, signedInUser *user.SignedInUser, cfg *setting.Cfg) bool {
-	if userLogin == "" || signedInUser.IsGrafanaAdmin || userLogin == signedInUser.Login {
+func IsHiddenUser(userLogin string, signedInUser identity.Requester, cfg *setting.Cfg) bool {
+	if userLogin == "" || signedInUser.GetIsGrafanaAdmin() || userLogin == signedInUser.GetLogin() {
 		return false
 	}
 

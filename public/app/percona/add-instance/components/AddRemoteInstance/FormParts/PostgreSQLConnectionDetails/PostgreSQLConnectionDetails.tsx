@@ -10,7 +10,7 @@ import { Messages } from '../FormParts.messages';
 import { getStyles } from '../FormParts.styles';
 import { MainDetailsFormPartProps } from '../FormParts.types';
 
-export const PostgreSQLConnectionDetails: FC<MainDetailsFormPartProps> = ({ form, remoteInstanceCredentials }) => {
+export const PostgreSQLConnectionDetails: FC<React.PropsWithChildren<MainDetailsFormPartProps>> = ({ form, remoteInstanceCredentials }) => {
   const styles = useStyles2(getStyles);
   const formValues = form && form.getState().values;
   const tlsFlag = formValues && formValues['tls'];

@@ -8,7 +8,7 @@ import { Messages } from './PodLogs.messages';
 import { getStyles } from './PodLogs.styles';
 import { PodLogsProps } from './PodLogs.types';
 
-export const PodLogs: FC<PodLogsProps> = ({ podLogs }) => {
+export const PodLogs: FC<React.PropsWithChildren<PodLogsProps>> = ({ podLogs }) => {
   const styles = useStyles(getStyles);
   const { name, isOpen: isPodOpen, containers, events } = podLogs;
   const [isOpen, setIsOpen] = useState(isPodOpen);

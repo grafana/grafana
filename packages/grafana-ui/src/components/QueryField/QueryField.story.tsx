@@ -1,15 +1,13 @@
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { TypeaheadInput } from '../../types';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import { QueryField, QueryFieldProps } from './QueryField';
 
-const meta: ComponentMeta<typeof QueryField> = {
+const meta: Meta<typeof QueryField> = {
   title: 'Data Source/QueryField',
   component: QueryField,
-  decorators: [withCenteredStory],
   parameters: {
     controls: {
       exclude: [
@@ -35,9 +33,7 @@ const meta: ComponentMeta<typeof QueryField> = {
   },
 };
 
-export const Basic: ComponentStory<typeof QueryField> = (args: Omit<QueryFieldProps, 'theme'>) => (
-  <QueryField {...args} />
-);
+export const Basic: StoryFn<typeof QueryField> = (args: Omit<QueryFieldProps, 'theme'>) => <QueryField {...args} />;
 
 Basic.args = {
   onTypeahead: async (_input: TypeaheadInput) => ({

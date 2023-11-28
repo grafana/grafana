@@ -3,10 +3,10 @@ import { from, merge, Observable, of } from 'rxjs';
 import { catchError, filter, finalize, map, mergeAll, mergeMap, reduce, takeUntil } from 'rxjs/operators';
 
 import { AnnotationQuery, DataSourceApi } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
+import { PublicAnnotationsDataSource } from 'app/features/query/state/DashboardQueryRunner/PublicAnnotationsDataSource';
 
 import { AnnotationQueryFinished, AnnotationQueryStarted } from '../../../../types/events';
-import { DashboardModel } from '../../../dashboard/state';
 
 import { AnnotationsQueryRunner } from './AnnotationsQueryRunner';
 import { getDashboardQueryRunner } from './DashboardQueryRunner';
@@ -29,8 +29,8 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
 
   canWork({ dashboard }: DashboardQueryRunnerOptions): boolean {
     const annotations = dashboard.annotations.list.find(AnnotationsWorker.getAnnotationsToProcessFilter);
-    // We shouldn't return annotations for public dashboards v1
-    return Boolean(annotations) && !this.publicDashboardViewMode(dashboard);
+
+    return Boolean(annotations);
   }
 
   work(options: DashboardQueryRunnerOptions): Observable<DashboardQueryRunnerWorkerResult> {
@@ -39,11 +39,25 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
     }
 
     const { dashboard, range } = options;
-    const annotations = dashboard.annotations.list.filter(AnnotationsWorker.getAnnotationsToProcessFilter);
+    let annotations = dashboard.annotations.list.filter(AnnotationsWorker.getAnnotationsToProcessFilter);
+
+    // We only want to create a single PublicDashboardDatasource. This will get all annotations in one request.
+    if (config.publicDashboardAccessToken && annotations.length > 0) {
+      annotations = [annotations[0]];
+    }
+
     const observables = annotations.map((annotation) => {
-      const datasourceObservable = from(getDataSourceSrv().get(annotation.datasource)).pipe(
-        catchError(handleDatasourceSrvError) // because of the reduce all observables need to be completed, so an erroneous observable wont do
-      );
+      let datasourceObservable;
+
+      if (config.publicDashboardAccessToken) {
+        const pubdashDatasource = new PublicAnnotationsDataSource();
+        datasourceObservable = of(pubdashDatasource).pipe(catchError(handleDatasourceSrvError));
+      } else {
+        datasourceObservable = from(getDataSourceSrv().get(annotation.datasource)).pipe(
+          catchError(handleDatasourceSrvError) // because of the reduce all observables need to be completed, so an erroneous observable wont do
+        );
+      }
+
       return datasourceObservable.pipe(
         mergeMap((datasource?: DataSourceApi) => {
           const runner = this.runners.find((r) => r.canRun(datasource));
@@ -65,7 +79,11 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
                 annotation.snapshotData = cloneDeep(results);
               }
               // translate result
-              return translateQueryResult(annotation, results);
+              if (config.publicDashboardAccessToken) {
+                return results;
+              } else {
+                return translateQueryResult(annotation, results);
+              }
             }),
             finalize(() => {
               dashboard.events.publish(new AnnotationQueryFinished(annotation));
@@ -92,9 +110,5 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
 
   private static getAnnotationsToProcessFilter(annotation: AnnotationQuery): boolean {
     return annotation.enable && !Boolean(annotation.snapshotData);
-  }
-
-  publicDashboardViewMode(dashboard: DashboardModel): boolean {
-    return dashboard.meta.publicDashboardAccessToken !== undefined && dashboard.meta.publicDashboardAccessToken !== '';
   }
 }

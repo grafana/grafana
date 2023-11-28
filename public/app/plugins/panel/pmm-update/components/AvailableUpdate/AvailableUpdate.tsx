@@ -15,6 +15,7 @@ export const AvailableUpdate: FC<AvailableUpdateProps> = ({ nextVersionDetails }
   const { nextVersionDate, nextVersion, nextFullVersion, newsLink } = nextVersionDetails;
 
   return (
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
     <section
       data-testid="update-latest-section"
       className={styles.availableUpdate}

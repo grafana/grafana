@@ -190,21 +190,9 @@ func (fb *frameBuilder) Init(metadata *query.FluxTableMetadata) error {
 		if col.IsGroup() {
 			fb.labels = append(fb.labels, col.Name())
 		} else {
-			dataType := col.DataType()
-			name := col.Name()
-			isTimestamp := isTimestampType(dataType)
-
-			converter, err := getConverter(dataType)
+			info, isTimestamp, err := getColumnInfo(col)
 			if err != nil {
 				return err
-			}
-
-			info := &columnInfo{
-				name:             name,
-				converter:        converter,
-				shouldGetLabels:  true, // we default to get-labels
-				isTheSimpleValue: false,
-				isTheSimpleTime:  false,
 			}
 
 			if isTimestamp {
@@ -243,6 +231,18 @@ func (fb *frameBuilder) Init(metadata *query.FluxTableMetadata) error {
 		fb.columns = append(fb.columns, *colInfo)
 	}
 
+	// if there is no columns in frame builder we use all the dataColumns
+	// this can happen with the queries which includes no time and value columns
+	if len(fb.columns) == 0 {
+		for _, col := range dataColumns {
+			info, _, err := getColumnInfo(col)
+			if err != nil {
+				return err
+			}
+			fb.columns = append(fb.columns, *info)
+		}
+	}
+
 	return nil
 }
 
@@ -252,6 +252,25 @@ type maxPointsExceededError struct {
 
 func (e maxPointsExceededError) Error() string {
 	return fmt.Sprintf("max data points limit exceeded (count is %d)", e.Count)
+}
+
+func getColumnInfo(col *query.FluxColumn) (info *columnInfo, isTimestamp bool, err error) {
+	dataType := col.DataType()
+	isTimestamp = isTimestampType(dataType)
+	name := col.Name()
+
+	converter, err := getConverter(dataType)
+	if err != nil {
+		return nil, false, err
+	}
+
+	return &columnInfo{
+		name:             name,
+		converter:        converter,
+		shouldGetLabels:  true, // we default to get-labels
+		isTheSimpleValue: false,
+		isTheSimpleTime:  false,
+	}, isTimestamp, nil
 }
 
 func getTableID(record *query.FluxRecord, groupColumns []string) []interface{} {

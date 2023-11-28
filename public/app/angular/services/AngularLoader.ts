@@ -6,10 +6,14 @@ import { GrafanaRootScope } from 'app/angular/GrafanaCtrl';
 import coreModule from 'app/angular/core_module';
 
 export class AngularLoader implements AngularLoaderInterface {
-  /** @ngInject */
-  constructor(private $compile: any, private $rootScope: GrafanaRootScope) {}
+  static $inject = ['$compile', '$rootScope'];
 
-  load(elem: any, scopeProps: any, template: string): AngularComponent {
+  constructor(
+    private $compile: angular.ICompileService,
+    private $rootScope: GrafanaRootScope
+  ) {}
+
+  load(elem: HTMLElement, scopeProps: any, template: string): AngularComponent {
     const scope = this.$rootScope.$new();
 
     assign(scope, scopeProps);

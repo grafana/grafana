@@ -1,8 +1,11 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { NavModel } from '@grafana/data';
+import { ModalManager } from 'app/core/services/ModalManager';
 
 import { backendSrv } from '../../core/services/backend_srv';
 import { Organization } from '../../types';
@@ -12,21 +15,9 @@ import { setOrganizationName } from './state/reducers';
 
 jest.mock('app/core/core', () => {
   return {
+    ...jest.requireActual('app/core/core'),
     contextSrv: {
       hasPermission: () => true,
-    },
-  };
-});
-
-jest.mock('@grafana/runtime', () => {
-  const originalModule = jest.requireActual('@grafana/runtime');
-  return {
-    ...originalModule,
-    config: {
-      ...originalModule.config,
-      featureToggles: {
-        internationalization: true,
-      },
     },
   };
 });
@@ -56,7 +47,11 @@ const setup = (propOverrides?: object) => {
   };
   Object.assign(props, propOverrides);
 
-  render(<OrgDetailsPage {...props} />);
+  render(
+    <TestProvider>
+      <OrgDetailsPage {...props} />
+    </TestProvider>
+  );
 };
 
 describe('Render', () => {
@@ -83,5 +78,25 @@ describe('Render', () => {
         },
       })
     ).not.toThrow();
+  });
+
+  it('should show a modal when submitting', async () => {
+    new ModalManager().init();
+    setup({
+      organization: {
+        name: 'Cool org',
+        id: 1,
+      },
+      preferences: {
+        homeDashboardUID: 'home-dashboard',
+        theme: 'Default',
+        timezone: 'Default',
+        locale: '',
+      },
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(screen.getByText('Confirm preferences update')).toBeInTheDocument();
   });
 });

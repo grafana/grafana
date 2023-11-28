@@ -11,10 +11,15 @@ export interface LokiVisualQuery {
 }
 
 export type LokiVisualQueryBinary = VisualQueryBinary<LokiVisualQuery>;
+export enum LokiQueryPatternType {
+  Log = 'log',
+  Metric = 'metric',
+}
 
 export interface LokiQueryPattern {
   name: string;
   operations: QueryBuilderOperation[];
+  type: LokiQueryPatternType;
 }
 
 export enum LokiVisualQueryOperationCategory {
@@ -35,7 +40,11 @@ export enum LokiOperationId {
   Unpack = 'unpack',
   LineFormat = 'line_format',
   LabelFormat = 'label_format',
+  Decolorize = 'decolorize',
+  Drop = 'drop',
+  Keep = 'keep',
   Rate = 'rate',
+  RateCounter = 'rate_counter',
   CountOverTime = 'count_over_time',
   SumOverTime = 'sum_over_time',
   AvgOverTime = 'avg_over_time',
@@ -60,6 +69,8 @@ export enum LokiOperationId {
   BottomK = 'bottomk',
   LineContains = '__line_contains',
   LineContainsNot = '__line_contains_not',
+  LineContainsCaseInsensitive = '__line_contains_case_insensitive',
+  LineContainsNotCaseInsensitive = '__line_contains_not_case_insensitive',
   LineMatchesRegex = '__line_matches_regex',
   LineMatchesRegexNot = '__line_matches_regex_not',
   LineFilterIpMatches = '__line_filter_ip_matches',
@@ -87,10 +98,24 @@ export enum LokiOperationId {
 
 export enum LokiOperationOrder {
   LineFilters = 1,
-  LineFormats = 2,
-  LabelFilters = 3,
+  Parsers = 2,
+  PipeOperations = 3,
+  // Unwrap is a special case, as it is usually the last operation, so the order is after pipeOperations
   Unwrap = 4,
   NoErrors = 5,
   RangeVectorFunction = 5,
   Last = 6,
 }
+
+export const lokiOperators = {
+  equals: { label: '=', value: '=', description: 'Equals', isMultiValue: false },
+  doesNotEqual: { label: '!=', value: '!=', description: 'Does not equal', isMultiValue: false },
+  matchesRegex: { label: '=~', value: '=~', description: 'Matches regex', isMultiValue: true },
+  doesNotMatchRegex: { label: '!~', value: '!~', description: 'Does not match regex', isMultiValue: true },
+  greaterThan: { label: '>', value: '>', description: 'Greater than', isMultiValue: false },
+  greaterThanOrEqual: { label: '>=', value: '>=', description: 'Greater than or equal to', isMultiValue: false },
+  lessThan: { label: '<', value: '<', description: 'Less than', isMultiValue: false },
+  lessThanOrEqual: { label: '<=', value: '<=', description: 'Less than or equal to', isMultiValue: false },
+  contains: { label: '|=', value: '|=', description: 'Contains', isMultiValue: false },
+  doesNotContain: { label: '!=', value: '!=', description: 'Does not contain', isMultiValue: false },
+};

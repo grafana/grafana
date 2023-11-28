@@ -1,0 +1,2 @@
+export const prepareSourceRanges = (sourceRanges) => sourceRanges.reduce((acc, item) => (!!(item === null || item === void 0 ? void 0 : item.sourceRange) ? [...acc, item === null || item === void 0 ? void 0 : item.sourceRange] : acc), []);
+//# sourceMappingURL=dbaas.utils.js.map

@@ -5,7 +5,7 @@ import { CollapsableSection, TagsInput, Select, Field, Input, Checkbox, Button, 
 
 import { DashboardLink, DashboardModel } from '../../state/DashboardModel';
 
-export const newLink = {
+export const newLink: DashboardLink = {
   icon: 'external link',
   title: 'New link',
   tooltip: '',
@@ -16,7 +16,7 @@ export const newLink = {
   targetBlank: false,
   keepTime: false,
   includeVars: false,
-} as DashboardLink;
+};
 
 const linkTypeOptions = [
   { value: 'dashboards', label: 'Dashboards' },
@@ -41,7 +41,7 @@ type LinkSettingsEditProps = {
   onGoBack: () => void;
 };
 
-export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ editLinkIdx, dashboard, onGoBack }) => {
+export const LinkSettingsEdit = ({ editLinkIdx, dashboard, onGoBack }: LinkSettingsEditProps) => {
   const [linkSettings, setLinkSettings] = useState(editLinkIdx !== null ? dashboard.links[editLinkIdx] : newLink);
 
   const onUpdate = (link: DashboardLink) => {
@@ -94,7 +94,7 @@ export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ editLinkIdx,
       {linkSettings.type === 'dashboards' && (
         <>
           <Field label="With tags">
-            <TagsInput tags={linkSettings.tags} placeholder="add tags" onChange={onTagsChange} />
+            <TagsInput tags={linkSettings.tags} onChange={onTagsChange} />
           </Field>
         </>
       )}

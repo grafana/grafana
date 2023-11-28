@@ -29,7 +29,7 @@ const { columns } = Messages.alertRuleTemplate.table;
 
 const { name: nameColumn, source: sourceColumn, actions: actionsColumn } = columns;
 
-export const AlertRuleTemplate: FC = () => {
+export const AlertRuleTemplate: FC<React.PropsWithChildren<unknown>> = () => {
   const styles = useStyles2(getStyles);
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [pendingRequest, setPendingRequest] = useState(true);

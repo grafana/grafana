@@ -10,6 +10,7 @@ import (
 	"time"
 
 	glog "github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 )
 
@@ -76,18 +77,35 @@ func wrapDirector(d func(*http.Request)) func(req *http.Request) {
 
 		d(req)
 		PrepareProxyRequest(req)
-
-		// Clear Origin and Referer to avoid CORS issues
-		req.Header.Del("Origin")
-		req.Header.Del("Referer")
 	}
+}
+
+// deletedHeaders lists a number of headers that we don't want to
+// pass-through from the upstream when using a reverse proxy.
+//
+// These are related to the connection between Grafana and the proxy
+// or instructions that would alter how a browser will interact with
+// future requests to Grafana (such as enabling Strict Transport
+// Security)
+var deletedHeaders = []string{
+	"Alt-Svc",
+	"Close",
+	"Server",
+	"Set-Cookie",
+	"Strict-Transport-Security",
 }
 
 // modifyResponse enforces certain constraints on http.Response.
 func modifyResponse(logger glog.Logger) func(resp *http.Response) error {
 	return func(resp *http.Response) error {
-		resp.Header.Del("Set-Cookie")
+		for _, header := range deletedHeaders {
+			resp.Header.Del(header)
+		}
+
 		SetProxyResponseHeaders(resp.Header)
+		SetViaHeader(resp.Header, resp.ProtoMajor, resp.ProtoMinor)
+
+		requestmeta.WithStatusSource(resp.Request.Context(), resp.StatusCode)
 		return nil
 	}
 }
@@ -105,6 +123,7 @@ type timeoutError interface {
 func errorHandler(logger glog.Logger) func(http.ResponseWriter, *http.Request, error) {
 	return func(w http.ResponseWriter, r *http.Request, err error) {
 		ctxLogger := logger.FromContext(r.Context())
+		requestmeta.WithDownstreamStatusSource(r.Context())
 
 		if errors.Is(err, context.Canceled) {
 			ctxLogger.Debug("Proxy request cancelled by client")

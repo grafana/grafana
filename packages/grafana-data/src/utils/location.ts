@@ -5,7 +5,7 @@ import { GrafanaConfig, RawTimeRange, ScopedVars } from '../types';
 
 import { UrlQueryMap, urlUtil } from './url';
 
-let grafanaConfig: GrafanaConfig = { appSubUrl: '' } as any;
+let grafanaConfig = { appSubUrl: '' } as GrafanaConfig;
 let getTimeRangeUrlParams: () => RawTimeRange;
 let getVariablesUrlParams: (scopedVars?: ScopedVars) => UrlQueryMap;
 
@@ -43,7 +43,10 @@ const stripBaseFromUrl = (urlOrPath: string): string => {
     segmentToStrip = `${window.location.origin}${appSubUrl}`;
   }
 
-  return urlOrPath.length > 0 && urlOrPath.indexOf(segmentToStrip) === 0
+  // Check if the segment is either exactly the same as the url
+  // or followed by a '/' so it does not replace incorrect similarly named segments
+  // i.e. /grafana should not replace /grafanadashboards
+  return urlOrPath.length > 0 && (urlOrPath.indexOf(segmentToStrip + '/') === 0 || urlOrPath === segmentToStrip)
     ? urlOrPath.slice(segmentToStrip.length - stripExtraChars)
     : urlOrPath;
 };
@@ -78,7 +81,7 @@ const getUrlForPartial = (location: Location<any>, searchParamsToUpdate: Record<
       searchParams[key] = searchParamsToUpdate[key];
     }
   }
-  return urlUtil.renderUrl(location.pathname, searchParams);
+  return assureBaseUrl(urlUtil.renderUrl(location.pathname, searchParams));
 };
 
 /**

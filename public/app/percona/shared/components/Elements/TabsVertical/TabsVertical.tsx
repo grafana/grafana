@@ -10,7 +10,7 @@ export interface TabsVerticalProps {
   dataTestId?: string;
 }
 
-export const TabsVertical: FC<TabsVerticalProps> = ({ children, className, dataTestId }) => {
+export const TabsVertical: FC<React.PropsWithChildren<TabsVerticalProps>> = ({ children, className, dataTestId }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 

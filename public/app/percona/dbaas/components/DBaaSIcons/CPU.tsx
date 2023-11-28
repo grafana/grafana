@@ -1,6 +1,6 @@
 import React, { FC, SVGProps } from 'react';
 
-export const CPU: FC<SVGProps<SVGSVGElement>> = (props) => (
+export const CPU: FC<React.PropsWithChildren<SVGProps<SVGSVGElement>>> = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22" fill="none" {...props}>
     <path
       fillRule="evenodd"

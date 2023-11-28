@@ -4,65 +4,41 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/fatih/color"
-	"github.com/grafana/grafana/pkg/bus"
+	"github.com/urfave/cli/v2"
+
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/datamigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/secretsmigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/runner"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/urfave/cli/v2"
 )
 
-func runRunnerCommand(command func(commandLine utils.CommandLine, runner runner.Runner) error) func(context *cli.Context) error {
+func runRunnerCommand(command func(commandLine utils.CommandLine, runner server.Runner) error) func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
-
-		cfg, err := initCfg(cmd)
-		if err != nil {
-			return fmt.Errorf("%v: %w", "failed to load configuration", err)
-		}
-
-		r, err := runner.Initialize(cfg)
+		runner, err := initializeRunner(cmd)
 		if err != nil {
 			return fmt.Errorf("%v: %w", "failed to initialize runner", err)
 		}
-
-		if err := command(cmd, r); err != nil {
+		if err := command(cmd, runner); err != nil {
 			return err
 		}
-
 		logger.Info("\n\n")
 		return nil
 	}
 }
 
-func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore.SQLStore) error) func(context *cli.Context) error {
+func runDbCommand(command func(commandLine utils.CommandLine, sqlStore db.DB) error) func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
-
-		cfg, err := initCfg(cmd)
+		runner, err := initializeRunner(cmd)
 		if err != nil {
-			return fmt.Errorf("%v: %w", "failed to load configuration", err)
+			return fmt.Errorf("%v: %w", "failed to initialize runner", err)
 		}
 
-		tracer, err := tracing.ProvideService(cfg)
-		if err != nil {
-			return fmt.Errorf("%v: %w", "failed to initialize tracer service", err)
-		}
-
-		bus := bus.ProvideBus(tracer)
-
-		sqlStore, err := sqlstore.ProvideService(cfg, nil, &migrations.OSSMigrations{}, bus, tracer)
-		if err != nil {
-			return fmt.Errorf("%v: %w", "failed to initialize SQL store", err)
-		}
-
+		sqlStore := runner.SQLStore
 		if err := command(cmd, sqlStore); err != nil {
 			return err
 		}
@@ -72,7 +48,7 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 	}
 }
 
-func initCfg(cmd *utils.ContextCommandLine) (*setting.Cfg, error) {
+func initializeRunner(cmd *utils.ContextCommandLine) (server.Runner, error) {
 	configOptions := strings.Split(cmd.String("configOverrides"), " ")
 	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
 		Config:   cmd.ConfigFile(),
@@ -80,16 +56,19 @@ func initCfg(cmd *utils.ContextCommandLine) (*setting.Cfg, error) {
 		// tailing arguments have precedence over the options string
 		Args: append(configOptions, cmd.Args().Slice()...),
 	})
-
 	if err != nil {
-		return nil, err
+		return server.Runner{}, err
+	}
+
+	runner, err := server.InitializeForCLI(cfg)
+	if err != nil {
+		return server.Runner{}, fmt.Errorf("%v: %w", "failed to initialize runner", err)
 	}
 
 	if cmd.Bool("debug") {
-		cfg.LogConfigSources()
+		runner.Cfg.LogConfigSources()
 	}
-
-	return cfg, nil
+	return runner, nil
 }
 
 func runPluginCommand(command func(commandLine utils.CommandLine) error) func(context *cli.Context) error {
@@ -98,53 +77,42 @@ func runPluginCommand(command func(commandLine utils.CommandLine) error) func(co
 		if err := command(cmd); err != nil {
 			return err
 		}
-
-		logger.Info(color.GreenString("Please restart Grafana after installing plugins. Refer to Grafana documentation for instructions if necessary.\n\n"))
 		return nil
 	}
-}
-
-// Command contains command state.
-type Command struct {
-	Client utils.ApiClient
-}
-
-var cmd Command = Command{
-	Client: &services.GrafanaComClient{},
 }
 
 var pluginCommands = []*cli.Command{
 	{
 		Name:   "install",
 		Usage:  "install <plugin id> <plugin version (optional)>",
-		Action: runPluginCommand(cmd.installCommand),
+		Action: runPluginCommand(installCommand),
 	}, {
 		Name:   "list-remote",
 		Usage:  "list remote available plugins",
-		Action: runPluginCommand(cmd.listRemoteCommand),
+		Action: runPluginCommand(listRemoteCommand),
 	}, {
 		Name:   "list-versions",
 		Usage:  "list-versions <plugin id>",
-		Action: runPluginCommand(cmd.listVersionsCommand),
+		Action: runPluginCommand(listVersionsCommand),
 	}, {
 		Name:    "update",
 		Usage:   "update <plugin id>",
 		Aliases: []string{"upgrade"},
-		Action:  runPluginCommand(cmd.upgradeCommand),
+		Action:  runPluginCommand(upgradeCommand),
 	}, {
 		Name:    "update-all",
 		Aliases: []string{"upgrade-all"},
 		Usage:   "update all your installed plugins",
-		Action:  runPluginCommand(cmd.upgradeAllCommand),
+		Action:  runPluginCommand(upgradeAllCommand),
 	}, {
 		Name:   "ls",
-		Usage:  "list all installed plugins",
-		Action: runPluginCommand(cmd.lsCommand),
+		Usage:  "list installed plugins (excludes core plugins)",
+		Action: runPluginCommand(lsCommand),
 	}, {
 		Name:    "uninstall",
 		Aliases: []string{"remove"},
 		Usage:   "uninstall <plugin id>",
-		Action:  runPluginCommand(cmd.removeCommand),
+		Action:  runPluginCommand(removeCommand),
 	},
 }
 
@@ -158,6 +126,11 @@ var adminCommands = []*cli.Command{
 				Name:  "password-from-stdin",
 				Usage: "Read the password from stdin",
 				Value: false,
+			},
+			&cli.IntFlag{
+				Name:  "user-id",
+				Usage: "The admin user's ID",
+				Value: DefaultAdminUserId,
 			},
 		},
 	},
@@ -201,6 +174,30 @@ var adminCommands = []*cli.Command{
 			{
 				Name:  "conflicts",
 				Usage: "runs a conflict resolution to find users with multiple entries",
+				CustomHelpTemplate: `
+This command will find users with multiple entries in the database and try to resolve the conflicts.
+explanation of each field:
+
+explanation of each field:
+* email - the user’s email
+* login - the user’s login/username
+* last_seen_at - the user’s last login
+* auth_module - if the user was created/signed in using an authentication provider
+* conflict_email - a boolean if we consider the email to be a conflict
+* conflict_login - a boolean if we consider the login to be a conflict
+
+# lists all the conflicting users
+grafana-cli user-manager conflicts list
+
+# creates a conflict patch file to edit
+grafana-cli user-manager conflicts generate-file
+
+# reads edited conflict patch file for validation
+grafana-cli user-manager conflicts validate-file <filepath>
+
+# validates and ingests edited patch file
+grafana-cli user-manager conflicts ingest-file <filepath>
+`,
 				Subcommands: []*cli.Command{
 					{
 						Name:   "list",
@@ -209,8 +206,18 @@ var adminCommands = []*cli.Command{
 					},
 					{
 						Name:   "generate-file",
-						Usage:  "creates a conflict users file.. Safe to execute multiple times.",
+						Usage:  "creates a conflict users file. Safe to execute multiple times.",
 						Action: runGenerateConflictUsersFile(),
+					},
+					{
+						Name:   "validate-file",
+						Usage:  "validates the conflict users file. Safe to execute multiple times.",
+						Action: runValidateConflictUsersFile(),
+					},
+					{
+						Name:   "ingest-file",
+						Usage:  "ingests the conflict users file. > Note: This is irreversible it will change the state of the database.",
+						Action: runIngestConflictUsersFile(),
 					},
 				},
 			},

@@ -2,7 +2,7 @@ import { cloneDeep } from 'lodash';
 import React, { useEffect, useState } from 'react';
 
 import { contextSrv } from 'app/core/core';
-import { initialState, updateNavTree } from 'app/core/reducers/navBarTree';
+import { initialState } from 'app/core/reducers/navBarTree';
 import { updateNavIndex } from 'app/core/reducers/navModel';
 import { fetchFolders } from 'app/features/manage-dashboards/state/actions';
 import { fetchActiveServiceTypesAction } from 'app/percona/shared/core/reducers/services';
@@ -32,14 +32,14 @@ import {
   buildAdvisorsNavItem,
   buildIntegratedAlertingMenuItem,
   buildInventoryAndSettings,
-  filterByServices,
+  // filterByServices,
   removeAlertingMenuItem,
 } from './PerconaNavigation.utils';
 
-const PerconaNavigation: React.FC = () => {
+const PerconaNavigation: React.FC<React.PropsWithChildren<unknown>> = () => {
   const [folders, setFolders] = useState<FolderDTO[]>([]);
   const { result } = useSelector(getPerconaSettings);
-  const { alertingEnabled, sttEnabled, dbaasEnabled, backupEnabled } = result!;
+  const { alertingEnabled, sttEnabled, dbaasEnabled, backupEnabled } = result || {};
   const { isPlatformUser, isAuthorized } = useSelector(getPerconaUser);
   const categorizedAdvisors = useSelector(getCategorizedAdvisors);
   const isLoggedIn = !!contextSrv.user.isSignedIn;
@@ -61,7 +61,7 @@ const PerconaNavigation: React.FC = () => {
   dispatch(updateNavIndex(advisorsPage));
 
   useEffect(() => {
-    let interval: NodeJS.Timer;
+    let interval: NodeJS.Timeout;
 
     if (isLoggedIn) {
       fetchFolders().then(setFolders);
@@ -122,7 +122,8 @@ const PerconaNavigation: React.FC = () => {
 
     addFolderLinks(updatedNavTree, folders);
 
-    dispatch(updateNavTree({ items: filterByServices(updatedNavTree, activeTypes) }));
+    // @PERCONA_TODO
+    // dispatch(updateNavTree({ items: filterByServices(updatedNavTree, activeTypes) }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result, folders, activeTypes, isAuthorized, isPlatformUser, advisorsPage]);
 

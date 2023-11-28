@@ -1,0 +1,1 @@
+{"version":3,"file":"useHistory.js","sourceRoot":"","sources":["../../../../../../../app/features/plugins/admin/hooks/useHistory.tsx"],"names":[],"mappings":"AAAA,OAAO,EAAE,eAAe,EAAE,MAAM,kBAAkB,CAAC;AAEnD,MAAM,CAAC,MAAM,UAAU,GAAG,GAAG,EAAE;IAC7B,OAAO;QACL,IAAI,EAAE,CAAC,EAAE,KAAK,EAAO,EAAE,EAAE;YACvB,eAAe,CAAC,OAAO,CAAC,KAAK,CAAC,CAAC;QACjC,CAAC;KACF,CAAC;AACJ,CAAC,CAAC"}

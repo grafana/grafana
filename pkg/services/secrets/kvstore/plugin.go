@@ -190,7 +190,7 @@ func (kv *SecretsKVStorePlugin) WithFallbackEnabled(fn func() error) error {
 }
 
 func parseKeys(keys []*smp.Key) []Key {
-	var newKeys []Key
+	newKeys := make([]Key, 0, len(keys))
 
 	for _, k := range keys {
 		newKey := Key{OrgId: k.OrgId, Namespace: k.Namespace, Type: k.Type}
@@ -201,7 +201,7 @@ func parseKeys(keys []*smp.Key) []Key {
 }
 
 func parseItems(items []*smp.Item) []Item {
-	var newItems []Item
+	newItems := make([]Item, 0, len(items))
 
 	for _, i := range items {
 		newItem := Item{OrgId: &i.Key.OrgId, Namespace: &i.Key.Namespace, Type: &i.Key.Type, Value: i.Value}
@@ -243,7 +243,7 @@ func GetNamespacedKVStore(kv kvstore.KVStore) *kvstore.NamespacedKVStore {
 func IsPluginStartupErrorFatal(ctx context.Context, kvstore *kvstore.NamespacedKVStore) (bool, error) {
 	_, exists, err := kvstore.Get(ctx, QuitOnPluginStartupFailureKey)
 	if err != nil {
-		return false, errors.New(fmt.Sprint("error retrieving key ", QuitOnPluginStartupFailureKey, " from kvstore. error: ", err.Error()))
+		return false, fmt.Errorf("error retrieving key %s from kvstore. error: %w", QuitOnPluginStartupFailureKey, err)
 	}
 	return exists, nil
 }

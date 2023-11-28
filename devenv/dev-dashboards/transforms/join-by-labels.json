@@ -333,7 +333,6 @@
     }
   ],
   "schemaVersion": 37,
-  "style": "dark",
   "tags": [
     "gdev",
     "transform"
@@ -347,7 +346,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Join by labels",
+  "title": "Transforms - Join by labels",
   "uid": "FVl-9CR4z",
   "version": 10,
   "weekStart": ""

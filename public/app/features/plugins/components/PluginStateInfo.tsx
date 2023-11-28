@@ -1,20 +1,29 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { PluginState } from '@grafana/data';
 import { Badge, BadgeProps } from '@grafana/ui';
 
 interface Props {
   state?: PluginState;
+  className?: string;
 }
 
-export const PluginStateInfo: FC<Props> = (props) => {
+export const PluginStateInfo = (props: Props) => {
   const display = getFeatureStateInfo(props.state);
 
   if (!display) {
     return null;
   }
 
-  return <Badge color={display.color} title={display.tooltip} text={display.text} icon={display.icon} />;
+  return (
+    <Badge
+      className={props.className}
+      color={display.color}
+      title={display.tooltip}
+      text={display.text}
+      icon={display.icon}
+    />
+  );
 };
 
 function getFeatureStateInfo(state?: PluginState): BadgeProps | null {

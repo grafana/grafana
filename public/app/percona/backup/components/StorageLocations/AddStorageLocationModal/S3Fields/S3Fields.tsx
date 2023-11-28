@@ -10,7 +10,7 @@ import { S3FieldsProps } from './S3Fields.types';
 
 const required = [validators.required];
 
-export const S3Fields: FC<S3FieldsProps> = ({ endpoint, accessKey, secretKey, bucketName }) => (
+export const S3Fields: FC<React.PropsWithChildren<S3FieldsProps>> = ({ endpoint, accessKey, secretKey, bucketName }) => (
   <>
     <TextInputField name="endpoint" label={Messages.endpoint} validators={required} initialValue={endpoint} />
     <TextInputField

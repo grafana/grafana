@@ -11,7 +11,7 @@ import { getStyles } from './OperatorStatusItem.styles';
 import { OperatorStatusItemProps } from './OperatorStatusItem.types';
 import { buildOperatorLabel } from './OperatorStatusItem.utils';
 
-export const OperatorStatusItem: FC<OperatorStatusItemProps> = ({
+export const OperatorStatusItem: FC<React.PropsWithChildren<OperatorStatusItemProps>> = ({
   operator,
   databaseType,
   kubernetes,

@@ -1,0 +1,46 @@
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    ports:
+      - "9090:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: >
+      --enable-feature=remote-write-receiver
+      --enable-feature=exemplar-storage
+      --config.file=/etc/prometheus/prometheus.yml
+      --storage.tsdb.path=/prometheus
+    volumes:
+      - ./docker/blocks/self-instrumentation/prometheus.yaml:/etc/prometheus/prometheus.yml
+  loki:
+    image: grafana/loki:2.8.2
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+  promtail:
+    image: grafana/promtail:2.8.2
+    command: -config.file=/etc/promtail/promtail.yaml
+    volumes:
+      - ./docker/blocks/self-instrumentation/promtail.yaml:/etc/promtail/promtail.yaml
+      - ../data/log:/var/log/grafana
+  tempo:
+    image: grafana/tempo:2.1.1
+    command: -config.file=/etc/tempo.yaml
+    volumes:
+      - ./docker/blocks/self-instrumentation/tempo.yaml:/etc/tempo.yaml
+    ports:
+      - "14268:14268"
+      - "3200:3200"
+  agent:
+    image: grafana/agent:v0.34.3
+    entrypoint:
+      - /bin/grafana-agent
+      - -server.http.address=0.0.0.0:12345
+      - -config.file=/etc/agent/agent.yaml
+      - -enable-features=integrations-next
+    volumes:
+      - ./docker/blocks/self-instrumentation/agent.yaml:/etc/agent/agent.yaml
+    ports:
+      - "12345:12345"
+      - "12347:12347"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

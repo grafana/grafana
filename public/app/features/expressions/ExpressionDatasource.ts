@@ -12,7 +12,7 @@ import { DataSourceWithBackend, getDataSourceSrv, getTemplateSrv } from '@grafan
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 
 import { ExpressionQueryEditor } from './ExpressionQueryEditor';
-import { ExpressionQuery, ExpressionQueryType } from './types';
+import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from './types';
 
 /**
  * This is a singleton instance that just pretends to be a DataSource
@@ -43,7 +43,7 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
         return query;
       }
 
-      return ds?.interpolateVariablesInQueries([query], request.scopedVars)[0] as ExpressionQuery;
+      return ds?.interpolateVariablesInQueries([query], request.scopedVars, request.filters)[0] as ExpressionQuery;
     });
 
     let sub = from(Promise.all(targets));
@@ -59,11 +59,6 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
     };
   }
 }
-
-/**
- * MATCHES a constant in DataSourceWithBackend
- */
-export const ExpressionDatasourceUID = '__expr__';
 
 export const instanceSettings: DataSourceInstanceSettings = {
   id: -100,

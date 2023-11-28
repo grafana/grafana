@@ -56,7 +56,7 @@ import {
 import { RetryModeSelector } from './RetryModeSelector';
 import { ScheduleSection } from './ScheduleSection/ScheduleSection';
 
-const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>> = ({ match }) => {
+const AddBackupPage: FC<React.PropsWithChildren<GrafanaRouteComponentProps<{ type: string; id: string }>>> = ({ match }) => {
   const [queryParams, setQueryParams] = useQueryParams();
   const scheduleMode: boolean = (queryParams['scheduled'] as boolean) || match.params.type === SCHEDULED_TYPE;
   const [backup, setBackup] = useState<Backup | ScheduledBackup | null>(null);
@@ -163,7 +163,7 @@ const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>
     setModalTitle(Messages.getModalTitle(true, editing));
   }, [editing, setQueryParams]);
 
-  const onToggle = useCallback((open) => setAdvancedSectionOpen(open), []);
+  const onToggle = useCallback((open: boolean) => setAdvancedSectionOpen(open), []);
 
   const pageSwitcherValues: Array<PageSwitcherValue<BackupType>> = useMemo(
     () => [

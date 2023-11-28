@@ -7,7 +7,7 @@ import { STATUS_DATA_QA } from './KubernetesClusterStatus.constants';
 import { getStyles } from './KubernetesClusterStatus.styles';
 import { KubernetesClusterStatusColors, KubernetesClusterStatusProps } from './KubernetesClusterStatus.types';
 
-export const KubernetesClusterStatus: FC<KubernetesClusterStatusProps> = ({ status }) => {
+export const KubernetesClusterStatus: FC<React.PropsWithChildren<KubernetesClusterStatusProps>> = ({ status }) => {
   const styles = useStyles2(getStyles);
   const statusColor: BadgeColor = KubernetesClusterStatusColors[status];
 

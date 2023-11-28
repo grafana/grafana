@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { cx, css } from '@emotion/css';
 import React, { ChangeEvent } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { Unsubscribable } from 'rxjs';
@@ -12,24 +12,34 @@ import {
   SelectableValue,
   standardTransformersRegistry,
   TransformerRegistryItem,
+  TransformerCategory,
+  DataTransformerID,
+  TransformationApplicabilityLevels,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
 import {
   Alert,
   Button,
+  ConfirmModal,
   Container,
   CustomScrollbar,
+  FilterPill,
   Themeable,
   VerticalGroup,
   withTheme,
   Input,
+  Icon,
   IconButton,
   useStyles2,
   Card,
+  Switch,
 } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
+import config from 'app/core/config';
 import { getDocsLink } from 'app/core/utils/docsLinks';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
+import { categoriesLabels } from 'app/features/transformers/utils';
 
 import { AppNotificationSeverity } from '../../../../types';
 import { PanelModel } from '../../state';
@@ -44,11 +54,26 @@ interface TransformationsEditorProps extends Themeable {
   panel: PanelModel;
 }
 
+type viewAllType = 'viewAll';
+const viewAllValue = 'viewAll';
+const viewAllLabel = 'View all';
+
+type FilterCategory = TransformerCategory | viewAllType;
+
+const filterCategoriesLabels: Array<[FilterCategory, string]> = [
+  [viewAllValue, viewAllLabel],
+  ...(Object.entries(categoriesLabels) as Array<[FilterCategory, string]>),
+];
+
 interface State {
   data: DataFrame[];
   transformations: TransformationsEditorTransformation[];
   search: string;
   showPicker?: boolean;
+  scrollTop?: number;
+  showRemoveAllModal?: boolean;
+  selectedFilter?: FilterCategory;
+  showIllustrations?: boolean;
 }
 
 class UnThemedTransformationsEditor extends React.PureComponent<TransformationsEditorProps, State> {
@@ -66,6 +91,8 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
       })),
       data: [],
       search: '',
+      selectedFilter: viewAllValue,
+      showIllustrations: true,
     };
   }
 
@@ -124,6 +151,25 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     }
   }
 
+  componentDidUpdate(prevProps: Readonly<TransformationsEditorProps>, prevState: Readonly<State>): void {
+    if (config.featureToggles.transformationsRedesign) {
+      const prevHasTransforms = prevState.transformations.length > 0;
+      const prevShowPicker = !prevHasTransforms || prevState.showPicker;
+
+      const currentHasTransforms = this.state.transformations.length > 0;
+      const currentShowPicker = !currentHasTransforms || this.state.showPicker;
+
+      if (prevShowPicker !== currentShowPicker) {
+        // kindOfZero will be a random number between 0 and 0.5. It will be rounded to 0 by the scrollable component.
+        // We cannot always use 0 as it will not trigger a rerender of the scrollable component consistently
+        // due to React changes detection algo.
+        const kindOfZero = Math.random() / 2;
+
+        this.setState({ scrollTop: currentShowPicker ? kindOfZero : Number.MAX_SAFE_INTEGER });
+      }
+    }
+  }
+
   onChange(transformations: TransformationsEditorTransformation[]) {
     this.setState({ transformations });
     this.props.panel.setTransformations(transformations.map((t) => t.transformation));
@@ -144,6 +190,15 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   };
 
   onTransformationAdd = (selectable: SelectableValue<string>) => {
+    let eventName = 'panel_editor_tabs_transformations_management';
+    if (config.featureToggles.transformationsRedesign) {
+      eventName = 'transformations_redesign_' + eventName;
+    }
+
+    reportInteraction(eventName, {
+      action: 'add',
+      transformationId: selectable.value,
+    });
     const { transformations } = this.state;
 
     const nextId = this.getTransformationNextId(selectable.value!);
@@ -160,18 +215,41 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     ]);
   };
 
-  onTransformationChange = (idx: number, config: DataTransformerConfig) => {
+  onTransformationChange = (idx: number, dataConfig: DataTransformerConfig) => {
     const { transformations } = this.state;
     const next = Array.from(transformations);
-    next[idx].transformation = config;
+    let eventName = 'panel_editor_tabs_transformations_management';
+    if (config.featureToggles.transformationsRedesign) {
+      eventName = 'transformations_redesign_' + eventName;
+    }
+
+    reportInteraction(eventName, {
+      action: 'change',
+      transformationId: next[idx].transformation.id,
+    });
+    next[idx].transformation = dataConfig;
     this.onChange(next);
   };
 
   onTransformationRemove = (idx: number) => {
     const { transformations } = this.state;
     const next = Array.from(transformations);
+    let eventName = 'panel_editor_tabs_transformations_management';
+    if (config.featureToggles.transformationsRedesign) {
+      eventName = 'transformations_redesign_' + eventName;
+    }
+
+    reportInteraction(eventName, {
+      action: 'remove',
+      transformationId: next[idx].transformation.id,
+    });
     next.splice(idx, 1);
     this.onChange(next);
+  };
+
+  onTransformationRemoveAll = () => {
+    this.onChange([]);
+    this.setState({ showRemoveAllModal: false });
   };
 
   onDragEnd = (result: DropResult) => {
@@ -193,33 +271,47 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   };
 
   renderTransformationEditors = () => {
-    const { data, transformations } = this.state;
+    const styles = getStyles(config.theme2);
+    const { data, transformations, showPicker } = this.state;
+    const hide = config.featureToggles.transformationsRedesign && showPicker;
 
     return (
-      <DragDropContext onDragEnd={this.onDragEnd}>
-        <Droppable droppableId="transformations-list" direction="vertical">
-          {(provided) => {
-            return (
-              <div ref={provided.innerRef} {...provided.droppableProps}>
-                <TransformationOperationRows
-                  configs={transformations}
-                  data={data}
-                  onRemove={this.onTransformationRemove}
-                  onChange={this.onTransformationChange}
-                />
-                {provided.placeholder}
-              </div>
-            );
-          }}
-        </Droppable>
-      </DragDropContext>
+      <div className={cx({ [styles.hide]: hide })}>
+        <DragDropContext onDragEnd={this.onDragEnd}>
+          <Droppable droppableId="transformations-list" direction="vertical">
+            {(provided) => {
+              return (
+                <div ref={provided.innerRef} {...provided.droppableProps}>
+                  <TransformationOperationRows
+                    configs={transformations}
+                    data={data}
+                    onRemove={this.onTransformationRemove}
+                    onChange={this.onTransformationChange}
+                  />
+                  {provided.placeholder}
+                </div>
+              );
+            }}
+          </Droppable>
+        </DragDropContext>
+      </div>
     );
   };
 
   renderTransformsPicker() {
+    const styles = getStyles(config.theme2);
     const { transformations, search } = this.state;
     let suffix: React.ReactNode = null;
     let xforms = standardTransformersRegistry.list().sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0));
+
+    if (this.state.selectedFilter !== viewAllValue) {
+      xforms = xforms.filter(
+        (t) =>
+          t.categories &&
+          this.state.selectedFilter &&
+          t.categories.has(this.state.selectedFilter as TransformerCategory)
+      );
+    }
 
     if (search) {
       const lower = search.toLowerCase();
@@ -236,6 +328,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
             onClick={() => {
               this.setState({ search: '' });
             }}
+            tooltip="Clear search"
           />
         </>
       );
@@ -253,13 +346,14 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
           onClick={() => {
             this.setState({ showPicker: false });
           }}
+          tooltip="Close picker"
         />
       );
     }
 
     return (
       <>
-        {noTransforms && (
+        {noTransforms && !config.featureToggles.transformationsRedesign && (
           <Container grow={1}>
             <LocalStorageValueProvider<boolean> storageKey={LOCAL_STORAGE_KEY} defaultValue={false}>
               {(isDismissed, onDismiss) => {
@@ -297,29 +391,110 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
           </Container>
         )}
         {showPicker ? (
-          <VerticalGroup>
-            <Input
-              aria-label={selectors.components.Transforms.searchInput}
-              value={search ?? ''}
-              autoFocus={!noTransforms}
-              placeholder="Add transformation"
-              onChange={this.onSearchChange}
-              onKeyDown={this.onSearchKeyDown}
-              suffix={suffix}
-            />
+          <>
+            {config.featureToggles.transformationsRedesign && (
+              <>
+                {!noTransforms && (
+                  <Button
+                    variant="secondary"
+                    fill="text"
+                    icon="angle-left"
+                    onClick={() => {
+                      this.setState({ showPicker: false });
+                    }}
+                  >
+                    Go back to&nbsp;<i>Transformations in use</i>
+                  </Button>
+                )}
+                <div className={styles.pickerInformationLine}>
+                  <a
+                    href={getDocsLink(DocsId.Transformations)}
+                    className="external-link"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <span className={styles.pickerInformationLineHighlight}>Transformations</span>{' '}
+                    <Icon name="external-link-alt" />
+                  </a>
+                  &nbsp;allow you to manipulate your data before a visualization is applied.
+                </div>
+              </>
+            )}
+            <VerticalGroup>
+              {!config.featureToggles.transformationsRedesign && (
+                <Input
+                  data-testid={selectors.components.Transforms.searchInput}
+                  value={search ?? ''}
+                  autoFocus={!noTransforms}
+                  placeholder="Search for transformation"
+                  onChange={this.onSearchChange}
+                  onKeyDown={this.onSearchKeyDown}
+                  suffix={suffix}
+                />
+              )}
 
-            {xforms.map((t) => {
-              return (
-                <TransformationCard
-                  key={t.name}
-                  transform={t}
-                  onClick={() => {
-                    this.onTransformationAdd({ value: t.id });
+              {!config.featureToggles.transformationsRedesign &&
+                xforms.map((t) => {
+                  return (
+                    <TransformationCard
+                      key={t.name}
+                      transform={t}
+                      onClick={() => {
+                        this.onTransformationAdd({ value: t.id });
+                      }}
+                    />
+                  );
+                })}
+
+              {config.featureToggles.transformationsRedesign && (
+                <div className={styles.searchWrapper}>
+                  <Input
+                    data-testid={selectors.components.Transforms.searchInput}
+                    className={styles.searchInput}
+                    value={search ?? ''}
+                    autoFocus={!noTransforms}
+                    placeholder="Search for transformation"
+                    onChange={this.onSearchChange}
+                    onKeyDown={this.onSearchKeyDown}
+                    suffix={suffix}
+                  />
+                  <div className={styles.showImages}>
+                    <span className={styles.illustationSwitchLabel}>Show images</span>{' '}
+                    <Switch
+                      value={this.state.showIllustrations}
+                      onChange={() => this.setState({ showIllustrations: !this.state.showIllustrations })}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {config.featureToggles.transformationsRedesign && (
+                <div className={styles.filterWrapper}>
+                  {filterCategoriesLabels.map(([slug, label]) => {
+                    return (
+                      <FilterPill
+                        key={slug}
+                        onClick={() => this.setState({ selectedFilter: slug })}
+                        label={label}
+                        selected={this.state.selectedFilter === slug}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+
+              {config.featureToggles.transformationsRedesign && (
+                <TransformationsGrid
+                  showIllustrations={this.state.showIllustrations}
+                  transformations={xforms}
+                  data={this.state.data}
+                  onClick={(id) => {
+                    this.onTransformationAdd({ value: id });
                   }}
                 />
-              );
-            })}
-          </VerticalGroup>
+              )}
+            </VerticalGroup>
+          </>
         ) : (
           <Button
             icon="plus"
@@ -327,8 +502,9 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
             onClick={() => {
               this.setState({ showPicker: true });
             }}
+            data-testid={selectors.components.Transforms.addTransformationButton}
           >
-            Add transformation
+            Add{config.featureToggles.transformationsRedesign ? ' another ' : ' '}transformation
           </Button>
         )}
       </>
@@ -336,6 +512,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   }
 
   render() {
+    const styles = getStyles(config.theme2);
     const {
       panel: { alert },
     } = this.props;
@@ -348,15 +525,37 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     }
 
     return (
-      <CustomScrollbar autoHeightMin="100%">
-        <Container padding="md">
-          <div aria-label={selectors.components.TransformTab.content}>
+      <CustomScrollbar scrollTop={this.state.scrollTop} autoHeightMin="100%">
+        <Container padding="lg">
+          <div data-testid={selectors.components.TransformTab.content}>
             {hasTransforms && alert ? (
               <Alert
                 severity={AppNotificationSeverity.Error}
                 title="Transformations can't be used on a panel with alerts"
               />
             ) : null}
+            {hasTransforms && config.featureToggles.transformationsRedesign && !this.state.showPicker && (
+              <div className={styles.listInformationLineWrapper}>
+                <span className={styles.listInformationLineText}>Transformations in use</span>{' '}
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => {
+                    this.setState({ showRemoveAllModal: true });
+                  }}
+                >
+                  Delete all transformations
+                </Button>
+                <ConfirmModal
+                  isOpen={Boolean(this.state.showRemoveAllModal)}
+                  title="Delete all transformations?"
+                  body="By deleting all transformations, you will go back to the main selection screen."
+                  confirmText="Delete all"
+                  onConfirm={() => this.onTransformationRemoveAll()}
+                  onDismiss={() => this.setState({ showRemoveAllModal: false })}
+                />
+              </div>
+            )}
             {hasTransforms && this.renderTransformationEditors()}
             {this.renderTransformsPicker()}
           </div>
@@ -376,7 +575,7 @@ function TransformationCard({ transform, onClick }: TransformationCardProps) {
   return (
     <Card
       className={styles.card}
-      aria-label={selectors.components.TransformTab.newTransform(transform.name)}
+      data-testid={selectors.components.TransformTab.newTransform(transform.name)}
       onClick={onClick}
     >
       <Card.Heading>{transform.name}</Card.Heading>
@@ -392,11 +591,214 @@ function TransformationCard({ transform, onClick }: TransformationCardProps) {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    card: css`
-      margin: 0;
-      padding: ${theme.spacing(1)};
+    hide: css({
+      display: 'none',
+    }),
+    card: css({
+      margin: '0',
+      padding: `${theme.spacing(1)}`,
+    }),
+    grid: css({
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+      gridAutoRows: '1fr',
+      gap: `${theme.spacing(2)} ${theme.spacing(1)}`,
+      width: '100%',
+    }),
+    newCard: css({
+      gridTemplateRows: 'min-content 0 1fr 0',
+    }),
+    cardDisabled: css({
+      backgroundColor: 'rgb(204, 204, 220, 0.045)',
+      color: `${theme.colors.text.disabled} !important`,
+    }),
+    heading: css`
+      font-weight: 400,
+      > button: {
+        width: '100%',
+        display: 'flex',
+        justify-content: 'space-between',
+        align-items: 'center',
+        flex-wrap: 'no-wrap',
+      },
     `,
+    description: css({
+      fontSize: '12px',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+    }),
+    image: css({
+      display: 'block',
+      maxEidth: '100%`',
+      marginTop: `${theme.spacing(2)}`,
+    }),
+    searchWrapper: css({
+      display: 'flex',
+      flexWrap: 'wrap',
+      columnGap: '27px',
+      rowGap: '16px',
+      width: '100%',
+    }),
+    searchInput: css({
+      flexGrow: '1',
+      width: 'initial',
+    }),
+    showImages: css({
+      flexBasis: '0',
+      display: 'flex',
+      gap: '8px',
+      alignItems: 'center',
+    }),
+    pickerInformationLine: css({
+      fontSize: '16px',
+      marginBottom: `${theme.spacing(2)}`,
+    }),
+    pickerInformationLineHighlight: css({
+      verticalAlign: 'middle',
+    }),
+    illustationSwitchLabel: css({
+      whiteSpace: 'nowrap',
+    }),
+    filterWrapper: css({
+      padding: `${theme.spacing(1)} 0`,
+      display: 'flex',
+      flexWrap: 'wrap',
+      rowGap: `${theme.spacing(1)}`,
+      columnGap: `${theme.spacing(0.5)}`,
+    }),
+    listInformationLineWrapper: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+      marginBottom: '24px',
+    }),
+    listInformationLineText: css({
+      fontSize: '16px',
+    }),
+    pluginStateInfoWrapper: css({
+      marginLeft: '5px',
+    }),
+    cardApplicableInfo: css({
+      position: 'absolute',
+      bottom: `${theme.spacing(1)}`,
+      right: `${theme.spacing(1)}`,
+    }),
   };
+};
+
+interface TransformationsGridProps {
+  transformations: Array<TransformerRegistryItem<any>>;
+  showIllustrations?: boolean;
+  onClick: (id: string) => void;
+  data: DataFrame[];
+}
+
+function TransformationsGrid({ showIllustrations, transformations, onClick, data }: TransformationsGridProps) {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <div className={styles.grid}>
+      {transformations.map((transform) => {
+        // Check to see if the transform
+        // is applicable to the given data
+        let applicabilityScore = TransformationApplicabilityLevels.Applicable;
+        if (transform.transformation.isApplicable !== undefined) {
+          applicabilityScore = transform.transformation.isApplicable(data);
+        }
+        const isApplicable = applicabilityScore > 0;
+
+        let applicabilityDescription = null;
+        if (transform.transformation.isApplicableDescription !== undefined) {
+          if (typeof transform.transformation.isApplicableDescription === 'function') {
+            applicabilityDescription = transform.transformation.isApplicableDescription(data);
+          } else {
+            applicabilityDescription = transform.transformation.isApplicableDescription;
+          }
+        }
+
+        // Add disabled styles to disabled
+        let cardClasses = styles.newCard;
+        if (!isApplicable) {
+          cardClasses = cx(styles.newCard, styles.cardDisabled);
+        }
+
+        return (
+          <Card
+            className={cardClasses}
+            data-testid={selectors.components.TransformTab.newTransform(transform.name)}
+            onClick={() => onClick(transform.id)}
+            key={transform.id}
+          >
+            <Card.Heading className={styles.heading}>
+              <>
+                <span>{transform.name}</span>
+                <span className={styles.pluginStateInfoWrapper}>
+                  <PluginStateInfo state={transform.state} />
+                </span>
+              </>
+            </Card.Heading>
+            <Card.Description className={styles.description}>
+              <>
+                <span>{getTransformationsRedesignDescriptions(transform.id)}</span>
+                {showIllustrations && (
+                  <span>
+                    <img
+                      className={styles.image}
+                      src={getImagePath(transform.id, !isApplicable)}
+                      alt={transform.name}
+                    />
+                  </span>
+                )}
+                {!isApplicable && applicabilityDescription !== null && (
+                  <IconButton
+                    className={styles.cardApplicableInfo}
+                    name="info-circle"
+                    tooltip={applicabilityDescription}
+                  />
+                )}
+              </>
+            </Card.Description>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+
+const getImagePath = (id: string, disabled: boolean) => {
+  let folder = null;
+  if (!disabled) {
+    folder = config.theme2.isDark ? 'dark' : 'light';
+  } else {
+    folder = 'disabled';
+  }
+
+  return `public/img/transformations/${folder}/${id}.svg`;
+};
+
+const getTransformationsRedesignDescriptions = (id: string): string => {
+  const overrides: { [key: string]: string } = {
+    [DataTransformerID.concatenate]: 'Combine all fields into a single frame.',
+    [DataTransformerID.configFromData]: 'Set unit, min, max and more.',
+    [DataTransformerID.fieldLookup]: 'Use a field value to lookup countries, states, or airports.',
+    [DataTransformerID.filterFieldsByName]: 'Remove parts of the query results using a regex pattern.',
+    [DataTransformerID.filterByRefId]: 'Remove rows from the data based on origin query',
+    [DataTransformerID.filterByValue]: 'Remove rows from the query results using user-defined filters.',
+    [DataTransformerID.groupBy]: 'Group data by a field value and create aggregate data.',
+    [DataTransformerID.groupingToMatrix]: 'Summarize and reorganize data based on three fields.',
+    [DataTransformerID.joinByField]: 'Combine rows from 2+ tables, based on a related field.',
+    [DataTransformerID.labelsToFields]: 'Group series by time and return labels or tags as fields.',
+    [DataTransformerID.merge]: 'Merge multiple series. Values will be combined into one row.',
+    [DataTransformerID.organize]: 'Re-order, hide, or rename fields.',
+    [DataTransformerID.partitionByValues]: 'Split a one-frame dataset into multiple series.',
+    [DataTransformerID.prepareTimeSeries]: 'Stretch data frames from the wide format into the long format.',
+    [DataTransformerID.reduce]: 'Reduce all rows or data points to a single value (ex. max, mean).',
+    [DataTransformerID.renameByRegex]:
+      'Rename parts of the query results using a regular expression and replacement pattern.',
+    [DataTransformerID.seriesToRows]: 'Merge multiple series. Return time, metric and values as a row.',
+  };
+
+  return overrides[id] || standardTransformersRegistry.getIfExists(id)?.description || '';
 };
 
 export const TransformationsEditor = withTheme(UnThemedTransformationsEditor);

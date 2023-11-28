@@ -18,7 +18,7 @@ jest.mock('../BackupInventory/BackupInventory.service');
 jest.mock('./AddBackupPage.service');
 jest.mock('app/percona/backup/components/StorageLocations/StorageLocations.service');
 
-const AddBackupPageWrapper: React.FC = ({ children }) => {
+const AddBackupPageWrapper: React.FC<React.PropsWithChildren<unknown>> = ({ children }) => {
   return (
     <Provider
       store={configureStore({

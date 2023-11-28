@@ -1,0 +1,1 @@
+{"version":3,"file":"applyStateChanges.js","sourceRoot":"","sources":["../../../../../app/core/utils/applyStateChanges.ts"],"names":[],"mappings":"AAEA,MAAM,CAAC,MAAM,iBAAiB,GAAG,CAAI,KAAQ,EAAE,GAAG,IAA+B,EAAK,EAAE;IACtF,OAAO,IAAI,CAAC,MAAM,CAAC,CAAC,GAAG,EAAE,GAAG,EAAE,EAAE;QAC9B,OAAO,GAAG,CAAC,GAAG,CAAC,CAAC;IAClB,CAAC,EAAE,KAAK,CAAC,CAAC;AACZ,CAAC,CAAC"}

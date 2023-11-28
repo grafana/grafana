@@ -1,6 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="[[.User.Language]]">
   <head>
+    [[ if and .CSPEnabled .IsDevelopmentEnv ]]
+    <!-- Cypress overwrites CSP headers in HTTP requests, so this is required for e2e tests-->
+    <meta  http-equiv="Content-Security-Policy" content="[[.CSPContent]]"/>
+    [[ end ]]
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
     <meta name="viewport" content="width=device-width" />
@@ -10,20 +14,15 @@
 
     <base href="[[.AppSubUrl]]/" />
 
-    <link
-      rel="preload"
-      href="[[.ContentDeliveryURL]]public/fonts/roboto/RxZJdnzeo3R5zSexge8UUVtXRa8TVwTICgirnJhmVJw.woff2"
-      as="font"
-      crossorigin
-    />
-
+    <!-- @PERCONA -->
     <link rel="icon" type="image/x-icon" href="public/img/percona-favicon.ico?cb=1584890955588" />
     <link rel="apple-touch-icon" sizes="180x180" href="[[.AppleTouchIcon]]" />
     <link rel="mask-icon" href="[[.ContentDeliveryURL]]public/img/grafana_mask_icon.svg" color="#F05A28" />
 
-    [[ if eq .Theme "light" ]]
+    <!-- If theme is "system", we inject the stylesheets with javascript further down the page -->
+    [[ if eq .ThemeType "light" ]]
     <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.light %>" />
-    [[ else ]]
+    [[ else if eq .ThemeType "dark" ]]
     <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.dark %>" />
     [[ end ]]
 
@@ -37,7 +36,7 @@
     <meta name="msapplication-config" content="public/img/browserconfig.xml" />
   </head>
 
-  <body class="theme-[[ .Theme ]] [[.AppNameBodyClass]]">
+  <body class="theme-[[ .ThemeType ]] [[.AppNameBodyClass]]">
     <style>
       .preloader {
         height: 100%;
@@ -72,6 +71,7 @@
         height: 60px;
         background-repeat: no-repeat;
         background-size: contain;
+        /* @PERCONA */
         background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYwIiBoZWlnaHQ9IjE2MCIgdmlld0JveD0iMCAwIDE2MCAxNjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNjAiIGhlaWdodD0iMTYwIiByeD0iMjQiIGZpbGw9InVybCgjcGFpbnQwX3JhZGlhbF8xMDg3M183Mzc1MCkiLz4KPHBhdGggb3BhY2l0eT0iMC4zMyIgZD0iTTI4IDgxLjc0NzNMNTQuOTY4OCAxMjUuNDg2TDU0Ljk3MzkgMTI1LjQ4MUw2NC40NjY2IDEwOC44NThMODIuMzAyMyAxNDBMMTAzLjI5NCAxMDMuMzQ4TDExMC40ODcgMTE1Ljk0N0wxMzIgODEuNzQ3NkwxMjYuNDMzIDgxLjc0NzNMMTEwLjQ5MiAxMDcuMzI2TDEwNS43NTYgOTkuMDU4TDExNS40ODIgODEuNzQ3M0gxMTAuMDIyTDEwMy4wOTQgOTQuNDA2Mkw5NS44NTkyIDgxLjc0NzNIOTAuODM5NkwxMDAuNjQ0IDk4LjY5MDNMODIuMzA3NCAxMzAuNzExTDY3LjEyNiAxMDQuMjA2TDc5Ljk1MDYgODEuNzQ3M0g3NS4wMjg3TDY0Ljc0NTIgMTAwLjA0OUw1NC4xMzA4IDgxLjc0NzNINDguNzQ3Mkw2Mi4wODU5IDEwNC42OTFMNTQuOTczOSAxMTcuMTA2TDMyLjQ0OTMgODEuNzQ3M0gyOFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0xMjEuODE0IDYzLjkwODlDMTIzLjc0NCA2Mi4yMDMyIDEyNS4xNDcgNTkuOTQwOSAxMjUuODIgNTcuNDA3OUMxMjYuNzMyIDUzLjk5MTQgMTI2LjI2NiA1MC40MjE3IDEyNC41MTQgNDcuMzU3NUMxMjIuNzYxIDQ0LjI5MzQgMTE5LjkyOSA0Mi4xMDI2IDExNi41NDEgNDEuMTg4NEMxMTUuNDIxIDQwLjg4NzEgMTE0LjI3NyA0MC43MzM5IDExMy4xMjcgNDAuNzMzOUMxMTEuNzI0IDQwLjczMzkgMTEwLjMxNiA0MC45NzM5IDEwOC45NzMgNDEuNDI4NUwxMDUuMDI3IDM0LjUxODlMOTUuNTM1MiA1MS4xNDE3TDc3LjcwMDQgMjBMNTYuNzA5OSA1Ni42NTIxTDQ5LjUxNzIgNDQuMDUzNEwyOCA4MS43NDczSDEzMkwxMjEuODE0IDYzLjkwODlaTTExMy4xMjcgNDQuOTE2NUMxMTMuOTEyIDQ0LjkxNjUgMTE0LjcwMiA0NS4wMjM3IDExNS40NzIgNDUuMjI4QzExNy43ODIgNDUuODQ1OSAxMTkuNzE3IDQ3LjM0MjIgMTIwLjkyMiA0OS40NDEyQzEyMi4xMjMgNTEuNTM1IDEyMi40NDIgNTMuOTc2MSAxMjEuODE5IDU2LjMxNUMxMjEuNDI0IDU3Ljc5MDkgMTIwLjY5NCA1OS4wOTgzIDExOS42ODYgNjAuMTc1OEwxMTEuMTExIDQ1LjE1NjVDMTExLjc3NCA0NC45OTgyIDExMi40NTggNDQuOTE2NSAxMTMuMTMyIDQ0LjkxNjVIMTEzLjEyN1pNMzUuNDAwMyA3Ny40MzcxTDQ5LjUxMjIgNTIuNjczOEw1NC4yNDgyIDYwLjk0MThMNDQuODcyNCA3Ny40MzcxSDM1LjQwMDNaTTU2LjkwNzUgNjUuNTg5MUw2My41MDI0IDc3LjQzNzFINTAuMzEyNUw1Ni45MDc1IDY1LjU4OTFaTTY4LjM3NTIgNzcuNDM3MUw1OS4zNTkgNjEuMzA5NUw3Ny42OTUzIDI5LjI4OTRMOTIuODc1OSA1NS43OTQxTDgwLjcwNDEgNzcuNDM3MUg2OC4zNzUyWk05NS4yNTY2IDU5Ljk1MTFMMTA1LjA3OCA3Ny40MzcxSDg1LjQzNUw5NS4yNTY2IDU5Ljk1MTFaTTExMC41ODkgNzcuNDM3MUw5Ny45MTU4IDU1LjMwOUwxMDUuMDI3IDQyLjg5NDFMMTI0LjgwNyA3Ny40MzcxSDExMC41ODlaIiBmaWxsPSJ3aGl0ZSIvPgo8ZGVmcz4KPHJhZGlhbEdyYWRpZW50IGlkPSJwYWludDBfcmFkaWFsXzEwODczXzczNzUwIiBjeD0iMCIgY3k9IjAiIHI9IjEiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiBncmFkaWVudFRyYW5zZm9ybT0idHJhbnNsYXRlKDIuNzMxOTcgMTU0LjE3Nykgc2NhbGUoMjEwLjY5MSkiPgo8c3RvcCBvZmZzZXQ9IjAuMjIiIHN0b3AtY29sb3I9IiNBQzMxMDAiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjRTg3MzE4Ii8+CjwvcmFkaWFsR3JhZGllbnQ+CjwvZGVmcz4KPC9zdmc+Cg==');
       }
 
@@ -120,12 +120,12 @@
 
       @keyframes preloader-squash {
         0% {
-          transform: scaleX(1.2) scaleY(0.8);
+          transform: scaleX(1.3) scaleY(0.8);
           animation-timing-function: cubic-bezier(0.3, 0, 0.1, 1);
           transform-origin: bottom center;
         }
         15% {
-          transform: scaleX(0.85) scaleY(1.2);
+          transform: scaleX(0.75) scaleY(1.25);
           animation-timing-function: cubic-bezier(0, 0, 0.7, 0.75);
           transform-origin: bottom center;
         }
@@ -134,13 +134,13 @@
           animation-timing-function: cubic-bezier(0.9, 0, 1, 1);
           transform-origin: top center;
         }
-        85% {
-          transform: scaleX(0.85) scaleY(1.2);
+        95% {
+          transform: scaleX(0.75) scaleY(1.25);
           animation-timing-function: cubic-bezier(0, 0, 0, 1);
           transform-origin: bottom center;
         }
         100% {
-          transform: scaleX(1.2) scaleY(0.8);
+          transform: scaleX(1.3) scaleY(0.8);
           transform-origin: bottom center;
           animation-timing-function: cubic-bezier(0, 0, 0.7, 1);
         }
@@ -182,6 +182,7 @@
           <div class="preloader__logo"></div>
         </div>
       </div>
+      <!-- @PERCONA -->
       <div class="preloader__text">Loading Percona Monitoring and Management</div>
       <div class="preloader__text preloader__text--fail">
         <p>
@@ -194,8 +195,7 @@
           2. If you host grafana under subpath make sure your grafana.ini root_url setting includes subpath. If not
           using a reverse proxy make sure to set serve_from_sub_path to true.<br />
           <br />
-          3. If you have a local dev build make sure you build frontend using: yarn start, yarn start:hot, or yarn
-          build<br />
+          3. If you have a local dev build make sure you build frontend using: yarn start, or yarn build<br />
           <br />
           4. Sometimes restarting grafana-server can help<br />
           <br />
@@ -257,6 +257,26 @@
           dark: '[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.dark %>'
         }
       };
+
+      // Set theme to match system only on startup.
+      // Do not react to changes in system theme after startup.
+      if (window.grafanaBootData.user.theme === "system") {
+        document.body.classList.remove("theme-system");
+        var darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+        var cssLink = document.createElement("link");
+        cssLink.rel = 'stylesheet';
+
+        if (darkQuery.matches) {
+          document.body.classList.add("theme-dark");
+          cssLink.href = window.grafanaBootData.themePaths.dark;
+          window.grafanaBootData.user.lightTheme = false;
+        } else {
+          document.body.classList.add("theme-light");
+          cssLink.href = window.grafanaBootData.themePaths.light;
+          window.grafanaBootData.user.lightTheme = true;
+        }
+        document.head.appendChild(cssLink);
+      }
 
       window.__grafana_load_failed = function() {
         var preloader = document.getElementsByClassName("preloader");
@@ -335,10 +355,5 @@
     <script nonce="[[.Nonce]]">
       performance.mark('frontend_boot_js_done_time_seconds');
     </script>
-
-    <!-- @PERCONA -->
-    [[ if eq .Env "development" ]]
-      <script src="http://localhost:35729/livereload.js"></script>
-    [[end]]
   </body>
 </html>

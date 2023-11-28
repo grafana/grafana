@@ -12,7 +12,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -86,23 +85,29 @@ func (s *HeadlessScreenshotService) Take(ctx context.Context, opts ScreenshotOpt
 	start := time.Now()
 	defer func() { s.duration.Observe(time.Since(start).Seconds()) }()
 
-	q := models.GetDashboardQuery{Uid: opts.DashboardUID}
-	if err := s.ds.GetDashboard(ctx, &q); err != nil {
+	q := dashboards.GetDashboardQuery{OrgID: opts.OrgID, UID: opts.DashboardUID}
+	dashboard, err := s.ds.GetDashboard(ctx, &q)
+	if err != nil {
 		s.instrumentError(err)
 		return nil, err
 	}
 
+	opts = opts.SetDefaults()
+
 	u := url.URL{}
-	u.Path = path.Join("d-solo", q.Result.Uid, q.Result.Slug)
+	u.Path = path.Join("d-solo", dashboard.UID, dashboard.Slug)
 	p := u.Query()
-	p.Add("orgId", strconv.FormatInt(q.Result.OrgId, 10))
+	p.Add("orgId", strconv.FormatInt(dashboard.OrgID, 10))
 	p.Add("panelId", strconv.FormatInt(opts.PanelID, 10))
+	if opts.From != "" && opts.To != "" {
+		p.Add("from", opts.From)
+		p.Add("to", opts.To)
+	}
 	u.RawQuery = p.Encode()
 
-	opts = opts.SetDefaults()
 	renderOpts := rendering.Opts{
 		AuthOpts: rendering.AuthOpts{
-			OrgID:   q.Result.OrgId,
+			OrgID:   dashboard.OrgID,
 			OrgRole: org.RoleAdmin,
 		},
 		ErrorOpts: rendering.ErrorOpts{

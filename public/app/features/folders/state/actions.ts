@@ -6,17 +6,18 @@ import { notifyApp, updateNavIndex } from 'app/core/actions';
 import { createSuccessNotification, createWarningNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { FolderState, ThunkResult } from 'app/types';
+import { FolderDTO, FolderState, ThunkResult } from 'app/types';
 import { DashboardAcl, DashboardAclUpdateDTO, NewDashboardAclItem, PermissionLevel } from 'app/types/acl';
 
 import { buildNavModel } from './navModel';
 import { loadFolder, loadFolderPermissions, setCanViewFolderPermissions } from './reducers';
 
-export function getFolderByUid(uid: string): ThunkResult<void> {
+export function getFolderByUid(uid: string): ThunkResult<Promise<FolderDTO>> {
   return async (dispatch) => {
     const folder = await backendSrv.getFolderByUid(uid);
     dispatch(loadFolder(folder));
     dispatch(updateNavIndex(buildNavModel(folder)));
+    return folder;
   };
 }
 
@@ -28,7 +29,8 @@ export function saveFolder(folder: FolderState): ThunkResult<void> {
     });
 
     dispatch(notifyApp(createSuccessNotification('Folder saved')));
-    locationService.push(`${res.url}/settings`);
+    dispatch(loadFolder(res));
+    locationService.push(locationUtil.stripBaseFromUrl(`${res.url}/settings`));
   };
 }
 
@@ -143,9 +145,9 @@ export function addFolderPermission(newItem: NewDashboardAclItem): ThunkResult<v
   };
 }
 
-export function createNewFolder(folderName: string): ThunkResult<void> {
+export function createNewFolder(folderName: string, uid?: string): ThunkResult<void> {
   return async (dispatch) => {
-    const newFolder = await getBackendSrv().post('/api/folders', { title: folderName });
+    const newFolder = await getBackendSrv().post('/api/folders', { title: folderName, parentUid: uid });
     await contextSrv.fetchUserPermissions();
     dispatch(notifyApp(createSuccessNotification('Folder Created', 'OK')));
     locationService.push(locationUtil.stripBaseFromUrl(newFolder.url));

@@ -37,7 +37,7 @@ import { beautifyAgentType, getAgentStatusColor, toAgentModel } from './Agents.u
 import { formatNodeId } from './Nodes.utils';
 import { getStyles } from './Tabs.styles';
 
-export const Agents: FC<GrafanaRouteComponentProps<{ serviceId: string; nodeId: string }>> = ({ match }) => {
+export const Agents: FC<React.PropsWithChildren<GrafanaRouteComponentProps<{ serviceId: string; nodeId: string }>>> = ({ match }) => {
   const [agentsLoading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [data, setData] = useState<Agent[]>([]);
@@ -97,7 +97,7 @@ export const Agents: FC<GrafanaRouteComponentProps<{ serviceId: string; nodeId: 
       {
         Header: Messages.agents.columns.agentType,
         accessor: 'type',
-        Cell: ({ value }) => beautifyAgentType(value),
+        Cell: ({ value }) => <>{beautifyAgentType(value)}</>,
         type: FilterFieldTypes.TEXT,
       },
       {
@@ -164,7 +164,7 @@ export const Agents: FC<GrafanaRouteComponentProps<{ serviceId: string; nodeId: 
   }, [generateToken, loadData, service, nodeId, serviceId, node]);
 
   const removeAgents = useCallback(
-    async (agents: Array<SelectedTableRows<FlattenAgent>>, forceMode) => {
+    async (agents: Array<SelectedTableRows<FlattenAgent>>, forceMode: boolean) => {
       try {
         setLoading(true);
         // eslint-disable-next-line max-len

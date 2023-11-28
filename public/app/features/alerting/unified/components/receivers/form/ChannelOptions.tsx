@@ -17,6 +17,8 @@ export interface Props<R extends ChannelValues> {
   errors?: FieldErrors<R>;
   pathPrefix?: string;
   readOnly?: boolean;
+
+  customValidators?: Record<string, React.ComponentProps<typeof OptionField>['customValidator']>;
 }
 
 export function ChannelOptions<R extends ChannelValues>({
@@ -27,16 +29,20 @@ export function ChannelOptions<R extends ChannelValues>({
   errors,
   pathPrefix = '',
   readOnly = false,
+  customValidators = {},
 }: Props<R>): JSX.Element {
   const { watch } = useFormContext<ReceiverFormValues<R>>();
-  const currentFormValues = watch() as Record<string, any>; // react hook form types ARE LYING!
+  const currentFormValues = watch(); // react hook form types ARE LYING!
   return (
     <>
       {selectedChannelOptions.map((option: NotificationChannelOption, index: number) => {
         const key = `${option.label}-${index}`;
         // Some options can be dependent on other options, this determines what is selected in the dependency options
         // I think this needs more thought.
-        const selectedOptionValue = currentFormValues[`${pathPrefix}settings.${option.showWhen.field}`];
+        // pathPrefix = items.index.
+        const paths = pathPrefix.split('.');
+        const selectedOptionValue =
+          paths.length >= 2 ? currentFormValues.items[Number(paths[1])].settings[option.showWhen.field] : undefined;
 
         if (option.showWhen.field && selectedOptionValue !== option.showWhen.is) {
           return null;
@@ -75,6 +81,7 @@ export function ChannelOptions<R extends ChannelValues>({
             pathPrefix={pathPrefix}
             pathSuffix={option.secure ? 'secureSettings.' : 'settings.'}
             option={option}
+            customValidator={customValidators[option.propertyName]}
           />
         );
       })}

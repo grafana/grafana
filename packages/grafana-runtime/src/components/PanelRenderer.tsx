@@ -10,7 +10,7 @@ import { AbsoluteTimeRange, FieldConfigSource, PanelData } from '@grafana/data';
  *
  * @internal
  */
-export interface PanelRendererProps<P extends object = any, F extends object = any> {
+export interface PanelRendererProps<P extends object = {}, F extends object = {}> {
   data?: PanelData;
   pluginId: string;
   title: string;
@@ -29,7 +29,7 @@ export interface PanelRendererProps<P extends object = any, F extends object = a
  *
  * @internal
  */
-export type PanelRendererType<P extends object = any, F extends object = any> = React.ComponentType<
+export type PanelRendererType<P extends object = {}, F extends object = {}> = React.ComponentType<
   PanelRendererProps<P, F>
 >;
 

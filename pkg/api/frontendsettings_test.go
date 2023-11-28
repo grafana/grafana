@@ -2,29 +2,37 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
-	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*web.Mux, *HTTPServer) {
+func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.FeatureManager, pstore pluginstore.Store, psettings pluginsettings.Service) (*web.Mux, *HTTPServer) {
 	t.Helper()
-	sqlstore.InitTestDB(t)
+	db.InitTestDB(t)
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 
 	{
@@ -38,8 +46,15 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.
 		})
 	}
 
-	sqlStore := sqlstore.InitTestDB(t)
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	var pluginStore = pstore
+	if pluginStore == nil {
+		pluginStore = &pluginstore.FakePluginStore{}
+	}
+
+	var pluginsSettings = psettings
+	if pluginsSettings == nil {
+		pluginsSettings = &pluginsettings.FakePluginSettings{}
+	}
 
 	hs := &HTTPServer{
 		Cfg:      cfg,
@@ -49,12 +64,17 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.
 			Cfg:                   cfg,
 			RendererPluginManager: &fakeRendererManager{},
 		},
-		SQLStore:             sqlStore,
+		SQLStore:             db.InitTestDB(t),
 		SettingsProvider:     setting.ProvideProvider(cfg),
-		pluginStore:          &fakePluginStore{},
+		pluginStore:          pluginStore,
 		grafanaUpdateChecker: &updatechecker.GrafanaService{},
-		AccessControl:        accesscontrolmock.New().WithDisabled(),
-		PluginSettings:       pluginSettings.ProvideService(sqlStore, secretsService),
+		AccessControl:        accesscontrolmock.New(),
+		PluginSettings:       pluginsSettings,
+		pluginsCDNService: pluginscdn.ProvideService(&config.Cfg{
+			PluginsCDNURLTemplate: cfg.PluginsCDNURLTemplate,
+			PluginSettings:        cfg.PluginSettings,
+		}),
+		SocialService: social.ProvideService(cfg, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeCacheStorage()),
 	}
 
 	m := web.New()
@@ -80,7 +100,7 @@ func TestHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testing.T) {
 	cfg.BuildVersion = "7.8.9"
 	cfg.BuildCommit = "01234567"
 
-	m, hs := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures())
+	m, hs := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
 
@@ -132,5 +152,197 @@ func TestHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testing.T) {
 
 			assert.EqualValues(t, expected, got)
 		})
+	}
+}
+
+func TestHTTPServer_GetFrontendSettings_pluginsCDNBaseURL(t *testing.T) {
+	type settings struct {
+		PluginsCDNBaseURL string `json:"pluginsCDNBaseURL"`
+	}
+
+	tests := []struct {
+		desc      string
+		mutateCfg func(*setting.Cfg)
+		expected  settings
+	}{
+		{
+			desc: "With CDN",
+			mutateCfg: func(cfg *setting.Cfg) {
+				cfg.PluginsCDNURLTemplate = "https://cdn.example.com"
+			},
+			expected: settings{PluginsCDNBaseURL: "https://cdn.example.com"},
+		},
+		{
+			desc: "Without CDN",
+			mutateCfg: func(cfg *setting.Cfg) {
+				cfg.PluginsCDNURLTemplate = ""
+			},
+			expected: settings{PluginsCDNBaseURL: ""},
+		},
+		{
+			desc:     "CDN is disabled by default",
+			expected: settings{PluginsCDNBaseURL: ""},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			if test.mutateCfg != nil {
+				test.mutateCfg(cfg)
+			}
+			m, _ := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), nil, nil)
+			req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
+
+			recorder := httptest.NewRecorder()
+			m.ServeHTTP(recorder, req)
+			var got settings
+			err := json.Unmarshal(recorder.Body.Bytes(), &got)
+			require.NoError(t, err)
+			require.Equal(t, http.StatusOK, recorder.Code)
+			require.EqualValues(t, test.expected, got)
+		})
+	}
+}
+
+func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
+	type settings struct {
+		Apps map[string]*plugins.AppDTO `json:"apps"`
+	}
+
+	tests := []struct {
+		desc           string
+		pluginStore    func() pluginstore.Store
+		pluginSettings func() pluginsettings.Service
+		expected       settings
+	}{
+		{
+			desc: "disabled app with preload",
+			pluginStore: func() pluginstore.Store {
+				return &pluginstore.FakePluginStore{
+					PluginList: []pluginstore.Plugin{
+						{
+							Module: fmt.Sprintf("/%s/module.js", "test-app"),
+							JSONData: plugins.JSONData{
+								ID:      "test-app",
+								Info:    plugins.Info{Version: "0.5.0"},
+								Type:    plugins.TypeApp,
+								Preload: true,
+							},
+						},
+					},
+				}
+			},
+			pluginSettings: func() pluginsettings.Service {
+				return &pluginsettings.FakePluginSettings{
+					Plugins: newAppSettings("test-app", false),
+				}
+			},
+			expected: settings{
+				Apps: map[string]*plugins.AppDTO{
+					"test-app": {
+						ID:      "test-app",
+						Preload: false,
+						Path:    "/test-app/module.js",
+						Version: "0.5.0",
+					},
+				},
+			},
+		},
+		{
+			desc: "enabled app with preload",
+			pluginStore: func() pluginstore.Store {
+				return &pluginstore.FakePluginStore{
+					PluginList: []pluginstore.Plugin{
+						{
+							Module: fmt.Sprintf("/%s/module.js", "test-app"),
+							JSONData: plugins.JSONData{
+								ID:      "test-app",
+								Info:    plugins.Info{Version: "0.5.0"},
+								Type:    plugins.TypeApp,
+								Preload: true,
+							},
+						},
+					},
+				}
+			},
+			pluginSettings: func() pluginsettings.Service {
+				return &pluginsettings.FakePluginSettings{
+					Plugins: newAppSettings("test-app", true),
+				}
+			},
+			expected: settings{
+				Apps: map[string]*plugins.AppDTO{
+					"test-app": {
+						ID:      "test-app",
+						Preload: true,
+						Path:    "/test-app/module.js",
+						Version: "0.5.0",
+					},
+				},
+			},
+		},
+		{
+			desc: "angular app plugin",
+			pluginStore: func() pluginstore.Store {
+				return &pluginstore.FakePluginStore{
+					PluginList: []pluginstore.Plugin{
+						{
+							Module: fmt.Sprintf("/%s/module.js", "test-app"),
+							JSONData: plugins.JSONData{
+								ID:      "test-app",
+								Info:    plugins.Info{Version: "0.5.0"},
+								Type:    plugins.TypeApp,
+								Preload: true,
+							},
+							AngularDetected: true,
+						},
+					},
+				}
+			},
+			pluginSettings: func() pluginsettings.Service {
+				return &pluginsettings.FakePluginSettings{
+					Plugins: newAppSettings("test-app", true),
+				}
+			},
+			expected: settings{
+				Apps: map[string]*plugins.AppDTO{
+					"test-app": {
+						ID:              "test-app",
+						Preload:         true,
+						Path:            "/test-app/module.js",
+						Version:         "0.5.0",
+						AngularDetected: true,
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			m, _ := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), test.pluginStore(), test.pluginSettings())
+			req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
+
+			recorder := httptest.NewRecorder()
+			m.ServeHTTP(recorder, req)
+			var got settings
+			err := json.Unmarshal(recorder.Body.Bytes(), &got)
+			require.NoError(t, err)
+			require.Equal(t, http.StatusOK, recorder.Code)
+			require.EqualValues(t, test.expected, got)
+		})
+	}
+}
+
+func newAppSettings(id string, enabled bool) map[string]*pluginsettings.DTO {
+	return map[string]*pluginsettings.DTO{
+		id: {
+			ID:       0,
+			OrgID:    1,
+			PluginID: id,
+			Enabled:  enabled,
+		},
 	}
 }

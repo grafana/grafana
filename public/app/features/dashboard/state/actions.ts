@@ -2,11 +2,14 @@ import { TimeZone } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { removeAllPanels } from 'app/features/panel/state/reducers';
 import { updateTimeZoneForSession, updateWeekStartForSession } from 'app/features/profile/state/reducers';
 import { DashboardAcl, DashboardAclUpdateDTO, NewDashboardAclItem, PermissionLevel, ThunkResult } from 'app/types';
 
 import { loadPluginDashboards } from '../../plugins/admin/state/actions';
 import { cancelVariables } from '../../variables/state/actions';
+import { getDashboardSrv } from '../services/DashboardSrv';
 import { getTimeSrv } from '../services/TimeSrv';
 
 import { cleanUpDashboard, loadDashboardPermissions } from './reducers';
@@ -122,8 +125,12 @@ export const cleanUpDashboardAndVariables = (): ThunkResult<void> => (dispatch, 
   }
 
   getTimeSrv().stopAutoRefresh();
-
   dispatch(cleanUpDashboard());
+  dispatch(removeAllPanels());
+
+  dashboardWatcher.leave();
+
+  getDashboardSrv().setCurrent(undefined);
 };
 
 export const updateTimeZoneDashboard =

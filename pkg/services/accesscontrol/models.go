@@ -2,13 +2,18 @@ package accesscontrol
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
+
+var ErrInternal = errutil.Internal("accesscontrol.internal")
 
 // RoleRegistration stores a role and its assignments to built-in roles
 // (Viewer, Editor, Admin, Grafana Admin)
@@ -24,7 +29,7 @@ type Role struct {
 	Version     int64  `json:"version"`
 	UID         string `xorm:"uid" json:"uid"`
 	Name        string `json:"name"`
-	DisplayName string `json:"displayName"`
+	DisplayName string `json:"displayName,omitempty"`
 	Group       string `xorm:"group_name" json:"group"`
 	Description string `json:"description"`
 	Hidden      bool   `json:"hidden"`
@@ -45,17 +50,9 @@ func (r *Role) IsBasic() bool {
 	return strings.HasPrefix(r.Name, BasicRolePrefix) || strings.HasPrefix(r.UID, BasicRoleUIDPrefix)
 }
 
-func (r *Role) GetDisplayName() string {
-	if r.IsFixed() && r.DisplayName == "" {
-		r.DisplayName = fallbackDisplayName(r.Name)
-	}
-	return r.DisplayName
-}
-
 func (r Role) MarshalJSON() ([]byte, error) {
 	type Alias Role
 
-	r.DisplayName = r.GetDisplayName()
 	return json.Marshal(&struct {
 		Alias
 		Global bool `json:"global" xorm:"-"`
@@ -69,7 +66,7 @@ type RoleDTO struct {
 	Version     int64        `json:"version"`
 	UID         string       `xorm:"uid" json:"uid"`
 	Name        string       `json:"name"`
-	DisplayName string       `json:"displayName"`
+	DisplayName string       `json:"displayName,omitempty"`
 	Description string       `json:"description"`
 	Group       string       `xorm:"group_name" json:"group"`
 	Permissions []Permission `json:"permissions,omitempty"`
@@ -126,24 +123,21 @@ func (r *RoleDTO) IsFixed() bool {
 	return strings.HasPrefix(r.Name, FixedRolePrefix)
 }
 
+func (r *RoleDTO) IsPlugin() bool {
+	return strings.HasPrefix(r.Name, PluginRolePrefix)
+}
+
 func (r *RoleDTO) IsBasic() bool {
 	return strings.HasPrefix(r.Name, BasicRolePrefix) || strings.HasPrefix(r.UID, BasicRoleUIDPrefix)
 }
 
-func (r *RoleDTO) GetDisplayName() string {
-	if r.IsFixed() && r.DisplayName == "" {
-		r.DisplayName = fallbackDisplayName(r.Name)
-	}
-	if r.DisplayName == "" {
-		return r.Name
-	}
-	return r.DisplayName
+func (r *RoleDTO) IsExternalService() bool {
+	return strings.HasPrefix(r.Name, ExternalServiceRolePrefix) || strings.HasPrefix(r.UID, ExternalServiceRoleUIDPrefix)
 }
 
 func (r RoleDTO) MarshalJSON() ([]byte, error) {
 	type Alias RoleDTO
 
-	r.DisplayName = r.GetDisplayName()
 	return json.Marshal(&struct {
 		Alias
 		Global bool `json:"global" xorm:"-"`
@@ -151,17 +145,6 @@ func (r RoleDTO) MarshalJSON() ([]byte, error) {
 		Alias:  (Alias)(r),
 		Global: r.Global(),
 	})
-}
-
-// fallbackDisplayName provides a fallback name for role
-// that can be displayed in the ui for better readability
-// example: currently this would give:
-// fixed:datasources:name -> datasources name
-// datasources:admin      -> datasources admin
-func fallbackDisplayName(rName string) string {
-	// removing prefix for fixed roles
-	rNameWithoutPrefix := strings.Replace(rName, FixedRolePrefix, "", 1)
-	return strings.TrimSpace(strings.Replace(rNameWithoutPrefix, ":", " ", -1))
 }
 
 type TeamRole struct {
@@ -199,6 +182,10 @@ type Permission struct {
 	Action string `json:"action"`
 	Scope  string `json:"scope"`
 
+	Kind       string `json:"-"`
+	Attribute  string `json:"-"`
+	Identifier string `json:"-"`
+
 	Updated time.Time `json:"updated"`
 	Created time.Time `json:"created"`
 }
@@ -210,32 +197,50 @@ func (p Permission) OSSPermission() Permission {
 	}
 }
 
+// SplitScope returns kind, attribute and Identifier
+func (p Permission) SplitScope() (string, string, string) {
+	if p.Scope == "" {
+		return "", "", ""
+	}
+
+	fragments := strings.Split(p.Scope, ":")
+	switch l := len(fragments); l {
+	case 1: // Splitting a wildcard scope "*" -> kind: "*"; attribute: "*"; identifier: "*"
+		return fragments[0], fragments[0], fragments[0]
+	case 2: // Splitting a wildcard scope with specified kind "dashboards:*" -> kind: "dashboards"; attribute: "*"; identifier: "*"
+		return fragments[0], fragments[1], fragments[1]
+	default: // Splitting a scope with all fields specified "dashboards:uid:my_dash" -> kind: "dashboards"; attribute: "uid"; identifier: "my_dash"
+		return fragments[0], fragments[1], strings.Join(fragments[2:], ":")
+	}
+}
+
 type GetUserPermissionsQuery struct {
-	OrgID      int64
-	UserID     int64
-	Roles      []string
-	TeamIDs    []int64
-	RolePrefix string
+	OrgID        int64
+	UserID       int64
+	Roles        []string
+	TeamIDs      []int64
+	RolePrefixes []string
 }
 
 // ResourcePermission is structure that holds all actions that either a team / user / builtin-role
 // can perform against specific resource.
 type ResourcePermission struct {
-	ID          int64
-	RoleName    string
-	Actions     []string
-	Scope       string
-	UserId      int64
-	UserLogin   string
-	UserEmail   string
-	TeamId      int64
-	TeamEmail   string
-	Team        string
-	BuiltInRole string
-	IsManaged   bool
-	IsInherited bool
-	Created     time.Time
-	Updated     time.Time
+	ID               int64
+	RoleName         string
+	Actions          []string
+	Scope            string
+	UserId           int64
+	UserLogin        string
+	UserEmail        string
+	TeamId           int64
+	TeamEmail        string
+	Team             string
+	BuiltInRole      string
+	IsManaged        bool
+	IsInherited      bool
+	IsServiceAccount bool
+	Created          time.Time
+	Updated          time.Time
 }
 
 func (p *ResourcePermission) Contains(targetActions []string) bool {
@@ -268,15 +273,55 @@ type SetResourcePermissionCommand struct {
 	Permission  string `json:"permission"`
 }
 
-const (
-	GlobalOrgID        = 0
-	FixedRolePrefix    = "fixed:"
-	ManagedRolePrefix  = "managed:"
-	BasicRolePrefix    = "basic:"
-	BasicRoleUIDPrefix = "basic_"
-	RoleGrafanaAdmin   = "Grafana Admin"
+type SaveExternalServiceRoleCommand struct {
+	OrgID             int64
+	Global            bool
+	ExternalServiceID string
+	ServiceAccountID  int64
+	Permissions       []Permission
+}
 
+func (cmd *SaveExternalServiceRoleCommand) Validate() error {
+	if cmd.ExternalServiceID == "" {
+		return errors.New("external service id not specified")
+	}
+
+	// slugify the external service id ID for the role to have correct name and uid
+	cmd.ExternalServiceID = slugify.Slugify(cmd.ExternalServiceID)
+
+	if (cmd.OrgID == GlobalOrgID) != cmd.Global {
+		return fmt.Errorf("invalid org id %d for global role %t", cmd.OrgID, cmd.Global)
+	}
+
+	// Check and deduplicate permissions
+	if cmd.Permissions == nil || len(cmd.Permissions) == 0 {
+		return errors.New("no permissions provided")
+	}
+	dedupMap := map[Permission]bool{}
+	dedup := make([]Permission, 0, len(cmd.Permissions))
+	for i := range cmd.Permissions {
+		if len(cmd.Permissions[i].Action) == 0 {
+			return fmt.Errorf("external service %v requests a permission with no Action", cmd.ExternalServiceID)
+		}
+		if dedupMap[cmd.Permissions[i]] {
+			continue
+		}
+		dedupMap[cmd.Permissions[i]] = true
+		dedup = append(dedup, cmd.Permissions[i])
+	}
+	cmd.Permissions = dedup
+
+	if cmd.ServiceAccountID <= 0 {
+		return fmt.Errorf("invalid service account id %d", cmd.ServiceAccountID)
+	}
+
+	return nil
+}
+
+const (
+	GlobalOrgID      = 0
 	GeneralFolderUID = "general"
+	RoleGrafanaAdmin = "Grafana Admin"
 
 	// Permission actions
 
@@ -285,8 +330,10 @@ const (
 	ActionAPIKeyDelete = "apikeys:delete"
 
 	// Users actions
-	ActionUsersRead  = "users:read"
-	ActionUsersWrite = "users:write"
+	ActionUsersRead        = "users:read"
+	ActionUsersWrite       = "users:write"
+	ActionUsersImpersonate = "users:impersonate"
+
 	// We can ignore gosec G101 since this does not contain any credentials.
 	// nolint:gosec
 	ActionUsersAuthTokenList = "users.authtoken:read"
@@ -304,6 +351,7 @@ const (
 	ActionUsersLogout            = "users:logout"
 	ActionUsersQuotasList        = "users.quotas:read"
 	ActionUsersQuotasUpdate      = "users.quotas:write"
+	ActionUsersPermissionsRead   = "users.permissions:read"
 
 	// Org actions
 	ActionOrgsRead             = "orgs:read"
@@ -330,7 +378,8 @@ const (
 	ActionServerStatsRead = "server.stats:read"
 
 	// Settings actions
-	ActionSettingsRead = "settings:read"
+	ActionSettingsRead  = "settings:read"
+	ActionSettingsWrite = "settings:write"
 
 	// Datasources actions
 	ActionDatasourcesExplore = "datasources:explore"
@@ -342,10 +391,13 @@ const (
 	ScopeAPIKeysAll = "apikeys:*"
 
 	// Users scope
-	ScopeUsersAll = "users:*"
+	ScopeUsersAll    = "users:*"
+	ScopeUsersPrefix = "users:id:"
 
 	// Settings scope
-	ScopeSettingsAll = "settings:*"
+	ScopeSettingsAll  = "settings:*"
+	ScopeSettingsAuth = "settings:auth:*"
+	ScopeSettingsSAML = "settings:auth.saml:*"
 
 	// Team related actions
 	ActionTeamsCreate           = "teams:create"
@@ -396,8 +448,19 @@ const (
 	ActionAlertingNotificationsExternalRead  = "alert.notifications.external:read"
 
 	// Alerting provisioning actions
-	ActionAlertingProvisioningRead  = "alert.provisioning:read"
-	ActionAlertingProvisioningWrite = "alert.provisioning:write"
+	ActionAlertingProvisioningRead        = "alert.provisioning:read"
+	ActionAlertingProvisioningReadSecrets = "alert.provisioning.secrets:read"
+	ActionAlertingProvisioningWrite       = "alert.provisioning:write"
+
+	// Feature Management actions
+	ActionFeatureManagementRead  = "featuremgmt.read"
+	ActionFeatureManagementWrite = "featuremgmt.write"
+
+	// Library Panel actions
+	ActionLibraryPanelsCreate = "library.panels:create"
+	ActionLibraryPanelsRead   = "library.panels:read"
+	ActionLibraryPanelsWrite  = "library.panels:write"
+	ActionLibraryPanelsDelete = "library.panels:delete"
 )
 
 var (

@@ -1,0 +1,1 @@
+{"version":3,"file":"kusto.js","sourceRoot":"","sources":["../../../../lib/monaco-languages/kusto.ts"],"names":[],"mappings":"AAAA,MAAM,CAAC,OAAO,UAAU,SAAS;IAC/B,OAAO,IAAI,OAAO,CAAO,CAAC,OAAO,EAAE,EAAE,CACnC,uBAAuB,CAAC,CAAC,uCAAuC,CAAC,EAAE,GAAG,EAAE,CAAC,OAAO,EAAE,CAAC,CACpF,CAAC;AACJ,CAAC"}

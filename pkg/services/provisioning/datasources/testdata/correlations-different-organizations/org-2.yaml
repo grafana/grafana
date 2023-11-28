@@ -1,0 +1,15 @@
+apiVersion: 1
+
+deleteDatasources:
+  - name: Foo
+    orgId: 2
+
+datasources:
+  - name: Foo
+    uid: foo
+    orgId: 2
+    type: graphite
+    correlations:
+      - targetUID: foo
+        label: self correlation
+        description: a description

@@ -3,10 +3,10 @@ import { merge } from 'lodash';
 import { toDataFrame } from '../dataframe/processDataFrame';
 import { createTheme } from '../themes';
 import { ReducerID } from '../transformations/fieldReducer';
-import { MappingType, SpecialValueMatch, ValueMapping } from '../types';
+import { FieldConfigPropertyItem, MappingType, SpecialValueMatch, ValueMapping } from '../types';
 
 import { getDisplayProcessor } from './displayProcessor';
-import { getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
+import { fixCellTemplateExpressions, getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 
 describe('FieldDisplay', () => {
@@ -14,11 +14,15 @@ describe('FieldDisplay', () => {
     // Since FieldConfigEditors belong to grafana-ui we need to mock those here
     // as grafana-ui code cannot be imported in grafana-data.
     // TODO: figure out a way to share standard editors between data/ui tests
-    const mappings = {
+    const mappings: FieldConfigPropertyItem = {
       id: 'mappings', // Match field properties
-      process: (value: any) => value,
+      process: (value) => value,
       shouldApply: () => true,
-    } as any;
+      override: jest.fn(),
+      editor: jest.fn(),
+      name: 'Value mappings',
+      path: 'mappings',
+    };
 
     standardFieldConfigEditorRegistry.setInit(() => {
       return [mappings];
@@ -321,7 +325,7 @@ describe('FieldDisplay', () => {
       });
 
       const cache = { numeric: 10, text: 'Value' };
-      options.data![0].fields[1].display = (v: any) => {
+      options.data![0].fields[1].display = () => {
         return cache;
       };
 
@@ -504,8 +508,25 @@ function createEmptyDisplayOptions(extend = {}): GetFieldDisplayValuesOptions {
 }
 
 function createDisplayOptions(extend: Partial<GetFieldDisplayValuesOptions> = {}): GetFieldDisplayValuesOptions {
-  const options: GetFieldDisplayValuesOptions = {
-    data: [
+  const options = merge(
+    {
+      replaceVariables: (value: string) => {
+        return value;
+      },
+      reduceOptions: {
+        calcs: [],
+      },
+      fieldConfig: {
+        overrides: [],
+        defaults: {},
+      },
+      theme: createTheme(),
+    },
+    extend
+  );
+
+  if (!options.data?.length) {
+    options.data = [
       toDataFrame({
         name: 'Series Name',
         fields: [
@@ -514,19 +535,23 @@ function createDisplayOptions(extend: Partial<GetFieldDisplayValuesOptions> = {}
           { name: 'Field 3', values: [2, 4, 6] },
         ],
       }),
-    ],
-    replaceVariables: (value: string) => {
-      return value;
-    },
-    reduceOptions: {
-      calcs: [],
-    },
-    fieldConfig: {
-      overrides: [],
-      defaults: {},
-    },
-    theme: createTheme(),
-  };
-
-  return merge<GetFieldDisplayValuesOptions, any>(options, extend);
+    ];
+  }
+  return options;
 }
+
+describe('fixCellTemplateExpressions', () => {
+  it('Should replace __cell_x correctly', () => {
+    expect(fixCellTemplateExpressions('$__cell_10 asd ${__cell_15} asd [[__cell_20]]')).toEqual(
+      '${__data.fields[10]} asd ${__data.fields[15]} asd ${__data.fields[20]}'
+    );
+  });
+
+  it('Should handle date formatting', () => {
+    expect(
+      fixCellTemplateExpressions('$__cell_10:date:iso asd ${__cell_15:date:seconds} asd [[__cell_20:date:YYYY-MM]]')
+    ).toEqual(
+      '${__data.fields[10]:date:iso} asd ${__data.fields[15]:date:seconds} asd ${__data.fields[20]:date:YYYY-MM}'
+    );
+  });
+});

@@ -9,7 +9,7 @@ import { DBaaSPageProps } from './DBaaSPage.types';
 import DBaaSPageButtons from './DBaaSPageButtons/DBaaSPageButtons';
 import { PageHeader } from './PageHeader/PageHeader';
 
-export const DBaaSPage: FC<DBaaSPageProps> = ({
+export const DBaaSPage: FC<React.PropsWithChildren<DBaaSPageProps>> = ({
   pageToolbarProps,
   pageName,
   cancelUrl,

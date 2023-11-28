@@ -1,18 +1,23 @@
 ---
-title: Modify dashboard settings
-menuTitle: Dashboard settings
-weight: 8
 keywords:
   - time settings
   - variables
   - links
   - dashboard
   - settings
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
+menuTitle: Modify dashboard settings
+title: Modify dashboard settings
+weight: 8
 ---
 
 # Modify dashboard settings
 
-The dashboard settings page enables you to:
+The dashboard settings page allows you to:
 
 - Edit general dashboard properties, including time settings
 - Add annotation queries
@@ -31,7 +36,7 @@ Adjust dashboard time settings when you want to change the dashboard timezone, t
 
 1. On the **Dashboard settings** page, click **General**.
 1. Navigate to the **Time Options** section.
-1. Specify time settings according to the following descriptions.
+1. Specify time settings as follows.
 
    - **Timezone:** Specify the local time zone of the service or system that you are monitoring. This can be helpful when monitoring a system or service that operates across several time zones.
      - **Default:** Grafana uses the default selected time zone for the user profile, team, or organization. If no time zone is specified for the user profile, a team the user is a member of, or the organization, then Grafana uses the local browser time.
@@ -51,7 +56,7 @@ icon you can hover over to see the event information.
 1. Enter a name and select a data source.
 1. Complete the rest of the form to build a query and annotation.
 
-The query editor UI changes based on the data source you select. Refer to the [Data source]({{< relref "../../../datasources/" >}}) documentation for details on how to construct a query.
+The query editor UI changes based on the data source you select. Refer to the [Data source][] documentation for details on how to construct a query.
 
 ## Add a variable
 
@@ -59,10 +64,10 @@ Variables enable you to create more interactive and dynamic dashboards. Instead 
 and sensor names in your metric queries, you can use variables in their place. Variables are displayed as dropdown lists at the top of
 the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
-For more information about variables, refer to [Variables]({{< relref "../../variables/" >}}).
+For more information about variables, refer to [Variables][].
 
 1. On the **Dashboard settings** page, click **Variable** in the left side section menu and then the **Add variable** button.
-1. In the **General** section, the the name of the variable. This is the name that you will later use in queries.
+1. In the **General** section, the name of the variable. This is the name that you will later use in queries.
 1. Select a variable **Type**.
 
    > **Note:** The variable type you select impacts which fields you populate on the page.
@@ -74,7 +79,7 @@ For more information about variables, refer to [Variables]({{< relref "../../var
 Dashboard links enable you to place links to other dashboards and web sites directly below the dashboard header. Links provide for easy navigation to other, related dashboards and content.
 
 1. On the **Dashboard settings** page, click **Links** in the left side section menu and then the **Add link** button.
-1. Enter title and and in the **Type** field, select **Dashboard** or **Link**.
+1. Enter title and in the **Type** field, select **Dashboard** or **Link**.
 1. To add a dashboard link:
    a. Add an optional tag. Tags are useful creating a dynamic dropdown of dashboards that all have a specific tag.
    b. Select any of the dashboard link **Options**.
@@ -90,4 +95,15 @@ A dashboard in Grafana is represented by a JSON object, which stores metadata of
 
 To view a dashboard JSON model, on the **Dashboard settings** page, click **JSON**.
 
-For more information about the JSON fields, refer to [JSON fields]({{< relref "../view-dashboard-json-model/#json-fields" >}}).
+For more information about the JSON fields, refer to [JSON fields][].
+
+{{% docs/reference %}}
+[Data source]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
+[Data source]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
+
+[Variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+[Variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+
+[JSON fields]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/view-dashboard-json-model#json-fields"
+[JSON fields]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/view-dashboard-json-model#json-fields"
+{{% /docs/reference %}}

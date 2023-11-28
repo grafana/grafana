@@ -28,19 +28,19 @@ export class FetchQueueWorker {
         concatMap(({ state, noOfInProgress }) => {
           const apiRequests = Object.keys(state)
             .filter((k) => state[k].state === FetchStatus.Pending && !isDataQuery(state[k].options.url))
-            .reduce((all, key) => {
+            .reduce<WorkerEntry[]>((all, key) => {
               const entry = { id: key, options: state[key].options };
               all.push(entry);
               return all;
-            }, [] as WorkerEntry[]);
+            }, []);
 
           const dataRequests = Object.keys(state)
             .filter((key) => state[key].state === FetchStatus.Pending && isDataQuery(state[key].options.url))
-            .reduce((all, key) => {
+            .reduce<WorkerEntry[]>((all, key) => {
               const entry = { id: key, options: state[key].options };
               all.push(entry);
               return all;
-            }, [] as WorkerEntry[]);
+            }, []);
 
           // apiRequests have precedence over data requests and should always be called directly
           // this means we can end up with a negative value.

@@ -1,0 +1,107 @@
+import { __awaiter } from "tslib";
+import { fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
+import config from 'app/core/config';
+import { LogDetailsRow } from './LogDetailsRow';
+const setup = (propOverrides) => {
+    const props = {
+        parsedValues: [''],
+        parsedKeys: [''],
+        isLabel: true,
+        wrapLogMessage: false,
+        getStats: () => null,
+        onClickFilterLabel: () => { },
+        onClickFilterOutLabel: () => { },
+        onClickShowField: () => { },
+        onClickHideField: () => { },
+        displayedFields: [],
+        row: {},
+        disableActions: false,
+    };
+    Object.assign(props, propOverrides);
+    return render(React.createElement("table", null,
+        React.createElement("tbody", null,
+            React.createElement(LogDetailsRow, Object.assign({}, props)))));
+};
+jest.mock('@grafana/runtime', () => (Object.assign(Object.assign({}, jest.requireActual('@grafana/runtime')), { reportInteraction: jest.fn() })));
+describe('LogDetailsRow', () => {
+    it('should render parsed key', () => {
+        setup({ parsedKeys: ['test key'] });
+        expect(screen.getByText('test key')).toBeInTheDocument();
+    });
+    it('should render parsed value', () => {
+        setup({ parsedValues: ['test value'] });
+        expect(screen.getByText('test value')).toBeInTheDocument();
+    });
+    it('should render metrics button', () => {
+        setup();
+        expect(screen.getAllByRole('button', { name: 'Ad-hoc statistics' })).toHaveLength(1);
+    });
+    describe('if props is a label', () => {
+        it('should render filter label button', () => {
+            setup();
+            expect(screen.getAllByRole('button', { name: 'Filter for value' })).toHaveLength(1);
+            expect(screen.queryByRole('button', { name: 'Remove filter' })).not.toBeInTheDocument();
+        });
+        it('should render filter out label button', () => {
+            setup();
+            expect(screen.getAllByRole('button', { name: 'Filter out value' })).toHaveLength(1);
+        });
+        it('should render filter buttons when toggleLabelsInLogsUI false', () => __awaiter(void 0, void 0, void 0, function* () {
+            setup({
+                isFilterLabelActive: jest.fn().mockResolvedValue(true),
+            });
+            expect(screen.getByRole('button', { name: 'Filter for value' })).toBeInTheDocument();
+            expect(screen.getByRole('button', { name: 'Filter out value' })).toBeInTheDocument();
+        }));
+        it('should render remove filter button when toggleLabelsInLogsUI true', () => __awaiter(void 0, void 0, void 0, function* () {
+            const defaultValue = config.featureToggles.toggleLabelsInLogsUI;
+            config.featureToggles.toggleLabelsInLogsUI = true;
+            setup({
+                isFilterLabelActive: jest.fn().mockResolvedValue(true),
+            });
+            expect(yield screen.findByRole('button', { name: 'Remove filter' })).toBeInTheDocument();
+            config.featureToggles.toggleLabelsInLogsUI = defaultValue;
+        }));
+    });
+    describe('if props is not a label', () => {
+        it('should render a show toggleFieldButton button', () => {
+            setup({ isLabel: false });
+            expect(screen.getAllByRole('button', { name: 'Show this field instead of the message' })).toHaveLength(1);
+        });
+    });
+    it('should render stats when stats icon is clicked', () => {
+        setup({
+            parsedKeys: ['key'],
+            parsedValues: ['value'],
+            getStats: () => {
+                return [
+                    {
+                        count: 1,
+                        proportion: 1 / 2,
+                        value: 'value',
+                    },
+                    {
+                        count: 1,
+                        proportion: 1 / 2,
+                        value: 'another value',
+                    },
+                ];
+            },
+        });
+        expect(screen.queryByTestId('logLabelStats')).not.toBeInTheDocument();
+        const adHocStatsButton = screen.getByRole('button', { name: 'Ad-hoc statistics' });
+        fireEvent.click(adHocStatsButton);
+        expect(screen.getByTestId('logLabelStats')).toBeInTheDocument();
+        expect(screen.getByTestId('logLabelStats')).toHaveTextContent('another value');
+    });
+    describe('copy button', () => {
+        it('should be invisible unless mouse is over', () => {
+            setup({ parsedValues: ['test value'] });
+            // This tests a regression where the button was always visible.
+            expect(screen.getByTitle('Copy value to clipboard')).not.toBeVisible();
+            // Asserting visibility on mouse-over is currently not possible.
+        });
+    });
+});
+//# sourceMappingURL=LogDetailsRow.test.js.map

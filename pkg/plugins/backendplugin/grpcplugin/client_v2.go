@@ -9,13 +9,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/hashicorp/go-plugin"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
+	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 type ClientV2 struct {
@@ -129,7 +130,7 @@ func (c *ClientV2) CollectMetrics(ctx context.Context, req *backend.CollectMetri
 
 func (c *ClientV2) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	if c.DiagnosticsClient == nil {
-		return nil, backendplugin.ErrMethodNotImplemented
+		return nil, plugins.ErrMethodNotImplemented
 	}
 
 	protoContext := backend.ToProto().PluginContext(req.PluginContext)
@@ -150,7 +151,7 @@ func (c *ClientV2) CheckHealth(ctx context.Context, req *backend.CheckHealthRequ
 
 func (c *ClientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if c.DataClient == nil {
-		return nil, backendplugin.ErrMethodNotImplemented
+		return nil, plugins.ErrMethodNotImplemented
 	}
 
 	protoReq := backend.ToProto().QueryDataRequest(req)
@@ -158,7 +159,7 @@ func (c *ClientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest)
 
 	if err != nil {
 		if status.Code(err) == codes.Unimplemented {
-			return nil, backendplugin.ErrMethodNotImplemented
+			return nil, plugins.ErrMethodNotImplemented
 		}
 
 		return nil, fmt.Errorf("%v: %w", "Failed to query data", err)
@@ -169,14 +170,14 @@ func (c *ClientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest)
 
 func (c *ClientV2) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if c.ResourceClient == nil {
-		return backendplugin.ErrMethodNotImplemented
+		return plugins.ErrMethodNotImplemented
 	}
 
 	protoReq := backend.ToProto().CallResourceRequest(req)
 	protoStream, err := c.ResourceClient.CallResource(ctx, protoReq)
 	if err != nil {
 		if status.Code(err) == codes.Unimplemented {
-			return backendplugin.ErrMethodNotImplemented
+			return plugins.ErrMethodNotImplemented
 		}
 
 		return fmt.Errorf("%v: %w", "Failed to call resource", err)
@@ -186,7 +187,7 @@ func (c *ClientV2) CallResource(ctx context.Context, req *backend.CallResourceRe
 		protoResp, err := protoStream.Recv()
 		if err != nil {
 			if status.Code(err) == codes.Unimplemented {
-				return backendplugin.ErrMethodNotImplemented
+				return plugins.ErrMethodNotImplemented
 			}
 
 			if errors.Is(err, io.EOF) {
@@ -204,7 +205,7 @@ func (c *ClientV2) CallResource(ctx context.Context, req *backend.CallResourceRe
 
 func (c *ClientV2) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	if c.StreamClient == nil {
-		return nil, backendplugin.ErrMethodNotImplemented
+		return nil, plugins.ErrMethodNotImplemented
 	}
 	protoResp, err := c.StreamClient.SubscribeStream(ctx, backend.ToProto().SubscribeStreamRequest(req))
 	if err != nil {
@@ -215,7 +216,7 @@ func (c *ClientV2) SubscribeStream(ctx context.Context, req *backend.SubscribeSt
 
 func (c *ClientV2) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
 	if c.StreamClient == nil {
-		return nil, backendplugin.ErrMethodNotImplemented
+		return nil, plugins.ErrMethodNotImplemented
 	}
 	protoResp, err := c.StreamClient.PublishStream(ctx, backend.ToProto().PublishStreamRequest(req))
 	if err != nil {
@@ -226,14 +227,14 @@ func (c *ClientV2) PublishStream(ctx context.Context, req *backend.PublishStream
 
 func (c *ClientV2) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	if c.StreamClient == nil {
-		return backendplugin.ErrMethodNotImplemented
+		return plugins.ErrMethodNotImplemented
 	}
 
 	protoReq := backend.ToProto().RunStreamRequest(req)
 	protoStream, err := c.StreamClient.RunStream(ctx, protoReq)
 	if err != nil {
 		if status.Code(err) == codes.Unimplemented {
-			return backendplugin.ErrMethodNotImplemented
+			return plugins.ErrMethodNotImplemented
 		}
 		return fmt.Errorf("%v: %w", "Failed to call resource", err)
 	}
@@ -242,7 +243,7 @@ func (c *ClientV2) RunStream(ctx context.Context, req *backend.RunStreamRequest,
 		p, err := protoStream.Recv()
 		if err != nil {
 			if status.Code(err) == codes.Unimplemented {
-				return backendplugin.ErrMethodNotImplemented
+				return plugins.ErrMethodNotImplemented
 			}
 			if errors.Is(err, io.EOF) {
 				return nil

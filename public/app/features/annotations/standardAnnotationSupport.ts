@@ -10,12 +10,14 @@ import {
   AnnotationSupport,
   DataFrame,
   DataSourceApi,
+  DataTransformContext,
   Field,
   FieldType,
   getFieldDisplayName,
   KeyValue,
   standardTransformers,
 } from '@grafana/data';
+import { config } from 'app/core/config';
 
 export const standardAnnotationSupport: AnnotationSupport = {
   /**
@@ -33,7 +35,7 @@ export const standardAnnotationSupport: AnnotationSupport = {
         mappings: {},
       };
     }
-    return json as AnnotationQuery;
+    return json;
   },
 
   /**
@@ -65,8 +67,12 @@ export function singleFrameFromPanelData(): OperatorFunction<DataFrame[], DataFr
           return of(data[0]);
         }
 
+        const ctx: DataTransformContext = {
+          interpolate: (v: string) => v,
+        };
+
         return of(data).pipe(
-          standardTransformers.mergeTransformer.operator({}),
+          standardTransformers.mergeTransformer.operator({}, ctx),
           map((d) => d[0])
         );
       })
@@ -83,7 +89,7 @@ interface AnnotationEventFieldSetter {
 
 export interface AnnotationFieldInfo {
   key: keyof AnnotationEvent;
-
+  label?: string;
   split?: string;
   field?: (frame: DataFrame) => Field | undefined;
   placeholder?: string;
@@ -97,7 +103,7 @@ export const annotationEventNames: AnnotationFieldInfo[] = [
     field: (frame: DataFrame) => frame.fields.find((f) => f.type === FieldType.time),
     placeholder: 'time, or the first time field',
   },
-  { key: 'timeEnd', help: 'When this field is defined, the annotation will be treated as a range' },
+  { key: 'timeEnd', label: 'end time', help: 'When this field is defined, the annotation will be treated as a range' },
   {
     key: 'title',
   },
@@ -112,9 +118,22 @@ export const annotationEventNames: AnnotationFieldInfo[] = [
   },
 ];
 
+export const publicDashboardEventNames: AnnotationFieldInfo[] = [
+  {
+    key: 'color',
+  },
+  {
+    key: 'isRegion',
+  },
+  {
+    key: 'source',
+  },
+];
+
 // Given legacy infrastructure, alert events are passed though the same annotation
 // pipeline, but include fields that should not be exposed generally
 const alertEventAndAnnotationFields: AnnotationFieldInfo[] = [
+  ...(config.publicDashboardAccessToken ? publicDashboardEventNames : []),
   ...annotationEventNames,
   { key: 'userId' },
   { key: 'login' },
@@ -185,7 +204,8 @@ export function getAnnotationsFromData(
       }
 
       if (!hasTime || !hasText) {
-        return []; // throw an error?
+        console.error('Cannot process annotation fields. No time or text present.');
+        return [];
       }
 
       // Add each value to the string
@@ -198,12 +218,12 @@ export function getAnnotationsFromData(
         };
 
         for (const f of fields) {
-          let v: any = undefined;
+          let v = undefined;
 
           if (f.text) {
             v = f.text; // TODO support templates!
           } else if (f.field) {
-            v = f.field.values.get(i);
+            v = f.field.values[i];
             if (v !== undefined && f.regex) {
               const match = f.regex.exec(v);
               if (match) {
@@ -216,7 +236,7 @@ export function getAnnotationsFromData(
             if (f.split && typeof v === 'string') {
               v = v.split(',');
             }
-            (anno as any)[f.key] = v;
+            anno[f.key] = v;
           }
         }
 

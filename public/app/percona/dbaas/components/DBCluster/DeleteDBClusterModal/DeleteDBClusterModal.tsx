@@ -11,7 +11,7 @@ import { newDBClusterService } from '../DBCluster.utils';
 import { getStyles } from './DeleteDBClusterModal.styles';
 import { DeleteDBClusterModalProps } from './DeleteDBClusterModal.types';
 
-export const DeleteDBClusterModal: FC<DeleteDBClusterModalProps> = ({
+export const DeleteDBClusterModal: FC<React.PropsWithChildren<DeleteDBClusterModalProps>> = ({
   isVisible,
   setVisible,
   setLoading,

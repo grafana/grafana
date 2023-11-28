@@ -6,24 +6,15 @@ import {
   FieldType,
   identityOverrideProcessor,
 } from '@grafana/data';
-import { StackingConfig, StackingMode } from '@grafana/schema';
+import { GraphFieldConfig, StackingConfig, StackingMode } from '@grafana/schema';
 
-import {
-  GraphFieldConfig,
-  graphFieldOptions,
-  HorizontalGroup,
-  IconButton,
-  Input,
-  RadioButtonGroup,
-  Tooltip,
-} from '../..';
+import { RadioButtonGroup } from '../../components/Forms/RadioButtonGroup/RadioButtonGroup';
+import { IconButton } from '../../components/IconButton/IconButton';
+import { Input } from '../../components/Input/Input';
+import { HorizontalGroup } from '../../components/Layout/Layout';
+import { graphFieldOptions } from '../../components/uPlot/config';
 
-export const StackingEditor: React.FC<FieldOverrideEditorProps<StackingConfig, any>> = ({
-  value,
-  context,
-  onChange,
-  item,
-}) => {
+export const StackingEditor = ({ value, context, onChange, item }: FieldOverrideEditorProps<StackingConfig, any>) => {
   return (
     <HorizontalGroup>
       <RadioButtonGroup
@@ -40,11 +31,7 @@ export const StackingEditor: React.FC<FieldOverrideEditorProps<StackingConfig, a
         <Input
           type="text"
           placeholder="Group"
-          suffix={
-            <Tooltip content="Name of the stacking group" placement="top">
-              <IconButton name="question-circle" />
-            </Tooltip>
-          }
+          suffix={<IconButton name="question-circle" tooltip="Name of the stacking group" tooltipPlacement="top" />}
           defaultValue={value?.group}
           onChange={(v) => {
             onChange({

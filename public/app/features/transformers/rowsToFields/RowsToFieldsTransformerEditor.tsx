@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { PluginState, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
+import { PluginState, TransformerRegistryItem, TransformerUIProps, TransformerCategory } from '@grafana/data';
 
 import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfigMappingEditor';
 
@@ -32,6 +32,7 @@ export const rowsToFieldsTransformRegistryItem: TransformerRegistryItem<RowToFie
   name: rowsToFieldsTransformer.name,
   description: rowsToFieldsTransformer.description,
   state: PluginState.beta,
+  categories: new Set([TransformerCategory.Reformat]),
   help: `
 ### Use cases 
 

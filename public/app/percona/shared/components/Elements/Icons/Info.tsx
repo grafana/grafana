@@ -7,7 +7,7 @@ import { useTheme } from '@grafana/ui';
 import { getStyles } from './Icons.styles';
 import { SvgProps } from './Icons.types';
 
-export const Info: FC<SvgProps> = ({ className, ...rest }) => {
+export const Info: FC<React.PropsWithChildren<SvgProps>> = ({ className, ...rest }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 

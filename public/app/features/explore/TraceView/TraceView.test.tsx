@@ -1,17 +1,16 @@
-import { TopOfViewRefType } from '@jaegertracing/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView';
-import { TraceData, TraceSpanData } from '@jaegertracing/jaeger-ui-components/src/types/trace';
 import { render, prettyDOM, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { createRef } from 'react';
 import { Provider } from 'react-redux';
 
 import { DataFrame, MutableDataFrame, getDefaultTimeRange, LoadingState } from '@grafana/data';
-import { setDataSourceSrv } from '@grafana/runtime';
-import { ExploreId } from 'app/types';
+import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 
 import { configureStore } from '../../../store/configureStore';
 
 import { TraceView } from './TraceView';
+import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
+import { TraceData, TraceSpanData } from './components/types/trace';
 import { transformDataFrames } from './utils/transform';
 
 function getTraceView(frames: DataFrame[]) {
@@ -23,15 +22,13 @@ function getTraceView(frames: DataFrame[]) {
   };
   const topOfViewRef = createRef<HTMLDivElement>();
 
-  const traceView = (
+  return (
     <Provider store={store}>
       <TraceView
-        exploreId={ExploreId.left}
+        exploreId="left"
         dataFrames={frames}
         splitOpenFn={() => {}}
         traceProp={transformDataFrames(frames[0])!}
-        search=""
-        focusedSpanIdForSearch=""
         queryResponse={mockPanelData}
         datasource={undefined}
         topOfViewRef={topOfViewRef}
@@ -39,7 +36,6 @@ function getTraceView(frames: DataFrame[]) {
       />
     </Provider>
   );
-  return traceView;
 }
 
 function renderTraceView(frames = [frameOld]) {
@@ -63,7 +59,7 @@ describe('TraceView', () => {
       getInstanceSettings() {
         return undefined;
       },
-    } as any);
+    } as DataSourceSrv);
   });
 
   it('renders TraceTimelineViewer', () => {
@@ -92,14 +88,14 @@ describe('TraceView', () => {
 
   it('toggles detailState', async () => {
     renderTraceViewNew();
-    expect(screen.queryByText(/Attributes/)).toBeFalsy();
+    expect(screen.queryByText(/Span Attributes/)).toBeFalsy();
     const spanView = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[0];
     await userEvent.click(spanView);
-    expect(screen.queryByText(/Attributes/)).toBeTruthy();
+    expect(screen.queryByText(/Span Attributes/)).toBeTruthy();
 
     await userEvent.click(spanView);
-    screen.debug(screen.queryAllByText(/Attributes/));
-    expect(screen.queryByText(/Attributes/)).toBeFalsy();
+    screen.debug(screen.queryAllByText(/Span Attributes/));
+    expect(screen.queryByText(/Span Attributes/)).toBeFalsy();
   });
 
   it('shows timeline ticks', () => {
@@ -157,7 +153,7 @@ const response: TraceData & { spans: TraceSpanData[] } = {
       spanID: '1ed38015486087ca',
       flags: 1,
       operationName: 'HTTP POST - api_prom_push',
-      references: [] as any,
+      references: [],
       startTime: 1585244579835187,
       duration: 1098,
       tags: [
@@ -191,7 +187,7 @@ const response: TraceData & { spans: TraceSpanData[] } = {
         },
       ],
       processID: '1ed38015486087ca',
-      warnings: null as any,
+      warnings: null,
     },
     {
       traceID: '1ed38015486087ca',
@@ -223,9 +219,9 @@ const response: TraceData & { spans: TraceSpanData[] } = {
         { key: 'component', type: 'string', value: 'gRPC' },
         { key: 'internal.span.format', type: 'string', value: 'proto' },
       ],
-      logs: [] as any,
+      logs: [],
       processID: '35118c298fc91f68',
-      warnings: null as any,
+      warnings: null,
     },
   ],
   processes: {
@@ -257,7 +253,7 @@ const response: TraceData & { spans: TraceSpanData[] } = {
       ],
     },
   },
-  warnings: null as any,
+  warnings: null,
 };
 
 export const frameOld = new MutableDataFrame({

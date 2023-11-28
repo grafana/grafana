@@ -4,14 +4,15 @@ import (
 	"os/exec"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	goplugin "github.com/hashicorp/go-plugin"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
+
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
+	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 // Handshake is the HandshakeConfig used to configure clients and servers.
@@ -26,11 +27,11 @@ var handshake = goplugin.HandshakeConfig{
 	MagicCookieValue: grpcplugin.MagicCookieValue,
 }
 
-func newClientConfig(executablePath string, env []string, logger log.Logger,
+func newClientConfig(executablePath string, args []string, env []string, logger log.Logger,
 	versionedPlugins map[int]goplugin.PluginSet) *goplugin.ClientConfig {
 	// We can ignore gosec G201 here, since the dynamic part of executablePath comes from the plugin definition
 	// nolint:gosec
-	cmd := exec.Command(executablePath)
+	cmd := exec.Command(executablePath, args...)
 	cmd.Env = env
 
 	return &goplugin.ClientConfig{
@@ -62,6 +63,7 @@ type StartSecretsManagerFunc func(pluginID string, secretsmanager secretsmanager
 type PluginDescriptor struct {
 	pluginID              string
 	executablePath        string
+	executableArgs        []string
 	managed               bool
 	versionedPlugins      map[int]goplugin.PluginSet
 	startRendererFn       StartRendererFunc
@@ -81,11 +83,22 @@ func getV2PluginSet() goplugin.PluginSet {
 }
 
 // NewBackendPlugin creates a new backend plugin factory used for registering a backend plugin.
-func NewBackendPlugin(pluginID, executablePath string) backendplugin.PluginFactoryFunc {
+func NewBackendPlugin(pluginID, executablePath string, executableArgs ...string) backendplugin.PluginFactoryFunc {
+	return newBackendPlugin(pluginID, executablePath, true, executableArgs...)
+}
+
+// NewUnmanagedBackendPlugin creates a new backend plugin factory used for registering an unmanaged backend plugin.
+func NewUnmanagedBackendPlugin(pluginID, executablePath string, executableArgs ...string) backendplugin.PluginFactoryFunc {
+	return newBackendPlugin(pluginID, executablePath, false, executableArgs...)
+}
+
+// NewBackendPlugin creates a new backend plugin factory used for registering a backend plugin.
+func newBackendPlugin(pluginID, executablePath string, managed bool, executableArgs ...string) backendplugin.PluginFactoryFunc {
 	return newPlugin(PluginDescriptor{
 		pluginID:       pluginID,
 		executablePath: executablePath,
-		managed:        true,
+		executableArgs: executableArgs,
+		managed:        managed,
 		versionedPlugins: map[int]goplugin.PluginSet{
 			grpcplugin.ProtocolVersion: getV2PluginSet(),
 		},
@@ -105,7 +118,7 @@ func NewRendererPlugin(pluginID, executablePath string, startFn StartRendererFun
 	})
 }
 
-// NewSecetsManagerPlugin creates a new secrets manager plugin factory used for registering a backend secrets manager plugin.
+// NewSecretsManagerPlugin creates a new secrets manager plugin factory used for registering a backend secrets manager plugin.
 func NewSecretsManagerPlugin(pluginID, executablePath string, startFn StartSecretsManagerFunc) backendplugin.PluginFactoryFunc {
 	return newPlugin(PluginDescriptor{
 		pluginID:       pluginID,

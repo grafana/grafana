@@ -17,7 +17,7 @@ import { LegacyVariableQueryEditor } from './LegacyVariableQueryEditor';
 export async function getVariableQueryEditor<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData,
-  VariableQuery extends DataQuery = TQuery
+  VariableQuery extends DataQuery = TQuery,
 >(
   datasource: DataSourceApi<TQuery, TOptions>,
   importDataSourcePluginFunc = importDataSourcePlugin
@@ -50,7 +50,7 @@ export async function getVariableQueryEditor<
 
 export function StandardVariableQueryEditor<
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
 >({
   datasource: propsDatasource,
   query: propsQuery,

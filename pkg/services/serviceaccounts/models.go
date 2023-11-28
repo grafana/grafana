@@ -4,8 +4,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
@@ -21,6 +22,28 @@ const (
 	ActionPermissionsRead  = "serviceaccounts.permissions:read"
 	ActionPermissionsWrite = "serviceaccounts.permissions:write"
 )
+
+var (
+	ErrServiceAccountNotFound            = errutil.NotFound("serviceaccounts.ErrNotFound", errutil.WithPublicMessage("service account not found"))
+	ErrServiceAccountInvalidRole         = errutil.BadRequest("serviceaccounts.ErrInvalidRoleSpecified", errutil.WithPublicMessage("invalid role specified"))
+	ErrServiceAccountRolePrivilegeDenied = errutil.Forbidden("serviceaccounts.ErrRoleForbidden", errutil.WithPublicMessage("can not assign a role higher than user's role"))
+	ErrServiceAccountInvalidOrgID        = errutil.BadRequest("serviceaccounts.ErrInvalidOrgId", errutil.WithPublicMessage("invalid org id specified"))
+	ErrServiceAccountInvalidID           = errutil.BadRequest("serviceaccounts.ErrInvalidId", errutil.WithPublicMessage("invalid service account id specified"))
+	ErrServiceAccountInvalidAPIKeyID     = errutil.BadRequest("serviceaccounts.ErrInvalidAPIKeyId", errutil.WithPublicMessage("invalid api key id specified"))
+	ErrServiceAccountInvalidTokenID      = errutil.BadRequest("serviceaccounts.ErrInvalidTokenId", errutil.WithPublicMessage("invalid service account token id specified"))
+	ErrServiceAccountAlreadyExists       = errutil.BadRequest("serviceaccounts.ErrAlreadyExists", errutil.WithPublicMessage("service account already exists"))
+	ErrServiceAccountTokenNotFound       = errutil.NotFound("serviceaccounts.ErrTokenNotFound", errutil.WithPublicMessage("service account token not found"))
+	ErrInvalidTokenExpiration            = errutil.ValidationFailed("serviceaccounts.ErrInvalidInput", errutil.WithPublicMessage("invalid SecondsToLive value"))
+	ErrDuplicateToken                    = errutil.BadRequest("serviceaccounts.ErrTokenAlreadyExists", errutil.WithPublicMessage("service account token with given name already exists in the organization"))
+)
+
+type MigrationResult struct {
+	Total           int      `json:"total"`
+	Migrated        int      `json:"migrated"`
+	Failed          int      `json:"failed"`
+	FailedApikeyIDs []int64  `json:"failedApikeyIDs"`
+	FailedDetails   []string `json:"failedDetails"`
+}
 
 type ServiceAccount struct {
 	Id int64
@@ -38,9 +61,10 @@ type CreateServiceAccountForm struct {
 
 // swagger:model
 type UpdateServiceAccountForm struct {
-	Name       *string       `json:"name"`
-	Role       *org.RoleType `json:"role"`
-	IsDisabled *bool         `json:"isDisabled"`
+	Name             *string       `json:"name"`
+	ServiceAccountID int64         `json:"serviceAccountId"`
+	Role             *org.RoleType `json:"role"`
+	IsDisabled       *bool         `json:"isDisabled"`
 }
 
 // swagger: model
@@ -70,15 +94,28 @@ type GetSATokensQuery struct {
 }
 
 type AddServiceAccountTokenCommand struct {
-	Name          string         `json:"name" binding:"Required"`
-	OrgId         int64          `json:"-"`
-	Key           string         `json:"-"`
-	SecondsToLive int64          `json:"secondsToLive"`
-	Result        *apikey.APIKey `json:"-"`
+	Name          string `json:"name" binding:"Required"`
+	OrgId         int64  `json:"-"`
+	Key           string `json:"-"`
+	SecondsToLive int64  `json:"secondsToLive"`
+}
+
+type SearchOrgServiceAccountsQuery struct {
+	OrgID        int64
+	Query        string
+	Filter       ServiceAccountFilter
+	Page         int
+	Limit        int
+	SignedInUser identity.Requester
+}
+
+func (q *SearchOrgServiceAccountsQuery) SetDefaults() {
+	q.Page = 1
+	q.Limit = 100
 }
 
 // swagger: model
-type SearchServiceAccountsResult struct {
+type SearchOrgServiceAccountsResult struct {
 	// It can be used for pagination of the user list
 	// E.g. if totalCount is equal to 100 users and
 	// the perpage parameter is set to 10 then there are 10 pages of users.
@@ -116,10 +153,6 @@ type ServiceAccountProfileDTO struct {
 
 type ServiceAccountFilter string // used for filtering
 
-type APIKeysMigrationStatus struct {
-	Migrated bool `json:"migrated"`
-}
-
 const (
 	FilterOnlyExpiredTokens ServiceAccountFilter = "expiredTokens"
 	FilterOnlyDisabled      ServiceAccountFilter = "disabled"
@@ -127,8 +160,10 @@ const (
 )
 
 type Stats struct {
-	ServiceAccounts int64 `xorm:"serviceaccounts"`
-	Tokens          int64 `xorm:"serviceaccount_tokens"`
+	ServiceAccounts           int64 `xorm:"serviceaccounts"`
+	ServiceAccountsWithNoRole int64 `xorm:"serviceaccounts_with_no_role"`
+	Tokens                    int64 `xorm:"serviceaccount_tokens"`
+	ForcedExpiryEnabled       bool  `xorm:"-"`
 }
 
 // AccessEvaluator is used to protect the "Configuration > Service accounts" page access

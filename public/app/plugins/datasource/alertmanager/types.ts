@@ -7,6 +7,8 @@ export type AlertManagerCortexConfig = {
   alertmanager_config: AlertmanagerConfig;
   /** { [name]: provenance } */
   template_file_provenances?: Record<string, string>;
+  last_applied?: string;
+  id?: number;
 };
 
 export type TLSConfig = {
@@ -77,22 +79,24 @@ export type GrafanaManagedReceiverConfig = {
   provenance?: string;
 };
 
-export type Receiver = {
+export interface GrafanaManagedContactPoint {
+  name: string;
+  grafana_managed_receiver_configs?: GrafanaManagedReceiverConfig[];
+}
+
+export interface AlertmanagerReceiver {
   name: string;
 
   email_configs?: EmailConfig[];
-  pagerduty_configs?: any[];
-  pushover_configs?: any[];
-  slack_configs?: any[];
-  opsgenie_configs?: any[];
   webhook_configs?: WebhookConfig[];
-  victorops_configs?: any[];
-  wechat_configs?: any[];
-  grafana_managed_receiver_configs?: GrafanaManagedReceiverConfig[];
-  [key: string]: any;
-};
 
-type ObjectMatcher = [name: string, operator: MatcherOperator, value: string];
+  // this is supposedly to support any *_configs
+  [key: `${string}_configs`]: any[] | undefined;
+}
+
+export type Receiver = GrafanaManagedContactPoint | AlertmanagerReceiver;
+
+export type ObjectMatcher = [name: string, operator: MatcherOperator, value: string];
 
 export type Route = {
   receiver?: string;
@@ -112,6 +116,11 @@ export type Route = {
   /** only the root policy might have a provenance field defined */
   provenance?: string;
 };
+
+export interface RouteWithID extends Route {
+  id: string;
+  routes?: RouteWithID[];
+}
 
 export type InhibitRule = {
   target_match: Record<string, string>;
@@ -150,6 +159,7 @@ export type AlertmanagerConfig = {
   mute_time_intervals?: MuteTimeInterval[];
   /** { [name]: provenance } */
   muteTimeProvenances?: Record<string, string>;
+  last_applied?: boolean;
 };
 
 export type Matcher = {
@@ -210,7 +220,7 @@ export type AlertmanagerAlert = {
   receivers: [
     {
       name: string;
-    }
+    },
   ];
   fingerprint: string;
   status: {
@@ -244,6 +254,7 @@ export interface AlertmanagerStatus {
 }
 
 export type TestReceiversAlert = Pick<AlertmanagerAlert, 'annotations' | 'labels'>;
+export type TestTemplateAlert = Pick<AlertmanagerAlert, 'annotations' | 'labels' | 'startsAt' | 'endsAt'>;
 
 export interface TestReceiversPayload {
   receivers?: Receiver[];
@@ -286,7 +297,6 @@ export enum AlertmanagerChoice {
 }
 
 export interface ExternalAlertmanagerConfig {
-  alertmanagers: string[];
   alertmanagersChoice: AlertmanagerChoice;
 }
 
@@ -307,6 +317,8 @@ export interface TimeInterval {
   days_of_month?: string[];
   months?: string[];
   years?: string[];
+  /** IANA TZ identifier like "Europe/Brussels", also supports "Local" or "UTC" */
+  location?: string;
 }
 
 export type MuteTimeInterval = {

@@ -1,0 +1,1 @@
+{"version":3,"file":"PermissionLoader.messages.js","sourceRoot":"","sources":["../../../../../../../../app/percona/shared/components/Elements/PermissionLoader/PermissionLoader.messages.ts"],"names":[],"mappings":"AAAA,MAAM,CAAC,MAAM,QAAQ,GAAG;IACtB,eAAe,EAAE,CAAC,WAAmB,EAAE,EAAE,CAAC,GAAG,WAAW,qCAAqC;IAC7F,WAAW,EAAE,eAAe;IAC5B,YAAY,EAAE,kCAAkC;CACjD,CAAC"}

@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { contextSrv } from 'app/core/core';
@@ -15,6 +15,7 @@ export interface Props {
   roleOptions: Role[];
   disabled?: boolean;
   basicRoleDisabled?: boolean;
+  basicRoleDisabledMessage?: string;
   /**
    * Set whether the component should send a request with the new roles to the
    * backend in UserRolePicker.onRolesChange (apply=false), or call {@link onApplyRoles}
@@ -32,7 +33,7 @@ export interface Props {
   maxWidth?: string | number;
 }
 
-export const UserRolePicker: FC<Props> = ({
+export const UserRolePicker = ({
   basicRole,
   userId,
   orgId,
@@ -40,11 +41,12 @@ export const UserRolePicker: FC<Props> = ({
   roleOptions,
   disabled,
   basicRoleDisabled,
+  basicRoleDisabledMessage,
   apply = false,
   onApplyRoles,
   pendingRoles,
   maxWidth,
-}) => {
+}: Props) => {
   const [{ loading, value: appliedRoles = [] }, getUserRoles] = useAsyncFn(async () => {
     try {
       if (apply && Boolean(pendingRoles?.length)) {
@@ -91,6 +93,7 @@ export const UserRolePicker: FC<Props> = ({
       isLoading={loading}
       disabled={disabled}
       basicRoleDisabled={basicRoleDisabled}
+      basicRoleDisabledMessage={basicRoleDisabledMessage}
       showBasicRole
       apply={apply}
       canUpdateRoles={canUpdateRoles}

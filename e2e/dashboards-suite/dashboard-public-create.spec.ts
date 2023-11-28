@@ -1,65 +1,74 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 
-e2e.scenario({
-  describeName: 'Create a public dashboard',
-  itName: 'Create a public dashboard',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Public dashboards', () => {
+  beforeEach(() => {
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
+  });
+
+  it('Create a public dashboard', () => {
     // Opening a dashboard without template variables
-    e2e().intercept('/api/ds/query').as('query');
+    cy.intercept({
+      pathname: '/api/ds/query',
+    }).as('query');
     e2e.flows.openDashboard({ uid: 'ZqZnVvFZz' });
-    e2e().wait('@query');
+    cy.wait('@query');
 
     // Open sharing modal
     e2e.pages.ShareDashboardModal.shareButton().click();
 
     // Select public dashboards tab
-    e2e().intercept('GET', '/api/dashboards/uid/ZqZnVvFZz/public-config').as('query-public-config');
     e2e.pages.ShareDashboardModal.PublicDashboard.Tab().click();
-    e2e().wait('@query-public-config');
 
-    // Saving button should be disabled
-    e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().should('be.disabled');
+    // Create button should be disabled
+    e2e.pages.ShareDashboardModal.PublicDashboard.CreateButton().should('be.disabled');
+
+    // Create flow shouldn't show these elements
+    e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlInput().should('not.exist');
+    e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlButton().should('not.exist');
+    e2e.pages.ShareDashboardModal.PublicDashboard.EnableAnnotationsSwitch().should('not.exist');
+    e2e.pages.ShareDashboardModal.PublicDashboard.EnableTimeRangeSwitch().should('not.exist');
+    e2e.pages.ShareDashboardModal.PublicDashboard.PauseSwitch().should('not.exist');
+    e2e.pages.ShareDashboardModal.PublicDashboard.DeleteButton().should('not.exist');
 
     // Acknowledge checkboxes
     e2e.pages.ShareDashboardModal.PublicDashboard.WillBePublicCheckbox().should('be.enabled').click({ force: true });
     e2e.pages.ShareDashboardModal.PublicDashboard.LimitedDSCheckbox().should('be.enabled').click({ force: true });
     e2e.pages.ShareDashboardModal.PublicDashboard.CostIncreaseCheckbox().should('be.enabled').click({ force: true });
 
-    e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().should('be.disabled');
+    e2e.pages.ShareDashboardModal.PublicDashboard.CreateButton().should('be.enabled');
 
-    // Switch on enabling toggle
-    e2e.pages.ShareDashboardModal.PublicDashboard.EnableSwitch().should('be.enabled').click({ force: true });
-    e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().should('be.enabled');
+    // Create public dashboard
+    cy.intercept('POST', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards').as('save');
+    e2e.pages.ShareDashboardModal.PublicDashboard.CreateButton().click();
+    cy.wait('@save');
 
-    // Save configuration
-    e2e().intercept('POST', '/api/dashboards/uid/ZqZnVvFZz/public-config').as('save');
-    e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().click();
-    e2e().wait('@save');
+    // These elements shouldn't be rendered after creating public dashboard
+    e2e.pages.ShareDashboardModal.PublicDashboard.WillBePublicCheckbox().should('not.exist');
+    e2e.pages.ShareDashboardModal.PublicDashboard.LimitedDSCheckbox().should('not.exist');
+    e2e.pages.ShareDashboardModal.PublicDashboard.CostIncreaseCheckbox().should('not.exist');
+    e2e.pages.ShareDashboardModal.PublicDashboard.CreateButton().should('not.exist');
 
-    // Checkboxes should be disabled after saving configuration
-    e2e.pages.ShareDashboardModal.PublicDashboard.WillBePublicCheckbox().should('be.disabled');
-    e2e.pages.ShareDashboardModal.PublicDashboard.LimitedDSCheckbox().should('be.disabled');
-    e2e.pages.ShareDashboardModal.PublicDashboard.CostIncreaseCheckbox().should('be.disabled');
+    // These elements should be rendered
+    e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlInput().should('exist');
+    e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlButton().should('exist');
+    e2e.pages.ShareDashboardModal.PublicDashboard.PauseSwitch().should('exist');
+    e2e.pages.ShareDashboardModal.PublicDashboard.DeleteButton().should('exist');
+    e2e.pages.ShareDashboardModal.PublicDashboard.SettingsDropdown().should('exist');
 
-    // Save config button should still be enabled
-    e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().should('be.enabled');
-  },
-});
+    e2e.pages.ShareDashboardModal.PublicDashboard.SettingsDropdown().click();
+    // There elements should be rendered once the Settings dropdown is opened
+    e2e.pages.ShareDashboardModal.PublicDashboard.EnableAnnotationsSwitch().should('exist');
+    e2e.pages.ShareDashboardModal.PublicDashboard.EnableTimeRangeSwitch().should('exist');
+  });
 
-e2e.scenario({
-  describeName: 'Open a public dashboard',
-  itName: 'Open a public dashboard',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+  it('Open a public dashboard', () => {
     // Opening a dashboard without template variables
-    e2e().intercept('/api/ds/query').as('query');
+    cy.intercept({
+      method: 'POST',
+      pathname: '/api/ds/query',
+    }).as('query');
     e2e.flows.openDashboard({ uid: 'ZqZnVvFZz' });
-    e2e().wait('@query');
+    cy.wait('@query');
 
     // Tag indicating a dashboard is public
     e2e.pages.Dashboard.DashNav.publicDashboardTag().should('exist');
@@ -68,82 +77,75 @@ e2e.scenario({
     e2e.pages.ShareDashboardModal.shareButton().click();
 
     // Select public dashboards tab
-    e2e().intercept('GET', '/api/dashboards/uid/ZqZnVvFZz/public-config').as('query-public-config');
+    cy.intercept('GET', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards').as('query-public-dashboard');
     e2e.pages.ShareDashboardModal.PublicDashboard.Tab().click();
-    e2e().wait('@query-public-config');
+    cy.wait('@query-public-dashboard');
 
-    e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().should('be.enabled');
+    e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlInput().should('exist');
+    e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlButton().should('exist');
+    e2e.pages.ShareDashboardModal.PublicDashboard.PauseSwitch().should('exist');
+    e2e.pages.ShareDashboardModal.PublicDashboard.DeleteButton().should('exist');
+    e2e.pages.ShareDashboardModal.PublicDashboard.SettingsDropdown().should('exist');
+
+    e2e.pages.ShareDashboardModal.PublicDashboard.SettingsDropdown().click();
+    // There elements should be rendered once the Settings dropdown is opened
+    e2e.pages.ShareDashboardModal.PublicDashboard.EnableTimeRangeSwitch().should('exist');
+    e2e.pages.ShareDashboardModal.PublicDashboard.EnableAnnotationsSwitch().should('exist');
 
     // Make a request to public dashboards api endpoint without authentication
     e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlInput()
       .invoke('val')
       .then((url) => {
-        e2e()
-          .clearCookies()
+        cy.clearCookies()
           .request(getPublicDashboardAPIUrl(String(url)))
           .then((resp) => {
             expect(resp.status).to.eq(200);
           });
       });
-  },
-});
+  });
 
-e2e.scenario({
-  describeName: 'Disable a public dashboard',
-  itName: 'Disable a public dashboard',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: true,
-  scenario: () => {
+  // @PERCONA TODO check if it should be disabled
+  it('Disable a public dashboard', () => {
     // Opening a dashboard without template variables
-    e2e().intercept('/api/ds/query').as('query');
+    cy.intercept({
+      method: 'POST',
+      pathname: '/api/ds/query',
+    }).as('query');
     e2e.flows.openDashboard({ uid: 'ZqZnVvFZz' });
-    e2e().wait('@query');
+    cy.wait('@query');
 
     // Open sharing modal
     e2e.pages.ShareDashboardModal.shareButton().click();
 
     // Select public dashboards tab
-    e2e().intercept('GET', '/api/dashboards/uid/ZqZnVvFZz/public-config').as('query-public-config');
+    cy.intercept('GET', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards').as('query-public-dashboard');
     e2e.pages.ShareDashboardModal.PublicDashboard.Tab().click();
-    e2e().wait('@query-public-config');
-
-    // All checkboxes should be disabled
-    e2e.pages.ShareDashboardModal.PublicDashboard.WillBePublicCheckbox().should('be.disabled');
-    e2e.pages.ShareDashboardModal.PublicDashboard.LimitedDSCheckbox().should('be.disabled');
-    e2e.pages.ShareDashboardModal.PublicDashboard.CostIncreaseCheckbox().should('be.disabled');
-
-    // Saving button should be enabled
-    e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().should('be.enabled');
+    cy.wait('@query-public-dashboard');
 
     // save url before disabling public dashboard
     e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlInput()
       .invoke('val')
-      .then((text) => e2e().wrap(text).as('url'));
+      .then((text) => cy.wrap(text).as('url'));
 
+    // Save public dashboard
+    cy.intercept('PATCH', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards/*').as('update');
     // Switch off enabling toggle
-    e2e.pages.ShareDashboardModal.PublicDashboard.EnableSwitch().should('be.enabled').click({ force: true });
-
-    // Save configuration
-    e2e().intercept('POST', '/api/dashboards/uid/ZqZnVvFZz/public-config').as('save');
-    e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().click();
-    e2e().wait('@save');
+    e2e.pages.ShareDashboardModal.PublicDashboard.PauseSwitch().should('be.enabled').click({ force: true });
+    cy.wait('@update');
 
     // Url should be hidden
-    e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlInput().should('not.exist');
+    e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlInput().should('be.disabled');
+    e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlButton().should('be.disabled');
 
     // Make a request to public dashboards api endpoint without authentication
-    e2e()
-      .get('@url')
-      .then((url) => {
-        e2e()
-          .clearCookies()
-          .request({ url: getPublicDashboardAPIUrl(String(url)), failOnStatusCode: false })
-          .then((resp) => {
-            expect(resp.status).to.eq(404);
-          });
-      });
-  },
+    cy.get('@url').then((url) => {
+      cy.clearCookies()
+        .request({ url: getPublicDashboardAPIUrl(String(url)), failOnStatusCode: false })
+        .then((resp) => {
+          expect(resp.status).to.eq(403);
+        });
+    });
+  });
 });
 
 const getPublicDashboardAPIUrl = (url: string): string => {

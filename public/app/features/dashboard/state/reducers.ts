@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { PanelPlugin } from '@grafana/data';
 import { AngularComponent } from '@grafana/runtime';
+import { defaultDashboard } from '@grafana/schema';
 import { processAclItems } from 'app/core/utils/acl';
 import { DashboardAclDTO, DashboardInitError, DashboardInitPhase, DashboardState } from 'app/types';
 
@@ -13,6 +14,7 @@ export const initialState: DashboardState = {
   getModel: () => null,
   permissions: [],
   initError: null,
+  initialDatasource: undefined,
 };
 
 const dashboardSlice = createSlice({
@@ -36,7 +38,10 @@ const dashboardSlice = createSlice({
       state.initPhase = DashboardInitPhase.Failed;
       state.initError = action.payload;
       state.getModel = () => {
-        return new DashboardModel({ title: 'Dashboard init failed' }, { canSave: false, canEdit: false });
+        return new DashboardModel(
+          { ...defaultDashboard, title: 'Dashboard init failed' },
+          { canSave: false, canEdit: false }
+        );
       };
     },
     cleanUpDashboard: (state) => {
@@ -46,6 +51,9 @@ const dashboardSlice = createSlice({
     },
     addPanel: (state, action: PayloadAction<PanelModel>) => {
       //state.panels[action.payload.id] = { pluginId: action.payload.type };
+    },
+    setInitialDatasource: (state, action: PayloadAction<string | undefined>) => {
+      state.initialDatasource = action.payload;
     },
   },
 });
@@ -73,6 +81,7 @@ export const {
   dashboardInitServices,
   cleanUpDashboard,
   addPanel,
+  setInitialDatasource,
 } = dashboardSlice.actions;
 
 export const dashboardReducer = dashboardSlice.reducer;

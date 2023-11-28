@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../../themes';
+import { Trans } from '../../../utils/i18n';
 import { Button } from '../../Button';
 
 import { TimePickerCalendarProps } from './TimePickerCalendar';
@@ -15,7 +16,9 @@ export function Header({ onClose }: TimePickerCalendarProps) {
 
   return (
     <div className={styles.container}>
-      <TimePickerTitle>Select a time range</TimePickerTitle>
+      <TimePickerTitle>
+        <Trans i18nKey="time-picker.calendar.select-time">Select a time range</Trans>
+      </TimePickerTitle>
       <Button
         aria-label={selectors.components.TimePicker.calendar.closeButton}
         icon="times"
@@ -30,12 +33,12 @@ Header.displayName = 'Header';
 
 const getHeaderStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css`
-      background-color: ${theme.colors.background.primary};
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 7px;
-    `,
+    container: css({
+      backgroundColor: theme.colors.background.primary,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '7px',
+    }),
   };
 };

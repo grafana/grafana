@@ -7,7 +7,11 @@ import { Dropdown } from 'app/percona/shared/components/Elements/Dropdown';
 import { getStyles } from './MultipleActions.styles';
 import { MultipleActionsProps } from './MultipleActions.types';
 
-export const MultipleActions: FC<MultipleActionsProps> = ({ actions, disabled, dataTestId }) => {
+export const MultipleActions: FC<React.PropsWithChildren<MultipleActionsProps>> = ({
+  actions,
+  disabled,
+  dataTestId,
+}) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 
@@ -16,6 +20,7 @@ export const MultipleActions: FC<MultipleActionsProps> = ({ actions, disabled, d
       <span className={styles.iconWrapper}>
         <IconButton
           name="ellipsis-v"
+          aria-label="Toggle"
           size="xl"
           disabled={disabled}
           data-testid={dataTestId}
@@ -36,6 +41,7 @@ export const MultipleActions: FC<MultipleActionsProps> = ({ actions, disabled, d
               {content}
             </span>
           ) : (
+            // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
             <span onClick={action} data-testid="dropdown-button">
               {content}
             </span>

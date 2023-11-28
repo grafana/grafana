@@ -7,7 +7,7 @@ import { Messages } from './BackupInventoryDetails.messages';
 import { getStyles } from './BackupInventoryDetails.styles';
 import { BackupInventoryDetailsProps } from './BackupInventoryDetails.types';
 
-export const BackupInventoryDetails: FC<BackupInventoryDetailsProps> = ({ name, folder, dataModel }) => {
+export const BackupInventoryDetails: FC<React.PropsWithChildren<BackupInventoryDetailsProps>> = ({ name, folder, dataModel }) => {
   const styles = useStyles(getStyles);
   const dataModelMsg = formatDataModel(dataModel);
 

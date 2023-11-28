@@ -1,0 +1,30 @@
+{
+  "docvalue_fields": [
+    "testtime"
+  ],
+  "query": {
+        "bool": {
+            "filter": {
+                "range": {
+                    "testtime": {
+                        "format": "epoch_millis",
+                        "gte": 1668422437218,
+                        "lte": 1668422625668
+                    }
+                }
+            }
+        }
+    },
+  "script_fields": {},
+  "size": 500,
+  "sort": 
+    {
+      "testtime": {
+        "order": "desc",
+        "unmapped_type": "boolean"
+      },
+      "_doc": {
+        "order": "desc"
+      }
+    }
+}

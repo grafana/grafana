@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
+import memoizeOne from 'memoize-one';
+import tinycolor from 'tinycolor2';
 
-import { GrafanaTheme2, LogLevel } from '@grafana/data';
+import { colorManipulator, GrafanaTheme2, LogLevel } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { styleMixins } from '@grafana/ui';
 
-export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
+export const getLogLevelStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
   let logColor = theme.isLight ? theme.v1.palette.gray5 : theme.v1.palette.gray2;
-  const hoverBgColor = styleMixins.hoverColor(theme.colors.background.secondary, theme);
-
   switch (logLevel) {
     case LogLevel.crit:
     case LogLevel.critical:
@@ -32,6 +33,33 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
   }
 
   return {
+    logsRowLevelColor: css`
+      &::after {
+        background-color: ${logColor};
+      }
+    `,
+  };
+};
+
+export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
+  const hoverBgColor = styleMixins.hoverColor(theme.colors.background.secondary, theme);
+  const contextOutlineColor = tinycolor(theme.components.dashboard.background).setAlpha(0.7).toRgbString();
+  const scrollableLogsContainer = config.featureToggles.exploreScrollableLogsContainer;
+  return {
+    logsRowLevel: css`
+      label: logs-row__level;
+      max-width: ${theme.spacing(1.25)};
+      cursor: default;
+      &::after {
+        content: '';
+        display: block;
+        position: absolute;
+        top: 1px;
+        bottom: 1px;
+        width: 3px;
+        left: ${theme.spacing(0.5)};
+      }
+    `,
     logsRowMatchHighLight: css`
       label: logs-row__match-highlight;
       background: inherit;
@@ -44,6 +72,13 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
       font-family: ${theme.typography.fontFamilyMonospace};
       font-size: ${theme.typography.bodySmall.fontSize};
       width: 100%;
+      ${!scrollableLogsContainer && `margin-bottom: ${theme.spacing(2.25)};`}
+    `,
+    logsRowsTableContain: css`
+      contain: strict;
+    `,
+    highlightBackground: css`
+      background-color: ${tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString()};
     `,
     logsRow: css`
       label: logs-row;
@@ -53,25 +88,22 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
 
       &:hover {
         .log-row-menu {
-          visibility: visible;
           z-index: 1;
         }
+
+        background: ${hoverBgColor};
       }
 
-      td:last-child {
+      td:not(.log-row-menu-cell):last-child {
         width: 100%;
       }
 
-      > td {
+      > td:not(.log-row-menu-cell) {
         position: relative;
         padding-right: ${theme.spacing(1)};
         border-top: 1px solid transparent;
         border-bottom: 1px solid transparent;
         height: 100%;
-      }
-
-      &:hover {
-        background: ${hoverBgColor};
       }
     `,
     logsRowDuplicates: css`
@@ -79,21 +111,6 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
       text-align: right;
       width: 4em;
       cursor: default;
-    `,
-    logsRowLevel: css`
-      label: logs-row__level;
-      max-width: 10px;
-      cursor: default;
-      &::after {
-        content: '';
-        display: block;
-        position: absolute;
-        top: 1px;
-        bottom: 1px;
-        width: 3px;
-        left: 4px;
-        background-color: ${logColor};
-      }
     `,
     logIconError: css`
       color: ${theme.colors.warning.main};
@@ -122,14 +139,28 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
       label: logs-row__message;
       white-space: pre-wrap;
       word-break: break-all;
+      overflow-wrap: anywhere;
+      width: 100%;
+      text-align: left;
+    `,
+    copyLogButton: css`
+      padding: 0 0 0 ${theme.spacing(0.5)};
+      height: ${theme.spacing(3)};
+      width: ${theme.spacing(3.25)};
+      line-height: ${theme.spacing(2.5)};
+      overflow: hidden;
+      &:hover {
+          background-color: ${colorManipulator.alpha(theme.colors.text.primary, 0.12)};
+        }
+      }
     `,
     //Log details specific CSS
     logDetailsContainer: css`
       label: logs-row-details-table;
       border: 1px solid ${theme.colors.border.medium};
       padding: 0 ${theme.spacing(1)} ${theme.spacing(1)};
-      border-radius: 3px;
-      margin: 20px 8px 20px 16px;
+      border-radius: ${theme.shape.radius.default};
+      margin: ${theme.spacing(2.5)} ${theme.spacing(1)} ${theme.spacing(2.5)} ${theme.spacing(2)};
       cursor: default;
     `,
     logDetailsTable: css`
@@ -144,8 +175,9 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
       label: logs-row-details__icon;
       position: relative;
       color: ${theme.v1.palette.gray3};
-      padding-top: 6px;
-      padding-left: 6px;
+      padding-top: 1px;
+      padding-bottom: 1px;
+      padding-right: ${theme.spacing(0.75)};
     `,
     logDetailsLabel: css`
       label: logs-row-details__label;
@@ -169,5 +201,117 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
         background-color: ${hoverBgColor};
       }
     `,
+    // Log row
+    topVerticalAlign: css`
+      label: topVerticalAlign;
+      margin-top: -${theme.spacing(0.9)};
+      margin-left: -${theme.spacing(0.25)};
+    `,
+    detailsOpen: css`
+      &:hover {
+        background-color: ${styleMixins.hoverColor(theme.colors.background.primary, theme)};
+      }
+    `,
+    errorLogRow: css`
+      label: erroredLogRow;
+      color: ${theme.colors.text.secondary};
+    `,
+    // Log Row Message
+    positionRelative: css`
+      label: positionRelative;
+      position: relative;
+    `,
+    rowWithContext: css`
+      label: rowWithContext;
+      z-index: 1;
+      outline: 9999px solid ${contextOutlineColor};
+      display: inherit;
+    `,
+    horizontalScroll: css`
+      label: horizontalScroll;
+      white-space: pre;
+    `,
+    contextNewline: css`
+      display: block;
+      margin-left: 0px;
+    `,
+    rowMenu: css`
+      label: rowMenu;
+      display: flex;
+      flex-wrap: nowrap;
+      flex-direction: row;
+      align-content: flex-end;
+      justify-content: space-evenly;
+      align-items: center;
+      position: absolute;
+      top: 0;
+      bottom: auto;
+      background: ${theme.colors.background.primary};
+      box-shadow: ${theme.shadows.z3};
+      padding: ${theme.spacing(0.5, 1, 0.5, 1)};
+      z-index: 100;
+      gap: ${theme.spacing(0.5)};
+
+      & > button {
+        margin: 0;
+      }
+    `,
+    logRowMenuCell: css`
+      position: sticky;
+      z-index: ${theme.zIndex.dropdown};
+      margin-top: -${theme.spacing(0.125)};
+      right: 0px;
+
+      & > span {
+        transform: translateX(-100%);
+      }
+    `,
+    logLine: css`
+      background-color: transparent;
+      border: none;
+      diplay: inline;
+      font-family: ${theme.typography.fontFamilyMonospace};
+      font-size: ${theme.typography.bodySmall.fontSize};
+      letter-spacing: ${theme.typography.bodySmall.letterSpacing};
+      text-align: left;
+      padding: 0;
+      user-select: text;
+    `,
+    // Log details
+    logsRowLevelDetails: css`
+      label: logs-row__level_details;
+      &::after {
+        top: -3px;
+      }
+    `,
+    logDetails: css`
+      label: logDetailsDefaultCursor;
+      cursor: default;
+
+      &:hover {
+        background-color: ${theme.colors.background.primary};
+      }
+    `,
+    visibleRowMenu: css`
+      label: visibleRowMenu;
+      aspect-ratio: 1/1;
+      z-index: 90;
+    `,
+    linkButton: css`
+      label: linkButton;
+      > button {
+        padding-top: ${theme.spacing(0.5)};
+      }
+    `,
+    hidden: css`
+      label: hidden;
+      visibility: hidden;
+    `,
+    unPinButton: css`
+      height: ${theme.spacing(3)};
+      line-height: ${theme.spacing(2.5)};
+    `,
   };
-};
+});
+
+export type LogRowStyles = ReturnType<typeof getLogRowStyles>;

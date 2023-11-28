@@ -1,14 +1,11 @@
 import { Meta, Story } from '@storybook/react';
 import React, { useEffect, useState } from 'react';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-
 import { VizLayout } from './VizLayout';
 
 const meta: Meta = {
   title: 'Visualizations/VizLayout',
   component: VizLayout,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {},
     controls: {

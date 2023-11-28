@@ -1,5 +1,5 @@
 import { cx, css, keyframes } from '@emotion/css';
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, styleMixins } from '@grafana/ui';
@@ -11,7 +11,7 @@ import LoginFooter from '../Footer/LoginFooter';
 interface InnerBoxProps {
   enterAnimation?: boolean;
 }
-export const InnerBox: FC<InnerBoxProps> = ({ children, enterAnimation = true }) => {
+export const InnerBox = ({ children, enterAnimation = true }: React.PropsWithChildren<InnerBoxProps>) => {
   const loginStyles = useStyles2(getLoginStyles);
   return <div className={cx(loginStyles.loginInnerBox, enterAnimation && loginStyles.enterAnimation)}>{children}</div>;
 };
@@ -19,9 +19,10 @@ export const InnerBox: FC<InnerBoxProps> = ({ children, enterAnimation = true })
 export interface LoginLayoutProps {
   /** Custom branding settings that can be used e.g. for previewing the Login page changes */
   branding?: BrandingSettings;
+  isChangingPassword?: boolean;
 }
 
-export const LoginLayout: FC<LoginLayoutProps> = ({ children, branding }) => {
+export const LoginLayout = ({ children, branding, isChangingPassword }: React.PropsWithChildren<LoginLayoutProps>) => {
   const loginStyles = useStyles2(getLoginStyles);
   const [startAnim, setStartAnim] = useState(false);
   const subTitle = branding?.loginSubtitle ?? Branding.GetLoginSubTitle();
@@ -35,16 +36,25 @@ export const LoginLayout: FC<LoginLayoutProps> = ({ children, branding }) => {
     <Branding.LoginBackground
       className={cx(loginStyles.container, startAnim && loginStyles.loginAnim, branding?.loginBackground)}
     >
-      <div className={cx(loginStyles.loginContent, loginBoxBackground, 'login-content-box')}>
-        <div className={loginStyles.loginLogoWrapper}>
-          <Branding.LoginLogo className={loginStyles.loginLogo} logo={loginLogo} />
-          <div className={loginStyles.titleWrapper}>
-            <h1 className={loginStyles.mainTitle}>{loginTitle}</h1>
-            {subTitle && <h3 className={loginStyles.subTitle}>{subTitle}</h3>}
+      <div className={loginStyles.loginMain}>
+        <div className={cx(loginStyles.loginContent, loginBoxBackground, 'login-content-box')}>
+          <div className={loginStyles.loginLogoWrapper}>
+            <Branding.LoginLogo className={loginStyles.loginLogo} logo={loginLogo} />
+            <div className={loginStyles.titleWrapper}>
+              {isChangingPassword ? (
+                <h1 className={loginStyles.mainTitle}>Update your password</h1>
+              ) : (
+                <>
+                  <h1 className={loginStyles.mainTitle}>{loginTitle}</h1>
+                  {subTitle && <h3 className={loginStyles.subTitle}>{subTitle}</h3>}
+                </>
+              )}
+            </div>
           </div>
+          <div className={loginStyles.loginOuterBox}>{children}</div>
         </div>
-        <div className={loginStyles.loginOuterBox}>{children}</div>
       </div>
+      {/* @PERCONA */}
       <LoginFooter />
     </Branding.LoginBackground>
   );
@@ -63,6 +73,14 @@ to{
 
 export const getLoginStyles = (theme: GrafanaTheme2) => {
   return {
+    loginMain: css({
+      flexGrow: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minWidth: '100%',
+    }),
     container: css({
       minHeight: '100%',
       backgroundPosition: 'center',
@@ -144,7 +162,7 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       justify-content: center;
     `,
     loginInnerBox: css`
-      padding: ${theme.spacing(2)};
+      padding: ${theme.spacing(0, 2, 2, 2)};
 
       display: flex;
       flex-direction: column;

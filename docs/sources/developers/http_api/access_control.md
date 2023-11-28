@@ -2,6 +2,7 @@
 aliases:
   - ../../http_api/access_control/
   - ../../http_api/accesscontrol/
+canonical: /docs/grafana/latest/developers/http_api/access_control/
 description: ''
 keywords:
   - grafana
@@ -11,16 +12,20 @@ keywords:
   - role-based-access-control
   - acl
   - enterprise
+labels:
+  products:
+    - enterprise
+    - oss
 title: RBAC HTTP API
 ---
 
 # RBAC API
 
-> Role-based access control API is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}).
+> Role-based access control API is only available in Grafana Cloud or Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "/docs/grafana/latest/introduction/grafana-enterprise" >}}).
 
 The API can be used to create, update, delete, get, and list roles.
 
-To check which basic or fixed roles have the required permissions, refer to [RBAC role definitions]({{< ref "../../administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/" >}}).
+To check which basic or fixed roles have the required permissions, refer to [RBAC role definitions]({{< ref "/docs/grafana/latest/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions" >}}).
 
 ## Get status
 
@@ -221,7 +226,7 @@ Content-Type: application/json; charset=UTF-8
 
 `POST /api/access-control/roles`
 
-Creates a new custom role and maps given permissions to that role. Note that roles with the same prefix as [Fixed roles]({{< relref "../../administration/roles-and-permissions/access-control/#fixed-roles" >}}) can't be created.
+Creates a new custom role and maps given permissions to that role. Note that roles with the same prefix as [Fixed roles]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control#fixed-roles" >}}) can't be created.
 
 #### Required permissions
 
@@ -259,24 +264,24 @@ Content-Type: application/json
 
 #### JSON body schema
 
-| Field Name  | Date Type  | Required | Description                                                                                                                                                                                                                                           |
-| ----------- | ---------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| uid         | string     | No       | UID of the role. If not present, the UID will be automatically created for you and returned in response. Refer to the [Custom roles]({{< relref "../../administration/roles-and-permissions/access-control/#custom-roles" >}}) for more information.  |
-| global      | boolean    | No       | A flag indicating if the role is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request.                                                                                                        |
-| version     | number     | No       | Version of the role. If not present, version 0 will be assigned to the role and returned in the response. Refer to the [Custom roles]({{< relref "../../administration/roles-and-permissions/access-control/#custom-roles" >}}) for more information. |
-| name        | string     | Yes      | Name of the role. Refer to [Custom roles]({{< relref "../../administration/roles-and-permissions/access-control/#custom-roles" >}}) for more information.                                                                                             |
-| description | string     | No       | Description of the role.                                                                                                                                                                                                                              |
-| displayName | string     | No       | Display name of the role, visible in the UI.                                                                                                                                                                                                          |
-| group       | string     | No       | The group name the role belongs to.                                                                                                                                                                                                                   |
-| hidden      | boolean    | No       | Specify whether the role is hidden or not. If set to `true`, then the role does not show in the role picker. It will not be listed by API endpoints unless explicitly specified.                                                                      |
-| permissions | Permission | No       | If not present, the role will be created without any permissions.                                                                                                                                                                                     |
+| Field Name  | Date Type  | Required | Description                                                                                                                                                                                                                                                          |
+| ----------- | ---------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| uid         | string     | No       | UID of the role. If not present, the UID will be automatically created for you and returned in response. Refer to the [Custom roles]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control#custom-roles" >}}) for more information.   |
+| global      | boolean    | No       | A flag indicating if the role is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request.                                                                                                                       |
+| version     | number     | No       | Version of the role. If not present, version 0 will be assigned to the role and returned in the response. Refer to the [Custom roles]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/#custom-roles" >}}) for more information. |
+| name        | string     | Yes      | Name of the role. Refer to [Custom roles]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control#custom-roles" >}}) for more information.                                                                                              |
+| description | string     | No       | Description of the role.                                                                                                                                                                                                                                             |
+| displayName | string     | No       | Display name of the role, visible in the UI.                                                                                                                                                                                                                         |
+| group       | string     | No       | The group name the role belongs to.                                                                                                                                                                                                                                  |
+| hidden      | boolean    | No       | Specify whether the role is hidden or not. If set to `true`, then the role does not show in the role picker. It will not be listed by API endpoints unless explicitly specified.                                                                                     |
+| permissions | Permission | No       | If not present, the role will be created without any permissions.                                                                                                                                                                                                    |
 
 **Permission**
 
-| Field Name | Data Type | Required | Description                                                                                                                                                                                                                                     |
-| ---------- | --------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| action     | string    | Yes      | Refer to [Custom role actions and scopes]({{< relref "../../administration/roles-and-permissions/access-control/custom-role-actions-scopes/" >}}) for full list of available actions.                                                           |
-| scope      | string    | No       | If not present, no scope will be mapped to the permission. Refer to [Custom role actions and scopes]({{< relref "../../administration/roles-and-permissions/access-control/custom-role-actions-scopes/" >}}) for full list of available scopes. |
+| Field Name | Data Type | Required | Description                                                                                                                                                                                                                                                   |
+| ---------- | --------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| action     | string    | Yes      | Refer to [Custom role actions and scopes]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for full list of available actions.                                                           |
+| scope      | string    | No       | If not present, no scope will be mapped to the permission. Refer to [Custom role actions and scopes]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for full list of available scopes. |
 
 #### Example response
 
@@ -306,14 +311,84 @@ Content-Type: application/json; charset=UTF-8
 }
 ```
 
+#### Create role validation errors
+
+Permission validation only occurs when permission validation is enabled (`rbac.permission_validation_enabled = true`).
+
+> It has been enabled by default since Grafana 10.2.
+
+##### Invalid action
+
+The following example shows a request with an invalid action. The action `serviceaccounts.permissions:reader` is not a valid action. The valid action should be `serviceaccounts.permissions:read`.
+
+```http
+POST /api/access-control/roles HTTP/1.1
+Content-Type: application/json
+{
+	"Name": "Read Service Account with id 6",
+	"Permissions": [
+			{
+			"action": "serviceaccounts.permissions:reader",
+			"scope": "serviceaccounts:uid:6"
+		}
+	]
+}
+```
+
+```http
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+{
+	"extra": {
+		"validationError": "the provided action was not found in the list of valid actions: serviceaccounts.permissions:reader"
+	},
+	"message": "Permission contains an invalid action",
+	"messageId": "accesscontrol.permission-invalid-action",
+	"statusCode": 400,
+	"traceID": ""
+}
+```
+
+##### Invalid scope
+
+The following example shows a request with an invalid scope. The scope `serviceaccounts:serviceaccount6` is not a valid scope for the action `serviceaccounts.permissions:read`. The valid scopes for this action are `*`, `serviceaccounts:*` and `serviceaccounts:id:*`.
+
+```http
+POST /api/access-control/roles HTTP/1.1
+Content-Type: application/json
+{
+	"Name": "Read Service Account with id 6",
+	"Permissions": [
+			{
+			"action": "serviceaccounts.permissions:read",
+			"scope": "serviceaccounts:serviceaccount6"
+		}
+	]
+}
+```
+
+```http
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+{
+	"extra": {
+		"validationError": "unknown scope: serviceaccounts:serviceaccount6 for action: serviceaccounts.permissions:read provided, expected prefixes are [* serviceaccounts:* serviceaccounts:id:*]"
+	},
+	"message": "Invalid scope",
+	"messageId": "accesscontrol.permission-invalid-scope",
+	"statusCode": 400,
+	"traceID": ""
+}
+```
+
 #### Status codes
 
-| Code | Description                                                                        |
-| ---- | ---------------------------------------------------------------------------------- |
-| 200  | Role is updated.                                                                   |
-| 400  | Bad request (invalid json, missing content-type, missing or invalid fields, etc.). |
-| 403  | Access denied                                                                      |
-| 500  | Unexpected error. Refer to body and/or server logs for more details.               |
+| Code | Description                                                                           |
+| ---- | ------------------------------------------------------------------------------------- |
+| 200  | Role is updated.                                                                      |
+| 400  | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).    |
+| 403  | Access denied (one of the specified permissions is not assigned to the the requester) |
+| 500  | Unexpected error. Refer to body and/or server logs for more details.                  |
 
 ### Update a role
 
@@ -374,10 +449,10 @@ Content-Type: application/json
 
 **Permission**
 
-| Field Name | Data Type | Required | Description                                                                                                                                                                                                                                     |
-| ---------- | --------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| action     | string    | Yes      | Refer to [Custom role actions and scopes]({{< relref "../../administration/roles-and-permissions/access-control/custom-role-actions-scopes/" >}}) for full list of available actions.                                                           |
-| scope      | string    | No       | If not present, no scope will be mapped to the permission. Refer to [Custom role actions and scopes]({{< relref "../../administration/roles-and-permissions/access-control/custom-role-actions-scopes/" >}}) for full list of available scopes. |
+| Field Name | Data Type | Required | Description                                                                                                                                                                                                                                                   |
+| ---------- | --------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| action     | string    | Yes      | Refer to [Custom role actions and scopes]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for full list of available actions.                                                           |
+| scope      | string    | No       | If not present, no scope will be mapped to the permission. Refer to [Custom role actions and scopes]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for full list of available scopes. |
 
 #### Example response
 
@@ -413,15 +488,23 @@ Content-Type: application/json; charset=UTF-8
 }
 ```
 
+#### Update role validation errors
+
+Permission validation only occurs when permission validation is enabled (`rbac.permission_validation_enabled = true`).
+
+> It has been enabled by default since Grafana 10.2.
+
+For more information, refer to [Create role validation errors]({{< ref "#create-role-validation-errors" >}}).
+
 #### Status codes
 
-| Code | Description                                                                        |
-| ---- | ---------------------------------------------------------------------------------- |
-| 200  | Role is updated.                                                                   |
-| 400  | Bad request (invalid json, missing content-type, missing or invalid fields, etc.). |
-| 403  | Access denied                                                                      |
-| 404  | Role was not found to update.                                                      |
-| 500  | Unexpected error. Refer to body and/or server logs for more details.               |
+| Code | Description                                                                           |
+| ---- | ------------------------------------------------------------------------------------- |
+| 200  | Role is updated.                                                                      |
+| 400  | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).    |
+| 403  | Access denied (one of the specified permissions is not assigned to the the requester) |
+| 404  | Role was not found to update.                                                         |
+| 500  | Unexpected error. Refer to body and/or server logs for more details.                  |
 
 ### Delete a custom role
 
@@ -447,10 +530,10 @@ Accept: application/json
 
 #### Query parameters
 
-| Param  | Type    | Required | Description                                                                                                                                                                                                                                                               |
-| ------ | ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| force  | boolean | No       | When set to `true`, the role will be deleted with all it's assignments.                                                                                                                                                                                                   |
-| global | boolean | No       | A flag indicating if the role is global or not. If set to false, the default org ID of the authenticated user will be used from the request. Refer to the [About RBAC]({{< relref "../../administration/roles-and-permissions/access-control/" >}}) for more information. |
+| Param  | Type    | Required | Description                                                                                                                                                                                                                                                                             |
+| ------ | ------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| force  | boolean | No       | When set to `true`, the role will be deleted with all it's assignments.                                                                                                                                                                                                                 |
+| global | boolean | No       | A flag indicating if the role is global or not. If set to false, the default org ID of the authenticated user will be used from the request. Refer to the [About RBAC]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control" >}}) for more information. |
 
 #### Example response
 
@@ -526,11 +609,60 @@ Content-Type: application/json; charset=UTF-8
 | 403  | Access denied.                                                       |
 | 500  | Unexpected error. Refer to body and/or server logs for more details. |
 
+### List your permissions
+
+`GET /api/access-control/user/permissions`
+
+Lists the permissions granted to the signed in user.
+
+#### Required permissions
+
+No permission is required.
+
+#### Query parameters
+
+| Param       | Type    | Required | Description                            |
+| ----------- | ------- | -------- | -------------------------------------- |
+| reloadcache | boolean | No       | A flag to reload the permission cache. |
+
+#### Example request
+
+```http
+GET /api/access-control/user/permissions
+Accept: application/json
+```
+
+#### Example response
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+{
+  "dashboards:read": ["dashboards:uid:70KrY6IVz"],
+  "dashboards:write": ["dashboards:uid:70KrY6IVz"],
+  "datasources.id:read": ["datasources:*"],
+  "datasources:read": ["datasources:*"],
+  "datasources:explore": [""],
+  "datasources:query": ["datasources:uid:grafana"],
+  "datasources:read": ["datasources:uid:grafana"],
+  "orgs:read": [""]
+}
+```
+
+#### Status codes
+
+| Code | Description                                                          |
+| ---- | -------------------------------------------------------------------- |
+| 200  | Set of assigned permissions is returned.                             |
+| 403  | Access denied.                                                       |
+| 500  | Unexpected error. Refer to body and/or server logs for more details. |
+
 ### List permissions assigned to a user
 
 `GET /api/access-control/users/:userId/permissions`
 
-Lists the permissions that a given user has.
+Lists the permissions granted to a given user.
 
 #### Required permissions
 

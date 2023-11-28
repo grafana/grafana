@@ -1,0 +1,74 @@
+{
+  "timeSeriesDescriptor": {
+    "labelDescriptors": [
+      {
+        "key": "resource.project_id"
+      },
+      {
+        "key": "resource.zone"
+      },
+      {
+        "key": "resource.instance_id"
+      },
+      {
+        "key": "metric.response_code_class",
+        "valueType": "INT64"
+      },
+      {
+        "key": "metadata.app"
+      }
+    ],
+    "pointDescriptors": [
+      {
+        "key": "value.read_bytes_count",
+        "valueType": "INT64",
+        "metricKind": "DELTA"
+      }
+    ]
+  },
+  "timeSeriesData": [
+    {
+      "labelValues": [
+        {
+          "stringValue": "grafana-prod"
+        },
+        {
+          "stringValue": "asia-northeast1-c"
+        },
+        {
+          "stringValue": "6724404429462225363"
+        },
+        {
+          "int64Value": "200"
+        },
+        {
+          "stringValue": "test-app"
+        }
+      ],
+      "pointData": [
+        {
+          "values": [
+            {
+              "int64Value": "0"
+            }
+          ],
+          "timeInterval": {
+            "startTime": "2020-05-18T09:47:00Z",
+            "endTime": "2020-05-18T09:48:00Z"
+          }
+        },
+        {
+          "values": [
+            {
+              "int64Value": "0"
+            }
+          ],
+          "timeInterval": {
+            "startTime": "2020-05-18T09:46:00Z",
+            "endTime": "2020-05-18T09:47:00Z"
+          }
+        }
+      ]
+    }
+  ]
+}

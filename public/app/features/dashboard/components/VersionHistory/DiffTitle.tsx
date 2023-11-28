@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
-import { useStyles, Icon } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2, Icon } from '@grafana/ui';
 
 import { DiffValues } from './DiffValues';
 import { Diff, getDiffText } from './utils';
@@ -14,8 +14,9 @@ type DiffTitleProps = {
 
 const replaceDiff: Diff = { op: 'replace', originalValue: undefined, path: [''], value: undefined, startLineNumber: 0 };
 
-export const DiffTitle: React.FC<DiffTitleProps> = ({ diff, title }) => {
-  const styles = useStyles(getDiffTitleStyles);
+export const DiffTitle = ({ diff, title }: DiffTitleProps) => {
+  const styles = useStyles2(getDiffTitleStyles);
+
   return diff ? (
     <>
       <Icon type="mono" name="circle" className={styles[diff.op]} /> <span className={styles.embolden}>{title}</span>{' '}
@@ -29,32 +30,32 @@ export const DiffTitle: React.FC<DiffTitleProps> = ({ diff, title }) => {
   );
 };
 
-const getDiffTitleStyles = (theme: GrafanaTheme) => ({
+const getDiffTitleStyles = (theme: GrafanaTheme2) => ({
   embolden: css`
-    font-weight: ${theme.typography.weight.bold};
+    font-weight: ${theme.typography.fontWeightBold};
   `,
   add: css`
-    color: ${theme.palette.online};
+    color: ${theme.colors.success.main};
   `,
   replace: css`
-    color: ${theme.palette.warn};
+    color: ${theme.colors.success.main};
   `,
   move: css`
-    color: ${theme.palette.warn};
+    color: ${theme.colors.success.main};
   `,
   copy: css`
-    color: ${theme.palette.warn};
+    color: ${theme.colors.success.main};
   `,
   _get: css`
-    color: ${theme.palette.warn};
+    color: ${theme.colors.success.main};
   `,
   test: css`
-    color: ${theme.palette.warn};
+    color: ${theme.colors.success.main};
   `,
   remove: css`
-    color: ${theme.palette.critical};
+    color: ${theme.colors.success.main};
   `,
   withoutDiff: css`
-    margin-bottom: ${theme.spacing.md};
+    margin-bottom: ${theme.spacing(2)};
   `,
 });

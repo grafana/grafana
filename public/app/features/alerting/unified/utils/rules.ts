@@ -5,7 +5,9 @@ import {
   Alert,
   AlertingRule,
   CloudRuleIdentifier,
+  CombinedRule,
   CombinedRuleGroup,
+  CombinedRuleWithLocation,
   GrafanaRuleIdentifier,
   PrometheusRuleIdentifier,
   PromRuleWithLocation,
@@ -26,10 +28,14 @@ import {
   RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
+import { CombinedRuleNamespace } from '../../../../types/unified-alerting';
 import { State } from '../components/StateTag';
+import { RuleHealth } from '../search/rulesSearchParser';
 
 import { RULER_NOT_SUPPORTED_MSG } from './constants';
+import { getRulesSourceName } from './datasource';
 import { AsyncRequestState } from './redux';
+import { safeParseDurationstr } from './time';
 
 export function isAlertingRule(rule: Rule | undefined): rule is AlertingRule {
   return typeof rule === 'object' && rule.type === PromRuleType.Alerting;
@@ -51,6 +57,10 @@ export function isGrafanaRulerRule(rule?: RulerRuleDTO): rule is RulerGrafanaRul
   return typeof rule === 'object' && 'grafana_alert' in rule;
 }
 
+export function isGrafanaRulerRulePaused(rule: CombinedRule) {
+  return rule.rulerRule && isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.is_paused);
+}
+
 export function alertInstanceKey(alert: Alert): string {
   return JSON.stringify(alert.labels);
 }
@@ -67,8 +77,28 @@ export function isCloudRuleIdentifier(identifier: RuleIdentifier): identifier is
   return 'rulerRuleHash' in identifier;
 }
 
+export function isPromRuleType(ruleType: string): ruleType is PromRuleType {
+  return Object.values<string>(PromRuleType).includes(ruleType);
+}
+
 export function isPrometheusRuleIdentifier(identifier: RuleIdentifier): identifier is PrometheusRuleIdentifier {
   return 'ruleHash' in identifier;
+}
+
+export function getRuleHealth(health: string): RuleHealth | undefined {
+  switch (health) {
+    case 'ok':
+      return RuleHealth.Ok;
+    case 'nodata':
+      return RuleHealth.NoData;
+    case 'error':
+    case 'err': // Prometheus-compat data sources
+      return RuleHealth.Error;
+    case 'unknown':
+      return RuleHealth.Unknown;
+    default:
+      return undefined;
+  }
 }
 
 export function alertStateToReadable(state: PromAlertingRuleState | GrafanaAlertStateWithReason | AlertState): string {
@@ -84,6 +114,22 @@ export const flattenRules = (rules: RuleNamespace[]) => {
       rules.forEach((rule) => {
         if (isAlertingRule(rule)) {
           acc.push({ dataSourceName, namespaceName, groupName, rule });
+        }
+      });
+    });
+    return acc;
+  }, []);
+};
+
+export const getAlertingRule = (rule: CombinedRuleWithLocation) =>
+  isAlertingRule(rule.promRule) ? rule.promRule : null;
+
+export const flattenCombinedRules = (rules: CombinedRuleNamespace[]) => {
+  return rules.reduce<CombinedRuleWithLocation[]>((acc, { rulesSource, name: namespaceName, groups }) => {
+    groups.forEach(({ name: groupName, rules }) => {
+      rules.forEach((rule) => {
+        if (rule.promRule && isAlertingRule(rule.promRule)) {
+          acc.push({ dataSourceName: getRulesSourceName(rulesSource), namespaceName, groupName, ...rule });
         }
       });
     });
@@ -119,11 +165,11 @@ const alertStateToStateMap: Record<PromAlertingRuleState | GrafanaAlertState | A
   [AlertState.Unknown]: 'info',
 };
 
-export function getFirstActiveAt(promRule: AlertingRule) {
-  if (!promRule.alerts) {
+export function getFirstActiveAt(promRule?: AlertingRule) {
+  if (!promRule?.alerts) {
     return null;
   }
-  return promRule.alerts.reduce((prev, alert) => {
+  return promRule.alerts.reduce<Date | null>((prev, alert) => {
     const isNotNormal =
       mapStateWithReasonToBaseState(alert.state as GrafanaAlertStateWithReason) !== GrafanaAlertState.Normal;
     if (alert.activeAt && isNotNormal) {
@@ -133,7 +179,7 @@ export function getFirstActiveAt(promRule: AlertingRule) {
       }
     }
     return prev;
-  }, null as Date | null);
+  }, null);
 }
 
 /**
@@ -145,3 +191,61 @@ export function getFirstActiveAt(promRule: AlertingRule) {
 export function isFederatedRuleGroup(group: CombinedRuleGroup) {
   return Array.isArray(group.source_tenants);
 }
+
+export function getRuleName(rule: RulerRuleDTO) {
+  if (isGrafanaRulerRule(rule)) {
+    return rule.grafana_alert.title;
+  }
+  if (isAlertingRulerRule(rule)) {
+    return rule.alert;
+  }
+
+  if (isRecordingRulerRule(rule)) {
+    return rule.record;
+  }
+
+  return '';
+}
+
+export interface AlertInfo {
+  alertName: string;
+  forDuration: string;
+  evaluationsToFire: number;
+}
+
+export const getAlertInfo = (alert: RulerRuleDTO, currentEvaluation: string): AlertInfo => {
+  const emptyAlert: AlertInfo = {
+    alertName: '',
+    forDuration: '0s',
+    evaluationsToFire: 0,
+  };
+  if (isGrafanaRulerRule(alert)) {
+    return {
+      alertName: alert.grafana_alert.title,
+      forDuration: alert.for,
+      evaluationsToFire: getNumberEvaluationsToStartAlerting(alert.for, currentEvaluation),
+    };
+  }
+  if (isAlertingRulerRule(alert)) {
+    return {
+      alertName: alert.alert,
+      forDuration: alert.for ?? '1m',
+      evaluationsToFire: getNumberEvaluationsToStartAlerting(alert.for ?? '1m', currentEvaluation),
+    };
+  }
+  return emptyAlert;
+};
+
+export const getNumberEvaluationsToStartAlerting = (forDuration: string, currentEvaluation: string) => {
+  const evalNumberMs = safeParseDurationstr(currentEvaluation);
+  const forNumber = safeParseDurationstr(forDuration);
+  if (forNumber === 0 && evalNumberMs !== 0) {
+    return 1;
+  }
+  if (evalNumberMs === 0) {
+    return 0;
+  } else {
+    const evaluationsBeforeCeil = forNumber / evalNumberMs;
+    return evaluationsBeforeCeil < 1 ? 0 : Math.ceil(forNumber / evalNumberMs) + 1;
+  }
+};

@@ -190,7 +190,7 @@ describe('mergeTables', () => {
         [12.12, time],
         [14.44, time + 1],
       ],
-    } as any as TableModel,
+    } as unknown as TableModel,
   ];
 
   it('should return the single table as is', () => {

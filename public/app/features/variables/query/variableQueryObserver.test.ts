@@ -1,3 +1,5 @@
+import { Subscription } from 'rxjs';
+
 import { LoadingState } from '@grafana/data';
 
 import { KeyedVariableIdentifier } from '../state/types';
@@ -5,13 +7,13 @@ import { KeyedVariableIdentifier } from '../state/types';
 import { UpdateOptionsResults } from './VariableQueryRunner';
 import { variableQueryObserver } from './variableQueryObserver';
 
-function getTestContext(args: { next?: UpdateOptionsResults; error?: any; complete?: boolean }) {
+function getTestContext(args: { next?: UpdateOptionsResults; error?: string; complete?: boolean }) {
   const { next, error, complete } = args;
   const resolve = jest.fn();
   const reject = jest.fn();
-  const subscription: any = {
+  const subscription = {
     unsubscribe: jest.fn(),
-  };
+  } as unknown as Subscription;
   const observer = variableQueryObserver(resolve, reject, subscription);
 
   if (next) {

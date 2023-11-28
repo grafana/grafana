@@ -26,12 +26,11 @@ func (e NotFoundError) Error() string {
 }
 
 type DuplicateError struct {
-	PluginID          string
-	ExistingPluginDir string
+	PluginID string
 }
 
 func (e DuplicateError) Error() string {
-	return fmt.Sprintf("plugin with ID '%s' already exists in '%s'", e.PluginID, e.ExistingPluginDir)
+	return fmt.Sprintf("plugin with ID '%s' already exists", e.PluginID)
 }
 
 func (e DuplicateError) Is(err error) bool {
@@ -47,13 +46,13 @@ type SignatureError struct {
 
 func (e SignatureError) Error() string {
 	switch e.SignatureStatus {
-	case SignatureInvalid:
+	case SignatureStatusInvalid:
 		return fmt.Sprintf("plugin '%s' has an invalid signature", e.PluginID)
-	case SignatureModified:
+	case SignatureStatusModified:
 		return fmt.Sprintf("plugin '%s' has an modified signature", e.PluginID)
-	case SignatureUnsigned:
+	case SignatureStatusUnsigned:
 		return fmt.Sprintf("plugin '%s' has no signature", e.PluginID)
-	case SignatureInternal, SignatureValid:
+	case SignatureStatusInternal, SignatureStatusValid:
 		return ""
 	}
 
@@ -62,13 +61,13 @@ func (e SignatureError) Error() string {
 
 func (e SignatureError) AsErrorCode() ErrorCode {
 	switch e.SignatureStatus {
-	case SignatureInvalid:
-		return signatureInvalid
-	case SignatureModified:
-		return signatureModified
-	case SignatureUnsigned:
-		return signatureMissing
-	case SignatureInternal, SignatureValid:
+	case SignatureStatusInvalid:
+		return errorCodeSignatureInvalid
+	case SignatureStatusModified:
+		return errorCodeSignatureModified
+	case SignatureStatusUnsigned:
+		return errorCodeSignatureMissing
+	case SignatureStatusInternal, SignatureStatusValid:
 		return ""
 	}
 
@@ -87,6 +86,7 @@ type Includes struct {
 	Type       string       `json:"type"`
 	Component  string       `json:"component"`
 	Role       org.RoleType `json:"role"`
+	Action     string       `json:"action,omitempty"`
 	AddToNav   bool         `json:"addToNav"`
 	DefaultNav bool         `json:"defaultNav"`
 	Slug       string       `json:"slug"`
@@ -101,6 +101,10 @@ func (e Includes) DashboardURLPath() string {
 		return ""
 	}
 	return "/d/" + e.UID
+}
+
+func (e Includes) RequiresRBACAction() bool {
+	return e.Action != ""
 }
 
 type Dependency struct {
@@ -151,52 +155,50 @@ type StaticRoute struct {
 type SignatureStatus string
 
 func (ss SignatureStatus) IsValid() bool {
-	return ss == SignatureValid
+	return ss == SignatureStatusValid
 }
 
 func (ss SignatureStatus) IsInternal() bool {
-	return ss == SignatureInternal
+	return ss == SignatureStatusInternal
 }
 
 const (
-	SignatureInternal SignatureStatus = "internal" // core plugin, no signature
-	SignatureValid    SignatureStatus = "valid"    // signed and accurate MANIFEST
-	SignatureInvalid  SignatureStatus = "invalid"  // invalid signature
-	SignatureModified SignatureStatus = "modified" // valid signature, but content mismatch
-	SignatureUnsigned SignatureStatus = "unsigned" // no MANIFEST file
+	SignatureStatusInternal SignatureStatus = "internal" // core plugin, no signature
+	SignatureStatusValid    SignatureStatus = "valid"    // signed and accurate MANIFEST
+	SignatureStatusInvalid  SignatureStatus = "invalid"  // invalid signature
+	SignatureStatusModified SignatureStatus = "modified" // valid signature, but content mismatch
+	SignatureStatusUnsigned SignatureStatus = "unsigned" // no MANIFEST file
 )
 
 type ReleaseState string
 
 const (
-	AlphaRelease ReleaseState = "alpha"
+	ReleaseStateAlpha ReleaseState = "alpha"
 )
 
 type SignatureType string
 
 const (
-	GrafanaSignature     SignatureType = "grafana"
-	CommercialSignature  SignatureType = "commercial"
-	CommunitySignature   SignatureType = "community"
-	PrivateSignature     SignatureType = "private"
-	PrivateGlobSignature SignatureType = "private-glob"
+	SignatureTypeGrafana     SignatureType = "grafana"
+	SignatureTypeCommercial  SignatureType = "commercial"
+	SignatureTypeCommunity   SignatureType = "community"
+	SignatureTypePrivate     SignatureType = "private"
+	SignatureTypePrivateGlob SignatureType = "private-glob"
 )
 
 func (s SignatureType) IsValid() bool {
 	switch s {
-	case GrafanaSignature, CommercialSignature, CommunitySignature, PrivateSignature, PrivateGlobSignature:
+	case SignatureTypeGrafana, SignatureTypeCommercial, SignatureTypeCommunity, SignatureTypePrivate,
+		SignatureTypePrivateGlob:
 		return true
 	}
 	return false
 }
 
-type PluginFiles map[string]struct{}
-
 type Signature struct {
 	Status     SignatureStatus
 	Type       SignatureType
 	SigningOrg string
-	Files      PluginFiles
 }
 
 type PluginMetaDTO struct {
@@ -209,21 +211,25 @@ type PluginMetaDTO struct {
 }
 
 type DataSourceDTO struct {
-	ID         int64                  `json:"id,omitempty"`
-	UID        string                 `json:"uid,omitempty"`
-	Type       string                 `json:"type"`
-	Name       string                 `json:"name"`
-	PluginMeta *PluginMetaDTO         `json:"meta"`
-	URL        string                 `json:"url,omitempty"`
-	IsDefault  bool                   `json:"isDefault"`
-	Access     string                 `json:"access,omitempty"`
-	Preload    bool                   `json:"preload"`
-	Module     string                 `json:"module,omitempty"`
-	JSONData   map[string]interface{} `json:"jsonData"`
-	ReadOnly   bool                   `json:"readOnly"`
+	ID              int64          `json:"id,omitempty"`
+	UID             string         `json:"uid,omitempty"`
+	Type            string         `json:"type"`
+	Name            string         `json:"name"`
+	PluginMeta      *PluginMetaDTO `json:"meta"`
+	URL             string         `json:"url,omitempty"`
+	IsDefault       bool           `json:"isDefault"`
+	Access          string         `json:"access,omitempty"`
+	Preload         bool           `json:"preload"`
+	Module          string         `json:"module,omitempty"`
+	JSONData        map[string]any `json:"jsonData"`
+	ReadOnly        bool           `json:"readOnly"`
+	AngularDetected bool           `json:"angularDetected"`
 
 	BasicAuth       string `json:"basicAuth,omitempty"`
 	WithCredentials bool   `json:"withCredentials,omitempty"`
+
+	// This is populated by an Enterprise hook
+	CachingConfig QueryCachingConfig `json:"cachingConfig,omitempty"`
 
 	// InfluxDB
 	Username string `json:"username,omitempty"`
@@ -237,22 +243,32 @@ type DataSourceDTO struct {
 }
 
 type PanelDTO struct {
-	ID            string `json:"id"`
-	Name          string `json:"name"`
-	Info          Info   `json:"info"`
-	HideFromList  bool   `json:"hideFromList"`
-	Sort          int    `json:"sort"`
-	SkipDataQuery bool   `json:"skipDataQuery"`
-	ReleaseState  string `json:"state"`
-	BaseURL       string `json:"baseUrl"`
-	Signature     string `json:"signature"`
-	Module        string `json:"module"`
+	ID              string   `json:"id"`
+	Name            string   `json:"name"`
+	AliasIDs        []string `json:"aliasIds,omitempty"`
+	Info            Info     `json:"info"`
+	HideFromList    bool     `json:"hideFromList"`
+	Sort            int      `json:"sort"`
+	SkipDataQuery   bool     `json:"skipDataQuery"`
+	ReleaseState    string   `json:"state"`
+	BaseURL         string   `json:"baseUrl"`
+	Signature       string   `json:"signature"`
+	Module          string   `json:"module"`
+	AngularDetected bool     `json:"angularDetected"`
+}
+
+type AppDTO struct {
+	ID              string `json:"id"`
+	Path            string `json:"path"`
+	Version         string `json:"version"`
+	Preload         bool   `json:"preload"`
+	AngularDetected bool   `json:"angularDetected"`
 }
 
 const (
-	signatureMissing  ErrorCode = "signatureMissing"
-	signatureModified ErrorCode = "signatureModified"
-	signatureInvalid  ErrorCode = "signatureInvalid"
+	errorCodeSignatureMissing  ErrorCode = "signatureMissing"
+	errorCodeSignatureModified ErrorCode = "signatureModified"
+	errorCodeSignatureInvalid  ErrorCode = "signatureInvalid"
 )
 
 type ErrorCode string
@@ -262,7 +278,28 @@ type Error struct {
 	PluginID  string `json:"pluginId,omitempty"`
 }
 
-type PreloadPlugin struct {
-	Path    string `json:"path"`
-	Version string `json:"version"`
+// Access-Control related definitions
+
+// RoleRegistration stores a role and its assignments to basic roles
+// (Viewer, Editor, Admin, Grafana Admin)
+type RoleRegistration struct {
+	Role   Role     `json:"role"`
+	Grants []string `json:"grants"`
+}
+
+// Role is the model for Role in RBAC.
+type Role struct {
+	Name        string       `json:"name"`
+	Description string       `json:"description"`
+	Permissions []Permission `json:"permissions"`
+}
+
+type Permission struct {
+	Action string `json:"action"`
+	Scope  string `json:"scope"`
+}
+
+type QueryCachingConfig struct {
+	Enabled bool  `json:"enabled"`
+	TTLMS   int64 `json:"TTLMs"`
 }

@@ -5,6 +5,10 @@ description: Describes provisioning settings for Grafana using configuration fil
 keywords:
   - grafana
   - provisioning
+labels:
+  products:
+    - enterprise
+    - oss
 title: Provision Grafana
 weight: 600
 ---
@@ -23,10 +27,12 @@ See [Configuration]({{< relref "../../setup-grafana/configure-grafana/" >}}) for
 - Custom configuration from `$WORKING_DIR/conf/custom.ini`
 - The custom configuration file path can be overridden using the `--config` parameter
 
-> **Note:** If you have installed Grafana using the `deb` or `rpm`
-> packages, then your configuration file is located at
-> `/etc/grafana/grafana.ini`. This path is specified in the Grafana
-> init.d script using `--config` file parameter.
+{{% admonition type="note" %}}
+If you have installed Grafana using the `deb` or `rpm`
+packages, then your configuration file is located at
+`/etc/grafana/grafana.ini`. This path is specified in the Grafana
+init.d script using `--config` file parameter.
+{{% /admonition %}}
 
 ### Using Environment Variables
 
@@ -56,151 +62,185 @@ Currently we do not provide any scripts/manifests for configuring Grafana. Rathe
 | Tool      | Project                                                                                                        |
 | --------- | -------------------------------------------------------------------------------------------------------------- |
 | Puppet    | [https://forge.puppet.com/puppet/grafana](https://forge.puppet.com/puppet/grafana)                             |
-| Ansible   | [https://github.com/cloudalchemy/ansible-grafana](https://github.com/cloudalchemy/ansible-grafana)             |
-| Chef      | [https://github.com/JonathanTron/chef-grafana](https://github.com/JonathanTron/chef-grafana)                   |
+| Ansible   | [https://github.com/grafana/grafana-ansible-collection](https://github.com/grafana/grafana-ansible-collection) |
+| Chef      | [https://github.com/sous-chefs/chef-grafana](https://github.com/sous-chefs/chef-grafana)                       |
 | Saltstack | [https://github.com/salt-formulas/salt-formula-grafana](https://github.com/salt-formulas/salt-formula-grafana) |
 | Jsonnet   | [https://github.com/grafana/grafonnet-lib/](https://github.com/grafana/grafonnet-lib/)                         |
 
 ## Data sources
 
-> This feature is available from v5.0
+{{% admonition type="note" %}}
+Available in Grafana v5.0 and higher.
+{{% /admonition %}}
 
-It's possible to manage data sources in Grafana by adding one or more YAML config files in the [`provisioning/datasources`](/administration/configuration/#provisioning) directory. Each config file can contain a list of `datasources` that will get added or updated during start up. If the data source already exists, then Grafana updates it to match the configuration file. The config file can also contain a list of data sources that should be deleted. That list is called `deleteDatasources`. Grafana will delete data sources listed in `deleteDatasources` before inserting/updating those in the `datasource` list.
+You can manage data sources in Grafana by adding YAML configuration files in the [`provisioning/datasources`]({{< relref "../../setup-grafana/configure-grafana#provisioning" >}}) directory.
+Each config file can contain a list of `datasources` to add or update during startup.
+If the data source already exists, Grafana reconfigures it to match the provisioned configuration file.
 
-### Running Multiple Grafana Instances
+The configuration file can also list data sources to automatically delete, called `deleteDatasources`.
+Grafana deletes the data sources listed in `deleteDatasources` _before_ adding or updating those in the `datasources` list.
 
-If you are running multiple instances of Grafana you might run into problems if they have different versions of the `datasource.yaml` configuration file. The best way to solve this problem is to add a version number to each datasource in the configuration and increase it when you update the config. Grafana will only update datasources with the same or lower version number than specified in the config. That way, old configs cannot overwrite newer configs if they restart at the same time.
+### Running multiple Grafana instances
 
-### Example data source Config File
+If you run multiple instances of Grafana, add a version number to each data source in the configuration and increase it when you update the configuration.
+Grafana updates only data sources with the same or lower version number than specified in the config.
+This prevents old configurations from overwriting newer ones if you have different versions of the `datasource.yaml` file that don't define version numbers, and then restart instances at the same time.
+
+### Example data source config file
+
+This example provisions a [Graphite data source]({{< relref "../../datasources/graphite" >}}):
 
 ```yaml
-# config file version
+# Configuration file version
 apiVersion: 1
 
-# list of datasources that should be deleted from the database
+# List of data sources to delete from the database.
 deleteDatasources:
   - name: Graphite
     orgId: 1
 
-# list of datasources to insert/update depending
-# what's available in the database
+# List of data sources to insert/update depending on what's
+# available in the database.
 datasources:
-  # <string, required> name of the datasource. Required
+  # <string, required> Sets the name you use to refer to
+  # the data source in panels and queries.
   - name: Graphite
-    # <string, required> datasource type. Required
+    # <string, required> Sets the data source type.
     type: graphite
-    # <string, required> access mode. proxy or direct (Server or Browser in the UI). Required
+    # <string, required> Sets the access mode, either
+    # proxy or direct (Server or Browser in the UI).
+    # Some data sources are incompatible with any setting
+    # but proxy (Server).
     access: proxy
-    # <int> org id. will default to orgId 1 if not specified
+    # <int> Sets the organization id. Defaults to orgId 1.
     orgId: 1
-    # <string> custom UID which can be used to reference this datasource in other parts of the configuration, if not specified will be generated automatically
+    # <string> Sets a custom UID to reference this
+    # data source in other parts of the configuration.
+    # If not specified, Grafana generates one.
     uid: my_unique_uid
-    # <string> url
+    # <string> Sets the data source's URL, including the
+    # port.
     url: http://localhost:8080
-    # <string> database user, if used
+    # <string> Sets the database user, if necessary.
     user:
-    # <string> database name, if used
+    # <string> Sets the database name, if necessary.
     database:
-    # <bool> enable/disable basic auth
+    # <bool> Enables basic authorization.
     basicAuth:
-    # <string> basic auth username
+    # <string> Sets the basic authorization username.
     basicAuthUser:
-    # <bool> enable/disable with credentials headers
+    # <bool> Enables credential headers.
     withCredentials:
-    # <bool> mark as default datasource. Max one per org
+    # <bool> Toggles whether the data source is pre-selected
+    # for new panels. You can set only one default
+    # data source per organization.
     isDefault:
-    # <map> fields that will be converted to json and stored in jsonData
+    # <map> Fields to convert to JSON and store in jsonData.
     jsonData:
+      # <string> Defines the Graphite service's version.
       graphiteVersion: '1.1'
+      # <bool> Enables TLS authentication using a client
+      # certificate configured in secureJsonData.
       tlsAuth: true
+      # <bool> Enables TLS authentication using a CA
+      # certificate.
       tlsAuthWithCACert: true
-    # <string> json object of data that will be encrypted.
+    # <map> Fields to encrypt before storing in jsonData.
     secureJsonData:
+      # <string> Defines the CA cert, client cert, and
+      # client key for encrypted authentication.
       tlsCACert: '...'
       tlsClientCert: '...'
       tlsClientKey: '...'
-      # <string> database password, if used
+      # <string> Sets the database password, if necessary.
       password:
-      # <string> basic auth password
+      # <string> Sets the basic authorization password.
       basicAuthPassword:
     version: 1
-    # <bool> allow users to edit datasources from the UI.
+    # <bool> Allows users to edit data sources from the
+    # Grafana UI.
     editable: false
 ```
 
-#### Custom Settings per Datasource
-
-Please refer to each datasource documentation for specific provisioning examples.
-
-| Datasource    | Misc                                                                               |
-| ------------- | ---------------------------------------------------------------------------------- |
-| Elasticsearch | Elasticsearch uses the `database` property to configure the index for a datasource |
+For provisioning examples of specific data sources, refer to that [data source's documentation]({{< relref "../../datasources" >}}).
 
 #### JSON Data
 
-Since not all datasources have the same configuration settings we only have the most common ones as fields. The rest should be stored as a json blob in the `jsonData` field. Here are the most common settings that the core datasources use.
+Since not all data sources have the same configuration settings, we include only the most common ones as fields.
+To provision the rest of a data source's settings, include them as a JSON blob in the `jsonData` field.
 
-> **Note:** Datasources tagged with _HTTP\*_ below denotes any data source which communicates using the HTTP protocol, e.g. all core data source plugins except MySQL, PostgreSQL and MSSQL.
+Common settings in the [built-in core data sources]({{< relref "../../datasources#built-in-core-data-sources" >}}) include:
 
-| Name                       | Type    | Datasource                                                       | Description                                                                                                                                                                                                                                                                                                         |
-| -------------------------- | ------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| tlsAuth                    | boolean | _HTTP\*_, MySQL                                                  | Enable TLS authentication using client cert configured in secure json data                                                                                                                                                                                                                                          |
-| tlsAuthWithCACert          | boolean | _HTTP\*_, MySQL, PostgreSQL                                      | Enable TLS authentication using CA cert                                                                                                                                                                                                                                                                             |
-| tlsSkipVerify              | boolean | _HTTP\*_, MySQL, PostgreSQL, MSSQL                               | Controls whether a client verifies the server's certificate chain and host name.                                                                                                                                                                                                                                    |
-| serverName                 | string  | _HTTP\*_, MSSQL                                                  | Optional. Controls the server name used for certificate common name/subject alternative name verification. Defaults to using the data source URL.                                                                                                                                                                   |
-| timeout                    | string  | _HTTP\*_                                                         | Request timeout in seconds. Overrides dataproxy.timeout option                                                                                                                                                                                                                                                      |
-| graphiteVersion            | string  | Graphite                                                         | Graphite version                                                                                                                                                                                                                                                                                                    |
-| timeInterval               | string  | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL and MSSQL | Lowest interval/step value that should be used for this data source.                                                                                                                                                                                                                                                |
-| httpMode                   | string  | Influxdb                                                         | HTTP Method. 'GET', 'POST', defaults to GET                                                                                                                                                                                                                                                                         |
-| maxSeries                  | number  | Influxdb                                                         | Max number of series/tables that Grafana processes                                                                                                                                                                                                                                                                  |
-| httpMethod                 | string  | Prometheus                                                       | HTTP Method. 'GET', 'POST', defaults to POST                                                                                                                                                                                                                                                                        |
-| customQueryParameters      | string  | Prometheus                                                       | Query parameters to add, as a URL-encoded string.                                                                                                                                                                                                                                                                   |
-| manageAlerts               | boolean | Prometheus and Loki                                              | Manage alerts via Alerting UI                                                                                                                                                                                                                                                                                       |
-| alertmanagerUid            | string  | Prometheus and Loki                                              | UID of Alert Manager that manages Alert for this data source.                                                                                                                                                                                                                                                       |
-| esVersion                  | string  | Elasticsearch                                                    | Elasticsearch version (E.g. `7.0.0`, `7.6.1`)                                                                                                                                                                                                                                                                       |
-| timeField                  | string  | Elasticsearch                                                    | Which field that should be used as timestamp                                                                                                                                                                                                                                                                        |
-| interval                   | string  | Elasticsearch                                                    | Index date time format. nil(No Pattern), 'Hourly', 'Daily', 'Weekly', 'Monthly' or 'Yearly'                                                                                                                                                                                                                         |
-| logMessageField            | string  | Elasticsearch                                                    | Which field should be used as the log message                                                                                                                                                                                                                                                                       |
-| logLevelField              | string  | Elasticsearch                                                    | Which field should be used to indicate the priority of the log message                                                                                                                                                                                                                                              |
-| maxConcurrentShardRequests | number  | Elasticsearch                                                    | Maximum number of concurrent shard requests that each sub-search request executes per node. Defaults to 5 if esVersion is greater than or equals 7.0.0. When the esVersion is less than 7.0.0 and greater than or equals 5.6.0, then the default value is 256. Option is ignored when esVersion is less than 5.6.0. |
-| sigV4Auth                  | boolean | Elasticsearch and Prometheus                                     | Enable usage of SigV4                                                                                                                                                                                                                                                                                               |
-| sigV4AuthType              | string  | Elasticsearch and Prometheus                                     | SigV4 auth provider. default/credentials/keys                                                                                                                                                                                                                                                                       |
-| sigV4ExternalId            | string  | Elasticsearch and Prometheus                                     | Optional SigV4 External ID                                                                                                                                                                                                                                                                                          |
-| sigV4AssumeRoleArn         | string  | Elasticsearch and Prometheus                                     | Optional SigV4 ARN role to assume                                                                                                                                                                                                                                                                                   |
-| sigV4Region                | string  | Elasticsearch and Prometheus                                     | SigV4 AWS region                                                                                                                                                                                                                                                                                                    |
-| sigV4Profile               | string  | Elasticsearch and Prometheus                                     | Optional SigV4 credentials profile                                                                                                                                                                                                                                                                                  |
-| authType                   | string  | Cloudwatch                                                       | Auth provider. default/credentials/keys                                                                                                                                                                                                                                                                             |
-| externalId                 | string  | Cloudwatch                                                       | Optional External ID                                                                                                                                                                                                                                                                                                |
-| assumeRoleArn              | string  | Cloudwatch                                                       | Optional ARN role to assume                                                                                                                                                                                                                                                                                         |
-| defaultRegion              | string  | Cloudwatch                                                       | Optional default AWS region                                                                                                                                                                                                                                                                                         |
-| customMetricsNamespaces    | string  | Cloudwatch                                                       | Namespaces of Custom Metrics                                                                                                                                                                                                                                                                                        |
-| profile                    | string  | Cloudwatch                                                       | Optional credentials profile                                                                                                                                                                                                                                                                                        |
-| tsdbVersion                | string  | OpenTSDB                                                         | Version                                                                                                                                                                                                                                                                                                             |
-| tsdbResolution             | string  | OpenTSDB                                                         | Resolution                                                                                                                                                                                                                                                                                                          |
-| sslmode                    | string  | PostgreSQL                                                       | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full'                                                                                                                                                                                                                                                         |
-| tlsConfigurationMethod     | string  | PostgreSQL                                                       | SSL Certificate configuration, either by 'file-path' or 'file-content'                                                                                                                                                                                                                                              |
-| sslRootCertFile            | string  | PostgreSQL, MSSQL                                                | SSL server root certificate file, must be readable by the Grafana user                                                                                                                                                                                                                                              |
-| sslCertFile                | string  | PostgreSQL                                                       | SSL client certificate file, must be readable by the Grafana user                                                                                                                                                                                                                                                   |
-| sslKeyFile                 | string  | PostgreSQL                                                       | SSL client key file, must be readable by _only_ the Grafana user                                                                                                                                                                                                                                                    |
-| encrypt                    | string  | MSSQL                                                            | Connection SSL encryption handling. 'disable', 'false' or 'true'                                                                                                                                                                                                                                                    |
-| postgresVersion            | number  | PostgreSQL                                                       | Postgres version as a number (903/904/905/906/1000) meaning v9.3, v9.4, ..., v10                                                                                                                                                                                                                                    |
-| timescaledb                | boolean | PostgreSQL                                                       | Enable usage of TimescaleDB extension                                                                                                                                                                                                                                                                               |
-| maxOpenConns               | number  | MySQL, PostgreSQL and MSSQL                                      | Maximum number of open connections to the database (Grafana v5.4+)                                                                                                                                                                                                                                                  |
-| maxIdleConns               | number  | MySQL, PostgreSQL and MSSQL                                      | Maximum number of connections in the idle connection pool (Grafana v5.4+)                                                                                                                                                                                                                                           |
-| connMaxLifetime            | number  | MySQL, PostgreSQL and MSSQL                                      | Maximum amount of time in seconds a connection may be reused (Grafana v5.4+)                                                                                                                                                                                                                                        |
-| keepCookies                | array   | _HTTP\*_                                                         | Cookies that needs to be passed along while communicating with datasources                                                                                                                                                                                                                                          |
-| prometheusVersion          | string  | Prometheus                                                       | The version of the Prometheus datasource (e.g. `2.37.0`, `2.24.0`)                                                                                                                                                                                                                                                  |
-| prometheusType             | string  | Prometheus                                                       | The type of the Prometheus datasources (i.e. `Prometheus`, `Cortex`, `Thanos`, or `Mimir`)                                                                                                                                                                                                                          |
+{{% admonition type="note" %}}
+Data sources tagged with _HTTP\*_ communicate using the HTTP protocol, which includes all core data source plugins except MySQL, PostgreSQL, and MSSQL.
+{{% /admonition %}}
 
-#### Secure Json Data
+| Name                          | Type    | Data source                                                      | Description                                                                                                                                                                                                                                                                                   |
+| ----------------------------- | ------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| tlsAuth                       | boolean | _HTTP\*_, MySQL                                                  | Enable TLS authentication using client cert configured in secure json data                                                                                                                                                                                                                    |
+| tlsAuthWithCACert             | boolean | _HTTP\*_, MySQL, PostgreSQL                                      | Enable TLS authentication using CA cert                                                                                                                                                                                                                                                       |
+| tlsSkipVerify                 | boolean | _HTTP\*_, MySQL, PostgreSQL, MSSQL                               | Controls whether a client verifies the server's certificate chain and host name.                                                                                                                                                                                                              |
+| serverName                    | string  | _HTTP\*_, MSSQL                                                  | Optional. Controls the server name used for certificate common name/subject alternative name verification. Defaults to using the data source URL.                                                                                                                                             |
+| timeout                       | string  | _HTTP\*_                                                         | Request timeout in seconds. Overrides dataproxy.timeout option                                                                                                                                                                                                                                |
+| graphiteVersion               | string  | Graphite                                                         | Graphite version                                                                                                                                                                                                                                                                              |
+| timeInterval                  | string  | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL and MSSQL | Lowest interval/step value that should be used for this data source.                                                                                                                                                                                                                          |
+| httpMode                      | string  | Influxdb                                                         | HTTP Method. 'GET', 'POST', defaults to GET                                                                                                                                                                                                                                                   |
+| maxSeries                     | number  | Influxdb                                                         | Max number of series/tables that Grafana processes                                                                                                                                                                                                                                            |
+| httpMethod                    | string  | Prometheus                                                       | HTTP Method. 'GET', 'POST', defaults to POST                                                                                                                                                                                                                                                  |
+| customQueryParameters         | string  | Prometheus                                                       | Query parameters to add, as a URL-encoded string.                                                                                                                                                                                                                                             |
+| manageAlerts                  | boolean | Prometheus and Loki                                              | Manage alerts via Alerting UI                                                                                                                                                                                                                                                                 |
+| alertmanagerUid               | string  | Prometheus and Loki                                              | UID of Alert Manager that manages Alert for this data source.                                                                                                                                                                                                                                 |
+| timeField                     | string  | Elasticsearch                                                    | Which field that should be used as timestamp                                                                                                                                                                                                                                                  |
+| interval                      | string  | Elasticsearch                                                    | Index date time format. nil(No Pattern), 'Hourly', 'Daily', 'Weekly', 'Monthly' or 'Yearly'                                                                                                                                                                                                   |
+| logMessageField               | string  | Elasticsearch                                                    | Which field should be used as the log message                                                                                                                                                                                                                                                 |
+| logLevelField                 | string  | Elasticsearch                                                    | Which field should be used to indicate the priority of the log message                                                                                                                                                                                                                        |
+| maxConcurrentShardRequests    | number  | Elasticsearch                                                    | Maximum number of concurrent shard requests that each sub-search request executes per node                                                                                                                                                                                                    |
+| sigV4Auth                     | boolean | Elasticsearch and Prometheus                                     | Enable usage of SigV4                                                                                                                                                                                                                                                                         |
+| sigV4AuthType                 | string  | Elasticsearch and Prometheus                                     | SigV4 auth provider. default/credentials/keys                                                                                                                                                                                                                                                 |
+| sigV4ExternalId               | string  | Elasticsearch and Prometheus                                     | Optional SigV4 External ID                                                                                                                                                                                                                                                                    |
+| sigV4AssumeRoleArn            | string  | Elasticsearch and Prometheus                                     | Optional SigV4 ARN role to assume                                                                                                                                                                                                                                                             |
+| sigV4Region                   | string  | Elasticsearch and Prometheus                                     | SigV4 AWS region                                                                                                                                                                                                                                                                              |
+| sigV4Profile                  | string  | Elasticsearch and Prometheus                                     | Optional SigV4 credentials profile                                                                                                                                                                                                                                                            |
+| authType                      | string  | Cloudwatch                                                       | Auth provider. default/credentials/keys                                                                                                                                                                                                                                                       |
+| externalId                    | string  | Cloudwatch                                                       | Optional External ID                                                                                                                                                                                                                                                                          |
+| assumeRoleArn                 | string  | Cloudwatch                                                       | Optional ARN role to assume                                                                                                                                                                                                                                                                   |
+| defaultRegion                 | string  | Cloudwatch                                                       | Optional default AWS region                                                                                                                                                                                                                                                                   |
+| customMetricsNamespaces       | string  | Cloudwatch                                                       | Namespaces of Custom Metrics                                                                                                                                                                                                                                                                  |
+| profile                       | string  | Cloudwatch                                                       | Optional credentials profile                                                                                                                                                                                                                                                                  |
+| tsdbVersion                   | string  | OpenTSDB                                                         | Version                                                                                                                                                                                                                                                                                       |
+| tsdbResolution                | string  | OpenTSDB                                                         | Resolution                                                                                                                                                                                                                                                                                    |
+| sslmode                       | string  | PostgreSQL                                                       | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full'                                                                                                                                                                                                                                   |
+| tlsConfigurationMethod        | string  | PostgreSQL                                                       | SSL Certificate configuration, either by 'file-path' or 'file-content'                                                                                                                                                                                                                        |
+| sslRootCertFile               | string  | PostgreSQL, MSSQL                                                | SSL server root certificate file, must be readable by the Grafana user                                                                                                                                                                                                                        |
+| sslCertFile                   | string  | PostgreSQL                                                       | SSL client certificate file, must be readable by the Grafana user                                                                                                                                                                                                                             |
+| sslKeyFile                    | string  | PostgreSQL                                                       | SSL client key file, must be readable by _only_ the Grafana user                                                                                                                                                                                                                              |
+| encrypt                       | string  | MSSQL                                                            | Determines SSL encryption handling. Options include: `disable` - data sent between client and server is not encrypted; `false` - data sent between client and server is not encrypted beyond the login packet; `true` - data sent between client and server is encrypted. Default is `false`. |
+| postgresVersion               | number  | PostgreSQL                                                       | Postgres version as a number (903/904/905/906/1000) meaning v9.3, v9.4, ..., v10                                                                                                                                                                                                              |
+| timescaledb                   | boolean | PostgreSQL                                                       | Enable usage of TimescaleDB extension                                                                                                                                                                                                                                                         |
+| maxOpenConns                  | number  | MySQL, PostgreSQL and MSSQL                                      | Maximum number of open connections to the database (Grafana v5.4+)                                                                                                                                                                                                                            |
+| maxIdleConns                  | number  | MySQL, PostgreSQL and MSSQL                                      | Maximum number of connections in the idle connection pool (Grafana v5.4+)                                                                                                                                                                                                                     |
+| connMaxLifetime               | number  | MySQL, PostgreSQL and MSSQL                                      | Maximum amount of time in seconds a connection may be reused (Grafana v5.4+)                                                                                                                                                                                                                  |
+| keepCookies                   | array   | _HTTP\*_                                                         | Cookies that needs to be passed along while communicating with data sources                                                                                                                                                                                                                   |
+| prometheusVersion             | string  | Prometheus                                                       | The version of the Prometheus data source, such as `2.37.0`, `2.24.0`                                                                                                                                                                                                                         |
+| prometheusType                | string  | Prometheus                                                       | Prometheus database type. Options are `Prometheus`, `Cortex`, `Mimir` or`Thanos`.                                                                                                                                                                                                             |
+| cacheLevel                    | string  | Prometheus                                                       | Determines the duration of the browser cache. Valid values include: `Low`, `Medium`, `High`, and `None`. This field is configurable when you enable the `prometheusResourceBrowserCache` feature flag.                                                                                        |
+| incrementalQuerying           | string  | Prometheus                                                       | Experimental: Turn on incremental querying to enhance dashboard reload performance with slow data sources                                                                                                                                                                                     |
+| incrementalQueryOverlapWindow | string  | Prometheus                                                       | Experimental: Configure incremental query overlap window. Requires a valid duration string, i.e. `180s` or `15m` Default value is `10m` (10 minutes).                                                                                                                                         |
+| disableRecordingRules         | boolean | Prometheus                                                       | Experimental: Turn off Prometheus recording rules                                                                                                                                                                                                                                             |
+| implementation                | string  | AlertManager                                                     | The implementation of the AlertManager data source, such as `prometheus`, `cortex` or `mimir`                                                                                                                                                                                                 |
+| handleGrafanaManagedAlerts    | boolean | AlertManager                                                     | When enabled, Grafana-managed alerts are sent to this Alertmanager                                                                                                                                                                                                                            |
 
-`{"authType":"keys","defaultRegion":"us-west-2","timeField":"@timestamp"}`
+For examples of specific data sources' JSON data, refer to that [data source's documentation]({{< relref "../../datasources" >}}).
 
-Secure json data is a map of settings that will be encrypted with [secret key]({{< relref "../../setup-grafana/configure-grafana/#secret_key" >}}) from the Grafana config. The purpose of this is only to hide content from the users of the application. This should be used for storing TLS Cert and password that Grafana will append to the request on the server side. All of these settings are optional.
+#### Secure JSON Data
 
-> **Note:** Datasources tagged with _HTTP\*_ below denotes any data source which communicates using the HTTP protocol, e.g. all core data source plugins except MySQL, PostgreSQL and MSSQL.
+Secure JSON data is a map of settings that will be encrypted with [secret key]({{< relref "../../setup-grafana/configure-grafana#secret_key" >}}) from the Grafana config. The purpose of this is only to hide content from the users of the application. This should be used for storing TLS Cert and password that Grafana will append to the request on the server side. All of these settings are optional.
 
-| Name              | Type   | Datasource                         | Description                                              |
+{{% admonition type="note" %}}
+The _HTTP\*_ tag denotes data sources that communicate using the HTTP protocol, including all core data source plugins except MySQL, PostgreSQL, and MSSQL.
+{{% /admonition %}}
+
+| Name              | Type   | Data source                        | Description                                              |
 | ----------------- | ------ | ---------------------------------- | -------------------------------------------------------- |
 | tlsCACert         | string | _HTTP\*_, MySQL, PostgreSQL        | CA cert for out going requests                           |
 | tlsClientCert     | string | _HTTP\*_, MySQL, PostgreSQL        | TLS Client cert for outgoing requests                    |
@@ -212,10 +252,10 @@ Secure json data is a map of settings that will be encrypted with [secret key]({
 | sigV4AccessKey    | string | Elasticsearch and Prometheus       | SigV4 access key. Required when using keys auth provider |
 | sigV4SecretKey    | string | Elasticsearch and Prometheus       | SigV4 secret key. Required when using keys auth provider |
 
-#### Custom HTTP headers for datasources
+#### Custom HTTP headers for data sources
 
 Data sources managed by Grafanas provisioning can be configured to add HTTP headers to all requests
-going to that datasource. The header name is configured in the `jsonData` field and the header value should be
+going to that data source. The header name is configured in the `jsonData` field and the header value should be
 configured in `secureJsonData`.
 
 ```yaml
@@ -233,12 +273,16 @@ datasources:
 
 ## Plugins
 
-> This feature is available from v7.1
+{{% admonition type="note" %}}
+Available in Grafana v7.1 and higher.
+{{% /admonition %}}
 
-You can manage plugin applications in Grafana by adding one or more YAML config files in the [`provisioning/plugins`]({{< relref "../../setup-grafana/configure-grafana/#provisioning" >}}) directory. Each config file can contain a list of `apps` that will be updated during start up. Grafana updates each app to match the configuration file.
+You can manage plugin applications in Grafana by adding one or more YAML config files in the [`provisioning/plugins`]({{< relref "../../setup-grafana/configure-grafana#provisioning" >}}) directory. Each config file can contain a list of `apps` that will be updated during start up. Grafana updates each app to match the configuration file.
 
-> **Note:** This feature enables you to provision plugin configurations, not the plugins themselves.
-> The plugins must already be installed on the grafana instance
+{{% admonition type="note" %}}
+This feature enables you to provision plugin configurations, not the plugins themselves.
+The plugins must already be installed on the Grafana instance.
+{{% /admonition %}}
 
 ### Example plugin configuration file
 
@@ -266,7 +310,7 @@ apps:
 
 ## Dashboards
 
-You can manage dashboards in Grafana by adding one or more YAML config files in the [`provisioning/dashboards`]({{< relref "../../setup-grafana/configure-grafana/" >}}) directory. Each config file can contain a list of `dashboards providers` that load dashboards into Grafana from the local filesystem.
+You can manage dashboards in Grafana by adding one or more YAML config files in the [`provisioning/dashboards`]({{< relref "../../setup-grafana/configure-grafana#dashboards" >}}) directory. Each config file can contain a list of `dashboards providers` that load dashboards into Grafana from the local filesystem.
 
 The dashboard provider config file looks somewhat like this:
 
@@ -299,7 +343,7 @@ providers:
 
 When Grafana starts, it will update/insert all dashboards available in the configured path. Then later on poll that path every **updateIntervalSeconds** and look for updated json files and update/insert those into the database.
 
-> **Note:** Dashboards are provisioned to the General folder if the `folder` option is missing or empty.
+> **Note:** Dashboards are provisioned to the root level if the `folder` option is missing or empty.
 
 #### Making changes to a provisioned dashboard
 
@@ -325,10 +369,12 @@ If the dashboard in the JSON file contains an [UID]({{< relref "../../dashboards
 When Grafana starts, it updates/inserts all dashboards available in the configured folders. If you modify the file, then the dashboard is also updated.
 By default, Grafana deletes dashboards in the database if the file is removed. You can disable this behavior using the `disableDeletion` setting.
 
-> **Note:** Provisioning allows you to overwrite existing dashboards
-> which leads to problems if you re-use settings that are supposed to be unique.
-> Be careful not to re-use the same `title` multiple times within a folder
-> or `uid` within the same installation as this will cause weird behaviors.
+{{% admonition type="note" %}}
+Provisioning allows you to overwrite existing dashboards
+which leads to problems if you reuse settings that are supposed to be unique.
+Be careful not to reuse the same `title` multiple times within a folder
+or `uid` within the same installation as this will cause weird behaviors.
+{{% /admonition %}}
 
 ### Provision folders structure from filesystem to Grafana
 
@@ -362,593 +408,23 @@ providers:
 
 `server` and `application` will become new folders in Grafana menu.
 
-> **Note:** `folder` and `folderUid` options should be empty or missing to make `foldersFromFilesStructure` work.
+{{% admonition type="note" %}}
+`folder` and `folderUid` options should be empty or missing to make `foldersFromFilesStructure` work.
+{{% /admonition %}}
 
-> **Note:** To provision dashboards to the General folder, store them in the root of your `path`.
+{{% admonition type="note" %}}
+To provision dashboards to the root level, store them in the root of your `path`.
+{{% /admonition %}}
 
 ## Alerting
 
-You can manage alert objects in Grafana by adding one or more YAML or JSON
-configuration files in the [`provisioning/alerting`]({{< relref "../../setup-grafana/configure-grafana/" >}})
-directory. Those files will be applied when starting Grafana. When Grafana
-is running, it's possible to do a hot reload using the
-[Admin API]({{< relref "../../developers/http_api/admin/#reload-provisioning-configurations" >}}).
-
-### Rules
-
-Creation
-
-```yaml
-# config file version
-apiVersion: 1
-
-# List of rule groups to import or update
-groups:
-  # <int> organization ID, default = 1
-  - orgId: 1
-    # <string, required> name of the rule group
-    name: my_rule_group
-    # <string, required> name of the folder the rule group will be stored in
-    folder: my_first_folder
-    # <duration, required> interval that the rule group should evaluated at
-    interval: 60s
-    # <list, required> list of rules that are part of the rule group
-    rules:
-      # <string, required> unique identifier for the rule
-      - uid: my_id_1
-        # <string, required> title of the rule that will be displayed in the UI
-        title: my_first_rule
-        # <string, required> which query should be used for the condition
-        condition: A
-        # <list, required> list of query objects that should be executed on each
-        #                  evaluation - should be obtained trough the API
-        data:
-          - refId: A
-            datasourceUid: '-100'
-            model:
-              conditions:
-                - evaluator:
-                    params:
-                      - 3
-                    type: gt
-                  operator:
-                    type: and
-                  query:
-                    params:
-                      - A
-                  reducer:
-                    type: last
-                  type: query
-              datasource:
-                type: __expr__
-                uid: '-100'
-              expression: 1==0
-              intervalMs: 1000
-              maxDataPoints: 43200
-              refId: A
-              type: math
-        # <string> UID of a dashboard that the alert rule should be linked to
-        dashboardUid: my_dashboard
-        # <int> ID of the panel that the alert rule should be linked to
-        panelId: 123
-        # <string> the state the alert rule will have when no data is returned
-        #          possible values: "NoData", "Alerting", "OK", default = NoData
-        noDataState: Alerting
-        # <string> the state the alert rule will have when the query execution
-        #          failed - possible values: "Error", "Alerting", "OK"
-        #          default = Alerting
-        # <duration, required> for how long should the alert fire before alerting
-        for: 60s
-        # <map<string, string>> a map of strings to pass around any data
-        annotations:
-          some_key: some_value
-        # <map<string, string> a map of strings that can be used to filter and
-        #                      route alerts
-        labels:
-          team: sre_team_1
-```
-
-Deletion
-
-```yaml
-# config file version
-apiVersion: 1
-
-# List of alert rule UIDs that should be deleted
-deleteRules:
-  # <int> organization ID, default = 1
-  - orgId: 1
-    # <string, required> unique identifier for the rule
-    uid: my_id_1
-```
-
-### Contact points
-
-Creation
-
-```yaml
-# config file version
-apiVersion: 1
-
-# List of contact points to import or update
-contactPoints:
-  # <int> organization ID, default = 1
-  - orgId: 1
-    # <string, required> name of the contact point
-    name: cp_1
-    receivers:
-      # <string, required> unique identifier for the receiver
-      - uid: first_uid
-        # <string, required> type of the receiver
-        type: prometheus-alertmanager
-        # <object, required> settings for the specific receiver type
-        settings:
-          url: http://test:9000
-```
-
-Deletion
-
-```yaml
-# config file version
-apiVersion: 1
-
-# List of receivers that should be deleted
-deleteContactPoints:
-  # <int> organization ID, default = 1
-  - orgId: 1
-    # <string, required> unique identifier for the receiver
-    uid: first_uid
-```
-
-#### Settings
-
-Here we showcase what kind of settings you can have for the different
-contact point types.
-
-##### Alertmanager
-
-```yaml
-type: prometheus-alertmanager
-settings:
-  # <string, required>
-  url: http://localhost:9093
-  # <string>
-  basicAuthUser: abc
-  # <string>
-  basicAuthPassword: abc123
-```
-
-##### DingDing
-
-```yaml
-type: dingding
-settings:
-  # <string, required>
-  url: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx
-  # <string> options: link, actionCard
-  msgType: link
-  # <string>
-  message: |
-    {{ template "default.message" . }}
-```
-
-##### Discord
-
-```yaml
-type: discord
-settings:
-  # <string, required>
-  url: https://discord/webhook
-  # <string>
-  avatar_url: https://my_avatar
-  # <string>
-  use_discord_username: Grafana
-  # <string>
-  message: |
-    {{ template "default.message" . }}
-```
-
-##### E-Mail
-
-```yaml
-type: email
-settings:
-  # <string, required>
-  addresses: me@example.com;you@example.com
-  # <bool>
-  singleEmail: false
-  # <string>
-  message: my optional message to include
-  # <string>
-  subject: |
-    {{ template "default.title" . }}
-```
-
-##### Google Hangouts Chat
-
-```yaml
-type: googlechat
-settings:
-  # <string, required>
-  url: https://google/webhook
-  # <string>
-  message: |
-    {{ template "default.message" . }}
-```
-
-##### Kafka
-
-```yaml
-type: kafka
-settings:
-  # <string, required>
-  kafkaRestProxy: http://localhost:8082
-  # <string, required>
-  kafkaTopic: topic1
-```
-
-##### LINE
-
-```yaml
-type: line
-settings:
-  # <string, required>
-  token: xxx
-```
-
-##### Microsoft Teams
-
-```yaml
-type: teams
-settings:
-  # <string, required>
-  url: https://ms_teams_url
-  # <string>
-  title: |
-    {{ template "default.title" . }}
-  # <string>
-  sectiontitle: ''
-  # <string>
-  message: |
-    {{ template "default.message" . }}
-```
-
-##### OpsGenie
-
-```yaml
-type: opsgenie
-settings:
-  # <string, required>
-  apiKey: xxx
-  # <string, required>
-  apiUrl: https://api.opsgenie.com/v2/alerts
-  # <string>
-  message: |
-    {{ template "default.title" . }}
-  # <string>
-  description: some descriptive description
-  # <bool>
-  autoClose: false
-  # <bool>
-  overridePriority: false
-  # <string> options: tags, details, both
-  sendTagsAs: both
-```
-
-##### PagerDuty
-
-```yaml
-type: pagerduty
-settings:
-  # <string, required>
-  integrationKey: XXX
-  # <string> options: critical, error, warning, info
-  severity: critical
-  # <string>
-  class: ping failure
-  # <string>
-  component: Grafana
-  # <string>
-  group: app-stack
-  # <string>
-  summary: |
-    {{ template "default.message" . }}
-```
-
-##### Pushover
-
-```yaml
-type: pushover
-settings:
-  # <string, required>
-  apiToken: XXX
-  # <string, required>
-  userKey: user1,user2
-  # <string>
-  device: device1,device2
-  # <string> options (high to low): 2,1,0,-1,-2
-  priority: '2'
-  # <string>
-  retry: '30'
-  # <string>
-  expire: '120'
-  # <string>
-  sound: siren
-  # <string>
-  okSound: magic
-  # <string>
-  message: |
-    {{ template "default.message" . }}
-```
-
-##### Slack
-
-```yaml
-type: slack
-settings:
-  # <string, required>
-  recipient: alerting-dev
-  # <string, required>
-  token: xxx
-  # <string>
-  username: grafana_bot
-  # <string>
-  icon_emoji: heart
-  # <string>
-  icon_url: https://icon_url
-  # <string>
-  mentionUsers: user_1,user_2
-  # <string>
-  mentionGroups: group_1,group_2
-  # <string> options: here, channel
-  mentionChannel: here
-  # <string> Optionally provide a Slack incoming webhook URL for sending messages, in this case the token isn't necessary
-  url: https://some_webhook_url
-  # <string>
-  endpointUrl: https://custom_url/api/chat.postMessage
-  # <string>
-  title: |
-    {{ template "slack.default.title" . }}
-  text: |
-    {{ template "slack.default.text" . }}
-```
-
-##### Sensu Go
-
-```yaml
-type: sensugo
-settings:
-  # <string, required>
-  url: http://sensu-api.local:8080
-  # <string, required>
-  apikey: xxx
-  # <string>
-  entity: default
-  # <string>
-  check: default
-  # <string>
-  handler: some_handler
-  # <string>
-  namespace: default
-  # <string>
-  message: |
-    {{ template "default.message" . }}
-```
-
-##### Telegram
-
-```yaml
-type: telegram
-settings:
-  # <string, required>
-  bottoken: xxx
-  # <string, required>
-  chatid: some_chat_id
-  # <string>
-  message: |
-    {{ template "default.message" . }}
-```
-
-##### Threema Gateway
-
-```yaml
-type: threema
-settings:
-  # <string, required>
-  api_secret: xxx
-  # <string, required>
-  gateway_id: A5K94S9
-  # <string, required>
-  recipient_id: A9R4KL4S
-```
-
-##### VictorOps
-
-```yaml
-type: victorops
-settings:
-  # <string, required>
-  url: XXX
-  # <string> options: CRITICAL, WARNING
-  messageType: CRITICAL
-```
-
-##### Webhook
-
-```yaml
-type: webhook
-settings:
-  # <string, required>
-  url: https://endpoint_url
-  # <string> options: POST, PUT
-  httpMethod: POST
-  # <string>
-  username: abc
-  # <string>
-  password: abc123
-  # <string>
-  authorization_scheme: Bearer
-  # <string>
-  authorization_credentials: abc123
-  # <string>
-  maxAlerts: '10'
-```
-
-##### WeCom
-
-```yaml
-type: wecom
-settings:
-  # <string, required>
-  url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxxxxx
-  # <string>
-  message: |
-    {{ template "default.message" . }}
-  # <string>
-  title: |
-    {{ template "default.title" . }}
-```
-
-### Notification policies
-
-Create
-
-```yaml
-# config file version
-apiVersion: 1
-
-# List of notification policies
-policies:
-  # <int> organization ID, default = 1
-  - orgId: 1
-    # <string> name of the contact point that should be used for this route
-    receiver: grafana-default-email
-    # <list> The labels by which incoming alerts are grouped together. For example,
-    #        multiple alerts coming in for cluster=A and alertname=LatencyHigh would
-    #        be batched into a single group.
-    #
-    #        To aggregate by all possible labels use the special value '...' as
-    #        the sole label name, for example:
-    #        group_by: ['...']
-    #        This effectively disables aggregation entirely, passing through all
-    #        alerts as-is. This is unlikely to be what you want, unless you have
-    #        a very low alert volume or your upstream notification system performs
-    #        its own grouping.
-    group_by: ['...']
-    # <list> a list of matchers that an alert has to fulfill to match the node
-    matchers:
-      - alertname = Watchdog
-      - severity =~ "warning|critical"
-    # <list> Times when the route should be muted. These must match the name of a
-    #        mute time interval.
-    #        Additionally, the root node cannot have any mute times.
-    #        When a route is muted it will not send any notifications, but
-    #        otherwise acts normally (including ending the route-matching process
-    #        if the `continue` option is not set)
-    mute_time_intervals:
-      - abc
-    # <duration> How long to initially wait to send a notification for a group
-    #            of alerts. Allows to collect more initial alerts for the same group.
-    #            (Usually ~0s to few minutes), default = 30s
-    group_wait: 30s
-    # <duration> How long to wait before sending a notification about new alerts that
-    #            are added to a group of alerts for which an initial notification has
-    #            already been sent. (Usually ~5m or more), default = 5m
-    group_interval: 5m
-    # <duration>  How long to wait before sending a notification again if it has already
-    #             been sent successfully for an alert. (Usually ~3h or more), default = 4h
-    repeat_interval: 4h
-    # <list> Zero or more child routes
-    # routes:
-    # ...
-```
-
-Reset
-
-```yaml
-# config file version
-apiVersion: 1
-
-# List of orgIds that should be reset to the default policy
-resetPolicies:
-  - 1
-```
-
-### Templates
-
-Creation
-
-```yaml
-# config file version
-apiVersion: 1
-
-# List of templates to import or update
-templates:
-  # <int> organization ID, default = 1
-  - orgID: 1
-    # <string, required> name of the template, must be unique
-    name: my_first_template
-    # <string, required> content of the the template
-    template: Alerting with a custom text template
-```
-
-Deletion
-
-```yaml
-# config file version
-apiVersion: 1
-
-# List of alert rule UIDs that should be deleted
-deleteTemplates:
-  # <int> organization ID, default = 1
-  - orgId: 1
-    # <string, required> name of the template, must be unique
-    name: my_first_template
-```
-
-### Mute timings
-
-Creation
-
-```yaml
-# config file version
-apiVersion: 1
-
-# List of mute time intervals to import or update
-muteTimes:
-  # <int> organization ID, default = 1
-  - orgId: 1
-    # <string, required> name of the mute time interval, must be unique
-    name: mti_1
-    # <list> time intervals that should trigger the muting
-    #        refer to https://prometheus.io/docs/alerting/latest/configuration/#time_interval-0
-    time_intervals:
-      - times:
-          - start_time: '06:00'
-            end_time: '23:59'
-        weekdays: ['monday:wednesday', 'saturday', 'sunday']
-        months: ['1:3', 'may:august', 'december']
-        years: ['2020:2022', '2030']
-        days_of_month: ['1:5', '-3:-1']
-```
-
-Deletion
-
-```yaml
-# config file version
-apiVersion: 1
-
-# List of mute time intervals that should be deleted
-deleteMuteTimes:
-  # <int> organization ID, default = 1
-  - orgId: 1
-    # <string, required> name of the mute time interval, must be unique
-    name: mti_1
-```
+For information on provisioning Grafana Alerting, refer to [Provision Grafana Alerting resources]({{< relref "../../alerting/set-up/provision-alerting-resources/"  >}}).
 
 ## Alert Notification Channels
 
-> **Note:** Alert Notification Channels are part of legacy alerting, which is deprecated and will be removed in Grafana 10. Use Contact Points in the alerting section above.
+{{% admonition type="note" %}}
+Alert Notification Channels are part of legacy alerting, which is deprecated and will be removed in Grafana 10. Use the Provision contact points section in [Create and manage alerting resources using file provisioning]({{< relref "../../alerting/set-up/provision-alerting-resources/file-provisioning" >}}).
+{{% /admonition %}}
 
 Alert Notification Channels can be provisioned by adding one or more YAML config files in the [`provisioning/notifiers`](/administration/configuration/#provisioning) directory.
 
@@ -1020,7 +496,9 @@ delete_notifiers:
 
 The following sections detail the supported settings and secure settings for each alert notification type. Secure settings are stored encrypted in the database and you add them to `secure_settings` in the YAML file instead of `settings`.
 
-> **Note:** Secure settings is supported since Grafana v7.2.
+{{% admonition type="note" %}}
+Secure settings is supported since Grafana v7.2.
+{{% /admonition %}}
 
 #### Alert notification `pushover`
 
@@ -1184,8 +662,18 @@ The following sections detail the supported settings and secure settings for eac
 | ---- |
 | url  |
 
+#### Alert notification `Cisco Webex Teams`
+
+| Name      | Secure setting |
+| --------- | -------------- |
+| message   |                |
+| room_id   |                |
+| api_url   |                |
+| bot_token | yes            |
+
 ## Grafana Enterprise
 
-Grafana Enterprise supports provisioning for the following resources:
+Grafana Enterprise supports:
 
-- [Role-based access control provisioning]({{< relref "../roles-and-permissions/access-control/rbac-grafana-provisioning" >}})
+- [Provisioning role-based access control with Grafana]({{< relref "../roles-and-permissions/access-control/rbac-grafana-provisioning/" >}})
+- [Provisioning role-based access control with Terraform]({{< relref "../roles-and-permissions/access-control/rbac-terraform-provisioning/" >}})

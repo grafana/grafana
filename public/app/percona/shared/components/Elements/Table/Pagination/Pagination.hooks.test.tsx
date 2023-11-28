@@ -8,7 +8,7 @@ const TABLE_ID = 'test-id';
 const TABLE_STORAGE_ID = `${TABLE_ID}-table-page-size`;
 const DEFAULT_VALUE = PAGE_SIZES[0].value;
 
-const TestComponent: FC = () => {
+const TestComponent: FC<React.PropsWithChildren<unknown>> = () => {
   const [pageSize, setPageSize] = useStoredTablePageSize(TABLE_ID);
 
   return (

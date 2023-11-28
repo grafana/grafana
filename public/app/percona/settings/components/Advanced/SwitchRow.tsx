@@ -7,7 +7,7 @@ import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/
 import { getStyles } from './Advanced.styles';
 import { SwitchRowProps } from './SwitchRow.types';
 
-export const SwitchRow: FC<SwitchRowProps> = ({
+export const SwitchRow: FC<React.PropsWithChildren<SwitchRowProps>> = ({
   label,
   tooltip,
   tooltipLinkText = '',

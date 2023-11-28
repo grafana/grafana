@@ -8,7 +8,7 @@ import { RadioButton } from 'app/percona/shared/components/Form/RadioButtonGroup
 import { getStyles } from './PageSwitcher.styles';
 import { PageSwitcherProps } from './PageSwitcher.types';
 
-export const PageSwitcher = <T,>({ values, className }: PageSwitcherProps<T>): ReturnType<FC> => {
+export const PageSwitcher = <T,>({ values, className }: PageSwitcherProps<T>): ReturnType<FC<React.PropsWithChildren<unknown>>> => {
   const styles = useStyles2(getStyles);
 
   return (

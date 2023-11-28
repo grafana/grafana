@@ -1,5 +1,15 @@
-import { createRangeOperation, createRangeOperationWithGrouping } from './operationUtils';
-import { LokiVisualQueryOperationCategory } from './types';
+import { QueryBuilderOperation, QueryBuilderOperationDef } from '../../prometheus/querybuilder/shared/types';
+
+import {
+  createRangeOperation,
+  createRangeOperationWithGrouping,
+  getLineFilterRenderer,
+  isConflictingFilter,
+  labelFilterRenderer,
+  pipelineRenderer,
+} from './operationUtils';
+import { getOperationDefinitions } from './operations';
+import { LokiOperationId, LokiVisualQueryOperationCategory } from './types';
 
 describe('createRangeOperation', () => {
   it('should create basic range operation without possible grouping', () => {
@@ -7,7 +17,7 @@ describe('createRangeOperation', () => {
       id: 'test_range_operation',
       name: 'Test range operation',
       params: [{ name: 'Range', type: 'string' }],
-      defaultParams: ['$__interval'],
+      defaultParams: ['$__auto'],
       alternativesKey: 'range function',
       category: LokiVisualQueryOperationCategory.RangeFunctions,
     });
@@ -26,7 +36,7 @@ describe('createRangeOperation', () => {
           optional: true,
         },
       ],
-      defaultParams: ['$__interval'],
+      defaultParams: ['$__auto'],
       alternativesKey: 'range function',
       category: LokiVisualQueryOperationCategory.RangeFunctions,
     });
@@ -41,7 +51,7 @@ describe('createRangeOperation', () => {
         { name: 'Quantile', type: 'number' },
         { name: 'By label', type: 'string', restParam: true, optional: true },
       ],
-      defaultParams: ['$__interval', '0.95'],
+      defaultParams: ['$__auto', '0.95'],
       alternativesKey: 'range function',
       category: LokiVisualQueryOperationCategory.RangeFunctions,
     });
@@ -60,7 +70,7 @@ describe('createRangeOperationWithGrouping', () => {
         { name: 'Quantile', type: 'number' },
         { name: 'By label', type: 'string', restParam: true, optional: true },
       ],
-      defaultParams: ['$__interval', '0.95'],
+      defaultParams: ['$__auto', '0.95'],
       alternativesKey: 'range function',
       category: LokiVisualQueryOperationCategory.RangeFunctions,
     });
@@ -73,7 +83,7 @@ describe('createRangeOperationWithGrouping', () => {
         { name: 'Quantile', type: 'number' },
         { name: 'Label', type: 'string', restParam: true, optional: true },
       ],
-      defaultParams: ['$__interval', '0.95', ''],
+      defaultParams: ['$__auto', '0.95', ''],
       alternativesKey: 'range function with grouping',
       category: LokiVisualQueryOperationCategory.RangeFunctions,
     });
@@ -86,7 +96,7 @@ describe('createRangeOperationWithGrouping', () => {
         { name: 'Quantile', type: 'number' },
         { name: 'Label', type: 'string', restParam: true, optional: true },
       ],
-      defaultParams: ['$__interval', '0.95', ''],
+      defaultParams: ['$__auto', '0.95', ''],
       alternativesKey: 'range function with grouping',
       category: LokiVisualQueryOperationCategory.RangeFunctions,
     });
@@ -120,5 +130,96 @@ describe('createRangeOperationWithGrouping', () => {
       '{job="grafana"}'
     );
     expect(query).toBe('avg_over_time({job="grafana"} [[$__interval]]) without (source)');
+  });
+});
+
+describe('getLineFilterRenderer', () => {
+  const MOCK_MODEL = {
+    id: '__line_contains',
+    params: ['error'],
+  };
+  const MOCK_MODEL_INSENSITIVE = {
+    id: '__line_contains_case_insensitive',
+    params: ['ERrOR'],
+  };
+
+  const MOCK_DEF = undefined as unknown as QueryBuilderOperationDef;
+
+  const MOCK_INNER_EXPR = '{job="grafana"}';
+
+  it('getLineFilterRenderer returns a function', () => {
+    const lineFilterRenderer = getLineFilterRenderer('!~');
+    expect(typeof lineFilterRenderer).toBe('function');
+  });
+
+  it('lineFilterRenderer returns the correct query for line contains', () => {
+    const lineFilterRenderer = getLineFilterRenderer('!~');
+    expect(lineFilterRenderer(MOCK_MODEL, MOCK_DEF, MOCK_INNER_EXPR)).toBe('{job="grafana"} !~ `error`');
+  });
+
+  it('lineFilterRenderer returns the correct query for line contains case insensitive', () => {
+    const lineFilterRenderer = getLineFilterRenderer('!~', true);
+    expect(lineFilterRenderer(MOCK_MODEL_INSENSITIVE, MOCK_DEF, MOCK_INNER_EXPR)).toBe(
+      '{job="grafana"} !~ `(?i)ERrOR`'
+    );
+  });
+});
+
+describe('labelFilterRenderer', () => {
+  const MOCK_MODEL = { id: '__label_filter', params: ['label', '', 'value'] };
+  const MOCK_DEF = undefined as unknown as QueryBuilderOperationDef;
+  const MOCK_INNER_EXPR = '{job="grafana"}';
+
+  it.each`
+    operator | type        | expected
+    ${'='}   | ${'string'} | ${'`value`'}
+    ${'!='}  | ${'string'} | ${'`value`'}
+    ${'=~'}  | ${'string'} | ${'`value`'}
+    ${'!~'}  | ${'string'} | ${'`value`'}
+    ${'>'}   | ${'number'} | ${'value'}
+    ${'>='}  | ${'number'} | ${'value'}
+    ${'<'}   | ${'number'} | ${'value'}
+    ${'<='}  | ${'number'} | ${'value'}
+  `("value should be of type '$type' when operator is: $operator", ({ operator, expected }) => {
+    MOCK_MODEL.params[1] = operator;
+    expect(labelFilterRenderer(MOCK_MODEL, MOCK_DEF, MOCK_INNER_EXPR)).toBe(
+      `{job="grafana"} | label ${operator} ${expected}`
+    );
+  });
+});
+
+describe('isConflictingFilter', () => {
+  it('should return true if the operation conflict with another label filter', () => {
+    const operation = { id: '__label_filter', params: ['abc', '!=', '123'] };
+    const queryOperations = [
+      { id: '__label_filter', params: ['abc', '=', '123'] },
+      { id: '__label_filter', params: ['abc', '!=', '123'] },
+    ];
+    expect(isConflictingFilter(operation, queryOperations)).toBe(true);
+  });
+
+  it("should return false if the operation doesn't conflict with another label filter", () => {
+    const operation = { id: '__label_filter', params: ['abc', '=', '123'] };
+    const queryOperations = [
+      { id: '__label_filter', params: ['abc', '=', '123'] },
+      { id: '__label_filter', params: ['abc', '=', '123'] },
+    ];
+    expect(isConflictingFilter(operation, queryOperations)).toBe(false);
+  });
+});
+
+describe('pipelineRenderer', () => {
+  let definitions: QueryBuilderOperationDef[];
+  beforeEach(() => {
+    definitions = getOperationDefinitions();
+  });
+
+  it('Correctly renders unpack expressions', () => {
+    const model: QueryBuilderOperation = {
+      id: LokiOperationId.Unpack,
+      params: [],
+    };
+    const definition = definitions.find((def) => def.id === LokiOperationId.Unpack);
+    expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | unpack');
   });
 });

@@ -1,9 +1,16 @@
 import { capitalize } from 'lodash';
-import React, { FC } from 'react';
+import React, { useMemo } from 'react';
 import { useObservable } from 'react-use';
 import { Observable, of } from 'rxjs';
 
-import { FieldConfigPropertyItem, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
+import { FieldConfigPropertyItem, StandardEditorProps, StandardEditorsRegistryItem, FrameMatcher } from '@grafana/data';
+import {
+  ScaleDimensionConfig,
+  ResourceDimensionConfig,
+  ColorDimensionConfig,
+  TextDimensionConfig,
+  ScalarDimensionConfig,
+} from '@grafana/schema';
 import {
   ColorPicker,
   Field,
@@ -22,17 +29,17 @@ import {
   ScalarDimensionEditor,
   TextDimensionEditor,
 } from 'app/features/dimensions/editors';
-import {
-  ScaleDimensionConfig,
-  ResourceDimensionConfig,
-  ColorDimensionConfig,
-  ResourceFolderName,
-  TextDimensionConfig,
-  defaultTextConfig,
-  ScalarDimensionConfig,
-} from 'app/features/dimensions/types';
+import { ResourceFolderName, defaultTextConfig, MediaType } from 'app/features/dimensions/types';
 
-import { defaultStyleConfig, GeometryTypeId, StyleConfig, TextAlignment, TextBaseline } from '../style/types';
+import {
+  HorizontalAlign,
+  VerticalAlign,
+  defaultStyleConfig,
+  GeometryTypeId,
+  StyleConfig,
+  TextAlignment,
+  TextBaseline,
+} from '../style/types';
 import { styleUsesText } from '../style/utils';
 import { LayerContentInfo } from '../utils/getFeatures';
 
@@ -40,14 +47,22 @@ export interface StyleEditorOptions {
   layerInfo?: Observable<LayerContentInfo>;
   simpleFixedValues?: boolean;
   displayRotation?: boolean;
+  hideSymbol?: boolean;
+  frameMatcher?: FrameMatcher;
 }
 
-export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions, any>> = ({
-  value,
-  context,
-  onChange,
-  item,
-}) => {
+type Props = StandardEditorProps<StyleConfig, StyleEditorOptions>;
+
+export const StyleEditor = (props: Props) => {
+  const { value, onChange, item } = props;
+  const context = useMemo(() => {
+    if (!item.settings?.frameMatcher) {
+      return props.context;
+    }
+
+    return { ...props.context, data: props.context.data.filter(item.settings.frameMatcher) };
+  }, [props.context, item.settings]);
+
   const settings = item.settings;
 
   const onSizeChange = (sizeValue: ScaleDimensionConfig | undefined) => {
@@ -92,6 +107,14 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
 
   const onTextBaselineChange = (textBaseline: TextBaseline) => {
     onChange({ ...value, textConfig: { ...value.textConfig, textBaseline: textBaseline } });
+  };
+
+  const onAlignHorizontalChange = (alignHorizontal: HorizontalAlign) => {
+    onChange({ ...value, symbolAlign: { ...value.symbolAlign, horizontal: alignHorizontal } });
+  };
+
+  const onAlignVerticalChange = (alignVertical: VerticalAlign) => {
+    onChange({ ...value, symbolAlign: { ...value.symbolAlign, vertical: alignVertical } });
   };
 
   const propertyOptions = useObservable(settings?.layerInfo ?? of());
@@ -192,24 +215,50 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
           }
         />
       </Field>
-      <Field label={'Symbol'}>
-        <ResourceDimensionEditor
-          value={value?.symbol ?? defaultStyleConfig.symbol}
-          context={context}
-          onChange={onSymbolChange}
-          item={
-            {
-              settings: {
-                resourceType: 'icon',
-                folderName: ResourceFolderName.Marker,
-                placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
-                placeholderValue: defaultStyleConfig.symbol.fixed,
-                showSourceRadio: false,
-              },
-            } as StandardEditorsRegistryItem
-          }
-        />
-      </Field>
+      {!settings?.hideSymbol && (
+        <>
+          <Field label={'Symbol'}>
+            <ResourceDimensionEditor
+              value={value?.symbol ?? defaultStyleConfig.symbol}
+              context={context}
+              onChange={onSymbolChange}
+              item={
+                {
+                  settings: {
+                    resourceType: MediaType.Icon,
+                    folderName: ResourceFolderName.Marker,
+                    placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
+                    placeholderValue: defaultStyleConfig.symbol.fixed,
+                    showSourceRadio: false,
+                  },
+                } as StandardEditorsRegistryItem
+              }
+            />
+          </Field>
+          <Field label={'Symbol Vertical Align'}>
+            <RadioButtonGroup
+              value={value?.symbolAlign?.vertical ?? defaultStyleConfig.symbolAlign.vertical}
+              onChange={onAlignVerticalChange}
+              options={[
+                { value: VerticalAlign.Top, label: capitalize(VerticalAlign.Top) },
+                { value: VerticalAlign.Center, label: capitalize(VerticalAlign.Center) },
+                { value: VerticalAlign.Bottom, label: capitalize(VerticalAlign.Bottom) },
+              ]}
+            />
+          </Field>
+          <Field label={'Symbol Horizontal Align'}>
+            <RadioButtonGroup
+              value={value?.symbolAlign?.horizontal ?? defaultStyleConfig.symbolAlign.horizontal}
+              onChange={onAlignHorizontalChange}
+              options={[
+                { value: HorizontalAlign.Left, label: capitalize(HorizontalAlign.Left) },
+                { value: HorizontalAlign.Center, label: capitalize(HorizontalAlign.Center) },
+                { value: HorizontalAlign.Right, label: capitalize(HorizontalAlign.Right) },
+              ]}
+            />
+          </Field>
+        </>
+      )}
       <Field label={'Color'}>
         <ColorDimensionEditor
           value={value?.color ?? defaultStyleConfig.color}

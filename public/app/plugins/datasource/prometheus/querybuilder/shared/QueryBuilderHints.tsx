@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useState, useEffect } from 'react';
 
 import { GrafanaTheme2, PanelData, QueryHint } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, Tooltip, useStyles2 } from '@grafana/ui';
 import { LokiDatasource } from 'app/plugins/datasource/loki/datasource';
 
@@ -45,6 +46,11 @@ export const QueryBuilderHints = <T extends PromLokiVisualQuery>({
               <Tooltip content={`${hint.label} ${hint.fix?.label}`} key={hint.type}>
                 <Button
                   onClick={() => {
+                    reportInteraction('grafana_query_builder_hints_clicked', {
+                      hint: hint.type,
+                      datasourceType: datasource.type,
+                    });
+
                     if (hint?.fix?.action) {
                       const query = { expr: queryModeller.renderQuery(visualQuery), refId: '' };
                       const newQuery = datasource.modifyQuery(query, hint.fix.action);
@@ -56,7 +62,7 @@ export const QueryBuilderHints = <T extends PromLokiVisualQuery>({
                   size="sm"
                   className={styles.hint}
                 >
-                  {'hint: ' + hint.fix?.action?.type.toLowerCase().replace('_', ' ') + '()'}
+                  hint: {hint.fix?.title || hint.fix?.action?.type.toLowerCase().replace('_', ' ')}
                 </Button>
               </Tooltip>
             );

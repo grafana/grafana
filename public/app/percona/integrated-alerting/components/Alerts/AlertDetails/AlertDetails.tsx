@@ -7,7 +7,7 @@ import { Messages } from './AlertDetails.messages';
 import { getStyles } from './AlertDetails.styles';
 import { AlertDetailsProps } from './AlertDetails.types';
 
-export const AlertDetails: FC<AlertDetailsProps> = ({ labels }) => {
+export const AlertDetails: FC<React.PropsWithChildren<AlertDetailsProps>> = ({ labels }) => {
   const styles = useStyles2(getStyles);
 
   return (

@@ -7,8 +7,9 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
 func TestAzureLogAnalyticsMacros(t *testing.T) {
@@ -120,6 +121,16 @@ func TestAzureLogAnalyticsMacros(t *testing.T) {
 			kql:      `$__escapeMulti(\\grafana-vm,\Network(eth0)\Total Bytes Received)`,
 			expected: "",
 			Err:      require.Error,
+		},
+		{
+			name: "traces time field should remain as timestamp",
+			query: backend.DataQuery{
+				QueryType: "Azure Traces",
+				TimeRange: timeRange,
+			},
+			kql:      `$__timeFilter()`,
+			expected: "['timestamp'] >= datetime('2018-03-15T13:00:00Z') and ['timestamp'] <= datetime('2018-03-15T13:34:00Z')",
+			Err:      require.NoError,
 		},
 	}
 

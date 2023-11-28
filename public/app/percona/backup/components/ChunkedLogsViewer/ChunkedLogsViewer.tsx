@@ -13,7 +13,7 @@ import { Messages } from './ChunkedLogsViewer.messages';
 import { getStyles } from './ChunkedLogsViewer.styles';
 import { ChunkedLogsViewerProps } from './ChunkedLogsViewer.types';
 
-export const ChunkedLogsViewer: FC<ChunkedLogsViewerProps> = ({ getLogChunks }) => {
+export const ChunkedLogsViewer: FC<React.PropsWithChildren<ChunkedLogsViewerProps>> = ({ getLogChunks }) => {
   const [lastLog, setLastLog] = useState(false);
   const [logs, setLogs] = useState<BackupLogChunk[]>([]);
   const [triggerTimeout, , stopTimeout] = useRecurringCall();

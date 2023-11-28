@@ -7,11 +7,12 @@ import { SelectableValue } from '@grafana/data';
 import { useStyles2 } from '../../themes';
 import { InlineLabel } from '../Forms/InlineLabel';
 
+import { SegmentSelect } from './SegmentSelect';
 import { getSegmentStyles } from './styles';
+import { SegmentProps } from './types';
+import { useExpandableLabel } from './useExpandableLabel';
 
-import { SegmentSelect, useExpandableLabel, SegmentProps } from './';
-
-export interface SegmentSyncProps<T> extends SegmentProps<T>, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
+export interface SegmentSyncProps<T> extends SegmentProps, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
   value?: T | SelectableValue<T>;
   onChange: (item: SelectableValue<T>) => void;
   options: Array<SelectableValue<T>>;
@@ -40,6 +41,7 @@ export function Segment<T>({
 
   if (!expanded) {
     const label = isObject(value) ? value.label : value;
+    const labelAsString = label != null ? String(label) : undefined;
 
     return (
       <Label
@@ -56,7 +58,7 @@ export function Segment<T>({
                 className
               )}
             >
-              {label || placeholder}
+              {labelAsString || placeholder}
             </InlineLabel>
           )
         }

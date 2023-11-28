@@ -1,0 +1,33 @@
+export var SuggestionName;
+(function (SuggestionName) {
+    SuggestionName["LineChart"] = "Line chart";
+    SuggestionName["LineChartSmooth"] = "Line chart smooth";
+    SuggestionName["LineChartGradientColorScheme"] = "Line chart with gradient color scheme";
+    SuggestionName["AreaChart"] = "Area chart";
+    SuggestionName["AreaChartStacked"] = "Area chart stacked";
+    SuggestionName["AreaChartStackedPercent"] = "Area chart 100% stacked";
+    SuggestionName["BarChart"] = "Bar chart";
+    SuggestionName["BarChartGradientColorScheme"] = "Bar chart with gradient color scheme";
+    SuggestionName["BarChartStacked"] = "Bar chart stacked";
+    SuggestionName["BarChartStackedPercent"] = "Bar chart 100% stacked";
+    SuggestionName["BarChartHorizontal"] = "Bar chart horizontal";
+    SuggestionName["BarChartHorizontalStacked"] = "Bar chart horizontal stacked";
+    SuggestionName["BarChartHorizontalStackedPercent"] = "Bar chart horizontal 100% stacked";
+    SuggestionName["Candlestick"] = "Candlestick";
+    SuggestionName["PieChart"] = "Pie chart";
+    SuggestionName["PieChartDonut"] = "Pie chart donut";
+    SuggestionName["Stat"] = "Stat";
+    SuggestionName["StatColoredBackground"] = "Stat colored background";
+    SuggestionName["Gauge"] = "Gauge";
+    SuggestionName["GaugeNoThresholds"] = "Gauge no thresholds";
+    SuggestionName["BarGaugeBasic"] = "Bar gauge basic";
+    SuggestionName["BarGaugeLCD"] = "Bar gauge LCD";
+    SuggestionName["Table"] = "Table";
+    SuggestionName["StateTimeline"] = "State timeline";
+    SuggestionName["StatusHistory"] = "Status history";
+    SuggestionName["TextPanel"] = "Text";
+    SuggestionName["DashboardList"] = "Dashboard list";
+    SuggestionName["Logs"] = "Logs";
+    SuggestionName["FlameGraph"] = "Flame graph";
+})(SuggestionName || (SuggestionName = {}));
+//# sourceMappingURL=suggestions.js.map

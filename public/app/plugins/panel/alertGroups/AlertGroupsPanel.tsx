@@ -12,10 +12,10 @@ import { AlertmanagerGroup, Matcher } from 'app/plugins/datasource/alertmanager/
 import { useDispatch } from 'app/types';
 
 import { AlertGroup } from './AlertGroup';
-import { AlertGroupPanelOptions } from './types';
+import { Options } from './panelcfg.gen';
 import { useFilteredGroups } from './useFilteredGroups';
 
-export const AlertGroupsPanel = (props: PanelProps<AlertGroupPanelOptions>) => {
+export const AlertGroupsPanel = (props: PanelProps<Options>) => {
   const dispatch = useDispatch();
   const isAlertingEnabled = config.unifiedAlertingEnabled;
 

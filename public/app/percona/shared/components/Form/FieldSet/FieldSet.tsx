@@ -13,7 +13,7 @@ interface FieldSetProps extends GrafanaFieldSetProps {
   collapsableProps?: Omit<CollapsableProps, 'children' | 'label'>;
 }
 
-const FieldSet: FC<FieldSetProps> = ({ children, label, collapsableProps, ...props }) => {
+const FieldSet: FC<React.PropsWithChildren<FieldSetProps>> = ({ children, label, collapsableProps, ...props }) => {
   const style = useStyles(getStyles);
 
   return collapsableProps ? (

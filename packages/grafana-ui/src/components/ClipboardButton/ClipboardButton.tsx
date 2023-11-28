@@ -3,6 +3,7 @@ import React, { useCallback, useRef, useState, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
+import { Trans } from '../../../src/utils/i18n';
 import { useStyles2 } from '../../themes';
 import { Button, ButtonProps } from '../Button';
 import { Icon } from '../Icon/Icon';
@@ -62,7 +63,7 @@ export function ClipboardButton({
     <>
       {showCopySuccess && (
         <InlineToast placement="top" referenceElement={buttonRef.current}>
-          Copied
+          <Trans i18nKey="clipboard-button.inline-toast.success">Copied</Trans>
         </InlineToast>
       )}
 
@@ -72,7 +73,7 @@ export function ClipboardButton({
         variant={showCopySuccess ? 'success' : variant}
         aria-label={showCopySuccess ? 'Copied' : undefined}
         {...buttonProps}
-        className={cx(styles.button, showCopySuccess && styles.successButton)}
+        className={cx(styles.button, showCopySuccess && styles.successButton, buttonProps.className)}
         ref={buttonRef}
       >
         {children}

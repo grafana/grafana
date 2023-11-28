@@ -1,0 +1,1 @@
+{"version":3,"file":"DBClusterLogsModal.messages.js","sourceRoot":"","sources":["../../../../../../../../app/percona/dbaas/components/DBCluster/DBClusterLogsModal/DBClusterLogsModal.messages.ts"],"names":[],"mappings":"AAAA,MAAM,CAAC,MAAM,QAAQ,GAAG;IACtB,KAAK,EAAE,mBAAmB;IAC1B,IAAI,EAAE,MAAM;IACZ,MAAM,EAAE,YAAY;IACpB,QAAQ,EAAE,cAAc;IACxB,MAAM,EAAE,uBAAuB;CAChC,CAAC"}

@@ -1,0 +1,1 @@
+{"version":3,"file":"singleLineEmptyQuery.js","sourceRoot":"","sources":["../../../../../../../../app/plugins/datasource/cloudwatch/__mocks__/metric-math-test-data/singleLineEmptyQuery.ts"],"names":[],"mappings":"AAEA,MAAM,CAAC,MAAM,oBAAoB,GAAG;IAClC,KAAK,EAAE,EAAE;IACT,MAAM,EAAE,EAA2B;IACnC,QAAQ,EAAE;QACR,UAAU,EAAE,CAAC;QACb,MAAM,EAAE,CAAC;KACV;CACF,CAAC"}

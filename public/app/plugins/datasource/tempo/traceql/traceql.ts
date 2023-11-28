@@ -1,4 +1,7 @@
-export const languageConfiguration = {
+import type { languages } from 'monaco-editor';
+import { Grammar } from 'prismjs';
+
+export const languageConfiguration: languages.LanguageConfiguration = {
   // the default separators except `@$`
   wordPattern: /(-?\d*\.\d\w*)|([^`~!#%^&*()\-=+\[{\]}\\|;:'",.<>\/?\s]+)/g,
   brackets: [
@@ -20,44 +23,52 @@ export const languageConfiguration = {
   folding: {},
 };
 
-const operators = ['=', '!=', '>', '<', '>=', '<=', '=~', '!~'];
+export const operators = ['=', '!=', '>', '<', '>=', '<=', '=~', '!~'];
+export const stringOperators = ['=', '!=', '=~', '!~'];
+export const numberOperators = ['=', '!=', '>', '<', '>=', '<='];
 
-const intrinsics = ['duration', 'name', 'status', 'parent'];
+export const intrinsics = ['duration', 'kind', 'name', 'status'];
+export const scopes: string[] = ['resource', 'span'];
 
-const scopes: string[] = ['resource', 'span'];
+export const functions = ['avg', 'min', 'max', 'sum', 'count', 'by'];
 
 const keywords = intrinsics.concat(scopes);
 
-export const language = {
+const statusValues = ['ok', 'unset', 'error', 'false', 'true'];
+
+export const language: languages.IMonarchLanguage = {
   ignoreCase: false,
   defaultToken: '',
   tokenPostfix: '.traceql',
 
   keywords,
   operators,
+  statusValues,
+  functions,
 
-  // we include these common regular expressions
   symbols: /[=><!~?:&|+\-*\/^%]+/,
   escapes: /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
   digits: /\d+(_+\d+)*/,
   octaldigits: /[0-7]+(_+[0-7]+)*/,
   binarydigits: /[0-1]+(_+[0-1]+)*/,
-  hexdigits: /[[0-9a-fA-F]+(_+[0-9a-fA-F]+)*/,
-  integersuffix: /(ll|LL|u|U|l|L)?(ll|LL|u|U|l|L)?/,
-  floatsuffix: /[fFlL]?/,
 
   tokenizer: {
     root: [
-      // labels
-      [/[a-z_.][\w./_-]*(?=\s*(=|!=|>|<|>=|<=|=~|!~))/, 'tag'],
+      // durations
+      [/[0-9]+(.[0-9]+)?(us|µs|ns|ms|s|m|h)/, 'number'],
 
-      // all keywords have the same color
+      // trace ID
+      [/^\s*[0-9A-Fa-f]+\s*$/, 'tag'],
+
+      // functions, keywords, predefined values
       [
         /[a-zA-Z_.]\w*/,
         {
           cases: {
-            '@keywords': 'type',
-            '@default': 'identifier',
+            '@functions': 'predefined',
+            '@keywords': 'keyword',
+            '@statusValues': 'type',
+            '@default': 'tag',
           },
         },
       ],
@@ -68,12 +79,8 @@ export const language = {
       [/"/, 'string', '@string_double'],
       [/'/, 'string', '@string_single'],
 
-      // whitespace
-      { include: '@whitespace' },
-
       // delimiters and operators
-      [/[{}()\[\]]/, '@brackets'],
-      [/[<>](?!@symbols)/, '@brackets'],
+      [/[{}()\[\]]/, 'delimiter.bracket'],
       [
         /@symbols/,
         {
@@ -85,14 +92,12 @@ export const language = {
       ],
 
       // numbers
-      [/\d+/, 'number'],
-      [/\d*\d+[eE]([\-+]?\d+)?(@floatsuffix)/, 'number.float'],
-      [/\d*\.\d+([eE][\-+]?\d+)?(@floatsuffix)/, 'number.float'],
-      [/0[xX][0-9a-fA-F']*[0-9a-fA-F](@integersuffix)/, 'number.hex'],
-      [/0[0-7']*[0-7](@integersuffix)/, 'number.octal'],
-      [/0[bB][0-1']*[0-1](@integersuffix)/, 'number.binary'],
-      [/\d[\d']*\d(@integersuffix)/, 'number'],
-      [/\d(@integersuffix)/, 'number'],
+      [/(@digits)[eE]([\-+]?(@digits))?[fFdD]?/, 'number.float'],
+      [/(@digits)\.(@digits)([eE][\-+]?(@digits))?[fFdD]?/, 'number.float'],
+      [/0(@octaldigits)[Ll]?/, 'number.octal'],
+      [/0[bB](@binarydigits)[Ll]?/, 'number.binary'],
+      [/(@digits)[fFdD]/, 'number.float'],
+      [/(@digits)[lL]?/, 'number'],
     ],
 
     string_double: [
@@ -108,13 +113,6 @@ export const language = {
       [/\\./, 'string.escape.invalid'],
       [/'/, 'string', '@pop'],
     ],
-
-    clauses: [
-      [/[^(,)]/, 'tag'],
-      [/\)/, 'identifier', '@pop'],
-    ],
-
-    whitespace: [[/[ \t\r\n]+/, 'white']],
   },
 };
 
@@ -127,4 +125,35 @@ export const languageDefinition = {
     language,
     languageConfiguration,
   },
+};
+
+export const traceqlGrammar: Grammar = {
+  comment: {
+    pattern: /#.*/,
+  },
+  'span-set': {
+    pattern: /\{[^}]*}/,
+    inside: {
+      filter: {
+        pattern: /([\w.\/-]+)?(\s*)(([!=+\-<>~]+)\s*("([^"\n&]+)?"?|([^"\n\s&|}]+))?)/g,
+        inside: {
+          comment: {
+            pattern: /#.*/,
+          },
+          'label-key': {
+            pattern: /[a-z_.][\w./_-]*(?=\s*(=|!=|>|<|>=|<=|=~|!~))/,
+            alias: 'attr-name',
+          },
+          'label-value': {
+            pattern: /("(?:\\.|[^\\"])*")|(\w+)/,
+            alias: 'attr-value',
+          },
+        },
+      },
+      punctuation: /[}{&|]/,
+    },
+  },
+  number: /\b-?\d+((\.\d*)?([eE][+-]?\d+)?)?\b/,
+  operator: new RegExp(`/[-+*/=%^~]|&&?|\\|?\\||!=?|<(?:=>?|<|>)?|>[>=]?|`, 'i'),
+  punctuation: /[{};()`,.]/,
 };

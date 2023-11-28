@@ -48,59 +48,56 @@ func boolPointer(b bool) *bool {
 	return &b
 }
 
+func resultValuesNoErr(v ...Value) Results {
+	return Results{
+		Values: v,
+		Error:  nil,
+	}
+}
+
 var aSeries = Vars{
-	"A": Results{
-		[]Value{
-			makeSeries("temp", nil, tp{
-				time.Unix(5, 0), float64Pointer(2),
-			}, tp{
-				time.Unix(10, 0), float64Pointer(1),
-			}),
-		},
-	},
+	"A": resultValuesNoErr(
+		makeSeries("temp", nil, tp{
+			time.Unix(5, 0), float64Pointer(2),
+		}, tp{
+			time.Unix(10, 0), float64Pointer(1),
+		}),
+	),
 }
 
 var aSeriesbNumber = Vars{
-	"A": Results{
-		[]Value{
-			makeSeries("temp", nil, tp{
-				time.Unix(5, 0), float64Pointer(2),
-			}, tp{
-				time.Unix(10, 0), float64Pointer(1),
-			}),
-		},
-	},
-	"B": Results{
-		[]Value{
-			makeNumber("volt", data.Labels{"id": "1"}, float64Pointer(7)),
-		},
-	},
+	"A": resultValuesNoErr(
+		makeSeries("temp", nil, tp{
+			time.Unix(5, 0), float64Pointer(2),
+		}, tp{
+			time.Unix(10, 0), float64Pointer(1),
+		}),
+	),
+	"B": resultValuesNoErr(
+		makeNumber("volt", data.Labels{"id": "1"}, float64Pointer(7)),
+	),
 }
 
 var twoSeriesSets = Vars{
-	"A": Results{
-		[]Value{
-			makeSeries("temp", data.Labels{"sensor": "a", "turbine": "1"}, tp{
-				time.Unix(5, 0), float64Pointer(6),
-			}, tp{
-				time.Unix(10, 0), float64Pointer(8),
-			}),
-			makeSeries("temp", data.Labels{"sensor": "b", "turbine": "1"}, tp{
-				time.Unix(5, 0), float64Pointer(10),
-			}, tp{
-				time.Unix(10, 0), float64Pointer(16),
-			}),
-		},
-	},
-	"B": Results{
-		[]Value{
-			makeSeries("efficiency", data.Labels{"turbine": "1"}, tp{
-				time.Unix(5, 0), float64Pointer(.5),
-			}, tp{
-				time.Unix(10, 0), float64Pointer(.2),
-			}),
-		},
-	},
+	"A": resultValuesNoErr(
+		makeSeries("temp", data.Labels{"sensor": "a", "turbine": "1"}, tp{
+			time.Unix(5, 0), float64Pointer(6),
+		}, tp{
+			time.Unix(10, 0), float64Pointer(8),
+		}),
+		makeSeries("temp", data.Labels{"sensor": "b", "turbine": "1"}, tp{
+			time.Unix(5, 0), float64Pointer(10),
+		}, tp{
+			time.Unix(10, 0), float64Pointer(16),
+		}),
+	),
+	"B": resultValuesNoErr(
+		makeSeries("efficiency", data.Labels{"turbine": "1"}, tp{
+			time.Unix(5, 0), float64Pointer(.5),
+		}, tp{
+			time.Unix(10, 0), float64Pointer(.2),
+		}),
+	),
 }
 
 // NaN is just to make the calls a little cleaner, the one

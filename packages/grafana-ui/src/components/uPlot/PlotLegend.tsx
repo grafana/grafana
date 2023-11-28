@@ -27,115 +27,134 @@ interface PlotLegendProps extends VizLegendOptions, Omit<VizLayoutLegendProps, '
   config: UPlotConfigBuilder;
 }
 
-export const PlotLegend: React.FC<PlotLegendProps> = ({
-  data,
-  config,
-  placement,
-  calcs,
-  displayMode,
-  ...vizLayoutLegendProps
-}) => {
-  const theme = useTheme2();
-  const legendItems = config
-    .getSeries()
-    .map<VizLegendItem | undefined>((s) => {
-      const seriesConfig = s.props;
-      const fieldIndex = seriesConfig.dataFrameFieldIndex;
-      const axisPlacement = config.getAxisPlacement(s.props.scaleKey);
+/**
+ * mostly duplicates logic in PlotLegend below :(
+ *
+ * @internal
+ */
+export function hasVisibleLegendSeries(config: UPlotConfigBuilder, data: DataFrame[]) {
+  return config.getSeries().some((s) => {
+    const fieldIndex = s.props.dataFrameFieldIndex;
 
-      if (!fieldIndex) {
-        return undefined;
-      }
+    if (!fieldIndex) {
+      return false;
+    }
 
-      const field = data[fieldIndex.frameIndex]?.fields[fieldIndex.fieldIndex];
+    const field = data[fieldIndex.frameIndex]?.fields[fieldIndex.fieldIndex];
 
-      if (!field || field.config.custom?.hideFrom?.legend) {
-        return undefined;
-      }
+    if (!field || field.config.custom?.hideFrom?.legend) {
+      return false;
+    }
 
-      const label = getFieldDisplayName(field, data[fieldIndex.frameIndex]!, data);
-      const scaleColor = getFieldSeriesColor(field, theme);
-      const seriesColor = scaleColor.color;
+    return true;
+  });
+}
 
-      return {
-        disabled: !(seriesConfig.show ?? true),
-        fieldIndex,
-        color: seriesColor,
-        label,
-        yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,
-        getDisplayValues: () => {
-          if (!calcs?.length) {
-            return [];
-          }
+export const PlotLegend = React.memo(
+  ({ data, config, placement, calcs, displayMode, ...vizLayoutLegendProps }: PlotLegendProps) => {
+    const theme = useTheme2();
+    const legendItems = config
+      .getSeries()
+      .map<VizLegendItem | undefined>((s) => {
+        const seriesConfig = s.props;
+        const fieldIndex = seriesConfig.dataFrameFieldIndex;
+        const axisPlacement = config.getAxisPlacement(s.props.scaleKey);
 
-          const fmt = field.display ?? defaultFormatter;
-          let countFormatter: DisplayProcessor | null = null;
+        if (!fieldIndex) {
+          return undefined;
+        }
 
-          const fieldCalcs = reduceField({
-            field,
-            reducers: calcs,
-          });
+        const field = data[fieldIndex.frameIndex]?.fields[fieldIndex.fieldIndex];
 
-          return calcs.map<DisplayValue>((reducerId) => {
-            const fieldReducer = fieldReducers.get(reducerId);
-            let formatter = fmt;
+        if (!field || field.config.custom?.hideFrom?.legend) {
+          return undefined;
+        }
 
-            if (fieldReducer.id === ReducerID.diffperc) {
-              formatter = getDisplayProcessor({
-                field: {
-                  ...field,
-                  config: {
-                    ...field.config,
-                    unit: 'percent',
-                  },
-                },
-                theme,
-              });
+        const label = getFieldDisplayName(field, data[fieldIndex.frameIndex]!, data);
+        const scaleColor = getFieldSeriesColor(field, theme);
+        const seriesColor = scaleColor.color;
+
+        return {
+          disabled: !(seriesConfig.show ?? true),
+          fieldIndex,
+          color: seriesColor,
+          label,
+          yAxis: axisPlacement === AxisPlacement.Left || axisPlacement === AxisPlacement.Bottom ? 1 : 2,
+          getDisplayValues: () => {
+            if (!calcs?.length) {
+              return [];
             }
 
-            if (
-              fieldReducer.id === ReducerID.count ||
-              fieldReducer.id === ReducerID.changeCount ||
-              fieldReducer.id === ReducerID.distinctCount
-            ) {
-              if (!countFormatter) {
-                countFormatter = getDisplayProcessor({
+            const fmt = field.display ?? defaultFormatter;
+            let countFormatter: DisplayProcessor | null = null;
+
+            const fieldCalcs = reduceField({
+              field,
+              reducers: calcs,
+            });
+
+            return calcs.map<DisplayValue>((reducerId) => {
+              const fieldReducer = fieldReducers.get(reducerId);
+              let formatter = fmt;
+
+              if (fieldReducer.id === ReducerID.diffperc) {
+                formatter = getDisplayProcessor({
                   field: {
                     ...field,
                     config: {
                       ...field.config,
-                      unit: 'none',
+                      unit: 'percentunit',
                     },
                   },
                   theme,
                 });
               }
-              formatter = countFormatter;
-            }
 
-            return {
-              ...formatter(fieldCalcs[reducerId]),
-              title: fieldReducer.name,
-              description: fieldReducer.description,
-            };
-          });
-        },
-        getItemKey: () => `${label}-${fieldIndex.frameIndex}-${fieldIndex.fieldIndex}`,
-      };
-    })
-    .filter((i) => i !== undefined) as VizLegendItem[];
+              if (
+                fieldReducer.id === ReducerID.count ||
+                fieldReducer.id === ReducerID.changeCount ||
+                fieldReducer.id === ReducerID.distinctCount
+              ) {
+                if (!countFormatter) {
+                  countFormatter = getDisplayProcessor({
+                    field: {
+                      ...field,
+                      config: {
+                        ...field.config,
+                        unit: 'none',
+                      },
+                    },
+                    theme,
+                  });
+                }
+                formatter = countFormatter;
+              }
 
-  return (
-    <VizLayout.Legend placement={placement} {...vizLayoutLegendProps}>
-      <VizLegend
-        placement={placement}
-        items={legendItems}
-        displayMode={displayMode}
-        sortBy={vizLayoutLegendProps.sortBy}
-        sortDesc={vizLayoutLegendProps.sortDesc}
-      />
-    </VizLayout.Legend>
-  );
-};
+              return {
+                ...formatter(fieldCalcs[reducerId]),
+                title: fieldReducer.name,
+                description: fieldReducer.description,
+              };
+            });
+          },
+          getItemKey: () => `${label}-${fieldIndex.frameIndex}-${fieldIndex.fieldIndex}`,
+        };
+      })
+      .filter((i): i is VizLegendItem => i !== undefined);
+
+    return (
+      <VizLayout.Legend placement={placement} {...vizLayoutLegendProps}>
+        <VizLegend
+          placement={placement}
+          items={legendItems}
+          displayMode={displayMode}
+          sortBy={vizLayoutLegendProps.sortBy}
+          sortDesc={vizLayoutLegendProps.sortDesc}
+          isSortable={true}
+        />
+      </VizLayout.Legend>
+    );
+  }
+);
 
 PlotLegend.displayName = 'PlotLegend';

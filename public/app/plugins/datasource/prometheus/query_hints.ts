@@ -25,7 +25,7 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
           type: 'ADD_HISTOGRAM_QUANTILE',
           query,
         },
-      } as QueryFix,
+      },
     });
   }
 
@@ -110,7 +110,7 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
             query,
             options: mappingForQuery,
           },
-        } as any as QueryFix,
+        },
       });
     }
   }
@@ -128,7 +128,7 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
             query: query,
             preventSubmit: true,
           },
-        } as QueryFix,
+        },
       });
     }
   }

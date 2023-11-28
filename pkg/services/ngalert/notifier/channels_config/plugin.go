@@ -38,6 +38,8 @@ const (
 	ElementTypeCheckbox = "checkbox"
 	// ElementTypeTextArea will render a textarea
 	ElementTypeTextArea = "textarea"
+	// ElementTypeKeyValueMap will render inputs to add arbitrary key-value pairs
+	ElementTypeKeyValueMap = "key_value_map"
 )
 
 // InputType is the type of input that can be rendered in the frontend.
@@ -57,6 +59,8 @@ type SelectOption struct {
 }
 
 // ShowWhen holds information about when options are dependant on other options.
+// Should be used when Element is ElementTypeSelect.
+// Does not work for ElementTypeCheckbox.
 type ShowWhen struct {
 	Field string `json:"field"`
 	Is    string `json:"is"`

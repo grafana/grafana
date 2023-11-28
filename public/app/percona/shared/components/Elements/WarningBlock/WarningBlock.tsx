@@ -11,7 +11,7 @@ const WarningIconMap: Record<WarningType, IconName> = {
   warning: 'exclamation-triangle',
 };
 
-export const WarningBlock: FC<WarningBlockProps> = ({
+export const WarningBlock: FC<React.PropsWithChildren<WarningBlockProps>> = ({
   message,
   className,
   type = 'info',

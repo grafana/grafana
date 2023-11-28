@@ -1,0 +1,162 @@
+export const Messages = {
+    form: {
+        trackingOptions: {
+            none: "Don't track",
+            pgStatements: 'PG Stat Statements',
+            pgMonitor: 'PG Stat Monitor',
+        },
+        labels: {
+            trackingOptions: 'Stat tracking options',
+            externalService: {
+                url: 'External service endpoint',
+                connectionParameters: 'External service connection parameters',
+                schema: 'Schema',
+                metricsPath: 'Metrics path',
+                group: 'Group',
+                address: 'External service hostname',
+                serviceName: 'Service name',
+                port: 'External service port',
+                username: 'Username',
+                password: 'Password',
+            },
+            mainDetails: {
+                address: 'Hostname',
+                serviceName: 'Service name',
+                port: 'Port',
+                username: 'Username',
+                password: 'Password',
+            },
+            postgresqlDetails: {
+                database: 'Database',
+                maxQueryLength: 'Max query length',
+            },
+            mysqlDetails: {
+                maxQueryLength: 'Max query length',
+            },
+            mongodbDetails: {
+                maxQueryLength: 'Max query length',
+            },
+            labels: {
+                environment: 'Environment',
+                region: 'Region',
+                az: 'Availability Zone',
+                replicationSet: 'Replication set',
+                cluster: 'Cluster',
+                customLabels: 'Custom labels',
+            },
+            tooltips: {
+                tlsCA: 'Content of the trusted certificate authority (CA) file used to sign client certificates',
+                tlsCertificateKey: 'Content of the client private key file',
+                tlsCertificate: 'Content of the client certificate file signed by one of the trusted certificate authorities (CAs)',
+            },
+            additionalOptions: {
+                skipConnectionCheck: 'Skip connection check',
+                tls: 'Use TLS for database connections',
+                tlsCertificateFilePassword: 'TLS certificate password',
+                tlsCertificateKey: 'TLS certificate key',
+                tlsCertificate: 'TLS certificate',
+                tlsCA: 'TLS CA',
+                tlsSkipVerify: 'Skip TLS certificate and hostname validation',
+                qanMysqlPerfschema: 'Use performance schema',
+                qanMongodbProfiler: 'Use QAN MongoDB Profiler',
+                disableBasicMetrics: 'Disable Basic Metrics',
+                disableEnchancedMetrics: 'Disable Enhanced Metrics',
+                tablestatOptions: 'Table statistics limit',
+                tablestatOptionsState: 'State',
+                tablestatOptionsLimit: 'Limit value',
+                azureDatabaseExporter: 'Enable Monitoring by Azure Metrics Exporter',
+                disableCommentsParsing: 'Disable comments parsing',
+            },
+        },
+        placeholders: {
+            externalService: {
+                url: 'http://example.com:3333/path/to/metrics',
+                metricsPath: '/path/to/metrics',
+                address: 'Hostname',
+                serviceName: 'Service name (default: Hostname)',
+                username: 'Username',
+                password: 'Password',
+            },
+            mainDetails: {
+                address: 'Hostname',
+                serviceName: 'Service name (default: Hostname)',
+                username: 'Username',
+                password: 'Password',
+            },
+            postgresqlDetails: {
+                database: 'Database (default: postgres)',
+                maxQueryLength: 'Max query length',
+            },
+            mysqlDetails: {
+                maxQueryLength: 'Max query length',
+            },
+            mongodbDetails: {
+                maxQueryLength: 'Max query length',
+            },
+            labels: {
+                environment: 'Environment',
+                region: 'Region',
+                az: 'Availability Zone',
+                replicationSet: 'Replication set',
+                cluster: 'Cluster',
+                customLabels: 'key1:value1\nkey2:value2',
+            },
+            additionalOptions: {},
+        },
+        tooltips: {
+            externalService: {
+                url: 'Your external service endpoint',
+                schema: 'Used version of protocol',
+                metricsPath: 'Path to your metrics',
+                group: 'Group to which your service belongs',
+                address: 'Public DNS hostname of your instance',
+                serviceName: 'Service name to use',
+                port: 'Port your external service is listening on',
+                username: 'Your external service username',
+                password: 'Your external service password',
+            },
+            mainDetails: {
+                address: 'Public DNS hostname of your instance',
+                serviceName: 'Service name to use',
+                port: 'Port your service is listening on',
+                username: 'Your database user name',
+                password: 'Your database password',
+            },
+            postgresqlDetails: {
+                database: 'Database name',
+                maxQueryLength: 'Full Example (Fingerprint) storage is not allowed by default to have the best performance',
+            },
+            mysqlDetails: {
+                maxQueryLength: 'Full Example (Fingerprint) storage is not allowed by default to have the best performance',
+            },
+            mongodbDetails: {
+                maxQueryLength: 'Full Example (Fingerprint) storage is not allowed by default to have the best performance',
+            },
+            haproxy: {
+                port: 'HAProxy prometheus exporter port',
+                username: 'username for HAProxy prometheus exporter',
+                password: 'password for HAProxy prometheus exporter',
+            },
+            labels: {
+                region: 'Region',
+                az: 'Availability Zone',
+            },
+        },
+        titles: {
+            mainDetails: 'Main details',
+            labels: 'Labels',
+            additionalOptions: 'Additional options',
+            parseURL: 'Parse URL',
+            connectionDetails: 'External service connection details',
+        },
+        descriptions: {
+            dot: '. ',
+            labels: 'Please choose some labels to help identify your services. Labels can be useful, for example, to help define groupings',
+            labelsRoles: ' and segment access to build custom user roles ',
+            labelsRolesLink: 'custom user roles',
+            labelsExisting: 'Editing existing labels may affect your inventory and its data.',
+            customLabels: 'Follow the format as exemplified below, one label per line.',
+        },
+    },
+};
+//# sourceMappingURL=FormParts.messages.js.map

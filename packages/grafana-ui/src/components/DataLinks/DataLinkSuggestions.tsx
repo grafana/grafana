@@ -6,7 +6,7 @@ import useClickAway from 'react-use/lib/useClickAway';
 import { VariableSuggestion, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
-import { List } from '../index';
+import { List } from '../List/List';
 
 interface DataLinkSuggestionsProps {
   activeRef?: React.RefObject<HTMLDivElement>;
@@ -18,42 +18,43 @@ interface DataLinkSuggestionsProps {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    list: css`
-      border-bottom: 1px solid ${theme.colors.border.weak};
-      &:last-child {
-        border: none;
-      }
-    `,
-    wrapper: css`
-      background: ${theme.colors.background.primary};
-      width: 250px;
-    `,
-    item: css`
-      background: none;
-      padding: 2px 8px;
-      color: ${theme.colors.text.primary};
-      cursor: pointer;
-      &:hover {
-        background: ${theme.colors.action.hover};
-      }
-    `,
-    label: css`
-      color: ${theme.colors.text.secondary};
-    `,
-    activeItem: css`
-      background: ${theme.colors.background.secondary};
-      &:hover {
-        background: ${theme.colors.background.secondary};
-      }
-    `,
-    itemValue: css`
-      font-family: ${theme.typography.fontFamilyMonospace};
-      font-size: ${theme.typography.size.sm};
-    `,
+    list: css({
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      '&:last-child': {
+        border: 'none',
+      },
+    }),
+    wrapper: css({
+      background: theme.colors.background.primary,
+      width: '250px',
+    }),
+    item: css({
+      background: 'none',
+      padding: '2px 8px',
+      userSelect: 'none',
+      color: theme.colors.text.primary,
+      cursor: 'pointer',
+      '&:hover': {
+        background: theme.colors.action.hover,
+      },
+    }),
+    label: css({
+      color: theme.colors.text.secondary,
+    }),
+    activeItem: css({
+      background: theme.colors.background.secondary,
+      '&:hover': {
+        background: theme.colors.background.secondary,
+      },
+    }),
+    itemValue: css({
+      fontFamily: theme.typography.fontFamilyMonospace,
+      fontSize: theme.typography.size.sm,
+    }),
   };
 };
 
-export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({ suggestions, ...otherProps }) => {
+export const DataLinkSuggestions = ({ suggestions, ...otherProps }: DataLinkSuggestionsProps) => {
   const ref = useRef(null);
 
   useClickAway(ref, () => {
@@ -69,7 +70,7 @@ export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({ sugges
   const styles = useStyles2(getStyles);
 
   return (
-    <div ref={ref} className={styles.wrapper}>
+    <div role="menu" ref={ref} className={styles.wrapper}>
       {Object.keys(groupedSuggestions).map((key, i) => {
         const indexOffset =
           i === 0
@@ -104,8 +105,16 @@ interface DataLinkSuggestionsListProps extends DataLinkSuggestionsProps {
   activeRef?: React.RefObject<HTMLDivElement>;
 }
 
-const DataLinkSuggestionsList: React.FC<DataLinkSuggestionsListProps> = React.memo(
-  ({ activeIndex, activeIndexOffset, label, onClose, onSuggestionSelect, suggestions, activeRef: selectedRef }) => {
+const DataLinkSuggestionsList = React.memo(
+  ({
+    activeIndex,
+    activeIndexOffset,
+    label,
+    onClose,
+    onSuggestionSelect,
+    suggestions,
+    activeRef: selectedRef,
+  }: DataLinkSuggestionsListProps) => {
     const styles = useStyles2(getStyles);
 
     return (
@@ -116,7 +125,11 @@ const DataLinkSuggestionsList: React.FC<DataLinkSuggestionsListProps> = React.me
           renderItem={(item, index) => {
             const isActive = index + activeIndexOffset === activeIndex;
             return (
+              // key events are handled by DataLinkInput
+              // eslint-disable-next-line jsx-a11y/click-events-have-key-events
               <div
+                role="menuitem"
+                tabIndex={0}
                 className={cx(styles.item, isActive && styles.activeItem)}
                 ref={isActive ? selectedRef : undefined}
                 onClick={() => {

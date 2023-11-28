@@ -10,7 +10,7 @@ import { Messages } from '../DBClusterAdvancedOptions.messages';
 import { ConfigurationService } from './Configurations.service';
 import { ConfigurationFields, ConfigurationProps } from './Configurations.types';
 
-export const Configurations: FC<ConfigurationProps> = ({ form, mode, databaseType, k8sClusterName }) => {
+export const Configurations: FC<React.PropsWithChildren<ConfigurationProps>> = ({ form, mode, databaseType, k8sClusterName }) => {
   const label = useMemo(
     () =>
       databaseType === Databases.mysql

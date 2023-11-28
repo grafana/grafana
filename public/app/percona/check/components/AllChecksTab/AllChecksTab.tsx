@@ -17,6 +17,7 @@ import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaN
 import { fetchAdvisors } from 'app/percona/shared/core/reducers/advisors/advisors';
 import { getAdvisors, getCategorizedAdvisors, getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { logger } from 'app/percona/shared/helpers/logger';
+import { Advisor } from 'app/percona/shared/services/advisors/Advisors.types';
 import { dispatch } from 'app/store/store';
 import { useSelector } from 'app/types';
 
@@ -28,7 +29,9 @@ import { getStyles } from './AllChecksTab.styles';
 import { ChangeCheckIntervalModal } from './ChangeCheckIntervalModal';
 import { CheckActions } from './CheckActions/CheckActions';
 
-export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> = ({ match }) => {
+export const AllChecksTab: FC<React.PropsWithChildren<GrafanaRouteComponentProps<{ category: string }>>> = ({
+  match,
+}) => {
   const category = match.params.category;
   const navModel = usePerconaNavModel(`advisors-${category}`);
   const [runChecksPending, setRunChecksPending] = useState(false);
@@ -45,7 +48,7 @@ export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> 
   }
   const getCheckNamesListInCategory = () => {
     return Object.values(advisors)
-      .map((advisor) => advisor.checks)
+      .map((advisor) => (advisor as Advisor).checks)
       .flat()
       .map((check) => check.name);
   };
@@ -116,7 +119,7 @@ export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> 
       {
         Header: Messages.table.columns.status,
         accessor: 'disabled',
-        Cell: ({ value }) => (!!value ? Messages.disabled : Messages.enabled),
+        Cell: ({ value }) => <>{!!value ? Messages.disabled : Messages.enabled}</>,
         type: FilterFieldTypes.RADIO_BUTTON,
         options: [
           {
@@ -138,7 +141,7 @@ export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> 
       {
         Header: Messages.table.columns.interval,
         accessor: 'interval',
-        Cell: ({ value }) => Interval[value],
+        Cell: ({ value }) => <>{Interval[value]}</>,
         type: FilterFieldTypes.DROPDOWN,
         options: [
           {

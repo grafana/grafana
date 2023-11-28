@@ -48,11 +48,7 @@ export function versions() {
   ];
 }
 
-export function compare(type: any) {
-  return type === 'basic' ? '<div></div>' : '<pre><code></code></pre>';
-}
-
-export function restore(version: any, restoredFrom?: any): any {
+export function restore(version: number, restoredFrom?: number) {
   return {
     dashboard: {
       meta: {
@@ -157,7 +153,6 @@ export function restore(version: any, restoredFrom?: any): any {
           },
         ],
         schemaVersion: 14,
-        style: 'dark',
         tags: ['development'],
         templating: {
           list: [],

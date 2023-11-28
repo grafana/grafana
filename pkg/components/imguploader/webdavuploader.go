@@ -26,7 +26,7 @@ type WebdavUploader struct {
 var netTransport = &http.Transport{
 	Proxy: http.ProxyFromEnvironment,
 	Dial: (&net.Dialer{
-		Timeout: 60 * time.Second,
+		Timeout: time.Minute,
 	}).Dial,
 	TLSHandshakeTimeout: 5 * time.Second,
 }
@@ -37,8 +37,8 @@ var netClient = &http.Client{
 }
 
 func (u *WebdavUploader) PublicURL(filename string) string {
-	if strings.Contains(u.public_url, "${file}") {
-		return strings.ReplaceAll(u.public_url, "${file}", filename)
+	if strings.Contains(u.public_url, "{{file}}") {
+		return strings.ReplaceAll(u.public_url, "{{file}}", filename)
 	}
 
 	publicURL, _ := url.Parse(u.public_url)

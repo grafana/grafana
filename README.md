@@ -18,7 +18,7 @@ Grafana allows you to query, visualize, alert on and understand your metrics no 
 ## Get started
 
 - [Get Grafana](https://grafana.com/get)
-- [Installation guides](http://docs.grafana.org/installation/)
+- [Installation guides](https://grafana.com/docs/grafana/latest/setup-grafana/installation/)
 
 Unsure if Grafana is for you? Watch Grafana in action on [play.grafana.org](https://play.grafana.org/)!
 
@@ -41,6 +41,8 @@ If you're interested in contributing to the Grafana project:
 - Read and subscribe to the [Grafana blog](https://grafana.com/blog/).
 - If you have a specific question, check out our [discussion forums](https://community.grafana.com/).
 - For general discussions, join us on the [official Slack](https://slack.grafana.com) team.
+
+This project is tested with [BrowserStack](https://www.browserstack.com/)
 
 ## License
 

@@ -1,9 +1,9 @@
 package pipeline
 
 type EntityInfo struct {
-	Type        string      `json:"type"`
-	Description string      `json:"description"`
-	Example     interface{} `json:"example,omitempty"`
+	Type        string `json:"type"`
+	Description string `json:"description"`
+	Example     any    `json:"example,omitempty"`
 }
 
 var SubscribersRegistry = []EntityInfo{
@@ -54,10 +54,6 @@ var ConvertersRegistry = []EntityInfo{
 	{
 		Type:        ConverterTypeJsonAuto,
 		Description: "automatic recursive JSON to Frame conversion",
-	},
-	{
-		Type:        ConverterTypeJsonExact,
-		Description: "JSON to Frame conversion according to exact list of fields",
 	},
 	{
 		Type:        ConverterTypeInfluxAuto,

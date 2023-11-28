@@ -12,14 +12,14 @@ import { Messages } from '../FormParts.messages';
 import { getStyles } from '../FormParts.styles';
 import { FormPartProps, MetricsParameters, Schema } from '../FormParts.types';
 
-export const ExternalServiceConnectionDetails: FC<FormPartProps> = ({ form }) => {
+export const ExternalServiceConnectionDetails: FC<React.PropsWithChildren<FormPartProps>> = ({ form }) => {
   const styles = useStyles2(getStyles);
   const formValues = form.getState().values;
   const selectedOption = formValues?.metricsParameters;
   const urlValue = formValues?.url;
   const portValidators = useMemo(() => [validators.required, Validators.validatePort], []);
 
-  const trim = useCallback((value) => (value ? value.trim() : value), []);
+  const trim = useCallback((value?: string) => (value ? value.trim() : value), []);
   const getUrlParts = () => {
     try {
       const url = new URL(form.getState().values.url);

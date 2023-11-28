@@ -6,9 +6,9 @@ import { Icon, Switch, Tooltip, useStyles } from '@grafana/ui';
 import { compose } from 'app/percona/shared/helpers/validatorsForm';
 
 import { getStyles } from './Switch.styles';
-import { SwitchFieldProps, SwitchFieldRenderProps } from './Switch.types';
+import { SwitchFieldProps } from './Switch.types';
 
-export const SwitchField: FC<SwitchFieldProps> = ({
+export const SwitchField: FC<React.PropsWithChildren<SwitchFieldProps>> = ({
   disabled,
   fieldClassName,
   inputProps,
@@ -24,8 +24,8 @@ export const SwitchField: FC<SwitchFieldProps> = ({
   const validate = useMemo(() => (Array.isArray(validators) ? compose(validators) : undefined), [validators]);
 
   return (
-    <Field<boolean> {...fieldConfig} type="checkbox" name={name} validate={validate}>
-      {({ input, meta }: SwitchFieldRenderProps) => (
+    <Field {...fieldConfig} type="checkbox" name={name} validate={validate}>
+      {({ input, meta }) => (
         <div className={cx(styles.field, fieldClassName)} data-testid={`${name}-field-container`}>
           <div className={styles.fieldWithLabelWrapper}>
             <Switch {...input} value={input.checked} disabled={disabled} data-testid={`${name}-switch`} />

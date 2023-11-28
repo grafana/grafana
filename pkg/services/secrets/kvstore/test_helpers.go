@@ -6,31 +6,33 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
+	"gopkg.in/ini.v1"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
+	pluginsLogger "github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc"
-	"gopkg.in/ini.v1"
 )
 
 func NewFakeSQLSecretsKVStore(t *testing.T) *SecretsKVStoreSQL {
 	t.Helper()
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	return NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 }
 
 func NewFakePluginSecretsKVStore(t *testing.T, features featuremgmt.FeatureToggles, fallback SecretsKVStore) *SecretsKVStorePlugin {
 	t.Helper()
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	store := kvstore.ProvideService(sqlStore)
 	namespacedKVStore := GetNamespacedKVStore(store)
@@ -256,6 +258,10 @@ func (pc *fakePluginClient) Stop(_ context.Context) error {
 	return nil
 }
 
+func (pc *fakePluginClient) Logger() pluginsLogger.Logger {
+	return pluginsLogger.NewTestLogger()
+}
+
 func SetupFatalCrashTest(
 	t *testing.T,
 	shouldFailOnStart bool,
@@ -266,7 +272,7 @@ func SetupFatalCrashTest(
 	fatalFlagOnce = sync.Once{}
 	startupOnce = sync.Once{}
 	cfg := SetupTestConfig(t)
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	secretService := fakes.FakeSecretsService{}
 	kvstore := kvstore.ProvideService(sqlStore)
 	if isPluginErrorFatal {
@@ -288,7 +294,7 @@ type fatalCrashTestFields struct {
 	SecretsKVStore SecretsKVStore
 	PluginManager  plugins.SecretsPluginManager
 	KVStore        kvstore.KVStore
-	SqlStore       *sqlstore.SQLStore
+	SqlStore       db.DB
 }
 
 func SetupTestConfig(t *testing.T) *setting.Cfg {

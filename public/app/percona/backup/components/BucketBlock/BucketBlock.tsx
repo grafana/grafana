@@ -6,7 +6,7 @@ import { Messages } from './BucketBlock.messages';
 import { getStyles } from './BucketBlock.styles';
 import { BucketBlockProps } from './BucketBlock.types';
 
-export const BucketBlock: FC<BucketBlockProps> = ({ bucketName }) => {
+export const BucketBlock: FC<React.PropsWithChildren<BucketBlockProps>> = ({ bucketName }) => {
   const styles = useStyles(getStyles);
 
   return (

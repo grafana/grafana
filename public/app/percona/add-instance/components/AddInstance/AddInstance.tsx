@@ -13,7 +13,7 @@ import { Messages } from './AddInstance.messages';
 import { getStyles } from './AddInstance.styles';
 import { AddInstanceProps, InstanceListItem, SelectInstanceProps } from './AddInstance.types';
 
-export const SelectInstance: FC<SelectInstanceProps> = ({ type, isSelected, icon, selectInstanceType, title }) => {
+export const SelectInstance: FC<React.PropsWithChildren<SelectInstanceProps>> = ({ type, isSelected, icon, selectInstanceType, title }) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -27,7 +27,7 @@ export const SelectInstance: FC<SelectInstanceProps> = ({ type, isSelected, icon
   );
 };
 
-export const AddInstance: FC<AddInstanceProps> = ({ selectedInstanceType, onSelectInstanceType, showAzure }) => {
+export const AddInstance: FC<React.PropsWithChildren<AddInstanceProps>> = ({ selectedInstanceType, onSelectInstanceType, showAzure }) => {
   const styles2 = useStyles2(getStyles);
   const instanceList = useMemo<InstanceListItem[]>(
     () => [

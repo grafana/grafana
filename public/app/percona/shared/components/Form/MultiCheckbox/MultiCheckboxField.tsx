@@ -14,7 +14,7 @@ import { MultiCheckboxFieldProps, MultiCheckboxRenderProps } from './MultiCheckb
 
 const { compose } = validators;
 
-export const MultiCheckboxField: FC<MultiCheckboxFieldProps> = React.memo(
+export const MultiCheckboxField: FC<React.PropsWithChildren<MultiCheckboxFieldProps>> = React.memo(
   ({
     className,
     disabled = false,

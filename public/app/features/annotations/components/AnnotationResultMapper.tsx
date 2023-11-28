@@ -42,7 +42,8 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
   }
 
   updateFields = () => {
-    const frame = this.props.response?.panelData?.series[0];
+    const panelData = this.props.response?.panelData;
+    const frame = panelData?.series?.[0] ?? panelData?.annotations?.[0];
     if (frame && frame.fields) {
       const fieldNames = frame.fields.map((f) => {
         const name = getFieldDisplayName(f, frame);
@@ -56,7 +57,7 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
             description += '...';
             break;
           }
-          description += f.values.get(i);
+          description += f.values[i];
         }
 
         if (description.length > 50) {
@@ -98,6 +99,15 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
 
   onFieldNameChange = (k: keyof AnnotationEvent, v: SelectableValue<string>) => {
     const mappings = this.props.mappings || {};
+
+    // in case of clearing the value
+    if (!v) {
+      const newMappings = { ...this.props.mappings };
+      delete newMappings[k];
+      this.props.change(newMappings);
+      return;
+    }
+
     const mapping = mappings[k] || {};
 
     this.props.change({
@@ -113,23 +123,20 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
   renderRow(row: AnnotationFieldInfo, mapping: AnnotationEventFieldMapping, first?: AnnotationEvent) {
     const { fieldNames } = this.state;
 
-    let picker = fieldNames;
+    let picker = [...fieldNames];
     const current = mapping.value;
     let currentValue = fieldNames.find((f) => current === f.value);
-    if (current) {
-      picker = [...fieldNames];
-      if (!currentValue) {
-        picker.push({
-          label: current,
-          value: current,
-        });
-      }
+    if (current && !currentValue) {
+      picker.push({
+        label: current,
+        value: current,
+      });
     }
 
     let value = first ? first[row.key] : '';
     if (value && row.key.startsWith('time')) {
       const fmt = getValueFormat('dateTimeAsIso');
-      value = formattedValueToString(fmt(value as number));
+      value = formattedValueToString(fmt(value));
     }
     if (value === null || value === undefined) {
       value = ''; // empty string
@@ -138,7 +145,7 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
     return (
       <tr key={row.key}>
         <td>
-          {row.key}{' '}
+          {row.label || row.key}{' '}
           {row.help && (
             <Tooltip content={row.help}>
               <Icon name="info-circle" />
@@ -165,6 +172,7 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
             }}
             noOptionsMessage="Unknown field names"
             allowCustomValue={true}
+            isClearable
           />
         </td>
         <td>{`${value}`}</td>

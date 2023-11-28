@@ -7,7 +7,6 @@ import coreModule from './core_module';
 export class DeltaCtrl {
   observer: any;
 
-  /** @ngInject */
   constructor() {
     const waitForCompile = () => {};
 
@@ -36,12 +35,18 @@ export function delta() {
     restrict: 'A',
   };
 }
+
 coreModule.directive('diffDelta', delta);
 
 // Link to JSON line number
 export class LinkJSONCtrl {
-  /** @ngInject */
-  constructor(private $scope: any, private $rootScope: GrafanaRootScope, private $anchorScroll: any) {}
+  static $inject = ['$scope', '$rootScope', '$anchorScroll'];
+
+  constructor(
+    private $scope: any,
+    private $rootScope: GrafanaRootScope,
+    private $anchorScroll: any
+  ) {}
 
   goToLine(line: number) {
     let unbind: () => void;
@@ -71,4 +76,5 @@ export function linkJson() {
     template: `<a class="diff-linenum btn btn-inverse btn-small" ng-click="ctrl.goToLine(link)">Line {{ line }}</a>`,
   };
 }
+
 coreModule.directive('diffLinkJson', linkJson);

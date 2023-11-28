@@ -16,6 +16,10 @@ deleteDatasources:
   - name: gdev-elasticsearch-v6-metrics
   - name: gdev-elasticsearch-v6-logs
   - name: gdev-elasticsearch-v6-filebeat
+  - name: gdev-elasticsearch-v7-metrics
+  - name: gdev-elasticsearch-v7-logs
+  - name: gdev-elasticsearch-v7-filebeat
+  - name: gdev-elasticsearch-v7-metricbeat
 
 datasources:
   - name: gdev-graphite
@@ -48,21 +52,36 @@ datasources:
       implementation: prometheus
 
   - name: gdev-prometheus
+    uid: gdev-prometheus
     type: prometheus
     access: proxy
     url: http://localhost:9090
+    basicAuth: true #username: admin, password: admin
+    basicAuthUser: admin
     jsonData:
       manageAlerts: true
       alertmanagerUid: gdev-alertmanager
       prometheusType: Prometheus #Cortex | Mimir | Prometheus | Thanos
       prometheusVersion: 2.40.0
+      exemplarTraceIdDestinations:
+      - name: traceID
+        datasourceUid: gdev-tempo
+    secureJsonData:
+      basicAuthPassword: admin #https://grafana.com/docs/grafana/latest/administration/provisioning/#using-environment-variables
 
   - name: gdev-slow-prometheus
+    uid: gdev-slow-prometheus-uid
     type: prometheus
     access: proxy
     url: http://localhost:3011
+    basicAuth: true #username: admin, password: admin
+    basicAuthUser: admin
     jsonData:
       manageAlerts: false
+      prometheusType: Prometheus #Cortex | Mimir | Prometheus | Thanos
+      prometheusVersion: 2.40.0
+    secureJsonData:
+      basicAuthPassword: admin #https://grafana.com/docs/grafana/latest/administration/provisioning/#using-environment-variables
 
   - name: gdev-testdata
     isDefault: true
@@ -71,11 +90,12 @@ datasources:
   - name: gdev-influxdb1-influxql
     type: influxdb
     access: proxy
-    database: site
     user: grafana
     url: http://localhost:8087
     secureJsonData:
       password: grafana
+    jsonData:
+      dbName: site
 
   - name: gdev-influxdb-flux
     type: influxdb
@@ -93,9 +113,9 @@ datasources:
   - name: gdev-influxdb-influxql
     type: influxdb
     access: proxy
-    database: mybucket
     url: http://localhost:8086
     jsonData:
+      dbName: mybucket
       httpHeaderName1: "Authorization"
     secureJsonData:
       httpHeaderValue1: "Token mytoken"
@@ -118,91 +138,71 @@ datasources:
 
   - name: gdev-elasticsearch
     type: elasticsearch
+    uid: gdev-elasticsearch
     access: proxy
-    database: "[logs-]YYYY.MM.DD"
     url: http://localhost:9200
     jsonData:
+      index: "[logs-]YYYY.MM.DD"
       interval: Daily
       timeField: "@timestamp"
       logLevelField: level
       logMessageField: line
-      esVersion: 8.0.0
 
-  - name: gdev-elasticsearch-v7-metrics
+  - name: gdev-elasticsearch-filebeat
     type: elasticsearch
     access: proxy
-    database: "[metrics-]YYYY.MM.DD"
-    url: http://localhost:12200
+    url: http://localhost:9200
     jsonData:
-      timeInterval: 10s
+      index: "[filebeat-]YYYY.MM.DD"
       interval: Daily
       timeField: "@timestamp"
-      esVersion: 7.10.0
-
-  - name: gdev-elasticsearch-v7-logs
-    type: elasticsearch
-    access: proxy
-    database: "[logs-]YYYY.MM.DD"
-    url: http://localhost:12200
-    jsonData:
-      interval: Daily
-      timeField: "@timestamp"
-      esVersion: 7.10.0
-
-  - name: gdev-elasticsearch-v7-filebeat
-    type: elasticsearch
-    access: proxy
-    database: "[filebeat-]YYYY.MM.DD"
-    url: http://localhost:12200
-    jsonData:
-      interval: Daily
-      timeField: "@timestamp"
-      esVersion: 7.10.0
       timeInterval: "10s"
       logMessageField: message
       logLevelField: fields.level
 
-  - name: gdev-elasticsearch-v7-metricbeat
+  - name: gdev-elasticsearch-metricbeat
     type: elasticsearch
     access: proxy
-    database: "[metricbeat-]YYYY.MM.DD"
-    url: http://localhost:12200
+    url: http://localhost:9200
     jsonData:
+      index: "[metricbeat-]YYYY.MM.DD"
       interval: Daily
       timeField: "@timestamp"
-      esVersion: 7.10.0
       timeInterval: "10s"
 
   - name: gdev-mysql
     type: mysql
     url: localhost:3306
-    database: grafana
     user: grafana
+    jsonData:
+      database: grafana
     secureJsonData:
       password: password
 
   - name: gdev-mysql-ds-tests
     type: mysql
     url: localhost:3306
-    database: grafana_ds_tests
     user: grafana
+    jsonData:
+      database: grafana_ds_tests
     secureJsonData:
       password: password
 
   - name: gdev-mssql
     type: mssql
     url: localhost:1433
-    database: grafana
     user: grafana
+    jsonData:
+      database: grafana
     secureJsonData:
       password: Password!
 
   - name: gdev-mssql-tls
     type: mssql
     url: localhost:1434
-    database: grafana
     user: grafana
     jsonData:
+      database: grafana
       encrypt: "true"
       tlsSkipVerify: true
     secureJsonData:
@@ -211,30 +211,31 @@ datasources:
   - name: gdev-mssql-ds-tests
     type: mssql
     url: localhost:1433
-    database: grafanatest
     user: grafana
+    jsonData:
+      database: grafanatest
     secureJsonData:
       password: Password!
 
   - name: gdev-postgres
     type: postgres
     url: localhost:5432
-    database: grafana
     user: grafana
     secureJsonData:
       password: password
     jsonData:
       sslmode: "disable"
+      database: grafana
 
   - name: gdev-postgres-ds-tests
     type: postgres
     url: localhost:5432
-    database: grafanadstest
     user: grafanatest
     secureJsonData:
       password: grafanatest
     jsonData:
       sslmode: "disable"
+      database: grafanadstest
 
   - name: gdev-cloudwatch
     type: cloudwatch
@@ -256,6 +257,17 @@ datasources:
       - targetUID: gdev-zipkin
         label: "Zipkin traces"
         description: "Related traces stored in Zipkin"
+      - targetUID: gdev-tempo
+        label: "Tempo traces"
+        description: "Related traces stored in Tempo"
+      - targetUID: gdev-prometheus
+        label: "Logs to metrics"
+        description: "Related metrics stored in Prometheus"
+        config:
+          type: query
+          target:
+            expr: "{ job=\"test\" }"
+          field: "traceID"
     jsonData:
       manageAlerts: false
       derivedFields:
@@ -267,6 +279,10 @@ datasources:
           matcherRegex: "traceID=(\\w+)"
           url: "$${__value.raw}"
           datasourceUid: gdev-zipkin
+        - name: "traceID"
+          matcherRegex: "traceID=(\\w+)"
+          url: "$${__value.raw}"
+          datasourceUid: gdev-tempo
 
   - name: gdev-jaeger
     type: jaeger
@@ -288,3 +304,10 @@ datasources:
     access: proxy
     url: http://localhost:3200
     editable: false
+    jsonData:
+      tracesToLogsV2:
+          datasourceUid: gdev-loki
+          spanStartTimeShift: '5m'
+          spanEndTimeShift: '-5m'
+          customQuery: true
+          query: '{filename="/var/log/grafana/grafana.log"} |="$${__span.traceId}"'
