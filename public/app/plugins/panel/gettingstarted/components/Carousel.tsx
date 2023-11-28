@@ -53,8 +53,8 @@ function useCarousel(page: number) {
   };
 
   const carouselRef = useRef<HTMLDivElement | null>(null);
-  const handleCarouselRef = useCallback((el: HTMLDivElement) => {
-    handleScroll({ currentTarget: el });
+  const handleCarouselRef = useCallback((el: HTMLDivElement | null) => {
+    el && handleScroll({ currentTarget: el });
     carouselRef.current = el;
   }, []);
 

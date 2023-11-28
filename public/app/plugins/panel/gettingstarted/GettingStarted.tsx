@@ -69,8 +69,6 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
     const { checksDone, steps } = this.state;
     const styles = getStyles();
 
-    // TODO: restore "Remove this panel" link / button
-
     return (
       <div className={styles.container}>
         {!checksDone ? (

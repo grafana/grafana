@@ -33,9 +33,11 @@ export const Step = ({ step, onDismiss }: StepProps) => {
           <Text>{step.info}</Text>
         </Stack>
 
-        <Button variant="secondary" fill="text" onClick={onDismiss}>
-          Remove this panel
-        </Button>
+        {step.showRemovePanel && (
+          <Button variant="secondary" fill="text" onClick={onDismiss}>
+            Remove this panel
+          </Button>
+        )}
       </Stack>
 
       <Stack gap={4} direction="row" grow={1}>
