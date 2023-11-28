@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -14,7 +15,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
@@ -180,7 +180,7 @@ func TestIntegrationPostgres(t *testing.T) {
 	// change to true to run the PostgreSQL tests
 	const runPostgresTests = false
 
-	if !(db.IsTestDbPostgres() || runPostgresTests) {
+	if !(isTestDbPostgres() || runPostgresTests) {
 		t.Skip()
 	}
 
@@ -232,6 +232,7 @@ func TestIntegrationPostgres(t *testing.T) {
 
 	sess := x.NewSession()
 	t.Cleanup(sess.Close)
+	db := sess.DB()
 	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 
 	t.Run("Given a table with different native data types", func(t *testing.T) {
@@ -261,7 +262,7 @@ func TestIntegrationPostgres(t *testing.T) {
 				c16_smallint smallint
 			);
 		`
-		_, err := sess.Exec(sql)
+		_, err := db.Exec(sql)
 		require.NoError(t, err)
 
 		sql = `
@@ -274,7 +275,7 @@ func TestIntegrationPostgres(t *testing.T) {
 				null
 			);
 		`
-		_, err = sess.Exec(sql)
+		_, err = db.Exec(sql)
 		require.NoError(t, err)
 
 		t.Run("When doing a table query should map Postgres column types to Go types", func(t *testing.T) {
@@ -337,7 +338,7 @@ func TestIntegrationPostgres(t *testing.T) {
 				)
 			`
 
-		_, err := sess.Exec(sql)
+		_, err := db.Exec(sql)
 		require.NoError(t, err)
 
 		type metric struct {
@@ -363,8 +364,10 @@ func TestIntegrationPostgres(t *testing.T) {
 			})
 		}
 
-		_, err = sess.InsertMulti(series)
-		require.NoError(t, err)
+		for _, m := range series {
+			_, err := db.Exec(`INSERT INTO metric ("time", value) VALUES ($1, $2)`, m.Time.UTC(), m.Value)
+			require.NoError(t, err)
+		}
 
 		t.Run("When doing a metric query using timeGroup", func(t *testing.T) {
 			query := &backend.QueryDataRequest{
@@ -541,8 +544,10 @@ func TestIntegrationPostgres(t *testing.T) {
 			},
 		}
 
-		_, err = sess.InsertMulti(series)
-		require.NoError(t, err)
+		for _, m := range series {
+			_, err := db.Exec(`INSERT INTO metric ("time", value) VALUES ($1, $2)`, m.Time.UTC(), m.Value)
+			require.NoError(t, err)
+		}
 
 		t.Run("querying with time group with default value", func(t *testing.T) {
 			query := &backend.QueryDataRequest{
@@ -624,12 +629,18 @@ func TestIntegrationPostgres(t *testing.T) {
 			ValueTwo            int64 `xorm:"integer 'valueTwo'"`
 		}
 
-		if exists, err := sess.IsTableExist(metric_values{}); err != nil || exists {
-			require.NoError(t, err)
-			err := sess.DropTable(metric_values{})
-			require.NoError(t, err)
-		}
-		err := sess.CreateTable(metric_values{})
+		_, err := db.Exec("DROP TABLE IF EXISTS metric_values")
+		require.NoError(t, err)
+
+		_, err = db.Exec(`CREATE TABLE metric_values (
+			"time" TIMESTAMP NULL,
+			"timeInt64" BIGINT NOT NULL, "timeInt64Nullable" BIGINT NULL,
+			"timeFloat64" DOUBLE PRECISION NOT NULL, "timeFloat64Nullable" DOUBLE PRECISION NULL,
+			"timeInt32" INTEGER NOT NULL, "timeInt32Nullable" INTEGER NULL,
+			"timeFloat32" DOUBLE PRECISION NOT NULL, "timeFloat32Nullable" DOUBLE PRECISION NULL,
+			measurement VARCHAR(255) NULL,
+			"valueOne" INTEGER NULL, "valueTwo" INTEGER NULL
+		)`)
 		require.NoError(t, err)
 
 		rng := rand.New(rand.NewSource(time.Now().Unix()))
@@ -672,8 +683,25 @@ func TestIntegrationPostgres(t *testing.T) {
 			series = append(series, &second)
 		}
 
-		_, err = sess.InsertMulti(series)
-		require.NoError(t, err)
+		// _, err = session.InsertMulti(series)
+		for _, m := range series {
+			_, err := db.Exec(`INSERT INTO "metric_values" (
+				time,
+				"timeInt64", "timeInt64Nullable",
+				"timeFloat64", "timeFloat64Nullable",
+				"timeInt32", "timeInt32Nullable",
+				"timeFloat32", "timeFloat32Nullable",
+				measurement, "valueOne", "valueTwo"
+			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+				m.Time,
+				m.TimeInt64, m.TimeInt64Nullable,
+				m.TimeFloat64, m.TimeFloat64Nullable,
+				m.TimeInt32, m.TimeInt32Nullable,
+				m.TimeFloat32, m.TimeFloat32Nullable,
+				m.Measurement, m.ValueOne, m.ValueTwo,
+			)
+			require.NoError(t, err)
+		}
 
 		t.Run(
 			"When doing a metric query using epoch (int64) as time column and value column (int64) should return metric with time in time.Time",
@@ -994,12 +1022,9 @@ func TestIntegrationPostgres(t *testing.T) {
 			Tags        string
 		}
 
-		if exists, err := sess.IsTableExist(event{}); err != nil || exists {
-			require.NoError(t, err)
-			err := sess.DropTable(event{})
-			require.NoError(t, err)
-		}
-		err := sess.CreateTable(event{})
+		_, err := db.Exec("DROP TABLE IF EXISTS event")
+		require.NoError(t, err)
+		_, err = db.Exec(`CREATE TABLE event (time_sec BIGINT NULL, description VARCHAR(255) NULL, tags VARCHAR(255) NULL)`)
 		require.NoError(t, err)
 
 		events := []*event{}
@@ -1017,7 +1042,7 @@ func TestIntegrationPostgres(t *testing.T) {
 		}
 
 		for _, e := range events {
-			_, err := sess.Insert(e)
+			_, err := db.Exec("INSERT INTO event (time_sec, description, tags) VALUES ($1, $2, $3)", e.TimeSec, e.Description, e.Tags)
 			require.NoError(t, err)
 		}
 
@@ -1333,18 +1358,9 @@ func TestIntegrationPostgres(t *testing.T) {
 	})
 
 	t.Run("Given an empty table", func(t *testing.T) {
-		type emptyObj struct {
-			EmptyKey string
-			EmptyVal int64
-		}
-
-		exists, err := sess.IsTableExist(emptyObj{})
+		_, err := db.Exec("DROP TABLE IF EXISTS empty_obj")
 		require.NoError(t, err)
-		if exists {
-			err := sess.DropTable(emptyObj{})
-			require.NoError(t, err)
-		}
-		err = sess.CreateTable(emptyObj{})
+		_, err = db.Exec("CREATE TABLE empty_obj (empty_key VARCHAR(255) NULL, empty_val BIGINT NULL)")
 		require.NoError(t, err)
 
 		t.Run("When no rows are returned, should return an empty frame", func(t *testing.T) {
@@ -1410,4 +1426,12 @@ type tlsTestManager struct {
 
 func (m *tlsTestManager) getTLSSettings(dsInfo sqleng.DataSourceInfo) (tlsSettings, error) {
 	return m.settings, nil
+}
+
+func isTestDbPostgres() bool {
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		return db == "postgres"
+	}
+
+	return false
 }

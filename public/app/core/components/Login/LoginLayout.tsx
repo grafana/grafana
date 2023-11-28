@@ -93,11 +93,11 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       justifyContent: 'center',
     }),
     loginAnim: css({
-      '&:before': {
+      ['&:before']: {
         opacity: 1,
       },
 
-      '.login-content-box': {
+      ['.login-content-box']: {
         opacity: 1,
       },
     }),
@@ -107,11 +107,11 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
     }),
     loginLogo: css({
       width: '100%',
-      maxWidth: '60px',
+      maxWidth: 60,
       marginBottom: theme.spacing(2),
 
       [theme.breakpoints.up('sm')]: {
-        maxWidth: '100px',
+        maxWidth: 100,
       },
     }),
     loginLogoWrapper: css({
@@ -125,33 +125,33 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       textAlign: 'center',
     }),
     mainTitle: css({
-      fontSize: '22px',
+      fontSize: 22,
 
       [theme.breakpoints.up('sm')]: {
-        fontSize: '32px',
+        fontSize: 32,
       },
     }),
     subTitle: css({
-      fontSize: theme.typography.body.fontSize,
+      fontSize: theme.typography.size.md,
       color: theme.colors.text.secondary,
     }),
     loginContent: css({
-      maxWidth: '478px',
-      width: 'calc(100% - 2rem)',
+      maxWidth: 478,
+      width: `calc(100% - 2rem)`,
       display: 'flex',
       alignItems: 'stretch',
       flexDirection: 'column',
       position: 'relative',
       justifyContent: 'flex-start',
       zIndex: 1,
-      minHeight: '320px',
-      borderRadius: theme.shape.radius.default,
+      minHeight: 320,
+      borderRadius: theme.shape.borderRadius(4),
       padding: theme.spacing(2, 0),
       opacity: 0,
       transition: 'opacity 0.5s ease-in-out',
 
       [theme.breakpoints.up('sm')]: {
-        minHeight: '320px',
+        minHeight: theme.spacing(40),
         justifyContent: 'center',
       },
     }),
@@ -168,7 +168,7 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       justifyContent: 'center',
       flexGrow: 1,
-      maxWidth: '415px',
+      maxWidth: 415,
       width: '100%',
       transform: 'translate(0px, 0px)',
       transition: '0.25s ease',

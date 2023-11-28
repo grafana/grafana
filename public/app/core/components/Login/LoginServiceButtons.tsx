@@ -97,8 +97,8 @@ const getServiceStyles = (theme: GrafanaTheme2) => {
         width: '100%',
       }),
       line: css({
-        width: '100px',
-        height: '10px',
+        width: 100,
+        height: 10,
         borderBottom: `1px solid ${theme.colors.text}`,
       }),
     },
@@ -128,15 +128,15 @@ const LoginDivider = () => {
 function getButtonStyleFor(service: LoginService, styles: ReturnType<typeof getServiceStyles>, theme: GrafanaTheme2) {
   return cx(
     styles.button,
-    css`
-      background-color: ${service.bgColor};
-      color: ${theme.colors.getContrastText(service.bgColor)};
+    css({
+      backgroundColor: service.bgColor,
+      color: theme.colors.getContrastText(service.bgColor),
 
-      &:hover {
-        background-color: ${theme.colors.emphasize(service.bgColor, 0.15)};
-        box-shadow: ${theme.shadows.z1};
-      }
-    `
+      ['&:hover']: {
+        backgroundColor: theme.colors.emphasize(service.bgColor, 0.15),
+        boxShadow: theme.shadows.z1,
+      },
+    })
   );
 }
 

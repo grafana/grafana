@@ -590,4 +590,8 @@ const (
 	// FlagPluginsSkipHostEnvVars
 	// Disables passing host environment variable to plugin processes
 	FlagPluginsSkipHostEnvVars = "pluginsSkipHostEnvVars"
+
+	// FlagRegressionTransformation
+	// Enables regression analysis transformation
+	FlagRegressionTransformation = "regressionTransformation"
 )
