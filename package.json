@@ -405,7 +405,7 @@
     "slate": "0.47.9",
     "slate-plain-serializer": "0.7.13",
     "slate-react": "0.22.10",
-    "sql-formatter-plus": "grafana/sql-formatter-plus#53b0b378153ee676228b375e9a6fc38a54cea687",
+    "sql-formatter-plus": "grafana/sql-formatter-plus#d3c89e0defe6fc2ce23203e29c00700866f8da37",
     "symbol-observable": "4.0.0",
     "test": "link:./public/test",
     "tether-drop": "https://github.com/torkelo/drop",
