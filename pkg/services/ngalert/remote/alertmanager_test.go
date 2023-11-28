@@ -97,13 +97,17 @@ func TestApplyConfig(t *testing.T) {
 	cfg := AlertmanagerConfig{
 		URL: server.URL,
 	}
-	fstore := notifier.NewFileStore(1, fakes.NewFakeKVStore(t), "")
+
+	ctx := context.Background()
+	store := fakes.NewFakeKVStore(t)
+	fstore := notifier.NewFileStore(1, store, "")
+	require.NoError(t, store.Set(ctx, 1, "alertmanager", notifier.SilencesFilename, "test"))
+	require.NoError(t, store.Set(ctx, 1, "alertmanager", notifier.NotificationLogFilename, "test"))
 
 	am, err := NewAlertmanager(cfg, 1, fstore)
 	require.NoError(t, err)
 
 	config := &ngmodels.AlertConfiguration{}
-	ctx := context.Background()
 	require.Error(t, am.ApplyConfig(ctx, config))
 	require.False(t, am.Ready())
 
@@ -149,14 +153,14 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 		OrgID:                     1,
 	}
 
-	ctx := context.Background()
 	silences := []byte("test-silences")
 	nflog := []byte("test-notifications")
-
 	store := fakes.NewFakeKVStore(t)
 	fstore := notifier.NewFileStore(1, store, "")
-	require.NoError(t, store.Set(ctx, 1, "alertmanager", "silences", base64.StdEncoding.EncodeToString(silences)))
-	require.NoError(t, store.Set(ctx, 1, "alertmanager", "notifications", base64.StdEncoding.EncodeToString(nflog)))
+
+	ctx := context.Background()
+	require.NoError(t, store.Set(ctx, 1, "alertmanager", notifier.SilencesFilename, base64.StdEncoding.EncodeToString(silences)))
+	require.NoError(t, store.Set(ctx, 1, "alertmanager", notifier.NotificationLogFilename, base64.StdEncoding.EncodeToString(nflog)))
 
 	fs := clusterpb.FullState{
 		Parts: []clusterpb.Part{
