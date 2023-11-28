@@ -392,7 +392,12 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
 
       deleteAll = (
         <>
-          <Button icon="times" variant="secondary" onClick={() => this.setState({ showRemoveAllModal: true })}>
+          <Button
+            icon="times"
+            variant="secondary"
+            onClick={() => this.setState({ showRemoveAllModal: true })}
+            style={{ marginLeft: this.props.theme.spacing.md }}
+          >
             Delete all transformations
           </Button>
           <ConfirmModal

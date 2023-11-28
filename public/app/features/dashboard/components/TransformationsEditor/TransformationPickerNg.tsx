@@ -193,11 +193,7 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
               <span>{getTransformationsRedesignDescriptions(transform.id)}</span>
               {showIllustrations && (
                 <span>
-                  <img
-                    className={styles.image}
-                    src={getImagePath(transform.id, !isApplicable)}
-                    alt={transform.name}
-                  />
+                  <img className={styles.image} src={getImagePath(transform.id, !isApplicable)} alt={transform.name} />
                 </span>
               )}
               {!isApplicable && applicabilityDescription !== null && (
