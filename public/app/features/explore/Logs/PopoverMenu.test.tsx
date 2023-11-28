@@ -2,8 +2,9 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { createLogRow } from '../../logs/components/__mocks__/logRow';
+
 import { PopoverMenu } from './PopoverMenu';
-import { createLogRow } from './__mocks__/logRow';
 
 const row = createLogRow();
 

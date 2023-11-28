@@ -144,6 +144,7 @@ describe('SpanFilters', () => {
       expect(screen.getByText('ProcessKey1')).toBeInTheDocument();
       expect(screen.getByText('LogKey0')).toBeInTheDocument();
       expect(screen.getByText('LogKey1')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Find...')).toBeInTheDocument();
     });
   });
 
