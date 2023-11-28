@@ -1082,6 +1082,13 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaBiSquad,
 		},
+		{
+			Name:         "customResourcePermissionActions",
+			Description:  "Enables custom resource permission actions when managing direct permission assignments",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        identityAccessTeam,
+		},
 	}
 )
 

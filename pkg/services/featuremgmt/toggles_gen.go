@@ -594,4 +594,8 @@ const (
 	// FlagRegressionTransformation
 	// Enables regression analysis transformation
 	FlagRegressionTransformation = "regressionTransformation"
+
+	// FlagCustomResourcePermissionActions
+	// Enables custom resource permission actions when managing direct permission assignments
+	FlagCustomResourcePermissionActions = "customResourcePermissionActions"
 )

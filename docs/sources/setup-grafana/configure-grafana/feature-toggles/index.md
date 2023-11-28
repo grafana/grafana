@@ -165,6 +165,7 @@ Experimental features might be changed or removed without prior notice.
 | `logRowsPopoverMenu`                        | Enable filtering menu displayed when text of a log line is selected                                                                                                                                                                                                               |
 | `pluginsSkipHostEnvVars`                    | Disables passing host environment variable to plugin processes                                                                                                                                                                                                                    |
 | `regressionTransformation`                  | Enables regression analysis transformation                                                                                                                                                                                                                                        |
+| `customResourcePermissionActions`           | Enables custom resource permission actions when managing direct permission assignments                                                                                                                                                                                            |
 
 ## Development feature toggles
 
