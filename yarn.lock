@@ -3417,6 +3417,7 @@ __metadata:
     calculate-size: "npm:1.1.1"
     classnames: "npm:2.3.2"
     common-tags: "npm:1.8.2"
+    core-js: "npm:3.33.0"
     css-loader: "npm:6.8.1"
     csstype: "npm:3.1.2"
     d3: "npm:7.8.5"
@@ -12893,17 +12894,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"core-js@npm:3.33.0, core-js@npm:^3.6.0, core-js@npm:^3.8.3":
+  version: 3.33.0
+  resolution: "core-js@npm:3.33.0"
+  checksum: 940ad9c3bbc971d884c08da7cf4a3fe9b360011a35b9e93c35627c439419f0e852749a357bef5d072d5f8921d45b46bd886a3ebb6979628c292ecf787a50506f
+  languageName: node
+  linkType: hard
+
 "core-js@npm:^2.4.0":
   version: 2.6.12
   resolution: "core-js@npm:2.6.12"
   checksum: 7c624eb00a59c74c769d5d80f751f3bf1fc6201205b6562f27286ad5e00bbca1483f2f7eb0c2854b86f526ef5c7dc958b45f2ff536f8a31b8e9cb1a13a96efca
-  languageName: node
-  linkType: hard
-
-"core-js@npm:^3.6.0, core-js@npm:^3.8.3":
-  version: 3.33.0
-  resolution: "core-js@npm:3.33.0"
-  checksum: 940ad9c3bbc971d884c08da7cf4a3fe9b360011a35b9e93c35627c439419f0e852749a357bef5d072d5f8921d45b46bd886a3ebb6979628c292ecf787a50506f
   languageName: node
   linkType: hard
 
@@ -17437,6 +17438,7 @@ __metadata:
     comlink: "npm:4.4.1"
     common-tags: "npm:1.8.2"
     copy-webpack-plugin: "npm:11.0.0"
+    core-js: "npm:3.33.0"
     css-loader: "npm:6.8.1"
     css-minimizer-webpack-plugin: "npm:5.0.1"
     cypress: "npm:13.1.0"
