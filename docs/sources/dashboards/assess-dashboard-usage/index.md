@@ -62,7 +62,7 @@ Dashboard insights show the following information:
 
 {{% admonition type="note" %}}
 
-If you've enabled the `publicDashboards` feature toggle, you'll also see a Public dashboards tab in your analytics.
+If public dashboards are [enabled]({{< relref "../../setup-grafana/configure-grafana/#public_dashboards" >}}), you'll also see a Public dashboards tab in your analytics.
 
 {{% /admonition %}}
 
