@@ -188,7 +188,7 @@ const FlameGraphContainer = ({
   } else if (selectedView === SelectedView.Both) {
     if (vertical) {
       body = (
-        <div className={styles.verticalContainer}>
+        <div>
           <div className={styles.verticalGraphContainer}>{flameGraph}</div>
           <div className={styles.verticalTableContainer}>{table}</div>
         </div>
@@ -295,8 +295,6 @@ function getStyles(theme: GrafanaTheme2) {
       flexBasis: '50%',
       maxHeight: 800,
     }),
-
-    verticalContainer: css({}),
 
     verticalGraphContainer: css({
       marginBottom: theme.spacing(1),
