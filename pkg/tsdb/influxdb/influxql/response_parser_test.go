@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
-const shouldUpdate = true
+const shouldUpdate = false
 
 func readJsonFile(filePath string) io.ReadCloser {
 	bytes, err := os.ReadFile(filepath.Join("testdata", filepath.Clean(filePath)+".json"))
