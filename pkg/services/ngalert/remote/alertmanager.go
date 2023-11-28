@@ -137,10 +137,9 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 		err := am.mimirClient.CreateGrafanaAlertmanagerConfig(ctx, config.AlertmanagerConfiguration, config.ConfigurationHash, config.ID, config.CreatedAt, config.Default)
 		if err != nil {
 			am.log.Error("Unable to upload the configuration to the remote Alertmanager", "err", err)
-		} else {
-			am.log.Debug("Completed configuration upload to remote Alertmanager", "url", am.url)
 		}
 	}
+	am.log.Debug("Completed configuration upload to remote Alertmanager", "url", am.url)
 
 	// Send base64-encoded state if necessary.
 	am.log.Debug("Start state upload to remote Alertmanager", "url", am.url)
@@ -152,10 +151,9 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 	if am.shouldSendState(ctx, state) {
 		if err := am.mimirClient.CreateGrafanaAlertmanagerState(ctx, state); err != nil {
 			am.log.Error("Unable to upload the state to the remote Alertmanager", "err", err)
-		} else {
-			am.log.Debug("Completed state upload to remote Alertmanager", "url", am.url)
 		}
 	}
+	am.log.Debug("Completed state upload to remote Alertmanager", "url", am.url)
 	return nil
 }
 
