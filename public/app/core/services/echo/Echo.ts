@@ -17,6 +17,7 @@ interface EchoConfig {
  * It's up to the registered backend to decide what to do with a given type of metric
  */
 export class Echo implements EchoSrv {
+  private _metaExtensions: Record<string, unknown> = {};
   private config: EchoConfig = {
     flushInterval: 10000, // By default Echo flushes every 10s
     debug: false,
@@ -66,8 +67,16 @@ export class Echo implements EchoSrv {
     });
   };
 
+  setMetaExtensions = (extensions: Record<string, unknown>) => {
+    this._metaExtensions = extensions;
+    return () => {
+      this._metaExtensions = {};
+    };
+  };
+
   getMeta = (): EchoMeta => {
     return {
+      ...this._metaExtensions,
       sessionId: '',
       userId: contextSrv.user.id,
       userLogin: contextSrv.user.login,

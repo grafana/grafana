@@ -109,6 +109,12 @@ export interface EchoSrv {
    * @param meta - Object that will extend/override the default meta object.
    */
   addEvent<T extends EchoEvent>(event: Omit<T, 'meta'>, meta?: {}): void;
+
+  /**
+   * Set meta extension that will be added to the default meta object.
+   * Returns a function that can be used to remove the extension.
+   */
+  setMetaExtensions(extension: Record<string, unknown>): () => void;
 }
 
 let singletonInstance: EchoSrv;
@@ -165,5 +171,9 @@ export class FakeEchoSrv implements EchoSrv {
 
   addEvent<T extends EchoEvent>(event: Omit<T, 'meta'>, meta?: {} | undefined): void {
     this.buffer.push({ event, meta });
+  }
+
+  setMetaExtensions() {
+    return () => {};
   }
 }
