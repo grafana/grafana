@@ -339,7 +339,6 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	})
 
 	t.Run("Influxdb response parser with invalid timestamp-format", func(t *testing.T) {
-
 		newField := data.NewField("Value", nil, []*float64{
 			toPtr(50.0), toPtr(52.0),
 		})
