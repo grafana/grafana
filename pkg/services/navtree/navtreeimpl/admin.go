@@ -80,7 +80,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
-	if authConfigUIAvailable && hasAccess(evalAuthenticationSettings()) {
+	if (authConfigUIAvailable && hasAccess(evalAuthenticationSettings())) || s.features.IsEnabled(ctx, featuremgmt.FlagSsoSettingsApi) {
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:     "Authentication",
 			Id:       "authentication",
