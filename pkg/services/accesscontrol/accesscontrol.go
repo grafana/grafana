@@ -79,7 +79,6 @@ type ServiceAccountPermissionsService interface {
 	PermissionsService
 }
 
-// TODO(aarongodin): this would need to change when I change the matching stucts
 type PermissionsService interface {
 	// GetPermissions returns all permissions for given resourceID
 	GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]ResourcePermission, error)

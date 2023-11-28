@@ -108,13 +108,13 @@ type Service struct {
 	api     *api
 	license licensing.Licensing
 
-	options     Options
-	permissions []string
-	actions     []string
-	allowedFGA  []string
-	sqlStore    db.DB
-	teamService team.Service
-	userService user.Service
+	options            Options
+	permissions        []string
+	actions            []string
+	fineGrainedActions []string // defines a set of actions that are allowed to be directly used in a custom set of actions
+	sqlStore           db.DB
+	teamService        team.Service
+	userService        user.Service
 }
 
 func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error) {
@@ -284,7 +284,7 @@ func (s *Service) SetPermissions(
 
 // MapActions returns the logical "Permission" (e.g. Access Level) that corresponds to a given set of a actions.
 // There is no guarantee of possible overlap between two access levels. The first Permission that contains
-// the set of actions will be
+// the set of actions will be returned.
 func (s *Service) MapActions(permission accesscontrol.ResourcePermission) string {
 	for _, p := range s.permissions {
 		if permission.Contains(s.options.PermissionsToActions[p]) {
@@ -325,7 +325,7 @@ func (s *Service) validateResource(ctx context.Context, orgID int64, resourceID 
 func (s Service) validateActions(actions []string) error {
 	for _, a := range actions {
 		actionFound := false
-		for _, fgaAction := range s.allowedFGA {
+		for _, fgaAction := range s.fineGrainedActions {
 			if a == fgaAction {
 				actionFound = true
 			}
