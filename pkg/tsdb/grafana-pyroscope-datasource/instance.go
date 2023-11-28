@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -26,7 +27,7 @@ var (
 )
 
 type ProfilingClient interface {
-	ProfileTypes(ctx context.Context) ([]*ProfileType, error)
+	ProfileTypes(ctx context.Context, start int64, end int64) ([]*ProfileType, error)
 	LabelNames(ctx context.Context) ([]string, error)
 	LabelValues(ctx context.Context, label string) ([]string, error)
 	GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64) (*SeriesResponse, error)
@@ -85,7 +86,30 @@ func (d *PyroscopeDatasource) CallResource(ctx context.Context, req *backend.Cal
 
 func (d *PyroscopeDatasource) profileTypes(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	ctxLogger := logger.FromContext(ctx)
-	types, err := d.client.ProfileTypes(ctx)
+
+	u, err := url.Parse(req.URL)
+	if err != nil {
+		ctxLogger.Error("Failed to parse URL", "error", err, "function", logEntrypoint())
+		return err
+	}
+	query := u.Query()
+
+	var start, end int64
+	if query.Has("start") && query.Has("end") {
+		start, err = strconv.ParseInt(query.Get("start"), 10, 64)
+		if err != nil {
+			ctxLogger.Error("Failed to parse start as int", "error", err, "function", logEntrypoint())
+			return err
+		}
+
+		end, err = strconv.ParseInt(query.Get("end"), 10, 64)
+		if err != nil {
+			ctxLogger.Error("Failed to parse end as int", "error", err, "function", logEntrypoint())
+			return err
+		}
+	}
+
+	types, err := d.client.ProfileTypes(ctx, start, end)
 	if err != nil {
 		ctxLogger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		return err
@@ -195,7 +219,10 @@ func (d *PyroscopeDatasource) CheckHealth(ctx context.Context, _ *backend.CheckH
 	status := backend.HealthStatusOk
 	message := "Data source is working"
 
-	if _, err := d.client.ProfileTypes(ctx); err != nil {
+	// Since this is a health check mechanism, there is no start/end that is
+	// meaningful. Setting start/end to 0 will override the windowing behavior.
+	const start, end = int64(0), int64(0)
+	if _, err := d.client.ProfileTypes(ctx, start, end); err != nil {
 		status = backend.HealthStatusError
 		message = err.Error()
 	}

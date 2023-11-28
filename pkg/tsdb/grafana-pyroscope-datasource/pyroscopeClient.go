@@ -70,10 +70,12 @@ func NewPyroscopeClient(httpClient *http.Client, url string) *PyroscopeClient {
 	}
 }
 
-func (c *PyroscopeClient) ProfileTypes(ctx context.Context) ([]*ProfileType, error) {
+func (c *PyroscopeClient) ProfileTypes(ctx context.Context, start int64, end int64) ([]*ProfileType, error) {
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.ProfileTypes")
 	defer span.End()
-	res, err := c.connectClient.ProfileTypes(ctx, connect.NewRequest(&querierv1.ProfileTypesRequest{}))
+	res, err := c.connectClient.ProfileTypes(ctx, connect.NewRequest(&querierv1.ProfileTypesRequest{
+		// TODO(bryan) add start/end here once github.com/grafana/pyroscope/api gets bumped to 0.2.2
+	}))
 	if err != nil {
 		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
