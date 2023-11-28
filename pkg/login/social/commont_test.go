@@ -33,7 +33,7 @@ token_url = test_token_url
 api_url = test_api_url
 teams_url = test_teams_url
 allowed_domains = domain1.com
-allowed_groups = 
+allowed_groups =
 team_ids = first, second
 allowed_organizations = org1, org2
 tls_skip_verify_insecure = true
@@ -94,7 +94,7 @@ hosted_domain = test_hosted_domain
 	}
 
 	settingsKVs := convertIniSectionToMap(iniFile.Section("test"))
-	oauthInfo, err := createOAuthInfoFromKeyValues(settingsKVs)
+	oauthInfo, err := CreateOAuthInfoFromKeyValues(settingsKVs)
 	require.NoError(t, err)
 
 	require.Equal(t, expectedOAuthInfo, oauthInfo)

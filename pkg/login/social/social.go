@@ -96,7 +96,7 @@ func ProvideService(cfg *setting.Cfg,
 		sec := cfg.Raw.Section("auth." + name)
 
 		settingsKVs := convertIniSectionToMap(sec)
-		info, err := createOAuthInfoFromKeyValues(settingsKVs)
+		info, err := CreateOAuthInfoFromKeyValues(settingsKVs)
 		if err != nil {
 			ss.log.Error("Failed to create OAuthInfo for provider", "error", err, "provider", name)
 			continue

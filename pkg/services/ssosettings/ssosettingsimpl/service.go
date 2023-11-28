@@ -57,29 +57,24 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 var _ ssosettings.Service = (*SSOSettingsService)(nil)
 
 func (s *SSOSettingsService) GetForProvider(ctx context.Context, provider string) (*models.SSOSettings, error) {
-	dto, err := s.store.Get(ctx, provider)
+	storeSettings, err := s.store.Get(ctx, provider)
 
 	if errors.Is(err, ssosettings.ErrNotFound) {
-		setting, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
+		settings, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
 		if err != nil {
 			return nil, err
 		}
 
-		return setting, nil
+		return settings, nil
 	}
 
 	if err != nil {
 		return nil, err
 	}
 
-	ssoSettings, err := dto.ToSSOSettings()
-	if err != nil {
-		return nil, err
-	}
+	storeSettings.Source = models.DB
 
-	ssoSettings.Source = models.DB
-
-	return ssoSettings, nil
+	return storeSettings, nil
 }
 
 func (s *SSOSettingsService) List(ctx context.Context, requester identity.Requester) ([]*models.SSOSettings, error) {
@@ -104,12 +99,12 @@ func (s *SSOSettingsService) List(ctx context.Context, requester identity.Reques
 		settings := getSettingsByProvider(provider, storedSettings)
 		if len(settings) == 0 {
 			// If there is no data in the DB then we need to load the settings using the fallback strategy
-			setting, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
+			fallbackSettings, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
 			if err != nil {
 				return nil, err
 			}
 
-			settings = append(settings, setting)
+			settings = append(settings, fallbackSettings)
 		}
 		result = append(result, settings...)
 	}
@@ -117,9 +112,9 @@ func (s *SSOSettingsService) List(ctx context.Context, requester identity.Reques
 	return result, nil
 }
 
-func (s *SSOSettingsService) Upsert(ctx context.Context, provider string, data interface{}) error {
+func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSettings) error {
 	// TODO: validation (configurable provider? Contains the required fields? etc)
-	err := s.store.Upsert(ctx, provider, data)
+	err := s.store.Upsert(ctx, settings)
 	if err != nil {
 		return err
 	}
@@ -147,33 +142,33 @@ func (s *SSOSettingsService) RegisterFallbackStrategy(providerRegex string, stra
 }
 
 func (s *SSOSettingsService) loadSettingsUsingFallbackStrategy(ctx context.Context, provider string) (*models.SSOSettings, error) {
-	// TODO: refactor config system parsing
-	//loadStrategy, ok := s.getFallBackstrategyFor(provider)
-	//if !ok {
-	//	return nil, errors.New("no fallback strategy found for provider: " + provider)
-	//}
+	loadStrategy, ok := s.getFallBackstrategyFor(provider)
+	if !ok {
+		return nil, errors.New("no fallback strategy found for provider: " + provider)
+	}
 
-	//settingsFromSystem, err := loadStrategy.ParseConfigFromSystem(ctx)
-	//if err != nil {
-	//	return nil, err
-	//}
+	settingsFromSystem, err := loadStrategy.ParseConfigFromSystem(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	oAuthInfo, err := social.CreateOAuthInfoFromKeyValues(settingsFromSystem)
+	if err != nil {
+		return nil, err
+	}
 
 	return &models.SSOSettings{
 		Provider:      provider,
 		Source:        models.System,
-		OAuthSettings: social.OAuthInfo{},
+		OAuthSettings: oAuthInfo,
 	}, nil
 }
 
-func getSettingsByProvider(provider string, settingsDb []*models.SSOSettingsDb) []*models.SSOSettings {
+func getSettingsByProvider(provider string, settings []*models.SSOSettings) []*models.SSOSettings {
 	result := make([]*models.SSOSettings, 0)
-	for _, s := range settingsDb {
-		if s.Provider == provider {
-			settings, err := s.ToSSOSettings()
-			if err != nil {
-				// TODO handle error
-			}
-			result = append(result, settings)
+	for _, item := range settings {
+		if item.Provider == provider {
+			result = append(result, item)
 		}
 	}
 	return result

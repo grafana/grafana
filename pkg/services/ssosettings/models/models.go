@@ -26,28 +26,24 @@ func (s SettingsSource) MarshalJSON() ([]byte, error) {
 	}
 }
 
-// service layer
 type SSOSettings struct {
-	ID            string            `json:"-"`
-	Provider      string            `json:"provider"`
-	OAuthSettings *social.OAuthInfo `json:"oauth_settings"`
-	//saml
-	//ldap
-	Created   time.Time      `json:"-"`
-	Updated   time.Time      `json:"-"`
-	IsDeleted bool           `json:"-"`
-	Source    SettingsSource `json:"source"`
+	ID            string
+	Provider      string
+	OAuthSettings *social.OAuthInfo
+	Created       time.Time
+	Updated       time.Time
+	IsDeleted     bool
+	Source        SettingsSource
 }
 
-// api+db
 type SSOSettingsDTO struct {
-	ID        string                 `xorm:"id pk" json:"id"` // why not make this field available via api?
+	ID        string                 `xorm:"id pk" json:"id"`
 	Provider  string                 `xorm:"provider" json:"provider"`
 	Settings  map[string]interface{} `xorm:"settings" json:"settings"`
 	Created   time.Time              `xorm:"created" json:"-"`
 	Updated   time.Time              `xorm:"updated" json:"-"`
 	IsDeleted bool                   `xorm:"is_deleted" json:"-"`
-	Source    SettingsSource         `xorm:"-" json:"source"` // why do we need this?
+	Source    SettingsSource         `xorm:"-" json:"source"`
 }
 
 // TableName returns the table name (needed for Xorm)

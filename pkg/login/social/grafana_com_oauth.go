@@ -29,7 +29,7 @@ type OrgRecord struct {
 }
 
 func NewGrafanaComProvider(settings map[string]any, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGrafanaCom, error) {
-	info, err := createOAuthInfoFromKeyValues(settings)
+	info, err := CreateOAuthInfoFromKeyValues(settings)
 	if err != nil {
 		return nil, err
 	}

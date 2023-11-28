@@ -61,7 +61,17 @@ func (api *Api) listAllProvidersSettings(c *contextmodel.ReqContext) response.Re
 		return response.Error(500, "Failed to get providers", err)
 	}
 
-	return response.JSON(http.StatusOK, providers)
+	dtos := make([]*models.SSOSettingsDTO, 0)
+	for _, provider := range providers {
+		dto, err := provider.ToSSOSettingsDTO()
+		if err != nil {
+			// TODO: handle error
+		} else {
+			dtos = append(dtos, dto)
+		}
+	}
+
+	return response.JSON(http.StatusOK, dtos)
 }
 
 func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Response {
@@ -75,7 +85,12 @@ func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Respons
 		return response.Error(http.StatusNotFound, "The provider was not found", err)
 	}
 
-	return response.JSON(http.StatusOK, settings)
+	dto, err := settings.ToSSOSettingsDTO()
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "The provider is invalid", err)
+	}
+
+	return response.JSON(http.StatusOK, dto)
 }
 
 func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Response {
@@ -84,14 +99,19 @@ func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "Missing key", nil)
 	}
 
-	var newSettings models.SSOSettings
-	if err := web.Bind(c.Req, &newSettings); err != nil {
+	var settingsDTO models.SSOSettingsDTO
+	if err := web.Bind(c.Req, &settingsDTO); err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to parse request body", err)
 	}
 
-	dbSettings := newSettings.ToSSOSettingsDb()
+	settings, err := settingsDTO.ToSSOSettings()
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Invalid request body", err)
+	}
 
-	err := api.SSOSettingsService.Upsert(c.Req.Context(), key, dbSettings.Settings)
+	settings.Provider = key
+
+	err = api.SSOSettingsService.Upsert(c.Req.Context(), *settings)
 	// TODO: first check whether the error is referring to validation errors
 
 	// other error
