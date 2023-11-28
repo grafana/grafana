@@ -108,6 +108,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
               {...register(`contactPoints.${alertManager}.groupWaitValue`, { validate: promDurationValidator })}
               aria-label="Group wait value"
               className={formStyles.promDurationInput}
+              placeholder={TIMING_OPTIONS_DEFAULTS.group_wait}
             />
           </Field>
           <Field
@@ -122,6 +123,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
               })}
               aria-label="Group interval value"
               className={formStyles.promDurationInput}
+              placeholder={TIMING_OPTIONS_DEFAULTS.group_interval}
             />
           </Field>
           <Field
@@ -139,6 +141,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
               })}
               aria-label="Repeat interval value"
               className={formStyles.promDurationInput}
+              placeholder={TIMING_OPTIONS_DEFAULTS.repeat_interval}
             />
           </Field>
         </>
