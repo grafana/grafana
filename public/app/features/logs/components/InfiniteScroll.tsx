@@ -31,6 +31,8 @@ export const InfiniteScroll = ({ children, loading, loadMoreLogs, range, rows, s
       return;
     }
 
+    console.log(scrollElement);
+
     function handleScroll(e: Event) {
       if (!scrollElement || !loadMoreLogs || !rows.length || loading) {
         return;
@@ -100,6 +102,10 @@ enum ScrollDirection {
   NoScroll = 0
 }
 function shouldLoadMore(element: HTMLDivElement, lastScroll: number): ScrollDirection {
+  // Disable behavior if there is no scroll
+  if (element.scrollHeight <= element.clientHeight) {
+    return ScrollDirection.NoScroll;
+  }
   const delta = element.scrollTop - lastScroll;
   const scrollDirection = delta <= 0 ? ScrollDirection.Top : ScrollDirection.Bottom;
   const diff = scrollDirection === ScrollDirection.Top ? 
