@@ -213,6 +213,26 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				Children:   []*navtree.NavLink{appLink},
 				Url:        s.cfg.AppSubURL + "/monitoring",
 			})
+		case navtree.NavIDInfrastructure:
+			treeRoot.AddSection(&navtree.NavLink{
+				Text:       "Infrastructure",
+				Id:         navtree.NavIDInfrastructure,
+				SubTitle:   "Observability and infrastructure apps",
+				Icon:       "heart-rate",
+				SortWeight: navtree.WeightInfrastructure,
+				Children:   []*navtree.NavLink{appLink},
+				Url:        s.cfg.AppSubURL + "/infrastructure",
+			})
+		case navtree.NavIDFrontend:
+			treeRoot.AddSection(&navtree.NavLink{
+				Text:       "Frontend",
+				Id:         navtree.NavIDFrontend,
+				SubTitle:   "Observability and infrastructure apps",
+				Icon:       "heart-rate",
+				SortWeight: navtree.WeightFrontend,
+				Children:   []*navtree.NavLink{appLink},
+				Url:        s.cfg.AppSubURL + "/frontend",
+			})
 		case navtree.NavIDAlertsAndIncidents:
 			alertsAndIncidentsChildren := []*navtree.NavLink{}
 			if alertingNode != nil {
@@ -252,12 +272,34 @@ func (s *ServiceImpl) hasAccessToInclude(c *contextmodel.ReqContext, pluginID st
 }
 
 func (s *ServiceImpl) readNavigationSettings() {
+	k8sCfg := NavigationAppConfig{SectionID: navtree.NavIDMonitoring, SortWeight: 1, Text: "Kubernetes"}
+	appO11yCfg := NavigationAppConfig{SectionID: navtree.NavIDMonitoring, SortWeight: 2, Text: "Application"}
+	profilesCfg := NavigationAppConfig{SectionID: navtree.NavIDMonitoring, SortWeight: 3, Text: "Profiles"}
+	frontendCfg := NavigationAppConfig{SectionID: navtree.NavIDMonitoring, SortWeight: 4, Text: "Frontend"}
+	syntheticsCfg := NavigationAppConfig{SectionID: navtree.NavIDMonitoring, SortWeight: 5, Text: "Synthetics"}
+
+	if s.features.IsEnabledGlobally(featuremgmt.FlagDockedMegaMenu) {
+		k8sCfg.SectionID = navtree.NavIDInfrastructure
+
+		appO11yCfg.SectionID = navtree.NavIDRoot
+		appO11yCfg.SortWeight = navtree.WeightApplication
+
+		profilesCfg.SectionID = navtree.NavIDExplore
+		profilesCfg.SortWeight = 1
+
+		frontendCfg.SectionID = navtree.NavIDFrontend
+		frontendCfg.SortWeight = 1
+
+		syntheticsCfg.SectionID = navtree.NavIDFrontend
+		syntheticsCfg.SortWeight = 2
+	}
+
 	s.navigationAppConfig = map[string]NavigationAppConfig{
-		"grafana-k8s-app":                  {SectionID: navtree.NavIDMonitoring, SortWeight: 1, Text: "Kubernetes"},
-		"grafana-app-observability-app":    {SectionID: navtree.NavIDMonitoring, SortWeight: 2, Text: "Application"},
-		"grafana-pyroscope-app":            {SectionID: navtree.NavIDMonitoring, SortWeight: 3, Text: "Profiles"},
-		"grafana-kowalski-app":             {SectionID: navtree.NavIDMonitoring, SortWeight: 4, Text: "Frontend"},
-		"grafana-synthetic-monitoring-app": {SectionID: navtree.NavIDMonitoring, SortWeight: 5, Text: "Synthetics"},
+		"grafana-k8s-app":                  k8sCfg,
+		"grafana-app-observability-app":    appO11yCfg,
+		"grafana-pyroscope-app":            profilesCfg,
+		"grafana-kowalski-app":             frontendCfg,
+		"grafana-synthetic-monitoring-app": syntheticsCfg,
 		"grafana-oncall-app":               {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 1, Text: "OnCall"},
 		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 2, Text: "Incidents"},
 		"grafana-ml-app":                   {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3, Text: "Machine Learning"},

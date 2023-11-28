@@ -21,6 +21,7 @@ export const availableIconsIndex = {
   'angle-up': true,
   'align-left': true,
   'align-right': true,
+  'application-observability': true,
   apps: true,
   arrow: true,
   'arrow-down': true,
