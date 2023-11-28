@@ -1,5 +1,5 @@
 import { AdHocVariableModel, TypedVariableModel, VariableModel } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, getEchoSrv } from '@grafana/runtime';
 import {
   VizPanel,
   SceneTimePicker,
@@ -28,6 +28,7 @@ import {
   TextBoxVariable,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { trackDashboardLoaded } from 'app/features/dashboard/utils/tracking';
 import { DashboardDTO } from 'app/types';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
@@ -64,7 +65,10 @@ export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
     autoMigrateOldPanels: false,
   });
 
-  return createDashboardSceneFromDashboardModel(oldModel);
+  const scene = createDashboardSceneFromDashboardModel(oldModel);
+  scene.state.$behaviors?.push(registerDashboardSceneTracking(oldModel, rsp.dashboard.version));
+
+  return scene;
 }
 
 export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridItemLike[] {
@@ -241,6 +245,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     }),
     $variables: variables,
     $behaviors: [
+      registerDashboardSceneTracking(oldModel),
       registerDashboardMacro,
       new behaviors.CursorSync({
         sync: oldModel.graphTooltip,
@@ -447,3 +452,17 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
 }
 
 const isAdhocVariable = (v: VariableModel): v is AdHocVariableModel => v.type === 'adhoc';
+
+export function registerDashboardSceneTracking(model: DashboardModel, version?: number) {
+  return () => {
+    const unsetEchoMetaExtensions = getEchoSrv().setMetaExtensions({
+      scenesView: true,
+    });
+
+    trackDashboardLoaded(model, version);
+
+    return () => {
+      unsetEchoMetaExtensions();
+    };
+  };
+}
