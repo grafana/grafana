@@ -51,7 +51,6 @@
     "esbuild": "0.18.12",
     "eslint-plugin-jest": "27.6.0",
     "glob": "^10.2.7",
-    "jest": "29.7.0",
     "rimraf": "5.0.1",
     "rollup": "2.79.1",
     "rollup-plugin-dts": "^5.0.0",

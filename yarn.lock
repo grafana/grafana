@@ -3371,7 +3371,6 @@ __metadata:
     esbuild: "npm:0.18.12"
     eslint-plugin-jest: "npm:27.6.0"
     glob: "npm:^10.2.7"
-    jest: "npm:29.7.0"
     react: "npm:18.2.0"
     react-use: "npm:17.4.0"
     rimraf: "npm:5.0.1"
