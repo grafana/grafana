@@ -42,7 +42,7 @@ func generateQuery(resFormat string, alias string) *models.Query {
 var testFiles = []string{
 	"all_values_are_null",
 	"one_measurement_with_two_columns",
-	"response",
+	"response_with_weird_tag",
 	"some_values_are_null",
 	"error_on_top_level_response",
 	"simple_response",

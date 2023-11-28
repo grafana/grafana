@@ -9,8 +9,7 @@
             "mean"
           ],
           "tags": {
-            "datacenter": "America",
-            "cluster-name": "Cluster"
+            "datacenter": "America"
           },
           "values": [
             [
@@ -26,8 +25,7 @@
             "mean"
           ],
           "tags": {
-            "datacenter": "America",
-            "cluster-name": "Cluster"
+            "datacenter": "America"
           },
           "values": [
             [
