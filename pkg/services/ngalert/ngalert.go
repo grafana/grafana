@@ -177,7 +177,9 @@ func (ng *AlertNG) init() error {
 	if ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Enable {
 		override := notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
 			externalAMCfg := remote.AlertmanagerConfig{}
-			return remote.NewAlertmanager(externalAMCfg, orgID, ng.KVStore)
+			// We won't be handling files on disk, we can pass an empty string as workingDirPath.
+			stateStore := notifier.NewFileStore(orgID, ng.KVStore, "")
+			return remote.NewAlertmanager(externalAMCfg, orgID, stateStore)
 		})
 
 		overrides = append(overrides, override)
