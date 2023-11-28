@@ -8,13 +8,22 @@ import (
 	"github.com/grafana/grafana/pkg/services/anonymous"
 )
 
+type FakeService struct {
+	ExpectedCountDevices int64
+	ExpectedError        error
+}
+
+func NewFakeService() *FakeService {
+	return &FakeService{}
+}
+
 type FakeAnonymousSessionService struct {
 }
 
-func (f *FakeAnonymousSessionService) TagDevice(ctx context.Context, httpReq *http.Request, kind anonymous.DeviceKind) error {
+func (f *FakeService) TagDevice(ctx context.Context, httpReq *http.Request, kind anonymous.DeviceKind) error {
 	return nil
 }
 
-func (f *FakeAnonymousSessionService) CountDevices(ctx context.Context, from time.Time, to time.Time) (int64, error) {
-	return 0, nil
+func (f *FakeService) CountDevices(ctx context.Context, from time.Time, to time.Time) (int64, error) {
+	return f.ExpectedCountDevices, nil
 }
