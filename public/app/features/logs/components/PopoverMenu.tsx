@@ -87,8 +87,8 @@ export const PopoverMenu = ({
 function track(action: string, selectionLength: number, dataSourceType: string | undefined) {
   reportInteraction(`grafana_explore_logs_popover_menu`, {
     action,
-    selection_length: selectionLength,
-    ds_type: dataSourceType || 'unknown',
+    selectionLength: selectionLength,
+    datasourceType: dataSourceType || 'unknown',
   });
 }
 
