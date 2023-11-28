@@ -26,37 +26,31 @@ export function DataTrailCard({ trail, onSelect, onDelete }: Props) {
   const dsValue = getDataSource(trail);
 
   return (
-    <div className={styles.wrapper}>
-      <button className={styles.container} onClick={() => onSelect(trail)}>
+    <button className={styles.container} onClick={() => onSelect(trail)}>
+      <div className={styles.wrapper}>
         <div className={styles.heading}>{getMetricName(trail.state.metric)}</div>
-        <Stack gap={1.5}>
-          {dsValue && (
-            <Stack direction="column" gap={0.5}>
-              <div className={styles.label}>Datasource</div>
-              <div className={styles.value}>{getDataSource(trail)}</div>
-            </Stack>
-          )}
-          {filters.map((filter, index) => (
-            <Stack key={index} direction="column" gap={0.5}>
-              <div className={styles.label}>{filter.key}</div>
-              <div className={styles.value}>{filter.value}</div>
-            </Stack>
-          ))}
-        </Stack>
-      </button>
-      {onDelete && (
-        <Tooltip content={'Remove bookmark'}>
-          <Button
-            size="sm"
-            icon="trash-alt"
-            variant="destructive"
-            fill="text"
-            className={styles.delete}
-            onClick={onDelete}
-          />
-        </Tooltip>
-      )}
-    </div>
+        {onDelete && (
+          <Tooltip content={'Remove bookmark'}>
+            <Button size="sm" icon="trash-alt" variant="destructive" fill="text" onClick={onDelete} />
+          </Tooltip>
+        )}
+      </div>
+
+      <Stack gap={1.5}>
+        {dsValue && (
+          <Stack direction="column" gap={0.5}>
+            <div className={styles.label}>Datasource</div>
+            <div className={styles.value}>{getDataSource(trail)}</div>
+          </Stack>
+        )}
+        {filters.map((filter, index) => (
+          <Stack key={index} direction="column" gap={0.5}>
+            <div className={styles.label}>{filter.key}</div>
+            <div className={styles.value}>{filter.value}</div>
+          </Stack>
+        ))}
+      </Stack>
+    </button>
   );
 }
 
@@ -106,20 +100,17 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(0),
       display: 'flex',
       fontWeight: theme.typography.fontWeightMedium,
-      width: '100%',
       overflowX: 'hidden',
     }),
     body: css({
       padding: theme.spacing(0),
     }),
-    delete: css({
-      position: 'absolute',
-      top: '2px',
-      right: '2px',
-    }),
     wrapper: css({
       position: 'relative',
       display: 'flex',
+      gap: theme.spacing.x1,
+      justifyContent: 'space-between',
+      width: '100%',
     }),
   };
 }
