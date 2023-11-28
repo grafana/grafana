@@ -74,8 +74,8 @@ type OAuthInfo struct {
 	TlsSkipVerify           bool              `mapstructure:"tls_skip_verify_insecure"`
 	UsePKCE                 bool              `mapstructure:"use_pkce"`
 	UseRefreshToken         bool              `mapstructure:"use_refresh_token"`
+	SignoutRedirectUrl      string            `mapstructure:"signout_redirect_url"`
 	Extra                   map[string]string `mapstructure:",remain"`
-	SignoutRedirectUrl      string   `toml:"signout_redirect_url"`
 }
 
 func ProvideService(cfg *setting.Cfg,
