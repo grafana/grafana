@@ -65,9 +65,7 @@ func TestReadInfluxAsTable(t *testing.T) {
 //lint:ignore U1000 Ignore used function for now
 func runScenario(tf string, resultFormat string) func(t *testing.T) {
 	return func(t *testing.T) {
-		// Safe to disable, this is a test.
-		// nolint:gosec
-		f, err := os.Open(path.Join("testdata", tf+".json"))
+		f, err := os.Open(path.Join("testdata", filepath.Clean(tf+".json")))
 		require.NoError(t, err)
 
 		var rsp *backend.DataResponse
