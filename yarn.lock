@@ -17583,7 +17583,7 @@ __metadata:
     slate: "npm:0.47.9"
     slate-plain-serializer: "npm:0.7.13"
     slate-react: "npm:0.22.10"
-    sql-formatter-plus: "grafana/sql-formatter-plus#63fc70639f3f8aa0fedf64041d02d324757a5894"
+    sql-formatter-plus: "grafana/sql-formatter-plus#53b0b378153ee676228b375e9a6fc38a54cea687"
     style-loader: "npm:3.3.3"
     stylelint: "npm:15.11.0"
     stylelint-config-prettier: "npm:9.0.5"
@@ -27981,10 +27981,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sql-formatter-plus@grafana/sql-formatter-plus#63fc70639f3f8aa0fedf64041d02d324757a5894":
+"sql-formatter-plus@grafana/sql-formatter-plus#53b0b378153ee676228b375e9a6fc38a54cea687":
   version: 1.3.6
-  resolution: "sql-formatter-plus@https://github.com/grafana/sql-formatter-plus.git#commit=63fc70639f3f8aa0fedf64041d02d324757a5894"
-  checksum: f66a075fe2f18d31a438557627ce55e6a36b86a2b1701434b26f2ecbb3b112be44f4ded1c751ec898f6ba85cd9b38f594e6552af74846192be2797d458464928
+  resolution: "sql-formatter-plus@https://github.com/grafana/sql-formatter-plus.git#commit=53b0b378153ee676228b375e9a6fc38a54cea687"
+  checksum: baf04d42133abb771e70cff5df167fbf0fb507a9d2e57135e0dd8f6c9b6110c76182a1b1dc2bcb5487d2e78b0da4c10df81ecac52ea7a4041d2e3a5745a292c3
   languageName: node
   linkType: hard
 
