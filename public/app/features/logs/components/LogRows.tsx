@@ -97,7 +97,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   };
 
   popoverMenuSupported() {
-    if (!config.featureToggles.logRowsPopoverMenu) {
+    if (!config.featureToggles.logRowsPopoverMenu || this.props.app !== CoreApp.Explore) {
       return false;
     }
     return Boolean(this.props.onClickFilterOutValue || this.props.onClickFilterValue);
