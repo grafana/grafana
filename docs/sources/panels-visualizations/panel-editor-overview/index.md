@@ -24,7 +24,7 @@ labels:
     - oss
 menuTitle: Panel editor overview
 title: Panel editor overview
-weight: 1
+weight: 20
 ---
 
 # Panel editor overview

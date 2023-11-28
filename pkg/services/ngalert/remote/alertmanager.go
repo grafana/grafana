@@ -26,6 +26,10 @@ import (
 
 const readyPath = "/-/ready"
 
+type stateStore interface {
+	GetFullState(ctx context.Context, keys ...string) (string, error)
+}
+
 type Alertmanager struct {
 	log      log.Logger
 	orgID    int64
@@ -34,10 +38,11 @@ type Alertmanager struct {
 
 	amClient    *amclient.AlertmanagerAPI
 	httpClient  *http.Client
-	fstore      *notifier.FileStore
+	store       stateStore
 	mimirClient mimirClient.MimirClient
 	ready       bool
 	sender      *sender.ExternalAlertmanager
+	stateStore  stateStore
 }
 
 type AlertmanagerConfig struct {
@@ -46,7 +51,7 @@ type AlertmanagerConfig struct {
 	BasicAuthPassword string
 }
 
-func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, fstore *notifier.FileStore) (*Alertmanager, error) {
+func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, store stateStore) (*Alertmanager, error) {
 	client := http.Client{
 		Transport: &mimirClient.MimirAuthRoundTripper{
 			TenantID: cfg.TenantID,
@@ -100,8 +105,9 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, fstore *notifier.FileS
 		mimirClient: mc,
 		amClient:    amclient.New(transport, nil),
 		httpClient:  &client,
-		fstore:      fstore,
+		store:       store,
 		sender:      s,
+		stateStore:  store,
 		orgID:       orgID,
 		tenantID:    cfg.TenantID,
 		url:         cfg.URL,
@@ -140,7 +146,7 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 	am.log.Debug("Start state upload to remote Alertmanager", "url", am.url)
 
 	// Get the base64-encoded state and send if necessary.
-	state, err := am.fstore.GetFullState(ctx)
+	state, err := am.store.GetFullState(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting the Alertmanager's full state: %w", err)
 	}
