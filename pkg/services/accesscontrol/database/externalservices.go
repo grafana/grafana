@@ -95,7 +95,7 @@ func genExternalServiceRole(cmd accesscontrol.SaveExternalServiceRoleCommand) ac
 
 func genExternalServiceAssignment(cmd accesscontrol.SaveExternalServiceRoleCommand) accesscontrol.UserRole {
 	assignment := accesscontrol.UserRole{
-		OrgID:   cmd.OrgID,
+		OrgID:   cmd.AssignmentOrgID,
 		UserID:  cmd.ServiceAccountID,
 		Created: time.Now(),
 	}

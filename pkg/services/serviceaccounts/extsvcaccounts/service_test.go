@@ -84,7 +84,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 					mock.Anything,
 					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
 						return cmd.ServiceAccountID == extSvcAccID && cmd.ExternalServiceID == extSvcSlug &&
-							cmd.OrgID == extSvcOrgID && len(cmd.Permissions) == 1 &&
+							cmd.AssignmentOrgID == extSvcOrgID && len(cmd.Permissions) == 1 &&
 							cmd.Permissions[0] == extSvcPerms[0]
 					})).
 					Return(nil)
@@ -133,7 +133,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 					mock.Anything,
 					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
 						return cmd.ServiceAccountID == extSvcAccount.Id && cmd.ExternalServiceID == extSvcSlug &&
-							cmd.OrgID == extSvcOrgID && len(cmd.Permissions) == 1 &&
+							cmd.AssignmentOrgID == extSvcOrgID && len(cmd.Permissions) == 1 &&
 							cmd.Permissions[0] == extSvcPerms[0]
 					})).
 					Return(nil)
@@ -158,7 +158,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 					mock.Anything,
 					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
 						return cmd.ServiceAccountID == int64(11) && cmd.ExternalServiceID == extSvcSlug &&
-							cmd.OrgID == extSvcOrgID && len(cmd.Permissions) == 1 &&
+							cmd.AssignmentOrgID == extSvcOrgID && len(cmd.Permissions) == 1 &&
 							cmd.Permissions[0] == extSvcPerms[0]
 					})).
 					Return(nil)
@@ -228,7 +228,7 @@ func TestExtSvcAccountsService_SaveExternalService(t *testing.T) {
 					mock.Anything,
 					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
 						return cmd.ServiceAccountID == extSvcAccID && cmd.ExternalServiceID == extSvcSlug &&
-							cmd.OrgID == tmpOrgID && len(cmd.Permissions) == 1 &&
+							cmd.AssignmentOrgID == tmpOrgID && len(cmd.Permissions) == 1 &&
 							cmd.Permissions[0] == extSvcPerms[0]
 					})).
 					Return(nil)
@@ -298,7 +298,7 @@ func TestExtSvcAccountsService_SaveExternalService(t *testing.T) {
 					mock.Anything,
 					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
 						return cmd.ServiceAccountID == extSvcAccount.Id && cmd.ExternalServiceID == extSvcSlug &&
-							cmd.OrgID == tmpOrgID && len(cmd.Permissions) == 1 &&
+							cmd.AssignmentOrgID == tmpOrgID && len(cmd.Permissions) == 1 &&
 							cmd.Permissions[0] == extSvcPerms[0]
 					})).
 					Return(nil)
@@ -327,7 +327,7 @@ func TestExtSvcAccountsService_SaveExternalService(t *testing.T) {
 					mock.Anything,
 					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
 						return cmd.ServiceAccountID == int64(11) && cmd.ExternalServiceID == extSvcSlug &&
-							cmd.OrgID == tmpOrgID && len(cmd.Permissions) == 1 &&
+							cmd.AssignmentOrgID == tmpOrgID && len(cmd.Permissions) == 1 &&
 							cmd.Permissions[0] == extSvcPerms[0]
 					})).
 					Return(nil)

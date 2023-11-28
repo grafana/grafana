@@ -274,7 +274,7 @@ type SetResourcePermissionCommand struct {
 }
 
 type SaveExternalServiceRoleCommand struct {
-	OrgID             int64
+	AssignmentOrgID   int64
 	ExternalServiceID string
 	ServiceAccountID  int64
 	Permissions       []Permission

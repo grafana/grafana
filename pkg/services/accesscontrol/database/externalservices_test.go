@@ -27,7 +27,7 @@ func TestAccessControlStore_SaveExternalServiceRole(t *testing.T) {
 				{
 					cmd: accesscontrol.SaveExternalServiceRoleCommand{
 						ExternalServiceID: "app1",
-						OrgID:             1,
+						AssignmentOrgID:   1,
 						ServiceAccountID:  1,
 						Permissions: []accesscontrol.Permission{
 							{Action: "users:read", Scope: "users:id:1"},
@@ -44,7 +44,7 @@ func TestAccessControlStore_SaveExternalServiceRole(t *testing.T) {
 				{
 					cmd: accesscontrol.SaveExternalServiceRoleCommand{
 						ExternalServiceID: "app1",
-						OrgID:             1,
+						AssignmentOrgID:   1,
 						ServiceAccountID:  1,
 						Permissions: []accesscontrol.Permission{
 							{Action: "users:read", Scope: "users:id:1"},
@@ -55,7 +55,7 @@ func TestAccessControlStore_SaveExternalServiceRole(t *testing.T) {
 				{
 					cmd: accesscontrol.SaveExternalServiceRoleCommand{
 						ExternalServiceID: "app1",
-						OrgID:             1,
+						AssignmentOrgID:   1,
 						ServiceAccountID:  1,
 						Permissions: []accesscontrol.Permission{
 							{Action: "users:write", Scope: "users:id:1"},
@@ -71,7 +71,7 @@ func TestAccessControlStore_SaveExternalServiceRole(t *testing.T) {
 				{
 					cmd: accesscontrol.SaveExternalServiceRoleCommand{
 						ExternalServiceID: "app1",
-						OrgID:             1,
+						AssignmentOrgID:   1,
 						ServiceAccountID:  1,
 						Permissions: []accesscontrol.Permission{
 							{Action: "users:read", Scope: "users:id:1"},
@@ -82,7 +82,7 @@ func TestAccessControlStore_SaveExternalServiceRole(t *testing.T) {
 				{
 					cmd: accesscontrol.SaveExternalServiceRoleCommand{
 						ExternalServiceID: "app1",
-						OrgID:             1,
+						AssignmentOrgID:   1,
 						ServiceAccountID:  1,
 						Permissions:       []accesscontrol.Permission{},
 					},
@@ -95,14 +95,14 @@ func TestAccessControlStore_SaveExternalServiceRole(t *testing.T) {
 				{
 					cmd: accesscontrol.SaveExternalServiceRoleCommand{
 						ExternalServiceID: "app1",
-						OrgID:             1,
+						AssignmentOrgID:   1,
 						ServiceAccountID:  1,
 					},
 				},
 				{
 					cmd: accesscontrol.SaveExternalServiceRoleCommand{
 						ExternalServiceID: "app1",
-						OrgID:             1,
+						AssignmentOrgID:   1,
 						ServiceAccountID:  2,
 					},
 					wantErr: true,
@@ -142,7 +142,7 @@ func TestAccessControlStore_SaveExternalServiceRole(t *testing.T) {
 					has, err := sess.Where("role_id = ? AND user_id = ?", storedRole.ID, tt.runs[i].cmd.ServiceAccountID).Get(&assignment)
 					require.NoError(t, err)
 					require.True(t, has)
-					require.Equal(t, tt.runs[i].cmd.OrgID, assignment.OrgID, "Incorrect OrgID for the role assignment")
+					require.Equal(t, tt.runs[i].cmd.AssignmentOrgID, assignment.OrgID, "Incorrect OrgID for the role assignment")
 
 					return nil
 				})
@@ -169,7 +169,7 @@ func TestAccessControlStore_DeleteExternalServiceRole(t *testing.T) {
 			name: "delete local role",
 			init: func(t *testing.T, ctx context.Context, s *AccessControlStore) {
 				errSave := s.SaveExternalServiceRole(ctx, accesscontrol.SaveExternalServiceRoleCommand{
-					OrgID:             2,
+					AssignmentOrgID:   2,
 					ExternalServiceID: extID,
 					ServiceAccountID:  3,
 					Permissions: []accesscontrol.Permission{
@@ -186,7 +186,7 @@ func TestAccessControlStore_DeleteExternalServiceRole(t *testing.T) {
 			name: "delete global role",
 			init: func(t *testing.T, ctx context.Context, s *AccessControlStore) {
 				errSave := s.SaveExternalServiceRole(ctx, accesscontrol.SaveExternalServiceRoleCommand{
-					OrgID:             1,
+					AssignmentOrgID:   1,
 					ExternalServiceID: extID,
 					ServiceAccountID:  3,
 					Permissions: []accesscontrol.Permission{
