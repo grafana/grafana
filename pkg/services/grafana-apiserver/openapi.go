@@ -9,7 +9,7 @@ import (
 )
 
 // This should eventually live in grafana-app-sdk
-func getOpenAPIDefinitions(builders []APIGroupBuilder) common.GetOpenAPIDefinitions {
+func GetOpenAPIDefinitions(builders []APIGroupBuilder) common.GetOpenAPIDefinitions {
 	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 		defs := getStandardOpenAPIDefinitions(ref)
 		for _, builder := range builders {

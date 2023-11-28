@@ -5,15 +5,16 @@ import (
 	"io"
 	"net"
 
-	"github.com/grafana/grafana/pkg/registry/apis/example"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
+	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
+	"k8s.io/apiserver/pkg/util/openapi"
 	netutils "k8s.io/utils/net"
 )
 
@@ -57,19 +58,11 @@ func newExampleServerOptions(out, errOut io.Writer) *ExampleServerOptions {
 	}
 }
 
-func (o *ExampleServerOptions) LoadAPIGroupBuilders(args []string, builders []grafanaAPIServer.APIGroupBuilder) error {
-	for _, g := range args {
-		switch g {
-		// No dependencies for testing
-		case "example.grafana.app":
-			o.builders = append(o.builders, &example.TestingAPIBuilder{})
-		case "playlist.grafana.app":
-			fallthrough
-		case "snapshots.grafana.app":
-			o.builders = builders
-		default:
-			return fmt.Errorf("unknown group: %s", g)
-		}
+func (o *ExampleServerOptions) LoadAPIGroupBuilders(builders []grafanaAPIServer.APIGroupBuilder) error {
+	o.builders = builders
+
+	if len(o.builders) < 1 {
+		return fmt.Errorf("expected group name(s) in the command line arguments")
 	}
 
 	// Install schemas
@@ -77,6 +70,45 @@ func (o *ExampleServerOptions) LoadAPIGroupBuilders(args []string, builders []gr
 		if err := b.InstallSchema(Scheme); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+// A copy of ApplyTo in recommended.go, but for >= 0.28, server pkg in apiserver does a bit extra causing
+// a panic when CoreAPI is set to nil
+func (o *ExampleServerOptions) ApplyTo(config *genericapiserver.RecommendedConfig) error {
+	if err := o.RecommendedOptions.Etcd.ApplyTo(&config.Config); err != nil {
+		return err
+	}
+	if err := o.RecommendedOptions.EgressSelector.ApplyTo(&config.Config); err != nil {
+		return err
+	}
+	if err := o.RecommendedOptions.Traces.ApplyTo(config.Config.EgressSelector, &config.Config); err != nil {
+		return err
+	}
+	if err := o.RecommendedOptions.SecureServing.ApplyTo(&config.Config.SecureServing, &config.Config.LoopbackClientConfig); err != nil {
+		return err
+	}
+	if err := o.RecommendedOptions.Authentication.ApplyTo(&config.Config.Authentication, config.SecureServing, config.OpenAPIConfig); err != nil {
+		return err
+	}
+	if err := o.RecommendedOptions.Authorization.ApplyTo(&config.Config.Authorization); err != nil {
+		return err
+	}
+	if err := o.RecommendedOptions.Audit.ApplyTo(&config.Config); err != nil {
+		return err
+	}
+	if err := o.RecommendedOptions.Features.ApplyTo(&config.Config); err != nil {
+		return err
+	}
+
+	if err := o.RecommendedOptions.CoreAPI.ApplyTo(config); err != nil {
+		return err
+	}
+
+	_, err := o.RecommendedOptions.ExtraAdmissionInitializers(config)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -95,9 +127,22 @@ func (o *ExampleServerOptions) Config() (*genericapiserver.RecommendedConfig, er
 
 	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
 
-	if err := o.RecommendedOptions.ApplyTo(serverConfig); err != nil {
+	if err := o.ApplyTo(serverConfig); err != nil {
 		return nil, err
 	}
+
+	// Add OpenAPI specs for each group+version
+	defsGetter := grafanaAPIServer.GetOpenAPIDefinitions(o.builders)
+	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
+		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
+		openapinamer.NewDefinitionNamer(Scheme))
+
+	serverConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(
+		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
+		openapinamer.NewDefinitionNamer(Scheme))
+
+	// Add the custom routes to service discovery
+	serverConfig.OpenAPIV3Config.PostProcessSpec3 = grafanaAPIServer.GetOpenAPIPostProcessor(o.builders)
 
 	return serverConfig, nil
 }

@@ -270,7 +270,7 @@ func (s *service) start(ctx context.Context) error {
 	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
 
 	// Add OpenAPI specs for each group+version
-	defsGetter := getOpenAPIDefinitions(builders)
+	defsGetter := GetOpenAPIDefinitions(builders)
 	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
 		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
 		openapinamer.NewDefinitionNamer(Scheme, scheme.Scheme))
@@ -280,7 +280,7 @@ func (s *service) start(ctx context.Context) error {
 		openapinamer.NewDefinitionNamer(Scheme, scheme.Scheme))
 
 	// Add the custom routes to service discovery
-	serverConfig.OpenAPIV3Config.PostProcessSpec3 = getOpenAPIPostProcessor(builders)
+	serverConfig.OpenAPIV3Config.PostProcessSpec3 = GetOpenAPIPostProcessor(builders)
 
 	// Set the swagger build versions
 	serverConfig.OpenAPIConfig.Info.Version = setting.BuildVersion

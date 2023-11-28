@@ -8,6 +8,10 @@ import (
 
 type FakeSecretsService struct{}
 
+func ProvideFakeSecretsService() *FakeSecretsService {
+	return &FakeSecretsService{}
+}
+
 func NewFakeSecretsService() FakeSecretsService {
 	return FakeSecretsService{}
 }
