@@ -175,9 +175,13 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 	am, err := NewAlertmanager(cfg, 1, fstore)
 	require.NoError(t, err)
 
-	// We should have no configuration at first.
+	// We should have no configuration or state at first.
 	{
-		_, err = am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
+		_, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
+		require.Error(t, err)
+		require.Equal(t, "Error response from the Mimir API: alertmanager storage object not found", err.Error())
+
+		_, err = am.mimirClient.GetGrafanaAlertmanagerState(ctx)
 		require.Error(t, err)
 		require.Equal(t, "Error response from the Mimir API: alertmanager storage object not found", err.Error())
 	}
@@ -190,7 +194,7 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 		// First, we need to verify that the readiness check passes.
 		require.True(t, am.Ready())
 
-		// Next, we need to verify that Mimir received the configuration.
+		// Next, we need to verify that Mimir received both the configuration and state.
 		config, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 		require.NoError(t, err)
 		require.Equal(t, int64(100), config.ID)
@@ -199,7 +203,6 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 		require.Equal(t, fakeConfigCreatedAt, config.CreatedAt)
 		require.Equal(t, true, config.Default)
 
-		// Check that the state was saved.
 		state, err := am.mimirClient.GetGrafanaAlertmanagerState(ctx)
 		require.NoError(t, err)
 		require.Equal(t, encodedFullState, state.State)
