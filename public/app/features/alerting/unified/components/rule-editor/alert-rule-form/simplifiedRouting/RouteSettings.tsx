@@ -49,16 +49,10 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
         <Field
           label="Group by"
           description="Group alerts when you receive a notification based on labels. If empty it will be inherited from the default notification policy."
+          {...register(`contactPoints.${alertManager}.groupBy`, { required: true })}
+          invalid={!!errors.contactPoints?.[alertManager]?.groupBy}
         >
           <InputControl
-            rules={{
-              validate: (value) => {
-                if (!value || value.length === 0) {
-                  return 'At least one group by option is required.';
-                }
-                return true;
-              },
-            }}
             render={({ field: { onChange, ref, ...field }, fieldState: { error } }) => (
               <>
                 <MultiSelect
@@ -71,12 +65,12 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
                     setGroupByOptions((opts) => [...opts, stringToSelectableValue(opt)]);
 
                     // @ts-ignore-check: react-hook-form made me do this
-                    setValue(`contactPoints.${contactPointIndex}.groupBy`, [...field.value, opt]);
+                    setValue(`contactPoints.${alertManager}.groupBy`, [...field.value, opt]);
                   }}
                   onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
                   options={[...commonGroupByOptions, ...groupByOptions]}
                 />
-                {error && <FieldValidationMessage>{error.message}</FieldValidationMessage>}
+                {error && <FieldValidationMessage>{'At least one group by option is required'}</FieldValidationMessage>}
               </>
             )}
             name={`contactPoints.${alertManager}.groupBy`}
