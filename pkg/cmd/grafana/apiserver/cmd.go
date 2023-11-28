@@ -1,13 +1,12 @@
 package apiserver
 
 import (
-	"context"
 	"fmt"
 	"os"
+	// "context"
 
-	"github.com/grafana/grafana/pkg/registry/apis/example"
-	"github.com/grafana/grafana/pkg/registry/apis/playlist"
-	"github.com/grafana/grafana/pkg/registry/apis/snapshots"
+	// "github.com/grafana/grafana/pkg/registry/apis/playlist"
+	// "github.com/grafana/grafana/pkg/registry/apis/snapshots"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/spf13/cobra"
@@ -16,7 +15,7 @@ import (
 	"k8s.io/component-base/cli"
 )
 
-func newCommandStartExampleAPIServer(o *ExampleServerOptions, stopCh <-chan struct{}, snapshotsBuilder *snapshots.SnapshotsAPIBuilder, playlistBuilder *playlist.PlaylistAPIBuilder) *cobra.Command {
+func newCommandStartExampleAPIServer(o *ExampleServerOptions, stopCh <-chan struct{}) *cobra.Command {
 	// While this exists as an experimental feature, we require adding the scarry looking command line
 	devAcknowledgementFlag := "grafana-enable-experimental-apiserver"
 	devAcknowledgementNotice := "The apiserver command is in heavy development.  The entire setup is subject to change without notice"
@@ -36,8 +35,13 @@ func newCommandStartExampleAPIServer(o *ExampleServerOptions, stopCh <-chan stru
 			}
 		},
 		RunE: func(c *cobra.Command, args []string) error {
+			cfg, _ := setting.NewCfgFromArgs(setting.CommandLineArgs{
+				Config:   "conf/custom.ini",
+				HomePath: "./",
+			})
+
 			// Parse builders for each group in the args
-			builders, err := ParseAPIGroupArgs(args[1:], snapshotsBuilder, playlistBuilder)
+			builders, err := ParseAPIGroupArgs(cfg, args[1:])
 			if err != nil {
 				return err
 			}
@@ -76,17 +80,28 @@ func newCommandStartExampleAPIServer(o *ExampleServerOptions, stopCh <-chan stru
 	return cmd
 }
 
-func ParseAPIGroupArgs(args []string, snapshotsBuilder *snapshots.SnapshotsAPIBuilder, playlistBuilder *playlist.PlaylistAPIBuilder) ([]grafanaAPIServer.APIGroupBuilder, error) {
+func ParseAPIGroupArgs(cfg *setting.Cfg, args []string) ([]grafanaAPIServer.APIGroupBuilder, error) {
 	builders := make([]grafanaAPIServer.APIGroupBuilder, 0)
 	for _, g := range args {
 		switch g {
-		// No dependencies for testing
 		case "example.grafana.app":
-			builders = append(builders, &example.TestingAPIBuilder{})
+			eb, err := initializeExampleAPIBuilder(cfg)
+			if err != nil {
+				return nil, err
+			}
+			builders = append(builders, eb)
 		case "playlist.grafana.app":
-			builders = append(builders, playlistBuilder)
+			pb, err := initializePlaylistsAPIBuilder(cfg)
+			if err != nil {
+				return nil, err
+			}
+			builders = append(builders, pb)
 		case "snapshots.grafana.app":
-			builders = append(builders, snapshotsBuilder)
+			sb, err := initializeSnapshotsAPIBuilder(cfg)
+			if err != nil {
+				return nil, err
+			}
+			builders = append(builders, sb)
 		}
 	}
 
@@ -102,14 +117,7 @@ func RunCLI() int {
 
 	options := newExampleServerOptions(os.Stdout, os.Stderr)
 
-	cfg, _ := setting.NewCfgFromArgs(setting.CommandLineArgs{
-		Config:   "conf/custom.ini",
-		HomePath: "./",
-	})
-	sb, _ := initializeSnapshotsAPIBuilder(context.Background(), cfg)
-	pb, _ := initializePlaylistsAPIBuilder(context.Background(), cfg)
-
-	cmd := newCommandStartExampleAPIServer(options, stopCh, sb, pb)
+	cmd := newCommandStartExampleAPIServer(options, stopCh)
 
 	return cli.Run(cmd)
 }

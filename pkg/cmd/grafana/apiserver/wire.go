@@ -4,14 +4,12 @@
 package apiserver
 
 import (
-	"context"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
-	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
+	"github.com/grafana/grafana/pkg/registry/apis/example"
 	"github.com/grafana/grafana/pkg/registry/apis/playlist"
 	"github.com/grafana/grafana/pkg/registry/apis/snapshots"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -52,20 +50,25 @@ var playlistsWireSet = wire.NewSet(
 	playlistimpl.ProvideService,
 )
 
-func initializeSnapshotsAPIBuilder(ctx context.Context, cfg *setting.Cfg) (*snapshots.SnapshotsAPIBuilder, error) {
+func initializeExampleAPIBuilder(cfg *setting.Cfg) (*example.TestingAPIBuilder, error) {
+	wire.Build(example.NewAPIService)
+	return &example.TestingAPIBuilder{}, nil
+}
+
+func initializeSnapshotsAPIBuilder(cfg *setting.Cfg) (*snapshots.SnapshotsAPIBuilder, error) {
 	wire.Build(
 		dbWireSet,
 		dashboardSnapshotsWireSet,
-		apiregistry.WireSetSansApiReg,
+		snapshots.NewAPIService,
 	)
 	return &snapshots.SnapshotsAPIBuilder{}, nil
 }
 
-func initializePlaylistsAPIBuilder(ctx context.Context, cfg *setting.Cfg) (*playlist.PlaylistAPIBuilder, error) {
+func initializePlaylistsAPIBuilder(cfg *setting.Cfg) (*playlist.PlaylistAPIBuilder, error) {
 	wire.Build(
 		dbWireSet,
 		playlistsWireSet,
-		apiregistry.WireSetSansApiReg,
+		playlist.NewAPIService,
 	)
 	return &playlist.PlaylistAPIBuilder{}, nil
 }
