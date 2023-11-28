@@ -135,10 +135,10 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				assert.Nil(t, identity)
 				assert.ErrorIs(t, err, tt.expectedErr)
 				return
-			} else {
-				assert.NoError(t, err)
-				assert.EqualValues(t, *tt.expectedIdentity, *identity)
 			}
+
+			assert.NoError(t, err)
+			assert.EqualValues(t, *tt.expectedIdentity, *identity)
 			assert.Equal(t, tt.req.OrgID, tt.expectedIdentity.OrgID, "the request organization should match the identity's one")
 		})
 	}
