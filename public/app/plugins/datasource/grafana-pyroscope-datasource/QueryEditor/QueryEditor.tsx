@@ -16,6 +16,8 @@ import { QueryOptions } from './QueryOptions';
 
 export type Props = QueryEditorProps<PyroscopeDataSource, Query, PyroscopeDataSourceOptions>;
 
+const labelSelectorRegex = /(\w+)\s*=\s*("[^,"]+")/g;
+
 export function QueryEditor(props: Props) {
   const { onChange, onRunQuery, datasource, query, range, app } = props;
 
@@ -119,13 +121,14 @@ function useLabels(
     from: Math.floor((range?.from.valueOf() || 0) / 5000) * 5000,
   };
 
-  const createSelector = (queryLabelSelector: string, profileTypeId: string, labelToRemove: string): string => {
+  // Transforms user input into a valid label selector including the profile type.
+  // It can optionally remove a label, used to support editing existing label values.
+  const createSelector = (rawInput: string, profileTypeId: string, labelToRemove: string): string => {
     let labels: string[] = [
       `__profile_type__=\"${profileTypeId}\"`,
     ]
-    const regex = /(\w+)\s*=\s*("[^,"]+")/g;
     let match;
-    while ((match = regex.exec(queryLabelSelector)) !== null) {
+    while ((match = labelSelectorRegex.exec(rawInput)) !== null) {
       if (match[1] && match[2]) {
         if (match[1] === labelToRemove) {
           continue;
@@ -136,35 +139,36 @@ function useLabels(
     return `{${labels.join(',')}}`
   }
 
-  const [queryLabels, setQueryLabels] = useState(() => ({ labels: [] as string[] }));
-  const [processedLabelSelector, setProcessedLabelSelector] = useState(() => ({ labelSelector: createSelector('', query.profileTypeId, '') }));
-  const [rawQuery, setRawQuery] = useState(() => ( { data: ''}))
+  const [availableLabels, setAvailableLabels] = useState(() => ({ data: [] as string[] }));
+  const [processedLabelSelector, setProcessedLabelSelector] = useState(
+      () => ({ data: createSelector(query.labelSelector, query.profileTypeId, '') }));
+  const [rawQuery, setRawQuery] = useState(() => ({ data: '' }))
 
   useEffect(() => {
     setProcessedLabelSelector({
-      labelSelector: createSelector(rawQuery.data, query.profileTypeId, ''),
+      data: createSelector(rawQuery.data, query.profileTypeId, ''),
     });
   }, [rawQuery.data, query.profileTypeId]);
 
   const getLabelNames = useCallback(
-    () => queryLabels.labels,
-    [queryLabels]
+    () => availableLabels.data,
+    [availableLabels]
   );
 
   useEffect(() => {
     const fetchData = async() => {
       const labels = await datasource.getLabelNames(
-          processedLabelSelector.labelSelector,
+          processedLabelSelector.data,
           unpreciseRange.from,
           unpreciseRange.to
       );
 
-      setQueryLabels((prevQueryLabels) => ({ ...prevQueryLabels, labels }));
+      setAvailableLabels({ data: labels });
     }
     fetchData();
-  }, [processedLabelSelector.labelSelector, unpreciseRange.from, unpreciseRange.to, datasource, setQueryLabels]);
+  }, [processedLabelSelector.data, unpreciseRange.from, unpreciseRange.to, datasource, setAvailableLabels]);
 
-  // Create a function with range and query already baked in so we don't have to send those everywhere
+  // Create a function with range and query already baked in, so we don't have to send those everywhere
   const getLabelValues = useCallback(
     (label: string) => {
       let labelSelector = createSelector(rawQuery.data, query.profileTypeId, label);
@@ -189,6 +193,7 @@ function useLabels(
     }, [setRawQuery]
   );
 
+  // This is to update the query state, as updating it every time the value in the editor changes causes many things to rerender.
   const onBlur = useCallback(() => {
     onChange({ ...query, labelSelector: rawQuery.data });
   }, [query, onChange, rawQuery.data])
