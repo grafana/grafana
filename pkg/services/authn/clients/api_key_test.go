@@ -118,7 +118,7 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				Key:              hash,
 				ServiceAccountId: intPtr(1),
 			},
-			expectedErr: errAPIKeyInvalidOrg,
+			expectedErr: errAPIKeyOrgMismatch,
 		},
 	}
 

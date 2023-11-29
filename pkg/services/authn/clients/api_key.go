@@ -19,10 +19,10 @@ import (
 )
 
 var (
-	errAPIKeyInvalid    = errutil.Unauthorized("api-key.invalid", errutil.WithPublicMessage("Invalid API key"))
-	errAPIKeyExpired    = errutil.Unauthorized("api-key.expired", errutil.WithPublicMessage("Expired API key"))
-	errAPIKeyRevoked    = errutil.Unauthorized("api-key.revoked", errutil.WithPublicMessage("Revoked API key"))
-	errAPIKeyInvalidOrg = errutil.Unauthorized("api-key.invalid-organization", errutil.WithPublicMessage("API key does not belong to the requested organization"))
+	errAPIKeyInvalid     = errutil.Unauthorized("api-key.invalid", errutil.WithPublicMessage("Invalid API key"))
+	errAPIKeyExpired     = errutil.Unauthorized("api-key.expired", errutil.WithPublicMessage("Expired API key"))
+	errAPIKeyRevoked     = errutil.Unauthorized("api-key.revoked", errutil.WithPublicMessage("Revoked API key"))
+	errAPIKeyOrgMismatch = errutil.Unauthorized("api-key.organization-mismatch", errutil.WithPublicMessage("API key does not belong to the requested organization"))
 )
 
 var _ authn.HookClient = new(APIKey)
@@ -66,7 +66,7 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	if r.OrgID == 0 {
 		r.OrgID = apiKey.OrgID
 	} else if r.OrgID != apiKey.OrgID {
-		return nil, errAPIKeyInvalidOrg.Errorf("API does not belong in Organization %v", r.OrgID)
+		return nil, errAPIKeyOrgMismatch.Errorf("API does not belong in Organization %v", r.OrgID)
 	}
 
 	// if the api key don't belong to a service account construct the identity and return it
