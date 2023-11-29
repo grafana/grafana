@@ -3,13 +3,13 @@ import React, { useState } from 'react';
 import { SelectableValue, toOption } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
-import { getOperationParamId } from '../../../prometheus/querybuilder/shared/operationUtils';
 import { QueryBuilderOperationParamEditorProps } from '../../../prometheus/querybuilder/shared/types';
 import { placeHolderScopedVars } from '../../components/monaco-query-field/monaco-completion-provider/validation';
 import { LokiDatasource } from '../../datasource';
 import { getLogQueryFromMetricsQuery, isQueryWithError } from '../../queryUtils';
 import { extractUnwrapLabelKeysFromDataFrame } from '../../responseUtils';
 import { lokiQueryModeller } from '../LokiQueryModeller';
+import { getOperationParamId } from '../operationUtils';
 import { LokiVisualQuery } from '../types';
 
 export function UnwrapParamEditor({

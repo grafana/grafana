@@ -3,9 +3,7 @@ import pluralize from 'pluralize';
 
 import { SelectableValue } from '@grafana/data/src';
 
-import { LabelParamEditor } from '../components/LabelParamEditor';
-import { PromVisualQueryOperationCategory } from '../types';
-
+import { LabelParamEditor } from './components/LabelParamEditor';
 import {
   QueryBuilderLabelFilter,
   QueryBuilderOperation,
@@ -13,7 +11,8 @@ import {
   QueryBuilderOperationParamDef,
   QueryBuilderOperationParamValue,
   QueryWithOperations,
-} from './types';
+} from './shared/types';
+import { PromVisualQueryOperationCategory } from './types';
 
 export function functionRendererLeft(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
   const params = renderParams(model, def, innerExpr);
@@ -116,7 +115,7 @@ export function defaultAddOperationHandler<T extends QueryWithOperations>(def: Q
   };
 }
 
-export function getPromAndLokiOperationDisplayName(funcName: string) {
+export function getPromOperationDisplayName(funcName: string) {
   return capitalize(funcName.replace(/_/g, ' '));
 }
 
@@ -156,14 +155,14 @@ export function getRangeVectorParamDef(withRateInterval = false): QueryBuilderOp
 /**
  * This function is shared between Prometheus and Loki variants
  */
-export function createAggregationOperation<T extends QueryWithOperations>(
+export function createAggregationOperation(
   name: string,
   overrides: Partial<QueryBuilderOperationDef> = {}
 ): QueryBuilderOperationDef[] {
   const operations: QueryBuilderOperationDef[] = [
     {
       id: name,
-      name: getPromAndLokiOperationDisplayName(name),
+      name: getPromOperationDisplayName(name),
       params: [
         {
           name: 'By label',
@@ -183,7 +182,7 @@ export function createAggregationOperation<T extends QueryWithOperations>(
     },
     {
       id: `__${name}_by`,
-      name: `${getPromAndLokiOperationDisplayName(name)} by`,
+      name: `${getPromOperationDisplayName(name)} by`,
       params: [
         {
           name: 'Label',
@@ -205,7 +204,7 @@ export function createAggregationOperation<T extends QueryWithOperations>(
     },
     {
       id: `__${name}_without`,
-      name: `${getPromAndLokiOperationDisplayName(name)} without`,
+      name: `${getPromOperationDisplayName(name)} without`,
       params: [
         {
           name: 'Label',
