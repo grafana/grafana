@@ -150,12 +150,12 @@ const FieldColorModeViz: FC<ModeProps> = ({ mode, theme }) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    group: css`
-      display: flex;
-    `,
-    select: css`
-      margin-right: 8px;
-      flex-grow: 1;
-    `,
+    group: css({
+      display: 'flex',
+    }),
+    select: css({
+      marginRight: theme.spacing(1),
+      flexGrow: 1,
+    }),
   };
 };

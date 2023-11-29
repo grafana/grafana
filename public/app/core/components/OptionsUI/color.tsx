@@ -71,30 +71,30 @@ export const ColorValueEditor = ({ value, settings, onChange, details }: Props) 
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    spot: css`
-      cursor: pointer;
-      color: ${theme.colors.text};
-      background: ${theme.components.input.background};
-      padding: 3px;
-      height: ${theme.v1.spacing.formInputHeight}px;
-      border: 1px solid ${theme.components.input.borderColor};
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      align-content: flex-end;
-      &:hover {
-        border: 1px solid ${theme.components.input.borderHover};
-      }
-    `,
-    colorPicker: css`
-      padding: 0 ${theme.spacing(1)};
-    `,
-    colorText: css`
-      flex-grow: 2;
-    `,
-    placeholderText: css`
-      flex-grow: 2;
-      color: ${theme.colors.text.secondary};
-    `,
+    spot: css({
+      cursor: 'pointer',
+      color: theme.colors.text.primary,
+      background: theme.components.input.background,
+      padding: '3px',
+      height: theme.v1.spacing.formInputHeight,
+      border: `1px solid ${theme.components.input.borderColor}`,
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      alignContent: 'flex-end',
+      '&:hover': {
+        border: `1px solid ${theme.components.input.borderHover}`,
+      },
+    }),
+    colorPicker: css({
+      padding: `0 ${theme.spacing(1)}`,
+    }),
+    colorText: css({
+      flexGrow: 2,
+    }),
+    placeholderText: css({
+      flexGrow: 2,
+      color: theme.colors.text.secondary,
+    }),
   };
 };
