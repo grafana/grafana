@@ -153,6 +153,7 @@ func newValueFields(rows []models.Row, labels data.Labels, colIdxStart, colIdxEn
 						// if then we see the valueField should be a sting field
 						// we append those nil elements into the stringArray
 						// then we clear the floatArray
+						// these steps are necessary for the responses like in string_column_with_null_value.json
 						for range floatArray {
 							stringArray = append(stringArray, nil)
 						}
@@ -167,6 +168,10 @@ func newValueFields(rows []models.Row, labels data.Labels, colIdxStart, colIdxEn
 				case "bool":
 					value, ok := valuePair[colIdx].(bool)
 					if ok {
+						// we handle null values by adding nil to floatArray
+						// if then we see the valueField should be a bool field
+						// we append those nil elements into the boolArray
+						// then we clear the floatArray
 						for range floatArray {
 							boolArray = append(boolArray, nil)
 						}
@@ -176,6 +181,8 @@ func newValueFields(rows []models.Row, labels data.Labels, colIdxStart, colIdxEn
 						boolArray = append(boolArray, nil)
 					}
 				case "null":
+					// If there is already a valueField, instead of adding nil to floatArray
+					// we add nil to the valueField and to the array of valueField constructed from
 					if valueField != nil {
 						if valueField != nil {
 							valueFieldType := valueField.Type()
@@ -190,6 +197,8 @@ func newValueFields(rows []models.Row, labels data.Labels, colIdxStart, colIdxEn
 						}
 						valueField.Append(nil)
 					} else {
+						// If there is no valueField created before we add the nil value to floatArray
+						// when we have the real value of the field these will be appended to the field
 						floatArray = append(floatArray, nil)
 					}
 				}
