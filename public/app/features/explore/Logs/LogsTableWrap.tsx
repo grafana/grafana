@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { debounce } from 'lodash';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import {
@@ -51,6 +50,7 @@ export function LogsTableWrap(props: Props) {
 
   // Filtered copy of columnsWithMeta that only includes matching results
   const [filteredColumnsWithMeta, setFilteredColumnsWithMeta] = useState<fieldNameMetaStore | undefined>(undefined);
+  const [searchValue, setSearchValue] = useState<string>('');
 
   const height = getLogsTableHeight();
   const panelStateRefId = props?.panelState?.refId;
@@ -251,6 +251,14 @@ export function LogsTableWrap(props: Props) {
     });
   }
 
+  const clearSelection = () => {
+    const pendingLabelState = { ...columnsWithMeta };
+    Object.keys(pendingLabelState).forEach((key) => {
+      pendingLabelState[key].active = !!pendingLabelState[key].type;
+    });
+    setColumnsWithMeta(pendingLabelState);
+  };
+
   // Toggle a column on or off when the user interacts with an element in the multi-select sidebar
   const toggleColumn = (columnName: fieldName) => {
     if (!columnsWithMeta || !(columnName in columnsWithMeta)) {
@@ -320,14 +328,12 @@ export function LogsTableWrap(props: Props) {
     fuzzySearch(Object.keys(columnsWithMeta), needle, dispatcher);
   };
 
-  // Debounce fuzzy search
-  const debouncedSearch = debounce(search, 500);
-
   // onChange handler for search input
   const onSearchInputChange = (e: React.FormEvent<HTMLInputElement>) => {
     const value = e.currentTarget?.value;
+    setSearchValue(value);
     if (value) {
-      debouncedSearch(value);
+      search(value);
     } else {
       // If the search input is empty, reset the local search state.
       setFilteredColumnsWithMeta(undefined);
@@ -376,11 +382,12 @@ export function LogsTableWrap(props: Props) {
       </div>
       <div className={styles.wrapper}>
         <section className={styles.sidebar}>
-          <LogsColumnSearch onChange={onSearchInputChange} />
+          <LogsColumnSearch value={searchValue} onChange={onSearchInputChange} />
           <LogsTableMultiSelect
             toggleColumn={toggleColumn}
             filteredColumnsWithMeta={filteredColumnsWithMeta}
             columnsWithMeta={columnsWithMeta}
+            clear={clearSelection}
           />
         </section>
         <LogsTable

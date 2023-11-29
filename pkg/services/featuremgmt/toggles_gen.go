@@ -195,6 +195,10 @@ const (
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
 
+	// FlagInfluxqlStreamingParser
+	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
+	FlagInfluxqlStreamingParser = "influxqlStreamingParser"
+
 	// FlagClientTokenRotation
 	// Replaces the current in-request token rotation so that the client initiates the rotation
 	FlagClientTokenRotation = "clientTokenRotation"
@@ -595,7 +599,7 @@ const (
 	// Enables regression analysis transformation
 	FlagRegressionTransformation = "regressionTransformation"
 
-	// FlagInfluxqlStreamingParser
-	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
-	FlagInfluxqlStreamingParser = "influxqlStreamingParser"
+	// FlagDisplayAnonymousStats
+	// Enables anonymous stats to be shown in the UI for Grafana
+	FlagDisplayAnonymousStats = "displayAnonymousStats"
 )
