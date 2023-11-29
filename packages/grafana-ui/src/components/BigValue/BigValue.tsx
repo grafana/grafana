@@ -89,7 +89,7 @@ export class BigValue extends PureComponent<Props> {
   };
 
   render() {
-    const { onClick, className, hasLinks, theme } = this.props;
+    const { onClick, className, hasLinks, theme, textMode } = this.props;
     const layout = buildLayout(this.props);
     const panelStyles = layout.getPanelStyles();
     const valueAndTitleContainerStyles = layout.getValueAndTitleContainerStyles();
@@ -106,6 +106,7 @@ export class BigValue extends PureComponent<Props> {
 
     // When there is an outer data link this tooltip will override the outer native tooltip
     const tooltip = hasLinks ? undefined : textValues.tooltip;
+    console.log(layout);
 
     if (!onClick) {
       return (
@@ -113,7 +114,7 @@ export class BigValue extends PureComponent<Props> {
           <div style={valueAndTitleContainerStyles}>
             {textValues.title && <div style={titleStyles}>{textValues.title}</div>}
             <FormattedValueDisplay value={textValues} style={valueStyles} />
-            {!percentChangeNaN && textValues.text.length > 0 && (
+            {!percentChangeNaN && textMode !== BigValueTextMode.Name && textMode !== BigValueTextMode.None && (
               <div style={percentChangeStyles}>
                 <HorizontalGroup>
                   {percentChangeIcon && (
