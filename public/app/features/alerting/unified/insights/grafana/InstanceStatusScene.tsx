@@ -12,7 +12,7 @@ export function getInstanceStatByStatusScene(
   status: 'alerting' | 'pending' | 'nodata' | 'normal' | 'error'
 ) {
   const expr = INSTANCE_ID
-    ? `sum by (state) (grafanacloud_grafana_instance_alerting_alerts{state="${status}", id="${INSTANCE_ID}"}})`
+    ? `sum by (state) (grafanacloud_grafana_instance_alerting_alerts{state="${status}", id="${INSTANCE_ID}"})`
     : `sum by (state) (grafanacloud_grafana_instance_alerting_alerts{state="${status}"})`;
 
   const query = new SceneQueryRunner({

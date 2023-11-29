@@ -8,7 +8,7 @@ import { InsightsRatingModal } from '../../RatingModal';
 
 export function getRulesPerGroupScene(datasource: DataSourceRef, panelTitle: string) {
   const expr = INSTANCE_ID
-    ? `sum(grafanacloud_instance_rule_group_rules{rule_group="$rule_group", id="${INSTANCE_ID}})`
+    ? `sum(grafanacloud_instance_rule_group_rules{rule_group="$rule_group", id="${INSTANCE_ID}"})`
     : `sum(grafanacloud_instance_rule_group_rules{rule_group="$rule_group"})`;
 
   const query = new SceneQueryRunner({

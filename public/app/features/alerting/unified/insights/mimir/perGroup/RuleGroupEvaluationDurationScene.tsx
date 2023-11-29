@@ -8,7 +8,7 @@ import { InsightsRatingModal } from '../../RatingModal';
 
 export function getRuleGroupEvaluationDurationScene(datasource: DataSourceRef, panelTitle: string) {
   const expr = INSTANCE_ID
-    ? `grafanacloud_instance_rule_group_last_duration_seconds{rule_group="$rule_group", id="${INSTANCE_ID}}`
+    ? `grafanacloud_instance_rule_group_last_duration_seconds{rule_group="$rule_group", id="${INSTANCE_ID}"}`
     : `grafanacloud_instance_rule_group_last_duration_seconds{rule_group="$rule_group"}`;
 
   const query = new SceneQueryRunner({
