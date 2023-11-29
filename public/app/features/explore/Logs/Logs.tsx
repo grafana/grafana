@@ -181,8 +181,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
     if (this.props?.panelState?.logs?.refId) {
       delete this.props.panelState.logs.refId;
     }
-    if (this.props?.panelState?.logs?.labelName) {
-      delete this.props.panelState.logs.labelName;
+    if (this.props?.panelState?.logs?.labelFieldName) {
+      delete this.props.panelState.logs.labelFieldName;
     }
   }
   updatePanelState = (logsPanelState: Partial<ExploreLogsPanelState>) => {
@@ -193,7 +193,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
           ...state.panelsState.logs,
           columns: logsPanelState.columns ?? this.props.panelState?.logs?.columns,
           visualisationType: logsPanelState.visualisationType ?? this.state.visualisationType,
-          labelName: logsPanelState.labelName,
+          labelFieldName: logsPanelState.labelFieldName,
           refId: logsPanelState.refId ?? this.props.panelState?.logs?.refId,
         })
       );

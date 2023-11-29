@@ -41,11 +41,11 @@ function getLogsTableTransformations(panelType: string, options: AddPanelToDashb
   let transformations: DataTransformerConfig[] = [];
   if (panelType === 'table' && options.panelState?.logs?.columns) {
     // If we have a labels column, we need to extract the fields from it
-    if (options.panelState.logs?.labelName) {
+    if (options.panelState.logs?.labelFieldName) {
       transformations.push({
         id: 'extractFields',
         options: {
-          source: options.panelState.logs.labelName,
+          source: options.panelState.logs.labelFieldName,
         },
       });
     }

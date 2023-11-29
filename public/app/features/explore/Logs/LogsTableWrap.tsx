@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { debounce } from 'lodash';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import {
@@ -83,7 +82,7 @@ export function LogsTableWrap(props: Props) {
       updatePanelState({
         columns: Object.values(defaultColumns),
         visualisationType: 'table',
-        labelName: logsFrame?.getLabelFieldName() ?? undefined,
+        labelFieldName: logsFrame?.getLabelFieldName() ?? undefined,
       });
     }
   }, [logsFrame, propsColumns, updatePanelState]);
@@ -255,11 +254,7 @@ export function LogsTableWrap(props: Props) {
   const clearSelection = () => {
     const pendingLabelState = { ...columnsWithMeta };
     Object.keys(pendingLabelState).forEach((key) => {
-      if (pendingLabelState[key].type) {
-        pendingLabelState[key].active = true;
-      } else {
-        pendingLabelState[key].active = false;
-      }
+      pendingLabelState[key].active = !!pendingLabelState[key].type;
     });
     setColumnsWithMeta(pendingLabelState);
   };
@@ -306,7 +301,7 @@ export function LogsTableWrap(props: Props) {
       columns: Object.keys(newColumns).length ? newColumns : defaultColumns,
       refId: currentDataFrame.refId,
       visualisationType: 'table',
-      labelName: logsFrame?.getLabelFieldName() ?? undefined,
+      labelFieldName: logsFrame?.getLabelFieldName() ?? undefined,
     };
 
     // Update url state
@@ -318,6 +313,7 @@ export function LogsTableWrap(props: Props) {
     const matches = data[0];
     let newColumnsWithMeta: fieldNameMetaStore = {};
     let numberOfResults = 0;
+    // debugger;
     matches.forEach((match) => {
       if (match in columnsWithMeta) {
         newColumnsWithMeta[match] = columnsWithMeta[match];
@@ -333,15 +329,12 @@ export function LogsTableWrap(props: Props) {
     fuzzySearch(Object.keys(columnsWithMeta), needle, dispatcher);
   };
 
-  // Debounce fuzzy search
-  const debouncedSearch = debounce(search, 500);
-
   // onChange handler for search input
   const onSearchInputChange = (e: React.FormEvent<HTMLInputElement>) => {
     const value = e.currentTarget?.value;
     setSearchValue(value);
     if (value) {
-      debouncedSearch(value);
+      search(value);
     } else {
       // If the search input is empty, reset the local search state.
       setFilteredColumnsWithMeta(undefined);
@@ -353,7 +346,7 @@ export function LogsTableWrap(props: Props) {
     if (matchingDataFrame) {
       setCurrentDataFrame(logsFrames.find((frame) => frame.refId === value.value) ?? logsFrames[0]);
     }
-    props.updatePanelState({ refId: value.value, labelName: logsFrame?.getLabelFieldName() ?? undefined });
+    props.updatePanelState({ refId: value.value, labelFieldName: logsFrame?.getLabelFieldName() ?? undefined });
   };
 
   const sidebarWidth = 220;
