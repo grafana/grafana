@@ -14,7 +14,7 @@ import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { setupDataSources } from '../../testSetup/datasources';
 import { DataSourceType } from '../../utils/datasource';
 
-import ContactPoints, { ContactPoint } from './ContactPoints.v2';
+import ContactPoints, { ContactPoint } from './ContactPoints';
 import setupGrafanaManagedServer from './__mocks__/grafanaManagedServer';
 import setupMimirFlavoredServer, { MIMIR_DATASOURCE_UID } from './__mocks__/mimirFlavoredServer';
 import setupVanillaAlertmanagerFlavoredServer, {

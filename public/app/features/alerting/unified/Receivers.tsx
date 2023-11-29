@@ -2,7 +2,7 @@ import React from 'react';
 import { Route, Switch } from 'react-router-dom';
 
 import { withErrorBoundary } from '@grafana/ui';
-const ContactPointsV2 = SafeDynamicImport(() => import('./components/contact-points/ContactPoints.v2'));
+const ContactPointsV2 = SafeDynamicImport(() => import('./components/contact-points/ContactPoints'));
 const EditContactPoint = SafeDynamicImport(() => import('./components/contact-points/EditContactPoint'));
 const NewContactPoint = SafeDynamicImport(() => import('./components/contact-points/NewContactPoint'));
 const EditMessageTemplate = SafeDynamicImport(() => import('./components/contact-points/EditMessageTemplate'));
