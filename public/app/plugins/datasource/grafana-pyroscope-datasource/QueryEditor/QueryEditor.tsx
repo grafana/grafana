@@ -119,14 +119,13 @@ function useLabels(
     from: Math.floor((range?.from.valueOf() || 0) / 5000) * 5000,
   };
 
-  const createSelector = useCallback(
-    (query: Query, labelToRemove: string): string => {
+  const createSelector = (queryLabelSelector: string, profileTypeId: string, labelToRemove: string): string => {
     let labels: string[] = [
-      `__profile_type__=\"${query.profileTypeId}\"`,
+      `__profile_type__=\"${profileTypeId}\"`,
     ]
     const regex = /(\w+)\s*=\s*("[^,"]+")/g;
     let match;
-    while ((match = regex.exec(query.labelSelector)) !== null) {
+    while ((match = regex.exec(queryLabelSelector)) !== null) {
       if (match[1] && match[2]) {
         if (match[1] === labelToRemove) {
           continue;
@@ -135,23 +134,22 @@ function useLabels(
       }
     }
     return `{${labels.join(',')}}`
-  }, []);
+  }
 
-  const labelSelector = useMemo(() => createSelector(query, ''), [query, createSelector]);
+  const labelSelector = useMemo(() => createSelector(query.labelSelector, query.profileTypeId, '')
+    , [query.labelSelector, query.profileTypeId]);
 
-  const labelsResult = useAsync(() => {
-    console.log(labelSelector)
-    const labelNames = datasource.getLabelNames(
-      labelSelector, unpreciseRange.from, unpreciseRange.to);
-    console.log(labelNames)
-    return labelNames
-  }, [datasource, query.profileTypeId, labelSelector, unpreciseRange.to, unpreciseRange.from]);
+  const getLabelNames = useCallback(
+    () => datasource.getLabelNames(labelSelector, unpreciseRange.from, unpreciseRange.to),
+    [datasource, labelSelector, unpreciseRange.from, unpreciseRange.to]
+  );
 
+  const labelsResult = useAsync(getLabelNames, [getLabelNames]);
 
   // Create a function with range and query already baked in so we don't have to send those everywhere
   const getLabelValues = useCallback(
     (label: string) => {
-      let labelSelector = createSelector(query, label);
+      let labelSelector = createSelector(query.labelSelector, query.profileTypeId, label);
       console.log(labelSelector)
       const labelValues = datasource.getLabelValues(
         labelSelector,
@@ -162,7 +160,7 @@ function useLabels(
       console.log(labelValues)
       return labelValues;
     },
-    [datasource, query, createSelector, unpreciseRange.to, unpreciseRange.from]
+    [datasource, query, unpreciseRange.to, unpreciseRange.from]
   );
 
   const onLabelSelectorChange = useCallback(
