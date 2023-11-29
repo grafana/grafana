@@ -82,7 +82,7 @@ export function LogsTableWrap(props: Props) {
       updatePanelState({
         columns: Object.values(defaultColumns),
         visualisationType: 'table',
-        labelName: logsFrame?.getLabelFieldName() ?? undefined,
+        labelFieldName: logsFrame?.getLabelFieldName() ?? undefined,
       });
     }
   }, [logsFrame, propsColumns, updatePanelState]);
@@ -293,7 +293,7 @@ export function LogsTableWrap(props: Props) {
       columns: Object.keys(newColumns).length ? newColumns : defaultColumns,
       refId: currentDataFrame.refId,
       visualisationType: 'table',
-      labelName: logsFrame?.getLabelFieldName() ?? undefined,
+      labelFieldName: logsFrame?.getLabelFieldName() ?? undefined,
     };
 
     // Update url state
@@ -339,7 +339,7 @@ export function LogsTableWrap(props: Props) {
     if (matchingDataFrame) {
       setCurrentDataFrame(logsFrames.find((frame) => frame.refId === value.value) ?? logsFrames[0]);
     }
-    props.updatePanelState({ refId: value.value, labelName: logsFrame?.getLabelFieldName() ?? undefined });
+    props.updatePanelState({ refId: value.value, labelFieldName: logsFrame?.getLabelFieldName() ?? undefined });
   };
 
   const sidebarWidth = 220;
