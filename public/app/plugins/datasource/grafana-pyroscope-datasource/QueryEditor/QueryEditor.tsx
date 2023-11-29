@@ -1,6 +1,5 @@
 import deepEqual from 'fast-deep-equal';
-import React, {useCallback, useEffect, useMemo} from 'react';
-import { useAsync } from 'react-use';
+import React, {useCallback, useEffect, useState} from 'react';
 
 import { CoreApp, QueryEditorProps, TimeRange } from '@grafana/data';
 import { LoadingPlaceholder } from '@grafana/ui';
@@ -26,7 +25,7 @@ export function QueryEditor(props: Props) {
   }
 
   const profileTypes = useProfileTypes(datasource);
-  const { labels, getLabelValues, onLabelSelectorChange } = useLabels(range, datasource, query, onChange);
+  const { getLabelNames, getLabelValues, onLabelSelectorChange } = useLabels(range, datasource, query, onChange);
   useNormalizeQuery(query, profileTypes, onChange, app);
 
   let cascader = <LoadingPlaceholder text={'Loading'} />;
@@ -55,13 +54,13 @@ export function QueryEditor(props: Props) {
           value={query.labelSelector}
           onChange={onLabelSelectorChange}
           onRunQuery={handleRunQuery}
-          labels={labels}
+          getLabelNames={getLabelNames}
           getLabelValues={getLabelValues}
         />
         <PyroscopeQueryLinkExtensions {...props} />
       </EditorRow>
       <EditorRow>
-        <QueryOptions query={query} onQueryChange={props.onChange} app={props.app} labels={labels} />
+        <QueryOptions query={query} onQueryChange={props.onChange} app={props.app} getLabelNames={getLabelNames} />
       </EditorRow>
     </EditorRows>
   );
@@ -136,20 +135,38 @@ function useLabels(
     return `{${labels.join(',')}}`
   }
 
-  const labelSelector = useMemo(() => createSelector(query.labelSelector, query.profileTypeId, '')
-    , [query.labelSelector, query.profileTypeId]);
+  const [queryLabels, setQueryLabels] = useState(() => ({ labels: [] as string[] }));
+  const [processedLabelSelector, setProcessedLabelSelector] = useState(() => ({ labelSelector: createSelector('', query.profileTypeId, '') }));
+  const [rawQuery, setRawQuery] = useState(() => ( { data: ''}))
+
+  useEffect(() => {
+    setProcessedLabelSelector({
+      labelSelector: createSelector(rawQuery.data, query.profileTypeId, ''),
+    });
+  }, [rawQuery.data, query.profileTypeId]);
 
   const getLabelNames = useCallback(
-    () => datasource.getLabelNames(labelSelector, unpreciseRange.from, unpreciseRange.to),
-    [datasource, labelSelector, unpreciseRange.from, unpreciseRange.to]
+    () => queryLabels.labels,
+    [queryLabels]
   );
 
-  const labelsResult = useAsync(getLabelNames, [getLabelNames]);
+  useEffect(() => {
+    const fetchData = async() => {
+      const labels = await datasource.getLabelNames(
+          processedLabelSelector.labelSelector,
+          unpreciseRange.from,
+          unpreciseRange.to
+      );
+
+      setQueryLabels((prevQueryLabels) => ({ ...prevQueryLabels, labels }));
+    }
+    fetchData();
+  }, [processedLabelSelector.labelSelector, unpreciseRange.from, unpreciseRange.to, datasource, setQueryLabels]);
 
   // Create a function with range and query already baked in so we don't have to send those everywhere
   const getLabelValues = useCallback(
     (label: string) => {
-      let labelSelector = createSelector(query.labelSelector, query.profileTypeId, label);
+      let labelSelector = createSelector(rawQuery.data, query.profileTypeId, label);
       console.log(labelSelector)
       const labelValues = datasource.getLabelValues(
         labelSelector,
@@ -160,15 +177,19 @@ function useLabels(
       console.log(labelValues)
       return labelValues;
     },
-    [datasource, query, unpreciseRange.to, unpreciseRange.from]
+    [datasource, rawQuery.data, query.profileTypeId, unpreciseRange.to, unpreciseRange.from]
   );
 
   const onLabelSelectorChange = useCallback(
     (value: string) => {
-      onChange({ ...query, labelSelector: value });
+      // onChange({ ...query, labelSelector: value });
+      setRawQuery({
+        data: value,
+      })
+      query.labelSelector = value
     },
-    [onChange, query]
+    [setRawQuery, query]
   );
 
-  return { labels: labelsResult.value, getLabelValues, onLabelSelectorChange };
+  return { getLabelNames, getLabelValues, onLabelSelectorChange };
 }

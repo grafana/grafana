@@ -46,7 +46,7 @@ const defaultLabels = ['foo'];
 
 function setup(value: string, offset: number, labels: string[] = []) {
   const provider = new CompletionProvider();
-  provider.init(labels, (label) => {
+  provider.init(() => labels, (label) => {
     if (labels.length === 0) {
       return Promise.resolve([]);
     }
