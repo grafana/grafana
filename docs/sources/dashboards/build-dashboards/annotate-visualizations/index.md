@@ -119,7 +119,7 @@ To add a new annotation query to a dashboard, take the following steps:
 
 After you add an annotation, they will still be visible. This is due to the built-in annotation query that exists on all dashboards. This annotation query will fetch all annotation events that originate from the current dashboard, which are stored in Grafana, and show them on the panel where they were created. This includes alert state history annotations.
 
-The built-in annotation query requires the special `-- Grafana --` data source to function, and the data source for the query shouldn't be changed. 
+The built-in annotation query requires the special `-- Grafana --` data source to function, and the data source selection shouldn't be changed. 
 
 To add annotations directly to the dashboard, this query must be enabled.
 
