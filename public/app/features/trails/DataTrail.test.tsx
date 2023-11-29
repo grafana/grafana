@@ -40,6 +40,14 @@ describe('DataTrail', () => {
       expect(trail.state.stepIndex).toBe(0);
     });
 
+    it('Should set parentIndex to -1', () => {
+      expect(trail.state.parentIndex).toBe(-1);
+    });
+
+    it('Should set history currentStep to 0', () => {
+      expect(trail.state.history.state.currentStep).toBe(0);
+    });
+
     describe('And metric is selected', () => {
       beforeEach(() => {
         trail.publishEvent(new MetricSelectedEvent('metric_bucket'));
@@ -61,9 +69,17 @@ describe('DataTrail', () => {
       it('Should set stepIndex to 1', () => {
         expect(trail.state.stepIndex).toBe(1);
       });
+
+      it('Should set history currentStep to 1', () => {
+        expect(trail.state.history.state.currentStep).toBe(1);
+      });
+
+      it('Should set parentIndex to 0', () => {
+        expect(trail.state.parentIndex).toBe(0);
+      });
     });
 
-    describe('When going back to history step', () => {
+    describe('When going back to history step 1', () => {
       beforeEach(() => {
         trail.publishEvent(new MetricSelectedEvent('first_metric'));
         trail.publishEvent(new MetricSelectedEvent('second_metric'));
@@ -79,13 +95,34 @@ describe('DataTrail', () => {
         expect(trail.state.stepIndex).toBe(1);
       });
 
+      it('Should set history currentStep to 1', () => {
+        expect(trail.state.history.state.currentStep).toBe(1);
+      });
+
       it('Should not create another history step', () => {
         expect(trail.state.history.state.steps.length).toBe(3);
       });
 
-      it('But selecting a new metric should create another history step', () => {
-        trail.publishEvent(new MetricSelectedEvent('third_metric'));
-        expect(trail.state.history.state.steps.length).toBe(4);
+      describe('But then selecting a new metric', () => {
+        beforeEach(() => {
+          trail.publishEvent(new MetricSelectedEvent('third_metric'));
+        });
+
+        it('Should create another history step', () => {
+          expect(trail.state.history.state.steps.length).toBe(4);
+        });
+
+        it('Should set stepIndex to 3', () => {
+          expect(trail.state.stepIndex).toBe(3);
+        });
+
+        it('Should set history currentStep to 1', () => {
+          expect(trail.state.history.state.currentStep).toBe(3);
+        });
+
+        it('Should set parentIndex to 1', () => {
+          expect(trail.state.parentIndex).toBe(1);
+        });
       });
     });
   });

@@ -457,7 +457,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
                 dispatch(addNewDataQuery());
               }}
               variant="secondary"
-              aria-label={selectors.components.QueryTab.addQuery}
+              data-testid={selectors.components.QueryTab.addQuery}
               disabled={noCompatibleDataSources}
               className={styles.addQueryButton}
             >

@@ -264,6 +264,7 @@ export interface QueryFilterOptions extends KeyValue<string> {}
 export interface ToggleFilterAction {
   type: 'FILTER_FOR' | 'FILTER_OUT';
   options: QueryFilterOptions;
+  frame?: DataFrame;
 }
 /**
  * Data sources that support toggleable filters through `toggleQueryFilter`, and displaying the active
