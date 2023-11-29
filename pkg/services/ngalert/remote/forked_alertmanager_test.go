@@ -21,6 +21,32 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 	ctx := context.Background()
 	expErr := errors.New("test error")
 
+	t.Run("SaveAndApplyConfig", func(tt *testing.T) {
+		// SaveAndApplyConfig should only be called on the remote Alertmanager.
+		// State and configuration are updated on an interval.
+		internal, _, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
+		internal.EXPECT().SaveAndApplyConfig(ctx, mock.Anything).Return(nil).Once()
+		require.NoError(tt, forked.SaveAndApplyConfig(ctx, &apimodels.PostableUserConfig{}))
+
+		// If there's an error, it should be returned.
+		internal, _, forked = genTestAlertmanagers(tt, modeRemoteSecondary)
+		internal.EXPECT().SaveAndApplyConfig(ctx, mock.Anything).Return(expErr).Once()
+		require.ErrorIs(tt, forked.SaveAndApplyConfig(ctx, &apimodels.PostableUserConfig{}), expErr)
+	})
+
+	t.Run("SaveAndApplyDefaultConfig", func(tt *testing.T) {
+		// SaveAndApplyDefaultConfig should only be called on the remote Alertmanager.
+		// State and configuration are updated on an interval.
+		internal, _, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
+		internal.EXPECT().SaveAndApplyDefaultConfig(ctx).Return(nil).Once()
+		require.NoError(tt, forked.SaveAndApplyDefaultConfig(ctx))
+
+		// If there's an error, it should be returned.
+		internal, _, forked = genTestAlertmanagers(tt, modeRemoteSecondary)
+		internal.EXPECT().SaveAndApplyDefaultConfig(ctx).Return(expErr).Once()
+		require.ErrorIs(tt, forked.SaveAndApplyDefaultConfig(ctx), expErr)
+	})
+
 	t.Run("GetStatus", func(tt *testing.T) {
 		// We care about the status of the internal Alertmanager.
 		internal, _, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
@@ -225,7 +251,7 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 	})
 
 	t.Run("StopAndWait", func(tt *testing.T) {
-		// StopAndWait should be called in both Alertmanagers.
+		// StopAndWait should be called on both Alertmanagers.
 		internal, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
 		internal.EXPECT().StopAndWait().Once()
 		remote.EXPECT().StopAndWait().Once()
@@ -457,7 +483,7 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 	})
 
 	t.Run("StopAndWait", func(tt *testing.T) {
-		// StopAndWait should be called in both Alertmanagers.
+		// StopAndWait should be called on both Alertmanagers.
 		internal, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
 		internal.EXPECT().StopAndWait().Once()
 		remote.EXPECT().StopAndWait().Once()

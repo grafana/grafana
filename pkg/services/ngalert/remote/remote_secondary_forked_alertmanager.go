@@ -25,11 +25,15 @@ func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, c
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
-	return nil
+	// We only need to call this method on the internal Alertmanager.
+	// Configuration is synced on an interval.
+	return fam.internal.SaveAndApplyConfig(ctx, config)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
-	return nil
+	// We only need to call this on the internal Alertmanager.
+	// Configuration is synced on an interval.
+	return fam.internal.SaveAndApplyDefaultConfig(ctx)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) GetStatus() apimodels.GettableStatus {
