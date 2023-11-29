@@ -65,7 +65,7 @@
     "generate-icons-bundle-cache-file": "node ./scripts/generate-icon-bundle.js",
     "plugin:build": "lerna run build --ignore=\"@grafana/*\"",
     "plugin:build:commit": "lerna run build:commit --ignore=\"@grafana/*\"",
-    "plugin:build:dev": "lerna run dev --ignore=\"@grafana/*\"",
+    "plugin:build:dev": "lerna run dev --ignore=\"@grafana/*\""
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v10-2/",
