@@ -11,6 +11,7 @@ import { CompletionProvider } from './autocomplete';
 interface Props {
   value: string;
   onChange: (val: string) => void;
+  onBlur: () => void;
   onRunQuery: (value: string) => void;
   getLabelNames: () => string[];
   getLabelValues: (label: string) => Promise<string[]>;
@@ -33,6 +34,7 @@ export function LabelsEditor(props: Props) {
         value={props.value}
         language={langId}
         onChange={props.onChange}
+        onBlur={props.onBlur}
         containerStyles={styles.queryField}
         monacoOptions={{
           folding: false,

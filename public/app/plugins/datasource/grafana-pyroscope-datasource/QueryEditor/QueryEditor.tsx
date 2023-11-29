@@ -25,7 +25,7 @@ export function QueryEditor(props: Props) {
   }
 
   const profileTypes = useProfileTypes(datasource);
-  const { getLabelNames, getLabelValues, onLabelSelectorChange } = useLabels(range, datasource, query, onChange);
+  const { getLabelNames, getLabelValues, onLabelSelectorChange, onBlur } = useLabels(range, datasource, query, onChange);
   useNormalizeQuery(query, profileTypes, onChange, app);
 
   let cascader = <LoadingPlaceholder text={'Loading'} />;
@@ -53,6 +53,7 @@ export function QueryEditor(props: Props) {
         <LabelsEditor
           value={query.labelSelector}
           onChange={onLabelSelectorChange}
+          onBlur={onBlur}
           onRunQuery={handleRunQuery}
           getLabelNames={getLabelNames}
           getLabelValues={getLabelValues}
@@ -182,14 +183,15 @@ function useLabels(
 
   const onLabelSelectorChange = useCallback(
     (value: string) => {
-      // onChange({ ...query, labelSelector: value });
       setRawQuery({
         data: value,
       })
-      query.labelSelector = value
-    },
-    [setRawQuery, query]
+    }, [setRawQuery]
   );
 
-  return { getLabelNames, getLabelValues, onLabelSelectorChange };
+  const onBlur = useCallback(() => {
+    onChange({ ...query, labelSelector: rawQuery.data });
+  }, [query, onChange, rawQuery.data])
+
+  return { getLabelNames, getLabelValues, onLabelSelectorChange, onBlur };
 }
