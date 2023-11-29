@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -79,7 +78,6 @@ func TestGetHomeDashboard(t *testing.T) {
 		SQLStore:                dbtest.NewFakeDB(),
 		preferenceService:       prefService,
 		dashboardVersionService: dashboardVersionService,
-		Kinds:                   corekind.NewBase(nil),
 		log:                     log.New("test-logger"),
 	}
 
@@ -515,60 +513,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a dashboard to validate", func(t *testing.T) {
-		sqlmock := dbtest.NewFakeDB()
-
-		t.Run("When an invalid dashboard json is posted", func(t *testing.T) {
-			cmd := dashboards.ValidateDashboardCommand{
-				Dashboard: "{\"hello\": \"world\"}",
-			}
-
-			role := org.RoleAdmin
-			postValidateScenario(t, "When calling POST on", "/api/dashboards/validate", "/api/dashboards/validate", cmd, role, func(sc *scenarioContext) {
-				callPostDashboard(sc)
-
-				result := sc.ToJSON()
-				assert.Equal(t, http.StatusUnprocessableEntity, sc.resp.Code)
-				assert.False(t, result.Get("isValid").MustBool())
-				assert.NotEmpty(t, result.Get("message").MustString())
-			}, sqlmock)
-		})
-
-		t.Run("When a dashboard with a too-low schema version is posted", func(t *testing.T) {
-			cmd := dashboards.ValidateDashboardCommand{
-				Dashboard: "{\"schemaVersion\": 1}",
-			}
-
-			role := org.RoleAdmin
-			postValidateScenario(t, "When calling POST on", "/api/dashboards/validate", "/api/dashboards/validate", cmd, role, func(sc *scenarioContext) {
-				callPostDashboard(sc)
-
-				result := sc.ToJSON()
-				assert.Equal(t, http.StatusPreconditionFailed, sc.resp.Code)
-				assert.False(t, result.Get("isValid").MustBool())
-				assert.Equal(t, "invalid schema version", result.Get("message").MustString())
-			}, sqlmock)
-		})
-
-		t.Run("When a valid dashboard is posted", func(t *testing.T) {
-			devenvDashboard, readErr := os.ReadFile("../../devenv/dev-dashboards/home.json")
-			assert.Empty(t, readErr)
-
-			cmd := dashboards.ValidateDashboardCommand{
-				Dashboard: string(devenvDashboard),
-			}
-
-			role := org.RoleAdmin
-			postValidateScenario(t, "When calling POST on", "/api/dashboards/validate", "/api/dashboards/validate", cmd, role, func(sc *scenarioContext) {
-				callPostDashboard(sc)
-
-				result := sc.ToJSON()
-				assert.Equal(t, http.StatusOK, sc.resp.Code)
-				assert.True(t, result.Get("isValid").MustBool())
-			}, sqlmock)
-		})
-	})
-
 	t.Run("Given two dashboards being compared", func(t *testing.T) {
 		fakeDashboardVersionService := dashvertest.NewDashboardVersionServiceFake()
 		fakeDashboardVersionService.ExpectedDashboardVersions = []*dashver.DashboardVersionDTO{
@@ -742,7 +686,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				AccessControl:                accesscontrolmock.New(),
 				DashboardService:             dashboardService,
 				Features:                     featuremgmt.WithFeatures(),
-				Kinds:                        corekind.NewBase(nil),
 				starService:                  startest.NewStarServiceFake(),
 			}
 			hs.callGetDashboard(sc)
@@ -781,7 +724,6 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 			Features:                featuremgmt.WithFeatures(),
 			DashboardService:        dashboardService,
 			dashboardVersionService: fakeDashboardVersionService,
-			Kinds:                   corekind.NewBase(nil),
 			QuotaService:            quotatest.New(false, nil),
 			userService:             userSvc,
 			CacheService:            localcache.New(5*time.Minute, 10*time.Minute),
@@ -922,7 +864,6 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		dashboardProvisioningService: dashboardProvisioningService,
 		DashboardService:             dashboardService,
 		Features:                     featuremgmt.WithFeatures(),
-		Kinds:                        corekind.NewBase(nil),
 		starService:                  startest.NewStarServiceFake(),
 	}
 
@@ -975,7 +916,6 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			DashboardService:      dashboardService,
 			folderService:         folderService,
 			Features:              featuremgmt.WithFeatures(),
-			Kinds:                 corekind.NewBase(nil),
 			accesscontrolService:  actest.FakeService{},
 			log:                   log.New("test-logger"),
 		}
@@ -988,42 +928,6 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			sc.context.SignedInUser = &user.SignedInUser{OrgID: cmd.OrgID, UserID: cmd.UserID}
 
 			return hs.PostDashboard(c)
-		})
-
-		sc.m.Post(routePattern, sc.defaultHandler)
-
-		fn(sc)
-	})
-}
-
-func postValidateScenario(t *testing.T, desc string, url string, routePattern string, cmd dashboards.ValidateDashboardCommand,
-	role org.RoleType, fn scenarioFunc, sqlmock db.DB) {
-	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		cfg := setting.NewCfg()
-		hs := HTTPServer{
-			Cfg:                   cfg,
-			ProvisioningService:   provisioning.NewProvisioningServiceMock(context.Background()),
-			Live:                  newTestLive(t, db.InitTestDB(t)),
-			QuotaService:          quotatest.New(false, nil),
-			LibraryPanelService:   &mockLibraryPanelService{},
-			LibraryElementService: &mockLibraryElementService{},
-			SQLStore:              sqlmock,
-			Features:              featuremgmt.WithFeatures(),
-			Kinds:                 corekind.NewBase(nil),
-		}
-
-		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
-			c.Req.Body = mockRequestBody(cmd)
-			c.Req.Header.Add("Content-Type", "application/json")
-			sc.context = c
-			sc.context.SignedInUser = &user.SignedInUser{
-				OrgID:  testOrgID,
-				UserID: testUserID,
-			}
-			sc.context.OrgRole = role
-
-			return hs.ValidateDashboard(c)
 		})
 
 		sc.m.Post(routePattern, sc.defaultHandler)
@@ -1048,7 +952,6 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 			SQLStore:                sqlmock,
 			dashboardVersionService: fakeDashboardVersionService,
 			Features:                featuremgmt.WithFeatures(),
-			Kinds:                   corekind.NewBase(nil),
 			DashboardService:        dashSvc,
 		}
 
@@ -1091,7 +994,6 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			SQLStore:                sqlStore,
 			Features:                featuremgmt.WithFeatures(),
 			dashboardVersionService: fakeDashboardVersionService,
-			Kinds:                   corekind.NewBase(nil),
 			accesscontrolService:    actest.FakeService{},
 			folderService:           folderSvc,
 		}

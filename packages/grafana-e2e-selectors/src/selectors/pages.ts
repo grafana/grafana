@@ -8,10 +8,10 @@ import { Components } from './components';
 export const Pages = {
   Login: {
     url: '/login',
-    username: 'Username input field',
-    password: 'Password input field',
-    submit: 'Login button',
-    skip: 'Skip change password button',
+    username: 'data-testid Username input field',
+    password: 'data-testid Password input field',
+    submit: 'data-testid Login button',
+    skip: 'data-testid Skip change password button',
   },
   Home: {
     url: '/',
