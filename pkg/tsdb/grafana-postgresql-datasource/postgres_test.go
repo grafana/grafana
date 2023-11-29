@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -14,8 +15,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
 
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 
@@ -180,7 +179,7 @@ func TestIntegrationPostgres(t *testing.T) {
 	// change to true to run the PostgreSQL tests
 	const runPostgresTests = false
 
-	if !(db.IsTestDbPostgres() || runPostgresTests) {
+	if !(isTestDbPostgres() || runPostgresTests) {
 		t.Skip()
 	}
 
@@ -1394,9 +1393,8 @@ func TestIntegrationPostgres(t *testing.T) {
 }
 
 func InitPostgresTestDB(t *testing.T) *xorm.Engine {
-	testDB := sqlutil.PostgresTestDB()
-	x, err := xorm.NewEngine(testDB.DriverName, strings.Replace(testDB.ConnStr, "dbname=grafanatest",
-		"dbname=grafanadstest", 1))
+	connStr := postgresTestDBConnString()
+	x, err := xorm.NewEngine("postgres", connStr)
 	require.NoError(t, err, "Failed to init postgres DB")
 
 	x.DatabaseTZ = time.UTC
@@ -1426,4 +1424,25 @@ type tlsTestManager struct {
 
 func (m *tlsTestManager) getTLSSettings(dsInfo sqleng.DataSourceInfo) (tlsSettings, error) {
 	return m.settings, nil
+}
+
+func isTestDbPostgres() bool {
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		return db == "postgres"
+	}
+
+	return false
+}
+
+func postgresTestDBConnString() string {
+	host := os.Getenv("POSTGRES_HOST")
+	if host == "" {
+		host = "localhost"
+	}
+	port := os.Getenv("POSTGRES_PORT")
+	if port == "" {
+		port = "5432"
+	}
+	return fmt.Sprintf("user=grafanatest password=grafanatest host=%s port=%s dbname=grafanadstest sslmode=disable",
+		host, port)
 }

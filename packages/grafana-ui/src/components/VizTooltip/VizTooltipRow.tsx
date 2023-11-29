@@ -7,7 +7,7 @@ import { useStyles2 } from '../../themes';
 import { Tooltip } from '../Tooltip';
 
 import { VizTooltipColorIndicator } from './VizTooltipColorIndicator';
-import { LabelValue } from './types';
+import { ColorPlacement, LabelValue } from './types';
 
 interface Props extends LabelValue {
   justify?: string;
@@ -21,6 +21,7 @@ export const VizTooltipRow = ({
   value,
   color,
   colorIndicator,
+  colorPlacement = ColorPlacement.leading,
   justify = 'flex-start',
   colorFirst = true,
   isActive = false,
@@ -65,12 +66,20 @@ export const VizTooltipRow = ({
       )}
 
       <div className={styles.valueWrapper}>
-        {color && !colorFirst && <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator!} />}
+        {color && !colorFirst && colorPlacement === ColorPlacement.leading && (
+          <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator!} />
+        )}
         <Tooltip content={value ? value.toString() : ''} interactive={false} show={showValueTooltip}>
           <div className={cx(styles.value, isActive)} onMouseEnter={onMouseEnterValue} onMouseLeave={onMouseLeaveValue}>
             {value}
           </div>
         </Tooltip>
+        {color && !colorFirst && colorPlacement === ColorPlacement.trailing && (
+          <>
+            &nbsp;
+            <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator!} />
+          </>
+        )}
       </div>
     </div>
   );

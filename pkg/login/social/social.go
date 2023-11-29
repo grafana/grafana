@@ -44,37 +44,37 @@ type SocialService struct {
 }
 
 type OAuthInfo struct {
-	ApiUrl                  string            `mapstructure:"api_url"`
-	AuthUrl                 string            `mapstructure:"auth_url"`
-	AuthStyle               string            `mapstructure:"auth_style"`
-	ClientId                string            `mapstructure:"client_id"`
-	ClientSecret            string            `mapstructure:"client_secret"`
-	EmailAttributeName      string            `mapstructure:"email_attribute_name"`
-	EmailAttributePath      string            `mapstructure:"email_attribute_path"`
-	EmptyScopes             bool              `mapstructure:"empty_scopes"`
-	GroupsAttributePath     string            `mapstructure:"groups_attribute_path"`
-	HostedDomain            string            `mapstructure:"hosted_domain"`
-	Icon                    string            `mapstructure:"icon"`
-	Name                    string            `mapstructure:"name"`
-	RoleAttributePath       string            `mapstructure:"role_attribute_path"`
-	TeamIdsAttributePath    string            `mapstructure:"team_ids_attribute_path"`
-	TeamsUrl                string            `mapstructure:"teams_url"`
-	TlsClientCa             string            `mapstructure:"tls_client_ca"`
-	TlsClientCert           string            `mapstructure:"tls_client_cert"`
-	TlsClientKey            string            `mapstructure:"tls_client_key"`
-	TokenUrl                string            `mapstructure:"token_url"`
-	AllowedDomains          []string          `mapstructure:"allowed_domains"`
-	AllowedGroups           []string          `mapstructure:"allowed_groups"`
-	Scopes                  []string          `mapstructure:"scopes"`
-	AllowAssignGrafanaAdmin bool              `mapstructure:"allow_assign_grafana_admin"`
-	AllowSignup             bool              `mapstructure:"allow_sign_up"`
-	AutoLogin               bool              `mapstructure:"auto_login"`
-	Enabled                 bool              `mapstructure:"enabled"`
-	RoleAttributeStrict     bool              `mapstructure:"role_attribute_strict"`
-	TlsSkipVerify           bool              `mapstructure:"tls_skip_verify_insecure"`
-	UsePKCE                 bool              `mapstructure:"use_pkce"`
-	UseRefreshToken         bool              `mapstructure:"use_refresh_token"`
-	Extra                   map[string]string `mapstructure:",remain"`
+	ApiUrl                  string            `mapstructure:"api_url" toml:"api_url"`
+	AuthUrl                 string            `mapstructure:"auth_url" toml:"auth_url"`
+	AuthStyle               string            `mapstructure:"auth_style" toml:"auth_style"`
+	ClientId                string            `mapstructure:"client_id" toml:"client_id"`
+	ClientSecret            string            `mapstructure:"client_secret" toml:"-"`
+	EmailAttributeName      string            `mapstructure:"email_attribute_name" toml:"email_attribute_name"`
+	EmailAttributePath      string            `mapstructure:"email_attribute_path" toml:"email_attribute_path"`
+	EmptyScopes             bool              `mapstructure:"empty_scopes" toml:"empty_scopes"`
+	GroupsAttributePath     string            `mapstructure:"groups_attribute_path" toml:"groups_attribute_path"`
+	HostedDomain            string            `mapstructure:"hosted_domain" toml:"hosted_domain"`
+	Icon                    string            `mapstructure:"icon" toml:"icon"`
+	Name                    string            `mapstructure:"name" toml:"name"`
+	RoleAttributePath       string            `mapstructure:"role_attribute_path" toml:"role_attribute_path"`
+	TeamIdsAttributePath    string            `mapstructure:"team_ids_attribute_path" toml:"team_ids_attribute_path"`
+	TeamsUrl                string            `mapstructure:"teams_url" toml:"teams_url"`
+	TlsClientCa             string            `mapstructure:"tls_client_ca" toml:"tls_client_ca"`
+	TlsClientCert           string            `mapstructure:"tls_client_cert" toml:"tls_client_cert"`
+	TlsClientKey            string            `mapstructure:"tls_client_key" toml:"tls_client_key"`
+	TokenUrl                string            `mapstructure:"token_url" toml:"token_url"`
+	AllowedDomains          []string          `mapstructure:"allowed_domains" toml:"allowed_domains"`
+	AllowedGroups           []string          `mapstructure:"allowed_groups" toml:"allowed_groups"`
+	Scopes                  []string          `mapstructure:"scopes" toml:"scopes"`
+	AllowAssignGrafanaAdmin bool              `mapstructure:"allow_assign_grafana_admin" toml:"allow_assign_grafana_admin"`
+	AllowSignup             bool              `mapstructure:"allow_sign_up" toml:"allow_sign_up"`
+	AutoLogin               bool              `mapstructure:"auto_login" toml:"auto_login"`
+	Enabled                 bool              `mapstructure:"enabled" toml:"enabled"`
+	RoleAttributeStrict     bool              `mapstructure:"role_attribute_strict" toml:"role_attribute_strict"`
+	TlsSkipVerify           bool              `mapstructure:"tls_skip_verify_insecure" toml:"tls_skip_verify_insecure"`
+	UsePKCE                 bool              `mapstructure:"use_pkce" toml:"use_pkce"`
+	UseRefreshToken         bool              `mapstructure:"use_refresh_token" toml:"use_refresh_token"`
+	Extra                   map[string]string `mapstructure:",remain" toml:"extra,omitempty"`
 }
 
 func ProvideService(cfg *setting.Cfg,
