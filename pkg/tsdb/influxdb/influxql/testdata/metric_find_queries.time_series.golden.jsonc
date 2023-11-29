@@ -1,0 +1,59 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: measurements
+//  Dimensions: 1 Fields by 10 Rows
+//  +----------------+
+//  | Name: Value    |
+//  | Labels:        |
+//  | Type: []string |
+//  +----------------+
+//  | cpu            |
+//  | disk           |
+//  | diskio         |
+//  | kernel         |
+//  | logs           |
+//  | mem            |
+//  | myMeasurement  |
+//  | processes      |
+//  | swap           |
+//  | system         |
+//  +----------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "measurements",
+        "fields": [
+          {
+            "name": "Value",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "cpu",
+            "disk",
+            "diskio",
+            "kernel",
+            "logs",
+            "mem",
+            "myMeasurement",
+            "processes",
+            "swap",
+            "system"
+          ]
+        ]
+      }
+    }
+  ]
+}
