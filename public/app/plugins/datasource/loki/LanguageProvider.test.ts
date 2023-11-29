@@ -8,7 +8,7 @@ import {
   extractLabelKeysFromDataFrame,
   extractUnwrapLabelKeysFromDataFrame,
 } from './responseUtils';
-import { LokiQueryType } from './types';
+import { LabelType, LokiQueryType } from './types';
 
 jest.mock('./responseUtils');
 
@@ -331,12 +331,19 @@ describe('Query imports', () => {
     let datasource: LokiDatasource, languageProvider: LanguageProvider;
     const extractLogParserFromDataFrameMock = jest.mocked(extractLogParserFromDataFrame);
     const extractedLabelKeys = ['extracted', 'label'];
+    const structuredMetadataKeys = ['structured', 'metadata'];
     const unwrapLabelKeys = ['unwrap', 'labels'];
 
     beforeEach(() => {
       datasource = createLokiDatasource();
       languageProvider = new LanguageProvider(datasource);
-      jest.mocked(extractLabelKeysFromDataFrame).mockReturnValue(extractedLabelKeys);
+      jest.mocked(extractLabelKeysFromDataFrame).mockImplementation((_, type) => {
+        if (type === LabelType.Indexed || !type) {
+          return extractedLabelKeys;
+        } else {
+          return structuredMetadataKeys;
+        }
+      });
       jest.mocked(extractUnwrapLabelKeysFromDataFrame).mockReturnValue(unwrapLabelKeys);
     });
 
@@ -347,6 +354,7 @@ describe('Query imports', () => {
       expect(await languageProvider.getParserAndLabelKeys('{place="luna"}')).toEqual({
         extractedLabelKeys,
         unwrapLabelKeys,
+        structuredMetadataKeys,
         hasJSON: true,
         hasLogfmt: false,
         hasPack: false,
@@ -360,6 +368,7 @@ describe('Query imports', () => {
       expect(await languageProvider.getParserAndLabelKeys('{place="luna"}')).toEqual({
         extractedLabelKeys,
         unwrapLabelKeys,
+        structuredMetadataKeys,
         hasJSON: false,
         hasLogfmt: true,
         hasPack: false,
@@ -373,6 +382,7 @@ describe('Query imports', () => {
       expect(await languageProvider.getParserAndLabelKeys('{place="luna"}')).toEqual({
         extractedLabelKeys: [],
         unwrapLabelKeys: [],
+        structuredMetadataKeys: [],
         hasJSON: false,
         hasLogfmt: false,
         hasPack: false,
@@ -386,6 +396,7 @@ describe('Query imports', () => {
       expect(await languageProvider.getParserAndLabelKeys('{place="luna"}')).toEqual({
         extractedLabelKeys: [],
         unwrapLabelKeys: [],
+        structuredMetadataKeys: [],
         hasJSON: false,
         hasLogfmt: false,
         hasPack: false,
@@ -406,6 +417,7 @@ describe('Query imports', () => {
       expect(await languageProvider.getParserAndLabelKeys('{place="luna"}', { maxLines: 5 })).toEqual({
         extractedLabelKeys: [],
         unwrapLabelKeys: [],
+        structuredMetadataKeys: [],
         hasJSON: false,
         hasLogfmt: false,
         hasPack: false,

@@ -3,6 +3,7 @@ import { from, isObservable, Observable } from 'rxjs';
 
 import {
   AbsoluteTimeRange,
+  createDataFrame,
   DataFrame,
   DataQuery,
   DataQueryRequest,
@@ -788,4 +789,22 @@ function getIntervalInfo(scopedVars: ScopedVars, timespanMs: number): { interval
   } else {
     return { interval: '$__interval' };
   }
+}
+
+/**
+ * Creates a new data frame containing only the single row from `logRow`.
+ */
+export function logRowToSingleRowDataFrame(logRow: LogRowModel): DataFrame | null {
+  const originFrame = logRow.dataFrame;
+
+  if (originFrame.length === 0 || originFrame.length <= logRow.rowIndex) {
+    return null;
+  }
+
+  // create a new data frame containing only the single row from `logRow`
+  const frame = createDataFrame({
+    fields: originFrame.fields.map((field) => ({ ...field, values: [field.values[logRow.rowIndex]] })),
+  });
+
+  return frame;
 }
