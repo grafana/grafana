@@ -511,15 +511,15 @@ func (dr *DashboardServiceImpl) setDefaultFolderPermissions(ctx context.Context,
 			dr.log.Error("Could not make user admin", "folder", cmd.Title, "namespaceID", namespaceID, "userID", userID, "error", err)
 		} else if namespaceID == identity.NamespaceUser && userID > 0 {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
-				UserID: userID, Permission: dashboards.PERMISSION_ADMIN.String(),
+				UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
 			})
 		}
 	}
 
 	if !inFolder {
 		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
-			{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
+			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
 		}...)
 	}
 
