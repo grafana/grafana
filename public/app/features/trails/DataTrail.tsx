@@ -9,6 +9,7 @@ import {
   getUrlSyncManager,
   SceneComponentProps,
   SceneControlsSpacer,
+  sceneGraph,
   SceneObject,
   SceneObjectBase,
   SceneObjectState,
@@ -26,8 +27,14 @@ import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory, DataTrailHistoryStep } from './DataTrailsHistory';
 import { MetricScene } from './MetricScene';
 import { MetricSelectScene } from './MetricSelectScene';
+<<<<<<< Updated upstream
 import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricSelectedEvent, trailDS, LOGS_METRIC, VAR_DATASOURCE } from './shared';
+||||||| constructed merge base
+import { MetricSelectedEvent, trailDS, LOGS_METRIC, VAR_DATASOURCE } from './shared';
+=======
+import { MetricSelectedEvent, trailDS, LOGS_METRIC, VAR_DATASOURCE, VAR_FILTERS } from './shared';
+>>>>>>> Stashed changes
 import { getUrlForTrail } from './utils';
 
 export interface DataTrailState extends SceneObjectState {
@@ -112,6 +119,14 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     } else {
       locationService.partial({ metric: evt.payload, actionView: null });
     }
+
+    // Add metric to adhoc filters baseFilter
+    const filterVar = sceneGraph.lookupVariable(VAR_FILTERS, this);
+    if (filterVar instanceof AdHocFiltersVariable) {
+      filterVar.state.set.setState({
+        baseFilters: getBaseFiltersForMetric(evt.payload),
+      });
+    }
   }
 
   private getSceneUpdatesForNewMetricValue(metric: string | undefined) {
@@ -183,6 +198,7 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
         datasource: trailDS,
         layout: 'vertical',
         filters: initialFilters ?? [],
+        baseFilters: getBaseFiltersForMetric(metric),
       }),
     ],
   });
@@ -210,4 +226,11 @@ function getStyles(theme: GrafanaTheme2) {
       flexWrap: 'wrap',
     }),
   };
+}
+
+function getBaseFiltersForMetric(metric?: string): AdHocVariableFilter[] {
+  if (metric) {
+    return [{ key: '__name__', operator: '=', value: metric }];
+  }
+  return [];
 }
