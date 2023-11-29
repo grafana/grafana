@@ -2,7 +2,7 @@ import { Unsubscribable } from 'rxjs';
 
 import { AppEvents } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { SceneObjectUrlSyncHandler, SceneObjectUrlValues } from '@grafana/scenes';
+import { SceneObjectRef, SceneObjectUrlSyncHandler, SceneObjectUrlValues } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
@@ -35,7 +35,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     const update: Partial<DashboardSceneState> = {};
 
     if (typeof values.editview === 'string' && meta.canEdit) {
-      update.editview = createDashboardEditViewFor(values.editview);
+      update.editview = createDashboardEditViewFor(values.editview, new SceneObjectRef(this._scene));
 
       // If we are not in editing (for example after full page reload)
       if (!isEditing) {
