@@ -898,5 +898,12 @@ var (
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
 		},
+		{
+			Name:         "displayAnonymousStats",
+			Description:  "Enables anonymous stats to be shown in the UI for Grafana",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaAuthnzSquad,
+		},
 	}
 )

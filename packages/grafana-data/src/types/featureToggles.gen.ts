@@ -146,4 +146,5 @@ export interface FeatureToggles {
   panelTitleSearchInV1?: boolean;
   pluginsInstrumentationStatusSource?: boolean;
   panelFilterVariable?: boolean;
+  displayAnonymousStats?: boolean;
 }
