@@ -7,6 +7,7 @@ on:
         type: choice
         options:
           - grafana-testdata-datasource
+          - grafana-tempo-datasource
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}-${{ inputs.plugin_id }}
