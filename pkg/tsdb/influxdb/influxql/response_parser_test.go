@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/util"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
@@ -118,7 +119,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			newField,
 		)
-		testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
+		testFrame.Meta = &data.FrameMeta{PreferredVisualization: util.GraphVisType, ExecutedQueryString: "Test raw query"}
 		testFrameWithoutMeta := data.NewFrame("series alias",
 			data.NewField("Time", nil,
 				[]time.Time{
@@ -323,17 +324,17 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	})
 
 	t.Run("Influxdb response parser parseNumber nil", func(t *testing.T) {
-		value := parseNumber(nil)
+		value := util.ParseNumber(nil)
 		require.Nil(t, value)
 	})
 
 	t.Run("Influxdb response parser parseNumber valid JSON.number", func(t *testing.T) {
-		value := parseNumber(json.Number("95.4"))
+		value := util.ParseNumber(json.Number("95.4"))
 		require.Equal(t, *value, 95.4)
 	})
 
 	t.Run("Influxdb response parser parseNumber invalid type", func(t *testing.T) {
-		value := parseNumber("95.4")
+		value := util.ParseNumber("95.4")
 		require.Nil(t, value)
 	})
 
@@ -350,7 +351,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			newField,
 		)
-		testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
+		testFrame.Meta = &data.FrameMeta{PreferredVisualization: util.GraphVisType, ExecutedQueryString: "Test raw query"}
 
 		result := ResponseParse(readJsonFile("invalid_timestamp_format"), 200, generateQuery("time_series", ""))
 
@@ -362,13 +363,13 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	t.Run("Influxdb response parser parseTimestamp valid JSON.number", func(t *testing.T) {
 		// currently we use milliseconds-precision with influxdb, so the test works with that.
 		// if we change this to for example nanoseconds-precision, the tests will have to change.
-		timestamp, err := parseTimestamp(json.Number("1609556645000"))
+		timestamp, err := util.ParseTimestamp(json.Number("1609556645000"))
 		require.NoError(t, err)
 		require.Equal(t, timestamp.Format(time.RFC3339), "2021-01-02T03:04:05Z")
 	})
 
 	t.Run("Influxdb response parser parseNumber invalid type", func(t *testing.T) {
-		_, err := parseTimestamp("hello")
+		_, err := util.ParseTimestamp("hello")
 		require.Error(t, err)
 	})
 }
