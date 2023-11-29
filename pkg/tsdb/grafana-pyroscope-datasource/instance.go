@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/prometheus/prometheus/promql/parser"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -116,18 +117,34 @@ func (d *PyroscopeDatasource) labelNames(ctx context.Context, req *backend.CallR
 
 	start, _ := strconv.ParseInt(query.Get("start"), 10, 64)
 	end, _ := strconv.ParseInt(query.Get("end"), 10, 64)
+	labelSelector := query.Get("query")
 
-	res, err := d.client.LabelNames(ctx, query.Get("query"), start, end)
+	labels, err := d.client.LabelNames(ctx, labelSelector, start, end)
 	if err != nil {
 		ctxLogger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		return fmt.Errorf("error calling LabelNames: %v", err)
 	}
-	data, err := json.Marshal(res)
+	matchers, err := parser.ParseMetricSelector(labelSelector)
+	if err != nil {
+		ctxLogger.Error("Could not parse label selector in input", "error", err, "function", logEntrypoint())
+		return fmt.Errorf("error processing label names in response: %v", err)
+	}
+	finalLabels := make([]string, 0)
+Outer:
+	for _, label := range labels {
+		for _, matcher := range matchers {
+			if matcher.Name == label {
+				continue Outer
+			}
+		}
+		finalLabels = append(finalLabels, label)
+	}
+	jsonResponse, err := json.Marshal(finalLabels)
 	if err != nil {
 		ctxLogger.Error("Failed to marshal response", "error", err, "function", logEntrypoint())
 		return err
 	}
-	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
+	err = sender.Send(&backend.CallResourceResponse{Body: jsonResponse, Headers: req.Headers, Status: 200})
 	if err != nil {
 		ctxLogger.Error("Failed to send response", "error", err, "function", logEntrypoint())
 		return err
