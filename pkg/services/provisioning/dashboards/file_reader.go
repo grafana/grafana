@@ -350,14 +350,14 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 		if err != nil {
 			return 0, "", err
 		}
-
+		// nolint:staticcheck
 		return f.ID, f.UID, nil
 	}
 
 	if !result.IsFolder {
 		return 0, "", fmt.Errorf("got invalid response. expected folder, found dashboard")
 	}
-	// nolint:staticcheck
+
 	return result.ID, result.UID, nil
 }
 
