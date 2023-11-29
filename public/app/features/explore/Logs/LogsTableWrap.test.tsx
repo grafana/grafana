@@ -117,7 +117,7 @@ describe('LogsTableWrap', () => {
       expect(updatePanelState).toBeCalledWith({
         visualisationType: 'table',
         columns: { 0: 'Line', 1: 'Time' },
-        labelField: 'labels',
+        labelFieldName: 'labels',
       });
     });
   });
