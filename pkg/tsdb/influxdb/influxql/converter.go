@@ -84,11 +84,13 @@ l1Fields:
 }
 
 func readSeries(iter *jsonitere.Iterator, frameName []byte, query *models.Query) *backend.DataResponse {
-	var measurement string
-	var tags map[string]string
-	var columns []string
-	var valueFields data.Fields
-	var hasTimeColumn bool
+	var (
+		measurement   string
+		tags          map[string]string
+		columns       []string
+		valueFields   data.Fields
+		hasTimeColumn bool
+	)
 	rsp := &backend.DataResponse{Frames: make(data.Frames, 0)}
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 		if err != nil {
@@ -280,16 +282,15 @@ func maybeCreateValueField(valueFields data.Fields, expectedType data.FieldType,
 // For nil values we might have added NullableFloat64 value field
 // if they are not matching fix it
 func maybeFixValueFieldType(valueFields data.Fields, expectedType data.FieldType, colIdx int) {
-	if valueFields[colIdx].Type() != expectedType {
-		stringField := data.NewFieldFromFieldType(expectedType, 0)
-		stringField.Name = "Value"
-		var i int
-		for i < valueFields[colIdx].Len() {
-			stringField.Append(nil)
-			i++
-		}
-		valueFields[colIdx] = stringField
+	if valueFields[colIdx].Type() == expectedType {
+		return
 	}
+	stringField := data.NewFieldFromFieldType(expectedType, 0)
+	stringField.Name = "Value"
+	for i := 0; i < valueFields[colIdx].Len(); i++ {
+		stringField.Append(nil)
+	}
+	valueFields[colIdx] = stringField
 }
 
 func handleTimeSeriesFormatWithTimeColumn(valueFields data.Fields, tags map[string]string, columns []string, measurement string, frameName []byte, query *models.Query) []*data.Frame {
@@ -310,17 +311,13 @@ func handleTimeSeriesFormatWithTimeColumn(valueFields data.Fields, tags map[stri
 
 func handleTimeSeriesFormatWithoutTimeColumn(valueFields data.Fields, columns []string, measurement string, query *models.Query) *data.Frame {
 	// Frame without time column
-	var frame *data.Frame
-	if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES")) {
-		if len(columns) >= 2 {
-			frame = data.NewFrame(measurement, valueFields[1])
-		}
-	} else {
-		if len(columns) >= 1 {
-			frame = data.NewFrame(measurement, valueFields[0])
-		}
+	if len(columns) >= 2 && strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES")) {
+		return data.NewFrame(measurement, valueFields[1])
 	}
-	return frame
+	if len(columns) >= 1 {
+		return data.NewFrame(measurement, valueFields[0])
+	}
+	return nil
 }
 
 func handleTableFormatFirstFrame(rsp *backend.DataResponse, measurement string, query *models.Query) {
