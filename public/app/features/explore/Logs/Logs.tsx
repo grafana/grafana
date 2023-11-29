@@ -57,6 +57,7 @@ import { dedupLogRows, filterLogLevels } from '../../logs/logsModel';
 import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 import { changePanelState } from '../state/explorePane';
 
+import { LogsFeedback } from './LogsFeedback';
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
 import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
@@ -602,16 +603,21 @@ class UnthemedLogs extends PureComponent<Props, State> {
         </PanelChrome>
         <PanelChrome
           titleItems={[
-            config.featureToggles.logsExploreTableVisualisation ? (
-              this.state.visualisationType === 'logs' ? null : (
-                <PanelChrome.TitleItem title="Experimental" key="A">
-                  <FeatureBadge
-                    featureState={FeatureState.beta}
-                    tooltip="This feature is experimental and may change in future versions"
-                  />
-                </PanelChrome.TitleItem>
-              )
-            ) : null,
+            config.featureToggles.logsExploreTableVisualisation
+              ? this.state.visualisationType === 'logs'
+                ? null
+                : [
+                    <PanelChrome.TitleItem title="Experimental" key="A">
+                      <FeatureBadge
+                        featureState={FeatureState.beta}
+                        tooltip="Table view is experimental and may change in future versions"
+                      />
+                    </PanelChrome.TitleItem>,
+                    <PanelChrome.TitleItem title="Feedback" key="B">
+                      <LogsFeedback feedbackUrl="https://forms.gle/5YyKdRQJ5hzq4c289" />
+                    </PanelChrome.TitleItem>,
+                  ]
+              : null,
           ]}
           title={'Logs'}
           actions={
