@@ -17,19 +17,6 @@ function getTimePicker(scene: DashboardScene) {
   return null;
 }
 
-function getDashboardLinks(scene: DashboardScene) {
-  const controls = scene.state.controls;
-
-  if (controls && controls[0] instanceof DashboardControls) {
-    const dashboardControls = controls[0];
-    const links = dashboardControls.state.linkControls;
-    return links;
-  }
-
-  return null;
-}
-
 export const dashboardSceneGraph = {
   getTimePicker,
-  getDashboardLinks,
 };
