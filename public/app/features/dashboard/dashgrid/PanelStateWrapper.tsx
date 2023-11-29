@@ -389,15 +389,40 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   };
 
   onPanelWarning = (event: BusEvent) => {
-    console.log('Panel warning', event);
+    const { panel, dashboard } = this.props;
+    const multiVariableValueSelected = event.payload.variableValue;
+
+    // check if panel is a repeated panel, and skip warning,
+    // the panel that has the `repeat` option will take care of the warning
+    if (panel.repeatPanelId) {
+      return false;
+    }
+    // check if this panel is using a variable to be repeat itself
+    if (panel.repeat) {
+      // get variable repeat instance based on panel
+      // TODO: how can I get the variable repeat instance from the panel?
+      // It seems I can't use this function because is private and only accesible from DashboardModel
+      const variableRepeat = dashboard.getPanelRepeatVariable(panel);
+      // if yes check that value from the multi choice var belongs to the variable options
+      if (
+        variableRepeat?.type === 'datasource' &&
+        variableRepeat?.options.find((varOption) => {
+          return varOption.value === multiVariableValueSelected;
+        }) !== undefined
+      ) {
+        return false;
+      }
+    }
+
     dispatch(
       notifyApp(
         createWarningNotification(
-          `panel id: ${this.props.panel.id} warning`,
-          'Panel id warning because of multi-choice var'
+          `Warning: panel id: ${panel.id} is using datasource variable ${panel.datasource?.uid} without configuring the repeat option`,
+          `Panel with title: "${panel.title}" is using a datasource variable with multiple options but its not being repeated`
         )
       )
     );
+    return true;
   };
 
   logPanelChangesOnError() {

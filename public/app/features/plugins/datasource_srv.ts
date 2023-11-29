@@ -359,10 +359,16 @@ export function getNameOrUid(ref?: string | DataSourceRef | null): string | unde
 
 export function variableInterpolation<T>(value: T | T[]) {
   if (Array.isArray(value)) {
-    if (value.length > 1) {
-      appEvents.publish(new PanelDataSourceIsMultiVar());
+    const firstValue = value[0];
+    if (typeof firstValue === 'string') {
+      // Check if we have a multi-variable datasource with more than one option
+      if (value.length > 1) {
+        appEvents.publish(new PanelDataSourceIsMultiVar({ variableValue: firstValue }));
+      }
+      return firstValue;
+    } else {
+      return firstValue;
     }
-    return value[0];
   }
   return value;
 }
