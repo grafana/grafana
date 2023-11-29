@@ -57,11 +57,6 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
     });
   };
 
-  const handleItemClick = (itemId: string, ref: HTMLElement | null, buttonTitle: string) => {
-    scrollIntoView(ref, buttonTitle);
-    setActiveItemId(itemId);
-  };
-
   const toggle = () => {
     toggleExpanded();
     reportInteraction('explore_toolbar_contentoutline_clicked', {
@@ -89,7 +84,10 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
               title={expanded ? item.title : undefined}
               className={styles.buttonStyles}
               icon={item.icon}
-              onClick={() => handleItemClick(item.id, item.ref, item.title)}
+              onClick={() => {
+                scrollIntoView(item.ref, item.title);
+                setActiveItemId(item.id);
+              }}
               tooltip={!expanded ? item.title : undefined}
               isActive={activeItemId === item.id}
             />
