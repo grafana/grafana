@@ -74,7 +74,8 @@ func (c *PyroscopeClient) ProfileTypes(ctx context.Context, start int64, end int
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.ProfileTypes")
 	defer span.End()
 	res, err := c.connectClient.ProfileTypes(ctx, connect.NewRequest(&querierv1.ProfileTypesRequest{
-		// TODO(bryan) add start/end here once github.com/grafana/pyroscope/api gets bumped to 0.2.2
+		Start: start,
+		End:   end,
 	}))
 	if err != nil {
 		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
