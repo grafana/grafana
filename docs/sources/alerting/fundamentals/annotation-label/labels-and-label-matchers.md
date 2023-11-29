@@ -62,6 +62,3 @@ Here is an example that shows how to exclude the label `Team`. You can choose be
 `label: team, operator: !~, value: .+`
 
 `label: team, operator: =~, value: ^$`
-
-
-
