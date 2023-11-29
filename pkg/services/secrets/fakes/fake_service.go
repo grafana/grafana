@@ -8,12 +8,8 @@ import (
 
 type FakeSecretsService struct{}
 
-func ProvideFakeSecretsService() *FakeSecretsService {
+func NewFakeSecretsService() *FakeSecretsService {
 	return &FakeSecretsService{}
-}
-
-func NewFakeSecretsService() FakeSecretsService {
-	return FakeSecretsService{}
 }
 
 func (f FakeSecretsService) Encrypt(_ context.Context, payload []byte, _ secrets.EncryptionOptions) ([]byte, error) {

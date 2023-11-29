@@ -26,7 +26,7 @@ import (
 )
 
 var dbWireSet = wire.NewSet(
-	secretsfakeimpl.ProvideFakeSecretsService,
+	secretsfakeimpl.NewFakeSecretsService,
 	wire.Bind(new(secrets.Service), new(*secretsfakeimpl.FakeSecretsService)),
 	migrations.ProvideOSSMigrations,
 	wire.Bind(new(registry.DatabaseMigrator), new(*migrations.OSSMigrations)),
