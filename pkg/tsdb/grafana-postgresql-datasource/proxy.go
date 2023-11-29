@@ -2,14 +2,15 @@ package postgres
 
 import (
 	"context"
+	"crypto/md5"
 	"database/sql"
 	"database/sql/driver"
+	"fmt"
 	"net"
 	"slices"
 	"time"
 
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/lib/pq"
 	"golang.org/x/net/proxy"
 )
@@ -18,10 +19,7 @@ import (
 // route connections through the secure socks proxy
 func createPostgresProxyDriver(cnnstr string, opts *sdkproxy.Options) (string, error) {
 	// create a unique driver per connection string
-	hash, err := util.Md5SumString(cnnstr)
-	if err != nil {
-		return "", err
-	}
+	hash := fmt.Sprintf("%x", md5.Sum([]byte(cnnstr)))
 	driverName := "postgres-proxy-" + hash
 
 	// only register the driver once
