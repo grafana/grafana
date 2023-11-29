@@ -44,37 +44,37 @@ type SocialService struct {
 }
 
 type OAuthInfo struct {
-	ApiUrl                  string            `mapstructure:"api_url" toml:"api_url" json:"apiUrl,omitempty"`
-	AuthUrl                 string            `mapstructure:"auth_url" toml:"auth_url" json:"authUrl,omitempty"`
-	AuthStyle               string            `mapstructure:"auth_style" toml:"auth_style" json:"authStyle,omitempty"`
-	ClientId                string            `mapstructure:"client_id" toml:"client_id" json:"clientId,omitempty"`
-	ClientSecret            string            `mapstructure:"client_secret" toml:"-" json:"clientSecret,omitempty"`
-	EmailAttributeName      string            `mapstructure:"email_attribute_name" toml:"email_attribute_name" json:"emailAttributeName,omitempty"`
-	EmailAttributePath      string            `mapstructure:"email_attribute_path" toml:"email_attribute_path" json:"emailAttributePath,omitempty"`
-	EmptyScopes             bool              `mapstructure:"empty_scopes" toml:"empty_scopes" json:"emptyScopes,omitempty"`
-	GroupsAttributePath     string            `mapstructure:"groups_attribute_path" toml:"groups_attribute_path" json:"groupsAttributePath,omitempty"`
-	HostedDomain            string            `mapstructure:"hosted_domain" toml:"hosted_domain" json:"hostedDomain,omitempty"`
-	Icon                    string            `mapstructure:"icon" toml:"icon" json:"icon,omitempty"`
-	Name                    string            `mapstructure:"name" toml:"name" json:"name,omitempty"`
-	RoleAttributePath       string            `mapstructure:"role_attribute_path" toml:"role_attribute_path" json:"roleAttributePath,omitempty"`
-	TeamIdsAttributePath    string            `mapstructure:"team_ids_attribute_path" toml:"team_ids_attribute_path" json:"teamIdsAttributePath,omitempty"`
-	TeamsUrl                string            `mapstructure:"teams_url" toml:"teams_url" json:"teamsUrl,omitempty"`
-	TlsClientCa             string            `mapstructure:"tls_client_ca" toml:"tls_client_ca" json:"tlsClientCa,omitempty"`
-	TlsClientCert           string            `mapstructure:"tls_client_cert" toml:"tls_client_cert" json:"tlsClientCert,omitempty"`
-	TlsClientKey            string            `mapstructure:"tls_client_key" toml:"tls_client_key" json:"tlsClientKey,omitempty"`
-	TokenUrl                string            `mapstructure:"token_url" toml:"token_url" json:"tokenUrl,omitempty"`
-	AllowedDomains          []string          `mapstructure:"allowed_domains" toml:"allowed_domains" json:"allowedDomains,omitempty"`
-	AllowedGroups           []string          `mapstructure:"allowed_groups" toml:"allowed_groups" json:"allowedGroups,omitempty"`
-	Scopes                  []string          `mapstructure:"scopes" toml:"scopes" json:"scopes,omitempty"`
-	AllowAssignGrafanaAdmin bool              `mapstructure:"allow_assign_grafana_admin" toml:"allow_assign_grafana_admin" json:"allowAssignGrafanaAdmin,omitempty"`
-	AllowSignup             bool              `mapstructure:"allow_sign_up" toml:"allow_sign_up" json:"allowSignup,omitempty"`
-	AutoLogin               bool              `mapstructure:"auto_login" toml:"auto_login" json:"autoLogin,omitempty"`
-	Enabled                 bool              `mapstructure:"enabled" toml:"enabled" json:"enabled,omitempty"`
-	RoleAttributeStrict     bool              `mapstructure:"role_attribute_strict" toml:"role_attribute_strict" json:"roleAttributeStrict,omitempty"`
-	TlsSkipVerify           bool              `mapstructure:"tls_skip_verify_insecure" toml:"tls_skip_verify_insecure" json:"tlsSkipVerify,omitempty"`
-	UsePKCE                 bool              `mapstructure:"use_pkce" toml:"use_pkce" json:"usePKCE,omitempty"`
-	UseRefreshToken         bool              `mapstructure:"use_refresh_token" toml:"use_refresh_token" json:"useRefreshToken,omitempty"`
-	Extra                   map[string]string `mapstructure:",remain" toml:"extra,omitempty" json:"extra,omitempty"`
+	ApiUrl                  string            `mapstructure:"api_url" toml:"api_url" json:"apiUrl"`
+	AuthUrl                 string            `mapstructure:"auth_url" toml:"auth_url" json:"authUrl"`
+	AuthStyle               string            `mapstructure:"auth_style" toml:"auth_style" json:"authStyle"`
+	ClientId                string            `mapstructure:"client_id" toml:"client_id" json:"clientId"`
+	ClientSecret            string            `mapstructure:"client_secret" toml:"-" json:"clientSecret"`
+	EmailAttributeName      string            `mapstructure:"email_attribute_name" toml:"email_attribute_name" json:"emailAttributeName"`
+	EmailAttributePath      string            `mapstructure:"email_attribute_path" toml:"email_attribute_path" json:"emailAttributePath"`
+	EmptyScopes             bool              `mapstructure:"empty_scopes" toml:"empty_scopes" json:"emptyScopes"`
+	GroupsAttributePath     string            `mapstructure:"groups_attribute_path" toml:"groups_attribute_path" json:"groupsAttributePath"`
+	HostedDomain            string            `mapstructure:"hosted_domain" toml:"hosted_domain" json:"hostedDomain"`
+	Icon                    string            `mapstructure:"icon" toml:"icon" json:"icon"`
+	Name                    string            `mapstructure:"name" toml:"name" json:"name"`
+	RoleAttributePath       string            `mapstructure:"role_attribute_path" toml:"role_attribute_path" json:"roleAttributePath"`
+	TeamIdsAttributePath    string            `mapstructure:"team_ids_attribute_path" toml:"team_ids_attribute_path" json:"teamIdsAttributePath"`
+	TeamsUrl                string            `mapstructure:"teams_url" toml:"teams_url" json:"teamsUrl"`
+	TlsClientCa             string            `mapstructure:"tls_client_ca" toml:"tls_client_ca" json:"tlsClientCa"`
+	TlsClientCert           string            `mapstructure:"tls_client_cert" toml:"tls_client_cert" json:"tlsClientCert"`
+	TlsClientKey            string            `mapstructure:"tls_client_key" toml:"tls_client_key" json:"tlsClientKey"`
+	TokenUrl                string            `mapstructure:"token_url" toml:"token_url" json:"tokenUrl"`
+	AllowedDomains          []string          `mapstructure:"allowed_domains" toml:"allowed_domains" json:"allowedDomains"`
+	AllowedGroups           []string          `mapstructure:"allowed_groups" toml:"allowed_groups" json:"allowedGroups"`
+	Scopes                  []string          `mapstructure:"scopes" toml:"scopes" json:"scopes"`
+	AllowAssignGrafanaAdmin bool              `mapstructure:"allow_assign_grafana_admin" toml:"allow_assign_grafana_admin" json:"allowAssignGrafanaAdmin"`
+	AllowSignup             bool              `mapstructure:"allow_sign_up" toml:"allow_sign_up" json:"allowSignup"`
+	AutoLogin               bool              `mapstructure:"auto_login" toml:"auto_login" json:"autoLogin"`
+	Enabled                 bool              `mapstructure:"enabled" toml:"enabled" json:"enabled"`
+	RoleAttributeStrict     bool              `mapstructure:"role_attribute_strict" toml:"role_attribute_strict" json:"roleAttributeStrict"`
+	TlsSkipVerify           bool              `mapstructure:"tls_skip_verify_insecure" toml:"tls_skip_verify_insecure" json:"tlsSkipVerify"`
+	UsePKCE                 bool              `mapstructure:"use_pkce" toml:"use_pkce" json:"usePKCE"`
+	UseRefreshToken         bool              `mapstructure:"use_refresh_token" toml:"use_refresh_token" json:"useRefreshToken"`
+	Extra                   map[string]string `mapstructure:",remain" toml:"extra,omitempty" json:"extra"`
 }
 
 func ProvideService(cfg *setting.Cfg,
