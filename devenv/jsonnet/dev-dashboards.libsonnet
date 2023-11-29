@@ -149,13 +149,6 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
-    dashboard.new('convert-field-enum', import '../dev-dashboards/transforms/convert-field-enum.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
     dashboard.new('dashlist', import '../dev-dashboards/panel-dashlist/dashlist.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
