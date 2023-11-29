@@ -610,7 +610,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     <PanelChrome.TitleItem title="Experimental" key="A">
                       <FeatureBadge
                         featureState={FeatureState.beta}
-                        tooltip="This feature is experimental and may change in future versions"
+                        tooltip="Table view is experimental and may change in future versions"
                       />
                     </PanelChrome.TitleItem>,
                     <PanelChrome.TitleItem title="Feedback" key="B">
