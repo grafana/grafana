@@ -218,7 +218,7 @@ function renderAddRestParamButton(
       <Button
         size="sm"
         icon="plus"
-        title={`Add ${paramDef.name}`}
+        title={`Add ${paramDef.name}`.trimEnd()}
         variant="secondary"
         onClick={onAddRestParam}
         data-testid={`operations.${operationIndex}.add-rest-param`}
