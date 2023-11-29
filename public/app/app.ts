@@ -196,20 +196,22 @@ export class GrafanaApp {
       const modalManager = new ModalManager();
       modalManager.init();
 
-      // Preload selected app plugins
-      const preloadResults = await preloadPlugins(config.apps);
+      if (contextSrv.isSignedIn) {
+        // Preload selected app plugins
+        const preloadResults = await preloadPlugins(config.apps);
 
-      // Create extension registry out of preloaded plugins and core extensions
-      const extensionRegistry = createPluginExtensionRegistry([
-        { pluginId: 'grafana', extensionConfigs: getCoreExtensionConfigurations() },
-        ...preloadResults,
-      ]);
+        // Create extension registry out of preloaded plugins and core extensions
+        const extensionRegistry = createPluginExtensionRegistry([
+          { pluginId: 'grafana', extensionConfigs: getCoreExtensionConfigurations() },
+          ...preloadResults,
+        ]);
 
-      // Expose the getPluginExtension function via grafana-runtime
-      const pluginExtensionGetter: GetPluginExtensions = (options) =>
-        getPluginExtensions({ ...options, registry: extensionRegistry });
+        // Expose the getPluginExtension function via grafana-runtime
+        const pluginExtensionGetter: GetPluginExtensions = (options) =>
+          getPluginExtensions({ ...options, registry: extensionRegistry });
 
-      setPluginExtensionGetter(pluginExtensionGetter);
+        setPluginExtensionGetter(pluginExtensionGetter);
+      }
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();
