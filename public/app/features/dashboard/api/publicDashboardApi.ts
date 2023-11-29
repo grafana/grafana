@@ -140,7 +140,10 @@ export const publicDashboardApi = createApi({
         url: '',
       }),
     }),
-    deleteRecipient: builder.mutation<void, { recipientUid: string; dashboardUid: string; uid: string }>({
+    deleteRecipient: builder.mutation<
+      void,
+      { recipientUid: string; recipientEmail: string; dashboardUid: string; uid: string }
+    >({
       query: () => ({
         url: '',
       }),
