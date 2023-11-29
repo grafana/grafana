@@ -249,7 +249,7 @@ export function LogsTableWrap(props: Props) {
   function searchFilterEvent(searchResultCount: number) {
     reportInteraction('grafana_explore_logs_table_text_search_result_count', {
       resultCount: searchResultCount,
-      datasourceType: props.datasourceType,
+      datasourceType: props.datasourceType ?? 'unknown',
     });
   }
 
