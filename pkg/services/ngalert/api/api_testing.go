@@ -194,8 +194,8 @@ func (srv TestingApiSrv) RouteEvalQueries(c *contextmodel.ReqContext, cmd apimod
 func addOptimizedQueryWarnings(evalResults *backend.QueryDataResponse, optimizations []store.Optimization) {
 	for _, opt := range optimizations {
 		if res, ok := evalResults.Responses[opt.RefID]; ok {
-			if len(res.Frames) > 0 && res.Frames[0].Meta != nil {
-				res.Frames[0].Meta.Notices = append(res.Frames[0].Meta.Notices, data.Notice{
+			if len(res.Frames) > 0 {
+				res.Frames[0].AppendNotices(data.Notice{
 					Severity: data.NoticeSeverityWarning,
 					Text:     "Query optimized from Range to Instant type", // Currently this is the only optimization we do.
 				})
