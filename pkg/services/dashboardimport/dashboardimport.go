@@ -25,6 +25,7 @@ type ImportDashboardRequest struct {
 	// Deprecated: use FolderUID instead
 	FolderId  int64  `json:"folderId"`
 	FolderUid string `json:"folderUid"`
+	OrgId     int64  `json:"orgId"`
 
 	User identity.Requester `json:"-"`
 }
@@ -42,6 +43,7 @@ type ImportDashboardResponse struct {
 	// Deprecated: use FolderUID instead
 	FolderId         int64  `json:"folderId"`
 	FolderUID        string `json:"folderUid"`
+	OrgId            int64  `json:"orgId"`
 	ImportedRevision int64  `json:"importedRevision,omitempty"` // Only used for plugin imports
 	Revision         int64  `json:"revision,omitempty"`         // Only used for plugin imports
 	Description      string `json:"description"`
