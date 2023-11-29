@@ -83,7 +83,7 @@ export const ServerStats = () => {
               { name: 'Active users in last 30 days', value: stats.activeUsers },
               ...(config.featureToggles.displayAnonymousStats && stats.activeDevices
                 ? [
-                    { name: 'Active devices in last 30 days', value: stats.activeDevices },
+                    { name: 'Active anonymous devices in last 30 days', value: stats.activeDevices },
                     { name: 'Active anonymous users in last 30 days', value: Math.floor(stats.activeDevices / 3) },
                   ]
                 : []),

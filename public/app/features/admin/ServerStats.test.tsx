@@ -54,7 +54,7 @@ describe('ServerStats', () => {
     config.featureToggles.displayAnonymousStats = true;
     render(<ServerStats />);
     expect(await screen.findByRole('heading', { name: /instance statistics/i })).toBeInTheDocument();
-    expect(screen.getByText('Active devices in last 30 days')).toBeInTheDocument();
+    expect(screen.getByText('Active anonymous devices in last 30 days')).toBeInTheDocument();
     expect(screen.getByText('Active anonymous users in last 30 days')).toBeInTheDocument();
   });
 });
