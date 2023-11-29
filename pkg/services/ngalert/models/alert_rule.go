@@ -14,6 +14,7 @@ import (
 	alertingModels "github.com/grafana/alerting/models"
 
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
@@ -420,6 +421,42 @@ func (alertRule *AlertRule) PreSave(timeNow func() time.Time) error {
 		alertRule.Data[i] = q
 	}
 	alertRule.Updated = timeNow()
+	return nil
+}
+
+// ValidateAlertRule validates various alert rule fields.
+func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSettings) error {
+	if len(alertRule.Data) == 0 {
+		return fmt.Errorf("%w: no queries or expressions are found", ErrAlertRuleFailedValidation)
+	}
+
+	if alertRule.Title == "" {
+		return fmt.Errorf("%w: title is empty", ErrAlertRuleFailedValidation)
+	}
+
+	if err := ValidateRuleGroupInterval(alertRule.IntervalSeconds, int64(cfg.BaseInterval.Seconds())); err != nil {
+		return err
+	}
+
+	if alertRule.OrgID == 0 {
+		return fmt.Errorf("%w: no organisation is found", ErrAlertRuleFailedValidation)
+	}
+
+	if alertRule.DashboardUID == nil && alertRule.PanelID != nil {
+		return fmt.Errorf("%w: cannot have Panel ID without a Dashboard UID", ErrAlertRuleFailedValidation)
+	}
+
+	if _, err := ErrStateFromString(string(alertRule.ExecErrState)); err != nil {
+		return err
+	}
+
+	if _, err := NoDataStateFromString(string(alertRule.NoDataState)); err != nil {
+		return err
+	}
+
+	if alertRule.For < 0 {
+		return fmt.Errorf("%w: field `for` cannot be negative", ErrAlertRuleFailedValidation)
+	}
 	return nil
 }
 

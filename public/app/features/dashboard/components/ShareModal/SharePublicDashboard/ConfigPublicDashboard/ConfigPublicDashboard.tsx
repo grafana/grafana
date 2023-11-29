@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { reportInteraction } from '@grafana/runtime';
 import { config, featureEnabled } from '@grafana/runtime/src';
 import {
   Button,
@@ -30,7 +31,6 @@ import { contextSrv } from '../../../../../../core/services/context_srv';
 import { AccessControlAction, useSelector } from '../../../../../../types';
 import { useIsDesktop } from '../../../../utils/screen';
 import { ShareModal } from '../../ShareModal';
-import { trackDashboardSharingActionPerType } from '../../analytics';
 import { shareDashboardType } from '../../utils';
 import { NoUpsertPermissionsAlert } from '../ModalAlerts/NoUpsertPermissionsAlert';
 import { SaveDashboardChangesAlert } from '../ModalAlerts/SaveDashboardChangesAlert';
@@ -111,7 +111,7 @@ export function ConfigPublicDashboardBase({
   };
 
   function onCopyURL() {
-    trackDashboardSharingActionPerType('copy_public_url', shareDashboardType.publicDashboard);
+    reportInteraction('dashboards_sharing_public_copy_url_clicked');
   }
 
   return (
@@ -151,10 +151,9 @@ export function ConfigPublicDashboardBase({
             {...register('isPaused')}
             disabled={disableInputs}
             onChange={(e) => {
-              trackDashboardSharingActionPerType(
-                e.currentTarget.checked ? 'disable_sharing' : 'enable_sharing',
-                shareDashboardType.publicDashboard
-              );
+              reportInteraction('dashboards_sharing_public_pause_clicked', {
+                paused: e.currentTarget.checked,
+              });
               onChange('isPaused', e.currentTarget.checked);
             }}
             data-testid={selectors.PauseSwitch}
@@ -243,6 +242,7 @@ export function ConfigPublicDashboard({ publicDashboard, unsupportedDatasources 
           showSaveChangesAlert={hasWritePermissions && dashboard.hasUnsavedChanges()}
           hasTemplateVariables={hasTemplateVariables}
           onRevoke={() => {
+            reportInteraction('dashboards_sharing_public_revoke_clicked');
             showModal(DeletePublicDashboardModal, {
               dashboardTitle: dashboard.title,
               onConfirm: () => onDeletePublicDashboardClick(hideModal),

@@ -2,6 +2,7 @@ package ssosettingsimpl
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -358,6 +359,40 @@ func TestSSOSettingsService_List(t *testing.T) {
 			require.ElementsMatch(t, tc.want, actual)
 		})
 	}
+}
+
+func TestSSOSettingsService_Delete(t *testing.T) {
+	t.Run("successfully delete SSO settings", func(t *testing.T) {
+		env := setupTestEnv(t)
+
+		provider := "azuread"
+		env.store.ExpectedError = nil
+
+		err := env.service.Delete(context.Background(), provider)
+		require.NoError(t, err)
+	})
+
+	t.Run("SSO settings not found for the specified provider", func(t *testing.T) {
+		env := setupTestEnv(t)
+
+		provider := "azuread"
+		env.store.ExpectedError = ssosettings.ErrNotFound
+
+		err := env.service.Delete(context.Background(), provider)
+		require.Error(t, err)
+		require.ErrorIs(t, err, ssosettings.ErrNotFound)
+	})
+
+	t.Run("store fails to delete the SSO settings for the specified provider", func(t *testing.T) {
+		env := setupTestEnv(t)
+
+		provider := "azuread"
+		env.store.ExpectedError = errors.New("delete sso settings failed")
+
+		err := env.service.Delete(context.Background(), provider)
+		require.Error(t, err)
+		require.NotErrorIs(t, err, ssosettings.ErrNotFound)
+	})
 }
 
 func setupTestEnv(t *testing.T) testEnv {

@@ -56,7 +56,7 @@ export interface CloudWatchSecureJsonData extends AwsAuthDataSourceSecureJsonDat
 
 export type CloudWatchLogsRequest = GetLogEventsRequest | StartQueryRequest | QueryParam;
 
-export interface GetLogEventsRequest {
+export interface GetLogEventsRequest extends DataQuery {
   /**
    * The name of the log group.
    */
@@ -85,7 +85,7 @@ export interface GetLogEventsRequest {
    * If the value is true, the earliest log events are returned first. If the value is false, the latest log events are returned first. The default value is false. If you are using nextToken in this operation, you must specify true for startFromHead.
    */
   startFromHead?: boolean;
-  region?: string;
+  region: string;
 }
 
 export interface TSDBResponse<T = any> {
@@ -135,7 +135,7 @@ export interface LogGroupField {
   percent?: number;
 }
 
-export interface StartQueryRequest {
+export interface StartQueryRequest extends DataQuery {
   /**
    * The log group on which to perform the query. A StartQuery operation must include a logGroupNames or a logGroupName parameter, but not both.
    */
@@ -157,7 +157,7 @@ export interface StartQueryRequest {
   region: string;
 }
 
-export interface QueryParam {
+export interface QueryParam extends DataQuery {
   queryId: string;
   refId: string;
   limit?: number;

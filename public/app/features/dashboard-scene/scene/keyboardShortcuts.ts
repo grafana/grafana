@@ -4,6 +4,7 @@ import { OptionsWithLegend } from '@grafana/schema';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 
 import { ShareModal } from '../sharing/ShareModal';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getPanelIdForVizPanel } from '../utils/utils';
 
@@ -79,6 +80,40 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     onTrigger: () => sceneGraph.getTimeRange(scene).onRefresh(),
   });
 
+  // Zoom out
+  keybindings.addBinding({
+    key: 't z',
+    onTrigger: () => {
+      handleZoomOut(scene);
+    },
+  });
+  keybindings.addBinding({
+    key: 'ctrl+z',
+    onTrigger: () => {
+      handleZoomOut(scene);
+    },
+  });
+
+  keybindings.addBinding({
+    key: 't left',
+    onTrigger: () => {
+      handleTimeRangeShift(scene, 'left');
+    },
+  });
+
+  keybindings.addBinding({
+    key: 't right',
+    onTrigger: () => {
+      handleTimeRangeShift(scene, 'right');
+    },
+  });
+
+  // Dashboard settings
+  keybindings.addBinding({
+    key: 'd s',
+    onTrigger: scene.onOpenSettings,
+  });
+
   // toggle all panel legends (TODO)
   // delete panel (TODO when we work on editing)
   // toggle all exemplars (TODO)
@@ -121,4 +156,24 @@ export function toggleVizPanelLegend(vizPanel: VizPanel) {
 
 function hasLegendOptions(optionsWithLegend: unknown): optionsWithLegend is OptionsWithLegend {
   return optionsWithLegend != null && typeof optionsWithLegend === 'object' && 'legend' in optionsWithLegend;
+}
+
+function handleZoomOut(scene: DashboardScene) {
+  const timePicker = dashboardSceneGraph.getTimePicker(scene);
+  timePicker?.onZoom();
+}
+
+function handleTimeRangeShift(scene: DashboardScene, direction: 'left' | 'right') {
+  const timePicker = dashboardSceneGraph.getTimePicker(scene);
+
+  if (!timePicker) {
+    return;
+  }
+
+  if (direction === 'left') {
+    timePicker.onMoveBackward();
+  }
+  if (direction === 'right') {
+    timePicker.onMoveForward();
+  }
 }

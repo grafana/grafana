@@ -49,9 +49,13 @@ func parse(buf io.Reader, statusCode int, query *models.Query) *backend.DataResp
 	result := response.Results[0]
 	if result.Error != "" {
 		return &backend.DataResponse{Error: fmt.Errorf(result.Error)}
-	} else {
-		return &backend.DataResponse{Frames: transformRows(result.Series, *query)}
 	}
+
+	if query.ResultFormat == "table" {
+		return &backend.DataResponse{Frames: transformRowsForTable(result.Series, *query)}
+	}
+
+	return &backend.DataResponse{Frames: transformRowsForTimeSeries(result.Series, *query)}
 }
 
 func parseJSON(buf io.Reader) (models.Response, error) {
@@ -65,7 +69,125 @@ func parseJSON(buf io.Reader) (models.Response, error) {
 	return response, err
 }
 
-func transformRows(rows []models.Row, query models.Query) data.Frames {
+func transformRowsForTable(rows []models.Row, query models.Query) data.Frames {
+	if len(rows) == 0 {
+		return make([]*data.Frame, 0)
+	}
+
+	frames := make([]*data.Frame, 0, 1)
+
+	newFrame := data.NewFrame(rows[0].Name)
+	newFrame.Meta = &data.FrameMeta{
+		ExecutedQueryString:    query.RawQuery,
+		PreferredVisualization: getVisType(query.ResultFormat),
+	}
+
+	conLen := len(rows[0].Columns)
+	if rows[0].Columns[0] == "time" {
+		newFrame.Fields = append(newFrame.Fields, newTimeField(rows))
+	} else {
+		newFrame.Fields = append(newFrame.Fields, newValueFields(rows, nil, 0, 1)...)
+	}
+
+	newFrame.Fields = append(newFrame.Fields, newTagField(rows, nil)...)
+	newFrame.Fields = append(newFrame.Fields, newValueFields(rows, nil, 1, conLen)...)
+
+	frames = append(frames, newFrame)
+	return frames
+}
+
+func newTimeField(rows []models.Row) *data.Field {
+	var timeArray []time.Time
+	for _, row := range rows {
+		for _, valuePair := range row.Values {
+			timestamp, timestampErr := parseTimestamp(valuePair[0])
+			// we only add this row if the timestamp is valid
+			if timestampErr != nil {
+				continue
+			}
+
+			timeArray = append(timeArray, timestamp)
+		}
+	}
+
+	timeField := data.NewField("Time", nil, timeArray)
+	return timeField
+}
+
+func newTagField(rows []models.Row, labels data.Labels) []*data.Field {
+	fields := make([]*data.Field, 0, len(rows[0].Tags))
+
+	for key := range rows[0].Tags {
+		tagField := data.NewField(key, labels, []*string{})
+		for _, row := range rows {
+			for range row.Values {
+				value := row.Tags[key]
+				tagField.Append(&value)
+			}
+		}
+		tagField.SetConfig(&data.FieldConfig{DisplayNameFromDS: key})
+		fields = append(fields, tagField)
+	}
+
+	return fields
+}
+
+func newValueFields(rows []models.Row, labels data.Labels, colIdxStart, colIdxEnd int) []*data.Field {
+	fields := make([]*data.Field, 0)
+
+	for colIdx := colIdxStart; colIdx < colIdxEnd; colIdx++ {
+		var valueField *data.Field
+		var floatArray []*float64
+		var stringArray []*string
+		var boolArray []*bool
+
+		for _, row := range rows {
+			valType := typeof(row.Values, colIdx)
+
+			for _, valuePair := range row.Values {
+				switch valType {
+				case "string":
+					value, ok := valuePair[colIdx].(string)
+					if ok {
+						stringArray = append(stringArray, &value)
+					} else {
+						stringArray = append(stringArray, nil)
+					}
+				case "json.Number":
+					value := parseNumber(valuePair[colIdx])
+					floatArray = append(floatArray, value)
+				case "bool":
+					value, ok := valuePair[colIdx].(bool)
+					if ok {
+						boolArray = append(boolArray, &value)
+					} else {
+						boolArray = append(boolArray, nil)
+					}
+				case "null":
+					floatArray = append(floatArray, nil)
+				}
+			}
+
+			switch valType {
+			case "string":
+				valueField = data.NewField(row.Columns[colIdx], labels, stringArray)
+			case "json.Number":
+				valueField = data.NewField(row.Columns[colIdx], labels, floatArray)
+			case "bool":
+				valueField = data.NewField(row.Columns[colIdx], labels, boolArray)
+			case "null":
+				valueField = data.NewField(row.Columns[colIdx], labels, floatArray)
+			}
+
+			valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: row.Columns[colIdx]})
+		}
+		fields = append(fields, valueField)
+	}
+
+	return fields
+}
+
+func transformRowsForTimeSeries(rows []models.Row, query models.Query) data.Frames {
 	// pre-allocate frames - this can save many allocations
 	cols := 0
 	for _, row := range rows {

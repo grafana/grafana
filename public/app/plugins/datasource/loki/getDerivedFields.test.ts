@@ -26,17 +26,20 @@ describe('getDerivedFields', () => {
     const newFields = getDerivedFields(df, [
       {
         matcherRegex: 'trace1=(\\w+)',
+        matcherType: 'regex',
         name: 'trace1',
         url: 'http://localhost/${__value.raw}',
       },
       {
         matcherRegex: 'trace2=(\\w+)',
+        matcherType: 'regex',
         name: 'trace2',
         url: 'test',
         datasourceUid: 'uid',
       },
       {
         matcherRegex: 'trace2=(\\w+)',
+        matcherType: 'regex',
         name: 'trace2',
         url: 'test',
         datasourceUid: 'uid2',
@@ -44,6 +47,7 @@ describe('getDerivedFields', () => {
       },
       {
         matcherRegex: 'trace=(\\w+)',
+        matcherType: 'regex',
         name: 'tempoTraceId',
         url: 'test',
         datasourceUid: 'tempo-datasource-uid',
@@ -51,6 +55,7 @@ describe('getDerivedFields', () => {
       },
       {
         matcherRegex: 'trace=(\\w+)',
+        matcherType: 'regex',
         name: 'xrayTraceId',
         url: 'test',
         datasourceUid: 'xray-datasource-uid',
@@ -115,6 +120,7 @@ describe('getDerivedFields', () => {
     const newFields = getDerivedFields(df, [
       {
         matcherRegex: 'trace1=(\\w+)',
+        matcherType: 'regex',
         name: 'trace1',
         url: 'http://localhost/${__value.raw}',
       },

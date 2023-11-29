@@ -130,7 +130,7 @@ export async function parseResponseBody<T>(
   return textData as any;
 }
 
-export function serializeParams(data: Record<string, any>): string {
+function serializeParams(data: Record<string, any>): string {
   return Object.keys(data)
     .map((key) => {
       const value = data[key];

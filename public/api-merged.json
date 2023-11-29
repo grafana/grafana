@@ -3420,7 +3420,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/AddCommand"
+              "$ref": "#/definitions/AddAPIKeyCommand"
             }
           }
         ],
@@ -10938,7 +10938,7 @@
         }
       }
     },
-    "AddCommand": {
+    "AddAPIKeyCommand": {
       "type": "object",
       "properties": {
         "name": {
@@ -22310,17 +22310,6 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/UserProfileDTO"
-      }
-    },
-    "validateDashboardResponse": {
-      "description": "(empty)",
-      "headers": {
-        "isValid": {
-          "type": "boolean"
-        },
-        "message": {
-          "type": "string"
-        }
       }
     },
     "viewPublicDashboardResponse": {

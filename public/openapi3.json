@@ -1911,21 +1911,6 @@
         },
         "description": "(empty)"
       },
-      "validateDashboardResponse": {
-        "description": "(empty)",
-        "headers": {
-          "isValid": {
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          "message": {
-            "schema": {
-              "type": "string"
-            }
-          }
-        }
-      },
       "viewPublicDashboardResponse": {
         "content": {
           "application/json": {
@@ -1977,7 +1962,7 @@
         },
         "type": "object"
       },
-      "AddCommand": {
+      "AddAPIKeyCommand": {
         "properties": {
           "name": {
             "type": "string"
@@ -15818,7 +15803,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AddCommand"
+                "$ref": "#/components/schemas/AddAPIKeyCommand"
               }
             }
           },

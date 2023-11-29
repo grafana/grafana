@@ -16,6 +16,8 @@ var (
 )
 
 // Service is a SSO settings service
+//
+//go:generate mockery --name Service --structname MockService --outpkg ssosettingstests --filename service_mock.go --output ./ssosettingstests/
 type Service interface {
 	// List returns all SSO settings from DB and config files
 	List(ctx context.Context, requester identity.Requester) ([]*models.SSOSetting, error)
