@@ -900,8 +900,11 @@ describe('DashboardModel', () => {
     beforeEach(() => {
       model = createDashboardModelFixture({
         panels: [
+          // @ts-expect-error
           { id: 1, type: 'graph', gridPos: { x: 0, y: 0, w: 24, h: 2 }, legend: { show: true } },
+          // @ts-expect-error
           { id: 3, type: 'graph', gridPos: { x: 0, y: 4, w: 12, h: 2 }, legend: { show: false } },
+          // @ts-expect-error
           { id: 4, type: 'graph', gridPos: { x: 12, y: 4, w: 12, h: 2 }, legend: { show: false } },
         ],
       });
