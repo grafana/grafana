@@ -145,14 +145,13 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 	am.log.Debug("Start state upload to remote Alertmanager", "url", am.url)
 	state, err := am.state.GetFullState(ctx, notifier.SilencesFilename, notifier.NotificationLogFilename)
 	if err != nil {
-		return fmt.Errorf("error getting the Alertmanager's full state: %w", err)
-	}
-
-	if am.shouldSendState(ctx, state) {
+		am.log.Error("error getting the Alertmanager's full state", "err", err)
+	} else if am.shouldSendState(ctx, state) {
 		if err := am.mimirClient.CreateGrafanaAlertmanagerState(ctx, state); err != nil {
 			am.log.Error("Unable to upload the state to the remote Alertmanager", "err", err)
 		}
 	}
+
 	am.log.Debug("Completed state upload to remote Alertmanager", "url", am.url)
 	return nil
 }
