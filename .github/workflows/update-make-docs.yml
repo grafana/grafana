@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: grafana/writers-toolkit/update-make-docs@update-make-docs/v1
+      - uses: grafana/writers-toolkit/update-make-docs@226968dc26263cd97dc20475e88f7c44459f15c5
         with:
           pr_options: >
             --label 'backport v10.0.x'
@@ -17,3 +17,4 @@ jobs:
             --label 'backport v10.2.x'
             --label no-changelog
             --label type/docs
+          trace: true
