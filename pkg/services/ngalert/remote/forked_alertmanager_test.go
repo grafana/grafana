@@ -240,7 +240,7 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 	})
 
 	t.Run("CleanUp", func(tt *testing.T) {
-		// CleanUp() should be called only in the internal Alertmanager,
+		// CleanUp should be called only in the internal Alertmanager,
 		// there's no cleanup to do in the remote one.
 		internal, _, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
 		internal.EXPECT().CleanUp().Once()
@@ -472,7 +472,7 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 	})
 
 	t.Run("CleanUp", func(tt *testing.T) {
-		// CleanUp() should be called only in the internal Alertmanager,
+		// CleanUp should be called only in the internal Alertmanager,
 		// there's no cleanup to do in the remote one.
 		internal, _, forked := genTestAlertmanagers(tt, modeRemotePrimary)
 		internal.EXPECT().CleanUp().Once()
