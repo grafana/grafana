@@ -7,6 +7,7 @@
   "repository": "github:grafana/grafana",
   "scripts": {
     "build": "yarn i18n:compile && NODE_ENV=production webpack --progress --config scripts/webpack/webpack.prod.js",
+    "build-max-memory": "NODE_OPTIONS='--max-old-space-size=5120' GENERATE_SOURCEMAP=false && yarn build",
     "build:nominify": "yarn run build --env noMinify=1",
     "dev": "yarn i18n:compile && NODE_ENV=dev webpack --progress --color --config scripts/webpack/webpack.dev.js",
     "e2e": "./e2e/start-and-run-suite",
@@ -56,6 +57,7 @@
     "i18n:compile": "echo 'no i18n compile yet, all good'",
     "i18n:pseudo": "node ./public/locales/pseudo.js",
     "i18n:stats": "node ./scripts/cli/reportI18nStats.mjs",
+    "test-percona": "echo NOT IMPLEMENTED",
     "betterer": "betterer",
     "betterer:merge": "betterer merge",
     "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts",
@@ -63,7 +65,7 @@
     "generate-icons-bundle-cache-file": "node ./scripts/generate-icon-bundle.js",
     "plugin:build": "lerna run build --ignore=\"@grafana/*\"",
     "plugin:build:commit": "lerna run build:commit --ignore=\"@grafana/*\"",
-    "plugin:build:dev": "lerna run dev --ignore=\"@grafana/*\""
+    "plugin:build:dev": "lerna run dev --ignore=\"@grafana/*\"",
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v10-2/",
