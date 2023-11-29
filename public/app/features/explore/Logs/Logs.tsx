@@ -268,6 +268,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     reportInteraction('grafana_explore_logs_visualisation_changed', {
       newVisualizationType: visualisation,
+      datasourceType: this.props.datasourceType ?? 'unknown',
     });
   };
 
@@ -757,6 +758,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   panelState={this.props.panelState?.logs}
                   theme={theme}
                   updatePanelState={this.updatePanelState}
+                  datasourceType={this.props.datasourceType}
                 />
               </div>
             )}
