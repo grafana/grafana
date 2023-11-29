@@ -48,7 +48,7 @@ l1Fields:
 				rsp.Error = err
 				return rsp
 			}
-			fmt.Println(fmt.Printf("[ROOT] TODO, support key: %s / %v\n\n", l1Field, v))
+			fmt.Printf("[ROOT] unsupported key: %s / %v\n\n", l1Field, v)
 		}
 	}
 
@@ -128,7 +128,7 @@ func readSeries(iter *jsonitere.Iterator, frameName []byte, query *models.Query)
 				if err != nil {
 					return rspErr(err)
 				}
-				fmt.Printf("unsupported key: %s / %v\n", l1Field, v)
+				fmt.Printf("[Series] unsupported key: %s / %v\n", l1Field, v)
 			}
 		}
 
@@ -185,7 +185,6 @@ func readColumns(iter *jsonitere.Iterator) (columns []string, err error) {
 }
 
 func readValues(iter *jsonitere.Iterator, hasTimeColumn bool) (valueFields data.Fields, err error) {
-	valueFields = make(data.Fields, 0)
 	if hasTimeColumn {
 		valueFields = append(valueFields, data.NewField("Time", nil, make([]time.Time, 0)))
 	}
