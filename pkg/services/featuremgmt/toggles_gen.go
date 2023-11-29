@@ -195,6 +195,10 @@ const (
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
 
+	// FlagInfluxqlStreamingParser
+	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
+	FlagInfluxqlStreamingParser = "influxqlStreamingParser"
+
 	// FlagClientTokenRotation
 	// Replaces the current in-request token rotation so that the client initiates the rotation
 	FlagClientTokenRotation = "clientTokenRotation"
@@ -367,6 +371,10 @@ const (
 	// Enables linking between traces and profiles
 	FlagTraceToProfiles = "traceToProfiles"
 
+	// FlagTracesEmbeddedFlameGraph
+	// Enables embedding a flame graph in traces
+	FlagTracesEmbeddedFlameGraph = "tracesEmbeddedFlameGraph"
+
 	// FlagPermissionsFilterRemoveSubquery
 	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
 	FlagPermissionsFilterRemoveSubquery = "permissionsFilterRemoveSubquery"
@@ -398,10 +406,6 @@ const (
 	// FlagReportingRetries
 	// Enables rendering retries for the reporting feature
 	FlagReportingRetries = "reportingRetries"
-
-	// FlagNewBrowseDashboards
-	// New browse/manage dashboards UI
-	FlagNewBrowseDashboards = "newBrowseDashboards"
 
 	// FlagSseGroupByDatasource
 	// Send query to the same datasource in a single request when using server side expressions
@@ -590,4 +594,12 @@ const (
 	// FlagPluginsSkipHostEnvVars
 	// Disables passing host environment variable to plugin processes
 	FlagPluginsSkipHostEnvVars = "pluginsSkipHostEnvVars"
+
+	// FlagRegressionTransformation
+	// Enables regression analysis transformation
+	FlagRegressionTransformation = "regressionTransformation"
+
+	// FlagDisplayAnonymousStats
+	// Enables anonymous stats to be shown in the UI for Grafana
+	FlagDisplayAnonymousStats = "displayAnonymousStats"
 )

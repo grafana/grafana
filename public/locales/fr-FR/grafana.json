@@ -86,9 +86,7 @@
     "manage-folder-nav": {
       "alert-rules": "Règles d'alerte",
       "dashboards": "Tableaux de bord",
-      "panels": "Panneaux",
-      "permissions": "Permissions",
-      "settings": "Paramètres"
+      "panels": "Panneaux"
     },
     "new-folder-form": {
       "cancel-label": "Annuler",
@@ -943,7 +941,8 @@
     },
     "megamenu": {
       "close": "Fermer le menu",
-      "dock": "Ancrer le menu"
+      "dock": "Ancrer le menu",
+      "undock": ""
     },
     "toolbar": {
       "close-menu": "Fermer le menu",
@@ -1091,15 +1090,6 @@
       "new-dashboard": "Nouveau tableau de bord",
       "new-folder": "Nouveau dossier"
     },
-    "folder-view": {
-      "go-to-folder": "Aller dans le dossier",
-      "select-folder": "Sélectionner un dossier"
-    },
-    "result-kind": {
-      "dashboard": "Tableau de bord",
-      "folder": "Dossier",
-      "panel": "Panneau"
-    },
     "results-table": {
       "datasource-header": "Source de données",
       "location-header": "Emplacement",
@@ -1112,12 +1102,6 @@
     "search-input": {
       "include-panels-placeholder": "Rechercher des tableaux de bord et des panneaux",
       "placeholder": "Rechercher des tableaux de bord"
-    }
-  },
-  "search-view": {
-    "no-results": {
-      "clear": "Effacer la recherche et les filtres",
-      "text": "Aucun résultat trouvé pour votre requête."
     }
   },
   "share-modal": {
@@ -1255,6 +1239,7 @@
     "calendar": {
       "apply-button": "Appliquer la plage de temps",
       "cancel-button": "Annuler",
+      "close": "",
       "select-time": "Sélectionner une plage de temps"
     },
     "content": {
@@ -1274,6 +1259,7 @@
       "default-error": "Entrez une date dans le passé ou « maintenant »",
       "fiscal-year": "Exercice fiscal",
       "from-input": "De",
+      "open-input-calendar": "",
       "range-error": "« De » ne peut pas être ultérieur à « À »",
       "to-input": "À"
     },

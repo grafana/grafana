@@ -89,7 +89,7 @@ lineage: schemas: [{
 			version?: uint32
 
 			// List of dashboard panels
-			panels?: [...(#Panel | #RowPanel | #GraphPanel | #HeatmapPanel)]
+			panels?: [...(#Panel | #RowPanel)]
 
 			// Configured template variables
 			templating?: {
@@ -713,31 +713,11 @@ lineage: schemas: [{
 			id: uint32
 
 			// List of panels in the row
-			panels: [...(#Panel | #GraphPanel | #HeatmapPanel)]
+			panels: [...#Panel]
 
 			// Name of template variable to repeat for.
 			repeat?: string
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
-
-		// Support for legacy graph panel.
-		// @deprecated this a deprecated panel type
-		#GraphPanel: {
-			type: "graph"
-			// @deprecated this is part of deprecated graph panel
-			legend?: {
-				show:      bool | *true
-				sort?:     string
-				sortDesc?: bool
-			}
-			...
-		} @cuetsy(kind="interface")
-
-		// Support for legacy heatmap panel.
-		// @deprecated this a deprecated panel type
-		#HeatmapPanel: {
-			type: "heatmap"
-			...
-		} @cuetsy(kind="interface")
 	}
 },
 ]

@@ -6,7 +6,6 @@ import { createErrorNotification } from 'app/core/copy/appNotification';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { KeybindingSrv } from 'app/core/services/keybindingSrv';
 import store from 'app/core/store';
-import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardSrv, getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -100,7 +99,7 @@ async function fetchDashboard(
         // only the folder API has information about ancestors
         // get parent folder (if it exists) and put it in the store
         // this will be used to populate the full breadcrumb trail
-        if (newBrowseDashboardsEnabled() && dashDTO.meta.folderUid) {
+        if (dashDTO.meta.folderUid) {
           try {
             await dispatch(getFolderByUid(dashDTO.meta.folderUid));
           } catch (err) {
@@ -128,7 +127,7 @@ async function fetchDashboard(
         // only the folder API has information about ancestors
         // get parent folder (if it exists) and put it in the store
         // this will be used to populate the full breadcrumb trail
-        if (newBrowseDashboardsEnabled() && args.urlFolderUid) {
+        if (args.urlFolderUid) {
           await dispatch(getFolderByUid(args.urlFolderUid));
         }
         return getNewDashboardModelData(args.urlFolderUid, args.panelType);
