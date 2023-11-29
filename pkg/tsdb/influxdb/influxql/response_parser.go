@@ -149,6 +149,10 @@ func newValueFields(rows []models.Row, labels data.Labels, colIdxStart, colIdxEn
 				case "string":
 					value, ok := valuePair[colIdx].(string)
 					if ok {
+						// we handle null values by adding nil to floatArray
+						// if then we see the valueField should be a sting field
+						// we append those nil elements into the stringArray
+						// then we clear the floatArray
 						for range floatArray {
 							stringArray = append(stringArray, nil)
 						}
@@ -164,7 +168,7 @@ func newValueFields(rows []models.Row, labels data.Labels, colIdxStart, colIdxEn
 					value, ok := valuePair[colIdx].(bool)
 					if ok {
 						for range floatArray {
-							stringArray = append(stringArray, nil)
+							boolArray = append(boolArray, nil)
 						}
 						floatArray = nil
 						boolArray = append(boolArray, &value)
