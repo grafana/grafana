@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/util"
@@ -28,14 +28,14 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 	page := c.QueryInt64("page")
 	dashboardType := c.Query("type")
 	sort := c.Query("sort")
-	permission := dashboards.PERMISSION_VIEW
+	permission := dashboardaccess.PERMISSION_VIEW
 
 	if limit > 5000 {
 		return response.Error(422, "Limit is above maximum allowed (5000), use page parameter to access hits beyond limit", nil)
 	}
 
 	if c.Query("permission") == "Edit" {
-		permission = dashboards.PERMISSION_EDIT
+		permission = dashboardaccess.PERMISSION_EDIT
 	}
 
 	dbIDs := make([]int64, 0)

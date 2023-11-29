@@ -41,6 +41,8 @@ import {
   trackToolbarSettingsClick,
   trackToolbarTimePickerClick,
   trackToolbarZoomClick,
+  trackToolbarSaveClick,
+  trackToolbarAddClick,
 } from './analytics';
 
 const mapDispatchToProps = {
@@ -280,7 +282,9 @@ export const DashNav = React.memo<Props>((props) => {
 
     if (canEdit && !isFullscreen) {
       if (config.featureToggles.emptyDashboardPage) {
-        buttons.push(<AddPanelButton dashboard={dashboard} key="panel-add-dropdown" />);
+        buttons.push(
+          <AddPanelButton dashboard={dashboard} onToolbarAddMenuOpen={trackToolbarAddClick} key="panel-add-dropdown" />
+        );
       } else {
         buttons.push(
           <ToolbarButton
@@ -302,6 +306,7 @@ export const DashNav = React.memo<Props>((props) => {
               tooltip={t('dashboard.toolbar.save', 'Save dashboard')}
               icon="save"
               onClick={() => {
+                trackToolbarSaveClick();
                 showModal(SaveDashboardDrawer, {
                   dashboard,
                   onDismiss: hideModal,
