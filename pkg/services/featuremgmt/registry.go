@@ -1082,6 +1082,13 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaBiSquad,
 		},
+		{
+			Name:         "displayAnonymousStats",
+			Description:  "Enables anonymous stats to be shown in the UI for Grafana",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        identityAccessTeam,
+		},
 	}
 )
 

@@ -33,19 +33,19 @@ func (_m *MockService) Delete(ctx context.Context, provider string) error {
 }
 
 // GetForProvider provides a mock function with given fields: ctx, provider
-func (_m *MockService) GetForProvider(ctx context.Context, provider string) (*models.SSOSetting, error) {
+func (_m *MockService) GetForProvider(ctx context.Context, provider string) (*models.SSOSettings, error) {
 	ret := _m.Called(ctx, provider)
 
-	var r0 *models.SSOSetting
+	var r0 *models.SSOSettings
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*models.SSOSetting, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*models.SSOSettings, error)); ok {
 		return rf(ctx, provider)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *models.SSOSetting); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) *models.SSOSettings); ok {
 		r0 = rf(ctx, provider)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.SSOSetting)
+			r0 = ret.Get(0).(*models.SSOSettings)
 		}
 	}
 
@@ -59,19 +59,19 @@ func (_m *MockService) GetForProvider(ctx context.Context, provider string) (*mo
 }
 
 // List provides a mock function with given fields: ctx, requester
-func (_m *MockService) List(ctx context.Context, requester identity.Requester) ([]*models.SSOSetting, error) {
+func (_m *MockService) List(ctx context.Context, requester identity.Requester) ([]*models.SSOSettings, error) {
 	ret := _m.Called(ctx, requester)
 
-	var r0 []*models.SSOSetting
+	var r0 []*models.SSOSettings
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, identity.Requester) ([]*models.SSOSetting, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, identity.Requester) ([]*models.SSOSettings, error)); ok {
 		return rf(ctx, requester)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, identity.Requester) []*models.SSOSetting); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, identity.Requester) []*models.SSOSettings); ok {
 		r0 = rf(ctx, requester)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*models.SSOSetting)
+			r0 = ret.Get(0).([]*models.SSOSettings)
 		}
 	}
 
@@ -108,13 +108,13 @@ func (_m *MockService) Reload(ctx context.Context, provider string) {
 	_m.Called(ctx, provider)
 }
 
-// Upsert provides a mock function with given fields: ctx, provider, data
-func (_m *MockService) Upsert(ctx context.Context, provider string, data map[string]interface{}) error {
-	ret := _m.Called(ctx, provider, data)
+// Upsert provides a mock function with given fields: ctx, settings
+func (_m *MockService) Upsert(ctx context.Context, settings models.SSOSettings) error {
+	ret := _m.Called(ctx, settings)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]interface{}) error); ok {
-		r0 = rf(ctx, provider, data)
+	if rf, ok := ret.Get(0).(func(context.Context, models.SSOSettings) error); ok {
+		r0 = rf(ctx, settings)
 	} else {
 		r0 = ret.Error(0)
 	}

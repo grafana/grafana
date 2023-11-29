@@ -173,8 +173,17 @@ class UnthemedLogs extends PureComponent<Props, State> {
     if (this.cancelFlippingTimer) {
       window.clearTimeout(this.cancelFlippingTimer);
     }
+    // Delete url state on unmount
+    if (this.props?.panelState?.logs?.columns) {
+      delete this.props.panelState.logs.columns;
+    }
+    if (this.props?.panelState?.logs?.refId) {
+      delete this.props.panelState.logs.refId;
+    }
+    if (this.props?.panelState?.logs?.labelFieldName) {
+      delete this.props.panelState.logs.labelFieldName;
+    }
   }
-
   updatePanelState = (logsPanelState: Partial<ExploreLogsPanelState>) => {
     const state: ExploreItemState | undefined = getState().explore.panes[this.props.exploreId];
     if (state?.panelsState) {
@@ -183,6 +192,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
           ...state.panelsState.logs,
           columns: logsPanelState.columns ?? this.props.panelState?.logs?.columns,
           visualisationType: logsPanelState.visualisationType ?? this.state.visualisationType,
+          labelFieldName: logsPanelState.labelFieldName,
           refId: logsPanelState.refId ?? this.props.panelState?.logs?.refId,
         })
       );
@@ -193,6 +203,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     if (this.props.loading && !prevProps.loading && this.props.panelState?.logs?.id) {
       // loading stopped, so we need to remove any permalinked log lines
       delete this.props.panelState.logs.id;
+
       dispatch(
         changePanelState(this.props.exploreId, 'logs', {
           ...this.props.panelState,
@@ -602,13 +613,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
               )
             ) : null,
           ]}
-          title={
-            config.featureToggles.logsExploreTableVisualisation
-              ? this.state.visualisationType === 'logs'
-                ? 'Logs'
-                : 'Table'
-              : 'Logs'
-          }
+          title={'Logs'}
           actions={
             <>
               {config.featureToggles.logsExploreTableVisualisation && (
@@ -617,14 +622,14 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     className={styles.visualisationTypeRadio}
                     options={[
                       {
-                        label: 'Table',
-                        value: 'table',
-                        description: 'Show results in table visualisation',
-                      },
-                      {
                         label: 'Logs',
                         value: 'logs',
                         description: 'Show results in logs visualisation',
+                      },
+                      {
+                        label: 'Table',
+                        value: 'table',
+                        description: 'Show results in table visualisation',
                       },
                     ]}
                     size="sm"

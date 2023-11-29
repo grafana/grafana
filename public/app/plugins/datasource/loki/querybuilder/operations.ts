@@ -246,9 +246,10 @@ Example: \`\`error_level=\`level\` \`\`
       name: 'Line contains',
       params: [
         {
-          name: 'String',
+          name: '',
           type: 'string',
           hideName: true,
+          restParam: true,
           placeholder: 'Text to find',
           description: 'Find log lines that contains this text',
           minWidth: 20,
@@ -261,16 +262,17 @@ Example: \`\`error_level=\`level\` \`\`
       orderRank: LokiOperationOrder.LineFilters,
       renderer: getLineFilterRenderer('|='),
       addOperationHandler: addLokiOperation,
-      explainHandler: (op) => `Return log lines that contain string \`${op.params[0]}\`.`,
+      explainHandler: (op) => `Return log lines that contain string \`${op.params?.join('`, or `')}\`.`,
     },
     {
       id: LokiOperationId.LineContainsNot,
       name: 'Line does not contain',
       params: [
         {
-          name: 'String',
+          name: '',
           type: 'string',
           hideName: true,
+          restParam: true,
           placeholder: 'Text to exclude',
           description: 'Find log lines that does not contain this text',
           minWidth: 26,
@@ -283,16 +285,17 @@ Example: \`\`error_level=\`level\` \`\`
       orderRank: LokiOperationOrder.LineFilters,
       renderer: getLineFilterRenderer('!='),
       addOperationHandler: addLokiOperation,
-      explainHandler: (op) => `Return log lines that does not contain string \`${op.params[0]}\`.`,
+      explainHandler: (op) => `Return log lines that does not contain string \`${op.params?.join('`, or `')}\`.`,
     },
     {
       id: LokiOperationId.LineContainsCaseInsensitive,
       name: 'Line contains case insensitive',
       params: [
         {
-          name: 'String',
+          name: '',
           type: 'string',
           hideName: true,
+          restParam: true,
           placeholder: 'Text to find',
           description: 'Find log lines that contains this text',
           minWidth: 33,
@@ -305,16 +308,17 @@ Example: \`\`error_level=\`level\` \`\`
       orderRank: LokiOperationOrder.LineFilters,
       renderer: getLineFilterRenderer('|~', true),
       addOperationHandler: addLokiOperation,
-      explainHandler: (op) => `Return log lines that match regex \`(?i)${op.params[0]}\`.`,
+      explainHandler: (op) => `Return log lines that match regex \`(?i)${op.params?.join('`, or `(?i)')}\`.`,
     },
     {
       id: LokiOperationId.LineContainsNotCaseInsensitive,
       name: 'Line does not contain case insensitive',
       params: [
         {
-          name: 'String',
+          name: '',
           type: 'string',
           hideName: true,
+          restParam: true,
           placeholder: 'Text to exclude',
           description: 'Find log lines that does not contain this text',
           minWidth: 40,
@@ -327,16 +331,17 @@ Example: \`\`error_level=\`level\` \`\`
       orderRank: LokiOperationOrder.LineFilters,
       renderer: getLineFilterRenderer('!~', true),
       addOperationHandler: addLokiOperation,
-      explainHandler: (op) => `Return log lines that does not match regex \`(?i)${op.params[0]}\`.`,
+      explainHandler: (op) => `Return log lines that does not match regex \`(?i)${op.params?.join('`, or `(?i)')}\`.`,
     },
     {
       id: LokiOperationId.LineMatchesRegex,
       name: 'Line contains regex match',
       params: [
         {
-          name: 'Regex',
+          name: '',
           type: 'string',
           hideName: true,
+          restParam: true,
           placeholder: 'Pattern to match',
           description: 'Find log lines that match this regex pattern',
           minWidth: 30,
@@ -349,16 +354,17 @@ Example: \`\`error_level=\`level\` \`\`
       orderRank: LokiOperationOrder.LineFilters,
       renderer: getLineFilterRenderer('|~'),
       addOperationHandler: addLokiOperation,
-      explainHandler: (op) => `Return log lines that match a \`RE2\` regex pattern. \`${op.params[0]}\`.`,
+      explainHandler: (op) => `Return log lines that match a \`RE2\` regex pattern. \`${op.params?.join('`, or `')}\`.`,
     },
     {
       id: LokiOperationId.LineMatchesRegexNot,
       name: 'Line does not match regex',
       params: [
         {
-          name: 'Regex',
+          name: '',
           type: 'string',
           hideName: true,
+          restParam: true,
           placeholder: 'Pattern to exclude',
           description: 'Find log lines that does not match this regex pattern',
           minWidth: 30,
@@ -371,7 +377,8 @@ Example: \`\`error_level=\`level\` \`\`
       orderRank: LokiOperationOrder.LineFilters,
       renderer: getLineFilterRenderer('!~'),
       addOperationHandler: addLokiOperation,
-      explainHandler: (op) => `Return log lines that doesn't match a \`RE2\` regex pattern. \`${op.params[0]}\`.`,
+      explainHandler: (op) =>
+        `Return log lines that doesn't match a \`RE2\` regex pattern. \`${op.params?.join('`, or `')}\`.`,
     },
     {
       id: LokiOperationId.LineFilterIpMatches,
