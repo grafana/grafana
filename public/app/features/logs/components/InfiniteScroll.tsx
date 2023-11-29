@@ -31,8 +31,6 @@ export const InfiniteScroll = ({ children, loading, loadMoreLogs, range, rows, s
       return;
     }
 
-    console.log(scrollElement);
-
     function handleScroll(e: Event) {
       if (!scrollElement || !loadMoreLogs || !rows.length || loading) {
         return;
