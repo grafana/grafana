@@ -21,25 +21,7 @@ addEventListener('message', async (event) => {
  * and also fills in node references in edges instead of node ids.
  */
 export function layout(nodes, edges) {
-  const mappedEdges = [];
-  const idToDOTMap = {};
-  const DOTToIdMap = {};
-
-  let index = 0;
-  for (const edge of edges) {
-    if (!idToDOTMap[edge.source]) {
-      idToDOTMap[edge.source] = index.toString(10);
-      DOTToIdMap[index.toString(10)] = edge.source;
-      index++;
-    }
-
-    if (!idToDOTMap[edge.target]) {
-      idToDOTMap[edge.target] = index.toString(10);
-      DOTToIdMap[index.toString(10)] = edge.target;
-      index++;
-    }
-    mappedEdges.push({ source: idToDOTMap[edge.source], target: idToDOTMap[edge.target] });
-  }
+  const { mappedEdges, DOTToIdMap, idToDOTMap } = createMappings(nodes, edges);
 
   const dot = edgesToDOT(mappedEdges);
   const graph = parseDot(dot);
@@ -53,7 +35,7 @@ export function layout(nodes, edges) {
     gn.boundaryCurve = CurveFactory.mkCircle(50, new Point(0, 0));
   }
   geomGraph.layoutSettings = new SugiyamaLayoutSettings();
-  geomGraph.layoutSettings.layerDirection = LayerDirectionEnum.BT;
+  geomGraph.layoutSettings.layerDirection = LayerDirectionEnum.LR;
   geomGraph.layoutSettings.LayerSeparation = 60;
   geomGraph.layoutSettings.commonSettings.NodeSeparation = 40;
   layoutGeomGraph(geomGraph);
@@ -87,6 +69,40 @@ export function layout(nodes, edges) {
   centerNodes(finalNodes);
   console.log({ finalNodes, edgesMapped });
   return [finalNodes, edgesMapped];
+}
+
+function createMappings(nodes, edges) {
+  // Edges where the source and target IDs are the indexes we use for layout
+  const mappedEdges = [];
+
+  // Key is an ID of the node and value is new ID which is just iteration index
+  const idToDOTMap = {};
+
+  // Key is an iteration index and value is actual ID of the node
+  const DOTToIdMap = {};
+
+  // Crate the maps both ways
+  let index = 0;
+  for (const edge of edges) {
+    if (!idToDOTMap[edge.source]) {
+      idToDOTMap[edge.source] = index.toString(10);
+      DOTToIdMap[index.toString(10)] = edge.source;
+      index++;
+    }
+
+    if (!idToDOTMap[edge.target]) {
+      idToDOTMap[edge.target] = index.toString(10);
+      DOTToIdMap[index.toString(10)] = edge.target;
+      index++;
+    }
+    mappedEdges.push({ source: idToDOTMap[edge.source], target: idToDOTMap[edge.target] });
+  }
+
+  return {
+    mappedEdges,
+    idToDOTMap,
+    DOTToIdMap,
+  };
 }
 
 function toDOT(edges, graphAttr = '', edgeAttr = '') {
