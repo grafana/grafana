@@ -55,7 +55,7 @@ then:
 
 You can also write label matchers to exclude labels.
 
-Here is an example that shows how to exclude the label `Team`. You can choose between any of the values below to exclude labels.
+Here is an example that shows how to exclude the label `team`. You can choose between any of the values below to exclude labels.
 
 `label: team, operator: =, value: "" –`
 
