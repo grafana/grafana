@@ -15,52 +15,57 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 )
 
-//func TestIntegrationGetSSOSettings(t *testing.T) {
-//	if testing.Short() {
-//		t.Skip("skipping integration test")
-//	}
-//
-//	var sqlStore *sqlstore.SQLStore
-//	var ssoSettingsStore *SSOSettingsStore
-//
-//	setup := func() {
-//		sqlStore = db.InitTestDB(t)
-//		ssoSettingsStore = ProvideStore(sqlStore)
-//
-//		err := insertSSOSetting(ssoSettingsStore, "azuread", nil)
-//		require.NoError(t, err)
-//	}
-//
-//	t.Run("returns existing SSO settings", func(t *testing.T) {
-//		setup()
-//
-//		expected := &models.SSOSettings{
-//			Provider:      "azuread",
-//			OAuthSettings: &social.OAuthInfo{Enabled: true},
-//		}
-//
-//		actual, err := ssoSettingsStore.Get(context.Background(), "azuread")
-//		require.NoError(t, err)
-//
-//		require.Equal(t, expected.OAuthSettings, actual.OAuthSettings)
-//	})
-//
-//	t.Run("returns not found if the SSO setting is missing for the specified provider", func(t *testing.T) {
-//		setup()
-//
-//		_, err := ssoSettingsStore.Get(context.Background(), "okta")
-//		require.ErrorAs(t, err, &ssosettings.ErrNotFound)
-//	})
-//
-//	t.Run("returns not found if the SSO setting is soft deleted for the specified provider", func(t *testing.T) {
-//		setup()
-//		err := ssoSettingsStore.Delete(context.Background(), "azuread")
-//		require.NoError(t, err)
-//
-//		_, err = ssoSettingsStore.Get(context.Background(), "azuread")
-//		require.ErrorAs(t, err, &ssosettings.ErrNotFound)
-//	})
-//}
+func TestIntegrationGetSSOSettings(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	var sqlStore *sqlstore.SQLStore
+	var ssoSettingsStore *SSOSettingsStore
+
+	setup := func() {
+		sqlStore = db.InitTestDB(t)
+		ssoSettingsStore = ProvideStore(sqlStore)
+
+		template := models.SSOSettings{
+			OAuthSettings: &social.OAuthInfo{
+				Enabled: true,
+			},
+		}
+		err := populateSSOSettings(sqlStore, template, "azuread")
+		require.NoError(t, err)
+	}
+
+	t.Run("returns existing SSO settings", func(t *testing.T) {
+		setup()
+
+		expected := &models.SSOSettings{
+			Provider:      "azuread",
+			OAuthSettings: &social.OAuthInfo{Enabled: true},
+		}
+
+		actual, err := ssoSettingsStore.Get(context.Background(), "azuread")
+		require.NoError(t, err)
+
+		require.Equal(t, expected.OAuthSettings, actual.OAuthSettings)
+	})
+
+	t.Run("returns not found if the SSO setting is missing for the specified provider", func(t *testing.T) {
+		setup()
+
+		_, err := ssoSettingsStore.Get(context.Background(), "okta")
+		require.ErrorAs(t, err, &ssosettings.ErrNotFound)
+	})
+
+	t.Run("returns not found if the SSO setting is soft deleted for the specified provider", func(t *testing.T) {
+		setup()
+		err := ssoSettingsStore.Delete(context.Background(), "azuread")
+		require.NoError(t, err)
+
+		_, err = ssoSettingsStore.Get(context.Background(), "azuread")
+		require.ErrorAs(t, err, &ssosettings.ErrNotFound)
+	})
+}
 
 func TestIntegrationUpsertSSOSettings(t *testing.T) {
 	if testing.Short() {
@@ -226,38 +231,44 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 	})
 }
 
-//func TestIntegrationListSSOSettings(t *testing.T) {
-//	if testing.Short() {
-//		t.Skip("skipping integration test")
-//	}
-//
-//	var sqlStore *sqlstore.SQLStore
-//	var ssoSettingsStore *SSOSettingsStore
-//
-//	setup := func() {
-//		sqlStore = db.InitTestDB(t)
-//		ssoSettingsStore = ProvideStore(sqlStore)
-//
-//		err := insertSSOSetting(ssoSettingsStore, "azuread", map[string]interface{}{
-//			"enabled": true,
-//		})
-//		require.NoError(t, err)
-//
-//		err = insertSSOSetting(ssoSettingsStore, "okta", map[string]interface{}{
-//			"enabled": false,
-//		})
-//		require.NoError(t, err)
-//	}
-//
-//	t.Run("returns every SSO settings successfully", func(t *testing.T) {
-//		setup()
-//
-//		list, err := ssoSettingsStore.List(context.Background())
-//
-//		require.NoError(t, err)
-//		require.Equal(t, 2, len(list))
-//	})
-//}
+func TestIntegrationListSSOSettings(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	var sqlStore *sqlstore.SQLStore
+	var ssoSettingsStore *SSOSettingsStore
+
+	setup := func() {
+		sqlStore = db.InitTestDB(t)
+		ssoSettingsStore = ProvideStore(sqlStore)
+
+		template := models.SSOSettings{
+			OAuthSettings: &social.OAuthInfo{
+				Enabled: true,
+			},
+		}
+		err := populateSSOSettings(sqlStore, template, "azuread")
+		require.NoError(t, err)
+
+		template = models.SSOSettings{
+			OAuthSettings: &social.OAuthInfo{
+				Enabled: false,
+			},
+		}
+		err = populateSSOSettings(sqlStore, template, "okta")
+		require.NoError(t, err)
+	}
+
+	t.Run("returns every SSO settings successfully", func(t *testing.T) {
+		setup()
+
+		list, err := ssoSettingsStore.List(context.Background())
+
+		require.NoError(t, err)
+		require.Equal(t, 2, len(list))
+	})
+}
 
 func TestIntegrationDeleteSSOSettings(t *testing.T) {
 	if testing.Short() {
@@ -363,15 +374,6 @@ func TestIntegrationDeleteSSOSettings(t *testing.T) {
 		require.EqualValues(t, 1, notDeleted)
 	})
 }
-
-//func insertSSOSetting(ssoSettingsStore ssosettings.Store, provider string, settings map[string]interface{}) error {
-//	if settings == nil {
-//		settings = map[string]interface{}{
-//			"enabled": true,
-//		}
-//	}
-//	return ssoSettingsStore.Upsert(context.Background(), provider, settings)
-//}
 
 func populateSSOSettings(sqlStore *sqlstore.SQLStore, template models.SSOSettings, providers ...string) error {
 	return sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
