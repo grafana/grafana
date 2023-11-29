@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -14,7 +15,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
@@ -180,7 +180,7 @@ func TestIntegrationPostgres(t *testing.T) {
 	// change to true to run the PostgreSQL tests
 	const runPostgresTests = false
 
-	if !(db.IsTestDbPostgres() || runPostgresTests) {
+	if !(isTestDbPostgres() || runPostgresTests) {
 		t.Skip()
 	}
 
@@ -1426,4 +1426,12 @@ type tlsTestManager struct {
 
 func (m *tlsTestManager) getTLSSettings(dsInfo sqleng.DataSourceInfo) (tlsSettings, error) {
 	return m.settings, nil
+}
+
+func isTestDbPostgres() bool {
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		return db == "postgres"
+	}
+
+	return false
 }

@@ -72,7 +72,7 @@ export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTra
         }
       }
 
-      const resolution = (xMax - xMin + 1) / predictionCount;
+      const resolution = (xMax - xMin) / (predictionCount - 1);
 
       // These are the X values for which we should predict Y
       const predictionPoints = [...[...Array(predictionCount - 1).keys()].map((_, i) => i * resolution + xMin), xMax];
