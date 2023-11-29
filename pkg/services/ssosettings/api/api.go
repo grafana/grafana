@@ -65,7 +65,7 @@ func (api *Api) listAllProvidersSettings(c *contextmodel.ReqContext) response.Re
 	for _, provider := range providers {
 		dto, err := provider.ToSSOSettingsDTO()
 		if err != nil {
-			// TODO: handle error
+			api.Log.Warn("Failed to convert SSO Settings for provider " + provider.Provider)
 		} else {
 			dtos = append(dtos, dto)
 		}

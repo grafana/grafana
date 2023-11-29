@@ -82,7 +82,7 @@ func (s *SSOSettingsStore) List(ctx context.Context) ([]*models.SSOSettings, err
 	for _, dto := range dtos {
 		item, err := dto.ToSSOSettings()
 		if err != nil {
-			// TODO: handle error
+			s.log.Warn("Failed to convert DB settings to SSOSettings for provider " + dto.Provider)
 		} else {
 			settings = append(settings, item)
 		}
