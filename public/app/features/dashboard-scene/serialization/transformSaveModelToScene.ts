@@ -225,6 +225,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
 
   return new DashboardScene({
     title: oldModel.title,
+    tags: oldModel.tags || [],
     uid: oldModel.uid,
     id: oldModel.id,
     meta: oldModel.meta,
