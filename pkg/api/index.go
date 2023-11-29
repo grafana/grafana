@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/middleware"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -81,6 +82,10 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	}
 
 	theme := hs.getThemeForIndexData(prefs.Theme, c.Query("theme"))
+	assets, err := webassets.LoadWebAssets(hs.Cfg.StaticRootPath)
+	if err != nil {
+		return nil, err
+	}
 
 	userOrgCount := 1
 	userOrgs, err := hs.orgService.GetUserOrgList(c.Req.Context(), &org.GetUserOrgListQuery{UserID: userID})
@@ -142,6 +147,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		ContentDeliveryURL:                  hs.Cfg.GetContentDeliveryURL(hs.License.ContentDeliveryPrefix()),
 		LoadingLogo:                         "public/img/grafana_icon.svg",
 		IsDevelopmentEnv:                    hs.Cfg.Env == setting.Dev,
+		Assets:                              assets,
 	}
 
 	if hs.Cfg.CSPEnabled {

@@ -61,7 +61,7 @@ func fakeViewIndex(t *testing.T) {
 		getViewIndex = origGetViewIndex
 	})
 	getViewIndex = func() string {
-		return "index-template"
+		return "index"
 	}
 }
 

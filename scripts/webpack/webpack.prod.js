@@ -4,9 +4,9 @@ const browserslist = require('browserslist');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const { EsbuildPlugin } = require('esbuild-loader');
 const { resolveToEsbuildTarget } = require('esbuild-plugin-browserslist');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const path = require('path');
+const WebpackAssetsManifest = require('webpack-assets-manifest');
 const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 const { merge } = require('webpack-merge');
 
@@ -67,21 +67,16 @@ module.exports = (env = {}) =>
       new MiniCssExtractPlugin({
         filename: 'grafana.[name].[contenthash].css',
       }),
-      new HtmlWebpackPlugin({
-        filename: path.resolve(__dirname, '../../public/views/error.html'),
-        template: path.resolve(__dirname, '../../public/views/error-template.html'),
-        inject: false,
-        excludeChunks: ['dark', 'light'],
-        chunksSortMode: 'none',
-      }),
-      new HtmlWebpackPlugin({
-        filename: path.resolve(__dirname, '../../public/views/index.html'),
-        template: path.resolve(__dirname, '../../public/views/index-template.html'),
-        inject: false,
-        excludeChunks: ['manifest', 'dark', 'light'],
-        chunksSortMode: 'none',
-      }),
       new HTMLWebpackCSSChunks(),
+      /**
+       * I know we have two manifest plugins here.
+       * WebpackManifestPlugin was only used in prod before and does not support integrity hashes
+       */
+      new WebpackAssetsManifest({
+        entrypoints: true,
+        integrity: true,
+        publicPath: true,
+      }),
       new WebpackManifestPlugin({
         fileName: path.join(process.cwd(), 'manifest.json'),
         filter: (file) => !file.name.endsWith('.map'),

@@ -4,10 +4,10 @@ const browserslist = require('browserslist');
 const { resolveToEsbuildTarget } = require('esbuild-plugin-browserslist');
 const ESLintPlugin = require('eslint-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const path = require('path');
 const { DefinePlugin } = require('webpack');
+const WebpackAssetsManifest = require('webpack-assets-manifest');
 const { merge } = require('webpack-merge');
 
 const HTMLWebpackCSSChunks = require('./plugins/HTMLWebpackCSSChunks');
@@ -101,25 +101,16 @@ module.exports = (env = {}) => {
       new MiniCssExtractPlugin({
         filename: 'grafana.[name].[contenthash].css',
       }),
-      new HtmlWebpackPlugin({
-        filename: path.resolve(__dirname, '../../public/views/error.html'),
-        template: path.resolve(__dirname, '../../public/views/error-template.html'),
-        inject: false,
-        chunksSortMode: 'none',
-        excludeChunks: ['dark', 'light'],
-      }),
-      new HtmlWebpackPlugin({
-        filename: path.resolve(__dirname, '../../public/views/index.html'),
-        template: path.resolve(__dirname, '../../public/views/index-template.html'),
-        inject: false,
-        chunksSortMode: 'none',
-        excludeChunks: ['dark', 'light'],
-      }),
       new HTMLWebpackCSSChunks(),
       new DefinePlugin({
         'process.env': {
           NODE_ENV: JSON.stringify('development'),
         },
+      }),
+      new WebpackAssetsManifest({
+        entrypoints: true,
+        integrity: true,
+        publicPath: true,
       }),
     ],
   });

@@ -151,6 +151,7 @@
     "@types/testing-library__jest-dom": "5.14.8",
     "@types/tinycolor2": "1.4.3",
     "@types/uuid": "9.0.2",
+    "@types/webpack-assets-manifest": "^5",
     "@types/yargs": "17.0.24",
     "@typescript-eslint/eslint-plugin": "5.42.0",
     "@typescript-eslint/parser": "5.42.0",
@@ -329,6 +330,7 @@
     "i18next-browser-languagedetector": "^7.0.2",
     "immer": "10.0.2",
     "immutable": "4.3.1",
+    "install": "^0.13.0",
     "jquery": "3.7.0",
     "js-yaml": "^4.1.0",
     "json-markup": "^1.1.0",
@@ -417,6 +419,7 @@
     "uuid": "9.0.0",
     "vendor": "link:./public/vendor",
     "visjs-network": "4.25.0",
+    "webpack-assets-manifest": "^5.1.0",
     "whatwg-fetch": "3.6.2",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz"
   },

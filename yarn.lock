@@ -9439,6 +9439,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/webpack-assets-manifest@npm:^5":
+  version: 5.1.4
+  resolution: "@types/webpack-assets-manifest@npm:5.1.4"
+  dependencies:
+    "@types/node": "npm:*"
+    tapable: "npm:^2.2.0"
+    webpack: "npm:^5"
+  checksum: 02aa3a400227693d5cb5db4364caf91df66e9529139999c0686f139138b76d27d200de5ad8d77d4199538d92f31d37df5dcdc6bdd8ccddcabf95bfc96b964c3a
+  languageName: node
+  linkType: hard
+
 "@types/webpack-env@npm:1.18.1":
   version: 1.18.1
   resolution: "@types/webpack-env@npm:1.18.1"
@@ -12050,7 +12061,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chalk@npm:^4.0.0, chalk@npm:^4.0.2, chalk@npm:^4.1.0, chalk@npm:^4.1.1, chalk@npm:^4.1.2":
+"chalk@npm:^4.0, chalk@npm:^4.0.0, chalk@npm:^4.0.2, chalk@npm:^4.1.0, chalk@npm:^4.1.1, chalk@npm:^4.1.2":
   version: 4.1.2
   resolution: "chalk@npm:4.1.2"
   dependencies:
@@ -14047,6 +14058,13 @@ __metadata:
   version: 0.1.4
   resolution: "deep-is@npm:0.1.4"
   checksum: ec12d074aef5ae5e81fa470b9317c313142c9e8e2afe3f8efa124db309720db96d1d222b82b84c834e5f87e7a614b44a4684b6683583118b87c833b3be40d4d8
+  languageName: node
+  linkType: hard
+
+"deepmerge@npm:^4.0":
+  version: 4.3.1
+  resolution: "deepmerge@npm:4.3.1"
+  checksum: 058d9e1b0ff1a154468bf3837aea436abcfea1ba1d165ddaaf48ca93765fdd01a30d33c36173da8fbbed951dd0a267602bc782fe288b0fc4b7e1e7091afc4529
   languageName: node
   linkType: hard
 
@@ -17412,6 +17430,7 @@ __metadata:
     "@types/tinycolor2": "npm:1.4.3"
     "@types/trusted-types": "npm:2.0.3"
     "@types/uuid": "npm:9.0.2"
+    "@types/webpack-assets-manifest": "npm:^5"
     "@types/webpack-env": "npm:1.18.1"
     "@types/yargs": "npm:17.0.24"
     "@typescript-eslint/eslint-plugin": "npm:5.42.0"
@@ -17492,6 +17511,7 @@ __metadata:
     i18next-parser: "npm:6.6.0"
     immer: "npm:10.0.2"
     immutable: "npm:4.3.1"
+    install: "npm:^0.13.0"
     jest: "npm:29.7.0"
     jest-canvas-mock: "npm:2.5.2"
     jest-date-mock: "npm:1.0.8"
@@ -17617,6 +17637,7 @@ __metadata:
     vendor: "link:./public/vendor"
     visjs-network: "npm:4.25.0"
     webpack: "npm:5.89.0"
+    webpack-assets-manifest: "npm:^5.1.0"
     webpack-bundle-analyzer: "npm:4.9.0"
     webpack-cli: "npm:5.1.4"
     webpack-dev-server: "npm:4.15.1"
@@ -18615,6 +18636,13 @@ __metadata:
     through: "npm:^2.3.6"
     wrap-ansi: "npm:^7.0.0"
   checksum: 50a240dfeaca37a14e6a6d11d7d6f7da947be3a9fe1e34ac41db6a49fc27022e7b3875ebe8ccd739497359808694488f3509792cc986f9ac48c43135f4e14172
+  languageName: node
+  linkType: hard
+
+"install@npm:^0.13.0":
+  version: 0.13.0
+  resolution: "install@npm:0.13.0"
+  checksum: 587789343de46cfdac4d6f153ff1137f9620c80cbe7c97460ba549b79c55b97c47362ef1942cf977d5ddb7eedf2319104aa4c899f12e10788cb38b0e062b7a32
   languageName: node
   linkType: hard
 
@@ -21306,6 +21334,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lockfile@npm:^1.0":
+  version: 1.0.4
+  resolution: "lockfile@npm:1.0.4"
+  dependencies:
+    signal-exit: "npm:^3.0.2"
+  checksum: 2fe86f932c106fabd15f56ffde2a87c99b02e4ca173b5fb64886349d3d0d82417e22a2be2b413006a55f4efbeac7beb679e8a7ac7f767d91981059c25be4dc15
+  languageName: node
+  linkType: hard
+
 "lodash-es@npm:^4.17.21":
   version: 4.17.21
   resolution: "lodash-es@npm:4.17.21"
@@ -21317,6 +21354,20 @@ __metadata:
   version: 4.0.8
   resolution: "lodash.debounce@npm:4.0.8"
   checksum: cd0b2819786e6e80cb9f5cda26b1a8fc073daaf04e48d4cb462fa4663ec9adb3a5387aa22d7129e48eed1afa05b482e2a6b79bfc99b86886364449500cbb00fd
+  languageName: node
+  linkType: hard
+
+"lodash.get@npm:^4.0":
+  version: 4.4.2
+  resolution: "lodash.get@npm:4.4.2"
+  checksum: 2a4925f6e89bc2c010a77a802d1ba357e17ed1ea03c2ddf6a146429f2856a216663e694a6aa3549a318cbbba3fd8b7decb392db457e6ac0b83dc745ed0a17380
+  languageName: node
+  linkType: hard
+
+"lodash.has@npm:^4.0":
+  version: 4.5.2
+  resolution: "lodash.has@npm:4.5.2"
+  checksum: 35c0862e715bc22528dd3cd34f1e66d25d58f0ecef9a43aa409fb7ddebaf6495cb357ae242f141e4b2325258f4a6bafdd8928255d51f1c0a741ae9b93951c743
   languageName: node
   linkType: hard
 
@@ -27170,7 +27221,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"schema-utils@npm:^3.0.0, schema-utils@npm:^3.1.0, schema-utils@npm:^3.1.1, schema-utils@npm:^3.2.0":
+"schema-utils@npm:^3.0, schema-utils@npm:^3.0.0, schema-utils@npm:^3.1.0, schema-utils@npm:^3.1.1, schema-utils@npm:^3.2.0":
   version: 3.3.0
   resolution: "schema-utils@npm:3.3.0"
   dependencies:
@@ -28718,7 +28769,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tapable@npm:^2.0.0, tapable@npm:^2.1.1, tapable@npm:^2.2.0, tapable@npm:^2.2.1":
+"tapable@npm:^2.0, tapable@npm:^2.0.0, tapable@npm:^2.1.1, tapable@npm:^2.2.0, tapable@npm:^2.2.1":
   version: 2.2.1
   resolution: "tapable@npm:2.2.1"
   checksum: 1769336dd21481ae6347611ca5fca47add0962fd8e80466515032125eca0084a4f0ede11e65341b9c0018ef4e1cf1ad820adbb0fba7cc99865c6005734000b0a
@@ -30380,6 +30431,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"webpack-assets-manifest@npm:^5.1.0":
+  version: 5.1.0
+  resolution: "webpack-assets-manifest@npm:5.1.0"
+  dependencies:
+    chalk: "npm:^4.0"
+    deepmerge: "npm:^4.0"
+    lockfile: "npm:^1.0"
+    lodash.get: "npm:^4.0"
+    lodash.has: "npm:^4.0"
+    schema-utils: "npm:^3.0"
+    tapable: "npm:^2.0"
+  peerDependencies:
+    webpack: ^5.2.0
+  checksum: 150e6e1f1dbeb04519b08d61c4251fa40a7b51fa711a3122eb655674303b46493e108025e94fdd050c4d3e8c377501e4b60d5df5632b1670f8d295f0d49e35f8
+  languageName: node
+  linkType: hard
+
 "webpack-bundle-analyzer@npm:4.9.0":
   version: 4.9.0
   resolution: "webpack-bundle-analyzer@npm:4.9.0"
@@ -30590,7 +30658,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack@npm:5, webpack@npm:5.89.0":
+"webpack@npm:5, webpack@npm:5.89.0, webpack@npm:^5":
   version: 5.89.0
   resolution: "webpack@npm:5.89.0"
   dependencies:
