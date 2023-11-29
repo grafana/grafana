@@ -313,7 +313,6 @@ export function LogsTableWrap(props: Props) {
     const matches = data[0];
     let newColumnsWithMeta: fieldNameMetaStore = {};
     let numberOfResults = 0;
-    // debugger;
     matches.forEach((match) => {
       if (match in columnsWithMeta) {
         newColumnsWithMeta[match] = columnsWithMeta[match];
