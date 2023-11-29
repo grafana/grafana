@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { ReactNode, useEffect, useState } from 'react';
 
 import { AbsoluteTimeRange, LogRowModel, TimeRange } from '@grafana/data';
-import { convertRawToRange, isRelativeTimeRange } from '@grafana/data/src/datetime/rangeutil';
+import { convertRawToRange, isRelativeTime, isRelativeTimeRange } from '@grafana/data/src/datetime/rangeutil';
 import { LogsSortOrder, TimeZone } from '@grafana/schema';
 
 type Props = {
@@ -76,11 +76,15 @@ export const InfiniteScroll = ({ children, loading, loadMoreLogs, range, rows, s
     };
   }, [lastScroll, loadMoreLogs, loading, range, rows, scrollElement, sortOrder, timeZone]);
 
+  // We allow "now" to move when using relative time, so we hide the message so it doesn't flash.
+  const hideTopMessage = sortOrder === LogsSortOrder.Descending && isRelativeTime(range.raw.to);
+  const hideBottomMessage = sortOrder === LogsSortOrder.Ascending && isRelativeTime(range.raw.to);
+
   return (
     <>
-      {upperOutOfRange && outOfRangeMessage}
+      {!hideTopMessage && upperOutOfRange && outOfRangeMessage}
       {children}
-      {lowerOutOfRange && outOfRangeMessage}
+      {!hideBottomMessage && lowerOutOfRange && outOfRangeMessage}
     </>
   );
 };
