@@ -6,7 +6,7 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { PanelProps } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { config, locationService, setPluginImportUtils } from '@grafana/runtime';
+import { config, getPluginLinkExtensions, locationService, setPluginImportUtils } from '@grafana/runtime';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 
 import { setupLoadDashboardMock } from '../utils/test-utils';
@@ -15,6 +15,8 @@ import { DashboardScenePage, Props } from './DashboardScenePage';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  setPluginExtensionGetter: jest.fn(),
+  getPluginLinkExtensions: jest.fn(),
   getDataSourceSrv: () => {
     return {
       get: jest.fn().mockResolvedValue({}),
@@ -22,6 +24,8 @@ jest.mock('@grafana/runtime', () => ({
     };
   },
 }));
+
+const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
 
 function setup() {
   const context = getGrafanaContextMock();
@@ -97,6 +101,8 @@ describe('DashboardScenePage', () => {
     // hacky way because mocking autosizer does not work
     Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: 1000 });
     Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 1000 });
+    getPluginLinkExtensionsMock.mockRestore();
+    getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
   });
 
   it('Can render dashboard', async () => {
@@ -123,6 +129,7 @@ describe('DashboardScenePage', () => {
     await userEvent.click(screen.getByLabelText('Menu for panel with title Panel B'));
 
     const inspectMenuItem = await screen.findAllByText('Inspect');
+
     act(() => fireEvent.click(inspectMenuItem[0]));
 
     expect(await screen.findByText('Inspect: Panel B')).toBeInTheDocument();
