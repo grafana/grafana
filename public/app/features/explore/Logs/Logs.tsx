@@ -876,66 +876,66 @@ export const Logs = withTheme2(UnthemedLogs);
 
 const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: number) => {
   return {
-    noData: css`
-      > * {
-        margin-left: 0.5em;
-      }
-    `,
-    logOptions: css`
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      flex-wrap: wrap;
-      background-color: ${theme.colors.background.primary};
-      padding: ${theme.spacing(1, 2)};
-      border-radius: ${theme.shape.radius.default};
-      margin: ${theme.spacing(0, 0, 1)};
-      border: 1px solid ${theme.colors.border.medium};
-    `,
-    headerButton: css`
-      margin: ${theme.spacing(0.5, 0, 0, 1)};
-    `,
-    horizontalInlineLabel: css`
-      > label {
-        margin-right: 0;
-      }
-    `,
-    horizontalInlineSwitch: css`
-      padding: 0 ${theme.spacing(1)} 0 0;
-    `,
-    radioButtons: css`
-      margin: 0;
-    `,
-    logsSection: css`
-      display: flex;
-      flex-direction: row;
-      justify-content: space-between;
-    `,
+    noData: css({
+      '& > *': {
+        marginLeft: '0.5em',
+      },
+    }),
+    logOptions: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'baseline',
+      flexWrap: 'wrap',
+      backgroundColor: theme.colors.background.primary,
+      padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
+      borderRadius: theme.shape.radius.default,
+      margin: `${theme.spacing(0, 0, 1)}`,
+      border: `1px solid ${theme.colors.border.medium}`,
+    }),
+    headerButton: css({
+      margin: `${theme.spacing(0.5, 0, 0, 1)}`,
+    }),
+    horizontalInlineLabel: css({
+      '& > label': {
+        marginRight: '0',
+      },
+    }),
+    horizontalInlineSwitch: css({
+      padding: `0 ${theme.spacing(1)} 0 0`,
+    }),
+    radioButtons: css({
+      margin: '0',
+    }),
+    logsSection: css({
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    }),
     logsTable: css({
       maxHeight: `${tableHeight}px`,
     }),
-    scrollableLogRows: css`
-      overflow-x: scroll;
-      overflow-y: visible;
-      width: 100%;
-      max-height: 75vh;
-    `,
-    logRows: css`
-      overflow-x: ${wrapLogMessage ? 'unset' : 'scroll'};
-      overflow-y: visible;
-      width: 100%;
-    `,
-    visualisationType: css`
-      display: flex;
-      flex: 1;
-      justify-content: space-between;
-    `,
-    visualisationTypeRadio: css`
-      margin: 0 0 0 ${theme.spacing(1)};
-    `,
-    stickyNavigation: css`
-      ${config.featureToggles.logsInfiniteScrolling && 'margin-bottom: 0px;'}
-      overflow: visible;
-    `,
-  };
+    scrollableLogRows: css({
+      overflowX: 'scroll',
+      overflowY: 'visible',
+      width: '100%',
+      maxHeight: '75vh',
+    }),
+    logRows: css({
+      overflowX: `${wrapLogMessage ? 'unset' : 'scroll'}`,
+      overflowY: 'visible',
+      width: '100%',
+    }),
+    visualisationType: css({
+      display: 'flex',
+      flex: '1',
+      justifyContent: 'space-between',
+    }),
+    visualisationTypeRadio: css({
+      margin: `0 0 0 ${theme.spacing(1)}`,
+    }),
+    stickyNavigation: css({
+      overflow: 'visible',
+      ...(config.featureToggles.logsInfiniteScrolling && { marginBottom: '0px' }),
+    }),
+  };  
 };
