@@ -1,5 +1,5 @@
 import deepEqual from 'fast-deep-equal';
-import React, {useCallback, useEffect, useState} from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { CoreApp, QueryEditorProps, TimeRange } from '@grafana/data';
 import { LoadingPlaceholder } from '@grafana/ui';
@@ -27,7 +27,12 @@ export function QueryEditor(props: Props) {
   }
 
   const profileTypes = useProfileTypes(datasource);
-  const { getLabelNames, getLabelValues, onLabelSelectorChange, onBlur } = useLabels(range, datasource, query, onChange);
+  const { getLabelNames, getLabelValues, onLabelSelectorChange, onBlur } = useLabels(
+    range,
+    datasource,
+    query,
+    onChange
+  );
   useNormalizeQuery(query, profileTypes, onChange, app);
 
   let cascader = <LoadingPlaceholder text={'Loading'} />;
@@ -124,9 +129,7 @@ function useLabels(
   // Transforms user input into a valid label selector including the profile type.
   // It can optionally remove a label, used to support editing existing label values.
   const createSelector = (rawInput: string, profileTypeId: string, labelToRemove: string): string => {
-    let labels: string[] = [
-      `__profile_type__=\"${profileTypeId}\"`,
-    ]
+    let labels: string[] = [`__profile_type__=\"${profileTypeId}\"`];
     let match;
     while ((match = labelSelectorRegex.exec(rawInput)) !== null) {
       if (match[1] && match[2]) {
@@ -136,13 +139,14 @@ function useLabels(
         labels.push(`${match[1]}=${match[2]}`);
       }
     }
-    return `{${labels.join(',')}}`
-  }
+    return `{${labels.join(',')}}`;
+  };
 
   const [availableLabels, setAvailableLabels] = useState(() => ({ data: [] as string[] }));
-  const [processedLabelSelector, setProcessedLabelSelector] = useState(
-      () => ({ data: createSelector(query.labelSelector, query.profileTypeId, '') }));
-  const [rawQuery, setRawQuery] = useState(() => ({ data: '' }))
+  const [processedLabelSelector, setProcessedLabelSelector] = useState(() => ({
+    data: createSelector(query.labelSelector, query.profileTypeId, ''),
+  }));
+  const [rawQuery, setRawQuery] = useState(() => ({ data: '' }));
 
   useEffect(() => {
     setProcessedLabelSelector({
@@ -150,21 +154,18 @@ function useLabels(
     });
   }, [rawQuery.data, query.profileTypeId]);
 
-  const getLabelNames = useCallback(
-    () => availableLabels.data,
-    [availableLabels]
-  );
+  const getLabelNames = useCallback(() => availableLabels.data, [availableLabels]);
 
   useEffect(() => {
-    const fetchData = async() => {
+    const fetchData = async () => {
       const labels = await datasource.getLabelNames(
-          processedLabelSelector.data,
-          unpreciseRange.from,
-          unpreciseRange.to
+        processedLabelSelector.data,
+        unpreciseRange.from,
+        unpreciseRange.to
       );
 
       setAvailableLabels({ data: labels });
-    }
+    };
     fetchData();
   }, [processedLabelSelector.data, unpreciseRange.from, unpreciseRange.to, datasource, setAvailableLabels]);
 
@@ -172,14 +173,9 @@ function useLabels(
   const getLabelValues = useCallback(
     (label: string) => {
       let labelSelector = createSelector(rawQuery.data, query.profileTypeId, label);
-      console.log(labelSelector)
-      const labelValues = datasource.getLabelValues(
-        labelSelector,
-        label,
-        unpreciseRange.from,
-        unpreciseRange.to
-      );
-      console.log(labelValues)
+      console.log(labelSelector);
+      const labelValues = datasource.getLabelValues(labelSelector, label, unpreciseRange.from, unpreciseRange.to);
+      console.log(labelValues);
       return labelValues;
     },
     [datasource, rawQuery.data, query.profileTypeId, unpreciseRange.to, unpreciseRange.from]
@@ -189,14 +185,15 @@ function useLabels(
     (value: string) => {
       setRawQuery({
         data: value,
-      })
-    }, [setRawQuery]
+      });
+    },
+    [setRawQuery]
   );
 
   // This is to update the query state, as updating it every time the value in the editor changes causes many things to rerender.
   const onBlur = useCallback(() => {
     onChange({ ...query, labelSelector: rawQuery.data });
-  }, [query, onChange, rawQuery.data])
+  }, [query, onChange, rawQuery.data]);
 
   return { getLabelNames, getLabelValues, onLabelSelectorChange, onBlur };
 }

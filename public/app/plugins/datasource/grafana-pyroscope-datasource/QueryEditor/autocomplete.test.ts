@@ -46,17 +46,20 @@ const defaultLabels = ['foo'];
 
 function setup(value: string, offset: number, labels: string[] = []) {
   const provider = new CompletionProvider();
-  provider.init(() => labels, (label) => {
-    if (labels.length === 0) {
-      return Promise.resolve([]);
+  provider.init(
+    () => labels,
+    (label) => {
+      if (labels.length === 0) {
+        return Promise.resolve([]);
+      }
+      const val = { foo: 'bar' }[label];
+      const result = [];
+      if (val) {
+        result.push(val);
+      }
+      return Promise.resolve(result);
     }
-    const val = { foo: 'bar' }[label];
-    const result = [];
-    if (val) {
-      result.push(val);
-    }
-    return Promise.resolve(result);
-  });
+  );
   const model = makeModel(value, offset);
   provider.monaco = {
     Range: {
