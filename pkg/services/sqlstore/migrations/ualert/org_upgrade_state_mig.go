@@ -8,11 +8,26 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
+// typeKey is a vendored migration.typeKey.
+var typeKey = "currentAlertingType"
+
+// AlertingType is a vendored migration.store.AlertingType.
+type alertingType string
+
+const (
+	Legacy          alertingType = "Legacy"
+	UnifiedAlerting alertingType = "UnifiedAlerting"
+)
+
 // CreateOrgMigratedKVStoreEntries creates kv store entries for each organization if the migration has been run.
 // This is needed now that we've changed the semantics of data loss when upgrading / rolling back. If a user who previously
 // upgraded were to rollback and upgrade again without clean_upgrade, then since they don't have org-level migrated states
 // it will attempt to upgrade their orgs as if they had never upgraded before. This will almost definitely fail with
 // duplicate key errors.
+//
+// In addition, this changes the entry for orgId=0 to be better named as it no longer tracks whether the
+// migration has been run, but rather the current alerting type of Grafana; Legacy or UnifiedAlerting. This is used to
+// detect transitions between Legacy and UnifiedAlerting by comparing to the desired type in the configuration.
 func CreateOrgMigratedKVStoreEntries(mg *migrator.Migrator) {
 	mg.AddMigration("copy kvstore migration status to each org", &createOrgMigratedKVStoreEntries{})
 }
@@ -26,18 +41,6 @@ func (c createOrgMigratedKVStoreEntries) SQL(migrator.Dialect) string {
 }
 
 func (c createOrgMigratedKVStoreEntries) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
-	var orgs []struct {
-		ID int64 `xorm:"id"`
-	}
-	if err := sess.SQL("select id from org").Find(&orgs); err != nil {
-		return err
-	}
-
-	if len(orgs) == 0 {
-		mg.Logger.Debug("no orgs, nothing to set in kvstore")
-		return nil
-	}
-
 	var anyOrg int64 = 0
 	migrated := kvStoreV1Entry{
 		OrgID:     &anyOrg,
@@ -49,8 +52,33 @@ func (c createOrgMigratedKVStoreEntries) Exec(sess *xorm.Session, mg *migrator.M
 		return err
 	}
 
-	if !has || migrated.Value != "true" {
-		mg.Logger.Debug("migration has not been run, nothing to set in kvstore")
+	if !has {
+		mg.Logger.Debug("No migrated status in kvstore, nothing to set")
+		return nil
+	}
+
+	// Rename old entry key and value.
+	val := Legacy
+	if migrated.Value == "true" {
+		val = UnifiedAlerting
+	}
+	if _, err := sess.Table("kv_store").Where("id = ?", migrated.ID).Update(&kvStoreV1Entry{
+		Key:   &typeKey,
+		Value: string(val),
+	}); err != nil {
+		mg.Logger.Error("failed to rename org migrated status in kvstore", "err", err)
+		return err
+	}
+
+	var orgs []struct {
+		ID int64 `xorm:"id"`
+	}
+	if err := sess.SQL("select id from org").Find(&orgs); err != nil {
+		return err
+	}
+
+	if len(orgs) == 0 {
+		mg.Logger.Debug("no orgs, nothing to set in kvstore")
 		return nil
 	}
 

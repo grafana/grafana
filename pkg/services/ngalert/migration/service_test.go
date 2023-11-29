@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -53,13 +54,13 @@ func TestServiceRevert(t *testing.T) {
 		}
 		service := NewTestMigrationService(t, sqlStore, cfg)
 
-		err = service.migrationStore.SetMigrated(ctx, anyOrg, false)
+		err = service.migrationStore.SetCurrentAlertingType(ctx, migrationStore.Legacy)
 		require.NoError(t, err)
 
 		require.NoError(t, service.Run(ctx))
 
 		// Verify migration was run.
-		checkMigrationStatus(t, ctx, service, anyOrg, true)
+		checkAlertingType(t, ctx, service, migrationStore.UnifiedAlerting)
 		checkMigrationStatus(t, ctx, service, 1, true)
 
 		// Currently, we fill in some random data for tables that aren't populated during migration.
@@ -97,7 +98,7 @@ func TestServiceRevert(t *testing.T) {
 		require.NoError(t, err)
 
 		// Verify revert was run.
-		checkMigrationStatus(t, ctx, service, anyOrg, false)
+		checkAlertingType(t, ctx, service, migrationStore.Legacy)
 		checkMigrationStatus(t, ctx, service, 1, false)
 
 		// Verify various UA resources are gone
@@ -129,13 +130,13 @@ func TestServiceRevert(t *testing.T) {
 		}
 		service := NewTestMigrationService(t, sqlStore, cfg)
 
-		err = service.migrationStore.SetMigrated(ctx, anyOrg, false)
+		err = service.migrationStore.SetCurrentAlertingType(ctx, migrationStore.Legacy)
 		require.NoError(t, err)
 
 		require.NoError(t, service.Run(ctx))
 
 		// Verify migration was run.
-		checkMigrationStatus(t, ctx, service, anyOrg, true)
+		checkAlertingType(t, ctx, service, migrationStore.UnifiedAlerting)
 		checkMigrationStatus(t, ctx, service, 1, true)
 
 		// Verify we created some folders.
@@ -162,7 +163,7 @@ func TestServiceRevert(t *testing.T) {
 		require.NoError(t, err)
 
 		// Verify revert was run. Should only set migration status for org.
-		checkMigrationStatus(t, ctx, service, anyOrg, false)
+		checkAlertingType(t, ctx, service, migrationStore.Legacy)
 		checkMigrationStatus(t, ctx, service, 1, false)
 
 		// Verify we are back to the original count.
@@ -203,13 +204,13 @@ func TestServiceRevert(t *testing.T) {
 		}
 		service := NewTestMigrationService(t, sqlStore, cfg)
 
-		err = service.migrationStore.SetMigrated(ctx, anyOrg, false)
+		err = service.migrationStore.SetCurrentAlertingType(ctx, migrationStore.Legacy)
 		require.NoError(t, err)
 
 		require.NoError(t, service.Run(ctx))
 
 		// Verify migration was run.
-		checkMigrationStatus(t, ctx, service, anyOrg, true)
+		checkAlertingType(t, ctx, service, migrationStore.UnifiedAlerting)
 		checkMigrationStatus(t, ctx, service, 1, true)
 
 		// Verify we created some folders.
@@ -252,7 +253,7 @@ func TestServiceRevert(t *testing.T) {
 		require.NoError(t, err)
 
 		// Verify revert was run. Should only set migration status for org.
-		checkMigrationStatus(t, ctx, service, anyOrg, false)
+		checkAlertingType(t, ctx, service, migrationStore.Legacy)
 		checkMigrationStatus(t, ctx, service, 1, false)
 
 		// Verify we are back to the original count + 2.
@@ -292,14 +293,14 @@ func TestServiceRevert(t *testing.T) {
 			},
 		}
 		service := NewTestMigrationService(t, sqlStore, cfg)
-		checkMigrationStatus(t, ctx, service, anyOrg, false)
+		checkAlertingType(t, ctx, service, migrationStore.Legacy)
 		checkMigrationStatus(t, ctx, service, 1, false)
 		checkAlertRulesCount(t, x, 1, 0)
 
 		// Enable UA.
 		// First run should migrate org.
 		require.NoError(t, service.Run(ctx))
-		checkMigrationStatus(t, ctx, service, anyOrg, true)
+		checkAlertingType(t, ctx, service, migrationStore.UnifiedAlerting)
 		checkMigrationStatus(t, ctx, service, 1, true)
 		checkAlertRulesCount(t, x, 1, 1)
 
@@ -307,7 +308,7 @@ func TestServiceRevert(t *testing.T) {
 		// This run should throw an error.
 		service.cfg.UnifiedAlerting.Enabled = pointer(false)
 		require.ErrorContains(t, service.Run(ctx), ForceMigrationError.Error())
-		checkMigrationStatus(t, ctx, service, anyOrg, true)
+		checkAlertingType(t, ctx, service, migrationStore.UnifiedAlerting)
 		checkMigrationStatus(t, ctx, service, 1, true)
 		checkAlertRulesCount(t, x, 1, 1)
 
@@ -316,7 +317,7 @@ func TestServiceRevert(t *testing.T) {
 		service.cfg.UnifiedAlerting.Enabled = pointer(false)
 		service.cfg.ForceMigration = true
 		require.NoError(t, service.Run(ctx))
-		checkMigrationStatus(t, ctx, service, anyOrg, false)
+		checkAlertingType(t, ctx, service, migrationStore.Legacy)
 		checkMigrationStatus(t, ctx, service, 1, false)
 		checkAlertRulesCount(t, x, 1, 0) // Alerts are gone.
 
@@ -328,7 +329,7 @@ func TestServiceRevert(t *testing.T) {
 		// This run should remigrate org, new alert is migrated.
 		service.cfg.UnifiedAlerting.Enabled = pointer(true)
 		require.NoError(t, service.Run(ctx))
-		checkMigrationStatus(t, ctx, service, anyOrg, true)
+		checkAlertingType(t, ctx, service, migrationStore.UnifiedAlerting)
 		checkMigrationStatus(t, ctx, service, 1, true)
 		checkAlertRulesCount(t, x, 1, 2) // Now we have 2
 	})
@@ -338,6 +339,12 @@ func checkMigrationStatus(t *testing.T, ctx context.Context, service *migrationS
 	migrated, err := service.migrationStore.IsMigrated(ctx, orgID)
 	require.NoError(t, err)
 	require.Equal(t, expected, migrated)
+}
+
+func checkAlertingType(t *testing.T, ctx context.Context, service *migrationService, expected migrationStore.AlertingType) {
+	aType, err := service.migrationStore.GetCurrentAlertingType(ctx)
+	require.NoError(t, err)
+	require.Equal(t, expected, aType)
 }
 
 func checkAlertRulesCount(t *testing.T, x *xorm.Engine, orgID int64, count int) {

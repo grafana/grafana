@@ -33,11 +33,11 @@ import (
 // TestServiceStart tests the wrapper method that decides when to run the migration based on migration status and settings.
 func TestServiceStart(t *testing.T) {
 	tc := []struct {
-		name           string
-		config         *setting.Cfg
-		isMigrationRun bool
-		expectedErr    bool
-		expected       bool
+		name        string
+		config      *setting.Cfg
+		starting    migrationStore.AlertingType
+		expectedErr bool
+		expected    migrationStore.AlertingType
 	}{
 		{
 			name: "when unified alerting enabled and migration not already run, then run migration",
@@ -46,8 +46,8 @@ func TestServiceStart(t *testing.T) {
 					Enabled: pointer(true),
 				},
 			},
-			isMigrationRun: false,
-			expected:       true,
+			starting: migrationStore.Legacy,
+			expected: migrationStore.UnifiedAlerting,
 		},
 		{
 			name: "when unified alerting disabled, migration is already run and force migration is enabled, then revert migration",
@@ -57,8 +57,8 @@ func TestServiceStart(t *testing.T) {
 				},
 				ForceMigration: true,
 			},
-			isMigrationRun: true,
-			expected:       false,
+			starting: migrationStore.UnifiedAlerting,
+			expected: migrationStore.Legacy,
 		},
 		{
 			name: "when unified alerting disabled, migration is already run and force migration is disabled, then the migration should panic",
@@ -68,9 +68,9 @@ func TestServiceStart(t *testing.T) {
 				},
 				ForceMigration: false,
 			},
-			isMigrationRun: true,
-			expected:       true,
-			expectedErr:    true,
+			starting:    migrationStore.UnifiedAlerting,
+			expected:    migrationStore.UnifiedAlerting,
+			expectedErr: true,
 		},
 		{
 			name: "when unified alerting enabled and migration is already run, then do nothing",
@@ -79,8 +79,8 @@ func TestServiceStart(t *testing.T) {
 					Enabled: pointer(true),
 				},
 			},
-			isMigrationRun: true,
-			expected:       true,
+			starting: migrationStore.UnifiedAlerting,
+			expected: migrationStore.UnifiedAlerting,
 		},
 		{
 			name: "when unified alerting disabled and migration is not already run, then do nothing",
@@ -89,8 +89,8 @@ func TestServiceStart(t *testing.T) {
 					Enabled: pointer(false),
 				},
 			},
-			isMigrationRun: false,
-			expected:       false,
+			starting: migrationStore.Legacy,
+			expected: migrationStore.Legacy,
 		},
 	}
 
@@ -100,19 +100,18 @@ func TestServiceStart(t *testing.T) {
 			ctx := context.Background()
 			service := NewTestMigrationService(t, sqlStore, tt.config)
 
-			err := service.migrationStore.SetMigrated(ctx, anyOrg, tt.isMigrationRun)
-			require.NoError(t, err)
+			require.NoError(t, service.migrationStore.SetCurrentAlertingType(ctx, tt.starting))
 
-			err = service.Run(ctx)
+			err := service.Run(ctx)
 			if tt.expectedErr {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
 			}
 
-			migrated, err := service.migrationStore.IsMigrated(ctx, anyOrg)
+			aType, err := service.migrationStore.GetCurrentAlertingType(ctx)
 			require.NoError(t, err)
-			require.Equal(t, tt.expected, migrated)
+			require.Equal(t, tt.expected, aType)
 		})
 	}
 }

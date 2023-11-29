@@ -57,6 +57,8 @@ type Store interface {
 
 	IsMigrated(ctx context.Context, orgID int64) (bool, error)
 	SetMigrated(ctx context.Context, orgID int64, migrated bool) error
+	GetCurrentAlertingType(ctx context.Context) (AlertingType, error)
+	SetCurrentAlertingType(ctx context.Context, t AlertingType) error
 	GetOrgMigrationState(ctx context.Context, orgID int64) (*migmodels.OrgMigrationState, error)
 	SetOrgMigrationState(ctx context.Context, orgID int64, summary *migmodels.OrgMigrationState) error
 
@@ -122,6 +124,9 @@ const migratedKey = "migrated"
 // stateKey is the kvstore key used for the OrgMigrationState.
 const stateKey = "stateKey"
 
+// typeKey is the kvstore key used for the current AlertingType.
+const typeKey = "currentAlertingType"
+
 // IsMigrated returns the migration status from the kvstore.
 func (ms *migrationStore) IsMigrated(ctx context.Context, orgID int64) (bool, error) {
 	kv := kvstore.WithNamespace(ms.kv, orgID, KVNamespace)
@@ -141,6 +146,55 @@ func (ms *migrationStore) IsMigrated(ctx context.Context, orgID int64) (bool, er
 func (ms *migrationStore) SetMigrated(ctx context.Context, orgID int64, migrated bool) error {
 	kv := kvstore.WithNamespace(ms.kv, orgID, KVNamespace)
 	return kv.Set(ctx, migratedKey, strconv.FormatBool(migrated))
+}
+
+// AlertingType represents the current alerting type of Grafana. This is used to detect transitions between
+// Legacy and UnifiedAlerting by comparing to the desired type in the configuration.
+type AlertingType string
+
+const (
+	Legacy          AlertingType = "Legacy"
+	UnifiedAlerting AlertingType = "UnifiedAlerting"
+)
+
+// typeFromString converts a string to an AlertingType.
+func typeFromString(s string) (AlertingType, error) {
+	switch s {
+	case "Legacy":
+		return Legacy, nil
+	case "UnifiedAlerting":
+		return UnifiedAlerting, nil
+	default:
+		return "", fmt.Errorf("unknown alerting type: %s", s)
+	}
+}
+
+const anyOrg = 0
+
+// GetCurrentAlertingType returns the current AlertingType of Grafana.
+func (ms *migrationStore) GetCurrentAlertingType(ctx context.Context) (AlertingType, error) {
+	kv := kvstore.WithNamespace(ms.kv, anyOrg, KVNamespace)
+	content, exists, err := kv.Get(ctx, typeKey)
+	if err != nil {
+		return "", err
+	}
+
+	if !exists {
+		return Legacy, nil
+	}
+
+	t, err := typeFromString(content)
+	if err != nil {
+		return "", err
+	}
+
+	return t, nil
+}
+
+// SetCurrentAlertingType stores the current AlertingType of Grafana.
+func (ms *migrationStore) SetCurrentAlertingType(ctx context.Context, t AlertingType) error {
+	kv := kvstore.WithNamespace(ms.kv, anyOrg, KVNamespace)
+	return kv.Set(ctx, typeKey, string(t))
 }
 
 // GetOrgMigrationState returns a summary of a previous migration.
