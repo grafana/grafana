@@ -7,10 +7,17 @@ import { FolderDTO } from 'app/types';
 
 import {
   NAV_FOLDER_MAP,
+  PMM_NAV_HAPROXY,
   NAV_ID_TO_SERVICE,
+  PMM_NAV_MONGO,
+  PMM_NAV_MYSQL,
+  PMM_NAV_POSTGRE,
+  PMM_NAV_PROXYSQL,
+  PMM_NAV_OS,
   PMM_ACCESS_ROLES_PAGE,
   PMM_ADD_INSTANCE_PAGE,
   PMM_ALERTING_PERCONA_ALERTS,
+  WEIGHTS,
 } from './PerconaNavigation.constants';
 
 const DIVIDER: NavModelItem = {
@@ -128,11 +135,13 @@ export const addAccessRolesLink = (configNode: NavModelItem) => {
 
 export const addFolderLinks = (navTree: NavModelItem[], folders: FolderDTO[]) => {
   for (const rootNode of navTree) {
+    const id = rootNode.id + '-other-dashboards';
     const folder = folders.find((f) => rootNode.id && NAV_FOLDER_MAP[rootNode.id] === f.title);
+    const exists = rootNode.children?.some((i) => i.id === id);
 
-    if (folder) {
+    if (folder && !exists) {
       rootNode.children?.push({
-        id: rootNode.id + '-other-dashboards',
+        id,
         icon: 'search',
         text: 'Other dashboards',
         showIconInNavbar: true,
@@ -160,6 +169,7 @@ export const buildAdvisorsNavItem = (categorizedAdvisors: CategorizedAdvisor) =>
     id: `advisors`,
     icon: 'percona-database-checks',
     text: 'Advisors',
+    sortWeight: WEIGHTS.alerting,
     subTitle: 'Run and analyze all checks',
     url: `${config.appSubUrl}/advisors`,
     section: NavSection.Core,
@@ -182,4 +192,17 @@ export const buildAdvisorsNavItem = (categorizedAdvisors: CategorizedAdvisor) =>
   });
 
   return modelItem;
+};
+
+export const addDashboardsLinks = (items: NavModelItem[]) => {
+  items.push(PMM_NAV_OS);
+  items.push(PMM_NAV_MYSQL);
+  items.push(PMM_NAV_MONGO);
+  items.push(PMM_NAV_POSTGRE);
+  items.push(PMM_NAV_PROXYSQL);
+  items.push(PMM_NAV_HAPROXY);
+};
+
+export const sortNavigation = (items: NavModelItem[]) => {
+  items.sort((a, b) => (a.sortWeight || 0) - (b.sortWeight || 0));
 };

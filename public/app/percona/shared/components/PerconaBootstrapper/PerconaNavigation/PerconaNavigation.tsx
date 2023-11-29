@@ -5,6 +5,7 @@ import { contextSrv } from 'app/core/core';
 import { initialState } from 'app/core/reducers/navBarTree';
 import { updateNavIndex } from 'app/core/reducers/navModel';
 import { fetchFolders } from 'app/features/manage-dashboards/state/actions';
+import { updateNavTree } from 'app/percona/shared/core/reducers/navigation';
 import { fetchActiveServiceTypesAction } from 'app/percona/shared/core/reducers/services';
 import { useAppDispatch } from 'app/store/store';
 import { FolderDTO, useSelector } from 'app/types';
@@ -14,6 +15,7 @@ import { getCategorizedAdvisors, getPerconaSettings, getPerconaUser, getServices
 import {
   ACTIVE_SERVICE_TYPES_CHECK_INTERVAL_MS,
   getPmmSettingsPage,
+  PMM_NAV_QAN,
   PMM_ACCESS_ROLES_PAGE,
   PMM_ACCESS_ROLE_CREATE_PAGE,
   PMM_ACCESS_ROLE_EDIT_PAGE,
@@ -28,12 +30,14 @@ import {
 } from './PerconaNavigation.constants';
 import {
   addAccessRolesLink,
+  addDashboardsLinks,
   addFolderLinks,
   buildAdvisorsNavItem,
   buildIntegratedAlertingMenuItem,
   buildInventoryAndSettings,
-  // filterByServices,
+  filterByServices,
   removeAlertingMenuItem,
+  sortNavigation,
 } from './PerconaNavigation.utils';
 
 const PerconaNavigation: React.FC<React.PropsWithChildren<unknown>> = () => {
@@ -77,6 +81,12 @@ const PerconaNavigation: React.FC<React.PropsWithChildren<unknown>> = () => {
 
   useEffect(() => {
     const updatedNavTree = cloneDeep(initialState);
+
+    // Add Dashboards
+    addDashboardsLinks(updatedNavTree);
+
+    // QAN
+    updatedNavTree.push(PMM_NAV_QAN);
 
     if (isPlatformUser) {
       updatedNavTree.push(PMM_ENTITLEMENTS_PAGE);
@@ -122,8 +132,9 @@ const PerconaNavigation: React.FC<React.PropsWithChildren<unknown>> = () => {
 
     addFolderLinks(updatedNavTree, folders);
 
-    // @PERCONA_TODO
-    // dispatch(updateNavTree({ items: filterByServices(updatedNavTree, activeTypes) }));
+    sortNavigation(updatedNavTree);
+
+    dispatch(updateNavTree(filterByServices(updatedNavTree, activeTypes)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result, folders, activeTypes, isAuthorized, isPlatformUser, advisorsPage]);
 
