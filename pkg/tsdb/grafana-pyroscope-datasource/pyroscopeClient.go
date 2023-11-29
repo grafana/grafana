@@ -243,6 +243,8 @@ func (c *PyroscopeClient) LabelNames(ctx context.Context, labelSelector string, 
 	defer span.End()
 	resp, err := c.connectClient.LabelNames(ctx, connect.NewRequest(&typesv1.LabelNamesRequest{
 		Matchers: []string{labelSelector},
+		Start:    start,
+		End:      end,
 	}))
 	if err != nil {
 		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
@@ -267,6 +269,8 @@ func (c *PyroscopeClient) LabelValues(ctx context.Context, label string, labelSe
 	resp, err := c.connectClient.LabelValues(ctx, connect.NewRequest(&typesv1.LabelValuesRequest{
 		Name:     label,
 		Matchers: []string{labelSelector},
+		Start:    start,
+		End:      end,
 	}))
 	if err != nil {
 		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
