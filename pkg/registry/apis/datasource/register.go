@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
-	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -90,8 +89,8 @@ func (b *DSAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return b.groupVersion
 }
 
-func (b *DSAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	scheme.AddKnownTypes(b.groupVersion,
+func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
+	scheme.AddKnownTypes(gv,
 		&v0alpha1.DataSourceConfig{},
 		&v0alpha1.DataSourceConfigList{},
 		&v0alpha1.DataSourceInstance{},
@@ -99,6 +98,23 @@ func (b *DSAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		// Added for subresource hack
 		&metav1.Status{},
 	)
+}
+
+func (b *DSAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+	addKnownTypes(scheme, b.groupVersion)
+
+	// Link this version to the internal representation.
+	// This is used for server-side-apply (PATCH), and avoids the error:
+	//   "no kind is registered for the type"
+	addKnownTypes(scheme, schema.GroupVersion{
+		Group:   b.groupVersion.Group,
+		Version: runtime.APIVersionInternal,
+	})
+
+	// If multiple versions exist, then register conversions from zz_generated.conversion.go
+	// if err := playlist.RegisterConversions(scheme); err != nil {
+	//   return err
+	// }
 	metav1.AddToGroupVersion(scheme, b.groupVersion)
 	return scheme.SetVersionPriority(b.groupVersion)
 }
@@ -198,7 +214,7 @@ func (b *DSAPIBuilder) getDataSource(ctx context.Context, name string) (*datasou
 }
 
 func (b *DSAPIBuilder) getDataSources(ctx context.Context) ([]*datasources.DataSource, error) {
-	info, err := grafanarequest.NamespaceInfoFrom(ctx, true)
+	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
 	}
