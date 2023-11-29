@@ -85,7 +85,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     mode: 'onSubmit',
     defaultValues,
     shouldFocusError: true,
-    reValidateMode: 'onSubmit',
+    reValidateMode: 'onBlur',
   });
 
   const { handleSubmit, watch } = formAPI;
