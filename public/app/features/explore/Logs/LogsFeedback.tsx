@@ -15,7 +15,7 @@ export function LogsFeedback({ feedbackUrl }: Props) {
       <a
         href={feedbackUrl}
         className={styles.link}
-        title="The metrics explorer is new, please let us know how we can improve it"
+        title="The logs table is new, please let us know how we can improve it"
         target="_blank"
         rel="noreferrer noopener"
       >
