@@ -54,10 +54,7 @@ export const updateTimeRange = (options: {
   };
 };
 
-export const loadMoreLogs = (options: {
-  exploreId: string;
-  absoluteRange: AbsoluteTimeRange;
-}): ThunkResult<void> => {
+export const loadMoreLogs = (options: { exploreId: string; absoluteRange: AbsoluteTimeRange }): ThunkResult<void> => {
   return (dispatch) => {
     dispatch(runLoadMoreLogsQueries({ ...options }));
   };

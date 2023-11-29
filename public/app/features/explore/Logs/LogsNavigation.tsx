@@ -211,11 +211,9 @@ const getStyles = (theme: GrafanaTheme2, oldestLogsFirst: boolean) => {
       max-height: ${navContainerHeight};
       display: flex;
       flex-direction: column;
-      ${config.featureToggles.logsInfiniteScrolling ? (
-        `justify-content: flex-end;`
-      ) : (
-        `justify-content: ${oldestLogsFirst ? 'flex-start' : 'space-between'};`
-      )}
+      ${config.featureToggles.logsInfiniteScrolling
+        ? `justify-content: flex-end;`
+        : `justify-content: ${oldestLogsFirst ? 'flex-start' : 'space-between'};`}
       position: sticky;
       top: ${theme.spacing(2)};
       right: 0;

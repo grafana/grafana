@@ -709,7 +709,7 @@ interface RunLoadMoreLogsQueriesOptions {
   absoluteRange: AbsoluteTimeRange;
 }
 /**
- * Supplementary action to run queries that request more results, and dispatches sub-actions based 
+ * Supplementary action to run queries that request more results, and dispatches sub-actions based
  * on which result viewers are active
  */
 export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQueriesOptions>(
@@ -718,12 +718,8 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
     dispatch(cancelQueries(exploreId));
 
     const correlations$ = getCorrelations(exploreId);
-    const {
-      datasourceInstance,
-      containerWidth,
-      queryResponse,
-      correlationEditorHelperData,
-    } = getState().explore.panes[exploreId]!;
+    const { datasourceInstance, containerWidth, queryResponse, correlationEditorHelperData } =
+      getState().explore.panes[exploreId]!;
 
     const isCorrelationEditorMode = getState().explore.correlationEditorDetails?.editorMode || false;
     const isLeftPane = Object.keys(getState().explore.panes)[0] === exploreId;
@@ -767,26 +763,19 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
     }
 
     const timeZone = getTimeZone(getState().user);
-    const range =  getTimeRange(timeZone, {
-      from: dateTimeForTimeZone(timeZone, absoluteRange.from),
-      to: dateTimeForTimeZone(timeZone, absoluteRange.to),
-    }, getFiscalYearStartMonth(getState().user));
-    const transaction = buildQueryTransaction(
-      exploreId,
-      queries,
-      queryOptions,
-      range,
-      false,
+    const range = getTimeRange(
       timeZone,
-      scopedVars
+      {
+        from: dateTimeForTimeZone(timeZone, absoluteRange.from),
+        to: dateTimeForTimeZone(timeZone, absoluteRange.to),
+      },
+      getFiscalYearStartMonth(getState().user)
     );
+    const transaction = buildQueryTransaction(exploreId, queries, queryOptions, range, false, timeZone, scopedVars);
 
     dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
 
-    newQuerySource = combineLatest([
-      runRequest(datasourceInstance, transaction.request),
-      correlations$,
-    ]).pipe(
+    newQuerySource = combineLatest([runRequest(datasourceInstance, transaction.request), correlations$]).pipe(
       mergeMap(([data, correlations]) =>
         decorateData(
           // Query splitting, otherwise duplicates results

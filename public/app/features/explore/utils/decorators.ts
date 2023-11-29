@@ -315,7 +315,7 @@ export function decorateData(
 export function mergeDataSeries(currentData: PanelData, newData: PanelData): PanelData {
   currentData.series = combineResponses({ data: currentData.series }, { data: newData.series }).data;
   return currentData;
-};
+}
 
 /**
  * Check if frame contains time series, which for our purpose means 1 time column and 1 or more numeric columns.
