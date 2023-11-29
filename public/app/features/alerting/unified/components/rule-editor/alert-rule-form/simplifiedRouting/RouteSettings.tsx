@@ -32,7 +32,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
   } = useFormContext<RuleFormValues>();
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues([]));
   const { groupBy, groupIntervalValue, groupWaitValue, repeatIntervalValue } = useGetDefaultsForRoutingSettings();
-
+  console.log('errors', errors);
   return (
     <Stack direction="column">
       <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
@@ -58,7 +58,6 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
                 <MultiSelect
                   aria-label="Group by"
                   {...field}
-                  invalid={Boolean(error)}
                   allowCustomValue
                   className={formStyles.input}
                   onCreateOption={(opt: string) => {
