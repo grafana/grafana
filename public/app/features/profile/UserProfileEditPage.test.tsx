@@ -131,7 +131,7 @@ enum ExtensionPointComponentTabs {
 const _createTabName = (tab: ExtensionPointComponentTabs) => `Tab ${tab}`;
 const _createTabContent = (tabId: ExtensionPointComponentId) => `this is settings for component ${tabId}`;
 
-const coreTabName = 'Core';
+const generalTabName = 'General';
 const tabOneName = _createTabName(ExtensionPointComponentTabs.One);
 const tabTwoName = _createTabName(ExtensionPointComponentTabs.Two);
 
@@ -351,7 +351,7 @@ describe('UserProfileEditPage', () => {
         };
 
         expect(extensionPointTabs()).toBeInTheDocument();
-        _assertTab(coreTabName.toLowerCase(), true);
+        _assertTab(generalTabName.toLowerCase(), true);
         _assertTab(tabOneName.toLowerCase());
         _assertTab(tabTwoName.toLowerCase());
       });
@@ -371,7 +371,7 @@ describe('UserProfileEditPage', () => {
         const tabOneContent2 = _createTabContent(ExtensionPointComponentId.Two);
         const tabTwoContent = _createTabContent(ExtensionPointComponentId.Three);
 
-        // core should be the default content
+        // "General" should be the default content
         expect(screen.queryByText(tabOneContent1)).toBeNull();
         expect(screen.queryByText(tabOneContent2)).toBeNull();
         expect(screen.queryByText(tabTwoContent)).toBeNull();

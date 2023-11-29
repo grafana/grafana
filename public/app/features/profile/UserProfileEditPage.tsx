@@ -19,7 +19,7 @@ import { UserTeams } from './UserTeams';
 import { changeUserOrg, initUserProfilePage, revokeUserSession, updateUserProfile } from './state/actions';
 
 const TAB_QUERY_PARAM = 'tab';
-const CORE_SETTINGS_TAB = 'core';
+const GENERAL_SETTINGS_TAB = 'general';
 
 type TabInfo = {
   id: string;
@@ -71,7 +71,7 @@ export function UserProfileEditPage({
   const [queryParams, updateQueryParams] = useQueryParams();
   const tabQueryParam = queryParams[TAB_QUERY_PARAM];
   const [activeTab, setActiveTab] = useState<string>(
-    typeof tabQueryParam === 'string' ? tabQueryParam : CORE_SETTINGS_TAB
+    typeof tabQueryParam === 'string' ? tabQueryParam : GENERAL_SETTINGS_TAB
   );
 
   useMount(() => initUserProfilePage());
@@ -103,8 +103,8 @@ export function UserProfileEditPage({
   const showTabs = extensionComponents.length > 0;
   const tabs: TabInfo[] = [
     {
-      id: CORE_SETTINGS_TAB,
-      title: t('user-profile.tabs.core', 'Core'),
+      id: GENERAL_SETTINGS_TAB,
+      title: t('user-profile.tabs.general', 'General'),
     },
     ...Object.keys(groupedExtensionComponents).map((title) => ({
       id: convertExtensionComponentTitleToTabId(title),
@@ -142,7 +142,7 @@ export function UserProfileEditPage({
           })}
         </TabsBar>
         <TabContent>
-          {activeTab === CORE_SETTINGS_TAB && <UserProfile />}
+          {activeTab === GENERAL_SETTINGS_TAB && <UserProfile />}
           {Object.entries(groupedExtensionComponents).map(([title, pluginExtensionComponents]) => {
             const tabId = convertExtensionComponentTitleToTabId(title);
 
