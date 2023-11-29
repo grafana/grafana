@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -35,7 +35,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | undefined; panelId: string }) {
   const { outlineItems } = useContentOutlineContext();
   const [expanded, toggleExpanded] = useToggle(false);
-  const [activeItemId, setActiveItemId] = useState<string | null>(outlineItems[0]?.id);
+  const [activeItemId, setActiveItemId] = useState<string | undefined>(outlineItems[0]?.id);
   const styles = useStyles2((theme) => getStyles(theme));
 
   const scrollIntoView = (ref: HTMLElement | null, buttonTitle: string) => {
@@ -51,6 +51,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
       top: scrollValue,
       behavior: 'smooth',
     });
+
     reportInteraction('explore_toolbar_contentoutline_clicked', {
       item: 'select_section',
       type: buttonTitle,
@@ -64,6 +65,30 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
       type: expanded ? 'minimize' : 'expand',
     });
   };
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        console.log('entries', entries);
+        entries.forEach((entry) => {
+          console.log('entry', entry);
+          if (entry.isIntersecting) {
+            const activeItem = outlineItems.find((item) => item.ref === entry.target);
+            setActiveItemId(activeItem?.id);
+          }
+        });
+      },
+      { root: scroller, threshold: 1 }
+    );
+
+    outlineItems.forEach((item) => {
+      if (item.ref) {
+        observer.observe(item.ref);
+      }
+    });
+
+    return () => observer.disconnect();
+  }, [outlineItems, scroller]);
 
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>
