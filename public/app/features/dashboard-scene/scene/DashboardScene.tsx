@@ -279,11 +279,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
    */
   public enrichDataRequest(sceneObject: SceneObject): Partial<DataQueryRequest> {
     const panel = getClosestVizPanel(sceneObject);
+    let panelId = 0;
+
+    if (panel && panel.state.key) {
+      if (panel.state.key.indexOf('-clone-') > 0) {
+        panelId = djb2Hash(panel?.state.key);
+      } else {
+        panelId = getPanelIdForVizPanel(panel);
+      }
+    }
 
     return {
       app: CoreApp.Dashboard,
       dashboardUID: this.state.uid,
-      panelId: (panel && getPanelIdForVizPanel(panel)) ?? 0,
+      panelId,
     };
   }
 
@@ -311,4 +320,17 @@ export class DashboardVariableDependency implements SceneVariableDependencyConfi
       appEvents.publish(new VariablesChanged({ refreshAll: true, panelIds: [] }));
     }
   }
+}
+
+/**
+ * Hashes a string using the DJB2 algorithm.
+ */
+function djb2Hash(str: string): number {
+  let hash = 5381;
+
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 33) ^ str.charCodeAt(i);
+  }
+
+  return hash >>> 0; // Ensure the result is an unsigned 32-bit integer
 }
