@@ -28,6 +28,7 @@ The Azure AD authentication allows you to use an Azure Active Directory tenant a
     - [Configure refresh token](#configure-refresh-token)
     - [Configure allowed tenants](#configure-allowed-tenants)
     - [Configure allowed groups](#configure-allowed-groups)
+      - [Configure group membership claims](#configure-group-membership-claims)
     - [Configure allowed domains](#configure-allowed-domains)
     - [PKCE](#pkce)
     - [Configure automatic login](#configure-automatic-login)
@@ -210,11 +211,22 @@ to a comma- or space-separated list of group object IDs. You can find object IDs
    allowed_groups = 8bab1c86-8fba-33e5-2089-1d1c80ec267d
    ```
 
-1. Verify that [group attributes](https://docs.microsoft.com/en-us/azure/active-directory/hybrid/how-to-connect-fed-group-claims#configure-the-azure-ad-application-registration-for-group-attributes) is enabled in your Azure AD Application Registration manifest file by navigating to **Azure Portal** > **Azure Active Directory** > **Application Registrations** > **Select Application** -> **Manifest**, and set the following:
+1. Verify that [group attributes](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims#configure-groups-optional-claims) is enabled in your Azure AD Application Registration manifest file by navigating to **Azure Portal** > **Azure Active Directory** > **Application Registrations** > **Select Application** -> **Manifest**, and set the following:
 
    ```
    "groupMembershipClaims": "ApplicationGroup, SecurityGroup"
    ```
+
+#### Configure group membership claims
+
+To make sure that the `groups` claim is included in the token, you need to add the `groups` claim to the token configuration either through the Azure Portal UI or by editing the manifest file. To do this from the Azure Portal UI: 
+1. Navigate to the **App Registrations** page and select your application
+1. Select **Token configuration**
+1. Click on **Add groups claim** and then select the relevant option for your use case (for example, **Security groups**). 
+ 
+For more information, see [Configure groups optional claims](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims#configure-groups-optional-claims).
+
+> If the user is a member of more than 200 groups, Azure AD does not emit the groups claim in the token and emits a group overage claim instead. To setup group overage claim, see [Users with over 200 Group assignments](#users-with-over-200-group-assignments).
 
 ### Configure allowed domains
 
