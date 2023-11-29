@@ -1,4 +1,3 @@
-import { keys, toPairs } from 'lodash';
 import React, { useMemo, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useMount } from 'react-use';
@@ -10,6 +9,7 @@ import { Tab, TabsBar, TabContent, VerticalGroup } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { t } from 'app/core/internationalization';
 import { StoreState } from 'app/types';
 
 import UserOrganizations from './UserOrganizations';
@@ -19,7 +19,12 @@ import { UserTeams } from './UserTeams';
 import { changeUserOrg, initUserProfilePage, revokeUserSession, updateUserProfile } from './state/actions';
 
 const TAB_QUERY_PARAM = 'tab';
-const CORE_SETTINGS_TAB = 'Core';
+const CORE_SETTINGS_TAB = 'core';
+
+type TabInfo = {
+  id: string;
+  title: string;
+};
 
 export interface OwnProps {}
 
@@ -66,7 +71,7 @@ export function UserProfileEditPage({
   const [queryParams, updateQueryParams] = useQueryParams();
   const tabQueryParam = queryParams[TAB_QUERY_PARAM];
   const [activeTab, setActiveTab] = useState<string>(
-    (typeof tabQueryParam === 'string' ? tabQueryParam : CORE_SETTINGS_TAB).toLowerCase()
+    typeof tabQueryParam === 'string' ? tabQueryParam : CORE_SETTINGS_TAB
   );
 
   useMount(() => initUserProfilePage());
@@ -93,8 +98,19 @@ export function UserProfileEditPage({
     {}
   );
 
+  const convertExtensionComponentTitleToTabId = (title: string) => title.toLowerCase();
+
   const showTabs = extensionComponents.length > 0;
-  const tabs = [CORE_SETTINGS_TAB, ...keys(groupedExtensionComponents).map((title) => title)];
+  const tabs: TabInfo[] = [
+    {
+      id: CORE_SETTINGS_TAB,
+      title: t('user-profile.tabs.core', 'Core'),
+    },
+    ...Object.keys(groupedExtensionComponents).map((title) => ({
+      id: convertExtensionComponentTitleToTabId(title),
+      title,
+    })),
+  ];
 
   const UserProfile = () => (
     <VerticalGroup spacing="md">
@@ -110,31 +126,31 @@ export function UserProfileEditPage({
     <div data-testid={selectors.components.UserProfile.extensionPointTabs}>
       <VerticalGroup spacing="md">
         <TabsBar>
-          {tabs.map((tabTitle) => {
-            const queryParamCompatibleTabTitle = tabTitle.toLowerCase();
-
+          {tabs.map(({ id, title }) => {
             return (
               <Tab
-                key={tabTitle}
-                label={tabTitle}
-                active={activeTab === queryParamCompatibleTabTitle}
+                key={id}
+                label={title}
+                active={activeTab === id}
                 onChangeTab={() => {
-                  setActiveTab(queryParamCompatibleTabTitle);
-                  updateQueryParams({ [TAB_QUERY_PARAM]: queryParamCompatibleTabTitle });
+                  setActiveTab(id);
+                  updateQueryParams({ [TAB_QUERY_PARAM]: id });
                 }}
-                data-testid={selectors.components.UserProfile.extensionPointTab(tabTitle)}
+                data-testid={selectors.components.UserProfile.extensionPointTab(id)}
               />
             );
           })}
         </TabsBar>
         <TabContent>
-          {activeTab === CORE_SETTINGS_TAB.toLowerCase() && <UserProfile />}
-          {toPairs(groupedExtensionComponents).map(([title, pluginExtensionComponents]) => {
-            if (activeTab === title.toLowerCase()) {
+          {activeTab === CORE_SETTINGS_TAB && <UserProfile />}
+          {Object.entries(groupedExtensionComponents).map(([title, pluginExtensionComponents]) => {
+            const tabId = convertExtensionComponentTitleToTabId(title);
+
+            if (activeTab === tabId) {
               return (
-                <React.Fragment key={title}>
+                <React.Fragment key={tabId}>
                   {pluginExtensionComponents.map(({ component: Component }, index) => (
-                    <Component key={`${title}-${index}`} />
+                    <Component key={`${tabId}-${index}`} />
                   ))}
                 </React.Fragment>
               );

@@ -110,9 +110,9 @@ function getSelectors() {
     /**
      * here lets use getByTestId because a specific tab should always be rendered within the tabs container
      */
-    extensionPointTab: (tabTitle: string) =>
+    extensionPointTab: (tabId: string) =>
       within(screen.getByTestId(selectors.components.UserProfile.extensionPointTabs)).getByTestId(
-        selectors.components.UserProfile.extensionPointTab(tabTitle)
+        selectors.components.UserProfile.extensionPointTab(tabId)
       ),
   };
 }
@@ -131,6 +131,7 @@ enum ExtensionPointComponentTabs {
 const _createTabName = (tab: ExtensionPointComponentTabs) => `Tab ${tab}`;
 const _createTabContent = (tabId: ExtensionPointComponentId) => `this is settings for component ${tabId}`;
 
+const coreTabName = 'Core';
 const tabOneName = _createTabName(ExtensionPointComponentTabs.One);
 const tabTwoName = _createTabName(ExtensionPointComponentTabs.Two);
 
@@ -343,16 +344,16 @@ describe('UserProfileEditPage', () => {
         await getTestContext({ extensions });
         const { extensionPointTabs, extensionPointTab } = getSelectors();
 
-        const _assertTab = (tabName: string, isDefault = false) => {
-          const tab = extensionPointTab(tabName);
+        const _assertTab = (tabId: string, isDefault = false) => {
+          const tab = extensionPointTab(tabId);
           expect(tab).toBeInTheDocument();
           expect(tab).toHaveAttribute('aria-selected', isDefault.toString());
         };
 
         expect(extensionPointTabs()).toBeInTheDocument();
-        _assertTab('Core', true);
-        _assertTab(tabOneName);
-        _assertTab(tabTwoName);
+        _assertTab(coreTabName.toLowerCase(), true);
+        _assertTab(tabOneName.toLowerCase());
+        _assertTab(tabTwoName.toLowerCase());
       });
 
       it('should change the active tab when a tab is clicked and update the "tab" query param', async () => {
@@ -375,7 +376,7 @@ describe('UserProfileEditPage', () => {
         expect(screen.queryByText(tabOneContent2)).toBeNull();
         expect(screen.queryByText(tabTwoContent)).toBeNull();
 
-        await userEvent.click(extensionPointTab(tabOneName));
+        await userEvent.click(extensionPointTab(tabOneName.toLowerCase()));
 
         expect(mockUpdateQueryParams).toHaveBeenCalledTimes(1);
         expect(mockUpdateQueryParams).toHaveBeenCalledWith({ tab: tabOneName.toLowerCase() });
@@ -384,7 +385,7 @@ describe('UserProfileEditPage', () => {
         expect(screen.queryByText(tabTwoContent)).toBeNull();
 
         mockUpdateQueryParams.mockClear();
-        await userEvent.click(extensionPointTab(tabTwoName));
+        await userEvent.click(extensionPointTab(tabTwoName.toLowerCase()));
 
         expect(mockUpdateQueryParams).toHaveBeenCalledTimes(1);
         expect(mockUpdateQueryParams).toHaveBeenCalledWith({ tab: tabTwoName.toLowerCase() });
@@ -392,32 +393,6 @@ describe('UserProfileEditPage', () => {
         expect(screen.queryByText(tabOneContent2)).toBeNull();
         expect(screen.queryByText(tabTwoContent)).not.toBeNull();
       });
-
-      it.each([tabOneName, tabOneName.toUpperCase(), tabOneName.toLowerCase()])(
-        'should set the active tab based on the "tab" query param and be case-insensitive',
-        async (tabQueryParam) => {
-          mockUseQueryParams.useQueryParams = () => [{ tab: tabQueryParam }, () => {}];
-
-          await getTestContext({
-            extensions: [
-              PluginExtensionPointComponent1,
-              PluginExtensionPointComponent2,
-              PluginExtensionPointComponent3,
-            ],
-          });
-
-          const { extensionPointTab } = getSelectors();
-
-          const _assertTab = (tabName: string, isDefault = false) => {
-            const tab = extensionPointTab(tabName);
-            expect(tab).toBeInTheDocument();
-            expect(tab).toHaveAttribute('aria-selected', isDefault.toString());
-          };
-
-          _assertTab('Core');
-          _assertTab(tabOneName, true);
-        }
-      );
     });
   });
 });

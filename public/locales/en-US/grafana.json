@@ -1216,6 +1216,9 @@
       "name-error": "Name is required",
       "name-label": "Name",
       "username-label": "Username"
+    },
+    "tabs": {
+      "core": "Core"
     }
   },
   "user-session": {
