@@ -156,8 +156,6 @@
     "jest": "29.5.0",
     "jest-environment-jsdom": "29.5.0",
     "prettier": "3.0.3",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
     "react-popper-tooltip": "4.4.2",
     "react-test-renderer": "18.2.0",
     "replace-in-file-webpack-plugin": "1.0.6",
@@ -177,9 +175,5 @@
     "webpack": "5.86.0",
     "webpack-cli": "5.1.4",
     "webpack-livereload-plugin": "3.0.2"
-  },
-  "peerDependencies": {
-    "react": "^17.0.0 || ^18.0.0",
-    "react-dom": "^17.0.0 || ^18.0.0"
   }
 }
