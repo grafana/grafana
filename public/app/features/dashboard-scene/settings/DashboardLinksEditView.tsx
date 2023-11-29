@@ -50,7 +50,7 @@ function DashboardLinksEditViewRenderer({ model }: SceneComponentProps<Dashboard
       {links &&
         links.state.links.map((link, i) => (
           <Link
-            key={link.title}
+            key={`${link.title}-${i}`}
             onClick={(e) => {
               e.preventDefault();
               locationService.partial({ editIndex: i });
