@@ -103,7 +103,7 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
       ) : (
         <>{children}</>
       )}
-      {isSelected !== undefined && <input aria-label="option" type="radio" checked={isSelected} />}
+      {isSelected !== undefined && <input aria-label="option" type="radio"  checked={isSelected} readOnly />}
     </h2>
   );
 };
@@ -123,6 +123,9 @@ const getHeadingStyles = (theme: GrafanaTheme2) => ({
     lineHeight: theme.typography.body.lineHeight,
     color: theme.colors.text.primary,
     fontWeight: theme.typography.fontWeightMedium,
+    '& input[readonly]':{
+      cursor:'inherit'
+    }
   }),
   linkHack: css({
     all: 'unset',
