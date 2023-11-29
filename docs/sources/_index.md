@@ -13,6 +13,8 @@ labels:
     - enterprise
     - oss
 title: Grafana documentation
+cascade:
+  TEMPO_VERSION: latest
 ---
 
 # Grafana documentation
