@@ -197,9 +197,9 @@ func convertIniSectionToMap(sec *ini.Section) map[string]any {
 	return mappedSettings
 }
 
-// createOAuthInfoFromKeyValues creates an OAuthInfo struct from a map[string]any using mapstructure
+// CreateOAuthInfoFromKeyValues creates an OAuthInfo struct from a map[string]any using mapstructure
 // it puts all extra key values into OAuthInfo's Extra map
-func createOAuthInfoFromKeyValues(settingsKV map[string]any) (*OAuthInfo, error) {
+func CreateOAuthInfoFromKeyValues(settingsKV map[string]any) (*OAuthInfo, error) {
 	emptyStrToSliceDecodeHook := func(from reflect.Type, to reflect.Type, data any) (any, error) {
 		if from.Kind() == reflect.String && to.Kind() == reflect.Slice {
 			strData, ok := data.(string)
