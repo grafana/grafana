@@ -1,15 +1,15 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {
   SceneObjectState,
   SceneObjectBase,
   SceneComponentProps,
-  sceneUtils,
   SceneVariableValueChangedEvent,
   SceneObjectStateChangedEvent,
   SceneTimeRange,
+  sceneUtils,
 } from '@grafana/scenes';
 import { useStyles2, Tooltip, Stack } from '@grafana/ui';
 
@@ -18,6 +18,7 @@ import { VAR_FILTERS } from './shared';
 import { getTrailFor } from './utils';
 
 export interface DataTrailsHistoryState extends SceneObjectState {
+  currentStep: number;
   steps: DataTrailHistoryStep[];
 }
 
@@ -31,7 +32,7 @@ export type TrailStepType = 'filters' | 'time' | 'metric' | 'start';
 
 export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
   public constructor(state: Partial<DataTrailsHistoryState>) {
-    super({ steps: state.steps ?? [] });
+    super({ steps: state.steps ?? [], currentStep: state.currentStep ?? 0 });
 
     this.addActivationHandler(this._onActivate.bind(this));
   }
@@ -44,6 +45,19 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
     }
 
     trail.subscribeToState((newState, oldState) => {
+      // Check if new and old state are at the same step index
+      // Then we know this is a history transition
+      const isMovingThroughHistory = newState.stepIndex !== oldState.stepIndex;
+
+      if (isMovingThroughHistory) {
+        this.setState({
+          ...this.state,
+          currentStep: newState.stepIndex,
+        });
+
+        return;
+      }
+
       if (newState.metric !== oldState.metric) {
         if (this.state.steps.length === 1) {
           // For the first step we want to update the starting state so that it contains data
@@ -70,7 +84,13 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
   }
 
   public addTrailStep(trail: DataTrail, type: TrailStepType) {
+    // Update the trail's new current step state, and note its parent step.
+    const stepIndex = this.state.steps.length;
+    const parentIndex = type === 'start' ? -1 : trail.state.stepIndex;
+    trail.setState({ ...trail.state, stepIndex, parentIndex });
+
     this.setState({
+      currentStep: stepIndex,
       steps: [
         ...this.state.steps,
         {
@@ -92,9 +112,29 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
   }
 
   public static Component = ({ model }: SceneComponentProps<DataTrailHistory>) => {
-    const { steps } = model.useState();
+    const { steps, currentStep } = model.useState();
     const styles = useStyles2(getStyles);
     const trail = getTrailFor(model);
+
+    const { ancestry, alternatePredecessorStyle } = useMemo(() => {
+      const ancestry = new Set<number>();
+      let cursor = currentStep;
+      while (cursor >= 0) {
+        ancestry.add(cursor);
+        cursor = steps[cursor].trailState.parentIndex;
+      }
+
+      const alternatePredecessorStyle = new Map<number, string>();
+
+      ancestry.forEach((index) => {
+        const parent = steps[index].trailState.parentIndex;
+        if (parent + 1 !== index) {
+          alternatePredecessorStyle.set(index, createAlternatePredecessorStyle(index, parent));
+        }
+      });
+
+      return { ancestry, alternatePredecessorStyle };
+    }, [currentStep, steps]);
 
     return (
       <div className={styles.container}>
@@ -102,7 +142,22 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
         {steps.map((step, index) => (
           <Tooltip content={() => model.renderStepTooltip(step)} key={index}>
             <button
-              className={cx(styles.step, styles.stepTypes[step.type])}
+              className={cx(
+                // Base for all steps
+                styles.step,
+                // Specifics per step type
+                styles.stepTypes[step.type],
+                // To highlight selected step
+                model.state.currentStep === index ? styles.stepSelected : '',
+                // To alter the look of steps with distant non-directly preceding parent
+                alternatePredecessorStyle.get(index) ?? '',
+                // To remove direct link for steps that don't have a direct parent
+                index !== step.trailState.parentIndex + 1 ? styles.stepOmitsDirectLeftLink : '',
+                // To remove the direct parent link on the start node as well
+                index === 0 ? styles.stepOmitsDirectLeftLink : '',
+                // To darken steps that aren't the current step's ancesters
+                !ancestry.has(index) ? styles.stepIsNotAncestorOfCurrent : ''
+              )}
               onClick={() => trail.goBackToStep(step)}
             ></button>
           </Tooltip>
@@ -136,48 +191,87 @@ function getStyles(theme: GrafanaTheme2) {
       background: theme.colors.primary.main,
       position: 'relative',
       '&:hover': {
-        transform: 'scale(1.1)',
+        opacity: 1,
       },
-      '&:after': {
+      '&:hover:before': {
+        // We only want the node to hover, not its connection to its parent
+        opacity: 0.7,
+      },
+      '&:before': {
         content: '""',
         position: 'absolute',
         width: 10,
         height: 2,
-        left: 8,
+        left: -10,
         top: 3,
         background: theme.colors.primary.border,
+        pointerEvents: 'none',
       },
-      '&:last-child': {
-        '&:after': {
-          display: 'none',
-        },
+    }),
+    stepSelected: css({
+      '&:after': {
+        content: '""',
+        borderStyle: `solid`,
+        borderWidth: 2,
+        borderRadius: '50%',
+        position: 'absolute',
+        width: 16,
+        height: 16,
+        left: -4,
+        top: -4,
+        boxShadow: `0px 0px 0px 2px inset ${theme.colors.background.canvas}`,
+      },
+    }),
+    stepOmitsDirectLeftLink: css({
+      '&:before': {
+        background: 'none',
+      },
+    }),
+    stepIsNotAncestorOfCurrent: css({
+      opacity: 0.2,
+      '&:hover:before': {
+        opacity: 0.2,
       },
     }),
     stepTypes: {
-      start: css({
-        background: visTheme.getColorByName('green'),
-        '&:after': {
-          background: visTheme.getColorByName('green'),
-        },
-      }),
-      filters: css({
-        background: visTheme.getColorByName('purple'),
-        '&:after': {
-          background: visTheme.getColorByName('purple'),
-        },
-      }),
-      metric: css({
-        background: visTheme.getColorByName('orange'),
-        '&:after': {
-          background: visTheme.getColorByName('orange'),
-        },
-      }),
-      time: css({
-        background: theme.colors.primary.main,
-        '&:after': {
-          background: theme.colors.primary.main,
-        },
-      }),
+      start: generateStepTypeStyle(visTheme.getColorByName('green')),
+      filters: generateStepTypeStyle(visTheme.getColorByName('purple')),
+      metric: generateStepTypeStyle(visTheme.getColorByName('orange')),
+      time: generateStepTypeStyle(theme.colors.primary.main),
     },
   };
+}
+
+function generateStepTypeStyle(color: string) {
+  return css({
+    background: color,
+    '&:before': {
+      background: color,
+      borderColor: color,
+    },
+    '&:after': {
+      borderColor: color,
+    },
+  });
+}
+
+function createAlternatePredecessorStyle(index: number, parent: number) {
+  const difference = index - parent;
+
+  const NODE_DISTANCE = 18;
+  const distanceToParent = difference * NODE_DISTANCE;
+
+  return css({
+    '&:before': {
+      content: '""',
+      width: distanceToParent + 2,
+      height: 10,
+      borderStyle: 'solid',
+      borderWidth: 2,
+      borderBottom: 'none',
+      top: -10,
+      left: 3 - distanceToParent,
+      background: 'none',
+    },
+  });
 }

@@ -45,6 +45,7 @@ const labelNames = ['place', 'source'];
 const labelValues = ['moon', 'luna', 'server\\1'];
 // Source is duplicated to test handling duplicated labels
 const extractedLabelKeys = ['extracted', 'place', 'source'];
+const structuredMetadataKeys = ['structured', 'metadata'];
 const unwrapLabelKeys = ['unwrap', 'labels'];
 const otherLabels: Label[] = [
   {
@@ -156,7 +157,8 @@ function buildAfterSelectorCompletions(
   detectedParser: string,
   otherParser: string,
   afterPipe: boolean,
-  hasSpace: boolean
+  hasSpace: boolean,
+  structuredMetadataKeys?: string[]
 ) {
   const explanation = '(detected)';
   let expectedCompletions = afterSelectorCompletions.map((completion) => {
@@ -197,6 +199,20 @@ function buildAfterSelectorCompletions(
     }
   });
 
+  structuredMetadataKeys?.forEach((key) => {
+    let text = `${afterPipe ? ' ' : ' | '}${key}`;
+    if (hasSpace) {
+      text = text.trimStart();
+    }
+
+    expectedCompletions.push({
+      insertText: text,
+      label: `${key} ${explanation}`,
+      documentation: `"${key}" was suggested based on structured metadata attached to your loglines.`,
+      type: 'LABEL_NAME',
+    });
+  });
+
   return expectedCompletions;
 }
 
@@ -218,6 +234,7 @@ describe('getCompletions', () => {
     jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
       extractedLabelKeys,
       unwrapLabelKeys,
+      structuredMetadataKeys,
       hasJSON: false,
       hasLogfmt: false,
       hasPack: false,
@@ -351,6 +368,7 @@ describe('getCompletions', () => {
       jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
         extractedLabelKeys,
         unwrapLabelKeys,
+        structuredMetadataKeys,
         hasJSON: true,
         hasLogfmt: false,
         hasPack: false,
@@ -358,7 +376,7 @@ describe('getCompletions', () => {
       const situation: Situation = { type: 'AFTER_SELECTOR', logQuery: '{job="grafana"}', afterPipe, hasSpace };
       const completions = await getCompletions(situation, completionProvider);
 
-      const expected = buildAfterSelectorCompletions('json', 'logfmt', afterPipe, hasSpace);
+      const expected = buildAfterSelectorCompletions('json', 'logfmt', afterPipe, hasSpace, structuredMetadataKeys);
       expect(completions).toEqual(expected);
     }
   );
@@ -369,6 +387,7 @@ describe('getCompletions', () => {
       jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
         extractedLabelKeys,
         unwrapLabelKeys,
+        structuredMetadataKeys,
         hasJSON: false,
         hasLogfmt: true,
         hasPack: false,
@@ -376,7 +395,7 @@ describe('getCompletions', () => {
       const situation: Situation = { type: 'AFTER_SELECTOR', logQuery: '', afterPipe, hasSpace: true };
       const completions = await getCompletions(situation, completionProvider);
 
-      const expected = buildAfterSelectorCompletions('logfmt', 'json', afterPipe, true);
+      const expected = buildAfterSelectorCompletions('logfmt', 'json', afterPipe, true, structuredMetadataKeys);
       expect(completions).toEqual(expected);
     }
   );
@@ -458,6 +477,7 @@ describe('getAfterSelectorCompletions', () => {
     jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
       extractedLabelKeys: ['abc', 'def'],
       unwrapLabelKeys: [],
+      structuredMetadataKeys: [],
       hasJSON: true,
       hasLogfmt: false,
       hasPack: false,
@@ -480,6 +500,7 @@ describe('getAfterSelectorCompletions', () => {
     jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
       extractedLabelKeys: ['abc', 'def'],
       unwrapLabelKeys: [],
+      structuredMetadataKeys: [],
       hasJSON: true,
       hasLogfmt: false,
       hasPack: true,
@@ -553,6 +574,7 @@ describe('IN_LOGFMT completions', () => {
     jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
       extractedLabelKeys: ['label1', 'label2'],
       unwrapLabelKeys: [],
+      structuredMetadataKeys: [],
       hasJSON: true,
       hasLogfmt: false,
       hasPack: false,

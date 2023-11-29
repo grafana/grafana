@@ -211,7 +211,7 @@ export const mockGrafanaRulerRule = (partial: Partial<GrafanaRuleDefinition> = {
     grafana_alert: {
       uid: '',
       title: 'my rule',
-      namespace_uid: '',
+      namespace_uid: 'NAMESPACE_UID',
       namespace_id: 0,
       condition: '',
       no_data_state: GrafanaAlertStateDecision.NoData,

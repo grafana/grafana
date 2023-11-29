@@ -359,6 +359,12 @@ var (
 			AllowSelfServe: falsePtr,
 		},
 		{
+			Name:        "influxqlStreamingParser",
+			Description: "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityMetricsSquad,
+		},
+		{
 			Name:           "clientTokenRotation",
 			Description:    "Replaces the current in-request token rotation so that the client initiates the rotation",
 			Stage:          FeatureStageGeneralAvailability,
@@ -672,6 +678,13 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
+			Name:         "tracesEmbeddedFlameGraph",
+			Description:  "Enables embedding a flame graph in traces",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+		},
+		{
 			Name:        "permissionsFilterRemoveSubquery",
 			Description: "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",
 			Stage:       FeatureStageExperimental,
@@ -853,7 +866,7 @@ var (
 			Name:         "transformationsVariableSupport",
 			Description:  "Allows using variables in transformations",
 			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaBiSquad,
 		},
 		{
@@ -1067,6 +1080,20 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "regressionTransformation",
+			Description:  "Enables regression analysis transformation",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaBiSquad,
+		},
+		{
+			Name:         "displayAnonymousStats",
+			Description:  "Enables anonymous stats to be shown in the UI for Grafana",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        identityAccessTeam,
 		},
 	}
 )

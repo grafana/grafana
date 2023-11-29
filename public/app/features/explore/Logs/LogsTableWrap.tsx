@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { debounce } from 'lodash';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import {
@@ -31,8 +30,8 @@ interface Props extends Themeable2 {
   logsSortOrder: LogsSortOrder;
   panelState: ExploreLogsPanelState | undefined;
   updatePanelState: (panelState: Partial<ExploreLogsPanelState>) => void;
-  onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
-  onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
+  onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
 }
 
 export type fieldNameMeta = {
@@ -44,13 +43,14 @@ type fieldName = string;
 type fieldNameMetaStore = Record<fieldName, fieldNameMeta>;
 
 export function LogsTableWrap(props: Props) {
-  const { logsFrames } = props;
-
+  const { logsFrames, updatePanelState, panelState } = props;
+  const propsColumns = panelState?.columns;
   // Save the normalized cardinality of each label
   const [columnsWithMeta, setColumnsWithMeta] = useState<fieldNameMetaStore | undefined>(undefined);
 
   // Filtered copy of columnsWithMeta that only includes matching results
   const [filteredColumnsWithMeta, setFilteredColumnsWithMeta] = useState<fieldNameMetaStore | undefined>(undefined);
+  const [searchValue, setSearchValue] = useState<string>('');
 
   const height = getLogsTableHeight();
   const panelStateRefId = props?.panelState?.refId;
@@ -74,6 +74,18 @@ export function LogsTableWrap(props: Props) {
     },
     [props.panelState?.columns]
   );
+  const logsFrame = parseLogsFrame(currentDataFrame);
+
+  useEffect(() => {
+    if (logsFrame?.timeField.name && logsFrame?.bodyField.name && !propsColumns) {
+      const defaultColumns = { 0: logsFrame?.timeField.name ?? '', 1: logsFrame?.bodyField.name ?? '' };
+      updatePanelState({
+        columns: Object.values(defaultColumns),
+        visualisationType: 'table',
+        labelFieldName: logsFrame?.getLabelFieldName() ?? undefined,
+      });
+    }
+  }, [logsFrame, propsColumns, updatePanelState]);
 
   /**
    * When logs frame updates (e.g. query|range changes), we need to set the selected frame to state
@@ -239,6 +251,14 @@ export function LogsTableWrap(props: Props) {
     });
   }
 
+  const clearSelection = () => {
+    const pendingLabelState = { ...columnsWithMeta };
+    Object.keys(pendingLabelState).forEach((key) => {
+      pendingLabelState[key].active = !!pendingLabelState[key].type;
+    });
+    setColumnsWithMeta(pendingLabelState);
+  };
+
   // Toggle a column on or off when the user interacts with an element in the multi-select sidebar
   const toggleColumn = (columnName: fieldName) => {
     if (!columnsWithMeta || !(columnName in columnsWithMeta)) {
@@ -266,22 +286,26 @@ export function LogsTableWrap(props: Props) {
       setFilteredColumnsWithMeta(pendingFilteredLabelState);
     }
 
+    const newColumns: Record<number, string> = Object.assign(
+      {},
+      // Get the keys of the object as an array
+      Object.keys(pendingLabelState)
+        // Only include active filters
+        .filter((key) => pendingLabelState[key]?.active)
+    );
+
+    const defaultColumns = { 0: logsFrame?.timeField.name ?? '', 1: logsFrame?.bodyField.name ?? '' };
     const newPanelState: ExploreLogsPanelState = {
       ...props.panelState,
       // URL format requires our array of values be an object, so we convert it using object.assign
-      columns: Object.assign(
-        {},
-        // Get the keys of the object as an array
-        Object.keys(pendingLabelState)
-          // Only include active filters
-          .filter((key) => pendingLabelState[key]?.active)
-      ),
+      columns: Object.keys(newColumns).length ? newColumns : defaultColumns,
       refId: currentDataFrame.refId,
       visualisationType: 'table',
+      labelFieldName: logsFrame?.getLabelFieldName() ?? undefined,
     };
 
     // Update url state
-    props.updatePanelState(newPanelState);
+    updatePanelState(newPanelState);
   };
 
   // uFuzzy search dispatcher, adds any matches to the local state
@@ -304,14 +328,12 @@ export function LogsTableWrap(props: Props) {
     fuzzySearch(Object.keys(columnsWithMeta), needle, dispatcher);
   };
 
-  // Debounce fuzzy search
-  const debouncedSearch = debounce(search, 500);
-
   // onChange handler for search input
   const onSearchInputChange = (e: React.FormEvent<HTMLInputElement>) => {
     const value = e.currentTarget?.value;
+    setSearchValue(value);
     if (value) {
-      debouncedSearch(value);
+      search(value);
     } else {
       // If the search input is empty, reset the local search state.
       setFilteredColumnsWithMeta(undefined);
@@ -323,7 +345,7 @@ export function LogsTableWrap(props: Props) {
     if (matchingDataFrame) {
       setCurrentDataFrame(logsFrames.find((frame) => frame.refId === value.value) ?? logsFrames[0]);
     }
-    props.updatePanelState({ refId: value.value });
+    props.updatePanelState({ refId: value.value, labelFieldName: logsFrame?.getLabelFieldName() ?? undefined });
   };
 
   const sidebarWidth = 220;
@@ -360,11 +382,12 @@ export function LogsTableWrap(props: Props) {
       </div>
       <div className={styles.wrapper}>
         <section className={styles.sidebar}>
-          <LogsColumnSearch onChange={onSearchInputChange} />
+          <LogsColumnSearch value={searchValue} onChange={onSearchInputChange} />
           <LogsTableMultiSelect
             toggleColumn={toggleColumn}
             filteredColumnsWithMeta={filteredColumnsWithMeta}
             columnsWithMeta={columnsWithMeta}
+            clear={clearSelection}
           />
         </section>
         <LogsTable
