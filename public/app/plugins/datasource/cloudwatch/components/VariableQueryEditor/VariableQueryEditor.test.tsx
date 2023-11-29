@@ -149,10 +149,8 @@ describe('VariableEditor', () => {
         // change filter key
         const keySelect = screen.getByRole('combobox', { name: 'Dimensions filter key' });
         // confirms getDimensionKeys was called with filter and that the element uses keysForDimensionFilter
-        await waitFor(() => {
-          select(keySelect, 'v4', {
-            container: document.body,
-          });
+        select(keySelect, 'v4', {
+          container: document.body,
         });
         expect(ds.datasource.resources.getDimensionKeys).toHaveBeenCalledWith({
           namespace: 'z2',

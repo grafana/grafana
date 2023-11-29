@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -43,10 +43,8 @@ describe('Dimensions', () => {
         InstanceId: '*',
         InstanceGroup: 'Group1',
       };
-      await act(async () => {
-        render(<Dimensions {...props} metricStat={props.query} />);
-      });
-      const filterItems = screen.getAllByTestId('cloudwatch-dimensions-filter-item');
+      render(<Dimensions {...props} metricStat={props.query} />);
+      const filterItems = await screen.findAllByTestId('cloudwatch-dimensions-filter-item');
       expect(filterItems.length).toBe(2);
 
       expect(within(filterItems[0]).getByText('InstanceId')).toBeInTheDocument();
@@ -63,10 +61,8 @@ describe('Dimensions', () => {
         InstanceId: ['*'],
         InstanceGroup: ['Group1'],
       };
-      await act(async () => {
-        render(<Dimensions {...props} metricStat={props.query} />);
-      });
-      const filterItems = screen.getAllByTestId('cloudwatch-dimensions-filter-item');
+      render(<Dimensions {...props} metricStat={props.query} />);
+      const filterItems = await screen.findAllByTestId('cloudwatch-dimensions-filter-item');
       expect(filterItems.length).toBe(2);
 
       expect(within(filterItems[0]).getByText('InstanceId')).toBeInTheDocument();
