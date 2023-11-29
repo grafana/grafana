@@ -65,6 +65,7 @@ export interface FeatureToggles {
   individualCookiePreferences?: boolean;
   prometheusMetricEncyclopedia?: boolean;
   influxdbBackendMigration?: boolean;
+  influxqlStreamingParser?: boolean;
   clientTokenRotation?: boolean;
   prometheusDataplane?: boolean;
   lokiMetricDataplane?: boolean;

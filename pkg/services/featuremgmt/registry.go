@@ -359,6 +359,12 @@ var (
 			AllowSelfServe: falsePtr,
 		},
 		{
+			Name:        "influxqlStreamingParser",
+			Description: "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityMetricsSquad,
+		},
+		{
 			Name:           "clientTokenRotation",
 			Description:    "Replaces the current in-request token rotation so that the client initiates the rotation",
 			Stage:          FeatureStageGeneralAvailability,
