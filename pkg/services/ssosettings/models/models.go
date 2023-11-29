@@ -92,5 +92,6 @@ func (s SSOSettings) ToSSOSettingsDTO() (*SSOSettingsDTO, error) {
 		Created:   s.Created,
 		Updated:   s.Updated,
 		IsDeleted: s.IsDeleted,
+		Source:    s.Source,
 	}, nil
 }
