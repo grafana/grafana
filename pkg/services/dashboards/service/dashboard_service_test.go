@@ -93,6 +93,16 @@ func TestDashboardService(t *testing.T) {
 				}
 			})
 
+			t.Run("Should return validation error if a folder that is specified can't be found", func(t *testing.T) {
+				dto.Dashboard = dashboards.NewDashboard("Dash")
+				dto.Dashboard.FolderUID = "non-existing-folder"
+				folderStore := foldertest.FakeFolderStore{}
+				folderStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(nil, dashboards.ErrFolderNotFound).Once()
+				service.folderStore = &folderStore
+				_, err := service.SaveDashboard(context.Background(), dto, false)
+				require.Equal(t, err, dashboards.ErrFolderNotFound)
+			})
+
 			t.Run("Should return validation error if dashboard is provisioned", func(t *testing.T) {
 				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything, mock.AnythingOfType("bool")).Return(true, nil).Once()
 				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioning{}, nil).Once()
@@ -220,18 +230,11 @@ func TestDashboardService(t *testing.T) {
 				err := service.DeleteDashboard(context.Background(), 1, 1)
 				require.NoError(t, err)
 			})
-
-			// t.Run("Delete ACL by user", func(t *testing.T) {
-			// 	fakeStore := dashboards.FakeDashboardStore{}
-			// 	args := 1
-			// 	fakeStore.On("DeleteACLByUser", mock.Anything, args).Return(nil).Once()
-			// 	err := service.DeleteACLByUser(context.Background(), 1)
-			// 	require.NoError(t, err)
-			// })
 		})
 
 		t.Run("Count dashboards in folder", func(t *testing.T) {
 			fakeStore.On("CountDashboardsInFolder", mock.Anything, mock.AnythingOfType("*dashboards.CountDashboardsInFolderRequest")).Return(int64(3), nil)
+			// nolint:staticcheck
 			folderSvc.ExpectedFolder = &folder.Folder{ID: 1}
 			// set up a ctx with signed in user
 			usr := &user.SignedInUser{UserID: 1}
@@ -246,43 +249,6 @@ func TestDashboardService(t *testing.T) {
 			args := &dashboards.DeleteDashboardsInFolderRequest{OrgID: 1, FolderUID: "uid"}
 			fakeStore.On("DeleteDashboardsInFolder", mock.Anything, args).Return(nil).Once()
 			err := service.DeleteInFolder(context.Background(), 1, "uid", nil)
-			require.NoError(t, err)
-		})
-	})
-
-	t.Run("Delete user by acl", func(t *testing.T) {
-		fakeStore := dashboards.FakeDashboardStore{}
-		fakeStore.On("DeleteACLByUser", mock.Anything, mock.AnythingOfType("int64")).Return(nil)
-		defer fakeStore.AssertExpectations(t)
-
-		service := &DashboardServiceImpl{
-			cfg:                setting.NewCfg(),
-			log:                log.New("test.logger"),
-			dashboardStore:     &fakeStore,
-			dashAlertExtractor: &dummyDashAlertExtractor{},
-		}
-		err := service.DeleteACLByUser(context.Background(), 1)
-		require.NoError(t, err)
-	})
-
-	t.Run("When org user is deleted", func(t *testing.T) {
-		fakeStore := dashboards.FakeDashboardStore{}
-		fakeStore.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(nil, nil)
-		t.Run("Should remove dependent permissions for deleted org user", func(t *testing.T) {
-			permQuery := &dashboards.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: 1}
-
-			permQueryResult, err := fakeStore.GetDashboardACLInfoList(context.Background(), permQuery)
-			require.NoError(t, err)
-
-			require.Equal(t, len(permQueryResult), 0)
-		})
-
-		t.Run("Should not remove dashboard permissions for same user in another org", func(t *testing.T) {
-			fakeStore := dashboards.FakeDashboardStore{}
-			fakeStore.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(nil, nil)
-			permQuery := &dashboards.GetDashboardACLInfoListQuery{DashboardID: 2, OrgID: 3}
-
-			_, err := fakeStore.GetDashboardACLInfoList(context.Background(), permQuery)
 			require.NoError(t, err)
 		})
 	})

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -259,15 +260,6 @@ type SaveDashboardCommand struct {
 	UpdatedAt time.Time
 }
 
-type ValidateDashboardCommand struct {
-	Dashboard string `json:"dashboard" binding:"Required"`
-}
-
-type TrimDashboardCommand struct {
-	Dashboard *simplejson.Json `json:"dashboard" binding:"Required"`
-	Meta      *simplejson.Json `json:"meta"`
-}
-
 type DashboardProvisioning struct {
 	ID          int64 `xorm:"pk autoincr 'id'"`
 	DashboardID int64 `xorm:"dashboard_id"`
@@ -387,7 +379,7 @@ type CountDashboardsInFolderRequest struct {
 
 func FromDashboard(dash *Dashboard) *folder.Folder {
 	return &folder.Folder{
-		ID:        dash.ID,
+		ID:        dash.ID, // nolint:staticcheck
 		UID:       dash.UID,
 		OrgID:     dash.OrgID,
 		Title:     dash.Title,
@@ -419,7 +411,7 @@ type DashboardACL struct {
 	UserID     int64         `xorm:"user_id"`
 	TeamID     int64         `xorm:"team_id"`
 	Role       *org.RoleType // pointer to be nullable
-	Permission PermissionType
+	Permission dashboardaccess.PermissionType
 
 	Created time.Time
 	Updated time.Time
@@ -437,23 +429,23 @@ type DashboardACLInfoDTO struct {
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
 
-	UserID         int64          `json:"userId" xorm:"user_id"`
-	UserLogin      string         `json:"userLogin"`
-	UserEmail      string         `json:"userEmail"`
-	UserAvatarURL  string         `json:"userAvatarUrl" xorm:"user_avatar_url"`
-	TeamID         int64          `json:"teamId" xorm:"team_id"`
-	TeamEmail      string         `json:"teamEmail"`
-	TeamAvatarURL  string         `json:"teamAvatarUrl" xorm:"team_avatar_url"`
-	Team           string         `json:"team"`
-	Role           *org.RoleType  `json:"role,omitempty"`
-	Permission     PermissionType `json:"permission"`
-	PermissionName string         `json:"permissionName"`
-	UID            string         `json:"uid" xorm:"uid"`
-	Title          string         `json:"title"`
-	Slug           string         `json:"slug"`
-	IsFolder       bool           `json:"isFolder"`
-	URL            string         `json:"url" xorm:"url"`
-	Inherited      bool           `json:"inherited"`
+	UserID         int64                          `json:"userId" xorm:"user_id"`
+	UserLogin      string                         `json:"userLogin"`
+	UserEmail      string                         `json:"userEmail"`
+	UserAvatarURL  string                         `json:"userAvatarUrl" xorm:"user_avatar_url"`
+	TeamID         int64                          `json:"teamId" xorm:"team_id"`
+	TeamEmail      string                         `json:"teamEmail"`
+	TeamAvatarURL  string                         `json:"teamAvatarUrl" xorm:"team_avatar_url"`
+	Team           string                         `json:"team"`
+	Role           *org.RoleType                  `json:"role,omitempty"`
+	Permission     dashboardaccess.PermissionType `json:"permission"`
+	PermissionName string                         `json:"permissionName"`
+	UID            string                         `json:"uid" xorm:"uid"`
+	Title          string                         `json:"title"`
+	Slug           string                         `json:"slug"`
+	IsFolder       bool                           `json:"isFolder"`
+	URL            string                         `json:"url" xorm:"url"`
+	Inherited      bool                           `json:"inherited"`
 }
 
 func (dto *DashboardACLInfoDTO) hasSameRoleAs(other *DashboardACLInfoDTO) bool {
@@ -477,12 +469,6 @@ func (dto *DashboardACLInfoDTO) IsDuplicateOf(other *DashboardACLInfoDTO) bool {
 	return dto.hasSameRoleAs(other) || dto.hasSameUserAs(other) || dto.hasSameTeamAs(other)
 }
 
-// QUERIES
-type GetDashboardACLInfoListQuery struct {
-	DashboardID int64
-	OrgID       int64
-}
-
 type FindPersistedDashboardsQuery struct {
 	Title         string
 	OrgId         int64
@@ -496,7 +482,7 @@ type FindPersistedDashboardsQuery struct {
 	Tags       []string
 	Limit      int64
 	Page       int64
-	Permission PermissionType
+	Permission dashboardaccess.PermissionType
 	Sort       model.SortOption
 
 	Filters []any

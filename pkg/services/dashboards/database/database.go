@@ -171,36 +171,6 @@ func (d *dashboardStore) SaveDashboard(ctx context.Context, cmd dashboards.SaveD
 	return result, err
 }
 
-func (d *dashboardStore) UpdateDashboardACL(ctx context.Context, dashboardID int64, items []*dashboards.DashboardACL) error {
-	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		// delete existing items
-		_, err := sess.Exec("DELETE FROM dashboard_acl WHERE dashboard_id=?", dashboardID)
-		if err != nil {
-			return fmt.Errorf("deleting from dashboard_acl failed: %w", err)
-		}
-
-		for _, item := range items {
-			if item.UserID == 0 && item.TeamID == 0 && (item.Role == nil || !item.Role.IsValid()) {
-				return dashboards.ErrDashboardACLInfoMissing
-			}
-
-			if item.DashboardID == 0 {
-				return dashboards.ErrDashboardPermissionDashboardEmpty
-			}
-
-			sess.Nullable("user_id", "team_id")
-			if _, err := sess.Insert(item); err != nil {
-				return err
-			}
-		}
-
-		// Update dashboard HasACL flag
-		dashboard := dashboards.Dashboard{HasACL: true}
-		_, err = sess.Cols("has_acl").Where("id=?", dashboardID).Update(&dashboard)
-		return err
-	})
-}
-
 func (d *dashboardStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*alertmodels.Alert) error {
 	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		existingAlerts, err := GetAlertsByDashboardId2(dashID, sess)
@@ -330,20 +300,6 @@ func getExistingDashboardByIDOrUIDForUpdate(sess *db.Session, dash *dashboards.D
 		}
 	}
 
-	// nolint:staticcheck
-	if dash.FolderID > 0 {
-		var existingFolder dashboards.Dashboard
-		folderExists, err := sess.Where("org_id=? AND id=? AND is_folder=?", dash.OrgID, dash.FolderID,
-			dialect.BooleanStr(true)).Get(&existingFolder)
-		if err != nil {
-			return false, fmt.Errorf("SQL query for folder failed: %w", err)
-		}
-
-		if !folderExists {
-			return false, dashboards.ErrDashboardFolderNotFound
-		}
-	}
-
 	if !dashWithIdExists && !dashWithUidExists {
 		return false, nil
 	}
@@ -365,8 +321,7 @@ func getExistingDashboardByIDOrUIDForUpdate(sess *db.Session, dash *dashboards.D
 		return isParentFolderChanged, dashboards.ErrDashboardTypeMismatch
 	}
 
-	// nolint:staticcheck
-	if !dash.IsFolder && dash.FolderID != existing.FolderID {
+	if !dash.IsFolder && dash.FolderUID != existing.FolderUID {
 		isParentFolderChanged = true
 	}
 

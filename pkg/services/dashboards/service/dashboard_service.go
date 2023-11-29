@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -132,6 +133,23 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		}
 	}
 
+	// Validate folder
+	if dash.FolderUID != "" {
+		folder, err := dr.folderStore.GetFolderByUID(ctx, dash.OrgID, dash.FolderUID)
+		if err != nil {
+			return nil, err
+		}
+		// nolint:staticcheck
+		dash.FolderID = folder.ID
+	} else if dash.FolderID != 0 { // nolint:staticcheck
+		// nolint:staticcheck
+		folder, err := dr.folderStore.GetFolderByID(ctx, dash.OrgID, dash.FolderID)
+		if err != nil {
+			return nil, err
+		}
+		dash.FolderUID = folder.UID
+	}
+
 	isParentFolderChanged, err := dr.dashboardStore.ValidateDashboardBeforeSave(ctx, dash, dto.Overwrite)
 	if err != nil {
 		return nil, err
@@ -222,10 +240,6 @@ func resolveUserID(user identity.Requester, log log.Logger) (int64, error) {
 		log.Debug("failed to parse user ID", "namespaceID", namespaceID, "userID", identifier, "error", err)
 	}
 	return userID, nil
-}
-
-func (dr *DashboardServiceImpl) UpdateDashboardACL(ctx context.Context, uid int64, items []*dashboards.DashboardACL) error {
-	return dr.dashboardStore.UpdateDashboardACL(ctx, uid, items)
 }
 
 func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *dashboards.DeleteOrphanedProvisionedDashboardsCommand) error {
@@ -489,15 +503,15 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 			dr.log.Error("Could not make user admin", "dashboard", dash.Title, "namespaceID", namespaceID, "userID", userID, "error", err)
 		} else if namespaceID == identity.NamespaceUser && userID > 0 {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
-				UserID: userID, Permission: dashboards.PERMISSION_ADMIN.String(),
+				UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
 			})
 		}
 	}
 
 	if !inFolder {
 		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
-			{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
+			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
 		}...)
 	}
 
@@ -589,16 +603,8 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 	return hitList
 }
 
-func (dr *DashboardServiceImpl) GetDashboardACLInfoList(ctx context.Context, query *dashboards.GetDashboardACLInfoListQuery) ([]*dashboards.DashboardACLInfoDTO, error) {
-	return dr.dashboardStore.GetDashboardACLInfoList(ctx, query)
-}
-
 func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *dashboards.GetDashboardTagsQuery) ([]*dashboards.DashboardTagCloudItem, error) {
 	return dr.dashboardStore.GetDashboardTags(ctx, query)
-}
-
-func (dr *DashboardServiceImpl) DeleteACLByUser(ctx context.Context, userID int64) error {
-	return dr.dashboardStore.DeleteACLByUser(ctx, userID)
 }
 
 func (dr DashboardServiceImpl) CountInFolder(ctx context.Context, orgID int64, folderUID string, u identity.Requester) (int64, error) {
