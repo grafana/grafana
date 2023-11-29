@@ -111,6 +111,7 @@ export const availableIconsIndex = {
   'folder-plus': true,
   'folder-upload': true,
   forward: true,
+  'frontend-observability': true,
   'gf-bar-alignment-after': true,
   'gf-bar-alignment-before': true,
   'gf-bar-alignment-center': true,

@@ -228,7 +228,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				Text:       "Frontend",
 				Id:         navtree.NavIDFrontend,
 				SubTitle:   "Gain real user monitoring insights",
-				Icon:       "heart-rate",
+				Icon:       "frontend-observability",
 				SortWeight: navtree.WeightFrontend,
 				Children:   []*navtree.NavLink{appLink},
 				Url:        s.cfg.AppSubURL + "/frontend",
