@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { range } from 'lodash';
 import React from 'react';
 
-import { LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { CoreApp, LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 
 import { LogRows, PREVIEW_LIMIT } from './LogRows';
 import { createLogRow } from './__mocks__/logRow';
@@ -207,7 +207,7 @@ describe('LogRows', () => {
 });
 
 describe('Popover menu', () => {
-  function setup() {
+  function setup(app = CoreApp.Explore) {
     const rows: LogRowModel[] = [createLogRow({ uid: '1' })];
     return render(
       <LogRows
@@ -223,6 +223,7 @@ describe('Popover menu', () => {
         displayedFields={[]}
         onClickFilterOutValue={() => {}}
         onClickFilterValue={() => {}}
+        app={app}
       />
     );
   }
@@ -246,5 +247,10 @@ describe('Popover menu', () => {
     expect(screen.getByText('Copy selection')).toBeInTheDocument();
     expect(screen.getByText('Add as line contains filter')).toBeInTheDocument();
     expect(screen.getByText('Add as line does not contain filter')).toBeInTheDocument();
+  });
+  it('Does not appear outside Explore', async () => {
+    setup(CoreApp.Unknown);
+    await userEvent.click(screen.getByText('log message 1'));
+    expect(screen.queryByText('Copy selection')).not.toBeInTheDocument();
   });
 });

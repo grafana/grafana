@@ -175,9 +175,9 @@ func (ng *AlertNG) init() error {
 
 	var overrides []notifier.Option
 	if ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Enable {
-		remoteSecondary := ng.FeatureToggles.IsEnabled(featuremgmt.FlagAlertmanagerRemoteSecondary)
-		remotePrimary := ng.FeatureToggles.IsEnabled(featuremgmt.FlagAlertmanagerRemotePrimary)
-		remoteOnly := ng.FeatureToggles.IsEnabled(featuremgmt.FlagAlertmanagerRemoteOnly)
+		remoteSecondary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondary)
+		remotePrimary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemotePrimary)
+		remoteOnly := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteOnly)
 		if !remoteSecondary && !remotePrimary && !remoteOnly {
 			return fmt.Errorf("at least one mode should be enabled to use the remote Alertmanager")
 		}
@@ -192,12 +192,15 @@ func (ng *AlertNG) init() error {
 		var override notifier.Option
 		if remoteOnly {
 			override = notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
-				return remote.NewAlertmanager(externalAMCfg, orgID)
+				// We won't be handling files on disk, we can pass an empty string as workingDirPath.
+				stateStore := notifier.NewFileStore(orgID, ng.KVStore, "")
+				return remote.NewAlertmanager(externalAMCfg, orgID, stateStore)
 			})
 		} else {
 			// If we're using either RemotePrimary or RemoteSecondary, we need the forked Alertmanager.
 			override = notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
-				external, err := remote.NewAlertmanager(externalAMCfg, orgID)
+				stateStore := notifier.NewFileStore(orgID, ng.KVStore, "")
+				external, err := remote.NewAlertmanager(externalAMCfg, orgID, stateStore)
 				if err != nil {
 					return nil, err
 				}
