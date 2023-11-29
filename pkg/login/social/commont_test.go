@@ -33,7 +33,7 @@ token_url = test_token_url
 api_url = test_api_url
 teams_url = test_teams_url
 allowed_domains = domain1.com
-allowed_groups = 
+allowed_groups =
 team_ids = first, second
 allowed_organizations = org1, org2
 tls_skip_verify_insecure = true
@@ -47,6 +47,7 @@ skip_org_role_sync = true
 use_refresh_token = true
 empty_scopes =
 hosted_domain = test_hosted_domain
+signout_redirect_url = https://oauth.com/signout?post_logout_redirect_uri=https://grafana.com
 `
 
 	iniFile, err := ini.Load([]byte(iniContent))
@@ -84,6 +85,7 @@ hosted_domain = test_hosted_domain
 		UseRefreshToken:         true,
 		SkipOrgRoleSync:         true,
 		HostedDomain:            "test_hosted_domain",
+		SignoutRedirectUrl:      "https://oauth.com/signout?post_logout_redirect_uri=https://grafana.com",
 		Extra: map[string]string{
 			"allowed_organizations":   "org1, org2",
 			"id_token_attribute_name": "id_token",

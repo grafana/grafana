@@ -64,7 +64,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn(hs.Cfg)
 	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL(hs.Cfg)
 	authorize := ac.Middleware(hs.AccessControl)
-	authorizeInOrg := ac.AuthorizeInOrgMiddleware(hs.AccessControl, hs.accesscontrolService, hs.userService)
+	authorizeInOrg := ac.AuthorizeInOrgMiddleware(hs.AccessControl, hs.accesscontrolService, hs.userService, hs.teamService)
 	quota := middleware.Quota(hs.QuotaService)
 
 	r := hs.RouteRegister
@@ -166,6 +166,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// anonymous view public dashboard
 		r.Get("/public-dashboards/:accessToken",
+			hs.PublicDashboardsApi.Middleware.HandleView,
 			publicdashboardsapi.SetPublicDashboardAccessToken,
 			publicdashboardsapi.SetPublicDashboardOrgIdOnContext(hs.PublicDashboardsApi.PublicDashboardService),
 			publicdashboardsapi.CountPublicDashboardRequest(),
@@ -465,7 +466,6 @@ func (hs *HTTPServer) registerRoutes() {
 			})
 
 			dashboardRoute.Post("/calculate-diff", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.CalculateDashboardDiff))
-			dashboardRoute.Post("/validate", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.ValidateDashboard))
 
 			dashboardRoute.Post("/db", authorize(ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionDashboardsWrite))), routing.Wrap(hs.PostDashboard))
 			dashboardRoute.Get("/home", routing.Wrap(hs.GetHomeDashboard))

@@ -8,11 +8,9 @@ import { TraceToProfilesData, TraceToProfilesSettings } from './TraceToProfilesS
 
 const defaultOption: DataSourceSettings<TraceToProfilesData> = {
   jsonData: {
-    tracesToProfilesV2: {
+    tracesToProfiles: {
       datasourceUid: 'profiling1_uid',
       tags: [{ key: 'someTag', value: 'newName' }],
-      spanStartTimeShift: '1m',
-      spanEndTimeShift: '1m',
       customQuery: true,
       query: '{${__tags}}',
     },
@@ -48,7 +46,6 @@ describe('TraceToProfilesSettings', () => {
 
   it('should render all options', () => {
     render(<TraceToProfilesSettings options={defaultOption} onOptionsChange={() => {}} />);
-    expect(screen.getByText('Select data source')).toBeInTheDocument();
     expect(screen.getByText('Tags')).toBeInTheDocument();
     expect(screen.getByText('Profile type')).toBeInTheDocument();
     expect(screen.getByText('Use custom query')).toBeInTheDocument();

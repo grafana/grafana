@@ -81,9 +81,7 @@
     "manage-folder-nav": {
       "alert-rules": "Alert rules",
       "dashboards": "Dashboards",
-      "panels": "Panels",
-      "permissions": "Permissions",
-      "settings": "Settings"
+      "panels": "Panels"
     },
     "new-folder-form": {
       "cancel-label": "Cancel",
@@ -937,7 +935,8 @@
     },
     "megamenu": {
       "close": "Close menu",
-      "dock": "Dock menu"
+      "dock": "Dock menu",
+      "undock": "Undock menu"
     },
     "toolbar": {
       "close-menu": "Close menu",
@@ -1085,15 +1084,6 @@
       "new-dashboard": "New dashboard",
       "new-folder": "New folder"
     },
-    "folder-view": {
-      "go-to-folder": "Go to folder",
-      "select-folder": "Select folder"
-    },
-    "result-kind": {
-      "dashboard": "Dashboard",
-      "folder": "Folder",
-      "panel": "Panel"
-    },
     "results-table": {
       "datasource-header": "Data source",
       "location-header": "Location",
@@ -1106,12 +1096,6 @@
     "search-input": {
       "include-panels-placeholder": "Search for dashboards, folders, and panels",
       "placeholder": "Search for dashboards and folders"
-    }
-  },
-  "search-view": {
-    "no-results": {
-      "clear": "Clear search and filters",
-      "text": "No results found for your query."
     }
   },
   "share-modal": {
@@ -1249,6 +1233,7 @@
     "calendar": {
       "apply-button": "Apply time range",
       "cancel-button": "Cancel",
+      "close": "Close calendar",
       "select-time": "Select a time range"
     },
     "content": {
@@ -1268,6 +1253,7 @@
       "default-error": "Please enter a past date or \"now\"",
       "fiscal-year": "Fiscal year",
       "from-input": "From",
+      "open-input-calendar": "Open calendar",
       "range-error": "\"From\" can't be after \"To\"",
       "to-input": "To"
     },

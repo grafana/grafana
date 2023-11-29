@@ -37,7 +37,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
-	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -187,7 +186,6 @@ type HTTPServer struct {
 	dashboardVersionService      dashver.Service
 	PublicDashboardsApi          *publicdashboardsApi.Api
 	starService                  star.Service
-	Kinds                        *corekind.Base
 	playlistService              playlist.Service
 	apiKeyService                apikey.Service
 	kvStore                      kvstore.KVStore
@@ -240,7 +238,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
-	starService star.Service, csrfService csrf.Service, basekinds *corekind.Base,
+	starService star.Service, csrfService csrf.Service,
 	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore,
 	secretsMigrator secrets.Migrator, secretsPluginManager plugins.SecretsPluginManager, secretsService secrets.Service,
 	secretsPluginMigrator spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
@@ -329,7 +327,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		dashboardPermissionsService:  dashboardPermissionsService,
 		dashboardVersionService:      dashboardVersionService,
 		starService:                  starService,
-		Kinds:                        basekinds,
 		playlistService:              playlistService,
 		apiKeyService:                apiKeyService,
 		kvStore:                      kvStore,

@@ -941,7 +941,7 @@ export interface RowPanel {
   /**
    * List of panels in the row
    */
-  panels: Array<(Panel | GraphPanel | HeatmapPanel)>;
+  panels: Array<Panel>;
   /**
    * Name of template variable to repeat for.
    */
@@ -960,30 +960,6 @@ export const defaultRowPanel: Partial<RowPanel> = {
   collapsed: false,
   panels: [],
 };
-
-/**
- * Support for legacy graph panel.
- * @deprecated this a deprecated panel type
- */
-export interface GraphPanel {
-  /**
-   * @deprecated this is part of deprecated graph panel
-   */
-  legend?: {
-    show: boolean;
-    sort?: string;
-    sortDesc?: boolean;
-  };
-  type: 'graph';
-}
-
-/**
- * Support for legacy heatmap panel.
- * @deprecated this a deprecated panel type
- */
-export interface HeatmapPanel {
-  type: 'heatmap';
-}
 
 export interface Dashboard {
   /**
@@ -1032,7 +1008,7 @@ export interface Dashboard {
   /**
    * List of dashboard panels
    */
-  panels?: Array<(Panel | RowPanel | GraphPanel | HeatmapPanel)>;
+  panels?: Array<(Panel | RowPanel)>;
   /**
    * Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
    */

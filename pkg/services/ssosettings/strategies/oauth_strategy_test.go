@@ -50,6 +50,7 @@ var (
 	use_refresh_token = true
 	empty_scopes =
 	hosted_domain = test_hosted_domain
+	signout_redirect_url = test_signout_redirect_url
 	`
 
 	expectedKVs = map[string]any{
@@ -89,6 +90,7 @@ var (
 		"name_attribute_path":        "name",
 		"skip_org_role_sync":         "true",
 		"team_ids":                   "first, second",
+		"signout_redirect_url":       "test_signout_redirect_url",
 	}
 
 	expectedOAuthInfo = &social.OAuthInfo{
@@ -123,6 +125,7 @@ var (
 		UseRefreshToken:         true,
 		HostedDomain:            "test_hosted_domain",
 		SkipOrgRoleSync:         true,
+		SignoutRedirectUrl:      "test_signout_redirect_url",
 		Extra: map[string]string{
 			"allowed_organizations":   "org1, org2",
 			"id_token_attribute_name": "id_token",
@@ -277,4 +280,5 @@ func setupEnvVars(t *testing.T) {
 	t.Setenv("GF_AUTH_GENERIC_OAUTH_LOGIN_ATTRIBUTE_PATH", "login")
 	t.Setenv("GF_AUTH_GENERIC_OAUTH_NAME_ATTRIBUTE_PATH", "name")
 	t.Setenv("GF_AUTH_GENERIC_OAUTH_TEAM_IDS", "first, second")
+	t.Setenv("GF_AUTH_GENERIC_OAUTH_SIGNOUT_REDIRECT_URL", "test_signout_redirect_url")
 }

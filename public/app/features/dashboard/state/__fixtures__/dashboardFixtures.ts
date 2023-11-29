@@ -3,7 +3,6 @@ import {
   Dashboard,
   defaultDashboardCursorSync,
   defaultVariableModel,
-  GraphPanel,
   Panel,
   RowPanel,
   VariableModel,
@@ -30,7 +29,7 @@ export function createDashboardModelFixture(
   return new DashboardModel(dashboardJson, meta, { getVariablesFromState });
 }
 
-export function createPanelSaveModel(panelInput: Partial<Panel | GraphPanel | RowPanel> = {}): Panel {
+export function createPanelSaveModel(panelInput: Partial<Panel | RowPanel> = {}): Panel {
   return {
     type: 'timeseries',
     ...panelInput,

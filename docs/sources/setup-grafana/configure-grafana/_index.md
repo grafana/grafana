@@ -2302,6 +2302,14 @@ Instruct headless browser instance whether to output its debug and error message
 
 It can be useful to set this to `true` when troubleshooting.
 
+### rendering_timing_metrics
+
+> **Note:** Available from grafana-image-renderer v3.9.0+
+
+Instruct a headless browser instance on whether to record metrics for the duration of every rendering step. Default is `false`.
+
+Setting this to `true` when optimizing the rendering mode settings to improve the plugin performance or when troubleshooting can be useful.
+
 ### rendering_args
 
 Additional arguments to pass to the headless browser instance. Defaults are `--no-sandbox,--disable-gpu`. The list of Chromium flags can be found at (https://peter.sh/experiments/chromium-command-line-switches/). Separate multiple arguments with commas.

@@ -11,6 +11,7 @@ import {
   removeCommentsFromQuery,
   removeLabelFromQuery,
 } from './modifyQuery';
+import { LabelType } from './types';
 
 describe('addLabelToQuery()', () => {
   it.each`
@@ -74,14 +75,26 @@ describe('addLabelToQuery()', () => {
     }
   );
 
-  it('should always add label as labelFilter if force flag is given', () => {
-    expect(addLabelToQuery('{foo="bar"}', 'forcedLabel', '=', 'value', true)).toEqual(
+  it('should always add label as labelFilter if label type is parsed', () => {
+    expect(addLabelToQuery('{foo="bar"}', 'forcedLabel', '=', 'value', LabelType.Parsed)).toEqual(
       '{foo="bar"} | forcedLabel=`value`'
     );
   });
 
-  it('should always add label as labelFilter if force flag is given with a parser', () => {
-    expect(addLabelToQuery('{foo="bar"} | logfmt', 'forcedLabel', '=', 'value', true)).toEqual(
+  it('should always add label as labelFilter if label type is parsed with parser', () => {
+    expect(addLabelToQuery('{foo="bar"} | logfmt', 'forcedLabel', '=', 'value', LabelType.Parsed)).toEqual(
+      '{foo="bar"} | logfmt | forcedLabel=`value`'
+    );
+  });
+
+  it('should always add label as labelFilter if label type is structured', () => {
+    expect(addLabelToQuery('{foo="bar"}', 'forcedLabel', '=', 'value', LabelType.StructuredMetadata)).toEqual(
+      '{foo="bar"} | forcedLabel=`value`'
+    );
+  });
+
+  it('should always add label as labelFilter if label type is structured with parser', () => {
+    expect(addLabelToQuery('{foo="bar"} | logfmt', 'forcedLabel', '=', 'value', LabelType.StructuredMetadata)).toEqual(
       '{foo="bar"} | logfmt | forcedLabel=`value`'
     );
   });
