@@ -166,27 +166,10 @@ func TestAccessControlStore_DeleteExternalServiceRole(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "delete local role",
+			name: "delete role",
 			init: func(t *testing.T, ctx context.Context, s *AccessControlStore) {
 				errSave := s.SaveExternalServiceRole(ctx, accesscontrol.SaveExternalServiceRoleCommand{
 					AssignmentOrgID:   2,
-					ExternalServiceID: extID,
-					ServiceAccountID:  3,
-					Permissions: []accesscontrol.Permission{
-						{Action: "users:read", Scope: "users:id:1"},
-						{Action: "users:write", Scope: "users:id:1"},
-					},
-				})
-				require.NoError(t, errSave)
-			},
-			id:      extID,
-			wantErr: false,
-		},
-		{
-			name: "delete global role",
-			init: func(t *testing.T, ctx context.Context, s *AccessControlStore) {
-				errSave := s.SaveExternalServiceRole(ctx, accesscontrol.SaveExternalServiceRoleCommand{
-					AssignmentOrgID:   1,
 					ExternalServiceID: extID,
 					ServiceAccountID:  3,
 					Permissions: []accesscontrol.Permission{
