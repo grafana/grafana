@@ -40,13 +40,13 @@ import {
   toUtc,
 } from '@grafana/data';
 import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
+import { config } from '@grafana/runtime';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { ansicolor, colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
 
 import { LogsFrame, parseLogsFrame } from './logsFrame';
 import { getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from './utils';
-import { config } from '@grafana/runtime';
 
 export const LIMIT_LABEL = 'Line limit';
 export const COMMON_LABELS = 'Common labels';
