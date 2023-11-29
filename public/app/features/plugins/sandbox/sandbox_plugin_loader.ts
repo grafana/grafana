@@ -94,6 +94,9 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.M
         // window.locationSandbox. In the future `window.location` could be a proxy if we
         // want to intercept calls to it.
         locationSandbox: window.location,
+        setImmediate: function (fn: Function, ...args: unknown[]) {
+          return setTimeout(fn, 0, ...args);
+        },
         get monaco() {
           // `window.monaco` may be undefined when invoked. However, plugins have long
           // accessed it directly, aware of this possibility.

@@ -44,6 +44,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   minRefreshInterval = '';
   appUrl = '';
   appSubUrl = '';
+  namespace = 'default';
   windowTitlePrefix = '';
   buildInfo: BuildInfo;
   newPanelTitle = '';

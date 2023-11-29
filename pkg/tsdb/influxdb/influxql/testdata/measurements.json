@@ -1,0 +1,29 @@
+{
+  "results": [
+    {
+      "statement_id": 0,
+      "series": [
+        {
+          "name": "measurements",
+          "columns": [
+            "name"
+          ],
+          "values": [
+            [
+              "cpu"
+            ],
+            [
+              "disk"
+            ],
+            [
+              "diskio"
+            ],
+            [
+              "kernel"
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}

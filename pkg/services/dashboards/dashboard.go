@@ -17,15 +17,12 @@ type DashboardService interface {
 	DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error
 	FindDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
 	GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error)
-	GetDashboardACLInfoList(ctx context.Context, query *GetDashboardACLInfoListQuery) ([]*DashboardACLInfoDTO, error)
 	GetDashboards(ctx context.Context, query *GetDashboardsQuery) ([]*Dashboard, error)
 	GetDashboardTags(ctx context.Context, query *GetDashboardTagsQuery) ([]*DashboardTagCloudItem, error)
 	GetDashboardUIDByID(ctx context.Context, query *GetDashboardRefByIDQuery) (*DashboardRef, error)
 	ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (*Dashboard, error)
 	SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*Dashboard, error)
 	SearchDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) (model.HitList, error)
-	UpdateDashboardACL(ctx context.Context, uid int64, items []*DashboardACL) error
-	DeleteACLByUser(ctx context.Context, userID int64) error
 	CountInFolder(ctx context.Context, orgID int64, folderUID string, user identity.Requester) (int64, error)
 }
 
@@ -56,7 +53,6 @@ type Store interface {
 	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *DeleteOrphanedProvisionedDashboardsCommand) error
 	FindDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
 	GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error)
-	GetDashboardACLInfoList(ctx context.Context, query *GetDashboardACLInfoListQuery) ([]*DashboardACLInfoDTO, error)
 	GetDashboardUIDByID(ctx context.Context, query *GetDashboardRefByIDQuery) (*DashboardRef, error)
 	GetDashboards(ctx context.Context, query *GetDashboardsQuery) ([]*Dashboard, error)
 	// GetDashboardsByPluginID retrieves dashboards identified by plugin.
@@ -70,10 +66,8 @@ type Store interface {
 	SaveDashboard(ctx context.Context, cmd SaveDashboardCommand) (*Dashboard, error)
 	SaveProvisionedDashboard(ctx context.Context, cmd SaveDashboardCommand, provisioning *DashboardProvisioning) (*Dashboard, error)
 	UnprovisionDashboard(ctx context.Context, id int64) error
-	UpdateDashboardACL(ctx context.Context, uid int64, items []*DashboardACL) error
 	// ValidateDashboardBeforeSave validates a dashboard before save.
 	ValidateDashboardBeforeSave(ctx context.Context, dashboard *Dashboard, overwrite bool) (bool, error)
-	DeleteACLByUser(context.Context, int64) error
 
 	Count(context.Context, *quota.ScopeParameters) (*quota.Map, error)
 	// CountDashboardsInFolder returns the number of dashboards associated with

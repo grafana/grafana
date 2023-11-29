@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,11 +25,8 @@ const (
 )
 
 func TestSocialGrafanaCom_UserInfo(t *testing.T) {
-	provider := SocialGrafanaCom{
-		SocialBase: &SocialBase{
-			log: newLogger("grafana_com_oauth_test", "debug"),
-		},
-	}
+	provider, err := NewGrafanaComProvider(map[string]any{}, &setting.Cfg{}, featuremgmt.WithFeatures())
+	require.NoError(t, err)
 
 	type conf struct {
 		skipOrgRoleSync bool
@@ -90,6 +89,43 @@ func TestSocialGrafanaCom_UserInfo(t *testing.T) {
 
 			require.NoError(t, err)
 			require.Equal(t, test.want.Role, actualResult.Role)
+		})
+	}
+}
+
+func TestSocialGrafanaCom_InitializeExtraFields(t *testing.T) {
+	type settingFields struct {
+		allowedOrganizations []string
+	}
+	testCases := []struct {
+		name     string
+		settings map[string]any
+		want     settingFields
+	}{
+		{
+			name:     "allowedOrganizations is not set",
+			settings: map[string]any{},
+			want: settingFields{
+				allowedOrganizations: []string{},
+			},
+		},
+		{
+			name: "allowedOrganizations is set",
+			settings: map[string]any{
+				"allowed_organizations": "uuid-1234,uuid-5678",
+			},
+			want: settingFields{
+				allowedOrganizations: []string{"uuid-1234", "uuid-5678"},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s, err := NewGrafanaComProvider(tc.settings, &setting.Cfg{}, featuremgmt.WithFeatures())
+			require.NoError(t, err)
+
+			require.Equal(t, tc.want.allowedOrganizations, s.allowedOrganizations)
 		})
 	}
 }

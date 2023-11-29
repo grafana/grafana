@@ -46,7 +46,7 @@ func newConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles) *config {
 	host := fmt.Sprintf("%s:%d", ip, port)
 
 	return &config{
-		enabled:     features.IsEnabled(featuremgmt.FlagGrafanaAPIServer),
+		enabled:     features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServer),
 		devMode:     cfg.Env == setting.Dev,
 		dataPath:    filepath.Join(cfg.DataPath, "grafana-apiserver"),
 		ip:          ip,

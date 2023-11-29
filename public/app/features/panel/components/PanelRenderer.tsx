@@ -107,7 +107,7 @@ export function PanelRenderer<P extends object = {}, F extends object = {}>(prop
   );
 }
 
-function useOptionDefaults<P extends object = {}, F extends object = {}>(
+function useOptionDefaults<P extends Record<string, unknown> = {}, F extends object = {}>(
   plugin: PanelPlugin | undefined,
   options: P,
   fieldConfig: FieldConfigSource<F>

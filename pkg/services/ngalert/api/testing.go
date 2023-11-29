@@ -12,7 +12,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -139,3 +141,14 @@ func (a *recordingAccessControlFake) IsDisabled() bool {
 }
 
 var _ accesscontrol.AccessControl = &recordingAccessControlFake{}
+
+type fakeRuleAccessControlService struct {
+}
+
+func (f fakeRuleAccessControlService) AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) bool {
+	return true
+}
+
+func (f fakeRuleAccessControlService) AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+	return nil
+}

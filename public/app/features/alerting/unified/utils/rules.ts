@@ -171,8 +171,7 @@ export function getFirstActiveAt(promRule?: AlertingRule) {
     return null;
   }
   return promRule.alerts.reduce<Date | null>((prev, alert) => {
-    const isNotNormal =
-      mapStateWithReasonToBaseState(alert.state as GrafanaAlertStateWithReason) !== GrafanaAlertState.Normal;
+    const isNotNormal = mapStateWithReasonToBaseState(alert.state) !== GrafanaAlertState.Normal;
     if (alert.activeAt && isNotNormal) {
       const activeAt = new Date(alert.activeAt);
       if (prev === null || prev.getTime() > activeAt.getTime()) {

@@ -17,12 +17,12 @@ import { PanelPlugin } from './PanelPlugin';
 export interface Props {
   plugin: PanelPlugin;
   currentFieldConfig: FieldConfigSource;
-  currentOptions: Record<string, any>;
+  currentOptions: Record<string, unknown>;
   isAfterPluginChange: boolean;
 }
 
 export interface OptionDefaults {
-  options: any;
+  options: Record<string, unknown>;
   fieldConfig: FieldConfigSource;
 }
 

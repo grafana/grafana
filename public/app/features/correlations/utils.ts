@@ -54,9 +54,10 @@ const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlatio
     field.config.links = field.config.links?.filter((link) => link.origin !== DataLinkConfigOrigin.Correlations) || [];
     correlations.map((correlation) => {
       if (correlation.config?.field === field.name) {
+        const targetQuery = correlation.config?.target || {};
         field.config.links!.push({
           internal: {
-            query: correlation.config?.target,
+            query: { ...targetQuery, datasource: { uid: correlation.target.uid } },
             datasourceUid: correlation.target.uid,
             datasourceName: correlation.target.name,
             transformations: correlation.config?.transformations,

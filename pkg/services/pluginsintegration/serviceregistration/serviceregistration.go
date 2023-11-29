@@ -23,7 +23,7 @@ type Service struct {
 
 func ProvideService(cfg *config.Cfg, reg extsvcauth.ExternalServiceRegistry, settingsSvc pluginsettings.Service) *Service {
 	s := &Service{
-		featureEnabled: cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAuth) || cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAccounts),
+		featureEnabled: cfg.Features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAuth) || cfg.Features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
 		log:            log.New("plugins.external.registration"),
 		reg:            reg,
 		settingsSvc:    settingsSvc,

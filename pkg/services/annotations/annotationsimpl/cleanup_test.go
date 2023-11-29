@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -92,7 +91,7 @@ func TestAnnotationCleanUp(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.AnnotationCleanupJobBatchSize = 1
-			cleaner := ProvideCleanupService(fakeSQL, cfg, featuremgmt.WithFeatures())
+			cleaner := ProvideCleanupService(fakeSQL, cfg)
 			affectedAnnotations, affectedAnnotationTags, err := cleaner.Run(context.Background(), test.cfg)
 			require.NoError(t, err)
 
@@ -147,7 +146,7 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 		// run the clean up task to keep one annotation.
 		cfg := setting.NewCfg()
 		cfg.AnnotationCleanupJobBatchSize = 1
-		cleaner := &xormRepositoryImpl{cfg: cfg, log: log.New("test-logger"), db: fakeSQL, features: featuremgmt.WithFeatures()}
+		cleaner := NewXormStore(cfg, log.New("annotation.test"), fakeSQL, nil)
 		_, err = cleaner.CleanAnnotations(context.Background(), setting.AnnotationCleanupSettings{MaxCount: 1}, alertAnnotationType)
 		require.NoError(t, err)
 

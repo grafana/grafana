@@ -182,8 +182,7 @@ const enum Op {
   NOT_IN = 'select_not_any_in',
   MACROS = 'macros',
 }
-// eslint-ignore
-const customOperators = getCustomOperators(BasicConfig) as typeof BasicConfig.operators;
+const customOperators = getCustomOperators(BasicConfig);
 const textWidget = BasicConfig.types.text.widgets.text;
 const opers = [...(textWidget.operators || []), Op.IN, Op.NOT_IN];
 const customTextWidget = {
@@ -216,7 +215,7 @@ export const raqbConfig: Config = {
   ...BasicConfig,
   widgets,
   settings,
-  operators: customOperators as typeof BasicConfig.operators,
+  operators: customOperators,
   types: customTypes,
 };
 
@@ -317,7 +316,6 @@ function getCustomOperators(config: BasicConfig) {
 }
 
 // value: string | List<string> but AQB uses a different version of Immutable
-// eslint-ignore
 function splitIfString(value: any) {
   if (isString(value)) {
     return value.split(',');

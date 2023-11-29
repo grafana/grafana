@@ -594,6 +594,6 @@ func (f *FakeFeatureToggles) GetEnabled(_ context.Context) map[string]bool {
 	return f.features
 }
 
-func (f *FakeFeatureToggles) IsEnabled(feature string) bool {
+func (f *FakeFeatureToggles) IsEnabledGlobally(feature string) bool {
 	return f.features[feature]
 }

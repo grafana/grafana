@@ -7,8 +7,10 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -189,9 +191,18 @@ func isSupportBundlesEnabled(s *ServiceImpl) bool {
 	return s.cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true)
 }
 
+// don't need to show the full commit hash in the UI
+// let's substring to 10 chars like local git does automatically
+func getShortCommitHash(commitHash string, maxLength int) string {
+	if len(commitHash) > maxLength {
+		return commitHash[:maxLength]
+	}
+	return commitHash
+}
+
 func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) {
 	if setting.HelpEnabled {
-		helpVersion := fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, setting.BuildVersion, setting.BuildCommit)
+		helpVersion := fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, setting.BuildVersion, getShortCommitHash(setting.BuildCommit, 10))
 		if s.cfg.AnonymousHideVersion && !c.IsSignedIn {
 			helpVersion = setting.ApplicationName
 		}
@@ -231,10 +242,10 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmode
 func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLink {
 	// Only set login if it's different from the name
 	var login string
-	if c.SignedInUser.Login != c.SignedInUser.NameOrFallback() {
-		login = c.SignedInUser.Login
+	if c.SignedInUser.GetLogin() != c.SignedInUser.GetDisplayName() {
+		login = c.SignedInUser.GetLogin()
 	}
-	gravatarURL := dtos.GetGravatarUrl(c.Email)
+	gravatarURL := dtos.GetGravatarUrl(c.SignedInUser.GetEmail())
 
 	children := []*navtree.NavLink{
 		{
@@ -266,7 +277,7 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 	}
 
 	return &navtree.NavLink{
-		Text:       c.SignedInUser.NameOrFallback(),
+		Text:       c.SignedInUser.GetDisplayName(),
 		SubTitle:   login,
 		Id:         "profile",
 		Img:        gravatarURL,
@@ -280,8 +291,9 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*navtree.NavLink, error) {
 	starredItemsChildNavs := []*navtree.NavLink{}
 
+	userID, _ := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
 	query := star.GetUserStarsQuery{
-		UserID: c.SignedInUser.UserID,
+		UserID: userID,
 	}
 
 	starredDashboardResult, err := s.starService.GetByUser(c.Req.Context(), &query)
@@ -346,7 +358,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			Icon:     "library-panel",
 		})
 
-		if s.features.IsEnabled(featuremgmt.FlagPublicDashboards) {
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPublicDashboards) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text: "Public dashboards",
 				Id:   "dashboards/public",
@@ -356,12 +368,21 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 		}
 	}
 
-	if s.features.IsEnabled(featuremgmt.FlagScenes) {
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagScenes) {
 		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 			Text: "Scenes",
 			Id:   "scenes",
 			Url:  s.cfg.AppSubURL + "/scenes",
 			Icon: "apps",
+		})
+	}
+
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDatatrails) {
+		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+			Text: "Data trails",
+			Id:   "data-trails",
+			Url:  s.cfg.AppSubURL + "/data-trails",
+			Icon: "code-branch",
 		})
 	}
 
@@ -385,7 +406,7 @@ func (s *ServiceImpl) buildLegacyAlertNavLinks(c *contextmodel.ReqContext) *navt
 		Text: "Alert rules", Id: "alert-list", Url: s.cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
 	})
 
-	if c.HasRole(org.RoleEditor) {
+	if c.SignedInUser.HasRole(roletype.RoleEditor) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
 			Text: "Notification channels", Id: "channels", Url: s.cfg.AppSubURL + "/alerting/notifications",
 			Icon: "comment-alt-share",
@@ -428,7 +449,7 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Alert groups", SubTitle: "See grouped alerts from an Alertmanager instance", Id: "groups", Url: s.cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
 	}
 
-	if c.OrgRole == org.RoleAdmin {
+	if c.SignedInUser.GetOrgRole() == org.RoleAdmin {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
 			Text: "Admin", Id: "alerting-admin", Url: s.cfg.AppSubURL + "/alerting/admin",
 			Icon: "cog",

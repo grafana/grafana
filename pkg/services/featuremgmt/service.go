@@ -74,7 +74,7 @@ func ProvideManagerService(cfg *setting.Cfg, licensing licensing.Licensing) (*Fe
 
 	// Minimum approach to avoid circular dependency
 	// nolint:staticcheck
-	cfg.IsFeatureToggleEnabled = mgmt.IsEnabled
+	cfg.IsFeatureToggleEnabled = mgmt.IsEnabledGlobally
 	return mgmt, nil
 }
 

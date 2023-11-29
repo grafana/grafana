@@ -45,7 +45,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 	s := &gPRCServerService{
 		cfg:     cfg,
 		logger:  log.New("grpc-server"),
-		enabled: features.IsEnabled(featuremgmt.FlagGrpcServer),
+		enabled: features.IsEnabledGlobally(featuremgmt.FlagGrpcServer),
 	}
 
 	// Register the metric here instead of an init() function so that we do

@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
@@ -34,7 +35,7 @@ func errorToResponse(err error) response.Response {
 	if errors.Is(err, errUnexpectedDatasourceType) {
 		return ErrResp(400, err, "")
 	}
-	if errors.Is(err, ErrAuthorization) {
+	if errors.Is(err, accesscontrol.ErrAuthorization) {
 		return ErrResp(401, err, "")
 	}
 	if errors.Is(err, errFolderAccess) {

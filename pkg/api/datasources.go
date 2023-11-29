@@ -15,6 +15,7 @@ import (
 	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -356,7 +357,7 @@ func validateJSONData(ctx context.Context, jsonData *simplejson.Json, cfg *setti
 	}
 
 	// Prevent adding a data source team header with a name that matches the auth proxy header name
-	if features.IsEnabled(featuremgmt.FlagTeamHttpHeaders) {
+	if features.IsEnabled(ctx, featuremgmt.FlagTeamHttpHeaders) {
 		err := validateTeamHTTPHeaderJSON(jsonData)
 		if err != nil {
 			return err

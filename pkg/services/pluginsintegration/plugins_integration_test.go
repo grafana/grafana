@@ -75,7 +75,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 		Azure:              &azsettings.AzureSettings{},
 
 		// nolint:staticcheck
-		IsFeatureToggleEnabled: features.IsEnabled,
+		IsFeatureToggleEnabled: features.IsEnabledGlobally,
 	}
 
 	tracer := tracing.InitializeTracerForTest()

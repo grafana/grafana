@@ -3,16 +3,16 @@ package api
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/folder"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // RuleStore is the interface for persisting alert rules and instances
 type RuleStore interface {
-	GetUserVisibleNamespaces(context.Context, int64, *user.SignedInUser) (map[string]*folder.Folder, error)
-	GetNamespaceByTitle(context.Context, string, int64, *user.SignedInUser) (*folder.Folder, error)
-	GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user *user.SignedInUser) (*folder.Folder, error)
+	GetUserVisibleNamespaces(context.Context, int64, identity.Requester) (map[string]*folder.Folder, error)
+	GetNamespaceByTitle(context.Context, string, int64, identity.Requester) (*folder.Folder, error)
+	GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user identity.Requester) (*folder.Folder, error)
 	GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) ([]*ngmodels.AlertRule, error)
 	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (ngmodels.RulesGroup, error)
 

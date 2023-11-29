@@ -164,6 +164,7 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]any, error
 	m["stats.dashboard_versions.count"] = statsResult.DashboardVersions
 	m["stats.annotations.count"] = statsResult.Annotations
 	m["stats.alert_rules.count"] = statsResult.AlertRules
+	m["stats.rule_groups.count"] = statsResult.RuleGroups
 	m["stats.library_panels.count"] = statsResult.LibraryPanels
 	m["stats.library_variables.count"] = statsResult.LibraryVariables
 	m["stats.dashboards_viewers_can_edit.count"] = statsResult.DashboardsViewersCanEdit
@@ -328,6 +329,7 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 	metrics.StatsTotalDashboardVersions.Set(float64(statsResult.DashboardVersions))
 	metrics.StatsTotalAnnotations.Set(float64(statsResult.Annotations))
 	metrics.StatsTotalAlertRules.Set(float64(statsResult.AlertRules))
+	metrics.StatsTotalRuleGroups.Set(float64(statsResult.RuleGroups))
 	metrics.StatsTotalLibraryPanels.Set(float64(statsResult.LibraryPanels))
 	metrics.StatsTotalLibraryVariables.Set(float64(statsResult.LibraryVariables))
 

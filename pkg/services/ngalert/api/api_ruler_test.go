@@ -21,6 +21,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -602,7 +603,7 @@ func createService(store *fakes.RuleStore) *RulerSrv {
 		cfg: &setting.UnifiedAlertingSettings{
 			BaseInterval: 10 * time.Second,
 		},
-		ac: acimpl.ProvideAccessControl(setting.NewCfg()),
+		authz: accesscontrol.NewRuleService(acimpl.ProvideAccessControl(setting.NewCfg())),
 	}
 }
 

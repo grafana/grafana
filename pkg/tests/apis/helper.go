@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
@@ -73,7 +74,6 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 }
 
 func (c *K8sTestHelper) Shutdown() {
-	fmt.Printf("calling shutdown on: %s\n", c.env.Server.HTTPServer.Listener.Addr())
 	err := c.env.Server.Shutdown(context.Background(), "done")
 	require.NoError(c.t, err)
 }
@@ -397,7 +397,60 @@ func (c K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 	}
 }
 
-func (c K8sTestHelper) CreateDS(cmd *datasources.AddDataSourceCommand) *datasources.DataSource {
+func (c *K8sTestHelper) NewDiscoveryClient() *discovery.DiscoveryClient {
+	c.t.Helper()
+
+	baseUrl := fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr())
+	conf := &rest.Config{
+		Host:     baseUrl,
+		Username: c.Org1.Admin.Identity.GetLogin(),
+		Password: c.Org1.Admin.password,
+	}
+	client, err := discovery.NewDiscoveryClientForConfig(conf)
+	require.NoError(c.t, err)
+	return client
+}
+
+func (c *K8sTestHelper) GetGroupVersionInfoJSON(group string) string {
+	c.t.Helper()
+
+	disco := c.NewDiscoveryClient()
+	req := disco.RESTClient().Get().
+		Prefix("apis").
+		SetHeader("Accept", "application/json;g=apidiscovery.k8s.io;v=v2beta1;as=APIGroupDiscoveryList,application/json")
+
+	result := req.Do(context.Background())
+	require.NoError(c.t, result.Error())
+
+	type DiscoItem struct {
+		Metadata struct {
+			Name string `json:"name"`
+		} `json:"metadata"`
+		Versions []any `json:"versions,omitempty"`
+	}
+	type DiscoList struct {
+		Items []DiscoItem `json:"items"`
+	}
+
+	raw, err := result.Raw()
+	require.NoError(c.t, err)
+	all := &DiscoList{}
+	err = json.Unmarshal(raw, all)
+	require.NoError(c.t, err)
+
+	for _, item := range all.Items {
+		if item.Metadata.Name == group {
+			v, err := json.MarshalIndent(item.Versions, "", "  ")
+			require.NoError(c.t, err)
+			return string(v)
+		}
+	}
+
+	require.Fail(c.t, "could not find discovery info for: ", group)
+	return ""
+}
+
+func (c *K8sTestHelper) CreateDS(cmd *datasources.AddDataSourceCommand) *datasources.DataSource {
 	c.t.Helper()
 
 	dataSource, err := c.env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), cmd)

@@ -32,7 +32,6 @@ export interface FeatureToggles {
   exploreContentOutline?: boolean;
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
-  newDBLibrary?: boolean;
   autoMigrateOldPanels?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
@@ -66,6 +65,7 @@ export interface FeatureToggles {
   individualCookiePreferences?: boolean;
   prometheusMetricEncyclopedia?: boolean;
   influxdbBackendMigration?: boolean;
+  influxqlStreamingParser?: boolean;
   clientTokenRotation?: boolean;
   prometheusDataplane?: boolean;
   lokiMetricDataplane?: boolean;
@@ -109,6 +109,7 @@ export interface FeatureToggles {
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
   traceToProfiles?: boolean;
+  tracesEmbeddedFlameGraph?: boolean;
   permissionsFilterRemoveSubquery?: boolean;
   prometheusConfigOverhaulAuth?: boolean;
   configurableSchedulerTick?: boolean;
@@ -117,7 +118,6 @@ export interface FeatureToggles {
   angularDeprecationUI?: boolean;
   dashgpt?: boolean;
   reportingRetries?: boolean;
-  newBrowseDashboards?: boolean;
   sseGroupByDatasource?: boolean;
   requestInstrumentationStatusSource?: boolean;
   libraryPanelRBAC?: boolean;
@@ -137,8 +137,8 @@ export interface FeatureToggles {
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
   cloudWatchBatchQueries?: boolean;
-  navAdminSubsections?: boolean;
   recoveryThreshold?: boolean;
+  lokiStructuredMetadata?: boolean;
   teamHttpHeaders?: boolean;
   awsDatasourcesNewFormStyling?: boolean;
   cachingOptimizeSerializationMemoryUsage?: boolean;
@@ -161,5 +161,10 @@ export interface FeatureToggles {
   logsInfiniteScrolling?: boolean;
   flameGraphItemCollapsing?: boolean;
   alertingDetailsViewV2?: boolean;
+  datatrails?: boolean;
   alertingSimplifiedRouting?: boolean;
+  logRowsPopoverMenu?: boolean;
+  pluginsSkipHostEnvVars?: boolean;
+  regressionTransformation?: boolean;
+  displayAnonymousStats?: boolean;
 }
