@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -39,20 +38,17 @@ type DBstore struct {
 	SQLStore         db.DB
 	Logger           log.Logger
 	FolderService    folder.Service
-	AccessControl    accesscontrol.AccessControl
 	DashboardService dashboards.DashboardService
 }
 
 func ProvideDBStore(
-	cfg *setting.Cfg, featureToggles featuremgmt.FeatureToggles, sqlstore db.DB, folderService folder.Service,
-	access accesscontrol.AccessControl, dashboards dashboards.DashboardService) (*DBstore, error) {
+	cfg *setting.Cfg, featureToggles featuremgmt.FeatureToggles, sqlstore db.DB, folderService folder.Service, dashboards dashboards.DashboardService) (*DBstore, error) {
 	store := DBstore{
 		Cfg:              cfg.UnifiedAlerting,
 		FeatureToggles:   featureToggles,
 		SQLStore:         sqlstore,
 		Logger:           log.New("ngalert.dbstore"),
 		FolderService:    folderService,
-		AccessControl:    access,
 		DashboardService: dashboards,
 	}
 	if err := folderService.RegisterService(store); err != nil {

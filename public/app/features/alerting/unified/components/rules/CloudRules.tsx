@@ -77,7 +77,7 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
 
       {!hasDataSourcesConfigured && <p>There are no Prometheus or Loki data sources configured.</p>}
       {hasDataSourcesConfigured && !hasDataSourcesLoading && !hasNamespaces && <p>No rules found.</p>}
-      {!hasSomeResults && hasDataSourcesLoading && <Spinner size={24} className={styles.spinner} />}
+      {!hasSomeResults && hasDataSourcesLoading && <Spinner size="xl" className={styles.spinner} />}
 
       <Pagination
         className={styles.pagination}

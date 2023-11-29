@@ -1,6 +1,8 @@
 package clients
 
 import (
+	"context"
+
 	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -19,10 +21,10 @@ func NewMetricsClient(api models.CloudWatchMetricsAPIProvider, config *setting.C
 	return &metricsClient{CloudWatchMetricsAPIProvider: api, config: config}
 }
 
-func (l *metricsClient) ListMetricsWithPageLimit(params *cloudwatch.ListMetricsInput) ([]resources.MetricResponse, error) {
+func (l *metricsClient) ListMetricsWithPageLimit(ctx context.Context, params *cloudwatch.ListMetricsInput) ([]resources.MetricResponse, error) {
 	var cloudWatchMetrics []resources.MetricResponse
 	pageNum := 0
-	err := l.ListMetricsPages(params, func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
+	err := l.ListMetricsPagesWithContext(ctx, params, func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
 		pageNum++
 		metrics.MAwsCloudWatchListMetrics.Inc()
 		metrics, err := awsutil.ValuesAtPath(page, "Metrics")

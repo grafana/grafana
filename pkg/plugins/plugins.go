@@ -55,7 +55,7 @@ type Plugin struct {
 	Module  string
 	BaseURL string
 
-	AngularDetected bool
+	Angular AngularMeta
 
 	ExternalService *auth.ExternalService
 
@@ -64,7 +64,14 @@ type Plugin struct {
 	client         backendplugin.Plugin
 	log            log.Logger
 
+	SkipHostEnvVars bool
+
 	mu sync.Mutex
+}
+
+type AngularMeta struct {
+	Detected        bool `json:"detected"`
+	HideDeprecation bool `json:"hideDeprecation"`
 }
 
 // JSONData represents the plugin's plugin.json
@@ -131,6 +138,8 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 	case "grafana-pyroscope-datasource":
 		fallthrough
 	case "grafana-testdata-datasource":
+		fallthrough
+	case "grafana-postgresql-datasource":
 		fallthrough
 	case "annolist":
 		fallthrough

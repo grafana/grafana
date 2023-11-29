@@ -12,12 +12,14 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
-	groupPerPage     = 50
-	accessLevelGuest = "10"
+	groupPerPage       = 50
+	accessLevelGuest   = "10"
+	gitlabProviderName = "gitlab"
 )
 
 type SocialGitlab struct {
@@ -45,6 +47,24 @@ type userData struct {
 	EmailVerified  bool              `json:"email_verified"`
 	Role           roletype.RoleType `json:"-"`
 	IsGrafanaAdmin *bool             `json:"-"`
+}
+
+func NewGitLabProvider(settings map[string]any, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGitlab, error) {
+	info, err := createOAuthInfoFromKeyValues(settings)
+	if err != nil {
+		return nil, err
+	}
+
+	config := createOAuthConfig(info, cfg, gitlabProviderName)
+	provider := &SocialGitlab{
+		SocialBase:      newSocialBase(gitlabProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		apiUrl:          info.ApiUrl,
+		skipOrgRoleSync: cfg.GitLabSkipOrgRoleSync,
+		// FIXME: Move skipOrgRoleSync to OAuthInfo
+		// skipOrgRoleSync: info.SkipOrgRoleSync
+	}
+
+	return provider, nil
 }
 
 func (s *SocialGitlab) getGroups(ctx context.Context, client *http.Client) []string {
@@ -160,6 +180,10 @@ func (s *SocialGitlab) UserInfo(ctx context.Context, client *http.Client, token 
 	}
 
 	return userInfo, nil
+}
+
+func (s *SocialGitlab) GetOAuthInfo() *OAuthInfo {
+	return s.info
 }
 
 func (s *SocialGitlab) extractFromAPI(ctx context.Context, client *http.Client, token *oauth2.Token) (*userData, error) {

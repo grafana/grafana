@@ -4,13 +4,10 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"net/url"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/auth/identity"
-	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 const (
@@ -132,64 +129,4 @@ func ApplyForwardIDHeader(req *http.Request, user identity.Requester) {
 	if token := user.GetIDToken(); token != "" {
 		req.Header.Set(IDHeaderName, token)
 	}
-}
-
-func ApplyTeamHTTPHeaders(req *http.Request, ds *datasources.DataSource, teams []int64) error {
-	headers, err := GetTeamHTTPHeaders(ds, teams)
-	if err != nil {
-		return err
-	}
-
-	for header, value := range headers {
-		// check if headerv is already set in req.Header
-		if req.Header.Get(header) != "" {
-			req.Header.Add(header, value)
-		} else {
-			req.Header.Set(header, value)
-		}
-	}
-
-	return nil
-}
-
-func GetTeamHTTPHeaders(ds *datasources.DataSource, teams []int64) (map[string]string, error) {
-	teamHTTPHeadersMap := make(map[string]string)
-	teamHTTPHeaders, err := ds.TeamHTTPHeaders()
-	if err != nil {
-		return nil, err
-	}
-
-	for teamID, headers := range teamHTTPHeaders {
-		id, err := strconv.ParseInt(teamID, 10, 64)
-		if err != nil {
-			// FIXME: logging here
-			continue
-		}
-
-		if !contains(teams, id) {
-			continue
-		}
-
-		for _, header := range headers {
-			// Header values should be properly escaped.
-			if value, ok := teamHTTPHeadersMap[header.Header]; ok {
-				// Add multiple header values as a comma-separated strings according to RFC 7230
-				// https://datatracker.ietf.org/doc/html/rfc7230#section-3.2.6
-				teamHTTPHeadersMap[header.Header] = fmt.Sprintf("%s,%s", value, url.PathEscape(header.Value))
-			} else {
-				teamHTTPHeadersMap[header.Header] = url.PathEscape(header.Value)
-			}
-		}
-	}
-
-	return teamHTTPHeadersMap, nil
-}
-
-func contains(slice []int64, value int64) bool {
-	for _, v := range slice {
-		if v == value {
-			return true
-		}
-	}
-	return false
 }

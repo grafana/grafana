@@ -27,7 +27,16 @@ export const operators = ['=', '!=', '>', '<', '>=', '<=', '=~', '!~'];
 export const stringOperators = ['=', '!=', '=~', '!~'];
 export const numberOperators = ['=', '!=', '>', '<', '>=', '<='];
 
-export const intrinsics = ['duration', 'kind', 'name', 'status'];
+export const intrinsics = [
+  'duration',
+  'kind',
+  'name',
+  'rootName',
+  'rootServiceName',
+  'status',
+  'statusMessage',
+  'traceDuration',
+];
 export const scopes: string[] = ['resource', 'span'];
 
 export const functions = ['avg', 'min', 'max', 'sum', 'count', 'by'];
@@ -54,21 +63,42 @@ export const language: languages.IMonarchLanguage = {
 
   tokenizer: {
     root: [
+      // comments
+      [/\/\/.*/, 'comment'], // line comment
+      [/\/\*.*\*\//, 'comment'], // block comment
+
       // durations
       [/[0-9]+(.[0-9]+)?(us|µs|ns|ms|s|m|h)/, 'number'],
 
       // trace ID
       [/^\s*[0-9A-Fa-f]+\s*$/, 'tag'],
 
-      // functions, keywords, predefined values
+      // keywords
       [
-        /[a-zA-Z_.]\w*/,
+        // match only predefined keywords
+        `(?:${keywords.join('|')})`,
+        {
+          cases: {
+            '@keywords': 'keyword',
+            '@default': 'tag', // fallback, but should never happen
+          },
+        },
+      ],
+
+      // functions and predefined values
+      [
+        // If not inside quotes, namely outside of open and closed `"`,
+        // allow only word characters (those matching `\w`) and full stop (`.`).
+        //
+        // If inside quotes, e.g. `"here"`, allow for any character, except for `"` and `\` which must be
+        // escaped with a backslash (`\"` and `\\` respectively).
+        // Quotes can be used to support special tag names, such as those with spaces (e.g., `my tag`).
+        /(?:\w|[.]|"(?:\\"|\\\\|[^\\"])*")+/,
         {
           cases: {
             '@functions': 'predefined',
-            '@keywords': 'keyword',
             '@statusValues': 'type',
-            '@default': 'tag',
+            '@default': 'tag', // fallback, used for tag names
           },
         },
       ],
@@ -76,8 +106,8 @@ export const language: languages.IMonarchLanguage = {
       // strings
       [/"([^"\\]|\\.)*$/, 'string.invalid'], // non-teminated string
       [/'([^'\\]|\\.)*$/, 'string.invalid'], // non-teminated string
-      [/"/, 'string', '@string_double'],
-      [/'/, 'string', '@string_single'],
+      [/([^\w])(")/, [{ token: '' }, { token: 'string', next: '@string_double' }]],
+      [/([^\w])(')/, [{ token: '' }, { token: 'string', next: '@string_single' }]],
 
       // delimiters and operators
       [/[{}()\[\]]/, 'delimiter.bracket'],
@@ -129,7 +159,7 @@ export const languageDefinition = {
 
 export const traceqlGrammar: Grammar = {
   comment: {
-    pattern: /#.*/,
+    pattern: /\/\/.*/,
   },
   'span-set': {
     pattern: /\{[^}]*}/,

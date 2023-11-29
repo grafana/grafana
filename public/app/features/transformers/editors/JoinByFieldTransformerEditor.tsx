@@ -12,6 +12,7 @@ import { JoinByFieldOptions, JoinMode } from '@grafana/data/src/transformations/
 import { getTemplateSrv } from '@grafana/runtime';
 import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
 
+import { getTransformationContent } from '../docs/getTransformationContent';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 const modes = [
@@ -88,4 +89,5 @@ export const joinByFieldTransformerRegistryItem: TransformerRegistryItem<JoinByF
   name: standardTransformers.joinByFieldTransformer.name,
   description: standardTransformers.joinByFieldTransformer.description,
   categories: new Set([TransformerCategory.Combine]),
+  help: getTransformationContent(DataTransformerID.joinByField).helperDocs,
 };

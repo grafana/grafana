@@ -62,6 +62,7 @@ export interface LineConfig {
 export enum HttpRequestMethod {
   GET = 'GET',
   POST = 'POST',
+  PUT = 'PUT',
 }
 
 export interface ConnectionCoordinates {

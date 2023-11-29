@@ -18,7 +18,7 @@ labels:
     - enterprise
     - oss
 title: Contact points
-weight: 106
+weight: 150
 ---
 
 # Contact points

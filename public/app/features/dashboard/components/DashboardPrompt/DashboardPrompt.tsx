@@ -146,6 +146,11 @@ export function ignoreChanges(current: DashboardModel | null, original: object |
     return true;
   }
 
+  // Ignore changes if original is unsaved
+  if ((original as DashboardModel).version === 0) {
+    return true;
+  }
+
   // Ignore changes if the user has been signed out
   if (!contextSrv.isSignedIn) {
     return true;
@@ -202,6 +207,7 @@ export function hasChanges(current: DashboardModel, original: unknown) {
   if (current.hasUnsavedChanges()) {
     return true;
   }
+
   // TODO: Make getSaveModelClone return Dashboard type instead
   const currentClean = cleanDashboardFromIgnoredChanges(current.getSaveModelCloneOld() as unknown as Dashboard);
   const originalClean = cleanDashboardFromIgnoredChanges(original as Dashboard);

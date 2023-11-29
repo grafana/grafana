@@ -187,9 +187,15 @@ export function pipelineRenderer(model: QueryBuilderOperation, def: QueryBuilder
   switch (model.id) {
     case LokiOperationId.Logfmt:
       const [strict = false, keepEmpty = false, ...labels] = model.params;
-      return `${innerExpr} | logfmt${strict ? ' --strict' : ''}${keepEmpty ? ' --keep-empty' : ''} ${labels.join(
-        ', '
-      )}`.trim();
+      return `${innerExpr} | logfmt${strict ? ' --strict' : ''}${keepEmpty ? ' --keep-empty' : ''} ${labels
+        .filter((label) => label)
+        .join(', ')}`.trim();
+    case LokiOperationId.Json:
+      return `${innerExpr} | json ${model.params.filter((param) => param).join(', ')}`.trim();
+    case LokiOperationId.Drop:
+      return `${innerExpr} | drop ${model.params.filter((param) => param).join(', ')}`.trim();
+    case LokiOperationId.Keep:
+      return `${innerExpr} | keep ${model.params.filter((param) => param).join(', ')}`.trim();
     default:
       return `${innerExpr} | ${model.id}`;
   }

@@ -11,7 +11,7 @@ labels:
     - enterprise
     - oss
 title: Notifications
-weight: 107
+weight: 160
 ---
 
 # Notifications

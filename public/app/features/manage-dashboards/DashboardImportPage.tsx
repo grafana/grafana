@@ -238,7 +238,7 @@ class UnthemedDashboardImport extends PureComponent<Props> {
           {loadingState === LoadingState.Loading && (
             <VerticalGroup justify="center">
               <HorizontalGroup justify="center">
-                <Spinner size={32} />
+                <Spinner size="xxl" />
               </HorizontalGroup>
             </VerticalGroup>
           )}

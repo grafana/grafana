@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"fmt"
 	"sort"
 
@@ -18,7 +19,7 @@ func NewListMetricsService(metricsClient models.MetricsClientProvider) models.Li
 	return &ListMetricsService{metricsClient}
 }
 
-func (l *ListMetricsService) GetDimensionKeysByDimensionFilter(r resources.DimensionKeysRequest) ([]resources.ResourceResponse[string], error) {
+func (l *ListMetricsService) GetDimensionKeysByDimensionFilter(ctx context.Context, r resources.DimensionKeysRequest) ([]resources.ResourceResponse[string], error) {
 	input := &cloudwatch.ListMetricsInput{}
 	if r.Namespace != "" {
 		input.Namespace = aws.String(r.Namespace)
@@ -29,7 +30,7 @@ func (l *ListMetricsService) GetDimensionKeysByDimensionFilter(r resources.Dimen
 	setDimensionFilter(input, r.DimensionFilter)
 	setAccount(input, r.ResourceRequest)
 
-	metrics, err := l.ListMetricsWithPageLimit(input)
+	metrics, err := l.ListMetricsWithPageLimit(ctx, input)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "unable to call AWS API", err)
 	}
@@ -64,7 +65,7 @@ func (l *ListMetricsService) GetDimensionKeysByDimensionFilter(r resources.Dimen
 	return response, nil
 }
 
-func (l *ListMetricsService) GetDimensionValuesByDimensionFilter(r resources.DimensionValuesRequest) ([]resources.ResourceResponse[string], error) {
+func (l *ListMetricsService) GetDimensionValuesByDimensionFilter(ctx context.Context, r resources.DimensionValuesRequest) ([]resources.ResourceResponse[string], error) {
 	input := &cloudwatch.ListMetricsInput{
 		Namespace:  aws.String(r.Namespace),
 		MetricName: aws.String(r.MetricName),
@@ -72,7 +73,7 @@ func (l *ListMetricsService) GetDimensionValuesByDimensionFilter(r resources.Dim
 	setDimensionFilter(input, r.DimensionFilter)
 	setAccount(input, r.ResourceRequest)
 
-	metrics, err := l.ListMetricsWithPageLimit(input)
+	metrics, err := l.ListMetricsWithPageLimit(ctx, input)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "unable to call AWS API", err)
 	}
@@ -98,10 +99,10 @@ func (l *ListMetricsService) GetDimensionValuesByDimensionFilter(r resources.Dim
 	return response, nil
 }
 
-func (l *ListMetricsService) GetMetricsByNamespace(r resources.MetricsRequest) ([]resources.ResourceResponse[resources.Metric], error) {
+func (l *ListMetricsService) GetMetricsByNamespace(ctx context.Context, r resources.MetricsRequest) ([]resources.ResourceResponse[resources.Metric], error) {
 	input := &cloudwatch.ListMetricsInput{Namespace: aws.String(r.Namespace)}
 	setAccount(input, r.ResourceRequest)
-	metrics, err := l.ListMetricsWithPageLimit(input)
+	metrics, err := l.ListMetricsWithPageLimit(ctx, input)
 	if err != nil {
 		return nil, err
 	}

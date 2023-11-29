@@ -14,7 +14,7 @@ interface Props {
   wrapLogMessage: boolean;
   prettifyLogMessage: boolean;
   app?: CoreApp;
-  showContextToggle?: (row?: LogRowModel) => boolean;
+  showContextToggle?: (row: LogRowModel) => boolean;
   onOpenContext: (row: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;

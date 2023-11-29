@@ -92,7 +92,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
       orderRank: LokiOperationOrder.Parsers,
-      renderer: (model, def, innerExpr) => `${innerExpr} | json ${model.params.join(', ')}`.trim(),
+      renderer: pipelineRenderer,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
         `This will extract keys and values from a [json](https://grafana.com/docs/loki/latest/logql/log_queries/#json) formatted log line as labels. The extracted labels can be used in label filter expressions and used as values for a range aggregation via the unwrap operation.`,
@@ -531,7 +531,7 @@ Example: \`\`error_level=\`level\` \`\`
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
       orderRank: LokiOperationOrder.PipeOperations,
-      renderer: (op, def, innerExpr) => `${innerExpr} | drop ${op.params.join(',')}`,
+      renderer: pipelineRenderer,
       addOperationHandler: addLokiOperation,
       explainHandler: () => 'The drop expression will drop the given labels in the pipeline.',
     },
@@ -555,7 +555,7 @@ Example: \`\`error_level=\`level\` \`\`
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
       orderRank: LokiOperationOrder.PipeOperations,
-      renderer: (op, def, innerExpr) => `${innerExpr} | keep ${op.params.join(',')}`,
+      renderer: pipelineRenderer,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
         'The keep expression will keep only the specified labels in the pipeline and drop all the other labels.',

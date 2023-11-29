@@ -198,19 +198,22 @@ function normalizeQuery(query: string) {
 }
 
 function isLeftOnlyAST(ast: unknown): ast is LeftOnlyAST {
-  if (!ast) {
+  if (!ast || typeof ast !== 'object') {
     return false;
   }
+
   if ('left' in ast && !('right' in ast)) {
     return true;
   }
+
   return false;
 }
 
 function isBinaryAST(ast: unknown): ast is BinaryAST {
-  if (!ast) {
+  if (!ast || typeof ast !== 'object') {
     return false;
   }
+
   if ('left' in ast && 'right' in ast) {
     return true;
   }
@@ -222,12 +225,10 @@ function isAST(ast: unknown): ast is AST {
 }
 
 function isNodeTerm(ast: unknown): ast is NodeTerm {
-  if (!ast) {
-    return false;
-  }
-  if ('term' in ast) {
+  if (ast && typeof ast === 'object' && 'term' in ast) {
     return true;
   }
+
   return false;
 }
 
@@ -237,4 +238,9 @@ function parseQuery(query: string) {
   } catch (e) {
     return null;
   }
+}
+
+export function addStringFilterToQuery(query: string, filter: string, contains = true) {
+  const expression = `"${escapeFilterValue(filter)}"`;
+  return query.trim() ? `${query} ${contains ? 'AND' : 'NOT'} ${expression}` : `${contains ? '' : 'NOT '}${expression}`;
 }

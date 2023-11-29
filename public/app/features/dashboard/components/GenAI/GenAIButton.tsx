@@ -7,34 +7,34 @@ import { Button, Spinner, useStyles2, Tooltip, Toggletip, Text } from '@grafana/
 import { GenAIHistory } from './GenAIHistory';
 import { StreamStatus, useOpenAIStream } from './hooks';
 import { AutoGenerateItem, EventTrackingSrc, reportAutoGenerateInteraction } from './tracking';
-import { OPEN_AI_MODEL, Message, sanitizeReply } from './utils';
+import { OAI_MODEL, DEFAULT_OAI_MODEL, Message, sanitizeReply } from './utils';
 
 export interface GenAIButtonProps {
   // Button label text
   text?: string;
-  // Button label text when loading
-  loadingText?: string;
   toggleTipTitle?: string;
   // Button click handler
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   // Messages to send to the LLM plugin
-  messages: Message[];
+  messages: Message[] | (() => Message[]);
   // Callback function that the LLM plugin streams responses to
   onGenerate: (response: string) => void;
   // Temperature for the LLM plugin. Default is 1.
   // Closer to 0 means more conservative, closer to 1 means more creative.
   temperature?: number;
+  model?: OAI_MODEL;
   // Event tracking source. Send as `src` to Rudderstack event
   eventTrackingSrc: EventTrackingSrc;
   // Whether the button should be disabled
   disabled?: boolean;
 }
+export const STOP_GENERATION_TEXT = 'Stop generating';
 
 export const GenAIButton = ({
   text = 'Auto-generate',
-  loadingText = 'Generating',
   toggleTipTitle = '',
   onClick: onClickProp,
+  model = DEFAULT_OAI_MODEL,
   messages,
   onGenerate,
   temperature = 1,
@@ -43,27 +43,42 @@ export const GenAIButton = ({
 }: GenAIButtonProps) => {
   const styles = useStyles2(getStyles);
 
-  const { setMessages, reply, value, error, streamStatus } = useOpenAIStream(OPEN_AI_MODEL, temperature);
+  const {
+    messages: streamMessages,
+    setMessages,
+    setStopGeneration,
+    reply,
+    value,
+    error,
+    streamStatus,
+  } = useOpenAIStream(model, temperature);
 
   const [history, setHistory] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(true);
 
   const hasHistory = history.length > 0;
   const isFirstHistoryEntry = streamStatus === StreamStatus.GENERATING && !hasHistory;
-  const isButtonDisabled = disabled || isFirstHistoryEntry || (value && !value.enabled && !error);
+  const isButtonDisabled = disabled || (value && !value.enabled && !error);
   const reportInteraction = (item: AutoGenerateItem) => reportAutoGenerateInteraction(eventTrackingSrc, item);
 
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (!hasHistory) {
-      onClickProp?.(e);
-      setMessages(messages);
+    if (streamStatus === StreamStatus.GENERATING) {
+      setStopGeneration(true);
     } else {
-      if (setShowHistory) {
-        setShowHistory(true);
+      if (!hasHistory) {
+        onClickProp?.(e);
+        setMessages(typeof messages === 'function' ? messages() : messages);
+      } else {
+        if (setShowHistory) {
+          setShowHistory(true);
+        }
       }
     }
+
     const buttonItem = error
       ? AutoGenerateItem.erroredRetryButton
+      : isFirstHistoryEntry
+      ? AutoGenerateItem.stopGenerationButton
       : hasHistory
       ? AutoGenerateItem.improveButton
       : AutoGenerateItem.autoGenerateButton;
@@ -121,7 +136,7 @@ export const GenAIButton = ({
     }
 
     if (isFirstHistoryEntry) {
-      buttonText = loadingText;
+      buttonText = STOP_GENERATION_TEXT;
     }
 
     if (hasHistory) {
@@ -154,7 +169,7 @@ export const GenAIButton = ({
           content={
             <GenAIHistory
               history={history}
-              messages={messages}
+              messages={streamMessages}
               onApplySuggestion={onApplySuggestion}
               updateHistory={pushHistoryEntry}
               eventTrackingSrc={eventTrackingSrc}
@@ -174,7 +189,7 @@ export const GenAIButton = ({
 
   return (
     <div className={styles.wrapper}>
-      {isFirstHistoryEntry && <Spinner size={14} />}
+      {isFirstHistoryEntry && <Spinner size="sm" className={styles.spinner} />}
       {!hasHistory && (
         <Tooltip
           show={error ? undefined : false}
@@ -194,5 +209,8 @@ export const GenAIButton = ({
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     display: 'flex',
+  }),
+  spinner: css({
+    color: theme.colors.text.link,
   }),
 });

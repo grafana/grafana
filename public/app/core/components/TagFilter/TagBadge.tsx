@@ -6,7 +6,7 @@ export interface Props {
   label: string;
   removeIcon: boolean;
   count: number;
-  onClick?: React.MouseEventHandler<HTMLDivElement>;
+  onClick?: React.MouseEventHandler<SVGElement>;
 }
 
 export class TagBadge extends React.Component<Props> {

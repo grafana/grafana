@@ -3,7 +3,6 @@ package extsvcauth
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
@@ -17,36 +16,21 @@ const (
 
 type AuthProvider string
 
+//go:generate mockery --name ExternalServiceRegistry --structname ExternalServiceRegistryMock --output tests --outpkg tests --filename extsvcregmock.go
 type ExternalServiceRegistry interface {
+	// HasExternalService returns whether an external service has been saved with that name.
+	HasExternalService(ctx context.Context, name string) (bool, error)
+
+	// GetExternalServiceNames returns the names of external services registered in store.
+	GetExternalServiceNames(ctx context.Context) ([]string, error)
+
+	// RemoveExternalService removes an external service and its associated resources from the database (ex: service account, token).
+	RemoveExternalService(ctx context.Context, name string) error
+
 	// SaveExternalService creates or updates an external service in the database. Based on the requested auth provider,
 	// it generates client_id, secrets and any additional provider specificities (ex: rsa keys). It also ensures that the
 	// associated service account has the correct permissions.
 	SaveExternalService(ctx context.Context, cmd *ExternalServiceRegistration) (*ExternalService, error)
-}
-
-//go:generate mockery --name ExtSvcAccountsService --structname MockExtSvcAccountsService --output extsvcmocks --outpkg extsvcmocks --filename extsvcaccmock.go
-type ExtSvcAccountsService interface {
-	// ManageExtSvcAccount creates, updates or deletes the service account associated with an external service
-	ManageExtSvcAccount(ctx context.Context, cmd *ManageExtSvcAccountCmd) (int64, error)
-	// RetrieveExtSvcAccount fetches an external service account by ID
-	RetrieveExtSvcAccount(ctx context.Context, orgID, saID int64) (*ExtSvcAccount, error)
-}
-
-// ExtSvcAccount represents the service account associated to an external service
-type ExtSvcAccount struct {
-	ID         int64
-	Login      string
-	Name       string
-	OrgID      int64
-	IsDisabled bool
-	Role       roletype.RoleType
-}
-
-type ManageExtSvcAccountCmd struct {
-	ExtSvcSlug  string
-	Enabled     bool // disabled: the service account and its permissions will be deleted
-	OrgID       int64
-	Permissions []accesscontrol.Permission
 }
 
 type SelfCfg struct {

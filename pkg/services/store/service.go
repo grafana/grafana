@@ -64,7 +64,7 @@ type StorageService interface {
 	RegisterHTTPRoutes(routing.RouteRegister)
 
 	// List folder contents
-	List(ctx context.Context, user *user.SignedInUser, path string) (*StorageListFrame, error)
+	List(ctx context.Context, user *user.SignedInUser, path string, maxFiles int) (*StorageListFrame, error)
 
 	// Read raw file contents out of the store
 	Read(ctx context.Context, user *user.SignedInUser, path string) (*filestorage.File, error)
@@ -340,9 +340,9 @@ func getOrgId(user *user.SignedInUser) int64 {
 	return user.OrgID
 }
 
-func (s *standardStorageService) List(ctx context.Context, user *user.SignedInUser, path string) (*StorageListFrame, error) {
+func (s *standardStorageService) List(ctx context.Context, user *user.SignedInUser, path string, maxFiles int) (*StorageListFrame, error) {
 	guardian := s.authService.newGuardian(ctx, user, getFirstSegment(path))
-	return s.tree.ListFolder(ctx, getOrgId(user), path, guardian.getPathFilter(ActionFilesRead))
+	return s.tree.ListFolder(ctx, getOrgId(user), path, maxFiles, guardian.getPathFilter(ActionFilesRead))
 }
 
 func (s *standardStorageService) Read(ctx context.Context, user *user.SignedInUser, path string) (*filestorage.File, error) {

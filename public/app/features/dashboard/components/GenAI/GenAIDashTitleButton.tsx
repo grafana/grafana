@@ -11,6 +11,8 @@ interface GenAIDashTitleButtonProps {
   onGenerate: (description: string) => void;
 }
 
+const DASH_TITLE_CHAR_LIMIT = 50;
+
 const TITLE_GENERATION_STANDARD_PROMPT =
   'You are an expert in creating Grafana Dashboards.\n' +
   'Your goal is to write a concise dashboard title.\n' +
@@ -19,7 +21,7 @@ const TITLE_GENERATION_STANDARD_PROMPT =
   'If the dashboard has no panels, the title should be "Empty dashboard"\n' +
   'There should be no numbers in the title.\n' +
   'The dashboard title should not have quotation marks in it.\n' +
-  'The title should be, at most, 50 characters.\n' +
+  `The title should be, at most, ${DASH_TITLE_CHAR_LIMIT} characters.\n` +
   'Respond with only the title of the dashboard.';
 
 export const GenAIDashTitleButton = ({ onGenerate, dashboard }: GenAIDashTitleButtonProps) => {
@@ -29,7 +31,6 @@ export const GenAIDashTitleButton = ({ onGenerate, dashboard }: GenAIDashTitleBu
     <GenAIButton
       messages={messages}
       onGenerate={onGenerate}
-      loadingText={'Generating title'}
       eventTrackingSrc={EventTrackingSrc.dashboardTitle}
       toggleTipTitle={'Improve your dashboard title'}
     />

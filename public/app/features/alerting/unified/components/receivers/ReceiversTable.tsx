@@ -3,8 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import { dateTime, dateTimeFormat } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Badge, Button, ConfirmModal, Icon, Modal, useStyles2 } from '@grafana/ui';
+import { Badge, Button, ConfirmModal, Icon, Modal, useStyles2, Stack } from '@grafana/ui';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { ContactPointsState, NotifiersState, ReceiversState, useDispatch } from 'app/types';
 
@@ -26,7 +25,7 @@ import { ActionIcon } from '../rules/ActionIcon';
 
 import { ReceiversSection } from './ReceiversSection';
 import { ReceiverMetadataBadge } from './grafanaAppReceivers/ReceiverMetadataBadge';
-import { ReceiverMetadata, useReceiversMetadata } from './grafanaAppReceivers/useReceiversMetadata';
+import { ReceiverPluginMetadata, useReceiversMetadata } from './grafanaAppReceivers/useReceiversMetadata';
 import { AlertmanagerConfigHealth, useAlertmanagerConfigHealth } from './useAlertmanagerConfigHealth';
 
 interface UpdateActionProps extends ActionProps {
@@ -174,7 +173,7 @@ interface ReceiverItem {
   types: string[];
   provisioned?: boolean;
   grafanaAppReceiverType?: SupportedPlugin;
-  metadata?: ReceiverMetadata;
+  metadata?: ReceiverPluginMetadata;
 }
 
 interface NotifierStatus {

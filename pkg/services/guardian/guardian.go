@@ -112,6 +112,7 @@ func MockDashboardGuardian(mock *FakeDashboardGuardian) {
 	NewByFolder = func(_ context.Context, f *folder.Folder, orgId int64, user identity.Requester) (DashboardGuardian, error) {
 		mock.OrgID = orgId
 		mock.DashUID = f.UID
+		// nolint:staticcheck
 		mock.DashID = f.ID
 		mock.User = user
 		return mock, nil

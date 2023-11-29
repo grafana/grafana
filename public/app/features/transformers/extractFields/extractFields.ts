@@ -7,8 +7,10 @@ import {
   Field,
   FieldType,
   getFieldTypeFromValue,
+  getUniqueFieldName,
   SynchronousDataTransformerInfo,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { findField } from 'app/features/dimensions';
 
 import { fieldExtractors } from './fieldExtractors';
@@ -30,7 +32,7 @@ export const extractFieldsTransformer: SynchronousDataTransformerInfo<ExtractFie
   },
 };
 
-function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptions): DataFrame {
+export function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptions): DataFrame {
   if (!options.source) {
     return frame;
   }
@@ -94,12 +96,16 @@ function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptions): Da
 
   const fields = names.map((name) => {
     const buffer = values.get(name);
-    return {
+    const field = {
       name,
       values: buffer,
       type: buffer ? getFieldTypeFromValue(buffer.find((v) => v != null)) : FieldType.other,
       config: {},
     } as Field;
+    if (config.featureToggles.extractFieldsNameDeduplication) {
+      field.name = getUniqueFieldName(field, frame);
+    }
+    return field;
   });
 
   if (options.keepTime) {

@@ -5,13 +5,12 @@ import { Provider } from 'react-redux';
 import { AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { logInfo } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 
-import { LogMessages } from '../../Analytics';
+import * as analytics from '../../Analytics';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { mockExportApi, mockFolderApi, setupMswServer } from '../../mockApi';
 import { grantUserPermissions, mockCombinedRule, mockDataSource, mockFolder, mockGrafanaRulerRule } from '../../mocks';
@@ -19,13 +18,9 @@ import { grantUserPermissions, mockCombinedRule, mockDataSource, mockFolder, moc
 import { RulesGroup } from './RulesGroup';
 
 jest.mock('../../hooks/useHasRuler');
-jest.mock('@grafana/runtime', () => {
-  const original = jest.requireActual('@grafana/runtime');
-  return {
-    ...original,
-    logInfo: jest.fn(),
-  };
-});
+
+jest.spyOn(analytics, 'logInfo');
+
 jest.mock('react-virtualized-auto-sizer', () => {
   return ({ children }: AutoSizerProps) => children({ height: 600, width: 1 });
 });
@@ -235,7 +230,7 @@ describe('Rules group tests', () => {
       await userEvent.click(screen.getByText('Cancel'));
 
       expect(screen.queryByText('Cancel')).not.toBeInTheDocument();
-      expect(logInfo).toHaveBeenCalledWith(LogMessages.leavingRuleGroupEdit);
+      expect(analytics.logInfo).toHaveBeenCalledWith(analytics.LogMessages.leavingRuleGroupEdit);
     });
   });
 });

@@ -31,12 +31,12 @@ func TestDataFrameSummary(t *testing.T) {
 	// fmt.Printf(string(asjson))
 	require.NoError(t, err)
 	require.JSONEq(t, `{
-		"uid": "somthing",
+		"UID": "somthing",
 		"kind": "frame",
 		"name": "http_requests_total",
 		"fields": {
-		  "cols": 4,
-		  "rows": 3
+		  "cols": "4",
+		  "rows": "3"
 		}
 	  }`, string(asjson))
 }

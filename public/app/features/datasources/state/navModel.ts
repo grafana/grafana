@@ -13,7 +13,6 @@ const loadingDSType = 'Loading';
 export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDataSourcePlugin): NavModelItem {
   const pluginMeta = plugin.meta;
   const highlightsEnabled = config.featureToggles.featureHighlights;
-  const dataSourcePageHeader = config.featureToggles.dataSourcePageHeader;
   const navModel: NavModelItem = {
     img: pluginMeta.info.logos.large,
     id: 'datasource-' + dataSource.uid,
@@ -29,10 +28,6 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
       },
     ],
   };
-
-  if (!dataSourcePageHeader) {
-    navModel.subTitle = `Type: ${pluginMeta.name}`;
-  }
 
   if (plugin.configPages) {
     for (const page of plugin.configPages) {
@@ -83,29 +78,31 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     });
   }
 
-  const analyticsExperimentId = 'feature-highlights-data-source-insights-badge';
-  const analytics: NavModelItem = {
-    active: false,
-    icon: 'info-circle',
-    id: `datasource-insights-${dataSource.uid}`,
-    text: 'Insights',
-    url: `datasources/edit/${dataSource.uid}/insights`,
-  };
+  if (config.analytics?.enabled) {
+    const analyticsExperimentId = 'feature-highlights-data-source-insights-badge';
+    const analytics: NavModelItem = {
+      active: false,
+      icon: 'info-circle',
+      id: `datasource-insights-${dataSource.uid}`,
+      text: 'Insights',
+      url: `datasources/edit/${dataSource.uid}/insights`,
+    };
 
-  if (highlightTrial() && !isLoadingNav) {
-    analytics.tabSuffix = () => ProBadge({ experimentId: analyticsExperimentId, eventVariant: 'trial' });
-  }
-
-  if (featureEnabled('analytics')) {
-    if (contextSrv.hasPermission(AccessControlAction.DataSourcesInsightsRead)) {
-      navModel.children!.push(analytics);
+    if (highlightTrial() && !isLoadingNav) {
+      analytics.tabSuffix = () => ProBadge({ experimentId: analyticsExperimentId, eventVariant: 'trial' });
     }
-  } else if (highlightsEnabled && !isLoadingNav) {
-    navModel.children!.push({
-      ...analytics,
-      url: analytics.url + '/upgrade',
-      tabSuffix: () => ProBadge({ experimentId: analyticsExperimentId }),
-    });
+
+    if (featureEnabled('analytics')) {
+      if (contextSrv.hasPermission(AccessControlAction.DataSourcesInsightsRead)) {
+        navModel.children!.push(analytics);
+      }
+    } else if (highlightsEnabled && !isLoadingNav) {
+      navModel.children!.push({
+        ...analytics,
+        url: analytics.url + '/upgrade',
+        tabSuffix: () => ProBadge({ experimentId: analyticsExperimentId }),
+      });
+    }
   }
 
   const cachingExperimentId = 'feature-highlights-query-caching-badge';

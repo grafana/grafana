@@ -47,6 +47,14 @@ describe('DashboardModelCompatibilityWrapper', () => {
     expect(wrapper.getPanelById(1)!.title).toBe('Panel A');
     expect(wrapper.getPanelById(2)!.title).toBe('Panel B');
   });
+
+  it('Can remove panel', () => {
+    const { wrapper, scene } = setup();
+
+    wrapper.removePanel(wrapper.getPanelById(1)!);
+
+    expect((scene.state.body as SceneGridLayout).state.children.length).toBe(1);
+  });
 });
 
 function setup() {

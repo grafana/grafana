@@ -30,6 +30,9 @@ Multiple alert instances can be created as a result of one alert rule (also know
 
 Grafana managed alert rules can only be edited or deleted by users with Edit permissions for the folder storing the rules.
 
+If you delete an alerting resource created in the UI, you can no longer retrieve it.
+To make a backup of your configuration and to be able to restore deleted alerting resources, create your alerting resources using file provisioning, Terraform, or the Alerting API.
+
 Watch this video to learn more about creating alert rules: {{< vimeo 720001934 >}}
 
 In the following sections, we’ll guide you through the process of creating your Grafana-managed alert rules.
@@ -202,7 +205,7 @@ Create alerts from any panel type. This means you can reuse the queries in the p
 
 1. Navigate to a dashboard in the **Dashboards** section.
 2. In the top right corner of the panel, click on the three dots (ellipses).
-3. From the dropdown menu, select **More...** and then choose **Create alert**.
+3. From the dropdown menu, select **More...** and then choose **New alert rule**.
 
 This will open the alert rule form, allowing you to configure and create your alert based on the current panel's query.
 

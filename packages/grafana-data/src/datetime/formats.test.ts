@@ -14,7 +14,7 @@ describe('Date Formats', () => {
       ''
     );
 
-    expect(format).toBe('MM/DD/YYYY, hh:mm:ss A');
+    expect(format).toBe('MM/DD/YYYY, hh:mm:ss A');
   });
 });
 
@@ -52,8 +52,8 @@ describe('systemDateFormats', () => {
 
   it('contains correct browser-localized date formats', () => {
     systemDateFormats.useBrowserLocale();
-    expect(systemDateFormats.fullDate).toBe('MM/DD/YYYY, hh:mm:ss A');
-    expect(systemDateFormats.fullDateMS).toBe('MM/DD/YYYY, hh:mm:ss.SSS A');
+    expect(systemDateFormats.fullDate).toBe('MM/DD/YYYY, hh:mm:ss A');
+    expect(systemDateFormats.fullDateMS).toBe('MM/DD/YYYY, hh:mm:ss.SSS A');
     expect(systemDateFormats.interval.millisecond).toBe('HH:mm:ss.SSS');
     expect(systemDateFormats.interval.second).toBe('HH:mm:ss');
     expect(systemDateFormats.interval.minute).toBe('HH:mm');

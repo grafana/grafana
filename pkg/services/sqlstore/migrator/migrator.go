@@ -59,7 +59,7 @@ func NewScopedMigrator(engine *xorm.Engine, cfg *setting.Cfg, scope string) *Mig
 		mg.Logger = log.New("migrator")
 	} else {
 		mg.tableName = scope + "_migration_log"
-		mg.Logger = log.New(scope + " migrator")
+		mg.Logger = log.New(scope + "-migrator")
 	}
 	return mg
 }

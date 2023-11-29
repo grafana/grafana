@@ -16,6 +16,7 @@ import { getTemplateSrv, config as cfg } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
+import { getTransformationContent } from '../docs/getTransformationContent';
 import { SuggestionsInput } from '../suggestionsInput/SuggestionsInput';
 import { numberOrVariableValidator } from '../utils';
 
@@ -189,4 +190,5 @@ export const histogramTransformRegistryItem: TransformerRegistryItem<HistogramTr
   name: standardTransformers.histogramTransformer.name,
   description: standardTransformers.histogramTransformer.description,
   categories: new Set([TransformerCategory.CreateNewVisualization]),
+  help: getTransformationContent(DataTransformerID.histogram).helperDocs,
 };

@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -43,7 +44,7 @@ func addMigrationInfo(da *migrationStore.DashAlert, dashboardUID string) (map[st
 // MigrateAlert migrates a single dashboard alert from legacy alerting to unified alerting.
 func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, da *migrationStore.DashAlert, info migmodels.DashboardUpgradeInfo) (*ngmodels.AlertRule, error) {
 	l.Debug("Migrating alert rule to Unified Alerting")
-	cond, err := transConditions(ctx, da, om.migrationStore)
+	cond, err := transConditions(ctx, l, da, om.migrationStore)
 	if err != nil {
 		return nil, fmt.Errorf("transform conditions: %w", err)
 	}
@@ -235,7 +236,7 @@ func isPrometheusQuery(queryData map[string]json.RawMessage) (bool, error) {
 	if datasource.Type == "" {
 		return false, fmt.Errorf("missing type field '%s'", string(ds))
 	}
-	return datasource.Type == "prometheus", nil
+	return datasource.Type == datasources.DS_PROMETHEUS, nil
 }
 
 func ruleAdjustInterval(freq int64) int64 {

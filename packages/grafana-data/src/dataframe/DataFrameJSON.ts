@@ -143,7 +143,7 @@ export function decodeFieldValueEntities(lookup: FieldValueEntityLookup, values:
  */
 export function decodeFieldValueEnums(lookup: string[], values: FieldValues) {
   for (let i = 0; i < values.length; i++) {
-    values[i] = lookup[values[i] as number];
+    values[i] = lookup[Number(values[i])];
   }
 }
 
@@ -240,7 +240,9 @@ export function dataFrameToJSON(frame: DataFrame): DataFrameJSON {
     name: frame.name,
     fields: frame.fields.map((f) => {
       const { values, nanos, state, display, ...sfield } = f;
-      delete (sfield as any).entities;
+      if ('entities' in sfield) {
+        delete sfield.entities;
+      }
       data.values.push(values);
 
       if (nanos != null) {

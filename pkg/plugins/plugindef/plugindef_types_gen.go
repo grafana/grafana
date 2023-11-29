@@ -140,10 +140,6 @@ type Header struct {
 
 // Impersonation defines model for Impersonation.
 type Impersonation struct {
-	// Enabled allows the service to request access tokens to impersonate users using the jwtbearer grant
-	// Defaults to true.
-	Enabled *bool `json:"enabled,omitempty"`
-
 	// Groups allows the service to list the impersonated user's teams.
 	// Defaults to true.
 	Groups *bool `json:"groups,omitempty"`

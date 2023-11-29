@@ -30,7 +30,7 @@ func MetricsHandler(ctx context.Context, pluginCtx backend.PluginContext, reqCtx
 	case resources.MetricsByNamespaceRequestType:
 		response, err = services.GetHardCodedMetricsByNamespace(metricsRequest.Namespace)
 	case resources.CustomNamespaceRequestType:
-		response, err = service.GetMetricsByNamespace(metricsRequest)
+		response, err = service.GetMetricsByNamespace(ctx, metricsRequest)
 	}
 	if err != nil {
 		return nil, models.NewHttpError("error in MetricsHandler", http.StatusInternalServerError, err)

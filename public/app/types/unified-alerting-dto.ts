@@ -38,11 +38,8 @@ export function isGrafanaAlertState(state: string): state is GrafanaAlertState {
 export function isAlertStateWithReason(
   state: PromAlertingRuleState | GrafanaAlertStateWithReason
 ): state is GrafanaAlertStateWithReason {
-  return (
-    state !== null &&
-    typeof state !== 'undefined' &&
-    !Object.values(PromAlertingRuleState).includes(state as PromAlertingRuleState)
-  );
+  const propAlertingRuleStateValues: string[] = Object.values(PromAlertingRuleState);
+  return state !== null && state !== undefined && !propAlertingRuleStateValues.includes(state);
 }
 
 export function mapStateWithReasonToBaseState(

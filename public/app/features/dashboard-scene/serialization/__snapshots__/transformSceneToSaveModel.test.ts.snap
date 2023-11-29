@@ -123,11 +123,6 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
 </div>",
         "mode": "markdown",
       },
-      "targets": [
-        {
-          "refId": "A",
-        },
-      ],
       "title": "",
       "transformations": [],
       "transparent": false,
@@ -180,6 +175,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
 </div>",
             "mode": "markdown",
           },
+          "title": "Text panel in collapsed row",
           "transformations": [],
           "transparent": false,
           "type": "text",
@@ -433,11 +429,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "content": "content",
         "mode": "markdown",
       },
-      "targets": [
-        {
-          "refId": "A",
-        },
-      ],
       "title": "Transparent text panel",
       "transformations": [],
       "transparent": true,

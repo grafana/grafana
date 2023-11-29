@@ -147,4 +147,11 @@ export interface MonacoOptionsWithGrafanaDefaults extends monacoType.editor.ISta
    * Defaults to true.
    */
   automaticLayout?: boolean;
+
+  /**
+   * Always consume mouse wheel events (always call preventDefault() and stopPropagation() on the browser events).
+   * Always consuming mouse wheel events will prevent the page from scrolling if the cursor is over the editor.
+   * Defaults to `false`.
+   */
+  alwaysConsumeMouseWheel?: boolean;
 }

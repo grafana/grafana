@@ -1,30 +1,56 @@
 import React, { useCallback } from 'react';
 
-import { PluginState, TransformerRegistryItem, TransformerUIProps, ReducerID, isReducerID } from '@grafana/data';
-import { InlineFieldRow, InlineField, StatsPicker } from '@grafana/ui';
+import {
+  PluginState,
+  TransformerRegistryItem,
+  TransformerUIProps,
+  ReducerID,
+  isReducerID,
+  SelectableValue,
+  Field,
+  FieldType,
+  isTimeSeriesField,
+} from '@grafana/data';
+import { InlineFieldRow, InlineField, StatsPicker, Select, InlineLabel } from '@grafana/ui';
 
-import { timeSeriesTableTransformer, TimeSeriesTableTransformerOptions } from './timeSeriesTableTransformer';
+import { getTransformationContent } from '../docs/getTransformationContent';
+
+import {
+  timeSeriesTableTransformer,
+  TimeSeriesTableTransformerOptions,
+  getRefData,
+} from './timeSeriesTableTransformer';
 
 export function TimeSeriesTableTransformEditor({
   input,
   options,
   onChange,
 }: TransformerUIProps<TimeSeriesTableTransformerOptions>) {
-  const refIds: string[] = input.reduce<string[]>((acc, frame) => {
-    if (frame.refId && !acc.includes(frame.refId)) {
-      return [...acc, frame.refId];
-    }
-    return acc;
-  }, []);
+  const refIdMap = getRefData(input);
+
+  const onSelectTimefield = useCallback(
+    (refId: string, value: SelectableValue<string>) => {
+      const val = value?.value !== undefined ? value.value : '';
+      onChange({
+        ...options,
+        [refId]: {
+          ...options[refId],
+          timeField: val,
+        },
+      });
+    },
+    [onChange, options]
+  );
 
   const onSelectStat = useCallback(
     (refId: string, stats: string[]) => {
       const reducerID = stats[0];
       if (reducerID && isReducerID(reducerID)) {
         onChange({
-          refIdToStat: {
-            ...options.refIdToStat,
-            [refId]: reducerID,
+          ...options,
+          [refId]: {
+            ...options[refId],
+            stat: reducerID,
           },
         });
       }
@@ -32,25 +58,59 @@ export function TimeSeriesTableTransformEditor({
     [onChange, options]
   );
 
-  return (
-    <>
-      {refIds.map((refId) => {
-        return (
-          <div key={refId}>
-            <InlineFieldRow>
-              <InlineField label={`Trend ${refIds.length > 1 ? ` #${refId}` : ''} value`}>
-                <StatsPicker
-                  stats={[options.refIdToStat?.[refId] ?? ReducerID.lastNotNull]}
-                  onChange={onSelectStat.bind(null, refId)}
-                  filterOptions={(ext) => ext.id !== ReducerID.allValues && ext.id !== ReducerID.uniqueValues}
-                />
-              </InlineField>
-            </InlineFieldRow>
-          </div>
-        );
-      })}
-    </>
-  );
+  let configRows = [];
+  for (const refId of Object.keys(refIdMap)) {
+    // Get time fields for the current refId
+    const timeFields: Record<string, Field<FieldType.time>> = {};
+    const timeValues: Array<SelectableValue<string>> = [];
+
+    // Get a map of time fields, we map
+    // by field name and assume that time fields
+    // in the same query with the same name
+    // are the same
+    for (const frame of input) {
+      if (frame.refId === refId) {
+        for (const field of frame.fields) {
+          if (isTimeSeriesField(field)) {
+            timeFields[field.name] = field;
+          }
+        }
+      }
+    }
+
+    for (const timeField of Object.values(timeFields)) {
+      const { name } = timeField;
+      timeValues.push({ label: name, value: name });
+    }
+
+    configRows.push(
+      <InlineFieldRow key={refId}>
+        <InlineField>
+          <InlineLabel>{`Trend #${refId}`}</InlineLabel>
+        </InlineField>
+        <InlineField
+          label="Time field"
+          tooltip="The time field that will be used for the time series. If not selected the first found will be used."
+        >
+          <Select
+            onChange={onSelectTimefield.bind(null, refId)}
+            options={timeValues}
+            value={options[refId]?.timeField}
+            isClearable={true}
+          />
+        </InlineField>
+        <InlineField label="Stat" tooltip="The statistic that should be calculated for this time series.">
+          <StatsPicker
+            stats={[options[refId]?.stat ?? ReducerID.lastNotNull]}
+            onChange={onSelectStat.bind(null, refId)}
+            filterOptions={(ext) => ext.id !== ReducerID.allValues && ext.id !== ReducerID.uniqueValues}
+          />
+        </InlineField>
+      </InlineFieldRow>
+    );
+  }
+
+  return <>{configRows}</>;
 }
 
 export const timeSeriesTableTransformRegistryItem: TransformerRegistryItem<TimeSeriesTableTransformerOptions> = {
@@ -60,5 +120,5 @@ export const timeSeriesTableTransformRegistryItem: TransformerRegistryItem<TimeS
   name: timeSeriesTableTransformer.name,
   description: timeSeriesTableTransformer.description,
   state: PluginState.beta,
-  help: ``,
+  help: getTransformationContent(timeSeriesTableTransformer.id).helperDocs,
 };

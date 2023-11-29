@@ -1,13 +1,43 @@
-import { AbstractLabelOperator, CoreApp, DataSourceInstanceSettings, PluginMetaInfo, PluginType } from '@grafana/data';
+import {
+  AbstractLabelOperator,
+  CoreApp,
+  DataSourceInstanceSettings,
+  PluginMetaInfo,
+  PluginType,
+  DataSourceJsonData,
+} from '@grafana/data';
+import { setPluginExtensionGetter, getBackendSrv, setBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { defaultPyroscopeQueryType } from './dataquery.gen';
 import { normalizeQuery, PyroscopeDataSource } from './datasource';
 import { Query } from './types';
 
+/** The datasource QueryEditor fetches datasource settings to send to the extension's `configure` method */
+export function mockFetchPyroscopeDatasourceSettings(
+  datasourceSettings?: Partial<DataSourceInstanceSettings<DataSourceJsonData>>
+) {
+  const settings = { ...defaultSettings, ...datasourceSettings };
+  const returnValues: Record<string, unknown> = {
+    [`/api/datasources/uid/${settings.uid}`]: settings,
+  };
+  setBackendSrv({
+    ...getBackendSrv(),
+    get: function <T>(path: string) {
+      const value = returnValues[path];
+      if (value) {
+        return Promise.resolve(value as T);
+      }
+      return Promise.reject({ message: 'reject' });
+    },
+  });
+}
+
 describe('Pyroscope data source', () => {
   let ds: PyroscopeDataSource;
   beforeEach(() => {
+    mockFetchPyroscopeDatasourceSettings();
+    setPluginExtensionGetter(() => ({ extensions: [] })); // No extensions
     ds = new PyroscopeDataSource(defaultSettings);
   });
 

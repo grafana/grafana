@@ -5,24 +5,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-var timeNow = time.Now
 
 // Update the item so that EpochEnd >= Epoch
 func validateTimeRange(item *annotations.Item) error {
@@ -42,12 +38,19 @@ func validateTimeRange(item *annotations.Item) error {
 }
 
 type xormRepositoryImpl struct {
-	cfg               *setting.Cfg
-	features          featuremgmt.FeatureToggles
-	db                db.DB
-	log               log.Logger
-	maximumTagsLength int64
-	tagService        tag.Service
+	cfg        *setting.Cfg
+	db         db.DB
+	log        log.Logger
+	tagService tag.Service
+}
+
+func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Service) *xormRepositoryImpl {
+	return &xormRepositoryImpl{
+		cfg:        cfg,
+		db:         db,
+		log:        l.New("store", "xorm"),
+		tagService: tagService,
+	}
 }
 
 func (r *xormRepositoryImpl) Add(ctx context.Context, item *annotations.Item) error {
@@ -237,7 +240,7 @@ func tagSet[T any](fn func(T) int64, list []T) map[int64]struct{} {
 	return set
 }
 
-func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
+func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQuery, accessResources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 	items := make([]*annotations.ItemDTO, 0)
@@ -339,12 +342,11 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQue
 			}
 		}
 
-		acFilter, err := r.getAccessControlFilter(query.SignedInUser)
+		acFilter, err := r.getAccessControlFilter(query.SignedInUser, accessResources)
 		if err != nil {
 			return err
 		}
-		sql.WriteString(fmt.Sprintf(" AND (%s)", acFilter.where))
-		params = append(params, acFilter.whereParams...)
+		sql.WriteString(fmt.Sprintf(" AND (%s)", acFilter))
 
 		if query.Limit == 0 {
 			query.Limit = 100
@@ -352,13 +354,6 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQue
 
 		// order of ORDER BY arguments match the order of a sql index for performance
 		sql.WriteString(" ORDER BY a.org_id, a.epoch_end DESC, a.epoch DESC" + r.db.GetDialect().Limit(query.Limit) + " ) dt on dt.id = annotation.id")
-		if acFilter.recQueries != "" {
-			var sb bytes.Buffer
-			sb.WriteString(acFilter.recQueries)
-			sb.WriteString(sql.String())
-			sql = sb
-			params = append(acFilter.recParams, params...)
-		}
 
 		if err := sess.SQL(sql.String(), params...).Find(&items); err != nil {
 			items = nil
@@ -371,64 +366,37 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQue
 	return items, err
 }
 
-type acFilter struct {
-	where       string
-	whereParams []interface{}
-	recQueries  string
-	recParams   []interface{}
-}
-
-func (r *xormRepositoryImpl) getAccessControlFilter(user identity.Requester) (acFilter, error) {
-	var recQueries string
-	var recQueriesParams []interface{}
-
-	if user == nil || user.IsNil() {
-		return acFilter{}, errors.New("missing permissions")
-	}
-
-	scopes, has := user.GetPermissions()[ac.ActionAnnotationsRead]
-	if !has {
-		return acFilter{}, errors.New("missing permissions")
-	}
-	types, hasWildcardScope := ac.ParseScopes(ac.ScopeAnnotationsProvider.GetResourceScopeType(""), scopes)
-	if hasWildcardScope {
-		types = map[interface{}]struct{}{annotations.Dashboard.String(): {}, annotations.Organization.String(): {}}
-	}
-
+func (r *xormRepositoryImpl) getAccessControlFilter(user identity.Requester, accessResources *accesscontrol.AccessResources) (string, error) {
 	var filters []string
-	var params []interface{}
-	for t := range types {
-		// annotation read permission with scope annotations:type:organization allows listing annotations that are not associated with a dashboard
-		if t == annotations.Organization.String() {
-			filters = append(filters, "a.dashboard_id = 0")
-		}
-		// annotation read permission with scope annotations:type:dashboard allows listing annotations from dashboards which the user can view
-		if t == annotations.Dashboard.String() {
-			recursiveQueriesAreSupported, err := r.db.RecursiveQueriesAreSupported()
-			if err != nil {
-				return acFilter{}, err
-			}
 
-			filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, dashboards.PERMISSION_VIEW, searchstore.TypeDashboard, r.features, recursiveQueriesAreSupported)
-			dashboardFilter, dashboardParams := filterRBAC.Where()
-			recQueries, recQueriesParams = filterRBAC.With()
-			leftJoin := filterRBAC.LeftJoin()
-			filter := fmt.Sprintf("a.dashboard_id IN(SELECT id FROM dashboard WHERE %s)", dashboardFilter)
-			if leftJoin != "" {
-				filter = fmt.Sprintf("a.dashboard_id IN(SELECT dashboard.id FROM dashboard LEFT OUTER JOIN %s WHERE %s)", leftJoin, dashboardFilter)
-			}
-			filters = append(filters, filter)
-			params = dashboardParams
-		}
+	if _, has := accessResources.ScopeTypes[annotations.Organization.String()]; has {
+		filters = append(filters, "a.dashboard_id = 0")
 	}
 
-	f := acFilter{
-		where:       strings.Join(filters, " OR "),
-		whereParams: params,
-		recQueries:  recQueries,
-		recParams:   recQueriesParams,
+	if _, has := accessResources.ScopeTypes[annotations.Dashboard.String()]; has {
+		var dashboardIDs []int64
+		for _, id := range accessResources.Dashboards {
+			dashboardIDs = append(dashboardIDs, id)
+		}
+
+		var inClause string
+		if len(dashboardIDs) == 0 {
+			inClause = "SELECT * FROM (SELECT 0 LIMIT 0) tt" // empty set
+		} else {
+			b := make([]byte, 0, 3*len(dashboardIDs))
+
+			b = strconv.AppendInt(b, dashboardIDs[0], 10)
+			for _, num := range dashboardIDs[1:] {
+				b = append(b, ',')
+				b = strconv.AppendInt(b, num, 10)
+			}
+
+			inClause = string(b)
+		}
+		filters = append(filters, fmt.Sprintf("a.dashboard_id IN (%s)", inClause))
 	}
-	return f, nil
+
+	return strings.Join(filters, " OR "), nil
 }
 
 func (r *xormRepositoryImpl) Delete(ctx context.Context, params *annotations.DeleteParams) error {
@@ -541,8 +509,8 @@ func (r *xormRepositoryImpl) validateTagsLength(item *annotations.Item) error {
 		}
 	}
 	estimatedTagsLength += 1 // trailing: ]
-	if estimatedTagsLength > int(r.maximumTagsLength) {
-		return annotations.ErrBaseTagLimitExceeded.Errorf("tags length (%d) exceeds the maximum allowed (%d): modify the configuration to increase it", estimatedTagsLength, r.maximumTagsLength)
+	if estimatedTagsLength > int(r.cfg.AnnotationMaximumTagsLength) {
+		return annotations.ErrBaseTagLimitExceeded.Errorf("tags length (%d) exceeds the maximum allowed (%d): modify the configuration to increase it", estimatedTagsLength, r.cfg.AnnotationMaximumTagsLength)
 	}
 	return nil
 }
@@ -550,7 +518,7 @@ func (r *xormRepositoryImpl) validateTagsLength(item *annotations.Item) error {
 func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.AnnotationCleanupSettings, annotationType string) (int64, error) {
 	var totalAffected int64
 	if cfg.MaxAge > 0 {
-		cutoffDate := time.Now().Add(-cfg.MaxAge).UnixNano() / int64(time.Millisecond)
+		cutoffDate := timeNow().Add(-cfg.MaxAge).UnixNano() / int64(time.Millisecond)
 		deleteQuery := `DELETE FROM annotation WHERE id IN (SELECT id FROM (SELECT id FROM annotation WHERE %s AND created < %v ORDER BY id DESC %s) a)`
 		sql := fmt.Sprintf(deleteQuery, annotationType, cutoffDate, r.db.GetDialect().Limit(r.cfg.AnnotationCleanupJobBatchSize))
 

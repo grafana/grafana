@@ -8,7 +8,7 @@ import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
 import { Layout, LayoutProps } from './Layout';
 import mdx from './Layout.mdx';
 
-export default {
+const meta: Meta = {
   title: 'Layout/Groups',
   component: Layout,
   decorators: [withStoryContainer],
@@ -56,7 +56,9 @@ export default {
       },
     },
   },
-} as Meta;
+};
+
+export default meta;
 
 export const Horizontal: Story<LayoutProps> = (args) => {
   return (

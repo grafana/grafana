@@ -314,6 +314,12 @@ export function prepConfig(opts: PrepConfigOpts) {
       // sparse already accounts for le/ge by explicit yMin & yMax cell bounds, so no need to expand y range
       isSparseHeatmap
         ? (u, dataMin, dataMax) => {
+            // ...but uPlot currently only auto-ranges from the yMin facet data, so we have to grow by 1 extra factor
+            // @ts-ignore
+            let bucketFactor = u.data[1][2][0] / u.data[1][1][0];
+
+            dataMax *= bucketFactor;
+
             let scaleMin: number | null, scaleMax: number | null;
 
             [scaleMin, scaleMax] = shouldUseLogScale
@@ -778,10 +784,19 @@ export function heatmapPathsPoints(opts: PointsBuilderOpts, exemplarColor: strin
 
         for (let i = 0; i < dataX.length; i++) {
           let yVal = dataY[i]!;
-          yVal -= 0.5; // center vertically in bucket (when tiles are le)
-          // y-randomize vertically to distribute exemplars in same bucket at same time
-          let randSign = Math.round(Math.random()) * 2 - 1;
-          yVal += randSign * 0.5 * Math.random();
+
+          // this is a hacky by-proxy check
+          // works okay since we have no exemplars in calculated heatmaps and...
+          //  - heatmap-rows has ordinal y
+          //  - heatmap-cells has log2 y
+          let isSparseHeatmap = scaleY.distr === 3 && scaleY.log === 2;
+
+          if (!isSparseHeatmap) {
+            yVal -= 0.5; // center vertically in bucket (when tiles are le)
+            // y-randomize vertically to distribute exemplars in same bucket at same time
+            let randSign = Math.round(Math.random()) * 2 - 1;
+            yVal += randSign * 0.5 * Math.random();
+          }
 
           let x = valToPosX(dataX[i], scaleX, xDim, xOff);
           let y = valToPosY(yVal, scaleY, yDim, yOff);
@@ -900,8 +915,8 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
           xSize = Math.max(1, xSize - cellGap);
           ySize = Math.max(1, ySize - cellGap);
 
-          let x = xMaxPx;
-          let y = yMinPx;
+          let x = xMaxPx - cellGap / 2 - xSize;
+          let y = yMaxPx + cellGap / 2;
 
           let fillPath = fillPaths[fills[i]];
 

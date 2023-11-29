@@ -79,6 +79,9 @@ type GrafanaPyroscopeDataQuery struct {
 	// In server side expressions, the refId is used as a variable name to identify results.
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
 	RefId string `json:"refId"`
+
+	// Specifies the query span selectors.
+	SpanSelector []string `json:"spanSelector,omitempty"`
 }
 
 // PyroscopeQueryType defines model for PyroscopeQueryType.

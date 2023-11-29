@@ -1,15 +1,14 @@
 import React, { useState, useCallback } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
-import { getBackendSrv, config } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { ConfirmModal, Button, LinkButton } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
-
-import { Snapshot } from '../types';
+import { getDashboardSnapshotSrv, Snapshot } from 'app/features/dashboard/services/SnapshotSrv';
 
 export function getSnapshots() {
-  return getBackendSrv()
-    .get('/api/dashboard/snapshots')
+  return getDashboardSnapshotSrv()
+    .getSnapshots()
     .then((result: Snapshot[]) => {
       return result.map((snapshot) => ({
         ...snapshot,
@@ -29,8 +28,8 @@ export const SnapshotListTable = () => {
     async (snapshot: Snapshot) => {
       const filteredSnapshots = snapshots.filter((ss) => ss.key !== snapshot.key);
       setSnapshots(filteredSnapshots);
-      await getBackendSrv()
-        .delete(`/api/snapshots/${snapshot.key}`)
+      await getDashboardSnapshotSrv()
+        .deleteSnapshot(snapshot.key)
         .catch(() => {
           setSnapshots(snapshots);
         });

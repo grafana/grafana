@@ -22,9 +22,42 @@ exports[`useContactPoints should return contact points with status 1`] = `
             "name": "email",
             "sendResolved": true,
           },
+          Symbol(receiver_metadata): {
+            "description": "Sends notifications using Grafana server configured SMTP settings",
+            "name": "Email",
+          },
+          Symbol(receiver_plugin_metadata): undefined,
         },
       ],
       "name": "grafana-default-email",
+      "numberOfPolicies": 0,
+    },
+    {
+      "grafana_managed_receiver_configs": [
+        {
+          "disableResolveMessage": false,
+          "name": "lotsa-emails",
+          "secureFields": {},
+          "settings": {
+            "addresses": "gilles.demey+1@grafana.com, gilles.demey+2@grafana.com, gilles.demey+3@grafana.com, gilles.demey+4@grafana.com",
+            "singleEmail": false,
+          },
+          "type": "email",
+          "uid": "af306c96-35a2-4d6e-908a-4993e245dbb2",
+          Symbol(receiver_status): {
+            "lastNotifyAttempt": "",
+            "lastNotifyAttemptDuration": "",
+            "name": "email",
+            "sendResolved": true,
+          },
+          Symbol(receiver_metadata): {
+            "description": "Sends notifications using Grafana server configured SMTP settings",
+            "name": "Email",
+          },
+          Symbol(receiver_plugin_metadata): undefined,
+        },
+      ],
+      "name": "lotsa-emails",
       "numberOfPolicies": 0,
     },
     {
@@ -46,32 +79,14 @@ exports[`useContactPoints should return contact points with status 1`] = `
             "name": "email",
             "sendResolved": true,
           },
+          Symbol(receiver_metadata): {
+            "description": "Sends notifications using Grafana server configured SMTP settings",
+            "name": "Email",
+          },
+          Symbol(receiver_plugin_metadata): undefined,
         },
       ],
       "name": "provisioned-contact-point",
-      "numberOfPolicies": 0,
-    },
-    {
-      "grafana_managed_receiver_configs": [
-        {
-          "disableResolveMessage": false,
-          "name": "lotsa-emails",
-          "secureFields": {},
-          "settings": {
-            "addresses": "gilles.demey+1@grafana.com, gilles.demey+2@grafana.com, gilles.demey+3@grafana.com, gilles.demey+4@grafana.com",
-            "singleEmail": false,
-          },
-          "type": "email",
-          "uid": "af306c96-35a2-4d6e-908a-4993e245dbb2",
-          Symbol(receiver_status): {
-            "lastNotifyAttempt": "",
-            "lastNotifyAttemptDuration": "",
-            "name": "email",
-            "sendResolved": true,
-          },
-        },
-      ],
-      "name": "lotsa-emails",
       "numberOfPolicies": 0,
     },
     {
@@ -93,6 +108,11 @@ exports[`useContactPoints should return contact points with status 1`] = `
             "name": "slack",
             "sendResolved": true,
           },
+          Symbol(receiver_metadata): {
+            "description": "Sends notifications to Slack",
+            "name": "Slack",
+          },
+          Symbol(receiver_plugin_metadata): undefined,
         },
         {
           "disableResolveMessage": false,
@@ -111,6 +131,11 @@ exports[`useContactPoints should return contact points with status 1`] = `
             "name": "slack",
             "sendResolved": true,
           },
+          Symbol(receiver_metadata): {
+            "description": "Sends notifications to Slack",
+            "name": "Slack",
+          },
+          Symbol(receiver_plugin_metadata): undefined,
         },
       ],
       "name": "Slack with multiple channels",

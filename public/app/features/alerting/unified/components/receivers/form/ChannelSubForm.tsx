@@ -159,7 +159,7 @@ export function ChannelSubForm<R extends ChannelValues>({
               variant="secondary"
               type="button"
               onClick={() => handleTest()}
-              icon={testingReceiver ? 'fa fa-spinner' : 'message'}
+              icon={testingReceiver ? 'spinner' : 'message'}
             >
               Test
             </Button>

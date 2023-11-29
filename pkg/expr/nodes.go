@@ -388,7 +388,7 @@ func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasou
 	}
 
 	var dt data.FrameType
-	dt, useDataplane, _ := shouldUseDataplane(frames, logger, s.features.IsEnabled(featuremgmt.FlagDisableSSEDataplane))
+	dt, useDataplane, _ := shouldUseDataplane(frames, logger, s.features.IsEnabled(ctx, featuremgmt.FlagDisableSSEDataplane))
 	if useDataplane {
 		logger.Debug("Handling SSE data source query through dataplane", "datatype", dt)
 		result, err := handleDataplaneFrames(ctx, s.tracer, dt, frames)

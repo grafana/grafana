@@ -9,7 +9,7 @@ import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
 import { FieldArray } from './FieldArray';
 import mdx from './FieldArray.mdx';
 
-export default {
+const meta: Meta = {
   title: 'Forms/FieldArray',
   component: FieldArray,
   decorators: [withStoryContainer],
@@ -25,7 +25,9 @@ export default {
     containerWidth: { control: { type: 'range', min: 100, max: 500, step: 10 } },
     containerHeight: { control: { type: 'range', min: 100, max: 500, step: 10 } },
   },
-} as Meta;
+};
+
+export default meta;
 
 export const Simple: Story = (args) => {
   const defaultValues: FieldValues = {

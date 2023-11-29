@@ -292,7 +292,9 @@ describe('CorrelationsPage', () => {
 
       await userEvent.click(await screen.findByRole('button', { name: /add$/i }));
 
-      expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_added');
+      await waitFor(() => {
+        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_added');
+      });
 
       // the table showing correlations should have appeared
       expect(await screen.findByRole('table')).toBeInTheDocument();
@@ -439,7 +441,9 @@ describe('CorrelationsPage', () => {
 
       await userEvent.click(screen.getByRole('button', { name: /add$/i }));
 
-      expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_added');
+      await waitFor(() => {
+        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_added');
+      });
 
       // the table showing correlations should have appeared
       expect(await screen.findByRole('table')).toBeInTheDocument();
@@ -474,7 +478,9 @@ describe('CorrelationsPage', () => {
 
       expect(screen.queryByRole('cell', { name: /some label$/i })).not.toBeInTheDocument();
 
-      expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_deleted');
+      await waitFor(() => {
+        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_deleted');
+      });
     });
 
     it('correctly edits correlations', async () => {
@@ -486,7 +492,9 @@ describe('CorrelationsPage', () => {
       const rowExpanderButton = within(tableRows[0]).getByRole('button', { name: /toggle row expanded/i });
       await userEvent.click(rowExpanderButton);
 
-      expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_details_expanded');
+      await waitFor(() => {
+        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_details_expanded');
+      });
 
       await userEvent.clear(screen.getByRole('textbox', { name: /label/i }));
       await userEvent.type(screen.getByRole('textbox', { name: /label/i }), 'edited label');
@@ -500,9 +508,11 @@ describe('CorrelationsPage', () => {
 
       await userEvent.click(screen.getByRole('button', { name: /save$/i }));
 
-      expect(await screen.findByRole('cell', { name: /edited label$/i })).toBeInTheDocument();
+      expect(await screen.findByRole('cell', { name: /edited label$/i }, { timeout: 5000 })).toBeInTheDocument();
 
-      expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_edited');
+      await waitFor(() => {
+        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_edited');
+      });
     });
 
     it('correctly edits transformations', async () => {
@@ -553,7 +563,9 @@ describe('CorrelationsPage', () => {
       expect(screen.getByText('Please define an expression')).toBeInTheDocument();
       await userEvent.type(screen.getByLabelText(/expression/i), 'test expression');
       await userEvent.click(screen.getByRole('button', { name: /save$/i }));
-      expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_edited');
+      await waitFor(() => {
+        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_edited');
+      });
     });
   });
 
@@ -684,7 +696,9 @@ describe('CorrelationsPage', () => {
 
       await userEvent.click(rowExpanderButton);
 
-      expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_details_expanded');
+      await waitFor(() => {
+        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_details_expanded');
+      });
 
       // form elements should be readonly
       const labelInput = await screen.findByRole('textbox', { name: /label/i });

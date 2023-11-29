@@ -67,6 +67,8 @@ export const getDefaultFormValues = (): RuleFormValues => {
     execErrState: GrafanaAlertStateDecision.Error,
     evaluateFor: '5m',
     evaluateEvery: MINUTE,
+    manualRouting: false, // let's decide this later
+    contactPoints: [],
 
     // cortex / loki
     namespace: '',
@@ -176,6 +178,8 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         labels: listifyLabelsOrAnnotations(rule.labels, true),
         folder: { title: namespace, uid: ga.namespace_uid },
         isPaused: ga.is_paused,
+        // manualrouting: ?? //todo depending on the implementation of the manual routing
+        // contactPoints: ?? //todo depending on the implementation of the manual routing
       };
     } else {
       throw new Error('Unexpected type of rule for grafana rules source');

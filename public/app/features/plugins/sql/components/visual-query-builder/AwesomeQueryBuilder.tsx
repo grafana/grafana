@@ -2,7 +2,6 @@ import {
   AnyObject,
   BasicConfig,
   Config,
-  JsonItem,
   JsonTree,
   Operator,
   Settings,
@@ -24,37 +23,13 @@ const buttonLabels = {
   remove: 'Remove',
 };
 
-export const emptyInitValue: JsonItem = {
-  id: Utils.uuid(),
-  type: 'group' as const,
-  children1: {
-    [Utils.uuid()]: {
-      type: 'rule',
-      properties: {
-        field: null,
-        operator: null,
-        value: [],
-        valueSrc: [],
-      },
-    },
-  },
-};
-
 export const emptyInitTree: JsonTree = {
   id: Utils.uuid(),
-  type: 'group' as const,
-  children1: {
-    [Utils.uuid()]: {
-      type: 'rule',
-      properties: {
-        field: null,
-        operator: null,
-        value: [],
-        valueSrc: [],
-      },
-    },
-  },
+  type: 'group',
 };
+
+const TIME_FILTER = 'timeFilter';
+const macros = [TIME_FILTER];
 
 export const widgets: Widgets = {
   ...BasicConfig.widgets,
@@ -86,14 +61,46 @@ export const widgets: Widgets = {
   datetime: {
     ...BasicConfig.widgets.datetime,
     factory: function DateTimeInput(props) {
+      if (props?.operator === Op.MACROS) {
+        return (
+          <Select
+            id={props.id}
+            aria-label="Macros value selector"
+            menuShouldPortal
+            options={macros.map(toOption)}
+            value={props?.value}
+            onChange={(val) => props.setValue(val.value)}
+          />
+        );
+      }
+      const dateValue = dateTime(props?.value).isValid() ? dateTime(props?.value).utc() : undefined;
       return (
         <DateTimePicker
           onChange={(e) => {
             props?.setValue(e.format(BasicConfig.widgets.datetime.valueFormat));
           }}
-          date={dateTime(props?.value).utc()}
+          date={dateValue}
         />
       );
+    },
+    sqlFormatValue: (val, field, widget, operator, operatorDefinition, rightFieldDef) => {
+      if (operator === Op.MACROS) {
+        if (macros.includes(val)) {
+          return val;
+        }
+        return undefined;
+      }
+
+      // This is just satisfying the type checker, this should never happen
+      if (
+        typeof BasicConfig.widgets.datetime.sqlFormatValue === 'string' ||
+        typeof BasicConfig.widgets.datetime.sqlFormatValue === 'object'
+      ) {
+        return undefined;
+      }
+      const func = BasicConfig.widgets.datetime.sqlFormatValue;
+      // We need to pass the ctx to this function this way so *this* is correct
+      return func?.call(BasicConfig.ctx, val, field, widget, operator, operatorDefinition, rightFieldDef) || '';
     },
   },
 };
@@ -173,9 +180,9 @@ export const settings: Settings = {
 const enum Op {
   IN = 'select_any_in',
   NOT_IN = 'select_not_any_in',
+  MACROS = 'macros',
 }
-// eslint-ignore
-const customOperators = getCustomOperators(BasicConfig) as typeof BasicConfig.operators;
+const customOperators = getCustomOperators(BasicConfig);
 const textWidget = BasicConfig.types.text.widgets.text;
 const opers = [...(textWidget.operators || []), Op.IN, Op.NOT_IN];
 const customTextWidget = {
@@ -192,13 +199,23 @@ const customTypes = {
       text: customTextWidget,
     },
   },
+  datetime: {
+    ...BasicConfig.types.datetime,
+    widgets: {
+      ...BasicConfig.types.datetime.widgets,
+      datetime: {
+        ...BasicConfig.types.datetime.widgets.datetime,
+        operators: [Op.MACROS, ...(BasicConfig.types.datetime.widgets.datetime.operators || [])],
+      },
+    },
+  },
 };
 
 export const raqbConfig: Config = {
   ...BasicConfig,
   widgets,
   settings,
-  operators: customOperators as typeof BasicConfig.operators,
+  operators: customOperators,
   types: customTypes,
 };
 
@@ -284,13 +301,21 @@ function getCustomOperators(config: BasicConfig) {
       ...supportedOperators[Op.NOT_IN],
       sqlFormatOp: customSqlNotInFormatter,
     },
+    [Op.MACROS]: {
+      label: 'Macros',
+      sqlFormatOp: (field: string, _operator: string, value: string | List<string>) => {
+        if (value === TIME_FILTER) {
+          return `$__timeFilter(${field})`;
+        }
+        return value;
+      },
+    },
   };
 
   return customOperators;
 }
 
 // value: string | List<string> but AQB uses a different version of Immutable
-// eslint-ignore
 function splitIfString(value: any) {
   if (isString(value)) {
     return value.split(',');

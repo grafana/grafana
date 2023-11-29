@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/preference/prefapi"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/sortopts"
@@ -58,7 +58,7 @@ func (tapi *TeamAPI) createTeam(c *contextmodel.ReqContext) response.Response {
 			break
 		}
 		if err := addOrUpdateTeamMember(c.Req.Context(), tapi.teamPermissionsService, userID, c.SignedInUser.GetOrgID(),
-			t.ID, dashboards.PERMISSION_ADMIN.String()); err != nil {
+			t.ID, dashboardaccess.PERMISSION_ADMIN.String()); err != nil {
 			c.Logger.Error("Could not add creator to team", "error", err)
 		}
 	default:
@@ -154,10 +154,20 @@ func (tapi *TeamAPI) searchTeams(c *contextmodel.ReqContext) response.Response {
 		return response.Err(err)
 	}
 
+	stringTeamIDs := c.QueryStrings("teamId")
+	queryTeamIDs := make([]int64, 0)
+	for _, id := range stringTeamIDs {
+		teamID, err := strconv.ParseInt(id, 10, 64)
+		if err == nil {
+			queryTeamIDs = append(queryTeamIDs, teamID)
+		}
+	}
+
 	query := team.SearchTeamsQuery{
 		OrgID:        c.SignedInUser.GetOrgID(),
 		Query:        c.Query("query"),
 		Name:         c.Query("name"),
+		TeamIds:      queryTeamIDs,
 		Page:         page,
 		Limit:        perPage,
 		SignedInUser: c.SignedInUser,

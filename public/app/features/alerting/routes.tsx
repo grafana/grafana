@@ -188,6 +188,18 @@ const unifiedRoutes: RouteDescriptor[] = [
     ),
   },
   {
+    path: '/alerting/notifications/receivers/:id/edit',
+    roles: evaluateAccess([
+      AccessControlAction.AlertingNotificationsWrite,
+      AccessControlAction.AlertingNotificationsExternalWrite,
+      AccessControlAction.AlertingNotificationsRead,
+      AccessControlAction.AlertingNotificationsExternalRead,
+    ]),
+    component: SafeDynamicImport(
+      () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
+    ),
+  },
+  {
     path: '/alerting/notifications/:type/:id/edit',
     roles: evaluateAccess([
       AccessControlAction.AlertingNotificationsWrite,

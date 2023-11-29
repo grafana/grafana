@@ -29,8 +29,8 @@ type Client struct {
 
 func NewClient(skipTLSVerify bool, logger log.PrettyLogger) *Client {
 	return &Client{
-		httpClient:          makeHttpClient(skipTLSVerify, 10*time.Second),
-		httpClientNoTimeout: makeHttpClient(skipTLSVerify, 0),
+		httpClient:          MakeHttpClient(skipTLSVerify, 10*time.Second),
+		httpClientNoTimeout: MakeHttpClient(skipTLSVerify, 0),
 		log:                 logger,
 	}
 }
@@ -234,7 +234,7 @@ func (c *Client) handleResp(res *http.Response, compatOpts CompatOpts) (io.ReadC
 	return res.Body, nil
 }
 
-func makeHttpClient(skipTLSVerify bool, timeout time.Duration) http.Client {
+func MakeHttpClient(skipTLSVerify bool, timeout time.Duration) http.Client {
 	return http.Client{
 		Timeout: timeout,
 		Transport: &http.Transport{

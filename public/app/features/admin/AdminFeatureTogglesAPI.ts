@@ -55,6 +55,7 @@ type FeatureToggle = {
 
 type FeatureMgmtState = {
   restartRequired: boolean;
+  allowEditing: boolean;
 };
 
 export const { useGetManagerStateQuery, useGetFeatureTogglesQuery, useUpdateFeatureTogglesMutation } = togglesApi;

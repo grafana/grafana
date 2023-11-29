@@ -271,7 +271,7 @@ func buildDatasourceHeaders(ctx context.Context) map[string]string {
 // getExprRequest validates the condition, gets the datasource information and creates an expr.Request from it.
 func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheService datasources.CacheService) (*expr.Request, error) {
 	req := &expr.Request{
-		OrgId:   ctx.User.OrgID,
+		OrgId:   ctx.User.GetOrgID(),
 		Headers: buildDatasourceHeaders(ctx.Ctx),
 		User:    ctx.User,
 	}

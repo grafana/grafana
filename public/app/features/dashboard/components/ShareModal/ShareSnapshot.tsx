@@ -1,17 +1,16 @@
 import React, { PureComponent } from 'react';
 
 import { isEmptyObject, SelectableValue } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, reportInteraction } from '@grafana/runtime';
 import { Button, ClipboardButton, Field, Input, LinkButton, Modal, Select, Spinner } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
 import { VariableRefresh } from '../../../variables/types';
+import { getDashboardSnapshotSrv } from '../../services/SnapshotSrv';
 
-import { trackDashboardSharingActionPerType } from './analytics';
 import { ShareModalTabProps } from './types';
-import { shareDashboardType } from './utils';
 
 const snapshotApiUrl = '/api/snapshots';
 
@@ -74,10 +73,10 @@ export class ShareSnapshot extends PureComponent<Props, State> {
   }
 
   async getSnaphotShareOptions() {
-    const shareOptions = await getBackendSrv().get('/api/snapshot/shared-options');
+    const shareOptions = await getDashboardSnapshotSrv().getSharingOptions();
     this.setState({
-      sharingButtonText: shareOptions['externalSnapshotName'],
-      externalEnabled: shareOptions['externalEnabled'],
+      sharingButtonText: shareOptions.externalSnapshotName,
+      externalEnabled: shareOptions.externalEnabled,
     });
   }
 
@@ -96,7 +95,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
   };
 
   saveSnapshot = async (dashboard: DashboardModel, external?: boolean) => {
-    const { snapshotExpires } = this.state;
+    const { snapshotExpires, timeoutSeconds } = this.state;
     const dash = this.dashboard.getSaveModelCloneOld();
 
     this.scrubDashboard(dash);
@@ -116,7 +115,17 @@ export class ShareSnapshot extends PureComponent<Props, State> {
         step: 2,
       });
     } finally {
-      trackDashboardSharingActionPerType(external ? 'publish_snapshot' : 'local_snapshot', shareDashboardType.snapshot);
+      if (external) {
+        reportInteraction('dashboards_sharing_snapshot_publish_clicked', {
+          expires: snapshotExpires,
+          timeout: timeoutSeconds,
+        });
+      } else {
+        reportInteraction('dashboards_sharing_snapshot_local_clicked', {
+          expires: snapshotExpires,
+          timeout: timeoutSeconds,
+        });
+      }
       this.setState({ isLoading: false });
     }
   };

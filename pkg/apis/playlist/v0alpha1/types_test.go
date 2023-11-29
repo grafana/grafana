@@ -11,16 +11,12 @@ import (
 
 func TestPlaylistClone(t *testing.T) {
 	src := Playlist{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Playlist",
-			APIVersion: APIVersion,
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              "TheUID",
 			ResourceVersion:   "12345",
 			CreationTimestamp: metav1.NewTime(time.Now()),
 			Annotations: map[string]string{
-				"grafana.com/updatedTime": time.Now().Format(time.RFC3339),
+				"grafana.app/updatedTimestamp": time.Now().Format(time.RFC3339),
 			},
 		},
 		Spec: Spec{

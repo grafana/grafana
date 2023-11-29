@@ -224,15 +224,6 @@ func (s *Service) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuer
 }
 
 func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
-	if len(cmd.Login) == 0 {
-		cmd.Login = cmd.Email
-	}
-
-	// if login is still empty both email and login field is missing
-	if len(cmd.Login) == 0 {
-		return user.ErrEmptyUsernameAndEmail.Errorf("user cannot be created with empty username and email")
-	}
-
 	if s.cfg.CaseInsensitiveLogin {
 		cmd.Login = strings.ToLower(cmd.Login)
 		cmd.Email = strings.ToLower(cmd.Email)
@@ -321,29 +312,15 @@ func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUs
 		return nil, err
 	}
 
-	// tempUser is used to retrieve the teams for the signed in user for internal use.
-	tempUser := &user.SignedInUser{
-		OrgID: signedInUser.OrgID,
-		Permissions: map[int64]map[string][]string{
-			signedInUser.OrgID: {
-				ac.ActionTeamsRead: {ac.ScopeTeamsAll},
-			},
-		},
+	getTeamsByUserQuery := &team.GetTeamIDsByUserQuery{
+		OrgID:  signedInUser.OrgID,
+		UserID: signedInUser.UserID,
 	}
-	getTeamsByUserQuery := &team.GetTeamsByUserQuery{
-		OrgID:        signedInUser.OrgID,
-		UserID:       signedInUser.UserID,
-		SignedInUser: tempUser,
-	}
-	getTeamsByUserQueryResult, err := s.teamService.GetTeamsByUser(ctx, getTeamsByUserQuery)
+	signedInUser.Teams, err = s.teamService.GetTeamIDsByUser(ctx, getTeamsByUserQuery)
 	if err != nil {
 		return nil, err
 	}
 
-	signedInUser.Teams = make([]int64, len(getTeamsByUserQueryResult))
-	for i, t := range getTeamsByUserQueryResult {
-		signedInUser.Teams[i] = t.ID
-	}
 	return signedInUser, err
 }
 

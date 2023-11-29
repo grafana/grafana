@@ -345,7 +345,7 @@ func (s dbFileStorage) List(ctx context.Context, folderPath string, paging *Pagi
 
 		sess.OrderBy("path")
 
-		pageSize := paging.First
+		pageSize := paging.Limit
 		sess.Limit(pageSize + 1)
 
 		if cursor != "" {

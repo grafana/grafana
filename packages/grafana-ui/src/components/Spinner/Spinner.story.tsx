@@ -49,7 +49,7 @@ export const Basic: Story<StoryProps> = (args) => {
 Basic.args = {
   backgroundColor: 'white',
   color: 'red',
-  size: 34,
+  size: 'xl',
   withStyle: false,
 };
 

@@ -24,6 +24,7 @@ export const generateOptions = (desc = false) => {
     'Ok Vicente',
     'Garry Spitz',
     'Han Harnish',
+    'A very long value that is very long and takes up a lot of space and should be truncated preferrably if it does not fit',
   ];
 
   return values.map<SelectableValue<string>>((name) => ({

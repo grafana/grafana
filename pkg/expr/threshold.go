@@ -81,7 +81,7 @@ func UnmarshalThresholdCommand(rn *rawNode, features featuremgmt.FeatureToggles)
 	if err != nil {
 		return nil, fmt.Errorf("invalid condition: %w", err)
 	}
-	if firstCondition.UnloadEvaluator != nil && features.IsEnabled(featuremgmt.FlagRecoveryThreshold) {
+	if firstCondition.UnloadEvaluator != nil && features.IsEnabledGlobally(featuremgmt.FlagRecoveryThreshold) {
 		unloading, err := NewThresholdCommand(rn.RefID, referenceVar, firstCondition.UnloadEvaluator.Type, firstCondition.UnloadEvaluator.Params)
 		unloading.Invert = true
 		if err != nil {

@@ -192,7 +192,7 @@ We strongly recommend not doing this in case you are using Azure AD as an identi
 
 #### Learn more
 
-- [CVE-2023-3128 Advisory](https://grafana.com/security/security-advisories/CVE-2023-3128)
+- [CVE-2023-3128 Advisory](https://grafana.com/security/security-advisories/cve-2023-3128/)
 - [Enable email lookup]({{< relref "../setup-grafana/configure-security/configure-authentication/" >}})
 
 ### The "Alias" field in the CloudWatch data source is removed

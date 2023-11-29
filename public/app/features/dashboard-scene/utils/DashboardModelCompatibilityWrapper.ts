@@ -2,11 +2,19 @@ import { Subscription } from 'rxjs';
 
 import { AnnotationQuery, DashboardCursorSync, dateTimeFormat, DateTimeInput, EventBusSrv } from '@grafana/data';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
-import { behaviors, SceneDataTransformer, sceneGraph, VizPanel } from '@grafana/scenes';
+import {
+  behaviors,
+  SceneDataTransformer,
+  sceneGraph,
+  SceneGridItem,
+  SceneGridLayout,
+  SceneGridRow,
+  VizPanel,
+} from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
-import { findVizPanelByKey, getVizPanelKeyForPanelId } from './utils';
+import { findVizPanelByKey, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from './utils';
 
 /**
  * Will move this to make it the main way we remain somewhat compatible with getDashboardSrv().getCurrent
@@ -104,9 +112,49 @@ export class DashboardModelCompatibilityWrapper {
     return null;
   }
 
+  /**
+   * Mainly implemented to support Getting started panel's dissmis button.
+   */
   public removePanel(panel: PanelCompatibilityWrapper) {
-    // TODO
-    console.error('Scenes DashboardModelCompatibilityWrapper.removePanel not implemented (yet)');
+    const vizPanel = findVizPanelByKey(this._scene, getVizPanelKeyForPanelId(panel.id));
+    if (!vizPanel) {
+      console.error('Trying to remove a panel that was not found in scene', panel);
+      return;
+    }
+
+    const gridItem = vizPanel.parent;
+    if (!(gridItem instanceof SceneGridItem)) {
+      console.error('Trying to remove a panel that is not wrapped in SceneGridItem');
+      return;
+    }
+
+    const layout = sceneGraph.getLayout(vizPanel);
+    if (!(layout instanceof SceneGridLayout)) {
+      console.error('Trying to remove a panel in a layout that is not SceneGridLayout ');
+      return;
+    }
+
+    // if grid item is directly in the layout just remove it
+    if (layout === gridItem.parent) {
+      layout.setState({
+        children: layout.state.children.filter((child) => child !== gridItem),
+      });
+    }
+
+    // Removing from a row is a bit more complicated
+    if (gridItem.parent instanceof SceneGridRow) {
+      // Clone the row and remove the grid item
+      const newRow = layout.clone({
+        children: layout.state.children.filter((child) => child !== gridItem),
+      });
+
+      // Now update the grid layout and replace the row with the updated one
+      if (layout.parent instanceof SceneGridLayout) {
+        layout.parent.setState({
+          children: layout.parent.state.children.map((child) => (child === layout ? newRow : child)),
+        });
+      }
+    }
   }
 
   public canEditAnnotations(dashboardUID?: string) {
@@ -124,6 +172,17 @@ export class DashboardModelCompatibilityWrapper {
 
 class PanelCompatibilityWrapper {
   constructor(private _vizPanel: VizPanel) {}
+
+  public get id() {
+    const id = getPanelIdForVizPanel(this._vizPanel);
+
+    if (isNaN(id)) {
+      console.error('VizPanel key could not be translated to a legacy numeric panel id', this._vizPanel);
+      return 0;
+    }
+
+    return id;
+  }
 
   public get type() {
     return this._vizPanel.state.pluginId;

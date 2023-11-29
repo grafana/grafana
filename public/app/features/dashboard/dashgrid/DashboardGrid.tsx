@@ -5,8 +5,10 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { Subscription } from 'rxjs';
 
 import { config } from '@grafana/runtime';
+import appEvents from 'app/core/app_events';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
+import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardPanelsChangedEvent } from 'app/types/events';
 
 import { AddLibraryPanelWidget } from '../components/AddLibraryPanelWidget';
@@ -18,6 +20,8 @@ import { GridPos } from '../state/PanelModel';
 import DashboardEmpty from './DashboardEmpty';
 import { DashboardPanel } from './DashboardPanel';
 
+export const PANEL_FILTER_VARIABLE = 'systemPanelFilterVar';
+
 export interface Props {
   dashboard: DashboardModel;
   isEditable: boolean;
@@ -25,7 +29,12 @@ export interface Props {
   viewPanel: PanelModel | null;
   hidePanelMenus?: boolean;
 }
-export class DashboardGrid extends PureComponent<Props> {
+
+interface State {
+  panelFilter?: RegExp;
+}
+
+export class DashboardGrid extends PureComponent<Props, State> {
   private panelMap: { [key: string]: PanelModel } = {};
   private eventSubs = new Subscription();
   private windowHeight = 1200;
@@ -37,10 +46,40 @@ export class DashboardGrid extends PureComponent<Props> {
 
   constructor(props: Props) {
     super(props);
+    this.state = {
+      panelFilter: undefined,
+    };
   }
 
   componentDidMount() {
     const { dashboard } = this.props;
+
+    if (config.featureToggles.panelFilterVariable) {
+      // If panel filter variable is set on load then
+      // update state to filter panels
+      for (const variable of dashboard.getVariables()) {
+        if (variable.id === PANEL_FILTER_VARIABLE) {
+          if ('query' in variable) {
+            this.setPanelFilter(variable.query);
+          }
+          break;
+        }
+      }
+
+      this.eventSubs.add(
+        appEvents.subscribe(VariablesChanged, (e) => {
+          if (e.payload.variable?.id === PANEL_FILTER_VARIABLE) {
+            if ('current' in e.payload.variable) {
+              let variable = e.payload.variable.current;
+              if ('value' in variable && typeof variable.value === 'string') {
+                this.setPanelFilter(variable.value);
+              }
+            }
+          }
+        })
+      );
+    }
+
     this.eventSubs.add(dashboard.events.subscribe(DashboardPanelsChangedEvent, this.triggerForceUpdate));
   }
 
@@ -48,10 +87,25 @@ export class DashboardGrid extends PureComponent<Props> {
     this.eventSubs.unsubscribe();
   }
 
+  setPanelFilter(regex: string) {
+    // Only set the panels filter if the systemPanelFilterVar variable
+    // is a non-empty string
+    let panelFilter = undefined;
+    if (regex.length > 0) {
+      panelFilter = new RegExp(regex, 'i');
+    }
+
+    this.setState({
+      panelFilter: panelFilter,
+    });
+  }
+
   buildLayout() {
     const layout: ReactGridLayout.Layout[] = [];
     this.panelMap = {};
+    const { panelFilter } = this.state;
 
+    let count = 0;
     for (const panel of this.props.dashboard.panels) {
       if (!panel.key) {
         panel.key = `panel-${panel.id}-${Date.now()}`;
@@ -78,13 +132,27 @@ export class DashboardGrid extends PureComponent<Props> {
         panelPos.isDraggable = panel.collapsed;
       }
 
-      layout.push(panelPos);
+      if (!panelFilter) {
+        layout.push(panelPos);
+      } else {
+        if (panelFilter.test(panel.title)) {
+          panelPos.isResizable = false;
+          panelPos.isDraggable = false;
+          panelPos.x = (count % 2) * GRID_COLUMN_COUNT;
+          panelPos.y = Math.floor(count / 2);
+          layout.push(panelPos);
+          count++;
+        }
+      }
     }
 
     return layout;
   }
 
   onLayoutChange = (newLayout: ReactGridLayout.Layout[]) => {
+    if (this.state.panelFilter) {
+      return;
+    }
     for (const newPos of newLayout) {
       this.panelMap[newPos.i!].updateGridPos(newPos, this.isLayoutInitialized);
     }
@@ -136,6 +204,7 @@ export class DashboardGrid extends PureComponent<Props> {
   }
 
   renderPanels(gridWidth: number, isDashboardDraggable: boolean) {
+    const { panelFilter } = this.state;
     const panelElements = [];
 
     // Reset last panel bottom
@@ -156,7 +225,7 @@ export class DashboardGrid extends PureComponent<Props> {
       // requires parent create stacking context to prevent overlap with parent elements
       const descIndex = this.props.dashboard.panels.length - panelElements.length;
 
-      panelElements.push(
+      const p = (
         <GrafanaGridItem
           key={panel.key}
           className={panelClasses}
@@ -173,6 +242,14 @@ export class DashboardGrid extends PureComponent<Props> {
           }}
         </GrafanaGridItem>
       );
+
+      if (!panelFilter) {
+        panelElements.push(p);
+      } else {
+        if (panelFilter.test(panel.title)) {
+          panelElements.push(p);
+        }
+      }
     }
 
     return panelElements;
@@ -295,7 +372,7 @@ interface GrafanaGridItemProps extends React.HTMLAttributes<HTMLDivElement> {
   isViewing: boolean;
   windowHeight: number;
   windowWidth: number;
-  children: any;
+  children: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 /**
