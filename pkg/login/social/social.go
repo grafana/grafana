@@ -74,7 +74,7 @@ type OAuthInfo struct {
 	TlsSkipVerify           bool              `mapstructure:"tls_skip_verify_insecure" toml:"tls_skip_verify_insecure"`
 	UsePKCE                 bool              `mapstructure:"use_pkce" toml:"use_pkce"`
 	UseRefreshToken         bool              `mapstructure:"use_refresh_token" toml:"use_refresh_token"`
-	SignoutRedirectUrl      string            `mapstructure:"signout_redirect_url"`
+	SignoutRedirectUrl      string            `mapstructure:"signout_redirect_url" toml:"signout_redirect_url"`
 	Extra                   map[string]string `mapstructure:",remain" toml:"extra,omitempty"`
 }
 
