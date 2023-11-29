@@ -330,8 +330,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "21"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "22"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "23"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "24"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "25"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "24"]
     ],
     "packages/grafana-data/src/types/explore.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -752,20 +751,6 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/DateTimePickers/TimeRangeInput.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
-    "packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker/CalendarHeader.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
-    ],
-    "packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker/TimePickerCalendar.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
-    ],
-    "packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker/TimePickerFooter.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
-    ],
-    "packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker/TimeRangeContent.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"],
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"]
-    ],
     "packages/grafana-ui/src/components/Drawer/Drawer.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
@@ -1147,9 +1132,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
-    "public/app/core/components/ForgottenPassword/ChangePassword.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
-    ],
     "public/app/core/components/ForgottenPassword/ForgottenPassword.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
@@ -1185,38 +1167,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "2"],
       [0, 0, 0, "Styles should be written using objects.", "3"],
       [0, 0, 0, "Styles should be written using objects.", "4"]
-    ],
-    "public/app/core/components/Login/LoginForm.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"],
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "3"]
-    ],
-    "public/app/core/components/Login/LoginLayout.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"],
-      [0, 0, 0, "Styles should be written using objects.", "5"],
-      [0, 0, 0, "Styles should be written using objects.", "6"],
-      [0, 0, 0, "Styles should be written using objects.", "7"],
-      [0, 0, 0, "Styles should be written using objects.", "8"],
-      [0, 0, 0, "Styles should be written using objects.", "9"],
-      [0, 0, 0, "Styles should be written using objects.", "10"]
-    ],
-    "public/app/core/components/Login/LoginPage.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
-    "public/app/core/components/Login/LoginServiceButtons.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"]
-    ],
-    "public/app/core/components/Login/UserSignup.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/core/components/NestedFolderPicker/Trigger.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
@@ -1339,9 +1289,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
-    "public/app/core/components/PasswordField/PasswordField.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
-    ],
     "public/app/core/components/QueryOperationRow/OperationRowHelp.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
@@ -1450,9 +1397,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "5"],
       [0, 0, 0, "Styles should be written using objects.", "6"],
       [0, 0, 0, "Styles should be written using objects.", "7"]
-    ],
-    "public/app/core/navigation/GrafanaRouteError.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/core/navigation/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -1651,8 +1595,7 @@ exports[`better eslint`] = {
     ],
     "public/app/features/alerting/AlertTab.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/features/alerting/AlertTabCtrl.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -1786,10 +1729,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/features/alerting/unified/PanelAlertTabContent.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"]
+      [0, 0, 0, "Styles should be written using objects.", "2"]
     ],
     "public/app/features/alerting/unified/RedirectToRuleViewer.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -2361,11 +2303,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
     "public/app/features/alerting/unified/components/rule-editor/query-and-alert-condition/QueryAndExpressionsStep.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
       [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"]
+      [0, 0, 0, "Styles should be written using objects.", "3"]
     ],
     "public/app/features/alerting/unified/components/rule-editor/rule-types/RuleType.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -3892,6 +3833,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "4"],
       [0, 0, 0, "Styles should be written using objects.", "5"]
     ],
+    "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/SpanFlameGraph.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
     "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/TextList.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
@@ -4891,10 +4835,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/transformers/editors/ReduceTransformerEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/features/transformers/editors/RenameByRegexTransformer.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
     "public/app/features/transformers/editors/SortByTransformerEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -5958,8 +5898,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
     ],
     "public/app/plugins/datasource/loki/queryUtils.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]

@@ -44,7 +44,7 @@ func addMigrationInfo(da *migrationStore.DashAlert, dashboardUID string) (map[st
 // MigrateAlert migrates a single dashboard alert from legacy alerting to unified alerting.
 func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, da *migrationStore.DashAlert, info migmodels.DashboardUpgradeInfo) (*ngmodels.AlertRule, error) {
 	l.Debug("Migrating alert rule to Unified Alerting")
-	cond, err := transConditions(ctx, da, om.migrationStore)
+	cond, err := transConditions(ctx, l, da, om.migrationStore)
 	if err != nil {
 		return nil, fmt.Errorf("transform conditions: %w", err)
 	}

@@ -274,8 +274,7 @@ type SetResourcePermissionCommand struct {
 }
 
 type SaveExternalServiceRoleCommand struct {
-	OrgID             int64
-	Global            bool
+	AssignmentOrgID   int64
 	ExternalServiceID string
 	ServiceAccountID  int64
 	Permissions       []Permission
@@ -288,10 +287,6 @@ func (cmd *SaveExternalServiceRoleCommand) Validate() error {
 
 	// slugify the external service id ID for the role to have correct name and uid
 	cmd.ExternalServiceID = slugify.Slugify(cmd.ExternalServiceID)
-
-	if (cmd.OrgID == GlobalOrgID) != cmd.Global {
-		return fmt.Errorf("invalid org id %d for global role %t", cmd.OrgID, cmd.Global)
-	}
 
 	// Check and deduplicate permissions
 	if cmd.Permissions == nil || len(cmd.Permissions) == 0 {

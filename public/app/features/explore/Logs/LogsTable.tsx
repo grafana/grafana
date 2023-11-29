@@ -34,8 +34,8 @@ interface Props {
   logsSortOrder: LogsSortOrder;
   columnsWithMeta: Record<string, fieldNameMeta>;
   height: number;
-  onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
-  onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
+  onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
 }
 
 export function LogsTable(props: Props) {
@@ -147,11 +147,11 @@ export function LogsTable(props: Props) {
       return;
     }
     if (operator === FILTER_FOR_OPERATOR) {
-      onClickFilterLabel(key, value, dataFrame.refId);
+      onClickFilterLabel(key, value, dataFrame);
     }
 
     if (operator === FILTER_OUT_OPERATOR) {
-      onClickFilterOutLabel(key, value, dataFrame.refId);
+      onClickFilterOutLabel(key, value, dataFrame);
     }
   };
 

@@ -2,15 +2,13 @@ import React from 'react';
 
 import { dateTime, UrlQueryMap } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, VizPanel, sceneGraph } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
 import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, Switch } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { createShortLink } from 'app/core/utils/shortLinks';
 import { ThemePicker } from 'app/features/dashboard/components/ShareModal/ThemePicker';
-import { trackDashboardSharingActionPerType } from 'app/features/dashboard/components/ShareModal/analytics';
-import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { getDashboardUrl } from '../utils/urlBuilders';
@@ -30,6 +28,8 @@ interface ShareOptions {
 }
 
 export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
+  public tabId = 'Link';
+
   static Component = ShareLinkTabRenderer;
 
   constructor(state: Omit<ShareLinkTabState, keyof ShareOptions>) {
@@ -119,7 +119,11 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
   };
 
   onCopy() {
-    trackDashboardSharingActionPerType('copy_link', shareDashboardType.link);
+    reportInteraction('dashboards_sharing_link_copy_clicked', {
+      currentTimeRange: this.state.useLockedTime,
+      theme: this.state.selectedTheme,
+      shortenURL: this.state.useShortUrl,
+    });
   }
 }
 
