@@ -220,14 +220,16 @@ to a comma- or space-separated list of group object IDs. You can find object IDs
 
 #### Configure group membership claims
 
-To make sure that the `groups` claim is included in the token, you need to add the `groups` claim to the token configuration either through the Azure Portal UI or by editing the manifest file. To do this from the Azure Portal UI: 
-1. Navigate to the **App Registrations** page and select your application
-1. Select **Token configuration**
-1. Click on **Add groups claim** and then select the relevant option for your use case (for example, **Security groups**). 
+To ensure that the `groups` claim is included in the token, add the `groups` claim to the token configuration either through the Azure Portal UI or by editing the manifest file. 
+
+To configure group membership claims from the Azure Portal UI, complete the following steps: 
+1. Navigate to the **App Registrations** page and select your application.
+1. Select **Token configuration**.
+1. Click **Add groups claim** and then select the relevant option for your use case (for example, **Security groups**). 
  
 For more information, see [Configure groups optional claims](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims#configure-groups-optional-claims).
 
-> If the user is a member of more than 200 groups, Azure AD does not emit the groups claim in the token and emits a group overage claim instead. To setup group overage claim, see [Users with over 200 Group assignments](#users-with-over-200-group-assignments).
+> If the user is a member of more than 200 groups, Azure AD does not emit the groups claim in the token and instead emits a group overage claim. To set up a group overage claim, see [Users with over 200 Group assignments](#users-with-over-200-group-assignments).
 
 ### Configure allowed domains
 
@@ -284,17 +286,21 @@ Azure AD does not emit the groups claim in the token and emits a group overage c
 If Grafana receives a token with a group overage claim instead of a groups claim,
 Grafana attempts to retrieve the user's group membership by calling the included endpoint.
 
-> Note: The 'App registration' must include the `GroupMember.Read.All` API permission for group overage claim calls to succeed.
+{{% admonition type="note" %}}
+The 'App registration' must include the `GroupMember.Read.All` API permission for group overage claim calls to succeed.
+
+Admin consent may be required for this permission.
+{{% /admonition %}}
 > Admin consent may be required for this permission.
 
 #### Configure the required Graph API permissions
 
-1. Go to **Azure Active Directory -> App registrations** and select your application.
-2. Select **API permissions** and then click on **Add a permission**.
-3. Select **Microsoft Graph** from the list of APIs.
-4. Select **Delegated permissions**.
-5. Select **GroupMember.Read.All** (under the **GroupMember** section).
-6. Click **Add permissions**. 
+1. Navigate to **Azure Active Directory > App registrations** and select your application.
+1. Select **API permissions** and then click on **Add a permission**.
+1. Select **Microsoft Graph** from the list of APIs.
+1. Select **Delegated permissions**.
+1. Under the **GroupMember** section, select **GroupMember.Read.All**.
+1. Click **Add permissions**. 
 
 > Admin consent may be required for this permission.
 
