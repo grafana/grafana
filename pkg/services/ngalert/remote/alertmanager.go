@@ -385,3 +385,8 @@ func (am *Alertmanager) shouldSendState(ctx context.Context, state string) bool 
 
 	return rs.State != state
 }
+
+func (am *Alertmanager) SendStateAndConfig() error {
+	// TODO: implement.
+	return nil
+}

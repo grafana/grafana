@@ -10,33 +10,37 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 )
 
+//go:generate mockery --name remoteAlertmanager --structname RemoteAlertmanagerMock --with-expecter --output mock --outpkg alertmanager_mock
+type remoteAlertmanager interface {
+	notifier.Alertmanager
+	SendStateAndConfig() error
+}
+
 type RemoteSecondaryForkedAlertmanager struct {
 	log log.Logger
 
-	lastSync     time.Time
-	syncInterval time.Duration
-
+	shutdown chan struct{}
 	internal notifier.Alertmanager
-	remote   notifier.Alertmanager
+	remote   remoteAlertmanager
 }
 
-func NewRemoteSecondaryForkedAlertmanager(l log.Logger, syncInterval time.Duration, internal, remote notifier.Alertmanager) *RemoteSecondaryForkedAlertmanager {
-	return &RemoteSecondaryForkedAlertmanager{
-		log:          l,
-		syncInterval: syncInterval,
-		internal:     internal,
-		remote:       remote,
+func NewRemoteSecondaryForkedAlertmanager(l log.Logger, syncInterval time.Duration, internal notifier.Alertmanager, remote remoteAlertmanager) *RemoteSecondaryForkedAlertmanager {
+	shutdownCh := make(chan struct{})
+	fam := RemoteSecondaryForkedAlertmanager{
+		log:      l,
+		internal: internal,
+		remote:   remote,
+		shutdown: shutdownCh,
 	}
+
+	// Start the routine to sync configuration and state.
+	go fam.syncRoutine(syncInterval)
+	return &fam
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
-	if time.Since(fam.lastSync) >= fam.syncInterval {
-		fam.log.Debug("Applying config to the remote Alertmanager", "lastSync", fam.lastSync, "syncInterval", fam.syncInterval)
-		if err := fam.remote.ApplyConfig(ctx, config); err != nil {
-			fam.log.Error("Error applying config to the remote Alertmanager", "err", err)
-		} else {
-			fam.lastSync = time.Now()
-		}
+	if err := fam.remote.ApplyConfig(ctx, config); err != nil {
+		fam.log.Error("Error applying config to the remote Alertmanager", "err", err)
 	}
 	return fam.internal.ApplyConfig(ctx, config)
 }
@@ -101,6 +105,9 @@ func (fam *RemoteSecondaryForkedAlertmanager) CleanUp() {
 func (fam *RemoteSecondaryForkedAlertmanager) StopAndWait() {
 	fam.internal.StopAndWait()
 	fam.remote.StopAndWait()
+
+	// Stop our routine to sync configuration and state.
+	fam.shutdown <- struct{}{}
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) Ready() bool {
@@ -109,4 +116,23 @@ func (fam *RemoteSecondaryForkedAlertmanager) Ready() bool {
 		return false
 	}
 	return fam.internal.Ready()
+}
+
+func (fam *RemoteSecondaryForkedAlertmanager) syncRoutine(interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	for {
+		select {
+		case <-ticker.C:
+			fam.log.Debug("Syncing configuration and state with the remote Alertmanager")
+			// TODO: context?
+			if err := fam.remote.SendStateAndConfig(); err != nil {
+				fam.log.Error("Failed to sync configuration and state with the remote Alertmanager", "err", err)
+			}
+			fam.log.Debug("Finished syncing configuration and state with the remote Alertmanager")
+		// Note: We could do the same thing with a context + cancel func.
+		case <-fam.shutdown:
+			fam.log.Debug("Stopping sync routine")
+			return
+		}
+	}
 }

@@ -176,10 +176,24 @@ func (ng *AlertNG) init() error {
 	var overrides []notifier.Option
 	if ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Enable {
 		override := notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
-			externalAMCfg := remote.AlertmanagerConfig{}
+			m := metrics.NewAlertmanagerMetrics(multiOrgMetrics.GetOrCreateOrgRegistry(orgID))
+			i, err := notifier.NewAlertmanager(ctx, orgID, ng.Cfg, ng.store, ng.KVStore, &notifier.NilPeer{}, decryptFn, ng.NotificationService, m)
+			if err != nil {
+				return nil, err
+			}
+
+			externalAMCfg := remote.AlertmanagerConfig{
+				URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
+				TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
+				BasicAuthPassword: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
+			}
 			// We won't be handling files on disk, we can pass an empty string as workingDirPath.
 			stateStore := notifier.NewFileStore(orgID, ng.KVStore, "")
-			return remote.NewAlertmanager(externalAMCfg, orgID, stateStore)
+			r, err := remote.NewAlertmanager(externalAMCfg, orgID, stateStore)
+			if err != nil {
+				return nil, err
+			}
+			return remote.NewRemoteSecondaryForkedAlertmanager(log.New("ngalert.forked-alertmanager.remote-secondary"), time.Minute, i, r), nil
 		})
 
 		overrides = append(overrides, override)
