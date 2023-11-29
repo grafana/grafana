@@ -114,6 +114,7 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		identity, clientErr = proxyClient.AuthenticateProxy(ctx, r, username, additional)
 		if identity != nil {
 			identity.ClientParams.CacheAuthProxyKey = cacheKey
+			identity.AuthenticatedBy = login.AuthProxyAuthModule
 			return identity, nil
 		}
 	}

@@ -1,7 +1,6 @@
 import {
   getTimeZone,
   PanelMenuItem,
-  PluginExtensionLink,
   PluginExtensionPoints,
   urlUtil,
   type PluginExtensionPanelContext,
@@ -26,7 +25,7 @@ import {
 } from 'app/features/dashboard/utils/panel';
 import { InspectTab } from 'app/features/inspector/types';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
-import { truncateTitle } from 'app/features/plugins/extensions/utils';
+import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { store } from 'app/store/store';
 
@@ -261,7 +260,7 @@ export function getPanelMenu(
 
   if (isCreateAlertMenuOptionAvailable) {
     subMenu.push({
-      text: t('panel.header-menu.create-alert', `Create alert`),
+      text: t('panel.header-menu.new-alert-rule', `New alert rule`),
       onClick: onCreateAlert,
     });
   }
@@ -304,7 +303,7 @@ export function getPanelMenu(
     subMenu.length = 0;
     if (isCreateAlertMenuOptionAvailable) {
       subMenu.push({
-        text: t('panel.header-menu.create-alert', `Create alert`),
+        text: t('panel.header-menu.new-alert-rule', `New alert rule`),
         onClick: onCreateAlert,
       });
     }
@@ -374,54 +373,4 @@ function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): P
     scopedVars: panel.scopedVars,
     data: panel.getQueryRunner().getLastResult(),
   };
-}
-
-function createExtensionSubMenu(extensions: PluginExtensionLink[]): PanelMenuItem[] {
-  const categorized: Record<string, PanelMenuItem[]> = {};
-  const uncategorized: PanelMenuItem[] = [];
-
-  for (const extension of extensions) {
-    const category = extension.category;
-
-    if (!category) {
-      uncategorized.push({
-        text: truncateTitle(extension.title, 25),
-        href: extension.path,
-        onClick: extension.onClick,
-      });
-      continue;
-    }
-
-    if (!Array.isArray(categorized[category])) {
-      categorized[category] = [];
-    }
-
-    categorized[category].push({
-      text: truncateTitle(extension.title, 25),
-      href: extension.path,
-      onClick: extension.onClick,
-    });
-  }
-
-  const subMenu = Object.keys(categorized).reduce((subMenu: PanelMenuItem[], category) => {
-    subMenu.push({
-      text: truncateTitle(category, 25),
-      type: 'group',
-      subMenu: categorized[category],
-    });
-    return subMenu;
-  }, []);
-
-  if (uncategorized.length > 0) {
-    if (subMenu.length > 0) {
-      subMenu.push({
-        text: 'divider',
-        type: 'divider',
-      });
-    }
-
-    Array.prototype.push.apply(subMenu, uncategorized);
-  }
-
-  return subMenu;
 }

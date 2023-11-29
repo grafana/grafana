@@ -12,7 +12,7 @@ labels:
     - enterprise
     - oss
 title: Alertmanager
-weight: 103
+weight: 140
 ---
 
 # Alertmanager

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Tab, TabProps } from '@grafana/ui/src/components/Tabs/Tab';
+import { Tab, TabProps } from '@grafana/ui';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
 import { usePanelCombinedRules } from './hooks/usePanelCombinedRules';

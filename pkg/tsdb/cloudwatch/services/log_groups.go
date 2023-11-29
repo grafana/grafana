@@ -1,7 +1,10 @@
 package services
 
 import (
+	"context"
+
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
@@ -17,7 +20,7 @@ func NewLogGroupsService(logsClient models.CloudWatchLogsAPIProvider, isCrossAcc
 	return &LogGroupsService{logGroupsAPI: logsClient, isCrossAccountEnabled: isCrossAccountEnabled}
 }
 
-func (s *LogGroupsService) GetLogGroups(req resources.LogGroupsRequest) ([]resources.ResourceResponse[resources.LogGroup], error) {
+func (s *LogGroupsService) GetLogGroupsWithContext(ctx context.Context, req resources.LogGroupsRequest) ([]resources.ResourceResponse[resources.LogGroup], error) {
 	input := &cloudwatchlogs.DescribeLogGroupsInput{
 		Limit:              aws.Int64(req.Limit),
 		LogGroupNamePrefix: req.LogGroupNamePrefix,
@@ -36,7 +39,7 @@ func (s *LogGroupsService) GetLogGroups(req resources.LogGroupsRequest) ([]resou
 	result := []resources.ResourceResponse[resources.LogGroup]{}
 
 	for {
-		response, err := s.logGroupsAPI.DescribeLogGroups(input)
+		response, err := s.logGroupsAPI.DescribeLogGroupsWithContext(ctx, input)
 		if err != nil || response == nil {
 			return nil, err
 		}
@@ -60,7 +63,7 @@ func (s *LogGroupsService) GetLogGroups(req resources.LogGroupsRequest) ([]resou
 	return result, nil
 }
 
-func (s *LogGroupsService) GetLogGroupFields(request resources.LogGroupFieldsRequest) ([]resources.ResourceResponse[resources.LogGroupField], error) {
+func (s *LogGroupsService) GetLogGroupFieldsWithContext(ctx context.Context, request resources.LogGroupFieldsRequest, option ...request.Option) ([]resources.ResourceResponse[resources.LogGroupField], error) {
 	input := &cloudwatchlogs.GetLogGroupFieldsInput{
 		LogGroupName: aws.String(request.LogGroupName),
 	}
@@ -70,7 +73,7 @@ func (s *LogGroupsService) GetLogGroupFields(request resources.LogGroupFieldsReq
 	// 	input.LogGroupName = nil
 	// }
 
-	getLogGroupFieldsOutput, err := s.logGroupsAPI.GetLogGroupFields(input)
+	getLogGroupFieldsOutput, err := s.logGroupsAPI.GetLogGroupFieldsWithContext(ctx, input)
 	if err != nil {
 		return nil, err
 	}

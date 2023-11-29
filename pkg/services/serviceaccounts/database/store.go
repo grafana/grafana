@@ -171,6 +171,15 @@ func (s *ServiceAccountsStoreImpl) deleteServiceAccount(sess *db.Session, orgId,
 	return nil
 }
 
+// EnableServiceAccount enable/disable service account
+func (s *ServiceAccountsStoreImpl) EnableServiceAccount(ctx context.Context, orgID, serviceAccountID int64, enable bool) error {
+	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		query := "UPDATE " + s.sqlStore.GetDialect().Quote("user") + " SET is_disabled = ? WHERE id = ? AND is_service_account = ?"
+		_, err := sess.Exec(query, !enable, serviceAccountID, true)
+		return err
+	})
+}
+
 // RetrieveServiceAccount returns a service account by its ID
 func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, orgId, serviceAccountId int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
 	serviceAccount := &serviceaccounts.ServiceAccountProfileDTO{}
@@ -270,9 +279,6 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 	}
 
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
-		sess := dbSession.Table("org_user")
-		sess.Join("INNER", s.sqlStore.GetDialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.GetDialect().Quote("user")))
-
 		whereConditions := make([]string, 0)
 		whereParams := make([]any, 0)
 
@@ -312,9 +318,37 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 				whereConditions,
 				"is_disabled = ?")
 			whereParams = append(whereParams, s.sqlStore.GetDialect().BooleanStr(true))
+		case serviceaccounts.FilterOnlyExternal:
+			whereConditions = append(
+				whereConditions,
+				"login "+s.sqlStore.GetDialect().LikeStr()+" ?")
+			whereParams = append(whereParams, serviceaccounts.ServiceAccountPrefix+serviceaccounts.ExtSvcPrefix+"%")
 		default:
 			s.log.Warn("Invalid filter user for service account filtering", "service account search filtering", query.Filter)
 		}
+
+		// Count the number of accounts
+		serviceaccount := serviceaccounts.ServiceAccountDTO{}
+		countSess := dbSession.Table("org_user")
+		countSess.Join("INNER", s.sqlStore.GetDialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.GetDialect().Quote("user")))
+
+		if len(whereConditions) > 0 {
+			countSess.Where(strings.Join(whereConditions, " AND "), whereParams...)
+		}
+		count, err := countSess.Count(&serviceaccount)
+		if err != nil {
+			return err
+		}
+		searchResult.TotalCount = count
+
+		// Stop here if we only wanted to count the number of accounts
+		if query.CountOnly {
+			return nil
+		}
+
+		// Fetch service accounts
+		sess := dbSession.Table("org_user")
+		sess.Join("INNER", s.sqlStore.GetDialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.GetDialect().Quote("user")))
 
 		if len(whereConditions) > 0 {
 			sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
@@ -338,21 +372,6 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 		if err := sess.Find(&searchResult.ServiceAccounts); err != nil {
 			return err
 		}
-
-		// get total
-		serviceaccount := serviceaccounts.ServiceAccountDTO{}
-		countSess := dbSession.Table("org_user")
-		sess.Join("INNER", s.sqlStore.GetDialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.GetDialect().Quote("user")))
-
-		if len(whereConditions) > 0 {
-			countSess.Where(strings.Join(whereConditions, " AND "), whereParams...)
-		}
-		count, err := countSess.Count(&serviceaccount)
-		if err != nil {
-			return err
-		}
-		searchResult.TotalCount = count
-
 		return nil
 	})
 	if err != nil {

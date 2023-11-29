@@ -67,6 +67,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   dataSupport: true,
   key: true,
   isNew: true,
+  refreshWhenInView: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -191,6 +192,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   cacheTimeout?: string | null;
   queryCachingTTL?: number | null;
   isNew?: boolean;
+  refreshWhenInView = false;
 
   cachedPluginOptions: Record<string, PanelOptionsCache> = {};
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
@@ -360,9 +362,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   }
 
   runAllPanelQueries({ dashboardUID, dashboardTimezone, timeData, width }: RunPanelQueryOptions) {
-    if (this.type === 'row') {
-      return;
-    }
     this.getQueryRunner().run({
       datasource: this.datasource,
       queries: this.targets,
@@ -617,7 +616,9 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   }
 
   isAngularPlugin(): boolean {
-    return (this.plugin && this.plugin.angularPanelCtrl) !== undefined || (this.plugin?.meta?.angularDetected ?? false);
+    return (
+      (this.plugin && this.plugin.angularPanelCtrl) !== undefined || (this.plugin?.meta?.angular?.detected ?? false)
+    );
   }
 
   destroy() {

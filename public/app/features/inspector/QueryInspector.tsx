@@ -4,9 +4,8 @@ import { Subscription } from 'rxjs';
 
 import { LoadingState, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Button, ClipboardButton, JSONFormatter, LoadingPlaceholder } from '@grafana/ui';
+import { Button, ClipboardButton, JSONFormatter, LoadingPlaceholder, Stack } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { backendSrv } from 'app/core/services/backend_srv';
 
@@ -33,7 +32,7 @@ interface State {
 }
 
 export class QueryInspector extends PureComponent<Props, State> {
-  private formattedJson: any;
+  private formattedJson?: {};
   private subs = new Subscription();
 
   constructor(props: Props) {
@@ -147,7 +146,7 @@ export class QueryInspector extends PureComponent<Props, State> {
     });
   }
 
-  setFormattedJson = (formattedJson: any) => {
+  setFormattedJson = (formattedJson: {}) => {
     this.formattedJson = formattedJson;
   };
 

@@ -129,7 +129,7 @@ schemas: [{
 
 			// Required Grafana version for this plugin. Validated using
 			// https://github.com/npm/node-semver.
-			grafanaDependency?: =~"^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]+))?$"
+			grafanaDependency?: =~"^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]+))?(\\-[0-9]+)?$"
 
 			// An array of required plugins on which this plugin depends
 			plugins?: [...#Dependency]
@@ -425,9 +425,6 @@ schemas: [{
 		}
 
 		#Impersonation: {
-			// Enabled allows the service to request access tokens to impersonate users using the jwtbearer grant
-			// Defaults to true.
-			enabled?: bool
 			// Groups allows the service to list the impersonated user's teams.
 			// Defaults to true.
 			groups?: bool

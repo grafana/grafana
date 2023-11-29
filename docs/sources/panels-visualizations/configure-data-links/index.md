@@ -20,7 +20,7 @@ labels:
     - oss
 menuTitle: Configure data links
 title: Configure data links
-weight: 400
+weight: 80
 ---
 
 # Configure data links

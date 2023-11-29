@@ -4,7 +4,7 @@ import React, { ElementType, forwardRef, PropsWithChildren } from 'react';
 import { GrafanaTheme2, ThemeSpacingTokens, ThemeShape, ThemeShadows } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
-import { AlignItems, JustifyContent } from '../Flex/Flex';
+import { AlignItems, FlexProps, JustifyContent } from '../types';
 import { ResponsiveProp, getResponsiveStyle } from '../utils/responsiveness';
 
 type Display = 'flex' | 'block' | 'inline' | 'none';
@@ -14,7 +14,7 @@ export type BorderColor = keyof GrafanaTheme2['colors']['border'] | 'error' | 's
 export type BorderRadius = keyof ThemeShape['radius'];
 export type BoxShadow = keyof ThemeShadows;
 
-interface BoxProps extends Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
+interface BoxProps extends FlexProps, Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
   // Margin props
   /** Sets the property `margin` */
   margin?: ResponsiveProp<ThemeSpacingTokens>;
@@ -53,10 +53,6 @@ interface BoxProps extends Omit<React.HTMLAttributes<HTMLElement>, 'className' |
   borderRadius?: ResponsiveProp<BorderRadius>;
 
   // Flex Props
-  /** Sets the property `flex` */
-  grow?: ResponsiveProp<number>;
-  /** Sets the property `flex-shrink` */
-  shrink?: ResponsiveProp<number>;
   alignItems?: ResponsiveProp<AlignItems>;
   justifyContent?: ResponsiveProp<JustifyContent>;
   gap?: ResponsiveProp<ThemeSpacingTokens>;
@@ -90,6 +86,8 @@ export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, 
     backgroundColor,
     grow,
     shrink,
+    basis,
+    flex,
     borderColor,
     borderStyle,
     borderRadius,
@@ -120,6 +118,8 @@ export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, 
     backgroundColor,
     grow,
     shrink,
+    basis,
+    flex,
     borderColor,
     borderStyle,
     borderRadius,
@@ -183,6 +183,8 @@ const getStyles = (
   backgroundColor: BoxProps['backgroundColor'],
   grow: BoxProps['grow'],
   shrink: BoxProps['shrink'],
+  basis: BoxProps['basis'],
+  flex: BoxProps['flex'],
   borderColor: BoxProps['borderColor'],
   borderStyle: BoxProps['borderStyle'],
   borderRadius: BoxProps['borderRadius'],
@@ -246,10 +248,16 @@ const getStyles = (
         backgroundColor: customBackgroundColor(val, theme),
       })),
       getResponsiveStyle(theme, grow, (val) => ({
-        flex: val,
+        flexGrow: val,
       })),
       getResponsiveStyle(theme, shrink, (val) => ({
         flexShrink: val,
+      })),
+      getResponsiveStyle(theme, basis, (val) => ({
+        flexBasis: val,
+      })),
+      getResponsiveStyle(theme, flex, (val) => ({
+        flex: val,
       })),
       getResponsiveStyle(theme, borderStyle, (val) => ({
         borderStyle: val,

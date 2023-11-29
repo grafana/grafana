@@ -33,6 +33,10 @@ If you just want to explore your data and do not want to create a dashboard, the
 
 In order to access Explore, you must have an editor or an administrator role, unless the [viewers_can_edit option]({{< relref "../setup-grafana/configure-grafana/#viewers_can_edit" >}}) is enabled. Refer to [About users and permissions]({{< relref "../administration/roles-and-permissions/" >}}) for more information on what each role has access to.
 
+{{% admonition type="note" %}}
+If you are using Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to enable the `viewers_can_edit` option
+{{% /admonition %}}
+
 To access Explore:
 
 1. Click on the Explore icon on the menu bar.
@@ -82,6 +86,10 @@ You can then click on any panel icon in the content outline to navigate to that 
 ## Share Explore URLs
 
 When using Explore, the URL in the browser address bar updates as you make changes to the queries. You can share or bookmark this URL.
+
+{{% admonition type="note" %}}
+Explore may generate relatively long URLs, some tools, like messaging or videoconferencing apps, may truncate messages to a fixed length. In such cases Explore will display a warning message and load a default state. If you encounter issues when sharing Explore links in such apps, you can generate shortened links. See [Share shortened link](#share-shortened-link) for more information.
+{{% /admonition %}}
 
 ### Generating Explore URLs from external tools
 

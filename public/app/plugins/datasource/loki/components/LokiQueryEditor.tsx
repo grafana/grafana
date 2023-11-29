@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash';
-import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
+import React, { SyntheticEvent, useCallback, useEffect, useId, useState } from 'react';
 import { usePrevious } from 'react-use';
 
 import { CoreApp, LoadingState } from '@grafana/data';
@@ -29,6 +29,7 @@ export const testIds = {
 };
 
 export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
+  const id = useId();
   const { onChange, onRunQuery, onAddQuery, data, app, queries, datasource, range: timeRange } = props;
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [queryPatternsModalOpen, setQueryPatternsModalOpen] = useState(false);
@@ -96,7 +97,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
   };
 
   useEffect(() => {
-    const update = shouldUpdateStats(
+    const shouldUpdate = shouldUpdateStats(
       query.expr,
       previousQueryExpr,
       timeRange,
@@ -104,14 +105,15 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
       query.queryType,
       previousQueryType
     );
-    if (update) {
+    if (shouldUpdate && timeRange) {
       const makeAsyncRequest = async () => {
-        const stats = await datasource.getStats(query);
+        // overwriting the refId that is later used to cancel inflight queries with the same ID.
+        const stats = await datasource.getStats({ ...query, refId: `${id}_${query.refId}` }, timeRange);
         setQueryStats(stats);
       };
       makeAsyncRequest();
     }
-  }, [datasource, timeRange, previousTimeRange, query, previousQueryExpr, previousQueryType, setQueryStats]);
+  }, [datasource, timeRange, previousTimeRange, query, previousQueryExpr, previousQueryType, setQueryStats, id]);
 
   return (
     <>
@@ -143,6 +145,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
         onClose={() => setLabelBrowserVisible(false)}
         onChange={onChangeInternal}
         onRunQuery={onRunQuery}
+        timeRange={timeRange}
       />
       <EditorHeader>
         <Stack gap={1}>
@@ -176,7 +179,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
             variant={dataIsStale ? 'primary' : 'secondary'}
             size="sm"
             onClick={onRunQuery}
-            icon={data?.state === LoadingState.Loading ? 'fa fa-spinner' : undefined}
+            icon={data?.state === LoadingState.Loading ? 'spinner' : undefined}
             disabled={data?.state === LoadingState.Loading}
           >
             {queries && queries.length > 1 ? `Run queries` : `Run query`}
@@ -196,6 +199,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
             onChange={onChangeInternal}
             onRunQuery={props.onRunQuery}
             showExplain={explain}
+            timeRange={timeRange}
           />
         )}
         <LokiQueryBuilderOptions

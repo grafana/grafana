@@ -41,10 +41,10 @@ export function AppChrome({ children }: Props) {
         chrome.setMegaMenu('closed');
         break;
       case 'docked':
-        // on desktop, clicking the button when the menu is docked should close the menu
-        // on mobile, the docked menu is hidden, so clicking the button should open the menu
-        const isDesktop = window.innerWidth > theme.breakpoints.values.md;
-        isDesktop ? chrome.setMegaMenu('closed') : chrome.setMegaMenu('open');
+        // on large screens, clicking the button when the menu is docked should close the menu
+        // on smaller screens, the docked menu is hidden, so clicking the button should open the menu
+        const isLargeScreen = window.innerWidth >= theme.breakpoints.values.xl;
+        isLargeScreen ? chrome.setMegaMenu('closed') : chrome.setMegaMenu('open');
         break;
     }
   };
@@ -93,7 +93,7 @@ export function AppChrome({ children }: Props) {
       </main>
       {!state.chromeless && (
         <>
-          {config.featureToggles.dockedMegaMenu ? (
+          {config.featureToggles.dockedMegaMenu && state.megaMenu !== 'docked' ? (
             <AppChromeMenu />
           ) : (
             <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu('closed')} />
@@ -131,7 +131,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'none',
       zIndex: theme.zIndex.navbarFixed,
 
-      [theme.breakpoints.up('md')]: {
+      [theme.breakpoints.up('xl')]: {
         display: 'block',
       },
     }),
@@ -141,7 +141,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       zIndex: theme.zIndex.navbarFixed,
       left: 0,
       right: 0,
-      boxShadow: shadow,
+      boxShadow: config.featureToggles.dockedMegaMenu ? undefined : shadow,
       background: theme.colors.background.primary,
       flexDirection: 'column',
       borderBottom: `1px solid ${theme.colors.border.weak}`,
@@ -163,6 +163,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexGrow: 1,
       minHeight: 0,
       minWidth: 0,
+      overflow: 'auto',
     }),
     skipLink: css({
       position: 'absolute',

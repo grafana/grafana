@@ -95,7 +95,7 @@ func TestIntegrationElasticsearch(t *testing.T) {
 		resp, err := http.Post(u, "application/json", buf1)
 		require.NoError(t, err)
 
-		require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		t.Cleanup(func() {
 			err := resp.Body.Close()
 			require.NoError(t, err)

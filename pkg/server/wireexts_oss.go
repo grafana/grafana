@@ -8,6 +8,7 @@ import (
 	"github.com/google/wire"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/registry/usagestatssvcs"
@@ -30,10 +31,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
+	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	publicdashboardsService "github.com/grafana/grafana/pkg/services/publicdashboards/service"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
@@ -67,8 +69,8 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(registry.BackgroundServiceRegistry), new(*backgroundsvcs.BackgroundServiceRegistry)),
 	migrations.ProvideOSSMigrations,
 	wire.Bind(new(registry.DatabaseMigrator), new(*migrations.OSSMigrations)),
-	authinfoservice.ProvideOSSUserProtectionService,
-	wire.Bind(new(login.UserProtectionService), new(*authinfoservice.OSSUserProtectionImpl)),
+	authinfoimpl.ProvideOSSUserProtectionService,
+	wire.Bind(new(login.UserProtectionService), new(*authinfoimpl.OSSUserProtectionImpl)),
 	encryptionprovider.ProvideEncryptionProvider,
 	wire.Bind(new(encryption.Provider), new(encryptionprovider.Provider)),
 	filters.ProvideOSSSearchUserFilter,
@@ -86,6 +88,8 @@ var wireExtsBasicSet = wire.NewSet(
 	ossaccesscontrol.ProvideDatasourcePermissionsService,
 	wire.Bind(new(accesscontrol.DatasourcePermissionsService), new(*ossaccesscontrol.DatasourcePermissionsService)),
 	pluginsintegration.WireExtensionSet,
+	publicdashboardsApi.ProvideMiddleware,
+	wire.Bind(new(publicdashboards.Middleware), new(*publicdashboardsApi.Middleware)),
 	publicdashboardsService.ProvideServiceWrapper,
 	wire.Bind(new(publicdashboards.ServiceWrapper), new(*publicdashboardsService.PublicDashboardServiceWrapperImpl)),
 	caching.ProvideCachingService,
@@ -94,6 +98,8 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(secrets.Migrator), new(*secretsMigrator.SecretsMigrator)),
 	idimpl.ProvideLocalSigner,
 	wire.Bind(new(auth.IDSigner), new(*idimpl.LocalSigner)),
+	manager.ProvideInstaller,
+	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
 )
 
 var wireExtsSet = wire.NewSet(

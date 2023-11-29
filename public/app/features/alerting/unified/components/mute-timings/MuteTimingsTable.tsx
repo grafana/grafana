@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { IconButton, LinkButton, Link, useStyles2, ConfirmModal } from '@grafana/ui';
+import { IconButton, LinkButton, Link, useStyles2, ConfirmModal, Stack } from '@grafana/ui';
 import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types/store';
 

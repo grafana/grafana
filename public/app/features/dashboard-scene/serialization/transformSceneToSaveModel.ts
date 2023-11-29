@@ -28,6 +28,7 @@ import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
+import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
@@ -81,8 +82,9 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     variables = sceneVariablesSetToVariables(variablesSet);
   }
 
-  if (state.controls) {
-    for (const control of state.controls) {
+  if (state.controls && state.controls[0] instanceof DashboardControls) {
+    const variableControls = state.controls[0].state.variableControls;
+    for (const control of variableControls) {
       if (control instanceof AdHocFilterSet) {
         variables.push({
           name: control.state.name!,
@@ -407,10 +409,8 @@ export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: D
   // When VizPanel is present, we are snapshoting a single panel. The rest of the panels is removed from the dashboard,
   // and the panel is resized to 24x20 grid and placed at the top of the dashboard.
   if (panel) {
-    // @ts-expect-error Due to legacy panels types. Id is present on such panels too.
     const singlePanel = dash.panels?.find((p) => p.id === getPanelIdForVizPanel(panel));
     if (singlePanel) {
-      // @ts-expect-error Due to legacy panels types. Id is present on such panels too.
       singlePanel.gridPos = { w: 24, x: 0, y: 0, h: 20 };
       result = {
         ...result,
