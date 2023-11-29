@@ -106,7 +106,6 @@ export function LogsTableWrap(props: Props) {
     if (!columnsWithMeta || !filteredColumnsWithMeta) {
       return;
     }
-    console.log('filteredColumnsWithMeta', filteredColumnsWithMeta);
     let newFiltered = { ...filteredColumnsWithMeta };
     let flag = false;
     Object.keys(columnsWithMeta).forEach((key) => {
@@ -116,7 +115,6 @@ export function LogsTableWrap(props: Props) {
       }
     });
     if (flag) {
-      console.log('newFiltered', newFiltered);
       setFilteredColumnsWithMeta(newFiltered);
     }
   }, [columnsWithMeta, filteredColumnsWithMeta]);
@@ -285,7 +283,6 @@ export function LogsTableWrap(props: Props) {
         ...filteredColumnsWithMeta,
         [columnName]: { ...filteredColumnsWithMeta[columnName], active: !filteredColumnsWithMeta[columnName]?.active },
       };
-      console.log('pendingFilteredLabelState', pendingFilteredLabelState);
       setFilteredColumnsWithMeta(pendingFilteredLabelState);
     }
 
@@ -323,7 +320,6 @@ export function LogsTableWrap(props: Props) {
         numberOfResults++;
       }
     });
-    console.log('newColumnsWithMeta', newColumnsWithMeta);
     setFilteredColumnsWithMeta(newColumnsWithMeta);
     searchFilterEvent(numberOfResults);
   };
@@ -341,7 +337,6 @@ export function LogsTableWrap(props: Props) {
       search(value);
     } else {
       // If the search input is empty, reset the local search state.
-      console.log('reset search state');
       setFilteredColumnsWithMeta(undefined);
     }
   };
