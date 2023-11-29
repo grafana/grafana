@@ -357,6 +357,9 @@ func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*
 	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		return nil, nil
 	}
+	if q.UID == folder.SharedWithMeFolderUID {
+		return []*folder.Folder{&folder.SharedWithMeFolder}, nil
+	}
 	return s.store.GetParents(ctx, q)
 }
 
