@@ -35,6 +35,7 @@ The Azure AD authentication allows you to use an Azure Active Directory tenant a
     - [Team Sync (Enterprise only)](#team-sync-enterprise-only)
   - [Common troubleshooting](#common-troubleshooting)
     - [Users with over 200 Group assignments](#users-with-over-200-group-assignments)
+      - [Configure the required Graph API permissions](#configure-the-required-graph-api-permissions)
     - [Force fetching groups from Microsoft graph API](#force-fetching-groups-from-microsoft-graph-api)
     - [Map roles](#map-roles)
   - [Skip organization role sync](#skip-organization-role-sync)
@@ -283,7 +284,18 @@ Azure AD does not emit the groups claim in the token and emits a group overage c
 If Grafana receives a token with a group overage claim instead of a groups claim,
 Grafana attempts to retrieve the user's group membership by calling the included endpoint.
 
-> Note: The token must include the `GroupMember.Read.All` permission for group overage claim calls to succeed.
+> Note: The 'App registration' must include the `GroupMember.Read.All` API permission for group overage claim calls to succeed.
+> Admin consent may be required for this permission.
+
+#### Configure the required Graph API permissions
+
+1. Go to **Azure Active Directory -> App registrations** and select your application.
+2. Select **API permissions** and then click on **Add a permission**.
+3. Select **Microsoft Graph** from the list of APIs.
+4. Select **Delegated permissions**.
+5. Select **GroupMember.Read.All** (under the **GroupMember** section).
+6. Click **Add permissions**. 
+
 > Admin consent may be required for this permission.
 
 ### Force fetching groups from Microsoft graph API
