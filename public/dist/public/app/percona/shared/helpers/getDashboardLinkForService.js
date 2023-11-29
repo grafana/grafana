@@ -1,2 +1,0 @@
-export const getDashboardLinkForService = (serviceType, serviceName) => `/d/${serviceType}-instance-summary/${serviceType}-instance-summary?var-service_name=${serviceName}`;
-//# sourceMappingURL=getDashboardLinkForService.js.map
