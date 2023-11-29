@@ -93,6 +93,7 @@ export const plugin = new PanelPlugin<Options>(StatPanel)
         name: 'Show percent change',
         defaultValue: defaultOptions.showPercentChange,
         category: mainCategory,
+        showIf: (config) => config.textMode !== BigValueTextMode.None,
       });
   })
   .setNoPadding()
