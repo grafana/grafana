@@ -70,25 +70,23 @@ func BuildFrameNameFromQuery(rowName, column string, tags map[string]string, fra
 	}
 	frameName = append(frameName, column...)
 
-	if len(tags) > 0 {
-		frameName = append(frameName, ' ', '{', ' ')
-		first := true
-		for k, v := range tags {
-			if !first {
-				frameName = append(frameName, ',')
-				frameName = append(frameName, ' ')
-			} else {
-				first = false
-			}
-			frameName = append(frameName, k...)
-			frameName = append(frameName, ':', ' ')
-			frameName = append(frameName, v...)
-		}
-
-		frameName = append(frameName, ' ', '}')
+	if len(tags) == 0 {
+		return frameName
 	}
-
-	return frameName
+	frameName = append(frameName, ' ', '{', ' ')
+	first := true
+	for k, v := range tags {
+		if !first {
+			frameName = append(frameName, ',')
+			frameName = append(frameName, ' ')
+		} else {
+			first = false
+		}
+		frameName = append(frameName, k...)
+		frameName = append(frameName, ':', ' ')
+		frameName = append(frameName, v...)
+	}
+	return append(frameName, ' ', '}')
 }
 
 func ParseTimestamp(value any) (time.Time, error) {
