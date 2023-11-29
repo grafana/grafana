@@ -6,7 +6,7 @@
 //          0
 //      ],
 //      "preferredVisualisationType": "table",
-//      "executedQueryString": "raw query"
+//      "executedQueryString": "Test raw query"
 //  }
 //  Name: cpu
 //  Dimensions: 4 Fields by 4 Rows
@@ -35,7 +35,7 @@
             0
           ],
           "preferredVisualisationType": "table",
-          "executedQueryString": "raw query"
+          "executedQueryString": "Test raw query"
         },
         "fields": [
           {

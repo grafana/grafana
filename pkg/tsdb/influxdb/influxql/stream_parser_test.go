@@ -1,7 +1,6 @@
-package converter_test
+package influxql_test
 
 import (
-	"io"
 	"os"
 	"path"
 	"path/filepath"
@@ -16,54 +15,42 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
-var shouldUpdate = false
+const shouldUpdate = false
 
-const streamParser = true
-
-var files = []string{
+var testFiles = []string{
+	"all_values_are_null",
 	"influx_select_all_from_cpu",
-	"select_value_from_cpu",
-	"select_multiple_from_cpu",
-	"select_multiple_from_cpu_group_by_tag",
-	"select_value_from_measurement_with_one_tag",
-	"select_value_from_measurement_with_multiple_tags",
-	"response_with_nulls",
+	"one_measurement_with_two_columns",
+	"response_with_weird_tag",
+	"some_values_are_null",
+	"error_on_top_level_response",
+	"simple_response",
+	"multiple_series_with_tags_and_multiple_columns",
+	"multiple_series_with_tags",
+	"empty_response",
+	"metric_find_queries",
+	"show_tag_values_response",
 	"retention_policy",
-	"show_measurements",
-	"diverse_data_types",
-}
-
-var query = &models.Query{
-	Measurement:  "",
-	Policy:       "",
-	Tags:         nil,
-	GroupBy:      nil,
-	Selects:      nil,
-	RawQuery:     "raw query",
-	UseRawQuery:  true,
-	Alias:        "",
-	Interval:     0,
-	Tz:           "",
-	Limit:        "",
-	Slimit:       "",
-	OrderByTime:  "",
-	RefID:        "",
-	ResultFormat: "time_series",
+	"simple_response_with_diverse_data_types",
+	"measurements",
+	"multiple_measurements",
+	// "many_columns", skipped for now
+	"response_with_nil_bools_and_nil_strings",
+	"invalid_value_format",
 }
 
 func TestReadInfluxAsTimeSeries(t *testing.T) {
-	for _, f := range files {
+	for _, f := range testFiles {
 		t.Run(f, runScenario(f, "time_series"))
 	}
 }
 
 func TestReadInfluxAsTable(t *testing.T) {
-	for _, f := range files {
+	for _, f := range testFiles {
 		t.Run(f, runScenario(f, "table"))
 	}
 }
 
-//lint:ignore U1000 Ignore used function for now
 func runScenario(tf string, resultFormat string) func(t *testing.T) {
 	return func(t *testing.T) {
 		f, err := os.Open(path.Join("testdata", filepath.Clean(tf+".json")))
@@ -71,13 +58,13 @@ func runScenario(tf string, resultFormat string) func(t *testing.T) {
 
 		var rsp *backend.DataResponse
 
-		query.ResultFormat = resultFormat
-
-		if streamParser {
-			rsp = influxql.StreamParse(f, 200, query)
-		} else {
-			rsp = influxql.ResponseParse(io.NopCloser(f), 200, query)
+		query := &models.Query{
+			RawQuery:     "Test raw query",
+			UseRawQuery:  true,
+			ResultFormat: resultFormat,
 		}
+
+		rsp = influxql.StreamParse(f, 200, query)
 
 		if strings.Contains(tf, "error") {
 			require.Error(t, rsp.Error)

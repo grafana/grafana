@@ -1,4 +1,4 @@
-package converter
+package influxql
 
 import (
 	"fmt"
