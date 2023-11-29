@@ -4,17 +4,26 @@ import { Cell, Row, TableState } from 'react-table';
 import { VariableSizeList } from 'react-window';
 import { Subscription, debounceTime } from 'rxjs';
 
-import { DataFrame, DataHoverClearEvent, DataHoverEvent, EventBus, Field, FieldType, TimeRange } from '@grafana/data';
+import {
+  DataFrame,
+  DataHoverClearEvent,
+  DataHoverEvent,
+  Field,
+  FieldType,
+  TimeRange,
+  hasTimeField,
+} from '@grafana/data';
 import { TableCellHeight } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes';
 import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
+import { usePanelContext } from '../PanelChrome';
 
 import { ExpandedRow, getExpandedRowHeight } from './ExpandedRow';
 import { TableCell } from './TableCell';
 import { TableStyles } from './styles';
 import { TableFilterActionCallback } from './types';
-import { calculateAroundPointThreshold, hasTimeField, isPointTimeValAroundTableTimeVal } from './utils';
+import { calculateAroundPointThreshold, isPointTimeValAroundTableTimeVal } from './utils';
 
 interface RowsListProps {
   data: DataFrame;
@@ -32,30 +41,22 @@ interface RowsListProps {
   tableStyles: TableStyles;
   nestedDataField?: Field;
   prepareRow: (row: Row) => void;
-  onRowHover?: (idx: number, frame: DataFrame) => void;
-  onRowLeave?: () => void;
   onCellFilterAdded?: TableFilterActionCallback;
   timeRange?: TimeRange;
   footerPaginationEnabled: boolean;
-  overrideRowHighlightIndex?: number;
-  eventBus?: EventBus;
 }
 
 export const RowsList = (props: RowsListProps) => {
   const {
     data,
     rows,
-    eventBus,
     headerHeight,
     footerPaginationEnabled,
-    overrideRowHighlightIndex,
     rowHeight,
     itemCount,
     pageIndex,
     tableState,
     prepareRow,
-    onRowHover,
-    onRowLeave,
     onCellFilterAdded,
     width,
     cellHeight = TableCellHeight.Sm,
@@ -70,6 +71,7 @@ export const RowsList = (props: RowsListProps) => {
   const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(undefined);
 
   const theme = useTheme2();
+  const panelContext = usePanelContext();
 
   const threshold = useMemo(() => {
     const timeField = data.fields.find((f) => f.type === FieldType.time);
@@ -80,6 +82,33 @@ export const RowsList = (props: RowsListProps) => {
 
     return calculateAroundPointThreshold(timeField);
   }, [data]);
+
+  const onRowHover = useCallback(
+    (idx: number, frame: DataFrame) => {
+      if (!panelContext || !enableSharedCrosshair || !hasTimeField(frame)) {
+        return;
+      }
+
+      const timeField: Field = frame!.fields.find((f) => f.type === FieldType.time)!;
+
+      panelContext.eventBus.publish(
+        new DataHoverEvent({
+          point: {
+            time: timeField.values[idx],
+          },
+        })
+      );
+    },
+    [enableSharedCrosshair, panelContext]
+  );
+
+  const onRowLeave = useCallback(() => {
+    if (!panelContext || !enableSharedCrosshair) {
+      return;
+    }
+
+    panelContext.eventBus.publish(new DataHoverClearEvent());
+  }, [enableSharedCrosshair, panelContext]);
 
   const onDataHoverEvent = useCallback(
     (evt: DataHoverEvent) => {
@@ -112,24 +141,19 @@ export const RowsList = (props: RowsListProps) => {
   );
 
   useEffect(() => {
-    if (overrideRowHighlightIndex !== undefined) {
-      setRowHighlightIndex(overrideRowHighlightIndex);
-      return;
-    }
-
-    if (!eventBus || !enableSharedCrosshair || !hasTimeField(data) || footerPaginationEnabled) {
+    if (!panelContext || !enableSharedCrosshair || !hasTimeField(data) || footerPaginationEnabled) {
       return;
     }
 
     const subs = new Subscription();
 
     subs.add(
-      eventBus
+      panelContext.eventBus
         .getStream(DataHoverEvent)
         .pipe(debounceTime(100))
         .subscribe({
           next: (evt) => {
-            if (eventBus === evt.origin) {
+            if (panelContext.eventBus === evt.origin) {
               return;
             }
 
@@ -139,12 +163,12 @@ export const RowsList = (props: RowsListProps) => {
     );
 
     subs.add(
-      eventBus
+      panelContext.eventBus
         .getStream(DataHoverClearEvent)
         .pipe(debounceTime(100))
         .subscribe({
           next: (evt) => {
-            if (eventBus === evt.origin) {
+            if (panelContext.eventBus === evt.origin) {
               return;
             }
 
@@ -156,7 +180,7 @@ export const RowsList = (props: RowsListProps) => {
     return () => {
       subs.unsubscribe();
     };
-  }, [data, enableSharedCrosshair, eventBus, footerPaginationEnabled, onDataHoverEvent, overrideRowHighlightIndex]);
+  }, [data, enableSharedCrosshair, footerPaginationEnabled, onDataHoverEvent, panelContext]);
 
   let scrollTop: number | undefined = undefined;
   if (rowHighlightIndex !== undefined) {
@@ -191,8 +215,8 @@ export const RowsList = (props: RowsListProps) => {
         <div
           {...row.getRowProps({ style })}
           className={cx(tableStyles.row, expandedRowStyle)}
-          onMouseEnter={() => (onRowHover ? onRowHover(index, data) : null)}
-          onMouseLeave={() => (onRowLeave ? onRowLeave() : null)}
+          onMouseEnter={() => onRowHover(index, data)}
+          onMouseLeave={onRowLeave}
         >
           {/*add the nested data to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
           {nestedDataField && tableState.expanded[row.index] && (

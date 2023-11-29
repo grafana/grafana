@@ -534,10 +534,6 @@ export function getAlignmentFactor(
   }
 }
 
-export function hasTimeField(data: DataFrame): boolean {
-  return data.fields.some((field) => field.type === FieldType.time);
-}
-
 // since the conversion from timeseries panel crosshair to time is pixel based, we need
 // to set a threshold where the table row highlights when the crosshair is hovered over a certain point
 // because multiple pixels (converted to times) may represent the same point/row in table

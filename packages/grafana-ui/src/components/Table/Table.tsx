@@ -47,10 +47,6 @@ export const Table = memo((props: Props) => {
     enablePagination,
     cellHeight = TableCellHeight.Sm,
     timeRange,
-    onRowHover,
-    onRowLeave,
-    rowHighlightIndex,
-    eventBus,
     enableSharedCrosshair = false,
   } = props;
 
@@ -289,22 +285,18 @@ export const Table = memo((props: Props) => {
                 cellHeight={cellHeight}
                 headerHeight={headerHeight}
                 rowHeight={tableStyles.rowHeight}
-                overrideRowHighlightIndex={rowHighlightIndex}
                 itemCount={itemCount}
                 pageIndex={state.pageIndex}
                 listHeight={listHeight}
                 listRef={listRef}
                 tableState={state}
                 prepareRow={prepareRow}
-                onRowHover={onRowHover}
-                onRowLeave={onRowLeave}
                 timeRange={timeRange}
                 onCellFilterAdded={onCellFilterAdded}
                 nestedDataField={nestedDataField}
                 tableStyles={tableStyles}
                 footerPaginationEnabled={Boolean(enablePagination)}
                 enableSharedCrosshair={enableSharedCrosshair}
-                eventBus={eventBus}
               />
             </div>
           ) : (

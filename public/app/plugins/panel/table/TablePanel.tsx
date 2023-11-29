@@ -1,14 +1,10 @@
 import { css } from '@emotion/css';
-import React, { useCallback } from 'react';
+import React from 'react';
 
 import {
   DashboardCursorSync,
   DataFrame,
-  DataHoverClearEvent,
-  DataHoverEvent,
-  Field,
   FieldMatcherID,
-  FieldType,
   getFrameDisplayName,
   PanelProps,
   SelectableValue,
@@ -16,7 +12,6 @@ import {
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
-import { hasTimeField } from '@grafana/ui/src/components/Table/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
 import { Options } from './panelcfg.gen';
@@ -37,33 +32,6 @@ export function TablePanel(props: Props) {
   const main = frames[currentIndex];
 
   let tableHeight = height;
-
-  const onRowHover = useCallback(
-    (idx: number, frame: DataFrame) => {
-      if (!panelContext.sync || panelContext.sync() === DashboardCursorSync.Off) {
-        return;
-      }
-
-      if (!hasTimeField(frame)) {
-        return;
-      }
-
-      const timeField: Field = frame!.fields.find((f) => f.type === FieldType.time)!;
-
-      panelContext.eventBus.publish(
-        new DataHoverEvent({
-          point: {
-            time: timeField.values[idx],
-          },
-        })
-      );
-    },
-    [panelContext]
-  );
-
-  const onRowLeave = useCallback(() => {
-    panelContext.eventBus.publish(new DataHoverClearEvent());
-  }, [panelContext.eventBus]);
 
   if (!count || !hasFields) {
     return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
@@ -94,10 +62,7 @@ export function TablePanel(props: Props) {
       enablePagination={options.footer?.enablePagination}
       cellHeight={options.cellHeight}
       timeRange={timeRange}
-      onRowHover={config.featureToggles.tableSharedCrosshair ? onRowHover : undefined}
-      onRowLeave={config.featureToggles.tableSharedCrosshair ? onRowLeave : undefined}
       enableSharedCrosshair={config.featureToggles.tableSharedCrosshair && enableSharedCrosshair}
-      eventBus={panelContext.eventBus}
     />
   );
 
