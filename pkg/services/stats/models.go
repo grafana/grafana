@@ -26,6 +26,7 @@ type SystemStats struct {
 	DashboardVersions         int64
 	Annotations               int64
 	AlertRules                int64
+	RuleGroups                int64
 	LibraryPanels             int64
 	LibraryVariables          int64
 	DashboardsViewersCanEdit  int64
