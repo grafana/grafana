@@ -16,6 +16,7 @@ import {
   SceneVariable,
   SceneVariableDependencyConfigLike,
 } from '@grafana/scenes';
+import { DashboardLink } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -35,6 +36,10 @@ import { setupKeyboardShortcuts } from './keyboardShortcuts';
 export interface DashboardSceneState extends SceneObjectState {
   /** The title */
   title: string;
+  /** Tags */
+  tags?: string[];
+  /** Links */
+  links?: DashboardLink[];
   /** A uid when saved */
   uid?: string;
   /** @deprecated */

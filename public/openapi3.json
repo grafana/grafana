@@ -1911,21 +1911,6 @@
         },
         "description": "(empty)"
       },
-      "validateDashboardResponse": {
-        "description": "(empty)",
-        "headers": {
-          "isValid": {
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          "message": {
-            "schema": {
-              "type": "string"
-            }
-          }
-        }
-      },
       "viewPublicDashboardResponse": {
         "content": {
           "application/json": {

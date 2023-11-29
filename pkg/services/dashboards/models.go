@@ -260,15 +260,6 @@ type SaveDashboardCommand struct {
 	UpdatedAt time.Time
 }
 
-type ValidateDashboardCommand struct {
-	Dashboard string `json:"dashboard" binding:"Required"`
-}
-
-type TrimDashboardCommand struct {
-	Dashboard *simplejson.Json `json:"dashboard" binding:"Required"`
-	Meta      *simplejson.Json `json:"meta"`
-}
-
 type DashboardProvisioning struct {
 	ID          int64 `xorm:"pk autoincr 'id'"`
 	DashboardID int64 `xorm:"dashboard_id"`
