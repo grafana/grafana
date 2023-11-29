@@ -613,13 +613,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
               )
             ) : null,
           ]}
-          title={
-            config.featureToggles.logsExploreTableVisualisation
-              ? this.state.visualisationType === 'logs'
-                ? 'Logs'
-                : 'Table'
-              : 'Logs'
-          }
+          title={'Logs'}
           actions={
             <>
               {config.featureToggles.logsExploreTableVisualisation && (
@@ -628,14 +622,14 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     className={styles.visualisationTypeRadio}
                     options={[
                       {
-                        label: 'Table',
-                        value: 'table',
-                        description: 'Show results in table visualisation',
-                      },
-                      {
                         label: 'Logs',
                         value: 'logs',
                         description: 'Show results in logs visualisation',
+                      },
+                      {
+                        label: 'Table',
+                        value: 'table',
+                        description: 'Show results in table visualisation',
                       },
                     ]}
                     size="sm"
