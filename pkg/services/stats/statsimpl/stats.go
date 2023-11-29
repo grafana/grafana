@@ -129,7 +129,7 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("dashboard_public") + `) AS public_dashboards,`)
 		sb.Write(`(SELECT MIN(timestamp) FROM ` + dialect.Quote("migration_log") + `) AS database_created_time,`)
 		if ss.IsUnifiedAlertingEnabled() {
-			sb.Write(`(SELECT COUNT(DISTINCT rule_group) FROM ` + dialect.Quote("alert_rule") + `) AS rule_groups,`)
+			sb.Write(`(SELECT COUNT(DISTINCT (` + dialect.Quote("rule_group") + `)) FROM ` + dialect.Quote("alert_rule") + `) AS rule_groups,`)
 		}
 
 		sb.Write(ss.roleCounterSQL(ctx))
