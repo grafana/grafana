@@ -86,28 +86,7 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
-    dashboard.new('barchart-autosizing', import '../dev-dashboards/panel-barchart/barchart-autosizing.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('barchart-label-rotation-skipping', import '../dev-dashboards/panel-barchart/barchart-label-rotation-skipping.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('barchart-thresholds-mappings', import '../dev-dashboards/panel-barchart/barchart-thresholds-mappings.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('barchart-tooltips', import '../dev-dashboards/panel-barchart/barchart-tooltips.json') +
+    dashboard.new('barchart-tests', import '../dev-dashboards/panel-barchart/barchart-tests.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
