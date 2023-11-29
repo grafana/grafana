@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"math/rand"
 	"net/url"
 	"strconv"
@@ -66,8 +65,6 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			createAlertRuleWithDashboard(t, sql, knownUIDs, "Test Rule 3", dashboard2.UID),
 		},
 	}
-
-	ruleNoDash := createAlertRule(t, sql, knownUIDs, "Test Rule 4")
 
 	t.Run("Testing Loki state history read", func(t *testing.T) {
 		start := time.Now()
@@ -194,71 +191,32 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		})
 	})
 
-	t.Run("Testing get alert rule", func(t *testing.T) {
-		store := createTestLokiStore(t, sql, NewFakeLokiClient())
-		rule := ruleNoDash
-
-		t.Run("should get rule by UID", func(t *testing.T) {
-			query := ruleQuery{
-				OrgID: 1,
-				UID:   rule.UID,
-			}
-
-			dbRule, err := store.getRule(context.Background(), query)
-			require.NoError(t, err)
-			require.Equal(t, rule.ID, dbRule.ID)
-			require.Equal(t, rule.UID, dbRule.UID)
-		})
-
-		t.Run("should get rule by ID", func(t *testing.T) {
-			query := ruleQuery{
-				OrgID: 1,
-				ID:    rule.ID,
-			}
-
-			dbRule, err := store.getRule(context.Background(), query)
-			require.NoError(t, err)
-			require.Equal(t, rule.ID, dbRule.ID)
-			require.Equal(t, rule.UID, dbRule.UID)
-		})
-	})
-
 	t.Run("Testing items from Loki stream", func(t *testing.T) {
 		fakeLokiClient := NewFakeLokiClient()
 		store := createTestLokiStore(t, sql, fakeLokiClient)
 
 		t.Run("should return empty list when no streams", func(t *testing.T) {
-			items := store.itemsFromStreams(context.Background(), 1, []historian.Stream{}, annotation_ac.AccessResources{})
+			items := store.annotationsFromStream(context.Background(), historian.Stream{}, annotation_ac.AccessResources{}, newRuleCache(store.db))
 			require.Empty(t, items)
 		})
 
 		t.Run("should return empty list when no entries", func(t *testing.T) {
-			items := store.itemsFromStreams(context.Background(), 1, []historian.Stream{
-				{
-					Values: []historian.Sample{},
-				},
-			}, annotation_ac.AccessResources{})
+			items := store.annotationsFromStream(context.Background(), historian.Stream{
+				Values: []historian.Sample{},
+			}, annotation_ac.AccessResources{}, newRuleCache(store.db))
 			require.Empty(t, items)
 		})
 
-		t.Run("should return one annotation per stream+sample", func(t *testing.T) {
+		t.Run("should return one annotation per sample", func(t *testing.T) {
 			rule := dashboardRules[dashboard1.UID][0]
 			start := time.Now()
 			numTransitions := 2
 			transitions := genStateTransitions(t, numTransitions, start)
 
-			res := []historian.Stream{
-				historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger()),
-			}
+			stream := historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger())
+			rc := newRuleCache(store.db)
 
-			items := store.itemsFromStreams(context.Background(), 1, res, annotation_ac.AccessResources{
-				Dashboards: map[string]int64{
-					dashboard1.UID: dashboard1.ID,
-				},
-				ScopeTypes: map[any]struct{}{
-					testutil.DashScopeType: {},
-				},
-			})
+			items := store.annotationsFromStream(context.Background(), stream, annotation_ac.AccessResources{}, rc)
 			require.Len(t, items, numTransitions)
 
 			for i := 0; i < numTransitions; i++ {
@@ -283,115 +241,83 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			}
 		})
 
-		t.Run("should filter out history from dashboards not in scope", func(t *testing.T) {
-			rule1 := dashboardRules[dashboard1.UID][0]
-			rule2 := dashboardRules[dashboard2.UID][0]
-
+		t.Run("should filter out annotations from dashboards not in scope", func(t *testing.T) {
 			start := time.Now()
 			numTransitions := 2
 			transitions := genStateTransitions(t, numTransitions, start)
 
-			res := []historian.Stream{
-				historian.StatesToStream(ruleMetaFromRule(t, rule1), transitions, map[string]string{}, log.NewNopLogger()),
-				historian.StatesToStream(ruleMetaFromRule(t, rule2), transitions, map[string]string{}, log.NewNopLogger()),
+			rule := dashboardRules[dashboard1.UID][0]
+			stream1 := historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger())
+
+			rule = createAlertRule(t, sql, knownUIDs, "Test rule")
+			stream2 := historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger())
+
+			stream := historian.Stream{
+				Values: append(stream1.Values, stream2.Values...),
+				Stream: stream1.Stream,
 			}
 
-			items := store.itemsFromStreams(context.Background(), 1, res, annotation_ac.AccessResources{
+			rc := newRuleCache(store.db)
+
+			items := store.annotationsFromStream(context.Background(), stream, annotation_ac.AccessResources{
 				Dashboards: map[string]int64{
 					dashboard1.UID: dashboard1.ID,
 				},
 				ScopeTypes: map[any]struct{}{
 					testutil.DashScopeType: {},
 				},
-			})
+			}, rc)
 			require.Len(t, items, numTransitions)
 
-			for i := 0; i < numTransitions; i++ {
-				item := items[i]
-				transition := transitions[i]
-
-				expected := &annotations.ItemDTO{
-					AlertID:      rule1.ID,
-					AlertName:    rule1.Title,
-					DashboardID:  dashboard1.ID,
-					DashboardUID: &dashboard1.UID,
-					PanelID:      *rule1.PanelID,
-					Time:         transition.State.LastEvaluationTime.UnixMilli(),
-					NewState:     transition.Formatted(),
-				}
-				if i > 0 {
-					prevTransition := transitions[i-1]
-					expected.PrevState = prevTransition.Formatted()
-				}
-
-				compareAnnotationItem(t, expected, item)
+			for _, item := range items {
+				require.Equal(t, dashboard1.ID, item.DashboardID)
+				require.Equal(t, dashboard1.UID, *item.DashboardUID)
 			}
 		})
 
-		t.Run("should include only history without linked dashboard on org scope", func(t *testing.T) {
+		t.Run("should include only annotations without linked dashboard on org scope", func(t *testing.T) {
 			start := time.Now()
 			numTransitions := 2
 			transitions := genStateTransitions(t, numTransitions, start)
 
-			res := []historian.Stream{
-				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][0]), transitions, map[string]string{}, log.NewNopLogger()),
-				historian.StatesToStream(ruleMetaFromRule(t, ruleNoDash), transitions, map[string]string{}, log.NewNopLogger()),
+			rule := dashboardRules[dashboard1.UID][0]
+			stream1 := historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger())
+
+			rule.DashboardUID = nil
+			stream2 := historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger())
+
+			stream := historian.Stream{
+				Values: append(stream1.Values, stream2.Values...),
+				Stream: stream1.Stream,
 			}
 
-			items := store.itemsFromStreams(context.Background(), 1, res, annotation_ac.AccessResources{
+			rc := newRuleCache(store.db)
+
+			items := store.annotationsFromStream(context.Background(), stream, annotation_ac.AccessResources{
 				Dashboards: map[string]int64{
 					dashboard1.UID: dashboard1.ID,
 				},
 				ScopeTypes: map[any]struct{}{
 					testutil.OrgScopeType: {},
 				},
-			})
+			}, rc)
 			require.Len(t, items, numTransitions)
 
-			for i := 0; i < numTransitions; i++ {
-				item := items[i]
-				transition := transitions[i]
-
-				expected := &annotations.ItemDTO{
-					AlertID:   ruleNoDash.ID,
-					AlertName: ruleNoDash.Title,
-					Time:      transition.State.LastEvaluationTime.UnixMilli(),
-					NewState:  transition.Formatted(),
-				}
-				if i > 0 {
-					prevTransition := transitions[i-1]
-					expected.PrevState = prevTransition.Formatted()
-				}
-
-				compareAnnotationItem(t, expected, item)
+			for _, item := range items {
+				require.Zero(t, item.DashboardUID)
+				require.Zero(t, item.DashboardID)
 			}
 		})
 	})
 }
 
-func TestShouldReplay(t *testing.T) {
+func TestHasAccess(t *testing.T) {
 	entry := historian.LokiEntry{
 		DashboardUID: "dashboard-uid",
 	}
-	transition := &state.StateTransition{
-		PreviousState: eval.Normal,
-		State: &state.State{
-			State: eval.Alerting,
-		},
-	}
-
-	t.Run("should return false when transition should not be recorded", func(t *testing.T) {
-		transition := &state.StateTransition{
-			PreviousState: eval.Normal,
-			State: &state.State{
-				State: eval.Normal,
-			},
-		}
-		require.False(t, shouldReplay(entry, transition, annotation_ac.AccessResources{}))
-	})
 
 	t.Run("should return false when scope is organization and entry has dashboard UID", func(t *testing.T) {
-		require.False(t, shouldReplay(entry, transition, annotation_ac.AccessResources{
+		require.False(t, hasAccess(entry, annotation_ac.AccessResources{
 			ScopeTypes: map[interface{}]struct{}{
 				testutil.OrgScopeType: {},
 			},
@@ -399,7 +325,7 @@ func TestShouldReplay(t *testing.T) {
 	})
 
 	t.Run("should return false when scope is dashboard and dashboard UID is not in resources", func(t *testing.T) {
-		require.False(t, shouldReplay(entry, transition, annotation_ac.AccessResources{
+		require.False(t, hasAccess(entry, annotation_ac.AccessResources{
 			ScopeTypes: map[interface{}]struct{}{
 				testutil.DashScopeType: {},
 			},
@@ -410,7 +336,7 @@ func TestShouldReplay(t *testing.T) {
 	})
 
 	t.Run("should return true when scope is dashboard and dashboard UID is in resources", func(t *testing.T) {
-		require.True(t, shouldReplay(entry, transition, annotation_ac.AccessResources{
+		require.True(t, hasAccess(entry, annotation_ac.AccessResources{
 			ScopeTypes: map[interface{}]struct{}{
 				testutil.DashScopeType: {},
 			},
@@ -448,27 +374,8 @@ func TestFloat64Map(t *testing.T) {
 	})
 }
 
-func TestParseFormattedState(t *testing.T) {
-	t.Run("should parse formatted state", func(t *testing.T) {
-		stateStr := "Normal (MissingSeries)"
-		s, reason, err := parseFormattedState(stateStr)
-		require.NoError(t, err)
-
-		require.Equal(t, eval.Normal, s)
-		require.Equal(t, ngmodels.StateReasonMissingSeries, reason)
-	})
-
-	t.Run("should return error when formatted state is invalid", func(t *testing.T) {
-		stateStr := "NotAState"
-		_, _, err := parseFormattedState(stateStr)
-		require.Error(t, err)
-	})
-}
-
 func TestBuildTransitionStub(t *testing.T) {
 	t.Run("should build stub correctly", func(t *testing.T) {
-		now := time.Now()
-
 		values := map[string]float64{
 			"key1": 1.0,
 			"key2": 2.0,
@@ -482,10 +389,9 @@ func TestBuildTransitionStub(t *testing.T) {
 			PreviousState:       eval.Error,
 			PreviousStateReason: ngmodels.StateReasonNoData,
 			State: &state.State{
-				LastEvaluationTime: now,
-				State:              eval.Normal,
-				Values:             values,
-				Labels:             labels,
+				State:  eval.Normal,
+				Values: values,
+				Labels: labels,
 			},
 		}
 
@@ -501,7 +407,6 @@ func TestBuildTransitionStub(t *testing.T) {
 				Values:         jsonValues,
 				InstanceLabels: labels,
 			},
-			now,
 		)
 
 		require.NoError(t, err)
@@ -519,70 +424,16 @@ func TestBuildTransitionStub(t *testing.T) {
 					"key2": "value2",
 				},
 			},
-			time.Now(),
 		)
 
 		require.Error(t, err)
 	})
 }
 
-func TestBuildAnnotationItem(t *testing.T) {
-	values := map[string]float64{
-		"key1": 1.0,
-		"key2": 2.0,
-	}
-
-	entry := &historian.LokiEntry{
-		Current:      "Normal",
-		Previous:     "Error (NoData)",
-		DashboardUID: "dashboardUID",
-		PanelID:      123,
-	}
-
-	dashID := int64(123)
-	rule := &ngmodels.AlertRule{
-		ID:    456,
-		Title: "Test Rule",
-	}
-	s := &state.State{
-		State:              eval.Normal,
-		LastEvaluationTime: time.Now(),
-		Values:             values,
-		Labels: map[string]string{
-			"key1": "value1",
-			"key2": "value2",
-		},
-	}
-
-	item, err := buildAnnotationItem(entry, dashID, rule, s)
-	require.NoError(t, err)
-
-	expectedText := fmt.Sprintf("Test Rule {key1=value1, key2=value2} - key1=%f, key2=%f", values["key1"], values["key2"])
-	expectedData := simplejson.NewFromAny(map[string]any{
-		"values": simplejson.NewFromAny(map[string]any{
-			"key1": 1.0,
-			"key2": 2.0,
-		}),
-	})
-
-	require.Equal(t, &annotations.ItemDTO{
-		AlertID:      rule.ID,
-		AlertName:    rule.Title,
-		DashboardID:  dashID,
-		DashboardUID: &entry.DashboardUID,
-		PanelID:      entry.PanelID,
-		NewState:     entry.Current,
-		PrevState:    entry.Previous,
-		Time:         s.LastEvaluationTime.UnixMilli(),
-		Text:         expectedText,
-		Data:         expectedData,
-	}, item)
-}
-
-func createTestLokiStore(t *testing.T, sql db.DB, client lokiQueryClient) *AlertStateHistoryStore {
+func createTestLokiStore(t *testing.T, sql db.DB, client lokiQueryClient) *LokiHistorianStore {
 	t.Helper()
 
-	return &AlertStateHistoryStore{
+	return &LokiHistorianStore{
 		client: client,
 		db:     sql,
 		log:    log.NewNopLogger(),
@@ -780,7 +631,7 @@ type FakeLokiClient struct {
 func NewFakeLokiClient() *FakeLokiClient {
 	url, _ := url.Parse("http://some.url")
 	req := historian.NewFakeRequester()
-	metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry())
+	metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry(), "annotations.test")
 
 	return &FakeLokiClient{
 		client: client.NewTimedClient(req, metrics.WriteDuration),

@@ -56,7 +56,7 @@ func NewAnnotationBackend(annotations AnnotationStore, rules RuleStore, metrics 
 func (h *AnnotationBackend) Record(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
 	logger := h.log.FromContext(ctx)
 	// Build annotations before starting goroutine, to make sure all data is copied and won't mutate underneath us.
-	annotations := BuildAnnotations(rule, states, logger)
+	annotations := buildAnnotations(rule, states, logger)
 	panel := parsePanelKey(rule, logger)
 
 	errCh := make(chan error, 1)
@@ -170,7 +170,7 @@ func (h *AnnotationBackend) Query(ctx context.Context, query ngmodels.HistoryQue
 	return frame, nil
 }
 
-func BuildAnnotations(rule history_model.RuleMeta, states []state.StateTransition, logger log.Logger) []annotations.Item {
+func buildAnnotations(rule history_model.RuleMeta, states []state.StateTransition, logger log.Logger) []annotations.Item {
 	items := make([]annotations.Item, 0, len(states))
 	for _, state := range states {
 		if !ShouldRecord(state) {
