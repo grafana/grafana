@@ -53,7 +53,7 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-const collator = new Intl.Collator('en', { sensitivity: 'base' });
+const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
 function sortLabels(labels: Record<string, fieldNameMeta>) {
   return (a: string, b: string) => {
     const la = labels[a];

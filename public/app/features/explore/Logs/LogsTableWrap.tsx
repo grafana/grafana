@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { debounce } from 'lodash';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import {
@@ -107,6 +106,7 @@ export function LogsTableWrap(props: Props) {
     if (!columnsWithMeta || !filteredColumnsWithMeta) {
       return;
     }
+    console.log('filteredColumnsWithMeta', filteredColumnsWithMeta);
     let newFiltered = { ...filteredColumnsWithMeta };
     let flag = false;
     Object.keys(columnsWithMeta).forEach((key) => {
@@ -116,6 +116,7 @@ export function LogsTableWrap(props: Props) {
       }
     });
     if (flag) {
+      console.log('newFiltered', newFiltered);
       setFilteredColumnsWithMeta(newFiltered);
     }
   }, [columnsWithMeta, filteredColumnsWithMeta]);
@@ -255,11 +256,7 @@ export function LogsTableWrap(props: Props) {
   const clearSelection = () => {
     const pendingLabelState = { ...columnsWithMeta };
     Object.keys(pendingLabelState).forEach((key) => {
-      if (pendingLabelState[key].type) {
-        pendingLabelState[key].active = true;
-      } else {
-        pendingLabelState[key].active = false;
-      }
+      pendingLabelState[key].active = !!pendingLabelState[key].type;
     });
     setColumnsWithMeta(pendingLabelState);
   };
@@ -288,6 +285,7 @@ export function LogsTableWrap(props: Props) {
         ...filteredColumnsWithMeta,
         [columnName]: { ...filteredColumnsWithMeta[columnName], active: !filteredColumnsWithMeta[columnName]?.active },
       };
+      console.log('pendingFilteredLabelState', pendingFilteredLabelState);
       setFilteredColumnsWithMeta(pendingFilteredLabelState);
     }
 
@@ -318,12 +316,14 @@ export function LogsTableWrap(props: Props) {
     const matches = data[0];
     let newColumnsWithMeta: fieldNameMetaStore = {};
     let numberOfResults = 0;
+    // debugger;
     matches.forEach((match) => {
       if (match in columnsWithMeta) {
         newColumnsWithMeta[match] = columnsWithMeta[match];
         numberOfResults++;
       }
     });
+    console.log('newColumnsWithMeta', newColumnsWithMeta);
     setFilteredColumnsWithMeta(newColumnsWithMeta);
     searchFilterEvent(numberOfResults);
   };
@@ -333,17 +333,15 @@ export function LogsTableWrap(props: Props) {
     fuzzySearch(Object.keys(columnsWithMeta), needle, dispatcher);
   };
 
-  // Debounce fuzzy search
-  const debouncedSearch = debounce(search, 500);
-
   // onChange handler for search input
   const onSearchInputChange = (e: React.FormEvent<HTMLInputElement>) => {
     const value = e.currentTarget?.value;
     setSearchValue(value);
     if (value) {
-      debouncedSearch(value);
+      search(value);
     } else {
       // If the search input is empty, reset the local search state.
+      console.log('reset search state');
       setFilteredColumnsWithMeta(undefined);
     }
   };
