@@ -938,5 +938,5 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
       overflow: 'visible',
       ...(config.featureToggles.logsInfiniteScrolling && { marginBottom: '0px' }),
     }),
-  };  
+  };
 };
