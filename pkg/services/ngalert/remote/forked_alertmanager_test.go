@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -25,41 +24,24 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 	expErr := errors.New("test error")
 
 	t.Run("ApplyConfig", func(tt *testing.T) {
-		tt.Run("with sync interval", func(tt *testing.T) {
-			// ApplyConfig should be called in both Alertmanagers.
-			internal, remote, forked := genTestAlertmanagersWithSyncInterval(tt, modeRemoteSecondary, 15*time.Minute)
-			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once()
-			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once()
-			require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}))
+		// ApplyConfig should be called in both Alertmanagers.
+		internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
+		internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Twice()
+		remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Twice()
+		require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}))
+		require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}))
 
-			// Calling ApplyConfig again should not result in remote.ApplyConfig being called,
-			// the sync interval has not passed yet.
-			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once()
-			require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}))
-		})
+		// An error in the remote Alertmanager should not be returned.
+		internal, remote, forked = genTestAlertmanagers(tt, modeRemoteSecondary)
+		internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once()
+		remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(expErr).Once()
+		require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}))
 
-		tt.Run("without sync interval", func(tt *testing.T) {
-			// Calling ApplyConfig twice in a row with a 0s sync interval should result in two calls.
-			internal, remote, forked := genTestAlertmanagersWithSyncInterval(tt, modeRemoteSecondary, 0)
-			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Twice()
-			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Twice()
-			require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}))
-			require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}))
-		})
-
-		tt.Run("error scenarios", func(tt *testing.T) {
-			// An error in the remote Alertmanager should not be returned.
-			internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
-			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once()
-			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(expErr).Once()
-			require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}))
-
-			// An error in the internal Alertmanager should be returned.
-			internal, remote, forked = genTestAlertmanagers(tt, modeRemoteSecondary)
-			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(expErr).Once()
-			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once()
-			require.Error(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}), expErr)
-		})
+		// An error in the internal Alertmanager should be returned.
+		internal, remote, forked = genTestAlertmanagers(tt, modeRemoteSecondary)
+		internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(expErr).Once()
+		remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once()
+		require.Error(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}), expErr)
 	})
 
 	t.Run("GetStatus", func(tt *testing.T) {
@@ -526,16 +508,11 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 }
 func genTestAlertmanagers(t *testing.T, mode int) (*alertmanager_mock.AlertmanagerMock, *alertmanager_mock.AlertmanagerMock, notifier.Alertmanager) {
 	t.Helper()
-	return genTestAlertmanagersWithSyncInterval(t, mode, time.Minute)
-}
-
-func genTestAlertmanagersWithSyncInterval(t *testing.T, mode int, syncInterval time.Duration) (*alertmanager_mock.AlertmanagerMock, *alertmanager_mock.AlertmanagerMock, notifier.Alertmanager) {
-	t.Helper()
 	internal := alertmanager_mock.NewAlertmanagerMock(t)
 	remote := alertmanager_mock.NewAlertmanagerMock(t)
 
 	if mode == modeRemoteSecondary {
-		return internal, remote, NewRemoteSecondaryForkedAlertmanager(log.NewNopLogger(), syncInterval, internal, remote)
+		return internal, remote, NewRemoteSecondaryForkedAlertmanager(log.NewNopLogger(), internal, remote)
 	}
 	return internal, remote, NewRemotePrimaryForkedAlertmanager(internal, remote)
 }
