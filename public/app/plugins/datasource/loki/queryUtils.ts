@@ -22,6 +22,7 @@ import {
   Logfmt,
   Json,
   OrFilter,
+  FilterOp,
 } from '@grafana/lezer-logql';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -85,7 +86,7 @@ export function getStringsFromLineFilter(filter: SyntaxNode): SyntaxNode[] {
   let node: SyntaxNode | null = filter;
   do {
     const string = node.getChild(String);
-    if (string) {
+    if (string && !node.getChild(FilterOp)) {
       nodes.push(string);
     }
     node = node.getChild(OrFilter);
