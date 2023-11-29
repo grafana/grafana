@@ -8,15 +8,14 @@ import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import {
   commonGroupByOptions,
   mapMultiSelectValueToStrings,
-  promDurationValidator,
-  repeatIntervalValidator,
   stringToSelectableValue,
   stringsToSelectableValues,
 } from 'app/features/alerting/unified/utils/amroutes';
 
-import { PromDurationInput } from '../../../notification-policies/PromDurationInput';
-import { getFormStyles } from '../../../notification-policies/formStyles';
-import { TIMING_OPTIONS_DEFAULTS } from '../../../notification-policies/timingOptions';
+import { getFormStyles } from '../../../../notification-policies/formStyles';
+import { TIMING_OPTIONS_DEFAULTS } from '../../../../notification-policies/timingOptions';
+
+import { RouteTimmings } from './RouteTimings';
 
 export interface RoutingSettingsProps {
   alertManager: string;
@@ -28,11 +27,9 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
     watch,
     register,
     formState: { errors },
-    getValues,
   } = useFormContext<RuleFormValues>();
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues([]));
   const { groupBy, groupIntervalValue, groupWaitValue, repeatIntervalValue } = useGetDefaultsForRoutingSettings();
-  console.log('errors', errors);
   return (
     <Stack direction="column">
       <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
@@ -89,56 +86,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
           </Text>
         )}
       </Stack>
-      {watch(`contactPoints.${alertManager}.overrideTimings`) && (
-        <>
-          <Field
-            label="Group wait"
-            description="The waiting time until the initial notification is sent for a new group created by an incoming alert. If empty it will be inherited from the parent policy."
-            invalid={!!errors.contactPoints?.[alertManager]?.groupWaitValue}
-            error={errors.contactPoints?.[alertManager]?.groupWaitValue?.message}
-          >
-            <PromDurationInput
-              {...register(`contactPoints.${alertManager}.groupWaitValue`, { validate: promDurationValidator })}
-              aria-label="Group wait value"
-              className={formStyles.promDurationInput}
-              placeholder={TIMING_OPTIONS_DEFAULTS.group_wait}
-            />
-          </Field>
-          <Field
-            label="Group interval"
-            description="The waiting time to send a batch of new alerts for that group after the first notification was sent. If empty it will be inherited from the parent policy."
-            invalid={!!errors.contactPoints?.[alertManager]?.groupIntervalValue}
-            error={errors.contactPoints?.[alertManager]?.groupIntervalValue?.message}
-          >
-            <PromDurationInput
-              {...register(`contactPoints.${alertManager}.groupIntervalValue`, {
-                validate: promDurationValidator,
-              })}
-              aria-label="Group interval value"
-              className={formStyles.promDurationInput}
-              placeholder={TIMING_OPTIONS_DEFAULTS.group_interval}
-            />
-          </Field>
-          <Field
-            label="Repeat interval"
-            description="The waiting time to resend an alert after they have successfully been sent."
-            invalid={!!errors.contactPoints?.[alertManager]?.repeatIntervalValue}
-            error={errors.contactPoints?.[alertManager]?.repeatIntervalValue?.message}
-          >
-            <PromDurationInput
-              {...register(`contactPoints.${alertManager}.repeatIntervalValue`, {
-                validate: (value: string) => {
-                  const groupInterval = getValues(`contactPoints.${alertManager}.repeatIntervalValue`);
-                  return repeatIntervalValidator(value, groupInterval);
-                },
-              })}
-              aria-label="Repeat interval value"
-              className={formStyles.promDurationInput}
-              placeholder={TIMING_OPTIONS_DEFAULTS.repeat_interval}
-            />
-          </Field>
-        </>
-      )}
+      {watch(`contactPoints.${alertManager}.overrideTimings`) && <RouteTimmings alertManager={alertManager} />}
     </Stack>
   );
 };

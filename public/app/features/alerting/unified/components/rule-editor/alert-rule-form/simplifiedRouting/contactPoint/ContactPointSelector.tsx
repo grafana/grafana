@@ -6,8 +6,8 @@ import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { ActionMeta, Field, FieldValidationMessage, InputControl, Select, Stack, useStyles2 } from '@grafana/ui';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 
-import { ContactPointReceiverSummary } from '../../../contact-points/ContactPoints.v2';
-import { ContactPointWithMetadata } from '../../../contact-points/utils';
+import { ContactPointReceiverSummary } from '../../../../contact-points/ContactPoints.v2';
+import { ContactPointWithMetadata } from '../../../../contact-points/utils';
 
 export interface ContactPointSelectorProps {
   alertManager: string;

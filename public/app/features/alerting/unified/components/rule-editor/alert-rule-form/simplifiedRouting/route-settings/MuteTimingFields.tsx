@@ -6,7 +6,7 @@ import { useMuteTimingOptions } from 'app/features/alerting/unified/hooks/useMut
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { mapMultiSelectValueToStrings } from 'app/features/alerting/unified/utils/amroutes';
 
-import { getFormStyles } from '../../../notification-policies/formStyles';
+import { getFormStyles } from '../../../../notification-policies/formStyles';
 
 export interface MuteTimingFieldsProps {
   alertManager: string;

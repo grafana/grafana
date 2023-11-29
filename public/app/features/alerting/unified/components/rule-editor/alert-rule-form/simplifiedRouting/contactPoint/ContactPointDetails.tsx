@@ -4,10 +4,10 @@ import { Icon, Stack, Text } from '@grafana/ui';
 import { INTEGRATION_ICONS } from 'app/features/alerting/unified/types/contact-points';
 import { GrafanaNotifierType } from 'app/types';
 
-import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY } from '../../../contact-points/useContactPoints';
-import { ReceiverConfigWithMetadata, getReceiverDescription } from '../../../contact-points/utils';
-import { ReceiverMetadataBadge } from '../../../receivers/grafanaAppReceivers/ReceiverMetadataBadge';
-import { ReceiverPluginMetadata } from '../../../receivers/grafanaAppReceivers/useReceiversMetadata';
+import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY } from '../../../../contact-points/useContactPoints';
+import { ReceiverConfigWithMetadata, getReceiverDescription } from '../../../../contact-points/utils';
+import { ReceiverMetadataBadge } from '../../../../receivers/grafanaAppReceivers/ReceiverMetadataBadge';
+import { ReceiverPluginMetadata } from '../../../../receivers/grafanaAppReceivers/useReceiversMetadata';
 
 interface ContactPointDetailsProps {
   receivers: ReceiverConfigWithMetadata[];
