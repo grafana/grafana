@@ -1,4 +1,4 @@
-package influxql
+package converter
 
 import (
 	"fmt"
@@ -170,7 +170,6 @@ func readTags(iter *jsonitere.Iterator) (map[string]string, error) {
 }
 
 func readColumns(iter *jsonitere.Iterator) (columns []string, err error) {
-	columns = make([]string, 0)
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 		if err != nil {
 			return nil, err
@@ -182,8 +181,7 @@ func readColumns(iter *jsonitere.Iterator) (columns []string, err error) {
 		}
 		columns = append(columns, l1Field)
 	}
-
-	return
+	return columns, nil
 }
 
 func readValues(iter *jsonitere.Iterator, hasTimeColumn bool) (valueFields data.Fields, err error) {
@@ -294,7 +292,7 @@ func maybeFixValueFieldType(valueFields data.Fields, expectedType data.FieldType
 }
 
 func handleTimeSeriesFormatWithTimeColumn(valueFields data.Fields, tags map[string]string, columns []string, measurement string, frameName []byte, query *models.Query) []*data.Frame {
-	frames := make([]*data.Frame, len(columns)-1)
+	frames := make([]*data.Frame, 0, len(columns)-1)
 	for i, v := range columns {
 		if v == "time" {
 			continue

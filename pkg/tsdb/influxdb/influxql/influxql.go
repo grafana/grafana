@@ -14,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/buffered"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/querydata"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/utils"
 )
@@ -130,9 +132,9 @@ func execute(ctx context.Context, tracer trace.Tracer, dsInfo *models.Datasource
 	var resp *backend.DataResponse
 	if isStreamingParserEnabled {
 		logger.Info("InfluxDB InfluxQL streaming parser enabled: ", "info")
-		resp = StreamParse(res.Body, res.StatusCode, query)
+		resp = querydata.ResponseParse(res.Body, res.StatusCode, query)
 	} else {
-		resp = ResponseParse(res.Body, res.StatusCode, query)
+		resp = buffered.ResponseParse(res.Body, res.StatusCode, query)
 	}
 	return *resp, nil
 }

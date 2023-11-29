@@ -1,4 +1,4 @@
-package influxql
+package querydata
 
 import (
 	"fmt"
@@ -8,11 +8,12 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	jsoniter "github.com/json-iterator/go"
 
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/converter"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/util"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
-func StreamParse(buf io.ReadCloser, statusCode int, query *models.Query) *backend.DataResponse {
+func ResponseParse(buf io.ReadCloser, statusCode int, query *models.Query) *backend.DataResponse {
 	defer func() {
 		if err := buf.Close(); err != nil {
 			fmt.Println("Failed to close response body", "err", err)
@@ -20,7 +21,7 @@ func StreamParse(buf io.ReadCloser, statusCode int, query *models.Query) *backen
 	}()
 
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, buf, 1024)
-	r := ReadInfluxQLStyleResult(iter, query)
+	r := converter.ReadInfluxQLStyleResult(iter, query)
 
 	if statusCode/100 != 2 {
 		return &backend.DataResponse{Error: fmt.Errorf("InfluxDB returned error: %s", r.Error)}

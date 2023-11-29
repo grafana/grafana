@@ -1,4 +1,4 @@
-package influxql
+package buffered
 
 import (
 	"encoding/json"

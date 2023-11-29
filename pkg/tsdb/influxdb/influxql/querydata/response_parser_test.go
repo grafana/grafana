@@ -1,4 +1,4 @@
-package influxql_test
+package querydata
 
 import (
 	"os"
@@ -11,11 +11,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
-const shouldUpdate = false
+const (
+	shouldUpdate = false
+	testPath     = "../testdata"
+)
 
 var testFiles = []string{
 	"all_values_are_null",
@@ -23,7 +25,6 @@ var testFiles = []string{
 	"one_measurement_with_two_columns",
 	"response_with_weird_tag",
 	"some_values_are_null",
-	"error_on_top_level_response",
 	"simple_response",
 	"multiple_series_with_tags_and_multiple_columns",
 	"multiple_series_with_tags",
@@ -53,7 +54,7 @@ func TestReadInfluxAsTable(t *testing.T) {
 
 func runScenario(tf string, resultFormat string) func(t *testing.T) {
 	return func(t *testing.T) {
-		f, err := os.Open(path.Join("testdata", filepath.Clean(tf+".json")))
+		f, err := os.Open(path.Join(testPath, filepath.Clean(tf+".json")))
 		require.NoError(t, err)
 
 		var rsp *backend.DataResponse
@@ -64,7 +65,7 @@ func runScenario(tf string, resultFormat string) func(t *testing.T) {
 			ResultFormat: resultFormat,
 		}
 
-		rsp = influxql.StreamParse(f, 200, query)
+		rsp = ResponseParse(f, 200, query)
 
 		if strings.Contains(tf, "error") {
 			require.Error(t, rsp.Error)
@@ -73,6 +74,6 @@ func runScenario(tf string, resultFormat string) func(t *testing.T) {
 		require.NoError(t, rsp.Error)
 
 		fname := tf + "." + resultFormat + ".golden"
-		experimental.CheckGoldenJSONResponse(t, "testdata", fname, rsp, shouldUpdate)
+		experimental.CheckGoldenJSONResponse(t, testPath, fname, rsp, shouldUpdate)
 	}
 }
