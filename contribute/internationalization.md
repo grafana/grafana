@@ -203,7 +203,7 @@ To provide feedback on translations, sign into Crowdin and follow these steps:
    `grafana/main > public > locales > 'language denomination' > grafana.json`
    <br>
    Click on the `grafana.json` file.
-5. On the left-hand section, click on the 'Search in file' input and search for the string that you want to comment on. You can search in English, as it is the default language, or in the language the string is translated to.
+5. In the left-hand section, click on the 'Search in file' input and search for the string that you want to comment on. You can search in English, as it is the default language, or in the language the string is translated to.
 6. Once you found the string, on the right hand there is a 'Comments' section where you can send the feedback about the translation. Tag @Translated to be sure the team of linguists gets notified.
 
 ## Documentation
