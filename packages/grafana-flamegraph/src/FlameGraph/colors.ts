@@ -106,35 +106,15 @@ export function getBarColorByDiff(
   return color(rgbString);
 }
 
-// const getColors = memoizeOne((theme) => getFilteredColors(colors, theme));
-
-// Different regexes to get the package name and function name from the label. We may at some point get an info about
-// the language from the backend and use the right regex but right now we just try all of them from most to least
-// specific.
-const matchers = [
-  ['phpspy', /^(?<packageName>([^\/]*\/)*)(?<filename>.*\.php+)(?<line_info>.*)$/],
-  ['pyspy', /^(?<packageName>([^\/]*\/)*)(?<filename>.*\.py+)(?<line_info>.*)$/],
-  ['rbspy', /^(?<packageName>([^\/]*\/)*)(?<filename>.*\.rb+)(?<line_info>.*)$/],
-  [
-    'nodespy',
-    /^(\.\/node_modules\/)?(?<packageName>[^/]*)(?<filename>.*\.?(jsx?|tsx?)?):(?<functionName>.*):(?<line_info>.*)$/,
-  ],
-  ['gospy', /^(?<packageName>.*?\/.*?\.|.*?\.|.+)(?<functionName>.*)$/], // also 'scrape'
-  ['javaspy', /^(?<packageName>.+\/)(?<filename>.+\.)(?<functionName>.+)$/],
-  ['dotnetspy', /^(?<packageName>.+)\.(.+)\.(.+)\(.*\)$/],
-  ['tracing', /^(?<packageName>.+?):.*$/],
-  ['pyroscope-rs', /^(?<packageName>[^::]+)/],
-  ['ebpfspy', /^(?<packageName>.+)$/],
-  ['unknown', /^(?<packageName>.+)$/],
-];
+const PKG_RE =  /^(?:.*?(?:gems|node_modules)[^\w]+)?(\w+)/;
 
 // Get the package name from the symbol. Try matchers from the list and return first one that matches.
 function getPackageName(name: string): string | undefined {
-  for (const [_, matcher] of matchers) {
-    const match = name.match(matcher);
-    if (match) {
-      return match.groups?.packageName || '';
-    }
+  let m = name.match(PKG_RE);
+
+  if (m != null) {
+    return m[1];
   }
+
   return undefined;
 }
