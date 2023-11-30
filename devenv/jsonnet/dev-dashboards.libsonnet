@@ -849,5 +849,12 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('xychart-tooltip-color-test', import '../dev-dashboards/panel-xychart/xychart-tooltip-color-test.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
   ],
 } 
