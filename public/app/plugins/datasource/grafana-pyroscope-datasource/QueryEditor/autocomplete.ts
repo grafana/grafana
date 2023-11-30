@@ -14,11 +14,11 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   monaco: Monaco | undefined;
   editor: monacoTypes.editor.IStandaloneCodeEditor | undefined;
 
-  private getLabelNames: () => string[] = () => [];
+  private labels: string[] = [];
   private getLabelValues: (label: string) => Promise<string[]> = () => Promise.resolve([]);
 
-  init(getLabelNames: () => string[], getLabelValues: (label: string) => Promise<string[]>) {
-    this.getLabelNames = getLabelNames;
+  init(labels: string[], getLabelValues: (label: string) => Promise<string[]>) {
+    this.labels = labels;
     this.getLabelValues = getLabelValues;
   }
 
@@ -68,7 +68,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         return [];
       }
       case 'EMPTY': {
-        return this.getLabelNames().map((key) => {
+        return this.labels.map((key) => {
           return {
             label: key,
             insertText: `{${key}="`,
@@ -77,7 +77,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         });
       }
       case 'IN_LABEL_NAME':
-        return this.getLabelNames().map((key) => {
+        return this.labels.map((key) => {
           return {
             label: key,
             insertText: key,

@@ -1,4 +1,5 @@
 import deepEqual from 'fast-deep-equal';
+import { debounce } from 'lodash';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { CoreApp, QueryEditorProps, TimeRange } from '@grafana/data';
@@ -27,12 +28,7 @@ export function QueryEditor(props: Props) {
   }
 
   const profileTypes = useProfileTypes(datasource);
-  const { getLabelNames, getLabelValues, onLabelSelectorChange, onBlur } = useLabels(
-    range,
-    datasource,
-    query,
-    onChange
-  );
+  const { labels, getLabelValues, onLabelSelectorChange } = useLabels(range, datasource, query, onChange);
   useNormalizeQuery(query, profileTypes, onChange, app);
 
   let cascader = <LoadingPlaceholder text={'Loading'} />;
@@ -60,15 +56,14 @@ export function QueryEditor(props: Props) {
         <LabelsEditor
           value={query.labelSelector}
           onChange={onLabelSelectorChange}
-          onBlur={onBlur}
           onRunQuery={handleRunQuery}
-          getLabelNames={getLabelNames}
+          labels={labels}
           getLabelValues={getLabelValues}
         />
         <PyroscopeQueryLinkExtensions {...props} />
       </EditorRow>
       <EditorRow>
-        <QueryOptions query={query} onQueryChange={props.onChange} app={props.app} getLabelNames={getLabelNames} />
+        <QueryOptions query={query} onQueryChange={props.onChange} app={props.app} labels={labels} />
       </EditorRow>
     </EditorRows>
   );
@@ -122,8 +117,8 @@ function useLabels(
   // Round to nearest 5 seconds. If the range is something like last 1h then every render the range values change slightly
   // and what ever has range as dependency is rerun. So this effectively debounces the queries.
   const unpreciseRange = {
-    to: Math.ceil((range?.to.valueOf() || 0) / 5000) * 5000,
-    from: Math.floor((range?.from.valueOf() || 0) / 5000) * 5000,
+    to: Math.ceil((range?.to.valueOf() || 0) / 10000) * 10000,
+    from: Math.floor((range?.from.valueOf() || 0) / 10000) * 10000,
   };
 
   // Transforms user input into a valid label selector including the profile type.
@@ -142,47 +137,42 @@ function useLabels(
     return `{${labels.join(',')}}`;
   };
 
-  const [availableLabels, setAvailableLabels] = useState(() => ['']);
-  const [processedLabelSelector, setProcessedLabelSelector] = useState(() =>
-    createSelector(query.labelSelector, query.profileTypeId, '')
-  );
-  const [rawQuery, setRawQuery] = useState(() => '');
-
-  useEffect(() => {
-    setProcessedLabelSelector(createSelector(rawQuery, query.profileTypeId, ''));
-  }, [rawQuery, query.profileTypeId]);
-
-  const getLabelNames = useCallback(() => availableLabels, [availableLabels]);
+  const [labels, setLabels] = useState(() => ['']);
 
   useEffect(() => {
     const fetchData = async () => {
-      const labels = await datasource.getLabelNames(processedLabelSelector, unpreciseRange.from, unpreciseRange.to);
+      const labels = await datasource.getLabelNames(
+        createSelector(query.labelSelector, query.profileTypeId, ''),
+        unpreciseRange.from,
+        unpreciseRange.to
+      );
 
-      setAvailableLabels(labels);
+      setLabels(labels);
     };
     fetchData();
-  }, [processedLabelSelector, unpreciseRange.from, unpreciseRange.to, datasource, setAvailableLabels]);
+  }, [query, unpreciseRange.from, unpreciseRange.to, datasource, setLabels]);
 
   // Create a function with range and query already baked in, so we don't have to send those everywhere
   const getLabelValues = useCallback(
     (label: string) => {
-      let labelSelector = createSelector(rawQuery, query.profileTypeId, label);
+      let labelSelector = createSelector(query.labelSelector, query.profileTypeId, label);
       return datasource.getLabelValues(labelSelector, label, unpreciseRange.from, unpreciseRange.to);
     },
-    [datasource, rawQuery, query.profileTypeId, unpreciseRange.to, unpreciseRange.from]
+    [datasource, query.labelSelector, query.profileTypeId, unpreciseRange.to, unpreciseRange.from]
   );
+
+  const onChangeDebounced = debounce((value: string) => {
+    if (onChange) {
+      onChange({ ...query, labelSelector: value });
+    }
+  }, 200);
 
   const onLabelSelectorChange = useCallback(
     (value: string) => {
-      setRawQuery(value);
+      onChangeDebounced(value);
     },
-    [setRawQuery]
+    [onChangeDebounced]
   );
 
-  // This is to update the query state, as updating it every time the value in the editor changes causes many things to rerender.
-  const onBlur = useCallback(() => {
-    onChange({ ...query, labelSelector: rawQuery });
-  }, [query, onChange, rawQuery]);
-
-  return { getLabelNames, getLabelValues, onLabelSelectorChange, onBlur };
+  return { labels, getLabelValues, onLabelSelectorChange };
 }

@@ -11,14 +11,13 @@ import { CompletionProvider } from './autocomplete';
 interface Props {
   value: string;
   onChange: (val: string) => void;
-  onBlur: () => void;
   onRunQuery: (value: string) => void;
-  getLabelNames: () => string[];
+  labels?: string[];
   getLabelValues: (label: string) => Promise<string[]>;
 }
 
 export function LabelsEditor(props: Props) {
-  const setupAutocompleteFn = useAutocomplete(props.getLabelValues, props.getLabelNames);
+  const setupAutocompleteFn = useAutocomplete(props.getLabelValues, props.labels);
   const styles = useStyles2(getStyles);
 
   const onRunQueryRef = useLatest(props.onRunQuery);
@@ -34,7 +33,6 @@ export function LabelsEditor(props: Props) {
         value={props.value}
         language={langId}
         onChange={props.onChange}
-        onBlur={props.onBlur}
         containerStyles={styles.queryField}
         monacoOptions={{
           folding: false,
@@ -94,7 +92,7 @@ const EDITOR_HEIGHT_OFFSET = 2;
 /**
  * Hook that returns function that will set up monaco autocomplete for the label selector
  */
-function useAutocomplete(getLabelValues: (label: string) => Promise<string[]>, getLabelNames: () => string[]) {
+function useAutocomplete(getLabelValues: (label: string) => Promise<string[]>, labels?: string[]) {
   const providerRef = useRef<CompletionProvider>();
   if (providerRef.current === undefined) {
     providerRef.current = new CompletionProvider();
@@ -102,9 +100,9 @@ function useAutocomplete(getLabelValues: (label: string) => Promise<string[]>, g
 
   useAsync(async () => {
     if (providerRef.current) {
-      providerRef.current.init(getLabelNames, getLabelValues);
+      providerRef.current.init(labels || [], getLabelValues);
     }
-  }, [getLabelNames, getLabelValues]);
+  }, [labels, getLabelValues]);
 
   const autocompleteDisposeFun = useRef<(() => void) | null>(null);
   useEffect(() => {

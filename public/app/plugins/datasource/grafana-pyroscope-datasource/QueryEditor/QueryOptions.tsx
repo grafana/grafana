@@ -15,7 +15,7 @@ export interface Props {
   query: Query;
   onQueryChange: (query: Query) => void;
   app?: CoreApp;
-  getLabelNames: () => string[];
+  labels?: string[];
 }
 
 const typeOptions: Array<{ value: Query['queryType']; label: string; description: string }> = [
@@ -34,11 +34,11 @@ function getTypeOptions(app?: CoreApp) {
 /**
  * Base on QueryOptionGroup component from grafana/ui but that is not available yet.
  */
-export function QueryOptions({ query, onQueryChange, app, getLabelNames }: Props) {
+export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
   const styles = useStyles2(getStyles);
   const typeOptions = getTypeOptions(app);
-  const groupByOptions = getLabelNames()
-    ? getLabelNames().map((l) => ({
+  const groupByOptions = labels
+    ? labels.map((l) => ({
         label: l,
         value: l,
       }))
