@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/alertmanager_mock"
+	remote_alertmanager_mock "github.com/grafana/grafana/pkg/services/ngalert/remote/mock"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -24,7 +26,7 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 	expErr := errors.New("test error")
 
 	t.Run("ApplyConfig", func(tt *testing.T) {
-		// ApplyConfig should be called in both Alertmanagers.
+		// ApplyConfig should be called on both Alertmanagers.
 		internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
 		internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Twice()
 		remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Twice()
@@ -597,14 +599,13 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 		require.False(tt, forked.Ready())
 	})
 }
-
-func genTestAlertmanagers(t *testing.T, mode int) (*alertmanager_mock.AlertmanagerMock, *alertmanager_mock.AlertmanagerMock, notifier.Alertmanager) {
+func genTestAlertmanagers(t *testing.T, mode int) (*alertmanager_mock.AlertmanagerMock, *remote_alertmanager_mock.RemoteAlertmanagerMock, notifier.Alertmanager) {
 	t.Helper()
 	internal := alertmanager_mock.NewAlertmanagerMock(t)
-	remote := alertmanager_mock.NewAlertmanagerMock(t)
+	remote := remote_alertmanager_mock.NewRemoteAlertmanagerMock(t)
 
 	if mode == modeRemoteSecondary {
-		return internal, remote, NewRemoteSecondaryForkedAlertmanager(log.NewNopLogger(), internal, remote)
+		return internal, remote, NewRemoteSecondaryForkedAlertmanager(log.NewNopLogger(), time.Minute, internal, remote)
 	}
 	return internal, remote, NewRemotePrimaryForkedAlertmanager(internal, remote)
 }

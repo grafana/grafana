@@ -175,48 +175,26 @@ func (ng *AlertNG) init() error {
 
 	var overrides []notifier.Option
 	if ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Enable {
-		remoteSecondary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondary)
-		remotePrimary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemotePrimary)
-		remoteOnly := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteOnly)
-		if !remoteSecondary && !remotePrimary && !remoteOnly {
-			return fmt.Errorf("at least one mode should be enabled to use the remote Alertmanager")
-		}
+		override := notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
+			m := metrics.NewAlertmanagerMetrics(multiOrgMetrics.GetOrCreateOrgRegistry(orgID))
+			i, err := notifier.NewAlertmanager(ctx, orgID, ng.Cfg, ng.store, ng.KVStore, &notifier.NilPeer{}, decryptFn, ng.NotificationService, m)
+			if err != nil {
+				return nil, err
+			}
 
-		// If we're using RemoteOnly there's no need for the forked Alertmanager
-		externalAMCfg := remote.AlertmanagerConfig{
-			URL:               ng.store.Cfg.RemoteAlertmanager.URL,
-			TenantID:          ng.store.Cfg.RemoteAlertmanager.TenantID,
-			BasicAuthPassword: ng.store.Cfg.RemoteAlertmanager.Password,
-		}
-
-		var override notifier.Option
-		if remoteOnly {
-			override = notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
-				// We won't be handling files on disk, we can pass an empty string as workingDirPath.
-				stateStore := notifier.NewFileStore(orgID, ng.KVStore, "")
-				return remote.NewAlertmanager(externalAMCfg, orgID, stateStore)
-			})
-		} else {
-			// If we're using either RemotePrimary or RemoteSecondary, we need the forked Alertmanager.
-			override = notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
-				stateStore := notifier.NewFileStore(orgID, ng.KVStore, "")
-				external, err := remote.NewAlertmanager(externalAMCfg, orgID, stateStore)
-				if err != nil {
-					return nil, err
-				}
-
-				m := metrics.NewAlertmanagerMetrics(multiOrgMetrics.GetOrCreateOrgRegistry(orgID))
-				internal, err := notifier.NewAlertmanager(ctx, orgID, ng.Cfg, ng.store, ng.KVStore, &notifier.NilPeer{}, decryptFn, ng.NotificationService, m)
-				if err != nil {
-					return nil, err
-				}
-
-				if remotePrimary {
-					return remote.NewRemotePrimaryForkedAlertmanager(internal, external), nil
-				}
-				return remote.NewRemoteSecondaryForkedAlertmanager(internal, external), nil
-			})
-		}
+			externalAMCfg := remote.AlertmanagerConfig{
+				URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
+				TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
+				BasicAuthPassword: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
+			}
+			// We won't be handling files on disk, we can pass an empty string as workingDirPath.
+			stateStore := notifier.NewFileStore(orgID, ng.KVStore, "")
+			r, err := remote.NewAlertmanager(externalAMCfg, orgID, stateStore)
+			if err != nil {
+				return nil, err
+			}
+			return remote.NewRemoteSecondaryForkedAlertmanager(log.New("ngalert.forked-alertmanager.remote-secondary"), time.Minute, i, r), nil
+		})
 
 		overrides = append(overrides, override)
 	}
