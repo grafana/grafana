@@ -12,7 +12,6 @@ describe('dashboardSceneGraph', () => {
         ...(dashboard_to_load as unknown as DashboardDataDTO),
         timepicker: {
           hidden: true,
-          collapse: false,
           refresh_intervals: [],
           time_options: [],
         },
