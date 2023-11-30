@@ -122,7 +122,7 @@ export function getBarColorByDiff(
   return color(rgbString);
 }
 
-const PKG_RE =  /^(?:.*?(?:gems|node_modules)[^\w]+)?(\w+)/;
+const PKG_RE =  /^(?:.*?(?:gems|node_modules|github\.com)[^\w]+)?(\w+)/;
 
 // Get the package name from the symbol. Try matchers from the list and return first one that matches.
 function getPackageName(name: string): string | undefined {
