@@ -29,7 +29,13 @@ import { DashboardEditView } from '../settings/utils';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/urlBuilders';
-import { findVizPanelByKey, forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel } from '../utils/utils';
+import {
+  findVizPanelByKey,
+  forceRenderChildren,
+  getClosestVizPanel,
+  getPanelIdForVizPanel,
+  isPanelClone,
+} from '../utils/utils';
 
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
@@ -283,7 +289,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     let panelId = 0;
 
     if (panel && panel.state.key) {
-      if (panel.state.key.indexOf('-clone-') > 0) {
+      if (isPanelClone(panel.state.key)) {
         panelId = djb2Hash(panel?.state.key);
       } else {
         panelId = getPanelIdForVizPanel(panel);
