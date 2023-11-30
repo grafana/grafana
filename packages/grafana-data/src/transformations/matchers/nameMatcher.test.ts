@@ -1,3 +1,4 @@
+import { setFeatureToggles } from '../../config';
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { FieldType, DataFrame } from '../../types';
 import { getFieldMatcher } from '../matchers';
@@ -5,15 +6,7 @@ import { getFieldMatcher } from '../matchers';
 import { FieldMatcherID } from './ids';
 import { ByNamesMatcherMode } from './nameMatcher';
 
-// mock the default window.grafanaBootData settings
-// eslint-disable-next-line
-(window as any).grafanaBootData = {
-  settings: {
-    featureToggles: {
-      dataplaneFrontendFallback: true,
-    },
-  },
-};
+setFeatureToggles({ dataplaneFrontendFallback: true });
 
 describe('Field Name by Regexp Matcher', () => {
   it('Match all with wildcard regex', () => {

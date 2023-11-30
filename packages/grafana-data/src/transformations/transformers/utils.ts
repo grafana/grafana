@@ -1,3 +1,6 @@
+import { getFeatureToggles } from '../../config';
+
 export const transformationsVariableSupport = () => {
-  return (window as any)?.grafanaBootData?.settings?.featureToggles?.transformationsVariableSupport;
+  console.log(getFeatureToggles().transformationsVariableSupport);
+  return getFeatureToggles().transformationsVariableSupport;
 };

@@ -1,3 +1,4 @@
+import { getFeatureToggles } from '../../config';
 import { getFieldDisplayName } from '../../field/fieldState';
 import { stringToJsRegex } from '../../text/string';
 import { DataFrame, Field, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../../types/dataFrame';
@@ -110,7 +111,7 @@ export function fieldNameFallback(fields: Set<string>) {
   // grafana-data does not have access to runtime so we are accessing the window object
   // to get access to the feature toggle
   // eslint-disable-next-line
-  const useMatcherFallback = (window as any)?.grafanaBootData?.settings?.featureToggles?.dataplaneFrontendFallback;
+  const useMatcherFallback = getFeatureToggles().dataplaneFrontendFallback;
   if (useMatcherFallback) {
     if (fields.has(TIME_SERIES_VALUE_FIELD_NAME)) {
       fallback = (field: Field, frame: DataFrame) => {

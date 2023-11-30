@@ -1,3 +1,4 @@
+import { setFeatureToggles } from '../../config';
 import { toDataFrame } from '../../dataframe';
 import { DataTransformerConfig, FieldType, Field, SpecialValue } from '../../types';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
@@ -8,6 +9,7 @@ import { DataTransformerID } from './ids';
 
 describe('Grouping to Matrix', () => {
   beforeAll(() => {
+    setFeatureToggles({ dataplaneFrontendFallback: false });
     mockTransformationsRegistry([groupingToMatrixTransformer]);
   });
 

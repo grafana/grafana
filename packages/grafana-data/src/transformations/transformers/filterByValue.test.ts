@@ -1,3 +1,4 @@
+import { setFeatureToggles } from '../../config';
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { DataTransformerConfig, FieldType, MatcherConfig } from '../../types';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
@@ -12,18 +13,6 @@ import {
   FilterByValueType,
 } from './filterByValue';
 import { DataTransformerID } from './ids';
-
-let transformationSupport = false;
-
-jest.mock('./utils', () => {
-  const actual = jest.requireActual('./utils');
-  return {
-    ...actual,
-    transformationsVariableSupport: () => {
-      return transformationSupport;
-    },
-  };
-});
 
 const seriesAWithSingleField = toDataFrame({
   name: 'A',
@@ -40,6 +29,7 @@ describe('FilterByValue transformer', () => {
   });
 
   it('should exclude values', async () => {
+    setFeatureToggles({ dataplaneFrontendFallback: true });
     const lower: MatcherConfig<BasicValueMatcherOptions<number>> = {
       id: ValueMatcherID.lower,
       options: { value: 6 },
@@ -122,7 +112,7 @@ describe('FilterByValue transformer', () => {
   });
 
   it('should interpolate dashboard variables', async () => {
-    transformationSupport = true;
+    setFeatureToggles({ transformationsVariableSupport: true });
 
     const lower: MatcherConfig<BasicValueMatcherOptions<string | number>> = {
       id: ValueMatcherID.lower,
@@ -164,7 +154,7 @@ describe('FilterByValue transformer', () => {
         },
       ]);
     });
-    transformationSupport = false;
+    setFeatureToggles({ transformationsVariableSupport: false });
   });
 
   it('should not interpolate dashboard variables when feature toggle is off', async () => {

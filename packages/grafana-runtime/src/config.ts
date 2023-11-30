@@ -18,6 +18,7 @@ import {
   getThemeById,
   AngularMeta,
 } from '@grafana/data';
+import { setFeatureToggles } from '@grafana/data/src/config';
 
 export interface AzureSettings {
   cloud?: string;
@@ -264,3 +265,5 @@ options.bootData = bootData;
  * @public
  */
 export const config = new GrafanaBootConfig(options);
+
+setFeatureToggles(config.featureToggles);
