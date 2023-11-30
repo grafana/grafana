@@ -142,55 +142,47 @@ function useLabels(
     return `{${labels.join(',')}}`;
   };
 
-  const [availableLabels, setAvailableLabels] = useState(() => ({ data: [''] }));
-  const [processedLabelSelector, setProcessedLabelSelector] = useState(() => ({
-    data: createSelector(query.labelSelector, query.profileTypeId, ''),
-  }));
-  const [rawQuery, setRawQuery] = useState(() => ({ data: '' }));
+  const [availableLabels, setAvailableLabels] = useState(() => ['']);
+  const [processedLabelSelector, setProcessedLabelSelector] = useState(() =>
+    createSelector(query.labelSelector, query.profileTypeId, '')
+  );
+  const [rawQuery, setRawQuery] = useState(() => '');
 
   useEffect(() => {
-    setProcessedLabelSelector({
-      data: createSelector(rawQuery.data, query.profileTypeId, ''),
-    });
-  }, [rawQuery.data, query.profileTypeId]);
+    setProcessedLabelSelector(createSelector(rawQuery, query.profileTypeId, ''));
+  }, [rawQuery, query.profileTypeId]);
 
-  const getLabelNames = useCallback(() => availableLabels.data, [availableLabels]);
+  const getLabelNames = useCallback(() => availableLabels, [availableLabels]);
 
   useEffect(() => {
     const fetchData = async () => {
-      const labels = await datasource.getLabelNames(
-        processedLabelSelector.data,
-        unpreciseRange.from,
-        unpreciseRange.to
-      );
+      const labels = await datasource.getLabelNames(processedLabelSelector, unpreciseRange.from, unpreciseRange.to);
 
-      setAvailableLabels({ data: labels });
+      setAvailableLabels(labels);
     };
     fetchData();
-  }, [processedLabelSelector.data, unpreciseRange.from, unpreciseRange.to, datasource, setAvailableLabels]);
+  }, [processedLabelSelector, unpreciseRange.from, unpreciseRange.to, datasource, setAvailableLabels]);
 
   // Create a function with range and query already baked in, so we don't have to send those everywhere
   const getLabelValues = useCallback(
     (label: string) => {
-      let labelSelector = createSelector(rawQuery.data, query.profileTypeId, label);
+      let labelSelector = createSelector(rawQuery, query.profileTypeId, label);
       return datasource.getLabelValues(labelSelector, label, unpreciseRange.from, unpreciseRange.to);
     },
-    [datasource, rawQuery.data, query.profileTypeId, unpreciseRange.to, unpreciseRange.from]
+    [datasource, rawQuery, query.profileTypeId, unpreciseRange.to, unpreciseRange.from]
   );
 
   const onLabelSelectorChange = useCallback(
     (value: string) => {
-      setRawQuery({
-        data: value,
-      });
+      setRawQuery(value);
     },
     [setRawQuery]
   );
 
   // This is to update the query state, as updating it every time the value in the editor changes causes many things to rerender.
   const onBlur = useCallback(() => {
-    onChange({ ...query, labelSelector: rawQuery.data });
-  }, [query, onChange, rawQuery.data]);
+    onChange({ ...query, labelSelector: rawQuery });
+  }, [query, onChange, rawQuery]);
 
   return { getLabelNames, getLabelValues, onLabelSelectorChange, onBlur };
 }
