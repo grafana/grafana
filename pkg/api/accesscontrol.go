@@ -358,6 +358,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				Group:       "Annotations",
 				Permissions: []ac.Permission{
 					{Action: ac.ActionAnnotationsRead, Scope: ac.ScopeAnnotationsTypeOrganization},
+					// Can remove the following permission when we remove the FlagAnnotationPermissionUpdate
+					{Action: ac.ActionAnnotationsRead, Scope: ac.ScopeAnnotationsTypeDashboard},
 				},
 			},
 			Grants: []string{string(org.RoleViewer)},
@@ -372,8 +374,12 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				Group:       "Annotations",
 				Permissions: []ac.Permission{
 					{Action: ac.ActionAnnotationsCreate, Scope: ac.ScopeAnnotationsTypeOrganization},
+					// Can remove the permissions scoped to ScopeAnnotationsTypeDashboard when we remove the FlagAnnotationPermissionUpdate
+					{Action: ac.ActionAnnotationsCreate, Scope: ac.ScopeAnnotationsTypeDashboard},
 					{Action: ac.ActionAnnotationsDelete, Scope: ac.ScopeAnnotationsTypeOrganization},
+					{Action: ac.ActionAnnotationsDelete, Scope: ac.ScopeAnnotationsTypeDashboard},
 					{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsTypeOrganization},
+					{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsTypeDashboard},
 				},
 			},
 			Grants: []string{string(org.RoleEditor)},
