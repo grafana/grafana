@@ -26,7 +26,6 @@ export interface Props {
 
 export interface DisplayValue {
   name: string;
-  fieldName?: string;
   value: unknown;
   valueString: string;
   highlight: boolean;
