@@ -1,13 +1,7 @@
 import React, { ChangeEvent } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
-import {
-  SceneComponentProps,
-  SceneObjectBase,
-  SceneObjectState,
-  SceneObjectRef,
-  SceneTimePicker,
-} from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneTimePicker } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
 import {
   Box,
@@ -31,9 +25,9 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 
-import { DashboardEditView, useDashboardEditPageNav } from './utils';
+import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
 
-export interface GeneralSettingsEditViewState extends SceneObjectState {
+export interface GeneralSettingsEditViewState extends DashboardEditViewState {
   dashboardRef: SceneObjectRef<DashboardScene>;
 }
 

@@ -50,7 +50,7 @@ var (
 )
 
 func NewGitHubProvider(settings map[string]any, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGithub, error) {
-	info, err := createOAuthInfoFromKeyValues(settings)
+	info, err := CreateOAuthInfoFromKeyValues(settings)
 	if err != nil {
 		return nil, err
 	}

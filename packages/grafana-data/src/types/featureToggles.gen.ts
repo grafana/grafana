@@ -65,6 +65,7 @@ export interface FeatureToggles {
   individualCookiePreferences?: boolean;
   prometheusMetricEncyclopedia?: boolean;
   influxdbBackendMigration?: boolean;
+  influxqlStreamingParser?: boolean;
   clientTokenRotation?: boolean;
   prometheusDataplane?: boolean;
   lokiMetricDataplane?: boolean;
@@ -165,4 +166,5 @@ export interface FeatureToggles {
   logRowsPopoverMenu?: boolean;
   pluginsSkipHostEnvVars?: boolean;
   regressionTransformation?: boolean;
+  displayAnonymousStats?: boolean;
 }

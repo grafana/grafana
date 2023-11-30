@@ -17,6 +17,7 @@ import {
   SceneVariable,
   SceneVariableDependencyConfigLike,
 } from '@grafana/scenes';
+import { DashboardLink } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -38,8 +39,10 @@ export interface DashboardSceneState extends SceneObjectState {
   title: string;
   /** The description */
   description?: string;
-  /** The tags */
+  /** Tags */
   tags?: string[];
+  /** Links */
+  links?: DashboardLink[];
   /** Is editable */
   editable?: boolean;
   /** Tooltip settings */

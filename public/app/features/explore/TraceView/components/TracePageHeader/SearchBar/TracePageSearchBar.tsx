@@ -69,9 +69,18 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
       search.tags.some((tag) => {
         return tag.key;
       }) ||
+      (search.query && search.query !== '') ||
       showSpanFilterMatchesOnly
     );
-  }, [search.serviceName, search.spanName, search.from, search.to, search.tags, showSpanFilterMatchesOnly]);
+  }, [
+    search.serviceName,
+    search.spanName,
+    search.from,
+    search.to,
+    search.tags,
+    search.query,
+    showSpanFilterMatchesOnly,
+  ]);
 
   return (
     <div className={styles.container}>

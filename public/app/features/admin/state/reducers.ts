@@ -13,6 +13,8 @@ import {
   UserSession,
   UserListAdminState,
   UserFilter,
+  UserListAnonymousDevicesState,
+  UserAnonymousDeviceDTO,
 } from 'app/types';
 
 const initialLdapState: LdapState = {
@@ -201,8 +203,37 @@ export const { usersFetched, usersFetchBegin, usersFetchEnd, queryChanged, pageC
   userListAdminSlice.actions;
 export const userListAdminReducer = userListAdminSlice.reducer;
 
+// UserListAnonymousPage
+
+const initialUserListAnonymousDevicesState: UserListAnonymousDevicesState = {
+  devices: [],
+};
+
+interface UsersAnonymousDevicesFetched {
+  devices: UserAnonymousDeviceDTO[];
+}
+
+export const userListAnonymousDevicesSlice = createSlice({
+  name: 'userListAnonymousDevices',
+  initialState: initialUserListAnonymousDevicesState,
+  reducers: {
+    usersAnonymousDevicesFetched: (state, action: PayloadAction<UsersAnonymousDevicesFetched>) => {
+      const { devices } = action.payload;
+      return {
+        ...state,
+        devices,
+        isLoading: false,
+      };
+    },
+  },
+});
+
+export const { usersAnonymousDevicesFetched } = userListAnonymousDevicesSlice.actions;
+export const userListAnonymousDevicesReducer = userListAnonymousDevicesSlice.reducer;
+
 export default {
   ldap: ldapReducer,
   userAdmin: userAdminReducer,
   userListAdmin: userListAdminReducer,
+  userListAnonymousDevices: userListAnonymousDevicesReducer,
 };
