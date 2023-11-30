@@ -20,6 +20,11 @@ const (
 	// corresponding document to return to the request.
 	// HTTP status code 404.
 	StatusNotFound CoreStatus = "Not found"
+	// StatusUnprocessableEntity means that the server understands the request,
+	// the content type and the syntax but it was unable to process the
+	// contained instructions.
+	// HTTP status code 422.
+	StatusUnprocessableEntity CoreStatus = "Unprocessable Content"
 	// StatusConflict means that the server cannot fulfill the request
 	// there is a conflict in the current state of a resource
 	// HTTP status code 409.
@@ -96,6 +101,8 @@ func (s CoreStatus) HTTPStatus() int {
 		return http.StatusNotFound
 	case StatusTimeout, StatusGatewayTimeout:
 		return http.StatusGatewayTimeout
+	case StatusUnprocessableEntity:
+		return http.StatusUnprocessableEntity
 	case StatusConflict:
 		return http.StatusConflict
 	case StatusTooManyRequests:

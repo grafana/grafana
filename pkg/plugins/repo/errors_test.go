@@ -50,7 +50,7 @@ func TestErrorTemplates(t *testing.T) {
 
 	err = ErrChecksumMismatch("http://localhost:6481/grafana-test-app/versions/1.0.0/download")
 	require.True(t, errors.As(err, base))
-	require.Equal(t, http.StatusInternalServerError, base.Public().StatusCode)
+	require.Equal(t, http.StatusUnprocessableEntity, base.Public().StatusCode)
 	require.Equal(t, "plugin.checksumMismatch", base.Public().MessageID)
 	require.Equal(t, "expected SHA256 checksum does not match the downloaded archive (http://localhost:6481/grafana-test-app/versions/1.0.0/download) - please contact security@grafana.com", base.Public().Message)
 
