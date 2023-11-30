@@ -323,20 +323,25 @@ func newFrameWithTimeField(row models.Row, column string, colIndex int, query mo
 }
 
 func newFrameWithoutTimeField(row models.Row, query models.Query) *data.Frame {
-	var values []string
+	var values []*string
 
 	for _, valuePair := range row.Values {
 		if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES")) {
 			if len(valuePair) >= 2 {
-				values = append(values, valuePair[1].(string))
+				values = append(values, util.ToPtr(valuePair[1].(string)))
 			}
 		} else {
 			if len(valuePair) >= 1 {
-				values = append(values, valuePair[0].(string))
+				values = append(values, util.ToPtr(valuePair[0].(string)))
 			}
 		}
 	}
 
 	field := data.NewField("Value", nil, values)
-	return data.NewFrame(row.Name, field)
+	frame := data.NewFrame(row.Name, field)
+	frame.Meta = &data.FrameMeta{
+		ExecutedQueryString:    query.RawQuery,
+		PreferredVisualization: util.GetVisType(query.ResultFormat),
+	}
+	return frame
 }

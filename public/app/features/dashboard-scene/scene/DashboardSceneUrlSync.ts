@@ -10,6 +10,7 @@ import { createDashboardEditViewFor } from '../settings/utils';
 import { findVizPanelByKey } from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
+import { ViewPanelScene } from './ViewPanelScene';
 import { DashboardRepeatsProcessedEvent } from './types';
 
 export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
@@ -25,13 +26,13 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     const state = this._scene.state;
     return {
       inspect: state.inspectPanelKey,
-      viewPanel: state.viewPanelKey,
+      viewPanel: state.viewPanelScene?.getUrlKey(),
       editview: state.editview?.getUrlKey(),
     };
   }
 
   updateFromUrl(values: SceneObjectUrlValues): void {
-    const { inspectPanelKey, viewPanelKey, meta, isEditing } = this._scene.state;
+    const { inspectPanelKey, viewPanelScene, meta, isEditing } = this._scene.state;
     const update: Partial<DashboardSceneState> = {};
 
     if (typeof values.editview === 'string' && meta.canEdit) {
@@ -78,9 +79,9 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         return;
       }
 
-      update.viewPanelKey = values.viewPanel;
-    } else if (viewPanelKey) {
-      update.viewPanelKey = undefined;
+      update.viewPanelScene = new ViewPanelScene({ panelRef: panel.getRef() });
+    } else if (viewPanelScene) {
+      update.viewPanelScene = undefined;
     }
 
     if (Object.keys(update).length > 0) {
@@ -94,7 +95,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         const panel = findVizPanelByKey(this._scene, viewPanel);
         if (panel) {
           this._eventSub?.unsubscribe();
-          this._scene.setState({ viewPanelKey: viewPanel });
+          this._scene.setState({ viewPanelScene: new ViewPanelScene({ panelRef: panel.getRef() }) });
         }
       });
     }
