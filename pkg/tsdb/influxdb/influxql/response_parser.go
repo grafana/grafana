@@ -306,12 +306,4 @@ func newFrameWithoutTimeField(row models.Row, query models.Query) *data.Frame {
 		PreferredVisualization: util.GetVisType(query.ResultFormat),
 	}
 	return frame
-
-	// if len(columns) >= 2 && strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES")) {
-	// 	return data.NewFrame(measurement, valueFields[1])
-	// }
-	// if len(columns) >= 1 {
-	// 	return data.NewFrame(measurement, valueFields[0])
-	// }
-	// return nil
 }
