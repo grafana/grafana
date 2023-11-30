@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql/parser"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -118,27 +120,28 @@ func (d *PyroscopeDatasource) labelNames(ctx context.Context, req *backend.CallR
 	start, _ := strconv.ParseInt(query.Get("start"), 10, 64)
 	end, _ := strconv.ParseInt(query.Get("end"), 10, 64)
 	labelSelector := query.Get("query")
+	matchers, err := parser.ParseMetricSelector(labelSelector)
+	if err != nil {
+		ctxLogger.Error("Could not parse label selector", "error", err, "function", logEntrypoint())
+		return fmt.Errorf("failed parsing label selector: %v", err)
+	}
 
-	labels, err := d.client.LabelNames(ctx, labelSelector, start, end)
+	labelNames, err := d.client.LabelNames(ctx, labelSelector, start, end)
 	if err != nil {
 		ctxLogger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		return fmt.Errorf("error calling LabelNames: %v", err)
 	}
-	matchers, err := parser.ParseMetricSelector(labelSelector)
-	if err != nil {
-		ctxLogger.Error("Could not parse label selector in input", "error", err, "function", logEntrypoint())
-		return fmt.Errorf("error processing label names in response: %v", err)
-	}
+
 	finalLabels := make([]string, 0)
-Outer:
-	for _, label := range labels {
-		for _, matcher := range matchers {
-			if matcher.Name == label {
-				continue Outer
-			}
+	for _, label := range labelNames {
+		if slices.ContainsFunc(matchers, func(m *labels.Matcher) bool {
+			return m.Name == label
+		}) {
+			continue
 		}
 		finalLabels = append(finalLabels, label)
 	}
+
 	jsonResponse, err := json.Marshal(finalLabels)
 	if err != nil {
 		ctxLogger.Error("Failed to marshal response", "error", err, "function", logEntrypoint())
