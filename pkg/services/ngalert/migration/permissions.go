@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
 	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
@@ -42,12 +43,12 @@ var (
 	// generalAlertingFolderTitle is the title of the general alerting folder. This is used for dashboard alerts in the general folder.
 	generalAlertingFolderTitle = "General Alerting"
 
-	// permissionMap maps the "friendly" permission name for a ResourcePermissions actions to the dashboards.PermissionType.
+	// permissionMap maps the "friendly" permission name for a ResourcePermissions actions to the dashboardaccess.PermissionType.
 	// A sort of reverse accesscontrol Service.MapActions similar to api.dashboardPermissionMap.
-	permissionMap = map[string]dashboards.PermissionType{
-		"View":  dashboards.PERMISSION_VIEW,
-		"Edit":  dashboards.PERMISSION_EDIT,
-		"Admin": dashboards.PERMISSION_ADMIN,
+	permissionMap = map[string]dashboardaccess.PermissionType{
+		"View":  dashboardaccess.PERMISSION_VIEW,
+		"Edit":  dashboardaccess.PERMISSION_EDIT,
+		"Admin": dashboardaccess.PERMISSION_ADMIN,
 	}
 )
 
@@ -103,6 +104,7 @@ func (om *OrgMigration) getOrCreateMigratedFolder(ctx context.Context, l log.Log
 
 	// Check if the dashboard has custom permissions. If it does, we need to create a new folder for it.
 	// This folder will be cached for re-use for each dashboard in the folder with the same permissions.
+	// nolint:staticcheck
 	permissionsToFolder, ok := om.permissionsMap[parentFolder.ID]
 	if !ok {
 		permissionsToFolder = make(map[permissionHash]*folder.Folder)
@@ -185,11 +187,11 @@ func isBasic(roleName string) bool {
 // There are two role types that we consider:
 //   - managed (ex. managed:users:1:permissions, managed:builtins:editor:permissions, managed:teams:1:permissions):
 //     These are the only roles that exist in OSS. For each of these roles, we add the actions of the highest
-//     dashboards.PermissionType between the folder and the dashboard. Permissions from the folder are inherited.
+//     dashboardaccess.PermissionType between the folder and the dashboard. Permissions from the folder are inherited.
 //     The added actions should have scope=folder:uid:xxxxxx, where xxxxxx is the new folder uid.
 //   - basic (ex. basic:admin, basic:editor):
 //     These are roles used in enterprise. Every user should have one of these roles. They should be considered
-//     equivalent to managed:builtins. The highest dashboards.PermissionType between the two should be used.
+//     equivalent to managed:builtins. The highest dashboardaccess.PermissionType between the two should be used.
 //
 // There are two role types that we do not consider:
 //   - fixed: (ex. fixed:dashboards:reader, fixed:dashboards:writer):
@@ -204,7 +206,7 @@ func isBasic(roleName string) bool {
 // For now, we choose the simpler approach of handling managed and basic roles. Fixed and custom roles will not
 // be taken into account, but we will log a warning if they had the potential to override the folder permissions.
 func (om *OrgMigration) convertResourcePerms(rperms []accesscontrol.ResourcePermission) ([]accesscontrol.SetResourcePermissionCommand, []accesscontrol.ResourcePermission) {
-	keep := make(map[accesscontrol.SetResourcePermissionCommand]dashboards.PermissionType)
+	keep := make(map[accesscontrol.SetResourcePermissionCommand]dashboardaccess.PermissionType)
 	unusedPerms := make([]accesscontrol.ResourcePermission, 0)
 	for _, p := range rperms {
 		if p.IsManaged || p.IsInherited || isBasic(p.RoleName) {
@@ -253,8 +255,8 @@ func (om *OrgMigration) convertResourcePerms(rperms []accesscontrol.ResourcePerm
 
 // potentialOverrides returns a map of roles from unusedOldPerms that have dashboard permissions that could potentially
 // override the given folder permissions in newPerms. These overrides are always to increase permissions not decrease them.
-func potentialOverrides(unusedOldPerms []accesscontrol.ResourcePermission, newPerms []accesscontrol.SetResourcePermissionCommand) map[string]dashboards.PermissionType {
-	var lowestPermission dashboards.PermissionType
+func potentialOverrides(unusedOldPerms []accesscontrol.ResourcePermission, newPerms []accesscontrol.SetResourcePermissionCommand) map[string]dashboardaccess.PermissionType {
+	var lowestPermission dashboardaccess.PermissionType
 	for _, p := range newPerms {
 		if p.BuiltinRole == string(org.RoleEditor) || p.BuiltinRole == string(org.RoleViewer) {
 			pType := permissionMap[p.Permission]
@@ -264,18 +266,18 @@ func potentialOverrides(unusedOldPerms []accesscontrol.ResourcePermission, newPe
 		}
 	}
 
-	nonManagedPermissionTypes := make(map[string]dashboards.PermissionType)
+	nonManagedPermissionTypes := make(map[string]dashboardaccess.PermissionType)
 	for _, p := range unusedOldPerms {
 		existing, ok := nonManagedPermissionTypes[p.RoleName]
-		if ok && existing == dashboards.PERMISSION_EDIT {
+		if ok && existing == dashboardaccess.PERMISSION_EDIT {
 			// We've already handled the highest permission we care about, no need to check this role anymore.
 			continue
 		}
 
 		if p.Contains([]string{dashboards.ActionDashboardsWrite}) {
-			existing = dashboards.PERMISSION_EDIT
+			existing = dashboardaccess.PERMISSION_EDIT
 		} else if p.Contains([]string{dashboards.ActionDashboardsRead}) {
-			existing = dashboards.PERMISSION_VIEW
+			existing = dashboardaccess.PERMISSION_VIEW
 		}
 
 		if existing > lowestPermission && existing > nonManagedPermissionTypes[p.RoleName] {

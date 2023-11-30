@@ -1,7 +1,7 @@
 import * as H from 'history';
 import { Unsubscribable } from 'rxjs';
 
-import { CoreApp, DataQueryRequest, NavIndex, NavModelItem, UrlQueryMap } from '@grafana/data';
+import { CoreApp, DataQueryRequest, NavIndex, NavModelItem } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
@@ -16,25 +16,31 @@ import {
   SceneVariable,
   SceneVariableDependencyConfigLike,
 } from '@grafana/scenes';
+import { DashboardLink } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardMeta } from 'app/types';
 
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
+import { DashboardEditView } from '../settings/utils';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { getDashboardUrl } from '../utils/urlBuilders';
-import { findVizPanelByKey, forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel } from '../utils/utils';
+import { forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
+import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 
 export interface DashboardSceneState extends SceneObjectState {
   /** The title */
   title: string;
+  /** Tags */
+  tags?: string[];
+  /** Links */
+  links?: DashboardLink[];
   /** A uid when saved */
   uid?: string;
   /** @deprecated */
@@ -53,8 +59,10 @@ export interface DashboardSceneState extends SceneObjectState {
   meta: DashboardMeta;
   /** Panel to inspect */
   inspectPanelKey?: string;
-  /** Panel to view in full screen */
-  viewPanelKey?: string;
+  /** Panel to view in fullscreen */
+  viewPanelScene?: ViewPanelScene;
+  /** Edit view */
+  editview?: DashboardEditView;
   /** Scene object that handles the current drawer or modal */
   overlay?: SceneObject;
 }
@@ -78,7 +86,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   /**
    * Url state before editing started
    */
-  private _initiallUrlState?: UrlQueryMap;
+  private _initialUrlState?: H.Location;
   /**
    * change tracking subscription
    */
@@ -129,7 +137,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   public onEnterEditMode = () => {
     // Save this state
     this._initialState = sceneUtils.cloneSceneObjectState(this.state);
-    this._initiallUrlState = locationService.getSearchObject();
+    this._initialUrlState = locationService.getLocation();
 
     // Switch to edit mode
     this.setState({ isEditing: true });
@@ -149,7 +157,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // Stop url sync before updating url
     this.stopUrlSync();
     // Now we can update url
-    locationService.partial(this._initiallUrlState!, true);
+    locationService.replace({ pathname: this._initialUrlState?.pathname, search: this._initialUrlState?.search });
     // Update state and disable editing
     this.setState({ ...this._initialState, isEditing: false });
     // and start url sync again
@@ -167,45 +175,33 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   };
 
   public getPageNav(location: H.Location, navIndex: NavIndex) {
-    const { meta } = this.state;
+    const { meta, viewPanelScene } = this.state;
 
     let pageNav: NavModelItem = {
       text: this.state.title,
       url: getDashboardUrl({
         uid: this.state.uid,
         currentQueryParams: location.search,
-        updateQuery: { viewPanel: null, inspect: null },
+        updateQuery: { viewPanel: null, inspect: null, editview: null },
         useExperimentalURL: Boolean(config.featureToggles.dashboardSceneForViewers && meta.canEdit),
       }),
     };
 
-    const { folderTitle, folderUid } = meta;
+    const { folderUid } = meta;
 
     if (folderUid) {
-      if (newBrowseDashboardsEnabled()) {
-        const folderNavModel = getNavModel(navIndex, `folder-dashboards-${folderUid}`).main;
-        // If the folder hasn't loaded (maybe user doesn't have permission on it?) then
-        // don't show the "page not found" breadcrumb
-        if (folderNavModel.id !== 'not-found') {
-          pageNav = {
-            ...pageNav,
-            parentItem: folderNavModel,
-          };
-        }
-      } else {
-        if (folderTitle) {
-          pageNav = {
-            ...pageNav,
-            parentItem: {
-              text: folderTitle,
-              url: `/dashboards/f/${meta.folderUid}`,
-            },
-          };
-        }
+      const folderNavModel = getNavModel(navIndex, `folder-dashboards-${folderUid}`).main;
+      // If the folder hasn't loaded (maybe user doesn't have permission on it?) then
+      // don't show the "page not found" breadcrumb
+      if (folderNavModel.id !== 'not-found') {
+        pageNav = {
+          ...pageNav,
+          parentItem: folderNavModel,
+        };
       }
     }
 
-    if (this.state.viewPanelKey) {
+    if (viewPanelScene) {
       pageNav = {
         text: 'View panel',
         parentItem: pageNav,
@@ -218,9 +214,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   /**
    * Returns the body (layout) or the full view panel
    */
-  public getBodyToRender(viewPanelKey?: string): SceneObject {
-    const viewPanel = findVizPanelByKey(this, viewPanelKey);
-    return viewPanel ?? this.state.body;
+  public getBodyToRender(): SceneObject {
+    return this.state.viewPanelScene ?? this.state.body;
   }
 
   private startTrackingChanges() {
@@ -274,6 +269,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       console.error('Failed to star dashboard', err);
     }
   }
+
+  public onOpenSettings = () => {
+    locationService.partial({ editview: 'settings' });
+  };
 
   /**
    * Called by the SceneQueryRunner to privide contextural parameters (tracking) props for the request

@@ -37,6 +37,7 @@ import {
   ToggleFilterAction,
   DataSourceGetTagValuesOptions,
   AdHocVariableFilter,
+  DataSourceWithQueryModificationSupport,
 } from '@grafana/data';
 import {
   DataSourceWithBackend,
@@ -107,7 +108,8 @@ export class ElasticDatasource
     DataSourceWithLogsContextSupport,
     DataSourceWithQueryImportSupport<ElasticsearchQuery>,
     DataSourceWithSupplementaryQueriesSupport<ElasticsearchQuery>,
-    DataSourceWithToggleableQueryFiltersSupport<ElasticsearchQuery>
+    DataSourceWithToggleableQueryFiltersSupport<ElasticsearchQuery>,
+    DataSourceWithQueryModificationSupport<ElasticsearchQuery>
 {
   basicAuth?: string;
   withCredentials?: boolean;
@@ -960,6 +962,10 @@ export class ElasticDatasource
     }
 
     return { ...query, query: expression };
+  }
+
+  getSupportedQueryModifications() {
+    return ['ADD_FILTER', 'ADD_FILTER_OUT', 'ADD_STRING_FILTER', 'ADD_STRING_FILTER_OUT'];
   }
 
   addAdHocFilters(query: string, adhocFilters?: AdHocVariableFilter[]) {

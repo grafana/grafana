@@ -3,7 +3,7 @@ import { Global } from '@emotion/react';
 import Slider, { SliderProps } from 'rc-slider';
 import React, { useCallback } from 'react';
 
-import { useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes/ThemeContext';
 
 import HandleTooltip from './HandleTooltip';
 import { getStyles } from './styles';
@@ -43,8 +43,7 @@ export const RangeSlider = ({
   );
 
   const isHorizontal = orientation === 'horizontal';
-  const theme = useTheme2();
-  const styles = getStyles(theme, isHorizontal);
+  const styles = useStyles2(getStyles, isHorizontal);
 
   const tipHandleRender: SliderProps['handleRender'] = (node, handleProps) => {
     return (

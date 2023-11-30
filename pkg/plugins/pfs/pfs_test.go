@@ -107,6 +107,10 @@ func TestParsePluginTestdata(t *testing.T) {
 			rootid:  "test-datasource",
 			subpath: "plugin",
 		},
+		"plugin-with-dist": {
+			rootid:  "test-datasource",
+			subpath: "plugin",
+		},
 		"no-rootfile": {
 			err: ErrNoRootFile,
 		},
