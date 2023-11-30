@@ -12,6 +12,7 @@ export enum ColorIndicator {
 
 export enum ColorPlacement {
   hidden = 'hidden',
+  first = 'first',
   leading = 'leading',
   trailing = 'trailing',
 }
