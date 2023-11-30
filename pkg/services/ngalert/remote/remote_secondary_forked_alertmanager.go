@@ -24,15 +24,13 @@ func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, c
 	return nil
 }
 
+// SaveAndApplyConfig is only called on the internal Alertmanager when running in remote secondary mode.
 func (fam *RemoteSecondaryForkedAlertmanager) SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
-	// We only need to call this method on the internal Alertmanager.
-	// Configuration is synced on an interval.
 	return fam.internal.SaveAndApplyConfig(ctx, config)
 }
 
+// SaveAndApplyDefaultConfig is only called on the internal Alertmanager when running in remote secondary mode.
 func (fam *RemoteSecondaryForkedAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
-	// We only need to call this on the internal Alertmanager.
-	// Configuration is synced on an interval.
 	return fam.internal.SaveAndApplyDefaultConfig(ctx)
 }
 
