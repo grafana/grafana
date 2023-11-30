@@ -111,6 +111,8 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	dashboardFolderMigrations.AddDashboardFolderMigrations(mg)
 
 	ssosettings.AddMigration(mg)
+
+	accesscontrol.AddManagedDashboardAnnotationActionsMigration(mg)
 }
 
 func addStarMigrations(mg *Migrator) {

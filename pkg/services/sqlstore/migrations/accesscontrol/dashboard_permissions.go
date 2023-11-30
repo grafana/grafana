@@ -661,6 +661,178 @@ func (m *managedFolderLibraryPanelActionsMigrator) Exec(sess *xorm.Session, mg *
 	return nil
 }
 
+const managedDashboardAnnotationActionsMigratorID = "managed dashboard permissions annotation actions migration"
+
+func AddManagedDashboardAnnotationActionsMigration(mg *migrator.Migrator) {
+	mg.AddMigration(managedDashboardAnnotationActionsMigratorID, &managedDashboardAnnotationActionsMigrator{})
+}
+
+type managedDashboardAnnotationActionsMigrator struct {
+	migrator.MigrationBase
+}
+
+func (m *managedDashboardAnnotationActionsMigrator) SQL(dialect migrator.Dialect) string {
+	return CodeMigrationSQL
+}
+
+// Make this migration run every time until we feel like it's safe to remove it
+func (m *managedDashboardAnnotationActionsMigrator) SkipMigrationLog() bool {
+	return true
+}
+
+func (m *managedDashboardAnnotationActionsMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	// Check if roles have been populated and return early if they haven't - this avoids logging a warning from hasDefaultAnnotationPermissions
+	roleCount, err := sess.Count(&ac.Role{})
+	if err != nil {
+		return fmt.Errorf("failed to check if roles have been populated: %w", err)
+	}
+	if roleCount == 0 {
+		return nil
+	}
+
+	// Check that default annotation permissions are assigned to basic roles. If that is not the case, skip the migration.
+	if hasDefaultPerms, err := m.hasDefaultAnnotationPermissions(sess, mg); err != nil || !hasDefaultPerms {
+		return err
+	}
+
+	var ids []any
+	if err := sess.SQL("SELECT id FROM role WHERE name LIKE 'managed:%'").Find(&ids); err != nil {
+		return err
+	}
+
+	if len(ids) == 0 {
+		return nil
+	}
+
+	var permissions []ac.Permission
+	if err := sess.SQL("SELECT role_id, action, scope FROM permission WHERE role_id IN(?"+strings.Repeat(" ,?", len(ids)-1)+") AND (scope LIKE 'folders:%' or scope LIKE 'dashboards:%')", ids...).Find(&permissions); err != nil {
+		return err
+	}
+
+	mapped := make(map[int64]map[string][]ac.Permission, len(ids)-1)
+	for _, p := range permissions {
+		if mapped[p.RoleID] == nil {
+			mapped[p.RoleID] = make(map[string][]ac.Permission)
+		}
+		mapped[p.RoleID][p.Scope] = append(mapped[p.RoleID][p.Scope], p)
+	}
+
+	var toAdd []ac.Permission
+	now := time.Now()
+
+	for roleId, mappedPermissions := range mapped {
+		for scope, rolePermissions := range mappedPermissions {
+			if hasAction(dashboards.ActionDashboardsRead, rolePermissions) {
+				if !hasAction(ac.ActionAnnotationsRead, rolePermissions) {
+					toAdd = append(toAdd, ac.Permission{
+						RoleID:  roleId,
+						Updated: now,
+						Created: now,
+						Scope:   scope,
+						Action:  ac.ActionAnnotationsRead,
+					})
+				}
+			}
+
+			if hasAction(dashboards.ActionDashboardsWrite, rolePermissions) {
+				if !hasAction(ac.ActionAnnotationsCreate, rolePermissions) {
+					toAdd = append(toAdd, ac.Permission{
+						RoleID:  roleId,
+						Updated: now,
+						Created: now,
+						Scope:   scope,
+						Action:  ac.ActionAnnotationsCreate,
+					})
+				}
+				if !hasAction(ac.ActionAnnotationsDelete, rolePermissions) {
+					toAdd = append(toAdd, ac.Permission{
+						RoleID:  roleId,
+						Updated: now,
+						Created: now,
+						Scope:   scope,
+						Action:  ac.ActionAnnotationsDelete,
+					})
+				}
+				if !hasAction(ac.ActionAnnotationsWrite, rolePermissions) {
+					toAdd = append(toAdd, ac.Permission{
+						RoleID:  roleId,
+						Updated: now,
+						Created: now,
+						Scope:   scope,
+						Action:  ac.ActionAnnotationsWrite,
+					})
+				}
+			}
+		}
+	}
+
+	if len(toAdd) == 0 {
+		return nil
+	}
+
+	err = batch(len(toAdd), batchSize, func(start, end int) error {
+		if _, err := sess.InsertMulti(toAdd[start:end]); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *managedDashboardAnnotationActionsMigrator) hasDefaultAnnotationPermissions(sess *xorm.Session, mg *migrator.Migrator) (bool, error) {
+	type basicRolePermission struct {
+		Uid    string
+		Action string
+		Scope  string
+	}
+
+	var basicRolePermissions []basicRolePermission
+	basicRoleUIDs := []any{"basic_viewer", "basic_editor", "basic_admin"}
+	query := `SELECT r.uid, p.action, p.scope FROM role r
+LEFT OUTER JOIN permission p ON p.role_id = r.id
+WHERE r.uid IN (?, ?, ?) AND p.action LIKE 'annotations:%'
+`
+	if err := sess.SQL(query, basicRoleUIDs...).Find(&basicRolePermissions); err != nil {
+		return false, fmt.Errorf("failed to list basic role permissions: %w", err)
+	}
+
+	mappedBasicRolePerms := make(map[any]map[string][]string, 0)
+	for _, p := range basicRolePermissions {
+		if mappedBasicRolePerms[p.Uid] == nil {
+			mappedBasicRolePerms[p.Uid] = make(map[string][]string)
+		}
+		mappedBasicRolePerms[p.Uid][p.Action] = append(mappedBasicRolePerms[p.Uid][p.Action], p.Scope)
+	}
+
+	expectedAnnotationActions := []string{ac.ActionAnnotationsRead, ac.ActionAnnotationsCreate, ac.ActionAnnotationsDelete, ac.ActionAnnotationsWrite}
+
+	for _, uid := range basicRoleUIDs {
+		if mappedBasicRolePerms[uid] == nil {
+			mg.Logger.Warn("basic role permissions missing annotation permissions, skipping annotation permission migration", "uid", uid)
+			return false, nil
+		}
+		for _, action := range expectedAnnotationActions {
+			foundDashScope := false
+			for _, scope := range mappedBasicRolePerms[uid][action] {
+				if scope == ac.ScopeAnnotationsAll || scope == ac.ScopeAnnotationsTypeDashboard {
+					foundDashScope = true
+					break
+				}
+			}
+			if !foundDashScope {
+				mg.Logger.Warn("basic role permissions missing annotation permissions, skipping annotation permission migration", "uid", uid, "action", action)
+				return false, nil
+			}
+		}
+	}
+	return true, nil
+}
+
 func hasFolderAdmin(permissions []ac.Permission) bool {
 	return hasActions(folderPermissionTranslation[dashboardaccess.PERMISSION_ADMIN], permissions)
 }

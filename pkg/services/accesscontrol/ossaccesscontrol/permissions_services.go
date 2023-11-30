@@ -130,6 +130,12 @@ func ProvideDashboardPermissions(
 		return queryResult, nil
 	}
 
+	if features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
+		DashboardViewActions = append(DashboardViewActions, accesscontrol.ActionAnnotationsRead)
+		DashboardEditActions = append(DashboardEditActions, []string{accesscontrol.ActionAnnotationsRead, accesscontrol.ActionAnnotationsWrite, accesscontrol.ActionAnnotationsDelete, accesscontrol.ActionAnnotationsCreate}...)
+		DashboardAdminActions = append(DashboardAdminActions, []string{accesscontrol.ActionAnnotationsRead, accesscontrol.ActionAnnotationsWrite, accesscontrol.ActionAnnotationsDelete, accesscontrol.ActionAnnotationsCreate}...)
+	}
+
 	options := resourcepermissions.Options{
 		Resource:          "dashboards",
 		ResourceAttribute: "uid",
@@ -209,10 +215,16 @@ var FolderEditActions = append(FolderViewActions, []string{
 var FolderAdminActions = append(FolderEditActions, []string{dashboards.ActionFoldersPermissionsRead, dashboards.ActionFoldersPermissionsWrite}...)
 
 func ProvideFolderPermissions(
-	features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, accesscontrol accesscontrol.AccessControl,
+	features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
 	license licensing.Licensing, dashboardStore dashboards.Store, folderService folder.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service,
 ) (*FolderPermissionsService, error) {
+	if features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
+		DashboardViewActions = append(DashboardViewActions, accesscontrol.ActionAnnotationsRead)
+		DashboardEditActions = append(DashboardEditActions, []string{accesscontrol.ActionAnnotationsRead, accesscontrol.ActionAnnotationsWrite, accesscontrol.ActionAnnotationsDelete, accesscontrol.ActionAnnotationsCreate}...)
+		DashboardAdminActions = append(DashboardAdminActions, []string{accesscontrol.ActionAnnotationsRead, accesscontrol.ActionAnnotationsWrite, accesscontrol.ActionAnnotationsDelete, accesscontrol.ActionAnnotationsCreate}...)
+	}
+
 	options := resourcepermissions.Options{
 		Resource:          "folders",
 		ResourceAttribute: "uid",
@@ -247,7 +259,7 @@ func ProvideFolderPermissions(
 		WriterRoleName: "Folder permission writer",
 		RoleGroup:      "Folders",
 	}
-	srv, err := resourcepermissions.New(options, features, router, license, accesscontrol, service, sql, teamService, userService)
+	srv, err := resourcepermissions.New(options, features, router, license, ac, service, sql, teamService, userService)
 	if err != nil {
 		return nil, err
 	}
