@@ -13,18 +13,6 @@ import {
 } from './filterByValue';
 import { DataTransformerID } from './ids';
 
-let transformationSupport = false;
-
-jest.mock('./utils', () => {
-  const actual = jest.requireActual('./utils');
-  return {
-    ...actual,
-    transformationsVariableSupport: () => {
-      return transformationSupport;
-    },
-  };
-});
-
 const seriesAWithSingleField = toDataFrame({
   name: 'A',
   length: 7,
@@ -122,8 +110,6 @@ describe('FilterByValue transformer', () => {
   });
 
   it('should interpolate dashboard variables', async () => {
-    transformationSupport = true;
-
     const lower: MatcherConfig<BasicValueMatcherOptions<string | number>> = {
       id: ValueMatcherID.lower,
       options: { value: 'thiswillinterpolateto6' },
@@ -143,7 +129,7 @@ describe('FilterByValue transformer', () => {
       },
     };
 
-    const ctxmock = { interpolate: jest.fn(() => '6') };
+    const ctxmock = { interpolate: jest.fn(() => '6'), featureToggles: { transformationsVariableSupport: true } };
 
     await expect(transformDataFrame([cfg], [seriesAWithSingleField], ctxmock)).toEmitValuesWith((received) => {
       const processed = received[0];
@@ -164,7 +150,6 @@ describe('FilterByValue transformer', () => {
         },
       ]);
     });
-    transformationSupport = false;
   });
 
   it('should not interpolate dashboard variables when feature toggle is off', async () => {
