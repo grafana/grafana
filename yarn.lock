@@ -17511,7 +17511,6 @@ __metadata:
     i18next-parser: "npm:6.6.0"
     immer: "npm:10.0.2"
     immutable: "npm:4.3.1"
-    install: "npm:^0.13.0"
     jest: "npm:29.7.0"
     jest-canvas-mock: "npm:2.5.2"
     jest-date-mock: "npm:1.0.8"
@@ -18636,13 +18635,6 @@ __metadata:
     through: "npm:^2.3.6"
     wrap-ansi: "npm:^7.0.0"
   checksum: 50a240dfeaca37a14e6a6d11d7d6f7da947be3a9fe1e34ac41db6a49fc27022e7b3875ebe8ccd739497359808694488f3509792cc986f9ac48c43135f4e14172
-  languageName: node
-  linkType: hard
-
-"install@npm:^0.13.0":
-  version: 0.13.0
-  resolution: "install@npm:0.13.0"
-  checksum: 587789343de46cfdac4d6f153ff1137f9620c80cbe7c97460ba549b79c55b97c47362ef1942cf977d5ddb7eedf2319104aa4c899f12e10788cb38b0e062b7a32
   languageName: node
   linkType: hard
 

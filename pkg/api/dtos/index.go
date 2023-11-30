@@ -46,5 +46,5 @@ type EntryPointAssets struct {
 
 type EntryPointAsset struct {
 	FilePath  string
-	Integrety string
+	Integrity string
 }

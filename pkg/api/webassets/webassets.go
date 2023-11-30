@@ -1,61 +1,84 @@
 package webassets
 
 import (
+	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 var logger log.Logger = log.New("webassets")
 
+type ManifestInfo struct {
+	FilePath  string `json:"src,omitempty"`
+	Integrity string `json:"integrity,omitempty"`
+
+	// The known entrypoints
+	App   *EntryPointInfo `json:"app,omitempty"`
+	Dark  *EntryPointInfo `json:"dark,omitempty"`
+	Light *EntryPointInfo `json:"light,omitempty"`
+}
+
+type EntryPointInfo struct {
+	Assets struct {
+		JS  []string `json:"js,omitempty"`
+		CSS []string `json:"css,omitempty"`
+	} `json:"assets,omitempty"`
+}
+
 func LoadWebAssets(staticRootPath string) (*dtos.EntryPointAssets, error) {
-	jsonFile, err := os.Open(filepath.Join(staticRootPath, "build", "assets-manifest.json"))
-	// if we os.Open returns an error then handle it
+	// TODO, add caching (this is called a few times for each load!)
+	return readWebAssets(filepath.Join(staticRootPath, "build", "assets-manifest.json"))
+}
+
+func readWebAssets(manifestpath string) (*dtos.EntryPointAssets, error) {
+	bytes, err := os.ReadFile(manifestpath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load assets-manifest.json %f", err)
+		return nil, fmt.Errorf("failed to load assets-manifest.json %w", err)
 	}
 
-	defer jsonFile.Close()
-
-	bytes, _ := io.ReadAll(jsonFile)
-	content, err := simplejson.NewJson(bytes)
-
+	manifest := map[string]ManifestInfo{}
+	err = json.Unmarshal(bytes, &manifest)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse assets-manifest.json %f", err)
+		return nil, fmt.Errorf("failed to read assets-manifest.json %w", err)
 	}
 
-	entryPoints := content.GetPath("entrypoints", "app", "assets", "js")
-	if entryPoints == nil {
+	integrity := make(map[string]string, 100)
+	for _, v := range manifest {
+		if v.Integrity != "" && v.FilePath != "" {
+			integrity[v.FilePath] = v.Integrity
+		}
+	}
+
+	entryPoints, ok := manifest["entrypoints"]
+	if !ok {
 		return nil, fmt.Errorf("could not find entrypoints in asssets-manifest")
 	}
 
+	if entryPoints.App == nil || len(entryPoints.App.Assets.JS) == 0 {
+		return nil, fmt.Errorf("missing app entry")
+	}
+	if entryPoints.Dark == nil || len(entryPoints.Dark.Assets.CSS) == 0 {
+		return nil, fmt.Errorf("missing dark entry")
+	}
+	if entryPoints.Light == nil || len(entryPoints.Light.Assets.CSS) == 0 {
+		return nil, fmt.Errorf("missing light entry")
+	}
+
 	entryPointJSAssets := make([]dtos.EntryPointAsset, 0)
-
-	for _, entryPoint := range entryPoints.MustArray() {
+	for _, entry := range entryPoints.App.Assets.JS {
 		entryPointJSAssets = append(entryPointJSAssets, dtos.EntryPointAsset{
-			FilePath: entryPoint.(string),
+			FilePath:  entry,
+			Integrity: integrity[entry],
 		})
-	}
-
-	darkCss := content.GetPath("entrypoints", "dark", "assets", "css")
-	lightCss := content.GetPath("entrypoints", "light", "assets", "css")
-
-	if darkCss == nil || len(darkCss.MustArray()) == 0 {
-		return nil, fmt.Errorf("could not find css files in assets-manifest")
-	}
-
-	if lightCss == nil || len(lightCss.MustArray()) == 0 {
-		return nil, fmt.Errorf("could not find css files in assets-manifest")
 	}
 
 	return &dtos.EntryPointAssets{
 		JSFiles:  entryPointJSAssets,
-		CSSDark:  darkCss.MustArray()[0].(string),
-		CSSLight: lightCss.MustArray()[0].(string),
+		CSSDark:  entryPoints.Dark.Assets.CSS[0],
+		CSSLight: entryPoints.Light.Assets.CSS[0],
 	}, nil
 }
