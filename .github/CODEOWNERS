@@ -556,7 +556,7 @@ scripts/generate-icon-bundle.js @grafana/plugins-platform-frontend @grafana/graf
 /public/app/plugins/datasource/prometheus/ @grafana/observability-metrics
 /public/app/plugins/datasource/cloud-monitoring/ @grafana/partner-datasources
 /public/app/plugins/datasource/zipkin/ @grafana/observability-traces-and-profiling
-/public/app/plugins/datasource/grafana-tempo-datasource/ @grafana/observability-traces-and-profiling
+/public/app/plugins/datasource/tempo/ @grafana/observability-traces-and-profiling
 /public/app/plugins/datasource/grafana-pyroscope-datasource/ @grafana/observability-traces-and-profiling
 /public/app/plugins/datasource/parca/ @grafana/observability-traces-and-profiling
 /public/app/plugins/datasource/alertmanager/ @grafana/alerting-squad

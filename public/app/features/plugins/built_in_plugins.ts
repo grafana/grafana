@@ -33,8 +33,7 @@ const cloudMonitoringPlugin = async () =>
   await import(/* webpackChunkName: "cloudMonitoringPlugin" */ 'app/plugins/datasource/cloud-monitoring/module');
 const azureMonitorPlugin = async () =>
   await import(/* webpackChunkName: "azureMonitorPlugin" */ 'app/plugins/datasource/azuremonitor/module');
-const tempoPlugin = async () =>
-  await import(/* webpackChunkName: "tempoPlugin" */ '@grafana-plugins/grafana-tempo-datasource/module');
+const tempoPlugin = async () => await import(/* webpackChunkName: "tempoPlugin" */ '@grafana-plugins/tempo/module');
 const alertmanagerPlugin = async () =>
   await import(/* webpackChunkName: "alertmanagerPlugin" */ 'app/plugins/datasource/alertmanager/module');
 const pyroscopePlugin = async () =>
@@ -100,7 +99,7 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/grafana-testdata-datasource': testDataDSPlugin,
   'core:plugin/cloud-monitoring': cloudMonitoringPlugin,
   'core:plugin/azuremonitor': azureMonitorPlugin,
-  'core:plugin/grafana-tempo-datasource': tempoPlugin,
+  'core:plugin/tempo': tempoPlugin,
   'core:plugin/alertmanager': alertmanagerPlugin,
   'core:plugin/grafana-pyroscope-datasource': pyroscopePlugin,
   'core:plugin/parca': parcaPlugin,

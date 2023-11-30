@@ -98,8 +98,8 @@
       "files": [
         "public/app/plugins/datasource/grafana-testdata-datasource/*.{ts,tsx}",
         "public/app/plugins/datasource/grafana-testdata-datasource/**/*.{ts,tsx}",
-        "public/app/plugins/datasource/grafana-tempo-datasource/*.{ts,tsx}",
-        "public/app/plugins/datasource/grafana-tempo-datasource/**/*.{ts,tsx}"
+        "public/app/plugins/datasource/tempo/*.{ts,tsx}",
+        "public/app/plugins/datasource/tempo/**/*.{ts,tsx}"
         
       ],
       "settings": {

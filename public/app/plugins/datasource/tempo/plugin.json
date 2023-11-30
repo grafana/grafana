@@ -1,7 +1,7 @@
 {
   "type": "datasource",
   "name": "Tempo",
-  "id": "grafana-tempo-datasource",
+  "id": "tempo",
   "aliasIDs": ["tempo"],
   "category": "tracing",
   "executable": "tempo",
