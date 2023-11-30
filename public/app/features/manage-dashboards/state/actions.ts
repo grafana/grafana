@@ -360,7 +360,12 @@ export function getFolderById(id: number): Promise<{ id: number; title: string }
 }
 
 export function deleteDashboard(uid: string, showSuccessAlert: boolean) {
-  return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${uid}`, { showSuccessAlert });
+  return getBackendSrv()
+    .delete<DeleteDashboardResponse>(`/api/dashboards/uid/${uid}`, { showSuccessAlert })
+    .then((response) => {
+      console.log('deleteDashboard response', response);
+      return response;
+    });
 }
 
 function executeInOrder(tasks: any[]): Promise<unknown> {
