@@ -4,6 +4,7 @@ import React, { ReactNode, useEffect, useState } from 'react';
 import { AbsoluteTimeRange, LogRowModel, TimeRange } from '@grafana/data';
 import { convertRawToRange, isRelativeTime, isRelativeTimeRange } from '@grafana/data/src/datetime/rangeutil';
 import { LogsSortOrder, TimeZone } from '@grafana/schema';
+import { Spinner } from '@grafana/ui';
 
 type Props = {
   children: ReactNode;
@@ -28,12 +29,21 @@ export const InfiniteScroll = ({
 }: Props) => {
   const [upperOutOfRange, setUpperOutOfRange] = useState(false);
   const [lowerOutOfRange, setLowerOutOfRange] = useState(false);
+  const [upperLoading, setUpperLoading] = useState(false);
+  const [lowerLoading, setLowerLoading] = useState(false);
   const [lastScroll, setLastScroll] = useState(scrollElement?.scrollTop || 0);
 
   useEffect(() => {
     setUpperOutOfRange(false);
     setLowerOutOfRange(false);
   }, [range, rows, sortOrder]);
+
+  useEffect(() => {
+    if (!loading) {
+      setUpperLoading(false);
+      setLowerLoading(false);
+    }
+  }, [loading]);
 
   useEffect(() => {
     if (!scrollElement || !loadMoreLogs) {
@@ -67,6 +77,7 @@ export const InfiniteScroll = ({
           ? getNextRange(getVisibleRange(rows), range, timeZone)
           : getPrevRange(getVisibleRange(rows), range);
       loadMoreLogs?.(newRange);
+      setUpperLoading(true);
     }
 
     function scrollBottom() {
@@ -80,6 +91,7 @@ export const InfiniteScroll = ({
           ? getPrevRange(getVisibleRange(rows), range)
           : getNextRange(getVisibleRange(rows), range, timeZone);
       loadMoreLogs?.(newRange);
+      setLowerLoading(true);
     }
 
     scrollElement.addEventListener('scroll', handleScroll);
@@ -97,9 +109,11 @@ export const InfiniteScroll = ({
 
   return (
     <>
+      {upperLoading && loadingMessage}
       {!hideTopMessage && upperOutOfRange && outOfRangeMessage}
       {children}
       {!hideBottomMessage && lowerOutOfRange && outOfRangeMessage}
+      {lowerLoading && loadingMessage}
     </>
   );
 };
@@ -112,6 +126,11 @@ const styles = {
 };
 
 const outOfRangeMessage = <div className={styles.limitReached}>Limit reached for the current time range.</div>;
+const loadingMessage = (
+  <div className={styles.limitReached}>
+    <Spinner />
+  </div>
+);
 
 enum ScrollDirection {
   Top = -1,
