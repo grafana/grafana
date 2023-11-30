@@ -3,6 +3,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { wrapWithGrafanaContextMock } from 'app/percona/shared/helpers/testUtils';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types';
 
@@ -21,11 +22,13 @@ describe('ServiceChecks', () => {
           },
         } as StoreState)}
       >
-        <ServiceChecks
-          {...getRouteComponentProps({
-            match: { params: { service: '/service_1/' }, isExact: true, path: '', url: '' },
-          })}
-        />
+        {wrapWithGrafanaContextMock(
+          <ServiceChecks
+            {...getRouteComponentProps({
+              match: { params: { service: '/service_1/' }, isExact: true, path: '', url: '' },
+            })}
+          />
+        )}
       </Provider>
     );
     await waitForElementToBeRemoved(() => screen.getByTestId('table-loading'));
@@ -42,11 +45,13 @@ describe('ServiceChecks', () => {
           },
         } as StoreState)}
       >
-        <ServiceChecks
-          {...getRouteComponentProps({
-            match: { params: { service: '/service_1/' }, isExact: true, path: '', url: '' },
-          })}
-        />
+        {wrapWithGrafanaContextMock(
+          <ServiceChecks
+            {...getRouteComponentProps({
+              match: { params: { service: '/service_1/' }, isExact: true, path: '', url: '' },
+            })}
+          />
+        )}
       </Provider>
     );
     await waitForElementToBeRemoved(() => screen.getByTestId('table-loading'));

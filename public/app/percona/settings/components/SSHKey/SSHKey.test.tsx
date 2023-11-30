@@ -3,6 +3,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 
 import * as reducers from 'app/percona/shared/core/reducers';
+import { wrapWithGrafanaContextMock } from 'app/percona/shared/helpers/testUtils';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types';
 
@@ -21,7 +22,7 @@ describe('SSHKey::', () => {
           },
         } as StoreState)}
       >
-        <SSHKey />
+        {wrapWithGrafanaContextMock(<SSHKey />)}
       </Provider>
     );
 
@@ -38,7 +39,7 @@ describe('SSHKey::', () => {
           },
         } as StoreState)}
       >
-        <SSHKey />
+        {wrapWithGrafanaContextMock(<SSHKey />)}
       </Provider>
     );
 
@@ -56,7 +57,7 @@ describe('SSHKey::', () => {
           },
         } as StoreState)}
       >
-        <SSHKey />
+        {wrapWithGrafanaContextMock(<SSHKey />)}
       </Provider>
     );
 

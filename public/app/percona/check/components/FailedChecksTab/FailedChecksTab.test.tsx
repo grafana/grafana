@@ -4,6 +4,7 @@ import { Provider } from 'react-redux';
 
 import { CheckService } from 'app/percona/check/Check.service';
 import { logger } from 'app/percona/shared/helpers/logger';
+import { wrapWithGrafanaContextMock } from 'app/percona/shared/helpers/testUtils';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types';
 
@@ -34,7 +35,7 @@ describe('FailedChecksTab::', () => {
           },
         } as StoreState)}
       >
-        <FailedChecksTab />
+        {wrapWithGrafanaContextMock(<FailedChecksTab />)}
       </Provider>
     );
 
@@ -57,7 +58,7 @@ describe('FailedChecksTab::', () => {
           },
         } as StoreState)}
       >
-        <FailedChecksTab />
+        {wrapWithGrafanaContextMock(<FailedChecksTab />)}
       </Provider>
     );
 
@@ -75,7 +76,7 @@ describe('FailedChecksTab::', () => {
           },
         } as StoreState)}
       >
-        <FailedChecksTab />
+        {wrapWithGrafanaContextMock(<FailedChecksTab />)}
       </Provider>
     );
 

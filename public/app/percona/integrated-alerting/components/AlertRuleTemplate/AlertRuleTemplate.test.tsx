@@ -4,6 +4,7 @@ import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 
 import { locationService } from '@grafana/runtime';
+import { wrapWithGrafanaContextMock } from 'app/percona/shared/helpers/testUtils';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types';
 
@@ -36,9 +37,11 @@ describe('AlertRuleTemplate', () => {
           },
         } as StoreState)}
       >
-        <Router history={locationService.getHistory()}>
-          <AlertRuleTemplate />
-        </Router>
+        {wrapWithGrafanaContextMock(
+          <Router history={locationService.getHistory()}>
+            <AlertRuleTemplate />
+          </Router>
+        )}
       </Provider>
     );
 
@@ -60,9 +63,11 @@ describe('AlertRuleTemplate', () => {
           },
         } as StoreState)}
       >
-        <Router history={locationService.getHistory()}>
-          <AlertRuleTemplate />
-        </Router>
+        {wrapWithGrafanaContextMock(
+          <Router history={locationService.getHistory()}>
+            <AlertRuleTemplate />
+          </Router>
+        )}
       </Provider>
     );
 
@@ -87,9 +92,11 @@ describe('AlertRuleTemplate', () => {
           },
         } as StoreState)}
       >
-        <Router history={locationService.getHistory()}>
-          <AlertRuleTemplate />
-        </Router>
+        {wrapWithGrafanaContextMock(
+          <Router history={locationService.getHistory()}>
+            <AlertRuleTemplate />
+          </Router>
+        )}
       </Provider>
     );
 

@@ -12,7 +12,7 @@ module.exports = {
     '^.+\\.(ts|tsx|js|jsx)$': [require.resolve('ts-jest'), { isolatedModules: true }],
   },
   transformIgnorePatterns: [
-    `/node_modules/(?!${esModules})`, // exclude es modules and yaml to prevent TS complaining
+    `/node_modules/(?!(${esModules}|yaml))`, // exclude es modules and yaml to prevent TS complaining
   ],
   moduleDirectories: ['public'],
   roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages'],

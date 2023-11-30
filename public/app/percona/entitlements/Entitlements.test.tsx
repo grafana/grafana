@@ -5,6 +5,8 @@ import { Provider } from 'react-redux';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types';
 
+import { wrapWithGrafanaContextMock } from '../shared/helpers/testUtils';
+
 import EntitlementsPage from './EntitlementsPage';
 
 describe('EntitlementsPage', () => {
@@ -18,7 +20,7 @@ describe('EntitlementsPage', () => {
           },
         } as StoreState)}
       >
-        <EntitlementsPage />
+        {wrapWithGrafanaContextMock(<EntitlementsPage />)}
       </Provider>
     );
     expect(screen.getByTestId('page-wrapper-entitlements')).toBeInTheDocument();
