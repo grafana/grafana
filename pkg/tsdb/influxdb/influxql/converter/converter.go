@@ -56,7 +56,7 @@ l1Fields:
 }
 
 func readResults(iter *jsonitere.Iterator, frameName []byte, query *models.Query) *backend.DataResponse {
-	var rsp *backend.DataResponse
+	rsp := &backend.DataResponse{Frames: make(data.Frames, 0)}
 l1Fields:
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 		if err != nil {
