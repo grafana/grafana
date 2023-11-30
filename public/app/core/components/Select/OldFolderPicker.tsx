@@ -10,7 +10,6 @@ import { ActionMeta, AsyncVirtualizedSelect, Input, InputActionMeta, useStyles2 
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
-import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
 import { createFolder, getFolderByUid, searchFolders } from 'app/features/manage-dashboards/state/actions';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { AccessControlAction, PermissionLevelString, SearchQueryType } from 'app/types';
@@ -83,7 +82,7 @@ export function OldFolderPicker(props: Props) {
     invalid,
   } = props;
 
-  const rootName = rootNameProp ?? newBrowseDashboardsEnabled() ? 'Dashboards' : 'General';
+  const rootName = rootNameProp ?? 'Dashboards';
 
   const [folder, setFolder] = useState<SelectedFolder | null>(null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);

@@ -3,7 +3,6 @@ import { getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { updateNavIndex } from 'app/core/actions';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { buildNavModel } from 'app/features/folders/state/navModel';
@@ -161,7 +160,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     // only the folder API has information about ancestors
     // get parent folder (if it exists) and put it in the store
     // this will be used to populate the full breadcrumb trail
-    if (newBrowseDashboardsEnabled() && dashboard.meta.folderUid) {
+    if (dashboard.meta.folderUid) {
       try {
         const folder = await backendSrv.getFolderByUid(dashboard.meta.folderUid);
         store.dispatch(updateNavIndex(buildNavModel(folder)));
