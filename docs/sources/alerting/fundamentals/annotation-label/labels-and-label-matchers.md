@@ -57,8 +57,8 @@ You can also write label matchers to exclude labels.
 
 Here is an example that shows how to exclude the label `Team`. You can choose between any of the values below to exclude labels.
 
-| Label                                       | Operator      | Value                                                                              |
-| ------------------------------------------------- | --------- | ---------------------------------------------------------------------------------------- |
-| `team`                         | `=`     | `""`                                                                 |
-| `team`                         | `!~`     | `.+`                                                                 |
-| `team`                         | `=~`     | `^$`                                                                 |
+| Label  | Operator | Value |
+| ------ | -------- | ----- |
+| `team` | `=`      | `""`  |
+| `team` | `!~`     | `.+`  |
+| `team` | `=~`     | `^$`  |
