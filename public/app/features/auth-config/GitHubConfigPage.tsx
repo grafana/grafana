@@ -40,7 +40,6 @@ export const GitHubConfigPage = ({ settings }: Props) => {
     const requestData = dtoToData(data, settings);
     try {
       await getBackendSrv().post('/api/v1/sso-settings', requestData);
-
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
         payload: ['Settings saved'],
@@ -56,7 +55,6 @@ export const GitHubConfigPage = ({ settings }: Props) => {
         type: AppEvents.alertError.name,
         payload: [message],
       });
-      console.error('Error during async operation:', error);
     } finally {
       setIsSaving(false);
     }
