@@ -12,6 +12,8 @@ import appEvents from 'app/core/app_events';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariablesChanged } from 'app/features/variables/types';
 
+import { djb2Hash } from '../utils/djb2Hash';
+
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 
 describe('DashboardScene', () => {
@@ -68,6 +70,12 @@ describe('DashboardScene', () => {
         panelId: 1,
       });
     });
+
+    it('Should hash the key of the cloned panels and set it as panelId', () => {
+      const queryRunner = sceneGraph.findObject(scene, (o) => o.state.key === 'data-query-runner2')!;
+      const expectedPanelId = djb2Hash('panel-2-clone-1');
+      expect(scene.enrichDataRequest(queryRunner).panelId).toEqual(expectedPanelId);
+    });
   });
 
   describe('When variables change', () => {
@@ -110,6 +118,14 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
             title: 'Panel B',
             key: 'panel-2',
             pluginId: 'table',
+          }),
+        }),
+        new SceneGridItem({
+          body: new VizPanel({
+            title: 'Panel B',
+            key: 'panel-2-clone-1',
+            pluginId: 'table',
+            $data: new SceneQueryRunner({ key: 'data-query-runner2', queries: [{ refId: 'A' }] }),
           }),
         }),
       ],

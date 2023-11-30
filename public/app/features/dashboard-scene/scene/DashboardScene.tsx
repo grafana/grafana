@@ -27,6 +27,7 @@ import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
 import { DashboardEditView } from '../settings/utils';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
+import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/urlBuilders';
 import { findVizPanelByKey, forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel } from '../utils/utils';
 
@@ -320,17 +321,4 @@ export class DashboardVariableDependency implements SceneVariableDependencyConfi
       appEvents.publish(new VariablesChanged({ refreshAll: true, panelIds: [] }));
     }
   }
-}
-
-/**
- * Hashes a string using the DJB2 algorithm.
- */
-function djb2Hash(str: string): number {
-  let hash = 5381;
-
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash * 33) ^ str.charCodeAt(i);
-  }
-
-  return hash >>> 0; // Ensure the result is an unsigned 32-bit integer
 }
