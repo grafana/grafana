@@ -218,10 +218,11 @@ type AlertRule struct {
 	ExecErrState    ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration
 	// but this is currently not possible because of circular dependencies
-	For         time.Duration
-	Annotations map[string]string
-	Labels      map[string]string
-	IsPaused    bool
+	For                  time.Duration
+	Annotations          map[string]string
+	Labels               map[string]string
+	IsPaused             bool
+	NotificationSettings *NotificationSettings `xorm:"notification_settings"`
 }
 
 // AlertRuleWithOptionals This is to avoid having to pass in additional arguments deep in the call stack. Alert rule
