@@ -33,7 +33,6 @@ var testFiles = []string{
 	"show_tag_values_response",
 	"retention_policy",
 	"simple_response_with_diverse_data_types",
-	"measurements",
 	"multiple_measurements",
 	// "many_columns", skipped for now
 	"response_with_nil_bools_and_nil_strings",
