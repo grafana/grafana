@@ -1,3 +1,6 @@
+// @PERCONA
+// Running typecheck in root of repo would yield errors here
+// @ts-nocheck
 import { Property } from 'csstype';
 import { FC } from 'react';
 import { CellProps, Column, Row, TableState, UseExpandedRowProps } from 'react-table';

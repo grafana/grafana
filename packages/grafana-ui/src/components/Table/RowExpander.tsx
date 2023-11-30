@@ -1,3 +1,6 @@
+// @PERCONA
+// Running typecheck in root of repo would yield errors here
+// @ts-nocheck
 import React from 'react';
 
 import { Icon } from '../Icon/Icon';

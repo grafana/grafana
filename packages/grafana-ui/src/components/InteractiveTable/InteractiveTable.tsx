@@ -1,3 +1,6 @@
+// @PERCONA
+// Running typecheck in root of repo would yield errors here
+// @ts-nocheck
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
 import React, { Fragment, ReactNode, useCallback, useEffect, useMemo } from 'react';

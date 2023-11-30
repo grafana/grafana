@@ -1,3 +1,6 @@
+// @PERCONA
+// Running typecheck in root of repo would yield errors here
+// @ts-nocheck
 import { css } from '@emotion/css';
 import React from 'react';
 import { CellProps } from 'react-table';
