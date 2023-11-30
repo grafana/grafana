@@ -285,7 +285,7 @@ export async function promQailSuggest(
   // Makes sure we loaded the metadata for metrics. Usually this is done in the start() method of the
   // provider but we only need the metadata here.
   if (!datasource.languageProvider.metricsMetadata) {
-    await datasource.languageProvider.loadMetricsMetadata();
+    // await datasource.languageProvider.loadMetricsMetadata();
   }
   if (datasource.languageProvider.metricsMetadata) {
     // `datasource.languageProvider.metricsMetadata` is a list of metric family names (with desired type)

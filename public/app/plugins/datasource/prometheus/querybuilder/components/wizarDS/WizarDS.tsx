@@ -33,7 +33,7 @@ export const WizarDS = (props: WizarDSProps) => {
 
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState(query, !skipStartingMessage));
 
-  const [labelNames, setLabelNames] = useState<string[]>([]);
+  // const [labelNames, setLabelNames] = useState<string[]>([]);
 
   const suggestions = state.interactions.reduce((acc, int) => acc + int.suggestions.length, 0);
 
@@ -55,18 +55,18 @@ export const WizarDS = (props: WizarDSProps) => {
     scrollToBottom();
   }, [state.interactions.length, suggestions]);
 
-  useEffect(() => {
-    const fetchLabels = async () => {
-      let labelsIndex: Record<string, string[]>;
-      if (datasource.hasLabelsMatchAPISupport()) {
-        labelsIndex = await datasource.languageProvider.fetchSeriesLabelsMatch(query.metric);
-      } else {
-        labelsIndex = await datasource.languageProvider.fetchSeriesLabels(query.metric);
-      }
-      setLabelNames(Object.keys(labelsIndex));
-    };
-    fetchLabels();
-  }, [query, datasource]);
+  // useEffect(() => {
+  //   const fetchLabels = async () => {
+  //     let labelsIndex: Record<string, string[]>;
+  //     if (datasource.hasLabelsMatchAPISupport()) {
+  //       labelsIndex = await datasource.languageProvider.fetchSeriesLabelsMatch(query.metric);
+  //     } else {
+  //       labelsIndex = await datasource.languageProvider.fetchSeriesLabels(query.metric);
+  //     }
+  //     setLabelNames(Object.keys(labelsIndex));
+  //   };
+  //   fetchLabels();
+  // }, [query, datasource]);
 
   const theme = useTheme2();
   const styles = getStyles(theme);
@@ -192,7 +192,7 @@ export const WizarDS = (props: WizarDSProps) => {
                         //   promVisualQuery: query,
                         //   doYouKnow: 'no',
                         // });
-                        promQailSuggest(dispatch, 0, query, labelNames, datasource);
+                        promQailSuggest(dispatch, 0, query, [], datasource);
                       }}
                     >
                       Just walk me through everything
@@ -287,7 +287,7 @@ export const WizarDS = (props: WizarDSProps) => {
                                     // });
 
                                     dispatch(updateInteraction(payload));
-                                    promQailSuggest(dispatch, idx, query, labelNames, datasource, newInteraction);
+                                    promQailSuggest(dispatch, idx, query, [], datasource, newInteraction);
                                   }}
                                 >
                                   Show me everything instead.
@@ -314,7 +314,7 @@ export const WizarDS = (props: WizarDSProps) => {
 
                                     dispatch(updateInteraction(payload));
                                     // add the suggestions in the API call
-                                    promQailSuggest(dispatch, idx, query, labelNames, datasource, interaction);
+                                    promQailSuggest(dispatch, idx, query, [], datasource, interaction);
                                   }}
                                 >
                                   Submit
