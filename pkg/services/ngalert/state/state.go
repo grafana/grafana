@@ -515,5 +515,9 @@ func GetRuleExtraLabels(rule *models.AlertRule, folderTitle string, includeFolde
 		// TODO remove when title will contain the full path https://github.com/grafana/grafana/issues/80324
 		extraLabels[models.FolderTitleLabel] = models.GetNamespaceTitleFromKey(folderTitle)
 	}
+
+	if rule.NotificationSettings != nil {
+		return mergeLabels(extraLabels, rule.NotificationSettings.ToLabels())
+	}
 	return extraLabels
 }
