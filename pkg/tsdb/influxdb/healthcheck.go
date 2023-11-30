@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -81,8 +82,8 @@ func CheckFluxHealth(ctx context.Context, dsInfo *models.DatasourceInfo,
 
 func CheckInfluxQLHealth(ctx context.Context, dsInfo *models.DatasourceInfo, features featuremgmt.FeatureToggles) (*backend.CheckHealthResult, error) {
 	logger := logger.FromContext(ctx)
-
-	resp, err := influxql.Query(ctx, dsInfo, &backend.QueryDataRequest{
+	tracer := tracing.DefaultTracer()
+	resp, err := influxql.Query(ctx, tracer, dsInfo, &backend.QueryDataRequest{
 		Queries: []backend.DataQuery{
 			{
 				RefID:     refID,
