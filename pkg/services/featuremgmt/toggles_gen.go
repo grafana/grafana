@@ -598,4 +598,8 @@ const (
 	// FlagDisplayAnonymousStats
 	// Enables anonymous stats to be shown in the UI for Grafana
 	FlagDisplayAnonymousStats = "displayAnonymousStats"
+
+	// FlagExtensionDrawer
+	// Enables global drawer where plugins can register tabs
+	FlagExtensionDrawer = "extensionDrawer"
 )

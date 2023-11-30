@@ -166,4 +166,5 @@ export interface FeatureToggles {
   pluginsSkipHostEnvVars?: boolean;
   regressionTransformation?: boolean;
   displayAnonymousStats?: boolean;
+  extensionDrawer?: boolean;
 }

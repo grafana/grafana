@@ -13,6 +13,11 @@ import { RouteDescriptor } from '../../navigation/types';
 
 export type MegaMenuState = 'open' | 'closed' | 'docked';
 
+export interface ExtensionDrawerState {
+  activeTab?: string;
+  open: boolean;
+}
+
 export interface AppChromeState {
   chromeless?: boolean;
   sectionNav: NavModel;
@@ -22,6 +27,7 @@ export interface AppChromeState {
   megaMenu: MegaMenuState;
   kioskMode: KioskMode | null;
   layout: PageLayoutType;
+  extensionDrawer: ExtensionDrawerState;
 }
 
 const DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.docked';
@@ -42,6 +48,7 @@ export class AppChromeService {
         : 'closed',
     kioskMode: null,
     layout: PageLayoutType.Canvas,
+    extensionDrawer: { open: false },
   });
 
   public setMatchedRoute(route: RouteDescriptor) {
@@ -49,6 +56,16 @@ export class AppChromeService {
       this.currentRoute = route;
       this.routeChangeHandled = false;
     }
+  }
+
+  public setExtensionDrawerOpen(open: boolean) {
+    const current = this.state.getValue();
+    this.update({ extensionDrawer: { ...current.extensionDrawer, open } });
+  }
+
+  public setExtensionDrawerTab(activeTab?: string) {
+    const current = this.state.getValue();
+    this.update({ extensionDrawer: { ...current.extensionDrawer, activeTab } });
   }
 
   public update(update: Partial<AppChromeState>) {

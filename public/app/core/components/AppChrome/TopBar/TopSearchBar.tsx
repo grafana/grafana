@@ -10,6 +10,7 @@ import { contextSrv } from 'app/core/core';
 import { useSelector } from 'app/types';
 
 import { Branding } from '../../Branding/Branding';
+import { ExtensionDrawerButton } from '../ExtensionDrawer/ExtensionDrawerButton';
 import { enrichHelpItem } from '../MegaMenu/utils';
 import { NewsContainer } from '../News/NewsContainer';
 import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitcher';
@@ -49,6 +50,7 @@ export const TopSearchBar = React.memo(function TopSearchBar() {
       </TopSearchBarSection>
 
       <TopSearchBarSection align="right">
+        <ExtensionDrawerButton />
         <QuickAdd />
         {enrichedHelpNode && (
           <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">

@@ -11,6 +11,7 @@ import { KioskMode } from 'app/types';
 
 import { AppChromeMenu } from './AppChromeMenu';
 import { MegaMenu as DockedMegaMenu } from './DockedMegaMenu/MegaMenu';
+import { ExtensionDrawer } from './ExtensionDrawer/ExtensionDrawer';
 import { MegaMenu } from './MegaMenu/MegaMenu';
 import { NavToolbar } from './NavToolbar/NavToolbar';
 import { SectionNav } from './SectionNav/SectionNav';
@@ -100,6 +101,14 @@ export function AppChrome({ children }: Props) {
           )}
           <CommandPalette />
         </>
+      )}
+      {config.featureToggles.extensionDrawer && (
+        <ExtensionDrawer
+          open={state.extensionDrawer.open}
+          onClose={() => chrome.setExtensionDrawerOpen(false)}
+          activeTab={state.extensionDrawer.activeTab}
+          onChangeTab={(id) => chrome.setExtensionDrawerTab(id)}
+        />
       )}
     </div>
   );

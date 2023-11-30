@@ -1088,6 +1088,13 @@ var (
 			FrontendOnly: true,
 			Owner:        identityAccessTeam,
 		},
+		{
+			Name:         "extensionDrawer",
+			Description:  "Enables global drawer where plugins can register tabs",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaPluginsPlatformSquad,
+		},
 	}
 )
 

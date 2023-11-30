@@ -44,6 +44,7 @@ export class KeybindingSrv {
       this.bind('g e', this.goToExplore);
       this.bind('g a', this.openAlerting);
       this.bind('g p', this.goToProfile);
+      this.bind('g i', this.openExtensionDrawer);
       this.bind('esc', this.exit);
       this.bindGlobalEsc();
     }
@@ -108,6 +109,10 @@ export class KeybindingSrv {
 
   private showHelpModal() {
     appEvents.publish(new ShowModalReactEvent({ component: HelpModal }));
+  }
+
+  private openExtensionDrawer() {
+    this.chromeService.setExtensionDrawerOpen(true);
   }
 
   private exit() {
