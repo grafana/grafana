@@ -1,3 +1,4 @@
+import { SelectableValue } from '@grafana/data';
 import { Settings } from 'app/types';
 
 export interface AuthProviderInfo {
@@ -10,16 +11,32 @@ export interface AuthProviderInfo {
 
 export type GetStatusHook = () => Promise<AuthProviderStatus>;
 
+// Settings types common to the provider settings data when working with the API and forms
+export type SSOProviderSettingsBase = {
+  enabled: boolean;
+  name: string;
+  type: string;
+  clientId: string;
+  clientSecret: string;
+  allowedDomains: string;
+};
+
+// SSO data received from the API and sent to it
 export type SSOProvider = {
   provider: string;
-  settings: {
-    enabled: boolean;
-    name: string;
-    type: string;
+  settings: SSOProviderSettingsBase & {
+    teamIds: string;
+    allowedOrganizations: string;
 
     // Legacy fields
     configPath?: string;
   };
+};
+
+// SSO data format for storing in the forms
+export type SSOProviderDTO = SSOProviderSettingsBase & {
+  teamIds: Array<SelectableValue<string>>;
+  allowedOrganizations: Array<SelectableValue<string>>;
 };
 
 export interface AuthConfigState {
