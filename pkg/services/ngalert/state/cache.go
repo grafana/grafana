@@ -117,8 +117,8 @@ func (rs *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule
 		return state
 	}
 
-	// If the first result we get is alerting, set StartsAt to EvaluatedAt because we
-	// do not have data for determining StartsAt otherwise
+	// For new states, we set StartsAt & EndsAt to EvaluatedAt as this is the
+	// expected value for a Normal state during state transition.
 	newState := &State{
 		AlertRuleUID:       alertRule.UID,
 		OrgID:              alertRule.OrgID,
@@ -127,9 +127,8 @@ func (rs *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule
 		Annotations:        annotations,
 		EvaluationDuration: result.EvaluationDuration,
 		Values:             values,
-	}
-	if result.State == eval.Alerting {
-		newState.StartsAt = result.EvaluatedAt
+		StartsAt:           result.EvaluatedAt,
+		EndsAt:             result.EvaluatedAt,
 	}
 	rs.states[id] = newState
 	return newState
