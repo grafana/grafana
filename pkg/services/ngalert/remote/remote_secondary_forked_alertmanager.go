@@ -2,6 +2,7 @@ package remote
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -13,32 +14,41 @@ import (
 //go:generate mockery --name remoteAlertmanager --structname RemoteAlertmanagerMock --with-expecter --output mock --outpkg alertmanager_mock
 type remoteAlertmanager interface {
 	notifier.Alertmanager
-	SendStateAndConfig() error
+	// TODO(santiago): implement, change.
+	SendStateAndConfig(context.Context, *models.AlertConfiguration) error
 }
 
 type RemoteSecondaryForkedAlertmanager struct {
 	log log.Logger
 
-	shutdown chan struct{}
 	internal notifier.Alertmanager
 	remote   remoteAlertmanager
+
+	mtx           sync.RWMutex
+	currentConfig *models.AlertConfiguration
+	syncCancel    func()
 }
 
 func NewRemoteSecondaryForkedAlertmanager(l log.Logger, syncInterval time.Duration, internal notifier.Alertmanager, remote remoteAlertmanager) *RemoteSecondaryForkedAlertmanager {
-	shutdownCh := make(chan struct{})
+	ctx, cancel := context.WithCancel(context.Background())
 	fam := RemoteSecondaryForkedAlertmanager{
-		log:      l,
-		internal: internal,
-		remote:   remote,
-		shutdown: shutdownCh,
+		log:        l,
+		internal:   internal,
+		remote:     remote,
+		syncCancel: cancel,
 	}
 
 	// Start the routine to sync configuration and state.
-	go fam.syncRoutine(syncInterval)
+	go fam.syncRoutine(ctx, syncInterval)
 	return &fam
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
+	// Save the config in memory to use it in our sync routine.
+	fam.mtx.Lock()
+	fam.currentConfig = config
+	fam.mtx.Unlock()
+
 	if err := fam.remote.ApplyConfig(ctx, config); err != nil {
 		fam.log.Error("Error applying config to the remote Alertmanager", "err", err)
 	}
@@ -107,7 +117,7 @@ func (fam *RemoteSecondaryForkedAlertmanager) StopAndWait() {
 	fam.remote.StopAndWait()
 
 	// Stop our routine to sync configuration and state.
-	fam.shutdown <- struct{}{}
+	fam.syncCancel()
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) Ready() bool {
@@ -118,20 +128,31 @@ func (fam *RemoteSecondaryForkedAlertmanager) Ready() bool {
 	return fam.internal.Ready()
 }
 
-func (fam *RemoteSecondaryForkedAlertmanager) syncRoutine(interval time.Duration) {
+func (fam *RemoteSecondaryForkedAlertmanager) syncRoutine(ctx context.Context, interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	for {
 		select {
 		case <-ticker.C:
+			fam.mtx.RLock()
+			// TODO(santiago): check...
+			config := *fam.currentConfig
+			fam.mtx.RUnlock()
 			fam.log.Debug("Syncing configuration and state with the remote Alertmanager")
-			// TODO: context?
-			if err := fam.remote.SendStateAndConfig(); err != nil {
+			if err := fam.remote.SendStateAndConfig(ctx, &config); err != nil {
 				fam.log.Error("Failed to sync configuration and state with the remote Alertmanager", "err", err)
 			}
 			fam.log.Debug("Finished syncing configuration and state with the remote Alertmanager")
-		// Note: We could do the same thing with a context + cancel func.
-		case <-fam.shutdown:
-			fam.log.Debug("Stopping sync routine")
+		case <-ctx.Done():
+			fam.mtx.RLock()
+			// TODO(santiago): check...
+			config := *fam.currentConfig
+			fam.mtx.RUnlock()
+			fam.log.Debug("Syncing configuration and state with the remote Alertmanager on shutdown")
+			// TODO(santiago): context?
+			if err := fam.remote.SendStateAndConfig(context.TODO(), &config); err != nil {
+				fam.log.Error("Failed to sync configuration and state with the remote Alertmanager on shutdown", "err", err)
+			}
+			fam.log.Debug("Finished syncing configuration and state with the remote Alertmanager on shutdown")
 			return
 		}
 	}

@@ -691,13 +691,13 @@ func (_c *RemoteAlertmanagerMock_SaveAndApplyDefaultConfig_Call) RunAndReturn(ru
 	return _c
 }
 
-// SendStateAndConfig provides a mock function with given fields:
-func (_m *RemoteAlertmanagerMock) SendStateAndConfig() error {
-	ret := _m.Called()
+// SendStateAndConfig provides a mock function with given fields: _a0, _a1
+func (_m *RemoteAlertmanagerMock) SendStateAndConfig(_a0 context.Context, _a1 *models.AlertConfiguration) error {
+	ret := _m.Called(_a0, _a1)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func() error); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(context.Context, *models.AlertConfiguration) error); ok {
+		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -711,13 +711,15 @@ type RemoteAlertmanagerMock_SendStateAndConfig_Call struct {
 }
 
 // SendStateAndConfig is a helper method to define mock.On call
-func (_e *RemoteAlertmanagerMock_Expecter) SendStateAndConfig() *RemoteAlertmanagerMock_SendStateAndConfig_Call {
-	return &RemoteAlertmanagerMock_SendStateAndConfig_Call{Call: _e.mock.On("SendStateAndConfig")}
+//   - _a0 context.Context
+//   - _a1 *models.AlertConfiguration
+func (_e *RemoteAlertmanagerMock_Expecter) SendStateAndConfig(_a0 interface{}, _a1 interface{}) *RemoteAlertmanagerMock_SendStateAndConfig_Call {
+	return &RemoteAlertmanagerMock_SendStateAndConfig_Call{Call: _e.mock.On("SendStateAndConfig", _a0, _a1)}
 }
 
-func (_c *RemoteAlertmanagerMock_SendStateAndConfig_Call) Run(run func()) *RemoteAlertmanagerMock_SendStateAndConfig_Call {
+func (_c *RemoteAlertmanagerMock_SendStateAndConfig_Call) Run(run func(_a0 context.Context, _a1 *models.AlertConfiguration)) *RemoteAlertmanagerMock_SendStateAndConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		run(args[0].(context.Context), args[1].(*models.AlertConfiguration))
 	})
 	return _c
 }
@@ -727,7 +729,7 @@ func (_c *RemoteAlertmanagerMock_SendStateAndConfig_Call) Return(_a0 error) *Rem
 	return _c
 }
 
-func (_c *RemoteAlertmanagerMock_SendStateAndConfig_Call) RunAndReturn(run func() error) *RemoteAlertmanagerMock_SendStateAndConfig_Call {
+func (_c *RemoteAlertmanagerMock_SendStateAndConfig_Call) RunAndReturn(run func(context.Context, *models.AlertConfiguration) error) *RemoteAlertmanagerMock_SendStateAndConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }
