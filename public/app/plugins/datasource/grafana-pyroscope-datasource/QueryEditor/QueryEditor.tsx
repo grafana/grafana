@@ -5,7 +5,7 @@ import { CoreApp, QueryEditorProps, TimeRange } from '@grafana/data';
 import { LoadingPlaceholder } from '@grafana/ui';
 
 import { normalizeQuery, PyroscopeDataSource } from '../datasource';
-import { PyroscopeDataSourceOptions, ProfileTypeMessage, Query } from '../types';
+import { ProfileTypeMessage, PyroscopeDataSourceOptions, Query } from '../types';
 
 import { EditorRow } from './EditorRow';
 import { EditorRows } from './EditorRows';
@@ -173,10 +173,7 @@ function useLabels(
   const getLabelValues = useCallback(
     (label: string) => {
       let labelSelector = createSelector(rawQuery.data, query.profileTypeId, label);
-      console.log(labelSelector);
-      const labelValues = datasource.getLabelValues(labelSelector, label, unpreciseRange.from, unpreciseRange.to);
-      console.log(labelValues);
-      return labelValues;
+      return datasource.getLabelValues(labelSelector, label, unpreciseRange.from, unpreciseRange.to);
     },
     [datasource, rawQuery.data, query.profileTypeId, unpreciseRange.to, unpreciseRange.from]
   );
