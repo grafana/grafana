@@ -1,5 +1,5 @@
 import produce from 'immer';
-import { compact, isEmpty } from 'lodash';
+import { chain, compact, isEmpty } from 'lodash';
 import { useCallback, useEffect, useMemo } from 'react';
 
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -118,58 +118,88 @@ const reduceNamespaces = (filterStateFilters: RulesFilter) => {
 const reduceGroups = (filterState: RulesFilter) => {
   return (groupAcc: CombinedRuleGroup[], group: CombinedRuleGroup) => {
     const rules = group.rules.filter((rule) => {
-      if (filterState.ruleType && filterState.ruleType !== rule.promRule?.type) {
-        return false;
-      }
+      const promRuleDefition = rule.promRule;
 
-      const doesNotQueryDs = isGrafanaRulerRule(rule.rulerRule) && !isQueryingDataSource(rule.rulerRule, filterState);
-      if (filterState.dataSourceName && doesNotQueryDs) {
-        return false;
-      }
+      // this will track what properties we're checking predicates for
+      // all predicates must be "true" to include the rule in the result set
+      // (this will result in an AND operation for our matchers)
+      const matchesFilterFor = chain(filterState)
+        // ⚠️ keep this list of properties we filter for here up-to-date ⚠️
+        // We are ignoring predicates we've matched before we get here
+        .pick(['ruleName', 'freeFormWords', 'ruleType', 'dataSourceName', 'ruleHealth', 'labels', 'ruleState'])
+        .omitBy(isEmpty)
+        .mapValues(() => false)
+        .value();
 
       const ruleNameLc = rule.name?.toLocaleLowerCase();
       // Free Form Query is used to filter by rule name
-      if (
-        filterState.freeFormWords.length > 0 &&
-        !filterState.freeFormWords.every((w) => ruleNameLc.includes(w.toLocaleLowerCase()))
-      ) {
-        return false;
+      if ('freeFormWords' in matchesFilterFor) {
+        const hasMatch = filterState.freeFormWords.every((w) => ruleNameLc.includes(w.toLocaleLowerCase()));
+        if (hasMatch) {
+          matchesFilterFor.freeFormWords = true;
+        }
       }
 
-      if (filterState.ruleName && !rule.name?.toLocaleLowerCase().includes(filterState.ruleName.toLocaleLowerCase())) {
-        return false;
+      if ('ruleName' in matchesFilterFor) {
+        const hasMatch = rule.name?.toLocaleLowerCase().includes(filterState.ruleName.toLocaleLowerCase());
+        if (hasMatch) {
+          matchesFilterFor.ruleName = true;
+        }
       }
 
-      if (filterState.ruleHealth && rule.promRule) {
-        const ruleHealth = getRuleHealth(rule.promRule.health);
-        return filterState.ruleHealth === ruleHealth;
+      if ('ruleType' in matchesFilterFor && filterState.ruleType === promRuleDefition?.type) {
+        matchesFilterFor.ruleType = true;
+      }
+
+      if ('dataSourceName' in matchesFilterFor) {
+        const doesNotQueryDs = isGrafanaRulerRule(rule.rulerRule) && isQueryingDataSource(rule.rulerRule, filterState);
+
+        if (doesNotQueryDs) {
+          matchesFilterFor.dataSourceName = true;
+        }
+      }
+
+      if ('ruleHealth' in filterState && promRuleDefition) {
+        const ruleHealth = getRuleHealth(promRuleDefition.health);
+        const match = filterState.ruleHealth === ruleHealth;
+
+        if (match) {
+          matchesFilterFor.ruleHealth = true;
+        }
       }
 
       // Query strings can match alert name, label keys, and label values
-      if (filterState.labels.length > 0) {
-        // const matchers = parseMatchers(filters.queryString);
+      if ('labels' in matchesFilterFor) {
         const matchers = compact(filterState.labels.map(looseParseMatcher));
 
+        // check if the label we query for exists in _either_ the rule definition or in any of its alerts
         const doRuleLabelsMatchQuery = matchers.length > 0 && labelsMatchMatchers(rule.labels, matchers);
         const doAlertsContainMatchingLabels =
           matchers.length > 0 &&
-          rule.promRule &&
-          rule.promRule.type === PromRuleType.Alerting &&
-          rule.promRule.alerts &&
-          rule.promRule.alerts.some((alert) => labelsMatchMatchers(alert.labels, matchers));
+          promRuleDefition &&
+          promRuleDefition.type === PromRuleType.Alerting &&
+          promRuleDefition.alerts &&
+          promRuleDefition.alerts.some((alert) => labelsMatchMatchers(alert.labels, matchers));
 
-        if (!(doRuleLabelsMatchQuery || doAlertsContainMatchingLabels)) {
-          return false;
+        if (doRuleLabelsMatchQuery || doAlertsContainMatchingLabels) {
+          matchesFilterFor.labels = true;
         }
       }
-      if (
-        filterState.ruleState &&
-        !(rule.promRule && isAlertingRule(rule.promRule) && rule.promRule.state === filterState.ruleState)
-      ) {
-        return false;
+
+      if ('ruleState' in matchesFilterFor) {
+        const promRule = rule.promRule;
+        const hasPromRuleDefinition = promRule && isAlertingRule(promRule);
+
+        const ruleStateMatches = hasPromRuleDefinition && promRule.state === filterState.ruleState;
+
+        if (ruleStateMatches) {
+          matchesFilterFor.ruleState = true;
+        }
       }
-      return true;
+
+      return Object.values(matchesFilterFor).every((match) => match === true);
     });
+
     // Add rules to the group that match the rule list filters
     if (rules.length) {
       groupAcc.push({
