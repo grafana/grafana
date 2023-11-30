@@ -17,43 +17,54 @@ type remoteAlertmanager interface {
 	CompareAndSendState(context.Context) error
 }
 
-type configStore interface {
-	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) (*models.AlertConfiguration, error)
-}
-
 type RemoteSecondaryForkedAlertmanager struct {
-	log        log.Logger
-	orgID      int64
-	store      configStore
-	syncCancel func()
+	log log.Logger
 
 	internal notifier.Alertmanager
 	remote   remoteAlertmanager
+
+	lastSynced   time.Time
+	syncInterval time.Duration
 }
 
-func NewRemoteSecondaryForkedAlertmanager(l log.Logger, orgID int64, store configStore, syncInterval time.Duration, internal notifier.Alertmanager, remote remoteAlertmanager) *RemoteSecondaryForkedAlertmanager {
-	ctx, cancel := context.WithCancel(context.Background())
-	fam := RemoteSecondaryForkedAlertmanager{
-		log:        l,
-		internal:   internal,
-		orgID:      orgID,
-		remote:     remote,
-		store:      store,
-		syncCancel: cancel,
+func NewRemoteSecondaryForkedAlertmanager(l log.Logger, syncInterval time.Duration, internal notifier.Alertmanager, remote remoteAlertmanager) *RemoteSecondaryForkedAlertmanager {
+	return &RemoteSecondaryForkedAlertmanager{
+		log:          l,
+		internal:     internal,
+		remote:       remote,
+		syncInterval: syncInterval,
 	}
-
-	// Start the routine to sync configuration and state.
-	go fam.syncRoutine(ctx, syncInterval)
-	return &fam
 }
 
 // ApplyConfig will only log errors for the remote Alertmanager and ensure we delegate the call to the internal Alertmanager.
 // We don't care about errors in the remote Alertmanager in remote secondary mode.
 func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
-	// Save the config in memory to use it in our sync routine.
-	if err := fam.remote.ApplyConfig(ctx, config); err != nil {
-		fam.log.Error("Error applying config to the remote Alertmanager", "err", err)
+	syncErr := false
+	if !fam.remote.Ready() {
+		if err := fam.remote.ApplyConfig(ctx, config); err != nil {
+			fam.log.Error("Error applying config to the remote Alertmanager", "err", err)
+			syncErr = true
+		}
 	}
+
+	if time.Since(fam.lastSynced) >= fam.syncInterval {
+		fam.log.Debug("Syncing configuration and state with the remote Alertmanager", "lastSynced", fam.lastSynced)
+		if err := fam.remote.CompareAndSendConfiguration(ctx, config); err != nil {
+			fam.log.Error("Unable to upload the configuration to the remote Alertmanager", "err", err)
+			syncErr = true
+		}
+		if err := fam.remote.CompareAndSendState(ctx); err != nil {
+			fam.log.Error("Unable to upload the state to the remote Alertmanager", "err", err)
+			syncErr = true
+		}
+		fam.log.Debug("Finished syncing configuration and state with the remote Alertmanager")
+	}
+
+	// If there were no errors syncing the configuration/state, update lastSynced
+	if !syncErr {
+		fam.lastSynced = time.Now()
+	}
+
 	return fam.internal.ApplyConfig(ctx, config)
 }
 
@@ -119,9 +130,7 @@ func (fam *RemoteSecondaryForkedAlertmanager) CleanUp() {
 func (fam *RemoteSecondaryForkedAlertmanager) StopAndWait() {
 	fam.internal.StopAndWait()
 	fam.remote.StopAndWait()
-
-	// Stop our routine to sync configuration and state.
-	fam.syncCancel()
+	// TODO: send config and state on shutdown.
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) Ready() bool {
@@ -130,36 +139,4 @@ func (fam *RemoteSecondaryForkedAlertmanager) Ready() bool {
 		return false
 	}
 	return fam.internal.Ready()
-}
-
-func (fam *RemoteSecondaryForkedAlertmanager) syncRoutine(ctx context.Context, interval time.Duration) {
-	fam.log.Debug("Starting sync routine")
-	ticker := time.NewTicker(interval)
-	for {
-		select {
-		case <-ticker.C:
-			fam.log.Debug("Syncing configuration and state with the remote Alertmanager")
-			q := models.GetLatestAlertmanagerConfigurationQuery{
-				OrgID: fam.orgID,
-			}
-			config, err := fam.store.GetLatestAlertmanagerConfiguration(ctx, &q)
-			if err != nil {
-				fam.log.Error("Failed to get configiguration from store", "err", err, "orgId", fam.orgID)
-				continue
-			}
-
-			if err := fam.remote.CompareAndSendConfiguration(ctx, config); err != nil {
-				fam.log.Error("Unable to upload the configuration to the remote Alertmanager", "err", err)
-			}
-			if err := fam.remote.CompareAndSendState(ctx); err != nil {
-				fam.log.Error("Unable to upload the state to the remote Alertmanager", "err", err)
-			}
-			fam.log.Debug("Finished syncing configuration and state with the remote Alertmanager")
-
-		case <-ctx.Done():
-			// TODO: send state and config on shutdown.
-			fam.log.Debug("Terminating sync routine")
-			return
-		}
-	}
 }

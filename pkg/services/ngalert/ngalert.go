@@ -193,7 +193,7 @@ func (ng *AlertNG) init() error {
 			if err != nil {
 				return nil, err
 			}
-			return remote.NewRemoteSecondaryForkedAlertmanager(log.New("ngalert.forked-alertmanager.remote-secondary"), orgID, ng.store, time.Minute, i, r), nil
+			return remote.NewRemoteSecondaryForkedAlertmanager(log.New("ngalert.forked-alertmanager.remote-secondary"), time.Minute, i, r), nil
 		})
 
 		overrides = append(overrides, override)
