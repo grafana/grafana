@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useMemo, useState } from 'react';
-import { DeepMap, FieldError, FormProvider, UseFormWatch, useForm } from 'react-hook-form';
+import { DeepMap, FieldError, FormProvider, useForm, UseFormWatch } from 'react-hook-form';
 import { Link, useParams } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, ConfirmModal, CustomScrollbar, HorizontalGroup, Spinner, Stack, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, CustomScrollbar, HorizontalGroup, Spinner, useStyles2, Stack } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
@@ -14,17 +14,17 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
-import { LogMessages, logInfo, trackNewAlerRuleFormError } from '../../../Analytics';
+import { logInfo, LogMessages, trackNewAlerRuleFormError } from '../../../Analytics';
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { deleteRuleAction, saveRuleFormAction } from '../../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { initialAsyncRequestState } from '../../../utils/redux';
 import {
-  MINUTE,
   formValuesFromExistingRule,
   getDefaultFormValues,
   getDefaultQueries,
   ignoreHiddenQueries,
+  MINUTE,
   normalizeDefaultAnnotations,
 } from '../../../utils/rule-form';
 import * as ruleId from '../../../utils/rule-id';
@@ -85,7 +85,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     mode: 'onSubmit',
     defaultValues,
     shouldFocusError: true,
-    reValidateMode: 'onBlur',
   });
 
   const { handleSubmit, watch } = formAPI;
