@@ -9,7 +9,6 @@ import { DataTransformerID } from './ids';
 
 describe('Grouping to Matrix', () => {
   beforeAll(() => {
-    setFeatureToggles({ dataplaneFrontendFallback: false });
     mockTransformationsRegistry([groupingToMatrixTransformer]);
   });
 

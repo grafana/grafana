@@ -7,5 +7,5 @@ export function setFeatureToggles(newFeatureToggles: FeatureToggles) {
 }
 
 export function getFeatureToggles() {
-  return featureToggles;
+  return featureToggles || {};
 }

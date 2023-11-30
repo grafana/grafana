@@ -6,7 +6,12 @@ import { getFieldMatcher } from '../matchers';
 import { FieldMatcherID } from './ids';
 import { ByNamesMatcherMode } from './nameMatcher';
 
-setFeatureToggles({ dataplaneFrontendFallback: true });
+beforeAll(() => {
+  setFeatureToggles({ dataplaneFrontendFallback: true });
+});
+afterAll(() => {
+  setFeatureToggles({ dataplaneFrontendFallback: false });
+});
 
 describe('Field Name by Regexp Matcher', () => {
   it('Match all with wildcard regex', () => {
