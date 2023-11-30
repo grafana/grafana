@@ -19,9 +19,11 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-const gitHubProviderName = "github"
+const (
+	gitHubProviderName = "github"
+)
 
-var ExtraGithubSettingKeys = []string{"allowed_organizations"}
+var ExtraGithubSettingKeys = []string{allowedOrganizationsKey, teamIdsKey}
 
 type SocialGithub struct {
 	*SocialBase
@@ -57,7 +59,7 @@ func NewGitHubProvider(settings map[string]any, cfg *setting.Cfg, features *feat
 		return nil, err
 	}
 
-	teamIds, err := mustInts(util.SplitString(info.Extra["team_ids"]))
+	teamIds, err := mustInts(util.SplitString(info.Extra[teamIdsKey]))
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +69,7 @@ func NewGitHubProvider(settings map[string]any, cfg *setting.Cfg, features *feat
 		SocialBase:           newSocialBase(gitHubProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		apiUrl:               info.ApiUrl,
 		teamIds:              teamIds,
-		allowedOrganizations: util.SplitString(info.Extra["allowed_organizations"]),
+		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 		skipOrgRoleSync:      cfg.GitHubSkipOrgRoleSync,
 		// FIXME: Move skipOrgRoleSync to OAuthInfo
 		// skipOrgRoleSync: info.SkipOrgRoleSync

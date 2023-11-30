@@ -19,6 +19,13 @@ import (
 	"gopkg.in/ini.v1"
 )
 
+const (
+	// consider moving this to OAuthInfo
+	teamIdsKey = "team_ids"
+	// consider moving this to OAuthInfo
+	allowedOrganizationsKey = "allowed_organizations"
+)
+
 var (
 	errMissingGroupMembership = &Error{"user not a member of one of the required groups"}
 )

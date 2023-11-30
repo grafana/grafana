@@ -17,7 +17,7 @@ import (
 
 const grafanaComProviderName = "grafana_com"
 
-var ExtraGrafanaComSettingKeys = []string{"allowed_organizations"}
+var ExtraGrafanaComSettingKeys = []string{allowedOrganizationsKey}
 
 type SocialGrafanaCom struct {
 	*SocialBase
@@ -45,7 +45,7 @@ func NewGrafanaComProvider(settings map[string]any, cfg *setting.Cfg, features *
 	provider := &SocialGrafanaCom{
 		SocialBase:           newSocialBase(grafanaComProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		url:                  cfg.GrafanaComURL,
-		allowedOrganizations: util.SplitString(info.Extra["allowed_organizations"]),
+		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 		skipOrgRoleSync:      cfg.GrafanaComSkipOrgRoleSync,
 		// FIXME: Move skipOrgRoleSync to OAuthInfo
 		// skipOrgRoleSync: info.SkipOrgRoleSync

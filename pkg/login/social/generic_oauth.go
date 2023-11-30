@@ -17,9 +17,15 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const genericOAuthProviderName = "generic_oauth"
+const (
+	genericOAuthProviderName = "generic_oauth"
 
-var ExtraGenericOAuthSettingKeys = []string{"name_attribute_path", "login_attribute_path", "id_token_attribute_name", "team_ids", "allowed_organizations"}
+	nameAttributePathKey    = "name_attribute_path"
+	loginAttributePathKey   = "login_attribute_path"
+	idTokenAttributeNameKey = "id_token_attribute_name"
+)
+
+var ExtraGenericOAuthSettingKeys = []string{nameAttributePathKey, loginAttributePathKey, idTokenAttributeNameKey, teamIdsKey, allowedOrganizationsKey}
 
 type SocialGenericOAuth struct {
 	*SocialBase
@@ -51,13 +57,13 @@ func NewGenericOAuthProvider(settings map[string]any, cfg *setting.Cfg, features
 		teamsUrl:             info.TeamsUrl,
 		emailAttributeName:   info.EmailAttributeName,
 		emailAttributePath:   info.EmailAttributePath,
-		nameAttributePath:    info.Extra["name_attribute_path"],
+		nameAttributePath:    info.Extra[nameAttributePathKey],
 		groupsAttributePath:  info.GroupsAttributePath,
-		loginAttributePath:   info.Extra["login_attribute_path"],
-		idTokenAttributeName: info.Extra["id_token_attribute_name"],
+		loginAttributePath:   info.Extra[loginAttributePathKey],
+		idTokenAttributeName: info.Extra[idTokenAttributeNameKey],
 		teamIdsAttributePath: info.TeamIdsAttributePath,
-		teamIds:              util.SplitString(info.Extra["team_ids"]),
-		allowedOrganizations: util.SplitString(info.Extra["allowed_organizations"]),
+		teamIds:              util.SplitString(info.Extra[teamIdsKey]),
+		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 		allowedGroups:        info.AllowedGroups,
 		skipOrgRoleSync:      cfg.GenericOAuthSkipOrgRoleSync,
 		// FIXME: Move skipOrgRoleSync to OAuthInfo

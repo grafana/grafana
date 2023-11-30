@@ -22,9 +22,12 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const azureADProviderName = "azuread"
+const (
+	azureADProviderName = "azuread"
+	forceUseGraphAPIKey = "force_use_graph_api"
+)
 
-var ExtraAzureADSettingKeys = []string{"force_use_graph_api", "allowed_organizations"}
+var ExtraAzureADSettingKeys = []string{forceUseGraphAPIKey, allowedOrganizationsKey}
 
 var _ SocialConnector = (*SocialAzureAD)(nil)
 
@@ -76,8 +79,8 @@ func NewAzureADProvider(settings map[string]any, cfg *setting.Cfg, features *fea
 	provider := &SocialAzureAD{
 		SocialBase:           newSocialBase(azureADProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		cache:                cache,
-		allowedOrganizations: util.SplitString(info.Extra["allowed_organizations"]),
-		forceUseGraphAPI:     MustBool(info.Extra["force_use_graph_api"], false),
+		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
+		forceUseGraphAPI:     MustBool(info.Extra[forceUseGraphAPIKey], false),
 		skipOrgRoleSync:      cfg.AzureADSkipOrgRoleSync,
 		// FIXME: Move skipOrgRoleSync to OAuthInfo
 		// skipOrgRoleSync: info.SkipOrgRoleSync
