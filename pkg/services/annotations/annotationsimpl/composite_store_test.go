@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
@@ -17,11 +18,11 @@ var (
 )
 
 func TestCompositeStore(t *testing.T) {
-	t.Run("should join errors", func(t *testing.T) {
+	t.Run("should return first error", func(t *testing.T) {
 		err1 := errors.New("error 1")
-		r1 := &fakeReader{err: err1}
+		r1 := newFakeReader(withError(err1))
 		err2 := errors.New("error 2")
-		r2 := &fakeReader{err: err2}
+		r2 := newFakeReader(withError(err2), withWait(10*time.Millisecond))
 
 		store := &CompositeStore{
 			[]readStore{r1, r2},
@@ -45,8 +46,7 @@ func TestCompositeStore(t *testing.T) {
 			_, err := tt.f()
 			require.Error(t, err)
 			require.ErrorIs(t, err, err1)
-			require.ErrorIs(t, err, err2)
-			require.ErrorIs(t, err, tt.err)
+			require.NotErrorIs(t, err, err2)
 		}
 	})
 
@@ -110,21 +110,64 @@ func TestCompositeStore(t *testing.T) {
 type fakeReader struct {
 	items  []*annotations.ItemDTO
 	tagRes annotations.FindTagsResult
+	wait   time.Duration
 	err    error
 }
 
 func (f *fakeReader) Get(ctx context.Context, query *annotations.ItemQuery, accessResources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
+	if f.wait > 0 {
+		time.Sleep(f.wait)
+	}
+
 	if f.err != nil {
 		err := fmt.Errorf("%w: %w", errGet, f.err)
 		return nil, err
 	}
+
 	return f.items, nil
 }
 
 func (f *fakeReader) GetTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
+	if f.wait > 0 {
+		time.Sleep(f.wait)
+	}
+
 	if f.err != nil {
 		err := fmt.Errorf("%w: %w", errGetTags, f.err)
 		return annotations.FindTagsResult{}, err
 	}
+
 	return f.tagRes, nil
+}
+
+func withWait(wait time.Duration) func(*fakeReader) {
+	return func(f *fakeReader) {
+		f.wait = wait
+	}
+}
+
+func withError(err error) func(*fakeReader) {
+	return func(f *fakeReader) {
+		f.err = err
+	}
+}
+
+func withItems(items []*annotations.ItemDTO) func(*fakeReader) {
+	return func(f *fakeReader) {
+		f.items = items
+	}
+}
+
+func withTags(tags []*annotations.TagsDTO) func(*fakeReader) {
+	return func(f *fakeReader) {
+		f.tagRes = annotations.FindTagsResult{Tags: tags}
+	}
+}
+
+func newFakeReader(opts ...func(*fakeReader)) *fakeReader {
+	f := &fakeReader{}
+	for _, opt := range opts {
+		opt(f)
+	}
+	return f
 }
