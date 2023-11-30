@@ -8,6 +8,8 @@ export interface ActionViewDefinition {
   getScene: () => SceneObject;
 }
 
+export const TRAILS_ROUTE = '/data-trails/trail';
+
 export const VAR_METRIC_NAMES = 'metricNames';
 export const VAR_FILTERS = 'filters';
 export const VAR_FILTERS_EXPR = '{${filters}}';
@@ -22,6 +24,10 @@ export const LOGS_METRIC = '$__logs__';
 export const KEY_SQR_METRIC_VIZ_QUERY = 'sqr-metric-viz-query';
 
 export const trailDS = { uid: VAR_DATASOURCE_EXPR };
+
+// Local storage keys
+export const RECENT_TRAILS_KEY = 'grafana.trails.recent';
+export const BOOKMARKED_TRAILS_KEY = 'grafana.trails.bookmarks';
 
 export type MakeOptional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 

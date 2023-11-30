@@ -10,13 +10,14 @@ interface EmailDTO {
   userOrEmail: string;
 }
 
-const paragraphStyles = (theme: GrafanaTheme2) => css`
-  color: ${theme.colors.text.secondary};
-  font-size: ${theme.typography.bodySmall.fontSize};
-  font-weight: ${theme.typography.fontWeightRegular};
-  margin-top: ${theme.spacing(1)};
-  display: block;
-`;
+const paragraphStyles = (theme: GrafanaTheme2) =>
+  css({
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.bodySmall.fontSize,
+    fontWeight: theme.typography.fontWeightRegular,
+    marginTop: theme.spacing(1),
+    display: 'block',
+  });
 
 export const ForgottenPassword = () => {
   const [emailSent, setEmailSent] = useState(false);

@@ -1,6 +1,10 @@
 import { getBackendSrv } from '@grafana/runtime';
 
-export interface ServerStat {
+interface AnonServerStat {
+  activeDevices?: number;
+}
+
+export interface ServerStat extends AnonServerStat {
   activeAdmins: number;
   activeEditors: number;
   activeSessions: number;
