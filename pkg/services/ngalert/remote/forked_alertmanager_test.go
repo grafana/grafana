@@ -545,7 +545,8 @@ func genTestAlertmanagersWithSyncInterval(t *testing.T, mode int, syncInterval t
 	remote := remote_alertmanager_mock.NewRemoteAlertmanagerMock(t)
 
 	if mode == modeRemoteSecondary {
-		return internal, remote, NewRemoteSecondaryForkedAlertmanager(log.NewNopLogger(), syncInterval, internal, remote)
+		store := notifier.NewFakeConfigStore(t, map[int64]*models.AlertConfiguration{})
+		return internal, remote, NewRemoteSecondaryForkedAlertmanager(log.NewNopLogger(), 1, store, syncInterval, internal, remote)
 	}
 	return internal, remote, NewRemotePrimaryForkedAlertmanager(internal, remote)
 }

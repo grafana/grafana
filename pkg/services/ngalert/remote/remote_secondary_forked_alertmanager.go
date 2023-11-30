@@ -2,7 +2,6 @@ package remote
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -18,23 +17,28 @@ type remoteAlertmanager interface {
 	CompareAndSendState(context.Context) error
 }
 
+type configStore interface {
+	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) (*models.AlertConfiguration, error)
+}
+
 type RemoteSecondaryForkedAlertmanager struct {
-	log log.Logger
+	log        log.Logger
+	orgID      int64
+	store      configStore
+	syncCancel func()
 
 	internal notifier.Alertmanager
 	remote   remoteAlertmanager
-
-	mtx           sync.RWMutex
-	currentConfig *models.AlertConfiguration
-	syncCancel    func()
 }
 
-func NewRemoteSecondaryForkedAlertmanager(l log.Logger, syncInterval time.Duration, internal notifier.Alertmanager, remote remoteAlertmanager) *RemoteSecondaryForkedAlertmanager {
+func NewRemoteSecondaryForkedAlertmanager(l log.Logger, orgID int64, store configStore, syncInterval time.Duration, internal notifier.Alertmanager, remote remoteAlertmanager) *RemoteSecondaryForkedAlertmanager {
 	ctx, cancel := context.WithCancel(context.Background())
 	fam := RemoteSecondaryForkedAlertmanager{
 		log:        l,
 		internal:   internal,
+		orgID:      orgID,
 		remote:     remote,
+		store:      store,
 		syncCancel: cancel,
 	}
 
@@ -47,10 +51,6 @@ func NewRemoteSecondaryForkedAlertmanager(l log.Logger, syncInterval time.Durati
 // We don't care about errors in the remote Alertmanager in remote secondary mode.
 func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
 	// Save the config in memory to use it in our sync routine.
-	fam.mtx.Lock()
-	fam.currentConfig = config
-	fam.mtx.Unlock()
-
 	if err := fam.remote.ApplyConfig(ctx, config); err != nil {
 		fam.log.Error("Error applying config to the remote Alertmanager", "err", err)
 	}
@@ -138,14 +138,17 @@ func (fam *RemoteSecondaryForkedAlertmanager) syncRoutine(ctx context.Context, i
 	for {
 		select {
 		case <-ticker.C:
-			fam.mtx.RLock()
-			// TODO(santiago): check...
-			// No va a funcionar porque no va a ser la última config en caso de cambio...
-			config := *fam.currentConfig
-			fam.mtx.RUnlock()
-
 			fam.log.Debug("Syncing configuration and state with the remote Alertmanager")
-			if err := fam.remote.CompareAndSendConfiguration(ctx, &config); err != nil {
+			q := models.GetLatestAlertmanagerConfigurationQuery{
+				OrgID: fam.orgID,
+			}
+			config, err := fam.store.GetLatestAlertmanagerConfiguration(ctx, &q)
+			if err != nil {
+				fam.log.Error("Failed to get configiguration from store", "err", err, "orgId", fam.orgID)
+				continue
+			}
+
+			if err := fam.remote.CompareAndSendConfiguration(ctx, config); err != nil {
 				fam.log.Error("Unable to upload the configuration to the remote Alertmanager", "err", err)
 			}
 			if err := fam.remote.CompareAndSendState(ctx); err != nil {

@@ -119,7 +119,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, stateStore stateStore)
 // 2. Upload the configuration and state we currently hold.
 func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
 	if am.ready {
-		am.log.Debug("Alertmanager previously marked as ready, skipping readiness check")
+		am.log.Debug("Alertmanager previously marked as ready, skipping readiness check and config + state update")
 		return nil
 	}
 
@@ -210,7 +210,6 @@ func (am *Alertmanager) CompareAndSendState(ctx context.Context) error {
 			return err
 		}
 	}
-
 	return nil
 }
 
