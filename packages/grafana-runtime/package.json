@@ -40,6 +40,7 @@
     "@grafana/data": "10.3.0-pre",
     "@grafana/e2e-selectors": "10.3.0-pre",
     "@grafana/faro-web-sdk": "1.2.1",
+    "@grafana/schema": "10.3.0-pre",
     "@grafana/ui": "10.3.0-pre",
     "history": "4.10.1",
     "lodash": "4.17.21",

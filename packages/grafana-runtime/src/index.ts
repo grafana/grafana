@@ -55,3 +55,4 @@ export {
   createDataSourcePluginEventProperties,
 } from './analytics/plugins/eventProperties';
 export { usePluginInteractionReporter } from './analytics/plugins/usePluginInteractionReporter';
+export { type EmbeddedDashboardProps, EmbeddedDashboard, setEmbeddedDashboard } from './components/EmbeddedDashboard';

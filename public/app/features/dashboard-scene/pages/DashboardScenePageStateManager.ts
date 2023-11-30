@@ -9,6 +9,7 @@ import { buildNavModel } from 'app/features/folders/state/navModel';
 import { store } from 'app/store/store';
 import { DashboardDTO, DashboardMeta, DashboardRoutes } from 'app/types';
 
+import { EmbeddedDashboard } from '../embedding/EmbeddedDashboardScene';
 import { buildPanelEditScene, PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
@@ -16,6 +17,7 @@ import { getVizPanelKeyForPanelId, findVizPanelByKey } from '../utils/utils';
 
 export interface DashboardScenePageState {
   dashboard?: DashboardScene;
+  embedded?: EmbeddedDashboard;
   panelEditor?: PanelEditor;
   isLoading?: boolean;
   loadError?: string;
@@ -27,6 +29,12 @@ interface DashboardCacheEntry {
   dashboard: DashboardDTO;
   ts: number;
 }
+
+export interface LoadDashboardOptions {
+  uid: string;
+  isEmbedded?: boolean;
+}
+
 export class DashboardScenePageStateManager extends StateManagerBase<DashboardScenePageState> {
   private cache: Record<string, DashboardScene> = {};
   // This is a simplistic, short-term cache for DashboardDTOs to avoid fetching the same dashboard multiple times across a short time span.
@@ -85,10 +93,13 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     return rsp;
   }
 
-  public async loadDashboard(uid: string) {
+  public async loadDashboard(options: LoadDashboardOptions) {
     try {
-      const dashboard = await this.loadScene(uid);
-      dashboard.startUrlSync();
+      const dashboard = await this.loadScene(options);
+
+      if (!options.isEmbedded) {
+        dashboard.startUrlSync();
+      }
 
       this.setState({ dashboard: dashboard, isLoading: false });
     } catch (err) {
@@ -98,7 +109,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
   public async loadPanelEdit(uid: string, panelId: string) {
     try {
-      const dashboard = await this.loadScene(uid);
+      const dashboard = await this.loadScene({ uid });
       const panel = findVizPanelByKey(dashboard, getVizPanelKeyForPanelId(parseInt(panelId, 10)));
 
       if (!panel) {
@@ -115,7 +126,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     }
   }
 
-  private async loadScene(uid: string): Promise<DashboardScene> {
+  private async loadScene({ uid, isEmbedded }: LoadDashboardOptions): Promise<DashboardScene> {
     const fromCache = this.cache[uid];
     if (fromCache) {
       return fromCache;
@@ -126,6 +137,10 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     const rsp = await this.fetchDashboard(uid);
 
     if (rsp?.dashboard) {
+      if (isEmbedded) {
+        rsp.meta.isEmbedded = true;
+      }
+
       const scene = transformSaveModelToScene(rsp);
 
       this.cache[uid] = scene;
