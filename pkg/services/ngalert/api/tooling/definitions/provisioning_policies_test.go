@@ -2,9 +2,10 @@ package definitions
 
 import (
 	"encoding/json"
+	"testing"
+
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
-	"testing"
 )
 
 func TestNotificationPolicyExportMarshal(t *testing.T) {
