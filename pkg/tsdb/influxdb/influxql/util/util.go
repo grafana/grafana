@@ -150,3 +150,7 @@ func GetVisType(resFormat string) data.VisType {
 		return GraphVisType
 	}
 }
+
+func ToPtr[T any](v T) *T {
+	return &v
+}

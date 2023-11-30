@@ -32,6 +32,7 @@ interface Props extends Themeable2 {
   updatePanelState: (panelState: Partial<ExploreLogsPanelState>) => void;
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  datasourceType?: string;
 }
 
 export type fieldNameMeta = {
@@ -239,8 +240,8 @@ export function LogsTableWrap(props: Props) {
       const event = {
         columnAction: newState ? 'add' : 'remove',
         columnCount: newState ? priorActiveCount + 1 : priorActiveCount - 1,
+        datasourceType: props.datasourceType,
       };
-
       reportInteraction('grafana_explore_logs_table_column_filter_clicked', event);
     }
   }
@@ -248,6 +249,7 @@ export function LogsTableWrap(props: Props) {
   function searchFilterEvent(searchResultCount: number) {
     reportInteraction('grafana_explore_logs_table_text_search_result_count', {
       resultCount: searchResultCount,
+      datasourceType: props.datasourceType ?? 'unknown',
     });
   }
 
