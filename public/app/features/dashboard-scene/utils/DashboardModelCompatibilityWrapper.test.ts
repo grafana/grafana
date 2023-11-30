@@ -12,7 +12,10 @@ describe('DashboardModelCompatibilityWrapper', () => {
 
     expect(wrapper.uid).toBe('dash-1');
     expect(wrapper.title).toBe('hello');
-
+    expect(wrapper.description).toBe('hello description');
+    expect(wrapper.editable).toBe(false);
+    expect(wrapper.graphTooltip).toBe(0);
+    expect(wrapper.tags).toEqual(['hello-tag']);
     expect(wrapper.time.from).toBe('now-6h');
   });
 
@@ -60,6 +63,8 @@ describe('DashboardModelCompatibilityWrapper', () => {
 function setup() {
   const scene = new DashboardScene({
     title: 'hello',
+    description: 'hello description',
+    tags: ['hello-tag'],
     uid: 'dash-1',
     $timeRange: new SceneTimeRange({
       timeZone: 'America/New_York',

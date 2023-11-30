@@ -47,6 +47,22 @@ export class DashboardModelCompatibilityWrapper {
     return this._scene.state.title;
   }
 
+  public get description() {
+    return this._scene.state.description;
+  }
+
+  public get editable() {
+    return this._scene.state.editable;
+  }
+
+  public get graphTooltip() {
+    return this._scene.state.graphTooltip;
+  }
+
+  public get tags() {
+    return this._scene.state.tags;
+  }
+
   public get meta() {
     return this._scene.state.meta;
   }
