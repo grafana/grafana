@@ -107,7 +107,7 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
-    dashboard.new('barchart-tooltips', import '../dev-dashboards/panel-barchart/barchart-tooltips.json') +
+    dashboard.new('barchart-tooltips-legends', import '../dev-dashboards/panel-barchart/barchart-tooltips-legends.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
