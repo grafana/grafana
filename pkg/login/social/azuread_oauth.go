@@ -138,7 +138,7 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 			// either they do not have a group or misconfiguration
 			return nil, errAzureADMissingGroups
 		}
-		// a group found in the claims is not in the allowed groups
+		// user is not a member of any of the allowed groups
 		return nil, errMissingGroupMembership
 	}
 
