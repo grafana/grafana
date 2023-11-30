@@ -796,6 +796,7 @@ const getTransformationsRedesignDescriptions = (id: string): string => {
     [DataTransformerID.renameByRegex]:
       'Rename parts of the query results using a regular expression and replacement pattern.',
     [DataTransformerID.seriesToRows]: 'Merge multiple series. Return time, metric and values as a row.',
+    [DataTransformerID.groupToSubframe]: 'Group data by a field and aggregate data for a sub-view (e.g. a sub-table).'
   };
 
   return overrides[id] || standardTransformersRegistry.getIfExists(id)?.description || '';
