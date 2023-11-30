@@ -41,6 +41,7 @@ func GetWebAssets(cfg *setting.Cfg) (*dtos.EntryPointAssets, error) {
 }
 
 func readWebAssets(manifestpath string) (*dtos.EntryPointAssets, error) {
+	//nolint:gosec
 	bytes, err := os.ReadFile(manifestpath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load assets-manifest.json %w", err)
