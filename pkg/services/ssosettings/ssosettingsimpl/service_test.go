@@ -52,7 +52,7 @@ func TestSSOSettingsService_GetForProvider(t *testing.T) {
 			setup: func(env testEnv) {
 				env.store.ExpectedError = ssosettings.ErrNotFound
 				env.fallbackStrategy.ExpectedIsMatch = true
-				env.fallbackStrategy.ExpectedConfig = map[string]interface{}{
+				env.fallbackStrategy.ExpectedConfig = map[string]any{
 					"enabled": true,
 				}
 			},
@@ -150,7 +150,7 @@ func TestSSOSettingsService_List(t *testing.T) {
 					},
 				}
 				env.fallbackStrategy.ExpectedIsMatch = true
-				env.fallbackStrategy.ExpectedConfig = map[string]interface{}{
+				env.fallbackStrategy.ExpectedConfig = map[string]any{
 					"enabled": false,
 				}
 			},
@@ -210,7 +210,7 @@ func TestSSOSettingsService_List(t *testing.T) {
 					},
 				}
 				env.fallbackStrategy.ExpectedIsMatch = true
-				env.fallbackStrategy.ExpectedConfig = map[string]interface{}{
+				env.fallbackStrategy.ExpectedConfig = map[string]any{
 					"enabled": false,
 				}
 			},
@@ -241,7 +241,7 @@ func TestSSOSettingsService_List(t *testing.T) {
 			setup: func(env testEnv) {
 				env.store.ExpectedSSOSettings = []*models.SSOSettings{}
 				env.fallbackStrategy.ExpectedIsMatch = true
-				env.fallbackStrategy.ExpectedConfig = map[string]interface{}{
+				env.fallbackStrategy.ExpectedConfig = map[string]any{
 					"enabled": false,
 				}
 			},

@@ -77,7 +77,7 @@ func NewAzureADProvider(settings map[string]any, cfg *setting.Cfg, features *fea
 		SocialBase:           newSocialBase(azureADProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		cache:                cache,
 		allowedOrganizations: util.SplitString(info.Extra["allowed_organizations"]),
-		forceUseGraphAPI:     mustBool(info.Extra["force_use_graph_api"], false),
+		forceUseGraphAPI:     MustBool(info.Extra["force_use_graph_api"], false),
 		skipOrgRoleSync:      cfg.AzureADSkipOrgRoleSync,
 		// FIXME: Move skipOrgRoleSync to OAuthInfo
 		// skipOrgRoleSync: info.SkipOrgRoleSync

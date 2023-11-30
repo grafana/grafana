@@ -17,6 +17,6 @@ func (f *FakeFallbackStrategy) IsMatch(provider string) bool {
 	return f.ExpectedIsMatch
 }
 
-func (f *FakeFallbackStrategy) ParseConfigFromSystem(ctx context.Context, provider string) (map[string]any, error) {
+func (f *FakeFallbackStrategy) ParseConfigFromSystem(ctx context.Context, provider string) (any, error) {
 	return f.ExpectedConfig, f.ExpectedError
 }

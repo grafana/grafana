@@ -28,7 +28,7 @@ type Service interface {
 	// Delete deletes the SSO settings for a given provider (soft delete)
 	Delete(ctx context.Context, provider string) error
 	// Patch updates the specified SSO settings (key-value pairs) for a given provider
-	Patch(ctx context.Context, provider string, data map[string]interface{}) error
+	Patch(ctx context.Context, provider string, data map[string]any) error
 	// RegisterReloadable registers a reloadable provider
 	RegisterReloadable(ctx context.Context, provider string, reloadable Reloadable)
 	// Reload implements ssosettings.Reloadable interface
@@ -45,7 +45,7 @@ type Reloadable interface {
 // using the config file and/or environment variables. Used mostly for backwards compatibility.
 type FallbackStrategy interface {
 	IsMatch(provider string) bool
-	ParseConfigFromSystem(ctx context.Context, provider string) (map[string]any, error)
+	ParseConfigFromSystem(ctx context.Context, provider string) (any, error)
 }
 
 // Store is a SSO settings store
@@ -55,6 +55,6 @@ type Store interface {
 	Get(ctx context.Context, provider string) (*models.SSOSettings, error)
 	List(ctx context.Context) ([]*models.SSOSettings, error)
 	Upsert(ctx context.Context, settings models.SSOSettings) error
-	Patch(ctx context.Context, provider string, data map[string]interface{}) error
+	Patch(ctx context.Context, provider string, data map[string]any) error
 	Delete(ctx context.Context, provider string) error
 }

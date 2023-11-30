@@ -121,7 +121,7 @@ func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSett
 	return nil
 }
 
-func (s *SSOSettingsService) Patch(ctx context.Context, provider string, data map[string]interface{}) error {
+func (s *SSOSettingsService) Patch(ctx context.Context, provider string, data map[string]any) error {
 	panic("not implemented") // TODO: Implement
 }
 
@@ -152,16 +152,16 @@ func (s *SSOSettingsService) loadSettingsUsingFallbackStrategy(ctx context.Conte
 		return nil, err
 	}
 
-	oAuthInfo, err := social.CreateOAuthInfoFromKeyValues(settingsFromSystem)
-	if err != nil {
-		return nil, err
+	switch settingsFromSystem.(type) {
+	case *social.OAuthInfo:
+		return &models.SSOSettings{
+			Provider:      provider,
+			Source:        models.System,
+			OAuthSettings: settingsFromSystem.(*social.OAuthInfo),
+		}, nil
+	default:
+		return nil, errors.New("could not parse settings from system")
 	}
-
-	return &models.SSOSettings{
-		Provider:      provider,
-		Source:        models.System,
-		OAuthSettings: oAuthInfo,
-	}, nil
 }
 
 func getSettingsByProvider(provider string, settings []*models.SSOSettings) []*models.SSOSettings {
