@@ -9508,6 +9508,35 @@
         }
       }
     },
+    "/stats": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "devices"
+        ],
+        "summary": "Lists all devices within the last 30 days",
+        "operationId": "listDevices",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/devicesResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/teams": {
       "post": {
         "tags": [
@@ -11147,6 +11176,10 @@
       "type": "object",
       "properties": {
         "activeAdmins": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "activeDevices": {
           "type": "integer",
           "format": "int64"
         },
@@ -20537,6 +20570,34 @@
         }
       }
     },
+    "deviceDTO": {
+      "type": "object",
+      "properties": {
+        "avatarUrl": {
+          "type": "string"
+        },
+        "clientIp": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "deviceId": {
+          "type": "string"
+        },
+        "lastSeenAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "userAgent": {
+          "type": "string"
+        }
+      }
+    },
     "gettableAlert": {
       "description": "GettableAlert gettable alert",
       "type": "object",
@@ -21352,6 +21413,15 @@
             "type": "string",
             "example": "My Folder"
           }
+        }
+      }
+    },
+    "devicesResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/deviceDTO"
         }
       }
     },

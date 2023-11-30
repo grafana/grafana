@@ -185,6 +185,9 @@ var (
 	// StatsTotalAlertRules is a metric of total number of alert rules stored in Grafana.
 	StatsTotalAlertRules prometheus.Gauge
 
+	// StatsTotalRuleGroups is a metric of total number of alert rule groups stored in Grafana.
+	StatsTotalRuleGroups prometheus.Gauge
+
 	// StatsTotalDashboardVersions is a metric of total number of dashboard versions stored in Grafana.
 	StatsTotalDashboardVersions prometheus.Gauge
 
@@ -554,6 +557,12 @@ func init() {
 		Namespace: ExporterName,
 	})
 
+	StatsTotalRuleGroups = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_rule_groups",
+		Help:      "total amount of alert rule groups in the database",
+		Namespace: ExporterName,
+	})
+
 	MAccessPermissionsSummary = prometheus.NewHistogram(prometheus.HistogramOpts{
 		Name:    "access_permissions_duration",
 		Help:    "Histogram for the runtime of permissions check function.",
@@ -707,6 +716,8 @@ func initMetricVars() {
 		grafanaPluginBuildInfoDesc,
 		StatsTotalDashboardVersions,
 		StatsTotalAnnotations,
+		StatsTotalAlertRules,
+		StatsTotalRuleGroups,
 		MAccessEvaluationCount,
 		StatsTotalLibraryPanels,
 		StatsTotalLibraryVariables,

@@ -779,6 +779,10 @@
       "title": "Explorer"
     },
     "frontend": {
+      "subtitle": "",
+      "title": ""
+    },
+    "frontend-app": {
       "title": "Frontend"
     },
     "global-orgs": {
@@ -806,6 +810,10 @@
       "title": "Incidents"
     },
     "infrastructure": {
+      "subtitle": "",
+      "title": ""
+    },
+    "integrations": {
       "title": "Intégrations"
     },
     "kubernetes": {
