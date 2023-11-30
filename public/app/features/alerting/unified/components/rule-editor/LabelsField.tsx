@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import { FieldArrayMethodProps, useFieldArray, useFormContext } from 'react-hook-form';
+import { useFieldArray, UseFieldArrayAppend, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, Field, InlineLabel, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
@@ -85,10 +85,7 @@ const RemoveButton: FC<{
 );
 
 const AddButton: FC<{
-  append: (
-    value: Partial<{ key: string; value: string }> | Array<Partial<{ key: string; value: string }>>,
-    options?: FieldArrayMethodProps | undefined
-  ) => void;
+  append: UseFieldArrayAppend<RuleFormValues, 'labels'>;
   className: string;
 }> = ({ append, className }) => (
   <Button
@@ -268,7 +265,7 @@ const LabelsField: FC<Props> = ({ dataSourceName }) => {
             Add labels to your rule to annotate your rules, ease searching, or route to a notification policy.
           </Text>
           <NeedHelpInfo
-            contentText="The dropdown only displays labels that you have previously used for alerts. 
+            contentText="The dropdown only displays labels that you have previously used for alerts.
             Select a label from the options below or type in a new one."
             title="Labels"
           />

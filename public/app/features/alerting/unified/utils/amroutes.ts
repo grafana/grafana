@@ -221,8 +221,8 @@ export const mapMultiSelectValueToStrings = (
   return selectableValuesToStrings(selectableValues);
 };
 
-export function promDurationValidator(duration: string) {
-  if (duration.length === 0) {
+export function promDurationValidator(duration?: string) {
+  if (!duration || duration.length === 0) {
     return true;
   }
 
@@ -237,8 +237,8 @@ export const objectMatchersToString = (matchers: ObjectMatcher[]): string[] => {
   });
 };
 
-export const repeatIntervalValidator = (repeatInterval: string, groupInterval: string) => {
-  if (repeatInterval.length === 0) {
+export const repeatIntervalValidator = (repeatInterval: string, groupInterval?: string) => {
+  if (!groupInterval || repeatInterval.length === 0) {
     return true;
   }
 
