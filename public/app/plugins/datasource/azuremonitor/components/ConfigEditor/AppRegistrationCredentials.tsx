@@ -1,7 +1,7 @@
 import React, { ChangeEvent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { Field, Select, Input, Button } from '@grafana/ui';
+import { Field, Select, Input, Button, Alert, VerticalGroup } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
 import { AadCurrentUserCredentials, AzureClientSecretCredentials, AzureCredentials } from '../../types';
@@ -68,6 +68,24 @@ export const AppRegistrationCredentials = (props: AppRegistrationCredentialsProp
 
   return (
     <>
+      {credentials.authType === 'currentuser' && (
+        <Alert severity="info" title="Service Principal Credentials">
+          <VerticalGroup>
+            <div>
+              User-based authentication does not support Grafana features that make requests to the data source without
+              a users details available to the request. An example of this is alerting. If you wish to ensure that
+              features that do not have a user in the context of the request still function as expected then please
+              provide App Registration credentials below.
+            </div>
+            <div>
+              <b>
+                Note: Features like alerting will be restricted to the access level of the app registration rather than
+                the user. This may present confusion for users and should be clarified.
+              </b>
+            </div>
+          </VerticalGroup>
+        </Alert>
+      )}
       {azureCloudOptions && (
         <Field
           label="Azure Cloud"
