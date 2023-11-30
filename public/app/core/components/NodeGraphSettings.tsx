@@ -70,17 +70,17 @@ export const NodeGraphSection = ({ options, onOptionsChange }: DataSourcePluginO
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  infoText: css`
-    label: infoText;
-    padding-bottom: ${theme.spacing(2)};
-    color: ${theme.colors.text.secondary};
-  `,
-  container: css`
-    label: container;
-    width: 100%;
-  `,
-  row: css`
-    label: row;
-    align-items: baseline;
-  `,
+  infoText: css({
+    label: 'infoText',
+    paddingBottom: theme.spacing(2),
+    color: theme.colors.text.secondary,
+  }),
+  container: css({
+    label: 'container',
+    width: '100%',
+  }),
+  row: css({
+    label: 'row',
+    alignItems: 'baseline',
+  }),
 });

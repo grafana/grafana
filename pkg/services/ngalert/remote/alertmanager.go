@@ -33,15 +33,15 @@ type stateStore interface {
 type Alertmanager struct {
 	log      log.Logger
 	orgID    int64
+	ready    bool
+	sender   *sender.ExternalAlertmanager
+	state    stateStore
 	tenantID string
 	url      string
 
 	amClient    *amclient.AlertmanagerAPI
-	mimirClient mimirClient.MimirClient
 	httpClient  *http.Client
-	ready       bool
-	sender      *sender.ExternalAlertmanager
-	stateStore  stateStore
+	mimirClient mimirClient.MimirClient
 }
 
 type AlertmanagerConfig struct {
@@ -50,7 +50,7 @@ type AlertmanagerConfig struct {
 	BasicAuthPassword string
 }
 
-func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, store stateStore) (*Alertmanager, error) {
+func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, stateStore stateStore) (*Alertmanager, error) {
 	client := http.Client{
 		Transport: &mimirClient.MimirAuthRoundTripper{
 			TenantID: cfg.TenantID,
@@ -104,8 +104,8 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, store stateStore) (*Al
 		mimirClient: mc,
 		amClient:    amclient.New(transport, nil),
 		httpClient:  &client,
+		state:       stateStore,
 		sender:      s,
-		stateStore:  store,
 		orgID:       orgID,
 		tenantID:    cfg.TenantID,
 		url:         cfg.URL,
@@ -126,30 +126,33 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 	// First, execute a readiness check to make sure the remote Alertmanager is ready.
 	am.log.Debug("Start readiness check for remote Alertmanager", "url", am.url)
 	if err := am.checkReadiness(ctx); err != nil {
-		am.log.Error("unable to pass the readiness check", "err", err)
+		am.log.Error("Unable to pass the readiness check", "err", err)
 		return err
 	}
 	am.log.Debug("Completed readiness check for remote Alertmanager", "url", am.url)
 
+	// Send configuration if necessary.
 	am.log.Debug("Start configuration upload to remote Alertmanager", "url", am.url)
-	if ok := am.compareRemoteConfig(ctx, config); !ok {
+	if am.shouldSendConfig(ctx, config) {
 		err := am.mimirClient.CreateGrafanaAlertmanagerConfig(ctx, config.AlertmanagerConfiguration, config.ConfigurationHash, config.ID, config.CreatedAt, config.Default)
 		if err != nil {
 			am.log.Error("Unable to upload the configuration to the remote Alertmanager", "err", err)
-		} else {
-			am.log.Debug("Completed configuration upload to remote Alertmanager", "url", am.url)
 		}
 	}
+	am.log.Debug("Completed configuration upload to remote Alertmanager", "url", am.url)
 
+	// Send base64-encoded state if necessary.
 	am.log.Debug("Start state upload to remote Alertmanager", "url", am.url)
-	if ok := am.compareRemoteState(ctx, ""); !ok {
-		if err := am.mimirClient.CreateGrafanaAlertmanagerState(ctx, ""); err != nil {
+	state, err := am.state.GetFullState(ctx, notifier.SilencesFilename, notifier.NotificationLogFilename)
+	if err != nil {
+		am.log.Error("error getting the Alertmanager's full state", "err", err)
+	} else if am.shouldSendState(ctx, state) {
+		if err := am.mimirClient.CreateGrafanaAlertmanagerState(ctx, state); err != nil {
 			am.log.Error("Unable to upload the state to the remote Alertmanager", "err", err)
 		}
 	}
-	am.log.Debug("Completed state upload to remote Alertmanager", "url", am.url)
-	// upload the state
 
+	am.log.Debug("Completed state upload to remote Alertmanager", "url", am.url)
 	return nil
 }
 
@@ -357,26 +360,28 @@ func (am *Alertmanager) Ready() bool {
 // CleanUp does not have an equivalent in a "remote Alertmanager" context, we don't have files on disk, no-op.
 func (am *Alertmanager) CleanUp() {}
 
-// compareRemoteConfig gets the remote Alertmanager config and compares it to the existing configuration.
-func (am *Alertmanager) compareRemoteConfig(ctx context.Context, config *models.AlertConfiguration) bool {
+// shouldSendConfig compares the remote Alertmanager configuration with our local one.
+// It returns true if the configurations are different.
+func (am *Alertmanager) shouldSendConfig(ctx context.Context, config *models.AlertConfiguration) bool {
 	rc, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 	if err != nil {
-		// If we get an error trying to compare log it and return false so that we try to upload it anyway.
+		// Log the error and return true so we try to upload our config anyway.
 		am.log.Error("Unable to get the remote Alertmanager Configuration for comparison", "err", err)
-		return false
+		return true
 	}
 
-	return md5.Sum([]byte(rc.GrafanaAlertmanagerConfig)) == md5.Sum([]byte(config.AlertmanagerConfiguration))
+	return md5.Sum([]byte(rc.GrafanaAlertmanagerConfig)) != md5.Sum([]byte(config.AlertmanagerConfiguration))
 }
 
-// compareRemoteState gets the remote Alertmanager state and compares it to the existing state.
-func (am *Alertmanager) compareRemoteState(ctx context.Context, state string) bool {
+// shouldSendState compares the remote Alertmanager state with our local one.
+// It returns true if the states are different.
+func (am *Alertmanager) shouldSendState(ctx context.Context, state string) bool {
 	rs, err := am.mimirClient.GetGrafanaAlertmanagerState(ctx)
 	if err != nil {
-		// If we get an error trying to compare log it and return false so that we try to upload it anyway.
+		// Log the error and return true so we try to upload our state anyway.
 		am.log.Error("Unable to get the remote Alertmanager state for comparison", "err", err)
-		return false
+		return true
 	}
 
-	return rs.State == state
+	return rs.State != state
 }

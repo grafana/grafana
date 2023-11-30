@@ -5,7 +5,7 @@ import { useDebounce } from 'react-use';
 import { Stack } from '@grafana/experimental';
 import { Button, Field, Icon, Input, useStyles2 } from '@grafana/ui';
 
-import { useURLSearchParams } from '../../hooks/useURLSearchParams';
+import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
 
 const ContactPointsFilter = () => {
   const styles = useStyles2(getStyles);

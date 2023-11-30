@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
@@ -14,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
@@ -1294,9 +1292,8 @@ func TestIntegrationMySQL(t *testing.T) {
 }
 
 func InitMySQLTestDB(t *testing.T) *xorm.Engine {
-	testDB := sqlutil.MySQLTestDB()
-	x, err := xorm.NewEngine(testDB.DriverName, strings.Replace(testDB.ConnStr, "/grafana_tests",
-		"/grafana_ds_tests", 1)+"&parseTime=true&loc=UTC")
+	connStr := mySQLTestDBConnStr()
+	x, err := xorm.NewEngine("mysql", connStr)
 	if err != nil {
 		t.Fatalf("Failed to init mysql db %v", err)
 	}
@@ -1328,4 +1325,16 @@ func isTestDbMySQL() bool {
 	}
 
 	return false
+}
+
+func mySQLTestDBConnStr() string {
+	host := os.Getenv("MYSQL_HOST")
+	if host == "" {
+		host = "localhost"
+	}
+	port := os.Getenv("MYSQL_PORT")
+	if port == "" {
+		port = "3306"
+	}
+	return fmt.Sprintf("grafana:password@tcp(%s:%s)/grafana_ds_tests?collation=utf8mb4_unicode_ci&sql_mode='ANSI_QUOTES'&parseTime=true&loc=UTC", host, port)
 }
