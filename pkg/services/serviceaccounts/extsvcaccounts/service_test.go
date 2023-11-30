@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -47,6 +48,7 @@ func setupTestEnv(t *testing.T) *TestEnv {
 		metrics:  newMetrics(nil, env.SaSvc, logger),
 		saSvc:    env.SaSvc,
 		skvStore: env.SkvStore,
+		tracer:   tracing.InitializeTracerForTest(),
 	}
 	return env
 }
@@ -82,7 +84,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 					mock.Anything,
 					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
 						return cmd.ServiceAccountID == extSvcAccID && cmd.ExternalServiceID == extSvcSlug &&
-							cmd.OrgID == int64(ac.GlobalOrgID) && len(cmd.Permissions) == 1 &&
+							cmd.AssignmentOrgID == extSvcOrgID && len(cmd.Permissions) == 1 &&
 							cmd.Permissions[0] == extSvcPerms[0]
 					})).
 					Return(nil)
@@ -131,7 +133,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 					mock.Anything,
 					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
 						return cmd.ServiceAccountID == extSvcAccount.Id && cmd.ExternalServiceID == extSvcSlug &&
-							cmd.OrgID == int64(ac.GlobalOrgID) && len(cmd.Permissions) == 1 &&
+							cmd.AssignmentOrgID == extSvcOrgID && len(cmd.Permissions) == 1 &&
 							cmd.Permissions[0] == extSvcPerms[0]
 					})).
 					Return(nil)
@@ -156,7 +158,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 					mock.Anything,
 					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
 						return cmd.ServiceAccountID == int64(11) && cmd.ExternalServiceID == extSvcSlug &&
-							cmd.OrgID == int64(ac.GlobalOrgID) && len(cmd.Permissions) == 1 &&
+							cmd.AssignmentOrgID == extSvcOrgID && len(cmd.Permissions) == 1 &&
 							cmd.Permissions[0] == extSvcPerms[0]
 					})).
 					Return(nil)
@@ -226,7 +228,7 @@ func TestExtSvcAccountsService_SaveExternalService(t *testing.T) {
 					mock.Anything,
 					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
 						return cmd.ServiceAccountID == extSvcAccID && cmd.ExternalServiceID == extSvcSlug &&
-							cmd.OrgID == int64(ac.GlobalOrgID) && len(cmd.Permissions) == 1 &&
+							cmd.AssignmentOrgID == tmpOrgID && len(cmd.Permissions) == 1 &&
 							cmd.Permissions[0] == extSvcPerms[0]
 					})).
 					Return(nil)
@@ -289,14 +291,14 @@ func TestExtSvcAccountsService_SaveExternalService(t *testing.T) {
 						return cmd.Name == sa.ExtSvcPrefix+extSvcSlug && *cmd.Role == roletype.RoleNone
 					})).
 					Return(extSvcAccount, nil)
-				env.SaSvc.On("EnableServiceAccount", mock.Anything, extsvcauth.TmpOrgID, extSvcAccID, true).Return(nil)
+				env.SaSvc.On("EnableServiceAccount", mock.Anything, tmpOrgID, extSvcAccID, true).Return(nil)
 				// Api Key was added without problem
 				env.SaSvc.On("AddServiceAccountToken", mock.Anything, mock.Anything, mock.Anything).Return(&apikey.APIKey{}, nil)
 				env.AcStore.On("SaveExternalServiceRole",
 					mock.Anything,
 					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
 						return cmd.ServiceAccountID == extSvcAccount.Id && cmd.ExternalServiceID == extSvcSlug &&
-							cmd.OrgID == int64(ac.GlobalOrgID) && len(cmd.Permissions) == 1 &&
+							cmd.AssignmentOrgID == tmpOrgID && len(cmd.Permissions) == 1 &&
 							cmd.Permissions[0] == extSvcPerms[0]
 					})).
 					Return(nil)
@@ -325,7 +327,7 @@ func TestExtSvcAccountsService_SaveExternalService(t *testing.T) {
 					mock.Anything,
 					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
 						return cmd.ServiceAccountID == int64(11) && cmd.ExternalServiceID == extSvcSlug &&
-							cmd.OrgID == int64(ac.GlobalOrgID) && len(cmd.Permissions) == 1 &&
+							cmd.AssignmentOrgID == tmpOrgID && len(cmd.Permissions) == 1 &&
 							cmd.Permissions[0] == extSvcPerms[0]
 					})).
 					Return(nil)

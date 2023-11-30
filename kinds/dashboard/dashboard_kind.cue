@@ -89,7 +89,7 @@ lineage: schemas: [{
 			version?: uint32
 
 			// List of dashboard panels
-			panels?: [...(#Panel | #RowPanel | #GraphPanel | #HeatmapPanel)]
+			panels?: [...(#Panel | #RowPanel)]
 
 			// Configured template variables
 			templating?: {
@@ -243,7 +243,9 @@ lineage: schemas: [{
 		// `4`: Numerical DESC
 		// `5`: Alphabetical Case Insensitive ASC
 		// `6`: Alphabetical Case Insensitive DESC
-		#VariableSort: 0 | 1 | 2 | 3 | 4 | 5 | 6 @cuetsy(kind="enum",memberNames="disabled|alphabeticalAsc|alphabeticalDesc|numericalAsc|numericalDesc|alphabeticalCaseInsensitiveAsc|alphabeticalCaseInsensitiveDesc")
+		// `7`: Natural ASC
+		// `8`: Natural DESC
+		#VariableSort: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 @cuetsy(kind="enum",memberNames="disabled|alphabeticalAsc|alphabeticalDesc|numericalAsc|numericalDesc|alphabeticalCaseInsensitiveAsc|alphabeticalCaseInsensitiveDesc|naturalAsc|naturalDesc")
 
 		// Ref to a DataSource instance
 		#DataSourceRef: {
@@ -711,31 +713,11 @@ lineage: schemas: [{
 			id: uint32
 
 			// List of panels in the row
-			panels: [...(#Panel | #GraphPanel | #HeatmapPanel)]
+			panels: [...#Panel]
 
 			// Name of template variable to repeat for.
 			repeat?: string
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
-
-		// Support for legacy graph panel.
-		// @deprecated this a deprecated panel type
-		#GraphPanel: {
-			type: "graph"
-			// @deprecated this is part of deprecated graph panel
-			legend?: {
-				show:      bool | *true
-				sort?:     string
-				sortDesc?: bool
-			}
-			...
-		} @cuetsy(kind="interface")
-
-		// Support for legacy heatmap panel.
-		// @deprecated this a deprecated panel type
-		#HeatmapPanel: {
-			type: "heatmap"
-			...
-		} @cuetsy(kind="interface")
 	}
 },
 ]

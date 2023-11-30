@@ -79,3 +79,11 @@ type ErrChecksumMismatch struct {
 func (e ErrChecksumMismatch) Error() string {
 	return fmt.Sprintf("expected SHA256 checksum does not match the downloaded archive (%s) - please contact security@grafana.com", e.archiveURL)
 }
+
+type ErrCorePlugin struct {
+	id string
+}
+
+func (e ErrCorePlugin) Error() string {
+	return fmt.Sprintf("plugin %s is a core plugin and cannot be installed separately", e.id)
+}

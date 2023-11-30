@@ -234,6 +234,7 @@ func TestDashboardService(t *testing.T) {
 
 		t.Run("Count dashboards in folder", func(t *testing.T) {
 			fakeStore.On("CountDashboardsInFolder", mock.Anything, mock.AnythingOfType("*dashboards.CountDashboardsInFolderRequest")).Return(int64(3), nil)
+			// nolint:staticcheck
 			folderSvc.ExpectedFolder = &folder.Folder{ID: 1}
 			// set up a ctx with signed in user
 			usr := &user.SignedInUser{UserID: 1}

@@ -186,6 +186,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     width: 520,
+    height: 250,
     // This is the space the footer height
     paddingBottom: 35,
   }),

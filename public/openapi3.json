@@ -506,6 +506,19 @@
         },
         "description": "(empty)"
       },
+      "devicesResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/deviceDTO"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "folderResponse": {
         "content": {
           "application/json": {
@@ -1911,21 +1924,6 @@
         },
         "description": "(empty)"
       },
-      "validateDashboardResponse": {
-        "description": "(empty)",
-        "headers": {
-          "isValid": {
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          "message": {
-            "schema": {
-              "type": "string"
-            }
-          }
-        }
-      },
       "viewPublicDashboardResponse": {
         "content": {
           "application/json": {
@@ -1977,7 +1975,7 @@
         },
         "type": "object"
       },
-      "AddCommand": {
+      "AddAPIKeyCommand": {
         "properties": {
           "name": {
             "type": "string"
@@ -2185,6 +2183,10 @@
       "AdminStats": {
         "properties": {
           "activeAdmins": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "activeDevices": {
             "format": "int64",
             "type": "integer"
           },
@@ -11574,6 +11576,34 @@
         ],
         "type": "object"
       },
+      "deviceDTO": {
+        "properties": {
+          "avatarUrl": {
+            "type": "string"
+          },
+          "clientIp": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "deviceId": {
+            "type": "string"
+          },
+          "lastSeenAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "userAgent": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "gettableAlert": {
         "description": "GettableAlert gettable alert",
         "properties": {
@@ -15818,7 +15848,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AddCommand"
+                "$ref": "#/components/schemas/AddAPIKeyCommand"
               }
             }
           },
@@ -22362,6 +22392,32 @@
         ]
       }
     },
+    "/stats": {
+      "get": {
+        "operationId": "listDevices",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/devicesResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Lists all devices within the last 30 days",
+        "tags": [
+          "devices"
+        ]
+      }
+    },
     "/teams": {
       "post": {
         "operationId": "createTeam",
@@ -23801,6 +23857,43 @@
         "summary": "Get teams for user.",
         "tags": [
           "users"
+        ]
+      }
+    },
+    "/v1/sso-settings/{key}": {
+      "delete": {
+        "description": "# Remove an SSO Settings entry by Key\n\nYou need to have a permission with action `settings:write` with scope `settings:auth.\u003cprovider\u003e:*`.",
+        "operationId": "removeProviderSettings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Remove SSO Settings",
+        "tags": [
+          "sso_settings"
         ]
       }
     }
