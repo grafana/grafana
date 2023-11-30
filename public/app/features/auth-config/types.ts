@@ -18,7 +18,7 @@ export type SSOProviderSettingsBase = {
   type: string;
   clientId: string;
   clientSecret: string;
-  allowedDomains: string;
+  allowedDomains?: string;
 };
 
 // SSO data received from the API and sent to it

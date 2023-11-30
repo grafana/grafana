@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
+import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModelItem } from '@grafana/data';
 import { Button, Field, Form, Input, InputControl, LinkButton, Select, Stack, Switch } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
+import { StoreState } from '../../types';
+
 import { SSOProviderDTO } from './types';
+import { dataToDTO } from './utils';
 
 const pageNav: NavModelItem = {
   text: 'GitHub',
@@ -14,14 +18,18 @@ const pageNav: NavModelItem = {
   id: 'GitHub',
 };
 type ProviderData = Pick<SSOProviderDTO, 'clientId' | 'clientSecret' | 'enabled' | 'teamIds' | 'allowedOrganizations'>;
-const defaultValues: ProviderData = {
-  clientId: '',
-  clientSecret: '',
-  enabled: false,
-  teamIds: [],
-  allowedOrganizations: [],
-};
-export const GitHubConfig = () => {
+
+const connector = connect(mapStateToProps);
+export type Props = ConnectedProps<typeof connector>;
+
+function mapStateToProps(state: StoreState) {
+  const settings = state.authConfig.providers.find(({ provider }) => provider === 'github');
+  return {
+    settings,
+  };
+}
+
+export const GitHubConfigPage = ({ settings }: Props) => {
   const [isSaving, setIsSaving] = useState(false);
   const handleSubmit = async (data: ProviderData) => {
     setIsSaving(true);
@@ -44,7 +52,7 @@ export const GitHubConfig = () => {
     <Page navId="authentication" pageNav={pageNav}>
       <Page.Contents>
         <Stack grow={1} direction={'column'}>
-          <Form onSubmit={handleSubmit} defaultValues={defaultValues}>
+          <Form onSubmit={handleSubmit} defaultValues={dataToDTO(settings)}>
             {({ register, errors, control, setValue, watch }) => {
               const teamIdOptions = watch('teamIds');
               const orgOptions = watch('allowedOrganizations');
@@ -124,4 +132,4 @@ export const GitHubConfig = () => {
   );
 };
 
-export default GitHubConfig;
+export default connector(GitHubConfigPage);

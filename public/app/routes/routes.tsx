@@ -279,7 +279,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       roles: () => contextSrv.evaluatePermission([AccessControlAction.SettingsWrite]),
       component: config.featureToggles.ssoSettingsApi
         ? SafeDynamicImport(
-            () => import(/* webpackChunkName: "AdminAuthentication" */ 'app/features/auth-config/GitHubConfig')
+            () => import(/* webpackChunkName: "AdminAuthentication" */ 'app/features/auth-config/GitHubConfigPage')
           )
         : () => <Redirect to="/admin" />,
     },
