@@ -9,7 +9,6 @@ import { PromQueryEditorProps } from './types';
 
 export function PromQueryEditorByApp(props: PromQueryEditorProps) {
   const { app } = props;
-
   switch (app) {
     case CoreApp.CloudAlerting:
       return <PromQueryEditorForAlerting {...props} />;
