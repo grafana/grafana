@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { NavModelItem } from '@grafana/data';
+import { AppEvents, NavModelItem } from '@grafana/data';
+import { getAppEvents, getBackendSrv, isFetchError } from '@grafana/runtime';
 import { Button, Field, Form, Input, InputControl, LinkButton, Select, Stack, Switch } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { StoreState } from '../../types';
 
 import { SSOProviderDTO } from './types';
-import { dataToDTO } from './utils';
+import { dataToDTO, dtoToData } from './utils';
 
 const pageNav: NavModelItem = {
   text: 'GitHub',
@@ -17,8 +18,11 @@ const pageNav: NavModelItem = {
   icon: 'github',
   id: 'GitHub',
 };
-type ProviderData = Pick<SSOProviderDTO, 'clientId' | 'clientSecret' | 'enabled' | 'teamIds' | 'allowedOrganizations'>;
-
+type ProviderData = Pick<
+  SSOProviderDTO,
+  'name' | 'type' | 'clientId' | 'clientSecret' | 'enabled' | 'teamIds' | 'allowedOrganizations'
+>;
+const appEvents = getAppEvents();
 const connector = connect(mapStateToProps);
 export type Props = ConnectedProps<typeof connector>;
 
@@ -33,17 +37,27 @@ export const GitHubConfigPage = ({ settings }: Props) => {
   const [isSaving, setIsSaving] = useState(false);
   const handleSubmit = async (data: ProviderData) => {
     setIsSaving(true);
+    const requestData = dtoToData(data, settings);
     try {
-      // Simulating an asynchronous operation with a setTimeout
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      // Show a success banner using AppEvents,
-      // https://developers.grafana.com/ui/canary/index.html?path=/docs/overlays-alert-toast--docs#dos-1
+      await getBackendSrv().post('/api/v1/sso-settings', requestData);
+
+      appEvents.publish({
+        type: AppEvents.alertSuccess.name,
+        payload: ['Settings saved'],
+      });
     } catch (error) {
-      // Show an error banner using AppEvents,
-      // https://developers.grafana.com/ui/canary/index.html?path=/docs/overlays-alert-toast--docs#dos-1
+      let message = '';
+      if (isFetchError(error)) {
+        message = error.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      appEvents.publish({
+        type: AppEvents.alertError.name,
+        payload: [message],
+      });
       console.error('Error during async operation:', error);
     } finally {
-      // This block will be executed regardless of success or failure
       setIsSaving(false);
     }
   };

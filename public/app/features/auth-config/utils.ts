@@ -1,3 +1,5 @@
+import { SelectableValue } from '@grafana/data';
+
 import { BASE_PATH } from './constants';
 import { AuthProviderInfo, SSOProvider, SSOProviderDTO } from './types';
 
@@ -28,5 +30,30 @@ export const dataToDTO = (data?: SSOProvider): SSOProviderDTO => {
     ...data.settings,
     teamIds: strToValue(data.settings.teamIds),
     allowedOrganizations: strToValue(data.settings.allowedOrganizations),
+  };
+};
+
+const valuesToArray = (values: Array<SelectableValue<string>>) => {
+  return values.map(({ value }) => value).join(',');
+};
+
+export const dtoToData = (dto: SSOProviderDTO, data?: SSOProvider) => {
+  if (!data) {
+    return {
+      settings: {
+        ...dto,
+        teamIds: valuesToArray(dto.teamIds),
+        allowedOrganizations: valuesToArray(dto.allowedOrganizations),
+      },
+    };
+  }
+  return {
+    ...data,
+    settings: {
+      ...data.settings,
+      ...dto,
+      teamIds: valuesToArray(dto.teamIds),
+      allowedOrganizations: valuesToArray(dto.allowedOrganizations),
+    },
   };
 };
