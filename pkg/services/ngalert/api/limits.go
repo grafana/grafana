@@ -8,7 +8,11 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func RegisterQuotas(cfg *setting.Cfg, qs quota.Service, rules RuleStore) error {
+type RuleUsageReader interface {
+	Count(ctx context.Context, orgID int64) (int64, error)
+}
+
+func RegisterQuotas(cfg *setting.Cfg, qs quota.Service, rules RuleUsageReader) error {
 	defaultLimits, err := readQuotaConfig(cfg)
 	if err != nil {
 		return err
@@ -21,7 +25,7 @@ func RegisterQuotas(cfg *setting.Cfg, qs quota.Service, rules RuleStore) error {
 	})
 }
 
-func UsageReporter(store RuleStore) quota.UsageReporterFunc {
+func UsageReporter(rules RuleUsageReader) quota.UsageReporterFunc {
 	return func(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
 		u := &quota.Map{}
 
@@ -30,7 +34,7 @@ func UsageReporter(store RuleStore) quota.UsageReporterFunc {
 			orgID = scopeParams.OrgID
 		}
 
-		if orgUsage, err := store.Count(ctx, orgID); err != nil {
+		if orgUsage, err := rules.Count(ctx, orgID); err != nil {
 			return u, err
 		} else {
 			tag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.OrgScope)
@@ -40,7 +44,7 @@ func UsageReporter(store RuleStore) quota.UsageReporterFunc {
 			u.Set(tag, orgUsage)
 		}
 
-		if globalUsage, err := store.Count(ctx, 0); err != nil {
+		if globalUsage, err := rules.Count(ctx, 0); err != nil {
 			return u, err
 		} else {
 			tag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.GlobalScope)

@@ -304,7 +304,7 @@ func (ng *AlertNG) init() error {
 	}
 	ng.api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
-	if err := api.RegisterQuotas(ng.Cfg, ng.QuotaService, ng.api.RuleStore); err != nil {
+	if err := api.RegisterQuotas(ng.Cfg, ng.QuotaService, ng.store); err != nil {
 		return err
 	}
 
