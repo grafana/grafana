@@ -3215,12 +3215,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-logql@npm:0.2.1":
-  version: 0.2.1
-  resolution: "@grafana/lezer-logql@npm:0.2.1"
+"@grafana/lezer-logql@npm:0.2.2":
+  version: 0.2.2
+  resolution: "@grafana/lezer-logql@npm:0.2.2"
   peerDependencies:
     "@lezer/lr": ^1.0.0
-  checksum: e3669e8e1b41eb87547756fb592681aec9d728397b7bb0ccd4cdb875632fabd3469321b6565da814f5700dece28918a1770313da2364a5bc6e3745ef96d10461
+  checksum: 4a2aa48c67a75a246a13e62854470aa36f15087e212b81cdba5fa1ac913a1bdd47da374fa47576c7db670a7333af460aff95465c61ed3cd48a77df6b918d812c
   languageName: node
   linkType: hard
 
@@ -3302,7 +3302,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:1.24.6":
+"@grafana/scenes@npm:^1.24.6":
   version: 1.24.6
   resolution: "@grafana/scenes@npm:1.24.6"
   dependencies:
@@ -17310,11 +17310,11 @@ __metadata:
     "@grafana/faro-web-sdk": "npm:1.2.1"
     "@grafana/flamegraph": "workspace:*"
     "@grafana/google-sdk": "npm:0.1.1"
-    "@grafana/lezer-logql": "npm:0.2.1"
+    "@grafana/lezer-logql": "npm:0.2.2"
     "@grafana/lezer-traceql": "npm:0.0.11"
     "@grafana/monaco-logql": "npm:^0.0.7"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:1.24.6"
+    "@grafana/scenes": "npm:^1.24.6"
     "@grafana/schema": "workspace:*"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
     "@grafana/ui": "workspace:*"

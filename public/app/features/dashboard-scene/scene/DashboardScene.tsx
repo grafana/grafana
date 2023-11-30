@@ -29,15 +29,10 @@ import { DashboardEditView } from '../settings/utils';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/urlBuilders';
-import {
-  findVizPanelByKey,
-  forceRenderChildren,
-  getClosestVizPanel,
-  getPanelIdForVizPanel,
-  isPanelClone,
-} from '../utils/utils';
+import { forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel, isPanelClone } from '../utils/utils';
 
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
+import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 
 export interface DashboardSceneState extends SceneObjectState {
@@ -65,8 +60,8 @@ export interface DashboardSceneState extends SceneObjectState {
   meta: DashboardMeta;
   /** Panel to inspect */
   inspectPanelKey?: string;
-  /** Panel to view in full screen */
-  viewPanelKey?: string;
+  /** Panel to view in fullscreen */
+  viewPanelScene?: ViewPanelScene;
   /** Edit view */
   editview?: DashboardEditView;
   /** Scene object that handles the current drawer or modal */
@@ -181,7 +176,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   };
 
   public getPageNav(location: H.Location, navIndex: NavIndex) {
-    const { meta, viewPanelKey } = this.state;
+    const { meta, viewPanelScene } = this.state;
 
     let pageNav: NavModelItem = {
       text: this.state.title,
@@ -207,7 +202,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       }
     }
 
-    if (viewPanelKey) {
+    if (viewPanelScene) {
       pageNav = {
         text: 'View panel',
         parentItem: pageNav,
@@ -220,9 +215,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   /**
    * Returns the body (layout) or the full view panel
    */
-  public getBodyToRender(viewPanelKey?: string): SceneObject {
-    const viewPanel = findVizPanelByKey(this, viewPanelKey);
-    return viewPanel ?? this.state.body;
+  public getBodyToRender(): SceneObject {
+    return this.state.viewPanelScene ?? this.state.body;
   }
 
   private startTrackingChanges() {
