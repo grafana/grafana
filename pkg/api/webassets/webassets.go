@@ -7,11 +7,8 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-var logger log.Logger = log.New("webassets")
 
 type ManifestInfo struct {
 	FilePath  string `json:"src,omitempty"`
@@ -32,7 +29,7 @@ type EntryPointInfo struct {
 
 var entryPointAssetsCache *dtos.EntryPointAssets = nil
 
-func LoadWebAssets(cfg *setting.Cfg) (*dtos.EntryPointAssets, error) {
+func GetWebAssets(cfg *setting.Cfg) (*dtos.EntryPointAssets, error) {
 	if cfg.Env != setting.Dev && entryPointAssetsCache != nil {
 		return entryPointAssetsCache, nil
 	}
