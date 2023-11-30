@@ -13,6 +13,7 @@ import {
   SceneObjectState,
   SceneObjectStateChangedEvent,
   SceneRefreshPicker,
+  SceneTimeRange,
   sceneUtils,
   SceneVariable,
   SceneVariableDependencyConfigLike,
@@ -28,11 +29,14 @@ import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
 import { DashboardEditView } from '../settings/utils';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardUrl } from '../utils/urlBuilders';
 import { findVizPanelByKey, forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
+
+export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip'];
 
 export interface DashboardSceneState extends SceneObjectState {
   /** The title */
@@ -74,6 +78,7 @@ export interface DashboardSceneState extends SceneObjectState {
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
+  static listenToChangesInProps = PERSISTED_PROPS;
   static Component = DashboardSceneRenderer;
 
   /**
@@ -236,10 +241,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
             this.setIsDirty();
           }
         }
-        if (
-          event.payload.changedObject instanceof SceneGridItem ||
-          event.payload.changedObject instanceof DashboardScene
-        ) {
+        if (event.payload.changedObject instanceof SceneGridItem) {
+          this.setIsDirty();
+        }
+        if (event.payload.changedObject instanceof DashboardScene) {
+          if (Object.keys(event.payload.partialUpdate).some((key) => PERSISTED_PROPS.includes(key))) {
+            this.setIsDirty();
+          }
+        }
+        if (event.payload.changedObject instanceof SceneTimeRange) {
           this.setIsDirty();
         }
       }

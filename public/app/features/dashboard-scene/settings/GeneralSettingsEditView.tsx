@@ -1,7 +1,14 @@
 import React, { ChangeEvent } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneTimePicker, sceneGraph } from '@grafana/scenes';
+import {
+  CancelActivationHandler,
+  SceneComponentProps,
+  SceneObjectBase,
+  SceneObjectRef,
+  SceneTimePicker,
+  sceneGraph,
+} from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
 import {
   Box,
@@ -59,11 +66,7 @@ export class GeneralSettingsEditView
   }
 
   public getTimeRange() {
-    return sceneGraph.getTimeRange(this);
-  }
-
-  public getWeekStart() {
-    return this._dashboard.state.$timeRange?.state.weekStart;
+    return sceneGraph.getTimeRange(this._dashboard);
   }
 
   public getRefreshPicker() {
@@ -98,19 +101,19 @@ export class GeneralSettingsEditView
   };
 
   public onTimeZoneChange = (value: TimeZone) => {
-    this._dashboard.state.$timeRange?.setState({
+    this.getTimeRange().setState({
       timeZone: value,
     });
   };
 
   public onWeekStartChange = (value: string) => {
-    this._dashboard.state.$timeRange?.setState({
+    this.getTimeRange().setState({
       weekStart: value,
     });
   };
 
   public onRefreshIntervalChange = (value: string[]) => {
-    const control = dashboardSceneGraph.getRefreshPicker(this._dashboard);
+    const control = this.getRefreshPicker();
     control?.setState({
       intervals: value,
     });
