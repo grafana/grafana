@@ -6,7 +6,6 @@ const path = require('path');
 const { DefinePlugin } = require('webpack');
 const { merge } = require('webpack-merge');
 
-const HTMLWebpackCSSChunks = require('./plugins/HTMLWebpackCSSChunks');
 const common = require('./webpack.common.js');
 
 module.exports = merge(common, {
@@ -79,7 +78,6 @@ module.exports = merge(common, {
     new MiniCssExtractPlugin({
       filename: 'grafana.[name].[contenthash].css',
     }),
-    new HTMLWebpackCSSChunks(),
     new ReactRefreshWebpackPlugin(),
     new DefinePlugin({
       'process.env': {

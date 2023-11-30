@@ -10,7 +10,6 @@ const WebpackAssetsManifest = require('webpack-assets-manifest');
 const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 const { merge } = require('webpack-merge');
 
-const HTMLWebpackCSSChunks = require('./plugins/HTMLWebpackCSSChunks');
 const common = require('./webpack.common.js');
 const esbuildTargets = resolveToEsbuildTarget(browserslist(), { printUnknownTargets: false });
 
@@ -67,7 +66,6 @@ module.exports = (env = {}) =>
       new MiniCssExtractPlugin({
         filename: 'grafana.[name].[contenthash].css',
       }),
-      new HTMLWebpackCSSChunks(),
       /**
        * I know we have two manifest plugins here.
        * WebpackManifestPlugin was only used in prod before and does not support integrity hashes

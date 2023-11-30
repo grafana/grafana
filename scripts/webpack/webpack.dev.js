@@ -10,7 +10,6 @@ const { DefinePlugin } = require('webpack');
 const WebpackAssetsManifest = require('webpack-assets-manifest');
 const { merge } = require('webpack-merge');
 
-const HTMLWebpackCSSChunks = require('./plugins/HTMLWebpackCSSChunks');
 const common = require('./webpack.common.js');
 const esbuildTargets = resolveToEsbuildTarget(browserslist(), { printUnknownTargets: false });
 // esbuild-loader 3.0.0+ requires format to be set to prevent it
@@ -101,7 +100,6 @@ module.exports = (env = {}) => {
       new MiniCssExtractPlugin({
         filename: 'grafana.[name].[contenthash].css',
       }),
-      new HTMLWebpackCSSChunks(),
       new DefinePlugin({
         'process.env': {
           NODE_ENV: JSON.stringify('development'),
