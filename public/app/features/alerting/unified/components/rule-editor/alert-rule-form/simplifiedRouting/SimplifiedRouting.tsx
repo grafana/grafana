@@ -7,12 +7,7 @@ import { getAlertManagerDataSourcesByPermission } from 'app/features/alerting/un
 
 import { AlertManagerManualRouting } from './AlertManagerRouting';
 
-export interface SimplifiedRoutingProps {
-  toggleOpenRoutingSettings: (nextValue: boolean) => void;
-  isOpenRoutingSettings: boolean;
-}
-
-export function SimplifiedRouting({ toggleOpenRoutingSettings, isOpenRoutingSettings }: SimplifiedRoutingProps) {
+export function SimplifiedRouting() {
   const { getValues } = useFormContext<RuleFormValues>();
   const contactPointsInAlert = getValues('contactPoints');
 
@@ -54,11 +49,7 @@ export function SimplifiedRouting({ toggleOpenRoutingSettings, isOpenRoutingSett
         alertmanagerSourceName={alertManagerContactPoint.alertManager.name}
         key={alertManagerContactPoint.alertManager.name + index}
       >
-        <AlertManagerManualRouting
-          alertManagerContactPoint={alertManagerContactPoint}
-          isOpenRoutingSettings={isOpenRoutingSettings}
-          toggleOpenRoutingSettings={toggleOpenRoutingSettings}
-        />
+        <AlertManagerManualRouting alertManagerContactPoint={alertManagerContactPoint} />
       </AlertmanagerProvider>
     );
   });

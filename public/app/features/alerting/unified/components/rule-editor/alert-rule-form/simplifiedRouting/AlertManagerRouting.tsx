@@ -25,15 +25,9 @@ interface AlertManagerManualRoutingProps {
     groupIntervalValue: string;
     repeatIntervalValue: string;
   };
-  toggleOpenRoutingSettings: (nextValue: boolean) => void;
-  isOpenRoutingSettings: boolean;
 }
 
-export function AlertManagerManualRouting({
-  alertManagerContactPoint,
-  isOpenRoutingSettings,
-  toggleOpenRoutingSettings,
-}: AlertManagerManualRoutingProps) {
+export function AlertManagerManualRouting({ alertManagerContactPoint }: AlertManagerManualRoutingProps) {
   const styles = useStyles2(getStyles);
 
   const alertManagerName = alertManagerContactPoint.alertManager.name;
@@ -68,12 +62,7 @@ export function AlertManagerManualRouting({
         <ContactPointDetails receivers={selectedContactPoint.grafana_managed_receiver_configs} />
       )}
       <div className={styles.routingSection}>
-        <CollapsableSection
-          label="Muting, grouping and timings"
-          isOpen={isOpenRoutingSettings}
-          className={styles.collapsableSection}
-          onToggle={toggleOpenRoutingSettings}
-        >
+        <CollapsableSection label="Muting, grouping and timings" isOpen={false} className={styles.collapsableSection}>
           <Stack direction="column" gap={1}>
             <MuteTimingFields alertManager={alertManagerName} />
             <RoutingSettings alertManager={alertManagerName} />
