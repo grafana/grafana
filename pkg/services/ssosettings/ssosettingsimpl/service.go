@@ -152,12 +152,12 @@ func (s *SSOSettingsService) loadSettingsUsingFallbackStrategy(ctx context.Conte
 		return nil, err
 	}
 
-	switch settingsFromSystem.(type) {
+	switch settingsFromSystem := settingsFromSystem.(type) {
 	case *social.OAuthInfo:
 		return &models.SSOSettings{
 			Provider:      provider,
 			Source:        models.System,
-			OAuthSettings: settingsFromSystem.(*social.OAuthInfo),
+			OAuthSettings: settingsFromSystem,
 		}, nil
 	default:
 		return nil, errors.New("could not parse settings from system")
