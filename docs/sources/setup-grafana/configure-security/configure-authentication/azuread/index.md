@@ -89,6 +89,7 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
             1. Click **Apply**.
 
     - By editing the application manifest file: 
+
         1. Go to **App Registrations**. Search for your application and click on it.
         
         1. Click on **Manifest** and then **Edit**.
@@ -137,10 +138,12 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
             			}
             		],
             ```
+            
+        1. Click on **Save**.
 
-2. Go to **Azure Active Directory** and then to **Enterprise Applications**. Search for your application and click on it.
+1. Go to **Azure Active Directory** and then to **Enterprise Applications**. Search for your application and click on it.
 
-3. Click on **Users and Groups** and add Users/Groups to the Grafana roles by using **Add User**.
+1. Click on **Users and Groups** and add Users/Groups to the Grafana roles by using **Add User**.
 
 ### Assign server administrator privileges
 
@@ -241,13 +244,15 @@ to a comma- or space-separated list of group object IDs. You can find object IDs
 
 > You can find the Object Id of a group by clicking on the group and then clicking on **Properties**. The object ID is listed under **Object ID**.
 
-1. To enable [group attributes](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims#configure-groups-optional-claims) in your Azure AD Application Registration manifest file, navigate to **Azure Portal** > **Azure Active Directory** > **Application Registrations** > **Select Application** > **Manifest**.
+1. You can enable [group attributes](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims#configure-groups-optional-claims) in your Azure AD App registration from either the Azure Portal by following the steps in [Configure group membership claims](#configure-group-membership-claims) or by updating the manifest file:
+    
+    1. Navigate to **App Registrations** > **Select Application** > **Manifest**.
 
-1. Set the following:
-
-   ```
-   "groupMembershipClaims": "ApplicationGroup, SecurityGroup"
-   ```
+    2. Set the following:
+    
+       ```
+       "groupMembershipClaims": "ApplicationGroup, SecurityGroup"
+       ```
 
 #### Configure group membership claims
 
