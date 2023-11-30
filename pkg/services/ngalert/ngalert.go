@@ -312,7 +312,7 @@ func (ng *AlertNG) init() error {
 	if err := ng.QuotaService.RegisterQuotaReporter(&quota.NewUsageReporter{
 		TargetSrv:     models.QuotaTargetSrv,
 		DefaultLimits: defaultLimits,
-		Reporter:      ng.api.Usage,
+		Reporter:      api.UsageReporter(ng.api.RuleStore),
 	}); err != nil {
 		return err
 	}
