@@ -14,6 +14,7 @@ import {
 } from '@grafana/data';
 import { CustomScrollbar, useStyles2, usePanelContext } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
+import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 
 import { LogLabels } from '../../../features/logs/components/LogLabels';
@@ -28,6 +29,7 @@ export const LogsPanel = ({
   data,
   timeZone,
   fieldConfig,
+  timeRange,
   options: {
     showLabels,
     showTime,
@@ -45,6 +47,7 @@ export const LogsPanel = ({
   const style = useStyles2(getStyles);
   const [scrollTop, setScrollTop] = useState(0);
   const logsContainerRef = useRef<HTMLDivElement>(null);
+  const [scrollElement, setScrollElement] = useState<HTMLDivElement | undefined>(undefined);
 
   const { eventBus } = usePanelContext();
   const onLogRowHover = useCallback(
@@ -102,25 +105,37 @@ export const LogsPanel = ({
   );
 
   return (
-    <CustomScrollbar autoHide scrollTop={scrollTop}>
-      <div className={style.container} ref={logsContainerRef}>
+    <CustomScrollbar autoHide scrollTop={scrollTop} scrollRefCallback={(element) => { setScrollElement(element || undefined); }}>
+      <div className={style.container} ref={logsContainerRef} id="caca">
         {showCommonLabels && !isAscending && renderCommonLabels()}
-        <LogRows
-          logRows={logRows}
-          deduplicatedRows={deduplicatedRows}
-          dedupStrategy={dedupStrategy}
-          showLabels={showLabels}
-          showTime={showTime}
-          wrapLogMessage={wrapLogMessage}
-          prettifyLogMessage={prettifyLogMessage}
+        <InfiniteScroll
+          loading={false}
+          loadMoreLogs={() => {
+            console.log('scrolling');
+          }}
+          range={timeRange}
           timeZone={timeZone}
-          getFieldLinks={getFieldLinks}
-          logsSortOrder={sortOrder}
-          enableLogDetails={enableLogDetails}
-          previewLimit={isAscending ? logRows.length : undefined}
-          onLogRowHover={onLogRowHover}
-          app={CoreApp.Dashboard}
-        />
+          rows={logRows}
+          scrollElement={scrollElement}
+          sortOrder={sortOrder}
+        >
+          <LogRows
+            logRows={logRows}
+            deduplicatedRows={deduplicatedRows}
+            dedupStrategy={dedupStrategy}
+            showLabels={showLabels}
+            showTime={showTime}
+            wrapLogMessage={wrapLogMessage}
+            prettifyLogMessage={prettifyLogMessage}
+            timeZone={timeZone}
+            getFieldLinks={getFieldLinks}
+            logsSortOrder={sortOrder}
+            enableLogDetails={enableLogDetails}
+            previewLimit={isAscending ? logRows.length : undefined}
+            onLogRowHover={onLogRowHover}
+            app={CoreApp.Dashboard}
+          />
+        </InfiniteScroll>
         {showCommonLabels && isAscending && renderCommonLabels()}
       </div>
     </CustomScrollbar>
