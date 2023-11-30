@@ -24,6 +24,8 @@ func NewRemoteSecondaryForkedAlertmanager(l log.Logger, internal, remote notifie
 	}
 }
 
+// ApplyConfig will only log errors for the remote Alertmanager and ensure we delegate the call to the internal Alertmanager.
+// We don't care about errors in the remote Alertmanager in remote secondary mode.
 func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
 	if err := fam.remote.ApplyConfig(ctx, config); err != nil {
 		fam.log.Error("Error applying config to the remote Alertmanager", "err", err)
