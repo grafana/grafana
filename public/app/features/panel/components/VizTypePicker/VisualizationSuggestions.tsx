@@ -40,9 +40,9 @@ export function VisualizationSuggestions({ searchQuery, onChange, data, panel }:
               <div className={styles.infoText}>Based on current data</div>
             </div>
             <div className={styles.grid} style={{ gridTemplateColumns: `repeat(auto-fill, ${previewWidth - 1}px)` }}>
-              {filteredSuggestions.map((suggestion) => (
+              {filteredSuggestions.map((suggestion, index) => (
                 <VisualizationSuggestionCard
-                  key={suggestion.pluginId}
+                  key={index}
                   data={data!}
                   suggestion={suggestion}
                   onChange={onChange}
