@@ -177,10 +177,7 @@ func TestMakeAlertRule(t *testing.T) {
 
 			require.NoError(t, err)
 			require.Len(t, ar.Title, store.AlertDefinitionMaxTitleLength)
-			parts := strings.SplitN(ar.Title, "_", 2)
-			require.Len(t, parts, 2)
-			require.Greater(t, len(parts[1]), 8, "unique identifier should be longer than 9 characters")
-			require.Equal(t, store.AlertDefinitionMaxTitleLength-1, len(parts[0])+len(parts[1]), "truncated name + underscore + unique identifier should together be DefaultFieldMaxLength")
+			require.Equal(t, ar.Title, fmt.Sprintf("%s #2", strings.Repeat("a", store.AlertDefinitionMaxTitleLength-3)))
 		})
 	})
 
@@ -241,23 +238,59 @@ func TestMakeAlertRule(t *testing.T) {
 		require.Equal(t, expected, ar.Annotations["message"])
 	})
 
-	t.Run("create unique group from dashboard title and panel", func(t *testing.T) {
+	t.Run("create unique group from dashboard title and humanized interval", func(t *testing.T) {
 		service := NewTestMigrationService(t, sqlStore, nil)
 		m := service.newOrgMigration(1)
 		da := createTestDashAlert()
 		da.PanelID = 42
 
-		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
+		intervalTests := []struct {
+			interval int64
+			expected string
+		}{
+			{interval: 10, expected: "10s"},
+			{interval: 30, expected: "30s"},
+			{interval: 60, expected: "1m"},
+			{interval: 120, expected: "2m"},
+			{interval: 3600, expected: "1h"},
+			{interval: 7200, expected: "2h"},
+			{interval: 86400, expected: "1d"},
+			{interval: 172800, expected: "2d"},
+			{interval: 604800, expected: "1w"},
+			{interval: 1209600, expected: "2w"},
+			{interval: 31536000, expected: "1y"},
+			{interval: 63072000, expected: "2y"},
+			{interval: 60 + 30, expected: "1m30s"},
+			{interval: 3600 + 10, expected: "1h10s"},
+			{interval: 3600 + 60, expected: "1h1m"},
+			{interval: 3600 + 60 + 10, expected: "1h1m10s"},
+			{interval: 86400 + 10, expected: "1d10s"},
+			{interval: 86400 + 60, expected: "1d1m"},
+			{interval: 86400 + 3600, expected: "1d1h"},
+			{interval: 86400 + 3600 + 60, expected: "1d1h1m"},
+			{interval: 86400 + 3600 + 10, expected: "1d1h10s"},
+			{interval: 86400 + 60 + 10, expected: "1d1m10s"},
+			{interval: 86400 + 3600 + 60 + 10, expected: "1d1h1m10s"},
+			{interval: 604800 + 86400 + 3600 + 60 + 10, expected: "8d1h1m10s"},
+			{interval: 31536000 + 604800 + 86400 + 3600 + 60 + 10, expected: "373d1h1m10s"},
+		}
 
-		require.NoError(t, err)
-		require.Equal(t, fmt.Sprintf("%s - %d", info.DashboardName, da.PanelID), ar.RuleGroup)
+		for _, test := range intervalTests {
+			t.Run(fmt.Sprintf("interval %ds should be %s", test.interval, test.expected), func(t *testing.T) {
+				da.Frequency = test.interval
+
+				ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
+
+				require.NoError(t, err)
+				require.Equal(t, fmt.Sprintf("%s - %s", info.DashboardName, test.expected), ar.RuleGroup)
+			})
+		}
 	})
 
-	t.Run("truncate rule group if dashboard name + panel id is too long", func(t *testing.T) {
+	t.Run("truncate dashboard name part of rule group if too long", func(t *testing.T) {
 		service := NewTestMigrationService(t, sqlStore, nil)
 		m := service.newOrgMigration(1)
 		da := createTestDashAlert()
-		da.PanelID = 42
 		info := migmodels.DashboardUpgradeInfo{
 			DashboardUID:  "dashboarduid",
 			DashboardName: strings.Repeat("a", store.AlertRuleMaxRuleGroupNameLength-1),
@@ -269,41 +302,8 @@ func TestMakeAlertRule(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Len(t, ar.RuleGroup, store.AlertRuleMaxRuleGroupNameLength)
-		require.Equal(t, fmt.Sprintf("%s - %d", strings.Repeat("a", store.AlertRuleMaxRuleGroupNameLength-5), da.PanelID), ar.RuleGroup)
-	})
-
-	t.Run("deduplicate rule group name if truncation is not unique", func(t *testing.T) {
-		service := NewTestMigrationService(t, sqlStore, nil)
-		m := service.newOrgMigration(1)
-		da := createTestDashAlert()
-		da.PanelID = 42
-		info := migmodels.DashboardUpgradeInfo{
-			DashboardUID:  "dashboarduid",
-			DashboardName: strings.Repeat("a", store.AlertRuleMaxRuleGroupNameLength-1),
-			NewFolderUID:  "newfolderuid",
-			NewFolderName: "newfoldername",
-		}
-
-		_, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
-		require.NoError(t, err)
-
-		da = createTestDashAlert()
-		da.PanelID = 42
-		info = migmodels.DashboardUpgradeInfo{
-			DashboardUID:  "dashboarduid",
-			DashboardName: strings.Repeat("a", store.AlertRuleMaxRuleGroupNameLength-1),
-			NewFolderUID:  "newfolderuid",
-			NewFolderName: "newfoldername",
-		}
-
-		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
-
-		require.NoError(t, err)
-		require.Len(t, ar.RuleGroup, store.AlertRuleMaxRuleGroupNameLength)
-		parts := strings.SplitN(ar.RuleGroup, "_", 2)
-		require.Len(t, parts, 2)
-		require.Greater(t, len(parts[1]), 8, "unique identifier should be longer than 9 characters")
-		require.Equal(t, store.AlertDefinitionMaxTitleLength-1, len(parts[0])+len(parts[1]), "truncated name + underscore + unique identifier should together be DefaultFieldMaxLength")
+		suffix := fmt.Sprintf(" - %ds", ar.IntervalSeconds)
+		require.Equal(t, fmt.Sprintf("%s%s", strings.Repeat("a", store.AlertRuleMaxRuleGroupNameLength-len(suffix)), suffix), ar.RuleGroup)
 	})
 }
 

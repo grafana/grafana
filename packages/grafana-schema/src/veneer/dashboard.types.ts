@@ -11,7 +11,7 @@ export interface Panel<TOptions = Record<string, unknown>, TCustomFieldConfig = 
 }
 
 export interface RowPanel extends Omit<raw.RowPanel, 'panels'> {
-  panels: Array<Panel | raw.GraphPanel | raw.HeatmapPanel>;
+  panels: Panel[];
 }
 
 export enum VariableHide {
@@ -25,7 +25,7 @@ export interface VariableModel extends Omit<raw.VariableModel, 'datasource'> {
 }
 
 export interface Dashboard extends Omit<raw.Dashboard, 'templating' | 'annotations' | 'panels'> {
-  panels?: Array<Panel | RowPanel | raw.GraphPanel | raw.HeatmapPanel>;
+  panels?: Array<Panel | RowPanel>;
   annotations?: AnnotationContainer;
   templating?: {
     list?: VariableModel[];
