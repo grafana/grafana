@@ -30,7 +30,7 @@ For information on how to configure queries for the data sources listed above, r
 
 You can query and search tracing data using a data source's query editor.
 
-Each data source can have it's own query editor. The query editor for the Tempo data source is slightly different than the query editor for the Jaegar data source.
+Each data source can have it's own query editor. The query editor for the Tempo data source is slightly different than the query editor for the Jaeger data source.
 
 For information on querying each data source, refer to their documentation:
 
