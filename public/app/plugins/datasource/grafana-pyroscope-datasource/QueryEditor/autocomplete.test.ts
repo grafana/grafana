@@ -1,4 +1,4 @@
-import { Monaco, monacoTypes } from '@grafana/ui';
+import { monacoTypes, Monaco } from '@grafana/ui';
 
 import { CompletionProvider } from './autocomplete';
 
