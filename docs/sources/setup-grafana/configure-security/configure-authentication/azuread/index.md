@@ -291,7 +291,6 @@ The 'App registration' must include the `GroupMember.Read.All` API permission fo
 
 Admin consent may be required for this permission.
 {{% /admonition %}}
-> Admin consent may be required for this permission.
 
 #### Configure the required Graph API permissions
 
