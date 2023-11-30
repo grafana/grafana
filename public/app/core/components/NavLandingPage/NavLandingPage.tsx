@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { EmbeddedDashboard } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
@@ -37,7 +36,6 @@ export function NavLandingPage({ navId, header }: Props) {
             </section>
           )}
         </div>
-        <EmbeddedDashboard uid="aw0AkS5Gz" />
       </Page.Contents>
     </Page>
   );

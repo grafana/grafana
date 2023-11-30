@@ -139,6 +139,8 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     if (rsp?.dashboard) {
       if (isEmbedded) {
         rsp.meta.isEmbedded = true;
+        rsp.meta.canEdit = false;
+        rsp.meta.canSave = false;
       }
 
       const scene = transformSaveModelToScene(rsp);
