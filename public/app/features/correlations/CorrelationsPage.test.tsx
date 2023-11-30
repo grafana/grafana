@@ -287,7 +287,7 @@ describe('CorrelationsPage', () => {
       await userEvent.click(screen.getByRole('button', { name: /add transformation/i }));
       const typeFilterSelect = screen.getAllByLabelText('Type');
       openMenu(typeFilterSelect[0]);
-      await userEvent.click(screen.getByText('Regular expression'));
+      await userEvent.click(screen.getAllByText('Regular expression')[0]);
       await userEvent.type(screen.getByLabelText(/expression/i), 'test expression');
 
       await userEvent.click(await screen.findByRole('button', { name: /add$/i }));
@@ -554,7 +554,7 @@ describe('CorrelationsPage', () => {
       await userEvent.click(screen.getByRole('button', { name: /add transformation/i }));
       typeFilterSelect = screen.getAllByLabelText('Type');
       openMenu(typeFilterSelect[0]);
-      await userEvent.click(screen.getByText('Regular expression'));
+      await userEvent.click(screen.getAllByText('Regular expression')[1]);
       expressionInput = screen.queryByLabelText(/expression/i);
       expect(expressionInput).toBeInTheDocument();
       expect(expressionInput).toBeEnabled();
