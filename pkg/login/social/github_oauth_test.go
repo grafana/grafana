@@ -12,6 +12,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const testGHUserTeamsJSON = `[
@@ -238,14 +239,16 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			}))
 			defer server.Close()
 
-			s := &SocialGithub{
-				SocialBase: newSocialBase("github", &oauth2.Config{},
-					&OAuthInfo{RoleAttributePath: tt.roleAttributePath}, tt.autoAssignOrgRole, false, *featuremgmt.WithFeatures()),
-				allowedOrganizations: []string{},
-				apiUrl:               server.URL + "/user",
-				teamIds:              []int{},
-				skipOrgRoleSync:      tt.settingSkipOrgRoleSync,
-			}
+			s, err := NewGitHubProvider(map[string]any{
+				"allowed_organizations": "",
+				"api_url":               server.URL + "/user",
+				"team_ids":              "",
+				"role_attribute_path":   tt.roleAttributePath,
+			}, &setting.Cfg{
+				AutoAssignOrgRole:     tt.autoAssignOrgRole,
+				GitHubSkipOrgRoleSync: tt.settingSkipOrgRoleSync,
+			}, featuremgmt.WithFeatures())
+			require.NoError(t, err)
 
 			token := &oauth2.Token{
 				AccessToken: "fake_token",
@@ -259,6 +262,60 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("UserInfo() got = %v, want %v", got, tt.want)
 			}
+		})
+	}
+}
+
+func TestSocialGitHub_InitializeExtraFields(t *testing.T) {
+	type settingFields struct {
+		teamIds              []int
+		allowedOrganizations []string
+	}
+	testCases := []struct {
+		name     string
+		settings map[string]any
+		want     settingFields
+	}{
+		{
+			name: "teamIds is set",
+			settings: map[string]any{
+				"team_ids": "1234,5678",
+			},
+			want: settingFields{
+				teamIds:              []int{1234, 5678},
+				allowedOrganizations: []string{},
+			},
+		},
+		{
+			name: "allowedOrganizations is set",
+			settings: map[string]any{
+				"allowed_organizations": "uuid-1234,uuid-5678",
+			},
+			want: settingFields{
+				teamIds:              []int{},
+				allowedOrganizations: []string{"uuid-1234", "uuid-5678"},
+			},
+		},
+		{
+			name: "teamIds and allowedOrganizations are empty",
+			settings: map[string]any{
+				"team_ids":              "",
+				"allowed_organizations": "",
+			},
+			want: settingFields{
+				teamIds:              []int{},
+				allowedOrganizations: []string{},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s, err := NewGitHubProvider(tc.settings, &setting.Cfg{}, featuremgmt.WithFeatures())
+			require.NoError(t, err)
+
+			require.Equal(t, tc.want.teamIds, s.teamIds)
+			require.Equal(t, tc.want.allowedOrganizations, s.allowedOrganizations)
 		})
 	}
 }

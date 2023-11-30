@@ -3,7 +3,7 @@ import React, { memo, cloneElement, FC, useMemo, useContext, ReactNode } from 'r
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2, useTheme2 } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 
 import { CardContainer, CardContainerProps, getCardContainerStyles } from './CardContainer';
@@ -55,8 +55,7 @@ export const Card: CardInterface = ({ disabled, href, onClick, children, isSelec
 
   const disableHover = disabled || (!onClick && !href);
   const onCardClick = onClick && !disabled ? onClick : undefined;
-  const theme = useTheme2();
-  const styles = getCardContainerStyles(theme, disabled, disableHover, isSelected);
+  const styles = useStyles2(getCardContainerStyles, disabled, disableHover, isSelected);
 
   return (
     <CardContainer

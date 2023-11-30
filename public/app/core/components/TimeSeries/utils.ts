@@ -609,7 +609,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     },
   };
 
-  if (sync && sync() !== DashboardCursorSync.Off) {
+  if (sync && sync() !== DashboardCursorSync.Off && xField.type === FieldType.time) {
     const payload: DataHoverPayload = {
       point: {
         [xScaleKey]: null,

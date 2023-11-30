@@ -63,6 +63,7 @@ func TestMSSQL(t *testing.T) {
 
 	sess := x.NewSession()
 	t.Cleanup(sess.Close)
+	db := sess.DB()
 
 	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 
@@ -105,7 +106,7 @@ func TestMSSQL(t *testing.T) {
 					)
 				`
 
-		_, err := sess.Exec(sql)
+		_, err := db.Exec(sql)
 		require.NoError(t, err)
 
 		dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
@@ -127,7 +128,7 @@ func TestMSSQL(t *testing.T) {
 					CONVERT(uniqueidentifier, '%s')
 		`, d, d2, d, d, d, d2, uuid)
 
-		_, err = sess.Exec(sql)
+		_, err = db.Exec(sql)
 		require.NoError(t, err)
 
 		t.Run("When doing a table query should map MSSQL column types to Go types", func(t *testing.T) {
@@ -194,7 +195,7 @@ func TestMSSQL(t *testing.T) {
 							)
 						`
 
-		_, err := sess.Exec(sql)
+		_, err := db.Exec(sql)
 		require.NoError(t, err)
 
 		type metric struct {
@@ -220,8 +221,10 @@ func TestMSSQL(t *testing.T) {
 			})
 		}
 
-		_, err = sess.InsertMulti(series)
-		require.NoError(t, err)
+		for _, m := range series {
+			_, err := db.Exec(`INSERT INTO metric ("time", value) VALUES (?, ?)`, m.Time.UTC(), m.Value)
+			require.NoError(t, err)
+		}
 
 		t.Run("When doing a metric query using timeGroup", func(t *testing.T) {
 			query := &backend.QueryDataRequest{
@@ -391,13 +394,17 @@ func TestMSSQL(t *testing.T) {
 			ValueTwo            int64 `xorm:"integer 'valueTwo'"`
 		}
 
-		exists, err := sess.IsTableExist(metric_values{})
+		_, err := db.Exec("DROP TABLE IF EXISTS metric_values")
 		require.NoError(t, err)
-		if exists {
-			err := sess.DropTable(metric_values{})
-			require.NoError(t, err)
-		}
-		err = sess.CreateTable(metric_values{})
+		_, err = db.Exec(`CREATE TABLE metric_values (
+			"time" DATETIME NULL,
+			timeInt64 BIGINT NOT NULL, timeInt64Nullable BIGINT NULL,
+			timeFloat64 FLOAT NOT NULL, timeFloat64Nullable FLOAT NULL,
+			timeInt32 INT NOT NULL, timeInt32Nullable INT NULL,
+			timeFloat32 FLOAT(11) NOT NULL, timeFloat32Nullable FLOAT(11) NULL,
+			measurement VARCHAR(255) NULL, valueOne INTEGER NULL, valueTwo INTEGER NULL
+		);
+		`)
 		require.NoError(t, err)
 
 		rng := rand.New(rand.NewSource(time.Now().Unix()))
@@ -440,8 +447,23 @@ func TestMSSQL(t *testing.T) {
 			series = append(series, &second)
 		}
 
-		_, err = sess.InsertMulti(series)
-		require.NoError(t, err)
+		for _, m := range series {
+			_, err := db.Exec(`INSERT INTO metric_values (
+					"time",
+					timeInt64, timeInt64Nullable,
+					timeFloat64, timeFloat64Nullable,
+					timeInt32, timeInt32Nullable,
+					timeFloat32, timeFloat32Nullable,
+					measurement, valueOne, valueTwo
+				) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			`, m.Time,
+				m.TimeInt64, m.TimeInt64Nullable,
+				m.TimeFloat64, m.TimeFloat64Nullable,
+				m.TimeInt32, m.TimeInt32Nullable,
+				m.TimeFloat32, m.TimeFloat32Nullable,
+				m.Measurement, m.ValueOne, m.ValueTwo)
+			require.NoError(t, err)
+		}
 
 		t.Run("When doing a metric query using epoch (int64) as time column and value column (int64) should return metric with time in time.Time", func(t *testing.T) {
 			query := &backend.QueryDataRequest{
@@ -747,7 +769,7 @@ func TestMSSQL(t *testing.T) {
 									DROP PROCEDURE sp_test_epoch
 							`
 
-			_, err := sess.Exec(sql)
+			_, err := db.Exec(sql)
 			require.NoError(t, err)
 
 			sql = `
@@ -781,7 +803,7 @@ func TestMSSQL(t *testing.T) {
 				END
 			`
 
-			_, err = sess.Exec(sql)
+			_, err = db.Exec(sql)
 			require.NoError(t, err)
 
 			t.Run("When doing a metric query using stored procedure should return correct result", func(t *testing.T) {
@@ -837,7 +859,7 @@ func TestMSSQL(t *testing.T) {
 									DROP PROCEDURE sp_test_datetime
 							`
 
-			_, err := sess.Exec(sql)
+			_, err := db.Exec(sql)
 			require.NoError(t, err)
 
 			sql = `
@@ -871,7 +893,7 @@ func TestMSSQL(t *testing.T) {
 				END
 			`
 
-			_, err = sess.Exec(sql)
+			_, err = db.Exec(sql)
 			require.NoError(t, err)
 
 			t.Run("When doing a metric query using stored procedure should return correct result", func(t *testing.T) {
@@ -924,7 +946,7 @@ func TestMSSQL(t *testing.T) {
 			)
 		`
 
-		_, err := sess.Exec(sql)
+		_, err := db.Exec(sql)
 		require.NoError(t, err)
 
 		type event struct {
@@ -953,7 +975,7 @@ func TestMSSQL(t *testing.T) {
 							VALUES(%d, '%s', '%s')
 						`, e.TimeSec, e.Description, e.Tags)
 
-			_, err = sess.Exec(sql)
+			_, err = db.Exec(sql)
 			require.NoError(t, err)
 		}
 
@@ -1266,18 +1288,10 @@ func TestMSSQL(t *testing.T) {
 	})
 
 	t.Run("Given an empty table", func(t *testing.T) {
-		type emptyObj struct {
-			EmptyKey string
-			EmptyVal int64
-		}
-
-		exists, err := sess.IsTableExist(emptyObj{})
+		_, err := db.Exec("DROP TABLE IF EXISTS empty_obj")
 		require.NoError(t, err)
-		if exists {
-			err := sess.DropTable(emptyObj{})
-			require.NoError(t, err)
-		}
-		err = sess.CreateTable(emptyObj{})
+
+		_, err = db.Exec("CREATE TABLE empty_obj (empty_key VARCHAR(255) NULL, empty_val BIGINT NULL)")
 		require.NoError(t, err)
 
 		t.Run("When no rows are returned, should return an empty frame", func(t *testing.T) {

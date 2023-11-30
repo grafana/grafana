@@ -11,5 +11,6 @@ describe('Panel edit tests - transformations', () => {
     e2e.components.Tab.title('Transform data').should('be.visible').click();
     e2e.components.TransformTab.newTransform('Reduce').scrollIntoView().should('be.visible').click();
     e2e.components.Transforms.Reduce.calculationsLabel().should('be.visible');
+    e2e.components.Transforms.Reduce.modeLabel().should('be.visible');
   });
 });

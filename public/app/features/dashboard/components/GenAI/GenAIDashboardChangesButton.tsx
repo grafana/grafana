@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback } from 'react';
 
 import { DashboardModel } from '../../state';
 
@@ -35,7 +35,7 @@ const CHANGES_GENERATION_POSTFIX_PROMPT = [
 ].join('.\n');
 
 export const GenAIDashboardChangesButton = ({ dashboard, onGenerate, disabled }: GenAIDashboardChangesButtonProps) => {
-  const messages = useMemo(() => getMessages(dashboard), [dashboard]);
+  const messages = useCallback(() => getMessages(dashboard), [dashboard]);
 
   return (
     <GenAIButton

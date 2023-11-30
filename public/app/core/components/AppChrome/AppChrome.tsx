@@ -93,7 +93,7 @@ export function AppChrome({ children }: Props) {
       </main>
       {!state.chromeless && (
         <>
-          {config.featureToggles.dockedMegaMenu ? (
+          {config.featureToggles.dockedMegaMenu && state.megaMenu !== 'docked' ? (
             <AppChromeMenu />
           ) : (
             <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu('closed')} />

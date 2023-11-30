@@ -26,7 +26,7 @@ import { getFieldLinksForExplore } from '../utils/links';
 import { fieldNameMeta } from './LogsTableWrap';
 
 interface Props {
-  logsFrames: DataFrame[];
+  dataFrame: DataFrame;
   width: number;
   timeZone: string;
   splitOpen: SplitOpen;
@@ -34,16 +34,13 @@ interface Props {
   logsSortOrder: LogsSortOrder;
   columnsWithMeta: Record<string, fieldNameMeta>;
   height: number;
-  onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
-  onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
+  onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
 }
 
 export function LogsTable(props: Props) {
-  const { timeZone, splitOpen, range, logsSortOrder, width, logsFrames, columnsWithMeta } = props;
+  const { timeZone, splitOpen, range, logsSortOrder, width, dataFrame, columnsWithMeta } = props;
   const [tableFrame, setTableFrame] = useState<DataFrame | undefined>(undefined);
-
-  // Only a single frame (query) is supported currently
-  const logFrameRaw = logsFrames ? logsFrames[0] : undefined;
 
   const prepareTableFrame = useCallback(
     (frame: DataFrame): DataFrame => {
@@ -99,14 +96,12 @@ export function LogsTable(props: Props) {
   useEffect(() => {
     const prepare = async () => {
       // Parse the dataframe to a logFrame
-      const logsFrame = logFrameRaw ? parseLogsFrame(logFrameRaw) : undefined;
+      const logsFrame = dataFrame ? parseLogsFrame(dataFrame) : undefined;
 
-      if (!logFrameRaw || !logsFrame) {
+      if (!logsFrame) {
         setTableFrame(undefined);
         return;
       }
-
-      let dataFrame = logFrameRaw;
 
       // create extract JSON transformation for every field that is `json.RawMessage`
       const transformations: Array<DataTransformerConfig | CustomTransformOperator> = extractFields(dataFrame);
@@ -139,7 +134,7 @@ export function LogsTable(props: Props) {
       }
     };
     prepare();
-  }, [columnsWithMeta, logFrameRaw, logsSortOrder, prepareTableFrame]);
+  }, [columnsWithMeta, dataFrame, logsSortOrder, prepareTableFrame]);
 
   if (!tableFrame) {
     return null;
@@ -152,11 +147,11 @@ export function LogsTable(props: Props) {
       return;
     }
     if (operator === FILTER_FOR_OPERATOR) {
-      onClickFilterLabel(key, value);
+      onClickFilterLabel(key, value, dataFrame);
     }
 
     if (operator === FILTER_OUT_OPERATOR) {
-      onClickFilterOutLabel(key, value);
+      onClickFilterOutLabel(key, value, dataFrame);
     }
   };
 

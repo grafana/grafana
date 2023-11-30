@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -26,17 +27,19 @@ var (
 type Local struct {
 	log        log.Logger
 	production bool
+	features   plugins.FeatureToggles
 }
 
-func NewLocalFinder(devMode bool) *Local {
+func NewLocalFinder(devMode bool, features plugins.FeatureToggles) *Local {
 	return &Local{
 		production: !devMode,
 		log:        log.New("local.finder"),
+		features:   features,
 	}
 }
 
 func ProvideLocalFinder(cfg *config.Cfg) *Local {
-	return NewLocalFinder(cfg.DevMode)
+	return NewLocalFinder(cfg.DevMode, cfg.Features)
 }
 
 func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error) {
@@ -58,7 +61,8 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 		}
 
 		followDistFolder := true
-		if src.PluginClass(ctx) == plugins.ClassCore {
+		if src.PluginClass(ctx) == plugins.ClassCore &&
+			!l.features.IsEnabledGlobally(featuremgmt.FlagExternalCorePlugins) {
 			followDistFolder = false
 		}
 		paths, err := l.getAbsPluginJSONPaths(path, followDistFolder)

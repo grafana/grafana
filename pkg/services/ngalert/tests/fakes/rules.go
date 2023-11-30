@@ -68,7 +68,7 @@ mainloop:
 		}
 		if existing == nil {
 			folders = append(folders, &folder.Folder{
-				ID:    rand.Int63(),
+				ID:    rand.Int63(), // nolint:staticcheck
 				UID:   r.NamespaceUID,
 				Title: "TEST-FOLDER-" + util.GenerateShortUID(),
 			})

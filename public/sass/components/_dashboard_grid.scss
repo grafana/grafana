@@ -109,8 +109,10 @@
   transition-property: none;
 }
 
-.react-grid-layout--enable-move-animations {
-  .react-grid-item.cssTransforms {
-    transition-property: transform;
+@media (prefers-reduced-motion: no-preference) {
+  .react-grid-layout--enable-move-animations {
+    .react-grid-item.cssTransforms {
+      transition-property: transform;
+    }
   }
 }
