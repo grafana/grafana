@@ -197,7 +197,6 @@ It defines the default config for the time picker and the refresh picker for the
 
 | Property            | Type     | Required | Default                               | Description                                                                                       |
 |---------------------|----------|----------|---------------------------------------|---------------------------------------------------------------------------------------------------|
-| `collapse`          | boolean  | **Yes**  | `false`                               | Whether timepicker is collapsed or not. Has no effect on provisioned dashboard.                   |
 | `hidden`            | boolean  | **Yes**  | `false`                               | Whether timepicker is visible or not.                                                             |
 | `refresh_intervals` | string[] | **Yes**  | `[5s 10s 30s 1m 5m 15m 30m 1h 2h 1d]` | Interval options available in the refresh picker dropdown.                                        |
 | `time_options`      | string[] | **Yes**  | `[5m 15m 1h 6h 12h 24h 2d 7d 30d]`    | Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard. |

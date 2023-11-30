@@ -842,9 +842,6 @@ type ThresholdsMode string
 // Time picker configuration
 // It defines the default config for the time picker and the refresh picker for the specific dashboard.
 type TimePickerConfig struct {
-	// Whether timepicker is collapsed or not. Has no effect on provisioned dashboard.
-	Collapse bool `json:"collapse"`
-
 	// Whether timepicker is visible or not.
 	Hidden bool `json:"hidden"`
 
