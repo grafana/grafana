@@ -86,6 +86,7 @@ var wireExtsBasicSet = wire.NewSet(
 	usagestatssvcs.ProvideUsageStatsProvidersRegistry,
 	wire.Bind(new(registry.UsageStatsProvidersRegistry), new(*usagestatssvcs.UsageStatsProvidersRegistry)),
 	ossaccesscontrol.ProvideDatasourcePermissionsService,
+	ossaccesscontrol.ProvideFolderPermissionsService,
 	wire.Bind(new(accesscontrol.DatasourcePermissionsService), new(*ossaccesscontrol.DatasourcePermissionsService)),
 	pluginsintegration.WireExtensionSet,
 	publicdashboardsApi.ProvideMiddleware,

@@ -204,7 +204,7 @@ var FolderEditActions = append(FolderViewActions, []string{
 }...)
 var FolderAdminActions = append(FolderEditActions, []string{dashboards.ActionFoldersPermissionsRead, dashboards.ActionFoldersPermissionsWrite}...)
 
-func ProvideFolderPermissions() (*FolderPermissionsService, error) {
+func ProvideFolderPermissionsService() (*FolderPermissionsService, error) {
 	return &FolderPermissionsService{}, nil
 }
 

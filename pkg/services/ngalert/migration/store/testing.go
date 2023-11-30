@@ -68,8 +68,8 @@ func NewTestMigrationStore(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setti
 	require.NoError(t, err)
 	folderService := folderimpl.ProvideService(ac, bus, cfg, dashboardStore, folderStore, sqlStore, features)
 
-	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions()
-	require.NoError(t, err)
+	// TODO(aarongodin): does the test rely on this implementation?
+	folderPermissions := ossaccesscontrol.FolderPermissionsService{}
 	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
 		features, routeRegister, sqlStore, ac, license, dashboardStore, folderService, acSvc, teamSvc, userSvc)
 	require.NoError(t, err)
