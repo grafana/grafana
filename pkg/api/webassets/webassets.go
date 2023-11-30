@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var logger log.Logger = log.New("webassets")
@@ -29,9 +30,17 @@ type EntryPointInfo struct {
 	} `json:"assets,omitempty"`
 }
 
-func LoadWebAssets(staticRootPath string) (*dtos.EntryPointAssets, error) {
-	// TODO, add caching (this is called a few times for each load!)
-	return readWebAssets(filepath.Join(staticRootPath, "build", "assets-manifest.json"))
+var entryPointAssetsCache *dtos.EntryPointAssets = nil
+
+func LoadWebAssets(cfg *setting.Cfg) (*dtos.EntryPointAssets, error) {
+	if cfg.Env != setting.Dev && entryPointAssetsCache != nil {
+		return entryPointAssetsCache, nil
+	}
+
+	result, err := readWebAssets(filepath.Join(cfg.StaticRootPath, "build", "assets-manifest.json"))
+	entryPointAssetsCache = result
+
+	return entryPointAssetsCache, err
 }
 
 func readWebAssets(manifestpath string) (*dtos.EntryPointAssets, error) {
