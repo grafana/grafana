@@ -227,14 +227,15 @@ func readValues(iter *jsonitere.Iterator, hasTimeColumn bool) (valueFields data.
 				}
 				valueFields = maybeCreateValueField(valueFields, data.FieldTypeNullableString, colIdx)
 				maybeFixValueFieldType(valueFields, data.FieldTypeNullableString, colIdx)
-				valueFields[colIdx].Append(&s)
+				tryToAppendValue(valueFields, &s, colIdx)
 			case jsoniter.NumberValue:
 				n, err := iter.ReadFloat64()
 				if err != nil {
 					return nil, err
 				}
 				valueFields = maybeCreateValueField(valueFields, data.FieldTypeNullableFloat64, colIdx)
-				valueFields[colIdx].Append(&n)
+				maybeFixValueFieldType(valueFields, data.FieldTypeNullableFloat64, colIdx)
+				tryToAppendValue(valueFields, &n, colIdx)
 			case jsoniter.BoolValue:
 				b, err := iter.ReadAny()
 				if err != nil {
@@ -243,7 +244,7 @@ func readValues(iter *jsonitere.Iterator, hasTimeColumn bool) (valueFields data.
 				valueFields = maybeCreateValueField(valueFields, data.FieldTypeNullableBool, colIdx)
 				maybeFixValueFieldType(valueFields, data.FieldTypeNullableBool, colIdx)
 				bv := b.ToBool()
-				valueFields[colIdx].Append(&bv)
+				tryToAppendValue(valueFields, &bv, colIdx)
 			case jsoniter.NilValue:
 				_, _ = iter.Read()
 				if len(valueFields) <= colIdx {
@@ -261,6 +262,15 @@ func readValues(iter *jsonitere.Iterator, hasTimeColumn bool) (valueFields data.
 			}
 
 			colIdx++
+		}
+	}
+
+	// if all values are null in a field we convert the field type to NullableFloat64
+	// it is because of the consistency between buffer and stream parser
+	// also frontend probably will not interpret the nullableJson value
+	for i, v := range valueFields {
+		if v.Type() == data.FieldTypeNullableJSON {
+			maybeFixValueFieldType(valueFields, data.FieldTypeNullableFloat64, i)
 		}
 	}
 
@@ -291,6 +301,28 @@ func maybeFixValueFieldType(valueFields data.Fields, expectedType data.FieldType
 		stringField.Append(nil)
 	}
 	valueFields[colIdx] = stringField
+}
+
+func tryToAppendValue[T *string | *float64 | *bool](valueFields data.Fields, value T, colIdx int) {
+	if valueFields[colIdx].Type() == typeOf(value) {
+		valueFields[colIdx].Append(value)
+	} else {
+		valueFields[colIdx].Append(nil)
+	}
+}
+
+func typeOf(value interface{}) data.FieldType {
+	switch v := value.(type) {
+	case *string:
+		return data.FieldTypeNullableString
+	case *float64:
+		return data.FieldTypeNullableFloat64
+	case *bool:
+		return data.FieldTypeNullableBool
+	default:
+		fmt.Printf("unknown value type: %v", v)
+		return data.FieldTypeNullableJSON
+	}
 }
 
 func handleTimeSeriesFormatWithTimeColumn(valueFields data.Fields, tags map[string]string, columns []string, measurement string, frameName []byte, query *models.Query) []*data.Frame {

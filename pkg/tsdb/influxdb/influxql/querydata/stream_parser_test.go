@@ -1,7 +1,6 @@
 package querydata
 
 import (
-	"fmt"
 	"os"
 	"path"
 	"path/filepath"
@@ -9,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/stretchr/testify/require"
 
@@ -52,13 +50,6 @@ func TestReadInfluxAsTable(t *testing.T) {
 	for _, f := range testFiles {
 		t.Run(f, runScenario(f, "table"))
 	}
-}
-
-func TestDataField(t *testing.T) {
-	var nilValues []any
-	nilValues = append(nilValues, nil)
-	nilField := data.NewField("Value", nil, nilValues)
-	fmt.Println(nilField.Type())
 }
 
 func runScenario(tf string, resultFormat string) func(t *testing.T) {
