@@ -1,4 +1,4 @@
-package api
+package ngalert
 
 import (
 	"context"
