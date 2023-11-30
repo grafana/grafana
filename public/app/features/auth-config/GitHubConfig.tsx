@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 
 import { NavModelItem } from '@grafana/data';
-import { Button, Field, Form, Input, InputControl, Select, Stack, Switch } from '@grafana/ui';
+import { Button, Field, Form, Input, InputControl, LinkButton, Select, Stack, Switch } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { SSOProviderDTO } from './types';
-
-interface FormPageProps {}
 
 const pageNav: NavModelItem = {
   text: 'GitHub',
@@ -23,7 +21,7 @@ const defaultValues: ProviderData = {
   teamIds: [],
   allowedOrganizations: [],
 };
-export const GitHubConfig = (props: FormPageProps) => {
+export const GitHubConfig = () => {
   const [isSaving, setIsSaving] = useState(false);
   const handleSubmit = async (data: ProviderData) => {
     setIsSaving(true);
@@ -49,6 +47,7 @@ export const GitHubConfig = (props: FormPageProps) => {
           <Form onSubmit={handleSubmit} defaultValues={defaultValues}>
             {({ register, errors, control, setValue, watch }) => {
               const teamIdOptions = watch('teamIds');
+              const orgOptions = watch('allowedOrganizations');
               return (
                 <>
                   <Field label="Enabled">
@@ -60,7 +59,6 @@ export const GitHubConfig = (props: FormPageProps) => {
                   <Field label="Client secret" required invalid={!!errors.clientId} error="This field is required">
                     <Input {...register('clientSecret', { required: true })} type="text" id="text" />
                   </Field>
-
                   <Field label="Team IDs">
                     <InputControl
                       name={'teamIds'}
@@ -69,14 +67,38 @@ export const GitHubConfig = (props: FormPageProps) => {
                         return (
                           <Select
                             {...fieldProps}
+                            placeholder={'Enter team IDs and press Enter to add'}
                             isMulti
                             options={teamIdOptions}
                             allowCustomValue
+                            onChange={onChange}
                             onCreateOption={(v) => {
                               const customValue = { value: v, label: v };
                               onChange([...teamIdOptions, customValue]);
                             }}
+                          />
+                        );
+                      }}
+                    />
+                  </Field>
+
+                  <Field label="Allowed organizations">
+                    <InputControl
+                      name={'allowedOrganizations'}
+                      control={control}
+                      render={({ field: { ref, onChange, ...fieldProps } }) => {
+                        return (
+                          <Select
+                            {...fieldProps}
+                            placeholder={'Enter organizations (my-team, myteam...) and press Enter to add'}
+                            isMulti
+                            options={orgOptions}
+                            allowCustomValue
                             onChange={onChange}
+                            onCreateOption={(v) => {
+                              const customValue = { value: v, label: v };
+                              onChange([...orgOptions, customValue]);
+                            }}
                           />
                         );
                       }}
@@ -84,10 +106,12 @@ export const GitHubConfig = (props: FormPageProps) => {
                   </Field>
                   <Stack gap={2}>
                     <Field>
-                      <Button type={'submit'}>{isSaving ? 'Saving...' : 'Submit'}</Button>
+                      <Button type={'submit'}>{isSaving ? 'Saving...' : 'Save'}</Button>
                     </Field>
                     <Field>
-                      <Button variant={'secondary'}>Cancel</Button>
+                      <LinkButton href={'/admin/authentication'} variant={'secondary'}>
+                        Discard
+                      </LinkButton>
                     </Field>
                   </Stack>
                 </>
