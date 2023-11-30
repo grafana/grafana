@@ -22,7 +22,7 @@ const (
 
 	nameAttributePathKey    = "name_attribute_path"
 	loginAttributePathKey   = "login_attribute_path"
-	idTokenAttributeNameKey = "id_token_attribute_name"
+	idTokenAttributeNameKey = "id_token_attribute_name" // #nosec G101 not a hardcoded credential
 )
 
 var ExtraGenericOAuthSettingKeys = []string{nameAttributePathKey, loginAttributePathKey, idTokenAttributeNameKey, teamIdsKey, allowedOrganizationsKey}

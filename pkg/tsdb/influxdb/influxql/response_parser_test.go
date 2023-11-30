@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/util"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
@@ -53,7 +54,6 @@ var testFiles = []string{
 	"show_tag_values_response",
 	"retention_policy",
 	"simple_response_with_diverse_data_types",
-	"measurements",
 	"multiple_measurements",
 	// "many_columns", skipped for now
 	"response_with_nil_bools_and_nil_strings",
@@ -108,7 +108,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		labels, err := data.LabelsFromString("/cluster/name/=Cluster/, @cluster@name@=Cluster@, cluster-name=Cluster, datacenter=America, dc.region.name=Northeast")
 		require.Nil(t, err)
 		newField := data.NewField("Value", labels, []*float64{
-			toPtr(222.0),
+			util.ToPtr(222.0),
 		})
 		newField.Config = &data.FieldConfig{DisplayNameFromDS: "series alias"}
 		testFrame := data.NewFrame("series alias",
@@ -118,7 +118,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			newField,
 		)
-		testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
+		testFrame.Meta = &data.FrameMeta{PreferredVisualization: util.GraphVisType, ExecutedQueryString: "Test raw query"}
 		testFrameWithoutMeta := data.NewFrame("series alias",
 			data.NewField("Time", nil,
 				[]time.Time{
@@ -149,7 +149,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			name = "alias sum"
 			testFrameWithoutMeta.Name = name
 			newField = data.NewField("Value", labels, []*float64{
-				toPtr(333.0),
+				util.ToPtr(333.0),
 			})
 			testFrameWithoutMeta.Fields[1] = newField
 			testFrameWithoutMeta.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: name}
@@ -162,7 +162,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			name = "alias America"
 			testFrame.Name = name
 			newField = data.NewField("Value", labels, []*float64{
-				toPtr(222.0),
+				util.ToPtr(222.0),
 			})
 			testFrame.Fields[1] = newField
 			testFrame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: name}
@@ -174,7 +174,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			name = "alias America/America"
 			testFrame.Name = name
 			newField = data.NewField("Value", labels, []*float64{
-				toPtr(222.0),
+				util.ToPtr(222.0),
 			})
 			testFrame.Fields[1] = newField
 			testFrame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: name}
@@ -323,23 +323,23 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	})
 
 	t.Run("Influxdb response parser parseNumber nil", func(t *testing.T) {
-		value := parseNumber(nil)
+		value := util.ParseNumber(nil)
 		require.Nil(t, value)
 	})
 
 	t.Run("Influxdb response parser parseNumber valid JSON.number", func(t *testing.T) {
-		value := parseNumber(json.Number("95.4"))
+		value := util.ParseNumber(json.Number("95.4"))
 		require.Equal(t, *value, 95.4)
 	})
 
 	t.Run("Influxdb response parser parseNumber invalid type", func(t *testing.T) {
-		value := parseNumber("95.4")
+		value := util.ParseNumber("95.4")
 		require.Nil(t, value)
 	})
 
 	t.Run("Influxdb response parser with invalid timestamp-format", func(t *testing.T) {
 		newField := data.NewField("Value", nil, []*float64{
-			toPtr(50.0), toPtr(52.0),
+			util.ToPtr(50.0), util.ToPtr(52.0),
 		})
 		newField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean"}
 		testFrame := data.NewFrame("cpu.mean",
@@ -350,7 +350,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			newField,
 		)
-		testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
+		testFrame.Meta = &data.FrameMeta{PreferredVisualization: util.GraphVisType, ExecutedQueryString: "Test raw query"}
 
 		result := ResponseParse(readJsonFile("invalid_timestamp_format"), 200, generateQuery("time_series", ""))
 
@@ -362,17 +362,13 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	t.Run("Influxdb response parser parseTimestamp valid JSON.number", func(t *testing.T) {
 		// currently we use milliseconds-precision with influxdb, so the test works with that.
 		// if we change this to for example nanoseconds-precision, the tests will have to change.
-		timestamp, err := parseTimestamp(json.Number("1609556645000"))
+		timestamp, err := util.ParseTimestamp(json.Number("1609556645000"))
 		require.NoError(t, err)
 		require.Equal(t, timestamp.Format(time.RFC3339), "2021-01-02T03:04:05Z")
 	})
 
 	t.Run("Influxdb response parser parseNumber invalid type", func(t *testing.T) {
-		_, err := parseTimestamp("hello")
+		_, err := util.ParseTimestamp("hello")
 		require.Error(t, err)
 	})
-}
-
-func toPtr[T any](v T) *T {
-	return &v
 }

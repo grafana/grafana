@@ -31,8 +31,7 @@ func (s *OAuthStrategy) IsMatch(provider string) bool {
 }
 
 func (s *OAuthStrategy) ParseConfigFromSystem(_ context.Context, provider string) (any, error) {
-	sectionName := "auth." + provider
-	section := s.cfg.SectionWithEnvOverrides(sectionName)
+	section := s.cfg.SectionWithEnvOverrides("auth." + provider)
 
 	result := &social.OAuthInfo{
 		AllowAssignGrafanaAdmin: social.MustBool(section.Key("allow_assign_grafana_admin").Value(), false),

@@ -1,12 +1,23 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import { DataFrame, DataFrameType, Field, getLinksSupplier, GrafanaTheme2, PanelProps, TimeRange } from '@grafana/data';
-import { PanelDataErrorView } from '@grafana/runtime';
+import {
+  DataFrame,
+  DataFrameType,
+  Field,
+  getLinksSupplier,
+  GrafanaTheme2,
+  PanelProps,
+  ScopedVars,
+  TimeRange,
+} from '@grafana/data';
+import { config, PanelDataErrorView } from '@grafana/runtime';
 import { ScaleDistributionConfig } from '@grafana/schema';
 import {
   Portal,
   ScaleDistribution,
+  TooltipPlugin2,
+  ZoomPlugin,
   UPlotChart,
   usePanelContext,
   useStyles2,
@@ -14,11 +25,13 @@ import {
   VizLayout,
   VizTooltipContainer,
 } from '@grafana/ui';
+import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
 import { ExemplarModalHeader } from './ExemplarModalHeader';
 import { HeatmapHoverView } from './HeatmapHoverView';
+import { HeatmapHoverView as HeatmapHoverViewOld } from './HeatmapHoverViewOld';
 import { prepareHeatmapData } from './fields';
 import { quantizeScheme } from './palettes';
 import { Options } from './types';
@@ -41,10 +54,12 @@ export const HeatmapPanel = ({
 }: HeatmapPanelProps) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const { sync } = usePanelContext();
+  const { sync, canAddAnnotations } = usePanelContext();
+
+  const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
 
   //  necessary for enabling datalinks in hover view
-  let scopedVarsFromRawData = [];
+  let scopedVarsFromRawData: ScopedVars[] = [];
   for (const series of data.series) {
     for (const field of series.fields) {
       if (field.state?.scopedVars) {
@@ -149,12 +164,6 @@ export const HeatmapPanel = ({
       eventBus,
       onhover: onhover,
       onclick: options.tooltip.show ? onclick : null,
-      onzoom: (evt) => {
-        const delta = evt.xMax - evt.xMin;
-        if (delta > 1) {
-          onChangeTimeRange({ from: evt.xMin, to: evt.xMax });
-        }
-      },
       isToolTipOpen,
       timeZone,
       getTimeRange: () => timeRangeRef.current,
@@ -212,42 +221,71 @@ export const HeatmapPanel = ({
     );
   }
 
+  const newVizTooltips = config.featureToggles.newVizTooltips ?? false;
+
   return (
     <>
       <VizLayout width={width} height={height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart config={builder} data={facets as any} width={vizWidth} height={vizHeight}>
             {/*children ? children(config, alignedFrame) : null*/}
+            {!newVizTooltips && <ZoomPlugin config={builder} onZoom={onChangeTimeRange} />}
+            {newVizTooltips && options.tooltip.show && (
+              <TooltipPlugin2
+                config={builder}
+                hoverMode={TooltipHoverMode.xyOne}
+                queryZoom={onChangeTimeRange}
+                render={(u, dataIdxs, seriesIdx, isPinned, dismiss) => {
+                  return (
+                    <HeatmapHoverView
+                      dataIdxs={dataIdxs}
+                      seriesIdx={seriesIdx}
+                      dataRef={dataRef}
+                      isPinned={isPinned}
+                      dismiss={dismiss}
+                      showHistogram={options.tooltip.yHistogram}
+                      showColorScale={options.tooltip.showColorScale}
+                      canAnnotate={enableAnnotationCreation}
+                      panelData={data}
+                      replaceVars={replaceVariables}
+                      scopedVars={scopedVarsFromRawData}
+                    />
+                  );
+                }}
+              />
+            )}
           </UPlotChart>
         )}
       </VizLayout>
-      <Portal>
-        {hover && options.tooltip.show && (
-          <VizTooltipContainer
-            position={{ x: hover.pageX, y: hover.pageY }}
-            offset={{ x: 10, y: 10 }}
-            allowPointerEvents={isToolTipOpen.current}
-          >
-            {shouldDisplayCloseButton && <ExemplarModalHeader onClick={onCloseToolTip} />}
-            <HeatmapHoverView
-              timeRange={timeRange}
-              data={info}
-              hover={hover}
-              showHistogram={options.tooltip.yHistogram}
-              replaceVars={replaceVariables}
-              scopedVars={scopedVarsFromRawData}
-            />
-          </VizTooltipContainer>
-        )}
-      </Portal>
+      {!newVizTooltips && (
+        <Portal>
+          {hover && options.tooltip.show && (
+            <VizTooltipContainer
+              position={{ x: hover.pageX, y: hover.pageY }}
+              offset={{ x: 10, y: 10 }}
+              allowPointerEvents={isToolTipOpen.current}
+            >
+              {shouldDisplayCloseButton && <ExemplarModalHeader onClick={onCloseToolTip} />}
+              <HeatmapHoverViewOld
+                timeRange={timeRange}
+                data={info}
+                hover={hover}
+                showHistogram={options.tooltip.yHistogram}
+                replaceVars={replaceVariables}
+                scopedVars={scopedVarsFromRawData}
+              />
+            </VizTooltipContainer>
+          )}
+        </Portal>
+      )}
     </>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  colorScaleWrapper: css`
-    margin-left: 25px;
-    padding: 10px 0;
-    max-width: 300px;
-  `,
+  colorScaleWrapper: css({
+    marginLeft: '25px',
+    padding: '10px 0',
+    maxWidth: '300px',
+  }),
 });

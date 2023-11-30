@@ -57,6 +57,7 @@ import { dedupLogRows, filterLogLevels } from '../../logs/logsModel';
 import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 import { changePanelState } from '../state/explorePane';
 
+import { LogsFeedback } from './LogsFeedback';
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
 import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
@@ -267,6 +268,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     reportInteraction('grafana_explore_logs_visualisation_changed', {
       newVisualizationType: visualisation,
+      datasourceType: this.props.datasourceType ?? 'unknown',
     });
   };
 
@@ -602,24 +604,23 @@ class UnthemedLogs extends PureComponent<Props, State> {
         </PanelChrome>
         <PanelChrome
           titleItems={[
-            config.featureToggles.logsExploreTableVisualisation ? (
-              this.state.visualisationType === 'logs' ? null : (
-                <PanelChrome.TitleItem title="Experimental" key="A">
-                  <FeatureBadge
-                    featureState={FeatureState.beta}
-                    tooltip="This feature is experimental and may change in future versions"
-                  />
-                </PanelChrome.TitleItem>
-              )
-            ) : null,
-          ]}
-          title={
             config.featureToggles.logsExploreTableVisualisation
               ? this.state.visualisationType === 'logs'
-                ? 'Logs'
-                : 'Table'
-              : 'Logs'
-          }
+                ? null
+                : [
+                    <PanelChrome.TitleItem title="Experimental" key="A">
+                      <FeatureBadge
+                        featureState={FeatureState.beta}
+                        tooltip="Table view is experimental and may change in future versions"
+                      />
+                    </PanelChrome.TitleItem>,
+                    <PanelChrome.TitleItem title="Feedback" key="B">
+                      <LogsFeedback feedbackUrl="https://forms.gle/5YyKdRQJ5hzq4c289" />
+                    </PanelChrome.TitleItem>,
+                  ]
+              : null,
+          ]}
+          title={'Logs'}
           actions={
             <>
               {config.featureToggles.logsExploreTableVisualisation && (
@@ -628,14 +629,14 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     className={styles.visualisationTypeRadio}
                     options={[
                       {
-                        label: 'Table',
-                        value: 'table',
-                        description: 'Show results in table visualisation',
-                      },
-                      {
                         label: 'Logs',
                         value: 'logs',
                         description: 'Show results in logs visualisation',
+                      },
+                      {
+                        label: 'Table',
+                        value: 'table',
+                        description: 'Show results in table visualisation',
                       },
                     ]}
                     size="sm"
@@ -757,6 +758,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   panelState={this.props.panelState?.logs}
                   theme={theme}
                   updatePanelState={this.updatePanelState}
+                  datasourceType={this.props.datasourceType}
                 />
               </div>
             )}
