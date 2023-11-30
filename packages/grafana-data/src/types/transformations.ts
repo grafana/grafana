@@ -5,6 +5,7 @@ import { MatcherConfig, DataTransformerConfig } from '@grafana/schema';
 import { RegistryItemWithOptions } from '../utils/Registry';
 
 import { DataFrame, Field } from './dataFrame';
+import { FeatureToggles } from './featureToggles.gen';
 import { InterpolateFunction } from './panel';
 
 /** deprecated, use it from schema */
@@ -15,6 +16,7 @@ export type { MatcherConfig };
  */
 export interface DataTransformContext {
   interpolate: InterpolateFunction;
+  featureToggles?: FeatureToggles;
 }
 
 /**

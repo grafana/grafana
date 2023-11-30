@@ -8,7 +8,6 @@ import { roundDecimals } from '../../utils';
 
 import { DataTransformerID } from './ids';
 import { AlignedData, join } from './joinDataFrames';
-import { transformationsVariableSupport } from './utils';
 
 /**
  * @internal
@@ -101,7 +100,7 @@ export const histogramTransformer: SynchronousDataTransformerInfo<HistogramTrans
       bucketOffset: number | undefined = undefined;
 
     if (options.bucketSize) {
-      if (transformationsVariableSupport()) {
+      if (ctx.featureToggles?.transformationsVariableSupport) {
         options.bucketSize = ctx.interpolate(options.bucketSize.toString());
       }
       if (typeof options.bucketSize === 'string') {
@@ -116,7 +115,7 @@ export const histogramTransformer: SynchronousDataTransformerInfo<HistogramTrans
     }
 
     if (options.bucketOffset) {
-      if (transformationsVariableSupport()) {
+      if (ctx.featureToggles?.transformationsVariableSupport) {
         options.bucketOffset = ctx.interpolate(options.bucketOffset.toString());
       }
       if (typeof options.bucketOffset === 'string') {

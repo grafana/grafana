@@ -26,11 +26,6 @@ const DEFAULT_ROW_FIELD = 'Time';
 const DEFAULT_VALUE_FIELD = 'Value';
 const DEFAULT_EMPTY_VALUE = SpecialValue.Empty;
 
-// grafana-data does not have access to runtime so we are accessing the window object
-// to get access to the feature toggle
-// eslint-disable-next-line
-const supportDataplaneFallback = (window as any)?.grafanaBootData?.settings?.featureToggles?.dataplaneFrontendFallback;
-
 export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTransformerOptions> = {
   id: DataTransformerID.groupingToMatrix,
   name: 'Grouping to Matrix',
@@ -63,9 +58,10 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
 
     return `Grouping to matrix requiers at least 3 fields to work. Currently there are ${numFields} fields.`;
   },
-  operator: (options) => (source) =>
+  operator: (options, ctx) => (source) =>
     source.pipe(
       map((data) => {
+        const supportDataplaneFallback = ctx.featureToggles?.dataplaneFrontendFallback ?? false;
         const columnFieldMatch = options.columnField || DEFAULT_COLUMN_FIELD;
         const rowFieldMatch = options.rowField || DEFAULT_ROW_FIELD;
         const valueFieldMatch = options.valueField || DEFAULT_VALUE_FIELD;
@@ -77,9 +73,9 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
         }
 
         const frame = data[0];
-        const keyColumnField = findKeyField(frame, columnFieldMatch);
-        const keyRowField = findKeyField(frame, rowFieldMatch);
-        const valueField = findKeyField(frame, valueFieldMatch);
+        const keyColumnField = findKeyField(frame, columnFieldMatch, supportDataplaneFallback);
+        const keyRowField = findKeyField(frame, rowFieldMatch, supportDataplaneFallback);
+        const valueField = findKeyField(frame, valueFieldMatch, supportDataplaneFallback);
         const rowColumnField = `${rowFieldMatch}\\${columnFieldMatch}`;
 
         if (!keyColumnField || !keyRowField || !valueField) {
@@ -155,7 +151,7 @@ function uniqueValues<T>(values: T[]): T[] {
   return Array.from(unique);
 }
 
-function findKeyField(frame: DataFrame, matchTitle: string): Field | null {
+function findKeyField(frame: DataFrame, matchTitle: string, supportDataplaneFallback: boolean): Field | null {
   for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
     const field = frame.fields[fieldIndex];
 

@@ -29,7 +29,7 @@ import {
   ApplyFieldOverrideOptions,
   StreamingDataFrame,
 } from '@grafana/data';
-import { toDataQueryError } from '@grafana/runtime';
+import { config, toDataQueryError } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -44,7 +44,7 @@ import { runRequest } from './runRequest';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData,
+  TOptions extends DataSourceJsonData = DataSourceJsonData
 > {
   datasource: DataSourceRef | DataSourceApi<TQuery, TOptions> | null;
   queries: TQuery[];
@@ -219,6 +219,7 @@ export class PanelQueryRunner {
 
     const ctx: DataTransformContext = {
       interpolate: (v: string) => this.templateSrv.replace(v, data?.request?.scopedVars),
+      featureToggles: config.featureToggles,
     };
 
     return transformDataFrame(transformations, data.series, ctx).pipe(
