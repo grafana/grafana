@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/prometheus/common/model"
+	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -34,14 +35,15 @@ type ConditionValidator interface {
 }
 
 type RulerSrv struct {
-	xactManager        provisioning.TransactionManager
-	provenanceStore    provisioning.ProvisioningStore
-	store              RuleStore
-	QuotaService       quota.Service
-	log                log.Logger
-	cfg                *setting.UnifiedAlertingSettings
-	conditionValidator ConditionValidator
-	authz              RuleAccessControlService
+	xactManager         provisioning.TransactionManager
+	provenanceStore     provisioning.ProvisioningStore
+	store               RuleStore
+	QuotaService        quota.Service
+	log                 log.Logger
+	cfg                 *setting.UnifiedAlertingSettings
+	conditionValidator  ConditionValidator
+	authz               RuleAccessControlService
+	notificationService NotificationService
 }
 
 var (
@@ -297,6 +299,12 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 			return err
 		}
 
+		var autogenRoutes []ngmodels.NotificationSettings
+		autogenRoutes, err = validateNotifications(c.Req.Context(), groupChanges, srv.notificationService, c.SignedInUser)
+		if err != nil {
+			return err
+		}
+
 		if err := verifyProvisionedRulesNotAffected(c.Req.Context(), srv.provenanceStore, c.SignedInUser.GetOrgID(), groupChanges); err != nil {
 			return err
 		}
@@ -363,7 +371,8 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 				return ngmodels.ErrQuotaReached
 			}
 		}
-		return nil
+
+		return srv.notificationService.EnsureRoutes(tranCtx, autogenRoutes)
 	})
 
 	if err != nil {
@@ -521,6 +530,47 @@ func validateQueries(ctx context.Context, groupChanges *store.GroupDelta, valida
 	return nil
 }
 
+func validateNotifications(ctx context.Context, groupChanges *store.GroupDelta, validator NotificationService, user identity.Requester) ([]ngmodels.NotificationSettings, error) {
+	var changedRoutes []ngmodels.NotificationSettings
+	for _, rule := range groupChanges.New {
+		if rule.NotificationSettings == nil {
+			continue
+		}
+		if slices.ContainsFunc(changedRoutes, func(r ngmodels.NotificationSettings) bool {
+			return rule.NotificationSettings.Equals(&r)
+		}) {
+			continue
+		}
+		err := validator.Validate(ctx, *rule.NotificationSettings, user)
+		if err != nil {
+			return nil, fmt.Errorf("%w '%s': %s", ngmodels.ErrAlertRuleFailedValidation, rule.Title, err.Error())
+		}
+		changedRoutes = append(changedRoutes, *rule.NotificationSettings)
+	}
+
+	for _, delta := range groupChanges.Update {
+		d := delta.Diff.GetDiffsForField("NotificationSettings")
+		if len(d) == 0 {
+			continue
+		}
+		s := delta.New.NotificationSettings
+		if s == nil {
+			continue
+		}
+		if slices.ContainsFunc(changedRoutes, func(r ngmodels.NotificationSettings) bool {
+			return s.Equals(&r)
+		}) {
+			continue
+		}
+		err := validator.Validate(ctx, *s, user)
+		if err != nil {
+			return nil, fmt.Errorf("%w '%s' (UID: %s): %s", ngmodels.ErrAlertRuleFailedValidation, delta.New.Title, delta.New.UID, err.Error())
+		}
+		changedRoutes = append(changedRoutes, *s)
+	}
+	return changedRoutes, nil
+}
+
 // getAuthorizedRuleByUid fetches all rules in group to which the specified rule belongs, and checks whether the user is authorized to access the group.
 // A user is authorized to access a group of rules only when it has permission to query all data sources used by all rules in this group.
 // Returns rule identified by provided UID or ErrAuthorization if user is not authorized to access the rule.
@@ -590,4 +640,9 @@ func (srv RulerSrv) searchAuthorizedAlertRules(ctx context.Context, c *contextmo
 		}
 	}
 	return byGroupKey, totalGroups, nil
+}
+
+type NotificationService interface {
+	Validate(ctx context.Context, route ngmodels.NotificationSettings, user identity.Requester) error
+	EnsureRoutes(ctx context.Context, cp []ngmodels.NotificationSettings) error
 }
