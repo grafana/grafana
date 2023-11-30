@@ -773,6 +773,10 @@
       "title": "Explore"
     },
     "frontend": {
+      "subtitle": "Gain real user monitoring insights",
+      "title": "Frontend"
+    },
+    "frontend-app": {
       "title": "Frontend"
     },
     "global-orgs": {
@@ -800,6 +804,10 @@
       "title": "Incidents"
     },
     "infrastructure": {
+      "subtitle": "Understand your infrastructure's health",
+      "title": "Infrastructure"
+    },
+    "integrations": {
       "title": "Integrations"
     },
     "kubernetes": {
