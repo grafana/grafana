@@ -598,4 +598,8 @@ const (
 	// FlagDisplayAnonymousStats
 	// Enables anonymous stats to be shown in the UI for Grafana
 	FlagDisplayAnonymousStats = "displayAnonymousStats"
+
+	// FlagWizarDSToggle
+	// Enables an AI assisted wizard for the Prometheus data source
+	FlagWizarDSToggle = "wizarDSToggle"
 )

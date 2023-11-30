@@ -1088,6 +1088,13 @@ var (
 			FrontendOnly: true,
 			Owner:        identityAccessTeam,
 		},
+		{
+			Name:         "wizarDSToggle",
+			Description:  "Enables an AI assisted wizard for the Prometheus data source",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
 	}
 )
 
