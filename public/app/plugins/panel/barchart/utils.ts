@@ -491,27 +491,16 @@ export function prepareBarChartDisplayValues(
     }
   }
 
-  let legendFields: Field[] = fields;
+  // If stacking is percent, we need to correct the fields unit and display
   if (options.stacking === StackingMode.Percent) {
-    legendFields = fields.map((field) => {
+    fields.map((field) => {
       const alignedFrameField = frame.fields.find(
-        (f) => getFieldDisplayName(f, frame) === getFieldDisplayName(field, frame)
-      )!;
+        (f) => getFieldDisplayName(f, frame) === getFieldDisplayName(f, frame)
+      );
 
-      const copy = {
-        ...field,
-        config: {
-          ...alignedFrameField.config,
-        },
-        values: field.values,
-      };
-
-      copy.display = getDisplayProcessor({ field: copy, theme });
-
-      return copy;
+      field.config.unit = alignedFrameField?.config?.unit ?? undefined;
+      field.display = getDisplayProcessor({ field: field, theme });
     });
-
-    legendFields.unshift(firstField);
   }
 
   // String field is first
@@ -526,10 +515,6 @@ export function prepareBarChartDisplayValues(
         fields: fields, // ideally: fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.viz)),
       },
     ],
-    legend: {
-      fields: legendFields,
-      length: firstField.values.length,
-    },
   };
 }
 
