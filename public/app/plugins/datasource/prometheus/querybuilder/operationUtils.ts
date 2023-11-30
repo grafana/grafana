@@ -152,9 +152,6 @@ export function getRangeVectorParamDef(withRateInterval = false): QueryBuilderOp
   return param;
 }
 
-/**
- * This function is shared between Prometheus and Loki variants
- */
 export function createAggregationOperation(
   name: string,
   overrides: Partial<QueryBuilderOperationDef> = {}

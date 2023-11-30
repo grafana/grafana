@@ -381,9 +381,6 @@ export function defaultAddOperationHandler<T extends QueryWithOperations>(def: Q
   };
 }
 
-/**
- * This function is shared between Prometheus and Loki variants
- */
 export function createAggregationOperation(
   name: string,
   overrides: Partial<QueryBuilderOperationDef> = {}
