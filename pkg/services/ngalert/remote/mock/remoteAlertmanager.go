@@ -105,6 +105,91 @@ func (_c *RemoteAlertmanagerMock_CleanUp_Call) RunAndReturn(run func()) *RemoteA
 	return _c
 }
 
+// CompareAndSendConfiguration provides a mock function with given fields: _a0, _a1
+func (_m *RemoteAlertmanagerMock) CompareAndSendConfiguration(_a0 context.Context, _a1 *models.AlertConfiguration) error {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *models.AlertConfiguration) error); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// RemoteAlertmanagerMock_CompareAndSendConfiguration_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CompareAndSendConfiguration'
+type RemoteAlertmanagerMock_CompareAndSendConfiguration_Call struct {
+	*mock.Call
+}
+
+// CompareAndSendConfiguration is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 *models.AlertConfiguration
+func (_e *RemoteAlertmanagerMock_Expecter) CompareAndSendConfiguration(_a0 interface{}, _a1 interface{}) *RemoteAlertmanagerMock_CompareAndSendConfiguration_Call {
+	return &RemoteAlertmanagerMock_CompareAndSendConfiguration_Call{Call: _e.mock.On("CompareAndSendConfiguration", _a0, _a1)}
+}
+
+func (_c *RemoteAlertmanagerMock_CompareAndSendConfiguration_Call) Run(run func(_a0 context.Context, _a1 *models.AlertConfiguration)) *RemoteAlertmanagerMock_CompareAndSendConfiguration_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*models.AlertConfiguration))
+	})
+	return _c
+}
+
+func (_c *RemoteAlertmanagerMock_CompareAndSendConfiguration_Call) Return(_a0 error) *RemoteAlertmanagerMock_CompareAndSendConfiguration_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *RemoteAlertmanagerMock_CompareAndSendConfiguration_Call) RunAndReturn(run func(context.Context, *models.AlertConfiguration) error) *RemoteAlertmanagerMock_CompareAndSendConfiguration_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CompareAndSendState provides a mock function with given fields: _a0
+func (_m *RemoteAlertmanagerMock) CompareAndSendState(_a0 context.Context) error {
+	ret := _m.Called(_a0)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(_a0)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// RemoteAlertmanagerMock_CompareAndSendState_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CompareAndSendState'
+type RemoteAlertmanagerMock_CompareAndSendState_Call struct {
+	*mock.Call
+}
+
+// CompareAndSendState is a helper method to define mock.On call
+//   - _a0 context.Context
+func (_e *RemoteAlertmanagerMock_Expecter) CompareAndSendState(_a0 interface{}) *RemoteAlertmanagerMock_CompareAndSendState_Call {
+	return &RemoteAlertmanagerMock_CompareAndSendState_Call{Call: _e.mock.On("CompareAndSendState", _a0)}
+}
+
+func (_c *RemoteAlertmanagerMock_CompareAndSendState_Call) Run(run func(_a0 context.Context)) *RemoteAlertmanagerMock_CompareAndSendState_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *RemoteAlertmanagerMock_CompareAndSendState_Call) Return(_a0 error) *RemoteAlertmanagerMock_CompareAndSendState_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *RemoteAlertmanagerMock_CompareAndSendState_Call) RunAndReturn(run func(context.Context) error) *RemoteAlertmanagerMock_CompareAndSendState_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CreateSilence provides a mock function with given fields: _a0, _a1
 func (_m *RemoteAlertmanagerMock) CreateSilence(_a0 context.Context, _a1 *v2models.PostableSilence) (string, error) {
 	ret := _m.Called(_a0, _a1)
@@ -687,49 +772,6 @@ func (_c *RemoteAlertmanagerMock_SaveAndApplyDefaultConfig_Call) Return(_a0 erro
 }
 
 func (_c *RemoteAlertmanagerMock_SaveAndApplyDefaultConfig_Call) RunAndReturn(run func(context.Context) error) *RemoteAlertmanagerMock_SaveAndApplyDefaultConfig_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// SendStateAndConfig provides a mock function with given fields: _a0, _a1
-func (_m *RemoteAlertmanagerMock) SendStateAndConfig(_a0 context.Context, _a1 *models.AlertConfiguration) error {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.AlertConfiguration) error); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// RemoteAlertmanagerMock_SendStateAndConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SendStateAndConfig'
-type RemoteAlertmanagerMock_SendStateAndConfig_Call struct {
-	*mock.Call
-}
-
-// SendStateAndConfig is a helper method to define mock.On call
-//   - _a0 context.Context
-//   - _a1 *models.AlertConfiguration
-func (_e *RemoteAlertmanagerMock_Expecter) SendStateAndConfig(_a0 interface{}, _a1 interface{}) *RemoteAlertmanagerMock_SendStateAndConfig_Call {
-	return &RemoteAlertmanagerMock_SendStateAndConfig_Call{Call: _e.mock.On("SendStateAndConfig", _a0, _a1)}
-}
-
-func (_c *RemoteAlertmanagerMock_SendStateAndConfig_Call) Run(run func(_a0 context.Context, _a1 *models.AlertConfiguration)) *RemoteAlertmanagerMock_SendStateAndConfig_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*models.AlertConfiguration))
-	})
-	return _c
-}
-
-func (_c *RemoteAlertmanagerMock_SendStateAndConfig_Call) Return(_a0 error) *RemoteAlertmanagerMock_SendStateAndConfig_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *RemoteAlertmanagerMock_SendStateAndConfig_Call) RunAndReturn(run func(context.Context, *models.AlertConfiguration) error) *RemoteAlertmanagerMock_SendStateAndConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }

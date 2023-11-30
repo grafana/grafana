@@ -131,28 +131,19 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 	}
 	am.log.Debug("Completed readiness check for remote Alertmanager", "url", am.url)
 
-	// Send configuration if necessary.
+	// Send configuration and base64-encoded state if necessary.
 	am.log.Debug("Start configuration upload to remote Alertmanager", "url", am.url)
-	if am.shouldSendConfig(ctx, config) {
-		err := am.mimirClient.CreateGrafanaAlertmanagerConfig(ctx, config.AlertmanagerConfiguration, config.ConfigurationHash, config.ID, config.CreatedAt, config.Default)
-		if err != nil {
-			am.log.Error("Unable to upload the configuration to the remote Alertmanager", "err", err)
-		}
+	if err := am.CompareAndSendConfiguration(ctx, config); err != nil {
+		am.log.Error("Unable to upload the configuration to the remote Alertmanager", "err", err)
 	}
 	am.log.Debug("Completed configuration upload to remote Alertmanager", "url", am.url)
 
-	// Send base64-encoded state if necessary.
 	am.log.Debug("Start state upload to remote Alertmanager", "url", am.url)
-	state, err := am.state.GetFullState(ctx, notifier.SilencesFilename, notifier.NotificationLogFilename)
-	if err != nil {
-		am.log.Error("error getting the Alertmanager's full state", "err", err)
-	} else if am.shouldSendState(ctx, state) {
-		if err := am.mimirClient.CreateGrafanaAlertmanagerState(ctx, state); err != nil {
-			am.log.Error("Unable to upload the state to the remote Alertmanager", "err", err)
-		}
+	if err := am.CompareAndSendState(ctx); err != nil {
+		am.log.Error("Unable to upload the state to the remote Alertmanager", "err", err)
 	}
-
 	am.log.Debug("Completed state upload to remote Alertmanager", "url", am.url)
+
 	return nil
 }
 
@@ -196,6 +187,31 @@ func (am *Alertmanager) checkReadiness(ctx context.Context) error {
 			return notifier.ErrAlertmanagerNotReady
 		}
 	}
+}
+
+func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
+	if am.shouldSendConfig(ctx, config) {
+		err := am.mimirClient.CreateGrafanaAlertmanagerConfig(ctx, config.AlertmanagerConfiguration, config.ConfigurationHash, config.ID, config.CreatedAt, config.Default)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (am *Alertmanager) CompareAndSendState(ctx context.Context) error {
+	state, err := am.state.GetFullState(ctx, notifier.SilencesFilename, notifier.NotificationLogFilename)
+	if err != nil {
+		return err
+	}
+
+	if am.shouldSendState(ctx, state) {
+		if err := am.mimirClient.CreateGrafanaAlertmanagerState(ctx, state); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
@@ -384,9 +400,4 @@ func (am *Alertmanager) shouldSendState(ctx context.Context, state string) bool 
 	}
 
 	return rs.State != state
-}
-
-func (am *Alertmanager) SendStateAndConfig(ctx context.Context, config *models.AlertConfiguration) error {
-	// TODO: implement.
-	return nil
 }

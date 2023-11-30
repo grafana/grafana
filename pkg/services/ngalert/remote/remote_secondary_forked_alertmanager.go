@@ -14,8 +14,8 @@ import (
 //go:generate mockery --name remoteAlertmanager --structname RemoteAlertmanagerMock --with-expecter --output mock --outpkg alertmanager_mock
 type remoteAlertmanager interface {
 	notifier.Alertmanager
-	// TODO(santiago): implement, change.
-	SendStateAndConfig(context.Context, *models.AlertConfiguration) error
+	CompareAndSendConfiguration(context.Context, *models.AlertConfiguration) error
+	CompareAndSendState(context.Context) error
 }
 
 type RemoteSecondaryForkedAlertmanager struct {
@@ -133,30 +133,29 @@ func (fam *RemoteSecondaryForkedAlertmanager) Ready() bool {
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) syncRoutine(ctx context.Context, interval time.Duration) {
+	fam.log.Debug("Starting sync routine")
 	ticker := time.NewTicker(interval)
 	for {
 		select {
 		case <-ticker.C:
 			fam.mtx.RLock()
 			// TODO(santiago): check...
+			// No va a funcionar porque no va a ser la última config en caso de cambio...
 			config := *fam.currentConfig
 			fam.mtx.RUnlock()
+
 			fam.log.Debug("Syncing configuration and state with the remote Alertmanager")
-			if err := fam.remote.SendStateAndConfig(ctx, &config); err != nil {
-				fam.log.Error("Failed to sync configuration and state with the remote Alertmanager", "err", err)
+			if err := fam.remote.CompareAndSendConfiguration(ctx, &config); err != nil {
+				fam.log.Error("Unable to upload the configuration to the remote Alertmanager", "err", err)
+			}
+			if err := fam.remote.CompareAndSendState(ctx); err != nil {
+				fam.log.Error("Unable to upload the state to the remote Alertmanager", "err", err)
 			}
 			fam.log.Debug("Finished syncing configuration and state with the remote Alertmanager")
+
 		case <-ctx.Done():
-			fam.mtx.RLock()
-			// TODO(santiago): check...
-			config := *fam.currentConfig
-			fam.mtx.RUnlock()
-			fam.log.Debug("Syncing configuration and state with the remote Alertmanager on shutdown")
-			// TODO(santiago): context?
-			if err := fam.remote.SendStateAndConfig(context.TODO(), &config); err != nil {
-				fam.log.Error("Failed to sync configuration and state with the remote Alertmanager on shutdown", "err", err)
-			}
-			fam.log.Debug("Finished syncing configuration and state with the remote Alertmanager on shutdown")
+			// TODO: send state and config on shutdown.
+			fam.log.Debug("Terminating sync routine")
 			return
 		}
 	}
