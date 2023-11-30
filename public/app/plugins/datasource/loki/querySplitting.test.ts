@@ -1,6 +1,5 @@
 import { of } from 'rxjs';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
-import { v4 as uuidv4 } from 'uuid';
 
 import { dateTime, LoadingState } from '@grafana/data';
 
