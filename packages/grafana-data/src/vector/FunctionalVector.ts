@@ -18,7 +18,7 @@ export abstract class FunctionalVector<T = any> implements Vector<T> {
     }
   }
 
-  set(index: number, value: any): void {
+  set(index: number, value: T): void {
     throw 'unsupported operation';
   }
 
