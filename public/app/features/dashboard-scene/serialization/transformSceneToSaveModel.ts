@@ -1,5 +1,6 @@
 import { isEmptyObject, ScopedVars, TimeRange } from '@grafana/data';
 import {
+  behaviors,
   SceneDataLayers,
   SceneGridItem,
   SceneGridItemLike,
@@ -51,7 +52,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   const body = state.body;
   let refresh_intervals = defaultTimePickerConfig.refresh_intervals;
   let panels: Panel[] = [];
-
+  let graphTooltip = defaultDashboard.graphTooltip;
   let variables: VariableModel[] = [];
 
   if (body instanceof SceneGridLayout) {
@@ -104,6 +105,10 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     }
   }
 
+  if (state.$behaviors && state.$behaviors[0] instanceof behaviors.CursorSync) {
+    graphTooltip = state.$behaviors[0].state.sync;
+  }
+
   const dashboard: Dashboard = {
     ...defaultDashboard,
     title: state.title,
@@ -130,7 +135,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
     weekStart: timeRange.weekStart,
     tags: state.tags,
-    graphTooltip: state.graphTooltip,
+    graphTooltip,
   };
 
   return sortedDeepCloneWithoutNulls(dashboard);

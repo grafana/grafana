@@ -56,7 +56,7 @@ export class DashboardModelCompatibilityWrapper {
   }
 
   public get graphTooltip() {
-    return this._scene.state.graphTooltip;
+    return this._getSyncMode();
   }
 
   public get tags() {

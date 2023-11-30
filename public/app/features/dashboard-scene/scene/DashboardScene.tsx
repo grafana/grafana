@@ -29,7 +29,6 @@ import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
 import { DashboardEditView } from '../settings/utils';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
-import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardUrl } from '../utils/urlBuilders';
 import { findVizPanelByKey, forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel } from '../utils/utils';
 
@@ -49,8 +48,6 @@ export interface DashboardSceneState extends SceneObjectState {
   links?: DashboardLink[];
   /** Is editable */
   editable?: boolean;
-  /** Tooltip settings */
-  graphTooltip: number;
   /** A uid when saved */
   uid?: string;
   /** @deprecated */
@@ -108,7 +105,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       title: 'Dashboard',
       meta: {},
       editable: true,
-      graphTooltip: 0,
       body: state.body ?? new SceneFlexLayout({ children: [] }),
       ...state,
     });

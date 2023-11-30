@@ -2,7 +2,7 @@ import React, { ChangeEvent } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
 import {
-  CancelActivationHandler,
+  behaviors,
   SceneComponentProps,
   SceneObjectBase,
   SceneObjectRef,
@@ -73,6 +73,16 @@ export class GeneralSettingsEditView
     return dashboardSceneGraph.getRefreshPicker(this._dashboard);
   }
 
+  public getCursorSync() {
+    const cursorSync = this._dashboard.state.$behaviors?.find((b) => b instanceof behaviors.CursorSync);
+
+    if (cursorSync instanceof behaviors.CursorSync) {
+      return cursorSync;
+    }
+
+    return;
+  }
+
   public onTitleChange = (value: string) => {
     this._dashboard.setState({ title: value });
   };
@@ -141,12 +151,13 @@ export class GeneralSettingsEditView
   };
 
   public onTooltipChange = (value: number) => {
-    this._dashboard.setState({ graphTooltip: value });
+    this.getCursorSync()?.setState({ sync: value });
   };
 
   static Component = ({ model }: SceneComponentProps<GeneralSettingsEditView>) => {
     const { navModel, pageNav } = useDashboardEditPageNav(model.getDashboard(), model.getUrlKey());
-    const { title, description, tags, meta, editable, graphTooltip, overlay } = model.getDashboard().useState();
+    const { title, description, tags, meta, editable, overlay } = model.getDashboard().useState();
+    const { sync: graphTooltip } = model.getCursorSync()?.useState() || {};
     const { timeZone, weekStart } = model.getTimeRange().useState();
     const { intervals } = model.getRefreshPicker()?.useState() || {};
 

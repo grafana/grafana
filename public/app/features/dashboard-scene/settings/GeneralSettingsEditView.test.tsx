@@ -1,4 +1,5 @@
-import { SceneGridLayout, SceneGridItem, SceneRefreshPicker, SceneTimeRange } from '@grafana/scenes';
+import { behaviors, SceneGridLayout, SceneGridItem, SceneRefreshPicker, SceneTimeRange } from '@grafana/scenes';
+import { DashboardCursorSync } from '@grafana/schema';
 
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardLinksControls } from '../scene/DashboardLinksControls';
@@ -34,6 +35,10 @@ describe('GeneralSettingsEditView', () => {
       expect(settings.getRefreshPicker()).toBe(
         (dashboard.state?.controls?.[0] as DashboardControls)?.state?.timeControls?.[0]
       );
+    });
+
+    it('should return the cursor sync', () => {
+      expect(settings.getCursorSync()).toBe(dashboard.state.$behaviors?.[0]);
     });
   });
 
@@ -99,9 +104,9 @@ describe('GeneralSettingsEditView', () => {
     });
 
     it('A change to tooltip settings updates the dashboard state', () => {
-      settings.onTooltipChange(1);
+      settings.onTooltipChange(DashboardCursorSync.Crosshair);
 
-      expect(dashboard.state.graphTooltip).toBe(1);
+      expect(settings.getCursorSync()?.state.sync).toBe(DashboardCursorSync.Crosshair);
     });
   });
 });
@@ -109,6 +114,7 @@ describe('GeneralSettingsEditView', () => {
 async function buildTestScene() {
   const dashboard = new DashboardScene({
     $timeRange: new SceneTimeRange({}),
+    $behaviors: [new behaviors.CursorSync({ sync: DashboardCursorSync.Off })],
     controls: [
       new DashboardControls({
         variableControls: [],
