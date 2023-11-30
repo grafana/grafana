@@ -1651,7 +1651,6 @@ If `false` or unset, existing Grafana Alerting data is not changed or deleted wh
 It should be kept false when not needed, as it may cause unintended data loss if left enabled.
 {{% /admonition %}}
 
-
 <hr>
 
 ## [alerting]
