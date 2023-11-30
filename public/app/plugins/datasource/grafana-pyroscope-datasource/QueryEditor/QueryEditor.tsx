@@ -142,7 +142,7 @@ function useLabels(
     return `{${labels.join(',')}}`;
   };
 
-  const [availableLabels, setAvailableLabels] = useState(() => ({ data: [] as string[] }));
+  const [availableLabels, setAvailableLabels] = useState(() => ({ data: [''] }));
   const [processedLabelSelector, setProcessedLabelSelector] = useState(() => ({
     data: createSelector(query.labelSelector, query.profileTypeId, ''),
   }));
