@@ -773,6 +773,10 @@
       "title": "探索"
     },
     "frontend": {
+      "subtitle": "",
+      "title": ""
+    },
+    "frontend-app": {
       "title": "前端"
     },
     "global-orgs": {
@@ -800,6 +804,10 @@
       "title": "事件"
     },
     "infrastructure": {
+      "subtitle": "",
+      "title": ""
+    },
+    "integrations": {
       "title": "集成"
     },
     "kubernetes": {
