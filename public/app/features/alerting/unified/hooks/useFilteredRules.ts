@@ -140,7 +140,7 @@ const reduceGroups = (filterState: RulesFilter) => {
         }
       }
 
-      if ('ruleName' in matchesFilterFor) {
+      if ('ruleName' in matchesFilterFor && filterState.ruleName) {
         const hasMatch = rule.name?.toLocaleLowerCase().includes(filterState.ruleName.toLocaleLowerCase());
         if (hasMatch) {
           matchesFilterFor.ruleName = true;
