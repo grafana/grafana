@@ -60,7 +60,7 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
       }
     }
 
-    if (config.publicDashboardsEnabled) {
+    if (Boolean(config.featureToggles['publicDashboards']) && config.publicDashboardsEnabled) {
       tabs.push(new SharePublicDashboardTab({ dashboardRef, modalRef: this.getRef() }));
     }
 

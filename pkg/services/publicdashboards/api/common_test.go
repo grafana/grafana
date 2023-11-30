@@ -41,9 +41,11 @@ func setupTestServer(
 	t *testing.T,
 	cfg *setting.Cfg,
 	service publicdashboards.Service,
-	db db.DB,
 	user *user.SignedInUser,
+	ffEnabled bool,
 ) *web.Mux {
+	t.Helper()
+
 	// build router to register routes
 	rr := routing.NewRouteRegister()
 
@@ -55,8 +57,13 @@ func setupTestServer(
 	// set initial context
 	m.Use(contextProvider(&testContext{user}))
 
+	features := featuremgmt.WithFeatures()
+	if ffEnabled {
+		features = featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards)
+	}
+
 	// build api, this will mount the routes at the same time if the feature is enabled
-	ProvideApi(service, rr, ac, featuremgmt.WithFeatures(), &Middleware{}, cfg)
+	ProvideApi(service, rr, ac, features, &Middleware{}, cfg)
 
 	// connect routes to mux
 	rr.Register(m.Router)

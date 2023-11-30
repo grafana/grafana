@@ -23,6 +23,10 @@ const (
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
 
+	// FlagPublicDashboards
+	// [Deprecated] Public dashboards are now enabled by default; if you want to disable it, you should use the configuration setting. This feature toggle will be removed in v11.0.0.
+	FlagPublicDashboards = "publicDashboards"
+
 	// FlagPublicDashboardsEmailSharing
 	// Enables public dashboard sharing to be restricted to only allowed emails
 	FlagPublicDashboardsEmailSharing = "publicDashboardsEmailSharing"

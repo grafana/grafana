@@ -50,9 +50,13 @@ func ProvideApi(
 		routeRegister:          rr,
 	}
 
-	// attach api if PublicDashboards feature flag is enabled
-	if cfg.PublicDashboardsEnabled {
+	// register endpoints if the feature is enabled
+	if features.IsEnabledGlobally(featuremgmt.FlagPublicDashboards) && cfg.PublicDashboardsEnabled {
 		api.RegisterAPIEndpoints()
+	}
+
+	if !features.IsEnabledGlobally(featuremgmt.FlagPublicDashboards) {
+		api.log.Warn("[Deprecated] The publicDashboards feature toggle will be removed in Grafana v11. If you want to disable the public dashboards feature, you should use the public_dashboards.enabled setting.")
 	}
 
 	return api

@@ -39,6 +39,7 @@ const renderPage = () => {
 
 const enableEmailSharing = () => {
   config.featureToggles.publicDashboardsEmailSharing = true;
+  config.featureToggles.publicDashboards = true;
   config.licenseInfo = { ...config.licenseInfo, enabledFeatures: { publicDashboardsEmailSharing: true } };
 };
 

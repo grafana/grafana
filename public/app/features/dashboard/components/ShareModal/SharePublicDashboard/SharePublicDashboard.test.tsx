@@ -187,6 +187,8 @@ describe('SharePublic', () => {
 
 describe('SharePublic - New config setup', () => {
   beforeEach(() => {
+    config.featureToggles.publicDashboards = true;
+
     server.use(getNonExistentPublicDashboardResponse());
   });
 
