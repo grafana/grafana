@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/registry"
+	deployments "github.com/grafana/grafana/pkg/registry/apis/app-deployments"
 	"github.com/grafana/grafana/pkg/registry/apis/example"
 	"github.com/grafana/grafana/pkg/registry/apis/playlist"
 )
@@ -19,6 +20,7 @@ type Service struct{}
 func ProvideRegistryServiceSink(
 	_ *playlist.PlaylistAPIBuilder,
 	_ *example.TestingAPIBuilder,
+	_ *deployments.DeploymentAPIBuilder,
 ) *Service {
 	return &Service{}
 }
