@@ -226,6 +226,7 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
       notificationsPermissions.provisioning.readSecrets
     ),
     // -- silences --
+    // for now, all supported Alertmanager flavors have API endpoints for managing silences
     [AlertmanagerAction.CreateSilence]: toAbility(AlwaysSupported, instancePermissions.create),
     [AlertmanagerAction.ViewSilence]: toAbility(AlwaysSupported, instancePermissions.read),
     [AlertmanagerAction.UpdateSilence]: toAbility(AlwaysSupported, instancePermissions.update),
