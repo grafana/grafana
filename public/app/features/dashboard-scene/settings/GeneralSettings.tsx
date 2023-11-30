@@ -1,7 +1,7 @@
 import React, { ChangeEvent } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneTimePicker } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneTimePicker, sceneGraph } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
 import {
   Box,
@@ -58,16 +58,16 @@ export class GeneralSettingsEditView
     return this._dashboard;
   }
 
-  public getTimeZone() {
-    return this._dashboard.state.$timeRange?.getTimeZone();
+  public getTimeRange() {
+    return sceneGraph.getTimeRange(this);
   }
 
   public getWeekStart() {
     return this._dashboard.state.$timeRange?.state.weekStart;
   }
 
-  public getRefreshIntervals() {
-    return dashboardSceneGraph.getRefreshPicker(this._dashboard)?.state.intervals;
+  public getRefreshPicker() {
+    return dashboardSceneGraph.getRefreshPicker(this._dashboard);
   }
 
   public onTitleChange = (value: string) => {
@@ -144,6 +144,9 @@ export class GeneralSettingsEditView
   static Component = ({ model }: SceneComponentProps<GeneralSettingsEditView>) => {
     const { navModel, pageNav } = useDashboardEditPageNav(model.getDashboard(), model.getUrlKey());
     const { title, description, tags, meta, editable, graphTooltip, overlay } = model.getDashboard().useState();
+    const { timeZone, weekStart } = model.getTimeRange().useState();
+    const { intervals } = model.getRefreshPicker()?.useState() || {};
+
     const {
       onTitleChange,
       onDescriptionChange,
@@ -237,7 +240,7 @@ export class GeneralSettingsEditView
             onNowDelayChange={onNowDelayChange}
             onHideTimePickerChange={onHideTimePickerChange}
             onLiveNowChange={onLiveNowChange}
-            refreshIntervals={model.getRefreshIntervals()}
+            refreshIntervals={intervals}
             // TODO: Control visibility of time picker
             // timePickerHidden={timepicker?.state?.hidden}
             // TODO: Implement this in dashboard scene
@@ -245,8 +248,8 @@ export class GeneralSettingsEditView
             // TODO: Implement this in dashboard scene
             // liveNow={liveNow}
             liveNow={false}
-            timezone={model.getTimeZone() || ''}
-            weekStart={model.getWeekStart() || ''}
+            timezone={timeZone || ''}
+            weekStart={weekStart || ''}
           />
 
           {/* @todo: Update "Graph tooltip" description to remove prompt about reloading when resolving #46581 */}
