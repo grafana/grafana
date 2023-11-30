@@ -164,7 +164,7 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
             }
           });
         }
-      })
+      });
     });
 
     for (let i = 0; i < framesForRef.length; i++) {
@@ -222,7 +222,7 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
         // Because we iterate each frame
         labelNames.forEach((labelName) => {
           refId2labelz[refId][labelName].values.push(field.labels?.[labelName] ?? '');
-        })
+        });
       }
     }
   }
