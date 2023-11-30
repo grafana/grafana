@@ -208,53 +208,56 @@ func readValues(iter *jsonitere.Iterator, hasTimeColumn bool) (valueFields data.
 					return nil, err
 				}
 				valueFields[0].Append(time.UnixMilli(int64(t)).UTC())
-			} else {
-				// Read column values
-				next, err := iter.WhatIsNext()
+
+				colIdx++
+				continue
+			}
+
+			// Read column values
+			next, err := iter.WhatIsNext()
+			if err != nil {
+				return nil, err
+			}
+
+			switch next {
+			case jsoniter.StringValue:
+				s, err := iter.ReadString()
 				if err != nil {
 					return nil, err
 				}
-
-				switch next {
-				case jsoniter.StringValue:
-					s, err := iter.ReadString()
-					if err != nil {
-						return nil, err
-					}
-					valueFields = maybeCreateValueField(valueFields, data.FieldTypeNullableString, colIdx)
-					maybeFixValueFieldType(valueFields, data.FieldTypeNullableString, colIdx)
-					valueFields[colIdx].Append(&s)
-				case jsoniter.NumberValue:
-					n, err := iter.ReadFloat64()
-					if err != nil {
-						return nil, err
-					}
-					valueFields = maybeCreateValueField(valueFields, data.FieldTypeNullableFloat64, colIdx)
-					valueFields[colIdx].Append(&n)
-				case jsoniter.BoolValue:
-					b, err := iter.ReadAny()
-					if err != nil {
-						return nil, err
-					}
-					valueFields = maybeCreateValueField(valueFields, data.FieldTypeNullableBool, colIdx)
-					maybeFixValueFieldType(valueFields, data.FieldTypeNullableBool, colIdx)
-					bv := b.ToBool()
-					valueFields[colIdx].Append(&bv)
-				case jsoniter.NilValue:
-					_, _ = iter.Read()
-					if len(valueFields) <= colIdx {
-						// no value field created before
-						// we don't know the type of the values for this field, yet
-						// but we assume it is a NullableFloat64
-						// if that is something else it will be replaced later
-						numberField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, 0)
-						numberField.Name = "Value"
-						valueFields = append(valueFields, numberField)
-					}
-					valueFields[colIdx].Append(nil)
-				default:
-					return nil, fmt.Errorf("unknown value type")
+				valueFields = maybeCreateValueField(valueFields, data.FieldTypeNullableString, colIdx)
+				maybeFixValueFieldType(valueFields, data.FieldTypeNullableString, colIdx)
+				valueFields[colIdx].Append(&s)
+			case jsoniter.NumberValue:
+				n, err := iter.ReadFloat64()
+				if err != nil {
+					return nil, err
 				}
+				valueFields = maybeCreateValueField(valueFields, data.FieldTypeNullableFloat64, colIdx)
+				valueFields[colIdx].Append(&n)
+			case jsoniter.BoolValue:
+				b, err := iter.ReadAny()
+				if err != nil {
+					return nil, err
+				}
+				valueFields = maybeCreateValueField(valueFields, data.FieldTypeNullableBool, colIdx)
+				maybeFixValueFieldType(valueFields, data.FieldTypeNullableBool, colIdx)
+				bv := b.ToBool()
+				valueFields[colIdx].Append(&bv)
+			case jsoniter.NilValue:
+				_, _ = iter.Read()
+				if len(valueFields) <= colIdx {
+					// no value field created before
+					// we don't know the type of the values for this field, yet
+					// but we assume it is a NullableFloat64
+					// if that is something else it will be replaced later
+					numberField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, 0)
+					numberField.Name = "Value"
+					valueFields = append(valueFields, numberField)
+				}
+				valueFields[colIdx].Append(nil)
+			default:
+				return nil, fmt.Errorf("unknown value type")
 			}
 
 			colIdx++
