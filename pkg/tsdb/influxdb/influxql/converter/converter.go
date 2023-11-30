@@ -249,11 +249,11 @@ func readValues(iter *jsonitere.Iterator, hasTimeColumn bool) (valueFields data.
 				if len(valueFields) <= colIdx {
 					// no value field created before
 					// we don't know the type of the values for this field, yet
-					// but we assume it is a NullableFloat64
+					// so we create a FieldTypeNullableJSON to hold nil values
 					// if that is something else it will be replaced later
-					numberField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, 0)
-					numberField.Name = "Value"
-					valueFields = append(valueFields, numberField)
+					unknownField := data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0)
+					unknownField.Name = "Value"
+					valueFields = append(valueFields, unknownField)
 				}
 				valueFields[colIdx].Append(nil)
 			default:
@@ -282,7 +282,7 @@ func maybeCreateValueField(valueFields data.Fields, expectedType data.FieldType,
 // For nil values we might have added NullableFloat64 value field
 // if they are not matching fix it
 func maybeFixValueFieldType(valueFields data.Fields, expectedType data.FieldType, colIdx int) {
-	if valueFields[colIdx].Type() == expectedType {
+	if valueFields[colIdx].Type() == expectedType || valueFields[colIdx].Type() != data.FieldTypeNullableJSON {
 		return
 	}
 	stringField := data.NewFieldFromFieldType(expectedType, 0)
