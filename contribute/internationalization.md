@@ -198,7 +198,7 @@ To provide feedback on translations, sign into Crowdin and follow these steps:
 1. Open the Grafana OSS project in Crowdin.
 2. In the left-hand menu, click on the 'Dashboard' menu item.
 3. A list of available languages appears under the 'Translations' section. Click on the one you want to comment on.
-4. There is a table with the files estructure on it:
+4. There is a table with the file structure in it:
    <br>
    `grafana/main > public > locales > 'language denomination' > grafana.json`
    <br>
