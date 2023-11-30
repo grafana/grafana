@@ -133,6 +133,8 @@ func (s CoreStatus) LogLevel() LogLevel {
 		return LevelInfo
 	case StatusTimeout:
 		return LevelInfo
+	case StatusUnprocessableEntity:
+		return LevelInfo
 	case StatusConflict:
 		return LevelInfo
 	case StatusTooManyRequests:
