@@ -30,7 +30,7 @@ describe('TransformationsEditor', () => {
     it('renders transformation empty message with transformationsRedesign feature toggled on', () => {
       config.featureToggles.transformationsRedesign = true;
       setup();
-      const message = screen.getAllByTestId('no transformations message');
+      const message = screen.getAllByTestId('data-testid no transformations message');
       expect(message.length).toEqual(1);
       config.featureToggles.transformationsRedesign = false;
     });
