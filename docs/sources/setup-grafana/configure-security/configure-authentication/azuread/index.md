@@ -212,7 +212,9 @@ to a comma- or space-separated list of group object IDs. You can find object IDs
    allowed_groups = 8bab1c86-8fba-33e5-2089-1d1c80ec267d
    ```
 
-1. Verify that [group attributes](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims#configure-groups-optional-claims) is enabled in your Azure AD Application Registration manifest file by navigating to **Azure Portal** > **Azure Active Directory** > **Application Registrations** > **Select Application** -> **Manifest**, and set the following:
+1. To enable [group attributes](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims#configure-groups-optional-claims) in your Azure AD Application Registration manifest file, navigate to **Azure Portal** > **Azure Active Directory** > **Application Registrations** > **Select Application** > **Manifest**.
+
+1. Set the following:
 
    ```
    "groupMembershipClaims": "ApplicationGroup, SecurityGroup"
