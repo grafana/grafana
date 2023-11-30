@@ -428,23 +428,35 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, provenanceRecords map[stri
 	if prov, exists := provenanceRecords[r.ResourceID()]; exists {
 		provenance = prov
 	}
+	var notificationSetting *apimodels.GettableNotificationSettings
+	if r.NotificationSettings != nil {
+		notificationSetting = &apimodels.GettableNotificationSettings{
+			Receiver:       r.NotificationSettings.Receiver,
+			GroupBy:        r.NotificationSettings.GroupBy,
+			GroupWait:      r.NotificationSettings.GroupWait,
+			GroupInterval:  r.NotificationSettings.GroupInterval,
+			RepeatInterval: r.NotificationSettings.RepeatInterval,
+		}
+	}
+
 	gettableExtendedRuleNode := apimodels.GettableExtendedRuleNode{
 		GrafanaManagedAlert: &apimodels.GettableGrafanaRule{
-			ID:              r.ID,
-			OrgID:           r.OrgID,
-			Title:           r.Title,
-			Condition:       r.Condition,
-			Data:            ApiAlertQueriesFromAlertQueries(r.Data),
-			Updated:         r.Updated,
-			IntervalSeconds: r.IntervalSeconds,
-			Version:         r.Version,
-			UID:             r.UID,
-			NamespaceUID:    r.NamespaceUID,
-			RuleGroup:       r.RuleGroup,
-			NoDataState:     apimodels.NoDataState(r.NoDataState),
-			ExecErrState:    apimodels.ExecutionErrorState(r.ExecErrState),
-			Provenance:      apimodels.Provenance(provenance),
-			IsPaused:        r.IsPaused,
+			ID:                   r.ID,
+			OrgID:                r.OrgID,
+			Title:                r.Title,
+			Condition:            r.Condition,
+			Data:                 ApiAlertQueriesFromAlertQueries(r.Data),
+			Updated:              r.Updated,
+			IntervalSeconds:      r.IntervalSeconds,
+			Version:              r.Version,
+			UID:                  r.UID,
+			NamespaceUID:         r.NamespaceUID,
+			RuleGroup:            r.RuleGroup,
+			NoDataState:          apimodels.NoDataState(r.NoDataState),
+			ExecErrState:         apimodels.ExecutionErrorState(r.ExecErrState),
+			Provenance:           apimodels.Provenance(provenance),
+			IsPaused:             r.IsPaused,
+			NotificationSettings: notificationSetting,
 		},
 	}
 	forDuration := model.Duration(r.For)

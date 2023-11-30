@@ -97,6 +97,13 @@ func validateRuleNode(
 		ExecErrState:    errorState,
 	}
 
+	if ruleNode.GrafanaManagedAlert.NotificationSettings != nil {
+		newAlertRule.NotificationSettings, err = validateNotificationSettings(ruleNode.GrafanaManagedAlert.NotificationSettings)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	newAlertRule.For, err = validateForInterval(ruleNode)
 	if err != nil {
 		return nil, err
@@ -234,4 +241,19 @@ func validateRuleGroup(
 		result = append(result, &ruleWithOptionals)
 	}
 	return result, nil
+}
+
+func validateNotificationSettings(n *apimodels.PostableNotificationSettings) (*ngmodels.NotificationSettings, error) {
+	if n == nil || len(n.Receiver) == 0 {
+		return nil, errors.New("receiver (contact point) name must be specified")
+	}
+	
+	// TODO add some validation of remaining settings.
+	return &ngmodels.NotificationSettings{
+		Receiver:       n.Receiver,
+		GroupBy:        n.GroupBy,
+		GroupWait:      n.GroupWait,
+		GroupInterval:  n.GroupInterval,
+		RepeatInterval: n.RepeatInterval,
+	}, nil
 }

@@ -406,34 +406,56 @@ const (
 	ErrorErrState    ExecutionErrorState = "Error"
 )
 
+// swagger: model
+type PostableNotificationSettings struct {
+	Receiver string `yaml:"receiver,omitempty" json:"receiver,omitempty"`
+
+	GroupBy        []string        `yaml:"group_by,omitempty" json:"group_by,omitempty"`
+	GroupWait      *model.Duration `yaml:"group_wait,omitempty" json:"group_wait,omitempty"`
+	GroupInterval  *model.Duration `yaml:"group_interval,omitempty" json:"group_interval,omitempty"`
+	RepeatInterval *model.Duration `yaml:"repeat_interval,omitempty" json:"repeat_interval,omitempty"`
+}
+
 // swagger:model
 type PostableGrafanaRule struct {
-	Title        string              `json:"title" yaml:"title"`
-	Condition    string              `json:"condition" yaml:"condition"`
-	Data         []AlertQuery        `json:"data" yaml:"data"`
-	UID          string              `json:"uid" yaml:"uid"`
-	NoDataState  NoDataState         `json:"no_data_state" yaml:"no_data_state"`
-	ExecErrState ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`
-	IsPaused     *bool               `json:"is_paused" yaml:"is_paused"`
+	Title                string                        `json:"title" yaml:"title"`
+	Condition            string                        `json:"condition" yaml:"condition"`
+	Data                 []AlertQuery                  `json:"data" yaml:"data"`
+	UID                  string                        `json:"uid" yaml:"uid"`
+	NoDataState          NoDataState                   `json:"no_data_state" yaml:"no_data_state"`
+	ExecErrState         ExecutionErrorState           `json:"exec_err_state" yaml:"exec_err_state"`
+	IsPaused             *bool                         `json:"is_paused" yaml:"is_paused"`
+	NotificationSettings *PostableNotificationSettings `json:"notification_settings" yaml:"notification_settings"`
+}
+
+// swagger: model
+type GettableNotificationSettings struct {
+	Receiver string `yaml:"receiver,omitempty" json:"receiver,omitempty"`
+
+	GroupBy        []string        `yaml:"group_by,omitempty" json:"group_by,omitempty"`
+	GroupWait      *model.Duration `yaml:"group_wait,omitempty" json:"group_wait,omitempty"`
+	GroupInterval  *model.Duration `yaml:"group_interval,omitempty" json:"group_interval,omitempty"`
+	RepeatInterval *model.Duration `yaml:"repeat_interval,omitempty" json:"repeat_interval,omitempty"`
 }
 
 // swagger:model
 type GettableGrafanaRule struct {
-	ID              int64               `json:"id" yaml:"id"`
-	OrgID           int64               `json:"orgId" yaml:"orgId"`
-	Title           string              `json:"title" yaml:"title"`
-	Condition       string              `json:"condition" yaml:"condition"`
-	Data            []AlertQuery        `json:"data" yaml:"data"`
-	Updated         time.Time           `json:"updated" yaml:"updated"`
-	IntervalSeconds int64               `json:"intervalSeconds" yaml:"intervalSeconds"`
-	Version         int64               `json:"version" yaml:"version"`
-	UID             string              `json:"uid" yaml:"uid"`
-	NamespaceUID    string              `json:"namespace_uid" yaml:"namespace_uid"`
-	RuleGroup       string              `json:"rule_group" yaml:"rule_group"`
-	NoDataState     NoDataState         `json:"no_data_state" yaml:"no_data_state"`
-	ExecErrState    ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`
-	Provenance      Provenance          `json:"provenance,omitempty" yaml:"provenance,omitempty"`
-	IsPaused        bool                `json:"is_paused" yaml:"is_paused"`
+	ID                   int64                         `json:"id" yaml:"id"`
+	OrgID                int64                         `json:"orgId" yaml:"orgId"`
+	Title                string                        `json:"title" yaml:"title"`
+	Condition            string                        `json:"condition" yaml:"condition"`
+	Data                 []AlertQuery                  `json:"data" yaml:"data"`
+	Updated              time.Time                     `json:"updated" yaml:"updated"`
+	IntervalSeconds      int64                         `json:"intervalSeconds" yaml:"intervalSeconds"`
+	Version              int64                         `json:"version" yaml:"version"`
+	UID                  string                        `json:"uid" yaml:"uid"`
+	NamespaceUID         string                        `json:"namespace_uid" yaml:"namespace_uid"`
+	RuleGroup            string                        `json:"rule_group" yaml:"rule_group"`
+	NoDataState          NoDataState                   `json:"no_data_state" yaml:"no_data_state"`
+	ExecErrState         ExecutionErrorState           `json:"exec_err_state" yaml:"exec_err_state"`
+	Provenance           Provenance                    `json:"provenance,omitempty" yaml:"provenance,omitempty"`
+	IsPaused             bool                          `json:"is_paused" yaml:"is_paused"`
+	NotificationSettings *GettableNotificationSettings `json:"notification_settings" yaml:"notification_settings"`
 }
 
 // AlertQuery represents a single query associated with an alert definition.
