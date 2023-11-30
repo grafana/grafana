@@ -14,6 +14,7 @@ import {
 
 import { DashboardScene } from '../scene/DashboardScene';
 
+import { dashboardSceneGraph } from './dashboardSceneGraph';
 import { findVizPanelByKey, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from './utils';
 
 /**
@@ -57,6 +58,20 @@ export class DashboardModelCompatibilityWrapper {
 
   public get graphTooltip() {
     return this._getSyncMode();
+  }
+
+  public get timepicker() {
+    return {
+      refresh_intervals: dashboardSceneGraph.getRefreshPicker(this._scene)?.state.intervals,
+    };
+  }
+
+  public get timezone() {
+    return this.getTimezone();
+  }
+
+  public get weekStart() {
+    return sceneGraph.getTimeRange(this._scene).state.weekStart;
   }
 
   public get tags() {
