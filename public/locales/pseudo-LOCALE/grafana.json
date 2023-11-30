@@ -81,9 +81,7 @@
     "manage-folder-nav": {
       "alert-rules": "Åľęřŧ řūľęş",
       "dashboards": "Đäşĥþőäřđş",
-      "panels": "Päŉęľş",
-      "permissions": "Pęřmįşşįőŉş",
-      "settings": "Ŝęŧŧįŉģş"
+      "panels": "Päŉęľş"
     },
     "new-folder-form": {
       "cancel-label": "Cäŉčęľ",
@@ -775,6 +773,10 @@
       "title": "Ēχpľőřę"
     },
     "frontend": {
+      "subtitle": "Ğäįŉ řęäľ ūşęř mőŉįŧőřįŉģ įŉşįģĥŧş",
+      "title": "Fřőŉŧęŉđ"
+    },
+    "frontend-app": {
       "title": "Fřőŉŧęŉđ"
     },
     "global-orgs": {
@@ -802,6 +804,10 @@
       "title": "Ĩŉčįđęŉŧş"
     },
     "infrastructure": {
+      "subtitle": "Ůŉđęřşŧäŉđ yőūř įŉƒřäşŧřūčŧūřę'ş ĥęäľŧĥ",
+      "title": "Ĩŉƒřäşŧřūčŧūřę"
+    },
+    "integrations": {
       "title": "Ĩŉŧęģřäŧįőŉş"
     },
     "kubernetes": {
@@ -937,7 +943,8 @@
     },
     "megamenu": {
       "close": "Cľőşę męŉū",
-      "dock": "Đőčĸ męŉū"
+      "dock": "Đőčĸ męŉū",
+      "undock": "Ůŉđőčĸ męŉū"
     },
     "toolbar": {
       "close-menu": "Cľőşę męŉū",
@@ -1085,15 +1092,6 @@
       "new-dashboard": "Ńęŵ đäşĥþőäřđ",
       "new-folder": "Ńęŵ ƒőľđęř"
     },
-    "folder-view": {
-      "go-to-folder": "Ğő ŧő ƒőľđęř",
-      "select-folder": "Ŝęľęčŧ ƒőľđęř"
-    },
-    "result-kind": {
-      "dashboard": "Đäşĥþőäřđ",
-      "folder": "Főľđęř",
-      "panel": "Päŉęľ"
-    },
     "results-table": {
       "datasource-header": "Đäŧä şőūřčę",
       "location-header": "Ŀőčäŧįőŉ",
@@ -1106,12 +1104,6 @@
     "search-input": {
       "include-panels-placeholder": "Ŝęäřčĥ ƒőř đäşĥþőäřđş, ƒőľđęřş, äŉđ päŉęľş",
       "placeholder": "Ŝęäřčĥ ƒőř đäşĥþőäřđş äŉđ ƒőľđęřş"
-    }
-  },
-  "search-view": {
-    "no-results": {
-      "clear": "Cľęäř şęäřčĥ äŉđ ƒįľŧęřş",
-      "text": "Ńő řęşūľŧş ƒőūŉđ ƒőř yőūř qūęřy."
     }
   },
   "share-modal": {
@@ -1249,6 +1241,7 @@
     "calendar": {
       "apply-button": "Åppľy ŧįmę řäŉģę",
       "cancel-button": "Cäŉčęľ",
+      "close": "Cľőşę čäľęŉđäř",
       "select-time": "Ŝęľęčŧ ä ŧįmę řäŉģę"
     },
     "content": {
@@ -1268,6 +1261,7 @@
       "default-error": "Pľęäşę ęŉŧęř ä päşŧ đäŧę őř \"ŉőŵ\"",
       "fiscal-year": "Fįşčäľ yęäř",
       "from-input": "Fřőm",
+      "open-input-calendar": "Øpęŉ čäľęŉđäř",
       "range-error": "\"Fřőm\" čäŉ'ŧ þę äƒŧęř \"Ŧő\"",
       "to-input": "Ŧő"
     },

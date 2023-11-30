@@ -1,10 +1,10 @@
 import 'symbol-observable';
-import 'core-js';
 import 'regenerator-runtime/runtime';
 
 import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import 'file-saver';
 import 'jquery';
+import 'vendor/bootstrap/bootstrap';
 
 import 'app/features/all';
 
@@ -15,7 +15,6 @@ import { createRoot } from 'react-dom/client';
 import {
   locationUtil,
   monacoLanguageRegistry,
-  OrgRole,
   setLocale,
   setTimeZoneResolver,
   setWeekStart,
@@ -280,7 +279,7 @@ function initEchoSrv() {
     }
   });
 
-  if (contextSrv.user.orgRole !== OrgRole.None) {
+  if (contextSrv.user.orgRole !== '') {
     registerEchoBackend(new PerformanceBackend({}));
   }
 

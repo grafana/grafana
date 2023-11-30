@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -174,7 +174,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 					UserID:     userId,
 					OrgID:      testOrgID,
 					TeamID:     team1.ID,
-					Permission: dashboards.PERMISSION_ADMIN,
+					Permission: dashboardaccess.PERMISSION_ADMIN,
 				})
 
 				require.NoError(t, err)
@@ -182,7 +182,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				qAfterUpdate := &team.GetTeamMembersQuery{OrgID: testOrgID, TeamID: team1.ID, SignedInUser: testUser}
 				qAfterUpdateResult, err := teamSvc.GetTeamMembers(context.Background(), qAfterUpdate)
 				require.NoError(t, err)
-				require.Equal(t, qAfterUpdateResult[0].Permission, dashboards.PERMISSION_ADMIN)
+				require.Equal(t, qAfterUpdateResult[0].Permission, dashboardaccess.PERMISSION_ADMIN)
 			})
 
 			t.Run("Should default to member permission level when updating a user with invalid permission level", func(t *testing.T) {
@@ -197,7 +197,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 				require.EqualValues(t, qBeforeUpdateResult[0].Permission, 0)
 
-				invalidPermissionLevel := dashboards.PERMISSION_EDIT
+				invalidPermissionLevel := dashboardaccess.PERMISSION_EDIT
 				err = teamSvc.UpdateTeamMember(context.Background(), &team.UpdateTeamMemberCommand{
 					UserID:     userID,
 					OrgID:      testOrgID,
@@ -220,7 +220,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 					UserID:     1,
 					OrgID:      testOrgID,
 					TeamID:     team1.ID,
-					Permission: dashboards.PERMISSION_ADMIN,
+					Permission: dashboardaccess.PERMISSION_ADMIN,
 				})
 
 				require.Error(t, err, team.ErrTeamMemberNotFound)
@@ -330,7 +330,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Should have empty teams", func(t *testing.T) {
-				err = teamSvc.AddTeamMember(userIds[0], testOrgID, team1.ID, false, dashboards.PERMISSION_ADMIN)
+				err = teamSvc.AddTeamMember(userIds[0], testOrgID, team1.ID, false, dashboardaccess.PERMISSION_ADMIN)
 				require.NoError(t, err)
 
 				t.Run("A user should be able to remove the admin permission for the last admin", func(t *testing.T) {
@@ -347,10 +347,10 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 					sqlStore = db.InitTestDB(t)
 					setup()
 
-					err = teamSvc.AddTeamMember(userIds[0], testOrgID, team1.ID, false, dashboards.PERMISSION_ADMIN)
+					err = teamSvc.AddTeamMember(userIds[0], testOrgID, team1.ID, false, dashboardaccess.PERMISSION_ADMIN)
 					require.NoError(t, err)
 
-					err = teamSvc.AddTeamMember(userIds[1], testOrgID, team1.ID, false, dashboards.PERMISSION_ADMIN)
+					err = teamSvc.AddTeamMember(userIds[1], testOrgID, team1.ID, false, dashboardaccess.PERMISSION_ADMIN)
 					require.NoError(t, err)
 					err = teamSvc.UpdateTeamMember(context.Background(), &team.UpdateTeamMemberCommand{OrgID: testOrgID, TeamID: team1.ID, UserID: userIds[0], Permission: 0})
 					require.NoError(t, err)

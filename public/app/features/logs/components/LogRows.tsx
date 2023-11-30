@@ -15,12 +15,12 @@ import {
 import { config } from '@grafana/runtime';
 import { withTheme2, Themeable2 } from '@grafana/ui';
 
+import { PopoverMenu } from '../../explore/Logs/PopoverMenu';
 import { UniqueKeyMaker } from '../UniqueKeyMaker';
 import { sortLogRows, targetIsElement } from '../utils';
 
 //Components
 import { LogRow } from './LogRow';
-import { PopoverMenu } from './PopoverMenu';
 import { getLogRowStyles } from './getLogRowStyles';
 
 export const PREVIEW_LIMIT = 100;
@@ -41,8 +41,8 @@ export interface Props extends Themeable2 {
   displayedFields?: string[];
   app?: CoreApp;
   showContextToggle?: (row: LogRowModel) => boolean;
-  onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
-  onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
+  onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
@@ -97,7 +97,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   };
 
   popoverMenuSupported() {
-    if (!config.featureToggles.logRowsPopoverMenu) {
+    if (!config.featureToggles.logRowsPopoverMenu || this.props.app !== CoreApp.Explore) {
       return false;
     }
     return Boolean(this.props.onClickFilterOutValue || this.props.onClickFilterValue);
@@ -120,17 +120,12 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       popoverMenuCoordinates: { x: e.clientX - parentBounds.left, y: e.clientY - parentBounds.top },
       selectedRow: row,
     });
+    document.addEventListener('click', this.handleDeselection);
+    document.addEventListener('contextmenu', this.handleDeselection);
     return true;
   };
 
   handleDeselection = (e: Event) => {
-    if (
-      targetIsElement(e.target) &&
-      (e.target?.getAttribute('role') === 'menuitem' || e.target?.parentElement?.getAttribute('role') === 'menuitem')
-    ) {
-      // Delegate closing the menu to the popover component.
-      return;
-    }
     if (targetIsElement(e.target) && !this.logRowsRef.current?.contains(e.target)) {
       // The mouseup event comes from outside the log rows, close the menu.
       this.closePopoverMenu();
@@ -143,6 +138,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   };
 
   closePopoverMenu = () => {
+    document.removeEventListener('click', this.handleDeselection);
+    document.removeEventListener('contextmenu', this.handleDeselection);
     this.setState({
       selection: '',
       popoverMenuCoordinates: { x: 0, y: 0 },
@@ -161,11 +158,11 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     } else {
       this.renderAllTimer = window.setTimeout(() => this.setState({ renderAll: true }), 2000);
     }
-    document.addEventListener('mouseup', this.handleDeselection);
   }
 
   componentWillUnmount() {
-    document.removeEventListener('mouseup', this.handleDeselection);
+    document.removeEventListener('click', this.handleDeselection);
+    document.removeEventListener('contextmenu', this.handleDeselection);
     if (this.renderAllTimer) {
       clearTimeout(this.renderAllTimer);
     }
