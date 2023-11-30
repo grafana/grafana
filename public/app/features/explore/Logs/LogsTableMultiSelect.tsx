@@ -13,7 +13,15 @@ function getStyles(theme: GrafanaTheme2) {
       overflowY: 'scroll',
       height: 'calc(100% - 50px)',
     }),
+    columnHeaderButton: css({
+      appearance: 'none',
+      background: 'none',
+      border: 'none',
+      fontSize: theme.typography.pxToRem(11),
+    }),
     columnHeader: css({
+      display: 'flex',
+      justifyContent: 'space-between',
       fontSize: theme.typography.h6.fontSize,
       background: theme.colors.background.secondary,
       position: 'sticky',
@@ -33,6 +41,7 @@ export const LogsTableMultiSelect = (props: {
   toggleColumn: (columnName: string) => void;
   filteredColumnsWithMeta: Record<string, fieldNameMeta> | undefined;
   columnsWithMeta: Record<string, fieldNameMeta>;
+  clear: () => void;
 }) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
@@ -41,11 +50,23 @@ export const LogsTableMultiSelect = (props: {
     <div className={styles.sidebarWrap}>
       {/* Sidebar columns */}
       <>
+        <div className={styles.columnHeader}>
+          Selected fields
+          <button onClick={props.clear} className={styles.columnHeaderButton}>
+            Reset
+          </button>
+        </div>
+        <LogsTableNavColumn
+          toggleColumn={props.toggleColumn}
+          labels={props.filteredColumnsWithMeta ?? props.columnsWithMeta}
+          valueFilter={(value) => props.columnsWithMeta[value]?.active ?? false}
+        />
+
         <div className={styles.columnHeader}>Fields</div>
         <LogsTableNavColumn
           toggleColumn={props.toggleColumn}
           labels={props.filteredColumnsWithMeta ?? props.columnsWithMeta}
-          valueFilter={(value) => !!value}
+          valueFilter={(value) => !props.columnsWithMeta[value]?.active}
         />
       </>
     </div>

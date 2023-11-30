@@ -43,6 +43,8 @@ func NewRemoteSecondaryForkedAlertmanager(l log.Logger, syncInterval time.Durati
 	return &fam
 }
 
+// ApplyConfig will only log errors for the remote Alertmanager and ensure we delegate the call to the internal Alertmanager.
+// We don't care about errors in the remote Alertmanager in remote secondary mode.
 func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
 	// Save the config in memory to use it in our sync routine.
 	fam.mtx.Lock()
@@ -55,12 +57,14 @@ func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, c
 	return fam.internal.ApplyConfig(ctx, config)
 }
 
+// SaveAndApplyConfig is only called on the internal Alertmanager when running in remote secondary mode.
 func (fam *RemoteSecondaryForkedAlertmanager) SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
-	return nil
+	return fam.internal.SaveAndApplyConfig(ctx, config)
 }
 
+// SaveAndApplyDefaultConfig is only called on the internal Alertmanager when running in remote secondary mode.
 func (fam *RemoteSecondaryForkedAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
-	return nil
+	return fam.internal.SaveAndApplyDefaultConfig(ctx)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) GetStatus() apimodels.GettableStatus {

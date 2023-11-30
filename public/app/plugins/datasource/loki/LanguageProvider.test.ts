@@ -407,7 +407,11 @@ describe('Query imports', () => {
           maxLines: DEFAULT_MAX_LINES_SAMPLE,
           refId: 'data-samples',
         },
-        undefined
+        // mocked default time range
+        expect.objectContaining({
+          from: 0,
+          to: 1,
+        })
       );
     });
 
@@ -428,7 +432,11 @@ describe('Query imports', () => {
           maxLines: 5,
           refId: 'data-samples',
         },
-        undefined
+        // mocked default time range
+        expect.objectContaining({
+          from: 0,
+          to: 1,
+        })
       );
     });
 
