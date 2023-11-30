@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { useMountedState, usePrevious } from 'react-use';
 
-import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
+import { DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { Button, Cascader, CascaderOption, useStyles2, Stack } from '@grafana/ui';
 
 import { OperationEditor } from './OperationEditor';
@@ -17,6 +17,7 @@ export interface Props<T extends QueryWithOperations> {
   queryModeller: VisualQueryModeller;
   explainMode?: boolean;
   highlightedOp?: QueryBuilderOperation;
+  timeRange?: TimeRange;
 }
 
 export function OperationList<T extends QueryWithOperations>({
@@ -26,6 +27,7 @@ export function OperationList<T extends QueryWithOperations>({
   onChange,
   onRunQuery,
   highlightedOp,
+  timeRange,
 }: Props<T>) {
   const styles = useStyles2(getStyles);
   const { operations } = query;
@@ -104,6 +106,7 @@ export function OperationList<T extends QueryWithOperations>({
                         onRunQuery={onRunQuery}
                         flash={opsToHighlight[index]}
                         highlight={highlightedOp === op}
+                        timeRange={timeRange}
                       />
                     );
                   })}
