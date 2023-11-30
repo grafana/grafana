@@ -3,7 +3,7 @@ import React, { useId, useState, useMemo, useEffect } from 'react';
 import Highlighter from 'react-highlight-words';
 import { useForm } from 'react-hook-form';
 
-import { DataLinkTransformationConfig, ScopedVars } from '@grafana/data';
+import { DataLinkTransformationConfig, ScopedVars, SupportedTransformationType } from '@grafana/data';
 import { Button, Field, Icon, Input, InputControl, Label, Modal, Select, Tooltip, Stack } from '@grafana/ui';
 
 import {
@@ -103,7 +103,7 @@ export const CorrelationTransformationAddModal = ({
       setIsExpValid(isExpressionValid);
       const transformationVars = getTransformationVars(
         {
-          type: formValues.type,
+          type: formValues.type || SupportedTransformationType.Regex, // TODO does this default value make sense?
           expression: isExpressionValid ? expression : '',
           mapValue: formValues.mapValue,
         },

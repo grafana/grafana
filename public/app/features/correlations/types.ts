@@ -1,4 +1,4 @@
-import { DataLinkTransformationConfig } from '@grafana/data';
+import { DataLink, DataLinkTransformationConfig } from '@grafana/data';
 
 export interface AddCorrelationResponse {
   correlation: Correlation;
@@ -30,7 +30,7 @@ type CorrelationConfigType = 'query';
 
 export interface CorrelationConfig {
   field: string;
-  target: object;
+  target: DataLink;
   type: CorrelationConfigType;
   transformations?: DataLinkTransformationConfig[];
 }
