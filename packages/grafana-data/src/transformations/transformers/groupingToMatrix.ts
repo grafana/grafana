@@ -28,8 +28,7 @@ const DEFAULT_EMPTY_VALUE = SpecialValue.Empty;
 
 // grafana-data does not have access to runtime so we are accessing the window object
 // to get access to the feature toggle
-// eslint-disable-next-line
-const supportDataplaneFallback = (window as any)?.grafanaBootData?.settings?.featureToggles?.dataplaneFrontendFallback;
+const supportDataplaneFallback = window.grafanaBootData?.settings?.featureToggles?.dataplaneFrontendFallback;
 
 export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTransformerOptions> = {
   id: DataTransformerID.groupingToMatrix,
@@ -89,7 +88,7 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
         const columnValues = uniqueValues(keyColumnField.values);
         const rowValues = uniqueValues(keyRowField.values);
 
-        const matrixValues: { [key: string]: { [key: string]: any } } = {};
+        const matrixValues: { [key: string]: { [key: string]: unknown } } = {};
 
         for (let index = 0; index < valueField.values.length; index++) {
           const columnName = keyColumnField.values[index];
