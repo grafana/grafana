@@ -24,7 +24,7 @@ const (
 	// the content type and the syntax but it was unable to process the
 	// contained instructions.
 	// HTTP status code 422.
-	StatusUnprocessableEntity CoreStatus = "Unprocessable Content"
+	StatusUnprocessableEntity CoreStatus = "Unprocessable Entity"
 	// StatusConflict means that the server cannot fulfill the request
 	// there is a conflict in the current state of a resource
 	// HTTP status code 409.
