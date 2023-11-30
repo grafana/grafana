@@ -1,8 +1,11 @@
-import React, { useMemo } from 'react';
+import { css } from '@emotion/css';
+import React, { useMemo, useState } from 'react';
 
-import { PluginExtensionPoints } from '@grafana/data';
+import { GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
 import { getPluginComponentExtensions } from '@grafana/runtime';
-import { Drawer, Tab, TabsBar } from '@grafana/ui';
+import { Drawer, IconButton, Tab, TabsBar, useStyles2 } from '@grafana/ui';
+
+type DrawerSize = 'sm' | 'md' | 'lg';
 
 export interface Props {
   open: boolean;
@@ -16,6 +19,8 @@ function ExampleTab() {
 }
 
 export function ExtensionDrawer({ open, onClose, activeTab, onChangeTab }: Props) {
+  const styles = useStyles2(getStyles);
+  const [size, setSize] = useState<DrawerSize>('md');
   const extensions = useMemo(() => {
     const extensionPointId = PluginExtensionPoints.GlobalDrawer;
     const { extensions } = getPluginComponentExtensions({ extensionPointId });
@@ -43,6 +48,11 @@ export function ExtensionDrawer({ open, onClose, activeTab, onChangeTab }: Props
     [activeTab, extensions]
   );
 
+  const [buttonIcon, buttonLabel, newSize] =
+    size === 'lg'
+      ? (['gf-movepane-left', 'Narrow drawer', 'md'] as const)
+      : (['gf-movepane-right', 'Widen drawer', 'lg'] as const);
+
   return (
     open && (
       <Drawer
@@ -50,14 +60,22 @@ export function ExtensionDrawer({ open, onClose, activeTab, onChangeTab }: Props
         onClose={onClose}
         title="Extensions"
         subtitle={
-          <div>
-            <div>Plugins can add tabs to this drawer to present globally accessible content.</div>
+          <div className={styles.wrapper}>
             <div>
-              Tip: open this drawer from anywhere using your keyboard with <code>g i</code>.
+              <div>Plugins can add tabs to this drawer to present globally accessible content.</div>
+              <div>
+                Tip: open this drawer from anywhere using your keyboard with <code>g i</code>.
+              </div>
             </div>
+            <IconButton
+              name={buttonIcon}
+              aria-label={buttonLabel}
+              tooltip={buttonLabel}
+              onClick={() => setSize(newSize)}
+            />
           </div>
         }
-        size="md"
+        size={size}
         closeOnMaskClick={false}
       >
         {activeTab === undefined && <ExampleTab />}
@@ -66,3 +84,12 @@ export function ExtensionDrawer({ open, onClose, activeTab, onChangeTab }: Props
     )
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  wrapper: css({
+    display: 'flex',
+    gap: theme.spacing(0.5),
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  }),
+});
