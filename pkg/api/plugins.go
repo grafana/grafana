@@ -21,10 +21,12 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -470,6 +472,13 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 		return response.Error(http.StatusInternalServerError, "Failed to install plugin", err)
 	}
 
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagExternalServiceAccounts) {
+		// This is a non-blocking function that verifies that the installer has
+		// the permissions that the plugin requests to have on Grafana.
+		// If we want to make this blocking, the check will have to happen before or during the installation.
+		hs.hasPluginRequestedPermissions(c, pluginID)
+	}
+
 	return response.JSON(http.StatusOK, []byte{})
 }
 
@@ -511,6 +520,47 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginID string, name 
 		}
 	}
 	return md.Content, nil
+}
+
+// hasPluginRequestedPermissions logs if the plugin installer does not have the permissions that the plugin requests to have on Grafana.
+func (hs *HTTPServer) hasPluginRequestedPermissions(c *contextmodel.ReqContext, pluginID string) {
+	plugin, ok := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
+	if !ok {
+		hs.log.Debug("plugin has not been installed", "pluginID", pluginID)
+		return
+	}
+
+	// No registration => Early return
+	if plugin.JSONData.ExternalServiceRegistration == nil || len(plugin.JSONData.ExternalServiceRegistration.Permissions) == 0 {
+		hs.log.Debug("plugin did not request permissions on Grafana", "pluginID", pluginID)
+		return
+	}
+
+	hs.log.Debug("check installer's permissions, plugin wants to register an external service")
+	evaluator := evalAllPermissions(plugin.JSONData.ExternalServiceRegistration.Permissions)
+	hasAccess := ac.HasGlobalAccess(hs.AccessControl, hs.accesscontrolService, c)
+	if hs.Cfg.RBACSingleOrganization {
+		// In a single organization setup, no need for a global check
+		hasAccess = ac.HasAccess(hs.AccessControl, c)
+	}
+
+	// Log a warning if the user does not have the plugin requested permissions
+	if !hasAccess(evaluator) {
+		hs.log.Warn("Plugin installer has less permission than what the plugin requires.", "Permissions", evaluator.String())
+	}
+}
+
+// evalAllPermissions generates an evaluator with all permissions from the input slice
+func evalAllPermissions(ps []plugindef.Permission) ac.Evaluator {
+	res := []ac.Evaluator{}
+	for _, p := range ps {
+		if p.Scope != nil {
+			res = append(res, ac.EvalPermission(p.Action, *p.Scope))
+			continue
+		}
+		res = append(res, ac.EvalPermission(p.Action))
+	}
+	return ac.EvalAll(res...)
 }
 
 func mdFilepath(mdFilename string) (string, error) {

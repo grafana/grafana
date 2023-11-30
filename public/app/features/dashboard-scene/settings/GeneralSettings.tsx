@@ -1,15 +1,15 @@
 import React from 'react';
 
 import { PageLayoutType } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { DashboardEditView, useDashboardEditPageNav } from './utils';
+import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
 
-export interface GeneralSettingsEditViewState extends SceneObjectState {}
+export interface GeneralSettingsEditViewState extends DashboardEditViewState {}
 
 export class GeneralSettingsEditView
   extends SceneObjectBase<GeneralSettingsEditViewState>

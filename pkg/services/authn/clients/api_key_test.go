@@ -109,6 +109,17 @@ func TestAPIKey_Authenticate(t *testing.T) {
 			},
 			expectedErr: errAPIKeyRevoked,
 		},
+		{
+			desc: "should fail for api key in another organization",
+			req:  &authn.Request{OrgID: 1, HTTPRequest: &http.Request{Header: map[string][]string{"Authorization": {"Bearer " + secret}}}},
+			expectedKey: &apikey.APIKey{
+				ID:               1,
+				OrgID:            2,
+				Key:              hash,
+				ServiceAccountId: intPtr(1),
+			},
+			expectedErr: errAPIKeyOrgMismatch,
+		},
 	}
 
 	for _, tt := range tests {
@@ -123,10 +134,12 @@ func TestAPIKey_Authenticate(t *testing.T) {
 			if tt.expectedErr != nil {
 				assert.Nil(t, identity)
 				assert.ErrorIs(t, err, tt.expectedErr)
-			} else {
-				assert.NoError(t, err)
-				assert.EqualValues(t, *tt.expectedIdentity, *identity)
+				return
 			}
+
+			assert.NoError(t, err)
+			assert.EqualValues(t, *tt.expectedIdentity, *identity)
+			assert.Equal(t, tt.req.OrgID, tt.expectedIdentity.OrgID, "the request organization should match the identity's one")
 		})
 	}
 }
