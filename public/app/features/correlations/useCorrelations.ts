@@ -46,8 +46,8 @@ const toEnrichedCorrelationData = ({
   // According to #72258 we will remove logic to handle orgId=0/null as global correlations.
   // This logging is to check if there are any customers who did not migrate existing correlations.
   // See Deprecation Notice in https://github.com/grafana/grafana/pull/72258 for more details
-  if (correlation.orgId === undefined || correlation.orgId === null || correlation.orgId === 0) {
-    logWarning('Invalid correlation config: Missing org id.');
+  if (correlation?.orgId === undefined || correlation?.orgId === null || correlation?.orgId === 0) {
+    logWarning('Invalid correlation config: Missing org id.', { module: 'Explore' });
   }
 
   if (
@@ -62,11 +62,11 @@ const toEnrichedCorrelationData = ({
       target: targetDatasource,
     };
   } else {
-    logWarning(
-      `Invalid correlation config: Missing source or target. source = ${JSON.stringify(
-        sourceDatasource
-      )}, target = ${JSON.stringify(targetDatasource)}`
-    );
+    logWarning(`Invalid correlation config: Missing source or target.`, {
+      module: 'Explore',
+      source: JSON.stringify(sourceDatasource),
+      target: JSON.stringify(targetDatasource),
+    });
     return undefined;
   }
 };
