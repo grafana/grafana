@@ -83,7 +83,7 @@ export class TimeSrv {
         type: AppEvents.alertWarning.name,
         payload: [
           'Invalid time range',
-          'This dashboard may not show any data as the time range is invalid: `to` value is before `from`.',
+          'This dashboard may not show any data as the time range is invalid: "From" value is after "To".',
         ],
       });
     }
