@@ -352,9 +352,15 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 	if !ng.shouldRun() {
 		return nil
 	}
-	ng.Log.Debug("Starting")
+	ng.Log.Debug("Starting", "execute_alerts", ng.Cfg.UnifiedAlerting.ExecuteAlerts)
 
-	ng.stateManager.Warm(ctx, ng.store)
+	// If we are not executing alerts, then Warm()-ing the state manager is
+	// wasteful and could lead to misleading rule status queries, as the status
+	// returned will be always based on the state loaded from the database at
+	// startup, and not the most recent evaluation state.
+	if ng.Cfg.UnifiedAlerting.ExecuteAlerts {
+		ng.stateManager.Warm(ctx, ng.store)
+	}
 
 	children, subCtx := errgroup.WithContext(ctx)
 
