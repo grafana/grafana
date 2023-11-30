@@ -163,22 +163,9 @@ func schema_pkg_apis_app_deployments_v0alpha1_Info(ref common.ReferenceCallback)
 							Format: "",
 						},
 					},
-					"version": {
+					"versions": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"cdn": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/app-deployments/v0alpha1.ChannelCDN"),
-						},
-					},
-					"old": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Additional versions that should be aggregated",
-							Type:        []string{"array"},
+							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -188,6 +175,12 @@ func schema_pkg_apis_app_deployments_v0alpha1_Info(ref common.ReferenceCallback)
 									},
 								},
 							},
+						},
+					},
+					"cdn": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/app-deployments/v0alpha1.ChannelCDN"),
 						},
 					},
 				},

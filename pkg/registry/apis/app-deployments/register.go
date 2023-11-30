@@ -99,23 +99,21 @@ func (b *DeploymentAPIBuilder) GetAPIGroupInfo(
 		store.DefaultQualifiedResource,
 		[]metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
-			{Name: "Version", Type: "string", Format: "string", Description: "the app server version"},
-			{Name: "Fast", Type: "string", Format: "string", Description: "fast channel CDN"},
+			{Name: "Steady", Type: "string", Format: "string", Description: "Fast channel CDN"},
 		},
 		func(obj any) ([]interface{}, error) {
 			r, ok := obj.(*v0alpha1.AppDeploymentInfo)
 			if ok {
 				return []interface{}{
 					r.Name,
-					r.Spec.Version,
-					r.Spec.CDN.Fast,
+					r.Spec.CDN.Steady,
 				}, nil
 			}
 			return nil, fmt.Errorf("expected resource or info")
 		})
 
 	storage := map[string]rest.Storage{}
-	storage["deployments"] = &staticStorage{}
+	storage["deployments"] = &staticStorage{store: store}
 
 	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage
 	return &apiGroupInfo, nil

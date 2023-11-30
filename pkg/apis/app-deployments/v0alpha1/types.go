@@ -14,12 +14,9 @@ type AppDeploymentInfo struct {
 }
 
 type Info struct {
-	Group   string     `json:"group,omitempty"`
-	Version string     `json:"version,omitempty"`
-	CDN     ChannelCDN `json:"cdn,omitempty"`
-
-	// Additional versions that should be aggregated
-	OldVersions []string `json:"old,omitempty"`
+	Group    string     `json:"group,omitempty"`
+	Versions []string   `json:"versions,omitempty"`
+	CDN      ChannelCDN `json:"cdn,omitempty"`
 }
 
 type ChannelCDN struct {
