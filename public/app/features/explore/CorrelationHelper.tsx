@@ -87,7 +87,7 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
 
       if (!dirty && (value.label !== defaultLabel || value.description !== '')) {
         dirty = true;
-      } else if (dirty && value.label === defaultLabel && value.description.trim() === '') {
+      } else if (dirty && value.label === defaultLabel && (value.description || '').trim() === '') {
         dirty = false;
       }
       dispatch(

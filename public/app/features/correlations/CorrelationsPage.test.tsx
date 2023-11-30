@@ -363,7 +363,7 @@ describe('CorrelationsPage', () => {
             provisioned: false,
             config: {
               field: 'line',
-              target: {},
+              target: { title: '', url: '' },
               type: 'query',
               transformations: [
                 { type: SupportedTransformationType.Regex, expression: 'url=http[s]?://(S*)', mapValue: 'path' },
@@ -375,7 +375,7 @@ describe('CorrelationsPage', () => {
             targetUID: 'loki',
             uid: '2',
             label: 'Prometheus to Loki',
-            config: { field: 'label', target: {}, type: 'query' },
+            config: { field: 'label', target: { title: '', url: '' }, type: 'query' },
             provisioned: false,
           },
         ]
@@ -597,7 +597,7 @@ describe('CorrelationsPage', () => {
             provisioned: false,
             config: {
               field: 'line',
-              target: {},
+              target: { title: '', url: '' },
               type: 'query',
               transformations: [
                 { type: SupportedTransformationType.Regex, expression: 'url=http[s]?://(S*)', mapValue: 'path' },
@@ -612,7 +612,7 @@ describe('CorrelationsPage', () => {
             provisioned: false,
             config: {
               field: 'line',
-              target: {},
+              target: { title: '', url: '' },
               type: 'query',
               transformations: [
                 { type: SupportedTransformationType.Regex, expression: 'url=http[s]?://(S*)', mapValue: 'path' },
@@ -624,7 +624,7 @@ describe('CorrelationsPage', () => {
             targetUID: 'loki',
             uid: '3',
             label: 'Prometheus to Loki',
-            config: { field: 'label', target: {}, type: 'query' },
+            config: { field: 'label', target: { title: '', url: '' }, type: 'query' },
             provisioned: false,
           },
           {
@@ -632,7 +632,7 @@ describe('CorrelationsPage', () => {
             targetUID: 'prometheus',
             uid: '4',
             label: 'Prometheus to Prometheus',
-            config: { field: 'label', target: {}, type: 'query' },
+            config: { field: 'label', target: { title: '', url: '' }, type: 'query' },
             provisioned: false,
           },
         ]
@@ -659,7 +659,7 @@ describe('CorrelationsPage', () => {
         provisioned: true,
         config: {
           field: 'line',
-          target: {},
+          target: { title: '', url: '' },
           type: 'query',
           transformations: [{ type: SupportedTransformationType.Regex, expression: '(?:msg)=' }],
         },
