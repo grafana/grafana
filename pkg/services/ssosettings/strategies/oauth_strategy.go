@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"gopkg.in/ini.v1"
 )
 
 type OAuthStrategy struct {
@@ -35,54 +34,48 @@ func (s *OAuthStrategy) ParseConfigFromSystem(_ context.Context, provider string
 	sectionName := "auth." + provider
 	section := s.cfg.SectionWithEnvOverrides(sectionName)
 
-	defaultSettings := s.cfg.Defaults.Section(sectionName)
-
 	result := &social.OAuthInfo{
-		AllowAssignGrafanaAdmin: social.MustBool(parseDataFromKey("allow_assign_grafana_admin", section, defaultSettings), false),
-		AllowSignup:             social.MustBool(parseDataFromKey("allow_sign_up", section, defaultSettings), false),
-		AllowedDomains:          util.SplitString(parseDataFromKey("allowed_domains", section, defaultSettings)),
-		AllowedGroups:           util.SplitString(parseDataFromKey("allowed_groups", section, defaultSettings)),
-		ApiUrl:                  parseDataFromKey("api_url", section, defaultSettings),
-		AuthStyle:               parseDataFromKey("auth_style", section, defaultSettings),
-		AuthUrl:                 parseDataFromKey("auth_url", section, defaultSettings),
-		AutoLogin:               social.MustBool(parseDataFromKey("auto_login", section, defaultSettings), false),
-		ClientId:                parseDataFromKey("client_id", section, defaultSettings),
-		ClientSecret:            parseDataFromKey("client_secret", section, defaultSettings),
-		EmailAttributeName:      parseDataFromKey("email_attribute_name", section, defaultSettings),
-		EmailAttributePath:      parseDataFromKey("email_attribute_path", section, defaultSettings),
-		EmptyScopes:             social.MustBool(parseDataFromKey("empty_scopes", section, defaultSettings), false),
-		Enabled:                 social.MustBool(parseDataFromKey("enabled", section, defaultSettings), false),
-		GroupsAttributePath:     parseDataFromKey("groups_attribute_path", section, defaultSettings),
-		HostedDomain:            parseDataFromKey("hosted_domain", section, defaultSettings),
-		Icon:                    parseDataFromKey("icon", section, defaultSettings),
-		Name:                    parseDataFromKey("name", section, defaultSettings),
-		RoleAttributePath:       parseDataFromKey("role_attribute_path", section, defaultSettings),
-		RoleAttributeStrict:     social.MustBool(parseDataFromKey("role_attribute_strict", section, defaultSettings), false),
-		Scopes:                  util.SplitString(parseDataFromKey("scopes", section, defaultSettings)),
-		SignoutRedirectUrl:      parseDataFromKey("signout_redirect_url", section, defaultSettings),
-		SkipOrgRoleSync:         social.MustBool(parseDataFromKey("skip_org_role_sync", section, defaultSettings), false),
-		TeamIdsAttributePath:    parseDataFromKey("team_ids_attribute_path", section, defaultSettings),
-		TeamsUrl:                parseDataFromKey("teams_url", section, defaultSettings),
-		TlsClientCa:             parseDataFromKey("tls_client_ca", section, defaultSettings),
-		TlsClientCert:           parseDataFromKey("tls_client_cert", section, defaultSettings),
-		TlsClientKey:            parseDataFromKey("tls_client_key", section, defaultSettings),
-		TlsSkipVerify:           social.MustBool(parseDataFromKey("tls_skip_verify_insecure", section, defaultSettings), false),
-		TokenUrl:                parseDataFromKey("token_url", section, defaultSettings),
-		UsePKCE:                 social.MustBool(parseDataFromKey("use_pkce", section, defaultSettings), false),
-		UseRefreshToken:         social.MustBool(parseDataFromKey("use_refresh_token", section, defaultSettings), false),
+		AllowAssignGrafanaAdmin: social.MustBool(section.Key("allow_assign_grafana_admin").Value(), false),
+		AllowSignup:             social.MustBool(section.Key("allow_sign_up").Value(), false),
+		AllowedDomains:          util.SplitString(section.Key("allowed_domains").Value()),
+		AllowedGroups:           util.SplitString(section.Key("allowed_groups").Value()),
+		ApiUrl:                  section.Key("api_url").Value(),
+		AuthStyle:               section.Key("auth_style").Value(),
+		AuthUrl:                 section.Key("auth_url").Value(),
+		AutoLogin:               social.MustBool(section.Key("auto_login").Value(), false),
+		ClientId:                section.Key("client_id").Value(),
+		ClientSecret:            section.Key("client_secret").Value(),
+		EmailAttributeName:      section.Key("email_attribute_name").Value(),
+		EmailAttributePath:      section.Key("email_attribute_path").Value(),
+		EmptyScopes:             social.MustBool(section.Key("empty_scopes").Value(), false),
+		Enabled:                 social.MustBool(section.Key("enabled").Value(), false),
+		GroupsAttributePath:     section.Key("groups_attribute_path").Value(),
+		HostedDomain:            section.Key("hosted_domain").Value(),
+		Icon:                    section.Key("icon").Value(),
+		Name:                    section.Key("name").Value(),
+		RoleAttributePath:       section.Key("role_attribute_path").Value(),
+		RoleAttributeStrict:     social.MustBool(section.Key("role_attribute_strict").Value(), false),
+		Scopes:                  util.SplitString(section.Key("scopes").Value()),
+		SignoutRedirectUrl:      section.Key("signout_redirect_url").Value(),
+		SkipOrgRoleSync:         social.MustBool(section.Key("skip_org_role_sync").Value(), false),
+		TeamIdsAttributePath:    section.Key("team_ids_attribute_path").Value(),
+		TeamsUrl:                section.Key("teams_url").Value(),
+		TlsClientCa:             section.Key("tls_client_ca").Value(),
+		TlsClientCert:           section.Key("tls_client_cert").Value(),
+		TlsClientKey:            section.Key("tls_client_key").Value(),
+		TlsSkipVerify:           social.MustBool(section.Key("tls_skip_verify_insecure").Value(), false),
+		TokenUrl:                section.Key("token_url").Value(),
+		UsePKCE:                 social.MustBool(section.Key("use_pkce").Value(), false),
+		UseRefreshToken:         social.MustBool(section.Key("use_refresh_token").Value(), false),
 		Extra:                   map[string]string{},
 	}
 
 	extraFields := getExtraKeysForProvider(provider)
 	for _, key := range extraFields {
-		result.Extra[key] = parseDataFromKey(key, section, defaultSettings)
+		result.Extra[key] = section.Key(key).Value()
 	}
 
 	return result, nil
-}
-
-func parseDataFromKey(key string, section *setting.DynamicSection, defaultSettings *ini.Section) string {
-	return util.StringsFallback2(section.Key(key).Value(), defaultSettings.Key(key).Value())
 }
 
 func getExtraKeysForProvider(provider string) []string {
