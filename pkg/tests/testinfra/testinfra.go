@@ -242,6 +242,11 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 		return section, err
 	}
 
+	dbCfg, err := cfg.NewSection("database")
+	require.NoError(t, err)
+	_, err = dbCfg.NewKey("wal", "true")
+	require.NoError(t, err)
+
 	for _, o := range opts {
 		if o.EnableCSP {
 			securitySect, err := cfg.NewSection("security")
