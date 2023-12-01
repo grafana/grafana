@@ -4169,6 +4169,522 @@ exports[`better eslint`] = {
     "public/app/features/logs/utils.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/features/logsApp/ContentOutline/ContentOutline.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/features/logsApp/ExploreDrawer.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"]
+    ],
+    "public/app/features/logsApp/ExplorePaneContainer.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
+    "public/app/features/logsApp/FeatureTogglePage.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
+    "public/app/features/logsApp/FlameGraph/FlameGraphExploreContainer.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
+    "public/app/features/logsApp/LiveTailButton.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"]
+    ],
+    "public/app/features/logsApp/Logs/LiveLogs.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"]
+    ],
+    "public/app/features/logsApp/Logs/Logs.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"],
+      [0, 0, 0, "Styles should be written using objects.", "5"],
+      [0, 0, 0, "Styles should be written using objects.", "6"],
+      [0, 0, 0, "Styles should be written using objects.", "7"],
+      [0, 0, 0, "Styles should be written using objects.", "8"],
+      [0, 0, 0, "Styles should be written using objects.", "9"],
+      [0, 0, 0, "Styles should be written using objects.", "10"],
+      [0, 0, 0, "Styles should be written using objects.", "11"],
+      [0, 0, 0, "Styles should be written using objects.", "12"]
+    ],
+    "public/app/features/logsApp/Logs/LogsMetaRow.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
+    "public/app/features/logsApp/Logs/LogsNavigation.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"]
+    ],
+    "public/app/features/logsApp/Logs/LogsNavigationPages.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"]
+    ],
+    "public/app/features/logsApp/Logs/LogsSamplePanel.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"]
+    ],
+    "public/app/features/logsApp/Logs/LogsVolumePanel.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"]
+    ],
+    "public/app/features/logsApp/Logs/LogsVolumePanelList.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"]
+    ],
+    "public/app/features/logsApp/Logs/utils/LogsCrossFadeTransition.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"]
+    ],
+    "public/app/features/logsApp/MetaInfoText.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"]
+    ],
+    "public/app/features/logsApp/NoData.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"]
+    ],
+    "public/app/features/logsApp/NoDataSourceCallToAction.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
+    "public/app/features/logsApp/NodeGraph/NodeGraphContainer.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
+    "public/app/features/logsApp/PrometheusListView/ItemLabels.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"]
+    ],
+    "public/app/features/logsApp/PrometheusListView/ItemValues.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"]
+    ],
+    "public/app/features/logsApp/PrometheusListView/RawListContainer.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"],
+      [0, 0, 0, "Styles should be written using objects.", "5"]
+    ],
+    "public/app/features/logsApp/PrometheusListView/RawListItem.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"]
+    ],
+    "public/app/features/logsApp/PrometheusListView/RawListItemAttributes.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"]
+    ],
+    "public/app/features/logsApp/QueryRows.test.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/features/logsApp/RichHistory/RichHistoryCard.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"],
+      [0, 0, 0, "Styles should be written using objects.", "5"],
+      [0, 0, 0, "Styles should be written using objects.", "6"],
+      [0, 0, 0, "Styles should be written using objects.", "7"],
+      [0, 0, 0, "Styles should be written using objects.", "8"],
+      [0, 0, 0, "Styles should be written using objects.", "9"],
+      [0, 0, 0, "Styles should be written using objects.", "10"],
+      [0, 0, 0, "Styles should be written using objects.", "11"],
+      [0, 0, 0, "Styles should be written using objects.", "12"],
+      [0, 0, 0, "Styles should be written using objects.", "13"]
+    ],
+    "public/app/features/logsApp/RichHistory/RichHistoryQueriesTab.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"],
+      [0, 0, 0, "Styles should be written using objects.", "5"],
+      [0, 0, 0, "Styles should be written using objects.", "6"],
+      [0, 0, 0, "Styles should be written using objects.", "7"],
+      [0, 0, 0, "Styles should be written using objects.", "8"],
+      [0, 0, 0, "Styles should be written using objects.", "9"],
+      [0, 0, 0, "Styles should be written using objects.", "10"],
+      [0, 0, 0, "Styles should be written using objects.", "11"],
+      [0, 0, 0, "Styles should be written using objects.", "12"],
+      [0, 0, 0, "Styles should be written using objects.", "13"]
+    ],
+    "public/app/features/logsApp/RichHistory/RichHistorySettingsTab.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"]
+    ],
+    "public/app/features/logsApp/RichHistory/RichHistoryStarredTab.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"],
+      [0, 0, 0, "Styles should be written using objects.", "5"],
+      [0, 0, 0, "Styles should be written using objects.", "6"]
+    ],
+    "public/app/features/logsApp/SecondaryActions.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
+    "public/app/features/logsApp/SupplementaryResultError.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"]
+    ],
+    "public/app/features/logsApp/TraceView/TraceView.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TracePageHeader/Actions/ActionButton.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TracePageHeader/Actions/TracePageActions.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TracePageHeader/SearchBar/NextPrevResult.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"],
+      [0, 0, 0, "Styles should be written using objects.", "5"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TracePageHeader/SearchBar/TracePageSearchBar.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TracePageHeader/SpanFilters/SpanFilters.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"],
+      [0, 0, 0, "Styles should be written using objects.", "5"],
+      [0, 0, 0, "Styles should be written using objects.", "6"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TracePageHeader/SpanGraph/CanvasSpanGraph.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TracePageHeader/SpanGraph/GraphTicks.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TracePageHeader/SpanGraph/Scrubber.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TracePageHeader/SpanGraph/TickLabels.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TracePageHeader/SpanGraph/ViewingLayer.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"],
+      [0, 0, 0, "Styles should be written using objects.", "5"],
+      [0, 0, 0, "Styles should be written using objects.", "6"],
+      [0, 0, 0, "Styles should be written using objects.", "7"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TracePageHeader/TracePageHeader.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"],
+      [0, 0, 0, "Styles should be written using objects.", "5"],
+      [0, 0, 0, "Styles should be written using objects.", "6"],
+      [0, 0, 0, "Styles should be written using objects.", "7"],
+      [0, 0, 0, "Styles should be written using objects.", "8"],
+      [0, 0, 0, "Styles should be written using objects.", "9"],
+      [0, 0, 0, "Styles should be written using objects.", "10"],
+      [0, 0, 0, "Styles should be written using objects.", "11"],
+      [0, 0, 0, "Styles should be written using objects.", "12"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TraceTimelineViewer/SpanBarRow.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"],
+      [0, 0, 0, "Styles should be written using objects.", "5"],
+      [0, 0, 0, "Styles should be written using objects.", "6"],
+      [0, 0, 0, "Styles should be written using objects.", "7"],
+      [0, 0, 0, "Styles should be written using objects.", "8"],
+      [0, 0, 0, "Styles should be written using objects.", "9"],
+      [0, 0, 0, "Styles should be written using objects.", "10"],
+      [0, 0, 0, "Styles should be written using objects.", "11"],
+      [0, 0, 0, "Styles should be written using objects.", "12"],
+      [0, 0, 0, "Styles should be written using objects.", "13"],
+      [0, 0, 0, "Styles should be written using objects.", "14"],
+      [0, 0, 0, "Styles should be written using objects.", "15"],
+      [0, 0, 0, "Styles should be written using objects.", "16"],
+      [0, 0, 0, "Styles should be written using objects.", "17"],
+      [0, 0, 0, "Styles should be written using objects.", "18"],
+      [0, 0, 0, "Styles should be written using objects.", "19"],
+      [0, 0, 0, "Styles should be written using objects.", "20"],
+      [0, 0, 0, "Styles should be written using objects.", "21"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TraceTimelineViewer/SpanDetail/AccordianKeyValues.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"],
+      [0, 0, 0, "Styles should be written using objects.", "5"],
+      [0, 0, 0, "Styles should be written using objects.", "6"],
+      [0, 0, 0, "Styles should be written using objects.", "7"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TraceTimelineViewer/SpanDetail/AccordianLogs.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TraceTimelineViewer/SpanDetail/AccordianReferences.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"],
+      [0, 0, 0, "Styles should be written using objects.", "5"],
+      [0, 0, 0, "Styles should be written using objects.", "6"],
+      [0, 0, 0, "Styles should be written using objects.", "7"],
+      [0, 0, 0, "Styles should be written using objects.", "8"],
+      [0, 0, 0, "Styles should be written using objects.", "9"],
+      [0, 0, 0, "Styles should be written using objects.", "10"],
+      [0, 0, 0, "Styles should be written using objects.", "11"],
+      [0, 0, 0, "Styles should be written using objects.", "12"],
+      [0, 0, 0, "Styles should be written using objects.", "13"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TraceTimelineViewer/SpanDetail/AccordianText.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"],
+      [0, 0, 0, "Styles should be written using objects.", "5"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TraceTimelineViewer/SpanDetail/SpanFlameGraph.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TraceTimelineViewer/SpanDetail/TextList.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TraceTimelineViewer/SpanDetail/index.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"],
+      [0, 0, 0, "Styles should be written using objects.", "5"],
+      [0, 0, 0, "Styles should be written using objects.", "6"],
+      [0, 0, 0, "Styles should be written using objects.", "7"],
+      [0, 0, 0, "Styles should be written using objects.", "8"],
+      [0, 0, 0, "Styles should be written using objects.", "9"],
+      [0, 0, 0, "Styles should be written using objects.", "10"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TraceTimelineViewer/SpanDetailRow.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TraceTimelineViewer/SpanLinks.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TraceTimelineViewer/SpanTreeOffset.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"],
+      [0, 0, 0, "Styles should be written using objects.", "5"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TraceTimelineViewer/Ticks.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TraceTimelineViewer/TimelineHeaderRow/TimelineCollapser.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TraceTimelineViewer/TimelineHeaderRow/TimelineColumnResizer.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"],
+      [0, 0, 0, "Styles should be written using objects.", "5"],
+      [0, 0, 0, "Styles should be written using objects.", "6"],
+      [0, 0, 0, "Styles should be written using objects.", "7"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TraceTimelineViewer/TimelineHeaderRow/TimelineHeaderRow.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TraceTimelineViewer/TimelineHeaderRow/TimelineViewingLayer.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"],
+      [0, 0, 0, "Styles should be written using objects.", "5"],
+      [0, 0, 0, "Styles should be written using objects.", "6"],
+      [0, 0, 0, "Styles should be written using objects.", "7"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TraceTimelineViewer/TimelineRow.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TraceTimelineViewer/VirtualizedTraceView.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"]
+    ],
+    "public/app/features/logsApp/TraceView/components/TraceTimelineViewer/index.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
+    "public/app/features/logsApp/TraceView/components/common/BreakableText.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
+    "public/app/features/logsApp/TraceView/components/common/CopyIcon.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
+    "public/app/features/logsApp/TraceView/components/common/Divider.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"]
+    ],
+    "public/app/features/logsApp/TraceView/components/common/LabeledList.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"]
+    ],
+    "public/app/features/logsApp/TraceView/components/common/NewWindowIcon.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
+    "public/app/features/logsApp/TraceView/components/common/TraceName.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
+    "public/app/features/logsApp/TraceView/components/demo/trace-generators.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/features/logsApp/TraceView/components/model/link-patterns.test.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
+    "public/app/features/logsApp/TraceView/components/model/link-patterns.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
+      [0, 0, 0, "Do not use any type assertions.", "9"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
+      [0, 0, 0, "Do not use any type assertions.", "11"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "12"]
+    ],
+    "public/app/features/logsApp/TraceView/components/model/transform-trace-data.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/features/logsApp/TraceView/components/settings/SpanBarSettings.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"]
+    ],
+    "public/app/features/logsApp/TraceView/components/types/trace.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/features/logsApp/TraceView/components/uberUtilityStyles.ts:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"],
+      [0, 0, 0, "Styles should be written using objects.", "5"],
+      [0, 0, 0, "Styles should be written using objects.", "6"],
+      [0, 0, 0, "Styles should be written using objects.", "7"],
+      [0, 0, 0, "Styles should be written using objects.", "8"],
+      [0, 0, 0, "Styles should be written using objects.", "9"],
+      [0, 0, 0, "Styles should be written using objects.", "10"],
+      [0, 0, 0, "Styles should be written using objects.", "11"],
+      [0, 0, 0, "Styles should be written using objects.", "12"],
+      [0, 0, 0, "Styles should be written using objects.", "13"],
+      [0, 0, 0, "Styles should be written using objects.", "14"],
+      [0, 0, 0, "Styles should be written using objects.", "15"],
+      [0, 0, 0, "Styles should be written using objects.", "16"]
+    ],
+    "public/app/features/logsApp/TraceView/createSpanLink.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"]
+    ],
+    "public/app/features/logsApp/spec/helper/setup.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
+    "public/app/features/logsApp/spec/interpolation.test.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/features/logsApp/spec/queryHistory.test.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/features/logsApp/state/time.test.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/features/logsApp/state/utils.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Do not use any type assertions.", "4"],
+      [0, 0, 0, "Do not use any type assertions.", "5"]
+    ],
     "public/app/features/manage-dashboards/DashboardImportPage.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],

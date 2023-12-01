@@ -514,6 +514,13 @@ export const mockNavModel: NavIndex = {
     icon: 'compass',
     url: '/explore',
   },
+  logs: {
+    id: 'logs',
+    text: 'Logs',
+    subTitle: 'View logs',
+    icon: 'list-ol',
+    url: '/logs',
+  },
   alerting: {
     id: 'alerting',
     text: 'Alerting',

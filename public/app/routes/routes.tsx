@@ -153,6 +153,10 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/logs',
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "logsapp" */ 'app/features/logsApp/LogsAppPage')),
+    },
+    {
       path: '/explore',
       pageClass: 'page-explore',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
