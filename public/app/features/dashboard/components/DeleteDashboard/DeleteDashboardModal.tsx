@@ -4,12 +4,12 @@ import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
+import { locationService } from '@grafana/runtime';
 import { Modal, ConfirmModal, Button } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { cleanUpDashboardAndVariables } from 'app/features/dashboard/state/actions';
-
-import { useDashboardDelete } from './useDashboardDelete';
+import { deleteDashboard } from 'app/features/manage-dashboards/state/actions';
 
 type DeleteDashboardModalProps = {
   hideModal(): void;
@@ -26,11 +26,12 @@ type Props = DeleteDashboardModalProps & ConnectedProps<typeof connector>;
 
 const DeleteDashboardModalUnconnected = ({ hideModal, cleanUpDashboardAndVariables, dashboard }: Props) => {
   const isProvisioned = dashboard.meta.provisioned;
-  const { onDeleteDashboard } = useDashboardDelete(dashboard.uid, cleanUpDashboardAndVariables);
 
   const [, onConfirm] = useAsyncFn(async () => {
-    await onDeleteDashboard();
+    await deleteDashboard(dashboard.uid, true);
+    cleanUpDashboardAndVariables();
     hideModal();
+    locationService.replace('/');
   }, [hideModal]);
 
   const modalBody = getModalBody(dashboard.panels, dashboard.title);
