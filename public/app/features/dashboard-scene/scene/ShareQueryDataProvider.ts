@@ -120,6 +120,13 @@ export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProvid
     }
     return false;
   }
+
+  public getInterval() {
+    if (this._sourceProvider && this._sourceProvider.getInterval) {
+      return this._sourceProvider.getInterval();
+    }
+    return { interval: '1s', intervalMs: 1000 };
+  }
 }
 
 export function findObjectInScene(scene: SceneObject, check: (scene: SceneObject) => boolean): SceneObject | null {
