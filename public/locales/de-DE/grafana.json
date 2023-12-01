@@ -773,6 +773,10 @@
       "title": "Entdecken"
     },
     "frontend": {
+      "subtitle": "",
+      "title": ""
+    },
+    "frontend-app": {
       "title": "Frontend"
     },
     "global-orgs": {
@@ -800,6 +804,10 @@
       "title": "Störungen"
     },
     "infrastructure": {
+      "subtitle": "",
+      "title": ""
+    },
+    "integrations": {
       "title": "Integrationen"
     },
     "kubernetes": {
@@ -1290,6 +1298,9 @@
       "name-error": "Name ist erforderlich",
       "name-label": "Name",
       "username-label": "Benutzername"
+    },
+    "tabs": {
+      "general": ""
     }
   },
   "user-session": {

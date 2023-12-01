@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/dashdiffs"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -792,72 +791,6 @@ func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.R
 	return response.JSON(http.StatusOK, dashVersionMeta)
 }
 
-// swagger:route POST /dashboards/validate dashboards alpha validateDashboard
-//
-// Validates a dashboard JSON against the schema.
-//
-// Produces:
-// - application/json
-//
-// Responses:
-// 200: validateDashboardResponse
-// 412: validateDashboardResponse
-// 422: validateDashboardResponse
-// 401: unauthorisedError
-// 403: forbiddenError
-// 500: internalServerError
-func (hs *HTTPServer) ValidateDashboard(c *contextmodel.ReqContext) response.Response {
-	cmd := dashboards.ValidateDashboardCommand{}
-
-	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "Bad request data", err)
-	}
-
-	dk := hs.Kinds.Dashboard()
-	dashboardBytes := []byte(cmd.Dashboard)
-
-	// POST api receives dashboard as a string of json (so line numbers for errors stay consistent),
-	// but we need to parse the schema version out of it
-	dashboardJson, err := simplejson.NewJson(dashboardBytes)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "unable to parse dashboard", err)
-	}
-
-	schemaVersion, err := dashboardJson.Get("schemaVersion").Int()
-
-	isValid := false
-	statusCode := http.StatusOK
-	validationMessage := ""
-
-	// Only try to validate if the schemaVersion is at least the handoff version
-	// (the minimum schemaVersion against which the dashboard schema is known to
-	// work), or if schemaVersion is absent (which will happen once the Thema
-	// schema becomes canonical).
-	if err != nil || schemaVersion >= dashboard.HandoffSchemaVersion {
-		// Schemas expect the dashboard to live in the spec field
-		k8sResource := `{"spec": ` + cmd.Dashboard + "}"
-
-		_, _, validationErr := dk.JSONValueMux([]byte(k8sResource))
-
-		if validationErr == nil {
-			isValid = true
-		} else {
-			validationMessage = validationErr.Error()
-			statusCode = http.StatusUnprocessableEntity
-		}
-	} else {
-		validationMessage = "invalid schema version"
-		statusCode = http.StatusPreconditionFailed
-	}
-
-	respData := &ValidateDashboardResponse{
-		IsValid: isValid,
-		Message: validationMessage,
-	}
-
-	return response.JSON(statusCode, respData)
-}
-
 // swagger:route POST /dashboards/calculate-diff dashboards calculateDashboardDiff
 //
 // Perform diff on two dashboards.
@@ -1302,10 +1235,4 @@ type DashboardVersionsResponse struct {
 type DashboardVersionResponse struct {
 	// in: body
 	Body *dashver.DashboardVersionMeta `json:"body"`
-}
-
-// swagger:response validateDashboardResponse
-type ValidateDashboardResponse struct {
-	IsValid bool   `json:"isValid"`
-	Message string `json:"message,omitempty"`
 }

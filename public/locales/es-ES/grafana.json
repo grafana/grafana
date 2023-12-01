@@ -779,6 +779,10 @@
       "title": "Explorar"
     },
     "frontend": {
+      "subtitle": "",
+      "title": ""
+    },
+    "frontend-app": {
       "title": "Interfaz"
     },
     "global-orgs": {
@@ -806,6 +810,10 @@
       "title": "Incidentes"
     },
     "infrastructure": {
+      "subtitle": "",
+      "title": ""
+    },
+    "integrations": {
       "title": "Integraciones"
     },
     "kubernetes": {
@@ -1296,6 +1304,9 @@
       "name-error": "El nombre es obligatorio",
       "name-label": "Nombre",
       "username-label": "Nombre de usuario"
+    },
+    "tabs": {
+      "general": ""
     }
   },
   "user-session": {
