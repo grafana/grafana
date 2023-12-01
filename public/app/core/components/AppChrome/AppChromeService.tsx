@@ -23,8 +23,8 @@ export interface AppChromeState {
   layout: PageLayoutType;
 }
 
-const DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.docked';
-const MENU_OPEN_LOCAL_STORAGE_KEY = 'grafana.navigation.open';
+export const DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.docked';
+export const DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY = 'grafana.navigation.open';
 
 export class AppChromeService {
   searchBarStorageKey = 'SearchBar_Hidden';
@@ -40,7 +40,11 @@ export class AppChromeService {
     chromeless: true, // start out hidden to not flash it on pages without chrome
     sectionNav: { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } },
     searchBarHidden: store.getBool(this.searchBarStorageKey, false),
-    megaMenuOpen: this.megaMenuDocked && store.getBool(MENU_OPEN_LOCAL_STORAGE_KEY, true),
+    megaMenuOpen: Boolean(
+      config.featureToggles.dockedMegaMenu &&
+        this.megaMenuDocked &&
+        store.getBool(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, true)
+    ),
     megaMenuDocked: this.megaMenuDocked,
     kioskMode: null,
     layout: PageLayoutType.Canvas,
@@ -105,8 +109,11 @@ export class AppChromeService {
   }
 
   public setMegaMenuOpen = (newOpenState: boolean) => {
+    const { megaMenuDocked } = this.state.getValue();
     if (config.featureToggles.dockedMegaMenu) {
-      store.set(MENU_OPEN_LOCAL_STORAGE_KEY, newOpenState);
+      if (megaMenuDocked) {
+        store.set(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, newOpenState);
+      }
       reportInteraction('grafana_mega_menu_open', { state: newOpenState });
     } else {
       reportInteraction('grafana_toggle_menu_clicked', { action: newOpenState ? 'open' : 'close' });
@@ -116,8 +123,10 @@ export class AppChromeService {
     });
   };
 
-  public setMegaMenuDocked = (newDockedState: boolean) => {
-    store.set(DOCKED_LOCAL_STORAGE_KEY, newDockedState);
+  public setMegaMenuDocked = (newDockedState: boolean, updatePersistedState = true) => {
+    if (updatePersistedState) {
+      store.set(DOCKED_LOCAL_STORAGE_KEY, newDockedState);
+    }
     reportInteraction('grafana_mega_menu_docked', { state: newDockedState });
     this.update({
       megaMenuDocked: newDockedState,

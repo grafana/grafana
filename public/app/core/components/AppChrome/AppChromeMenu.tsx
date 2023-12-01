@@ -33,7 +33,7 @@ export function AppChromeMenu({}: Props) {
   const animationSpeed = prevDockedState.current && state.megaMenuOpen ? 0 : theme.transitions.duration.shortest;
   const animationStyles = useStyles2(getAnimStyles, animationSpeed);
 
-  const isOpen = state.megaMenuOpen;
+  const isOpen = state.megaMenuOpen && !state.megaMenuDocked;
   const onClose = () => chrome.setMegaMenuOpen(false);
 
   const { overlayProps, underlayProps } = useOverlay(

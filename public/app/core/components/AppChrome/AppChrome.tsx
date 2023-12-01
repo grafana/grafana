@@ -1,16 +1,18 @@
 import { css, cx } from '@emotion/css';
 import classNames from 'classnames';
-import React, { PropsWithChildren, useState } from 'react';
+import React, { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { useStyles2, LinkButton, useTheme2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
+import store from 'app/core/store';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { KioskMode } from 'app/types';
 
 import { AppChromeMenu } from './AppChromeMenu';
+import { DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY } from './AppChromeService';
 import { MegaMenu as DockedMegaMenu } from './DockedMegaMenu/MegaMenu';
 import { MegaMenu } from './MegaMenu/MegaMenu';
 import { NavToolbar } from './NavToolbar/NavToolbar';
@@ -28,13 +30,15 @@ export function AppChrome({ children }: Props) {
   const styles = useStyles2(getStyles);
 
   const dockedMenuBreakpoint = theme.breakpoints.values.xl;
-  const [canShowDockedMenu, setCanShowDockedMenu] = useState(
-    window.matchMedia(`(min-width: ${dockedMenuBreakpoint}px)`).matches
-  );
   useMediaQueryChange({
     breakpoint: dockedMenuBreakpoint,
     onChange: (e) => {
-      setCanShowDockedMenu(e.matches);
+      if (config.featureToggles.dockedMegaMenu) {
+        chrome.setMegaMenuDocked(e.matches, false);
+        chrome.setMegaMenuOpen(
+          e.matches ? store.getBool(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, state.megaMenuOpen) : false
+        );
+      }
     },
   });
 
@@ -82,13 +86,9 @@ export function AppChrome({ children }: Props) {
           {state.layout === PageLayoutType.Standard && state.sectionNav && !config.featureToggles.dockedMegaMenu && (
             <SectionNav model={state.sectionNav} />
           )}
-          {config.featureToggles.dockedMegaMenu &&
-            !state.chromeless &&
-            state.megaMenuDocked &&
-            canShowDockedMenu &&
-            state.megaMenuOpen && (
-              <DockedMegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
-            )}
+          {config.featureToggles.dockedMegaMenu && !state.chromeless && state.megaMenuDocked && state.megaMenuOpen && (
+            <DockedMegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
+          )}
           <div className={styles.pageContainer} id="pageContent">
             {children}
           </div>
@@ -96,7 +96,7 @@ export function AppChrome({ children }: Props) {
       </main>
       {!state.chromeless && (
         <>
-          {config.featureToggles.dockedMegaMenu && (!state.megaMenuDocked || !canShowDockedMenu) ? (
+          {config.featureToggles.dockedMegaMenu ? (
             <AppChromeMenu />
           ) : (
             <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenuOpen(false)} />
