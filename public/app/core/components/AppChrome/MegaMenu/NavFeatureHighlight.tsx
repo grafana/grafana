@@ -20,15 +20,15 @@ export const NavFeatureHighlight = ({ children }: Props): JSX.Element => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    highlight: css`
-      background-color: ${theme.colors.success.main};
-      border-radius: ${theme.shape.radius.circle};
-      width: 6px;
-      height: 6px;
-      display: inline-block;
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-    `,
+    highlight: css({
+      backgroundColor: theme.colors.success.main,
+      borderRadius: theme.shape.radius.circle,
+      width: '6px',
+      height: '6px',
+      display: 'inline-block',
+      position: 'absolute',
+      top: '50%',
+      transform: 'translateY(-50%)',
+    }),
   };
 };
