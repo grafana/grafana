@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useToggle, useScroll } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -68,33 +68,15 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
     });
   };
 
-  const outlineItemsWithBoundingClient = useMemo(() => {
-    return outlineItems.map((item) => {
-      const el = item.ref?.getBoundingClientRect();
-
-      return {
-        ...item,
-        top: el?.top,
-      };
-    });
-  }, [outlineItems]);
-
   useEffect(() => {
-    const items = outlineItemsWithBoundingClient.map((item) => {
-      const el = item.ref?.getBoundingClientRect();
+    const activeItem = outlineItems.find((item) => {
+      const top = item?.ref?.getBoundingClientRect().top;
 
-      return {
-        ...item,
-        top: el?.top,
-      };
-    });
-
-    const activeItem = items.find((item) => {
-      if (!item.top) {
+      if (top === undefined) {
         return false;
       }
 
-      return item?.top >= 0;
+      return top >= 0;
     });
 
     if (!activeItem) {
@@ -102,7 +84,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
     }
 
     setActiveItemId(activeItem.id);
-  }, [outlineItemsWithBoundingClient, verticalScroll]);
+  }, [outlineItems, verticalScroll]);
 
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>
@@ -120,7 +102,6 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
           {outlineItems.map((item) => {
             return (
               <ContentOutlineItemButton
-                // ... other props
                 key={item.id}
                 title={expanded ? item.title : undefined}
                 className={styles.buttonStyles}
