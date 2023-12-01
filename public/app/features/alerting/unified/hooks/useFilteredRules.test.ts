@@ -166,6 +166,40 @@ describe('filterRules', function () {
     expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
   });
 
+  it('should be able to combine multiple predicates with AND', () => {
+    const rules = [
+      mockCombinedRule({
+        name: 'Memory too low',
+        labels: { team: 'operations', region: 'EMEA' },
+        promRule: mockPromAlertingRule({
+          health: RuleHealth.Ok,
+        }),
+      }),
+      mockCombinedRule({
+        name: 'Memory too low',
+        labels: { team: 'operations', region: 'NASA' },
+        promRule: mockPromAlertingRule({
+          health: RuleHealth.Ok,
+        }),
+      }),
+    ];
+
+    const ns = mockCombinedRuleNamespace({
+      groups: [mockCombinedRuleGroup('Resources usage group', rules)],
+    });
+
+    const filtered = filterRules(
+      [ns],
+      getFilter({
+        ruleHealth: RuleHealth.Ok,
+        labels: ['team=operations', 'region=EMEA'],
+      })
+    );
+
+    expect(filtered[0]?.groups[0]?.rules).toHaveLength(1);
+    expect(filtered[0]?.groups[0]?.rules[0]?.name).toBe('Memory too low');
+  });
+
   // Typos there are deliberate to test the fuzzy search
   it.each(['nasa', 'alrt rul', 'nasa ruls'])('should filter out rules by namespace = "%s"', (namespaceFilter) => {
     const cpuRule = mockCombinedRule({ name: 'High CPU usage' });
