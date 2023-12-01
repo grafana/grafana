@@ -19,9 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-const (
-	gitHubProviderName = "github"
-)
+const gitHubProviderName = "github"
 
 var ExtraGithubSettingKeys = []string{allowedOrganizationsKey, teamIdsKey}
 
