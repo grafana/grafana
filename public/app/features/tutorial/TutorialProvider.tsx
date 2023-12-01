@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
 import { TutorialOverlay } from './TutorialOverlay';
+import { tutorialSteps } from './hardCodedSteps';
 import {
-  tutorialSteps,
   waitForElement,
   type ChangeAction,
   type ClickAction,
@@ -21,7 +21,6 @@ export const TutorialProvider = () => {
   }, [stepIndex]);
 
   const onReady = useCallback(() => {
-    console.log(`onReady`);
     setShowTooltip(true);
   }, []);
 

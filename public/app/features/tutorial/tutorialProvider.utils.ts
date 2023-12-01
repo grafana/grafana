@@ -27,61 +27,44 @@ export type ChangeAction = RequiredActionBase & {
 
 export type RequiredAction = ClickAction | ChangeAction;
 
-export const tutorialSteps: Step[] = [
-  {
-    route: `/explore`,
-    target: `[data-testid*="Select a data source"]`,
-    title: `Let's get started`,
-    content: 'Pick the prometheus datasource!',
-    requiredActions: [
-      {
-        target: `[data-testid*="Select a data source"]`,
-        action: 'change',
-        attribute: {
-          name: 'placeholder',
-          value: 'grafanacloud-ckbedwellksix-prom',
-        },
-      },
-    ],
-  },
-  {
-    route: `/explore`,
-    target: `[data-testid*="Select a data source"]`,
-    title: `The prometheus datasource is selected`,
-    content: `Awesome, let's take a look at what you can do next!`,
-  },
-  {
-    route: `/explore`,
-    target: `[aria-label="Query patterns"]`,
-    title: `Turbo charge`,
-    content: `This is the 'Kick start your query' button. It will help you get started with your first query!`,
-  },
-  {
-    route: `/explore`,
-    target: `[aria-label="Toggle switch"]`,
-    title: `ELI5`,
-    content: `Give it a go!`,
-    requiredActions: [
-      {
-        target: `[aria-label="Toggle switch"]`,
-        action: 'click',
-      },
-    ],
-  },
-];
-
 export function waitForElement<T extends Element = Element>(selector: string): Promise<T> {
   return new Promise((resolve) => {
     const interval = setInterval(() => {
       const element = document.querySelector<T>(selector);
-      if (element && element.getBoundingClientRect().width > 0) {
-        clearInterval(interval);
 
-        requestAnimationFrame(() => {
-          resolve(element);
+      if (element) {
+        hasElementStoppedAnimating(element).then(() => {
+          clearInterval(interval);
+
+          requestAnimationFrame(() => {
+            console.log(element);
+            resolve(element);
+          });
         });
       }
     }, 30);
+  });
+}
+
+function hasElementStoppedAnimating(element: Element) {
+  return new Promise((resolve) => {
+    let lastX: number;
+    let lastY: number;
+
+    const interval = setInterval(() => {
+      const currentX = element.getBoundingClientRect().x;
+      const currentY = element.getBoundingClientRect().y;
+
+      if (lastX !== currentX || lastY !== currentY) {
+        lastX = currentX;
+        lastY = currentY;
+      }
+
+      if (currentX === lastX && currentY === lastY) {
+        clearInterval(interval);
+        resolve(false);
+      }
+    }, 150);
   });
 }
 
