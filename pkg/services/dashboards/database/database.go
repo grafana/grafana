@@ -912,6 +912,7 @@ func (d *dashboardStore) GetDashboards(ctx context.Context, query *dashboards.Ge
 			session = sess.Where("org_id = ?", query.OrgID)
 		}
 
+		session = sess.Where("is_deleted = ?", d.store.GetDialect().BooleanStr(false))
 		err := session.Find(&dashboards)
 		return err
 	})
@@ -977,6 +978,8 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 			NestedFoldersEnabled: d.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders),
 		})
 	}
+
+	filters = append(filters, searchstore.DeletedFilter{Dialect: d.store.GetDialect(), Deleted: query.IsDeleted})
 
 	var res []dashboards.DashboardSearchProjection
 	sb := &searchstore.Builder{Dialect: d.store.GetDialect(), Filters: filters, Features: d.features}

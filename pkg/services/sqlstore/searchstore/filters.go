@@ -198,3 +198,12 @@ var _ model.FilterWhere = &FolderWithAlertsFilter{}
 func (f FolderWithAlertsFilter) Where() (string, []any) {
 	return "EXISTS (SELECT 1 FROM alert_rule WHERE alert_rule.namespace_uid = dashboard.uid)", nil
 }
+
+type DeletedFilter struct {
+	Dialect migrator.Dialect
+	Deleted bool
+}
+
+func (f DeletedFilter) Where() (string, []any) {
+	return "dashboard.is_deleted = " + f.Dialect.BooleanStr(f.Deleted), nil
+}
