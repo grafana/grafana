@@ -59,6 +59,10 @@ describe('FilterByValue transformer', () => {
       },
     };
 
+    // Take a (JSON-esque) config and use it to run transformDataFrame
+    // I'm looking for something else: actually a couple of things:
+    // 1. Where is the UI converted into the config, and can I also generate a PRQL query from it?
+    // 2. What does this test become, if it is configured with a PRQL query instead?
     await expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith((received) => {
       const processed = received[0];
 
