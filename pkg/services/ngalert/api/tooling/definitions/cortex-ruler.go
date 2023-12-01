@@ -408,12 +408,14 @@ const (
 
 // swagger: model
 type PostableNotificationSettings struct {
-	Receiver string `yaml:"receiver,omitempty" json:"receiver,omitempty"`
+	Receiver string `json:"receiver"`
 
-	GroupBy        []string        `yaml:"group_by,omitempty" json:"group_by,omitempty"`
-	GroupWait      *model.Duration `yaml:"group_wait,omitempty" json:"group_wait,omitempty"`
-	GroupInterval  *model.Duration `yaml:"group_interval,omitempty" json:"group_interval,omitempty"`
-	RepeatInterval *model.Duration `yaml:"repeat_interval,omitempty" json:"repeat_interval,omitempty"`
+	// Optional settings
+	GroupBy           []string        `json:"group_by,omitempty"`
+	GroupWait         *model.Duration `json:"group_wait,omitempty"`
+	GroupInterval     *model.Duration `json:"group_interval,omitempty"`
+	RepeatInterval    *model.Duration `json:"repeat_interval,omitempty"`
+	MuteTimeIntervals []string        `json:"mute_time_intervals,omitempty"`
 }
 
 // swagger:model
@@ -432,10 +434,11 @@ type PostableGrafanaRule struct {
 type GettableNotificationSettings struct {
 	Receiver string `yaml:"receiver,omitempty" json:"receiver,omitempty"`
 
-	GroupBy        []string        `yaml:"group_by,omitempty" json:"group_by,omitempty"`
-	GroupWait      *model.Duration `yaml:"group_wait,omitempty" json:"group_wait,omitempty"`
-	GroupInterval  *model.Duration `yaml:"group_interval,omitempty" json:"group_interval,omitempty"`
-	RepeatInterval *model.Duration `yaml:"repeat_interval,omitempty" json:"repeat_interval,omitempty"`
+	GroupBy           []string        `yaml:"group_by,omitempty" json:"group_by,omitempty"`
+	GroupWait         *model.Duration `yaml:"group_wait,omitempty" json:"group_wait,omitempty"`
+	GroupInterval     *model.Duration `yaml:"group_interval,omitempty" json:"group_interval,omitempty"`
+	RepeatInterval    *model.Duration `yaml:"repeat_interval,omitempty" json:"repeat_interval,omitempty"`
+	MuteTimeIntervals []string        `yaml:"mute_time_intervals,omitempty" json:"mute_time_intervals,omitempty"`
 }
 
 // swagger:model

@@ -242,11 +242,12 @@ func convertGettableNotificationSettingsToPostable(gettable *apimodels.GettableN
 		return nil
 	}
 	return &apimodels.PostableNotificationSettings{
-		Receiver:       gettable.Receiver,
-		GroupBy:        gettable.GroupBy,
-		GroupWait:      gettable.GroupWait,
-		GroupInterval:  gettable.GroupInterval,
-		RepeatInterval: gettable.RepeatInterval,
+		Receiver:          gettable.Receiver,
+		GroupBy:           gettable.GroupBy,
+		GroupWait:         gettable.GroupWait,
+		GroupInterval:     gettable.GroupInterval,
+		RepeatInterval:    gettable.RepeatInterval,
+		MuteTimeIntervals: gettable.MuteTimeIntervals,
 	}
 }
 
