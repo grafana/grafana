@@ -4,6 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { AppEvents, NavModelItem } from '@grafana/data';
 import { getAppEvents, getBackendSrv, isFetchError } from '@grafana/runtime';
 import { Button, Field, Form, Input, InputControl, LinkButton, Select, Stack, Switch } from '@grafana/ui';
+import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { Page } from 'app/core/components/Page/Page';
 
 import { StoreState } from '../../types';
@@ -65,11 +66,12 @@ export const GitHubConfigPage = ({ settings }: Props) => {
       <Page.Contents>
         <Stack grow={1} direction={'column'}>
           <Form onSubmit={handleSubmit} defaultValues={dataToDTO(settings)}>
-            {({ register, errors, control, setValue, watch }) => {
+            {({ register, errors, control, setValue, watch, formState }) => {
               const teamIdOptions = watch('teamIds');
               const orgOptions = watch('allowedOrganizations');
               return (
                 <>
+                  <FormPrompt confirmRedirect={formState.isDirty} onDiscard={() => {}} />
                   <Field label="Enabled">
                     <Switch {...register('enabled')} id="enabled" />
                   </Field>
