@@ -1035,6 +1035,30 @@
       "passwords-must-match": "Päşşŵőřđş mūşŧ mäŧčĥ"
     }
   },
+  "query-editor": {
+    "editor-header": {
+      "builder-mode": "ßūįľđęř",
+      "code-mode": "Cőđę",
+      "filter": "Fįľŧęř",
+      "format": "Főřmäŧ",
+      "group": "Ğřőūp",
+      "invalid-query": "Ÿőūř qūęřy įş įŉväľįđ. Cĥęčĸ þęľőŵ ƒőř đęŧäįľş. <0 /> Ħőŵęvęř, yőū čäŉ şŧįľľ řūŉ ŧĥįş qūęřy.",
+      "order": "Øřđęř",
+      "preview": "Přęvįęŵ",
+      "run-query": "Ŗūŉ qūęřy"
+    },
+    "editor-row": {
+      "dataset": "Đäŧäşęŧ",
+      "loading-tables-placeholder": "Ŀőäđįŉģ ŧäþľęş",
+      "select-tables-placeholder": "Ŝęľęčŧ ŧäþľę",
+      "table": "Ŧäþľę"
+    },
+    "sql-select-row": {
+      "aggregation": "Åģģřęģäŧįőŉ",
+      "alias": "Åľįäş",
+      "column": "Cőľūmŉ"
+    }
+  },
   "query-operation": {
     "header": {
       "collapse-row": "Cőľľäpşę qūęřy řőŵ",

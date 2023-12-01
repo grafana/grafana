@@ -1037,26 +1037,26 @@
   },
   "query-editor": {
     "editor-header": {
-      "format": "Format",
+      "builder-mode": "Builder",
+      "code-mode": "Code",
       "filter": "Filter",
+      "format": "Format",
       "group": "Group",
+      "invalid-query": "Your query is invalid. Check below for details. <0 /> However, you can still run this query.",
       "order": "Order",
       "preview": "Preview",
-      "run-query": "Run query",
-      "invalid-query": "Your query is invalid. Check below for details. <0 /> However, you can still run this query.",
-      "builder-mode": "Builder",
-      "code-mode": "Code"
+      "run-query": "Run query"
     },
     "editor-row": {
       "dataset": "Dataset",
-      "table": "Table",
-      "select-table-placeholder": "Select table",
-      "loading-tables-placeholder": "Loading tables"
+      "loading-tables-placeholder": "Loading tables",
+      "select-tables-placeholder": "Select table",
+      "table": "Table"
     },
     "sql-select-row": {
-      "column": "Column",
       "aggregation": "Aggregation",
-      "alias": "Alias"
+      "alias": "Alias",
+      "column": "Column"
     }
   },
   "query-operation": {

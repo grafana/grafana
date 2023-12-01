@@ -1035,6 +1035,30 @@
       "passwords-must-match": "Passwörter müssen übereinstimmen"
     }
   },
+  "query-editor": {
+    "editor-header": {
+      "builder-mode": "",
+      "code-mode": "",
+      "filter": "",
+      "format": "",
+      "group": "",
+      "invalid-query": "",
+      "order": "",
+      "preview": "",
+      "run-query": ""
+    },
+    "editor-row": {
+      "dataset": "",
+      "loading-tables-placeholder": "",
+      "select-tables-placeholder": "",
+      "table": ""
+    },
+    "sql-select-row": {
+      "aggregation": "",
+      "alias": "",
+      "column": ""
+    }
+  },
   "query-operation": {
     "header": {
       "collapse-row": "Abfragezeile einklappen",
