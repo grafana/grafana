@@ -76,6 +76,8 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
   }, [show, panel, data]);
 
   const onApplyPanelModel = useCallback(() => {
+    // somehow, does this call setTransformations?
+    // I think I need to figure this out.
     if (panel && dashboard && text) {
       try {
         if (!dashboard!.meta.canEdit) {

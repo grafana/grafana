@@ -645,9 +645,21 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   }
 
   setTransformations(transformations: DataTransformerConfig[]) {
+    console.log('==============setTransformations===========');
+
+    // ONE OPTION
+    // add a field `PRQL-expr` to the transformations object
+    // populate it here
+    // seems a good option, so it is set before we run .resendLastResult()
     this.transformations = transformations;
+    console.log(this.transformations);
+
+    // resend the last result to the query runner. ie. update the data-frame
     this.resendLastResult();
     this.configRev++;
+
+    // I think this sync's the badge count in the tab header
+    // Transform data (3)
     this.events.publish(new PanelTransformationsChangedEvent());
   }
 
