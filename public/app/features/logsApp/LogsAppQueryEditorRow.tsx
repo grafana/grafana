@@ -19,11 +19,12 @@ import {
   PanelEvents,
   QueryResultMetaNotice,
   TimeRange,
+  dateTime,
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { AngularComponent, getAngularLoader, getDataSourceSrv } from '@grafana/runtime';
-import { Badge, ErrorBoundaryAlert } from '@grafana/ui';
+import { Badge, ErrorBoundaryAlert, InlineField, TimeRangeInput } from '@grafana/ui';
 import {
   QueryOperationRow,
   QueryOperationRowRenderProps,
@@ -60,6 +61,8 @@ interface Props<TQuery extends DataQuery> {
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
   collapsable?: boolean;
+  range?: TimeRange;
+  updateTimeRange: (range: TimeRange) => void;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -261,7 +264,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 
   renderPluginEditor = () => {
-    const { query, onChange, queries, onRunQuery, onAddQuery, app = CoreApp.PanelEditor, history } = this.props;
+    const { query, onChange, queries, onRunQuery, onAddQuery, app = CoreApp.PanelEditor, history, range } = this.props;
     const { datasource, data } = this.state;
 
     if (this.isWaitingForDatasourceToLoad()) {
@@ -286,7 +289,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
               onRunQuery={onRunQuery}
               onAddQuery={onAddQuery}
               data={data}
-              range={getTimeSrv().timeRange()}
+              range={range ?? getDefaultLogsTimeRange()}
               queries={queries}
               app={app}
               history={history}
@@ -416,7 +419,11 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   renderHeader = (props: QueryOperationRowRenderProps) => {
-    const { alerting, query, dataSource, onChangeDataSource, onChange, queries, renderHeaderExtras } = this.props;
+    const { alerting, query, dataSource, onChangeDataSource, onChange, queries, range, updateTimeRange } = this.props;
+    // todo - figure out how to make it visible
+    const renderHeaderExtras = () => (
+      <TimeRangeInput value={range ?? getDefaultLogsTimeRange()} onChange={updateTimeRange} />
+    );
 
     return (
       <QueryEditorRowHeader
@@ -539,5 +546,15 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
     error,
     errors: error ? [error] : undefined,
     timeRange,
+  };
+}
+
+export function getDefaultLogsTimeRange(): TimeRange {
+  const now = dateTime();
+
+  return {
+    from: dateTime(now).subtract(30, 'minute'),
+    to: now,
+    raw: { from: 'now-30m', to: 'now' },
   };
 }
