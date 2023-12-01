@@ -587,12 +587,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
     return (
       <ContentOutlineContextProvider>
-        <ExploreToolbar
-          exploreId={exploreId}
-          onChangeTime={this.onChangeTime}
-          onContentOutlineToogle={this.onContentOutlineToogle}
-          isContentOutlineOpen={contentOutlineVisible}
-        />
         <div
           style={{
             position: 'relative',
@@ -618,21 +612,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                       <PanelContainer className={styles.queryContainer}>
                         {correlationsBox}
                         <QueryRows exploreId={exploreId} />
-                        <SecondaryActions
-                          // do not allow people to add queries with potentially different datasources in correlations editor mode
-                          addQueryRowButtonDisabled={
-                            isLive || (isCorrelationsEditorMode && datasourceInstance.meta.mixed)
-                          }
-                          // We cannot show multiple traces at the same time right now so we do not show add query button.
-                          //TODO:unification
-                          addQueryRowButtonHidden={false}
-                          richHistoryRowButtonHidden={richHistoryRowButtonHidden}
-                          richHistoryButtonActive={showRichHistory}
-                          queryInspectorButtonActive={showQueryInspector}
-                          onClickAddQueryRowButton={this.onClickAddQueryRowButton}
-                          onClickRichHistoryButton={this.toggleShowRichHistory}
-                          onClickQueryInspectorButton={this.toggleShowQueryInspector}
-                        />
                         <ResponseErrorContainer exploreId={exploreId} />
                       </PanelContainer>
                     </ContentOutlineItem>
