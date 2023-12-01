@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
-import { useToggle } from 'react-use';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useToggle, useScroll } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -37,6 +37,8 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
   const [expanded, toggleExpanded] = useToggle(false);
   const [activeItemId, setActiveItemId] = useState<string | undefined>(outlineItems[0]?.id);
   const styles = useStyles2((theme) => getStyles(theme));
+  const scrollerRef = useRef(scroller as HTMLElement);
+  const { y: verticalScroll } = useScroll(scrollerRef);
 
   const scrollIntoView = (ref: HTMLElement | null, buttonTitle: string) => {
     let scrollValue = 0;
@@ -66,29 +68,41 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
     });
   };
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        console.log('entries', entries);
-        entries.forEach((entry) => {
-          console.log('entry', entry);
-          if (entry.isIntersecting) {
-            const activeItem = outlineItems.find((item) => item.ref === entry.target);
-            setActiveItemId(activeItem?.id);
-          }
-        });
-      },
-      { root: scroller, threshold: 1 }
-    );
+  const outlineItemsWithBoundingClient = useMemo(() => {
+    return outlineItems.map((item) => {
+      const el = item.ref?.getBoundingClientRect();
 
-    outlineItems.forEach((item) => {
-      if (item.ref) {
-        observer.observe(item.ref);
-      }
+      return {
+        ...item,
+        top: el?.top,
+      };
+    });
+  }, [outlineItems]);
+
+  useEffect(() => {
+    const items = outlineItemsWithBoundingClient.map((item) => {
+      const el = item.ref?.getBoundingClientRect();
+
+      return {
+        ...item,
+        top: el?.top,
+      };
     });
 
-    return () => observer.disconnect();
-  }, [outlineItems, scroller]);
+    const activeItem = items.find((item) => {
+      if (!item.top) {
+        return false;
+      }
+
+      return item?.top >= 0;
+    });
+
+    if (!activeItem) {
+      return;
+    }
+
+    setActiveItemId(activeItem.id);
+  }, [outlineItemsWithBoundingClient, verticalScroll]);
 
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>
@@ -103,20 +117,23 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
             aria-expanded={expanded}
           />
 
-          {outlineItems.map((item) => (
-            <ContentOutlineItemButton
-              key={item.id}
-              title={expanded ? item.title : undefined}
-              className={styles.buttonStyles}
-              icon={item.icon}
-              onClick={() => {
-                scrollIntoView(item.ref, item.title);
-                setActiveItemId(item.id);
-              }}
-              tooltip={!expanded ? item.title : undefined}
-              isActive={activeItemId === item.id}
-            />
-          ))}
+          {outlineItems.map((item) => {
+            return (
+              <ContentOutlineItemButton
+                // ... other props
+                key={item.id}
+                title={expanded ? item.title : undefined}
+                className={styles.buttonStyles}
+                icon={item.icon}
+                onClick={() => {
+                  scrollIntoView(item.ref, item.title);
+                  setActiveItemId(item.id);
+                }}
+                tooltip={!expanded ? item.title : undefined}
+                isActive={activeItemId === item.id}
+              />
+            );
+          })}
         </div>
       </CustomScrollbar>
     </PanelContainer>
