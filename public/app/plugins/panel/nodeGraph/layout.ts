@@ -5,7 +5,7 @@ import useMountedState from 'react-use/lib/useMountedState';
 import { Field } from '@grafana/data';
 import { config as grafanaConfig } from '@grafana/runtime';
 
-import { createWorker, createDOTWorker, createMsaglWorker } from './createLayoutWorker';
+import { createWorker, createMsaglWorker } from './createLayoutWorker';
 import { EdgeDatum, EdgeDatumLayout, NodeDatum } from './types';
 import { useNodeLimit } from './useNodeLimit';
 import { graphBounds } from './utils';
@@ -86,13 +86,12 @@ export function useLayout(
       return;
     }
 
-    // DOT lyout is better but also more expensive and so we switch to default force based layout for bigger graphs.
-    // see https://docs.google.com/spreadsheets/d/1shQv9wXkYJrPmaduozUCrGEqs34w7725mNeFXbWTe14/edit#gid=0 for some
-    // comparison.
-    const layoutType = grafanaConfig.featureToggles.nodeGraphDotLayout && rawNodes.length <= 200 ? 'dot' : 'default';
+    // Layered layout is better but also more expensive, so we switch to default force based layout for bigger graphs.
+    const layoutType =
+      grafanaConfig.featureToggles.nodeGraphDotLayout && rawNodes.length <= 500 ? 'layered' : 'default';
 
     setLoading(true);
-    // This is async but as I wanted to still run the sync grid layout and you cannot return promise from effect so
+    // This is async but as I wanted to still run the sync grid layout, and you cannot return promise from effect so
     // having callback seems ok here.
     const cancel = layout(rawNodes, rawEdges, layoutType, ({ nodes, edges }) => {
       if (isMounted()) {
@@ -156,12 +155,10 @@ export function useLayout(
 function layout(
   nodes: NodeDatum[],
   edges: EdgeDatum[],
-  engine: 'default' | 'dot',
+  engine: 'default' | 'layered',
   done: (data: { nodes: NodeDatum[]; edges: EdgeDatum[] }) => void
 ) {
-  // const worker = engine === 'default' ? createWorker() : createDOTWorker();
-  const worker = createMsaglWorker();
-  // const worker = createDOTWorker();
+  const worker = engine === 'default' ? createWorker() : createMsaglWorker();
 
   worker.onmessage = (event: MessageEvent<{ nodes: NodeDatum[]; edges: EdgeDatumLayout[] }>) => {
     for (let i = 0; i < nodes.length; i++) {

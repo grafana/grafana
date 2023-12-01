@@ -3596,17 +3596,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@hpcc-js/wasm@npm:^2.14.1":
-  version: 2.15.0
-  resolution: "@hpcc-js/wasm@npm:2.15.0"
-  dependencies:
-    yargs: "npm:17.7.2"
-  bin:
-    dot-wasm: bin/dot-wasm.js
-  checksum: 9b4f9113f191ca4d4850e2b54e633cfc11e6ca591d6f39257ed34256d0c1f378eb94d96558fafa6e8e0cc4dd63ce80fecda10500a4bd9c6b5ae8ece6888d8a0b
-  languageName: node
-  linkType: hard
-
 "@humanwhocodes/config-array@npm:^0.11.10, @humanwhocodes/config-array@npm:^0.11.13":
   version: 0.11.13
   resolution: "@humanwhocodes/config-array@npm:0.11.13"
@@ -17540,7 +17529,6 @@ __metadata:
     "@grafana/schema": "workspace:*"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
     "@grafana/ui": "workspace:*"
-    "@hpcc-js/wasm": "npm:^2.14.1"
     "@kusto/monaco-kusto": "npm:^7.4.0"
     "@leeoniya/ufuzzy": "npm:1.0.8"
     "@lezer/common": "npm:1.0.2"
@@ -31428,7 +31416,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yargs@npm:17.7.2, yargs@npm:^17.3.1, yargs@npm:^17.5.1, yargs@npm:^17.6.2":
+"yargs@npm:^17.3.1, yargs@npm:^17.5.1, yargs@npm:^17.6.2":
   version: 17.7.2
   resolution: "yargs@npm:17.7.2"
   dependencies:
