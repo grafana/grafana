@@ -148,11 +148,11 @@ func TestParseConfigFromSystem_EnvVarsOverridIniFileSettings(t *testing.T) {
 	oauthInfo, ok := result.(*social.OAuthInfo)
 	require.True(t, ok)
 
-	expectedOAuthInfoWithOverrides := expectedOAuthInfo
+	expectedOAuthInfoWithOverrides := *expectedOAuthInfo
 	expectedOAuthInfoWithOverrides.Enabled = false
 	expectedOAuthInfoWithOverrides.SkipOrgRoleSync = false
 
-	require.Equal(t, expectedOAuthInfo, oauthInfo)
+	require.Equal(t, expectedOAuthInfoWithOverrides, *oauthInfo)
 }
 
 func setupEnvVars(t *testing.T) {
