@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -51,6 +52,17 @@ func ProvideService(
 // alerting type as determined by the kvstore and configuration, respectively.
 func (ms *migrationService) Run(ctx context.Context) error {
 	var errMigration error
+
+	// check if migration is necessary
+	migrate, err := ms.needMigration(ctx)
+	if err != nil {
+		return fmt.Errorf("checking if migration is needed: %w", err)
+	}
+	if !migrate {
+		// set current alerting type to avoid extra checks in future?
+		return nil
+	}
+
 	errLock := ms.lock.LockExecuteAndRelease(ctx, actionName, time.Minute*10, func(ctx context.Context) {
 		ms.log.Info("Starting")
 		errMigration = ms.store.InTransaction(ctx, func(ctx context.Context) error {
@@ -186,4 +198,28 @@ func (ms *migrationService) migrateAllOrgs(ctx context.Context) error {
 		}
 	}
 	return nil
+}
+
+func (ms *migrationService) needMigration(ctx context.Context) (bool, error) {
+	result := true
+	err := ms.store.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		currentType, err := ms.migrationStore.GetCurrentAlertingType(ctx)
+		if err != nil {
+			return fmt.Errorf("getting migration status: %w", err)
+		}
+		transition := newTransition(currentType, ms.cfg)
+		if transition.isNoChange() {
+			result = false
+			return nil
+		}
+		if transition.isUpgrading() {
+			hasAlerts, err := ms.migrationStore.HasLegacyAlerts(ctx)
+			if err != nil {
+				return err
+			}
+			result = hasAlerts
+		}
+		return nil
+	})
+	return result, err
 }

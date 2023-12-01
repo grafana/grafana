@@ -44,6 +44,7 @@ type Store interface {
 	GetNotificationChannels(ctx context.Context, orgID int64) ([]*legacymodels.AlertNotification, error)
 
 	GetOrgDashboardAlerts(ctx context.Context, orgID int64) (map[int64][]*DashAlert, int, error)
+	HasLegacyAlerts(ctx context.Context) (bool, error)
 
 	GetDashboardPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error)
 	GetFolderPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error)
@@ -457,6 +458,19 @@ func (ms *migrationStore) GetOrgDashboardAlerts(ctx context.Context, orgID int64
 		})
 	}
 	return mappedAlerts, len(alerts), nil
+}
+
+func (ms *migrationStore) HasLegacyAlerts(ctx context.Context) (bool, error) {
+	empty := true
+	err := ms.store.WithDbSession(ctx, func(sess *db.Session) error {
+		qty, err := sess.Count(legacymodels.Alert{})
+		if err != nil {
+			return err
+		}
+		empty = qty > 0
+		return nil
+	})
+	return empty, err
 }
 
 func (ms *migrationStore) GetDashboardPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error) {
