@@ -37,14 +37,16 @@ const valuesToArray = (values: Array<SelectableValue<string>>) => {
   return values.map(({ value }) => value).join(',');
 };
 
-export const dtoToData = (dto: SSOProviderDTO, data?: SSOProvider) => {
+// Convert the DTO to the data format used by the API
+export function dtoToData<T extends Partial<SSOProviderDTO>>(dto: T, data?: SSOProvider) {
+  const settings = {
+    ...dto,
+    ...(dto.teamIds ? { teamIds: valuesToArray(dto.teamIds) } : {}),
+    ...(dto.allowedOrganizations ? { allowedOrganizations: valuesToArray(dto.allowedOrganizations) } : {}),
+  };
   if (!data) {
     return {
-      settings: {
-        ...dto,
-        teamIds: valuesToArray(dto.teamIds),
-        allowedOrganizations: valuesToArray(dto.allowedOrganizations),
-      },
+      settings,
     };
   }
   return {
@@ -52,8 +54,7 @@ export const dtoToData = (dto: SSOProviderDTO, data?: SSOProvider) => {
     settings: {
       ...data.settings,
       ...dto,
-      teamIds: valuesToArray(dto.teamIds),
-      allowedOrganizations: valuesToArray(dto.allowedOrganizations),
+      ...settings,
     },
   };
-};
+}

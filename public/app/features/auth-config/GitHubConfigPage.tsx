@@ -12,6 +12,7 @@ import { StoreState } from '../../types';
 import { SSOProviderDTO } from './types';
 import { dataToDTO, dtoToData } from './utils';
 
+const appEvents = getAppEvents();
 const pageNav: NavModelItem = {
   text: 'GitHub',
   subTitle:
@@ -19,11 +20,9 @@ const pageNav: NavModelItem = {
   icon: 'github',
   id: 'GitHub',
 };
-type ProviderData = Pick<
-  SSOProviderDTO,
-  'name' | 'type' | 'clientId' | 'clientSecret' | 'enabled' | 'teamIds' | 'allowedOrganizations'
->;
-const appEvents = getAppEvents();
+
+type ProviderData = Pick<SSOProviderDTO, 'clientId' | 'clientSecret' | 'enabled' | 'teamIds' | 'allowedOrganizations'>;
+
 const connector = connect(mapStateToProps);
 export type Props = ConnectedProps<typeof connector>;
 
@@ -38,7 +37,7 @@ export const GitHubConfigPage = ({ settings }: Props) => {
   const [isSaving, setIsSaving] = useState(false);
   const handleSubmit = async (data: ProviderData) => {
     setIsSaving(true);
-    const requestData = dtoToData(data, settings);
+    const requestData = dtoToData<ProviderData>(data, settings);
     try {
       await getBackendSrv().post('/api/v1/sso-settings', requestData);
       appEvents.publish({
