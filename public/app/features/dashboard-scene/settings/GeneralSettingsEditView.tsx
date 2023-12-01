@@ -161,21 +161,6 @@ export class GeneralSettingsEditView
     const { timeZone, weekStart } = model.getTimeRange().useState();
     const { intervals } = model.getRefreshPicker()?.useState() || {};
 
-    const {
-      onTitleChange,
-      onDescriptionChange,
-      onTagsChange,
-      onFolderChange,
-      onEditableChange,
-      onTimeZoneChange,
-      onWeekStartChange,
-      onRefreshIntervalChange,
-      onNowDelayChange,
-      onHideTimePickerChange,
-      onLiveNowChange,
-      onTooltipChange,
-    } = model;
-
     return (
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
         <NavToolbarActions dashboard={model.getDashboard()} />
@@ -198,7 +183,7 @@ export class GeneralSettingsEditView
                 id="title-input"
                 name="title"
                 defaultValue={title}
-                onBlur={(e: ChangeEvent<HTMLInputElement>) => onTitleChange(e.target.value)}
+                onBlur={(e: ChangeEvent<HTMLInputElement>) => model.onTitleChange(e.target.value)}
               />
             </Field>
             <Field
@@ -218,16 +203,16 @@ export class GeneralSettingsEditView
                 id="description-input"
                 name="description"
                 defaultValue={description}
-                onBlur={(e: ChangeEvent<HTMLTextAreaElement>) => onDescriptionChange(e.target.value)}
+                onBlur={(e: ChangeEvent<HTMLTextAreaElement>) => model.onDescriptionChange(e.target.value)}
               />
             </Field>
             <Field label={t('dashboard-settings.general.tags-label', 'Tags')}>
-              <TagsInput id="tags-input" tags={tags} onChange={onTagsChange} width={40} />
+              <TagsInput id="tags-input" tags={tags} onChange={model.onTagsChange} width={40} />
             </Field>
             <Field label={t('dashboard-settings.general.folder-label', 'Folder')}>
               <FolderPicker
                 value={meta.folderUid}
-                onChange={onFolderChange}
+                onChange={model.onFolderChange}
                 // TODO deprecated props that can be removed once NestedFolderPicker is enabled by default
                 initialTitle={meta.folderTitle}
                 inputId="dashboard-folder-input"
@@ -243,17 +228,17 @@ export class GeneralSettingsEditView
                 'Set to read-only to disable all editing. Reload the dashboard for changes to take effect'
               )}
             >
-              <RadioButtonGroup value={editable} options={EDITABLE_OPTIONS} onChange={onEditableChange} />
+              <RadioButtonGroup value={editable} options={EDITABLE_OPTIONS} onChange={model.onEditableChange} />
             </Field>
           </Box>
 
           <TimePickerSettings
-            onTimeZoneChange={onTimeZoneChange}
-            onWeekStartChange={onWeekStartChange}
-            onRefreshIntervalChange={onRefreshIntervalChange}
-            onNowDelayChange={onNowDelayChange}
-            onHideTimePickerChange={onHideTimePickerChange}
-            onLiveNowChange={onLiveNowChange}
+            onTimeZoneChange={model.onTimeZoneChange}
+            onWeekStartChange={model.onWeekStartChange}
+            onRefreshIntervalChange={model.onRefreshIntervalChange}
+            onNowDelayChange={model.onNowDelayChange}
+            onHideTimePickerChange={model.onHideTimePickerChange}
+            onLiveNowChange={model.onLiveNowChange}
             refreshIntervals={intervals}
             // TODO: Control visibility of time picker
             // timePickerHidden={timepicker?.state?.hidden}
@@ -278,7 +263,7 @@ export class GeneralSettingsEditView
                 'Controls tooltip and hover highlight behavior across different panels. Reload the dashboard for changes to take effect'
               )}
             >
-              <RadioButtonGroup onChange={onTooltipChange} options={GRAPH_TOOLTIP_OPTIONS} value={graphTooltip} />
+              <RadioButtonGroup onChange={model.onTooltipChange} options={GRAPH_TOOLTIP_OPTIONS} value={graphTooltip} />
             </Field>
           </CollapsableSection>
 
