@@ -59,7 +59,7 @@ const FlameGraphTopTableContainer = React.memo(
         }
       }
       return filteredTable;
-    }, [data, search]); // Add `search` as a dependency
+    }, [data, search]);
 
     const rowHeight = 35;
     // When we use normal layout we size the table to have the same height as the flamegraph to look good side by side.
