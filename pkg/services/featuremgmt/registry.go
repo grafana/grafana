@@ -1315,5 +1315,14 @@ var (
 			RequiresRestart: true,
 			Created:         time.Date(2024, time.January, 10, 12, 0, 0, 0, time.UTC),
 		},
+		{
+			Name:           "alertingQueryOptimization",
+			Description:    "Optimizes eligible queries in order to reduce load on datasources",
+			Stage:          FeatureStageGeneralAvailability,
+			Expression:     "true",
+			Owner:          grafanaAlertingSquad,
+			AllowSelfServe: false,
+			Created:        time.Date(2024, time.January, 10, 12, 0, 0, 0, time.UTC),
+		},
 	}
 )
