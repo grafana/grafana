@@ -1292,6 +1292,9 @@
       "name-error": "姓名是必填项",
       "name-label": "姓名",
       "username-label": "用户名"
+    },
+    "tabs": {
+      "general": ""
     }
   },
   "user-session": {

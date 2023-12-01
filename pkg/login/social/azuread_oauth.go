@@ -22,11 +22,15 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var (
-	errAzureADMissingGroups = &Error{"either the user does not have any group membership or the groups claim is missing from the token."}
+const (
+	AzureADProviderName = "azuread"
+	forceUseGraphAPIKey = "force_use_graph_api" // #nosec G101 not a hardcoded credential
 )
 
-const azureADProviderName = "azuread"
+var (
+	ExtraAzureADSettingKeys = []string{forceUseGraphAPIKey, allowedOrganizationsKey}
+	errAzureADMissingGroups = &Error{"either the user does not have any group membership or the groups claim is missing from the token."}
+)
 
 var _ SocialConnector = (*SocialAzureAD)(nil)
 
@@ -74,12 +78,12 @@ func NewAzureADProvider(settings map[string]any, cfg *setting.Cfg, features *fea
 		return nil, err
 	}
 
-	config := createOAuthConfig(info, cfg, azureADProviderName)
+	config := createOAuthConfig(info, cfg, AzureADProviderName)
 	provider := &SocialAzureAD{
-		SocialBase:           newSocialBase(azureADProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:           newSocialBase(AzureADProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		cache:                cache,
-		allowedOrganizations: util.SplitString(info.Extra["allowed_organizations"]),
-		forceUseGraphAPI:     mustBool(info.Extra["force_use_graph_api"], false),
+		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
+		forceUseGraphAPI:     MustBool(info.Extra[forceUseGraphAPIKey], false),
 		skipOrgRoleSync:      cfg.AzureADSkipOrgRoleSync,
 		// FIXME: Move skipOrgRoleSync to OAuthInfo
 		// skipOrgRoleSync: info.SkipOrgRoleSync
