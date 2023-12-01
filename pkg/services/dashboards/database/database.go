@@ -861,7 +861,7 @@ func (d *dashboardStore) GetDashboard(ctx context.Context, query *dashboards.Get
 			mustCols = append(mustCols, "folder_id")
 		}
 
-		has, err := sess.MustCols(mustCols...).Get(&dashboard)
+		has, err := sess.Where("is_deleted=?", d.store.GetDialect().BooleanStr(false)).MustCols(mustCols...).Get(&dashboard)
 
 		if err != nil {
 			return err
