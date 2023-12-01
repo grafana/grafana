@@ -345,6 +345,11 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 			_, err = serverSection.NewKey("router_logging", "true")
 			require.NoError(t, err)
+
+			databaseSection, err := getOrCreateSection("database")
+			require.NoError(t, err)
+			_, err = databaseSection.NewKey("log_queries", "true")
+			require.NoError(t, err)
 		}
 
 		if o.APIServerStorageType != "" {

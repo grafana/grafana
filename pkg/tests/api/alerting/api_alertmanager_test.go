@@ -45,6 +45,7 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
+		EnableLog:             true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -406,6 +407,7 @@ func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
+		EnableLog:             true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -568,6 +570,7 @@ func TestIntegrationRulerAccess(t *testing.T) {
 		DisableAnonymous:      true,
 		ViewersCanEdit:        true,
 		AppModeProduction:     true,
+		EnableLog:             true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -685,6 +688,7 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 		DisableAnonymous:      true,
 		ViewersCanEdit:        true,
 		AppModeProduction:     true,
+		EnableLog:             true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -847,6 +851,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		EnableQuota:           true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
+		EnableLog:             true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -1852,6 +1857,7 @@ func TestIntegrationAlertmanagerStatus(t *testing.T) {
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		AppModeProduction:     true,
+		EnableLog:             true,
 	})
 
 	grafanaListedAddr, _ := testinfra.StartGrafana(t, dir, path)
@@ -1919,6 +1925,7 @@ func TestIntegrationQuota(t *testing.T) {
 		EnableQuota:           true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
+		EnableLog:             true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -2121,6 +2128,7 @@ func TestIntegrationEval(t *testing.T) {
 		EnableQuota:           true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
+		EnableLog:             true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)

@@ -10,9 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/expr"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -37,6 +38,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 		NGAlertAdminConfigPollInterval: 2 * time.Second,
 		UnifiedAlertingDisabledOrgs:    []int64{disableOrgID}, // disable unified alerting for organisation 3
 		AppModeProduction:              true,
+		EnableLog:                      true,
 	})
 
 	grafanaListedAddr, s := testinfra.StartGrafana(t, dir, path)
