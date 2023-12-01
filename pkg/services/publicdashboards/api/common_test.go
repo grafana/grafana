@@ -62,6 +62,11 @@ func setupTestServer(
 		features = featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards)
 	}
 
+	if cfg == nil {
+		cfg = setting.NewCfg()
+		cfg.PublicDashboardsEnabled = true
+	}
+
 	// build api, this will mount the routes at the same time if the feature is enabled
 	ProvideApi(service, rr, ac, features, &Middleware{}, cfg)
 

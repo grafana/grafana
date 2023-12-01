@@ -98,9 +98,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 			service.On("GetPublicDashboardForView", mock.Anything, mock.AnythingOfType("string")).
 				Return(test.DashboardResult, test.Err).Maybe()
 
-			cfg := setting.NewCfg()
-
-			testServer := setupTestServer(t, cfg, service, anonymousUser, true)
+			testServer := setupTestServer(t, nil, service, anonymousUser, true)
 
 			response := callAPI(testServer, http.MethodGet,
 				fmt.Sprintf("/api/public/dashboards/%s", test.AccessToken),
@@ -192,9 +190,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 
 	setup := func(enabled bool) (*web.Mux, *publicdashboards.FakePublicDashboardService) {
 		service := publicdashboards.NewFakePublicDashboardService(t)
-		cfg := setting.NewCfg()
-
-		testServer := setupTestServer(t, cfg, service, anonymousUser, true)
+		testServer := setupTestServer(t, nil, service, anonymousUser, true)
 
 		return testServer, service
 	}
@@ -321,6 +317,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	// create public dashboard
 	store := publicdashboardsStore.ProvideStore(db, db.Cfg, featuremgmt.WithFeatures())
 	cfg := setting.NewCfg()
+	cfg.PublicDashboardsEnabled = true
 	ac := acmock.New()
 	ws := publicdashboardsService.ProvideServiceWrapper(store)
 	service := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac, ws)
@@ -404,7 +401,6 @@ func TestAPIGetAnnotations(t *testing.T) {
 	}
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
-			cfg := setting.NewCfg()
 			service := publicdashboards.NewFakePublicDashboardService(t)
 
 			if test.ExpectedServiceCalled {
@@ -412,7 +408,7 @@ func TestAPIGetAnnotations(t *testing.T) {
 					Return(test.Annotations, test.ServiceError).Once()
 			}
 
-			testServer := setupTestServer(t, cfg, service, anonymousUser, true)
+			testServer := setupTestServer(t, nil, service, anonymousUser, true)
 
 			path := fmt.Sprintf("/api/public/dashboards/%s/annotations?from=%s&to=%s", test.AccessToken, test.From, test.To)
 			response := callAPI(testServer, http.MethodGet, path, nil, t)

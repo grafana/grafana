@@ -80,10 +80,8 @@ func TestAPIFeatureDisabled(t *testing.T) {
 		})
 
 		t.Run(test.Name+" - feature flag disabled", func(t *testing.T) {
-			cfg := setting.NewCfg()
-			cfg.PublicDashboardsEnabled = false
 			service := publicdashboards.NewFakePublicDashboardService(t)
-			testServer := setupTestServer(t, cfg, service, userAdmin, false)
+			testServer := setupTestServer(t, nil, service, userAdmin, false)
 			response := callAPI(testServer, test.Method, test.Path, nil, t)
 			assert.Equal(t, http.StatusNotFound, response.Code)
 		})
@@ -138,8 +136,7 @@ func TestAPIListPublicDashboard(t *testing.T) {
 			service.On("FindAllWithPagination", mock.Anything, mock.Anything, mock.Anything).
 				Return(test.Response, test.ResponseErr).Maybe()
 
-			cfg := setting.NewCfg()
-			testServer := setupTestServer(t, cfg, service, test.User, true)
+			testServer := setupTestServer(t, nil, service, test.User, true)
 
 			response := callAPI(testServer, http.MethodGet, "/api/dashboards/public-dashboards", nil, t)
 			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
@@ -266,8 +263,7 @@ func TestAPIDeletePublicDashboard(t *testing.T) {
 					Return(test.ResponseErr)
 			}
 
-			cfg := setting.NewCfg()
-			testServer := setupTestServer(t, cfg, service, test.User, true)
+			testServer := setupTestServer(t, nil, service, test.User, true)
 
 			response := callAPI(testServer, http.MethodDelete, fmt.Sprintf("/api/dashboards/uid/%s/public-dashboards/%s", test.DashboardUid, test.PublicDashboardUid), nil, t)
 			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
@@ -352,9 +348,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 					Return(test.PublicDashboardResult, test.PublicDashboardErr)
 			}
 
-			cfg := setting.NewCfg()
-
-			testServer := setupTestServer(t, cfg, service, test.User, true)
+			testServer := setupTestServer(t, nil, service, test.User, true)
 
 			response := callAPI(
 				testServer,
@@ -472,9 +466,7 @@ func TestApiCreatePublicDashboard(t *testing.T) {
 					Return(&PublicDashboard{IsEnabled: true}, test.SaveDashboardErr)
 			}
 
-			cfg := setting.NewCfg()
-
-			testServer := setupTestServer(t, cfg, service, test.User, true)
+			testServer := setupTestServer(t, nil, service, test.User, true)
 
 			response := callAPI(
 				testServer,
@@ -600,7 +592,6 @@ func TestAPIUpdatePublicDashboard(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		cfg := setting.NewCfg()
 		t.Run(test.Name, func(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
 
@@ -609,7 +600,7 @@ func TestAPIUpdatePublicDashboard(t *testing.T) {
 					Return(test.ExpectedResponse, test.ExpectedError)
 			}
 
-			testServer := setupTestServer(t, cfg, service, test.User, true)
+			testServer := setupTestServer(t, nil, service, test.User, true)
 			url := fmt.Sprintf("/api/dashboards/uid/%s/public-dashboards/%s", test.DashboardUid, test.PublicDashboardUid)
 			body := strings.NewReader(test.Body)
 
