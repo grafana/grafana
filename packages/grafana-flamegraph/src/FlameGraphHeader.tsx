@@ -75,6 +75,7 @@ const FlameGraphHeader = ({
           }}
           placeholder={'Search..'}
           suffix={suffix}
+          data-testid="searchInput"
         />
       </div>
 

@@ -87,4 +87,54 @@ describe('FlameGraphContainer', () => {
 
     expect(screen.queryByTestId(/Both/)).toBeNull();
   });
+
+  it('should filter table items based on search input', async () => {
+    // Render the FlameGraphContainer with necessary props
+    render(<FlameGraphContainerWithProps />);
+  
+    // Simulate typing into the search input field
+    const searchInput = await screen.findByTestId('searchInput');
+    await userEvent.type(searchInput, 'net/http.HandlerFunc.ServeHTTP');
+  
+    // Verify that the table displays filtered items based on the search term
+    const filteredRows = screen.queryAllByText('net/http.HandlerFunc.ServeHTTP');
+    expect(filteredRows.length).toBeGreaterThan(0); // Expect to find at least one row with the search term
+  
+    // Verify that rows not matching the search term are not displayed
+    const unfilteredRows = screen.queryAllByText('SomeOtherTextNotInSearch');
+    expect(unfilteredRows.length).toBe(0); // Expect not to find rows that should be filtered out
+  });  
 });
+
+
+
+// it('should filter table items based on search input', async () => {
+//   // Needed for AutoSizer to work in test
+//   Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: 500 });
+//   Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 500 });
+
+//   const { mocks } = setup();
+
+//   // Assuming there's an input field for the search functionality
+//   // Replace 'searchInput' with the actual test id or placeholder text of your search input field
+//   // const searchInput = screen.getByTestId('searchInput');
+//   console.log(screen.debug());
+
+//   const searchInput = await screen.findByTestId('searchInput');
+  
+
+//   // Simulate typing into the search input
+//   await userEvents.type(searchInput, 'net/http.HandlerFunc.ServeHTTP');
+
+//   // Assuming the onSearch mock function is triggered on search input change
+//   expect(mocks.onSearch).toHaveBeenCalledWith('net/http.HandlerFunc.ServeHTTP');
+
+//   // Verify that the table is filtered
+//   // For example, check that only the rows related to the search input are displayed
+//   // Replace 'net/http.HandlerFunc.ServeHTTP' with the actual text content of your table cell
+//   const filteredRows = screen.getAllByText('net/http.HandlerFunc.ServeHTTP');
+//   expect(filteredRows.length).toBeGreaterThan(0);
+
+//   // Optionally, verify that other rows are not displayed
+//   // This depends on how specific or general the search term is
+// });

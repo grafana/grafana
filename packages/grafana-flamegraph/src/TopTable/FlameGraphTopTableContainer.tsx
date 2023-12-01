@@ -43,19 +43,23 @@ const FlameGraphTopTableContainer = React.memo(
     const table = useMemo(() => {
       // Group the data by label, we show only one row per label and sum the values
       // TODO: should be by filename + funcName + linenumber?
-      let table: { [key: string]: TableData } = {};
+      let filteredTable: { [key: string]: TableData } = {};
       for (let i = 0; i < data.data.length; i++) {
         const value = data.getValue(i);
         const valueRight = data.getValueRight(i);
         const self = data.getSelf(i);
         const label = data.getLabel(i);
-        table[label] = table[label] || {};
-        table[label].self = table[label].self ? table[label].self + self : self;
-        table[label].total = table[label].total ? table[label].total + value : value;
-        table[label].totalRight = table[label].totalRight ? table[label].totalRight + valueRight : valueRight;
+
+        // Check if the label includes the search string
+        if (!search || label.toLowerCase().includes(search.toLowerCase())) {
+          filteredTable[label] = filteredTable[label] || {};
+          filteredTable[label].self = filteredTable[label].self ? filteredTable[label].self + self : self;
+          filteredTable[label].total = filteredTable[label].total ? filteredTable[label].total + value : value;
+          filteredTable[label].totalRight = filteredTable[label].totalRight ? filteredTable[label].totalRight + valueRight : valueRight;
+        }
       }
-      return table;
-    }, [data]);
+      return filteredTable;
+    }, [data, search]); // Add `search` as a dependency
 
     const rowHeight = 35;
     // When we use normal layout we size the table to have the same height as the flamegraph to look good side by side.
