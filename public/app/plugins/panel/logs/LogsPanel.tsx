@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useMemo, useRef, useLayoutEffect, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useLayoutEffect, useState, useEffect } from 'react';
 
 import {
   PanelProps,
@@ -11,8 +11,10 @@ import {
   DataHoverClearEvent,
   DataHoverEvent,
   CoreApp,
+  AbsoluteTimeRange,
 } from '@grafana/data';
 import { CustomScrollbar, useStyles2, usePanelContext } from '@grafana/ui';
+import { mergeDataSeries } from 'app/features/explore/utils/decorators';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
@@ -40,7 +42,7 @@ export const LogsPanel = ({
     dedupStrategy,
     enableLogDetails,
   },
-  title,
+  onChangeTimeRange,
   id,
 }: LogsPanelProps) => {
   const isAscending = sortOrder === LogsSortOrder.Ascending;
@@ -48,6 +50,8 @@ export const LogsPanel = ({
   const [scrollTop, setScrollTop] = useState(0);
   const logsContainerRef = useRef<HTMLDivElement>(null);
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | undefined>(undefined);
+  const [infiniteScrolling, setInfiniteScrolling] = useState(false);
+  const [panelData, setPanelData] = useState(data);
 
   const { eventBus } = usePanelContext();
   const onLogRowHover = useCallback(
@@ -69,14 +73,26 @@ export const LogsPanel = ({
 
   // Important to memoize stuff here, as panel rerenders a lot for example when resizing.
   const [logRows, deduplicatedRows, commonLabels] = useMemo(() => {
-    const logs = data
-      ? dataFrameToLogsModel(data.series, data.request?.intervalMs, undefined, data.request?.targets)
+    const logs = panelData
+      ? dataFrameToLogsModel(panelData.series, data.request?.intervalMs, undefined, data.request?.targets)
       : null;
     const logRows = logs?.rows || [];
     const commonLabels = logs?.meta?.find((m) => m.label === COMMON_LABELS);
     const deduplicatedRows = dedupLogRows(logRows, dedupStrategy);
     return [logRows, deduplicatedRows, commonLabels];
-  }, [data, dedupStrategy]);
+  }, [data.request?.intervalMs, data.request?.targets, dedupStrategy, panelData]);
+
+  useEffect(() => {
+    if (data === panelData && data.series === panelData.series) {
+      return;
+    }
+    if (!infiniteScrolling) {
+      setPanelData(data);
+      return;
+    }
+    setPanelData(mergeDataSeries(panelData, data));
+    setInfiniteScrolling(false);
+  }, [data, infiniteScrolling, panelData]);
 
   useLayoutEffect(() => {
     if (isAscending && logsContainerRef.current) {
@@ -93,8 +109,13 @@ export const LogsPanel = ({
     [data]
   );
 
-  if (!data || logRows.length === 0) {
-    return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
+  const loadMore = useCallback((scrollRange: AbsoluteTimeRange) => {
+    setInfiniteScrolling(true);
+    onChangeTimeRange(scrollRange);
+  }, [onChangeTimeRange]);
+
+  if (!panelData || logRows.length === 0) {
+    return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={panelData} needsStringField />;
   }
 
   const renderCommonLabels = () => (
@@ -109,10 +130,8 @@ export const LogsPanel = ({
       <div className={style.container} ref={logsContainerRef} id="caca">
         {showCommonLabels && !isAscending && renderCommonLabels()}
         <InfiniteScroll
-          loading={false}
-          loadMoreLogs={() => {
-            console.log('scrolling');
-          }}
+          loading={infiniteScrolling}
+          loadMoreLogs={loadMore}
           range={timeRange}
           timeZone={timeZone}
           rows={logRows}
