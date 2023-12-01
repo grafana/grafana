@@ -1,11 +1,12 @@
 import { css, cx } from '@emotion/css';
 import classNames from 'classnames';
-import React, { PropsWithChildren } from 'react';
+import React, { PropsWithChildren, useState } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { useStyles2, LinkButton, useTheme2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { KioskMode } from 'app/types';
 
@@ -26,6 +27,17 @@ export function AppChrome({ children }: Props) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
+  const dockedMenuBreakpoint = theme.breakpoints.values.xl;
+  const [canShowDockedMenu, setCanShowDockedMenu] = useState(
+    window.matchMedia(`(min-width: ${dockedMenuBreakpoint}px)`).matches
+  );
+  useMediaQueryChange({
+    breakpoint: dockedMenuBreakpoint,
+    onChange: (e) => {
+      setCanShowDockedMenu(e.matches);
+    },
+  });
+
   const contentClass = cx({
     [styles.content]: true,
     [styles.contentNoSearchBar]: searchBarHidden,
@@ -34,20 +46,6 @@ export function AppChrome({ children }: Props) {
 
   const handleMegaMenu = () => {
     chrome.setMegaMenuOpen(!state.megaMenuOpen);
-    // switch (state.megaMenu) {
-    //   case 'closed':
-    //     chrome.setMegaMenu('open');
-    //     break;
-    //   case 'open':
-    //     chrome.setMegaMenu('closed');
-    //     break;
-    //   case 'docked':
-    //     // on large screens, clicking the button when the menu is docked should close the menu
-    //     // on smaller screens, the docked menu is hidden, so clicking the button should open the menu
-    //     const isLargeScreen = window.innerWidth >= theme.breakpoints.values.xl;
-    //     isLargeScreen ? chrome.setMegaMenu('closed') : chrome.setMegaMenu('open');
-    //     break;
-    // }
   };
 
   // Chromeless routes are without topNav, mega menu, search & command palette
@@ -84,9 +82,13 @@ export function AppChrome({ children }: Props) {
           {state.layout === PageLayoutType.Standard && state.sectionNav && !config.featureToggles.dockedMegaMenu && (
             <SectionNav model={state.sectionNav} />
           )}
-          {config.featureToggles.dockedMegaMenu && !state.chromeless && state.megaMenuDocked && state.megaMenuOpen && (
-            <DockedMegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
-          )}
+          {config.featureToggles.dockedMegaMenu &&
+            !state.chromeless &&
+            state.megaMenuDocked &&
+            canShowDockedMenu &&
+            state.megaMenuOpen && (
+              <DockedMegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
+            )}
           <div className={styles.pageContainer} id="pageContent">
             {children}
           </div>
@@ -94,7 +96,7 @@ export function AppChrome({ children }: Props) {
       </main>
       {!state.chromeless && (
         <>
-          {config.featureToggles.dockedMegaMenu && !state.megaMenuDocked ? (
+          {config.featureToggles.dockedMegaMenu && (!state.megaMenuDocked || !canShowDockedMenu) ? (
             <AppChromeMenu />
           ) : (
             <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenuOpen(false)} />
