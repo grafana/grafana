@@ -1298,6 +1298,9 @@
       "name-error": "Name ist erforderlich",
       "name-label": "Name",
       "username-label": "Benutzername"
+    },
+    "tabs": {
+      "general": ""
     }
   },
   "user-session": {

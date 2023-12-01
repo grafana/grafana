@@ -1304,6 +1304,9 @@
       "name-error": "Un nom est obligatoire",
       "name-label": "Nom",
       "username-label": "Nom d’utilisateur"
+    },
+    "tabs": {
+      "general": ""
     }
   },
   "user-session": {
