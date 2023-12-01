@@ -729,9 +729,6 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/DataLinks/DataLinkInput.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "packages/grafana-ui/src/components/DataLinks/DataLinksContextMenu.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
-    ],
     "packages/grafana-ui/src/components/DataSourceSettings/CustomHeadersSettings.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
@@ -916,13 +913,6 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-ui/src/components/Tags/Tag.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "packages/grafana-ui/src/components/ValuePicker/ValuePicker.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
-    ],
-    "packages/grafana-ui/src/components/VizLegend/VizLegendListItem.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "packages/grafana-ui/src/components/VizLegend/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -6988,7 +6978,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "11"]
     ],
     "public/app/plugins/panel/timeseries/plugins/ExemplarMarker.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
       [0, 0, 0, "Styles should be written using objects.", "2"],
       [0, 0, 0, "Styles should be written using objects.", "3"],
@@ -6998,8 +6988,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "7"],
       [0, 0, 0, "Styles should be written using objects.", "8"],
       [0, 0, 0, "Styles should be written using objects.", "9"],
-      [0, 0, 0, "Styles should be written using objects.", "10"],
-      [0, 0, 0, "Styles should be written using objects.", "11"]
+      [0, 0, 0, "Styles should be written using objects.", "10"]
     ],
     "public/app/plugins/panel/timeseries/plugins/ThresholdDragHandle.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
