@@ -1,15 +1,14 @@
 import { createSelector } from '@reduxjs/toolkit';
 import React, { useCallback, useMemo } from 'react';
 
-import { CoreApp } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
-import { getNextRefIdChar } from 'app/core/utils/query';
+import { CoreApp, DataSourceInstanceSettings } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { useDispatch, useSelector } from 'app/types';
 
 import { getDatasourceSrv } from '../plugins/datasource_srv';
-import { QueryEditorRows } from '../query/components/QueryEditorRows';
 
+import { QueryEditorRow } from './LogsAppQueryEditorRow';
 import { changeQueries, runQueries } from './state/query';
 import { getExploreItemSelector } from './state/selectors';
 
@@ -39,6 +38,7 @@ export const QueryRows = ({ exploreId }: Props) => {
   );
 
   const queries = useSelector(getQueries);
+  const query = queries[0];
   const dsSettings = useSelector(getDatasourceInstanceSettings);
   const queryResponse = useSelector(getQueryResponse);
   const history = useSelector(getHistory);
@@ -55,39 +55,71 @@ export const QueryRows = ({ exploreId }: Props) => {
     [dispatch, exploreId]
   );
 
-  const onAddQuery = useCallback(
-    (query: DataQuery) => {
-      onChange([...queries, { ...query, refId: getNextRefIdChar(queries) }]);
-    },
-    [onChange, queries]
-  );
+  const onDataSourceChange = (dataSource: DataSourceInstanceSettings, index: number) => {
+    onChange(
+      [queries[0]].map((item, itemIndex) => {
+        if (itemIndex !== index) {
+          return item;
+        }
 
-  const onQueryCopied = () => {
-    reportInteraction('grafana_explore_query_row_copy');
+        const dataSourceRef: DataSourceRef = {
+          type: dataSource.type,
+          uid: dataSource.uid,
+        };
+
+        if (item.datasource) {
+          const previous = getDataSourceSrv().getInstanceSettings(item.datasource);
+
+          if (previous?.type === dataSource.type) {
+            return {
+              ...item,
+              datasource: dataSourceRef,
+            };
+          }
+        }
+
+        return {
+          refId: item.refId,
+          hide: item.hide,
+          datasource: dataSourceRef,
+        };
+      })
+    );
   };
 
-  const onQueryRemoved = () => {
-    reportInteraction('grafana_explore_query_row_remove');
-  };
-
-  const onQueryToggled = (queryStatus?: boolean) => {
-    reportInteraction('grafana_query_row_toggle', queryStatus === undefined ? {} : { queryEnabled: queryStatus });
-  };
+  const dataSourceSettings = getDataSourceSettings(query, dsSettings);
+  const onChangeDataSourceSettings = dsSettings.meta.mixed
+    ? (settings: DataSourceInstanceSettings) => onDataSourceChange(settings, 0)
+    : undefined;
 
   return (
-    <QueryEditorRows
-      dsSettings={dsSettings}
-      queries={queries}
-      onQueriesChange={onChange}
-      onAddQuery={onAddQuery}
-      onRunQueries={onRunQueries}
-      onQueryCopied={onQueryCopied}
-      onQueryRemoved={onQueryRemoved}
-      onQueryToggled={onQueryToggled}
+    <QueryEditorRow
       data={queryResponse}
+      query={query}
+      queries={[query]}
+      id={query.refId}
+      index={0}
+      dataSource={dataSourceSettings}
+      onAddQuery={() => {}}
+      onRemoveQuery={() => {}}
+      onChange={(query) => onChange([query])}
+      onRunQuery={onRunQueries}
       app={CoreApp.Explore}
       history={history}
       eventBus={eventBridge}
+      collapsable={true}
+      onChangeDataSource={onChangeDataSourceSettings}
     />
   );
+};
+
+const getDataSourceSettings = (
+  query: DataQuery,
+  groupSettings: DataSourceInstanceSettings
+): DataSourceInstanceSettings => {
+  if (!query.datasource) {
+    return groupSettings;
+  }
+  const querySettings = getDataSourceSrv().getInstanceSettings(query.datasource);
+  return querySettings || groupSettings;
 };
