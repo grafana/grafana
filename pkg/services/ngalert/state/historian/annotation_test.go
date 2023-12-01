@@ -62,7 +62,7 @@ func TestAnnotationHistorian(t *testing.T) {
 
 	t.Run("emits expected write metrics", func(t *testing.T) {
 		reg := prometheus.NewRegistry()
-		met := metrics.NewHistorianMetrics(reg)
+		met := metrics.NewHistorianMetrics(reg, metrics.Subsystem)
 		anns := createTestAnnotationBackendSutWithMetrics(t, met)
 		errAnns := createFailingAnnotationSut(t, met)
 		rule := createTestRule()
@@ -101,7 +101,7 @@ grafana_alerting_state_history_writes_total{backend="annotations",org="1"} 2
 }
 
 func createTestAnnotationBackendSut(t *testing.T) *AnnotationBackend {
-	return createTestAnnotationBackendSutWithMetrics(t, metrics.NewHistorianMetrics(prometheus.NewRegistry()))
+	return createTestAnnotationBackendSutWithMetrics(t, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 }
 
 func createTestAnnotationBackendSutWithMetrics(t *testing.T, met *metrics.Historian) *AnnotationBackend {

@@ -64,7 +64,18 @@ func (api *Api) listAllProvidersSettings(c *contextmodel.ReqContext) response.Re
 		return response.Error(500, "Failed to get providers", err)
 	}
 
-	return response.JSON(http.StatusOK, providers)
+	dtos := make([]*models.SSOSettingsDTO, 0)
+	for _, provider := range providers {
+		dto, err := provider.ToSSOSettingsDTO()
+		if err != nil {
+			api.Log.Warn("Failed to convert SSO Settings for provider " + provider.Provider)
+			continue
+		}
+
+		dtos = append(dtos, dto)
+	}
+
+	return response.JSON(http.StatusOK, dtos)
 }
 
 func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Response {
@@ -78,43 +89,12 @@ func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Respons
 		return response.Error(http.StatusNotFound, "The provider was not found", err)
 	}
 
-	if c.QueryBool("includeDefaults") {
-		return response.JSON(200, settings)
+	dto, err := settings.ToSSOSettingsDTO()
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "The provider is invalid", err)
 	}
 
-	// colinTODO: remove when defaults for each provider are implemented
-	defaults := map[string]interface{}{
-		"enabled":                    false,
-		"role_attribute_strict":      false,
-		"allow_sign_up":              true,
-		"name":                       "default name",
-		"tls_skip_verify_insecure":   false,
-		"use_pkce":                   true,
-		"use_refresh_token":          false,
-		"allow_assign_grafana_admin": false,
-		"auto_login":                 false,
-	}
-
-	for key, defaultValue := range defaults {
-		if value, exists := settings.Settings[key]; exists && value == defaultValue {
-			delete(settings.Settings, key)
-		}
-	}
-
-	if _, exists := settings.Settings["client_secret"]; exists {
-		settings.Settings["client_secret"] = "*********"
-	}
-
-	etag := generateSHA1ETag(settings.Settings)
-
-	return response.JSON(200, settings).SetHeader("ETag", etag)
-}
-
-func generateSHA1ETag(settings map[string]interface{}) string {
-	hasher := sha1.New()
-	data, _ := json.Marshal(settings)
-	hasher.Write(data)
-	return fmt.Sprintf("%x", hasher.Sum(nil))
+	return response.JSON(http.StatusOK, dto)
 }
 
 func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Response {
@@ -123,12 +103,19 @@ func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "Missing key", nil)
 	}
 
-	var newSettings models.SSOSetting
-	if err := web.Bind(c.Req, &newSettings); err != nil {
+	var settingsDTO models.SSOSettingsDTO
+	if err := web.Bind(c.Req, &settingsDTO); err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to parse request body", err)
 	}
 
-	err := api.SSOSettingsService.Upsert(c.Req.Context(), key, newSettings.Settings)
+	settings, err := settingsDTO.ToSSOSettings()
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Invalid request body", err)
+	}
+
+	settings.Provider = key
+
+	err = api.SSOSettingsService.Upsert(c.Req.Context(), *settings)
 	// TODO: first check whether the error is referring to validation errors
 
 	// other error

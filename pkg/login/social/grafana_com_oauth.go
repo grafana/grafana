@@ -15,7 +15,13 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const grafanaComProviderName = "grafana_com"
+const (
+	GrafanaComProviderName = "grafana_com"
+	// legacy/old settings for the provider
+	GrafanaNetProviderName = "grafananet"
+)
+
+var ExtraGrafanaComSettingKeys = []string{allowedOrganizationsKey}
 
 var (
 	ExtraGrafanaComSettingKeys = []string{"allowed_organizations"}
@@ -44,7 +50,7 @@ type OrgRecord struct {
 }
 
 func NewGrafanaComProvider(settings map[string]any, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGrafanaCom, error) {
-	info, err := createOAuthInfoFromKeyValues(settings)
+	info, err := CreateOAuthInfoFromKeyValues(settings)
 	if err != nil {
 		return nil, err
 	}
@@ -54,11 +60,11 @@ func NewGrafanaComProvider(settings map[string]any, cfg *setting.Cfg, features *
 	info.TokenUrl = cfg.GrafanaComURL + "/api/oauth2/token"
 	info.AuthStyle = "inheader"
 
-	config := createOAuthConfig(info, cfg, grafanaComProviderName)
+	config := createOAuthConfig(info, cfg, GrafanaComProviderName)
 	provider := &SocialGrafanaCom{
-		SocialBase:           newSocialBase(grafanaComProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:           newSocialBase(GrafanaComProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		url:                  cfg.GrafanaComURL,
-		allowedOrganizations: util.SplitString(info.Extra["allowed_organizations"]),
+		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 		skipOrgRoleSync:      cfg.GrafanaComSkipOrgRoleSync,
 		// FIXME: Move skipOrgRoleSync to OAuthInfo
 		// skipOrgRoleSync: info.SkipOrgRoleSync

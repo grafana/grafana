@@ -2,8 +2,6 @@ package strategies
 
 import (
 	"context"
-	"regexp"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -12,72 +10,95 @@ import (
 )
 
 type OAuthStrategy struct {
-	cfg                     *setting.Cfg
-	supportedProvidersRegex *regexp.Regexp
+	cfg                *setting.Cfg
+	settingsByProvider map[string]*social.OAuthInfo
+}
+
+var extraKeysByProvider = map[string][]string{
+	social.AzureADProviderName:      social.ExtraAzureADSettingKeys,
+	social.GenericOAuthProviderName: social.ExtraGenericOAuthSettingKeys,
+	social.GitHubProviderName:       social.ExtraGithubSettingKeys,
+	social.GrafanaComProviderName:   social.ExtraGrafanaComSettingKeys,
+	social.GrafanaNetProviderName:   social.ExtraGrafanaComSettingKeys,
 }
 
 var _ ssosettings.FallbackStrategy = (*OAuthStrategy)(nil)
 
 func NewOAuthStrategy(cfg *setting.Cfg) *OAuthStrategy {
-	compiledRegex := regexp.MustCompile(`^` + strings.Join(ssosettings.AllOAuthProviders, "|") + `$`)
-	return &OAuthStrategy{
-		cfg:                     cfg,
-		supportedProvidersRegex: compiledRegex,
+	oauthStrategy := &OAuthStrategy{
+		cfg:                cfg,
+		settingsByProvider: make(map[string]*social.OAuthInfo),
 	}
+
+	oauthStrategy.loadAllSettings()
+	return oauthStrategy
 }
 
 func (s *OAuthStrategy) IsMatch(provider string) bool {
-	return s.supportedProvidersRegex.MatchString(provider)
+	_, ok := s.settingsByProvider[provider]
+	return ok
 }
 
-func (s *OAuthStrategy) ParseConfigFromSystem(_ context.Context, provider string) (map[string]any, error) {
+func (s *OAuthStrategy) GetProviderConfig(_ context.Context, provider string) (any, error) {
+	return s.settingsByProvider[provider], nil
+}
+
+func (s *OAuthStrategy) loadAllSettings() {
+	allProviders := append(ssosettings.AllOAuthProviders, social.GrafanaNetProviderName)
+	for _, provider := range allProviders {
+		settings := s.loadSettingsForProvider(provider)
+		if provider == social.GrafanaNetProviderName {
+			provider = social.GrafanaComProviderName
+		}
+		s.settingsByProvider[provider] = settings
+	}
+}
+
+func (s *OAuthStrategy) loadSettingsForProvider(provider string) *social.OAuthInfo {
 	section := s.cfg.SectionWithEnvOverrides("auth." + provider)
 
-	defaultSettings := getDefaultOAuthInfoForProvider(provider)
-
-	result := map[string]interface{}{
-		"client_id":                  parseDataFromKey("client_id", section, defaultSettings),
-		"client_secret":              parseDataFromKey("client_secret", section, defaultSettings),
-		"scopes":                     parseDataFromKey("scopes", section, defaultSettings),
-		"auth_url":                   parseDataFromKey("auth_url", section, defaultSettings),
-		"token_url":                  parseDataFromKey("token_url", section, defaultSettings),
-		"api_url":                    parseDataFromKey("api_url", section, defaultSettings),
-		"teams_url":                  parseDataFromKey("teams_url", section, defaultSettings),
-		"enabled":                    parseDataFromKey("enabled", section, defaultSettings),
-		"email_attribute_name":       parseDataFromKey("email_attribute_name", section, defaultSettings),
-		"email_attribute_path":       parseDataFromKey("email_attribute_path", section, defaultSettings),
-		"role_attribute_path":        parseDataFromKey("role_attribute_path", section, defaultSettings),
-		"role_attribute_strict":      parseDataFromKey("role_attribute_strict", section, defaultSettings),
-		"groups_attribute_path":      parseDataFromKey("groups_attribute_path", section, defaultSettings),
-		"team_ids_attribute_path":    parseDataFromKey("team_ids_attribute_path", section, defaultSettings),
-		"allowed_domains":            parseDataFromKey("allowed_domains", section, defaultSettings),
-		"hosted_domain":              parseDataFromKey("hosted_domain", section, defaultSettings),
-		"allow_sign_up":              parseDataFromKey("allow_sign_up", section, defaultSettings),
-		"name":                       parseDataFromKey("name", section, defaultSettings),
-		"icon":                       parseDataFromKey("icon", section, defaultSettings),
-		"tls_client_cert":            parseDataFromKey("tls_client_cert", section, defaultSettings),
-		"tls_client_key":             parseDataFromKey("tls_client_key", section, defaultSettings),
-		"tls_client_ca":              parseDataFromKey("tls_client_ca", section, defaultSettings),
-		"tls_skip_verify_insecure":   parseDataFromKey("tls_skip_verify_insecure", section, defaultSettings),
-		"use_pkce":                   parseDataFromKey("use_pkce", section, defaultSettings),
-		"use_refresh_token":          parseDataFromKey("use_refresh_token", section, defaultSettings),
-		"allow_assign_grafana_admin": parseDataFromKey("allow_assign_grafana_admin", section, defaultSettings),
-		"auto_login":                 parseDataFromKey("auto_login", section, defaultSettings),
-		"allowed_groups":             parseDataFromKey("allowed_groups", section, defaultSettings),
-		// "skip_org_role_sync":         parseDataFromKey("skip_org_role_sync", section, defaultSettings),
+	result := &social.OAuthInfo{
+		AllowAssignGrafanaAdmin: section.Key("allow_assign_grafana_admin").MustBool(false),
+		AllowSignup:             section.Key("allow_sign_up").MustBool(false),
+		AllowedDomains:          util.SplitString(section.Key("allowed_domains").Value()),
+		AllowedGroups:           util.SplitString(section.Key("allowed_groups").Value()),
+		ApiUrl:                  section.Key("api_url").Value(),
+		AuthStyle:               section.Key("auth_style").Value(),
+		AuthUrl:                 section.Key("auth_url").Value(),
+		AutoLogin:               section.Key("auto_login").MustBool(false),
+		ClientId:                section.Key("client_id").Value(),
+		ClientSecret:            section.Key("client_secret").Value(),
+		EmailAttributeName:      section.Key("email_attribute_name").Value(),
+		EmailAttributePath:      section.Key("email_attribute_path").Value(),
+		EmptyScopes:             section.Key("empty_scopes").MustBool(false),
+		Enabled:                 section.Key("enabled").MustBool(false),
+		GroupsAttributePath:     section.Key("groups_attribute_path").Value(),
+		HostedDomain:            section.Key("hosted_domain").Value(),
+		Icon:                    section.Key("icon").Value(),
+		Name:                    section.Key("name").Value(),
+		RoleAttributePath:       section.Key("role_attribute_path").Value(),
+		RoleAttributeStrict:     section.Key("role_attribute_strict").MustBool(false),
+		Scopes:                  util.SplitString(section.Key("scopes").Value()),
+		SignoutRedirectUrl:      section.Key("signout_redirect_url").Value(),
+		SkipOrgRoleSync:         section.Key("skip_org_role_sync").MustBool(false),
+		TeamIdsAttributePath:    section.Key("team_ids_attribute_path").Value(),
+		TeamsUrl:                section.Key("teams_url").Value(),
+		TlsClientCa:             section.Key("tls_client_ca").Value(),
+		TlsClientCert:           section.Key("tls_client_cert").Value(),
+		TlsClientKey:            section.Key("tls_client_key").Value(),
+		TlsSkipVerify:           section.Key("tls_skip_verify_insecure").MustBool(false),
+		TokenUrl:                section.Key("token_url").Value(),
+		UsePKCE:                 section.Key("use_pkce").MustBool(false),
+		UseRefreshToken:         section.Key("use_refresh_token").MustBool(false),
+		Extra:                   map[string]string{},
 	}
 
-	extraFields := getExtraKeysForProvider(provider)
+	extraFields := extraKeysByProvider[provider]
 	for _, key := range extraFields {
-		result[key] = parseDataFromKey(key, section, defaultSettings)
+		result.Extra[key] = section.Key(key).Value()
 	}
 
-	// when empty_scopes parameter exists and is true, overwrite scope with empty value
-	if section.Key("empty_scopes").MustBool(false) {
-		result["scopes"] = ""
-	}
-
-	return result, nil
+	return result
 }
 
 func parseDataFromKey(key string, section *setting.DynamicSection, defaultSettings map[string]string) string {
