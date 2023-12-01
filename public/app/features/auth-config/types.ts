@@ -34,7 +34,7 @@ export type SSOProvider = {
 };
 
 // SSO data format for storing in the forms
-export type SSOProviderDTO = SSOProviderSettingsBase & {
+export type SSOProviderDTO = Partial<SSOProviderSettingsBase> & {
   teamIds: Array<SelectableValue<string>>;
   allowedOrganizations: Array<SelectableValue<string>>;
 };

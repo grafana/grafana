@@ -67,9 +67,9 @@ export const GitHubConfig = ({ settings }: GitHubConfigProps) => {
   const [isSaving, setIsSaving] = useState(false);
   const handleSubmit = async (data: ProviderData) => {
     setIsSaving(true);
-    const requestData = dtoToData<ProviderData>(data, settings);
+    const requestData = dtoToData<ProviderData>(data);
     try {
-      await getBackendSrv().post('/api/v1/sso-settings', requestData);
+      await getBackendSrv().put('/api/v1/sso-settings/github', requestData);
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
         payload: ['Settings saved'],

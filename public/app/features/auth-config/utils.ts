@@ -14,7 +14,7 @@ const strToValue = (str: string) => {
   return str.split(',').map((s) => ({ label: s, value: s }));
 };
 
-export const dataToDTO = (data?: SSOProvider): SSOProviderDTO => {
+export function dataToDTO(data?: SSOProvider): SSOProviderDTO {
   if (!data) {
     return {
       clientId: '',
@@ -22,39 +22,28 @@ export const dataToDTO = (data?: SSOProvider): SSOProviderDTO => {
       enabled: false,
       teamIds: [],
       allowedOrganizations: [],
-      name: '',
-      type: '',
     };
   }
   return {
-    ...data.settings,
+    clientId: data.settings.clientId,
+    clientSecret: data.settings.clientSecret,
     teamIds: strToValue(data.settings.teamIds),
     allowedOrganizations: strToValue(data.settings.allowedOrganizations),
   };
-};
+}
 
 const valuesToArray = (values: Array<SelectableValue<string>>) => {
   return values.map(({ value }) => value).join(',');
 };
 
 // Convert the DTO to the data format used by the API
-export function dtoToData<T extends Partial<SSOProviderDTO>>(dto: T, data?: SSOProvider) {
+export function dtoToData<T extends Partial<SSOProviderDTO>>(dto: T) {
   const settings = {
     ...dto,
     ...(dto.teamIds ? { teamIds: valuesToArray(dto.teamIds) } : {}),
     ...(dto.allowedOrganizations ? { allowedOrganizations: valuesToArray(dto.allowedOrganizations) } : {}),
   };
-  if (!data) {
-    return {
-      settings,
-    };
-  }
   return {
-    ...data,
-    settings: {
-      ...data.settings,
-      ...dto,
-      ...settings,
-    },
+    settings,
   };
 }

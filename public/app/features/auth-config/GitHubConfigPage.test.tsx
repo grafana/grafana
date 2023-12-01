@@ -4,10 +4,10 @@ import React, { JSX } from 'react';
 
 import { GitHubConfig } from './GitHubConfigPage';
 
-const postMock = jest.fn(() => Promise.resolve({}));
+const putMock = jest.fn(() => Promise.resolve({}));
 jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({
-    post: postMock,
+    put: putMock,
   }),
   config: {
     panels: {
@@ -80,16 +80,13 @@ describe('GitHubConfig', () => {
     await user.click(screen.getByRole('button', { name: /Save/i }));
 
     await waitFor(() => {
-      expect(postMock).toHaveBeenCalledWith('/api/v1/sso-settings', {
-        provider: 'github',
+      expect(putMock).toHaveBeenCalledWith('/api/v1/sso-settings/github', {
         settings: {
           allowedOrganizations: 'test-org1,test-org2',
           clientId: 'test-client-id',
           clientSecret: 'test-client-secret',
-          enabled: true,
-          name: 'GitHub',
           teamIds: 'test-team',
-          type: 'OAuth',
+          enabled: false,
         },
       });
     });
