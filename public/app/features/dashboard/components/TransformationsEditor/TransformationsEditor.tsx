@@ -41,6 +41,7 @@ import { getDocsLink } from 'app/core/utils/docsLinks';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 import { categoriesLabels } from 'app/features/transformers/utils';
 
+import { PRQLEditor } from '../../../../../../prql/src/editor';
 import { AppNotificationSeverity } from '../../../../types';
 import { PanelModel } from '../../state';
 import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
@@ -556,6 +557,19 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                 />
               </div>
             )}
+            {
+              <>
+                <div>
+                  <h1>PRQL CodeMirror demo</h1>
+                  <p>
+                    PRQL is a modern language for transforming data — a simple, powerful, pipelined SQL replacement.
+                  </p>
+                  <div id="editor">
+                    <PRQLEditor />
+                  </div>
+                </div>
+              </>
+            }
             {hasTransforms && this.renderTransformationEditors()}
             {this.renderTransformsPicker()}
           </div>
