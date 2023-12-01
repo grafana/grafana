@@ -9,8 +9,8 @@ import {
 } from '@grafana/scenes';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
-import { DashboardScene } from '../scene/DashboardScene';
 import { PanelEditor } from '../panel-edit/PanelEditor';
+import { DashboardScene } from '../scene/DashboardScene';
 
 export function getVizPanelKeyForPanelId(panelId: number) {
   return `panel-${panelId}`;
