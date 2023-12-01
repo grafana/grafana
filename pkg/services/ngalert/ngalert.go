@@ -304,16 +304,7 @@ func (ng *AlertNG) init() error {
 	}
 	ng.api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
-	defaultLimits, err := readQuotaConfig(ng.Cfg)
-	if err != nil {
-		return err
-	}
-
-	if err := ng.QuotaService.RegisterQuotaReporter(&quota.NewUsageReporter{
-		TargetSrv:     models.QuotaTargetSrv,
-		DefaultLimits: defaultLimits,
-		Reporter:      ng.api.Usage,
-	}); err != nil {
+	if err := RegisterQuotas(ng.Cfg, ng.QuotaService, ng.store); err != nil {
 		return err
 	}
 
@@ -391,35 +382,6 @@ func (ng *AlertNG) IsDisabled() bool {
 // is invoked after all other middleware is invoked (authentication, instrumentation).
 func (ng *AlertNG) GetHooks() *api.Hooks {
 	return ng.api.Hooks
-}
-
-func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
-	limits := &quota.Map{}
-
-	if cfg == nil {
-		return limits, nil
-	}
-
-	var alertOrgQuota int64
-	var alertGlobalQuota int64
-
-	if cfg.UnifiedAlerting.IsEnabled() {
-		alertOrgQuota = cfg.Quota.Org.AlertRule
-		alertGlobalQuota = cfg.Quota.Global.AlertRule
-	}
-
-	globalQuotaTag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.GlobalScope)
-	if err != nil {
-		return limits, err
-	}
-	orgQuotaTag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.OrgScope)
-	if err != nil {
-		return limits, err
-	}
-
-	limits.Set(globalQuotaTag, alertGlobalQuota)
-	limits.Set(orgQuotaTag, alertOrgQuota)
-	return limits, nil
 }
 
 type Historian interface {
