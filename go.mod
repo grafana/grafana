@@ -13,10 +13,10 @@ replace cuelang.org/go => github.com/grafana/cue v0.0.0-20230926092038-971951014
 // TODO: following otel replaces to pin the libraries so k8s.io/apiserver doesn't downgrade us inadvertantly
 // will need bumps as we upgrade otel in Grafana
 replace (
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp => go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.46.0 // @grafana/backend-platform
-	go.opentelemetry.io/otel => go.opentelemetry.io/otel v1.20.0 // @grafana/backend-platform
-	go.opentelemetry.io/otel/metric => go.opentelemetry.io/otel/metric v1.20.0 // @grafana/backend-platform
-	go.opentelemetry.io/otel/trace => go.opentelemetry.io/otel/trace v1.20.0 // @grafana/backend-platform
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp => go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.46.1 // @grafana/backend-platform
+	go.opentelemetry.io/otel => go.opentelemetry.io/otel v1.21.0 // @grafana/backend-platform
+	go.opentelemetry.io/otel/metric => go.opentelemetry.io/otel/metric v1.21.0 // @grafana/backend-platform
+	go.opentelemetry.io/otel/trace => go.opentelemetry.io/otel/trace v1.21.0 // @grafana/backend-platform
 )
 
 // Override Prometheus version because Prometheus v2.X is tagged as v0.X for Go modules purposes and Go assumes
