@@ -1,7 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit';
 import React, { useCallback, useMemo } from 'react';
 
-import { CoreApp, DataSourceInstanceSettings } from '@grafana/data';
+import { CoreApp, DataSourceInstanceSettings, TimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { useDispatch, useSelector } from 'app/types';
@@ -14,6 +14,7 @@ import { getExploreItemSelector } from './state/selectors';
 
 interface Props {
   exploreId: string;
+  onChangeTime: (range: TimeRange) => void;
 }
 
 const makeSelectors = (exploreId: string) => {
@@ -23,6 +24,7 @@ const makeSelectors = (exploreId: string) => {
     getQueryResponse: createSelector(exploreItemSelector, (s) => s!.queryResponse),
     getHistory: createSelector(exploreItemSelector, (s) => s!.history),
     getEventBridge: createSelector(exploreItemSelector, (s) => s!.eventBridge),
+    getRange: createSelector(exploreItemSelector, (s) => s!.range),
     getDatasourceInstanceSettings: createSelector(
       exploreItemSelector,
       (s) => getDatasourceSrv().getInstanceSettings(s!.datasourceInstance?.uid)!
@@ -30,9 +32,9 @@ const makeSelectors = (exploreId: string) => {
   };
 };
 
-export const QueryRows = ({ exploreId }: Props) => {
+export const QueryRows = ({ exploreId, onChangeTime }: Props) => {
   const dispatch = useDispatch();
-  const { getQueries, getDatasourceInstanceSettings, getQueryResponse, getHistory, getEventBridge } = useMemo(
+  const { getQueries, getDatasourceInstanceSettings, getQueryResponse, getHistory, getEventBridge, getRange } = useMemo(
     () => makeSelectors(exploreId),
     [exploreId]
   );
@@ -43,6 +45,7 @@ export const QueryRows = ({ exploreId }: Props) => {
   const queryResponse = useSelector(getQueryResponse);
   const history = useSelector(getHistory);
   const eventBridge = useSelector(getEventBridge);
+  const range = useSelector(getRange);
 
   const onRunQueries = useCallback(() => {
     dispatch(runQueries({ exploreId }));
@@ -109,6 +112,8 @@ export const QueryRows = ({ exploreId }: Props) => {
       eventBus={eventBridge}
       collapsable={true}
       onChangeDataSource={onChangeDataSourceSettings}
+      range={range}
+      updateTimeRange={onChangeTime}
     />
   );
 };

@@ -42,7 +42,6 @@ import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
 import { CorrelationHelper } from './CorrelationHelper';
 import { CustomContainer } from './CustomContainer';
 import ExploreQueryInspector from './ExploreQueryInspector';
-import { ExploreToolbar } from './ExploreToolbar';
 import { FlameGraphExploreContainer } from './FlameGraph/FlameGraphExploreContainer';
 import { GraphContainer } from './Graph/GraphContainer';
 import LogsContainer from './Logs/LogsContainer';
@@ -54,7 +53,6 @@ import { QueryRows } from './QueryRows';
 import RawPrometheusContainer from './RawPrometheus/RawPrometheusContainer';
 import { ResponseErrorContainer } from './ResponseErrorContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
-import { SecondaryActions } from './SecondaryActions';
 import TableContainer from './Table/TableContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { changeSize } from './state/explorePane';
@@ -544,7 +542,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       exploreId,
       graphResult,
       queryResponse,
-      isLive,
       theme,
       showMetrics,
       showTable,
@@ -563,7 +560,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     const styles = getStyles(theme);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
     const showRichHistory = openDrawer === ExploreDrawer.RichHistory;
-    const richHistoryRowButtonHidden = !supportedFeatures().queryHistoryAvailable;
     const showQueryInspector = openDrawer === ExploreDrawer.QueryInspector;
     const showNoData =
       queryResponse.state === LoadingState.Done &&
@@ -611,7 +607,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                     <ContentOutlineItem title="Queries" icon="arrow">
                       <PanelContainer className={styles.queryContainer}>
                         {correlationsBox}
-                        <QueryRows exploreId={exploreId} />
+                        <QueryRows exploreId={exploreId} onChangeTime={this.onChangeTime} />
                         <ResponseErrorContainer exploreId={exploreId} />
                       </PanelContainer>
                     </ContentOutlineItem>
