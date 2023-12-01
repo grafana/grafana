@@ -57,7 +57,7 @@ export const QueryRows = ({ exploreId }: Props) => {
 
   const onDataSourceChange = (dataSource: DataSourceInstanceSettings, index: number) => {
     onChange(
-      [queries[0]].map((item, itemIndex) => {
+      [query].map((item, itemIndex) => {
         if (itemIndex !== index) {
           return item;
         }
