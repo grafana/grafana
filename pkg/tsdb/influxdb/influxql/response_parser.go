@@ -173,16 +173,14 @@ func newValueFields(rows []models.Row, labels data.Labels, colIdxStart, colIdxEn
 					// If there is already a valueField, instead of adding nil to floatArray
 					// we add nil to the valueField and to the array of valueField constructed from
 					if valueField != nil {
-						if valueField != nil {
-							valueFieldType := valueField.Type()
-							switch valueFieldType {
-							case data.FieldTypeNullableString:
-								stringArray = append(stringArray, nil)
-							case data.FieldTypeNullableBool:
-								boolArray = append(boolArray, nil)
-							default:
-								floatArray = append(floatArray, nil)
-							}
+						valueFieldType := valueField.Type()
+						switch valueFieldType {
+						case data.FieldTypeNullableString:
+							stringArray = append(stringArray, nil)
+						case data.FieldTypeNullableBool:
+							boolArray = append(boolArray, nil)
+						default:
+							floatArray = append(floatArray, nil)
 						}
 						valueField.Append(nil)
 					} else {
