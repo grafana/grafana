@@ -4,8 +4,11 @@ import React, { JSX } from 'react';
 
 import { GitHubConfig } from './GitHubConfigPage';
 
+const backendSrvMock = jest.fn(() => Promise.resolve({}));
 jest.mock('@grafana/runtime', () => ({
-  getBackendSrv: jest.fn(),
+  getBackendSrv: () => ({
+    post: backendSrvMock,
+  }),
   config: {
     panels: {
       test: {
@@ -13,10 +16,6 @@ jest.mock('@grafana/runtime', () => ({
         name: 'test',
       },
     },
-    featureToggles: {
-      dockedMegaMenu: true,
-    },
-    theme2: { breakpoints: { values: { sm: 0 } } },
   },
   getAppEvents: () => ({
     publish: jest.fn(),
@@ -24,7 +23,7 @@ jest.mock('@grafana/runtime', () => ({
   isFetchError: () => true,
 }));
 
-// Mock FormPrompt component as it requires Router setup to work
+// Mock the FormPrompt component as it requires Router setup to work
 jest.mock('app/core/components/FormPrompt/FormPrompt', () => ({
   FormPrompt: () => <></>,
 }));
@@ -63,15 +62,11 @@ describe('GitHubConfig', () => {
     expect(screen.getByRole('textbox', { name: /Client ID/i })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: /Team IDs/i })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: /Allowed organizations/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Save/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Discard/i })).toBeInTheDocument();
   });
 
-  it('correct data is saved on form submit', async () => {
-    const { getBackendSrv } = require('@grafana/runtime');
-    const backendSrvMock = {
-      post: jest.fn(() => Promise.resolve({})),
-    };
-    getBackendSrv.mockReturnValue(backendSrvMock);
-
+  it('should save correct data on form submit', async () => {
     const { user } = setup(<GitHubConfig settings={emptySettings} />);
     await user.type(screen.getByRole('textbox', { name: /Client ID/i }), 'test-client-id');
     await user.type(screen.getByRole('textbox', { name: /Client secret/i }), 'test-client-secret');
@@ -86,7 +81,7 @@ describe('GitHubConfig', () => {
     await user.click(screen.getByRole('button', { name: /Save/i }));
 
     await waitFor(() => {
-      expect(backendSrvMock.post).toHaveBeenCalledWith('/api/v1/sso-settings', {
+      expect(backendSrvMock).toHaveBeenCalledWith('/api/v1/sso-settings', {
         provider: 'github',
         settings: {
           allowedOrganizations: 'test-org1,test-org2',
@@ -101,7 +96,7 @@ describe('GitHubConfig', () => {
     });
   });
 
-  it('required fields validated', async () => {
+  it('should validate required fields', async () => {
     const { user } = setup(<GitHubConfig settings={emptySettings} />);
     await user.click(screen.getByRole('button', { name: /Save/i }));
 
