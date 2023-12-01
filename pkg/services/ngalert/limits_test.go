@@ -11,7 +11,6 @@ import (
 )
 
 func TestUsageReporter(t *testing.T) {
-
 	t.Run("reports org usage", func(t *testing.T) {
 		rules := newFakeUsageReader(map[int64]int64{1: 10, 2: 20})
 		params := quota.ScopeParameters{
