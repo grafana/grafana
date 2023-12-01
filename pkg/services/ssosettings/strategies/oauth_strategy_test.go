@@ -130,7 +130,7 @@ func TestParseConfigFromSystem_IniFileOnly(t *testing.T) {
 	require.Equal(t, expectedOAuthInfo, oauthInfo)
 }
 
-func TestParseConfigFromSystem_EnvVarsOverridIniFileSettings(t *testing.T) {
+func TestParseConfigFromSystem_EnvVarsOverrideIniFileSettings(t *testing.T) {
 	t.Setenv("GF_AUTH_GENERIC_OAUTH_ENABLED", "false")
 	t.Setenv("GF_AUTH_GENERIC_OAUTH_SKIP_ORG_ROLE_SYNC", "false")
 
