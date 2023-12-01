@@ -158,10 +158,7 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
               onChange={(e) => {
                 const updatedQueries = (options.jsonData.tracesToMetrics?.queries ?? []).map(
                   (traceToMetricQuery, index) => {
-                    if (index === i) {
-                      return { ...traceToMetricQuery, query: e.currentTarget.value };
-                    }
-                    return traceToMetricQuery;
+                    return index === i ? { ...traceToMetricQuery, query: e.currentTarget.value } : traceToMetricQuery;
                   }
                 );
                 updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
