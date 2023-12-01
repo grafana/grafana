@@ -222,7 +222,7 @@ type AlertRule struct {
 	Annotations          map[string]string
 	Labels               map[string]string
 	IsPaused             bool
-	NotificationSettings *NotificationSettings `xorm:"notification_settings"`
+	NotificationSettings []NotificationSettings `xorm:"notification_settings"` // we use slice to workaround xorm mapping that does not serialize a struct to JSON unless it's a slice
 }
 
 // AlertRuleWithOptionals This is to avoid having to pass in additional arguments deep in the call stack. Alert rule

@@ -438,14 +438,15 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, provenanceRecords map[stri
 		provenance = prov
 	}
 	var notificationSetting *apimodels.GettableNotificationSettings
-	if r.NotificationSettings != nil {
+	if len(r.NotificationSettings) > 0 {
+		settings := r.NotificationSettings[0]
 		notificationSetting = &apimodels.GettableNotificationSettings{
-			Receiver:          r.NotificationSettings.Receiver,
-			GroupBy:           r.NotificationSettings.GroupBy,
-			GroupWait:         r.NotificationSettings.GroupWait,
-			GroupInterval:     r.NotificationSettings.GroupInterval,
-			RepeatInterval:    r.NotificationSettings.RepeatInterval,
-			MuteTimeIntervals: r.NotificationSettings.MuteTimeIntervals,
+			Receiver:          settings.Receiver,
+			GroupBy:           settings.GroupBy,
+			GroupWait:         settings.GroupWait,
+			GroupInterval:     settings.GroupInterval,
+			RepeatInterval:    settings.RepeatInterval,
+			MuteTimeIntervals: settings.MuteTimeIntervals,
 		}
 	}
 
@@ -538,15 +539,15 @@ func validateNotifications(ctx context.Context, groupChanges *store.GroupDelta, 
 			continue
 		}
 		if slices.ContainsFunc(changedRoutes, func(r ngmodels.NotificationSettings) bool {
-			return rule.NotificationSettings.Equals(&r)
+			return rule.NotificationSettings[0].Equals(&r)
 		}) {
 			continue
 		}
-		err := validator.Validate(ctx, *rule.NotificationSettings, user)
+		err := validator.Validate(ctx, rule.NotificationSettings[0], user)
 		if err != nil {
 			return nil, fmt.Errorf("%w '%s': %s", ngmodels.ErrAlertRuleFailedValidation, rule.Title, err.Error())
 		}
-		changedRoutes = append(changedRoutes, *rule.NotificationSettings)
+		changedRoutes = append(changedRoutes, rule.NotificationSettings[0])
 	}
 
 	for _, delta := range groupChanges.Update {
@@ -555,19 +556,19 @@ func validateNotifications(ctx context.Context, groupChanges *store.GroupDelta, 
 			continue
 		}
 		s := delta.New.NotificationSettings
-		if s == nil {
+		if len(s) == 0 {
 			continue
 		}
 		if slices.ContainsFunc(changedRoutes, func(r ngmodels.NotificationSettings) bool {
-			return s.Equals(&r)
+			return s[0].Equals(&r)
 		}) {
 			continue
 		}
-		err := validator.Validate(ctx, *s, user)
+		err := validator.Validate(ctx, s[0], user)
 		if err != nil {
 			return nil, fmt.Errorf("%w '%s' (UID: %s): %s", ngmodels.ErrAlertRuleFailedValidation, delta.New.Title, delta.New.UID, err.Error())
 		}
-		changedRoutes = append(changedRoutes, *s)
+		changedRoutes = append(changedRoutes, s[0])
 	}
 	return changedRoutes, nil
 }
