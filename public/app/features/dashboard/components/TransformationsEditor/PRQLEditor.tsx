@@ -1,9 +1,6 @@
-import { EditorState } from '@codemirror/state';
-import { oneDark } from '@codemirror/theme-one-dark';
-import React, { useEffect, useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 
-import { PRQLEditorView, basicSetup } from './codemirror';
-import { prql } from './lang-prql/prql';
+import { basicSetup, PRQLEditorView, prql, EditorState, oneDark } from '@grafana/prql';
 
 let doc = `from invoices
 filter invoice_date >= @1970-01-16

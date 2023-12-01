@@ -3507,6 +3507,25 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana/prql@file:prql::locator=grafana%40workspace%3A.":
+  version: 0.0.0
+  resolution: "@grafana/prql@file:prql#prql::hash=547748&locator=grafana%40workspace%3A."
+  dependencies:
+    "@codemirror/autocomplete": "npm:^6.11.0"
+    "@codemirror/commands": "npm:^6.3.0"
+    "@codemirror/language": "npm:^6.9.2"
+    "@codemirror/lint": "npm:^6.4.2"
+    "@codemirror/search": "npm:^6.5.4"
+    "@codemirror/state": "npm:^6.3.2"
+    "@codemirror/theme-one-dark": "npm:^6.1.2"
+    "@codemirror/view": "npm:^6.22.0"
+    "@lezer/highlight": "npm:^1.2.0"
+    "@lezer/lr": "npm:^1.3.14"
+    react: "npm:^18.2.0"
+  checksum: 9fadcc96b891c348bd9574cbf8bb7b30a52a256b9f6b9a3ab826858113eed1bffa1feccbe426b6d266cff398585d206ca8ebbfa6cd33ed35a06536761d4ae397
+  languageName: node
+  linkType: hard
+
 "@grafana/runtime@npm:10.3.0-pre, @grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
@@ -17785,6 +17804,7 @@ __metadata:
     "@grafana/lezer-logql": "npm:0.2.2"
     "@grafana/lezer-traceql": "npm:0.0.11"
     "@grafana/monaco-logql": "npm:^0.0.7"
+    "@grafana/prql": "file:prql"
     "@grafana/runtime": "workspace:*"
     "@grafana/scenes": "npm:^1.24.6"
     "@grafana/schema": "workspace:*"

@@ -37,5 +37,7 @@ export const prqlLanguage = LRLanguage.define({
 
 /// PRQL language support.
 export function prql() {
+  // It still complains that the types are wrong between the two versions of @lezer/common, but at run time it appears that we are calling the right dependencies that we've bundled in this workspace
+  //@ts-ignore
   return new LanguageSupport(prqlLanguage, [prqlLanguage.data.of({ autocomplete: globalCompletion })]);
 }

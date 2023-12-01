@@ -564,9 +564,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                   <p>
                     PRQL is a modern language for transforming data — a simple, powerful, pipelined SQL replacement.
                   </p>
-                  <div id="editor">
-                    <PRQLEditor />
-                  </div>
+                  <PRQLEditor />
                 </div>
               </>
             }

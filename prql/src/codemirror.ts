@@ -105,4 +105,6 @@ export const minimalSetup: Extension = (() => [
   keymap.of([...defaultKeymap, ...historyKeymap]),
 ])();
 
-export { EditorView } from '@codemirror/view';
+export { EditorView as PRQLEditorView } from '@codemirror/view';
+export { EditorState } from '@codemirror/state';
+export { oneDark } from '@codemirror/theme-one-dark';
