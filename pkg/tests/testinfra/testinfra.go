@@ -157,6 +157,14 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	viewsDir := filepath.Join(publicDir, "views")
 	err = fs.CopyRecursive(filepath.Join(rootDir, "public", "views"), viewsDir)
 	require.NoError(t, err)
+	// Copy index template to index.html, since Grafana will try to use the latter
+	err = fs.CopyFile(filepath.Join(rootDir, "public", "views", "index.html"),
+		filepath.Join(viewsDir, "index.html"))
+	require.NoError(t, err)
+	// Copy error template to error.html, since Grafana will try to use the latter
+	err = fs.CopyFile(filepath.Join(rootDir, "public", "views", "error.html"),
+		filepath.Join(viewsDir, "error.html"))
+	require.NoError(t, err)
 	emailsDir := filepath.Join(publicDir, "emails")
 	err = fs.CopyRecursive(filepath.Join(rootDir, "public", "emails"), emailsDir)
 	require.NoError(t, err)
