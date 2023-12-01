@@ -19,7 +19,7 @@ labels:
     - oss
 menuTitle: Configure panel options
 title: Configure panel options
-weight: 2
+weight: 50
 ---
 
 # Configure panel options

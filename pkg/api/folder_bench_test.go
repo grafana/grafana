@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -270,7 +271,7 @@ func setupDB(b testing.TB) benchScenario {
 				UserID:     userID,
 				TeamID:     teamID,
 				OrgID:      orgID,
-				Permission: dashboards.PERMISSION_VIEW,
+				Permission: dashboardaccess.PERMISSION_VIEW,
 				Created:    now,
 				Updated:    now,
 			})

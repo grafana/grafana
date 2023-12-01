@@ -7,9 +7,10 @@ import appEvents from 'app/core/app_events';
 
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { createDashboardEditViewFor } from '../settings/utils';
-import { findVizPanelByKey } from '../utils/utils';
+import { findVizPanelByKey, isPanelClone } from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
+import { ViewPanelScene } from './ViewPanelScene';
 import { DashboardRepeatsProcessedEvent } from './types';
 
 export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
@@ -25,17 +26,17 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     const state = this._scene.state;
     return {
       inspect: state.inspectPanelKey,
-      viewPanel: state.viewPanelKey,
+      viewPanel: state.viewPanelScene?.getUrlKey(),
       editview: state.editview?.getUrlKey(),
     };
   }
 
   updateFromUrl(values: SceneObjectUrlValues): void {
-    const { inspectPanelKey, viewPanelKey, meta, isEditing } = this._scene.state;
+    const { inspectPanelKey, viewPanelScene, meta, isEditing } = this._scene.state;
     const update: Partial<DashboardSceneState> = {};
 
     if (typeof values.editview === 'string' && meta.canEdit) {
-      update.editview = createDashboardEditViewFor(values.editview);
+      update.editview = createDashboardEditViewFor(values.editview, this._scene.getRef());
 
       // If we are not in editing (for example after full page reload)
       if (!isEditing) {
@@ -68,7 +69,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       const panel = findVizPanelByKey(this._scene, values.viewPanel);
       if (!panel) {
         // // If we are trying to view a repeat clone that can't be found it might be that the repeats have not been processed yet
-        if (values.viewPanel.indexOf('clone')) {
+        if (isPanelClone(values.viewPanel)) {
           this._handleViewRepeatClone(values.viewPanel);
           return;
         }
@@ -78,9 +79,9 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         return;
       }
 
-      update.viewPanelKey = values.viewPanel;
-    } else if (viewPanelKey) {
-      update.viewPanelKey = undefined;
+      update.viewPanelScene = new ViewPanelScene({ panelRef: panel.getRef() });
+    } else if (viewPanelScene) {
+      update.viewPanelScene = undefined;
     }
 
     if (Object.keys(update).length > 0) {
@@ -94,7 +95,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         const panel = findVizPanelByKey(this._scene, viewPanel);
         if (panel) {
           this._eventSub?.unsubscribe();
-          this._scene.setState({ viewPanelKey: viewPanel });
+          this._scene.setState({ viewPanelScene: new ViewPanelScene({ panelRef: panel.getRef() }) });
         }
       });
     }

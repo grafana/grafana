@@ -76,9 +76,7 @@
     "manage-folder-nav": {
       "alert-rules": "警报规则",
       "dashboards": "仪表板",
-      "panels": "面板",
-      "permissions": "权限",
-      "settings": "设置"
+      "panels": "面板"
     },
     "new-folder-form": {
       "cancel-label": "取消",
@@ -769,6 +767,10 @@
       "title": "探索"
     },
     "frontend": {
+      "subtitle": "",
+      "title": ""
+    },
+    "frontend-app": {
       "title": "前端"
     },
     "global-orgs": {
@@ -796,6 +798,10 @@
       "title": "事件"
     },
     "infrastructure": {
+      "subtitle": "",
+      "title": ""
+    },
+    "integrations": {
       "title": "集成"
     },
     "kubernetes": {
@@ -931,7 +937,8 @@
     },
     "megamenu": {
       "close": "关闭菜单",
-      "dock": "停靠菜单"
+      "dock": "停靠菜单",
+      "undock": ""
     },
     "toolbar": {
       "close-menu": "关闭菜单",
@@ -1103,15 +1110,6 @@
       "new-dashboard": "新建仪表板",
       "new-folder": "新建文件夹"
     },
-    "folder-view": {
-      "go-to-folder": "前往文件夹",
-      "select-folder": "选择文件夹"
-    },
-    "result-kind": {
-      "dashboard": "仪表板",
-      "folder": "文件夹",
-      "panel": "面板"
-    },
     "results-table": {
       "datasource-header": "数据源",
       "location-header": "位置",
@@ -1124,12 +1122,6 @@
     "search-input": {
       "include-panels-placeholder": "搜索仪表板和面板",
       "placeholder": "搜索仪表板"
-    }
-  },
-  "search-view": {
-    "no-results": {
-      "clear": "清除搜索和筛选条件",
-      "text": "您的查询未找到结果。"
     }
   },
   "share-modal": {
@@ -1267,6 +1259,7 @@
     "calendar": {
       "apply-button": "应用时间范围",
       "cancel-button": "取消",
+      "close": "",
       "select-time": "选择时间范围"
     },
     "content": {
@@ -1286,6 +1279,7 @@
       "default-error": "请输入一个过去的日期或\"现在\"",
       "fiscal-year": "财政年度",
       "from-input": "发件人",
+      "open-input-calendar": "",
       "range-error": "“发件人”不能在“收件人”之后",
       "to-input": "结束"
     },
@@ -1308,6 +1302,12 @@
       "select-search-input": "输入以搜索(国家、城市、缩写)"
     }
   },
+  "transformations": {
+    "empty": {
+      "add-transformation-body": "",
+      "add-transformation-header": ""
+    }
+  },
   "user-orgs": {
     "current-org-button": "当前",
     "name-column": "姓名",
@@ -1322,6 +1322,9 @@
       "name-error": "姓名是必填项",
       "name-label": "姓名",
       "username-label": "用户名"
+    },
+    "tabs": {
+      "general": ""
     }
   },
   "user-session": {
