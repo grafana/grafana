@@ -27,8 +27,9 @@ import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
 import { DashboardEditView } from '../settings/utils';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
+import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/urlBuilders';
-import { forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel } from '../utils/utils';
+import { forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel, isPanelClone } from '../utils/utils';
 
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { ViewPanelScene } from './ViewPanelScene';
@@ -279,11 +280,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
    */
   public enrichDataRequest(sceneObject: SceneObject): Partial<DataQueryRequest> {
     const panel = getClosestVizPanel(sceneObject);
+    let panelId = 0;
+
+    if (panel && panel.state.key) {
+      if (isPanelClone(panel.state.key)) {
+        panelId = djb2Hash(panel?.state.key);
+      } else {
+        panelId = getPanelIdForVizPanel(panel);
+      }
+    }
 
     return {
       app: CoreApp.Dashboard,
       dashboardUID: this.state.uid,
-      panelId: (panel && getPanelIdForVizPanel(panel)) ?? 0,
+      panelId,
     };
   }
 
