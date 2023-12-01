@@ -55,7 +55,9 @@ const FlameGraphTopTableContainer = React.memo(
           filteredTable[label] = filteredTable[label] || {};
           filteredTable[label].self = filteredTable[label].self ? filteredTable[label].self + self : self;
           filteredTable[label].total = filteredTable[label].total ? filteredTable[label].total + value : value;
-          filteredTable[label].totalRight = filteredTable[label].totalRight ? filteredTable[label].totalRight + valueRight : valueRight;
+          filteredTable[label].totalRight = filteredTable[label].totalRight
+            ? filteredTable[label].totalRight + valueRight
+            : valueRight;
         }
       }
       return filteredTable;

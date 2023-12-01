@@ -91,17 +91,17 @@ describe('FlameGraphContainer', () => {
   it('should filter table items based on search input', async () => {
     // Render the FlameGraphContainer with necessary props
     render(<FlameGraphContainerWithProps />);
-  
+
     // Simulate typing into the search input field
     const searchInput = await screen.findByTestId('searchInput');
     await userEvent.type(searchInput, 'net/http.HandlerFunc.ServeHTTP');
-  
+
     // Verify that the table displays filtered items based on the search term
     const filteredRows = screen.queryAllByText('net/http.HandlerFunc.ServeHTTP');
     expect(filteredRows.length).toBeGreaterThan(0); // Expect to find at least one row with the search term
-  
+
     // Verify that rows not matching the search term are not displayed
     const unfilteredRows = screen.queryAllByText('SomeOtherTextNotInSearch');
     expect(unfilteredRows.length).toBe(0); // Expect not to find rows that should be filtered out
-  });  
+  });
 });
