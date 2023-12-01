@@ -736,17 +736,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
               </div>
             )}
             <div ref={this.topLogsRef} />
-            <LogsMetaRow
-              logRows={logRows}
-              meta={logsMeta || []}
-              dedupStrategy={dedupStrategy}
-              dedupCount={dedupCount}
-              hasUnescapedContent={hasUnescapedContent}
-              forceEscape={forceEscape}
-              displayedFields={displayedFields}
-              onEscapeNewlines={this.onEscapeNewlines}
-              clearDetectedFields={this.clearDetectedFields}
-            />
           </div>
           <div
             className={cx(styles.logsSection, this.state.visualisationType === 'table' ? styles.logsTable : undefined)}
