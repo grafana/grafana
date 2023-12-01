@@ -59,7 +59,6 @@ func (ms *migrationService) Run(ctx context.Context) error {
 		return fmt.Errorf("checking if migration is needed: %w", err)
 	}
 	if !migrate {
-		// set current alerting type to avoid extra checks in future?
 		return nil
 	}
 
@@ -216,6 +215,11 @@ func (ms *migrationService) needMigration(ctx context.Context) (bool, error) {
 			hasAlerts, err := ms.migrationStore.HasLegacyAlerts(ctx)
 			if err != nil {
 				return err
+			}
+			if !hasAlerts {
+				if err := ms.migrationStore.SetCurrentAlertingType(ctx, transition.DesiredType); err != nil {
+					return fmt.Errorf("setting migration status: %w", err)
+				}
 			}
 			result = hasAlerts
 		}
