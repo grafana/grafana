@@ -55,13 +55,13 @@ func TestCompositeStore(t *testing.T) {
 			{TimeEnd: 1, Time: 2},
 			{TimeEnd: 2, Time: 1},
 		}
-		r1 := &fakeReader{items: items1}
+		r1 := newFakeReader(withItems(items1))
 
 		items2 := []*annotations.ItemDTO{
 			{TimeEnd: 1, Time: 1},
 			{TimeEnd: 1, Time: 3},
 		}
-		r2 := &fakeReader{items: items2}
+		r2 := newFakeReader(withItems(items2))
 
 		store := &CompositeStore{
 			[]readStore{r1, r2},
@@ -83,13 +83,13 @@ func TestCompositeStore(t *testing.T) {
 			{Tag: "key1:val1"},
 			{Tag: "key2:val1"},
 		}
-		r1 := &fakeReader{tagRes: annotations.FindTagsResult{Tags: tags1}}
+		r1 := newFakeReader(withTags(tags1))
 
 		tags2 := []*annotations.TagsDTO{
 			{Tag: "key1:val2"},
 			{Tag: "key2:val2"},
 		}
-		r2 := &fakeReader{tagRes: annotations.FindTagsResult{Tags: tags2}}
+		r2 := newFakeReader(withTags(tags2))
 
 		store := &CompositeStore{
 			[]readStore{r1, r2},
