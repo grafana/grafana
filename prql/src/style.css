@@ -1,0 +1,10 @@
+:root {
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+}
+
+.cm-editor {
+  max-height: 400px;
+  border: 1px solid silver;
+}

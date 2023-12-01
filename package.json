@@ -433,6 +433,9 @@
     "history@^4.9.0": "patch:history@npm%3A4.10.1#./.yarn/patches/history-npm-4.10.1-ee217563ae.patch"
   },
   "workspaces": {
+    "nohoist": [
+      "prql"
+    ],
     "packages": [
       "packages/*",
       "plugins-bundled/internal/*",
