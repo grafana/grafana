@@ -50,13 +50,13 @@ export const InfiniteScroll = ({
       return;
     }
 
-    function handleScroll(e: Event) {
+    function handleScroll(event: Event | WheelEvent) {
       if (!scrollElement || !loadMoreLogs || !rows.length || loading) {
         return;
       }
-      e.stopImmediatePropagation();
+      event.stopImmediatePropagation();
       setLastScroll(scrollElement.scrollTop);
-      const scrollDirection = shouldLoadMore(scrollElement, lastScroll);
+      const scrollDirection = shouldLoadMore(event, scrollElement, lastScroll);
       if (scrollDirection === ScrollDirection.NoScroll) {
         return;
       } else if (scrollDirection === ScrollDirection.Top) {
@@ -137,13 +137,16 @@ enum ScrollDirection {
   Bottom = 1,
   NoScroll = 0,
 }
-function shouldLoadMore(element: HTMLDivElement, lastScroll: number): ScrollDirection {
+function shouldLoadMore(event: Event | WheelEvent, element: HTMLDivElement, lastScroll: number): ScrollDirection {
   // Disable behavior if there is no scroll
   if (element.scrollHeight <= element.clientHeight) {
     return ScrollDirection.NoScroll;
   }
-  const delta = element.scrollTop - lastScroll;
-  const scrollDirection = delta <= 0 ? ScrollDirection.Top : ScrollDirection.Bottom;
+  const delta = event instanceof WheelEvent ? event.deltaY : element.scrollTop - lastScroll;
+  if (delta === 0) {
+    return ScrollDirection.NoScroll;
+  }
+  const scrollDirection = delta < 0 ? ScrollDirection.Top : ScrollDirection.Bottom;
   const diff =
     scrollDirection === ScrollDirection.Top
       ? element.scrollTop
