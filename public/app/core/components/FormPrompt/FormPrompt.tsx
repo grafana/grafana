@@ -99,9 +99,7 @@ const UnsavedChangesModal = ({ onDiscard, onBackToForm, isOpen }: UnsavedChanges
       title="Leave page?"
       onDismiss={onBackToForm}
       icon="exclamation-triangle"
-      className={css`
-        width: 500px;
-      `}
+      className={css({ width: '500px' })}
     >
       <h5>Changes that you made may not be saved.</h5>
       <Modal.ButtonRow>
