@@ -12,7 +12,7 @@ import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { KioskMode } from 'app/types';
 
 import { AppChromeMenu } from './AppChromeMenu';
-import { DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY } from './AppChromeService';
+import { DOCKED_LOCAL_STORAGE_KEY, DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY } from './AppChromeService';
 import { MegaMenu as DockedMegaMenu } from './DockedMegaMenu/MegaMenu';
 import { MegaMenu } from './MegaMenu/MegaMenu';
 import { NavToolbar } from './NavToolbar/NavToolbar';
@@ -30,10 +30,11 @@ export function AppChrome({ children }: Props) {
   const styles = useStyles2(getStyles);
 
   const dockedMenuBreakpoint = theme.breakpoints.values.xl;
+  const dockedMenuLocalStorageState = store.getBool(DOCKED_LOCAL_STORAGE_KEY, true);
   useMediaQueryChange({
     breakpoint: dockedMenuBreakpoint,
     onChange: (e) => {
-      if (config.featureToggles.dockedMegaMenu) {
+      if (config.featureToggles.dockedMegaMenu && dockedMenuLocalStorageState) {
         chrome.setMegaMenuDocked(e.matches, false);
         chrome.setMegaMenuOpen(
           e.matches ? store.getBool(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, state.megaMenuOpen) : false
