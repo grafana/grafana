@@ -97,13 +97,13 @@ var (
 	}
 )
 
-func TestParseConfigFromSystem_EnvVarsOnly(t *testing.T) {
+func TestGetProviderConfig_EnvVarsOnly(t *testing.T) {
 	setupEnvVars(t)
 
 	cfg := setting.NewCfg()
 	strategy := NewOAuthStrategy(cfg)
 
-	result, err := strategy.ParseConfigFromSystem(context.Background(), "generic_oauth")
+	result, err := strategy.GetProviderConfig(context.Background(), "generic_oauth")
 	require.NoError(t, err)
 
 	oauthInfo, ok := result.(*social.OAuthInfo)
@@ -112,7 +112,7 @@ func TestParseConfigFromSystem_EnvVarsOnly(t *testing.T) {
 	require.Equal(t, expectedOAuthInfo, oauthInfo)
 }
 
-func TestParseConfigFromSystem_IniFileOnly(t *testing.T) {
+func TestGetProviderConfig_IniFileOnly(t *testing.T) {
 	iniFile, err := ini.Load([]byte(iniContent))
 	require.NoError(t, err)
 
@@ -121,7 +121,7 @@ func TestParseConfigFromSystem_IniFileOnly(t *testing.T) {
 
 	strategy := NewOAuthStrategy(cfg)
 
-	result, err := strategy.ParseConfigFromSystem(context.Background(), "generic_oauth")
+	result, err := strategy.GetProviderConfig(context.Background(), "generic_oauth")
 	require.NoError(t, err)
 
 	oauthInfo, ok := result.(*social.OAuthInfo)
@@ -130,7 +130,7 @@ func TestParseConfigFromSystem_IniFileOnly(t *testing.T) {
 	require.Equal(t, expectedOAuthInfo, oauthInfo)
 }
 
-func TestParseConfigFromSystem_EnvVarsOverrideIniFileSettings(t *testing.T) {
+func TestGetProviderConfig_EnvVarsOverrideIniFileSettings(t *testing.T) {
 	t.Setenv("GF_AUTH_GENERIC_OAUTH_ENABLED", "false")
 	t.Setenv("GF_AUTH_GENERIC_OAUTH_SKIP_ORG_ROLE_SYNC", "false")
 
@@ -142,7 +142,7 @@ func TestParseConfigFromSystem_EnvVarsOverrideIniFileSettings(t *testing.T) {
 
 	strategy := NewOAuthStrategy(cfg)
 
-	result, err := strategy.ParseConfigFromSystem(context.Background(), "generic_oauth")
+	result, err := strategy.GetProviderConfig(context.Background(), "generic_oauth")
 	require.NoError(t, err)
 
 	oauthInfo, ok := result.(*social.OAuthInfo)

@@ -2,8 +2,6 @@ package strategies
 
 import (
 	"context"
-	"regexp"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -12,9 +10,8 @@ import (
 )
 
 type OAuthStrategy struct {
-	cfg                     *setting.Cfg
-	supportedProvidersRegex *regexp.Regexp
-	settingsByProvider      map[string]*social.OAuthInfo
+	cfg                *setting.Cfg
+	settingsByProvider map[string]*social.OAuthInfo
 }
 
 var extraKeysByProvider = map[string][]string{
@@ -28,11 +25,9 @@ var extraKeysByProvider = map[string][]string{
 var _ ssosettings.FallbackStrategy = (*OAuthStrategy)(nil)
 
 func NewOAuthStrategy(cfg *setting.Cfg) *OAuthStrategy {
-	compiledRegex := regexp.MustCompile(`^` + strings.Join(ssosettings.AllOAuthProviders, "|") + `$`)
 	oauthStrategy := &OAuthStrategy{
-		cfg:                     cfg,
-		supportedProvidersRegex: compiledRegex,
-		settingsByProvider:      make(map[string]*social.OAuthInfo),
+		cfg:                cfg,
+		settingsByProvider: make(map[string]*social.OAuthInfo),
 	}
 
 	oauthStrategy.loadAllSettings()
@@ -40,10 +35,11 @@ func NewOAuthStrategy(cfg *setting.Cfg) *OAuthStrategy {
 }
 
 func (s *OAuthStrategy) IsMatch(provider string) bool {
-	return s.supportedProvidersRegex.MatchString(provider)
+	_, ok := s.settingsByProvider[provider]
+	return ok
 }
 
-func (s *OAuthStrategy) ParseConfigFromSystem(_ context.Context, provider string) (any, error) {
+func (s *OAuthStrategy) GetProviderConfig(_ context.Context, provider string) (any, error) {
 	return s.settingsByProvider[provider], nil
 }
 
