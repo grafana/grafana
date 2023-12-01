@@ -235,7 +235,6 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
     "to": "now",
   },
   "timepicker": {
-    "collapse": false,
     "hidden": false,
     "refresh_intervals": [
       "5s",
@@ -558,7 +557,6 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
     "to": "now",
   },
   "timepicker": {
-    "collapse": false,
     "hidden": false,
     "refresh_intervals": [
       "5s",
@@ -881,7 +879,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
     "to": "now",
   },
   "timepicker": {
-    "collapse": false,
     "hidden": false,
     "refresh_intervals": [
       "10s",
