@@ -2,14 +2,15 @@ package mssql
 
 import (
 	"context"
+	"crypto/md5"
 	"database/sql"
 	"database/sql/driver"
 	"errors"
+	"fmt"
 	"net"
 	"slices"
 
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
-	"github.com/grafana/grafana/pkg/util"
 	mssql "github.com/microsoft/go-mssqldb"
 	"golang.org/x/net/proxy"
 )
@@ -18,10 +19,7 @@ import (
 // route connections through the secure socks proxy
 func createMSSQLProxyDriver(cnnstr string, hostName string, opts *sdkproxy.Options) (string, error) {
 	// create a unique driver per connection string
-	hash, err := util.Md5SumString(cnnstr)
-	if err != nil {
-		return "", err
-	}
+	hash := fmt.Sprintf("%x", md5.Sum([]byte(cnnstr)))
 	driverName := "mssql-proxy-" + hash
 
 	// only register the driver once
