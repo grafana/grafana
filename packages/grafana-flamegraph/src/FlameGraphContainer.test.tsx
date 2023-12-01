@@ -40,9 +40,13 @@ describe('FlameGraphContainer', () => {
     render(<FlameGraphContainerWithProps />);
     await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[0]);
     expect(screen.getByDisplayValue('net/http.HandlerFunc.ServeHTTP')).toBeInTheDocument();
+    // Unclick the selection so that the rest of the tests don't have it highlighted
+    await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[0]);
+
     await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[1]);
     expect(screen.getByDisplayValue('total')).toBeInTheDocument();
-    await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[1]);
+    // after it is highlighted it will be the only (first) item in the table so [1] -> [0]
+    await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[0]); 
     expect(screen.queryByDisplayValue('total')).not.toBeInTheDocument();
   });
 
