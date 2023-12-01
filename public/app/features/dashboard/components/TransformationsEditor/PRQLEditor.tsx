@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 
-import { basicSetup, PRQLEditorView, prql, EditorState, oneDark } from '@grafana/prql';
+import { basicSetup, PRQLEditorView, prql, EditorState, oneDark } from '../../../../../../prql';
 
 let doc = `from invoices
 filter invoice_date >= @1970-01-16

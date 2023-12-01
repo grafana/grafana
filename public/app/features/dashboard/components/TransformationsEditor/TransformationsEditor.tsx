@@ -41,11 +41,11 @@ import { getDocsLink } from 'app/core/utils/docsLinks';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 import { categoriesLabels } from 'app/features/transformers/utils';
 
-import { PRQLEditor } from '../../../../../../prql/src/editor';
 import { AppNotificationSeverity } from '../../../../types';
 import { PanelModel } from '../../state';
 import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
 
+import { PRQLEditor } from './PRQLEditor';
 import { TransformationOperationRows } from './TransformationOperationRows';
 import { TransformationsEditorTransformation } from './types';
 
