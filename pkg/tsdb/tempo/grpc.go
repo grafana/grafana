@@ -10,14 +10,13 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/tempo/pkg/tempopb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-var logger = log.New("tsdb.tempo")
+var logger = backend.NewLoggerWith("logger", "tsdb.tempo")
 
 // This function creates a new gRPC client to connect to a streaming query service.
 // It starts by parsing the URL from the data source settings and extracting the host, since that's what the gRPC connection expects.

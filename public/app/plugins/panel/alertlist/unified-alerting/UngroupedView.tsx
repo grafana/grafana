@@ -119,6 +119,7 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
                     </div>
                   </div>
                   <AlertInstances
+                    rule={ruleWithLocation}
                     alerts={alertingRule.alerts ?? []}
                     options={options}
                     grafanaTotalInstances={grafanaInstancesTotal}

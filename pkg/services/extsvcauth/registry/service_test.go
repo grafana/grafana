@@ -2,10 +2,10 @@ package registry
 
 import (
 	"context"
-	"sync"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/tests"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -19,6 +19,14 @@ type TestEnv struct {
 	saReg    *tests.ExternalServiceRegistryMock
 }
 
+// Never lock in tests
+type fakeServerLock struct{}
+
+func (f *fakeServerLock) LockExecuteAndReleaseWithRetries(ctx context.Context, actionName string, timeConfig serverlock.LockTimeConfig, fn func(ctx context.Context), retryOpts ...serverlock.RetryOpt) error {
+	fn(ctx)
+	return nil
+}
+
 func setupTestEnv(t *testing.T) *TestEnv {
 	env := TestEnv{}
 	env.oauthReg = tests.NewExternalServiceRegistryMock(t)
@@ -29,7 +37,7 @@ func setupTestEnv(t *testing.T) *TestEnv {
 		oauthReg:        env.oauthReg,
 		saReg:           env.saReg,
 		extSvcProviders: map[string]extsvcauth.AuthProvider{},
-		lock:            sync.Mutex{},
+		serverLock:      &fakeServerLock{},
 	}
 	return &env
 }
@@ -113,7 +121,7 @@ func TestRegistry_GetExternalServiceNames(t *testing.T) {
 
 			names, err := env.r.GetExternalServiceNames(context.Background())
 			require.NoError(t, err)
-			require.EqualValues(t, tt.want, names)
+			require.ElementsMatch(t, tt.want, names)
 
 			env.oauthReg.AssertExpectations(t)
 			env.saReg.AssertExpectations(t)

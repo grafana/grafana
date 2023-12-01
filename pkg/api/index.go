@@ -166,7 +166,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	hs.HooksService.RunIndexDataHooks(&data, c)
 
-	data.NavTree.ApplyAdminIA(hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagNavAdminSubsections))
+	data.NavTree.ApplyAdminIA()
 	data.NavTree.Sort()
 
 	return &data, nil

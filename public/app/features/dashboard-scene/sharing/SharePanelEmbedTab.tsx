@@ -18,6 +18,7 @@ export interface SharePanelEmbedTabState extends SceneShareTabState {
 }
 
 export class SharePanelEmbedTab extends SceneObjectBase<SharePanelEmbedTabState> {
+  public tabId = 'Embed';
   static Component = SharePanelEmbedTabRenderer;
 
   public constructor(state: SharePanelEmbedTabState) {

@@ -38,7 +38,6 @@ func TestInitializer_envVars(t *testing.T) {
 					"custom_env_var": "customVal",
 				},
 			},
-			Features: featuremgmt.WithFeatures(),
 		}, licensing)
 
 		envVars := envVarsProvider.Get(context.Background(), p)
@@ -77,10 +76,12 @@ func TestInitializer_skipHostEnvVars(t *testing.T) {
 		require.False(t, ok, "host env var should not be present")
 	})
 
-	t.Run("with FlagPluginsSkipHostEnvVars", func(t *testing.T) {
-		envVarsProvider := NewProvider(&config.Cfg{
-			Features: featuremgmt.WithFeatures(featuremgmt.FlagPluginsSkipHostEnvVars),
-		}, nil)
+	t.Run("with SkipHostEnvVars = true", func(t *testing.T) {
+		p := &plugins.Plugin{
+			JSONData:        plugins.JSONData{ID: "test"},
+			SkipHostEnvVars: true,
+		}
+		envVarsProvider := NewProvider(&config.Cfg{}, nil)
 
 		t.Run("should populate allowed host env vars", func(t *testing.T) {
 			// Set all allowed variables
