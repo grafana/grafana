@@ -1088,6 +1088,16 @@ var (
 			FrontendOnly: true,
 			Owner:        identityAccessTeam,
 		},
+		{
+			// this is mainly used a a way to quickly disable query hints as a safe guard for our infrastructure
+			Name:           "lokiQueryHints",
+			Description:    "Enables query hints for Loki",
+			Stage:          FeatureStageGeneralAvailability,
+			FrontendOnly:   true,
+			Expression:     "true",
+			Owner:          grafanaObservabilityLogsSquad,
+			AllowSelfServe: falsePtr,
+		},
 	}
 )
 

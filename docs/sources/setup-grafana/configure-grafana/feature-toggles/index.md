@@ -51,6 +51,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `prometheusConfigOverhaulAuth`       | Update the Prometheus configuration page with the new auth component                                                                                                                                                         | Yes                |
 | `alertingInsights`                   | Show the new alerting insights landing page                                                                                                                                                                                  | Yes                |
 | `cloudWatchWildCardDimensionValues`  | Fetches dimension values from CloudWatch to correctly label wildcard dimensions                                                                                                                                              | Yes                |
+| `lokiQueryHints`                     | Enables query hints for Loki                                                                                                                                                                                                 | Yes                |
 
 ## Preview feature toggles
 

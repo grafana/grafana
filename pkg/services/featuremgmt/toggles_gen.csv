@@ -147,3 +147,4 @@ logRowsPopoverMenu,experimental,@grafana/observability-logs,false,false,false,tr
 pluginsSkipHostEnvVars,experimental,@grafana/plugins-platform-backend,false,false,false,false
 regressionTransformation,experimental,@grafana/grafana-bi-squad,false,false,false,true
 displayAnonymousStats,experimental,@grafana/identity-access-team,false,false,false,true
+lokiQueryHints,GA,@grafana/observability-logs,false,false,false,true
