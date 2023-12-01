@@ -1,5 +1,5 @@
   oauthkeycloakdb:
-    image: docker.io/library/postgres:12-alpine
+    image: docker.io/library/postgres:16-alpine
     container_name: oauthkeycloakdb
     environment:
       POSTGRES_DB: keycloak
@@ -10,7 +10,7 @@
     restart: unless-stopped
 
   oauthkeycloak:
-    image: quay.io/keycloak/keycloak:22.0
+    image: quay.io/keycloak/keycloak:23.0
     container_name: oauthkeycloak
     command: start-dev
     environment:

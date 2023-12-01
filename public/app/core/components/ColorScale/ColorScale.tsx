@@ -64,8 +64,8 @@ export const ColorScale = ({ colorPalette, min, max, display, hoverValue, useSto
       {display && (
         <div className={styles.followerContainer}>
           <div className={styles.legendValues}>
-            <span>{display(min)}</span>
-            <span>{display(max)}</span>
+            <span className={styles.disabled}>{display(min)}</span>
+            <span className={styles.disabled}>{display(max)}</span>
           </div>
           {percent != null && (scaleHover.isShown || hoverValue !== undefined) && (
             <span className={styles.hoverValue} style={{ left: `${percent}%` }}>
@@ -135,8 +135,9 @@ const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
   }),
   scaleGradient: css({
     background: `linear-gradient(90deg, ${colors.join()})`,
-    height: '10px',
+    height: '9px',
     pointerEvents: 'none',
+    borderRadius: theme.shape.radius.default,
   }),
   legendValues: css({
     display: 'flex',
@@ -147,7 +148,6 @@ const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
     position: 'absolute',
     marginTop: '-14px',
     padding: '3px 15px',
-    background: theme.colors.background.primary,
     transform: 'translateX(-50%)',
   }),
   followerContainer: css({
@@ -157,11 +157,14 @@ const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
   }),
   follower: css({
     position: 'absolute',
-    height: '14px',
-    width: '14px',
+    height: '13px',
+    width: '13px',
     borderRadius: theme.shape.radius.default,
     transform: 'translateX(-50%) translateY(-50%)',
     border: `2px solid ${theme.colors.text.primary}`,
-    marginTop: '5px',
+    top: '5px',
+  }),
+  disabled: css({
+    color: theme.colors.text.disabled,
   }),
 });
