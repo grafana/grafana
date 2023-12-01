@@ -10,9 +10,12 @@ import {
   TimeRange,
   toUtc,
   IntervalValues,
-  AppEvents,
+  // AppEvents,
 } from '@grafana/data';
-import { locationService, getAppEvents } from '@grafana/runtime';
+import {
+  locationService,
+  // getAppEvents
+} from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 import { config } from 'app/core/config';
@@ -70,23 +73,6 @@ export class TimeSrv {
 
     // remember time at load so we can go back to it
     this.timeAtLoad = cloneDeep(this.time);
-
-    const range = rangeUtil.convertRawToRange(
-      this.time,
-      this.timeModel?.getTimezone(),
-      this.timeModel?.fiscalYearStartMonth
-    );
-
-    if (range.to.isBefore(range.from)) {
-      const appEvents = getAppEvents();
-      appEvents.publish({
-        type: AppEvents.alertWarning.name,
-        payload: [
-          'Invalid time range',
-          'This dashboard may not show any data as the time range is invalid: `to` value is before `from`.',
-        ],
-      });
-    }
 
     if (this.refresh) {
       this.setAutoRefresh(this.refresh);

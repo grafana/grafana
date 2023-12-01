@@ -109,7 +109,10 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
   const { modalBackdrop } = useStyles2(getModalStyles);
   const hasAbsolute = !rangeUtil.isRelativeTime(value.raw.from) || !rangeUtil.isRelativeTime(value.raw.to);
 
+  const isFromAfterTo = value.to.isBefore(value.from);
+
   const variant = isSynced ? 'active' : isOnCanvas ? 'canvas' : 'default';
+  const timePickerIcon = isFromAfterTo ? 'exclamation-triangle' : 'clock-nine';
 
   const currentTimeRange = formattedRange(value, timeZone);
 
@@ -138,9 +141,9 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
           })}
           aria-controls="TimePickerContent"
           onClick={onToolbarButtonSwitch}
-          icon="clock-nine"
+          icon={timePickerIcon}
           isOpen={isOpen}
-          variant={variant}
+          variant={isFromAfterTo ? 'destructive' : variant}
         >
           <TimePickerButtonLabel {...props} />
         </ToolbarButton>
