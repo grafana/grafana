@@ -51,16 +51,16 @@ The **Up color** and **Down color** options select which colors are used when th
 
 ## Open, High, Low, Close
 
-The candlestick visualization will attempt to map fields from your data to the appropriate dimension below: 
+The candlestick visualization will attempt to map fields from your data to the appropriate dimension below:
 
 - **Open** corresponds to the starting value of the given period.
 - **High** corresponds to the highest value of the given period.
 - **Low** corresponds to the lowest value of the given period.
 - **Close** corresponds to the final (end) value of the given period.
-- **Volume** corresponds to the sample count in the given period. (e.g. number of trades)
+- **Volume** corresponds to the sample count in the given period. (for example, number of trades)
 
 {{% admonition type="note" %}}
-These values are hidden from the legend.
+The legend doesn't display these values.
 {{% /admonition %}}
 
 To properly map these dimensions, the query results table from your data must include _at least_ the following columns:
@@ -73,7 +73,7 @@ To properly map these dimensions, the query results table from your data must in
 
 If your data can't be mapped to these dimensions for some reason (for example, because the column names aren't the same), you can map them manually using the **Open**, **High**, **Low**, and **Close** fields under the **Candlestick** options in the panel editor:
 
-<!--screenshot here--> 
+![Open, High, Low, and Close fields in the panel editor](/screenshot-olhc-options-10.3.png)
 
 ## Additional fields
 
