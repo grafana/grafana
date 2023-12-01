@@ -10,7 +10,7 @@ type DrawerSize = 'sm' | 'md' | 'lg';
 export interface Props {
   open: boolean;
   onClose: () => void;
-  activeTab?: string;
+  selectedTab?: string;
   onChangeTab: (id?: string) => void;
 }
 
@@ -18,7 +18,7 @@ function ExampleTab() {
   return <div>Example content from a plugin</div>;
 }
 
-export function ExtensionDrawer({ open, onClose, activeTab, onChangeTab }: Props) {
+export function ExtensionDrawer({ open, onClose, selectedTab, onChangeTab }: Props) {
   const styles = useStyles2(getStyles);
   const [size, setSize] = useState<DrawerSize>('md');
   const extensions = useMemo(() => {
@@ -27,18 +27,20 @@ export function ExtensionDrawer({ open, onClose, activeTab, onChangeTab }: Props
     return extensions;
   }, []);
 
+  const activeTab = selectedTab ?? extensions[0]?.id;
+
   const tabs = useMemo(() => {
     return (
       <TabsBar>
-        {activeTab === undefined && <Tab label="Example" active={true} onChangeTab={() => onChangeTab(undefined)} />}
         {extensions.map((extension, index) => (
           <Tab
             key={index}
             label={extension.title}
-            active={activeTab === extension.id || (!activeTab && index === 0)}
+            active={activeTab === extension.id}
             onChangeTab={() => onChangeTab(extension.id)}
           />
         ))}
+        {extensions.length === 0 && <Tab label="Example" active={true} onChangeTab={() => onChangeTab(undefined)} />}
       </TabsBar>
     );
   }, [activeTab, extensions, onChangeTab]);
@@ -78,8 +80,8 @@ export function ExtensionDrawer({ open, onClose, activeTab, onChangeTab }: Props
         size={size}
         closeOnMaskClick={false}
       >
-        {activeTab === undefined && <ExampleTab />}
         {children}
+        {activeTab === undefined && <ExampleTab />}
       </Drawer>
     )
   );

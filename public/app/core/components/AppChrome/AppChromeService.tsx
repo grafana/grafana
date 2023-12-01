@@ -14,7 +14,7 @@ import { RouteDescriptor } from '../../navigation/types';
 export type MegaMenuState = 'open' | 'closed' | 'docked';
 
 export interface ExtensionDrawerState {
-  activeTab?: string;
+  selectedTab?: string;
   open: boolean;
 }
 
@@ -63,9 +63,9 @@ export class AppChromeService {
     this.update({ extensionDrawer: { ...current.extensionDrawer, open } });
   }
 
-  public setExtensionDrawerTab(activeTab?: string) {
+  public setExtensionDrawerTab(selectedTab?: string) {
     const current = this.state.getValue();
-    this.update({ extensionDrawer: { ...current.extensionDrawer, activeTab } });
+    this.update({ extensionDrawer: { ...current.extensionDrawer, selectedTab } });
   }
 
   public update(update: Partial<AppChromeState>) {

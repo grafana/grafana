@@ -106,7 +106,7 @@ export function AppChrome({ children }: Props) {
         <ExtensionDrawer
           open={state.extensionDrawer.open}
           onClose={() => chrome.setExtensionDrawerOpen(false)}
-          activeTab={state.extensionDrawer.activeTab}
+          selectedTab={state.extensionDrawer.selectedTab}
           onChangeTab={(id) => chrome.setExtensionDrawerTab(id)}
         />
       )}
