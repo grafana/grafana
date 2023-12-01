@@ -10,6 +10,7 @@ import {
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { PanelEditor } from '../panel-edit/PanelEditor';
 
 export function getVizPanelKeyForPanelId(panelId: number) {
   return `panel-${panelId}`;
@@ -164,6 +165,11 @@ export function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQu
 
 export function getDashboardSceneFor(sceneObject: SceneObject): DashboardScene {
   const root = sceneObject.getRoot();
+
+  if (root instanceof PanelEditor) {
+    return root.state.dashboardRef.resolve();
+  }
+
   if (root instanceof DashboardScene) {
     return root;
   }
