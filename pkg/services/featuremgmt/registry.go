@@ -1088,6 +1088,15 @@ var (
 			FrontendOnly: true,
 			Owner:        identityAccessTeam,
 		},
+		{
+			Name:              "alertStateHistoryAnnotationsFromLoki",
+			Description:       "Enable using Loki as the source for alert state history annotations",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			RequiresRestart:   true,
+		},
 	}
 )
 

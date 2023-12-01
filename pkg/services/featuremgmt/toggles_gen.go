@@ -598,4 +598,8 @@ const (
 	// FlagDisplayAnonymousStats
 	// Enables anonymous stats to be shown in the UI for Grafana
 	FlagDisplayAnonymousStats = "displayAnonymousStats"
+
+	// FlagAlertStateHistoryAnnotationsFromLoki
+	// Enable using Loki as the source for alert state history annotations
+	FlagAlertStateHistoryAnnotationsFromLoki = "alertStateHistoryAnnotationsFromLoki"
 )
