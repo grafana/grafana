@@ -85,10 +85,40 @@ export const groupToSubframeTransformer: DataTransformerInfo<GroupToSubframeTran
 
               valuesByField[fieldName].values.push(field.values[rowIndex]);
             }
+
           }
 
-          const fields: Field[] = [];
 
+          // Construct a subframe of any fields
+          // that aren't being group on or reduced
+          const subFields: Field[][] = [];
+          for (const [, value] of valuesByGroupKey) {
+            const nestedFields: Field[] = [];
+
+            for (const [fieldName, field] of Object.entries(value)) {
+              const fieldOpts = options.fields[fieldName];
+
+              if (fieldOpts === undefined) {
+                nestedFields.push(field);
+              }
+              // Depending on the configuration form state all of the following are possible
+              else if (
+                fieldOpts.aggregations === undefined || 
+                (fieldOpts.operation === GroupByOperationID.aggregate && fieldOpts.aggregations.length === 0) || 
+                (fieldOpts.operation === null || fieldOpts.operation === undefined)
+              ) {
+                nestedFields.push(field);
+              }
+            }
+            
+            subFields.push(nestedFields);
+          }
+          // At this point we have fields for each nested frame
+          // However we need to turn them into frames so they can be nested 
+
+
+
+          const fields: Field[] = [];
           for (const field of groupByFields) {
             const values: any[] = [];
             const fieldName = getFieldDisplayName(field);
@@ -108,7 +138,9 @@ export const groupToSubframeTransformer: DataTransformerInfo<GroupToSubframeTran
           }
 
           // Then for each calculations configured, compute and add a new field (column)
-          for (const field of frame.fields) {
+          for (let i = 0; i < frame.fields.length; i++) {
+            const field = frame.fields[i];
+            
 
             if (!shouldCalculateField(field, options)) {
               continue;

@@ -12,6 +12,7 @@ import { filterFramesByRefIdTransformRegistryItem } from './editors/FilterByRefI
 import { formatStringTransformerRegistryItem } from './editors/FormatStringTransformerEditor';
 import { formatTimeTransformerRegistryItem } from './editors/FormatTimeTransformerEditor';
 import { groupByTransformRegistryItem } from './editors/GroupByTransformerEditor';
+import { groupToSubframeTransformRegistryItem } from './editors/GroupToSubrameTransformerEditor';
 import { groupingToMatrixTransformRegistryItem } from './editors/GroupingToMatrixTransformerEditor';
 import { histogramTransformRegistryItem } from './editors/HistogramTransformerEditor';
 import { joinByFieldTransformerRegistryItem } from './editors/JoinByFieldTransformerEditor';
@@ -32,6 +33,7 @@ import { regressionTransformerRegistryItem } from './regression/regressionEditor
 import { rowsToFieldsTransformRegistryItem } from './rowsToFields/RowsToFieldsTransformerEditor';
 import { spatialTransformRegistryItem } from './spatial/SpatialTransformerEditor';
 import { timeSeriesTableTransformRegistryItem } from './timeSeriesTable/TimeSeriesTableTransformEditor';
+
 
 export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> => {
   return [
@@ -64,6 +66,7 @@ export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> =
     partitionByValuesTransformRegistryItem,
     ...(config.featureToggles.formatString ? [formatStringTransformerRegistryItem] : []),
     ...(config.featureToggles.regressionTransformation ? [regressionTransformerRegistryItem] : []),
+    ...(true ? [groupToSubframeTransformRegistryItem] : []),
     formatTimeTransformerRegistryItem,
     timeSeriesTableTransformRegistryItem,
   ];
