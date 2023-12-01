@@ -106,7 +106,7 @@ export const GitHubConfig = ({ settings }: GitHubConfigProps) => {
                 <Field label="Client ID" required invalid={!!errors.clientId} error="This field is required">
                   <Input {...register('clientId', { required: true })} type="text" id="clientId" />
                 </Field>
-                <Field label="Client secret" required invalid={!!errors.clientId} error="This field is required">
+                <Field label="Client secret" required invalid={!!errors.clientSecret} error="This field is required">
                   <Input {...register('clientSecret', { required: true })} type="text" id="clientSecret" />
                 </Field>
                 <Field label="Team IDs" htmlFor={'teamIds'}>

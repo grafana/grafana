@@ -4,10 +4,10 @@ import React, { JSX } from 'react';
 
 import { GitHubConfig } from './GitHubConfigPage';
 
-const backendSrvMock = jest.fn(() => Promise.resolve({}));
+const postMock = jest.fn(() => Promise.resolve({}));
 jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({
-    post: backendSrvMock,
+    post: postMock,
   }),
   config: {
     panels: {
@@ -52,7 +52,6 @@ function setup(jsx: JSX.Element) {
 
 describe('GitHubConfig', () => {
   beforeEach(() => {
-    // Reset mocks before each test
     jest.clearAllMocks();
   });
 
@@ -81,7 +80,7 @@ describe('GitHubConfig', () => {
     await user.click(screen.getByRole('button', { name: /Save/i }));
 
     await waitFor(() => {
-      expect(backendSrvMock).toHaveBeenCalledWith('/api/v1/sso-settings', {
+      expect(postMock).toHaveBeenCalledWith('/api/v1/sso-settings', {
         provider: 'github',
         settings: {
           allowedOrganizations: 'test-org1,test-org2',
