@@ -152,8 +152,8 @@ export function setupExplore(options?: SetupOptions): {
     explore: {
       id: 'logs',
       text: 'Logs',
-      subTitle: 'Logs',
-      icon: 'list-ol',
+      subTitle: 'View logs',
+      icon: 'gf-logs',
       url: '/logs',
     },
   };

@@ -16,6 +16,7 @@ import dataSourcesReducers from 'app/features/datasources/state/reducers';
 import exploreReducers from 'app/features/explore/state/main';
 import foldersReducers from 'app/features/folders/state/reducers';
 import invitesReducers from 'app/features/invites/state/reducers';
+import logsAppReducers from 'app/features/logsApp/state/main';
 import importDashboardReducers from 'app/features/manage-dashboards/state/reducers';
 import organizationReducers from 'app/features/org/state/reducers';
 import panelsReducers from 'app/features/panel/state/reducers';
@@ -38,6 +39,7 @@ const rootReducers = {
   ...foldersReducers,
   ...dashboardReducers,
   ...exploreReducers,
+  ...logsAppReducers,
   ...dataSourcesReducers,
   ...usersReducers,
   ...serviceAccountsReducer,

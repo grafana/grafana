@@ -518,7 +518,7 @@ export const mockNavModel: NavIndex = {
     id: 'logs',
     text: 'Logs',
     subTitle: 'View logs',
-    icon: 'list-ol',
+    icon: 'gf-logs',
     url: '/logs',
   },
   alerting: {

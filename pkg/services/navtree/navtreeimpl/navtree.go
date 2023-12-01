@@ -116,6 +116,15 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		treeRoot.AddSection(dashboardLink)
 	}
 
+	treeRoot.AddSection(&navtree.NavLink{
+		Text:       "Logs",
+		Id:         navtree.NavIDLogs,
+		SubTitle:   "See your logs",
+		Icon:       "gf-logs",
+		SortWeight: navtree.WeightExplore,
+		Url:        s.cfg.AppSubURL + "/logs",
+	})
+
 	if setting.ExploreEnabled && hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:       "Explore",
