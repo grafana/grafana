@@ -33,6 +33,7 @@ import (
 
 const (
 	OfflineAccessScope = "offline_access"
+	RoleGrafanaAdmin   = "GrafanaAdmin" // For AzureAD for example this value cannot contain spaces
 )
 
 type SocialService struct {
@@ -115,8 +116,8 @@ func ProvideService(cfg *setting.Cfg,
 			continue
 		}
 
-		if name == "grafananet" {
-			name = grafanaCom
+		if name == GrafanaNetProviderName {
+			name = GrafanaComProviderName
 		}
 
 		conn, err := ss.createOAuthConnector(name, settingsKVs, cfg, features, cache)
@@ -187,15 +188,11 @@ func (e Error) Error() string {
 	return e.s
 }
 
-const (
-	grafanaCom       = "grafana_com"
-	RoleGrafanaAdmin = "GrafanaAdmin" // For AzureAD for example this value cannot contain spaces
-)
-
 var (
 	SocialBaseUrl = "/login/"
 	SocialMap     = make(map[string]SocialConnector)
-	allOauthes    = []string{"github", "gitlab", "google", "generic_oauth", "grafananet", grafanaCom, "azuread", "okta"}
+	allOauthes    = []string{GitHubProviderName, GitlabProviderName, GoogleProviderName, GenericOAuthProviderName, GrafanaNetProviderName,
+		GrafanaComProviderName, AzureADProviderName, OktaProviderName}
 )
 
 type Service interface {
@@ -517,19 +514,19 @@ func (s *SocialBase) retrieveRawIDToken(idToken any) ([]byte, error) {
 
 func (ss *SocialService) createOAuthConnector(name string, settings map[string]any, cfg *setting.Cfg, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) (SocialConnector, error) {
 	switch name {
-	case azureADProviderName:
+	case AzureADProviderName:
 		return NewAzureADProvider(settings, cfg, features, cache)
-	case genericOAuthProviderName:
+	case GenericOAuthProviderName:
 		return NewGenericOAuthProvider(settings, cfg, features)
-	case gitHubProviderName:
+	case GitHubProviderName:
 		return NewGitHubProvider(settings, cfg, features)
-	case gitlabProviderName:
+	case GitlabProviderName:
 		return NewGitLabProvider(settings, cfg, features)
-	case googleProviderName:
+	case GoogleProviderName:
 		return NewGoogleProvider(settings, cfg, features)
-	case grafanaComProviderName:
+	case GrafanaComProviderName:
 		return NewGrafanaComProvider(settings, cfg, features)
-	case oktaProviderName:
+	case OktaProviderName:
 		return NewOktaProvider(settings, cfg, features)
 	default:
 		return nil, fmt.Errorf("unknown oauth provider: %s", name)

@@ -14,23 +14,29 @@ import (
 type OAuthStrategy struct {
 	cfg                     *setting.Cfg
 	supportedProvidersRegex *regexp.Regexp
+	settingsByProvider      map[string]*social.OAuthInfo
 }
 
 var extraKeysByProvider = map[string][]string{
-	"azuread":       social.ExtraAzureADSettingKeys,
-	"generic_oauth": social.ExtraGenericOAuthSettingKeys,
-	"github":        social.ExtraGithubSettingKeys,
-	"grafana_com":   social.ExtraGrafanaComSettingKeys,
+	social.AzureADProviderName:      social.ExtraAzureADSettingKeys,
+	social.GenericOAuthProviderName: social.ExtraGenericOAuthSettingKeys,
+	social.GitHubProviderName:       social.ExtraGithubSettingKeys,
+	social.GrafanaComProviderName:   social.ExtraGrafanaComSettingKeys,
+	social.GrafanaNetProviderName:   social.ExtraGrafanaComSettingKeys,
 }
 
 var _ ssosettings.FallbackStrategy = (*OAuthStrategy)(nil)
 
 func NewOAuthStrategy(cfg *setting.Cfg) *OAuthStrategy {
 	compiledRegex := regexp.MustCompile(`^` + strings.Join(ssosettings.AllOAuthProviders, "|") + `$`)
-	return &OAuthStrategy{
+	oauthStrategy := &OAuthStrategy{
 		cfg:                     cfg,
 		supportedProvidersRegex: compiledRegex,
+		settingsByProvider:      make(map[string]*social.OAuthInfo),
 	}
+
+	oauthStrategy.loadAllSettings()
+	return oauthStrategy
 }
 
 func (s *OAuthStrategy) IsMatch(provider string) bool {
@@ -38,6 +44,21 @@ func (s *OAuthStrategy) IsMatch(provider string) bool {
 }
 
 func (s *OAuthStrategy) ParseConfigFromSystem(_ context.Context, provider string) (any, error) {
+	return s.settingsByProvider[provider], nil
+}
+
+func (s *OAuthStrategy) loadAllSettings() {
+	allProviders := append(ssosettings.AllOAuthProviders, social.GrafanaNetProviderName)
+	for _, provider := range allProviders {
+		settings := s.loadSettingsForProvider(provider)
+		if provider == social.GrafanaNetProviderName {
+			provider = social.GrafanaComProviderName
+		}
+		s.settingsByProvider[provider] = settings
+	}
+}
+
+func (s *OAuthStrategy) loadSettingsForProvider(provider string) *social.OAuthInfo {
 	section := s.cfg.SectionWithEnvOverrides("auth." + provider)
 
 	result := &social.OAuthInfo{
@@ -81,5 +102,5 @@ func (s *OAuthStrategy) ParseConfigFromSystem(_ context.Context, provider string
 		result.Extra[key] = section.Key(key).Value()
 	}
 
-	return result, nil
+	return result
 }

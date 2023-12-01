@@ -18,7 +18,7 @@ const (
 	legacyAPIURL            = "https://www.googleapis.com/oauth2/v1/userinfo"
 	googleIAMGroupsEndpoint = "https://content-cloudidentity.googleapis.com/v1/groups/-/memberships:searchDirectGroups"
 	googleIAMScope          = "https://www.googleapis.com/auth/cloud-identity.groups.readonly"
-	googleProviderName      = "google"
+	GoogleProviderName      = "google"
 )
 
 type SocialGoogle struct {
@@ -42,9 +42,9 @@ func NewGoogleProvider(settings map[string]any, cfg *setting.Cfg, features *feat
 		return nil, err
 	}
 
-	config := createOAuthConfig(info, cfg, googleProviderName)
+	config := createOAuthConfig(info, cfg, GoogleProviderName)
 	provider := &SocialGoogle{
-		SocialBase:      newSocialBase(googleProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:      newSocialBase(GoogleProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		hostedDomain:    info.HostedDomain,
 		apiUrl:          info.ApiUrl,
 		skipOrgRoleSync: cfg.GoogleSkipOrgRoleSync,

@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	azureADProviderName = "azuread"
+	AzureADProviderName = "azuread"
 	forceUseGraphAPIKey = "force_use_graph_api" // #nosec G101 not a hardcoded credential
 )
 
@@ -78,9 +78,9 @@ func NewAzureADProvider(settings map[string]any, cfg *setting.Cfg, features *fea
 		return nil, err
 	}
 
-	config := createOAuthConfig(info, cfg, azureADProviderName)
+	config := createOAuthConfig(info, cfg, AzureADProviderName)
 	provider := &SocialAzureAD{
-		SocialBase:           newSocialBase(azureADProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:           newSocialBase(AzureADProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		cache:                cache,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 		forceUseGraphAPI:     MustBool(info.Extra[forceUseGraphAPIKey], false),

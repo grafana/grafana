@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	genericOAuthProviderName = "generic_oauth"
+	GenericOAuthProviderName = "generic_oauth"
 
 	nameAttributePathKey    = "name_attribute_path"
 	loginAttributePathKey   = "login_attribute_path"
@@ -50,9 +50,9 @@ func NewGenericOAuthProvider(settings map[string]any, cfg *setting.Cfg, features
 		return nil, err
 	}
 
-	config := createOAuthConfig(info, cfg, genericOAuthProviderName)
+	config := createOAuthConfig(info, cfg, GenericOAuthProviderName)
 	provider := &SocialGenericOAuth{
-		SocialBase:           newSocialBase(genericOAuthProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:           newSocialBase(GenericOAuthProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		apiUrl:               info.ApiUrl,
 		teamsUrl:             info.TeamsUrl,
 		emailAttributeName:   info.EmailAttributeName,
