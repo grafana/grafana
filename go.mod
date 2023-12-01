@@ -75,7 +75,7 @@ require (
 	github.com/influxdata/line-protocol v0.0.0-20210311194329-9aa0e372d097 // @grafana/grafana-app-platform-squad
 	github.com/jmespath/go-jmespath v0.4.0 // @grafana/backend-platform
 	github.com/json-iterator/go v1.1.12 // @grafana/backend-platform
-	github.com/lib/pq v1.10.9 // @grafana/backend-platform
+	github.com/lib/pq v1.10.6 // @grafana/backend-platform
 	github.com/linkedin/goavro/v2 v2.10.0 // @grafana/backend-platform
 	github.com/m3db/prometheus_remote_client_golang v0.4.4 // @grafana/backend-platform
 	github.com/magefile/mage v1.15.0 // @grafana/grafana-delivery
@@ -505,5 +505,8 @@ replace xorm.io/xorm => ./pkg/util/xorm
 // Use our fork of the upstream alertmanagers.
 // This is required in order to get notification delivery errors from the receivers API.
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20231027171310-70c52bf65758
+
+// Use 1.10.6 of pq to avoid a change in 1.10.7 that has certificate validation issues. https://github.com/grafana/grafana/issues/65816
+replace github.com/lib/pq => github.com/lib/pq v1.10.6
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
