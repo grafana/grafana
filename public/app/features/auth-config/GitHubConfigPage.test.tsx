@@ -75,18 +75,26 @@ describe('GitHubConfig', () => {
     const { user } = setup(<GitHubConfig settings={emptySettings} />);
     await user.type(screen.getByRole('textbox', { name: /Client ID/i }), 'test-client-id');
     await user.type(screen.getByRole('textbox', { name: /Client secret/i }), 'test-client-secret');
+    // Type a team name and press enter to select it
+    await user.type(screen.getByRole('combobox', { name: /Team IDs/i }), 'test-team');
+    await user.type(screen.getByRole('combobox', { name: /Team IDs/i }), '{enter}');
+    // Add two orgs
+    await user.type(screen.getByRole('combobox', { name: /Allowed organizations/i }), 'test-org1');
+    await user.type(screen.getByRole('combobox', { name: /Allowed organizations/i }), '{enter}');
+    await user.type(screen.getByRole('combobox', { name: /Allowed organizations/i }), 'test-org2');
+    await user.type(screen.getByRole('combobox', { name: /Allowed organizations/i }), '{enter}');
     await user.click(screen.getByRole('button', { name: /Save/i }));
 
     await waitFor(() => {
       expect(backendSrvMock.post).toHaveBeenCalledWith('/api/v1/sso-settings', {
         provider: 'github',
         settings: {
-          allowedOrganizations: '',
+          allowedOrganizations: 'test-org1,test-org2',
           clientId: 'test-client-id',
           clientSecret: 'test-client-secret',
           enabled: true,
           name: 'GitHub',
-          teamIds: '',
+          teamIds: 'test-team',
           type: 'OAuth',
         },
       });
@@ -97,6 +105,7 @@ describe('GitHubConfig', () => {
     const { user } = setup(<GitHubConfig settings={emptySettings} />);
     await user.click(screen.getByRole('button', { name: /Save/i }));
 
+    // Should show 2 alerts for 2 empty fields
     expect(await screen.findAllByRole('alert')).toHaveLength(2);
   });
 });

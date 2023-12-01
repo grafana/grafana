@@ -33,6 +33,9 @@ function mapStateToProps(state: StoreState) {
   };
 }
 
+/**
+ * Separate the Page logic from the Content logic for easier testing.
+ */
 export const GitHubConfigPage = ({ settings }: Props) => {
   return (
     <Page navId="authentication" pageNav={pageNav}>
