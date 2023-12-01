@@ -29,10 +29,9 @@ func ProvideService(
 	tagService tag.Service,
 ) *RepositoryImpl {
 	l := log.New("annotations")
+	l.Debug("Initializing annotations service")
 
 	xormStore := NewXormStore(cfg, log.New("annotations.sql"), db, tagService)
-
-	l.Debug("Using xorm write store")
 	write := xormStore
 
 	var read readStore
