@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { AppEvents, NavModelItem } from '@grafana/data';
@@ -9,7 +9,8 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { StoreState } from '../../types';
 
-import { SSOProviderDTO } from './types';
+import { loadSettings } from './state/actions';
+import { SSOProvider, SSOProviderDTO } from './types';
 import { dataToDTO, dtoToData } from './utils';
 
 const appEvents = getAppEvents();
@@ -23,30 +24,46 @@ const pageNav: NavModelItem = {
 
 type ProviderData = Pick<SSOProviderDTO, 'clientId' | 'clientSecret' | 'enabled' | 'teamIds' | 'allowedOrganizations'>;
 
-const connector = connect(mapStateToProps, null);
-export type Props = ConnectedProps<typeof connector>;
-
 function mapStateToProps(state: StoreState) {
-  const settings = state.authConfig.providers.find(({ provider }) => provider === 'github');
+  const { isLoading, providers } = state.authConfig;
+  const settings = providers.find(({ provider }) => provider === 'github');
   return {
     settings,
+    isLoading,
   };
 }
+
+const mapDispatchToProps = {
+  loadSettings,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+export type Props = ConnectedProps<typeof connector>;
 
 /**
  * Separate the Page logic from the Content logic for easier testing.
  */
-export const GitHubConfigPage = ({ settings }: Props) => {
+export const GitHubConfigPage = ({ settings, loadSettings, isLoading }: Props) => {
+  useEffect(() => {
+    if (!settings) {
+      loadSettings();
+    }
+  }, [settings, loadSettings]);
   return (
     <Page navId="authentication" pageNav={pageNav}>
-      <GitHubConfig settings={settings} />
+      <GitHubConfig settings={settings} isLoading={isLoading} />
     </Page>
   );
 };
 
 export default connector(GitHubConfigPage);
 
-export const GitHubConfig = ({ settings }: Props) => {
+interface GitHubConfigProps {
+  settings?: SSOProvider;
+  isLoading?: boolean;
+}
+
+export const GitHubConfig = ({ settings }: GitHubConfigProps) => {
   const [isSaving, setIsSaving] = useState(false);
   const handleSubmit = async (data: ProviderData) => {
     setIsSaving(true);
