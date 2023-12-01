@@ -183,7 +183,9 @@ async function getJSONObject(show: ShowContent, panel?: PanelModel, data?: Panel
 
   if (show === ShowContent.PanelJSON && panel) {
     reportPanelInspectInteraction(InspectTab.JSON, 'panelJSON');
-    return panel!.getSaveModel();
+    let saveModel = panel!.getSaveModel();
+    console.log(saveModel);
+    return saveModel;
   }
 
   return { note: t('dashboard.inspect-json.unknown', 'Unknown Object: {{show}}', { show }) };
