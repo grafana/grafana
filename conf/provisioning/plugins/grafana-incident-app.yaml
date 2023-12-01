@@ -1,0 +1,11 @@
+apiVersion: 1
+
+apps:
+  - type: grafana-incident-app
+    jsonData:
+      backendUrl: http://localhost:8080
+      siftUrl: http://localhost:4032
+      accessTokenSet: True
+    secureJsonData:
+      accessToken: dGhlc3RhY2s6dGhldG9rZW4=
+
