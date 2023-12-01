@@ -144,7 +144,7 @@ export interface NotificationChannelOption {
   validationRule: string;
   subformOptions?: NotificationChannelOption[];
   dependsOn: string;
-  setValueAs?: (value: string | boolean) => string | number | boolean | null | undefined;
+  setValueAs?: (value: string | boolean) => string | number | boolean | null;
 }
 
 export interface NotificationChannelState {
