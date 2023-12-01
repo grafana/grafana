@@ -11,35 +11,37 @@ import { KioskMode } from 'app/types';
 
 import { RouteDescriptor } from '../../navigation/types';
 
-export type MegaMenuState = 'open' | 'closed' | 'docked';
-
 export interface AppChromeState {
   chromeless?: boolean;
   sectionNav: NavModel;
   pageNav?: NavModelItem;
   actions?: React.ReactNode;
   searchBarHidden?: boolean;
-  megaMenu: MegaMenuState;
+  megaMenuOpen: boolean;
+  megaMenuDocked: boolean;
   kioskMode: KioskMode | null;
   layout: PageLayoutType;
 }
 
 const DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.docked';
+const MENU_OPEN_LOCAL_STORAGE_KEY = 'grafana.navigation.open';
 
 export class AppChromeService {
   searchBarStorageKey = 'SearchBar_Hidden';
   private currentRoute?: RouteDescriptor;
   private routeChangeHandled = true;
 
+  private megaMenuDocked = store.getBool(
+    DOCKED_LOCAL_STORAGE_KEY,
+    Boolean(config.featureToggles.dockedMegaMenu && window.innerWidth >= config.theme2.breakpoints.values.xxl)
+  );
+
   readonly state = new BehaviorSubject<AppChromeState>({
     chromeless: true, // start out hidden to not flash it on pages without chrome
     sectionNav: { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } },
     searchBarHidden: store.getBool(this.searchBarStorageKey, false),
-    megaMenu:
-      config.featureToggles.dockedMegaMenu &&
-      store.getBool(DOCKED_LOCAL_STORAGE_KEY, window.innerWidth >= config.theme2.breakpoints.values.xxl)
-        ? 'docked'
-        : 'closed',
+    megaMenuOpen: store.getBool(MENU_OPEN_LOCAL_STORAGE_KEY, this.megaMenuDocked),
+    megaMenuDocked: this.megaMenuDocked,
     kioskMode: null,
     layout: PageLayoutType.Canvas,
   });
@@ -102,15 +104,31 @@ export class AppChromeService {
     return useObservable(this.state, this.state.getValue());
   }
 
-  public setMegaMenu = (newMegaMenuState: AppChromeState['megaMenu']) => {
+  public setMegaMenuOpen = (newOpenState: boolean) => {
     if (config.featureToggles.dockedMegaMenu) {
-      store.set(DOCKED_LOCAL_STORAGE_KEY, newMegaMenuState === 'docked');
-      reportInteraction('grafana_mega_menu_state', { state: newMegaMenuState });
-    } else {
-      reportInteraction('grafana_toggle_menu_clicked', { action: newMegaMenuState === 'open' ? 'open' : 'close' });
+      store.set(MENU_OPEN_LOCAL_STORAGE_KEY, newOpenState);
     }
-    this.update({ megaMenu: newMegaMenuState });
+    this.update({
+      megaMenuOpen: newOpenState,
+    });
   };
+
+  public setMegaMenuDocked = (newDockedState: boolean) => {
+    store.set(DOCKED_LOCAL_STORAGE_KEY, newDockedState);
+    this.update({
+      megaMenuDocked: newDockedState,
+    });
+  };
+
+  // public setMegaMenu = (newMegaMenuState: AppChromeState['megaMenu']) => {
+  //   if (config.featureToggles.dockedMegaMenu) {
+  //     store.set(DOCKED_LOCAL_STORAGE_KEY, newMegaMenuState === 'docked');
+  //     reportInteraction('grafana_mega_menu_state', { state: newMegaMenuState });
+  //   } else {
+  //     reportInteraction('grafana_toggle_menu_clicked', { action: newMegaMenuState === 'open' ? 'open' : 'close' });
+  //   }
+  //   this.update({ megaMenu: newMegaMenuState });
+  // };
 
   public onToggleSearchBar = () => {
     const { searchBarHidden, kioskMode } = this.state.getValue();

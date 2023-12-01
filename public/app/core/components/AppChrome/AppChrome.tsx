@@ -33,20 +33,21 @@ export function AppChrome({ children }: Props) {
   });
 
   const handleMegaMenu = () => {
-    switch (state.megaMenu) {
-      case 'closed':
-        chrome.setMegaMenu('open');
-        break;
-      case 'open':
-        chrome.setMegaMenu('closed');
-        break;
-      case 'docked':
-        // on large screens, clicking the button when the menu is docked should close the menu
-        // on smaller screens, the docked menu is hidden, so clicking the button should open the menu
-        const isLargeScreen = window.innerWidth >= theme.breakpoints.values.xl;
-        isLargeScreen ? chrome.setMegaMenu('closed') : chrome.setMegaMenu('open');
-        break;
-    }
+    chrome.setMegaMenuOpen(!state.megaMenuOpen);
+    // switch (state.megaMenu) {
+    //   case 'closed':
+    //     chrome.setMegaMenu('open');
+    //     break;
+    //   case 'open':
+    //     chrome.setMegaMenu('closed');
+    //     break;
+    //   case 'docked':
+    //     // on large screens, clicking the button when the menu is docked should close the menu
+    //     // on smaller screens, the docked menu is hidden, so clicking the button should open the menu
+    //     const isLargeScreen = window.innerWidth >= theme.breakpoints.values.xl;
+    //     isLargeScreen ? chrome.setMegaMenu('closed') : chrome.setMegaMenu('open');
+    //     break;
+    // }
   };
 
   // Chromeless routes are without topNav, mega menu, search & command palette
@@ -83,8 +84,8 @@ export function AppChrome({ children }: Props) {
           {state.layout === PageLayoutType.Standard && state.sectionNav && !config.featureToggles.dockedMegaMenu && (
             <SectionNav model={state.sectionNav} />
           )}
-          {config.featureToggles.dockedMegaMenu && !state.chromeless && state.megaMenu === 'docked' && (
-            <DockedMegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenu('closed')} />
+          {config.featureToggles.dockedMegaMenu && !state.chromeless && state.megaMenuDocked && state.megaMenuOpen && (
+            <DockedMegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
           )}
           <div className={styles.pageContainer} id="pageContent">
             {children}
@@ -93,10 +94,10 @@ export function AppChrome({ children }: Props) {
       </main>
       {!state.chromeless && (
         <>
-          {config.featureToggles.dockedMegaMenu && state.megaMenu !== 'docked' ? (
+          {config.featureToggles.dockedMegaMenu && !state.megaMenuDocked ? (
             <AppChromeMenu />
           ) : (
-            <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu('closed')} />
+            <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenuOpen(false)} />
           )}
           <CommandPalette />
         </>

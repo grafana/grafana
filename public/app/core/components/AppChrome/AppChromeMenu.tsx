@@ -20,22 +20,21 @@ export function AppChromeMenu({}: Props) {
   const theme = useTheme2();
   const { chrome } = useGrafana();
   const state = chrome.useState();
-  const prevMegaMenuState = useRef(state.megaMenu);
+  const prevDockedState = useRef(state.megaMenuDocked);
   const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV;
 
   useEffect(() => {
-    prevMegaMenuState.current = state.megaMenu;
-  }, [state.megaMenu]);
+    prevDockedState.current = state.megaMenuDocked;
+  }, [state.megaMenuDocked]);
 
   const ref = useRef(null);
   const backdropRef = useRef(null);
   // we don't want to show the opening animation when transitioning between docked + open
-  const animationSpeed =
-    prevMegaMenuState.current === 'docked' && state.megaMenu === 'open' ? 0 : theme.transitions.duration.shortest;
+  const animationSpeed = prevDockedState.current && state.megaMenuOpen ? 0 : theme.transitions.duration.shortest;
   const animationStyles = useStyles2(getAnimStyles, animationSpeed);
 
-  const isOpen = state.megaMenu === 'open';
-  const onClose = () => chrome.setMegaMenu('closed');
+  const isOpen = state.megaMenuOpen;
+  const onClose = () => chrome.setMegaMenuOpen(false);
 
   const { overlayProps, underlayProps } = useOverlay(
     {

@@ -35,7 +35,7 @@ export const MegaMenu = React.memo(
     const activeItem = getActiveItem(navItems, location.pathname);
 
     const handleDockedMenu = () => {
-      chrome.setMegaMenu(state.megaMenu === 'docked' ? 'open' : 'docked');
+      chrome.setMegaMenuDocked(!state.megaMenuDocked);
 
       // refocus on dock/undock button when changing state
       setTimeout(() => {
@@ -65,7 +65,7 @@ export const MegaMenu = React.memo(
                       id="dock-menu-button"
                       className={styles.dockMenuButton}
                       tooltip={
-                        state.megaMenu === 'docked'
+                        state.megaMenuDocked
                           ? t('navigation.megamenu.undock', 'Undock menu')
                           : t('navigation.megamenu.dock', 'Dock menu')
                       }
@@ -76,7 +76,7 @@ export const MegaMenu = React.memo(
                   )}
                   <MegaMenuItem
                     link={link}
-                    onClick={state.megaMenu === 'open' ? onClose : undefined}
+                    onClick={state.megaMenuDocked ? undefined : onClose}
                     activeItem={activeItem}
                   />
                 </Stack>
