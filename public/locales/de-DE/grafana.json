@@ -773,6 +773,10 @@
       "title": "Entdecken"
     },
     "frontend": {
+      "subtitle": "",
+      "title": ""
+    },
+    "frontend-app": {
       "title": "Frontend"
     },
     "global-orgs": {
@@ -800,6 +804,10 @@
       "title": "Störungen"
     },
     "infrastructure": {
+      "subtitle": "",
+      "title": ""
+    },
+    "integrations": {
       "title": "Integrationen"
     },
     "kubernetes": {

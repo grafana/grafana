@@ -123,6 +123,35 @@ describe('Regression transformation', () => {
     expect(result[1].fields[1].values[4]).toBeCloseTo(1.2, 1);
     expect(result[1].fields[1].values[5]).toBeCloseTo(-0.1, 1);
   });
+
+  it('should have the last x point be equal to the last x point of the data', () => {
+    const source = [
+      toDataFrame({
+        name: 'data',
+        refId: 'A',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [0, 1, 2, 3, 4] },
+          { name: 'value', type: FieldType.number, values: [1, 1, 1, 1, 1] },
+        ],
+      }),
+    ];
+
+    const config: RegressionTransformerOptions = {
+      modelType: ModelType.polynomial,
+      degree: 2,
+      predictionCount: 10,
+      xFieldName: 'time',
+      yFieldName: 'value',
+    };
+
+    const result = RegressionTransformer.transformer(config, {} as DataTransformContext)(source);
+
+    expect(result[1].fields[0].values[0]).toBe(0);
+    expect(result[1].fields[0].values[1]).toBeCloseTo(0.44, 1);
+    expect(result[1].fields[0].values[4]).toBeCloseTo(1.76, 1);
+    expect(result[1].fields[0].values[8]).toBeCloseTo(3.55, 1);
+    expect(result[1].fields[0].values[9]).toBe(4);
+  });
 });
 
 function toEquableDataFrame(source: DataFrame): DataFrame {

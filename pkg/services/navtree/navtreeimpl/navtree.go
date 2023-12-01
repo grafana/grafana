@@ -119,7 +119,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	if setting.ExploreEnabled && hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:       "Explore",
-			Id:         "explore",
+			Id:         navtree.NavIDExplore,
 			SubTitle:   "Explore your data",
 			Icon:       "compass",
 			SortWeight: navtree.WeightExplore,

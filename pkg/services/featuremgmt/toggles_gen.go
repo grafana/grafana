@@ -195,6 +195,10 @@ const (
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
 
+	// FlagInfluxqlStreamingParser
+	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
+	FlagInfluxqlStreamingParser = "influxqlStreamingParser"
+
 	// FlagClientTokenRotation
 	// Replaces the current in-request token rotation so that the client initiates the rotation
 	FlagClientTokenRotation = "clientTokenRotation"
@@ -427,10 +431,6 @@ const (
 	// Show the new alerting insights landing page
 	FlagAlertingInsights = "alertingInsights"
 
-	// FlagAlertingContactPointsV2
-	// Show the new contacpoints list view
-	FlagAlertingContactPointsV2 = "alertingContactPointsV2"
-
 	// FlagExternalCorePlugins
 	// Allow core plugins to be loaded as external
 	FlagExternalCorePlugins = "externalCorePlugins"
@@ -594,4 +594,8 @@ const (
 	// FlagRegressionTransformation
 	// Enables regression analysis transformation
 	FlagRegressionTransformation = "regressionTransformation"
+
+	// FlagDisplayAnonymousStats
+	// Enables anonymous stats to be shown in the UI for Grafana
+	FlagDisplayAnonymousStats = "displayAnonymousStats"
 )
