@@ -1023,11 +1023,13 @@ var (
 			Owner:           identityAccessTeam,
 		},
 		{
-			Name:         "logsInfiniteScrolling",
-			Description:  "Enables infinite scrolling for the Logs panel in Explore and Dashboards",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
+			Name:           "logsInfiniteScrolling",
+			Description:    "Enables infinite scrolling for the Logs panel in Explore and Dashboards",
+			Stage:          FeatureStageGeneralAvailability,
+			FrontendOnly:   true,
+			Owner:          grafanaObservabilityLogsSquad,
+			Expression:     "true", // enabled by default
+			AllowSelfServe: truePtr,
 		},
 		{
 			Name:         "flameGraphItemCollapsing",
