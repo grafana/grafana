@@ -67,6 +67,8 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
+  config.featureToggles.publicDashboards = true;
+
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
 });
@@ -187,8 +189,6 @@ describe('SharePublic', () => {
 
 describe('SharePublic - New config setup', () => {
   beforeEach(() => {
-    config.featureToggles.publicDashboards = true;
-
     server.use(getNonExistentPublicDashboardResponse());
   });
 
