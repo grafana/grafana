@@ -95,7 +95,10 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
           });
 
           panel!.restoreModel(updates);
-          panel!.refresh();
+          console.log('panel!.refresh() - but its disabled');
+          // I think this updates the builder UI.
+          // But not the JSON, nor the query-results
+          // panel!.refresh();
           appEvents.emit(AppEvents.alertSuccess, ['Panel model updated']);
         }
       } catch (err) {
