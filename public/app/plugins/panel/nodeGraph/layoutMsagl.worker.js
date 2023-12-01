@@ -65,9 +65,65 @@ export function layout(nodes, edges) {
     };
   });
 
+  const subgraphs = [];
+  for (const e of edgesMapped) {
+    const sourceGraph = subgraphs.find((g) => g.nodes.has(e.source));
+    const targetGraph = subgraphs.find((g) => g.nodes.has(e.target));
+    if (sourceGraph && targetGraph) {
+      // if the node sets are not the same we merge them
+      if (sourceGraph !== targetGraph) {
+        targetGraph.nodes.forEach(sourceGraph.nodes.add, sourceGraph.nodes);
+        subgraphs.splice(subgraphs.indexOf(targetGraph), 1);
+        sourceGraph.top = Math.min(sourceGraph.top, targetGraph.top);
+        sourceGraph.bottom = Math.max(sourceGraph.bottom, targetGraph.bottom);
+        sourceGraph.left = Math.min(sourceGraph.left, targetGraph.left);
+        sourceGraph.right = Math.max(sourceGraph.right, targetGraph.right);
+      }
+      // if the sets are the same nothing to do.
+    } else if (sourceGraph) {
+      sourceGraph.nodes.add(e.target);
+      sourceGraph.top = Math.min(sourceGraph.top, e.target.y);
+      sourceGraph.bottom = Math.max(sourceGraph.bottom, e.target.y);
+      sourceGraph.left = Math.min(sourceGraph.left, e.target.x);
+      sourceGraph.right = Math.max(sourceGraph.right, e.target.x);
+    } else if (targetGraph) {
+      targetGraph.nodes.add(e.source);
+      targetGraph.top = Math.min(targetGraph.top, e.source.y);
+      targetGraph.bottom = Math.max(targetGraph.bottom, e.source.y);
+      targetGraph.left = Math.min(targetGraph.left, e.source.x);
+      targetGraph.right = Math.max(targetGraph.right, e.source.x);
+    } else {
+      // we don't have these nodes
+      subgraphs.push({
+        top: Math.min(e.source.y, e.target.y),
+        bottom: Math.max(e.source.y, e.target.y),
+        left: Math.min(e.source.x, e.target.x),
+        right: Math.max(e.source.x, e.target.x),
+        nodes: new Set([e.source, e.target]),
+      });
+    }
+  }
+
+  let top = 0;
+  let left = 0;
+  for (const g of subgraphs) {
+    if (top === 0) {
+      top = g.bottom + 200;
+      left = g.left;
+    } else {
+      const topDiff = top - g.top;
+      const leftDiff = left - g.left;
+      for (const n of g.nodes) {
+        n.x += leftDiff;
+        n.y += topDiff;
+      }
+      top += g.bottom - g.top + 200;
+    }
+  }
+
   const finalNodes = Object.values(nodesMap).map((v) => v.datum);
+
   centerNodes(finalNodes);
-  console.log({ finalNodes, edgesMapped });
   return [finalNodes, edgesMapped];
 }
 
