@@ -2,7 +2,7 @@ import { isEqual } from 'lodash';
 import React, { SyntheticEvent, useCallback, useEffect, useId, useState } from 'react';
 import { usePrevious } from 'react-use';
 
-import { CoreApp, LoadingState } from '@grafana/data';
+import { LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { EditorHeader, EditorRows, FlexItem, Space, Stack } from '@grafana/experimental';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -174,17 +174,15 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
         </Stack>
         <QueryHeaderSwitch label="Explain query" value={explain} onChange={onExplainChange} />
         <FlexItem grow={1} />
-        {app !== CoreApp.Explore && app !== CoreApp.Correlations && (
-          <Button
-            variant={dataIsStale ? 'primary' : 'secondary'}
-            size="sm"
-            onClick={onRunQuery}
-            icon={data?.state === LoadingState.Loading ? 'spinner' : undefined}
-            disabled={data?.state === LoadingState.Loading}
-          >
-            {queries && queries.length > 1 ? `Run queries` : `Run query`}
-          </Button>
-        )}
+        <Button
+          variant={dataIsStale ? 'primary' : 'secondary'}
+          size="sm"
+          onClick={onRunQuery}
+          icon={data?.state === LoadingState.Loading ? 'spinner' : undefined}
+          disabled={data?.state === LoadingState.Loading}
+        >
+          {queries && queries.length > 1 ? `Run queries` : `Run query`}
+        </Button>
         <QueryEditorModeToggle mode={editorMode!} onChange={onEditorModeChange} />
       </EditorHeader>
       <Space v={0.5} />
