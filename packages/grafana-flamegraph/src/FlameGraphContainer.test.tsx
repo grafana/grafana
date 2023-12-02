@@ -46,7 +46,7 @@ describe('FlameGraphContainer', () => {
     await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[1]);
     expect(screen.getByDisplayValue('total')).toBeInTheDocument();
     // after it is highlighted it will be the only (first) item in the table so [1] -> [0]
-    await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[0]); 
+    await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[0]);
     expect(screen.queryByDisplayValue('total')).not.toBeInTheDocument();
   });
 
