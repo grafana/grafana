@@ -264,6 +264,14 @@ func readValues(iter *jsonitere.Iterator, hasTimeColumn bool) (valueFields data.
 		}
 	}
 
+	/**
+	for null values we should keep the nullableJson
+	after handling everything in frames we should iterate over the fields
+	and then changed the value types.
+	this will help us to handle null table values
+	like the cases in string_column_with_null_value2.json
+	*/
+
 	// if all values are null in a field we convert the field type to NullableFloat64
 	// it is because of the consistency between buffer and stream parser
 	// also frontend probably will not interpret the nullableJson value
@@ -400,22 +408,29 @@ func handleTableFormatTagFields(rsp *backend.DataResponse, valueFields data.Fiel
 
 func handleTableFormatValueFields(rsp *backend.DataResponse, valueFields data.Fields, tags map[string]string, columns []string) {
 	// number of fields we currently have in the first frame
+	// we handled first value field and then tags.
 	si := len(tags) + 1
 	for i, v := range valueFields {
-		// first value field is always handled first, before tags
+		// first value field is always handled first, before tags.
 		// no need to create another one again here
 		if i == 0 {
 			continue
 		}
 		v.Name = columns[i]
 		v.Config = &data.FieldConfig{DisplayNameFromDS: columns[i]}
+
 		if len(rsp.Frames[0].Fields) == si {
 			rsp.Frames[0].Fields = append(rsp.Frames[0].Fields, v)
 		} else {
-			vi := 0
-			for vi < v.Len() {
-				rsp.Frames[0].Fields[si].Append(v.At(vi))
-				vi++
+			for vi := 0; vi < v.Len(); vi++ {
+				var fp *float64 = nil
+				if v.At(vi) == fp {
+					// add nil explicitly.
+					// we don't know if it is a float pointer nil or string pointer nil or etc
+					rsp.Frames[0].Fields[si].Append(nil)
+				} else {
+					rsp.Frames[0].Fields[si].Append(v.At(vi))
+				}
 			}
 		}
 		si++
