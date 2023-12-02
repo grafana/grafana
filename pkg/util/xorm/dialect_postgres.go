@@ -1037,6 +1037,7 @@ WHERE c.relkind = 'r'::char AND c.relname = $1%s AND f.attnum > 0 ORDER BY f.att
 		case "oid":
 			col.SQLType = core.SQLType{Name: core.BigInt, DefaultLength: 0, DefaultLength2: 0}
 		case "tsvector":
+			// Ignore tsvector columns in PostgreSQL. Xorm does not know how to work with them anyway, but otherwise it would fail on unknown column type.
 			continue
 		default:
 			col.SQLType = core.SQLType{Name: strings.ToUpper(dataType), DefaultLength: 0, DefaultLength2: 0}
