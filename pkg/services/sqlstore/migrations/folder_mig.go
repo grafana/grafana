@@ -35,6 +35,10 @@ func addFolderMigrations(mg *migrator.Migrator) {
 		Type: migrator.UniqueIndex,
 		Cols: []string{"title", "parent_uid", "org_id"},
 	}))
+
+	mg.AddMigration("Test", migrator.NewRawSQLMigration("").Postgres(`
+		CREATE TABLE fts(title TEXT, ts tsvector)
+	`))
 }
 
 func folderv1() migrator.Table {
