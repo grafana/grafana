@@ -19,8 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -65,49 +63,11 @@ func ProvideService(
 		db:                   db,
 		registry:             make(map[string]folder.RegistryService),
 	}
-	srv.DBMigration(db)
 
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(folderStore, srv))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, srv))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(srv))
 	return srv
-}
-
-func (s *Service) DBMigration(db db.DB) {
-	ctx := context.Background()
-	err := db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		var err error
-		if db.GetDialect().DriverName() == migrator.SQLite {
-			_, err = sess.Exec(`
-				INSERT INTO folder (uid, org_id, title, created, updated)
-				SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1
-				ON CONFLICT DO UPDATE SET title=excluded.title, updated=excluded.updated
-			`)
-		} else if db.GetDialect().DriverName() == migrator.Postgres {
-			_, err = sess.Exec(`
-				INSERT INTO folder (uid, org_id, title, created, updated)
-				SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = true
-				ON CONFLICT(uid, org_id) DO UPDATE SET title=excluded.title, updated=excluded.updated
-			`)
-		} else {
-			_, err = sess.Exec(`
-				INSERT INTO folder (uid, org_id, title, created, updated)
-				SELECT * FROM (SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1) AS derived
-				ON DUPLICATE KEY UPDATE title=derived.title, updated=derived.updated
-			`)
-		}
-		if err != nil {
-			return err
-		}
-		_, err = sess.Exec(`
-			DELETE FROM folder WHERE NOT EXISTS
-				(SELECT 1 FROM dashboard WHERE dashboard.uid = folder.uid AND dashboard.org_id = folder.org_id AND dashboard.is_folder = true)
-		`)
-		return err
-	})
-	if err != nil {
-		s.log.Error("DB migration on folder service start failed.", "err", err)
-	}
 }
 
 func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
