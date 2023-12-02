@@ -13,17 +13,18 @@ const (
 
 	WeightHome = (iota - 20) * 100
 	WeightSavedItems
-	WeightCreate
 	WeightDashboard
 	WeightExplore
 	WeightAlerting
 	WeightAlertsAndIncidents
 	WeightMonitoring
+	WeightInfrastructure
+	WeightApplication
+	WeightFrontend
 	WeightDataConnections
 	WeightApps
 	WeightPlugin
 	WeightConfig
-	WeightAdmin
 	WeightProfile
 	WeightHelp
 )
@@ -31,11 +32,14 @@ const (
 const (
 	NavIDRoot               = "root"
 	NavIDDashboards         = "dashboards/browse"
+	NavIDExplore            = "explore"
 	NavIDCfg                = "cfg" // NavIDCfg is the id for org configuration navigation node
 	NavIDAlertsAndIncidents = "alerts-and-incidents"
 	NavIDAlerting           = "alerting"
 	NavIDAlertingLegacy     = "alerting-legacy"
 	NavIDMonitoring         = "monitoring"
+	NavIDInfrastructure     = "infrastructure"
+	NavIDFrontend           = "frontend"
 	NavIDReporting          = "reports"
 	NavIDApps               = "apps"
 	NavIDCfgGeneral         = "cfg/general"

@@ -530,6 +530,30 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			},
 		},
 		{
+			name: "Error if user does not have groups but allowed groups",
+			fields: fields{
+				providerCfg: map[string]any{
+					"name":                       "azuread",
+					"client_id":                  "client-id-example",
+					"allow_assign_grafana_admin": "false",
+					"allowed_groups":             "foo, bar",
+				},
+				cfg: &setting.Cfg{
+					AutoAssignOrgRole: "Viewer",
+				},
+			},
+			claims: &azureClaims{
+				Email:             "me@example.com",
+				PreferredUsername: "",
+				Roles:             []string{},
+				Groups:            []string{""},
+				Name:              "My Name",
+				ID:                "1234",
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
 			name: "Fetch groups when ClaimsNames and ClaimsSources is set",
 			fields: fields{
 				providerCfg: map[string]any{

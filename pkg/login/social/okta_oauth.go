@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const oktaProviderName = "okta"
+const OktaProviderName = "okta"
 
 type SocialOkta struct {
 	*SocialBase
@@ -49,9 +49,9 @@ func NewOktaProvider(settings map[string]any, cfg *setting.Cfg, features *featur
 		return nil, err
 	}
 
-	config := createOAuthConfig(info, cfg, oktaProviderName)
+	config := createOAuthConfig(info, cfg, OktaProviderName)
 	provider := &SocialOkta{
-		SocialBase:    newSocialBase(oktaProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:    newSocialBase(OktaProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		apiUrl:        info.ApiUrl,
 		allowedGroups: info.AllowedGroups,
 		// FIXME: Move skipOrgRoleSync to OAuthInfo
