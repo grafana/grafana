@@ -1100,6 +1100,7 @@ var (
 			Description: "Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAlertingSquad,
+			Created:     unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "alertmanagerRemoteOnly",
@@ -1231,7 +1232,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaBiSquad,
-			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
+			Created:      time.Date(2023, time.November, 24, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "displayAnonymousStats",
@@ -1239,7 +1240,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        identityAccessTeam,
-			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
+			Created:      time.Date(2023, time.November, 29, 12, 0, 0, 0, time.UTC),
 		},
 	}
 )

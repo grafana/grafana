@@ -26,7 +26,6 @@ func TestFeatureToggleFiles(t *testing.T) {
 		"service-accounts":              true,
 		"database_metrics":              true,
 		"live-service-web-worker":       true,
-		"k8s":                           true, // Camel case does not like this one
 	}
 
 	t.Run("check registry constraints", func(t *testing.T) {
@@ -51,6 +50,10 @@ func TestFeatureToggleFiles(t *testing.T) {
 			}
 			if flag.AllowSelfServe != nil && flag.Stage != FeatureStageGeneralAvailability {
 				t.Errorf("only allow self-serving GA toggles")
+			}
+			if flag.Created.Year() < 2010 {
+				t.Errorf("flag requires a reasonable created date.  See: %s (%s)",
+					flag.Name, flag.Created.Format(time.DateOnly))
 			}
 		}
 	})
