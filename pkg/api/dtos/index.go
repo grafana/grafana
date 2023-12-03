@@ -34,7 +34,6 @@ type IndexViewData struct {
 	// Nonce is a cryptographic identifier for use with Content Security Policy.
 	Nonce           string
 	NewsFeedEnabled bool
-	CssFilePath     string
 	Assets          *EntryPointAssets
 }
 
