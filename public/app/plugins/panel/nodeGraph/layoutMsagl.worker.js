@@ -65,6 +65,8 @@ export function layout(nodes, edges) {
     };
   });
 
+  // This section checks if there are separate disjointed subgraphs. If so it groups nodes for each and then aligns
+  // each subgraph, so it starts on a single vertical line. Otherwise, they are laid out randomly from left to right.
   const subgraphs = [];
   for (const e of edgesMapped) {
     const sourceGraph = subgraphs.find((g) => g.nodes.has(e.source));
