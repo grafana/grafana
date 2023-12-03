@@ -123,6 +123,13 @@ func readSeries(iter *jsonitere.Iterator, frameName []byte, query *models.Query)
 				if err != nil {
 					return rspErr(err)
 				}
+				if util.GetVisType(query.ResultFormat) != util.TableVisType {
+					for i, v := range valueFields {
+						if v.Type() == data.FieldTypeNullableJSON {
+							maybeFixValueFieldType(valueFields, data.FieldTypeNullableFloat64, i)
+						}
+					}
+				}
 			default:
 				v, err := iter.Read()
 				if err != nil {
@@ -147,6 +154,23 @@ func readSeries(iter *jsonitere.Iterator, frameName []byte, query *models.Query)
 				// Frame without time column
 				newFrame := handleTimeSeriesFormatWithoutTimeColumn(valueFields, columns, measurement, query)
 				rsp.Frames = append(rsp.Frames, newFrame)
+			}
+		}
+	}
+
+	// if all values are null in a field, we convert the field type to NullableFloat64
+	// it is because of the consistency between buffer and stream parser
+	// also frontend probably will not interpret the nullableJson value
+	for i, f := range rsp.Frames {
+		for j, v := range f.Fields {
+			if v.Type() == data.FieldTypeNullableJSON {
+				newField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, 0)
+				newField.Name = v.Name
+				newField.Config = v.Config
+				for k := 0; k < v.Len(); k++ {
+					newField.Append(nil)
+				}
+				rsp.Frames[i].Fields[j] = newField
 			}
 		}
 	}
@@ -261,23 +285,6 @@ func readValues(iter *jsonitere.Iterator, hasTimeColumn bool) (valueFields data.
 			}
 
 			colIdx++
-		}
-	}
-
-	/**
-	for null values we should keep the nullableJson
-	after handling everything in frames we should iterate over the fields
-	and then changed the value types.
-	this will help us to handle null table values
-	like the cases in string_column_with_null_value2.json
-	*/
-
-	// if all values are null in a field we convert the field type to NullableFloat64
-	// it is because of the consistency between buffer and stream parser
-	// also frontend probably will not interpret the nullableJson value
-	for i, v := range valueFields {
-		if v.Type() == data.FieldTypeNullableJSON {
-			maybeFixValueFieldType(valueFields, data.FieldTypeNullableFloat64, i)
 		}
 	}
 
@@ -416,23 +423,26 @@ func handleTableFormatValueFields(rsp *backend.DataResponse, valueFields data.Fi
 		if i == 0 {
 			continue
 		}
-		v.Name = columns[i]
-		v.Config = &data.FieldConfig{DisplayNameFromDS: columns[i]}
 
 		if len(rsp.Frames[0].Fields) == si {
 			rsp.Frames[0].Fields = append(rsp.Frames[0].Fields, v)
 		} else {
 			for vi := 0; vi < v.Len(); vi++ {
-				var fp *float64 = nil
-				if v.At(vi) == fp {
+				if v.Type() == data.FieldTypeNullableJSON {
 					// add nil explicitly.
 					// we don't know if it is a float pointer nil or string pointer nil or etc
 					rsp.Frames[0].Fields[si].Append(nil)
 				} else {
+					if v.Type() != rsp.Frames[0].Fields[si].Type() {
+						maybeFixValueFieldType(rsp.Frames[0].Fields, v.Type(), si)
+					}
 					rsp.Frames[0].Fields[si].Append(v.At(vi))
 				}
 			}
 		}
+
+		rsp.Frames[0].Fields[si].Name = columns[i]
+		rsp.Frames[0].Fields[si].Config = &data.FieldConfig{DisplayNameFromDS: columns[i]}
 		si++
 	}
 }
