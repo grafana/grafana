@@ -20,6 +20,7 @@ import { RouteDescriptor } from './core/navigation/types';
 import { contextSrv } from './core/services/context_srv';
 import { ThemeProvider } from './core/utils/ConfigProvider';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
+// import { TutorialProvider } from './features/tutorial/TutorialProvider';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -124,6 +125,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                   <LiveConnectionWarning />
                   <ModalRoot />
                   <PortalContainer />
+                  {/* <TutorialProvider /> */}
                 </ModalsProvider>
               </KBarProvider>
             </ThemeProvider>

@@ -166,6 +166,7 @@ Experimental features might be changed or removed without prior notice.
 | `pluginsSkipHostEnvVars`                    | Disables passing host environment variable to plugin processes                                                                                                                                                                                                                    |
 | `regressionTransformation`                  | Enables regression analysis transformation                                                                                                                                                                                                                                        |
 | `displayAnonymousStats`                     | Enables anonymous stats to be shown in the UI for Grafana                                                                                                                                                                                                                         |
+| `wizarDSToggle`                             | Enables an AI assisted wizard for the Prometheus data source                                                                                                                                                                                                                      |
 
 ## Development feature toggles
 
