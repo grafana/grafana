@@ -155,6 +155,40 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	err = os.MkdirAll(publicDir, 0750)
 	require.NoError(t, err)
 
+	viewsDir := filepath.Join(publicDir, "views")
+	err = fs.CopyRecursive(filepath.Join(rootDir, "public", "views"), viewsDir)
+	require.NoError(t, err)
+
+	// add a stub manifest to the build directory
+	buildDir := filepath.Join(publicDir, "build")
+	err = os.MkdirAll(buildDir, 0750)
+	require.NoError(t, err)
+	err = os.WriteFile(filepath.Join(buildDir, "assets-manifest.json"), []byte(`{
+		"entrypoints": {
+		  "app": {
+			"assets": {
+			  "js": ["public/build/runtime.XYZ.js"]
+			}
+		  },
+		  "dark": {
+			"assets": {
+			  "css": ["public/build/dark.css"]
+			}
+		  },
+		  "light": {
+			"assets": {
+			  "css": ["public/build/light.css"]
+			}
+		  }
+		},
+		"runtime.50398398ecdeaf58968c.js": {
+		  "src": "public/build/runtime.XYZ.js",
+		  "integrity": "sha256-k1g7TksMHFQhhQGE"
+		}
+	  }
+	  `), 0750)
+	require.NoError(t, err)
+
 	emailsDir := filepath.Join(publicDir, "emails")
 	err = fs.CopyRecursive(filepath.Join(rootDir, "public", "emails"), emailsDir)
 	require.NoError(t, err)
