@@ -13746,6 +13746,7 @@
       }
     },
     "DsAccess": {
+      "description": "enum: Proxy,Direct",
       "type": "string"
     },
     "DsPermissionType": {

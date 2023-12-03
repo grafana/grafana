@@ -37,6 +37,7 @@ const (
 	CustomHeaderValue = "httpHeaderValue"
 )
 
+// enum: Proxy,Direct
 type DsAccess string
 
 type DataSource struct {
@@ -44,10 +45,8 @@ type DataSource struct {
 	OrgID   int64 `json:"orgId,omitempty" xorm:"org_id"`
 	Version int   `json:"version,omitempty"`
 
-	Name string `json:"name"`
-	Type string `json:"type"`
-	// Some data sources are incompatible with any setting but proxy (Server).
-	// enum: Proxy,Direct
+	Name   string   `json:"name"`
+	Type   string   `json:"type"`
 	Access DsAccess `json:"access"`
 	URL    string   `json:"url" xorm:"url"`
 	// swagger:ignore

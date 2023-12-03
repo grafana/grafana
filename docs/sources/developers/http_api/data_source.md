@@ -360,8 +360,8 @@ JSON Body schema:
 - **name** – Name of data source
 - **type** – Type of data source
 - **url** – Url of data source
-- **access** - The access mode for the data source. "proxy" or "direct"
-- **basicAuth** –  Whether basic authentication is enabled for the data source.
+- **access** - The access mode for the data source. "proxy" or "direct". Some data sources are only compatible with proxy.
+- **basicAuth** – Whether basic authentication is enabled for the data source.
 
 **Example Graphite Request with basic auth enabled**:
 
