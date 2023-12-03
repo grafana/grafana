@@ -346,11 +346,11 @@ func handleTimeSeriesFormatWithTimeColumn(valueFields data.Fields, tags map[stri
 		if v == "time" {
 			continue
 		}
-		formattedFrameName := util.FormatFrameName(measurement, v, tags, *query, frameName[:])
+		formattedFrameName := string(util.FormatFrameName(measurement, v, tags, *query, frameName[:]))
 		valueFields[i].Labels = tags
-		valueFields[i].Config = &data.FieldConfig{DisplayNameFromDS: string(formattedFrameName)}
+		valueFields[i].Config = &data.FieldConfig{DisplayNameFromDS: formattedFrameName}
 
-		frame := data.NewFrame(string(formattedFrameName), valueFields[0], valueFields[i])
+		frame := data.NewFrame(formattedFrameName, valueFields[0], valueFields[i])
 		frames = append(frames, frame)
 	}
 	return frames
