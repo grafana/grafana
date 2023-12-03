@@ -6,7 +6,13 @@
 
 package featuremgmt
 
+import (
+	"time"
+)
+
 var (
+	unknownDate = time.Date(2014, time.December, 25, 12, 0, 0, 0, time.UTC)
+
 	falsePtr = boolPtr(false)
 	truePtr  = boolPtr(true)
 	// Register each toggle here
@@ -18,6 +24,7 @@ var (
 			Owner:             grafanaAsCodeSquad,
 			HideFromAdminPage: true,
 			AllowSelfServe:    falsePtr,
+			Created:           time.Date(2023, time.November, 14, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "live-service-web-worker",
@@ -25,6 +32,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaAppPlatformSquad,
+			Created:      time.Date(2022, time.January, 26, 9, 44, 0, 0, time.UTC),
 		},
 		{
 			Name:         "queryOverLive",
@@ -32,6 +40,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaAppPlatformSquad,
+			Created:      time.Date(2022, time.January, 26, 9, 44, 0, 0, time.UTC),
 		},
 		{
 			Name:              "panelTitleSearch",
@@ -39,6 +48,7 @@ var (
 			Stage:             FeatureStagePublicPreview,
 			Owner:             grafanaAppPlatformSquad,
 			HideFromAdminPage: true,
+			Created:           time.Date(2022, time.January, 26, 9, 44, 0, 0, time.UTC),
 		},
 		{
 			Name:           "publicDashboards",
@@ -47,6 +57,7 @@ var (
 			Owner:          grafanaSharingSquad,
 			Expression:     "true", // enabled by default
 			AllowSelfServe: truePtr,
+			Created:        time.Date(2022, time.January, 1, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:              "publicDashboardsEmailSharing",
@@ -56,12 +67,14 @@ var (
 			Owner:             grafanaSharingSquad,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
+			Created:           time.Date(2022, time.January, 1, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "lokiExperimentalStreaming",
 			Description: "Support new streaming approach for loki (prototype, needs special loki build)",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityLogsSquad,
+			Created:     time.Date(2023, time.June, 19, 3, 0, 3, 0, time.UTC),
 		},
 		{
 			Name:           "featureHighlights",
@@ -69,24 +82,28 @@ var (
 			Stage:          FeatureStageGeneralAvailability,
 			Owner:          grafanaAsCodeSquad,
 			AllowSelfServe: truePtr,
+			Created:        time.Date(2023, time.January, 1, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "migrationLocking",
 			Description: "Lock database during migrations",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaBackendPlatformSquad,
+			Created:     time.Date(2022, time.February, 15, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "storage",
 			Description: "Configurable storage for dashboards, datasources, and resources",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAppPlatformSquad,
+			Created:     time.Date(2022, time.March, 17, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "correlations",
 			Description: "Correlations page",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaExploreSquad,
+			Created:     time.Date(2022, time.September, 16, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "exploreContentOutline",
@@ -96,12 +113,14 @@ var (
 			Expression:     "true", // enabled by default
 			FrontendOnly:   true,
 			AllowSelfServe: truePtr,
+			Created:        time.Date(2023, time.September, 16, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "datasourceQueryMultiStatus",
 			Description: "Introduce HTTP 207 Multi Status for api/ds/query",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaPluginsPlatformSquad,
+			Created:     time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "traceToMetrics",
@@ -109,6 +128,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "autoMigrateOldPanels",
@@ -116,6 +136,7 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:              "disableAngular",
@@ -124,6 +145,7 @@ var (
 			FrontendOnly:      true,
 			Owner:             grafanaDatavizSquad,
 			HideFromAdminPage: true,
+			Created:           unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:              "canvasPanelNesting",
@@ -132,6 +154,7 @@ var (
 			FrontendOnly:      true,
 			Owner:             grafanaDatavizSquad,
 			HideFromAdminPage: true,
+			Created:           unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "newVizTooltips",
@@ -140,6 +163,7 @@ var (
 			FrontendOnly:   true,
 			Owner:          grafanaDatavizSquad,
 			AllowSelfServe: truePtr,
+			Created:        unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "scenes",
@@ -147,6 +171,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:            "disableSecretsCompatibility",
@@ -154,12 +179,14 @@ var (
 			Stage:           FeatureStageExperimental,
 			RequiresRestart: true,
 			Owner:           hostedGrafanaTeam,
+			Created:         unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "logRequestsInstrumentedAsUnknown",
 			Description: "Logs the path for requests that are instrumented as unknown",
 			Stage:       FeatureStageExperimental,
 			Owner:       hostedGrafanaTeam,
+			Created:     unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "dataConnectionsConsole",
@@ -168,6 +195,7 @@ var (
 			Expression:     "true", // turned on by default
 			Owner:          grafanaPluginsPlatformSquad,
 			AllowSelfServe: truePtr,
+			Created:        unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			// Some plugins rely on topnav feature flag being enabled, so we cannot remove this until we
@@ -177,6 +205,7 @@ var (
 			Stage:       FeatureStageDeprecated,
 			Expression:  "true", // enabled by default
 			Owner:       grafanaFrontendPlatformSquad,
+			Created:     unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "dockedMegaMenu",
@@ -184,6 +213,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaFrontendPlatformSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:              "grpcServer",
@@ -191,6 +221,7 @@ var (
 			Stage:             FeatureStagePublicPreview,
 			Owner:             grafanaAppPlatformSquad,
 			HideFromAdminPage: true,
+			Created:           unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:            "entityStore",
@@ -198,6 +229,7 @@ var (
 			Stage:           FeatureStageExperimental,
 			RequiresDevMode: true,
 			Owner:           grafanaAppPlatformSquad,
+			Created:         unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "cloudWatchCrossAccountQuerying",
@@ -206,6 +238,7 @@ var (
 			Expression:     "true", // enabled by default
 			Owner:          awsDatasourcesSquad,
 			AllowSelfServe: truePtr,
+			Created:        unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "redshiftAsyncQueryDataSupport",
@@ -214,6 +247,7 @@ var (
 			Expression:     "true", // enabled by default
 			Owner:          awsDatasourcesSquad,
 			AllowSelfServe: falsePtr,
+			Created:        unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "athenaAsyncQueryDataSupport",
@@ -223,24 +257,28 @@ var (
 			FrontendOnly:   true,
 			Owner:          awsDatasourcesSquad,
 			AllowSelfServe: falsePtr,
+			Created:        unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "cloudwatchNewRegionsHandler",
 			Description: "Refactor of /regions endpoint, no user-facing changes",
 			Stage:       FeatureStageExperimental,
 			Owner:       awsDatasourcesSquad,
+			Created:     unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "showDashboardValidationWarnings",
 			Description: "Show warnings when dashboards do not validate against the schema",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDashboardsSquad,
+			Created:     unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "mysqlAnsiQuotes",
 			Description: "Use double quotes to escape keyword in a MySQL query",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaBackendPlatformSquad,
+			Created:     unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:              "accessControlOnCall",
@@ -248,12 +286,14 @@ var (
 			Stage:             FeatureStagePublicPreview,
 			Owner:             identityAccessTeam,
 			HideFromAdminPage: true,
+			Created:           unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "nestedFolders",
 			Description: "Enable folder nesting",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaBackendPlatformSquad,
+			Created:     unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "nestedFolderPicker",
@@ -263,6 +303,7 @@ var (
 			FrontendOnly:   true,
 			Expression:     "true", // enabled by default
 			AllowSelfServe: truePtr,
+			Created:        unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "accessTokenExpirationCheck",
@@ -270,6 +311,7 @@ var (
 			Stage:          FeatureStageGeneralAvailability,
 			Owner:          identityAccessTeam,
 			AllowSelfServe: falsePtr,
+			Created:        unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:              "emptyDashboardPage",
@@ -280,6 +322,7 @@ var (
 			Owner:             grafanaDashboardsSquad,
 			AllowSelfServe:    falsePtr,
 			HideFromAdminPage: true,
+			Created:           unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "disablePrometheusExemplarSampling",
@@ -287,12 +330,14 @@ var (
 			Stage:          FeatureStageGeneralAvailability,
 			Owner:          grafanaObservabilityMetricsSquad,
 			AllowSelfServe: truePtr,
+			Created:        unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "alertingBacktesting",
 			Description: "Rule backtesting API for alerting",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAlertingSquad,
+			Created:     unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "editPanelCSVDragAndDrop",
@@ -300,6 +345,7 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaBiSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:              "alertingNoNormalState",
@@ -308,6 +354,7 @@ var (
 			RequiresRestart:   false,
 			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,
+			Created:           unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "logsContextDatasourceUi",
@@ -317,6 +364,7 @@ var (
 			Owner:          grafanaObservabilityLogsSquad,
 			Expression:     "true", // turned on by default
 			AllowSelfServe: truePtr,
+			Created:        unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "lokiQuerySplitting",
@@ -326,6 +374,7 @@ var (
 			Owner:          grafanaObservabilityLogsSquad,
 			Expression:     "true", // turned on by default
 			AllowSelfServe: truePtr,
+			Created:        unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "lokiQuerySplittingConfig",
@@ -333,12 +382,14 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "individualCookiePreferences",
 			Description: "Support overriding cookie preferences per user",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaBackendPlatformSquad,
+			Created:     unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "prometheusMetricEncyclopedia",
@@ -348,6 +399,7 @@ var (
 			FrontendOnly:   true,
 			Owner:          grafanaObservabilityMetricsSquad,
 			AllowSelfServe: truePtr,
+			Created:        unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "influxdbBackendMigration",
@@ -357,12 +409,14 @@ var (
 			Owner:          grafanaObservabilityMetricsSquad,
 			Expression:     "true", // enabled by default
 			AllowSelfServe: falsePtr,
+			Created:        unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "influxqlStreamingParser",
 			Description: "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
+			Created:     unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "clientTokenRotation",
@@ -371,6 +425,7 @@ var (
 			Expression:     "true",
 			Owner:          identityAccessTeam,
 			AllowSelfServe: falsePtr,
+			Created:        unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "prometheusDataplane",
@@ -379,6 +434,7 @@ var (
 			Stage:          FeatureStageGeneralAvailability,
 			Owner:          grafanaObservabilityMetricsSquad,
 			AllowSelfServe: truePtr,
+			Created:        unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "lokiMetricDataplane",
@@ -387,12 +443,14 @@ var (
 			Expression:     "true",
 			Owner:          grafanaObservabilityLogsSquad,
 			AllowSelfServe: truePtr,
+			Created:        unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "lokiLogsDataplane",
 			Description: "Changes logs responses from Loki to be compliant with the dataplane specification.",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityLogsSquad,
+			Created:     unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "dataplaneFrontendFallback",
@@ -402,36 +460,42 @@ var (
 			Expression:     "true",
 			Owner:          grafanaObservabilityMetricsSquad,
 			AllowSelfServe: truePtr,
+			Created:        unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "disableSSEDataplane",
 			Description: "Disables dataplane specific processing in server side expressions.",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
+			Created:     unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "alertStateHistoryLokiSecondary",
 			Description: "Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAlertingSquad,
+			Created:     unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "alertStateHistoryLokiPrimary",
 			Description: "Enable a remote Loki instance as the primary source for state history reads.",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAlertingSquad,
+			Created:     unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "alertStateHistoryLokiOnly",
 			Description: "Disable Grafana alerts from emitting annotations when a remote Loki instance is available.",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAlertingSquad,
+			Created:     unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "unifiedRequestLog",
 			Description: "Writes error logs to the request logger",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaBackendPlatformSquad,
+			Created:     unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:              "renderAuthJWT",
@@ -439,6 +503,7 @@ var (
 			Stage:             FeatureStagePublicPreview,
 			Owner:             grafanaAsCodeSquad,
 			HideFromAdminPage: true,
+			Created:           unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:            "externalServiceAuth",
@@ -446,13 +511,15 @@ var (
 			Stage:           FeatureStageExperimental,
 			RequiresDevMode: true,
 			Owner:           identityAccessTeam,
+			Created:         unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:              "refactorVariablesTimeRange",
 			Description:       "Refactor time range variables flow to reduce number of API calls made when query variables are chained",
 			Stage:             FeatureStagePublicPreview,
 			Owner:             grafanaDashboardsSquad,
-			HideFromAdminPage: true, // Non-feature, used to test out a bug fix that impacts the performance of template variables.
+			HideFromAdminPage: true,        // Non-feature, used to test out a bug fix that impacts the performance of template variables.
+			Created:           unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:            "useCachingService",
@@ -462,6 +529,7 @@ var (
 			RequiresRestart: true,
 			Expression:      "true", // enabled by default
 			AllowSelfServe:  falsePtr,
+			Created:         unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "enableElasticsearchBackendQuerying",
@@ -470,6 +538,7 @@ var (
 			Owner:          grafanaObservabilityLogsSquad,
 			Expression:     "true", // enabled by default
 			AllowSelfServe: truePtr,
+			Created:        unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:              "advancedDataSourcePicker",
@@ -480,6 +549,7 @@ var (
 			Owner:             grafanaDashboardsSquad,
 			AllowSelfServe:    falsePtr,
 			HideFromAdminPage: true,
+			Created:           unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "faroDatasourceSelector",
@@ -487,6 +557,7 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        appO11ySquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "enableDatagridEditing",
@@ -494,6 +565,7 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaBiSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "extraThemes",
@@ -501,6 +573,7 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "lokiPredefinedOperations",
@@ -508,6 +581,7 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityLogsSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "pluginsFrontendSandbox",
@@ -515,6 +589,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaPluginsPlatformSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "dashboardEmbed",
@@ -522,6 +597,7 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAsCodeSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "frontendSandboxMonitorOnly",
@@ -529,6 +605,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaPluginsPlatformSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:              "sqlDatasourceDatabaseSelection",
@@ -537,6 +614,7 @@ var (
 			Stage:             FeatureStagePublicPreview,
 			Owner:             grafanaBiSquad,
 			HideFromAdminPage: true,
+			Created:           unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "lokiFormatQuery",
@@ -544,6 +622,7 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityLogsSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "cloudWatchLogsMonacoEditor",
@@ -553,6 +632,7 @@ var (
 			Expression:     "true", // enabled by default
 			Owner:          awsDatasourcesSquad,
 			AllowSelfServe: truePtr,
+			Created:        unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "exploreScrollableLogsContainer",
@@ -560,6 +640,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "recordedQueriesMulti",
@@ -568,6 +649,7 @@ var (
 			Expression:     "true",
 			Owner:          grafanaObservabilityMetricsSquad,
 			AllowSelfServe: falsePtr,
+			Created:        unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "pluginsDynamicAngularDetectionPatterns",
@@ -575,6 +657,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "vizAndWidgetSplit",
@@ -582,6 +665,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "prometheusIncrementalQueryInstrumentation",
@@ -589,6 +673,7 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityMetricsSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "logsExploreTableVisualisation",
@@ -596,12 +681,14 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "awsDatasourcesTempCredentials",
 			Description: "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
 			Stage:       FeatureStageExperimental,
 			Owner:       awsDatasourcesSquad,
+			Created:     unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "transformationsRedesign",
@@ -611,6 +698,7 @@ var (
 			Expression:     "true", // enabled by default
 			Owner:          grafanaObservabilityMetricsSquad,
 			AllowSelfServe: truePtr,
+			Created:        unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "mlExpressions",
@@ -618,6 +706,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "traceQLStreaming",
@@ -625,6 +714,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "metricsSummary",
@@ -632,6 +722,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "grafanaAPIServer",
@@ -639,6 +730,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaAppPlatformSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "grafanaAPIServerWithExperimentalAPIs",
@@ -646,6 +738,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaAppPlatformSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:            "featureToggleAdminPage",
@@ -654,12 +747,14 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaOperatorExperienceSquad,
 			RequiresRestart: true,
+			Created:         unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "awsAsyncQueryCaching",
 			Description: "Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       awsDatasourcesSquad,
+			Created:     unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:              "splitScopes",
@@ -668,7 +763,8 @@ var (
 			FrontendOnly:      false,
 			Owner:             identityAccessTeam,
 			RequiresRestart:   true,
-			HideFromAdminPage: true, // This is internal work to speed up dashboard search, and is not ready for wider use
+			HideFromAdminPage: true,        // This is internal work to speed up dashboard search, and is not ready for wider use
+			Created:           unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "traceToProfiles",
@@ -676,6 +772,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "tracesEmbeddedFlameGraph",
@@ -683,12 +780,14 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "permissionsFilterRemoveSubquery",
 			Description: "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaBackendPlatformSquad,
+			Created:     unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "prometheusConfigOverhaulAuth",
@@ -697,6 +796,7 @@ var (
 			Stage:          FeatureStageGeneralAvailability,
 			Expression:     "true", // on by default
 			AllowSelfServe: falsePtr,
+			Created:        unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:            "configurableSchedulerTick",
@@ -706,6 +806,7 @@ var (
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
 			HideFromDocs:    true,
+			Created:         unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:            "influxdbSqlSupport",
@@ -714,6 +815,7 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaObservabilityMetricsSquad,
 			RequiresRestart: false,
+			Created:         unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:            "alertingNoDataErrorExecution",
@@ -723,6 +825,7 @@ var (
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
 			Enabled:         true,
+			Created:         unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "angularDeprecationUI",
@@ -730,6 +833,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaPluginsPlatformSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "dashgpt",
@@ -737,6 +841,7 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:            "reportingRetries",
@@ -745,12 +850,14 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaSharingSquad,
 			RequiresRestart: true,
+			Created:         unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "sseGroupByDatasource",
 			Description: "Send query to the same datasource in a single request when using server side expressions",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
+			Created:     unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "requestInstrumentationStatusSource",
@@ -758,6 +865,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:            "libraryPanelRBAC",
@@ -766,6 +874,7 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: true,
+			Created:         unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "lokiRunQueriesInParallel",
@@ -773,6 +882,7 @@ var (
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
 			Owner:        grafanaObservabilityLogsSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "wargamesTesting",
@@ -780,6 +890,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        hostedGrafanaTeam,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:              "alertingInsights",
@@ -789,13 +900,15 @@ var (
 			Owner:             grafanaAlertingSquad,
 			Expression:        "true", // enabled by default
 			AllowSelfServe:    falsePtr,
-			HideFromAdminPage: true, // This is moving away from being a feature toggle.
+			HideFromAdminPage: true,        // This is moving away from being a feature toggle.
+			Created:           unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "externalCorePlugins",
 			Description: "Allow core plugins to be loaded as external",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaPluginsPlatformSquad,
+			Created:     unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "pluginsAPIMetrics",
@@ -803,6 +916,7 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaPluginsPlatformSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:            "httpSLOLevels",
@@ -811,6 +925,7 @@ var (
 			FrontendOnly:    false,
 			Owner:           hostedGrafanaTeam,
 			RequiresRestart: true,
+			Created:         unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:            "idForwarding",
@@ -818,6 +933,7 @@ var (
 			Stage:           FeatureStageExperimental,
 			Owner:           identityAccessTeam,
 			RequiresDevMode: true,
+			Created:         unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "cloudWatchWildCardDimensionValues",
@@ -826,6 +942,7 @@ var (
 			Expression:     "true", // enabled by default
 			Owner:          awsDatasourcesSquad,
 			AllowSelfServe: truePtr,
+			Created:        unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:            "externalServiceAccounts",
@@ -833,6 +950,7 @@ var (
 			Stage:           FeatureStageExperimental,
 			RequiresDevMode: true,
 			Owner:           identityAccessTeam,
+			Created:         unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "panelMonitoring",
@@ -840,6 +958,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDatavizSquad,
 			FrontendOnly: true,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "enableNativeHTTPHistogram",
@@ -847,6 +966,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        hostedGrafanaTeam,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "formatString",
@@ -854,6 +974,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaBiSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "transformationsVariableSupport",
@@ -861,19 +982,22 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaBiSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:            "kubernetesPlaylists",
 			Description:     "Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true, // changes the API routing
+			RequiresRestart: true,        // changes the API routing
+			Created:         unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       awsDatasourcesSquad,
+			Created:     unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:            "recoveryThreshold",
@@ -882,6 +1006,7 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
+			Created:         unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "lokiStructuredMetadata",
@@ -889,6 +1014,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaObservabilityLogsSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "teamHttpHeaders",
@@ -896,6 +1022,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        identityAccessTeam,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "awsDatasourcesNewFormStyling",
@@ -903,6 +1030,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        awsDatasourcesSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "cachingOptimizeSerializationMemoryUsage",
@@ -910,6 +1038,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaOperatorExperienceSquad,
 			FrontendOnly: false,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:            "panelTitleSearchInV1",
@@ -917,6 +1046,7 @@ var (
 			RequiresDevMode: true,
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaBackendPlatformSquad,
+			Created:         unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "pluginsInstrumentationStatusSource",
@@ -924,6 +1054,7 @@ var (
 			FrontendOnly: false,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaPluginsPlatformSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "costManagementUi",
@@ -931,6 +1062,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaDatabasesFrontend,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:            "managedPluginsInstall",
@@ -938,6 +1070,7 @@ var (
 			Stage:           FeatureStageExperimental,
 			RequiresDevMode: false,
 			Owner:           grafanaPluginsPlatformSquad,
+			Created:         unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "prometheusPromQAIL",
@@ -945,6 +1078,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "addFieldFromCalculationStatFunctions",
@@ -952,12 +1086,14 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaBiSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "alertmanagerRemoteSecondary",
 			Description: "Enable Grafana to sync configuration and state with a remote Alertmanager.",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAlertingSquad,
+			Created:     unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "alertmanagerRemotePrimary",
@@ -970,6 +1106,7 @@ var (
 			Description: "Disable the internal Alertmanager and only use the external one defined.",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAlertingSquad,
+			Created:     unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:            "annotationPermissionUpdate",
@@ -977,6 +1114,7 @@ var (
 			Stage:           FeatureStageExperimental,
 			RequiresDevMode: false,
 			Owner:           identityAccessTeam,
+			Created:         unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "extractFieldsNameDeduplication",
@@ -984,6 +1122,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaBiSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "dashboardSceneForViewers",
@@ -991,6 +1130,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "dashboardScene",
@@ -998,6 +1138,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "panelFilterVariable",
@@ -1006,6 +1147,7 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "pdfTables",
@@ -1013,6 +1155,7 @@ var (
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
 			Owner:        grafanaSharingSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:            "ssoSettingsApi",
@@ -1021,6 +1164,7 @@ var (
 			Stage:           FeatureStageExperimental,
 			FrontendOnly:    false,
 			Owner:           identityAccessTeam,
+			Created:         unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "logsInfiniteScrolling",
@@ -1028,6 +1172,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "flameGraphItemCollapsing",
@@ -1035,6 +1180,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "alertingDetailsViewV2",
@@ -1043,6 +1189,7 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "datatrails",
@@ -1051,6 +1198,7 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "alertingSimplifiedRouting",
@@ -1059,6 +1207,7 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "logRowsPopoverMenu",
@@ -1066,6 +1215,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "pluginsSkipHostEnvVars",
@@ -1073,6 +1223,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "regressionTransformation",
@@ -1080,6 +1231,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaBiSquad,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "displayAnonymousStats",
@@ -1087,6 +1239,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        identityAccessTeam,
+			Created:      unknownDate, // time.Date(2022, time.May, 3, 12, 0, 0, 0, time.UTC),
 		},
 	}
 )
