@@ -22,10 +22,6 @@ func ReadInfluxQLStyleResult(jIter *jsoniter.Iterator, query *models.Query) *bac
 	iter := jsonitere.NewIterator(jIter)
 	var rsp *backend.DataResponse
 
-	// frameName is pre-allocated. So we can reuse it, saving memory.
-	// It's sized for a reasonably-large name, but will grow if needed.
-	frameName := make([]byte, 0, 128)
-
 l1Fields:
 	for l1Field, err := iter.ReadObject(); ; l1Field, err = iter.ReadObject() {
 		if err != nil {
@@ -33,7 +29,7 @@ l1Fields:
 		}
 		switch l1Field {
 		case "results":
-			rsp = readResults(iter, frameName, query)
+			rsp = readResults(iter, query)
 			if rsp.Error != nil {
 				return rsp
 			}
@@ -55,7 +51,7 @@ l1Fields:
 	return rsp
 }
 
-func readResults(iter *jsonitere.Iterator, frameName []byte, query *models.Query) *backend.DataResponse {
+func readResults(iter *jsonitere.Iterator, query *models.Query) *backend.DataResponse {
 	rsp := &backend.DataResponse{Frames: make(data.Frames, 0)}
 l1Fields:
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
@@ -68,7 +64,7 @@ l1Fields:
 			}
 			switch l1Field {
 			case "series":
-				rsp = readSeries(iter, frameName, query)
+				rsp = readSeries(iter, query)
 			case "":
 				break l1Fields
 			default:
@@ -83,7 +79,7 @@ l1Fields:
 	return rsp
 }
 
-func readSeries(iter *jsonitere.Iterator, frameName []byte, query *models.Query) *backend.DataResponse {
+func readSeries(iter *jsonitere.Iterator, query *models.Query) *backend.DataResponse {
 	var (
 		measurement   string
 		tags          map[string]string
@@ -91,6 +87,11 @@ func readSeries(iter *jsonitere.Iterator, frameName []byte, query *models.Query)
 		valueFields   data.Fields
 		hasTimeColumn bool
 	)
+
+	// frameName is pre-allocated. So we can reuse it, saving memory.
+	// It's sized for a reasonably-large name, but will grow if needed.
+	frameName := make([]byte, 0, 128)
+
 	rsp := &backend.DataResponse{Frames: make(data.Frames, 0)}
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 		if err != nil {
@@ -345,7 +346,7 @@ func handleTimeSeriesFormatWithTimeColumn(valueFields data.Fields, tags map[stri
 		if v == "time" {
 			continue
 		}
-		formattedFrameName := util.FormatFrameName(measurement, v, tags, *query, frameName)
+		formattedFrameName := util.FormatFrameName(measurement, v, tags, *query, frameName[:])
 		valueFields[i].Labels = tags
 		valueFields[i].Config = &data.FieldConfig{DisplayNameFromDS: string(formattedFrameName)}
 
