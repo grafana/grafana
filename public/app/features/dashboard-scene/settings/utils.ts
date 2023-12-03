@@ -10,7 +10,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 
 import { AnnotationsEditView } from './AnnotationsEditView';
 import { DashboardLinksEditView } from './DashboardLinksEditView';
-import { GeneralSettingsEditView } from './GeneralSettings';
+import { GeneralSettingsEditView } from './GeneralSettingsEditView';
 import { VariablesEditView } from './VariablesEditView';
 
 export interface DashboardEditViewState extends SceneObjectState {
