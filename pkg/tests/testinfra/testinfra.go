@@ -154,12 +154,6 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	publicDir := filepath.Join(tmpDir, "public")
 	err = os.MkdirAll(publicDir, 0750)
 	require.NoError(t, err)
-	// viewsDir := filepath.Join(publicDir, "views")
-	// err = fs.CopyRecursive(filepath.Join(rootDir, "public", "views"), viewsDir)
-	// require.NoError(t, err)
-
-	// fmt.Printf("FROM: %s\n", viewsDir)
-	// fmt.Printf("TO: %s\n", filepath.Join(rootDir, "public", "views"))
 
 	emailsDir := filepath.Join(publicDir, "emails")
 	err = fs.CopyRecursive(filepath.Join(rootDir, "public", "emails"), emailsDir)
