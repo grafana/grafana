@@ -355,6 +355,14 @@ Content-Type: application/json
 By defining `password` and `basicAuthPassword` under `secureJsonData` Grafana encrypts them securely as an encrypted blob in the database. The response then lists the encrypted fields under `secureJsonFields`.
 {{% /admonition %}}
 
+JSON Body schema:
+
+- **name** – Name of data source
+- **type** – Type of data source
+- **url** – Url of data source
+- **access** - The access mode for the data source. "proxy" or "direct"
+- **basicAuth** –  Whether basic authentication is enabled for the data source.
+
 **Example Graphite Request with basic auth enabled**:
 
 ```http
