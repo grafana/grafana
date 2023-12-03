@@ -292,7 +292,8 @@ func readValues(iter *jsonitere.Iterator, hasTimeColumn bool) (valueFields data.
 	return valueFields, nil
 }
 
-// maybeCreateValueField checks whether a value field created. if not creates a new one
+// maybeCreateValueField checks whether a value field has created already.
+// if it hasn't, creates a new one
 func maybeCreateValueField(valueFields data.Fields, expectedType data.FieldType, colIdx int) data.Fields {
 	if len(valueFields) == colIdx {
 		newField := data.NewFieldFromFieldType(expectedType, 0)
@@ -304,8 +305,10 @@ func maybeCreateValueField(valueFields data.Fields, expectedType data.FieldType,
 }
 
 // maybeFixValueFieldType checks if the value field type is matching
-// For nil values we might have added NullableFloat64 value field
-// if they are not matching fix it
+// For nil values we might have added FieldTypeNullableJSON value field
+// if the type of the field in valueFields is not matching the expected type
+// or the type of the field in valueFields is nullableJSON
+// we change the type of the field as expectedType
 func maybeFixValueFieldType(valueFields data.Fields, expectedType data.FieldType, colIdx int) {
 	if valueFields[colIdx].Type() == expectedType || valueFields[colIdx].Type() != data.FieldTypeNullableJSON {
 		return
