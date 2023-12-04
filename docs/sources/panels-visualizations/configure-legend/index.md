@@ -15,6 +15,38 @@ weight: 70
 
 A panel includes a legend that you can use to interpret data displayed in a visualization. Each legend option adds context and clarity to the data illustrated in a visualization.
 
+## Legend options
+
+<!--consider making these bullet points rather than H3s-->
+
+### Visibility
+
+Set whether legends are displayed or not. Use the switch to toggle legends on or off.
+
+### Mode
+
+Set the format in which legends are displayed. Choose from
+
+- **List**
+- **Table**
+
+When you format legends as a table, other information about the legend, such as its location in the visualization, might be displayed as well.
+
+### Placement
+
+Set where on the visualization legends are displayed. Choose from:
+
+- **Bottom**
+- **Right**
+
+### Width
+
+If you set the legend placement to **Right**, the **Width** option becomes available. Leave the field empty to allow Grafana to automatically set the legend width or enter a value in the field. The width is in [what measurement??].
+
+### Values
+
+Select values or [calculations][] to show in legends.
+
 ## Isolate series data in a visualization
 
 Visualizations can often be visually complex, and include many data series. You can simplify the view by removing series data from the visualization, which isolates the data you want to see. Grafana automatically creates a new override in the **Override** tab.
