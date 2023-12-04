@@ -59,13 +59,13 @@ import { dedupLogRows, filterLogLevels } from '../../logs/logsModel';
 import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 import { changePanelState } from '../state/explorePane';
 
+import { LogDetails } from './LogDetails';
+import { LogStats } from './LogStats';
 import { LogsFeedback } from './LogsFeedback';
 import LogsNavigation from './LogsNavigation';
 import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { SETTINGS_KEYS } from './utils/logs';
-import { LogDetails } from './LogDetails';
-import { LogStats } from './LogStats';
 
 interface Props extends Themeable2 {
   width: number;
@@ -170,6 +170,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
     this.logsVolumeEventBus = props.eventBus.newScopedBus('logsvolume', { onlyLocal: false });
   }
 
+  componentDidMount() {
+    document.addEventListener('keydown', this.handleKeyPress);
+  }
+
   componentWillUnmount() {
     if (this.flipOrderTimer) {
       window.clearTimeout(this.flipOrderTimer);
@@ -195,6 +199,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
         })
       );
     }
+
+    document.removeEventListener('keydown', this.handleKeyPress);
   }
 
   updatePanelState = (logsPanelState: Partial<ExploreLogsPanelState>) => {
@@ -228,10 +234,14 @@ class UnthemedLogs extends PureComponent<Props, State> {
         visualisationType: this.props.panelState?.logs?.visualisationType ?? 'logs',
       });
     }
-    if (this.props.logRows !== prevProps.logRows) {
-      this.setState({
-        logDetailsRow: undefined
-      });
+    if (this.state.logDetailsRow) {
+      const included = this.props.logRows.includes(this.state.logDetailsRow);
+      const found = this.props.logRows.findIndex((row) => row.rowId === this.state.logDetailsRow?.rowId);
+      if (!included) {
+        this.setState({
+          logDetailsRow: found ? this.props.logRows[found] : undefined,
+        });
+      }
     }
   }
 
@@ -532,7 +542,40 @@ class UnthemedLogs extends PureComponent<Props, State> {
     this.setState({
       logDetailsRow: row,
     });
-  }
+  };
+
+  handleKeyPress = (e: KeyboardEvent) => {
+    if (!this.state.logDetailsRow) {
+      return;
+    }
+    if (!['ArrowDown', 'ArrowUp'].includes(e.key)) {
+      return;
+    }
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    const delta = e.key === 'ArrowDown' ? 1 : -1;
+    const currentIndex = this.props.logRows.indexOf(this.state.logDetailsRow);
+    if (!currentIndex) {
+      this.setState({
+        logDetailsRow: undefined,
+      });
+      return;
+    }
+    let newIndex = currentIndex + delta;
+    if (newIndex < 0) {
+      newIndex = this.props.logRows.length - 1;
+    } else if (newIndex + 1 >= this.props.logRows.length) {
+      newIndex = 0;
+    }
+    const logDetailsRow = this.props.logRows[newIndex];
+    this.setState({
+      logDetailsRow,
+    });
+    document.getElementById(`row-${logDetailsRow.rowId}`)?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+    });
+  };
 
   render() {
     const {
@@ -582,7 +625,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     const styles = getStyles(theme, wrapLogMessage, tableHeight);
     const logRowStyles = getLogRowStyles(theme);
     const hasData = logRows && logRows.length > 0;
-    
+
     const filteredLogs = this.filterRows(logRows, hiddenLogLevels);
     const { dedupedRows } = this.dedupRows(filteredLogs, dedupStrategy);
     const navigationRange = this.createNavigationRange(logRows);
@@ -831,7 +874,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 onClickFilterOutLabel={onClickFilterOutLabel}
                 onClickShowField={this.showField}
                 onClickHideField={this.hideField}
-                getRows={() => logRows}
+                rows={logRows}
                 row={this.state.logDetailsRow}
                 wrapLogMessage={wrapLogMessage}
                 hasError={false}

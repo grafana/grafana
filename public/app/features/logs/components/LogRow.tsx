@@ -211,6 +211,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
           onMouseEnter={this.onMouseEnter}
           onMouseLeave={this.onMouseLeave}
           onMouseMove={this.onMouseMove}
+          id={`row-${row.rowId}`}
           /**
            * For better accessibility support, we listen to the onFocus event here (to display the LogRowMenuCell), and
            * to onBlur event in the LogRowMenuCell (to hide it). This way, the LogRowMenuCell is displayed when the user navigates
@@ -230,8 +231,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               </Tooltip>
             )}
           </td>
-          <td className={styles.logsRowToggleDetails}>
-          </td>
+          <td className={styles.logsRowToggleDetails}></td>
           {showTime && <td className={styles.logsRowLocalTime}>{this.renderTimeStamp(row.timeEpochMs)}</td>}
           {showLabels && processedRow.uniqueLabels && (
             <td className={styles.logsRowLabels}>
