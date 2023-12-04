@@ -19,13 +19,7 @@ import { AutoVizPanel } from './AutomaticMetricQueries/AutoVizPanel';
 import { buildBreakdownActionScene } from './BreakdownScene';
 import { MetricSelectScene } from './MetricSelectScene';
 import { SelectMetricAction } from './SelectMetricAction';
-import {
-  ActionViewDefinition,
-  getVariablesWithMetricConstant,
-  LOGS_METRIC,
-  MakeOptional,
-  OpenEmbeddedTrailEvent,
-} from './shared';
+import { ActionViewDefinition, getVariablesWithMetricConstant, LOGS_METRIC, MakeOptional } from './shared';
 
 export interface MetricSceneState extends SceneObjectState {
   body: SceneFlexLayout;
@@ -92,13 +86,13 @@ const actionViewsDefinitions: ActionViewDefinition[] = [
 export interface MetricActionBarState extends SceneObjectState {}
 
 export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
-  public onOpenTrail = () => {
-    this.publishEvent(new OpenEmbeddedTrailEvent(), true);
-  };
-
   public static Component = ({ model }: SceneComponentProps<MetricActionBar>) => {
     const metricScene = sceneGraph.getAncestor(model, MetricScene);
     const { actionView } = metricScene.useState();
+
+    if (!actionView) {
+      metricScene.setActionView(actionViewsDefinitions[0]);
+    }
 
     return (
       <Box paddingY={1}>
