@@ -49,6 +49,7 @@ import {
 import store from 'app/core/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
+import { getLogRowStyles } from 'app/features/logs/components/getLogRowStyles';
 import { dispatch, getState } from 'app/store/store';
 
 import { ExploreItemState } from '../../../types';
@@ -63,8 +64,7 @@ import LogsNavigation from './LogsNavigation';
 import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { SETTINGS_KEYS } from './utils/logs';
-import { LogDetails } from 'app/features/logs/components/LogDetails';
-import { getLogRowStyles } from 'app/features/logs/components/getLogRowStyles';
+import { LogDetails } from './LogDetails';
 
 interface Props extends Themeable2 {
   width: number;
