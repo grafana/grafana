@@ -22,6 +22,7 @@ import {
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
+import { DataTrailsExtraControls } from './DataTrailExtraControls';
 import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory, DataTrailHistoryStep } from './DataTrailsHistory';
 import { MetricScene } from './MetricScene';
@@ -59,6 +60,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       controls: state.controls ?? [
         new VariableValueSelectors({ layout: 'vertical' }),
         new SceneControlsSpacer(),
+        new DataTrailsExtraControls(),
         new SceneTimePicker({}),
         new SceneRefreshPicker({}),
       ],
@@ -147,14 +149,10 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     return (
       <div className={styles.container}>
         <history.Component model={history} />
-        {controls && (
-          <div className={styles.controls}>
-            {controls.map((control) => (
-              <control.Component key={control.state.key} model={control} />
-            ))}
-            <settings.Component model={settings} />
-          </div>
-        )}
+        <div className={styles.controls}>
+          {controls?.map((control) => <control.Component key={control.state.key} model={control} />)}
+          <settings.Component model={settings} />
+        </div>
         <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
       </div>
     );

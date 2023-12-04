@@ -12,7 +12,7 @@ import {
   PanelBuilders,
   sceneGraph,
 } from '@grafana/scenes';
-import { ToolbarButton, Box, Stack } from '@grafana/ui';
+import { Box, TabsBar, Tab } from '@grafana/ui';
 
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { AutoVizPanel } from './AutomaticMetricQueries/AutoVizPanel';
@@ -26,7 +26,6 @@ import {
   MakeOptional,
   OpenEmbeddedTrailEvent,
 } from './shared';
-import { getTrailFor } from './utils';
 
 export interface MetricSceneState extends SceneObjectState {
   body: SceneFlexLayout;
@@ -93,39 +92,28 @@ const actionViewsDefinitions: ActionViewDefinition[] = [
 export interface MetricActionBarState extends SceneObjectState {}
 
 export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
-  public getButtonVariant(actionViewName: string, currentView: string | undefined) {
-    return currentView === actionViewName ? 'active' : 'canvas';
-  }
-
   public onOpenTrail = () => {
     this.publishEvent(new OpenEmbeddedTrailEvent(), true);
   };
 
   public static Component = ({ model }: SceneComponentProps<MetricActionBar>) => {
     const metricScene = sceneGraph.getAncestor(model, MetricScene);
-    const trail = getTrailFor(model);
     const { actionView } = metricScene.useState();
 
     return (
       <Box paddingY={1}>
-        <Stack gap={2}>
-          {actionViewsDefinitions.map((viewDef) => (
-            <ToolbarButton
-              key={viewDef.value}
-              variant={viewDef.value === actionView ? 'active' : 'canvas'}
-              onClick={() => metricScene.setActionView(viewDef)}
-            >
-              {viewDef.displayName}
-            </ToolbarButton>
-          ))}
-          <ToolbarButton variant={'canvas'}>Add to dashboard</ToolbarButton>
-          <ToolbarButton variant={'canvas'} icon="compass" tooltip="Open in explore (todo)" disabled />
-          {trail.state.embedded && (
-            <ToolbarButton variant={'canvas'} onClick={model.onOpenTrail}>
-              Open
-            </ToolbarButton>
-          )}
-        </Stack>
+        <TabsBar>
+          {actionViewsDefinitions.map((tab, index) => {
+            return (
+              <Tab
+                key={index}
+                label={tab.displayName}
+                active={actionView === tab.value}
+                onChangeTab={() => metricScene.setActionView(tab)}
+              />
+            );
+          })}
+        </TabsBar>
       </Box>
     );
   };
