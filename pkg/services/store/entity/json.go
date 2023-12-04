@@ -12,19 +12,10 @@ import (
 )
 
 func init() { //nolint:gochecknoinits
-	jsoniter.RegisterTypeEncoder("entity.EntityListResult", &ListResultCodec{})
 	jsoniter.RegisterTypeEncoder("entity.WriteEntityResponse", &writeResponseCodec{})
 
 	jsoniter.RegisterTypeEncoder("entity.Entity", &rawEntityCodec{})
 	jsoniter.RegisterTypeDecoder("entity.Entity", &rawEntityCodec{})
-}
-
-func writeRawJson(stream *jsoniter.Stream, val []byte) {
-	if json.Valid(val) {
-		_, _ = stream.Write(val)
-	} else {
-		stream.WriteString(string(val))
-	}
 }
 
 // Unlike the standard JSON marshal, this will write bytes as JSON when it can
@@ -188,72 +179,6 @@ func readEntity(iter *jsoniter.Iterator, raw *Entity) {
 			return
 		}
 	}
-}
-
-// Unlike the standard JSON marshal, this will write bytes as JSON when it can
-type ListResultCodec struct{}
-
-func (obj *EntityListResult) MarshalJSON() ([]byte, error) {
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
-	return json.Marshal(obj)
-}
-
-func (codec *ListResultCodec) IsEmpty(ptr unsafe.Pointer) bool {
-	f := (*EntityListResult)(ptr)
-	return f.GRN == nil && f.Body == nil
-}
-
-func (codec *ListResultCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
-	obj := (*EntityListResult)(ptr)
-	stream.WriteObjectStart()
-	stream.WriteObjectField("GUID")
-	stream.WriteVal(obj.Guid)
-	stream.WriteMore()
-	stream.WriteObjectField("GRN")
-	stream.WriteVal(obj.GRN)
-	stream.WriteMore()
-	stream.WriteObjectField("name")
-	stream.WriteString(obj.Name)
-	stream.WriteMore()
-	stream.WriteObjectField("description")
-	stream.WriteString(obj.Description)
-	stream.WriteMore()
-	stream.WriteObjectField("size")
-	stream.WriteInt64(obj.Size)
-	stream.WriteMore()
-	stream.WriteObjectField("updatedAt")
-	stream.WriteInt64(obj.UpdatedAt)
-	stream.WriteMore()
-	stream.WriteObjectField("updatedBy")
-	stream.WriteVal(obj.UpdatedBy)
-
-	if obj.Body != nil {
-		stream.WriteMore()
-		if json.Valid(obj.Body) {
-			stream.WriteObjectField("body")
-			_, _ = stream.Write(obj.Body) // works for strings
-		} else {
-			stream.WriteObjectField("body_base64")
-			stream.WriteVal(obj.Body) // works for strings
-		}
-	}
-	if obj.Labels != nil {
-		stream.WriteMore()
-		stream.WriteObjectField("labels")
-		stream.WriteVal(obj.Labels)
-	}
-	if obj.ErrorJson != nil {
-		stream.WriteMore()
-		stream.WriteObjectField("error")
-		writeRawJson(stream, obj.ErrorJson)
-	}
-	if obj.FieldsJson != nil {
-		stream.WriteMore()
-		stream.WriteObjectField("fields")
-		writeRawJson(stream, obj.FieldsJson)
-	}
-
-	stream.WriteObjectEnd()
 }
 
 // Unlike the standard JSON marshal, this will write bytes as JSON when it can
