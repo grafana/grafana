@@ -3,75 +3,84 @@ import { Suggestion } from '../types';
 export const componentTemplates: Suggestion[] = [
   {
     component: 'Kickstart your query',
-    explanation:
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
-    testid: 'wizard-kickstart-your-query',
+    explanation: `Click to see a list of operation patterns that help you quickly get started adding multiple operations to your query. These include:
+
+      Rate query starters
+      Histogram query starters
+      Binary query starters`,
+    testid: 'wizard-prometheus-kickstart-your-query',
     order: 1,
-    link: '',
+    link: 'https://grafana.com/docs/grafana/latest/datasources/prometheus/query-editor/#toolbar-elements',
   },
   {
-    component: 'Metric',
-    explanation:
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
-    testid: '',
+    component: 'Metric select',
+    explanation: `When you are ready to create a query, you can choose the specific metric name from the dropdown list under Metric. The data source requests the list of available metrics from the Prometheus server based on the selected time rage. You can also enter text into the selector when the dropdown is open to search and filter the list.`,
+    testid: 'wizard-prometheus-metric-select',
     order: 2,
-    link: '',
+    link: 'https://grafana.com/docs/grafana/latest/datasources/prometheus/query-editor/#metrics',
   },
   {
     component: 'Label filters',
-    explanation:
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
-    testid: '',
+    explanation: `Select desired labels and their values from the dropdown list. When a metric is selected, the data source requests available labels and their values from the server. Use the + button to add a label, and the x button to remove a label.`,
+    testid: 'wizard-prometheus-label-filter',
     order: 3,
-    link: '',
+    link: 'https://grafana.com/docs/grafana/latest/datasources/prometheus/query-editor/#label-filters',
   },
   {
     component: 'Operations',
     explanation:
       'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
-    testid: '',
+    testid: 'wizard-prometheus-operations',
     order: 4,
-    link: '',
+    link: 'https://grafana.com/docs/grafana/latest/datasources/prometheus/query-editor/#operations',
   },
   {
     component: 'Legend',
-    explanation:
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
-    testid: '',
+    explanation: `The Legend setting defines the time series’s name. You can use a predefined or custom format.
+
+      Auto - Displays unique labels. Also displays all overlapping labels if a series has multiple labels.
+      Verbose - Displays all label names.
+      Custom - Uses templating to select which labels will be included. For example, {{hostname}} is replaced by the label value for the label hostname. Clear the input and click outside of it to select another mode.`,
+    testid: 'wizard-prometheus-legend',
     order: 5,
-    link: '',
+    link: 'https://grafana.com/docs/grafana/latest/datasources/prometheus/query-editor/#legend',
   },
   {
     component: 'Min step',
-    explanation:
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
-    testid: '',
+    explanation: `The Min step setting defines the lower bounds on the interval between data points. For example, set this to 1h to hint that measurements are taken hourly. This setting supports the $__interval and $__rate_interval macros.`,
+    testid: 'wizard-prometheus-min-step',
     order: 6,
-    link: '',
+    link: 'https://grafana.com/docs/grafana/latest/datasources/prometheus/query-editor/#min-step',
   },
   {
     component: 'Format',
-    explanation:
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
-    testid: '',
+    explanation: `Switch between the following format options:
+
+      Time series - The default time series format. See Time series kind formats for information on time series data frames and how time and value fields are structured.
+      Table - This works only in a Table panel.
+      Heatmap - Displays metrics of the Histogram type on a Heatmap panel by converting cumulative histograms to regular ones and sorting the series by the bucket bound.`,
+    testid: 'wizard-prometheus-format',
     order: 7,
-    link: '',
+    link: 'https://grafana.com/docs/grafana/latest/datasources/prometheus/query-editor/#format',
   },
   {
     component: 'Type',
-    explanation:
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
-    testid: '',
+    explanation: `The Type setting sets the query type. These include:
+
+      Both - The default option. Returns results for both a Range query and an Instant query.
+      Range - Returns a range vector consisting of a set of time series data containing a range of data points over time for each time series. You can choose lines, bars, points, stacked lines or stacked bars
+      Instant - Returns one data point per query and only the most recent point in the time range provided. The results can be shown in table format or as raw data. To depict instant query results in the time series panel, first add a field override, next add a property to the override named Transform, and finally select Constant from the Transform dropdown.`,
+    testid: 'wizard-prometheus-type',
     order: 8,
-    link: '',
+    link: 'https://grafana.com/docs/grafana/latest/datasources/prometheus/query-editor/#type',
   },
   {
     component: 'Exemplars',
     explanation:
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
-    testid: '',
+      'Toggle Exemplars to run a query that includes exemplars in the graph. Exemplars are unique to Prometheus. For more information see Introduction to exemplars. https://grafana.com/docs/grafana/latest/datasources/prometheus/query-editor/#:~:text=Toggle%20Exemplars%20to%20run%20a%20query%20that%20includes%20exemplars%20in%20the%20graph.%20Exemplars%20are%20unique%20to%20Prometheus.%20For%20more%20information%20see%20Introduction%20to%20exemplars.',
+    testid: 'wizard-prometheus-exemplars',
     order: 9,
-    link: '',
+    link: 'https://grafana.com/docs/grafana/latest/datasources/prometheus/query-editor/#exemplars',
   },
 ];
 
