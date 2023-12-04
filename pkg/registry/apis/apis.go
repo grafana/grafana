@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/registry"
-	deployments "github.com/grafana/grafana/pkg/registry/apis/app-deployments"
 	"github.com/grafana/grafana/pkg/registry/apis/example"
+	"github.com/grafana/grafana/pkg/registry/apis/featureflags"
 	"github.com/grafana/grafana/pkg/registry/apis/playlist"
 )
 
@@ -20,7 +20,7 @@ type Service struct{}
 func ProvideRegistryServiceSink(
 	_ *playlist.PlaylistAPIBuilder,
 	_ *example.TestingAPIBuilder,
-	_ *deployments.DeploymentAPIBuilder,
+	_ *featureflags.FeatureFlagAPIBuilder,
 ) *Service {
 	return &Service{}
 }
