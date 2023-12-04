@@ -16,6 +16,7 @@ var ErrDatabaseError = errutil.NewBase(errutil.StatusInternal, "folder.database-
 var ErrInternal = errutil.NewBase(errutil.StatusInternal, "folder.internal")
 var ErrCircularReference = errutil.NewBase(errutil.StatusBadRequest, "folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
 var ErrTargetRegistrySrvConflict = errutil.NewBase(errutil.StatusInternal, "folder.target-registry-srv-conflict")
+var ErrFolderNotEmpty = errutil.NewBase(errutil.StatusBadRequest, "folder.not-empty", errutil.WithPublicMessage("Folder cannot be deleted: folder is not empty"))
 
 const (
 	GeneralFolderUID     = "general"
