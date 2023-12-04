@@ -10,10 +10,11 @@ import (
 	"strings"
 	"time"
 
-	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
+
+	alertingNotify "github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
@@ -35,7 +36,7 @@ type channelReceiver struct {
 }
 
 // setupAlertmanagerConfigs creates Alertmanager configs with migrated receivers and routes.
-func (om *OrgMigration) migrateChannels(allChannels []*legacymodels.AlertNotification, pairs []*AlertPair) (*apimodels.PostableUserConfig, error) {
+func (om *OrgMigration) migrateChannels(ctx context.Context, allChannels []*legacymodels.AlertNotification, pairs []*AlertPair) (*apimodels.PostableUserConfig, error) {
 	var defaultChannels []*legacymodels.AlertNotification
 	var channels []*legacymodels.AlertNotification
 	for _, c := range allChannels {
@@ -57,7 +58,7 @@ func (om *OrgMigration) migrateChannels(allChannels []*legacymodels.AlertNotific
 	}
 
 	// Create all newly migrated receivers from legacy notification channels.
-	receiversMap, receivers, err := om.createReceivers(channels)
+	receiversMap, receivers, err := om.createReceivers(ctx, channels)
 	if err != nil {
 		return nil, fmt.Errorf("create receiver: %w", err)
 	}
@@ -77,7 +78,7 @@ func (om *OrgMigration) migrateChannels(allChannels []*legacymodels.AlertNotific
 	for _, c := range defaultChannels {
 		defaultReceivers[c.Name] = struct{}{}
 	}
-	defaultReceiver, defaultRoute, err := om.createDefaultRouteAndReceiver(defaultChannels)
+	defaultReceiver, defaultRoute, err := om.createDefaultRouteAndReceiver(ctx, defaultChannels)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create default route & receiver in orgId %d: %w", om.orgID, err)
 	}
@@ -107,7 +108,7 @@ func (om *OrgMigration) migrateChannels(allChannels []*legacymodels.AlertNotific
 
 	// Validate the alertmanager configuration produced, this gives a chance to catch bad configuration at migration time.
 	// Validation between legacy and unified alerting can be different (e.g. due to bug fixes) so this would fail the migration in that case.
-	if err := om.validateAlertmanagerConfig(amConfig); err != nil {
+	if err := om.validateAlertmanagerConfig(ctx, amConfig); err != nil {
 		return nil, fmt.Errorf("failed to validate AlertmanagerConfig in orgId %d: %w", om.orgID, err)
 	}
 
@@ -115,7 +116,7 @@ func (om *OrgMigration) migrateChannels(allChannels []*legacymodels.AlertNotific
 }
 
 // validateAlertmanagerConfig validates the alertmanager configuration produced by the migration against the receivers.
-func (om *OrgMigration) validateAlertmanagerConfig(config *apimodels.PostableUserConfig) error {
+func (om *OrgMigration) validateAlertmanagerConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
 	for _, r := range config.AlertmanagerConfig.Receivers {
 		for _, gr := range r.GrafanaManagedReceivers {
 			data, err := gr.Settings.MarshalJSON()
@@ -133,7 +134,7 @@ func (om *OrgMigration) validateAlertmanagerConfig(config *apimodels.PostableUse
 				}
 			)
 
-			_, err = alertingNotify.BuildReceiverConfiguration(context.Background(), &alertingNotify.APIReceiver{
+			_, err = alertingNotify.BuildReceiverConfiguration(ctx, &alertingNotify.APIReceiver{
 				GrafanaIntegrations: alertingNotify.GrafanaIntegrations{Integrations: []*alertingNotify.GrafanaIntegrationConfig{cfg}},
 			}, om.encryptionService.GetDecryptedValue)
 			if err != nil {
@@ -162,8 +163,8 @@ func quote(s string) string {
 }
 
 // Create a notifier (PostableGrafanaReceiver) from a legacy notification channel
-func (om *OrgMigration) createNotifier(c *legacymodels.AlertNotification) (*apimodels.PostableGrafanaReceiver, error) {
-	settings, secureSettings, err := om.migrateSettingsToSecureSettings(c.Type, c.Settings, c.SecureSettings)
+func (om *OrgMigration) createNotifier(ctx context.Context, c *legacymodels.AlertNotification) (*apimodels.PostableGrafanaReceiver, error) {
+	settings, secureSettings, err := om.migrateSettingsToSecureSettings(ctx, c.Type, c.Settings, c.SecureSettings)
 	if err != nil {
 		return nil, err
 	}
@@ -184,13 +185,13 @@ func (om *OrgMigration) createNotifier(c *legacymodels.AlertNotification) (*apim
 }
 
 // Create one receiver for every unique notification channel.
-func (om *OrgMigration) createReceivers(allChannels []*legacymodels.AlertNotification) (map[migrationStore.UidOrID]*apimodels.PostableApiReceiver, []channelReceiver, error) {
+func (om *OrgMigration) createReceivers(ctx context.Context, allChannels []*legacymodels.AlertNotification) (map[migrationStore.UidOrID]*apimodels.PostableApiReceiver, []channelReceiver, error) {
 	receivers := make([]channelReceiver, 0, len(allChannels))
 	receiversMap := make(map[migrationStore.UidOrID]*apimodels.PostableApiReceiver)
 
 	set := make(map[string]struct{}) // Used to deduplicate sanitized names.
 	for _, c := range allChannels {
-		notifier, err := om.createNotifier(c)
+		notifier, err := om.createNotifier(ctx, c)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -234,7 +235,7 @@ func (om *OrgMigration) createReceivers(allChannels []*legacymodels.AlertNotific
 }
 
 // Create the root-level route with the default receiver. If no new receiver is created specifically for the root-level route, the returned receiver will be nil.
-func (om *OrgMigration) createDefaultRouteAndReceiver(defaultChannels []*legacymodels.AlertNotification) (*apimodels.PostableApiReceiver, *apimodels.Route, error) {
+func (om *OrgMigration) createDefaultRouteAndReceiver(ctx context.Context, defaultChannels []*legacymodels.AlertNotification) (*apimodels.PostableApiReceiver, *apimodels.Route, error) {
 	defaultReceiverName := "autogen-contact-point-default"
 	defaultRoute := &apimodels.Route{
 		Receiver:       defaultReceiverName,
@@ -262,7 +263,7 @@ func (om *OrgMigration) createDefaultRouteAndReceiver(defaultChannels []*legacym
 		// If we ever allow more than one receiver per route this won't be necessary.
 		for _, c := range defaultChannels {
 			// Need to create a new notifier to prevent uid conflict.
-			defaultNotifier, err := om.createNotifier(c)
+			defaultNotifier, err := om.createNotifier(ctx, c)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -371,7 +372,7 @@ var secureKeysToMigrate = map[string][]string{
 // Some settings were migrated from settings to secure settings in between.
 // See https://grafana.com/docs/grafana/latest/installation/upgrading/#ensure-encryption-of-existing-alert-notification-channel-secrets.
 // migrateSettingsToSecureSettings takes care of that.
-func (om *OrgMigration) migrateSettingsToSecureSettings(chanType string, settings *simplejson.Json, secureSettings SecureJsonData) (*simplejson.Json, map[string]string, error) {
+func (om *OrgMigration) migrateSettingsToSecureSettings(ctx context.Context, chanType string, settings *simplejson.Json, secureSettings SecureJsonData) (*simplejson.Json, map[string]string, error) {
 	keys := secureKeysToMigrate[chanType]
 	newSecureSettings := secureSettings.Decrypt()
 	cloneSettings := simplejson.New()
@@ -394,7 +395,7 @@ func (om *OrgMigration) migrateSettingsToSecureSettings(chanType string, setting
 		}
 	}
 
-	err = om.encryptSecureSettings(newSecureSettings)
+	err = om.encryptSecureSettings(ctx, newSecureSettings)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -402,9 +403,9 @@ func (om *OrgMigration) migrateSettingsToSecureSettings(chanType string, setting
 	return cloneSettings, newSecureSettings, nil
 }
 
-func (om *OrgMigration) encryptSecureSettings(secureSettings map[string]string) error {
+func (om *OrgMigration) encryptSecureSettings(ctx context.Context, secureSettings map[string]string) error {
 	for key, value := range secureSettings {
-		encryptedData, err := om.encryptionService.Encrypt(context.Background(), []byte(value), secrets.WithoutScope())
+		encryptedData, err := om.encryptionService.Encrypt(ctx, []byte(value), secrets.WithoutScope())
 		if err != nil {
 			return fmt.Errorf("failed to encrypt secure settings: %w", err)
 		}

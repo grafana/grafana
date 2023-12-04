@@ -9,8 +9,9 @@ import (
 	"sort"
 	"strings"
 
-	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/prometheus/alertmanager/config"
+
+	alertingNotify "github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -146,7 +147,7 @@ func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID in
 	}
 
 	for k, v := range extractedSecrets {
-		encryptedValue, err := ecp.encryptValue(v)
+		encryptedValue, err := ecp.encryptValue(ctx, v)
 		if err != nil {
 			return apimodels.EmbeddedContactPoint{}, err
 		}
@@ -272,7 +273,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		return err
 	}
 	for k, v := range extractedSecrets {
-		encryptedValue, err := ecp.encryptValue(v)
+		encryptedValue, err := ecp.encryptValue(ctx, v)
 		if err != nil {
 			return err
 		}
@@ -415,8 +416,8 @@ func (ecp *ContactPointService) decryptValueOrRedacted(decrypt bool, integration
 	}
 }
 
-func (ecp *ContactPointService) encryptValue(value string) (string, error) {
-	encryptedData, err := ecp.encryptionService.Encrypt(context.Background(), []byte(value), secrets.WithoutScope())
+func (ecp *ContactPointService) encryptValue(ctx context.Context, value string) (string, error) {
+	encryptedData, err := ecp.encryptionService.Encrypt(ctx, []byte(value), secrets.WithoutScope())
 	if err != nil {
 		return "", fmt.Errorf("failed to encrypt secure settings: %w", err)
 	}

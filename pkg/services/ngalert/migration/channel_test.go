@@ -269,7 +269,7 @@ func TestCreateReceivers(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			service := NewTestMigrationService(t, sqlStore, nil)
 			m := service.newOrgMigration(1)
-			recvMap, recvs, err := m.createReceivers(tt.allChannels)
+			recvMap, recvs, err := m.createReceivers(context.Background(), tt.allChannels)
 			if tt.expErr != nil {
 				require.Error(t, err)
 				require.EqualError(t, err, tt.expErr.Error())
@@ -385,7 +385,7 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			service := NewTestMigrationService(t, sqlStore, nil)
 			m := service.newOrgMigration(1)
-			recv, err := m.createNotifier(tt.channel)
+			recv, err := m.createNotifier(context.Background(), tt.channel)
 			if tt.expErr != nil {
 				require.Error(t, err)
 				require.EqualError(t, err, tt.expErr.Error())
@@ -419,7 +419,7 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 							channel.SecureSettings[key] = []byte(legacyEncryptFn("secure " + key))
 						}
 					})
-					recv, err := m.createNotifier(channel)
+					recv, err := m.createNotifier(context.Background(), channel)
 					require.NoError(t, err)
 
 					require.Equal(t, nType, recv.Type)
@@ -454,7 +454,7 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 							channel.Settings.Set(key, "secure "+key)
 						}
 					})
-					recv, err := m.createNotifier(channel)
+					recv, err := m.createNotifier(context.Background(), channel)
 					require.NoError(t, err)
 
 					require.Equal(t, nType, recv.Type)
@@ -547,7 +547,7 @@ func TestCreateDefaultRouteAndReceiver(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			service := NewTestMigrationService(t, sqlStore, nil)
 			m := service.newOrgMigration(1)
-			recv, route, err := m.createDefaultRouteAndReceiver(tt.defaultChannels)
+			recv, route, err := m.createDefaultRouteAndReceiver(context.Background(), tt.defaultChannels)
 			if tt.expErr != nil {
 				require.Error(t, err)
 				require.EqualError(t, err, tt.expErr.Error())

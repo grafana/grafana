@@ -68,7 +68,7 @@ func (om *OrgMigration) migrateOrgChannels(ctx context.Context, pairs []*AlertPa
 		return nil, fmt.Errorf("load notification channels: %w", err)
 	}
 
-	amConfig, err := om.migrateChannels(channels, pairs)
+	amConfig, err := om.migrateChannels(ctx, channels, pairs)
 	if err != nil {
 		return nil, err
 	}
