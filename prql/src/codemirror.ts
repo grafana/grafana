@@ -76,7 +76,7 @@ export const basicSetup: Extension = (() => [
   syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
   bracketMatching(),
   closeBrackets(),
-  autocompletion(),
+  autocompletion(), // ro rm
   rectangularSelection(),
   crosshairCursor(),
   highlightActiveLine(),
@@ -98,12 +98,15 @@ export const basicSetup: Extension = (() => [
 /// highlighting](#view.highlightSpecialChars), [custom selection
 /// drawing](#view.drawSelection), and [default highlight
 /// style](#language.defaultHighlightStyle).
-export const minimalSetup: Extension = (() => [
+export const readonlySetup: Extension = (() => [
+  lineNumbers(),
   highlightSpecialChars(),
-  history(),
+  foldGutter(),
   drawSelection(),
+  dropCursor(),
   syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
-  keymap.of([...defaultKeymap, ...historyKeymap]),
+  bracketMatching(),
+  closeBrackets(),
 ])();
 
 export { EditorView as PRQLEditorView } from '@codemirror/view';

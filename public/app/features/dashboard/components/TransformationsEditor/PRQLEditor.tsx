@@ -1,4 +1,7 @@
+import { css } from '@emotion/css';
 import React, { useRef, useEffect } from 'react';
+
+import { useStyles2 } from '@grafana/ui';
 
 import {
   basicSetup,
@@ -9,6 +12,7 @@ import {
   prqlLanguage,
   CompletionContext,
   syntaxTree,
+  readonlySetup,
 } from '../../../../../../prql';
 
 function myCompletions(context: CompletionContext, metricNames: string[]) {
@@ -18,8 +22,6 @@ function myCompletions(context: CompletionContext, metricNames: string[]) {
   }
 
   let nodeBefore = syntaxTree(context.state).resolveInner(context.pos, -1);
-  console.log('context', context);
-  console.log('nodeBefore', nodeBefore);
   // Top level selector, i.e. "from"
   if (nodeBefore?.type?.name === 'CallExpression' && nodeBefore?.parent?.type?.name === 'Pipeline') {
     //https://codemirror.net/docs/ref/#autocomplete
@@ -43,21 +45,36 @@ function myCompletions(context: CompletionContext, metricNames: string[]) {
 interface Props {
   metricNames: string[];
   queryString: string;
-
-  //@todo
-  readOnly?: boolean;
+  readOnly?: boolean; // transparent bg, make it obviously readonly
 }
+
+const getStyles = (readOnly?: boolean) => {
+  if (readOnly) {
+    return {
+      editor: css`
+        .ͼo {
+          background-color: rgba(40, 44, 52, 0.3);
+        }
+      `,
+    };
+  } else {
+    return {
+      editor: css``,
+    };
+  }
+};
 
 export const PRQLEditor = (props: Props) => {
   const editor = useRef(null);
-  const { queryString: doc, metricNames } = props;
+  const { queryString: doc, metricNames, readOnly } = props;
+  const styles = useStyles2((theme) => getStyles(readOnly));
 
   // How to make readonly
   useEffect(() => {
     const startState = EditorState.create({
       doc: doc,
       extensions: [
-        basicSetup,
+        readOnly ? readonlySetup : basicSetup,
         oneDark,
         [
           prqlLanguage.data.of({
@@ -65,22 +82,24 @@ export const PRQLEditor = (props: Props) => {
           }),
           prql(),
         ],
+        [EditorState.readOnly.of(readOnly ?? false)],
       ],
     });
 
     const view = new PRQLEditorView({
       state: startState,
       parent: editor.current!,
+      extensions: [PRQLEditorView.editable.of(!readOnly ?? true)],
     });
 
     return () => {
       view.destroy();
     };
-  }, [doc, metricNames]);
+  }, [doc, metricNames, readOnly]);
 
   return (
-    <div id="editor">
-      <div ref={editor}></div>;
+    <div className={styles.editor} id="editor">
+      <div ref={editor}></div>
     </div>
   );
 };
