@@ -26,6 +26,7 @@ type DashboardService interface {
 	CountInFolder(ctx context.Context, orgID int64, folderUID string, user identity.Requester) (int64, error)
 	GetDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*Dashboard, error)
 	SoftDeleteDashboard(ctx context.Context, dashboardUid string) error
+	RestoreDashboard(ctx context.Context, dashboardUid string) error
 	CleanUpDeletedDashboards(ctx context.Context) (int64, error)
 }
 
@@ -77,5 +78,5 @@ type Store interface {
 	// the given parent folder ID.
 	CountDashboardsInFolder(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
 	DeleteDashboardsInFolder(ctx context.Context, request *DeleteDashboardsInFolderRequest) error
-	TrashDashboardByUID(ctx context.Context, dashboardUid string) error
+	SoftDeleteDashboard(ctx context.Context, dashboardUid string) error
 }

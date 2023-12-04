@@ -432,6 +432,11 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 
 	return dash, nil
 }
+
+func (dr *DashboardServiceImpl) RestoreDashboard(ctx context.Context, dashboardUID string) error {
+	return dr.dashboardStore.RestoreDashboard(ctx, dashboardUID)
+}
+
 func (dr *DashboardServiceImpl) SoftDeleteDashboard(ctx context.Context, dashboardUID string) error {
 	return dr.dashboardStore.SoftDeleteDashboard(ctx, dashboardUID)
 }
