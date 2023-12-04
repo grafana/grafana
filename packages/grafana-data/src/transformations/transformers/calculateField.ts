@@ -33,6 +33,10 @@ export enum WindowAlignment {
   Centered = 'centered',
 }
 
+export interface PrqlExpression {
+  prql?: string;
+}
+
 export interface ReduceOptions {
   include?: string[]; // Assume all fields
   reducer: ReducerID;
@@ -50,7 +54,7 @@ export interface WindowOptions extends CumulativeOptions {
   windowAlignment?: WindowAlignment;
 }
 
-export interface UnaryOptions {
+export interface UnaryOptions extends PrqlExpression {
   operator: UnaryOperationID;
   fieldName: string;
 }
@@ -85,6 +89,15 @@ const defaultBinaryOptions: BinaryOptions = {
 const defaultUnaryOptions: UnaryOptions = {
   operator: UnaryOperationID.Abs,
   fieldName: '',
+  // TODO: Replace `up` with a reference to the column name here
+  // take inspiration from the ServerSideExpressions implementation
+  // Might need to also ASSIGN a new reference here too, somehow
+  prql: `
+    derive abs(up) = case [
+      up >= 0 => up,
+      up < 0 => -up,
+    ]
+  `,
 };
 
 export interface CalculateFieldTransformerOptions {
@@ -121,7 +134,8 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
       reducer: ReducerID.sum,
     },
   },
-  operator: (options, ctx) => (outerSource) => {
+  operator: (options, ctx, str) => (outerSource) => {
+    console.log('str', str);
     const operator =
       options && options.timeSeries !== false
         ? ensureColumnsTransformer.operator(null, ctx)
@@ -149,6 +163,10 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
             break;
           case CalculateFieldMode.UnaryOperation:
             creator = getUnaryCreator(defaults(options.unary, defaultUnaryOptions), data);
+            console.log('defaultUnaryOptions', defaultUnaryOptions);
+            console.log('options.unary', options.unary);
+            console.log('defaults(options.unary, defaultUnaryOptions)', defaults(options.unary, defaultUnaryOptions));
+            console.log('creator', creator);
             break;
           case CalculateFieldMode.BinaryOperation:
             const binaryOptions = {
