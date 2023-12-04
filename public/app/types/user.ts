@@ -54,6 +54,8 @@ export interface UserDTO extends WithAccessControlMetadata {
   orgs?: Unit[];
   isExternallySynced?: boolean;
   isGrafanaAdminExternallySynced?: boolean;
+  achievements?: string[];
+  level?: number;
 }
 
 export interface Invitee {

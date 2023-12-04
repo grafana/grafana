@@ -1,5 +1,14 @@
 import { AchievementId, AchievementLevel } from './types';
 
+// These are just hard coded for now loosely based on current available achievements
+export const achievementLevelThresholds = {
+  [AchievementLevel.Novice]: 3,
+  [AchievementLevel.Beginner]: 8,
+  [AchievementLevel.Experienced]: 15,
+  [AchievementLevel.Expert]: 30,
+  [AchievementLevel.Wizard]: 40,
+};
+
 export const achievements = [
   {
     id: AchievementId.NavigateToDashboard,
