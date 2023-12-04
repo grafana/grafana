@@ -32,6 +32,7 @@ const explationOptions: SelectableValue[] = [
 
 export function SuggestionItem(props: Props) {
   const { suggestion, order, explain, historical, /* closeDrawer,*/ last, allSuggestions, prompt } = props;
+
   const [showExp, updShowExp] = useState<boolean>(false);
 
   const [gaveExplanationFeedback, updateGaveExplanationFeedback] = useState<boolean>(false);
