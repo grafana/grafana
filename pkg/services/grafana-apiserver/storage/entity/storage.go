@@ -143,10 +143,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 // If 'cachedExistingObject' is non-nil, it can be used as a suggestion about the
 // current version of the object to avoid read operation from storage to get it.
 // However, the implementations have to retry in case suggestion is stale.
-func (s *Storage) Delete(
-	ctx context.Context, key string, out runtime.Object, preconditions *storage.Preconditions,
-	validateDeletion storage.ValidateObjectFunc, cachedExistingObject runtime.Object) error {
-
+func (s *Storage) Delete(ctx context.Context, key string, out runtime.Object, preconditions *storage.Preconditions, validateDeletion storage.ValidateObjectFunc, cachedExistingObject runtime.Object) error {
 	grn, err := keyToGRN(key)
 	if err != nil {
 		return apierrors.NewInternalError(err)
