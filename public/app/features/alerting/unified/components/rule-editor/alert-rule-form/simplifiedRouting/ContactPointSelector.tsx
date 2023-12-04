@@ -6,7 +6,7 @@ import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Alert, Field, LoadingPlaceholder, Select, Stack, useStyles2 } from '@grafana/ui';
 import { AlertManagerDataSource } from 'app/features/alerting/unified/utils/datasource';
 
-import { ContactPointReceiverSummary } from '../../../contact-points/ContactPoints.v2';
+import { ContactPointReceiverSummary } from '../../../contact-points/ContactPoints';
 import { useContactPointsWithStatus } from '../../../contact-points/useContactPoints';
 
 import { selectContactPoint } from './SimplifiedRouting';
