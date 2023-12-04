@@ -47,12 +47,6 @@ type Storage struct {
 	// watchSet *WatchSet
 }
 
-// ErrFileNotExists means the file doesn't actually exist.
-var ErrFileNotExists = fmt.Errorf("file doesn't exist")
-
-// ErrNamespaceNotExists means the directory for the namespace doesn't actually exist.
-var ErrNamespaceNotExists = errors.New("namespace does not exist")
-
 func NewStorage(
 	config *storagebackend.ConfigForResource,
 	gr schema.GroupResource,
