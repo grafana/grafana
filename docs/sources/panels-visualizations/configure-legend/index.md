@@ -69,6 +69,8 @@ You can add more context to a visualization by adding series data values or [cal
 
 ![Legend showing values](screenshot-legend-values-10.3.png)
 
+<!-- image to be deleted from local and upladed to media folder after review -->
+
 ## Change a series color
 
 By default, Grafana sets the colors of your series data, but you can change them through the panel legend. To change the series data color, follow these steps:
@@ -114,6 +116,8 @@ When you format a legend as a table and add values to it, you can sort series in
 ![Legend formatted as a table showing sorted values](screenshot-legend-sorted-10.3.png)
 
 ![Legend formatted as a table showing sorted values](screenshot-legend-sorted-10.3-v2.png)
+
+<!-- images to be deleted from local and upladed to media folder after review -->
 
 {{% admonition type="note" %}}
 This feature is only supported for the following visualizations: bar chart, histogram, time series.
