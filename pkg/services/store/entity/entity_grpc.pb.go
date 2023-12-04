@@ -26,7 +26,7 @@ const (
 	EntityStore_Update_FullMethodName     = "/entity.EntityStore/Update"
 	EntityStore_Delete_FullMethodName     = "/entity.EntityStore/Delete"
 	EntityStore_History_FullMethodName    = "/entity.EntityStore/History"
-	EntityStore_Search_FullMethodName     = "/entity.EntityStore/Search"
+	EntityStore_List_FullMethodName       = "/entity.EntityStore/List"
 	EntityStore_Watch_FullMethodName      = "/entity.EntityStore/Watch"
 	EntityStore_AdminWrite_FullMethodName = "/entity.EntityStore/AdminWrite"
 )
@@ -42,7 +42,7 @@ type EntityStoreClient interface {
 	Update(ctx context.Context, in *UpdateEntityRequest, opts ...grpc.CallOption) (*UpdateEntityResponse, error)
 	Delete(ctx context.Context, in *DeleteEntityRequest, opts ...grpc.CallOption) (*DeleteEntityResponse, error)
 	History(ctx context.Context, in *EntityHistoryRequest, opts ...grpc.CallOption) (*EntityHistoryResponse, error)
-	Search(ctx context.Context, in *EntitySearchRequest, opts ...grpc.CallOption) (*EntitySearchResponse, error)
+	List(ctx context.Context, in *EntityListRequest, opts ...grpc.CallOption) (*EntityListResponse, error)
 	Watch(ctx context.Context, in *EntityWatchRequest, opts ...grpc.CallOption) (EntityStore_WatchClient, error)
 	// TEMPORARY... while we split this into a new service (see below)
 	AdminWrite(ctx context.Context, in *AdminWriteEntityRequest, opts ...grpc.CallOption) (*WriteEntityResponse, error)
@@ -119,9 +119,9 @@ func (c *entityStoreClient) History(ctx context.Context, in *EntityHistoryReques
 	return out, nil
 }
 
-func (c *entityStoreClient) Search(ctx context.Context, in *EntitySearchRequest, opts ...grpc.CallOption) (*EntitySearchResponse, error) {
-	out := new(EntitySearchResponse)
-	err := c.cc.Invoke(ctx, EntityStore_Search_FullMethodName, in, out, opts...)
+func (c *entityStoreClient) List(ctx context.Context, in *EntityListRequest, opts ...grpc.CallOption) (*EntityListResponse, error) {
+	out := new(EntityListResponse)
+	err := c.cc.Invoke(ctx, EntityStore_List_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +180,7 @@ type EntityStoreServer interface {
 	Update(context.Context, *UpdateEntityRequest) (*UpdateEntityResponse, error)
 	Delete(context.Context, *DeleteEntityRequest) (*DeleteEntityResponse, error)
 	History(context.Context, *EntityHistoryRequest) (*EntityHistoryResponse, error)
-	Search(context.Context, *EntitySearchRequest) (*EntitySearchResponse, error)
+	List(context.Context, *EntityListRequest) (*EntityListResponse, error)
 	Watch(*EntityWatchRequest, EntityStore_WatchServer) error
 	// TEMPORARY... while we split this into a new service (see below)
 	AdminWrite(context.Context, *AdminWriteEntityRequest) (*WriteEntityResponse, error)
@@ -211,8 +211,8 @@ func (UnimplementedEntityStoreServer) Delete(context.Context, *DeleteEntityReque
 func (UnimplementedEntityStoreServer) History(context.Context, *EntityHistoryRequest) (*EntityHistoryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method History not implemented")
 }
-func (UnimplementedEntityStoreServer) Search(context.Context, *EntitySearchRequest) (*EntitySearchResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Search not implemented")
+func (UnimplementedEntityStoreServer) List(context.Context, *EntityListRequest) (*EntityListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
 }
 func (UnimplementedEntityStoreServer) Watch(*EntityWatchRequest, EntityStore_WatchServer) error {
 	return status.Errorf(codes.Unimplemented, "method Watch not implemented")
@@ -358,20 +358,20 @@ func _EntityStore_History_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
-func _EntityStore_Search_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(EntitySearchRequest)
+func _EntityStore_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EntityListRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(EntityStoreServer).Search(ctx, in)
+		return srv.(EntityStoreServer).List(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: EntityStore_Search_FullMethodName,
+		FullMethod: EntityStore_List_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EntityStoreServer).Search(ctx, req.(*EntitySearchRequest))
+		return srv.(EntityStoreServer).List(ctx, req.(*EntityListRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -451,8 +451,8 @@ var EntityStore_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _EntityStore_History_Handler,
 		},
 		{
-			MethodName: "Search",
-			Handler:    _EntityStore_Search_Handler,
+			MethodName: "List",
+			Handler:    _EntityStore_List_Handler,
 		},
 		{
 			MethodName: "AdminWrite",

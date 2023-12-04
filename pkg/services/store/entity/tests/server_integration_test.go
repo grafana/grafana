@@ -316,7 +316,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.Equal(t, deleteResp.Status, entity.DeleteEntityResponse_DELETED)
 	})
 
-	t.Run("should be able to search for objects", func(t *testing.T) {
+	t.Run("should be able to list objects", func(t *testing.T) {
 		uid2 := "uid2"
 		uid3 := "uid3"
 		uid4 := "uid4"
@@ -362,17 +362,17 @@ func TestIntegrationEntityServer(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		search, err := testCtx.client.Search(ctx, &entity.EntitySearchRequest{
+		resp, err := testCtx.client.List(ctx, &entity.EntityListRequest{
 			Kind:     []string{kind, kind2},
 			WithBody: false,
 		})
 		require.NoError(t, err)
 
-		require.NotNil(t, search)
-		uids := make([]string, 0, len(search.Results))
-		kinds := make([]string, 0, len(search.Results))
-		version := make([]string, 0, len(search.Results))
-		for _, res := range search.Results {
+		require.NotNil(t, resp)
+		uids := make([]string, 0, len(resp.Results))
+		kinds := make([]string, 0, len(resp.Results))
+		version := make([]string, 0, len(resp.Results))
+		for _, res := range resp.Results {
 			uids = append(uids, res.GRN.ResourceIdentifier)
 			kinds = append(kinds, res.GRN.ResourceKind)
 			version = append(version, res.Version)
@@ -387,14 +387,14 @@ func TestIntegrationEntityServer(t *testing.T) {
 		}, version)
 
 		// Again with only one kind
-		searchKind1, err := testCtx.client.Search(ctx, &entity.EntitySearchRequest{
+		respKind1, err := testCtx.client.List(ctx, &entity.EntityListRequest{
 			Kind: []string{kind},
 		})
 		require.NoError(t, err)
-		uids = make([]string, 0, len(searchKind1.Results))
-		kinds = make([]string, 0, len(searchKind1.Results))
-		version = make([]string, 0, len(searchKind1.Results))
-		for _, res := range searchKind1.Results {
+		uids = make([]string, 0, len(respKind1.Results))
+		kinds = make([]string, 0, len(respKind1.Results))
+		version = make([]string, 0, len(respKind1.Results))
+		for _, res := range respKind1.Results {
 			uids = append(uids, res.GRN.ResourceIdentifier)
 			kinds = append(kinds, res.GRN.ResourceKind)
 			version = append(version, res.Version)
@@ -431,7 +431,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		search, err := testCtx.client.Search(ctx, &entity.EntitySearchRequest{
+		resp, err := testCtx.client.List(ctx, &entity.EntityListRequest{
 			Kind:       []string{kind},
 			WithBody:   false,
 			WithLabels: true,
@@ -440,11 +440,11 @@ func TestIntegrationEntityServer(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.NotNil(t, search)
-		require.Len(t, search.Results, 1)
-		require.Equal(t, search.Results[0].GRN.ResourceIdentifier, "red-green")
+		require.NotNil(t, resp)
+		require.Len(t, resp.Results, 1)
+		require.Equal(t, resp.Results[0].GRN.ResourceIdentifier, "red-green")
 
-		search, err = testCtx.client.Search(ctx, &entity.EntitySearchRequest{
+		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
 			Kind:       []string{kind},
 			WithBody:   false,
 			WithLabels: true,
@@ -454,11 +454,11 @@ func TestIntegrationEntityServer(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.NotNil(t, search)
-		require.Len(t, search.Results, 1)
-		require.Equal(t, search.Results[0].GRN.ResourceIdentifier, "red-green")
+		require.NotNil(t, resp)
+		require.Len(t, resp.Results, 1)
+		require.Equal(t, resp.Results[0].GRN.ResourceIdentifier, "red-green")
 
-		search, err = testCtx.client.Search(ctx, &entity.EntitySearchRequest{
+		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
 			Kind:       []string{kind},
 			WithBody:   false,
 			WithLabels: true,
@@ -467,10 +467,10 @@ func TestIntegrationEntityServer(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.NotNil(t, search)
-		require.Len(t, search.Results, 0)
+		require.NotNil(t, resp)
+		require.Len(t, resp.Results, 0)
 
-		search, err = testCtx.client.Search(ctx, &entity.EntitySearchRequest{
+		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
 			Kind:       []string{kind},
 			WithBody:   false,
 			WithLabels: true,
@@ -479,10 +479,10 @@ func TestIntegrationEntityServer(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.NotNil(t, search)
-		require.Len(t, search.Results, 2)
+		require.NotNil(t, resp)
+		require.Len(t, resp.Results, 2)
 
-		search, err = testCtx.client.Search(ctx, &entity.EntitySearchRequest{
+		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
 			Kind:       []string{kind},
 			WithBody:   false,
 			WithLabels: true,
@@ -491,7 +491,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.NotNil(t, search)
-		require.Len(t, search.Results, 0)
+		require.NotNil(t, resp)
+		require.Len(t, resp.Results, 0)
 	})
 }

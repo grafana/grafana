@@ -23,8 +23,8 @@ message Entity {
   // k8s key value
   string key = 22;
 
-	// The folder UID
-	string folder = 4;
+  // The folder UID
+  string folder = 4;
 
   // Raw meta from k8s
   bytes meta = 5;
@@ -62,20 +62,20 @@ message Entity {
   // human-readable description of the entity
   string description = 16;
 
-	// URL safe version of the name.  It will be unique within the folder
-	string slug = 17;
+  // URL safe version of the name.  It will be unique within the folder
+  string slug = 17;
 
   // Commit message (optional)
   string message = 18;
 
-	// Key value pairs.  Tags are are represented as keys with empty values
-	map<string,string> labels = 19;
+  // Key value pairs.  Tags are are represented as keys with empty values
+  map<string,string> labels = 19;
 
-	// Optional field values.  The schema will define and document possible values for a given kind
-	map<string, string> fields = 20;
+  // Optional field values.  The schema will define and document possible values for a given kind
+  map<string, string> fields = 20;
 
   // When errors exist
-	repeated EntityErrorInfo errors = 21;
+  repeated EntityErrorInfo errors = 21;
 }
 
 // This stores additional metadata for items entities that were synced from external systmes
@@ -307,7 +307,7 @@ message EntityHistoryResponse {
 // List request/response
 //-----------------------------------------------
 
-message EntitySearchRequest {
+message EntityListRequest {
   // Starting from the requested page (other query parameters must match!)
   string next_page_token = 1;
 
@@ -356,8 +356,8 @@ message ReferenceRequest {
   string uid = 4;
 }
 
-// Search result metadata for each entity
-message EntitySearchResult {
+// List result metadata for each entity
+message EntityListResult {
   // Entity identifier
   grn.GRN GRN = 1;
 
@@ -413,7 +413,7 @@ message EntitySearchResult {
   bytes error_json = 17;
 }
 
-message EntitySearchResponse {
+message EntityListResponse {
   repeated Entity results = 1;
 
   // More results exist... pass this in the next request
@@ -470,47 +470,47 @@ message EntityWatchResponse {
 
 message EntitySummary {
   string UID = 1;
-	string kind = 2;
+  string kind = 2;
 
-	string name = 3;
-	string description = 4;
+  string name = 3;
+  string description = 4;
 
-	// Key value pairs.  Tags are are represented as keys with empty values
-	map<string,string> labels = 5;
+  // Key value pairs.  Tags are are represented as keys with empty values
+  map<string,string> labels = 5;
 
-	// Parent folder UID
-	string folder = 6;
+  // Parent folder UID
+  string folder = 6;
 
-	// URL safe version of the name.  It will be unique within the folder
-	string slug = 7;
+  // URL safe version of the name.  It will be unique within the folder
+  string slug = 7;
 
-	// When errors exist
-	EntityErrorInfo error = 8;
+  // When errors exist
+  EntityErrorInfo error = 8;
 
-	// Optional field values.  The schema will define and document possible values for a given kind
-	map<string, string> fields = 9;
+  // Optional field values.  The schema will define and document possible values for a given kind
+  map<string, string> fields = 9;
 
-	// eg: panels within dashboard
-	repeated EntitySummary nested = 10;
+  // eg: panels within dashboard
+  repeated EntitySummary nested = 10;
 
-	// Optional references to external things
-	repeated EntityExternalReference references = 11;
+  // Optional references to external things
+  repeated EntityExternalReference references = 11;
 }
 
 message EntityExternalReference {
-	// Category of dependency
-	// eg: datasource, plugin, runtime
-	string family = 1;
+  // Category of dependency
+  // eg: datasource, plugin, runtime
+  string family = 1;
 
-	// datasource > prometheus|influx|...
-	// plugin > panel | datasource
-	// runtime > transformer
-	string type = 2;
+  // datasource > prometheus|influx|...
+  // plugin > panel | datasource
+  // runtime > transformer
+  string type = 2;
 
-	// datasource > UID
-	// plugin > plugin identifier
-	// runtime > name lookup
-	string identifier = 3;
+  // datasource > UID
+  // plugin > plugin identifier
+  // runtime > name lookup
+  string identifier = 3;
 }
 
 
@@ -527,7 +527,7 @@ service EntityStore {
   rpc Update(UpdateEntityRequest) returns (UpdateEntityResponse);
   rpc Delete(DeleteEntityRequest) returns (DeleteEntityResponse);
   rpc History(EntityHistoryRequest) returns (EntityHistoryResponse);
-  rpc Search(EntitySearchRequest) returns (EntitySearchResponse);
+  rpc List(EntityListRequest) returns (EntityListResponse);
   rpc Watch(EntityWatchRequest) returns (stream EntityWatchResponse);
 
   // TEMPORARY... while we split this into a new service (see below)
