@@ -49,7 +49,7 @@ func (i fakeEntityStore) History(ctx context.Context, r *entity.EntityHistoryReq
 	return nil, fmt.Errorf("unimplemented")
 }
 
-func (i fakeEntityStore) Search(ctx context.Context, r *entity.EntitySearchRequest) (*entity.EntitySearchResponse, error) {
+func (i fakeEntityStore) List(ctx context.Context, r *entity.EntityListRequest) (*entity.EntityListResponse, error) {
 	return nil, fmt.Errorf("unimplemented")
 }
 
@@ -57,6 +57,6 @@ func (i fakeEntityStore) Watch(*entity.EntityWatchRequest, entity.EntityStore_Wa
 	return fmt.Errorf("unimplemented")
 }
 
-func (i fakeEntityStore) FindReferences(ctx context.Context, r *entity.ReferenceRequest) (*entity.EntitySearchResponse, error) {
+func (i fakeEntityStore) FindReferences(ctx context.Context, r *entity.ReferenceRequest) (*entity.EntityListResponse, error) {
 	return nil, fmt.Errorf("unimplemented")
 }

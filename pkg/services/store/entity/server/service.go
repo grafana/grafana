@@ -94,7 +94,7 @@ func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, erro
 	if err != nil {
 		return nil, fmt.Errorf("invalid id token: %w", err)
 	}
-	fmt.Printf("JWT CLAIMS: %+v\n", claims)
+	// fmt.Printf("JWT CLAIMS: %+v\n", claims)
 
 	return appcontext.WithUser(ctx, &user.SignedInUser{
 		Login:  login,
@@ -144,6 +144,9 @@ func (s *service) Run(ctx context.Context) error {
 }
 
 func (s *service) start(ctx context.Context) error {
+	// TODO: use wire
+
+	// TODO: support using grafana db connection?
 	eDB, err := entityDB.ProvideEntityDB(nil, s.cfg, s.features)
 	if err != nil {
 		return err

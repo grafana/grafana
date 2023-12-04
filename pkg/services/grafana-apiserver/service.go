@@ -279,6 +279,7 @@ func (s *service) start(ctx context.Context) error {
 		}
 
 	case StorageTypeUnified:
+		// TODO: support passing grafana db connection
 		eDB, err := entityDB.ProvideEntityDB(nil, s.cfg, s.features)
 		if err != nil {
 			return err
@@ -293,10 +294,13 @@ func (s *service) start(ctx context.Context) error {
 
 	case StorageTypeUnifiedGrpc:
 		// Create a connection to the gRPC server
+		// TODO: support configuring the gRPC server address
 		conn, err := grpc.Dial("localhost:10000", grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			return err
 		}
+
+		// TODO: determine when to close the connection, we cannot defer it here
 		// defer conn.Close()
 
 		// Create a client instance
