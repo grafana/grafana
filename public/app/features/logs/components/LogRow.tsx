@@ -10,7 +10,6 @@ import { withTheme2, Themeable2, Icon, Tooltip } from '@grafana/ui';
 
 import { checkLogsError, escapeUnescapedString } from '../utils';
 
-import { LogDetails } from './LogDetails';
 import { LogLabels } from './LogLabels';
 import { LogRowMessage } from './LogRowMessage';
 import { LogRowMessageDisplayedFields } from './LogRowMessageDisplayedFields';
@@ -49,12 +48,13 @@ interface Props extends Themeable2 {
   pinned?: boolean;
   containerRendered?: boolean;
   handleTextSelection?: (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => boolean;
+  showDetails?: (row: LogRowModel) => void;
+  logDetailsRow?: LogRowModel;
 }
 
 interface State {
   permalinked: boolean;
   showingContext: boolean;
-  showDetails: boolean;
   mouseIsOver: boolean;
 }
 
@@ -69,7 +69,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   state: State = {
     permalinked: false,
     showingContext: false,
-    showDetails: false,
     mouseIsOver: false,
   };
   logLineRef: React.RefObject<HTMLTableRowElement>;
@@ -94,22 +93,17 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       // Event handled by the parent.
       return;
     }
-
-    if (!this.props.enableLogDetails) {
+    if (!this.props.showDetails) {
       return;
     }
 
+    this.props.showDetails(this.props.row);
+
     reportInteraction('grafana_explore_logs_log_details_clicked', {
       datasourceType: this.props.row.datasourceType,
-      type: this.state.showDetails ? 'close' : 'open',
+      type: 'open',
       logRowUid: this.props.row.uid,
       app: this.props.app,
-    });
-
-    this.setState((state) => {
-      return {
-        showDetails: !state.showDetails,
-      };
     });
   };
 
@@ -183,12 +177,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
 
   render() {
     const {
-      getRows,
-      onClickFilterLabel,
-      onClickFilterOutLabel,
-      onClickShowField,
-      onClickHideField,
-      enableLogDetails,
       row,
       showDuplicates,
       showContextToggle,
@@ -202,17 +190,14 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       forceEscape,
       app,
       styles,
+      logDetailsRow,
     } = this.props;
-    const { showDetails, showingContext, permalinked } = this.state;
+    const { showingContext, permalinked } = this.state;
     const levelStyles = getLogLevelStyles(theme, row.logLevel);
     const { errorMessage, hasError } = checkLogsError(row);
     const logRowBackground = cx(styles.logsRow, {
       [styles.errorLogRow]: hasError,
-      [styles.highlightBackground]: showingContext || permalinked,
-    });
-    const logRowDetailsBackground = cx(styles.logsRow, {
-      [styles.errorLogRow]: hasError,
-      [styles.highlightBackground]: permalinked && !this.state.showDetails,
+      [styles.highlightBackground]: showingContext || permalinked || logDetailsRow === row,
     });
 
     const processedRow = this.escapeRow(row, forceEscape);
@@ -226,6 +211,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
           onMouseEnter={this.onMouseEnter}
           onMouseLeave={this.onMouseLeave}
           onMouseMove={this.onMouseMove}
+          id={`row-${row.rowId}`}
           /**
            * For better accessibility support, we listen to the onFocus event here (to display the LogRowMenuCell), and
            * to onBlur event in the LogRowMenuCell (to hide it). This way, the LogRowMenuCell is displayed when the user navigates
@@ -245,11 +231,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               </Tooltip>
             )}
           </td>
-          {enableLogDetails && (
-            <td title={showDetails ? 'Hide log details' : 'See log details'} className={styles.logsRowToggleDetails}>
-              <Icon className={styles.topVerticalAlign} name={showDetails ? 'angle-down' : 'angle-right'} />
-            </td>
-          )}
+          <td className={styles.logsRowToggleDetails}></td>
           {showTime && <td className={styles.logsRowLocalTime}>{this.renderTimeStamp(row.timeEpochMs)}</td>}
           {showLabels && processedRow.uniqueLabels && (
             <td className={styles.logsRowLabels}>
@@ -290,25 +272,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             />
           )}
         </tr>
-        {this.state.showDetails && (
-          <LogDetails
-            className={logRowDetailsBackground}
-            showDuplicates={showDuplicates}
-            getFieldLinks={getFieldLinks}
-            onClickFilterLabel={onClickFilterLabel}
-            onClickFilterOutLabel={onClickFilterOutLabel}
-            onClickShowField={onClickShowField}
-            onClickHideField={onClickHideField}
-            getRows={getRows}
-            row={processedRow}
-            wrapLogMessage={wrapLogMessage}
-            hasError={hasError}
-            displayedFields={displayedFields}
-            app={app}
-            styles={styles}
-            isFilterLabelActive={this.props.isFilterLabelActive}
-          />
-        )}
       </>
     );
   }

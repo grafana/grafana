@@ -49,6 +49,7 @@ import {
 import store from 'app/core/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
+import { getLogRowStyles } from 'app/features/logs/components/getLogRowStyles';
 import { dispatch, getState } from 'app/store/store';
 
 import { ExploreItemState } from '../../../types';
@@ -58,6 +59,8 @@ import { dedupLogRows, filterLogLevels } from '../../logs/logsModel';
 import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 import { changePanelState } from '../state/explorePane';
 
+import { LogDetails } from './LogDetails';
+import { LogStats } from './LogStats';
 import { LogsFeedback } from './LogsFeedback';
 import LogsNavigation from './LogsNavigation';
 import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
@@ -126,6 +129,7 @@ interface State {
   tableFrame?: DataFrame;
   visualisationType?: LogsVisualisationType;
   logsContainer?: HTMLDivElement;
+  logDetailsRow: LogRowModel | undefined;
 }
 
 // we need to define the order of these explicitly
@@ -158,11 +162,16 @@ class UnthemedLogs extends PureComponent<Props, State> {
     tableFrame: undefined,
     visualisationType: this.props.panelState?.logs?.visualisationType ?? 'logs',
     logsContainer: undefined,
+    logDetailsRow: undefined,
   };
 
   constructor(props: Props) {
     super(props);
     this.logsVolumeEventBus = props.eventBus.newScopedBus('logsvolume', { onlyLocal: false });
+  }
+
+  componentDidMount() {
+    document.addEventListener('keydown', this.handleKeyPress);
   }
 
   componentWillUnmount() {
@@ -190,6 +199,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
         })
       );
     }
+
+    document.removeEventListener('keydown', this.handleKeyPress);
   }
 
   updatePanelState = (logsPanelState: Partial<ExploreLogsPanelState>) => {
@@ -222,6 +233,15 @@ class UnthemedLogs extends PureComponent<Props, State> {
       this.setState({
         visualisationType: this.props.panelState?.logs?.visualisationType ?? 'logs',
       });
+    }
+    if (this.state.logDetailsRow) {
+      const included = this.props.logRows.includes(this.state.logDetailsRow);
+      const found = this.props.logRows.findIndex((row) => row.rowId === this.state.logDetailsRow?.rowId);
+      if (!included) {
+        this.setState({
+          logDetailsRow: found ? this.props.logRows[found] : undefined,
+        });
+      }
     }
   }
 
@@ -518,6 +538,45 @@ class UnthemedLogs extends PureComponent<Props, State> {
     this.topLogsRef.current?.scrollIntoView();
   };
 
+  showDetails = (row: LogRowModel) => {
+    this.setState({
+      logDetailsRow: row,
+    });
+  };
+
+  handleKeyPress = (e: KeyboardEvent) => {
+    if (!this.state.logDetailsRow) {
+      return;
+    }
+    if (!['ArrowDown', 'ArrowUp'].includes(e.key)) {
+      return;
+    }
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    const delta = e.key === 'ArrowDown' ? 1 : -1;
+    const currentIndex = this.props.logRows.indexOf(this.state.logDetailsRow);
+    if (!currentIndex) {
+      this.setState({
+        logDetailsRow: undefined,
+      });
+      return;
+    }
+    let newIndex = currentIndex + delta;
+    if (newIndex < 0) {
+      newIndex = this.props.logRows.length - 1;
+    } else if (newIndex + 1 >= this.props.logRows.length) {
+      newIndex = 0;
+    }
+    const logDetailsRow = this.props.logRows[newIndex];
+    this.setState({
+      logDetailsRow,
+    });
+    document.getElementById(`row-${logDetailsRow.rowId}`)?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+    });
+  };
+
   render() {
     const {
       width,
@@ -564,8 +623,9 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     const tableHeight = getLogsTableHeight();
     const styles = getStyles(theme, wrapLogMessage, tableHeight);
+    const logRowStyles = getLogRowStyles(theme);
     const hasData = logRows && logRows.length > 0;
-    
+
     const filteredLogs = this.filterRows(logRows, hiddenLogLevels);
     const { dedupedRows } = this.dedupRows(filteredLogs, dedupStrategy);
     const navigationRange = this.createNavigationRange(logRows);
@@ -800,9 +860,31 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     containerRendered={!!this.state.logsContainer}
                     onClickFilterValue={this.props.onClickFilterValue}
                     onClickFilterOutValue={this.props.onClickFilterOutValue}
+                    showDetails={this.showDetails}
+                    logDetailsRow={this.state.logDetailsRow}
                   />
                 </InfiniteScroll>
               </div>
+            )}
+            {this.state.logDetailsRow ? (
+              <LogDetails
+                showDuplicates={false}
+                getFieldLinks={getFieldLinks}
+                onClickFilterLabel={onClickFilterLabel}
+                onClickFilterOutLabel={onClickFilterOutLabel}
+                onClickShowField={this.showField}
+                onClickHideField={this.hideField}
+                rows={logRows}
+                row={this.state.logDetailsRow}
+                wrapLogMessage={wrapLogMessage}
+                hasError={false}
+                displayedFields={displayedFields}
+                app={CoreApp.Explore}
+                styles={logRowStyles}
+                isFilterLabelActive={this.props.isFilterLabelActive}
+              />
+            ) : (
+              <LogStats styles={logRowStyles} rows={logRows} />
             )}
             {!loading && !hasData && !scanning && (
               <div className={styles.logRows}>
