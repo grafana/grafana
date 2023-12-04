@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -67,6 +68,14 @@ func NewGenericOAuthProvider(info *models.OAuthInfo, cfg *setting.Cfg, features 
 	}
 
 	return provider, nil
+}
+
+func (s *SocialGenericOAuth) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
+	return nil
+}
+
+func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	return nil
 }
 
 // TODOD: remove this in the next PR and use the isGroupMember from social.go

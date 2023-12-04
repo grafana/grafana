@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -161,6 +162,14 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 		IsGrafanaAdmin: isGrafanaAdmin,
 		Groups:         groups,
 	}, nil
+}
+
+func (s *SocialAzureAD) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
+	return nil
+}
+
+func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	return nil
 }
 
 func (s *SocialAzureAD) GetOAuthInfo() *models.OAuthInfo {

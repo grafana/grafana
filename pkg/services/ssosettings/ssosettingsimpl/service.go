@@ -26,6 +26,8 @@ type SSOSettingsService struct {
 	store        ssosettings.Store
 	ac           ac.AccessControl
 	fbStrategies []ssosettings.FallbackStrategy
+
+	reloadables map[string]ssosettings.Reloadable
 }
 
 func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
@@ -104,7 +106,19 @@ func (s *SSOSettingsService) List(ctx context.Context) ([]*models.SSOSettings, e
 
 func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSettings) error {
 	// TODO: validation (configurable provider? Contains the required fields? etc)
-	err := s.store.Upsert(ctx, settings)
+
+	// TODO: also check whether the provider is configurable using the
+	connector, ok := s.reloadables[settings.Provider]
+	if !ok {
+		s.log.Warn("No validation handler found for provider", "provider", settings.Provider)
+	}
+
+	err := connector.Validate(ctx, settings)
+	if err != nil {
+		return err
+	}
+
+	err = s.store.Upsert(ctx, settings)
 	if err != nil {
 		return err
 	}
@@ -123,8 +137,8 @@ func (s *SSOSettingsService) Reload(ctx context.Context, provider string) {
 	panic("not implemented") // TODO: Implement
 }
 
-func (s *SSOSettingsService) RegisterReloadable(ctx context.Context, provider string, reloadable ssosettings.Reloadable) {
-	panic("not implemented") // TODO: Implement
+func (s *SSOSettingsService) RegisterReloadable(provider string, reloadable ssosettings.Reloadable) {
+	s.reloadables[provider] = reloadable
 }
 
 func (s *SSOSettingsService) RegisterFallbackStrategy(providerRegex string, strategy ssosettings.FallbackStrategy) {

@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -60,6 +61,14 @@ func NewOktaProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *feature
 	}
 
 	return provider, nil
+}
+
+func (s *SocialOkta) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
+	return nil
+}
+
+func (s *SocialOkta) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	return nil
 }
 
 func (claims *OktaClaims) extractEmail() string {

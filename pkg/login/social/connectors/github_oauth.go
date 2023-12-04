@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -70,6 +71,14 @@ func NewGitHubProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featu
 	}
 
 	return provider, nil
+}
+
+func (s *SocialGithub) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
+	return nil
+}
+
+func (s *SocialGithub) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	return nil
 }
 
 func (s *SocialGithub) IsTeamMember(ctx context.Context, client *http.Client) bool {

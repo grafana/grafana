@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -61,6 +62,14 @@ func NewGitLabProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featu
 	}
 
 	return provider, nil
+}
+
+func (s *SocialGitlab) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
+	return nil
+}
+
+func (s *SocialGitlab) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	return nil
 }
 
 func (s *SocialGitlab) getGroups(ctx context.Context, client *http.Client) []string {

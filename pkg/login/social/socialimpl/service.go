@@ -58,11 +58,13 @@ func ProvideService(cfg *setting.Cfg,
 		}
 
 		for _, ssoSetting := range allSettings {
+			// decrypt the client_secret
 			conn, err := createOAuthConnector(ssoSetting.Provider, ssoSetting.OAuthSettings, cfg, features, cache)
 			if err != nil {
 				ss.log.Error("Failed to create OAuth provider", "error", err, "provider", ssoSetting.Provider)
 			}
 
+			// err = ssoSettings.RegisterReloadable(ssoSetting.Provider, conn)
 			ss.socialMap[ssoSetting.Provider] = conn
 		}
 	} else {

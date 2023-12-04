@@ -5,9 +5,8 @@ import (
 	"context"
 	"net/http"
 
-	"golang.org/x/oauth2"
-
 	"github.com/grafana/grafana/pkg/login/social/models"
+	"golang.org/x/oauth2"
 )
 
 type Service interface {

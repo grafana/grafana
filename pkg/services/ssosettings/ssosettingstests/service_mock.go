@@ -96,9 +96,9 @@ func (_m *MockService) Patch(ctx context.Context, provider string, data map[stri
 	return r0
 }
 
-// RegisterReloadable provides a mock function with given fields: ctx, provider, reloadable
-func (_m *MockService) RegisterReloadable(ctx context.Context, provider string, reloadable ssosettings.Reloadable) {
-	_m.Called(ctx, provider, reloadable)
+// RegisterReloadable provides a mock function with given fields: provider, reloadable
+func (_m *MockService) RegisterReloadable(provider string, reloadable ssosettings.Reloadable) {
+	_m.Called(provider, reloadable)
 }
 
 // Reload provides a mock function with given fields: ctx, provider

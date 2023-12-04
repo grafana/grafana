@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -53,6 +54,14 @@ func NewGoogleProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featu
 	}
 
 	return provider, nil
+}
+
+func (s *SocialGoogle) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
+	return nil
+}
+
+func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	return nil
 }
 
 func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*models.BasicUserInfo, error) {

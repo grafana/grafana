@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -52,6 +53,14 @@ func NewGrafanaComProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *f
 	}
 
 	return provider, nil
+}
+
+func (s *SocialGrafanaCom) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
+	return nil
+}
+
+func (s *SocialGrafanaCom) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	return nil
 }
 
 func (s *SocialGrafanaCom) IsEmailAllowed(email string) bool {

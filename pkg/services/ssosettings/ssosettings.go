@@ -29,15 +29,16 @@ type Service interface {
 	Delete(ctx context.Context, provider string) error
 	// Patch updates the specified SSO settings (key-value pairs) for a given provider
 	Patch(ctx context.Context, provider string, data map[string]any) error
-	// RegisterReloadable registers a reloadable provider
-	RegisterReloadable(ctx context.Context, provider string, reloadable Reloadable)
-	// Reload implements ssosettings.Reloadable interface
+	// RegisterReloadable registers a reloadable for a given provider
+	RegisterReloadable(provider string, reloadable Reloadable)
+	// Reload reloads the settings for a given provider
 	Reload(ctx context.Context, provider string)
 }
 
-// Reloadable is an interface that can be implemented by a provider to allow it to be reloaded
+// Reloadable is an interface that can be implemented by a provider to allow it to be validated and reloaded
 type Reloadable interface {
-	Reload(ctx context.Context) error
+	Reload(ctx context.Context, settings models.SSOSettings) error
+	Validate(ctx context.Context, settings models.SSOSettings) error
 }
 
 // FallbackStrategy is an interface that can be implemented to allow a provider to load settings from a different source
