@@ -21,12 +21,7 @@ import {
 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import {
-  ExpressionDatasourceUID,
-  ExpressionQuery,
-  ExpressionQueryType,
-  expressionTypes,
-} from 'app/features/expressions/types';
+import { ExpressionDatasourceUID, ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
 import { useDispatch } from 'app/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -371,13 +366,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     condition,
   ]);
 
-  const updateQueryExpression = useCallback(
-    (query: ExpressionQuery) => {
-      dispatch(updateExpression(query));
-    },
-    [dispatch]
-  );
-
   return (
     <RuleEditorSection
       stepNo={2}
@@ -502,7 +490,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
             onUpdateExpressionType={(refId, type) => {
               dispatch(updateExpressionType({ refId, type }));
             }}
-            onUpdateQueryExpression={updateQueryExpression}
+            onUpdateQueryExpression={(model) => {
+              dispatch(updateExpression(model));
+            }}
           />
           {/* action buttons */}
           <Stack direction="row">

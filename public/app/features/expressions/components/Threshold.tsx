@@ -64,7 +64,8 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError }: Prop
   // any change in the queryState will trigger the onChange function.
   useEffect(() => {
     queryState && onChange(queryState);
-  }, [queryState, onChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryState]);
 
   const onEvalFunctionChange = (value: SelectableValue<EvalFunction>) => {
     dispatch(updateThresholdType({ evalFunction: value.value ?? defaultThresholdFunction, onError }));
@@ -119,55 +120,43 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError }: Prop
           />
         )}
       </InlineFieldRow>
-      {hysteresisEnabled && (
-        <HysteresisSection
-          isRange={isRange}
-          onError={onError}
-          conditionInState={conditionInState}
-          dispatch={dispatch}
-          labelWidth={labelWidth}
-        />
-      )}
+      {hysteresisEnabled && <HysteresisSection isRange={isRange} onError={onError} />}
     </>
   );
-};
-interface HysteresisSectionProps {
-  isRange: boolean;
-  conditionInState: ClassicCondition;
-  onError?: (error: string | undefined) => void;
-  dispatch: React.Dispatch<AnyAction>;
-  labelWidth: number | 'auto';
-}
+  interface HysteresisSectionProps {
+    isRange: boolean;
+    onError?: (error: string | undefined) => void;
+  }
 
-function HysteresisSection({ isRange, onError, dispatch, conditionInState, labelWidth }: HysteresisSectionProps) {
-  const hasHysteresis = Boolean(conditionInState.unloadEvaluator);
-  const styles = useStyles2(getStyles);
+  function HysteresisSection({ isRange, onError }: HysteresisSectionProps) {
+    const hasHysteresis = Boolean(conditionInState.unloadEvaluator);
 
-  const onHysteresisCheckChange = (event: FormEvent<HTMLInputElement>) => {
-    dispatch(updateHysteresisChecked({ hysteresisChecked: event.currentTarget.checked, onError }));
-  };
-  return (
-    <div className={styles.hysteresis}>
-      <InlineSwitch
-        showLabel={true}
-        label="Custom recovery threshold"
-        value={hasHysteresis}
-        onChange={onHysteresisCheckChange}
-        className={styles.switch}
-      />
-
-      {hasHysteresis && (
-        <RecoveryThresholdRow
-          isRange={isRange}
-          condition={conditionInState}
-          labelWidth={labelWidth}
-          onError={onError}
-          dispatch={dispatch}
+    const onHysteresisCheckChange = (event: FormEvent<HTMLInputElement>) => {
+      dispatch(updateHysteresisChecked({ hysteresisChecked: event.currentTarget.checked, onError }));
+    };
+    return (
+      <div className={styles.hysteresis}>
+        <InlineSwitch
+          showLabel={true}
+          label="Custom recovery threshold"
+          value={hasHysteresis}
+          onChange={onHysteresisCheckChange}
+          className={styles.switch}
         />
-      )}
-    </div>
-  );
-}
+
+        {hasHysteresis && (
+          <RecoveryThresholdRow
+            isRange={isRange}
+            condition={conditionInState}
+            labelWidth={labelWidth}
+            onError={onError}
+            dispatch={dispatch}
+          />
+        )}
+      </div>
+    );
+  }
+};
 
 interface RecoveryThresholdRowProps {
   isRange: boolean;
