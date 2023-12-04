@@ -642,6 +642,19 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 				if err := s.deleteChildrenInFolder(ctx, dashFolder.OrgID, dashFolder.UID, cmd.SignedInUser); err != nil {
 					return err
 				}
+			} else {
+				alertRuleSrv, ok := s.registry[entity.StandardKindAlertRule]
+				if !ok {
+					return folder.ErrInternal.Errorf("no alert rule service found in registry")
+				}
+				alertRulesInFolder, err := alertRuleSrv.CountInFolder(ctx, dashFolder.OrgID, dashFolder.UID, cmd.SignedInUser)
+				if err != nil {
+					s.log.Error("failed to count alert rules in folder", "error", err)
+					return err
+				}
+				if alertRulesInFolder > 0 {
+					return folder.ErrFolderNotEmpty.Errorf("folder contains %d alert rules", alertRulesInFolder)
+				}
 			}
 
 			if err = s.legacyDelete(ctx, cmd, dashFolder); err != nil {
