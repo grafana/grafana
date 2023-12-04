@@ -1,38 +1,71 @@
 import React, { useRef, useEffect } from 'react';
 
-import { basicSetup, PRQLEditorView, prql, EditorState, oneDark } from '../../../../../../prql';
+import {
+  basicSetup,
+  PRQLEditorView,
+  prql,
+  EditorState,
+  oneDark,
+  prqlLanguage,
+  CompletionContext,
+  syntaxTree,
+} from '../../../../../../prql';
 
-let doc = `from invoices
-filter invoice_date >= @1970-01-16
-derive {
-  transaction_fees = 0.8,
-  income = total - transaction_fees
-}
-filter income > 1
-group customer_id (
-  aggregate {
-    average total,
-    sum_income = sum income,
-    ct = count total,
+function myCompletions(context: CompletionContext, metricNames: string[]) {
+  let word = context.matchBefore(/\w*/);
+  if (word?.from === word?.to && !context.explicit) {
+    return null;
   }
-)
-sort {-sum_income}
-take 10
-join c=customers (==customer_id)
-derive name = f"{c.last_name}, {c.first_name}"
-select {
-  c.customer_id, name, sum_income
+
+  let nodeBefore = syntaxTree(context.state).resolveInner(context.pos, -1);
+  console.log('context', context);
+  console.log('nodeBefore', nodeBefore);
+  // Top level selector, i.e. "from"
+  if (nodeBefore?.type?.name === 'CallExpression' && nodeBefore?.parent?.type?.name === 'Pipeline') {
+    //https://codemirror.net/docs/ref/#autocomplete
+    return {
+      from: word?.from,
+      filter: false,
+      options: metricNames.map((metric) => ({ label: metric, type: 'constant', boost: 99 })),
+    };
+  }
+
+  return {
+    from: word?.from,
+    options: [
+      { label: 'match', type: 'keyword' },
+      { label: 'hello', type: 'variable', info: '(World)' },
+      { label: 'magic', type: 'text', apply: '⠁⭒*.✩.*⭒⠁', detail: 'macro' },
+    ],
+  };
 }
-derive db_version = s"version()"
-`;
 
-export const PRQLEditor = () => {
+interface Props {
+  metricNames: string[];
+  queryString: string;
+
+  //@todo
+  readOnly?: boolean;
+}
+
+export const PRQLEditor = (props: Props) => {
   const editor = useRef(null);
+  const { queryString: doc, metricNames } = props;
 
+  // How to make readonly
   useEffect(() => {
     const startState = EditorState.create({
       doc: doc,
-      extensions: [basicSetup, oneDark, prql()],
+      extensions: [
+        basicSetup,
+        oneDark,
+        [
+          prqlLanguage.data.of({
+            autocomplete: (context: CompletionContext) => myCompletions(context, metricNames),
+          }),
+          prql(),
+        ],
+      ],
     });
 
     const view = new PRQLEditorView({
@@ -43,7 +76,7 @@ export const PRQLEditor = () => {
     return () => {
       view.destroy();
     };
-  }, []);
+  }, [doc, metricNames]);
 
   return (
     <div id="editor">

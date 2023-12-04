@@ -560,11 +560,15 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
             {
               <>
                 <div>
-                  <h1>PRQL CodeMirror demo</h1>
-                  <p>
-                    PRQL is a modern language for transforming data — a simple, powerful, pipelined SQL replacement.
-                  </p>
-                  <PRQLEditor />
+                  <PRQLEditor
+                    metricNames={['metric1', 'metric2', 'metric3']}
+                    queryString={`from invoices
+filter invoice_date >= @1970-01-16
+derive {
+  transaction_fees = 0.8,
+  income = total - transaction_fees
+}`}
+                  />
                 </div>
               </>
             }

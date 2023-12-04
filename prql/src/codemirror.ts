@@ -62,6 +62,7 @@ import {
 /// you take this package's source (which is just a bunch of imports
 /// and an array literal), copy it into your own code, and adjust it
 /// as desired.
+
 export const basicSetup: Extension = (() => [
   lineNumbers(),
   highlightActiveLineGutter(),
@@ -108,3 +109,5 @@ export const minimalSetup: Extension = (() => [
 export { EditorView as PRQLEditorView } from '@codemirror/view';
 export { EditorState } from '@codemirror/state';
 export { oneDark } from '@codemirror/theme-one-dark';
+export { CompletionContext } from '@codemirror/autocomplete';
+export { syntaxTree } from '@codemirror/language';
