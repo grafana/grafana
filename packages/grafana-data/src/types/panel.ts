@@ -114,7 +114,7 @@ export interface PanelProps<T = any> {
   /** Field config change handler. Invoke it to update the panel field config. */
   onFieldConfigChange: (config: FieldConfigSource) => void;
 
-  /** Template variables interpolation function. Given a string containing template variables, it return the string with interpolated values. */
+  /** Template variables interpolation function. Given a string containing template variables, it returns the string with interpolated values. */
   replaceVariables: InterpolateFunction;
 
   /** Time range change handler */
