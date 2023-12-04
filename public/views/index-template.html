@@ -50,7 +50,7 @@
         animation-name: preloader-fade-in;
         animation-iteration-count: 1;
         animation-duration: 0.9s;
-        animation-delay: 1.35s;
+        animation-delay: 0.5s;
         animation-fill-mode: forwards;
       }
 
@@ -81,7 +81,7 @@
         opacity: 0;
         animation-name: preloader-fade-in;
         animation-duration: 0.9s;
-        animation-delay: 1.8s;
+        animation-delay: 0.5s;
         animation-fill-mode: forwards;
       }
 
@@ -172,10 +172,9 @@
     <div class="preloader">
       <div class="preloader__enter">
         <div class="preloader__bounce">
-          <div class="preloader__logo"></div>
+          <div class="preloader__logo" aria-live="polite" role="status" aria-label="Loading Grafana"></div>
         </div>
       </div>
-      <div class="preloader__text">Loading Grafana</div>
       <div class="preloader__text preloader__text--fail">
         <p>
           <strong>If you're seeing this Grafana has failed to load its application files</strong>
