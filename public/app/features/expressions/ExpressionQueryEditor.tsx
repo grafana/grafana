@@ -5,6 +5,7 @@ import { InlineField, Select } from '@grafana/ui';
 
 import { ClassicConditions } from './components/ClassicConditions';
 import { Math } from './components/Math';
+import { PRQLExpr } from './components/PRQLExpr';
 import { Reduce } from './components/Reduce';
 import { Resample } from './components/Resample';
 import { Threshold } from './components/Threshold';
@@ -27,6 +28,7 @@ function useExpressionsCache() {
       case ExpressionQueryType.reduce:
       case ExpressionQueryType.resample:
       case ExpressionQueryType.threshold:
+      case ExpressionQueryType.prql:
         return expressionCache.current[queryType];
       case ExpressionQueryType.classic:
         return undefined;
@@ -89,6 +91,9 @@ export function ExpressionQueryEditor(props: Props) {
 
       case ExpressionQueryType.threshold:
         return <Threshold onChange={onChange} query={query} labelWidth={labelWidth} refIds={refIds} />;
+
+      case ExpressionQueryType.prql:
+        return <PRQLExpr onChange={onChange} query={query} labelWidth={labelWidth} refIds={refIds} />;
     }
   };
 

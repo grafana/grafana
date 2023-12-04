@@ -117,6 +117,8 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles) (*CMDNode, er
 		node.Command, err = UnmarshalReduceCommand(rn)
 	case TypeResample:
 		node.Command, err = UnmarshalResampleCommand(rn)
+	case TypePRQL:
+		node.Command, err = UnmarshalPRQLCommand(rn)
 	case TypeClassicConditions:
 		node.Command, err = classic.UnmarshalConditionsCmd(rn.Query, rn.RefID)
 	case TypeThreshold:
