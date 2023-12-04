@@ -17,7 +17,13 @@ A panel includes a legend that you can use to interpret data displayed in a visu
 
 ## Legend options
 
+You can find the following options under the **Legend** section in the panel edit pane.
+
 <!--consider making these bullet points rather than H3s-->
+
+{{% admonition type="note" %}}
+Not all of the options listed apply to all visualizations with legends.
+{{% /admonition %}}
 
 ### Visibility
 
