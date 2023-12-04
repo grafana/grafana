@@ -24,7 +24,7 @@ The Azure AD authentication allows you to use an Azure Active Directory tenant a
 - [Configure Azure AD OAuth2 authentication](#configure-azure-ad-oauth2-authentication)
   - [Create the Azure AD application](#create-the-azure-ad-application)
       - [Configure Application roles for Grafana on the Azure Portal](#configure-application-roles-for-grafana-on-the-azure-portal)
-      - [Configure Application roles for Grafana from the manifest file](#configure-application-roles-for-grafana-from-the-manifest-file)
+      - [Configure Application roles for Grafana in the manifest file](#configure-application-roles-for-grafana-in-the-manifest-file)
     - [Assign server administrator privileges](#assign-server-administrator-privileges)
   - [Enable Azure AD OAuth in Grafana](#enable-azure-ad-oauth-in-grafana)
     - [Configure refresh token](#configure-refresh-token)
@@ -71,11 +71,11 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
 
 1. Click **Add** then copy the key value. This is the OAuth client secret.
 
-1. You can define the required Application Roles for Grafana [using the Azure Portal](#configure-application-roles-on-the-azure-portal) or [using the manifest file](#configure-application-roles-for-grafana-from-the-manifest-file).
+2. You can define the required Application Roles for Grafana [using the Azure Portal](#configure-application-roles-for-grafana-on-the-azure-portal) or [using the manifest file](#configure-application-roles-for-grafana-in-the-manifest-file).
 
-1. Go to **Azure Active Directory** and then to **Enterprise Applications**. Search for your application and click on it.
+3. Go to **Azure Active Directory** and then to **Enterprise Applications**. Search for your application and click on it.
 
-1. Click on **Users and Groups** and add Users/Groups to the Grafana roles by using **Add User**.
+4. Click on **Users and Groups** and add Users/Groups to the Grafana roles by using **Add User**.
 
 #### Configure Application roles for Grafana on the Azure Portal
 
@@ -97,7 +97,7 @@ In this seciont we'll go through how to setup basic Appplication roles for Grafa
 
     1. Click **Apply**.
 
-#### Configure Application roles for Grafana from the manifest file
+#### Configure Application roles for Grafana in the manifest file
 
 1. Go to **App Registrations**. Search for your application and click on it.
         
