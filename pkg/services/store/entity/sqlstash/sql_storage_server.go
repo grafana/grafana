@@ -13,6 +13,7 @@ import (
 	"xorm.io/xorm"
 
 	"github.com/bwmarrin/snowflake"
+	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/grn"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -21,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/oklog/ulid/v2"
 )
 
 type EntityDB interface {
@@ -421,7 +421,7 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 			}
 		} else {
 			// generate guid for new entity
-			current.Guid = ulid.Make().String()
+			current.Guid = uuid.New().String()
 			current.GRN = grn
 			current.Key = r.Entity.Key
 		}
@@ -674,7 +674,7 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 		}
 
 		// generate guid for new entity
-		current.Guid = ulid.Make().String()
+		current.Guid = uuid.New().String()
 		current.GRN = grn
 		current.Key = r.Entity.Key
 
