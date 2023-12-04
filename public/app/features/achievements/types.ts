@@ -7,9 +7,9 @@ export enum AchievementLevel {
 }
 
 export enum AchievementId {
-  NavigateToDashboard = 'NavigateToDashboard',
-  NavigateToExplore = 'NavigateToExplore',
-  WatchIntroToGrafanaVideo = 'WatchIntroToGrafanaVideo',
+  NavigateToDashboard = 'NavigateToDashboard', // DONE
+  NavigateToExplore = 'NavigateToExplore', // DONE
+  WatchIntroToGrafanaVideo = 'WatchIntroToGrafanaVideo', // TBD by achievements page
   ConnectYourFirstDatasource = 'ConnectYourFirstDatasource',
   UseExploreToMakeAQuery = 'UseExploreToMakeAQuery',
   AddExplorePanelToADashboard = 'AddExplorePanelToADashboard',

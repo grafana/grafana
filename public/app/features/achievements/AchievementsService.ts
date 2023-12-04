@@ -1,6 +1,8 @@
 // mix of util / helper functions to save achievement data, and to check if an achievement has been completed
 
+import { AppEvents } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
+import appEvents from 'app/core/app_events';
 import { UserDTO } from 'app/types/user';
 
 import { api } from '../profile/api';
@@ -12,8 +14,6 @@ import { Achievement, AchievementId, AchievementLevel } from './types';
 // needs to look at current user data, see if achievement is already completed, and if not, save it as completed on user object
 // also needs to check if the achievement is a level up, and if so, save the new level on the user object
 export const registerAchievementCompleted = async (achievementId: AchievementId): Promise<void> => {
-  let isLevelUp = false;
-
   const user = await api.loadUser();
 
   console.log('user: ', user);
@@ -28,7 +28,7 @@ export const registerAchievementCompleted = async (achievementId: AchievementId)
 
   // check if achievement is a level up
   // if so, save new level on user object
-  isLevelUp = checkIfLevelUp(user);
+  const isLevelUp = checkIfLevelUp(user);
 
   try {
     updateUser(user);
@@ -41,9 +41,14 @@ export const registerAchievementCompleted = async (achievementId: AchievementId)
   if (isLevelUp) {
     // TODO notify user of level up!
     console.log('level up! new level: ', user.level);
+    appEvents.emit(AppEvents.alertSuccess, ['Level up!', `You are now a level ${user.level} Grafana user!`]);
   } else {
     // TODO notify user of achievement completion!
     console.log('achievement completed!', achievementId);
+    appEvents.emit(AppEvents.alertSuccess, [
+      'Achievement completed!',
+      `You have completed the ${achievementId} achievement!`,
+    ]);
   }
 };
 
