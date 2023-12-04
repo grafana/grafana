@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {
@@ -11,9 +11,10 @@ import {
   SceneTimeRange,
   sceneUtils,
 } from '@grafana/scenes';
-import { useStyles2, Tooltip, Stack } from '@grafana/ui';
+import { useStyles2, Tooltip, Stack, IconButton } from '@grafana/ui';
 
 import { DataTrail, DataTrailState } from './DataTrail';
+import { getTrailStore } from './TrailStore/TrailStore';
 import { VAR_FILTERS } from './shared';
 import { getTrailFor } from './utils';
 
@@ -115,6 +116,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
     const { steps, currentStep } = model.useState();
     const styles = useStyles2(getStyles);
     const trail = getTrailFor(model);
+    const [isBookmarked, setBookmarked] = useState(false);
 
     const { ancestry, alternatePredecessorStyle } = useMemo(() => {
       const ancestry = new Set<number>();
@@ -136,32 +138,48 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
       return { ancestry, alternatePredecessorStyle };
     }, [currentStep, steps]);
 
+    const onBookmarkTrail = () => {
+      getTrailStore().addBookmark(trail);
+      setBookmarked(!isBookmarked);
+    };
+
     return (
       <div className={styles.container}>
-        <div className={styles.heading}>Trail</div>
-        {steps.map((step, index) => (
-          <Tooltip content={() => model.renderStepTooltip(step)} key={index}>
-            <button
-              className={cx(
-                // Base for all steps
-                styles.step,
-                // Specifics per step type
-                styles.stepTypes[step.type],
-                // To highlight selected step
-                model.state.currentStep === index ? styles.stepSelected : '',
-                // To alter the look of steps with distant non-directly preceding parent
-                alternatePredecessorStyle.get(index) ?? '',
-                // To remove direct link for steps that don't have a direct parent
-                index !== step.trailState.parentIndex + 1 ? styles.stepOmitsDirectLeftLink : '',
-                // To remove the direct parent link on the start node as well
-                index === 0 ? styles.stepOmitsDirectLeftLink : '',
-                // To darken steps that aren't the current step's ancesters
-                !ancestry.has(index) ? styles.stepIsNotAncestorOfCurrent : ''
-              )}
-              onClick={() => trail.goBackToStep(step)}
-            ></button>
-          </Tooltip>
-        ))}
+        <div className={styles.trailContainer}>
+          <div className={styles.heading}>Trail</div>
+          {steps.map((step, index) => (
+            <Tooltip content={() => model.renderStepTooltip(step)} key={index}>
+              <button
+                className={cx(
+                  // Base for all steps
+                  styles.step,
+                  // Specifics per step type
+                  styles.stepTypes[step.type],
+                  // To highlight selected step
+                  model.state.currentStep === index ? styles.stepSelected : '',
+                  // To alter the look of steps with distant non-directly preceding parent
+                  alternatePredecessorStyle.get(index) ?? '',
+                  // To remove direct link for steps that don't have a direct parent
+                  index !== step.trailState.parentIndex + 1 ? styles.stepOmitsDirectLeftLink : '',
+                  // To remove the direct parent link on the start node as well
+                  index === 0 ? styles.stepOmitsDirectLeftLink : '',
+                  // To darken steps that aren't the current step's ancesters
+                  !ancestry.has(index) ? styles.stepIsNotAncestorOfCurrent : ''
+                )}
+                onClick={() => trail.goBackToStep(step)}
+              ></button>
+            </Tooltip>
+          ))}
+        </div>
+        <div className={styles.buttonsContainer}>
+          <IconButton
+            name={isBookmarked ? 'favorite' : 'star'}
+            iconType={isBookmarked ? 'mono' : 'default'}
+            tooltip={'Bookmark'}
+            onClick={onBookmarkTrail}
+          />
+          <IconButton name="share-alt" tooltip="Copy url (todo)" disabled />
+        </div>
       </div>
     );
   };
@@ -173,7 +191,17 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
       display: 'flex',
+      gap: 16,
+      alignItems: 'center',
+    }),
+    trailContainer: css({
+      display: 'flex',
       gap: 10,
+      alignItems: 'center',
+    }),
+    buttonsContainer: css({
+      display: 'flex',
+      gap: 8,
       alignItems: 'center',
     }),
     heading: css({}),
