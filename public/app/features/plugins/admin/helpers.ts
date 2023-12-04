@@ -161,7 +161,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     accessControl: accessControl,
     angularDetected,
     isFullyInstalled: true,
-    externalServiceRegistration: plugin.externalServiceRegistration,
+    iam: plugin.iam,
   };
 }
 
@@ -219,7 +219,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     accessControl: local?.accessControl,
     angularDetected: local?.angularDetected || remote?.angularDetected,
     isFullyInstalled: Boolean(local) || isDisabled,
-    externalServiceRegistration: local?.externalServiceRegistration || remote?.externalServiceRegistration,
+    iam: local?.iam || remote?.iam,
   };
 }
 

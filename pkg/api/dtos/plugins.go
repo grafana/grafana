@@ -31,24 +31,24 @@ type PluginSetting struct {
 }
 
 type PluginListItem struct {
-	Name                        string                                 `json:"name"`
-	Type                        string                                 `json:"type"`
-	Id                          string                                 `json:"id"`
-	Enabled                     bool                                   `json:"enabled"`
-	Pinned                      bool                                   `json:"pinned"`
-	Info                        plugins.Info                           `json:"info"`
-	Dependencies                plugins.Dependencies                   `json:"dependencies"`
-	LatestVersion               string                                 `json:"latestVersion"`
-	HasUpdate                   bool                                   `json:"hasUpdate"`
-	DefaultNavUrl               string                                 `json:"defaultNavUrl"`
-	Category                    string                                 `json:"category"`
-	State                       plugins.ReleaseState                   `json:"state"`
-	Signature                   plugins.SignatureStatus                `json:"signature"`
-	SignatureType               plugins.SignatureType                  `json:"signatureType"`
-	SignatureOrg                string                                 `json:"signatureOrg"`
-	AccessControl               accesscontrol.Metadata                 `json:"accessControl,omitempty"`
-	AngularDetected             bool                                   `json:"angularDetected"`
-	ExternalServiceRegistration *plugindef.ExternalServiceRegistration `json:"externalServiceRegistration,omitempty"`
+	Name            string                  `json:"name"`
+	Type            string                  `json:"type"`
+	Id              string                  `json:"id"`
+	Enabled         bool                    `json:"enabled"`
+	Pinned          bool                    `json:"pinned"`
+	Info            plugins.Info            `json:"info"`
+	Dependencies    plugins.Dependencies    `json:"dependencies"`
+	LatestVersion   string                  `json:"latestVersion"`
+	HasUpdate       bool                    `json:"hasUpdate"`
+	DefaultNavUrl   string                  `json:"defaultNavUrl"`
+	Category        string                  `json:"category"`
+	State           plugins.ReleaseState    `json:"state"`
+	Signature       plugins.SignatureStatus `json:"signature"`
+	SignatureType   plugins.SignatureType   `json:"signatureType"`
+	SignatureOrg    string                  `json:"signatureOrg"`
+	AccessControl   accesscontrol.Metadata  `json:"accessControl,omitempty"`
+	AngularDetected bool                    `json:"angularDetected"`
+	IAM             *plugindef.IAM          `json:"iam,omitempty"`
 }
 
 type PluginList []PluginListItem

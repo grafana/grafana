@@ -62,7 +62,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
               </tr>
             </thead>
             <tbody>
-              {plugin.externalServiceRegistration?.permissions.map((permission: Permission, i: number) => (
+              {plugin.iam?.permissions.map((permission: Permission, i: number) => (
                 <tr key={`property-${i}`}>
                   <td>{permission.action}</td>
                   <td>{permission.scope}</td>

@@ -41,7 +41,7 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabI
       return navModelChildren;
     }
 
-    if (plugin?.externalServiceRegistration) {
+    if (plugin?.iam) {
       navModelChildren.push({
         text: PluginTabLabels.IAM,
         icon: 'shield',

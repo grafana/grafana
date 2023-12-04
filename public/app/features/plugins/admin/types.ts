@@ -62,7 +62,7 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   // instance plugins may not be fully installed, which means a new instance
   // running the plugin didn't started yet
   isFullyInstalled?: boolean;
-  externalServiceRegistration?: ExternalServiceRegistration;
+  iam?: IdentityAccessManagement;
 }
 
 export interface CatalogPluginDetails {
@@ -132,7 +132,7 @@ export type RemotePlugin = {
   versionSignedByOrgName: string;
   versionStatus: string;
   angularDetected?: boolean;
-  externalServiceRegistration?: ExternalServiceRegistration;
+  iam?: IdentityAccessManagement;
 };
 
 // The available status codes on GCOM are available here:
@@ -177,10 +177,10 @@ export type LocalPlugin = WithAccessControlMetadata & {
   type: PluginType;
   dependencies: PluginDependencies;
   angularDetected: boolean;
-  externalServiceRegistration?: ExternalServiceRegistration;
+  iam?: IdentityAccessManagement;
 };
 
-interface ExternalServiceRegistration {
+interface IdentityAccessManagement {
   permissions: Permission[];
 }
 
