@@ -76,7 +76,12 @@ export class SoloPanelPage extends Component<Props, State> {
         return;
       }
 
+      if (panel) {
+        dashboard.exitViewPanel(panel);
+      }
+
       this.setState({ panel });
+      dashboard.initViewPanel(panel);
     }
   }
 

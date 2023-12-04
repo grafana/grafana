@@ -14,11 +14,11 @@ export function getPluginSettings(pluginId: string, options?: Partial<BackendSrv
   }
   return getBackendSrv()
     .get(`/api/plugins/${pluginId}/settings`, undefined, undefined, options)
-    .then((settings: any) => {
+    .then((settings) => {
       pluginInfoCache[pluginId] = settings;
       return settings;
     })
-    .catch((err: any) => {
+    .catch(() => {
       return Promise.reject(new Error('Unknown Plugin'));
     });
 }

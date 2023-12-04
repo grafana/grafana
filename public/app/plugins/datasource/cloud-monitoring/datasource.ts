@@ -54,7 +54,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     return super.query(request);
   }
 
-  applyTemplateVariables(target: CloudMonitoringQuery, scopedVars: ScopedVars): Record<string, any> {
+  applyTemplateVariables(target: CloudMonitoringQuery, scopedVars: ScopedVars) {
     const { timeSeriesList, timeSeriesQuery, sloQuery, promQLQuery } = target;
 
     return {
@@ -335,9 +335,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   }
 
   interpolateVariablesInQueries(queries: CloudMonitoringQuery[], scopedVars: ScopedVars): CloudMonitoringQuery[] {
-    return queries.map(
-      (query) => this.applyTemplateVariables(this.migrateQuery(query), scopedVars) as CloudMonitoringQuery
-    );
+    return queries.map((query) => this.applyTemplateVariables(this.migrateQuery(query), scopedVars));
   }
 
   interpolateFilters(filters: string[], scopedVars: ScopedVars) {

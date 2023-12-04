@@ -46,15 +46,10 @@ describe('logParser', () => {
       expect(getAllFields(createScenario(-0))).toHaveLength(1);
     });
 
-    it('should filter out field with labels name old-loki-style frame', () => {
+    it('should filter out field with labels in frame', () => {
       const logRow = createLogRow({
         entryFieldIndex: 1,
         dataFrame: new MutableDataFrame({
-          meta: {
-            custom: {
-              frameType: 'LabeledTimeValues',
-            },
-          },
           refId: 'A',
           fields: [
             testTimeField,

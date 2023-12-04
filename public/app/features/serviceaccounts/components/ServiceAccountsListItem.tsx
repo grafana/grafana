@@ -91,7 +91,7 @@ const ServiceAccountListItem = memo(
             <OrgRolePicker
               aria-label="Role"
               value={serviceAccount.role}
-              disabled={!canUpdateRole || serviceAccount.isDisabled}
+              disabled={serviceAccount.isExternal || !canUpdateRole || serviceAccount.isDisabled}
               onChange={(newRole) => onRoleChange(newRole, serviceAccount)}
             />
           </td>
@@ -112,32 +112,48 @@ const ServiceAccountListItem = memo(
           </a>
         </td>
         <td>
-          <HorizontalGroup justify="flex-end">
-            {contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite) && !serviceAccount.tokens && (
-              <Button onClick={() => onAddTokenClick(serviceAccount)} disabled={serviceAccount.isDisabled}>
-                Add token
-              </Button>
-            )}
-            {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, serviceAccount) &&
-              (serviceAccount.isDisabled ? (
-                <Button variant="primary" onClick={() => onEnable(serviceAccount)}>
-                  Enable
+          {!serviceAccount.isExternal && (
+            <HorizontalGroup justify="flex-end">
+              {contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite) && !serviceAccount.tokens && (
+                <Button
+                  onClick={() => onAddTokenClick(serviceAccount)}
+                  disabled={serviceAccount.isDisabled}
+                  className={styles.actionButton}
+                >
+                  Add token
                 </Button>
-              ) : (
-                <Button variant="secondary" onClick={() => onDisable(serviceAccount)}>
-                  Disable
-                </Button>
-              ))}
-            {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsDelete, serviceAccount) && (
+              )}
+              {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, serviceAccount) &&
+                (serviceAccount.isDisabled ? (
+                  <Button variant="primary" onClick={() => onEnable(serviceAccount)} className={styles.actionButton}>
+                    Enable
+                  </Button>
+                ) : (
+                  <Button variant="secondary" onClick={() => onDisable(serviceAccount)} className={styles.actionButton}>
+                    Disable
+                  </Button>
+                ))}
+              {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsDelete, serviceAccount) && (
+                <IconButton
+                  className={styles.deleteButton}
+                  name="trash-alt"
+                  size="md"
+                  onClick={() => onRemoveButtonClick(serviceAccount)}
+                  tooltip={`Delete service account ${serviceAccount.name}`}
+                />
+              )}
+            </HorizontalGroup>
+          )}
+          {serviceAccount.isExternal && (
+            <HorizontalGroup justify="flex-end">
               <IconButton
-                className={styles.deleteButton}
-                name="trash-alt"
+                disabled={true}
+                name="lock"
                 size="md"
-                onClick={() => onRemoveButtonClick(serviceAccount)}
-                tooltip={`Delete service account ${serviceAccount.name}`}
+                tooltip={`This is a managed service account and cannot be modified.`}
               />
-            )}
-          </HorizontalGroup>
+            </HorizontalGroup>
+          )}
         </td>
       </tr>
     );
@@ -174,6 +190,9 @@ const getStyles = (theme: GrafanaTheme2) => {
         color: ${theme.colors.text.secondary};
       }
     `,
+    actionButton: css({
+      minWidth: 85,
+    }),
   };
 };
 

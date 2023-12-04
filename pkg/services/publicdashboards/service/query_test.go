@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -682,7 +683,7 @@ const (
 
 func TestGetQueryDataResponse(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotatest.New(false, nil))
+	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
 	require.NoError(t, err)
 	publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
 	serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
@@ -745,7 +746,7 @@ func TestFindAnnotations(t *testing.T) {
 	t.Run("will build anonymous user with correct permissions to get annotations", func(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
 		config := setting.NewCfg()
-		tagService := tagimpl.ProvideService(sqlStore, sqlStore.Cfg)
+		tagService := tagimpl.ProvideService(sqlStore)
 		annotationsRepo := annotationsimpl.ProvideService(sqlStore, config, featuremgmt.WithFeatures(), tagService)
 		fakeStore := FakePublicDashboardStore{}
 		service := &PublicDashboardServiceImpl{
@@ -1127,7 +1128,7 @@ func TestFindAnnotations(t *testing.T) {
 
 func TestGetMetricRequest(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
-	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotatest.New(false, nil))
+	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
 	require.NoError(t, err)
 	publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
 	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]interface{}{}, nil)
@@ -1212,7 +1213,7 @@ func TestGetUniqueDashboardDatasourceUids(t *testing.T) {
 
 func TestBuildMetricRequest(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
-	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotatest.New(false, nil))
+	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
 	require.NoError(t, err)
 	publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
 	serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
@@ -1373,7 +1374,7 @@ func TestBuildMetricRequest(t *testing.T) {
 
 func TestBuildAnonymousUser(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
-	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotatest.New(false, nil))
+	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
 	require.NoError(t, err)
 	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]interface{}{}, nil)
 

@@ -17,13 +17,12 @@ const (
 	GoOSWindows = "windows"
 	GoOSLinux   = "linux"
 
-	BackendBinary          = "grafana"
-	ExampleAPIServerBinary = "grafana-example-apiserver"
-	ServerBinary           = "grafana-server"
-	CLIBinary              = "grafana-cli"
+	BackendBinary = "grafana"
+	ServerBinary  = "grafana-server"
+	CLIBinary     = "grafana-cli"
 )
 
-var binaries = []string{BackendBinary, ExampleAPIServerBinary, ServerBinary, CLIBinary}
+var binaries = []string{BackendBinary, ServerBinary, CLIBinary}
 
 func logError(message string, err error) int {
 	log.Println(message, err)
@@ -82,13 +81,6 @@ func RunCmd() int {
 			}
 
 			if err := doBuild("grafana-server", "./pkg/cmd/grafana-server", opts); err != nil {
-				log.Println(err)
-				return 1
-			}
-
-		case "build-example-apiserver":
-			clean(opts)
-			if err := doBuild("grafana-example-apiserver", "./pkg/cmd/grafana-example-apiserver", opts); err != nil {
 				log.Println(err)
 				return 1
 			}

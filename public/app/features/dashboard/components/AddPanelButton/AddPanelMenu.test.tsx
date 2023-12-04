@@ -68,7 +68,7 @@ it('renders with all buttons enabled except paste a panel', () => {
   expect(screen.getByText('visualization', { exact: false })).not.toBeDisabled();
   expect(screen.getByText('row', { exact: false })).not.toBeDisabled();
   expect(screen.getByText('library', { exact: false })).not.toBeDisabled();
-  expect(screen.getByText('paste panel', { exact: false })).toBeDisabled();
+  expect(screen.getByRole('menuitem', { name: 'Paste panel' })).toBeDisabled();
 });
 
 it('renders with all buttons enabled', () => {

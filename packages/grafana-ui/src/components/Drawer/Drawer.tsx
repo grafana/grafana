@@ -36,6 +36,7 @@ export interface Props {
    * sm = width 25vw & min-width 384px
    * md = width 50vw & min-width 568px
    * lg = width 75vw & min-width 744px
+   * xl = width 85vw & min-width 744px
    **/
   size?: 'sm' | 'md' | 'lg';
   /** Tabs */
@@ -203,7 +204,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       lg: css({
         '.rc-drawer-content-wrapper': {
           label: 'drawer-lg',
-          width: '75vw',
+          width: '85vw',
           minWidth: theme.spacing(93),
 
           [theme.breakpoints.down('md')]: {

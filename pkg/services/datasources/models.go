@@ -23,7 +23,7 @@ const (
 	DS_TEMPO          = "tempo"
 	DS_ZIPKIN         = "zipkin"
 	DS_MYSQL          = "mysql"
-	DS_POSTGRES       = "postgres"
+	DS_POSTGRES       = "grafana-postgresql-datasource"
 	DS_MSSQL          = "mssql"
 	DS_ACCESS_DIRECT  = "direct"
 	DS_ACCESS_PROXY   = "proxy"
@@ -77,6 +77,8 @@ type TeamHTTPHeader struct {
 	Header string `json:"header"`
 	Value  string `json:"value"`
 }
+
+const DefaultTeamHTTPHeader = "default"
 
 func (ds DataSource) TeamHTTPHeaders() (TeamHTTPHeaders, error) {
 	return GetTeamHTTPHeaders(ds.JsonData)
@@ -138,7 +140,7 @@ func (e ErrDatasourceSecretsPluginUserFriendly) Error() string {
 
 // Also acts as api DTO
 type AddDataSourceCommand struct {
-	Name            string            `json:"name" binding:"Required"`
+	Name            string            `json:"name"`
 	Type            string            `json:"type" binding:"Required"`
 	Access          DsAccess          `json:"access" binding:"Required"`
 	URL             string            `json:"url"`

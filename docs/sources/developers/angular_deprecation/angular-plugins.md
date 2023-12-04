@@ -300,10 +300,6 @@ Latest Version: 1.1.2 | Signature: Community | Last Updated: 2021
 Lack of recent activity in the [project repository](https://github.com/hawkular/hawkular-grafana-datasource) in the past 5 years suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
-### [Humio](https://grafana.com/grafana/plugins/humio-datasource/)
-
-Latest Version: 3.3.1 | Signature: Commercial | Last Updated: 2022
-
 ### [IBM APM](https://grafana.com/grafana/plugins/ibm-apm-datasource/)
 
 Latest Version: 0.9.1 | Signature: Community | Last Updated: 2021
@@ -436,10 +432,6 @@ Latest Version: 1.2.3 | Signature: Community | Last Updated: 2021
 Lack of recent activity in the [project repository](https://github.com/netxms/grafana) in the past 2 years suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
-### [Shoreline Data Source](https://grafana.com/grafana/plugins/shorelinesoftware-shoreline-datasource/)
-
-Latest Version: 1.1.0 | Signature: Commercial | Last Updated: 6 months ago
-
 ### [Sidewinder](https://grafana.com/grafana/plugins/sidewinder-datasource/)
 
 Latest Version: 0.2.1 | Signature: Community | Last Updated: 2021
@@ -570,14 +562,6 @@ Latest Version: 1.0.3 | Signature: Community | Last Updated: 2021
 
 {{% admonition type="note" %}}
 Migration to React is planned - [issue](https://github.com/briangann/grafana-datatable-panel/issues/174).
-{{% /admonition %}}
-
-### [D3 Gauge](https://grafana.com/grafana/plugins/briangann-gauge-panel/)
-
-Latest Version: 0.0.9 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="note" %}}
-Migration to React is a planned [update](https://github.com/briangann/grafana-gauge-panel/issues/740).
 {{% /admonition %}}
 
 ### [GeoLoop](https://grafana.com/grafana/plugins/citilogics-geoloop-panel/)

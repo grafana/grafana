@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { pick } from 'lodash';
-import React, { RefObject, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { shallowEqual } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2 } from '@grafana/data';
@@ -62,16 +62,9 @@ interface Props {
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
   onContentOutlineToogle: () => void;
   isContentOutlineOpen: boolean;
-  topOfViewRef?: RefObject<HTMLDivElement>;
 }
 
-export function ExploreToolbar({
-  exploreId,
-  topOfViewRef,
-  onChangeTime,
-  onContentOutlineToogle,
-  isContentOutlineOpen,
-}: Props) {
+export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle, isContentOutlineOpen }: Props) {
   const dispatch = useDispatch();
   const splitted = useSelector(isSplit);
   const styles = useStyles2(getStyles, splitted);
@@ -225,9 +218,9 @@ export function ExploreToolbar({
   ];
 
   return (
-    <div ref={topOfViewRef}>
+    <div>
       {refreshInterval && <SetInterval func={onRunQuery} interval={refreshInterval} loading={loading} />}
-      <div ref={topOfViewRef}>
+      <div>
         <AppChromeUpdate actions={navBarActions} />
       </div>
       <PageToolbar

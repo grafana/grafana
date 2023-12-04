@@ -5,7 +5,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
 // AlertingResultsReader provides fingerprints of results that are in alerting state.
@@ -17,18 +17,18 @@ type AlertingResultsReader interface {
 // EvaluationContext represents the context in which a condition is evaluated.
 type EvaluationContext struct {
 	Ctx                   context.Context
-	User                  *user.SignedInUser
+	User                  identity.Requester
 	AlertingResultsReader AlertingResultsReader
 }
 
-func NewContext(ctx context.Context, user *user.SignedInUser) EvaluationContext {
+func NewContext(ctx context.Context, user identity.Requester) EvaluationContext {
 	return EvaluationContext{
 		Ctx:  ctx,
 		User: user,
 	}
 }
 
-func NewContextWithPreviousResults(ctx context.Context, user *user.SignedInUser, reader AlertingResultsReader) EvaluationContext {
+func NewContextWithPreviousResults(ctx context.Context, user identity.Requester, reader AlertingResultsReader) EvaluationContext {
 	return EvaluationContext{
 		Ctx:                   ctx,
 		User:                  user,

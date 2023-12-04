@@ -6,7 +6,7 @@ import { Input } from '@grafana/ui';
 
 export interface Props {
   refId: string;
-  onChange: (alias: any) => void;
+  onChange: (alias: string) => void;
   value?: string;
 }
 
@@ -15,14 +15,14 @@ export const AliasBy = ({ refId, value = '', onChange }: Props) => {
 
   const propagateOnChange = debounce(onChange, 1000);
 
-  onChange = (e: any) => {
-    setAlias(e.target.value);
-    propagateOnChange(e.target.value);
+  const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAlias(e.currentTarget.value);
+    propagateOnChange(e.currentTarget.value);
   };
 
   return (
     <EditorField label="Alias by">
-      <Input id={`${refId}-alias-by`} value={alias} onChange={onChange} />
+      <Input id={`${refId}-alias-by`} value={alias} onChange={onInputChange} />
     </EditorField>
   );
 };

@@ -9,8 +9,19 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
+
+const (
+	GrafanaComProviderName = "grafana_com"
+	// legacy/old settings for the provider
+	GrafanaNetProviderName = "grafananet"
+)
+
+var ExtraGrafanaComSettingKeys = []string{allowedOrganizationsKey}
 
 type SocialGrafanaCom struct {
 	*SocialBase
@@ -21,6 +32,30 @@ type SocialGrafanaCom struct {
 
 type OrgRecord struct {
 	Login string `json:"login"`
+}
+
+func NewGrafanaComProvider(settings map[string]any, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGrafanaCom, error) {
+	info, err := CreateOAuthInfoFromKeyValues(settings)
+	if err != nil {
+		return nil, err
+	}
+
+	// Override necessary settings
+	info.AuthUrl = cfg.GrafanaComURL + "/oauth2/authorize"
+	info.TokenUrl = cfg.GrafanaComURL + "/api/oauth2/token"
+	info.AuthStyle = "inheader"
+
+	config := createOAuthConfig(info, cfg, GrafanaComProviderName)
+	provider := &SocialGrafanaCom{
+		SocialBase:           newSocialBase(GrafanaComProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		url:                  cfg.GrafanaComURL,
+		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
+		skipOrgRoleSync:      cfg.GrafanaComSkipOrgRoleSync,
+		// FIXME: Move skipOrgRoleSync to OAuthInfo
+		// skipOrgRoleSync: info.SkipOrgRoleSync
+	}
+
+	return provider, nil
 }
 
 func (s *SocialGrafanaCom) IsEmailAllowed(email string) bool {
@@ -85,4 +120,8 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 	}
 
 	return userInfo, nil
+}
+
+func (s *SocialGrafanaCom) GetOAuthInfo() *OAuthInfo {
+	return s.info
 }

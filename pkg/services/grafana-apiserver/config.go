@@ -27,7 +27,7 @@ type config struct {
 	logLevel int
 }
 
-func newConfig(cfg *setting.Cfg) *config {
+func newConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles) *config {
 	defaultLogLevel := 0
 	ip := net.ParseIP(cfg.HTTPAddr)
 	apiURL := cfg.AppURL
@@ -46,7 +46,7 @@ func newConfig(cfg *setting.Cfg) *config {
 	host := fmt.Sprintf("%s:%d", ip, port)
 
 	return &config{
-		enabled:     cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrafanaAPIServer),
+		enabled:     features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServer),
 		devMode:     cfg.Env == setting.Dev,
 		dataPath:    filepath.Join(cfg.DataPath, "grafana-apiserver"),
 		ip:          ip,

@@ -171,7 +171,7 @@ export const TeamList = ({
                 New Team
               </LinkButton>
             </div>
-            <Stack gap={2}>
+            <Stack direction={'column'} gap={2}>
               <InteractiveTable
                 columns={columns}
                 data={teams}

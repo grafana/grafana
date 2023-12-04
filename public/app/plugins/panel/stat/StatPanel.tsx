@@ -48,7 +48,7 @@ export class StatPanel extends PureComponent<PanelProps<Options>> {
         theme={config.theme2}
         onClick={openMenu}
         className={targetClassName}
-        disableWideLayout={true}
+        disableWideLayout={!options.wideLayout}
       />
     );
   };

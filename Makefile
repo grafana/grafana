@@ -7,7 +7,7 @@ WIRE_TAGS = "oss"
 -include local/Makefile
 include .bingo/Variables.mk
 
-.PHONY: all deps-go deps-js deps build-go build-backend build-example-apiserver build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue fix-cue
+.PHONY: all deps-go deps-js deps build-go build-backend build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue fix-cue
 
 GO = go
 GO_FILES ?= ./pkg/...
@@ -132,10 +132,6 @@ build-server: ## Build Grafana server.
 	@echo "build server"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build-server
 
-build-example-apiserver: ## Build Grafana example-apiserver application.
-	@echo "build grafana-cli"
-	$(GO) run build.go $(GO_BUILD_FLAGS) build-example-apiserver
-
 build-cli: ## Build Grafana CLI application.
 	@echo "build grafana-cli"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build-cli
@@ -188,8 +184,8 @@ test-go-integration: ## Run integration tests for backend with flags.
 test-go-integration-alertmanager: ## Run integration tests for the remote alertmanager (config taken from the mimir_backend block).
 	@echo "test remote alertmanager integration tests"
 	$(GO) clean -testcache
-	AM_URL=http://localhost:8080 AM_TENANT_ID=test AM_PASSWORD=test \
-	$(GO) test -count=1 -run "^TestIntegrationRemoteAlertmanager" -covermode=atomic -timeout=5m ./pkg/services/ngalert/notifier/...
+	AM_URL=http://localhost:8080 AM_TENANT_ID=test \
+	$(GO) test -count=1 -run "^TestIntegrationRemoteAlertmanager" -covermode=atomic -timeout=5m ./pkg/services/ngalert/...
 
 .PHONY: test-go-integration-postgres
 test-go-integration-postgres: devenv-postgres ## Run integration tests for postgres backend with flags.

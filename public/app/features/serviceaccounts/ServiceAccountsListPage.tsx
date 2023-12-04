@@ -17,6 +17,7 @@ import {
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { StoreState, ServiceAccountDTO, AccessControlAction, ServiceAccountStateFilter } from 'app/types';
 
@@ -55,6 +56,16 @@ const mapDispatchToProps = {
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
+
+const availableFilters = [
+  { label: 'All', value: ServiceAccountStateFilter.All },
+  { label: 'With expired tokens', value: ServiceAccountStateFilter.WithExpiredTokens },
+  { label: 'Disabled', value: ServiceAccountStateFilter.Disabled },
+];
+
+if (config.featureToggles.externalServiceAccounts || config.featureToggles.externalServiceAuth) {
+  availableFilters.push({ label: 'Managed', value: ServiceAccountStateFilter.External });
+}
 
 export const ServiceAccountsListPageUnconnected = ({
   page,
@@ -191,11 +202,7 @@ export const ServiceAccountsListPageUnconnected = ({
             />
           </InlineField>
           <RadioButtonGroup
-            options={[
-              { label: 'All', value: ServiceAccountStateFilter.All },
-              { label: 'With expired tokens', value: ServiceAccountStateFilter.WithExpiredTokens },
-              { label: 'Disabled', value: ServiceAccountStateFilter.Disabled },
-            ]}
+            options={availableFilters}
             onChange={onStateFilterChange}
             value={serviceAccountStateFilter}
             className={styles.filter}

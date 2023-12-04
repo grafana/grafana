@@ -5,6 +5,7 @@ import {
   getDataSourceRef,
   isDataSourceRef,
   isEmptyObject,
+  isObject,
   LoadingState,
   TimeRange,
   TypedVariableModel,
@@ -617,7 +618,7 @@ export const variableUpdated = (
           };
 
     const node = g.getNode(variableInState.name);
-    let promises: Array<Promise<any>> = [];
+    let promises: Array<Promise<void>> = [];
     if (node) {
       promises = node.getOptimizedInputEdges().map((e) => {
         const variable = variables.find((v) => v.name === e.inputNode?.name);
@@ -758,8 +759,8 @@ const getVariablesThatNeedRefreshOld = (key: string, state: StoreState): Variabl
   const allVariables = getVariablesByKey(key, state);
 
   const variablesThatNeedRefresh = allVariables.filter((variable) => {
-    if (variable.hasOwnProperty('refresh') && variable.hasOwnProperty('options')) {
-      const variableWithRefresh = variable as unknown as QueryVariableModel;
+    if ('refresh' in variable && 'options' in variable) {
+      const variableWithRefresh = variable;
       return variableWithRefresh.refresh === VariableRefresh.onTimeRangeChanged;
     }
     return false;
@@ -828,7 +829,7 @@ export const timeRangeUpdated =
 export const templateVarsChangedInUrl =
   (key: string, vars: ExtendedUrlQueryMap, events: typeof appEvents = appEvents): ThunkResult<void> =>
   async (dispatch, getState) => {
-    const update: Array<Promise<any>> = [];
+    const update: Array<Promise<void>> = [];
     const dashboard = getState().dashboard.getModel();
     const variables = getVariablesByKey(key, getState());
 
@@ -888,7 +889,7 @@ export const templateVarsChangedInUrl =
     }
   };
 
-export function isVariableUrlValueDifferentFromCurrent(variable: TypedVariableModel, urlValue: any): boolean {
+export function isVariableUrlValueDifferentFromCurrent(variable: TypedVariableModel, urlValue: unknown): boolean {
   const variableValue = variableAdapters.get(variable.type).getValueForUrl(variable);
   let stringUrlValue = ensureStringValues(urlValue);
   if (Array.isArray(variableValue) && !Array.isArray(stringUrlValue)) {
@@ -1032,12 +1033,12 @@ export const updateOptions =
 
 export const createVariableErrorNotification = (
   message: string,
-  error: any,
+  error: unknown,
   identifier?: KeyedVariableIdentifier
 ): AppNotification =>
   createErrorNotification(
     `${identifier ? `Templating [${identifier.id}]` : 'Templating'}`,
-    `${message} ${error.message}`
+    error instanceof Error ? `${message} ${error.message}` : `${message}`
   );
 
 export const completeVariableLoading =
@@ -1105,10 +1106,6 @@ export function upgradeLegacyQueries(
   };
 }
 
-function isDataQueryType(query: any): query is DataQuery {
-  if (!query) {
-    return false;
-  }
-
-  return query.hasOwnProperty('refId') && typeof query.refId === 'string';
+function isDataQueryType(query: unknown): query is DataQuery {
+  return isObject(query) && 'refId' in query && typeof query.refId === 'string';
 }

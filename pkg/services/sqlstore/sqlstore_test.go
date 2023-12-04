@@ -23,7 +23,7 @@ type sqlStoreTest struct {
 	dbUser     string
 	dbPwd      string
 	expConnStr string
-	features   []string
+	features   featuremgmt.FeatureToggles
 	err        error
 }
 
@@ -101,15 +101,8 @@ var sqlStoreTestCases = []sqlStoreTest{
 		name:       "MySQL with ANSI_QUOTES mode",
 		dbType:     "mysql",
 		dbHost:     "[::1]",
-		features:   []string{featuremgmt.FlagMysqlAnsiQuotes},
+		features:   featuremgmt.WithFeatures(featuremgmt.FlagMysqlAnsiQuotes),
 		expConnStr: ":@tcp([::1])/test_db?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&sql_mode='ANSI_QUOTES'",
-	},
-	{
-		name:       "New DB library",
-		dbType:     "mysql",
-		dbHost:     "[::1]",
-		features:   []string{featuremgmt.FlagNewDBLibrary},
-		expConnStr: ":@tcp([::1])/test_db?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&sql_mode='ANSI_QUOTES'&parseTime=true",
 	},
 }
 
@@ -180,7 +173,11 @@ func TestIntegrationIsUniqueConstraintViolation(t *testing.T) {
 func makeSQLStoreTestConfig(t *testing.T, tc sqlStoreTest) *setting.Cfg {
 	t.Helper()
 
-	cfg := setting.NewCfg()
+	if tc.features == nil {
+		tc.features = featuremgmt.WithFeatures()
+	}
+	// nolint:staticcheck
+	cfg := setting.NewCfgWithFeatures(tc.features.IsEnabledGlobally)
 
 	sec, err := cfg.Raw.NewSection("database")
 	require.NoError(t, err)
@@ -196,15 +193,6 @@ func makeSQLStoreTestConfig(t *testing.T, tc sqlStoreTest) *setting.Cfg {
 	require.NoError(t, err)
 	_, err = sec.NewKey("password", tc.dbPwd)
 	require.NoError(t, err)
-
-	cfg.IsFeatureToggleEnabled = func(key string) bool {
-		for _, f := range tc.features {
-			if f == key {
-				return true
-			}
-		}
-		return false
-	}
 
 	return cfg
 }

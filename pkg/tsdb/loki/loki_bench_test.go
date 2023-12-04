@@ -19,7 +19,7 @@ func BenchmarkMatrixJson(b *testing.B) {
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		_, _ = runQuery(context.Background(), makeMockedAPI(http.StatusOK, "application/json", bytes, nil), &lokiQuery{}, ResponseOpts{}, log.New("test"))
+		_, _ = runQuery(context.Background(), makeMockedAPI(http.StatusOK, "application/json", bytes, nil, false), &lokiQuery{}, ResponseOpts{}, log.New("test"))
 	}
 }
 

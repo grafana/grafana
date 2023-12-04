@@ -9,15 +9,16 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var (
@@ -63,7 +64,7 @@ func NewEngine(appUrl *url.URL, evalFactory eval.EvaluatorFactory, tracer tracin
 	}
 }
 
-func (e *Engine) Test(ctx context.Context, user *user.SignedInUser, rule *models.AlertRule, from, to time.Time) (*data.Frame, error) {
+func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models.AlertRule, from, to time.Time) (*data.Frame, error) {
 	ruleCtx := models.WithRuleKey(ctx, rule.GetKey())
 	logger := logger.FromContext(ctx)
 
@@ -130,7 +131,7 @@ func (e *Engine) Test(ctx context.Context, user *user.SignedInUser, rule *models
 	return result, nil
 }
 
-func newBacktestingEvaluator(ctx context.Context, evalFactory eval.EvaluatorFactory, user *user.SignedInUser, condition models.Condition, reader eval.AlertingResultsReader) (backtestingEvaluator, error) {
+func newBacktestingEvaluator(ctx context.Context, evalFactory eval.EvaluatorFactory, user identity.Requester, condition models.Condition, reader eval.AlertingResultsReader) (backtestingEvaluator, error) {
 	for _, q := range condition.Data {
 		if q.DatasourceUID == "__data__" || q.QueryType == "__data__" {
 			if len(condition.Data) != 1 {

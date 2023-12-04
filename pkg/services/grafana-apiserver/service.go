@@ -6,14 +6,20 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path"
+	goruntime "runtime"
+	"runtime/debug"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
+	"golang.org/x/mod/semver"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
@@ -34,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	filestorage "github.com/grafana/grafana/pkg/services/grafana-apiserver/storage/file"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -113,12 +120,13 @@ type service struct {
 
 func ProvideService(
 	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
 	rr routing.RouteRegister,
 	authz authorizer.Authorizer,
 	tracing *tracing.TracingService,
 ) (*service, error) {
 	s := &service{
-		config:     newConfig(cfg),
+		config:     newConfig(cfg, features),
 		rr:         rr,
 		stopCh:     make(chan struct{}),
 		builders:   []APIGroupBuilder{},
@@ -231,12 +239,10 @@ func (s *service) start(ctx context.Context) error {
 		if err := o.Authentication.ApplyTo(&serverConfig.Authentication, serverConfig.SecureServing, serverConfig.OpenAPIConfig); err != nil {
 			return err
 		}
-	}
-
-	// override ExternalAddress and LoopbackClientConfig in prod mode.
-	// in dev mode we want to use the loopback client config
-	// and address provided by SecureServingOptions.
-	if !s.config.devMode {
+	} else {
+		// In production mode, override ExternalAddress and LoopbackClientConfig.
+		// In dev mode we want to use the loopback client config
+		// and address provided by SecureServingOptions.
 		serverConfig.ExternalAddress = s.config.host
 		serverConfig.LoopbackClientConfig = &clientrest.Config{
 			Host: s.config.apiURL,
@@ -251,9 +257,6 @@ func (s *service) start(ctx context.Context) error {
 		if err := o.Etcd.Validate(); len(err) > 0 {
 			return err[0]
 		}
-		if err := o.Etcd.Complete(serverConfig.Config.StorageObjectCountTracker, serverConfig.Config.DrainedNotify(), serverConfig.Config.AddPostStartHook); err != nil {
-			return err
-		}
 		if err := o.Etcd.ApplyTo(&serverConfig.Config); err != nil {
 			return err
 		}
@@ -264,6 +267,7 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	serverConfig.Authorization.Authorizer = s.authorizer
+	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
 
 	// Add OpenAPI specs for each group+version
 	defsGetter := getOpenAPIDefinitions(builders)
@@ -277,6 +281,10 @@ func (s *service) start(ctx context.Context) error {
 
 	// Add the custom routes to service discovery
 	serverConfig.OpenAPIV3Config.PostProcessSpec3 = getOpenAPIPostProcessor(builders)
+
+	// Set the swagger build versions
+	serverConfig.OpenAPIConfig.Info.Version = setting.BuildVersion
+	serverConfig.OpenAPIV3Config.Info.Version = setting.BuildVersion
 
 	serverConfig.SkipOpenAPIInstallation = false
 	serverConfig.BuildHandlerChainFunc = func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
@@ -293,7 +301,22 @@ func (s *service) start(ctx context.Context) error {
 		return genericapiserver.DefaultBuildHandlerChain(requestHandler, c)
 	}
 
-	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
+	k8sVersion, err := getK8sApiserverVersion()
+	if err != nil {
+		return err
+	}
+	before, after, _ := strings.Cut(setting.BuildVersion, ".")
+	serverConfig.Version = &version.Info{
+		Major:        before,
+		Minor:        after,
+		GoVersion:    goruntime.Version(),
+		Platform:     fmt.Sprintf("%s/%s", goruntime.GOOS, goruntime.GOARCH),
+		Compiler:     goruntime.Compiler,
+		GitTreeState: setting.BuildBranch,
+		GitCommit:    setting.BuildCommit,
+		BuildDate:    time.Unix(setting.BuildStamp, 0).UTC().Format(time.DateTime),
+		GitVersion:   k8sVersion,
+	}
 
 	// Create the server
 	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegate())
@@ -316,21 +339,18 @@ func (s *service) start(ctx context.Context) error {
 		}
 	}
 
-	s.restConfig = server.LoopbackClientConfig
-
-	// only write kubeconfig in dev mode
-	if s.config.devMode {
-		if err := s.ensureKubeConfig(); err != nil {
-			return err
-		}
-	}
-
 	// Used by the proxy wrapper registered in ProvideService
 	s.handler = server.Handler
+	s.restConfig = server.LoopbackClientConfig
 
-	// skip starting the server in prod mode
+	// When running in production, do not start a standalone https server
 	if !s.config.devMode {
 		return nil
+	}
+
+	// only write kubeconfig in dev mode
+	if err := s.ensureKubeConfig(); err != nil {
+		return err
 	}
 
 	prepared := server.PrepareRun()
@@ -408,4 +428,34 @@ type roundTripperFunc struct {
 
 func (f *roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return f.fn(req)
+}
+
+// find the k8s version according to build info
+func getK8sApiserverVersion() (string, error) {
+	bi, ok := debug.ReadBuildInfo()
+	if !ok {
+		return "", fmt.Errorf("debug.ReadBuildInfo() failed")
+	}
+
+	if len(bi.Deps) == 0 {
+		return "v?.?", nil // this is normal while debugging
+	}
+
+	for _, dep := range bi.Deps {
+		if dep.Path == "k8s.io/apiserver" {
+			if !semver.IsValid(dep.Version) {
+				return "", fmt.Errorf("invalid semantic version for k8s.io/apiserver")
+			}
+			// v0 => v1
+			majorVersion := strings.TrimPrefix(semver.Major(dep.Version), "v")
+			majorInt, err := strconv.Atoi(majorVersion)
+			if err != nil {
+				return "", fmt.Errorf("could not convert majorVersion to int. majorVersion: %s", majorVersion)
+			}
+			newMajor := fmt.Sprintf("v%d", majorInt+1)
+			return strings.Replace(dep.Version, semver.Major(dep.Version), newMajor, 1), nil
+		}
+	}
+
+	return "", fmt.Errorf("could not find k8s.io/apiserver in build info")
 }

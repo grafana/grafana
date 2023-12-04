@@ -3,9 +3,9 @@ import React, { useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { Field, Icon, IconButton, Input, Label, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { getSupportedTransTypeDetails, getTransformOptions } from './types';
-
 type Props = {
   index: number;
   value: Record<string, string>;
@@ -28,7 +28,10 @@ const TransformationEditorRow = (props: Props) => {
   const [keptVals, setKeptVals] = useState<{ expression?: string; mapValue?: string }>({});
 
   register(`config.transformations.${index}.type`, {
-    required: { value: true, message: 'Please select a transformation type' },
+    required: {
+      value: true,
+      message: t('correlations.transform-row.transform-required', 'Please select a transformation type'),
+    },
   });
   const typeValue = useWatch({ name: `config.transformations.${index}.type`, control });
 
@@ -41,11 +44,17 @@ const TransformationEditorRow = (props: Props) => {
       <Field
         label={
           <Stack gap={0.5}>
-            <Label htmlFor={`config.transformations.${defaultValue.id}-${index}.type`}>Type</Label>
+            <Label htmlFor={`config.transformations.${defaultValue.id}-${index}.type`}>
+              <Trans i18nKey="correlations.transform-row.type-label">Type</Trans>
+            </Label>
             <Tooltip
               content={
                 <div>
-                  <p>The type of transformation that will be applied to the source data.</p>
+                  <p>
+                    <Trans i18nKey="correlations.transform-row.type-tooltip">
+                      The type of transformation that will be applied to the source data.
+                    </Trans>
+                  </p>
                 </div>
               }
             >
@@ -92,13 +101,17 @@ const TransformationEditorRow = (props: Props) => {
       <Field
         label={
           <Stack gap={0.5}>
-            <Label htmlFor={`config.transformations.${defaultValue.id}.field`}>Field</Label>
+            <Label htmlFor={`config.transformations.${defaultValue.id}.field`}>
+              <Trans i18nKey="correlations.transform-row.field-label">Field</Trans>
+            </Label>
             <Tooltip
               content={
                 <div>
                   <p>
-                    Optional. The field to transform. If not specified, the transformation will be applied to the
-                    results field.
+                    <Trans i18nKey="correlations.transform-row.field-tooltip">
+                      Optional. The field to transform. If not specified, the transformation will be applied to the
+                      results field.
+                    </Trans>
                   </p>
                 </div>
               }
@@ -112,7 +125,7 @@ const TransformationEditorRow = (props: Props) => {
           {...register(`config.transformations.${index}.field`)}
           readOnly={readOnly}
           defaultValue={defaultValue.field}
-          label="field"
+          label={t('correlations.transform-row.field-input', 'field')}
           id={`config.transformations.${defaultValue.id}.field`}
         />
       </Field>
@@ -120,7 +133,7 @@ const TransformationEditorRow = (props: Props) => {
         label={
           <Stack gap={0.5}>
             <Label htmlFor={`config.transformations.${defaultValue.id}.expression`}>
-              Expression
+              <Trans i18nKey="correlations.transform-row.expression-label">Expression</Trans>
               {getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).expressionDetails.required
                 ? ' *'
                 : ''}
@@ -129,8 +142,10 @@ const TransformationEditorRow = (props: Props) => {
               content={
                 <div>
                   <p>
-                    Required for regular expression. The expression the transformation will use. Logfmt does not use
-                    further specifications.
+                    <Trans i18nKey="correlations.transform-row.expression-tooltip">
+                      Required for regular expression. The expression the transformation will use. Logfmt does not use
+                      further specifications.
+                    </Trans>
                   </p>
                 </div>
               }
@@ -146,7 +161,7 @@ const TransformationEditorRow = (props: Props) => {
           {...register(`config.transformations.${index}.expression`, {
             required: getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).expressionDetails
               .required
-              ? 'Please define an expression'
+              ? t('correlations.transform-row.expression-required', 'Please define an expression')
               : undefined,
           })}
           defaultValue={defaultValue.expression}
@@ -158,13 +173,17 @@ const TransformationEditorRow = (props: Props) => {
       <Field
         label={
           <Stack gap={0.5}>
-            <Label htmlFor={`config.transformations.${defaultValue.id}.mapValue`}>Map value</Label>
+            <Label htmlFor={`config.transformations.${defaultValue.id}.mapValue`}>
+              <Trans i18nKey="correlations.transform-row.map-value-label">Map value</Trans>
+            </Label>
             <Tooltip
               content={
                 <div>
                   <p>
-                    Optional. Defines the name of the variable. This is currently only valid for regular expressions
-                    with a single, unnamed capture group.
+                    <Trans i18nKey="correlations.transform-row.map-value-tooltip">
+                      Optional. Defines the name of the variable. This is currently only valid for regular expressions
+                      with a single, unnamed capture group.
+                    </Trans>
                   </p>
                 </div>
               }
@@ -185,13 +204,13 @@ const TransformationEditorRow = (props: Props) => {
       {!readOnly && (
         <div className={styles.removeButton}>
           <IconButton
-            tooltip="Remove transformation"
+            tooltip={t('correlations.transform-row.remove-tooltip', 'Remove transformation')}
             name="trash-alt"
             onClick={() => {
               remove(index);
             }}
           >
-            Remove
+            <Trans i18nKey="correlations.transform-row.remove-button">Remove</Trans>
           </IconButton>
         </div>
       )}

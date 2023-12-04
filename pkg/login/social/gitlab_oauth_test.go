@@ -15,7 +15,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -36,12 +38,9 @@ const (
 
 func TestSocialGitlab_UserInfo(t *testing.T) {
 	var nilPointer *bool
-	provider := SocialGitlab{
-		SocialBase: &SocialBase{
-			log: newLogger("gitlab_oauth_test", "debug"),
-		},
-		skipOrgRoleSync: false,
-	}
+
+	provider, err := NewGitLabProvider(map[string]any{"skip_org_role_sync": false}, &setting.Cfg{}, featuremgmt.WithFeatures())
+	require.NoError(t, err)
 
 	type conf struct {
 		AllowAssignGrafanaAdmin bool
@@ -217,7 +216,7 @@ func TestSocialGitlab_extractFromToken(t *testing.T) {
 		switch r.URL.Path {
 		case "/oauth/token":
 			// Return a dummy access token
-			_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			_ = json.NewEncoder(w).Encode(map[string]any{
 				"access_token": "dummy_access_token",
 				"token_type":   "Bearer",
 			})
@@ -347,26 +346,27 @@ func TestSocialGitlab_extractFromToken(t *testing.T) {
 			// Create a test client with a dummy token
 			client := oauth2.NewClient(context.Background(), &tokenSource{accessToken: "dummy_access_token"})
 
-			// Create a test SocialGitlab instance
-			s := &SocialGitlab{
-				SocialBase: &SocialBase{
-					Config:              tc.config,
-					log:                 newLogger("test", "debug"),
-					allowSignup:         false,
-					allowedDomains:      []string{},
-					roleAttributePath:   "",
-					roleAttributeStrict: false,
-					autoAssignOrgRole:   "",
-					skipOrgRoleSync:     false,
-				},
-				skipOrgRoleSync: false,
-			}
+			s, err := NewGitLabProvider(map[string]any{
+				"allowed_domains":       []string{},
+				"allow_sign_up":         false,
+				"role_attribute_path":   "",
+				"role_attribute_strict": false,
+				"skip_org_role_sync":    false,
+				"auth_url":              tc.config.Endpoint.AuthURL,
+				"token_url":             tc.config.Endpoint.TokenURL,
+			},
+				&setting.Cfg{
+					AutoAssignOrgRole:          "",
+					OAuthSkipOrgRoleUpdateSync: false,
+				}, featuremgmt.WithFeatures())
+
+			require.NoError(t, err)
 
 			// Test case: successful extraction
 			token := &oauth2.Token{}
 			// build jwt
 			// header
-			header := map[string]interface{}{
+			header := map[string]any{
 				"alg": "RS256",
 				"typ": "JWT",
 				"kid": "dummy",
@@ -381,7 +381,7 @@ func TestSocialGitlab_extractFromToken(t *testing.T) {
 			// build token
 			idToken := fmt.Sprintf("%s.%s.%s", headerEncoded, payloadEncoded, signatureEncoded)
 
-			token = token.WithExtra(map[string]interface{}{"id_token": idToken})
+			token = token.WithExtra(map[string]any{"id_token": idToken})
 			data, err := s.extractFromToken(context.Background(), client, token)
 			if tc.wantErrMessage != "" {
 				require.Error(t, err)
@@ -450,12 +450,8 @@ func TestSocialGitlab_GetGroupsNextPage(t *testing.T) {
 	defer mockServer.Close()
 
 	// Create a SocialGitlab instance with the mock server URL
-	s := &SocialGitlab{
-		apiUrl: mockServer.URL,
-		SocialBase: &SocialBase{
-			log: newLogger("test", "debug"),
-		},
-	}
+	s, err := NewGitLabProvider(map[string]any{"api_url": mockServer.URL}, &setting.Cfg{}, featuremgmt.WithFeatures())
+	require.NoError(t, err)
 
 	// Call getGroups and verify that it returns all groups
 	expectedGroups := []string{"admins", "editors", "viewers", "serveradmins"}

@@ -52,9 +52,17 @@ export function LabelFilterItem({
 
   const getSelectOptionsFromString = (item?: string): string[] => {
     if (item) {
+      const regExp = /\(([^)]+)\)/;
+      const matches = item?.match(regExp);
+
+      if (matches && matches[0].indexOf('|') > 0) {
+        return [item];
+      }
+
       if (item.indexOf('|') > 0) {
         return item.split('|');
       }
+
       return [item];
     }
     return [];
@@ -65,8 +73,10 @@ export function LabelFilterItem({
     debounceDuration
   );
 
+  const itemValue = item?.value ?? '';
+
   return (
-    <div data-testid="prometheus-dimensions-filter-item">
+    <div key={itemValue} data-testid="prometheus-dimensions-filter-item">
       <InputGroup>
         {/* Label name select, loads all values at once */}
         <Select
@@ -128,8 +138,8 @@ export function LabelFilterItem({
           width="auto"
           value={
             isMultiSelect()
-              ? getSelectOptionsFromString(item?.value).map(toOption)
-              : getSelectOptionsFromString(item?.value).map(toOption)[0]
+              ? getSelectOptionsFromString(itemValue).map(toOption)
+              : getSelectOptionsFromString(itemValue).map(toOption)[0]
           }
           allowCustomValue
           onOpenMenu={async () => {
@@ -171,7 +181,7 @@ export function LabelFilterItem({
           }}
           invalid={invalidValue}
         />
-        <AccessoryButton aria-label="remove" icon="times" variant="secondary" onClick={onDelete} />
+        <AccessoryButton aria-label={`remove-${item.label}`} icon="times" variant="secondary" onClick={onDelete} />
       </InputGroup>
     </div>
   );

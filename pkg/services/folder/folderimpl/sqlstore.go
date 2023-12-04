@@ -67,7 +67,7 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 		}
 
 		foldr, err = ss.Get(ctx, folder.GetFolderQuery{
-			ID: &lastInsertedID,
+			ID: &lastInsertedID, // nolint:staticcheck
 		})
 		if err != nil {
 			return err
@@ -140,7 +140,7 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 			return folder.ErrInternal.Errorf("failed to get affected row: %w", err)
 		}
 		if affected == 0 {
-			return folder.ErrInternal.Errorf("no folders are updated")
+			return folder.ErrInternal.Errorf("no folders are updated: %w", folder.ErrFolderNotFound)
 		}
 
 		foldr, err = ss.Get(ctx, folder.GetFolderQuery{
@@ -164,6 +164,7 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 		switch {
 		case q.UID != nil:
 			exists, err = sess.SQL("SELECT * FROM folder WHERE uid = ? AND org_id = ?", q.UID, q.OrgID).Get(foldr)
+		// nolint:staticcheck
 		case q.ID != nil:
 			exists, err = sess.SQL("SELECT * FROM folder WHERE id = ?", q.ID).Get(foldr)
 		case q.Title != nil:

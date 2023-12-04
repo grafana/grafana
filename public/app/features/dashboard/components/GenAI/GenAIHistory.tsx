@@ -9,13 +9,13 @@ import {
   Icon,
   IconButton,
   Input,
-  Spinner,
   Text,
   TextLink,
   useStyles2,
   VerticalGroup,
 } from '@grafana/ui';
 
+import { STOP_GENERATION_TEXT } from './GenAIButton';
 import { GenerationHistoryCarousel } from './GenerationHistoryCarousel';
 import { QuickFeedback } from './QuickFeedback';
 import { StreamStatus, useOpenAIStream } from './hooks';
@@ -45,7 +45,10 @@ export const GenAIHistory = ({
   const [showError, setShowError] = useState(false);
   const [customFeedback, setCustomPrompt] = useState('');
 
-  const { setMessages, reply, streamStatus, error } = useOpenAIStream(DEFAULT_OAI_MODEL, temperature);
+  const { setMessages, setStopGeneration, reply, streamStatus, error } = useOpenAIStream(
+    DEFAULT_OAI_MODEL,
+    temperature
+  );
 
   const isStreamGenerating = streamStatus === StreamStatus.GENERATING;
 
@@ -80,7 +83,14 @@ export const GenAIHistory = ({
   };
 
   const onApply = () => {
-    onApplySuggestion(history[currentIndex - 1]);
+    if (isStreamGenerating) {
+      setStopGeneration(true);
+      if (reply !== '') {
+        updateHistory(sanitizeReply(reply));
+      }
+    } else {
+      onApplySuggestion(history[currentIndex - 1]);
+    }
   };
 
   const onNavigate = (index: number) => {
@@ -148,9 +158,8 @@ export const GenAIHistory = ({
       </div>
       <div className={styles.applySuggestion}>
         <HorizontalGroup justify={'flex-end'}>
-          {isStreamGenerating && <Spinner />}
-          <Button onClick={onApply} disabled={isStreamGenerating}>
-            Apply
+          <Button icon={!isStreamGenerating ? 'check' : 'fa fa-spinner'} onClick={onApply}>
+            {isStreamGenerating ? STOP_GENERATION_TEXT : 'Apply'}
           </Button>
         </HorizontalGroup>
       </div>
@@ -177,6 +186,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     width: 520,
+    height: 250,
     // This is the space the footer height
     paddingBottom: 35,
   }),
