@@ -76,6 +76,8 @@ export const AmRoutesExpandedForm = ({
     object_matchers: route ? formAmRoute.object_matchers : emptyMatcher,
   };
 
+  const requiredFieldsInGroupBy = ['grafana_folder', 'alertname'];
+
   return (
     <Form defaultValues={defaultValues} onSubmit={onSubmit} maxWidth="none">
       {({ control, register, errors, setValue, watch, getValues }) => (
@@ -199,11 +201,11 @@ export const AmRoutesExpandedForm = ({
             >
               <InputControl
                 rules={{
-                  validate: (value) => {
+                  validate: (value: string[]) => {
                     if (!value || value.length === 0) {
                       return 'At least one group by option is required.';
                     }
-                    return true;
+                    return requiredFieldsInGroupBy.every((field) => value.includes(field));
                   },
                 }}
                 render={({ field: { onChange, ref, ...field }, fieldState: { error } }) => (
