@@ -12,7 +12,7 @@ import { PromVisualQuery } from '../../types';
 import { SuggestionContainer } from './SuggestionContainer';
 // @ts-ignore until we can get these added for icons
 import AI_Logo_color from './resources/AI_Logo_color.svg';
-import { promQailExplain, promQailSuggest } from './state/helpers';
+import { wizarDSExplain, wizarDSSuggest } from './state/helpers';
 import { initialState, stateSlice } from './state/state';
 import { Interaction, Suggestion, SuggestionType } from './types';
 
@@ -193,7 +193,7 @@ export const WizarDS = (props: WizarDSProps) => {
                         //   promVisualQuery: query,
                         //   doYouKnow: 'no',
                         // });
-                        promQailSuggest(dispatch, 0, query, [], datasource, templates);
+                        wizarDSSuggest(dispatch, 0, query, [], datasource, templates);
                       }}
                     >
                       Just walk me through everything
@@ -288,7 +288,7 @@ export const WizarDS = (props: WizarDSProps) => {
                                     // });
 
                                     dispatch(updateInteraction(payload));
-                                    promQailSuggest(dispatch, idx, query, [], datasource, templates, newInteraction);
+                                    wizarDSSuggest(dispatch, idx, query, [], datasource, templates, newInteraction);
                                   }}
                                 >
                                   Show me everything instead.
@@ -315,7 +315,7 @@ export const WizarDS = (props: WizarDSProps) => {
 
                                     dispatch(updateInteraction(payload));
                                     // add the suggestions in the API call
-                                    promQailSuggest(dispatch, idx, query, [], datasource, templates, interaction);
+                                    wizarDSSuggest(dispatch, idx, query, [], datasource, templates, interaction);
                                   }}
                                 >
                                   Submit
@@ -337,7 +337,7 @@ export const WizarDS = (props: WizarDSProps) => {
                           }}
                           explain={(suggIdx: number) =>
                             interaction.suggestions[suggIdx].explanation === ''
-                              ? promQailExplain(dispatch, idx, query, interaction, suggIdx, datasource)
+                              ? wizarDSExplain(dispatch, idx, query, interaction, suggIdx, datasource)
                               : interaction.suggestions[suggIdx].explanation
                           }
                           // onChange={onChange}
@@ -365,7 +365,7 @@ export const WizarDS = (props: WizarDSProps) => {
                       }}
                       explain={(suggIdx: number) =>
                         interaction.suggestions[suggIdx].explanation === ''
-                          ? promQailExplain(dispatch, idx, query, interaction, suggIdx, datasource)
+                          ? wizarDSExplain(dispatch, idx, query, interaction, suggIdx, datasource)
                           : interaction.suggestions[suggIdx].explanation
                       }
                       // onChange={onChange}
@@ -546,7 +546,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
 };
 
 export const testIds = {
-  promQail: 'prom-qail',
+  wizarDS: 'wizar-ds',
   securityInfoButton: 'security-info-button',
   clickForHistorical: 'click-for-historical',
   clickForAi: 'click-for-ai',

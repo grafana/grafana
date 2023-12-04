@@ -37,7 +37,7 @@ export function getExplainMessage(templates?: Suggestion[], question?: string): 
  * @param interaction
  * @returns
  */
-export async function promQailExplain(
+export async function wizarDSExplain(
   dispatch: React.Dispatch<AnyAction>,
   idx: number,
   query: PromVisualQuery,
@@ -45,7 +45,7 @@ export async function promQailExplain(
   suggIdx: number,
   datasource: PrometheusDatasource
 ) {
-  const suggestedQuery = interaction.suggestions[suggIdx].component;
+  // const suggestedQuery = interaction.suggestions[suggIdx].component;
 
   const promptMessages = getExplainMessage(templates, interaction.prompt);
   const interactionToUpdate = interaction;
@@ -215,7 +215,7 @@ export async function promQailExplain(
  * @param interaction
  * @returns
  */
-export async function promQailSuggest(
+export async function wizarDSSuggest(
   dispatch: React.Dispatch<AnyAction>,
   idx: number,
   query: PromVisualQuery,
@@ -224,7 +224,7 @@ export async function promQailSuggest(
   templates: Suggestion[],
   interaction?: Interaction
 ) {
-  // when you're not running promqail
+  // when you're not running the LLM service that supports wizarDS
   // @ts-ignore llms types issue
   const check = await llms.openai.enabled(); // && (await llms.vector.enabled());
 

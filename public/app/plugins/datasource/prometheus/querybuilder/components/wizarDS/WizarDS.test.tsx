@@ -13,6 +13,7 @@ import { PromOptions } from '../../../types';
 import { PromVisualQuery } from '../../types';
 
 import { WizarDS /*testIds*/ } from './WizarDS';
+import { componentTemplates } from './state/templates';
 
 // don't care about interaction tracking in our unit tests
 jest.mock('@grafana/runtime', () => ({
@@ -125,10 +126,11 @@ function createDatasource(withLabels?: boolean) {
 
 function createProps(query: PromVisualQuery, datasource: PrometheusDatasource) {
   return {
+    query,
     datasource,
     onChange: jest.fn(),
     closeDrawer: jest.fn(),
-    query: query,
+    templates: componentTemplates,
   };
 }
 

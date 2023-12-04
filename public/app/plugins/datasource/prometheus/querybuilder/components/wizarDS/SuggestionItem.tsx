@@ -109,7 +109,7 @@ export function SuggestionItem(props: Props) {
           )}
           <TextArea
             type="text"
-            aria-label="Promqail suggestion text"
+            aria-label="WizarDS suggestion text"
             placeholder="Enter your feedback"
             value={type === 'explanation' ? explanationFeedback.text : suggestionFeedback.text}
             onChange={updateTextFeedback}
