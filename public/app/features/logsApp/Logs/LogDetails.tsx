@@ -5,7 +5,7 @@ import { CoreApp, DataFrame, DataFrameType, Field, LinkModel, LogRowModel } from
 import { Themeable2, withTheme2 } from '@grafana/ui';
 import { LogRowStyles, getLogLevelStyles } from 'app/features/logs/components/getLogRowStyles';
 import { createLogLineLinks, getAllFields } from 'app/features/logs/components/logParser';
-import { calculateStats } from 'app/features/logs/utils';
+import { calculateLogsLabelStats, calculateStats } from 'app/features/logs/utils';
 
 import { LogDetailsRow } from './LogDetailsRow';
 
@@ -74,124 +74,130 @@ class UnThemedLogDetails extends PureComponent<Props> {
       : `${levelStyles.logsRowLevelColor} ${styles.logsRowLevel} ${styles.logsRowLevelDetails}`;
 
     return (
-      <tr className={cx(className, styles.logDetails)}>
-        {showDuplicates && <td />}
-        <td className={levelClassName} aria-label="Log level" />
-        <td colSpan={4}>
-          <div className={styles.logDetailsContainer}>
-            <table className={styles.logDetailsTable}>
-              <tbody>
-                {(labelsAvailable || fieldsAvailable) && (
-                  <tr>
-                    <td colSpan={100} className={styles.logDetailsHeading} aria-label="Fields">
-                      Fields
-                    </td>
-                  </tr>
-                )}
-                {Object.keys(labels)
-                  .sort()
-                  .map((key, i) => {
-                    const value = labels[key];
-                    return (
-                      <LogDetailsRow
-                        key={`${key}=${value}-${i}`}
-                        parsedKeys={[key]}
-                        parsedValues={[value]}
-                        isLabel={true}
-                        getStats={() => calculateLogsLabelStats(getRows(), key)}
-                        onClickFilterOutLabel={onClickFilterOutLabel}
-                        onClickFilterLabel={onClickFilterLabel}
-                        onClickShowField={onClickShowField}
-                        onClickHideField={onClickHideField}
-                        row={row}
-                        app={app}
-                        wrapLogMessage={wrapLogMessage}
-                        displayedFields={displayedFields}
-                        disableActions={false}
-                        isFilterLabelActive={this.props.isFilterLabelActive}
-                      />
-                    );
-                  })}
-                {fields.map((field, i) => {
-                  const { keys, values, fieldIndex } = field;
-                  return (
-                    <LogDetailsRow
-                      key={`${keys[0]}=${values[0]}-${i}`}
-                      parsedKeys={keys}
-                      parsedValues={values}
-                      onClickShowField={onClickShowField}
-                      onClickHideField={onClickHideField}
-                      onClickFilterOutLabel={onClickFilterOutLabel}
-                      onClickFilterLabel={onClickFilterLabel}
-                      getStats={() => calculateStats(row.dataFrame.fields[fieldIndex].values)}
-                      displayedFields={displayedFields}
-                      wrapLogMessage={wrapLogMessage}
-                      row={row}
-                      app={app}
-                      disableActions={false}
-                      isFilterLabelActive={this.props.isFilterLabelActive}
-                    />
-                  );
-                })}
+      <div className={cx(className, styles.logDetails)}>
+        <table>
+          <tbody>
+            <tr>
+              {showDuplicates && <td />}
+              <td className={levelClassName} aria-label="Log level" />
+              <td colSpan={4}>
+                <div className={styles.logDetailsContainer}>
+                  <table className={styles.logDetailsTable}>
+                    <tbody>
+                      {(labelsAvailable || fieldsAvailable) && (
+                        <tr>
+                          <td colSpan={100} className={styles.logDetailsHeading} aria-label="Fields">
+                            Fields
+                          </td>
+                        </tr>
+                      )}
+                      {Object.keys(labels)
+                        .sort()
+                        .map((key, i) => {
+                          const value = labels[key];
+                          return (
+                            <LogDetailsRow
+                              key={`${key}=${value}-${i}`}
+                              parsedKeys={[key]}
+                              parsedValues={[value]}
+                              isLabel={true}
+                              getStats={() => calculateLogsLabelStats(getRows(), key)}
+                              onClickFilterOutLabel={onClickFilterOutLabel}
+                              onClickFilterLabel={onClickFilterLabel}
+                              onClickShowField={onClickShowField}
+                              onClickHideField={onClickHideField}
+                              row={row}
+                              app={app}
+                              wrapLogMessage={wrapLogMessage}
+                              displayedFields={displayedFields}
+                              disableActions={false}
+                              isFilterLabelActive={this.props.isFilterLabelActive}
+                            />
+                          );
+                        })}
+                      {fields.map((field, i) => {
+                        const { keys, values, fieldIndex } = field;
+                        return (
+                          <LogDetailsRow
+                            key={`${keys[0]}=${values[0]}-${i}`}
+                            parsedKeys={keys}
+                            parsedValues={values}
+                            onClickShowField={onClickShowField}
+                            onClickHideField={onClickHideField}
+                            onClickFilterOutLabel={onClickFilterOutLabel}
+                            onClickFilterLabel={onClickFilterLabel}
+                            getStats={() => calculateStats(row.dataFrame.fields[fieldIndex].values)}
+                            displayedFields={displayedFields}
+                            wrapLogMessage={wrapLogMessage}
+                            row={row}
+                            app={app}
+                            disableActions={false}
+                            isFilterLabelActive={this.props.isFilterLabelActive}
+                          />
+                        );
+                      })}
 
-                {fieldsWithLinksAvailable && (
-                  <tr>
-                    <td colSpan={100} className={styles.logDetailsHeading} aria-label="Data Links">
-                      Links
-                    </td>
-                  </tr>
-                )}
-                {displayedFieldsWithLinks.map((field, i) => {
-                  const { keys, values, links, fieldIndex } = field;
-                  return (
-                    <LogDetailsRow
-                      key={`${keys[0]}=${values[0]}-${i}`}
-                      parsedKeys={keys}
-                      parsedValues={values}
-                      links={links}
-                      onClickShowField={onClickShowField}
-                      onClickHideField={onClickHideField}
-                      getStats={() => calculateStats(row.dataFrame.fields[fieldIndex].values)}
-                      displayedFields={displayedFields}
-                      wrapLogMessage={wrapLogMessage}
-                      row={row}
-                      app={app}
-                      disableActions={false}
-                    />
-                  );
-                })}
-                {fieldsWithLinksFromVariableMap?.map((field, i) => {
-                  const { keys, values, links, fieldIndex } = field;
-                  return (
-                    <LogDetailsRow
-                      key={`${keys[0]}=${values[0]}-${i}`}
-                      parsedKeys={keys}
-                      parsedValues={values}
-                      links={links}
-                      onClickShowField={onClickShowField}
-                      onClickHideField={onClickHideField}
-                      getStats={() => calculateStats(row.dataFrame.fields[fieldIndex].values)}
-                      displayedFields={displayedFields}
-                      wrapLogMessage={wrapLogMessage}
-                      row={row}
-                      app={app}
-                      disableActions={true}
-                    />
-                  );
-                })}
+                      {fieldsWithLinksAvailable && (
+                        <tr>
+                          <td colSpan={100} className={styles.logDetailsHeading} aria-label="Data Links">
+                            Links
+                          </td>
+                        </tr>
+                      )}
+                      {displayedFieldsWithLinks.map((field, i) => {
+                        const { keys, values, links, fieldIndex } = field;
+                        return (
+                          <LogDetailsRow
+                            key={`${keys[0]}=${values[0]}-${i}`}
+                            parsedKeys={keys}
+                            parsedValues={values}
+                            links={links}
+                            onClickShowField={onClickShowField}
+                            onClickHideField={onClickHideField}
+                            getStats={() => calculateStats(row.dataFrame.fields[fieldIndex].values)}
+                            displayedFields={displayedFields}
+                            wrapLogMessage={wrapLogMessage}
+                            row={row}
+                            app={app}
+                            disableActions={false}
+                          />
+                        );
+                      })}
+                      {fieldsWithLinksFromVariableMap?.map((field, i) => {
+                        const { keys, values, links, fieldIndex } = field;
+                        return (
+                          <LogDetailsRow
+                            key={`${keys[0]}=${values[0]}-${i}`}
+                            parsedKeys={keys}
+                            parsedValues={values}
+                            links={links}
+                            onClickShowField={onClickShowField}
+                            onClickHideField={onClickHideField}
+                            getStats={() => calculateStats(row.dataFrame.fields[fieldIndex].values)}
+                            displayedFields={displayedFields}
+                            wrapLogMessage={wrapLogMessage}
+                            row={row}
+                            app={app}
+                            disableActions={true}
+                          />
+                        );
+                      })}
 
-                {!fieldsAvailable && !labelsAvailable && !fieldsWithLinksAvailable && (
-                  <tr>
-                    <td colSpan={100} aria-label="No details">
-                      No details available
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </td>
-      </tr>
+                      {!fieldsAvailable && !labelsAvailable && !fieldsWithLinksAvailable && (
+                        <tr>
+                          <td colSpan={100} aria-label="No details">
+                            No details available
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     );
   }
 }
