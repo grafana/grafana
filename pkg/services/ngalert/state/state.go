@@ -399,9 +399,7 @@ func (a *State) TrimResults(alertRule *models.AlertRule) {
 	if len(a.Results) < int(numBuckets) {
 		return
 	}
-	newResults := make([]Evaluation, numBuckets)
-	copy(newResults, a.Results[len(a.Results)-int(numBuckets):])
-	a.Results = newResults
+	a.Results = a.Results[len(a.Results)-int(numBuckets):]
 }
 
 func nextEndsTime(interval int64, evaluatedAt time.Time) time.Time {
