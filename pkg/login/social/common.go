@@ -19,6 +19,13 @@ import (
 	"gopkg.in/ini.v1"
 )
 
+const (
+	// consider moving this to OAuthInfo
+	teamIdsKey = "team_ids"
+	// consider moving this to OAuthInfo
+	allowedOrganizationsKey = "allowed_organizations"
+)
+
 var (
 	errMissingGroupMembership = &Error{"user not a member of one of the required groups"}
 )
@@ -166,7 +173,7 @@ func createOAuthConfig(info *OAuthInfo, cfg *setting.Cfg, defaultName string) *o
 	return &config
 }
 
-func mustBool(value any, defaultValue bool) bool {
+func MustBool(value any, defaultValue bool) bool {
 	if value == nil {
 		return defaultValue
 	}

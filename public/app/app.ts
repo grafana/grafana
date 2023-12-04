@@ -81,7 +81,7 @@ import { createPluginExtensionRegistry } from './features/plugins/extensions/cre
 import { getCoreExtensionConfigurations } from './features/plugins/extensions/getCoreExtensionConfigurations';
 import { getPluginExtensions } from './features/plugins/extensions/getPluginExtensions';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
-import { preloadPlugins } from './features/plugins/pluginPreloader';
+import { PluginPreloadResult, preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
 import { initWindowRuntime } from './features/runtime/init';
@@ -198,8 +198,12 @@ export class GrafanaApp {
       const modalManager = new ModalManager();
       modalManager.init();
 
-      // Preload selected app plugins
-      const preloadResults = await preloadPlugins(config.apps);
+      let preloadResults: PluginPreloadResult[] = [];
+
+      if (contextSrv.isSignedIn) {
+        // Preload selected app plugins
+        preloadResults = await preloadPlugins(config.apps);
+      }
 
       // Create extension registry out of preloaded plugins and core extensions
       const extensionRegistry = createPluginExtensionRegistry([
