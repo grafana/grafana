@@ -151,6 +151,11 @@ export function deepFreeze(value?: object | Record<string | symbol, unknown> | u
     //   1. clone it
     //   2. freeze it
     if (prop && (typeof prop === 'object' || typeof prop === 'function')) {
+      // Don't freeze React components. Not sure of the consequences of this,
+      // but lazy components don't work if you freeze them.
+      if (typeof prop === 'object' && name === 'component') {
+        continue;
+      }
       if (Array.isArray(clonedValue)) {
         clonedValue[Number(name)] = deepFreeze(prop, frozenProps);
       } else {

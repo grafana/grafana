@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import React, { Suspense, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
 import { getPluginComponentExtensions } from '@grafana/runtime';
@@ -46,7 +46,16 @@ export function ExtensionDrawer({ open, onClose, selectedTab, onChangeTab }: Pro
   }, [activeTab, extensions, onChangeTab]);
 
   const children = useMemo(
-    () => extensions.map((extension, index) => activeTab === extension.id && <extension.component key={index} />),
+    () =>
+      extensions.map(
+        (extension, index) =>
+          activeTab === extension.id && (
+            // Support lazy components with a fallback.
+            <Suspense key={index} fallback={'Loading...'}>
+              <extension.component />
+            </Suspense>
+          )
+      ),
     [activeTab, extensions]
   );
 

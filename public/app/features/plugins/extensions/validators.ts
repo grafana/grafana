@@ -135,8 +135,11 @@ export function isReactComponent(component: unknown): component is React.Compone
   // The sandbox wraps the plugin components with React.memo.
   const isReactMemoObject = (obj: unknown): boolean =>
     hasReactTypeProp(obj) && obj.$$typeof === Symbol.for('react.memo');
+  // Let's have some fun and allow lazy components, it's a Hackathon after all.
+  const isReactLazyComponent = (obj: unknown): obj is { $$typeof: Symbol } =>
+    hasReactTypeProp(obj) && obj.$$typeof === Symbol.for('react.lazy');
 
   // We currently don't have any strict runtime-checking for this.
   // (The main reason is that we don't want to start depending on React implementation details.)
-  return typeof component === 'function' || isReactMemoObject(component);
+  return typeof component === 'function' || isReactMemoObject(component) || isReactLazyComponent(component);
 }
