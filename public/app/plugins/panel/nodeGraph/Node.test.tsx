@@ -76,6 +76,22 @@ describe('Node', () => {
 
     expect(screen.getByTestId('node-icon-database')).toHaveAttribute('icon-size', 'md');
   });
+
+  it('renders correct font size', async () => {
+    render(
+      <svg>
+        <Node
+          node={{ ...nodeDatum, fontSize: { name: 'fontSize', values: [20], type: FieldType.number, config: {} } }}
+          onMouseEnter={() => {}}
+          onMouseLeave={() => {}}
+          onClick={() => {}}
+          hovering={'default'}
+        />
+      </svg>
+    );
+
+    expect(screen.getByTestId('node-g-1')).toHaveStyle({ 'font-size': '20px' });
+  });
 });
 
 const nodeDatum = {

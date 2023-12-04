@@ -57,6 +57,7 @@ export type NodeFields = {
   nodeRadius?: Field;
   highlighted?: Field;
   iconSize?: Field;
+  fontSize?: Field;
 };
 
 export function getNodeFields(nodes: DataFrame): NodeFields {
@@ -78,6 +79,7 @@ export function getNodeFields(nodes: DataFrame): NodeFields {
     nodeRadius: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.nodeRadius.toLowerCase()),
     highlighted: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.highlighted.toLowerCase()),
     iconSize: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.iconSize.toLowerCase()),
+    fontSize: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.fontSize.toLowerCase()),
   };
 }
 
@@ -328,6 +330,7 @@ function makeNodeDatum(id: string, nodeFields: NodeFields, index: number): NodeD
     nodeRadius: nodeFields.nodeRadius,
     highlighted: nodeFields.highlighted?.values[index] || false,
     iconSize: nodeFields.iconSize,
+    fontSize: nodeFields.fontSize,
   };
 }
 
@@ -370,6 +373,7 @@ function makeNode(index: number) {
     icon: 'database',
     noderadius: 40,
     iconsize: 'xxxl',
+    fontsize: 10,
   };
 }
 
@@ -421,6 +425,10 @@ function nodesFrame() {
     [NodeGraphDataFrameFieldNames.iconSize]: {
       values: [],
       type: FieldType.string,
+    },
+    [NodeGraphDataFrameFieldNames.fontSize]: {
+      values: [],
+      type: FieldType.number,
     },
   };
 

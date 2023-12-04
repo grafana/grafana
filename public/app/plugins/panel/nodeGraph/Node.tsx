@@ -14,11 +14,11 @@ import { statToString } from './utils';
 export const nodeR = 40;
 export const highlightedNodeColor = '#a00';
 export const iconS = 'xxxl';
+export const fontS = 10;
 
 const getStyles = (theme: GrafanaTheme2, hovering: HoverState) => ({
   mainGroup: css`
     cursor: pointer;
-    font-size: 10px;
     transition: opacity 300ms;
     opacity: ${hovering === 'inactive' ? 0.5 : 1};
   `,
@@ -88,13 +88,20 @@ export const Node = memo(function Node(props: {
   const isHovered = hovering === 'active';
   const nodeRadius = node.nodeRadius?.values[node.dataFrameRowIndex] || nodeR;
   const strokeWidth = computeNodeCircumferenceStrokeWidth(nodeRadius);
+  const fontSize = (node.fontSize?.values[node.dataFrameRowIndex] || fontS) + 'px';
 
   if (!(node.x !== undefined && node.y !== undefined)) {
     return null;
   }
 
   return (
-    <g data-node-id={node.id} className={styles.mainGroup} aria-label={`Node: ${node.title}`}>
+    <g
+      data-testid={`node-g-${node.id}`}
+      data-node-id={node.id}
+      className={styles.mainGroup}
+      aria-label={`Node: ${node.title}`}
+      style={{ fontSize: fontSize }}
+    >
       <circle
         data-testid={`node-circle-${node.id}`}
         className={node.highlighted ? styles.filledCircle : styles.mainCircle}
