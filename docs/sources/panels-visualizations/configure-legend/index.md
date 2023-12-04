@@ -65,9 +65,9 @@ If you set the legend placement to **Right**, the **Width** option becomes avail
 
 ### Values
 
-You can add more context to a visualization by adding series data values or [calculations][] to a legend. You can add as many values as you'd like. After you apply your changes, you can horizontally scroll the legend to see all values.
+You can add more context to a visualization by adding series data values or [calculations][] to a legend. You can add as many values as you'd like. After you apply your changes, you can scroll the legend to see all values.
 
-![Legend formatted as a table showing calculated values](/screenshot-legend-calculations-10.3.png)
+![Legend showing values](screenshot-legend-values-10.3.png)
 
 ## Change a series color
 
@@ -103,7 +103,7 @@ When you apply your changes, the visualization changes appear to all users of th
 
 ## Sort series
 
-When your legend is formatted as table and shows calculations, you can sort series by the calculation values. To do so, follow these steps:
+When your legend is formatted as a table and displays values, you can sort series by those values. To do so, follow these steps:
 
 1. Edit the panel.
 
@@ -116,6 +116,8 @@ When your legend is formatted as table and shows calculations, you can sort seri
    Values are now added to the legend table.
 
 1. Click the calculation name header in the legend table to sort the values in the table in ascending or descending order.
+
+![Legend formatted as a table showing sorted values](screenshot-legend-sorted-10.3.png)
 
 {{% admonition type="note" %}}
 This feature is only supported in these panels: Bar chart, Histogram, Time series.
