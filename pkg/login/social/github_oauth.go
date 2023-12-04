@@ -23,24 +23,6 @@ const GitHubProviderName = "github"
 
 var ExtraGithubSettingKeys = []string{allowedOrganizationsKey, teamIdsKey}
 
-var (
-	ExtraGithubSettingKeys = []string{"allowed_organizations"}
-
-	GitHubDefaultSettings = map[string]string{
-		"name":          "GitHub",
-		"icon":          "github",
-		"enabled":       "false",
-		"allow_sign_up": "true",
-		"auto_login":    "false",
-		"scopes":        "user:email,read:org",
-		"auth_url":      "https://github.com/login/oauth/authorize",
-		"token_url":     "https://github.com/login/oauth/access_token",
-		"api_url":       "https://api.github.com/user",
-		// GitHub OAuth apps does not provide refresh tokens and the access tokens never expires.
-		"use_refresh_token": "false",
-	}
-)
-
 type SocialGithub struct {
 	*SocialBase
 	allowedOrganizations []string

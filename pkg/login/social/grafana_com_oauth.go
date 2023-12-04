@@ -23,21 +23,6 @@ const (
 
 var ExtraGrafanaComSettingKeys = []string{allowedOrganizationsKey}
 
-var (
-	ExtraGrafanaComSettingKeys = []string{"allowed_organizations"}
-
-	GrafanaComDefaultSettings = map[string]string{
-		"name":               "Grafana.com",
-		"icon":               "grafana",
-		"enabled":            "false",
-		"allow_sign_up":      "true",
-		"auto_login":         "false",
-		"scopes":             "user:email",
-		"skip_org_role_sync": "false",
-		"use_refresh_token":  "false",
-	}
-)
-
 type SocialGrafanaCom struct {
 	*SocialBase
 	url                  string

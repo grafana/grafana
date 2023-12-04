@@ -101,42 +101,27 @@ func (s *OAuthStrategy) loadSettingsForProvider(provider string) *social.OAuthIn
 	return result
 }
 
-func parseDataFromKey(key string, section *setting.DynamicSection, defaultSettings map[string]string) string {
-	return util.StringsFallback2(section.Key(key).Value(), defaultSettings[key])
-}
+func (s *OAuthStrategy) GetDefaultSettingsForProvider(provider string) *social.OAuthInfo {
+	section := s.cfg.SectionWithEnvOverrides("auth." + provider)
 
-func getDefaultOAuthInfoForProvider(provider string) map[string]string {
-	switch provider {
-	case "azuread":
-		return social.AzureADDefaultSettings
-	case "generic_oauth":
-		return social.GenericOAuthDefaultSettings
-	case "github":
-		return social.GitHubDefaultSettings
-	case "gitlab":
-		return social.GitlabDefaultSettings
-	case "google":
-		return social.GoogleDefaultSettings
-	case "grafana_com":
-		return social.GrafanaComDefaultSettings
-	case "okta":
-		return social.OktaDefaultSettings
-	default:
-		return map[string]string{}
+	result := &social.OAuthInfo{
+		AllowAssignGrafanaAdmin: false,
+		AllowSignup:             false,
+		AutoLogin:               false,
+		EmptyScopes:             false,
+		Enabled:                 false,
+		RoleAttributeStrict:     false,
+		SkipOrgRoleSync:         false,
+		TlsSkipVerify:           false,
+		UsePKCE:                 false,
+		UseRefreshToken:         false,
+		Extra:                   map[string]string{},
 	}
-}
 
-func getExtraKeysForProvider(provider string) []string {
-	switch provider {
-	case "azuread":
-		return social.ExtraAzureADSettingKeys
-	case "generic_oauth":
-		return social.ExtraGenericOAuthSettingKeys
-	case "github":
-		return social.ExtraGithubSettingKeys
-	case "grafana_com":
-		return social.ExtraGrafanaComSettingKeys
-	default:
-		return nil
+	extraFields := extraKeysByProvider[provider]
+	for _, key := range extraFields {
+		result.Extra[key] = section.Key(key).Value()
 	}
+
+	return result
 }

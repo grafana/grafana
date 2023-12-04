@@ -89,12 +89,37 @@ func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Respons
 		return response.Error(http.StatusNotFound, "The provider was not found", err)
 	}
 
+	if c.QueryBool("includeDefaults") {
+		return response.JSON(200, settings)
+	}
+
+	// defaultSettings := getDefaultOAuthInfoForProvider(settings.provider)
+
+	for key, defaultValue := range defaultSettings {
+		if value, exists := settings.OAuthSettings[key]; exists && value == defaultValue {
+			delete(settings.OAuthSettings, key)
+		}
+	}
+
+	if _, exists := settings.Settings["client_secret"]; exists {
+		settings.Settings["client_secret"] = "*********"
+	}
+
+	etag := generateSHA1ETag(settings.Settings)
+
 	dto, err := settings.ToSSOSettingsDTO()
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "The provider is invalid", err)
 	}
 
-	return response.JSON(http.StatusOK, dto)
+	return response.JSON(http.StatusOK, dto).SetHeader("ETag", etag)
+}
+
+func generateSHA1ETag(settings map[string]interface{}) string {
+	hasher := sha1.New()
+	data, _ := json.Marshal(settings)
+	hasher.Write(data)
+	return fmt.Sprintf("%x", hasher.Sum(nil))
 }
 
 func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Response {
