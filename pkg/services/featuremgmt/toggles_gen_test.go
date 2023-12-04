@@ -51,7 +51,7 @@ func TestFeatureToggleFiles(t *testing.T) {
 			if flag.AllowSelfServe != nil && flag.Stage != FeatureStageGeneralAvailability {
 				t.Errorf("only allow self-serving GA toggles")
 			}
-			if flag.Created.Year() < 2010 {
+			if flag.Created.Year() < 2021 {
 				t.Errorf("flag requires a reasonable created date.  See: %s (%s)",
 					flag.Name, flag.Created.Format(time.DateOnly))
 			}
