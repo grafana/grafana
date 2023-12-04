@@ -9,6 +9,8 @@ import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useDispatch } from 'app/types';
 
+import { registerAchievementCompleted } from '../achievements/AchievementsService';
+import { AchievementId } from '../achievements/types';
 import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
@@ -102,6 +104,11 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
       reportInteraction('grafana_browse_dashboards_page_edit_folder_name', { status: 'failed_no_folderDTO' });
     }
   };
+
+  // register achievement
+  useEffect(() => {
+    registerAchievementCompleted(AchievementId.NavigateToDashboard);
+  }, []);
 
   return (
     <Page

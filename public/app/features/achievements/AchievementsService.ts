@@ -15,6 +15,9 @@ export const registerAchievementCompleted = async (achievementId: AchievementId)
   let isLevelUp = false;
 
   const user = await api.loadUser();
+
+  console.log('user: ', user);
+
   // check if achievement is already completed
   if (userHasCompletedAchievement(achievementId, user)) {
     return;
