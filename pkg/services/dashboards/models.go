@@ -47,6 +47,7 @@ type Dashboard struct {
 	FolderUID string `xorm:"folder_uid"`
 	IsFolder  bool
 	HasACL    bool `xorm:"has_acl"`
+	IsDeleted bool `xorm:"is_deleted"`
 
 	Title string
 	Data  *simplejson.Json
@@ -484,6 +485,7 @@ type FindPersistedDashboardsQuery struct {
 	Page       int64
 	Permission dashboardaccess.PermissionType
 	Sort       model.SortOption
+	IsDeleted  bool
 
 	Filters []any
 }
