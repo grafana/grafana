@@ -518,4 +518,8 @@ const (
 	// FlagPanelFilterVariable
 	// Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
 	FlagPanelFilterVariable = "panelFilterVariable"
+
+	// FlagDisplayAnonymousStats
+	// Enables anonymous stats to be shown in the UI for Grafana
+	FlagDisplayAnonymousStats = "displayAnonymousStats"
 )
