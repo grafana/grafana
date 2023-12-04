@@ -134,6 +134,9 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
       reducer: ReducerID.sum,
     },
   },
+  toPrql: (options) => {
+    return 'TODO: toPrql';
+  },
   // operator: (options, ctx, str) => (outerSource) => {
   operator: (options, ctx) => (outerSource) => {
     // console.log('str', str);

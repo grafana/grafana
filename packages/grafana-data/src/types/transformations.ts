@@ -56,6 +56,8 @@ export interface DataTransformerInfo<TOptions = any> extends RegistryItemWithOpt
    * This way descriptions can be tailored relative to the underlying data.
    */
   isApplicableDescription?: string | ((data: DataFrame[]) => string);
+  // here
+  toPrql?: (options: TOptions) => string;
 }
 
 /**
