@@ -59,8 +59,6 @@ export interface MatcherConfig<TConfig = any> extends raw.MatcherConfig {
 
 export interface DataTransformerConfig<TOptions = any> extends raw.DataTransformerConfig {
   options: TOptions;
-  // The other option to fix is this
-  // prql?: string;
 }
 
 export interface TimePickerConfig extends raw.TimePickerConfig {}

@@ -159,7 +159,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
   panels?: PanelModel[];
   declare targets: DataQuery[];
-  // Read off the state. Where is the state getting written?
   transformations?: DataTransformerConfig[];
   datasource: DataSourceRef | null = null;
   thresholds?: any;
@@ -302,25 +301,12 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     const model: any = {};
 
     for (const property in this) {
-      if (property === 'transformations') {
-        // console.log('==============transformations===========');
-      }
-      // console.log(property);
-      // console.log(typeof property);
       if (notPersistedProperties[property] || !this.hasOwnProperty(property)) {
         continue;
       }
 
       if (isEqual(this[property], defaults[property])) {
         continue;
-      }
-
-      if (property === 'transformations') {
-        // console.log('==============cloning-deep===========');
-        // let transformations = this.transformations;
-        // let transformations2 = this[property];
-        // console.log(transformations);
-        // console.log(transformations2);
       }
 
       model[property] = cloneDeep(this[property]);
@@ -645,20 +631,10 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
   setTransformations(transformations: DataTransformerConfig[]) {
     console.log('==============setTransformations===========');
-
-    // ONE OPTION
-    // add a field `PRQL-expr` to the transformations object
-    // populate it here
-    // seems a good option, so it is set before we run .resendLastResult()
     this.transformations = transformations;
     console.log(this.transformations);
-
-    // resend the last result to the query runner. ie. update the data-frame
     this.resendLastResult();
     this.configRev++;
-
-    // I think this sync's the badge count in the tab header
-    // Transform data (3)
     this.events.publish(new PanelTransformationsChangedEvent());
   }
 

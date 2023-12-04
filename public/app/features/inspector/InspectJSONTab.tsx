@@ -76,8 +76,6 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
   }, [show, panel, data]);
 
   const onApplyPanelModel = useCallback(() => {
-    // somehow, does this call setTransformations?
-    // I think I need to figure this out.
     if (panel && dashboard && text) {
       try {
         if (!dashboard!.meta.canEdit) {
@@ -95,10 +93,7 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
           });
 
           panel!.restoreModel(updates);
-          console.log('panel!.refresh() - but its disabled');
-          // I think this updates the builder UI.
-          // But not the JSON, nor the query-results
-          // panel!.refresh();
+          panel!.refresh();
           appEvents.emit(AppEvents.alertSuccess, ['Panel model updated']);
         }
       } catch (err) {
@@ -188,9 +183,7 @@ async function getJSONObject(show: ShowContent, panel?: PanelModel, data?: Panel
 
   if (show === ShowContent.PanelJSON && panel) {
     reportPanelInspectInteraction(InspectTab.JSON, 'panelJSON');
-    let saveModel = panel!.getSaveModel();
-    console.log(saveModel);
-    return saveModel;
+    return panel!.getSaveModel();
   }
 
   return { note: t('dashboard.inspect-json.unknown', 'Unknown Object: {{show}}', { show }) };

@@ -28,12 +28,6 @@ export const IndexOptionsEditor = (props: {
   };
 
   const onToggleRowIndexAsPercentile = (e: React.FormEvent<HTMLInputElement>) => {
-    // console.log({
-    //   ...options,
-    //   index: {
-    //     asPercentile: e.currentTarget.checked,
-    //   },
-    // });
     onChange({
       ...options,
       index: {

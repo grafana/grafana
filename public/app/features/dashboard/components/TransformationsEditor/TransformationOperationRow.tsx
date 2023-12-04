@@ -142,16 +142,7 @@ export const TransformationOperationRow = ({
     );
   };
 
-  // This doesn't seem to work. Ask Russ to find out why.
-  // configs[index].transformation.prql = 'Will insert the PRQL here';
-
-  // Now works! Joey helped me to understand :-)
-  // One option to fix is this:
-  // configs[index].prql = 'Will insert the PRQL here';
-
   configs[index].transformation.options.samExtraField = 'extra string';
-  // configs[index].transformation.options.prql = 'Will insert the PRQL here';
-
   return (
     <>
       <QueryOperationRow
@@ -169,10 +160,6 @@ export const TransformationOperationRow = ({
         {filter && (
           <TransformationFilter index={index} config={configs[index].transformation} data={data} onChange={onChange} />
         )}
-        {/* <p>
-          hi sam, {1 + 2}, {'sam' + 'ben'}
-        </p> */}
-        {/* <p>{JSON.stringify(uiConfig.transformation)}</p> */}
         <p>{JSON.stringify(configs[index].transformation)}</p>
         <TransformationEditor
           debugMode={showDebug}
