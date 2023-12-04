@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { openMenu } from 'react-select-event';
 
-import { TemplateSrvMock } from '@grafana/runtime';
+// import { TemplateSrvMock } from '@grafana/runtime';
 
 import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
 import { createMockMetricDescriptor } from '../__mocks__/cloudMonitoringMetricDescriptor';
@@ -14,7 +14,7 @@ import { Alignment } from './Alignment';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getTemplateSrv: () => new TemplateSrvMock({}),
+  // getTemplateSrv: () => new TemplateSrvMock({}),
 }));
 
 describe('Alignment', () => {

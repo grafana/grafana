@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { openMenu, select } from 'react-select-event';
 
-import { getTimeSrv, getTemplateSrv } from '@grafana/runtime';
+import { getDefaultTimeRange } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 
 import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
 import { createMockMetricDescriptor } from '../__mocks__/cloudMonitoringMetricDescriptor';
@@ -26,8 +27,17 @@ describe('VisualMetricQueryEditor', () => {
     const onChange = jest.fn();
     const query = createMockTimeSeriesList();
     const datasource = createMockDatasource();
+    const range = getDefaultTimeRange();
 
-    render(<VisualMetricQueryEditor {...defaultProps} onChange={onChange} datasource={datasource} query={query} />);
+    render(
+      <VisualMetricQueryEditor
+        {...defaultProps}
+        onChange={onChange}
+        datasource={datasource}
+        query={query}
+        range={range}
+      />
+    );
 
     expect(await screen.findByLabelText('Service')).toBeInTheDocument();
     expect(await screen.findByLabelText('Metric name')).toBeInTheDocument();
@@ -41,8 +51,17 @@ describe('VisualMetricQueryEditor', () => {
       getMetricTypes: jest.fn().mockResolvedValue([mockMetricDescriptor]),
       getLabels: jest.fn().mockResolvedValue([]),
     });
+    const range = getDefaultTimeRange();
 
-    render(<VisualMetricQueryEditor {...defaultProps} onChange={onChange} datasource={datasource} query={query} />);
+    render(
+      <VisualMetricQueryEditor
+        {...defaultProps}
+        onChange={onChange}
+        datasource={datasource}
+        query={query}
+        range={range}
+      />
+    );
 
     const service = await screen.findByLabelText('Service');
     openMenu(service);
@@ -63,8 +82,17 @@ describe('VisualMetricQueryEditor', () => {
       filterMetricsByType: jest.fn().mockResolvedValue([createMockMetricDescriptor(), mockMetricDescriptor]),
       getLabels: jest.fn().mockResolvedValue([]),
     });
+    const range = getDefaultTimeRange();
 
-    render(<VisualMetricQueryEditor {...defaultProps} onChange={onChange} datasource={datasource} query={query} />);
+    render(
+      <VisualMetricQueryEditor
+        {...defaultProps}
+        onChange={onChange}
+        datasource={datasource}
+        query={query}
+        range={range}
+      />
+    );
 
     const service = await screen.findByLabelText('Service');
     openMenu(service);
@@ -111,8 +139,17 @@ describe('VisualMetricQueryEditor', () => {
       ]),
     });
     const query = createMockTimeSeriesList();
+    const range = getDefaultTimeRange();
 
-    render(<VisualMetricQueryEditor {...defaultProps} onChange={onChange} datasource={datasource} query={query} />);
+    render(
+      <VisualMetricQueryEditor
+        {...defaultProps}
+        onChange={onChange}
+        datasource={datasource}
+        query={query}
+        range={range}
+      />
+    );
     const service = await screen.findByLabelText('Service');
     openMenu(service);
     expect(screen.getAllByLabelText('Select option').length).toEqual(2);
@@ -131,8 +168,17 @@ describe('VisualMetricQueryEditor', () => {
       getLabels: jest.fn().mockResolvedValue([]),
     });
     const defaultQuery = { ...query, ...defaultTimeSeriesList(datasource), filters: ['metric.type', '=', 'type2'] };
+    const range = getDefaultTimeRange();
 
-    render(<VisualMetricQueryEditor {...defaultProps} onChange={onChange} datasource={datasource} query={query} />);
+    render(
+      <VisualMetricQueryEditor
+        {...defaultProps}
+        onChange={onChange}
+        datasource={datasource}
+        query={query}
+        range={range}
+      />
+    );
 
     expect(screen.getByText('metric.test_label')).toBeInTheDocument();
     const service = await screen.findByLabelText('Service');
@@ -170,8 +216,17 @@ describe('VisualMetricQueryEditor', () => {
       templateSrv: getTemplateSrv(),
     });
     const defaultQuery = { ...query, ...defaultTimeSeriesList(datasource), filters: query.filters };
+    const range = getDefaultTimeRange();
 
-    render(<VisualMetricQueryEditor {...defaultProps} onChange={onChange} datasource={datasource} query={query} />);
+    render(
+      <VisualMetricQueryEditor
+        {...defaultProps}
+        onChange={onChange}
+        datasource={datasource}
+        query={query}
+        range={range}
+      />
+    );
     expect(document.body).toHaveTextContent('metric.test_label');
     expect(await screen.findByText('Delta')).toBeInTheDocument();
     expect(await screen.findByText('metric.test_groupby')).toBeInTheDocument();
@@ -192,7 +247,7 @@ describe('VisualMetricQueryEditor', () => {
   });
 
   it('updates labels on time range change', async () => {
-    const timeSrv = getTimeSrv();
+    // const timeSrv = getTimeSrv();
     const query = createMockTimeSeriesList();
     const onChange = jest.fn();
     const datasource = createMockDatasource({
@@ -203,11 +258,18 @@ describe('VisualMetricQueryEditor', () => {
           timeSrv.time.from === 'now-6h' ? { 'metric.test_groupby': '' } : { 'metric.test_groupby_1': '' }
         ),
       templateSrv: getTemplateSrv(),
-      timeSrv,
+      // timeSrv,
     });
+    const range = getDefaultTimeRange();
 
     const { rerender } = render(
-      <VisualMetricQueryEditor {...defaultProps} onChange={onChange} datasource={datasource} query={query} />
+      <VisualMetricQueryEditor
+        {...defaultProps}
+        onChange={onChange}
+        datasource={datasource}
+        query={query}
+        range={range}
+      />
     );
 
     const service = await screen.findByLabelText('Service');
@@ -226,11 +288,18 @@ describe('VisualMetricQueryEditor', () => {
     await waitFor(() => expect(document.body).toHaveTextContent('metric.test_groupby'));
     timeSrv.setTime({ from: 'now-12h', to: 'now' });
     const datasourceUpdated = createMockDatasource({
-      timeSrv,
+      // timeSrv,
       getLabels: jest.fn().mockResolvedValue({ 'metric.test_groupby_1': '' }),
     });
+
     rerender(
-      <VisualMetricQueryEditor {...defaultProps} onChange={onChange} datasource={datasourceUpdated} query={query} />
+      <VisualMetricQueryEditor
+        {...defaultProps}
+        onChange={onChange}
+        datasource={datasourceUpdated}
+        query={query}
+        range={range}
+      />
     );
     openMenu(groupBy);
     await waitFor(() => expect(document.body).toHaveTextContent('metric.test_groupby_1'));

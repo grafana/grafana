@@ -3,7 +3,7 @@ import debounce from 'debounce-promise';
 import { startCase, uniqBy } from 'lodash';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { GrafanaTheme2, SelectableValue, TimeRange } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue, TimeRange, getDefaultTimeRange } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
 import { getSelectStyles, Select, AsyncSelect, useStyles2, useTheme2 } from '@grafana/ui';
@@ -30,7 +30,7 @@ export interface Props {
   variableOptionGroup: SelectableValue<string>;
   aliasBy?: string;
   onChangeAliasBy: (aliasBy: string) => void;
-  range?: TimeRange;
+  range: TimeRange;
 }
 
 export function Editor({
@@ -62,7 +62,7 @@ export function Editor({
     }
   };
 
-  useTime(datasource.timeSrv.timeRange());
+  useTime(getDefaultTimeRange());
 
   const theme = useTheme2();
   const selectStyles = getSelectStyles(theme);

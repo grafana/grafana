@@ -1,7 +1,7 @@
 import { isEqual } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { QueryEditorProps, toOption } from '@grafana/data';
+import { QueryEditorProps, getDefaultTimeRange, toOption } from '@grafana/data';
 import { EditorRows } from '@grafana/experimental';
 import { ConfirmModal } from '@grafana/ui';
 
@@ -130,6 +130,7 @@ export const QueryEditor = (props: Props) => {
           onRunQuery={onRunQuery}
           datasource={datasource}
           query={query}
+          range={range || getDefaultTimeRange()}
         />
       )}
 
