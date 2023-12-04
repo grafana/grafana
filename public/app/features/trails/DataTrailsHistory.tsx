@@ -117,6 +117,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
   public static Component = ({ model }: SceneComponentProps<DataTrailHistory>) => {
     const { steps, currentStep } = model.useState();
     const styles = useStyles2(getStyles);
+    const trail = getTrailFor(model);
     const [isBookmarked, setBookmarked] = useState(false);
 
     const { ancestry, alternatePredecessorStyle } = useMemo(() => {
@@ -161,7 +162,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
                   // To alter the look of steps with distant non-directly preceding parent
                   alternatePredecessorStyle.get(index) ?? '',
                   // To remove direct link for steps that don't have a direct parent
-                  index !== step.trailState.parentIndex + 1 ? styles.stepOmitsDirectLeftLink : '',
+                  index !== step.parentIndex + 1 ? styles.stepOmitsDirectLeftLink : '',
                   // To remove the direct parent link on the start node as well
                   index === 0 ? styles.stepOmitsDirectLeftLink : '',
                   // To darken steps that aren't the current step's ancesters
