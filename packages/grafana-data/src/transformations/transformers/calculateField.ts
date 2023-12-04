@@ -134,8 +134,9 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
       reducer: ReducerID.sum,
     },
   },
-  operator: (options, ctx, str) => (outerSource) => {
-    console.log('str', str);
+  // operator: (options, ctx, str) => (outerSource) => {
+  operator: (options, ctx) => (outerSource) => {
+    // console.log('str', str);
     const operator =
       options && options.timeSeries !== false
         ? ensureColumnsTransformer.operator(null, ctx)
@@ -163,10 +164,10 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
             break;
           case CalculateFieldMode.UnaryOperation:
             creator = getUnaryCreator(defaults(options.unary, defaultUnaryOptions), data);
-            console.log('defaultUnaryOptions', defaultUnaryOptions);
-            console.log('options.unary', options.unary);
-            console.log('defaults(options.unary, defaultUnaryOptions)', defaults(options.unary, defaultUnaryOptions));
-            console.log('creator', creator);
+            // console.log('defaultUnaryOptions', defaultUnaryOptions);
+            // console.log('options.unary', options.unary);
+            // console.log('defaults(options.unary, defaultUnaryOptions)', defaults(options.unary, defaultUnaryOptions));
+            // console.log('creator', creator);
             break;
           case CalculateFieldMode.BinaryOperation:
             const binaryOptions = {

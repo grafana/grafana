@@ -213,6 +213,7 @@ export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformer
         <IndexOptionsEditor options={options} onChange={props.onChange}></IndexOptionsEditor>
       )}
       <InlineField labelWidth={LABEL_WIDTH} label="Alias">
+        {/* TODO: When the "Alias" changes, ALSO update the PRQL */}
         <Input
           className="width-18"
           value={options.alias ?? ''}

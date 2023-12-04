@@ -22,17 +22,18 @@ const getOperator =
     }
 
     const defaultOptions = info.transformation.defaultOptions ?? {};
-    console.log('defaultOptions', defaultOptions);
-    console.log('config.options', config.options);
+    // console.log('defaultOptions', defaultOptions);
+    // console.log('config.options', config.options);
 
     const options = { ...defaultOptions, ...config.options };
-    console.log('options', options);
+    // console.log('options', options);
 
     const matcher = config.filter?.options ? getFrameMatchers(config.filter) : undefined;
     return source.pipe(
       mergeMap((before) =>
         of(filterInput(before, matcher)).pipe(
-          info.transformation.operator(options, ctx, 'sam'),
+          info.transformation.operator(options, ctx),
+          // info.transformation.operator(options, ctx, 'sam'),
           postProcessTransform(before, info, matcher)
         )
       )

@@ -42,7 +42,8 @@ export interface DataTransformerInfo<TOptions = any> extends RegistryItemWithOpt
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  operator: (options: TOptions, context: DataTransformContext, str?: string) => MonoTypeOperatorFunction<DataFrame[]>;
+  // operator: (options: TOptions, context: DataTransformContext, str?: string) => MonoTypeOperatorFunction<DataFrame[]>;
+  operator: (options: TOptions, context: DataTransformContext) => MonoTypeOperatorFunction<DataFrame[]>;
   /**
    * Function that is present will indicate whether a transformation is applicable
    * given the current data.

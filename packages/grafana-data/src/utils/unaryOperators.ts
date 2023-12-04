@@ -18,6 +18,7 @@ interface UnaryOperatorInfo extends RegistryItem {
 export const unaryOperators = new Registry<UnaryOperatorInfo>(() => {
   return [
     {
+      // TODO: Add PRQL (default) expressions here?
       id: UnaryOperationID.Abs,
       name: 'Absolute value',
       operation: (value: number) => Math.abs(value),
