@@ -66,7 +66,6 @@ import LogsNavigation from './LogsNavigation';
 import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { SETTINGS_KEYS } from './utils/logs';
-import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 
 interface Props extends Themeable2 {
   width: number;
@@ -629,7 +628,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     const filteredLogs = this.filterRows(logRows, hiddenLogLevels);
     const { dedupedRows } = this.dedupRows(filteredLogs, dedupStrategy);
-    const paneSize = (window.innerWidth / 4) * 3;
+    const navigationRange = this.createNavigationRange(logRows);
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
 
@@ -798,125 +797,127 @@ class UnthemedLogs extends PureComponent<Props, State> {
           <div
             className={cx(styles.logsSection, this.state.visualisationType === 'table' ? styles.logsTable : undefined)}
           >
-            <SplitPaneWrapper
-              splitOrientation="vertical"
-              paneSize={paneSize}
-            >
-              <div className={styles.logsColumn}>
-                {this.state.visualisationType === 'table' && hasData && (
-                  <div className={styles.logRows} data-testid="logRowsTable">
-                    {/* Width should be full width minus logs navigation and padding */}
-                    <LogsTableWrap
-                      logsSortOrder={this.state.logsSortOrder}
-                      range={this.props.range}
-                      splitOpen={this.props.splitOpen}
-                      timeZone={timeZone}
-                      width={width - 80}
-                      logsFrames={this.props.logsFrames ?? []}
-                      onClickFilterLabel={onClickFilterLabel}
-                      onClickFilterOutLabel={onClickFilterOutLabel}
-                      panelState={this.props.panelState?.logs}
-                      theme={theme}
-                      updatePanelState={this.updatePanelState}
-                      datasourceType={this.props.datasourceType}
-                    />
-                  </div>
-                )}
-                {this.state.visualisationType === 'logs' && hasData && (
-                  <div
-                    className={config.featureToggles.logsInfiniteScrolling ? styles.scrollableLogRows : styles.logRows}
-                    data-testid="logRows"
-                    ref={this.onLogsContainerRef}
-                  >
-                    <InfiniteScroll
-                      loading={loading}
-                      loadMoreLogs={loadMoreLogs}
-                      range={this.props.range}
-                      timeZone={timeZone}
-                      rows={logRows}
-                      scrollElement={this.state.logsContainer}
-                      sortOrder={logsSortOrder}
-                    >
-                      <LogRows
-                        logRows={logRows}
-                        deduplicatedRows={dedupedRows}
-                        dedupStrategy={dedupStrategy}
-                        onClickFilterLabel={onClickFilterLabel}
-                        onClickFilterOutLabel={onClickFilterOutLabel}
-                        showContextToggle={showContextToggle}
-                        showLabels={showLabels}
-                        showTime={showTime}
-                        enableLogDetails={true}
-                        forceEscape={forceEscape}
-                        wrapLogMessage={wrapLogMessage}
-                        prettifyLogMessage={prettifyLogMessage}
-                        timeZone={timeZone}
-                        getFieldLinks={getFieldLinks}
-                        logsSortOrder={logsSortOrder}
-                        displayedFields={displayedFields}
-                        onClickShowField={this.showField}
-                        onClickHideField={this.hideField}
-                        app={CoreApp.Explore}
-                        onLogRowHover={this.onLogRowHover}
-                        onOpenContext={this.onOpenContext}
-                        onPermalinkClick={this.onPermalinkClick}
-                        permalinkedRowId={this.props.panelState?.logs?.id}
-                        scrollIntoView={this.scrollIntoView}
-                        isFilterLabelActive={this.props.isFilterLabelActive}
-                        containerRendered={!!this.state.logsContainer}
-                        onClickFilterValue={this.props.onClickFilterValue}
-                        onClickFilterOutValue={this.props.onClickFilterOutValue}
-                        showDetails={this.showDetails}
-                        logDetailsRow={this.state.logDetailsRow}
-                      />
-                    </InfiniteScroll>
-                  </div>
-                )}
-
-                {!loading && !hasData && !scanning && (
-                  <div className={styles.logRows}>
-                    <div className={styles.noData}>
-                      No logs found.
-                      <Button size="sm" variant="secondary" onClick={this.onClickScan}>
-                        Scan for older logs
-                      </Button>
-                    </div>
-                  </div>
-                )}
-                {scanning && (
-                  <div className={styles.logRows}>
-                    <div className={styles.noData}>
-                      <span>{scanText}</span>
-                      <Button size="sm" variant="secondary" onClick={this.onClickStopScan}>
-                        Stop scan
-                      </Button>
-                    </div>
-                  </div>
-                )}
+            {this.state.visualisationType === 'table' && hasData && (
+              <div className={styles.logRows} data-testid="logRowsTable">
+                {/* Width should be full width minus logs navigation and padding */}
+                <LogsTableWrap
+                  logsSortOrder={this.state.logsSortOrder}
+                  range={this.props.range}
+                  splitOpen={this.props.splitOpen}
+                  timeZone={timeZone}
+                  width={width - 80}
+                  logsFrames={this.props.logsFrames ?? []}
+                  onClickFilterLabel={onClickFilterLabel}
+                  onClickFilterOutLabel={onClickFilterOutLabel}
+                  panelState={this.props.panelState?.logs}
+                  theme={theme}
+                  updatePanelState={this.updatePanelState}
+                  datasourceType={this.props.datasourceType}
+                />
               </div>
-              <div>
-                {this.state.logDetailsRow ? (
-                  <LogDetails
-                    showDuplicates={false}
-                    getFieldLinks={getFieldLinks}
+            )}
+            {this.state.visualisationType === 'logs' && hasData && (
+              <div
+                className={config.featureToggles.logsInfiniteScrolling ? styles.scrollableLogRows : styles.logRows}
+                data-testid="logRows"
+                ref={this.onLogsContainerRef}
+              >
+                <InfiniteScroll
+                  loading={loading}
+                  loadMoreLogs={loadMoreLogs}
+                  range={this.props.range}
+                  timeZone={timeZone}
+                  rows={logRows}
+                  scrollElement={this.state.logsContainer}
+                  sortOrder={logsSortOrder}
+                >
+                  <LogRows
+                    logRows={logRows}
+                    deduplicatedRows={dedupedRows}
+                    dedupStrategy={dedupStrategy}
                     onClickFilterLabel={onClickFilterLabel}
                     onClickFilterOutLabel={onClickFilterOutLabel}
+                    showContextToggle={showContextToggle}
+                    showLabels={showLabels}
+                    showTime={showTime}
+                    enableLogDetails={true}
+                    forceEscape={forceEscape}
+                    wrapLogMessage={wrapLogMessage}
+                    prettifyLogMessage={prettifyLogMessage}
+                    timeZone={timeZone}
+                    getFieldLinks={getFieldLinks}
+                    logsSortOrder={logsSortOrder}
+                    displayedFields={displayedFields}
                     onClickShowField={this.showField}
                     onClickHideField={this.hideField}
-                    rows={logRows}
-                    row={this.state.logDetailsRow}
-                    wrapLogMessage={wrapLogMessage}
-                    hasError={false}
-                    displayedFields={displayedFields}
                     app={CoreApp.Explore}
-                    styles={logRowStyles}
+                    onLogRowHover={this.onLogRowHover}
+                    onOpenContext={this.onOpenContext}
+                    onPermalinkClick={this.onPermalinkClick}
+                    permalinkedRowId={this.props.panelState?.logs?.id}
+                    scrollIntoView={this.scrollIntoView}
                     isFilterLabelActive={this.props.isFilterLabelActive}
+                    containerRendered={!!this.state.logsContainer}
+                    onClickFilterValue={this.props.onClickFilterValue}
+                    onClickFilterOutValue={this.props.onClickFilterOutValue}
+                    showDetails={this.showDetails}
+                    logDetailsRow={this.state.logDetailsRow}
                   />
-                ) : (
-                  <LogStats styles={logRowStyles} rows={logRows} />
-                )}
+                </InfiniteScroll>
               </div>
-            </SplitPaneWrapper>
+            )}
+            {this.state.logDetailsRow ? (
+              <LogDetails
+                showDuplicates={false}
+                getFieldLinks={getFieldLinks}
+                onClickFilterLabel={onClickFilterLabel}
+                onClickFilterOutLabel={onClickFilterOutLabel}
+                onClickShowField={this.showField}
+                onClickHideField={this.hideField}
+                rows={logRows}
+                row={this.state.logDetailsRow}
+                wrapLogMessage={wrapLogMessage}
+                hasError={false}
+                displayedFields={displayedFields}
+                app={CoreApp.Explore}
+                styles={logRowStyles}
+                isFilterLabelActive={this.props.isFilterLabelActive}
+              />
+            ) : (
+              <LogStats styles={logRowStyles} rows={logRows} />
+            )}
+            {!loading && !hasData && !scanning && (
+              <div className={styles.logRows}>
+                <div className={styles.noData}>
+                  No logs found.
+                  <Button size="sm" variant="secondary" onClick={this.onClickScan}>
+                    Scan for older logs
+                  </Button>
+                </div>
+              </div>
+            )}
+            {scanning && (
+              <div className={styles.logRows}>
+                <div className={styles.noData}>
+                  <span>{scanText}</span>
+                  <Button size="sm" variant="secondary" onClick={this.onClickStopScan}>
+                    Stop scan
+                  </Button>
+                </div>
+              </div>
+            )}
+            <LogsNavigation
+              logsSortOrder={logsSortOrder}
+              visibleRange={navigationRange ?? absoluteRange}
+              absoluteRange={absoluteRange}
+              timeZone={timeZone}
+              onChangeTime={onChangeTime}
+              loading={loading}
+              queries={logsQueries ?? []}
+              scrollToTopLogs={this.scrollToTopLogs}
+              addResultsToCache={addResultsToCache}
+              clearCache={clearCache}
+            />
           </div>
         </PanelChrome>
       </>
@@ -928,8 +929,6 @@ export const Logs = withTheme2(UnthemedLogs);
 
 const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: number) => {
   return {
-    logsColumn: css({ 
-    }),
     noData: css({
       '& > *': {
         marginLeft: '0.5em',
@@ -961,6 +960,9 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
       margin: '0',
     }),
     logsSection: css({
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
     }),
     logsTable: css({
       maxHeight: `${tableHeight}px`,
