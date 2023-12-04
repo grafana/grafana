@@ -484,6 +484,7 @@ require (
 
 require (
 	github.com/google/gnostic-models v0.6.8 // indirect
+	github.com/marcboeker/go-duckdb v1.5.4
 	github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0 // indirect
 )
 
