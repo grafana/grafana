@@ -16,10 +16,9 @@ import {
   SplitOpen,
   SupplementaryQueryType,
   TimeZone,
-  fieldColorModeRegistry,
 } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
-import { FieldColor, FieldColorModeId } from '@grafana/schema';
+import { FieldColorModeId } from '@grafana/schema';
 import { Button, InlineField, useStyles2, Select } from '@grafana/ui';
 
 import { mergeLogsVolumeDataFrames, isLogsVolumeLimited, getLogsVolumeMaximumRange } from '../../logs/utils';
@@ -29,6 +28,7 @@ import { LogsVolumePanel } from './LogsVolumePanel';
 type Props = {
   logsVolumeData: DataQueryResponse | undefined;
   logsCountData: DataQueryResponse | undefined;
+  logsCountWithGroupByData: DataQueryResponse | undefined;
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
   splitOpen: SplitOpen;
@@ -44,6 +44,7 @@ type Props = {
 export const LogsVolumePanelList = ({
   logsVolumeData,
   logsCountData,
+  logsCountWithGroupByData,
   absoluteRange,
   onUpdateTimeRange,
   width,
@@ -97,7 +98,11 @@ export const LogsVolumePanelList = ({
     to: Math.min(absoluteRange.to, allLogsVolumeMaximumRange.to),
   };
 
-  if (logsVolumeData?.state === LoadingState.Loading || logsCountData?.state === LoadingState.Loading) {
+  if (
+    logsVolumeData?.state === LoadingState.Loading ||
+    logsCountData?.state === LoadingState.Loading ||
+    logsCountWithGroupByData?.state === LoadingState.Loading
+  ) {
     return <span>Loading...</span>;
   }
 
@@ -110,6 +115,37 @@ export const LogsVolumePanelList = ({
           pluginId="stat"
           height={120}
           data={{ series: logsCountData?.data, state: logsCountData?.state } as PanelData}
+          fieldConfig={{
+            defaults: {
+              color: {
+                mode: FieldColorModeId.PaletteClassic,
+              },
+              // unit: 'log lines',
+              custom: {},
+            },
+            overrides: [],
+          }}
+        />
+      )}
+      {logsCountWithGroupByData?.data && logsCountWithGroupByData?.state === LoadingState.Done && (
+        <PanelRenderer
+          title="Logs count"
+          width={width}
+          pluginId="stat"
+          height={120}
+          options={{
+            reduceOptions: {
+              values: 'true',
+              calcs: ['lastNotNull'],
+            },
+            orientation: 'auto',
+            textMode: 'auto',
+            wideLayout: true,
+            colorMode: 'background',
+            graphMode: 'area',
+            justifyMode: 'auto',
+          }}
+          data={{ series: logsCountWithGroupByData?.data, state: logsCountWithGroupByData?.state } as PanelData}
           fieldConfig={{
             defaults: {
               color: {
@@ -170,7 +206,8 @@ export const LogsVolumePanelList = ({
                 setSelectedLabel(change);
                 setLabelNamesMenuOpen(false);
                 if (change.value !== selectedLabel.value) {
-                  onLoadLogsVolume(SupplementaryQueryType.LogsVolume);
+                  datasourceInstance.groupByFilter = change.value;
+                  onLoadLogsVolume(SupplementaryQueryType.LogsCountWithGroupBy);
                 }
               }}
             />

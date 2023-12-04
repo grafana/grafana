@@ -1005,7 +1005,6 @@ export function loadSupplementaryQueryData(exploreId: string, type: Supplementar
     for (const type of suppQ) {
       dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
     }
-
     if (dataProvider) {
       const dataSubscription = dataProvider.subscribe({
         next: (supplementaryQueryData: DataQueryResponse) => {

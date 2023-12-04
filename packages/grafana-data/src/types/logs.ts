@@ -168,12 +168,17 @@ export enum SupplementaryQueryType {
   LogsVolume = 'LogsVolume',
   LogsSample = 'LogsSample',
   LogsCount = 'LogsCount',
+  LogsCountWithGroupBy = 'LogsCountWithGroupBy',
 }
 
 /**
  * @internal
  */
-export type SupplementaryQueryOptions = LogsVolumeOption | LogsSampleOptions | LogsCountOptions;
+export type SupplementaryQueryOptions =
+  | LogsVolumeOption
+  | LogsSampleOptions
+  | LogsCountOptions
+  | LogsCountWithGroupByOptions;
 
 /**
  * @internal
@@ -195,6 +200,13 @@ export type LogsSampleOptions = {
  */
 export type LogsCountOptions = {
   type: SupplementaryQueryType.LogsCount;
+};
+
+/**
+ * @internal
+ */
+export type LogsCountWithGroupByOptions = {
+  type: SupplementaryQueryType.LogsCountWithGroupBy;
   label?: string;
 };
 

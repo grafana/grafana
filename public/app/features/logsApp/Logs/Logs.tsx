@@ -87,6 +87,7 @@ interface Props extends Themeable2 {
   logsVolumeData: DataQueryResponse | undefined;
   logsCountEnabled: boolean;
   logsCountData: DataQueryResponse | undefined;
+  logsCountWithGroupByData: DataQueryResponse | undefined;
   onSetLogsVolumeEnabled: (enabled: boolean) => void;
   loadLogsVolumeData: (suppQueryType?: SupplementaryQueryType) => void;
   showContextToggle?: (row: LogRowModel) => boolean;
@@ -532,6 +533,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       logsVolumeData,
       logsCountEnabled,
       logsCountData,
+      logsCountWithGroupByData,
       loadLogsVolumeData,
       loading = false,
       onClickFilterLabel,
@@ -578,7 +580,11 @@ class UnthemedLogs extends PureComponent<Props, State> {
     const navigationRange = this.createNavigationRange(logRows);
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
-    const title = logsVolumeData?.data ? 'Logs count in time' : logsCountData?.data ? 'Logs count over time' : '';
+    const title = logsVolumeData?.data
+      ? 'Logs count in time'
+      : logsCountData?.data || logsCountWithGroupByData?.data
+      ? 'Logs count over time'
+      : '';
     return (
       <>
         {getRowContext && contextRow && (
@@ -608,6 +614,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 width={w}
                 logsVolumeData={logsVolumeData}
                 logsCountData={logsCountData}
+                logsCountWithGroupByData={logsCountWithGroupByData}
                 onUpdateTimeRange={onChangeTime}
                 timeZone={timeZone}
                 splitOpen={splitOpen}
