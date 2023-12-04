@@ -149,6 +149,9 @@ export const TransformationOperationRow = ({
   // One option to fix is this:
   // configs[index].prql = 'Will insert the PRQL here';
 
+  // configs[index].transformation.options.samExtraField = 'extra string';
+  configs[index].transformation.options.prql = 'Will insert the PRQL here';
+
   return (
     <>
       <QueryOperationRow
