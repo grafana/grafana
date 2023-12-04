@@ -54,6 +54,24 @@ const getStyles = (readOnly?: boolean) => {
       editor: css`
         .ͼo {
           background-color: rgba(40, 44, 52, 0.3);
+          color: rgba(171, 178, 191, 0.5);
+
+          .cm-gutters {
+            background-color: rgba(40, 44, 52, 0.3);
+          }
+          .ͼq {
+            color: rgba(224, 108, 117, 0.5);
+          }
+          .ͼu {
+            color: #e5c07b;
+            color: rgba(229, 192, 123, 0.5);
+          }
+          .ͼr {
+            color: rgba(97, 175, 239, 0.5);
+          }
+          .ͼv {
+            color: rgba(86, 182, 194, 0.5);
+          }
         }
       `,
     };
