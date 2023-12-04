@@ -28,9 +28,6 @@ replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.
 // This will not be required in the next k8s release @v28-with-hook
 replace k8s.io/kube-openapi v0.0.0-20230717233707-2695361300d9 => github.com/ryantxu/kube-openapi v0.0.0-20231113051506-80b8e1dfdde6 // @grafana/grafana-app-platform-squad
 
-// Workaround for https://github.com/grafana/thema/blob/067284b336bbbc82d6549748e20143e2475a4989/internal/deepmap/oapi-codegen/pkg/codegen/codegen.go#L206-
-replace github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.120.0
-
 require (
 	cloud.google.com/go/storage v1.30.1 // @grafana/backend-platform
 	cuelang.org/go v0.6.0-0.dev // @grafana/grafana-as-code
@@ -65,7 +62,7 @@ require (
 	github.com/google/wire v0.5.0 // @grafana/backend-platform
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20231101090315-bf12694896a8 // @grafana/alerting-squad-backend
-	github.com/grafana/cuetsy v0.1.10 // @grafana/grafana-as-code
+	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.19.1 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go v1.9.0 // @grafana/backend-platform
 	github.com/grafana/grafana-plugin-sdk-go v0.195.0 // @grafana/plugins-platform-backend
@@ -510,3 +507,5 @@ replace xorm.io/xorm => ./pkg/util/xorm
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20231027171310-70c52bf65758
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
+
+replace github.com/grafana/thema => github.com/grafana/thema v0.0.0-20231204151833-93b6494d445e
