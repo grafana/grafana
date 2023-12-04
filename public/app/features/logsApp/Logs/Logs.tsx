@@ -59,7 +59,6 @@ import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 import { changePanelState } from '../state/explorePane';
 
 import { LogsFeedback } from './LogsFeedback';
-import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
 import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
@@ -524,7 +523,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
       width,
       splitOpen,
       logRows,
-      logsMeta,
       logsVolumeEnabled,
       logsVolumeData,
       loadLogsVolumeData,
@@ -567,10 +565,9 @@ class UnthemedLogs extends PureComponent<Props, State> {
     const tableHeight = getLogsTableHeight();
     const styles = getStyles(theme, wrapLogMessage, tableHeight);
     const hasData = logRows && logRows.length > 0;
-    const hasUnescapedContent = this.checkUnescapedContent(logRows);
-
+    
     const filteredLogs = this.filterRows(logRows, hiddenLogLevels);
-    const { dedupedRows, dedupCount } = this.dedupRows(filteredLogs, dedupStrategy);
+    const { dedupedRows } = this.dedupRows(filteredLogs, dedupStrategy);
     const navigationRange = this.createNavigationRange(logRows);
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
