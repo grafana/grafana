@@ -112,7 +112,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     mixBlendMode: 'hard-light',
   }),
   spotlight: css({
-    backgroundColor: `gray`,
+    backgroundColor: `#939393`,
     position: `absolute`,
     boxSizing: `content-box`,
     borderRadius: theme.shape.radius.default,
