@@ -96,7 +96,7 @@ export interface PanelProps<T = any> {
   /** Current height of the panel in pixels */
   height: number;
 
-  /** Field options configuration. Contains how field values should be displayed (e.g., units, min, max, decimals, thresholds) */
+  /** Field options configuration. Controls how field values are displayed (e.g., units, min, max, decimals, thresholds) */
   fieldConfig: FieldConfigSource;
 
   /** @internal */
