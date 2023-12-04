@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import React from 'react';
+import Skeleton from 'react-loading-skeleton';
 
 import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Card, LinkButton, Tag, useStyles2 } from '@grafana/ui';
+import { Card, LinkButton, Stack, Tag, useStyles2 } from '@grafana/ui';
 
 import { useDataSourcesRoutes } from '../state';
 import { trackCreateDashboardClicked, trackExploreClicked } from '../tracking';
@@ -76,6 +77,44 @@ export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRigh
     </Card>
   );
 }
+
+function DataSourcesListCardSkeleton({ hasExploreRights }: Pick<Props, 'hasExploreRights'>) {
+  const skeletonStyles = useStyles2(getSkeletonStyles);
+  return (
+    <Card>
+      <Card.Heading>
+        <Skeleton width={140} />
+      </Card.Heading>
+      <Card.Figure>
+        <Skeleton width={40} height={40} containerClassName={skeletonStyles.figure} />
+      </Card.Figure>
+      <Card.Meta>
+        <Skeleton width={120} />
+      </Card.Meta>
+      <Card.Tags>
+        <Stack direction="row">
+          <Skeleton height={32} width={179} containerClassName={skeletonStyles.button} />
+
+          {/* Explore */}
+          {hasExploreRights && <Skeleton height={32} width={107} containerClassName={skeletonStyles.button} />}
+        </Stack>
+      </Card.Tags>
+    </Card>
+  );
+}
+
+DataSourcesListCard.Skeleton = DataSourcesListCardSkeleton;
+
+const getSkeletonStyles = () => {
+  return {
+    button: css({
+      lineHeight: 0,
+    }),
+    figure: css({
+      lineHeight: 0,
+    }),
+  };
+};
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

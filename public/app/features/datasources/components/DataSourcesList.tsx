@@ -6,7 +6,6 @@ import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/core';
 import { StoreState, AccessControlAction, useSelector } from 'app/types';
 
@@ -65,11 +64,7 @@ export function DataSourcesListView({
     });
   }, [location]);
 
-  if (isLoading) {
-    return <PageLoader />;
-  }
-
-  if (dataSourcesCount === 0) {
+  if (!isLoading && dataSourcesCount === 0) {
     return (
       <EmptyListCTA
         buttonDisabled={!hasCreateRights}
@@ -92,17 +87,21 @@ export function DataSourcesListView({
 
       {/* List */}
       <ul className={styles.list}>
-        {dataSources.map((dataSource) => {
-          return (
-            <li key={dataSource.uid}>
-              <DataSourcesListCard
-                dataSource={dataSource}
-                hasWriteRights={hasWriteRights}
-                hasExploreRights={hasExploreRights}
-              />
-            </li>
-          );
-        })}
+        {isLoading
+          ? new Array(20)
+              .fill(null)
+              .map((_, index) => <DataSourcesListCard.Skeleton key={index} hasExploreRights={hasExploreRights} />)
+          : dataSources.map((dataSource) => {
+              return (
+                <li key={dataSource.uid}>
+                  <DataSourcesListCard
+                    dataSource={dataSource}
+                    hasWriteRights={hasWriteRights}
+                    hasExploreRights={hasExploreRights}
+                  />
+                </li>
+              );
+            })}
       </ul>
     </>
   );
