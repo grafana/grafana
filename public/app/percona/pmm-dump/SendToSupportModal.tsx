@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React, { FC, useCallback } from 'react';
 
 import { Modal, Button, Form, Field, Input, useStyles2 } from '@grafana/ui';
 import { Messages } from 'app/percona/pmm-dump/PMMDump.messages';
@@ -27,19 +27,26 @@ export const SendToSupportModal: FC<ModalProps> = ({ onClose, dumpIds }) => {
     directory: '',
   };
 
-  const onSubmit = (values: SendToSupportForm) => {
-    dispatch(
-      sendToSupportAction({
-        sftp_parameters: {
-          user: values.user,
-          address: values.address,
-          password: values.password,
-          directory: values.directory || undefined,
-        },
-        dump_ids: dumpIds,
-      })
-    );
-  };
+  const onSubmit = useCallback(
+    (values: SendToSupportForm) => {
+      dispatch(
+        sendToSupportAction({
+          sftp_parameters: {
+            user: values.user,
+            address: values.address,
+            password: values.password,
+            directory: values.directory || undefined,
+          },
+          dump_ids: dumpIds,
+        })
+      );
+
+      if (!isLoading) {
+        onClose();
+      }
+    },
+    [isLoading, dumpIds, onClose, dispatch]
+  );
 
   return (
     <Modal
