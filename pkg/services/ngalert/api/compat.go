@@ -272,8 +272,8 @@ func AlertingFileExportFromRoute(orgID int64, route definitions.Route) (definiti
 	f := definitions.AlertingFileExport{
 		APIVersion: 1,
 		Policies: []definitions.NotificationPolicyExport{{
-			OrgID:  orgID,
-			Policy: RouteExportFromRoute(&route),
+			OrgID:       orgID,
+			RouteExport: RouteExportFromRoute(&route),
 		}},
 	}
 	return f, nil
