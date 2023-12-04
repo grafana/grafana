@@ -157,6 +157,24 @@ func (evalResults Results) HasErrors() bool {
 	return false
 }
 
+// HasNonRetryableErrors returns true if we have at least 1 result with:
+// 1. A `State` of `Error`
+// 2. The `Error` attribute is not nil
+// 3. The `Error` type is of `&invalidEvalResultFormatError`
+// Our thinking with this approach, is that we don't want to retry errors that have relation with invalid alert definition format.
+func (evalReuslts Results) HasNonRetryableErrors() bool {
+	var count int
+	for _, result := range evalReuslts {
+		if result.State == Error && result.Error != nil {
+			if errors.Is(result.Error, &invalidEvalResultFormatError{}) {
+				count++
+			}
+		}
+	}
+
+	return count > 0
+}
+
 // HasErrors returns true when Results contains at least one element and all elements are errors
 func (evalResults Results) IsError() bool {
 	for _, r := range evalResults {
@@ -175,6 +193,18 @@ func (evalResults Results) IsNoData() bool {
 		}
 	}
 	return true
+}
+
+// Error returns the aggregated `error` of all results of which state is `Error`.
+func (evalResults Results) Error() error {
+	var errs []error
+	for _, result := range evalResults {
+		if result.State == Error && result.Error != nil {
+			errs = append(errs, result.Error)
+		}
+	}
+
+	return errors.Join(errs...)
 }
 
 // Result contains the evaluated State of an alert instance
