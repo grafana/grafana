@@ -47,7 +47,7 @@ func (d *DuckDB) AppendAll(ctx context.Context, frames data.Frames) error {
 		err = db.Close()
 		fmt.Println("failed to close db")
 	}(db)
-	d.createTable(frames)
+	d.createTables(frames)
 	connector, err := duckdb.NewConnector(d.Name, nil)
 	if err != nil {
 		return err
@@ -84,7 +84,7 @@ func (d *DuckDB) AppendAll(ctx context.Context, frames data.Frames) error {
 	return nil
 }
 
-func (d *DuckDB) createTable(frames data.Frames) error {
+func (d *DuckDB) createTables(frames data.Frames) error {
 	for _, f := range frames {
 		name := f.RefID
 		if name == "" {
