@@ -134,6 +134,58 @@ func TestAlertQuery(t *testing.T) {
 			expectedMaxPoints:    defaultMaxDataPoints,
 			expectedIntervalMS:   defaultIntervalMS,
 		},
+		{
+			desc: "given a query with short time range and no intervalMs",
+			alertQuery: AlertQuery{
+				RefID: "A",
+				Model: json.RawMessage(`{
+					"queryType": "metricQuery",
+					"extraParam": "some text"
+				}`),
+				RelativeTimeRange: RelativeTimeRange{
+					From: Duration(time.Duration(5) * time.Minute),
+					To:   Duration(0),
+				},
+			},
+			expectedIsExpression: false,
+			expectedMaxPoints:    defaultMaxDataPoints,
+			expectedIntervalMS:   defaultIntervalMS,
+		},
+		{
+			desc: "given a query with long time range and no intervalMs",
+			alertQuery: AlertQuery{
+				RefID: "A",
+				Model: json.RawMessage(`{
+					"queryType": "metricQuery",
+					"extraParam": "some text"
+				}`),
+				RelativeTimeRange: RelativeTimeRange{
+					From: Duration(time.Duration(24) * time.Hour),
+					To:   Duration(0),
+				},
+			},
+			expectedIsExpression: false,
+			expectedMaxPoints:    defaultMaxDataPoints,
+			expectedIntervalMS:   2000,
+		},
+		{
+			desc: "given a query with long time range, custom maxDataPoints, and no intervalMs",
+			alertQuery: AlertQuery{
+				RefID: "A",
+				Model: json.RawMessage(`{
+					"queryType": "metricQuery",
+					"maxDataPoints": 24,
+					"extraParam": "some text"
+				}`),
+				RelativeTimeRange: RelativeTimeRange{
+					From: Duration(time.Duration(24) * time.Hour),
+					To:   Duration(0),
+				},
+			},
+			expectedIsExpression: false,
+			expectedMaxPoints:    24,
+			expectedIntervalMS:   (time.Duration(1) * time.Hour).Milliseconds(),
+		},
 	}
 
 	for _, tc := range testCases {

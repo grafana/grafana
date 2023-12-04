@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 const defaultMaxDataPoints int64 = 43200 // 12 hours at 1sec interval
@@ -114,7 +115,7 @@ func (aq *AlertQuery) IsExpression() bool {
 }
 
 func (aq *AlertQuery) CalculateModel() (CalculatedModel, error) {
-	return fromRawModel(aq.Model)
+	return fromRawModel(aq.Model, aq.RelativeTimeRange)
 }
 
 // PreSave sets query's properties.
@@ -149,7 +150,7 @@ func (aq *AlertQuery) Validate() error {
 
 type CalculatedModel map[string]any
 
-func fromRawModel(model json.RawMessage) (CalculatedModel, error) {
+func fromRawModel(model json.RawMessage, timeRange RelativeTimeRange) (CalculatedModel, error) {
 	cm := make(CalculatedModel)
 	err := json.Unmarshal(model, &cm)
 	if err != nil {
@@ -159,12 +160,15 @@ func fromRawModel(model json.RawMessage) (CalculatedModel, error) {
 	// GEL requires intervalMs and maxDataPoints inside the query JSON
 	maxDataPoints, err := cm.GetMaxDataPoints()
 	if err != nil || maxDataPoints <= 0 {
-		cm[maxDataPointsKey] = defaultMaxDataPoints
+		maxDataPoints = defaultMaxDataPoints
+		cm[maxDataPointsKey] = maxDataPoints
 	}
 
 	interval, err := cm.GetIntervalDuration()
 	if err != nil || interval <= 0 {
-		cm[intervalMSKey] = defaultIntervalMS
+		calculator := intervalv2.NewCalculator()
+		interval = calculator.Calculate(timeRange.ToTimeRange().AbsoluteTime(time.Now()), time.Duration(int64(time.Millisecond)*defaultIntervalMS), maxDataPoints).Value
+		cm[intervalMSKey] = interval.Milliseconds()
 	}
 
 	return cm, nil
