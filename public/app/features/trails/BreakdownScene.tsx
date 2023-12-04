@@ -20,7 +20,7 @@ import {
   SceneQueryRunner,
   SceneVariableSet,
 } from '@grafana/scenes';
-import { Button, Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, Field, Select, useStyles2 } from '@grafana/ui';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { AddToFiltersGraphAction } from './AddToFiltersGraphAction';
@@ -141,7 +141,11 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
         {loading && <div>Loading...</div>}
         <div className={styles.controls}>
           <Field label="By label">
-            <RadioButtonGroup options={labels} value={value} onChange={model.onChange} />
+            <Select
+              onChange={(val) => model.onChange(val.value || ALL_VARIABLE_VALUE)}
+              options={labels}
+              value={value}
+            />
           </Field>
           {body instanceof LayoutSwitcher && (
             <div className={styles.controlsRight}>
