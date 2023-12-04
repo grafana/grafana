@@ -159,6 +159,11 @@ export const TransformationOperationRow = ({
         {filter && (
           <TransformationFilter index={index} config={configs[index].transformation} data={data} onChange={onChange} />
         )}
+        {/* <p>
+          hi sam, {1 + 2}, {'sam' + 'ben'}
+        </p> */}
+        {/* <p>{JSON.stringify(uiConfig.transformation)}</p> */}
+        <p>{JSON.stringify(configs[index].transformation)}</p>
         <TransformationEditor
           debugMode={showDebug}
           index={index}
