@@ -6,14 +6,14 @@ import (
 	"github.com/prometheus/common/model"
 )
 
-// swagger:route GET /api/v1/provisioning/alert-rules provisioning stable RouteGetAlertRules
+// swagger:route GET /v1/provisioning/alert-rules provisioning stable RouteGetAlertRules
 //
 // Get all the alert rules.
 //
 //     Responses:
 //       200: ProvisionedAlertRules
 
-// swagger:route GET /api/v1/provisioning/alert-rules/export provisioning stable RouteGetAlertRulesExport
+// swagger:route GET /v1/provisioning/alert-rules/export provisioning stable RouteGetAlertRulesExport
 //
 // Export all alert rules in provisioning file format.
 //
@@ -21,7 +21,7 @@ import (
 //       200: AlertingFileExport
 //       404: description: Not found.
 
-// swagger:route GET /api/v1/provisioning/alert-rules/{UID} provisioning stable RouteGetAlertRule
+// swagger:route GET /v1/provisioning/alert-rules/{UID} provisioning stable RouteGetAlertRule
 //
 // Get a specific alert rule by UID.
 //
@@ -29,7 +29,7 @@ import (
 //       200: ProvisionedAlertRule
 //       404: description: Not found.
 
-// swagger:route GET /api/v1/provisioning/alert-rules/{UID}/export provisioning stable RouteGetAlertRuleExport
+// swagger:route GET /v1/provisioning/alert-rules/{UID}/export provisioning stable RouteGetAlertRuleExport
 //
 // Export an alert rule in provisioning file format.
 //
@@ -42,7 +42,7 @@ import (
 //       200: AlertingFileExport
 //       404: description: Not found.
 
-// swagger:route POST /api/v1/provisioning/alert-rules provisioning stable RoutePostAlertRule
+// swagger:route POST /v1/provisioning/alert-rules provisioning stable RoutePostAlertRule
 //
 // Create a new alert rule.
 //
@@ -53,7 +53,7 @@ import (
 //       201: ProvisionedAlertRule
 //       400: ValidationError
 
-// swagger:route PUT /api/v1/provisioning/alert-rules/{UID} provisioning stable RoutePutAlertRule
+// swagger:route PUT /v1/provisioning/alert-rules/{UID} provisioning stable RoutePutAlertRule
 //
 // Update an existing alert rule.
 //
@@ -64,7 +64,7 @@ import (
 //       200: ProvisionedAlertRule
 //       400: ValidationError
 
-// swagger:route DELETE /api/v1/provisioning/alert-rules/{UID} provisioning stable RouteDeleteAlertRule
+// swagger:route DELETE /v1/provisioning/alert-rules/{UID} provisioning stable RouteDeleteAlertRule
 //
 // Delete a specific alert rule by UID.
 //
@@ -158,7 +158,7 @@ type ProvisionedAlertRule struct {
 	IsPaused bool `json:"isPaused"`
 }
 
-// swagger:route GET /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RouteGetAlertRuleGroup
+// swagger:route GET /v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RouteGetAlertRuleGroup
 //
 // Get a rule group.
 //
@@ -166,7 +166,7 @@ type ProvisionedAlertRule struct {
 //       200: AlertRuleGroup
 //       404: description: Not found.
 
-// swagger:route GET /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export provisioning stable RouteGetAlertRuleGroupExport
+// swagger:route GET /v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export provisioning stable RouteGetAlertRuleGroupExport
 //
 // Export an alert rule group in provisioning file format.
 //
@@ -179,7 +179,7 @@ type ProvisionedAlertRule struct {
 //       200: AlertingFileExport
 //       404: description: Not found.
 
-// swagger:route PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RoutePutAlertRuleGroup
+// swagger:route PUT /v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RoutePutAlertRuleGroup
 //
 // Update the interval of a rule group.
 //
