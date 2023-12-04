@@ -29,7 +29,7 @@ const DeleteDashboardModalUnconnected = ({ hideModal, cleanUpDashboardAndVariabl
 
   const [, onConfirm] = useAsyncFn(async () => {
     await deleteDashboard(dashboard.uid, true);
-    cleanUpDashboardAndVariables();
+    // cleanUpDashboardAndVariables(); add for
     hideModal();
     locationService.replace('/');
   }, [hideModal]);

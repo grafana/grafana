@@ -272,6 +272,35 @@ func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id in
 	return queryResult, nil
 }
 
+func (hs *HTTPServer) TrashDashboardByUID(c *contextmodel.ReqContext) response.Response {
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), 0, web.Params(c.Req)[":uid"])
+	if rsp != nil {
+		return rsp
+	}
+
+	guardian, err := guardian.NewByDashboard(c.Req.Context(), dash, c.SignedInUser.GetOrgID(), c.SignedInUser)
+	if err != nil {
+		return response.Err(err)
+	}
+
+	if canDelete, err := guardian.CanDelete(); err != nil || !canDelete {
+		return dashboardGuardianResponse(err)
+	}
+
+	uid := web.Params(c.Req)[":uid"]
+
+	err = hs.DashboardService.TrashDashboardByUID(c.Req.Context(), uid)
+	if err != nil {
+		return response.Error(http.StatusNotFound, "Dashboard coannot be trashed", err)
+	}
+
+	return response.JSON(http.StatusOK, util.DynMap{
+		"title":   dash.Title,
+		"message": fmt.Sprintf("Dashboard %s is in the Trash", dash.Title),
+		"id":      dash.ID,
+	})
+}
+
 // DeleteDashboardByUID swagger:route DELETE /dashboards/uid/{uid} dashboards deleteDashboardByUID
 //
 // Delete dashboard by uid.

@@ -359,8 +359,12 @@ export function getFolderById(id: number): Promise<{ id: number; title: string }
   return getBackendSrv().get(`/api/folders/id/${id}`);
 }
 
-export function deleteDashboard(uid: string, showSuccessAlert: boolean) {
-  return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${uid}`, { showSuccessAlert });
+export function deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<{ id: number; title: string }> {
+  return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${uid}/trash`, { showSuccessAlert });
+}
+
+export function hardDeleteDashboard(uid: string) {
+  return getBackendSrv().delete(`/api/dashboards/uid/${uid}`);
 }
 
 function executeInOrder(tasks: any[]): Promise<unknown> {
