@@ -28,7 +28,8 @@ const DEFAULT_EMPTY_VALUE = SpecialValue.Empty;
 
 // grafana-data does not have access to runtime so we are accessing the window object
 // to get access to the feature toggle
-const supportDataplaneFallback = window.grafanaBootData?.settings?.featureToggles?.dataplaneFrontendFallback;
+// eslint-disable-next-line
+const supportDataplaneFallback = (window as any)?.grafanaBootData?.settings?.featureToggles?.dataplaneFrontendFallback;
 
 export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTransformerOptions> = {
   id: DataTransformerID.groupingToMatrix,
