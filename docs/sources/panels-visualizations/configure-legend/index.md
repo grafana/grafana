@@ -35,8 +35,6 @@ Legends are supported for the following visualizations:
 
 You can find the following options under the **Legend** section in the panel edit pane.
 
-<!--consider making these bullet points rather than H3s-->
-
 {{% admonition type="note" %}}
 Not all of the options listed apply to all visualizations with legends.
 {{% /admonition %}}
@@ -69,7 +67,7 @@ If you set the legend placement to **Right**, the **Width** option becomes avail
 
 You can add more context to a visualization by adding series data values or [calculations][] to a legend. You can add as many values as you'd like. After you apply your changes, you can horizontally scroll the legend to see all values.
 
-<!--add image here that shows a value or calculation in the legend-->
+![Legend formatted as a table showing calculated values](/screenshot-legend-calculations-10.3.png)
 
 ## Change a series color
 
