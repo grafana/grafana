@@ -7,13 +7,14 @@ import { promDurationValidator, repeatIntervalValidator } from 'app/features/ale
 
 import { PromDurationInput } from '../../../../notification-policies/PromDurationInput';
 import { getFormStyles } from '../../../../notification-policies/formStyles';
+import { routeTimingsFields } from '../../../../notification-policies/routeTimingsFields';
 import { TIMING_OPTIONS_DEFAULTS } from '../../../../notification-policies/timingOptions';
 
-interface RouteTimmingsProps {
+interface RouteTimingsProps {
   alertManager: string;
 }
 
-export function RouteTimmings({ alertManager }: RouteTimmingsProps) {
+export function RouteTimings({ alertManager }: RouteTimingsProps) {
   const formStyles = useStyles2(getFormStyles);
   const {
     register,
@@ -23,21 +24,21 @@ export function RouteTimmings({ alertManager }: RouteTimmingsProps) {
   return (
     <>
       <Field
-        label="Group wait"
-        description="The waiting time until the initial notification is sent for a new group created by an incoming alert. If empty it will be inherited from the parent policy."
+        label={routeTimingsFields.groupWait.label}
+        description={routeTimingsFields.groupWait.description}
         invalid={!!errors.contactPoints?.[alertManager]?.groupWaitValue}
         error={errors.contactPoints?.[alertManager]?.groupWaitValue?.message}
       >
         <PromDurationInput
           {...register(`contactPoints.${alertManager}.groupWaitValue`, { validate: promDurationValidator })}
-          aria-label="Group wait value"
+          aria-label={routeTimingsFields.groupWait.ariaLabel}
           className={formStyles.promDurationInput}
           placeholder={TIMING_OPTIONS_DEFAULTS.group_wait}
         />
       </Field>
       <Field
-        label="Group interval"
-        description="The waiting time to send a batch of new alerts for that group after the first notification was sent. If empty it will be inherited from the parent policy."
+        label={routeTimingsFields.groupInterval.label}
+        description={routeTimingsFields.groupInterval.description}
         invalid={!!errors.contactPoints?.[alertManager]?.groupIntervalValue}
         error={errors.contactPoints?.[alertManager]?.groupIntervalValue?.message}
       >
@@ -45,14 +46,14 @@ export function RouteTimmings({ alertManager }: RouteTimmingsProps) {
           {...register(`contactPoints.${alertManager}.groupIntervalValue`, {
             validate: promDurationValidator,
           })}
-          aria-label="Group interval value"
+          aria-label={routeTimingsFields.groupInterval.ariaLabel}
           className={formStyles.promDurationInput}
           placeholder={TIMING_OPTIONS_DEFAULTS.group_interval}
         />
       </Field>
       <Field
-        label="Repeat interval"
-        description="The waiting time to resend an alert after they have successfully been sent."
+        label={routeTimingsFields.repeatInterval.label}
+        description={routeTimingsFields.repeatInterval.description}
         invalid={!!errors.contactPoints?.[alertManager]?.repeatIntervalValue}
         error={errors.contactPoints?.[alertManager]?.repeatIntervalValue?.message}
       >
@@ -63,7 +64,7 @@ export function RouteTimmings({ alertManager }: RouteTimmingsProps) {
               return repeatIntervalValidator(value, groupInterval);
             },
           })}
-          aria-label="Repeat interval value"
+          aria-label={routeTimingsFields.repeatInterval.ariaLabel}
           className={formStyles.promDurationInput}
           placeholder={TIMING_OPTIONS_DEFAULTS.repeat_interval}
         />

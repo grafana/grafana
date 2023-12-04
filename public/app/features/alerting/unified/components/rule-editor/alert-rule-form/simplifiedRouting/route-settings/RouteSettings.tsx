@@ -15,7 +15,7 @@ import {
 import { getFormStyles } from '../../../../notification-policies/formStyles';
 import { TIMING_OPTIONS_DEFAULTS } from '../../../../notification-policies/timingOptions';
 
-import { RouteTimmings } from './RouteTimings';
+import { RouteTimings } from './RouteTimings';
 
 export interface RoutingSettingsProps {
   alertManager: string;
@@ -88,7 +88,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
           </Text>
         )}
       </Stack>
-      {overrideTimings && <RouteTimmings alertManager={alertManager} />}
+      {overrideTimings && <RouteTimings alertManager={alertManager} />}
     </Stack>
   );
 };
