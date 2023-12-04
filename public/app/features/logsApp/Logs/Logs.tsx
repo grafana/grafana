@@ -65,6 +65,7 @@ import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { SETTINGS_KEYS } from './utils/logs';
 import { LogDetails } from './LogDetails';
+import { LogStats } from './LogStats';
 
 interface Props extends Themeable2 {
   width: number;
@@ -816,7 +817,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 </InfiniteScroll>
               </div>
             )}
-            {this.state.logDetailsRow && (
+            {this.state.logDetailsRow ? (
               <LogDetails
                 showDuplicates={false}
                 getFieldLinks={getFieldLinks}
@@ -833,6 +834,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 styles={logRowStyles}
                 isFilterLabelActive={this.props.isFilterLabelActive}
               />
+            ) : (
+              <LogStats styles={logRowStyles} rows={logRows} />
             )}
             {!loading && !hasData && !scanning && (
               <div className={styles.logRows}>
