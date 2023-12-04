@@ -187,7 +187,7 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 					return actual[i] < actual[j]
 				})
 
-				require.EqualValues(t, []uint64{18446744073709551615, 2, 3, 4, 5}, actual)
+				require.EqualValues(t, []uint64{2, 3, 4, 5, 18446744073709551615}, actual)
 			},
 		},
 	}
