@@ -92,7 +92,7 @@ function DataSourcesListCardSkeleton({ hasExploreRights }: Pick<Props, 'hasExplo
         <Skeleton width={120} />
       </Card.Meta>
       <Card.Tags>
-        <Stack direction="row">
+        <Stack direction="row" gap={2}>
           <Skeleton height={32} width={179} containerClassName={skeletonStyles.button} />
 
           {/* Explore */}
