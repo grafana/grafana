@@ -142,6 +142,9 @@ export const TransformationOperationRow = ({
     );
   };
 
+  // This doesn't seem to work. Ask Russ to find out why.
+  // configs[index].transformation.prql = 'Will insert the PRQL here';
+
   return (
     <>
       <QueryOperationRow
