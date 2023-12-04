@@ -175,7 +175,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
         <QueryHeaderSwitch label="Explain query" value={explain} onChange={onExplainChange} />
         <FlexItem grow={1} />
         <Button
-          variant={dataIsStale ? 'primary' : 'secondary'}
+          variant="primary"
           size="sm"
           onClick={onRunQuery}
           icon={data?.state === LoadingState.Loading ? 'spinner' : undefined}

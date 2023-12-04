@@ -73,7 +73,6 @@ export default function LogsAppPage(props: GrafanaRouteComponentProps<{}, Explor
         {panes.map(([exploreId]) => {
           return (
             <ErrorBoundaryAlert key={exploreId} style="page">
-              <div>LOGS APP</div>
               <ExplorePaneContainer exploreId={exploreId} />
             </ErrorBoundaryAlert>
           );

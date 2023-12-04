@@ -18,12 +18,13 @@ import {
   PanelData,
   PanelEvents,
   QueryResultMetaNotice,
+  RawTimeRange,
   TimeRange,
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { AngularComponent, getAngularLoader, getDataSourceSrv } from '@grafana/runtime';
-import { Badge, ErrorBoundaryAlert } from '@grafana/ui';
+import { Badge, ErrorBoundaryAlert, TimeRangeInput } from '@grafana/ui';
 import {
   QueryOperationRow,
   QueryOperationRowRenderProps,
@@ -35,6 +36,8 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { QueryEditorRowHeader } from '../query/components/QueryEditorRowHeader';
 import { QueryErrorAlert } from '../query/components/QueryErrorAlert';
+
+import { getDefaultLogsTimeRange } from './state/utils';
 
 interface Props<TQuery extends DataQuery> {
   data: PanelData;
@@ -60,6 +63,8 @@ interface Props<TQuery extends DataQuery> {
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
   collapsable?: boolean;
+  range?: TimeRange;
+  updateTimeRange: (range: RawTimeRange) => void;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -261,7 +266,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 
   renderPluginEditor = () => {
-    const { query, onChange, queries, onRunQuery, onAddQuery, app = CoreApp.PanelEditor, history } = this.props;
+    const { query, onChange, queries, onRunQuery, onAddQuery, app = CoreApp.PanelEditor, history, range } = this.props;
     const { datasource, data } = this.state;
 
     if (this.isWaitingForDatasourceToLoad()) {
@@ -274,7 +279,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
     if (datasource) {
       let QueryEditor = this.getReactQueryEditor(datasource);
-
       if (QueryEditor) {
         return (
           <DataSourcePluginContextProvider instanceSettings={this.props.dataSource}>
@@ -286,7 +290,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
               onRunQuery={onRunQuery}
               onAddQuery={onAddQuery}
               data={data}
-              range={getTimeSrv().timeRange()}
+              range={range ?? getDefaultLogsTimeRange()}
               queries={queries}
               app={app}
               history={history}
@@ -416,7 +420,15 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   renderHeader = (props: QueryOperationRowRenderProps) => {
-    const { alerting, query, dataSource, onChangeDataSource, onChange, queries, renderHeaderExtras } = this.props;
+    const { alerting, query, dataSource, onChangeDataSource, onChange, queries, range, updateTimeRange } = this.props;
+    const onChangeTime = (timeRange: TimeRange) => {
+      updateTimeRange(timeRange.raw);
+    };
+    const renderHeaderExtras = () => (
+      <div style={{ position: 'absolute', top: '13px' }}>
+        <TimeRangeInput value={range ?? getDefaultLogsTimeRange()} onChange={onChangeTime} />
+      </div>
+    );
 
     return (
       <QueryEditorRowHeader
@@ -430,6 +442,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         collapsedText={!props.isOpen ? this.renderCollapsedText() : null}
         renderExtras={renderHeaderExtras}
         alerting={alerting}
+        logs={true}
       />
     );
   };

@@ -606,7 +606,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                     <ContentOutlineItem title="Queries" icon="arrow">
                       <PanelContainer className={styles.queryContainer}>
                         {correlationsBox}
-                        <QueryRows exploreId={exploreId} />
+                        <QueryRows exploreId={exploreId} onChangeTime={this.onChangeTime} />
                         <ResponseErrorContainer exploreId={exploreId} />
                       </PanelContainer>
                     </ContentOutlineItem>
