@@ -90,8 +90,6 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return apierrors.NewInternalError(fmt.Errorf("could not get request info"))
 	}
 
-	fmt.Printf("k8s CREATE: %#v\n\n%#v\n\n%#v\n\n%#v\n\n", key, obj, out, requestInfo)
-
 	if err := s.Versioner().PrepareObjectForStorage(obj); err != nil {
 		return err
 	}
@@ -123,8 +121,6 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		Entity: e,
 	}
 
-	// fmt.Printf("req: %#v\n\n", req)
-
 	rsp, err := s.store.Create(ctx, req)
 	if err != nil {
 		return err
@@ -145,7 +141,6 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		})
 	*/
 
-	fmt.Printf("k8s CREATE:%#v\n", out)
 	return nil
 }
 
@@ -185,7 +180,6 @@ func (s *Storage) Delete(
 		return apierrors.NewInternalError(err)
 	}
 
-	fmt.Printf("k8s DELETE:%#v\n", out)
 	return nil
 }
 
@@ -235,7 +229,6 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 		return apierrors.NewInternalError(err)
 	}
 
-	fmt.Printf("k8s GET:%#v\n\n", objPtr)
 	return nil
 }
 
@@ -251,10 +244,6 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		return apierrors.NewInternalError(err)
 	}
 
-	k := key
-
-	// fmt.Printf("kind: %#v\n", k)
-
 	listPtr, err := meta.GetItemsPtr(listObj)
 	if err != nil {
 		return err
@@ -264,8 +253,8 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		return err
 	}
 
-	rsp, err := s.store.Search(ctx, &entityStore.EntitySearchRequest{
-		Key:      []string{k},
+	rsp, err := s.store.List(ctx, &entityStore.EntityListRequest{
+		Key:      []string{key},
 		WithBody: true,
 	})
 	if err != nil {
@@ -290,10 +279,8 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 
 	if rsp.NextPageToken != "" {
 		listAccessor.SetContinue(rsp.NextPageToken)
-		// fmt.Printf("CONTINUE: %s\n", rsp.NextPageToken)
 	}
 
-	fmt.Printf("k8s GETLIST: %#v\n\n", listObj)
 	return nil
 }
 
@@ -319,10 +306,6 @@ func (s *Storage) GuaranteedUpdate(
 	tryUpdate storage.UpdateFunc,
 	cachedExistingObject runtime.Object,
 ) error {
-	// ctx, err := contextWithFakeGrafanaUser(ctx)
-	// if err != nil {
-	// 	return err
-	// }
 	var err error
 	for attempt := 1; attempt <= MaxUpdateAttempts; attempt = attempt + 1 {
 		err = s.guaranteedUpdate(ctx, key, destination, ignoreNotFound, preconditions, tryUpdate, cachedExistingObject)
@@ -361,7 +344,6 @@ func (s *Storage) guaranteedUpdate(
 	res := &storage.ResponseMeta{}
 	updatedObj, _, err := tryUpdate(destination, *res)
 	if err != nil {
-		fmt.Printf("tryUpdate error: %s\n", err.Error())
 		var statusErr *apierrors.StatusError
 		if errors.As(err, &statusErr) {
 			// For now, forbidden may come from a mutation handler
@@ -389,8 +371,6 @@ func (s *Storage) guaranteedUpdate(
 		Entity:          e,
 		PreviousVersion: previousVersion,
 	}
-
-	fmt.Printf("req: %#v\n", req)
 
 	rsp, err := s.store.Update(ctx, req)
 	if err != nil {

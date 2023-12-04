@@ -36,8 +36,8 @@ func (c *entityStoreClientWrapper) Delete(ctx context.Context, in *DeleteEntityR
 func (c *entityStoreClientWrapper) History(ctx context.Context, in *EntityHistoryRequest) (*EntityHistoryResponse, error) {
 	return c.EntityStoreClient.History(ctx, in)
 }
-func (c *entityStoreClientWrapper) Search(ctx context.Context, in *EntitySearchRequest) (*EntitySearchResponse, error) {
-	return c.EntityStoreClient.Search(ctx, in)
+func (c *entityStoreClientWrapper) List(ctx context.Context, in *EntityListRequest) (*EntityListResponse, error) {
+	return c.EntityStoreClient.List(ctx, in)
 }
 func (c *entityStoreClientWrapper) Watch(*EntityWatchRequest, EntityStore_WatchServer) error {
 	return status.Errorf(codes.Unimplemented, "method Watch not implemented")

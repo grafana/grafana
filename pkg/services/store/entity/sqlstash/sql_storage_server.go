@@ -340,8 +340,6 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 		return nil, err
 	}
 
-	fmt.Printf("r.Entity: %#v\n", r.Entity)
-
 	timestamp := time.Now().UnixMilli()
 	createdAt := r.Entity.CreatedAt
 	createdBy := r.Entity.CreatedBy
@@ -537,9 +535,6 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 			"message":       current.Message,
 		}
 
-		fmt.Printf("VALUES: %+v\n", values)
-		fmt.Printf("CURRENT: %+v\n", current)
-
 		// 1. Add the `entity_history` values
 		query, args, err := s.dialect.InsertQuery("entity_history", values)
 		if err != nil {
@@ -633,8 +628,6 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 		s.log.Error("error validating GRN", "msg", err.Error())
 		return nil, err
 	}
-
-	fmt.Printf("r.Entity: %#v\n", r.Entity)
 
 	createdAt := r.Entity.CreatedAt
 	createdBy := r.Entity.CreatedBy
@@ -789,9 +782,6 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 			"message":       current.Message,
 		}
 
-		fmt.Printf("VALUES: %+v\n", values)
-		fmt.Printf("CURRENT: %+v\n", current)
-
 		// 1. Add the `entity_history` values
 		query, args, err := s.dialect.InsertQuery("entity_history", values)
 		if err != nil {
@@ -852,8 +842,6 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		s.log.Error("error validating GRN", "msg", err.Error())
 		return nil, err
 	}
-
-	fmt.Printf("r.Entity: %#v\n", r.Entity)
 
 	timestamp := time.Now().UnixMilli()
 	updatedAt := r.Entity.UpdatedAt
@@ -1009,9 +997,6 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 			"origin_ts":     current.Origin.Time,
 			"message":       current.Message,
 		}
-
-		fmt.Printf("VALUES: %+v\n", values)
-		fmt.Printf("CURRENT: %+v\n", current)
 
 		// 1. Add the `entity_history` values
 		query, args, err := s.dialect.InsertQuery("entity_history", values)
@@ -1244,7 +1229,7 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 	return rsp, err
 }
 
-func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequest) (*entity.EntitySearchResponse, error) {
+func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest) (*entity.EntityListResponse, error) {
 	if err := s.Init(); err != nil {
 		return nil, err
 	}
@@ -1341,7 +1326,7 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 	}
 	defer func() { _ = rows.Close() }()
 	token := ""
-	rsp := &entity.EntitySearchResponse{}
+	rsp := &entity.EntityListResponse{}
 	for rows.Next() {
 		result := &entity.Entity{
 			GRN: &grn.GRN{},
@@ -1408,7 +1393,7 @@ func (s *sqlEntityServer) Watch(*entity.EntityWatchRequest, entity.EntityStore_W
 	return fmt.Errorf("unimplemented")
 }
 
-func (s *sqlEntityServer) FindReferences(ctx context.Context, r *entity.ReferenceRequest) (*entity.EntitySearchResponse, error) {
+func (s *sqlEntityServer) FindReferences(ctx context.Context, r *entity.ReferenceRequest) (*entity.EntityListResponse, error) {
 	if err := s.Init(); err != nil {
 		return nil, err
 	}
@@ -1454,7 +1439,7 @@ func (s *sqlEntityServer) FindReferences(ctx context.Context, r *entity.Referenc
 	}
 	defer func() { _ = rows.Close() }()
 	token := ""
-	rsp := &entity.EntitySearchResponse{}
+	rsp := &entity.EntityListResponse{}
 	for rows.Next() {
 		result := &entity.Entity{
 			GRN: &grn.GRN{},

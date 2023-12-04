@@ -136,13 +136,6 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object) error {
 	} else {
 		metaAccessor.SetNamespace("default") // org 1
 	}
-	/*
-		res.GetObjectKind().SetGroupVersionKind(schema.GroupVersionKind{
-			Group:   rsp.GRN.ResourceGroup,
-			Version: rsp.GroupVersion,
-			Kind:    rsp.GRN.ResourceKind,
-		})
-	*/
 	metaAccessor.SetUID(types.UID(rsp.Guid))
 	metaAccessor.SetResourceVersion(rsp.Version)
 	metaAccessor.SetCreationTimestamp(metav1.Unix(rsp.CreatedAt/1000, rsp.CreatedAt%1000*1000000))
@@ -200,8 +193,6 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object) error {
 		}
 	}
 
-	// fmt.Printf("RESOURCE: %#v\n\n", res)
-
 	return nil
 }
 
@@ -210,8 +201,6 @@ func resourceToEntity(key string, res runtime.Object, requestInfo *request.Reque
 	if err != nil {
 		return nil, err
 	}
-
-	// fmt.Printf("RESOURCE: %+v\n", res)
 
 	g, err := keyToGRN(key)
 	if err != nil {
@@ -253,6 +242,7 @@ func resourceToEntity(key string, res runtime.Object, requestInfo *request.Reque
 		return nil, err
 	}
 
+	// TODO: store entire object in body?
 	spec := reflect.ValueOf(res).Elem().FieldByName("Spec")
 	if spec != (reflect.Value{}) {
 		rsp.Body, err = json.Marshal(spec.Interface())
@@ -268,8 +258,6 @@ func resourceToEntity(key string, res runtime.Object, requestInfo *request.Reque
 			return nil, err
 		}
 	}
-
-	// fmt.Printf("ENTITY: %+v\n", rsp)
 
 	return rsp, nil
 }

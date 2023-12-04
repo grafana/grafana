@@ -12,7 +12,7 @@ import (
 )
 
 func init() { //nolint:gochecknoinits
-	jsoniter.RegisterTypeEncoder("entity.EntitySearchResult", &searchResultCodec{})
+	jsoniter.RegisterTypeEncoder("entity.EntityListResult", &ListResultCodec{})
 	jsoniter.RegisterTypeEncoder("entity.WriteEntityResponse", &writeResponseCodec{})
 
 	jsoniter.RegisterTypeEncoder("entity.Entity", &rawEntityCodec{})
@@ -191,20 +191,20 @@ func readEntity(iter *jsoniter.Iterator, raw *Entity) {
 }
 
 // Unlike the standard JSON marshal, this will write bytes as JSON when it can
-type searchResultCodec struct{}
+type ListResultCodec struct{}
 
-func (obj *EntitySearchResult) MarshalJSON() ([]byte, error) {
+func (obj *EntityListResult) MarshalJSON() ([]byte, error) {
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	return json.Marshal(obj)
 }
 
-func (codec *searchResultCodec) IsEmpty(ptr unsafe.Pointer) bool {
-	f := (*EntitySearchResult)(ptr)
+func (codec *ListResultCodec) IsEmpty(ptr unsafe.Pointer) bool {
+	f := (*EntityListResult)(ptr)
 	return f.GRN == nil && f.Body == nil
 }
 
-func (codec *searchResultCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
-	obj := (*EntitySearchResult)(ptr)
+func (codec *ListResultCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
+	obj := (*EntityListResult)(ptr)
 	stream.WriteObjectStart()
 	stream.WriteObjectField("GUID")
 	stream.WriteVal(obj.Guid)
