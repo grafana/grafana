@@ -85,6 +85,8 @@ interface Props extends Themeable2 {
   datasourceType?: string;
   logsVolumeEnabled: boolean;
   logsVolumeData: DataQueryResponse | undefined;
+  logsCountEnabled: boolean;
+  logsCountData: DataQueryResponse | undefined;
   onSetLogsVolumeEnabled: (enabled: boolean) => void;
   loadLogsVolumeData: (suppQueryType?: SupplementaryQueryType) => void;
   showContextToggle?: (row: LogRowModel) => boolean;
@@ -528,6 +530,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
       logRows,
       logsVolumeEnabled,
       logsVolumeData,
+      logsCountEnabled,
+      logsCountData,
       loadLogsVolumeData,
       loading = false,
       onClickFilterLabel,
@@ -574,7 +578,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     const navigationRange = this.createNavigationRange(logRows);
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
-
+    const title = logsVolumeData?.data ? 'Logs count in time' : logsCountData?.data ? 'Logs count over time' : '';
     return (
       <>
         {getRowContext && contextRow && (
@@ -590,26 +594,33 @@ class UnthemedLogs extends PureComponent<Props, State> {
           />
         )}
         <PanelChrome
-          title="Logs volume"
+          title={title}
           collapsible
           collapsed={!logsVolumeEnabled}
           onToggleCollapse={this.onToggleLogsVolumeCollapse}
+          height={210}
+          width={width + 16}
         >
-          {logsVolumeEnabled && (
-            <LogsVolumePanelList
-              absoluteRange={absoluteRange}
-              width={width}
-              logsVolumeData={logsVolumeData}
-              onUpdateTimeRange={onChangeTime}
-              timeZone={timeZone}
-              splitOpen={splitOpen}
-              onLoadLogsVolume={loadLogsVolumeData}
-              onHiddenSeriesChanged={this.onToggleLogLevel}
-              eventBus={this.logsVolumeEventBus}
-              onClose={() => this.onToggleLogsVolumeCollapse(true)}
-              datasourceInstance={this.props.datasourceInstance}
-            />
-          )}
+          {(w, h) =>
+            logsVolumeEnabled || logsCountEnabled ? (
+              <LogsVolumePanelList
+                absoluteRange={absoluteRange}
+                width={w}
+                logsVolumeData={logsVolumeData}
+                logsCountData={logsCountData}
+                onUpdateTimeRange={onChangeTime}
+                timeZone={timeZone}
+                splitOpen={splitOpen}
+                onLoadLogsVolume={loadLogsVolumeData}
+                onHiddenSeriesChanged={this.onToggleLogLevel}
+                eventBus={this.logsVolumeEventBus}
+                onClose={() => this.onToggleLogsVolumeCollapse(true)}
+                datasourceInstance={this.props.datasourceInstance}
+              />
+            ) : (
+              <></>
+            )
+          }
         </PanelChrome>
         <PanelChrome
           titleItems={[

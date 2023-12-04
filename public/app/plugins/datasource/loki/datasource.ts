@@ -46,7 +46,7 @@ import { Duration } from '@grafana/lezer-logql';
 import { BackendSrvRequest, config, DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 
-import { queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
+import { queryLogsCount, queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
 import { getLogLevelFromKey } from '../../../features/logs/utils';
 import { replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
 
@@ -107,6 +107,7 @@ export const REF_ID_STARTER_ANNOTATION = 'annotation-';
 export const REF_ID_STARTER_LOG_ROW_CONTEXT = 'log-row-context-query-';
 export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
 export const REF_ID_STARTER_LOG_SAMPLE = 'log-sample-';
+export const REF_ID_STARTER_LOG_COUNT = 'log-count-';
 export const REF_ID_STARTER_STATS = 'log-stats-';
 
 const NS_IN_MS = 1000000;
@@ -183,6 +184,8 @@ export class LokiDatasource
         return this.getLogsVolumeDataProvider(request);
       case SupplementaryQueryType.LogsSample:
         return this.getLogsSampleDataProvider(request);
+      case SupplementaryQueryType.LogsCount:
+        return this.getLogsCountDataProvider(request);
       default:
         return undefined;
     }
@@ -194,7 +197,7 @@ export class LokiDatasource
    * @returns An array of supported supplementary query types.
    */
   getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[] {
-    return [SupplementaryQueryType.LogsVolume, SupplementaryQueryType.LogsSample];
+    return [SupplementaryQueryType.LogsVolume, SupplementaryQueryType.LogsSample, SupplementaryQueryType.LogsCount];
   }
 
   /**
@@ -236,10 +239,28 @@ export class LokiDatasource
         return {
           ...normalizedQuery,
           queryType: LokiQueryType.Range,
-          refId: `${REF_ID_STARTER_LOG_SAMPLE}${normalizedQuery.refId}`,
+          refId: `${REF_ID_STARTER_LOG_COUNT}${normalizedQuery.refId}`,
           expr: getLogQueryFromMetricsQuery(expr),
           maxLines: Number.isNaN(Number(options.limit)) ? this.maxLines : Number(options.limit),
         };
+
+      case SupplementaryQueryType.LogsCount:
+        // it has to be a metric query
+        isQuerySuitable = !!(expr && isLogsQuery(expr));
+        if (!isQuerySuitable) {
+          return undefined;
+        }
+
+        const expr1 = `sum(count_over_time(${expr}[$__auto]))`;
+        console.log(expr1);
+        const q = {
+          ...normalizedQuery,
+          queryType: LokiQueryType.Instant,
+          refId: `${REF_ID_STARTER_LOG_SAMPLE}${normalizedQuery.refId}`,
+          expr: expr1,
+        };
+        console.log(q);
+        return q;
 
       default:
         return undefined;
@@ -287,6 +308,21 @@ export class LokiDatasource
     return queryLogsSample(this, { ...logsSampleRequest, targets });
   }
 
+  /**
+   * Private method used in the `getDataProvider` for DataSourceWithSupplementaryQueriesSupport, specifically for Logs sample queries.
+   * @returns An Observable of DataQueryResponse or undefined if no suitable queries are found.
+   */
+  private getLogsCountDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
+    const logsCountRequest = cloneDeep(request);
+    const targets = logsCountRequest.targets
+      .map((query) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsCount }, query))
+      .filter((query): query is LokiQuery => !!query);
+
+    if (!targets.length) {
+      return undefined;
+    }
+    return queryLogsCount(this, { ...logsCountRequest, targets });
+  }
   /**
    * Required by DataSourceApi. It executes queries based on the provided DataQueryRequest.
    * @returns An Observable of DataQueryResponse containing the query results.

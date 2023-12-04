@@ -23,6 +23,7 @@ import { makeDataFramesForLogs } from '../../logs/logsModel';
 export const supplementaryQueryTypes: SupplementaryQueryType[] = [
   SupplementaryQueryType.LogsVolume,
   SupplementaryQueryType.LogsSample,
+  SupplementaryQueryType.LogsCount,
 ];
 
 const getSupplementaryQuerySettingKey = (type: SupplementaryQueryType) => `grafana.explore.logs.enable${type}`;
@@ -36,6 +37,7 @@ export const loadSupplementaryQueries = (): SupplementaryQueries => {
   let supplementaryQueries: SupplementaryQueries = {
     [SupplementaryQueryType.LogsVolume]: { enabled: true },
     [SupplementaryQueryType.LogsSample]: { enabled: false },
+    [SupplementaryQueryType.LogsCount]: { enabled: false },
   };
 
   for (const type of supplementaryQueryTypes) {

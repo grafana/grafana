@@ -704,6 +704,79 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
   });
 }
 
+//queryLogsCount
+/**
+ * Creates an observable, which makes requests to get logs volume and aggregates results.
+ */
+export function queryLogsCount<TQuery extends DataQuery, TOptions extends DataSourceJsonData>(
+  datasource: DataSourceApi<TQuery, TOptions>,
+  logsCountRequest: DataQueryRequest<TQuery>
+): Observable<DataQueryResponse> {
+  logsCountRequest.hideFromInspector = true;
+
+  return new Observable((observer) => {
+    let logsCountData: DataFrame[] = [];
+    observer.next({
+      state: LoadingState.Loading,
+      error: undefined,
+      data: [],
+    });
+
+    const queryResponse = datasource.query(logsCountRequest);
+    const queryObservable = isObservable(queryResponse) ? queryResponse : from(queryResponse);
+
+    const subscription = queryObservable.subscribe({
+      complete: () => {
+        observer.complete();
+      },
+      next: (dataQueryResponse: DataQueryResponse) => {
+        const { error } = dataQueryResponse;
+        if (error !== undefined) {
+          observer.next({
+            state: LoadingState.Error,
+            error,
+            data: [],
+          });
+          observer.error(error);
+        } else {
+          logsCountData = dataQueryResponse.data.map((dataFrame) => {
+            let sourceRefId = dataFrame.refId || '';
+            if (sourceRefId.startsWith('log-count-')) {
+              sourceRefId = sourceRefId.substr('log-count-'.length);
+            }
+
+            dataFrame.meta = {
+              ...dataFrame.meta,
+              custom: {
+                ...dataFrame.meta?.custom,
+                type: 'logscount',
+              },
+            };
+            return dataFrame;
+          });
+
+          observer.next({
+            state: dataQueryResponse.state,
+            error: undefined,
+            data: logsCountData,
+          });
+        }
+      },
+      error: (error) => {
+        observer.next({
+          state: LoadingState.Error,
+          error: error,
+          data: [],
+        });
+        observer.error(error);
+      },
+    });
+    return () => {
+      subscription?.unsubscribe();
+    };
+  });
+}
+
 /**
  * Creates an observable, which makes requests to get logs sample.
  */

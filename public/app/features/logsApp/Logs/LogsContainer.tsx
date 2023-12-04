@@ -269,6 +269,7 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
       addResultsToCache,
       clearCache,
       logsVolume,
+      logsCount,
       scrollElement,
     } = this.props;
 
@@ -305,17 +306,19 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
             logsMeta={logsMeta}
             logsSeries={logsSeries}
             logsVolumeEnabled={logsVolume.enabled}
+            logsCountEnabled={logsCount.enabled}
             onSetLogsVolumeEnabled={(enabled) =>
               setSupplementaryQueryEnabled(exploreId, enabled, SupplementaryQueryType.LogsVolume)
             }
             logsVolumeData={logsVolume.data}
+            logsCountData={logsCount.data}
             logsQueries={logsQueries}
             width={width}
             splitOpen={splitOpenFn}
             loading={loading}
             loadingState={loadingState}
             loadLogsVolumeData={(suppQueryType?: SupplementaryQueryType) =>
-              loadSupplementaryQueryData(exploreId, suppQueryType ?? SupplementaryQueryType.LogsVolume)
+              loadSupplementaryQueryData(exploreId, suppQueryType ?? SupplementaryQueryType.LogsCount)
             }
             onChangeTime={this.onChangeTime}
             loadMoreLogs={this.loadMoreLogs}
@@ -368,6 +371,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   const panelState = item.panelsState;
   const timeZone = getTimeZone(state.user);
   const logsVolume = supplementaryQueries[SupplementaryQueryType.LogsVolume];
+  const logsCount = supplementaryQueries[SupplementaryQueryType.LogsCount];
 
   return {
     loading,
@@ -385,6 +389,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     range,
     absoluteRange,
     logsVolume,
+    logsCount,
     panelState,
     logsFrames: item.queryResponse.logsFrames,
   };

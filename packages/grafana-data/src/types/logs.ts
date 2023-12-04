@@ -167,12 +167,13 @@ export const hasLogsContextSupport = (datasource: unknown): datasource is DataSo
 export enum SupplementaryQueryType {
   LogsVolume = 'LogsVolume',
   LogsSample = 'LogsSample',
+  LogsCount = 'LogsCount',
 }
 
 /**
  * @internal
  */
-export type SupplementaryQueryOptions = LogsVolumeOption | LogsSampleOptions;
+export type SupplementaryQueryOptions = LogsVolumeOption | LogsSampleOptions | LogsCountOptions;
 
 /**
  * @internal
@@ -187,6 +188,14 @@ export type LogsVolumeOption = {
 export type LogsSampleOptions = {
   type: SupplementaryQueryType.LogsSample;
   limit?: number;
+};
+
+/**
+ * @internal
+ */
+export type LogsCountOptions = {
+  type: SupplementaryQueryType.LogsCount;
+  label?: string;
 };
 
 /**

@@ -11,21 +11,24 @@ import {
   EventBus,
   GrafanaTheme2,
   LoadingState,
+  PanelData,
   SelectableValue,
   SplitOpen,
   SupplementaryQueryType,
   TimeZone,
+  fieldColorModeRegistry,
 } from '@grafana/data';
-import { Button, InlineField, Alert, useStyles2, Select } from '@grafana/ui';
+import { PanelRenderer } from '@grafana/runtime';
+import { FieldColor, FieldColorModeId } from '@grafana/schema';
+import { Button, InlineField, useStyles2, Select } from '@grafana/ui';
 
 import { mergeLogsVolumeDataFrames, isLogsVolumeLimited, getLogsVolumeMaximumRange } from '../../logs/utils';
-import { SupplementaryResultError } from '../SupplementaryResultError';
 
 import { LogsVolumePanel } from './LogsVolumePanel';
-import { isTimeoutErrorResponse } from './utils/logsVolumeResponse';
 
 type Props = {
   logsVolumeData: DataQueryResponse | undefined;
+  logsCountData: DataQueryResponse | undefined;
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
   splitOpen: SplitOpen;
@@ -40,6 +43,7 @@ type Props = {
 
 export const LogsVolumePanelList = ({
   logsVolumeData,
+  logsCountData,
   absoluteRange,
   onUpdateTimeRange,
   width,
@@ -88,42 +92,36 @@ export const LogsVolumePanelList = ({
     return !isLogsVolumeLimited(data) && zoomRatio && zoomRatio < 1;
   });
 
-  const timeoutError = isTimeoutErrorResponse(logsVolumeData);
-
   const visibleRange = {
     from: Math.max(absoluteRange.from, allLogsVolumeMaximumRange.from),
     to: Math.min(absoluteRange.to, allLogsVolumeMaximumRange.to),
   };
 
-  if (logsVolumeData?.state === LoadingState.Loading) {
+  if (logsVolumeData?.state === LoadingState.Loading || logsCountData?.state === LoadingState.Loading) {
     return <span>Loading...</span>;
-  } else if (timeoutError) {
-    return (
-      <SupplementaryResultError
-        title="The logs volume query has timed out"
-        // Using info to avoid users thinking that the actual query has failed.
-        severity="info"
-        suggestedAction="Retry"
-        onSuggestedAction={onLoadLogsVolume}
-        onRemove={onClose}
-      />
-    );
-  } else if (logsVolumeData?.error !== undefined) {
-    return <SupplementaryResultError error={logsVolumeData.error} title="Failed to load log volume for this query" />;
-  }
-
-  if (numberOfLogVolumes === 0) {
-    return (
-      <div className={styles.alertContainer}>
-        <Alert severity="info" title="No logs volume available">
-          No volume information available for the current queries and time range.
-        </Alert>
-      </div>
-    );
   }
 
   return (
     <div className={styles.listContainer}>
+      {logsCountData?.data && logsCountData?.state === LoadingState.Done && (
+        <PanelRenderer
+          title="Logs count"
+          width={width}
+          pluginId="stat"
+          height={120}
+          data={{ series: logsCountData?.data, state: logsCountData?.state } as PanelData}
+          fieldConfig={{
+            defaults: {
+              color: {
+                mode: FieldColorModeId.PaletteClassic,
+              },
+              // unit: 'log lines',
+              custom: {},
+            },
+            overrides: [],
+          }}
+        />
+      )}
       {Object.keys(logVolumes).map((name, index) => {
         const logsVolumeData = { data: logVolumes[name] };
         return (
@@ -179,9 +177,27 @@ export const LogsVolumePanelList = ({
           </InlineField>
           <InlineField>
             <>
-              <Button icon="chart-line" size="xs" variant="secondary" style={{ marginLeft: '4px' }} />
-              <Button icon="graph-bar" size="xs" variant="secondary" style={{ marginLeft: '4px' }} />
-              <Button icon="calculator-alt" size="xs" variant="secondary" style={{ marginLeft: '4px' }} />
+              <Button
+                icon="chart-line"
+                size="xs"
+                variant="secondary"
+                style={{ marginLeft: '4px' }}
+                onClick={() => onLoadLogsVolume(SupplementaryQueryType.LogsVolume)}
+              />
+              <Button
+                icon="graph-bar"
+                size="xs"
+                variant="secondary"
+                style={{ marginLeft: '4px' }}
+                onClick={() => onLoadLogsVolume(SupplementaryQueryType.LogsCount)}
+              />
+              <Button
+                icon="calculator-alt"
+                size="xs"
+                variant="secondary"
+                style={{ marginLeft: '4px' }}
+                onClick={() => onLoadLogsVolume(SupplementaryQueryType.LogsCount)}
+              />
             </>
           </InlineField>
         </div>
@@ -200,7 +216,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       justify-content: end;
       position: absolute;
       right: 5px;
-      top: 5px;
+      top: -25px;
     `,
     oldInfoText: css`
       font-size: ${theme.typography.bodySmall.fontSize};

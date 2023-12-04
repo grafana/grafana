@@ -25,6 +25,7 @@ export enum SupportingQueryType {
   DataSample = 'dataSample',
   LogsSample = 'logsSample',
   LogsVolume = 'logsVolume',
+  LogsCount = 'logsCount',
 }
 
 export enum LokiQueryDirection {
