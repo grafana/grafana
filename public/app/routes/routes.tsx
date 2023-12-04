@@ -153,6 +153,12 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/dashboards/trash',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "TrashDashboardListPage"*/ '../features/trash-dashboards/TrashDashboardsPage')
+      ),
+    },
+    {
       path: '/explore',
       pageClass: 'page-explore',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
