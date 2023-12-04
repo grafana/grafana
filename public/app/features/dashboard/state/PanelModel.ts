@@ -303,7 +303,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
     for (const property in this) {
       if (property === 'transformations') {
-        console.log('==============transformations===========');
+        // console.log('==============transformations===========');
       }
       // console.log(property);
       // console.log(typeof property);
@@ -316,12 +316,11 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       }
 
       if (property === 'transformations') {
-        console.log('==============cloning-deep===========');
-        let transformations = this.transformations;
-        let transformations2 = this[property];
-
-        console.log(transformations);
-        console.log(transformations2);
+        // console.log('==============cloning-deep===========');
+        // let transformations = this.transformations;
+        // let transformations2 = this[property];
+        // console.log(transformations);
+        // console.log(transformations2);
       }
 
       model[property] = cloneDeep(this[property]);

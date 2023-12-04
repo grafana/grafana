@@ -105,6 +105,7 @@ export interface CalculateFieldTransformerOptions {
 
   // Output field properties
   alias?: string; // The output field name
+  prql?: string; // The output PRQL expression
   // TODO: config?: FieldConfig; or maybe field overrides? since the UI exists
 }
 
