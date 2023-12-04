@@ -2,6 +2,7 @@ export type Suggestion = {
   component: string;
   explanation: string;
   testid: string;
+  link: string;
   order: number;
 };
 

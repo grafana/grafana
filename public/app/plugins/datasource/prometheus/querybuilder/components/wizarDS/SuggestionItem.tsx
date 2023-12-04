@@ -31,7 +31,7 @@ const explationOptions: SelectableValue[] = [
 ];
 
 export function SuggestionItem(props: Props) {
-  const { suggestion, order, explain, historical, closeDrawer, last, allSuggestions, prompt } = props;
+  const { suggestion, order, explain, historical, /* closeDrawer,*/ last, allSuggestions, prompt } = props;
   const [showExp, updShowExp] = useState<boolean>(false);
 
   const [gaveExplanationFeedback, updateGaveExplanationFeedback] = useState<boolean>(false);
@@ -50,7 +50,7 @@ export function SuggestionItem(props: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme);
 
-  const { component, explanation, testid } = suggestion;
+  const { component, explanation /* testid, order, link */ } = suggestion;
 
   const feedbackToggleTip = (type: string) => {
     const updateRadioFeedback = (value: string) => {
