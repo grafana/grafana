@@ -12,6 +12,8 @@ import {
   SceneObjectBase,
   SceneObjectState,
   SceneObjectStateChangedEvent,
+  SceneRefreshPicker,
+  SceneTimeRange,
   sceneUtils,
   SceneVariable,
   SceneVariableDependencyConfigLike,
@@ -35,13 +37,19 @@ import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 
+export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip'];
+
 export interface DashboardSceneState extends SceneObjectState {
   /** The title */
   title: string;
+  /** The description */
+  description?: string;
   /** Tags */
   tags?: string[];
   /** Links */
   links?: DashboardLink[];
+  /** Is editable */
+  editable?: boolean;
   /** A uid when saved */
   uid?: string;
   /** @deprecated */
@@ -69,6 +77,7 @@ export interface DashboardSceneState extends SceneObjectState {
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
+  static listenToChangesInProps = PERSISTED_PROPS;
   static Component = DashboardSceneRenderer;
 
   /**
@@ -97,6 +106,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     super({
       title: 'Dashboard',
       meta: {},
+      editable: true,
       body: state.body ?? new SceneFlexLayout({ children: [] }),
       ...state,
     });
@@ -223,7 +233,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this._changeTrackerSub = this.subscribeToEvent(
       SceneObjectStateChangedEvent,
       (event: SceneObjectStateChangedEvent) => {
+        if (event.payload.changedObject instanceof SceneRefreshPicker) {
+          if (Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'intervals')) {
+            this.setIsDirty();
+          }
+        }
         if (event.payload.changedObject instanceof SceneGridItem) {
+          this.setIsDirty();
+        }
+        if (event.payload.changedObject instanceof DashboardScene) {
+          if (Object.keys(event.payload.partialUpdate).some((key) => PERSISTED_PROPS.includes(key))) {
+            this.setIsDirty();
+          }
+        }
+        if (event.payload.changedObject instanceof SceneTimeRange) {
           this.setIsDirty();
         }
       }
