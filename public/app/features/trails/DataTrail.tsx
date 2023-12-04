@@ -45,10 +45,6 @@ export interface DataTrailState extends SceneObjectState {
 
   // Synced with url
   metric?: string;
-
-  // Indicates which step in the data trail this is
-  stepIndex: number;
-  parentIndex: number; // If there is no parent, this will be -1
 }
 
 export class DataTrail extends SceneObjectBase<DataTrailState> {
@@ -67,8 +63,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       ],
       history: state.history ?? new DataTrailHistory({}),
       settings: state.settings ?? new DataTrailSettings({}),
-      stepIndex: state.stepIndex ?? 0,
-      parentIndex: state.parentIndex ?? -1,
       ...state,
     });
 
@@ -83,6 +77,29 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     // Some scene elements publish this
     this.subscribeToEvent(MetricSelectedEvent, this._handleMetricSelectedEvent.bind(this));
 
+    // Pay attention to changes in history (i.e., changing the step)
+    this.state.history.subscribeToState((newState, oldState) => {
+      const oldNumberOfSteps = oldState.steps.length;
+      const newNumberOfSteps = newState.steps.length;
+
+      const newStepWasAppended = newNumberOfSteps > oldNumberOfSteps;
+
+      if (newStepWasAppended) {
+        // Do nothing because the state is already up to date -- it created a new step!
+        return;
+      }
+
+      if (oldState.currentStep === newState.currentStep) {
+        // The same step was clicked on -- no need to change anything.
+        return;
+      }
+
+      // History changed because a different node was selected
+      const step = newState.steps[newState.currentStep];
+
+      this.goBackToStep(step);
+    });
+
     return () => {
       if (!this.state.embedded) {
         getUrlSyncManager().cleanUp(this);
@@ -91,7 +108,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     };
   }
 
-  public goBackToStep(step: DataTrailHistoryStep) {
+  private goBackToStep(step: DataTrailHistoryStep) {
     if (!this.state.embedded) {
       getUrlSyncManager().cleanUp(this);
     }

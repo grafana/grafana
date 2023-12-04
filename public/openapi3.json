@@ -1011,7 +1011,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/Spec"
+              "$ref": "#/components/schemas/Preferences"
             }
           }
         },
@@ -3263,6 +3263,9 @@
             "type": "string"
           },
           "username": {
+            "type": "string"
+          },
+          "username_file": {
             "type": "string"
           }
         },
@@ -6561,7 +6564,7 @@
       },
       "MatchRegexps": {
         "additionalProperties": {
-          "$ref": "#/components/schemas/Regexp"
+          "type": "string"
         },
         "title": "MatchRegexps represents a map of Regexp.",
         "type": "object"
@@ -7839,6 +7842,38 @@
         },
         "type": "object"
       },
+      "Preferences": {
+        "description": "Spec defines user, team or org Grafana preferences",
+        "properties": {
+          "cookiePreferences": {
+            "$ref": "#/components/schemas/CookiePreferences"
+          },
+          "homeDashboardUID": {
+            "description": "UID for the home dashboard",
+            "type": "string"
+          },
+          "language": {
+            "description": "Selected language (beta)",
+            "type": "string"
+          },
+          "queryHistory": {
+            "$ref": "#/components/schemas/QueryHistoryPreference"
+          },
+          "theme": {
+            "description": "Theme light, dark, empty is default",
+            "type": "string"
+          },
+          "timezone": {
+            "description": "The timezone selection\nTODO: this should use the timezone defined in common",
+            "type": "string"
+          },
+          "weekStart": {
+            "description": "WeekStart day of the week (sunday, monday, etc)",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "PrometheusRemoteWriteTargetJSON": {
         "properties": {
           "data_source_uid": {
@@ -8259,9 +8294,11 @@
       "QueryHistoryPreference": {
         "properties": {
           "homeTab": {
+            "description": "HomeTab one of: '' | 'query' | 'starred';",
             "type": "string"
           }
         },
+        "title": "QueryHistoryPreference defines model for QueryHistoryPreference.",
         "type": "object"
       },
       "QueryHistoryResponse": {
@@ -8564,11 +8601,6 @@
             "type": "string"
           }
         },
-        "type": "object"
-      },
-      "Regexp": {
-        "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
-        "title": "Regexp is the representation of a compiled regular expression.",
         "type": "object"
       },
       "RelativeTimeRange": {
@@ -9810,38 +9842,6 @@
           }
         },
         "title": "A Span defines a continuous sequence of buckets.",
-        "type": "object"
-      },
-      "Spec": {
-        "properties": {
-          "cookiePreferences": {
-            "$ref": "#/components/schemas/CookiePreferences"
-          },
-          "homeDashboardUID": {
-            "description": "UID for the home dashboard",
-            "type": "string"
-          },
-          "language": {
-            "description": "Selected language (beta)",
-            "type": "string"
-          },
-          "queryHistory": {
-            "$ref": "#/components/schemas/QueryHistoryPreference"
-          },
-          "theme": {
-            "description": "Theme light, dark, empty is default",
-            "type": "string"
-          },
-          "timezone": {
-            "description": "The timezone selection\nTODO: this should use the timezone defined in common",
-            "type": "string"
-          },
-          "weekStart": {
-            "description": "WeekStart day of the week (sunday, monday, etc)",
-            "type": "string"
-          }
-        },
-        "title": "Spec defines model for Spec.",
         "type": "object"
       },
       "State": {
@@ -11449,6 +11449,7 @@
         "type": "object"
       },
       "alertGroup": {
+        "description": "AlertGroup alert group",
         "properties": {
           "alerts": {
             "description": "alerts",
@@ -11661,6 +11662,7 @@
         "type": "object"
       },
       "gettableAlerts": {
+        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
@@ -11721,6 +11723,7 @@
         "type": "array"
       },
       "integration": {
+        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -11930,7 +11933,6 @@
         "type": "object"
       },
       "receiver": {
-        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",

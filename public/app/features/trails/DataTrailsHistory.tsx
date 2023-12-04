@@ -27,6 +27,7 @@ export interface DataTrailHistoryStep {
   description: string;
   type: TrailStepType;
   trailState: DataTrailState;
+  parentIndex: number;
 }
 
 export type TrailStepType = 'filters' | 'time' | 'metric' | 'start';
@@ -38,6 +39,8 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
     this.addActivationHandler(this._onActivate.bind(this));
   }
 
+  private stepTransitionInProgress = false;
+
   public _onActivate() {
     const trail = getTrailFor(this);
 
@@ -46,19 +49,6 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
     }
 
     trail.subscribeToState((newState, oldState) => {
-      // Check if new and old state are at the same step index
-      // Then we know this is a history transition
-      const isMovingThroughHistory = newState.stepIndex !== oldState.stepIndex;
-
-      if (isMovingThroughHistory) {
-        this.setState({
-          ...this.state,
-          currentStep: newState.stepIndex,
-        });
-
-        return;
-      }
-
       if (newState.metric !== oldState.metric) {
         if (this.state.steps.length === 1) {
           // For the first step we want to update the starting state so that it contains data
@@ -85,10 +75,13 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
   }
 
   public addTrailStep(trail: DataTrail, type: TrailStepType) {
-    // Update the trail's new current step state, and note its parent step.
+    if (this.stepTransitionInProgress) {
+      // Do not add trail steps when step transition is in progress
+      return;
+    }
+
     const stepIndex = this.state.steps.length;
-    const parentIndex = type === 'start' ? -1 : trail.state.stepIndex;
-    trail.setState({ ...trail.state, stepIndex, parentIndex });
+    const parentIndex = type === 'start' ? -1 : this.state.currentStep;
 
     this.setState({
       currentStep: stepIndex,
@@ -98,9 +91,18 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
           description: 'Test',
           type,
           trailState: sceneUtils.cloneSceneObjectState(trail.state, { history: this }),
+          parentIndex,
         },
       ],
     });
+  }
+
+  public goBackToStep(stepIndex: number) {
+    this.stepTransitionInProgress = true;
+
+    this.setState({ currentStep: stepIndex });
+
+    this.stepTransitionInProgress = false;
   }
 
   renderStepTooltip(step: DataTrailHistoryStep) {
@@ -115,7 +117,6 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
   public static Component = ({ model }: SceneComponentProps<DataTrailHistory>) => {
     const { steps, currentStep } = model.useState();
     const styles = useStyles2(getStyles);
-    const trail = getTrailFor(model);
     const [isBookmarked, setBookmarked] = useState(false);
 
     const { ancestry, alternatePredecessorStyle } = useMemo(() => {
@@ -123,13 +124,13 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
       let cursor = currentStep;
       while (cursor >= 0) {
         ancestry.add(cursor);
-        cursor = steps[cursor].trailState.parentIndex;
+        cursor = steps[cursor].parentIndex;
       }
 
       const alternatePredecessorStyle = new Map<number, string>();
 
       ancestry.forEach((index) => {
-        const parent = steps[index].trailState.parentIndex;
+        const parent = steps[index].parentIndex;
         if (parent + 1 !== index) {
           alternatePredecessorStyle.set(index, createAlternatePredecessorStyle(index, parent));
         }
@@ -166,7 +167,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
                   // To darken steps that aren't the current step's ancesters
                   !ancestry.has(index) ? styles.stepIsNotAncestorOfCurrent : ''
                 )}
-                onClick={() => trail.goBackToStep(step)}
+                onClick={() => model.goBackToStep(index)}
               ></button>
             </Tooltip>
           ))}
@@ -297,6 +298,8 @@ function createAlternatePredecessorStyle(index: number, parent: number) {
       borderStyle: 'solid',
       borderWidth: 2,
       borderBottom: 'none',
+      borderTopLeftRadius: 8,
+      borderTopRightRadius: 8,
       top: -10,
       left: 3 - distanceToParent,
       background: 'none',
