@@ -3,7 +3,8 @@ package strategies
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/connectors"
+	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -11,15 +12,15 @@ import (
 
 type OAuthStrategy struct {
 	cfg                *setting.Cfg
-	settingsByProvider map[string]*social.OAuthInfo
+	settingsByProvider map[string]*models.OAuthInfo
 }
 
 var extraKeysByProvider = map[string][]string{
-	social.AzureADProviderName:      social.ExtraAzureADSettingKeys,
-	social.GenericOAuthProviderName: social.ExtraGenericOAuthSettingKeys,
-	social.GitHubProviderName:       social.ExtraGithubSettingKeys,
-	social.GrafanaComProviderName:   social.ExtraGrafanaComSettingKeys,
-	social.GrafanaNetProviderName:   social.ExtraGrafanaComSettingKeys,
+	connectors.AzureADProviderName:      connectors.ExtraAzureADSettingKeys,
+	connectors.GenericOAuthProviderName: connectors.ExtraGenericOAuthSettingKeys,
+	connectors.GitHubProviderName:       connectors.ExtraGithubSettingKeys,
+	connectors.GrafanaComProviderName:   connectors.ExtraGrafanaComSettingKeys,
+	connectors.GrafanaNetProviderName:   connectors.ExtraGrafanaComSettingKeys,
 }
 
 var _ ssosettings.FallbackStrategy = (*OAuthStrategy)(nil)
@@ -27,7 +28,7 @@ var _ ssosettings.FallbackStrategy = (*OAuthStrategy)(nil)
 func NewOAuthStrategy(cfg *setting.Cfg) *OAuthStrategy {
 	oauthStrategy := &OAuthStrategy{
 		cfg:                cfg,
-		settingsByProvider: make(map[string]*social.OAuthInfo),
+		settingsByProvider: make(map[string]*models.OAuthInfo),
 	}
 
 	oauthStrategy.loadAllSettings()
@@ -44,20 +45,20 @@ func (s *OAuthStrategy) GetProviderConfig(_ context.Context, provider string) (a
 }
 
 func (s *OAuthStrategy) loadAllSettings() {
-	allProviders := append(ssosettings.AllOAuthProviders, social.GrafanaNetProviderName)
+	allProviders := append(ssosettings.AllOAuthProviders, connectors.GrafanaNetProviderName)
 	for _, provider := range allProviders {
 		settings := s.loadSettingsForProvider(provider)
-		if provider == social.GrafanaNetProviderName {
-			provider = social.GrafanaComProviderName
+		if provider == connectors.GrafanaNetProviderName {
+			provider = connectors.GrafanaComProviderName
 		}
 		s.settingsByProvider[provider] = settings
 	}
 }
 
-func (s *OAuthStrategy) loadSettingsForProvider(provider string) *social.OAuthInfo {
+func (s *OAuthStrategy) loadSettingsForProvider(provider string) *models.OAuthInfo {
 	section := s.cfg.SectionWithEnvOverrides("auth." + provider)
 
-	result := &social.OAuthInfo{
+	result := &models.OAuthInfo{
 		AllowAssignGrafanaAdmin: section.Key("allow_assign_grafana_admin").MustBool(false),
 		AllowSignup:             section.Key("allow_sign_up").MustBool(false),
 		AllowedDomains:          util.SplitString(section.Key("allowed_domains").Value()),

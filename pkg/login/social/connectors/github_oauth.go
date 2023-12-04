@@ -1,4 +1,4 @@
-package social
+package connectors
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -51,12 +52,7 @@ var (
 			"User is not a member of one of the required organizations. Please contact identity provider administrator."))
 )
 
-func NewGitHubProvider(settings map[string]any, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGithub, error) {
-	info, err := CreateOAuthInfoFromKeyValues(settings)
-	if err != nil {
-		return nil, err
-	}
-
+func NewGitHubProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGithub, error) {
 	teamIds, err := mustInts(util.SplitString(info.Extra[teamIdsKey]))
 	if err != nil {
 		return nil, err
@@ -223,7 +219,7 @@ func (s *SocialGithub) FetchOrganizations(ctx context.Context, client *http.Clie
 	return logins, nil
 }
 
-func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
+func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*models.BasicUserInfo, error) {
 	var data struct {
 		Id    int    `json:"id"`
 		Login string `json:"login"`
@@ -267,7 +263,7 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
-	userInfo := &BasicUserInfo{
+	userInfo := &models.BasicUserInfo{
 		Name:           data.Login,
 		Login:          data.Login,
 		Id:             fmt.Sprintf("%d", data.Id),
@@ -309,7 +305,7 @@ func (t *GithubTeam) GetShorthand() (string, error) {
 	return fmt.Sprintf("@%s/%s", t.Organization.Login, t.Slug), nil
 }
 
-func (s *SocialGithub) GetOAuthInfo() *OAuthInfo {
+func (s *SocialGithub) GetOAuthInfo() *models.OAuthInfo {
 	return s.info
 }
 

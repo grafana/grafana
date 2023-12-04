@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -22,7 +23,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 	type testCase struct {
 		desc                  string
 		req                   *authn.Request
-		oauthCfg              *social.OAuthInfo
+		oauthCfg              *models.OAuthInfo
 		allowInsecureTakeover bool
 
 		addStateCookie   bool
@@ -32,7 +33,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 		pkceCookieValue string
 
 		isEmailAllowed bool
-		userInfo       *social.BasicUserInfo
+		userInfo       *models.BasicUserInfo
 
 		expectedErr      error
 		expectedIdentity *authn.Identity
@@ -42,13 +43,13 @@ func TestOAuth_Authenticate(t *testing.T) {
 		{
 			desc:        "should return error when missing state cookie",
 			req:         &authn.Request{HTTPRequest: &http.Request{Header: map[string][]string{}}},
-			oauthCfg:    &social.OAuthInfo{},
+			oauthCfg:    &models.OAuthInfo{},
 			expectedErr: errOAuthMissingState,
 		},
 		{
 			desc:             "should return error when state cookie is present but don't have a value",
 			req:              &authn.Request{HTTPRequest: &http.Request{Header: map[string][]string{}}},
-			oauthCfg:         &social.OAuthInfo{},
+			oauthCfg:         &models.OAuthInfo{},
 			addStateCookie:   true,
 			stateCookieValue: "",
 			expectedErr:      errOAuthMissingState,
@@ -60,7 +61,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 				URL:    mustParseURL("http://grafana.com/?state=some-other-state"),
 			},
 			},
-			oauthCfg:         &social.OAuthInfo{UsePKCE: true},
+			oauthCfg:         &models.OAuthInfo{UsePKCE: true},
 			addStateCookie:   true,
 			stateCookieValue: "some-state",
 			expectedErr:      errOAuthInvalidState,
@@ -72,7 +73,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 				URL:    mustParseURL("http://grafana.com/?state=some-state"),
 			},
 			},
-			oauthCfg:         &social.OAuthInfo{UsePKCE: true},
+			oauthCfg:         &models.OAuthInfo{UsePKCE: true},
 			addStateCookie:   true,
 			stateCookieValue: "some-state",
 			expectedErr:      errOAuthMissingPKCE,
@@ -84,12 +85,12 @@ func TestOAuth_Authenticate(t *testing.T) {
 				URL:    mustParseURL("http://grafana.com/?state=some-state"),
 			},
 			},
-			oauthCfg:         &social.OAuthInfo{UsePKCE: true},
+			oauthCfg:         &models.OAuthInfo{UsePKCE: true},
 			addStateCookie:   true,
 			stateCookieValue: "some-state",
 			addPKCECookie:    true,
 			pkceCookieValue:  "some-pkce-value",
-			userInfo:         &social.BasicUserInfo{},
+			userInfo:         &models.BasicUserInfo{},
 			expectedErr:      errOAuthMissingRequiredEmail,
 		},
 		{
@@ -99,12 +100,12 @@ func TestOAuth_Authenticate(t *testing.T) {
 				URL:    mustParseURL("http://grafana.com/?state=some-state"),
 			},
 			},
-			oauthCfg:         &social.OAuthInfo{UsePKCE: true},
+			oauthCfg:         &models.OAuthInfo{UsePKCE: true},
 			addStateCookie:   true,
 			stateCookieValue: "some-state",
 			addPKCECookie:    true,
 			pkceCookieValue:  "some-pkce-value",
-			userInfo:         &social.BasicUserInfo{Email: "some@email.com"},
+			userInfo:         &models.BasicUserInfo{Email: "some@email.com"},
 			isEmailAllowed:   false,
 			expectedErr:      errOAuthEmailNotAllowed,
 		},
@@ -115,13 +116,13 @@ func TestOAuth_Authenticate(t *testing.T) {
 				URL:    mustParseURL("http://grafana.com/?state=some-state"),
 			},
 			},
-			oauthCfg:         &social.OAuthInfo{UsePKCE: true},
+			oauthCfg:         &models.OAuthInfo{UsePKCE: true},
 			addStateCookie:   true,
 			stateCookieValue: "some-state",
 			addPKCECookie:    true,
 			pkceCookieValue:  "some-pkce-value",
 			isEmailAllowed:   true,
-			userInfo: &social.BasicUserInfo{
+			userInfo: &models.BasicUserInfo{
 				Id:     "123",
 				Name:   "name",
 				Email:  "some@email.com",
@@ -153,14 +154,14 @@ func TestOAuth_Authenticate(t *testing.T) {
 				URL:    mustParseURL("http://grafana.com/?state=some-state"),
 			},
 			},
-			oauthCfg:              &social.OAuthInfo{UsePKCE: true},
+			oauthCfg:              &models.OAuthInfo{UsePKCE: true},
 			allowInsecureTakeover: true,
 			addStateCookie:        true,
 			stateCookieValue:      "some-state",
 			addPKCECookie:         true,
 			pkceCookieValue:       "some-pkce-value",
 			isEmailAllowed:        true,
-			userInfo: &social.BasicUserInfo{
+			userInfo: &models.BasicUserInfo{
 				Id:     "123",
 				Name:   "name",
 				Email:  "some@email.com",
@@ -242,7 +243,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 func TestOAuth_RedirectURL(t *testing.T) {
 	type testCase struct {
 		desc        string
-		oauthCfg    *social.OAuthInfo
+		oauthCfg    *models.OAuthInfo
 		expectedErr error
 
 		numCallOptions    int
@@ -252,18 +253,18 @@ func TestOAuth_RedirectURL(t *testing.T) {
 	tests := []testCase{
 		{
 			desc:              "should generate redirect url and state",
-			oauthCfg:          &social.OAuthInfo{},
+			oauthCfg:          &models.OAuthInfo{},
 			authCodeUrlCalled: true,
 		},
 		{
 			desc:              "should generate redirect url with hosted domain option if configured",
-			oauthCfg:          &social.OAuthInfo{HostedDomain: "grafana.com"},
+			oauthCfg:          &models.OAuthInfo{HostedDomain: "grafana.com"},
 			numCallOptions:    1,
 			authCodeUrlCalled: true,
 		},
 		{
 			desc:              "should generate redirect url with pkce if configured",
-			oauthCfg:          &social.OAuthInfo{UsePKCE: true},
+			oauthCfg:          &models.OAuthInfo{UsePKCE: true},
 			numCallOptions:    2,
 			authCodeUrlCalled: true,
 		},
@@ -314,7 +315,7 @@ func (m mockConnector) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) 
 var _ social.SocialConnector = new(fakeConnector)
 
 type fakeConnector struct {
-	ExpectedUserInfo        *social.BasicUserInfo
+	ExpectedUserInfo        *models.BasicUserInfo
 	ExpectedUserInfoErr     error
 	ExpectedIsEmailAllowed  bool
 	ExpectedIsSignupAllowed bool
@@ -323,7 +324,7 @@ type fakeConnector struct {
 	social.SocialConnector
 }
 
-func (f fakeConnector) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
+func (f fakeConnector) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*models.BasicUserInfo, error) {
 	return f.ExpectedUserInfo, f.ExpectedUserInfoErr
 }
 

@@ -15,6 +15,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/connectors"
+	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -49,14 +51,14 @@ var (
 	errOAuthEmailNotAllowed      = errutil.Unauthorized("auth.oauth.email.not-allowed", errutil.WithPublicMessage("Required email domain not fulfilled"))
 )
 
-func fromSocialErr(err *social.Error) error {
+func fromSocialErr(err *connectors.Error) error {
 	return errutil.Unauthorized("auth.oauth.userinfo.failed", errutil.WithPublicMessage(err.Error())).Errorf("%w", err)
 }
 
 var _ authn.RedirectClient = new(OAuth)
 
 func ProvideOAuth(
-	name string, cfg *setting.Cfg, oauthCfg *social.OAuthInfo,
+	name string, cfg *setting.Cfg, oauthCfg *models.OAuthInfo,
 	connector social.SocialConnector, httpClient *http.Client,
 ) *OAuth {
 	return &OAuth{
@@ -70,7 +72,7 @@ type OAuth struct {
 	moduleName string
 	log        log.Logger
 	cfg        *setting.Cfg
-	oauthCfg   *social.OAuthInfo
+	oauthCfg   *models.OAuthInfo
 	connector  social.SocialConnector
 	httpClient *http.Client
 }
@@ -118,7 +120,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 
 	userInfo, err := c.connector.UserInfo(ctx, c.connector.Client(clientCtx, token), token)
 	if err != nil {
-		var sErr *social.Error
+		var sErr *connectors.Error
 		if errors.As(err, &sErr) {
 			return nil, fromSocialErr(sErr)
 		}

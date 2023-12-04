@@ -1,4 +1,4 @@
-package social
+package connectors
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -34,12 +35,7 @@ type OrgRecord struct {
 	Login string `json:"login"`
 }
 
-func NewGrafanaComProvider(settings map[string]any, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGrafanaCom, error) {
-	info, err := CreateOAuthInfoFromKeyValues(settings)
-	if err != nil {
-		return nil, err
-	}
-
+func NewGrafanaComProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGrafanaCom, error) {
 	// Override necessary settings
 	info.AuthUrl = cfg.GrafanaComURL + "/oauth2/authorize"
 	info.TokenUrl = cfg.GrafanaComURL + "/api/oauth2/token"
@@ -79,7 +75,7 @@ func (s *SocialGrafanaCom) IsOrganizationMember(organizations []OrgRecord) bool 
 }
 
 // UserInfo is used for login credentials for the user
-func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ *oauth2.Token) (*BasicUserInfo, error) {
+func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ *oauth2.Token) (*models.BasicUserInfo, error) {
 	var data struct {
 		Id    int         `json:"id"`
 		Name  string      `json:"name"`
@@ -105,7 +101,7 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 	if !s.skipOrgRoleSync {
 		role = org.RoleType(data.Role)
 	}
-	userInfo := &BasicUserInfo{
+	userInfo := &models.BasicUserInfo{
 		Id:    fmt.Sprintf("%d", data.Id),
 		Name:  data.Name,
 		Login: data.Login,
@@ -122,6 +118,6 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 	return userInfo, nil
 }
 
-func (s *SocialGrafanaCom) GetOAuthInfo() *OAuthInfo {
+func (s *SocialGrafanaCom) GetOAuthInfo() *models.OAuthInfo {
 	return s.info
 }

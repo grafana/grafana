@@ -1,4 +1,4 @@
-package social
+package connectors
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -124,7 +125,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 		settingSkipOrgRoleSync   bool
 		roleAttributePath        string
 		autoAssignOrgRole        string
-		want                     *BasicUserInfo
+		want                     *models.BasicUserInfo
 		wantErr                  bool
 	}{
 		{
@@ -133,7 +134,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			userTeamsRawJSON:  testGHUserTeamsJSON,
 			autoAssignOrgRole: "",
 			roleAttributePath: "",
-			want: &BasicUserInfo{
+			want: &models.BasicUserInfo{
 				Id:     "1",
 				Name:   "monalisa octocat",
 				Email:  "octocat@github.com",
@@ -148,7 +149,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			userRawJSON:       testGHUserJSON,
 			autoAssignOrgRole: "Editor",
 			userTeamsRawJSON:  testGHUserTeamsJSON,
-			want: &BasicUserInfo{
+			want: &models.BasicUserInfo{
 				Id:     "1",
 				Name:   "monalisa octocat",
 				Email:  "octocat@github.com",
@@ -163,7 +164,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			userRawJSON:       testGHUserJSON,
 			autoAssignOrgRole: "Editor",
 			userTeamsRawJSON:  testGHUserTeamsJSON,
-			want: &BasicUserInfo{
+			want: &models.BasicUserInfo{
 				Id:     "1",
 				Name:   "monalisa octocat",
 				Email:  "octocat@github.com",
@@ -178,7 +179,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			settingSkipOrgRoleSync: true,
 			userRawJSON:            testGHUserJSON,
 			userTeamsRawJSON:       testGHUserTeamsJSON,
-			want: &BasicUserInfo{
+			want: &models.BasicUserInfo{
 				Id:     "1",
 				Name:   "monalisa octocat",
 				Email:  "octocat@github.com",
@@ -194,7 +195,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			settingAllowGrafanaAdmin: true,
 			userRawJSON:              testGHUserJSON,
 			userTeamsRawJSON:         testGHUserTeamsJSON,
-			want: &BasicUserInfo{
+			want: &models.BasicUserInfo{
 				Id:             "1",
 				Name:           "monalisa octocat",
 				Email:          "octocat@github.com",
@@ -210,7 +211,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			userRawJSON:       testGHUserJSON,
 			autoAssignOrgRole: "Editor",
 			userTeamsRawJSON:  testGHUserTeamsJSON,
-			want: &BasicUserInfo{
+			want: &models.BasicUserInfo{
 				Id:     "1",
 				Name:   "monalisa octocat",
 				Email:  "octocat@github.com",

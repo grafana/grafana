@@ -3,8 +3,7 @@ package ssosettings
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/login/social/connectors"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 )
 
@@ -13,7 +12,7 @@ var (
 	// TODO: make it configurable
 	ConfigurableOAuthProviders = []string{"github", "gitlab", "google", "generic_oauth", "azuread", "okta"}
 
-	AllOAuthProviders = []string{social.GitHubProviderName, social.GitlabProviderName, social.GoogleProviderName, social.GenericOAuthProviderName, social.GrafanaComProviderName, social.AzureADProviderName, social.OktaProviderName}
+	AllOAuthProviders = []string{connectors.GitHubProviderName, connectors.GitlabProviderName, connectors.GoogleProviderName, connectors.GenericOAuthProviderName, connectors.GrafanaComProviderName, connectors.AzureADProviderName, connectors.OktaProviderName}
 )
 
 // Service is a SSO settings service
@@ -21,7 +20,7 @@ var (
 //go:generate mockery --name Service --structname MockService --outpkg ssosettingstests --filename service_mock.go --output ./ssosettingstests/
 type Service interface {
 	// List returns all SSO settings from DB and config files
-	List(ctx context.Context, requester identity.Requester) ([]*models.SSOSettings, error)
+	List(ctx context.Context) ([]*models.SSOSettings, error)
 	// GetForProvider returns the SSO settings for a given provider (DB or config file)
 	GetForProvider(ctx context.Context, provider string) (*models.SSOSettings, error)
 	// Upsert creates or updates the SSO settings for a given provider

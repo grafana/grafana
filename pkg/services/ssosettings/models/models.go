@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/models"
 )
 
 type SettingsSource int
@@ -29,7 +29,7 @@ func (s SettingsSource) MarshalJSON() ([]byte, error) {
 type SSOSettings struct {
 	ID            string
 	Provider      string
-	OAuthSettings *social.OAuthInfo
+	OAuthSettings *models.OAuthInfo
 	Created       time.Time
 	Updated       time.Time
 	IsDeleted     bool
@@ -57,7 +57,7 @@ func (s SSOSettingsDTO) ToSSOSettings() (*SSOSettings, error) {
 		return nil, err
 	}
 
-	var settings social.OAuthInfo
+	var settings models.OAuthInfo
 	err = json.Unmarshal(settingsEncoded, &settings)
 	if err != nil {
 		return nil, err

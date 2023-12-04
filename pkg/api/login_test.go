@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -84,7 +85,7 @@ type redirectCase struct {
 	redirectURL string
 }
 
-var oAuthInfos = map[string]*social.OAuthInfo{
+var oAuthInfos = map[string]*models.OAuthInfo{
 	"github": {
 		ClientId:     "fake",
 		ClientSecret: "fakefake",
@@ -478,7 +479,7 @@ func TestLoginOAuthRedirect(t *testing.T) {
 	sc := setupScenarioContext(t, "/login")
 	cfg := setting.NewCfg()
 	mock := &mockSocialService{
-		oAuthInfo: &social.OAuthInfo{
+		oAuthInfo: &models.OAuthInfo{
 			ClientId:     "fake",
 			ClientSecret: "fakefake",
 			Enabled:      true,
@@ -564,7 +565,7 @@ func TestAuthProxyLoginWithEnableLoginTokenAndEnabledOauthAutoLogin(t *testing.T
 	fakeSetIndexViewData(t)
 
 	mock := &mockSocialService{
-		oAuthInfo: &social.OAuthInfo{
+		oAuthInfo: &models.OAuthInfo{
 			ClientId:     "fake",
 			ClientSecret: "fakefake",
 			Enabled:      true,
@@ -678,19 +679,19 @@ func TestLogoutSaml(t *testing.T) {
 }
 
 type mockSocialService struct {
-	oAuthInfo       *social.OAuthInfo
-	oAuthInfos      map[string]*social.OAuthInfo
+	oAuthInfo       *models.OAuthInfo
+	oAuthInfos      map[string]*models.OAuthInfo
 	oAuthProviders  map[string]bool
 	httpClient      *http.Client
 	socialConnector social.SocialConnector
 	err             error
 }
 
-func (m *mockSocialService) GetOAuthInfoProvider(name string) *social.OAuthInfo {
+func (m *mockSocialService) GetOAuthInfoProvider(name string) *models.OAuthInfo {
 	return m.oAuthInfo
 }
 
-func (m *mockSocialService) GetOAuthInfoProviders() map[string]*social.OAuthInfo {
+func (m *mockSocialService) GetOAuthInfoProviders() map[string]*models.OAuthInfo {
 	return m.oAuthInfos
 }
 

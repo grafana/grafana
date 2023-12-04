@@ -15,8 +15,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/login/socialtest"
+	"github.com/grafana/grafana/pkg/login/social/models"
+	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -29,7 +29,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 	type testCase struct {
 		desc      string
 		identity  *authn.Identity
-		oauthInfo *social.OAuthInfo
+		oauthInfo *models.OAuthInfo
 
 		expectedHasEntryToken *login.UserAuth
 		expectHasEntryCalled  bool
@@ -98,7 +98,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 			expectHasEntryCalled:        true,
 			expectTryRefreshTokenCalled: false,
 			expectedHasEntryToken:       &login.UserAuth{OAuthExpiry: time.Now().Add(-10 * time.Minute)},
-			oauthInfo:                   &social.OAuthInfo{UseRefreshToken: false},
+			oauthInfo:                   &models.OAuthInfo{UseRefreshToken: false},
 		},
 		{
 			desc:                        "should refresh access token when ID token has expired",
@@ -141,7 +141,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 			}
 
 			if tt.oauthInfo == nil {
-				tt.oauthInfo = &social.OAuthInfo{
+				tt.oauthInfo = &models.OAuthInfo{
 					UseRefreshToken: true,
 				}
 			}

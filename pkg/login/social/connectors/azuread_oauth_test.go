@@ -1,4 +1,4 @@
-package social
+package connectors
 
 import (
 	"context"
@@ -17,6 +17,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -47,7 +48,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		claims                   *azureClaims
 		args                     args
 		settingAutoAssignOrgRole string
-		want                     *BasicUserInfo
+		want                     *models.BasicUserInfo
 		wantErr                  bool
 	}{
 		{
@@ -68,7 +69,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 					AutoAssignOrgRole: "Viewer",
 				},
 			},
-			want: &BasicUserInfo{
+			want: &models.BasicUserInfo{
 				Id:     "1234",
 				Name:   "My Name",
 				Email:  "me@example.com",
@@ -132,7 +133,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				},
 				usGovURL: true,
 			},
-			want: &BasicUserInfo{
+			want: &models.BasicUserInfo{
 				Id:     "1234",
 				Name:   "My Name",
 				Email:  "me@example.com",
@@ -159,7 +160,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 					AutoAssignOrgRole: "Viewer",
 				},
 			},
-			want: &BasicUserInfo{
+			want: &models.BasicUserInfo{
 				Id:     "1234",
 				Name:   "My Name",
 				Email:  "me@example.com",
@@ -186,7 +187,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:              "My Name",
 				ID:                "1234",
 			},
-			want: &BasicUserInfo{
+			want: &models.BasicUserInfo{
 				Id:     "1234",
 				Name:   "My Name",
 				Email:  "me@example.com",
@@ -213,7 +214,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:              "My Name",
 				ID:                "1234",
 			},
-			want: &BasicUserInfo{
+			want: &models.BasicUserInfo{
 				Id:     "1234",
 				Name:   "My Name",
 				Email:  "me@example.com",
@@ -240,7 +241,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:              "My Name",
 				ID:                "1234",
 			},
-			want: &BasicUserInfo{
+			want: &models.BasicUserInfo{
 				Id:     "1234",
 				Name:   "My Name",
 				Email:  "me@example.com",
@@ -268,7 +269,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 					AutoAssignOrgRole: "Editor",
 				},
 			},
-			want: &BasicUserInfo{
+			want: &models.BasicUserInfo{
 				Id:     "1234",
 				Name:   "My Name",
 				Email:  "me@example.com",
@@ -295,7 +296,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 					AutoAssignOrgRole: "Editor",
 				},
 			},
-			want: &BasicUserInfo{
+			want: &models.BasicUserInfo{
 				Id:     "1234",
 				Name:   "My Name",
 				Email:  "me@example.com",
@@ -322,7 +323,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:              "My Name",
 				ID:                "1234",
 			},
-			want: &BasicUserInfo{
+			want: &models.BasicUserInfo{
 				Id:     "1234",
 				Name:   "My Name",
 				Email:  "me@example.com",
@@ -351,7 +352,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:              "My Name",
 				ID:                "1234",
 			},
-			want: &BasicUserInfo{
+			want: &models.BasicUserInfo{
 				Id:             "1234",
 				Name:           "My Name",
 				Email:          "me@example.com",
@@ -380,7 +381,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:              "My Name",
 				ID:                "1234",
 			},
-			want: &BasicUserInfo{
+			want: &models.BasicUserInfo{
 				Id:             "1234",
 				Name:           "My Name",
 				Email:          "me@example.com",
@@ -409,7 +410,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:              "My Name",
 				ID:                "1234",
 			},
-			want: &BasicUserInfo{
+			want: &models.BasicUserInfo{
 				Id:             "1234",
 				Name:           "My Name",
 				Email:          "me@example.com",
@@ -489,7 +490,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:              "My Name",
 				ID:                "1234",
 			},
-			want: &BasicUserInfo{
+			want: &models.BasicUserInfo{
 				Id:     "1234",
 				Name:   "My Name",
 				Email:  "me@example.com",
@@ -520,7 +521,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:              "My Name",
 				ID:                "1234",
 			},
-			want: &BasicUserInfo{
+			want: &models.BasicUserInfo{
 				Id:     "1234",
 				Name:   "My Name",
 				Email:  "me@example.com",
@@ -574,7 +575,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ClaimSources:      nil, // set by the test
 			},
 			settingAutoAssignOrgRole: "",
-			want: &BasicUserInfo{
+			want: &models.BasicUserInfo{
 				Id:     "1",
 				Name:   "test",
 				Email:  "test@test.com",
@@ -607,7 +608,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Groups:            []string{"foo", "bar"}, // must be ignored
 			},
 			settingAutoAssignOrgRole: "",
-			want: &BasicUserInfo{
+			want: &models.BasicUserInfo{
 				Id:     "1",
 				Name:   "test",
 				Email:  "test@test.com",
@@ -776,7 +777,7 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 		fields                   fields
 		claims                   *azureClaims
 		settingAutoAssignOrgRole string
-		want                     *BasicUserInfo
+		want                     *models.BasicUserInfo
 		wantErr                  bool
 	}{
 		{
@@ -800,7 +801,7 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 				Name:              "My Name",
 				ID:                "1234",
 			},
-			want: &BasicUserInfo{
+			want: &models.BasicUserInfo{
 				Id:             "1234",
 				Name:           "My Name",
 				Email:          "me@example.com",
@@ -831,7 +832,7 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 				Name:              "My Name",
 				ID:                "1234",
 			},
-			want: &BasicUserInfo{
+			want: &models.BasicUserInfo{
 				Id:             "1234",
 				Name:           "My Name",
 				Email:          "me@example.com",

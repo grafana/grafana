@@ -1,4 +1,4 @@
-package social
+package connectors
 
 import (
 	"errors"
@@ -19,3 +19,11 @@ var (
 	errInvalidRole = errutil.BadRequest("oauth.invalid_role",
 		errutil.WithPublicMessage("IdP did not return a valid role attribute, please contact your administrator"))
 )
+
+type Error struct {
+	s string
+}
+
+func (e Error) Error() string {
+	return e.s
+}

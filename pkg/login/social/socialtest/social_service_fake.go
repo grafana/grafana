@@ -4,10 +4,11 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/models"
 )
 
 type FakeSocialService struct {
-	ExpectedAuthInfoProvider *social.OAuthInfo
+	ExpectedAuthInfoProvider *models.OAuthInfo
 	ExpectedConnector        social.SocialConnector
 	ExpectedHttpClient       *http.Client
 }
@@ -24,10 +25,10 @@ func (fss *FakeSocialService) GetConnector(string) (social.SocialConnector, erro
 	return fss.ExpectedConnector, nil
 }
 
-func (fss *FakeSocialService) GetOAuthInfoProvider(string) *social.OAuthInfo {
+func (fss *FakeSocialService) GetOAuthInfoProvider(string) *models.OAuthInfo {
 	return fss.ExpectedAuthInfoProvider
 }
 
-func (fss *FakeSocialService) GetOAuthInfoProviders() map[string]*social.OAuthInfo {
+func (fss *FakeSocialService) GetOAuthInfoProviders() map[string]*models.OAuthInfo {
 	panic("not implemented")
 }

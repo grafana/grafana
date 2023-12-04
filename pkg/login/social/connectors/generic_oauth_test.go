@@ -1,4 +1,4 @@
-package social
+package connectors
 
 import (
 	"context"
@@ -14,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
-
 	"github.com/grafana/grafana/pkg/setting"
 )
 

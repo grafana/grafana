@@ -1,4 +1,4 @@
-package social
+package connectors
 
 import (
 	"bytes"
@@ -15,6 +15,8 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -32,7 +34,7 @@ var (
 	errAzureADMissingGroups = &Error{"either the user does not have any group membership or the groups claim is missing from the token."}
 )
 
-var _ SocialConnector = (*SocialAzureAD)(nil)
+var _ social.SocialConnector = (*SocialAzureAD)(nil)
 
 type SocialAzureAD struct {
 	*SocialBase
@@ -72,12 +74,7 @@ type keySetJWKS struct {
 	jose.JSONWebKeySet
 }
 
-func NewAzureADProvider(settings map[string]any, cfg *setting.Cfg, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) (*SocialAzureAD, error) {
-	info, err := CreateOAuthInfoFromKeyValues(settings)
-	if err != nil {
-		return nil, err
-	}
-
+func NewAzureADProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) (*SocialAzureAD, error) {
 	config := createOAuthConfig(info, cfg, AzureADProviderName)
 	provider := &SocialAzureAD{
 		SocialBase:           newSocialBase(AzureADProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
@@ -90,13 +87,13 @@ func NewAzureADProvider(settings map[string]any, cfg *setting.Cfg, features *fea
 	}
 
 	if info.UseRefreshToken && features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) {
-		appendUniqueScope(config, OfflineAccessScope)
+		appendUniqueScope(config, models.OfflineAccessScope)
 	}
 
 	return provider, nil
 }
 
-func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
+func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*models.BasicUserInfo, error) {
 	idToken := token.Extra("id_token")
 	if idToken == nil {
 		return nil, ErrIDTokenNotFound
@@ -155,7 +152,7 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
-	return &BasicUserInfo{
+	return &models.BasicUserInfo{
 		Id:             claims.ID,
 		Name:           claims.Name,
 		Email:          email,
@@ -166,7 +163,7 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 	}, nil
 }
 
-func (s *SocialAzureAD) GetOAuthInfo() *OAuthInfo {
+func (s *SocialAzureAD) GetOAuthInfo() *models.OAuthInfo {
 	return s.info
 }
 
@@ -248,11 +245,11 @@ func (s *SocialAzureAD) extractRoleAndAdmin(claims *azureClaims) (org.RoleType, 
 		return s.defaultRole(), false, nil
 	}
 
-	roleOrder := []org.RoleType{RoleGrafanaAdmin, org.RoleAdmin, org.RoleEditor,
+	roleOrder := []org.RoleType{models.RoleGrafanaAdmin, org.RoleAdmin, org.RoleEditor,
 		org.RoleViewer, org.RoleNone}
 	for _, role := range roleOrder {
 		if found := hasRole(claims.Roles, role); found {
-			if role == RoleGrafanaAdmin {
+			if role == models.RoleGrafanaAdmin {
 				return org.RoleAdmin, true, nil
 			}
 
