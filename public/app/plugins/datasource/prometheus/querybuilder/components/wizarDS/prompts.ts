@@ -28,10 +28,12 @@ export type SuggestSystemPromptParams = {
 // You are a Grafana expert.
 export function GetComponentSuggestionsSystemPrompt({ templates }: SuggestSystemPromptParams): string {
   return `
-  Here is a list of elements in the query editor in JSON format:
+  You are an expert on Grafana.
+
+  You only respond with JSON like the following.
   ${templates}
 
-  Please study the JSON list. You will only return exact objects from this list for your responses ${templates}
+  Return only the JSON above. Do not return any prose.
 `;
 }
 
@@ -41,8 +43,6 @@ export function GetComponentSuggestionsUserPrompt({ templates, question }: Sugge
   
   Here is the same JSON list of objects you saw before:
   ${templates}
-
-  Only return exact copies of these objects${templates}.
   
   Return exact copies of these JSON objects ${templates} that best match the user question by the attributes 'component' and 'explanation'.
 
