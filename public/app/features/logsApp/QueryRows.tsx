@@ -1,7 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit';
 import React, { useCallback, useMemo } from 'react';
 
-import { CoreApp, DataSourceInstanceSettings, TimeRange } from '@grafana/data';
+import { CoreApp, DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { useDispatch, useSelector } from 'app/types';
@@ -14,7 +14,7 @@ import { getExploreItemSelector } from './state/selectors';
 
 interface Props {
   exploreId: string;
-  onChangeTime: (range: TimeRange) => void;
+  onChangeTime: (range: RawTimeRange) => void;
 }
 
 const makeSelectors = (exploreId: string) => {

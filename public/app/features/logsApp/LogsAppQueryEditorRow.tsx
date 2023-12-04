@@ -18,6 +18,7 @@ import {
   PanelData,
   PanelEvents,
   QueryResultMetaNotice,
+  RawTimeRange,
   TimeRange,
   toLegacyResponseData,
 } from '@grafana/data';
@@ -63,7 +64,7 @@ interface Props<TQuery extends DataQuery> {
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
   collapsable?: boolean;
   range?: TimeRange;
-  updateTimeRange: (range: TimeRange) => void;
+  updateTimeRange: (range: RawTimeRange) => void;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -278,7 +279,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
     if (datasource) {
       let QueryEditor = this.getReactQueryEditor(datasource);
-      console.log(range);
       if (QueryEditor) {
         return (
           <DataSourcePluginContextProvider instanceSettings={this.props.dataSource}>
@@ -421,10 +421,12 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   renderHeader = (props: QueryOperationRowRenderProps) => {
     const { alerting, query, dataSource, onChangeDataSource, onChange, queries, range, updateTimeRange } = this.props;
-    // todo - figure out how to make it visible
+    const onChangeTime = (timeRange: TimeRange) => {
+      updateTimeRange(timeRange.raw);
+    };
     const renderHeaderExtras = () => (
       <div style={{ position: 'absolute', top: '13px' }}>
-        <TimeRangeInput value={range ?? getDefaultLogsTimeRange()} onChange={updateTimeRange} />
+        <TimeRangeInput value={range ?? getDefaultLogsTimeRange()} onChange={onChangeTime} />
       </div>
     );
 
