@@ -5,10 +5,6 @@ import { Dashboard } from '@grafana/schema';
 export interface EmbeddedDashboardProps {
   uid?: string;
   dashboard?: Dashboard;
-  /** Set to true to show in drawer */
-  inDrawer?: boolean;
-  /** Only relevant when inDrawer = true */
-  onClose?: () => void;
 }
 
 /**

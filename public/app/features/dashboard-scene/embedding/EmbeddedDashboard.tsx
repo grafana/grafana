@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { EmbeddedDashboardProps } from '@grafana/runtime';
-import { Spinner, Alert, useStyles2, Drawer, Box, TextLink, Button, Stack } from '@grafana/ui';
+import { Spinner, Alert, useStyles2 } from '@grafana/ui';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -38,7 +38,7 @@ interface RendererProps extends EmbeddedDashboardProps {
   model: DashboardScene;
 }
 
-function EmbeddedDashboardRenderer({ model, uid, inDrawer, onClose = () => {} }: RendererProps) {
+function EmbeddedDashboardRenderer({ model, uid }: RendererProps) {
   const [isActive, setIsActive] = useState(false);
   const { controls, body } = model.useState();
   const styles = useStyles2(getStyles);
@@ -52,66 +52,24 @@ function EmbeddedDashboardRenderer({ model, uid, inDrawer, onClose = () => {} }:
     return null;
   }
 
-  if (!inDrawer) {
-    return (
-      <div className={styles.canvas}>
-        {controls && (
-          <div className={styles.controls}>
-            {controls.map((control) => (
-              <control.Component key={control.state.key} model={control} />
-            ))}
-          </div>
-        )}
-        <div className={styles.body}>
-          <body.Component model={body} />
-        </div>
-      </div>
-    );
-  }
-
-  const title = (
-    <Stack direction="column" gap={0}>
-      <div className={styles.drawerHeader}>
-        <div className={styles.drawerTitle}>{model.state.title}</div>
-        <div className={styles.actions}>
-          <Button icon="times" variant="secondary" fill="text" onClick={onClose} />
-        </div>
-      </div>
-      <Box paddingX={2}>
-        <TextLink href={`/d/${uid}`}>Open dashboard</TextLink>
-        {controls && (
-          <div className={styles.controls}>
-            {controls.map((control) => (
-              <control.Component key={control.state.key} model={control} />
-            ))}
-          </div>
-        )}
-      </Box>
-    </Stack>
-  );
-
   return (
-    <Drawer title={title} onClose={onClose} size="lg">
-      <body.Component model={body} />
-    </Drawer>
+    <div className={styles.canvas}>
+      {controls && (
+        <div className={styles.controls}>
+          {controls.map((control) => (
+            <control.Component key={control.state.key} model={control} />
+          ))}
+        </div>
+      )}
+      <div className={styles.body}>
+        <body.Component model={body} />
+      </div>
+    </div>
   );
 }
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    drawerHeader: css({
-      display: 'flex',
-      padding: theme.spacing(2, 2, 0, 2),
-    }),
-    drawerTitle: css({
-      fontSize: theme.typography.h4.fontSize,
-      flexGrow: 1,
-    }),
-    actions: css({
-      position: 'absolute',
-      right: theme.spacing(1),
-      top: theme.spacing(1),
-    }),
     canvas: css({
       label: 'canvas-content',
       display: 'flex',
