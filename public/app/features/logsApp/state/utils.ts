@@ -4,9 +4,9 @@ import {
   AbsoluteTimeRange,
   DataSourceApi,
   dateMath,
+  dateTime,
   DateTime,
   EventBusExtended,
-  getDefaultTimeRange,
   HistoryItem,
   isDateTime,
   LoadingState,
@@ -30,7 +30,7 @@ import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
 
 export const DEFAULT_RANGE = {
-  from: 'now-6h',
+  from: 'now-30m',
   to: 'now',
 };
 
@@ -79,7 +79,7 @@ export const makeExplorePaneState = (overrides?: Partial<ExploreItemState>): Exp
 export const createEmptyQueryResponse = (): ExplorePanelData => ({
   state: LoadingState.NotStarted,
   series: [],
-  timeRange: getDefaultTimeRange(),
+  timeRange: getDefaultLogsTimeRange(),
   graphFrames: [],
   logsFrames: [],
   traceFrames: [],
@@ -235,3 +235,13 @@ export const getDatasourceUIDs = (datasourceUID: string, queries: DataQuery[]): 
     return [datasourceUID];
   }
 };
+
+export function getDefaultLogsTimeRange(): TimeRange {
+  const now = dateTime();
+
+  return {
+    from: dateTime(now).subtract(30, 'minute'),
+    to: now,
+    raw: { from: 'now-30m', to: 'now' },
+  };
+}

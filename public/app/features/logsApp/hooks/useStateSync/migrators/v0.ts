@@ -20,7 +20,7 @@ export const v0Migrator: MigrationHandler<never, ExploreURLV0> = {
             datasource: null,
             queries: [],
             range: {
-              from: 'now-6h',
+              from: 'now-30m',
               to: 'now',
             },
           },

@@ -19,12 +19,11 @@ import {
   PanelEvents,
   QueryResultMetaNotice,
   TimeRange,
-  dateTime,
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { AngularComponent, getAngularLoader, getDataSourceSrv } from '@grafana/runtime';
-import { Badge, ErrorBoundaryAlert, InlineField, TimeRangeInput } from '@grafana/ui';
+import { Badge, ErrorBoundaryAlert, TimeRangeInput } from '@grafana/ui';
 import {
   QueryOperationRow,
   QueryOperationRowRenderProps,
@@ -36,6 +35,8 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { QueryEditorRowHeader } from '../query/components/QueryEditorRowHeader';
 import { QueryErrorAlert } from '../query/components/QueryErrorAlert';
+
+import { getDefaultLogsTimeRange } from './state/utils';
 
 interface Props<TQuery extends DataQuery> {
   data: PanelData;
@@ -277,7 +278,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
     if (datasource) {
       let QueryEditor = this.getReactQueryEditor(datasource);
-
+      console.log(range);
       if (QueryEditor) {
         return (
           <DataSourcePluginContextProvider instanceSettings={this.props.dataSource}>
@@ -422,7 +423,9 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const { alerting, query, dataSource, onChangeDataSource, onChange, queries, range, updateTimeRange } = this.props;
     // todo - figure out how to make it visible
     const renderHeaderExtras = () => (
-      <TimeRangeInput value={range ?? getDefaultLogsTimeRange()} onChange={updateTimeRange} />
+      <div style={{ position: 'absolute', top: '13px' }}>
+        <TimeRangeInput value={range ?? getDefaultLogsTimeRange()} onChange={updateTimeRange} />
+      </div>
     );
 
     return (
@@ -437,6 +440,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         collapsedText={!props.isOpen ? this.renderCollapsedText() : null}
         renderExtras={renderHeaderExtras}
         alerting={alerting}
+        logs={true}
       />
     );
   };
@@ -546,15 +550,5 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
     error,
     errors: error ? [error] : undefined,
     timeRange,
-  };
-}
-
-export function getDefaultLogsTimeRange(): TimeRange {
-  const now = dateTime();
-
-  return {
-    from: dateTime(now).subtract(30, 'minute'),
-    to: now,
-    raw: { from: 'now-30m', to: 'now' },
   };
 }
