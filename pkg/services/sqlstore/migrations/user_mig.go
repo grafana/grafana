@@ -140,6 +140,14 @@ func addUserMigrations(mg *Migrator) {
 			SQLite(migSQLITEisServiceAccountNullable).
 			Postgres("ALTER TABLE `user` ALTER COLUMN is_service_account DROP NOT NULL;").
 			Mysql("ALTER TABLE user MODIFY is_service_account BOOLEAN DEFAULT 0;"))
+
+	//GG Add user achievement columns
+	mg.AddMigration("Add column level to user table", NewAddColumnMigration(userV2, &Column{
+		Name: "level", Type: DB_BigInt, Nullable: false, Default: "0",
+	}))
+	mg.AddMigration("Add column achievements to user table", NewAddColumnMigration(userV2, &Column{
+		Name: "achievements", Type: DB_NVarchar, Length: 255, Nullable: true, Default: "null",
+	}))
 }
 
 const migSQLITEisServiceAccountNullable = `ALTER TABLE user ADD COLUMN tmp_service_account BOOLEAN DEFAULT 0;
