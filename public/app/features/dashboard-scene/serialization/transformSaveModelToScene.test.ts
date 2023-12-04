@@ -455,6 +455,91 @@ describe('transformSaveModelToScene', () => {
       });
     });
 
+    it('should migrate query variable with definition', () => {
+      const variable: QueryVariableModel = {
+        allValue: null,
+        current: {
+          text: 'America',
+          value: 'America',
+          selected: false,
+        },
+        datasource: {
+          uid: 'P15396BDD62B2BE29',
+          type: 'influxdb',
+        },
+        definition: 'SHOW TAG VALUES  WITH KEY = "datacenter"',
+        hide: 0,
+        includeAll: false,
+        label: 'Datacenter',
+        multi: false,
+        name: 'datacenter',
+        options: [
+          {
+            text: 'America',
+            value: 'America',
+            selected: true,
+          },
+          {
+            text: 'Africa',
+            value: 'Africa',
+            selected: false,
+          },
+          {
+            text: 'Asia',
+            value: 'Asia',
+            selected: false,
+          },
+          {
+            text: 'Europe',
+            value: 'Europe',
+            selected: false,
+          },
+        ],
+        query: 'SHOW TAG VALUES  WITH KEY = "datacenter" ',
+        refresh: 1,
+        regex: '',
+        skipUrlSync: false,
+        sort: 0,
+        type: 'query',
+        rootStateKey: '000000002',
+        id: 'datacenter',
+        global: false,
+        index: 0,
+        state: LoadingState.Done,
+        error: null,
+        description: null,
+      };
+
+      const migrated = createSceneVariableFromVariableModel(variable);
+      const { key, ...rest } = migrated.state;
+
+      expect(migrated).toBeInstanceOf(QueryVariable);
+      expect(rest).toEqual({
+        allValue: undefined,
+        datasource: {
+          type: 'influxdb',
+          uid: 'P15396BDD62B2BE29',
+        },
+        defaultToAll: false,
+        description: null,
+        includeAll: false,
+        isMulti: false,
+        label: 'Datacenter',
+        name: 'datacenter',
+        options: [],
+        query: 'SHOW TAG VALUES  WITH KEY = "datacenter" ',
+        refresh: 1,
+        regex: '',
+        skipUrlSync: false,
+        sort: 0,
+        text: 'America',
+        type: 'query',
+        value: 'America',
+        hide: 0,
+        definition: 'SHOW TAG VALUES  WITH KEY = "datacenter"',
+      });
+    });
+
     it('should migrate query variable', () => {
       const variable: QueryVariableModel = {
         allValue: null,
@@ -524,6 +609,7 @@ describe('transformSaveModelToScene', () => {
         description: null,
         includeAll: false,
         isMulti: false,
+        definition: '',
         label: 'Datacenter',
         name: 'datacenter',
         options: [],
