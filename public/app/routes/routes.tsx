@@ -155,7 +155,8 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/dashboards/trash',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "TrashDashboardListPage"*/ '../features/trash-dashboards/TrashDashboardsPage')
+        () =>
+          import(/* webpackChunkName: "TrashDashboardListPage"*/ 'app/features/trash-dashboards/TrashDashboardsPage')
       ),
     },
     {
