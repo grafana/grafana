@@ -40,7 +40,7 @@ func NewNGAlert(r prometheus.Registerer) *NGAlert {
 		stateMetrics:                NewStateMetrics(r),
 		multiOrgAlertmanagerMetrics: NewMultiOrgAlertmanagerMetrics(r),
 		apiMetrics:                  NewAPIMetrics(r),
-		historianMetrics:            NewHistorianMetrics(r),
+		historianMetrics:            NewHistorianMetrics(r, Subsystem),
 	}
 }
 

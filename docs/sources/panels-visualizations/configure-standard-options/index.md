@@ -19,7 +19,7 @@ labels:
     - oss
 menuTitle: Configure standard options
 title: Configure standard options
-weight: 2
+weight: 60
 ---
 
 # Configure standard options

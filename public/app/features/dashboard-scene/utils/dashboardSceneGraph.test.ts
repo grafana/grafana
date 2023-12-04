@@ -12,7 +12,6 @@ describe('dashboardSceneGraph', () => {
         ...(dashboard_to_load as unknown as DashboardDataDTO),
         timepicker: {
           hidden: true,
-          collapse: false,
           refresh_intervals: [],
           time_options: [],
         },
@@ -34,6 +33,36 @@ describe('dashboardSceneGraph', () => {
       });
       const timePicker = dashboardSceneGraph.getTimePicker(scene);
       expect(timePicker).not.toBeNull();
+    });
+  });
+
+  describe('getRefreshPicker', () => {
+    it('should return null if no refresh picker', () => {
+      const dashboard: DashboardDataDTO = {
+        ...(dashboard_to_load as unknown as DashboardDataDTO),
+        timepicker: {
+          hidden: true,
+          refresh_intervals: [],
+          time_options: [],
+        },
+      };
+
+      const scene = transformSaveModelToScene({
+        dashboard: dashboard as unknown as DashboardDataDTO,
+        meta: {},
+      });
+
+      const refreshPicker = dashboardSceneGraph.getRefreshPicker(scene);
+      expect(refreshPicker).toBeNull();
+    });
+
+    it('should return refresh picker', () => {
+      const scene = transformSaveModelToScene({
+        dashboard: dashboard_to_load as unknown as DashboardDataDTO,
+        meta: {},
+      });
+      const refreshPicker = dashboardSceneGraph.getRefreshPicker(scene);
+      expect(refreshPicker).not.toBeNull();
     });
   });
 });
