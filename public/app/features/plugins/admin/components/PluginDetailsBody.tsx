@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { AppPlugin, GrafanaTheme2, PluginContextProvider, UrlQueryMap } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { useStyles2, Stack } from '@grafana/ui';
 
 import { VersionList } from '../components/VersionList';
@@ -49,7 +50,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
     );
   }
 
-  if (pageId === PluginTabIds.IAM) {
+  if (config.featureToggles.externalServiceAccounts && pageId === PluginTabIds.IAM) {
     return (
       <Stack direction="column">
         <Stack direction="row">The {plugin.name} plugin requires the following permissions on your instance:</Stack>
