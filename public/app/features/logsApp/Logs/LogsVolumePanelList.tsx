@@ -1,18 +1,22 @@
 import { css } from '@emotion/css';
 import { flatten, groupBy, mapValues, sortBy } from 'lodash';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import {
   AbsoluteTimeRange,
   DataFrame,
+  DataQuery,
   DataQueryResponse,
+  DataSourceApi,
   EventBus,
   GrafanaTheme2,
   LoadingState,
+  SelectableValue,
   SplitOpen,
+  SupplementaryQueryType,
   TimeZone,
 } from '@grafana/data';
-import { Button, InlineField, Alert, useStyles2 } from '@grafana/ui';
+import { Button, InlineField, Alert, useStyles2, Select } from '@grafana/ui';
 
 import { mergeLogsVolumeDataFrames, isLogsVolumeLimited, getLogsVolumeMaximumRange } from '../../logs/utils';
 import { SupplementaryResultError } from '../SupplementaryResultError';
@@ -27,10 +31,11 @@ type Props = {
   splitOpen: SplitOpen;
   width: number;
   onUpdateTimeRange: (timeRange: AbsoluteTimeRange) => void;
-  onLoadLogsVolume: () => void;
+  onLoadLogsVolume: (suppQueryType?: SupplementaryQueryType) => void;
   onHiddenSeriesChanged: (hiddenSeries: string[]) => void;
   eventBus: EventBus;
   onClose?(): void;
+  datasourceInstance: DataSourceApi<DataQuery>;
 };
 
 export const LogsVolumePanelList = ({
@@ -44,6 +49,7 @@ export const LogsVolumePanelList = ({
   splitOpen,
   timeZone,
   onClose,
+  datasourceInstance,
 }: Props) => {
   const {
     logVolumes,
@@ -65,6 +71,13 @@ export const LogsVolumePanelList = ({
       logVolumes,
     };
   }, [logsVolumeData]);
+
+  const [state, setState] = useState<{
+    labelNames?: SelectableValue[];
+    isLoadingLabelNames?: boolean;
+  }>({});
+  const [labelNamesMenuOpen, setLabelNamesMenuOpen] = useState(false);
+  const [selectedLabel, setSelectedLabel] = useState<SelectableValue<string>>({ label: 'none', value: 'none' });
 
   const styles = useStyles2(getStyles);
 
@@ -130,13 +143,49 @@ export const LogsVolumePanelList = ({
           />
         );
       })}
-      {containsZoomed && (
-        <div className={styles.extraInfoContainer}>
+      <div className={styles.extraInfoContainer}>
+        {containsZoomed && (
           <InlineField label="Reload log volume" transparent>
-            <Button size="xs" icon="sync" variant="secondary" onClick={onLoadLogsVolume} id="reload-volume" />
+            <Button size="xs" icon="sync" variant="secondary" onClick={() => onLoadLogsVolume()} id="reload-volume" />
+          </InlineField>
+        )}
+        <div style={{ display: 'flex' }}>
+          <InlineField label="Group by">
+            <Select
+              onOpenMenu={async () => {
+                setState({ isLoadingLabelNames: true });
+                // @ts-ignore this should be implemented for test data sources
+                const labels = await datasourceInstance.getTagKeys();
+                const labelNames = labels.map((l) => ({ label: l.text, value: l.text }));
+                setLabelNamesMenuOpen(true);
+                setState({
+                  labelNames: [{ label: 'none', value: 'none' }, ...labelNames],
+                  isLoadingLabelNames: undefined,
+                });
+              }}
+              isOpen={labelNamesMenuOpen}
+              isLoading={state.isLoadingLabelNames}
+              options={state.labelNames}
+              width={20}
+              value={selectedLabel}
+              onChange={(change) => {
+                setSelectedLabel(change);
+                setLabelNamesMenuOpen(false);
+                if (change.value !== selectedLabel.value) {
+                  onLoadLogsVolume(SupplementaryQueryType.LogsVolume);
+                }
+              }}
+            />
+          </InlineField>
+          <InlineField>
+            <>
+              <Button icon="chart-line" size="xs" variant="secondary" style={{ marginLeft: '4px' }} />
+              <Button icon="graph-bar" size="xs" variant="secondary" style={{ marginLeft: '4px' }} />
+              <Button icon="calculator-alt" size="xs" variant="secondary" style={{ marginLeft: '4px' }} />
+            </>
           </InlineField>
         </div>
-      )}
+      </div>
     </div>
   );
 };

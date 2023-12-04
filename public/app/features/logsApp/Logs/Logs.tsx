@@ -10,6 +10,7 @@ import {
   DataHoverClearEvent,
   DataHoverEvent,
   DataQueryResponse,
+  DataSourceApi,
   EventBus,
   ExploreLogsPanelState,
   ExplorePanelsState,
@@ -29,6 +30,7 @@ import {
   RawTimeRange,
   serializeStateToUrlParam,
   SplitOpen,
+  SupplementaryQueryType,
   TimeRange,
   TimeZone,
   urlUtil,
@@ -84,7 +86,7 @@ interface Props extends Themeable2 {
   logsVolumeEnabled: boolean;
   logsVolumeData: DataQueryResponse | undefined;
   onSetLogsVolumeEnabled: (enabled: boolean) => void;
-  loadLogsVolumeData: () => void;
+  loadLogsVolumeData: (suppQueryType?: SupplementaryQueryType) => void;
   showContextToggle?: (row: LogRowModel) => boolean;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
@@ -106,6 +108,7 @@ interface Props extends Themeable2 {
   onClickFilterValue?: (value: string, refId?: string) => void;
   onClickFilterOutValue?: (value: string, refId?: string) => void;
   loadMoreLogs?(range: AbsoluteTimeRange): void;
+  datasourceInstance: DataSourceApi<DataQuery>;
 }
 
 export type LogsVisualisationType = 'table' | 'logs';
@@ -565,7 +568,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     const tableHeight = getLogsTableHeight();
     const styles = getStyles(theme, wrapLogMessage, tableHeight);
     const hasData = logRows && logRows.length > 0;
-    
+
     const filteredLogs = this.filterRows(logRows, hiddenLogLevels);
     const { dedupedRows } = this.dedupRows(filteredLogs, dedupStrategy);
     const navigationRange = this.createNavigationRange(logRows);
@@ -604,6 +607,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
               onHiddenSeriesChanged={this.onToggleLogLevel}
               eventBus={this.logsVolumeEventBus}
               onClose={() => this.onToggleLogsVolumeCollapse(true)}
+              datasourceInstance={this.props.datasourceInstance}
             />
           )}
         </PanelChrome>

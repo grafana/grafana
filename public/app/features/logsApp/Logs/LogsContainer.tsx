@@ -300,6 +300,7 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
           <Logs
             exploreId={exploreId}
             datasourceType={this.props.datasourceInstance?.type}
+            datasourceInstance={this.state.dsInstances['A']}
             logRows={logRows}
             logsMeta={logsMeta}
             logsSeries={logsSeries}
@@ -313,7 +314,9 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
             splitOpen={splitOpenFn}
             loading={loading}
             loadingState={loadingState}
-            loadLogsVolumeData={() => loadSupplementaryQueryData(exploreId, SupplementaryQueryType.LogsVolume)}
+            loadLogsVolumeData={(suppQueryType?: SupplementaryQueryType) =>
+              loadSupplementaryQueryData(exploreId, suppQueryType ?? SupplementaryQueryType.LogsVolume)
+            }
             onChangeTime={this.onChangeTime}
             loadMoreLogs={this.loadMoreLogs}
             onClickFilterLabel={this.logDetailsFilterAvailable() ? onClickFilterLabel : undefined}
