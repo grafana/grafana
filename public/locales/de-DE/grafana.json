@@ -1077,6 +1077,9 @@
       "turned-off": "Automatische Aktualisierung aus"
     }
   },
+  "route-fallback": {
+    "loading-text": ""
+  },
   "search": {
     "actions": {
       "include-panels": "Panels einschließen",

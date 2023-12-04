@@ -5,6 +5,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 
+import { t } from '../internationalization';
+
 export function GrafanaRouteLoading() {
   const styles = useStyles2(getStyles);
 
@@ -15,7 +17,7 @@ export function GrafanaRouteLoading() {
       })}
       aria-live="polite"
       role="status"
-      aria-label="Loading"
+      aria-label={t('route-fallback.loading-text', 'Loading')}
     >
       <div className="preloader__enter">
         <div className="preloader__bounce">

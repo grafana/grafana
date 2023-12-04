@@ -1083,6 +1083,9 @@
       "turned-off": "Actualización automática desactivada"
     }
   },
+  "route-fallback": {
+    "loading-text": ""
+  },
   "search": {
     "actions": {
       "include-panels": "Incluir paneles",

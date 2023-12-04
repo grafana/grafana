@@ -1077,6 +1077,9 @@
       "turned-off": "Auto refresh off"
     }
   },
+  "route-fallback": {
+    "loading-text": "Loading"
+  },
   "search": {
     "actions": {
       "include-panels": "Include panels",
