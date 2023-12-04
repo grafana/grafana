@@ -23,12 +23,15 @@ The Azure AD authentication allows you to use an Azure Active Directory tenant a
 
 - [Configure Azure AD OAuth2 authentication](#configure-azure-ad-oauth2-authentication)
   - [Create the Azure AD application](#create-the-azure-ad-application)
+      - [Configure Application roles for Grafana on the Azure Portal](#configure-application-roles-for-grafana-on-the-azure-portal)
+      - [Configure Application roles for Grafana from the manifest file](#configure-application-roles-for-grafana-from-the-manifest-file)
     - [Assign server administrator privileges](#assign-server-administrator-privileges)
   - [Enable Azure AD OAuth in Grafana](#enable-azure-ad-oauth-in-grafana)
     - [Configure refresh token](#configure-refresh-token)
     - [Configure allowed tenants](#configure-allowed-tenants)
     - [Configure allowed groups](#configure-allowed-groups)
-      - [Configure group membership claims](#configure-group-membership-claims)
+      - [Configure group membership claims on the Azure Portal](#configure-group-membership-claims-on-the-azure-portal)
+      - [Configure group membership claim in the manifest file](#configure-group-membership-claim-in-the-manifest-file)
     - [Configure allowed domains](#configure-allowed-domains)
     - [PKCE](#pkce)
     - [Configure automatic login](#configure-automatic-login)
@@ -68,83 +71,85 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
 
 1. Click **Add** then copy the key value. This is the OAuth client secret.
 
-1. To define the required Application Roles for Grafana you can either do it using the Azure Portal or by editing the application manifest file.
-
-    - Using the Azure Portal (more info [here](https://learn.microsoft.com/en-us/entra/identity-platform/howto-add-app-roles-in-apps)):
-
-        1. Go to **App Registrations**. Search for your application and click on it.
-
-        1. Click on **App Roles** and then **Create app role**.
-
-        1. Define a role corresponding to each Grafana role: Viewer, Editor, or Admin. 
-
-            1. Choose a **Display name** for the role. For example, "Grafana Editor".
-            
-            1. Set the **Allowed member types** to **Users/Groups**.
-
-            1. Ensure that the **Value** field matches the Grafana role name. For example, "Editor".
-
-            1. Choose a **Description** for the role. For example, "Grafana Editor Users".
-
-            1. Click **Apply**.
-
-    - By editing the application manifest file: 
-
-        1. Go to **App Registrations**. Search for your application and click on it.
-        
-        1. Click on **Manifest** and then **Edit**.
-
-        1. Every role requires a [Universally Unique Identifier](https://en.wikipedia.org/wiki/Universally_unique_identifier) which you can generate on Linux with `uuidgen`, and on Windows through Microsoft PowerShell with `New-Guid`.
-
-        1. Generate a unique ID for each role and replace each "SOME_UNIQUE_ID" with the generated ID in the manifest file:
-
-            ```json
-            	"appRoles": [
-            			{
-            				"allowedMemberTypes": [
-            					"User"
-            				],
-            				"description": "Grafana org admin Users",
-            				"displayName": "Grafana Org Admin",
-            				"id": "SOME_UNIQUE_ID",
-            				"isEnabled": true,
-            				"lang": null,
-            				"origin": "Application",
-            				"value": "Admin"
-            			},
-            			{
-            				"allowedMemberTypes": [
-            					"User"
-            				],
-            				"description": "Grafana read only Users",
-            				"displayName": "Grafana Viewer",
-            				"id": "SOME_UNIQUE_ID",
-            				"isEnabled": true,
-            				"lang": null,
-            				"origin": "Application",
-            				"value": "Viewer"
-            			},
-            			{
-            				"allowedMemberTypes": [
-            					"User"
-            				],
-            				"description": "Grafana Editor Users",
-            				"displayName": "Grafana Editor",
-            				"id": "SOME_UNIQUE_ID",
-            				"isEnabled": true,
-            				"lang": null,
-            				"origin": "Application",
-            				"value": "Editor"
-            			}
-            		],
-            ```
-            
-        1. Click on **Save**.
+1. You can define the required Application Roles for Grafana [using the Azure Portal](#configure-application-roles-on-the-azure-portal) or [using the manifest file](#configure-application-roles-for-grafana-from-the-manifest-file).
 
 1. Go to **Azure Active Directory** and then to **Enterprise Applications**. Search for your application and click on it.
 
 1. Click on **Users and Groups** and add Users/Groups to the Grafana roles by using **Add User**.
 
+#### Configure Application roles for Grafana on the Azure Portal
+
+In this seciont we'll go through how to setup basic Appplication roles for Grafana from the Azure Portal. More info can be found [here](https://learn.microsoft.com/en-us/entra/identity-platform/howto-add-app-roles-in-apps):
+
+1. Go to **App Registrations**. Search for your application and click on it.
+
+1. Click on **App roles** and then **Create app role**.
+
+1. Define a role corresponding to each Grafana role: Viewer, Editor, and Admin. 
+
+    1. Choose a **Display name** for the role. For example, "Grafana Editor".
+            
+    1. Set the **Allowed member types** to **Users/Groups**.
+
+    1. Ensure that the **Value** field matches the Grafana role name. For example, "Editor".
+
+    1. Choose a **Description** for the role. For example, "Grafana Editor Users".
+
+    1. Click **Apply**.
+
+#### Configure Application roles for Grafana from the manifest file
+
+1. Go to **App Registrations**. Search for your application and click on it.
+        
+1. Click on **Manifest** and then **Edit**.
+
+1. Every role requires a [Universally Unique Identifier](https://en.wikipedia.org/wiki/Universally_unique_identifier) which you can generate on Linux with `uuidgen`, and on Windows through Microsoft PowerShell with `New-Guid`.
+
+1. Generate a unique ID for each role and replace each "SOME_UNIQUE_ID" with the generated ID in the manifest file:
+
+    ```json
+    	"appRoles": [
+    			{
+    				"allowedMemberTypes": [
+    					"User"
+    				],
+    				"description": "Grafana org admin Users",
+    				"displayName": "Grafana Org Admin",
+    				"id": "SOME_UNIQUE_ID",
+    				"isEnabled": true,
+    				"lang": null,
+    				"origin": "Application",
+    				"value": "Admin"
+    			},
+    			{
+    				"allowedMemberTypes": [
+    					"User"
+    				],
+    				"description": "Grafana read only Users",
+    				"displayName": "Grafana Viewer",
+    				"id": "SOME_UNIQUE_ID",
+    				"isEnabled": true,
+    				"lang": null,
+    				"origin": "Application",
+    				"value": "Viewer"
+    			},
+    			{
+    				"allowedMemberTypes": [
+    					"User"
+    				],
+    				"description": "Grafana Editor Users",
+    				"displayName": "Grafana Editor",
+    				"id": "SOME_UNIQUE_ID",
+    				"isEnabled": true,
+    				"lang": null,
+    				"origin": "Application",
+    				"value": "Editor"
+    			}
+    		],
+    ```
+            
+1. Click on **Save**.
+   
 ### Assign server administrator privileges
 
 > Available in Grafana v9.2 and later versions.
@@ -244,17 +249,9 @@ to a comma- or space-separated list of group object IDs. You can find object IDs
 
 > You can find the Object Id of a group by clicking on the group and then clicking on **Properties**. The object ID is listed under **Object ID**.
 
-1. You can enable [group attributes](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims#configure-groups-optional-claims) in your Azure AD App registration from either the Azure Portal by following the steps in [Configure group membership claims](#configure-group-membership-claims) or by updating the manifest file:
-    
-    1. Navigate to **App Registrations** > **Select Application** > **Manifest**.
+1. You can enable adding the [group attribute](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims#configure-groups-optional-claims) to the tokens in your Azure AD App registration either [from the Azure Portal](#configure-group-membership-claims-on-the-azure-portal) or [from the manifest file](#configure-group-membership-claim-in-the-manifest-file).
 
-    2. Set the following:
-    
-       ```
-       "groupMembershipClaims": "ApplicationGroup, SecurityGroup"
-       ```
-
-#### Configure group membership claims
+#### Configure group membership claims on the Azure Portal
 
 To ensure that the `groups` claim is included in the token, add the `groups` claim to the token configuration either through the Azure Portal UI or by editing the manifest file. 
 
@@ -266,6 +263,18 @@ To configure group membership claims from the Azure Portal UI, complete the foll
 For more information, see [Configure groups optional claims](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims#configure-groups-optional-claims).
 
 > If the user is a member of more than 200 groups, Azure AD does not emit the groups claim in the token and instead emits a group overage claim. To set up a group overage claim, see [Users with over 200 Group assignments](#users-with-over-200-group-assignments).
+
+#### Configure group membership claim in the manifest file
+
+1. Go to **App Registrations**. Search for your application and click on it.
+
+1. Click on **Manifest** and then **Edit**.
+
+2. Add the following to the root of the manifest file:
+    
+       ```
+       "groupMembershipClaims": "ApplicationGroup, SecurityGroup"
+       ```
 
 ### Configure allowed domains
 
