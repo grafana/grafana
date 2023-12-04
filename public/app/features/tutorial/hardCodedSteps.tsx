@@ -25,7 +25,7 @@ export const tutorialSteps: Step[] = [
         action: 'change',
         attribute: {
           name: 'placeholder',
-          value: 'grafanacloud-ckbedwellksix-prom',
+          value: 'gdev-prometheus',
         },
       },
     ],
