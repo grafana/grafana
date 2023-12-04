@@ -548,6 +548,59 @@ func TestResolve(t *testing.T) {
 	assert.Equal(t, expected, s)
 }
 
+func TestTrimResults(t *testing.T) {
+	now := time.Now()
+	interval := time.Minute
+	r := ngmodels.AlertRule{For: 5 * time.Minute, IntervalSeconds: int64(interval.Seconds())}
+	s := State{State: eval.Alerting}
+
+	// The test should start with no evaluation results.
+	assert.Len(t, s.Results, 0)
+
+	// With a For interval of 5 minutes, and 60 second evaluation interval,
+	// we can store the 5 most recent evaluations at a time.
+	for i := 0; i < 5; i++ {
+		s.Results = append(s.Results, Evaluation{
+			EvaluationTime:  now.Add(interval * time.Duration(i)),
+			EvaluationState: eval.Normal},
+		)
+		assert.Len(t, s.Results, i+1)
+		// No truncation should happen.
+		s.TrimResults(&r)
+		assert.Len(t, s.Results, i+1)
+	}
+
+	// Add a 6th evaluation and results should be truncated.
+	s.Results = append(s.Results, Evaluation{
+		EvaluationTime:  now.Add(interval * 5),
+		EvaluationState: eval.Normal,
+	})
+	assert.Len(t, s.Results, 6)
+	s.TrimResults(&r)
+	assert.Len(t, s.Results, 5)
+	// Check we have the expected results after truncation.
+	for i := 0; i < len(s.Results); i++ {
+		assert.Equal(t, now.Add(interval*time.Duration(i+1)), s.Results[i].EvaluationTime)
+	}
+
+	// Add a 7th and 8th evaluation and results should be truncated again.
+	s.Results = append(s.Results, Evaluation{
+		EvaluationTime:  now.Add(interval * 6),
+		EvaluationState: eval.Normal,
+	})
+	s.Results = append(s.Results, Evaluation{
+		EvaluationTime:  now.Add(interval * 7),
+		EvaluationState: eval.Normal,
+	})
+	assert.Len(t, s.Results, 7)
+	s.TrimResults(&r)
+	assert.Len(t, s.Results, 5)
+	// Check we have the expected results after truncation.
+	for i := 0; i < len(s.Results); i++ {
+		assert.Equal(t, now.Add(interval*time.Duration(i+3)), s.Results[i].EvaluationTime)
+	}
+}
+
 func TestShouldTakeImage(t *testing.T) {
 	tests := []struct {
 		name          string

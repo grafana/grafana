@@ -19,6 +19,21 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 )
 
+func BenchmarkTrimResults(b *testing.B) {
+	now := time.Now()
+	interval := time.Minute
+	r := models.AlertRule{For: 5 * time.Minute, IntervalSeconds: int64(interval.Seconds())}
+	s := state.State{State: eval.Alerting}
+
+	for n := 0; n < b.N; n++ {
+		s.Results = append(s.Results, state.Evaluation{
+			EvaluationTime:  now.Add(time.Duration(n) * time.Minute),
+			EvaluationState: eval.Normal,
+		})
+		s.TrimResults(&r)
+	}
+}
+
 func BenchmarkProcessEvalResults(b *testing.B) {
 	as := annotations.FakeAnnotationsRepo{}
 	as.On("SaveMany", mock.Anything, mock.Anything).Return(nil)
