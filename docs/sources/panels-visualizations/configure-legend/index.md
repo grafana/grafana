@@ -101,6 +101,8 @@ When you apply your changes, the visualization changes appear to all users of th
 
 1. To save your changes so that they appear to all viewers of the panel, click **Apply**.
 
+<!--this might need to be chunked out -->
+
 ## Sort series
 
 When your legend is formatted as a table and displays values, you can sort series by those values. To do so, follow these steps:
@@ -119,11 +121,11 @@ When your legend is formatted as a table and displays values, you can sort serie
 
 ![Legend formatted as a table showing sorted values](screenshot-legend-sorted-10.3.png)
 
+![Legend formatted as a table showing sorted values](screenshot-legend-sorted-10.3-v2.png)
+
 {{% admonition type="note" %}}
 This feature is only supported in these panels: Bar chart, Histogram, Time series.
 {{% /admonition %}}
-
-![Sort legend series](/static/img/docs/legend/legend-series-sort-8-3.png).
 
 {{% docs/reference %}}
 [bar chart]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/bar-chart"
