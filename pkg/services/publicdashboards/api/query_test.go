@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/dashboards/service"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"net/http"
 	"strings"
 	"testing"
@@ -337,15 +340,26 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	cfg := setting.NewCfg()
 	ac := acmock.New()
 	ws := publicdashboardsService.ProvideServiceWrapper(store)
-	service := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac, ws)
-	pubdash, err := service.Create(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
+	folderStore := folderimpl.ProvideDashboardFolderStore(db)
+	dashPermissionService := acmock.NewMockedPermissionsService()
+
+	//folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()),
+	//	cfg, dashboardStoreService, folderStore, db.InitTestDB(t), features)
+	dashService, err := service.ProvideDashboardServiceImpl(
+		cfg, dashboardStoreService, folderStore, nil,
+		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), dashPermissionService, ac,
+		foldertest.NewFakeService(),
+	)
+
+	pds := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac, ws, dashService)
+	pubdash, err := pds.Create(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
 	require.NoError(t, err)
 
 	// setup test server
 	server := setupTestServer(t,
 		cfg,
 		featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards),
-		service,
+		pds,
 		db,
 		anonymousUser,
 	)
