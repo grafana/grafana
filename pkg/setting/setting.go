@@ -246,6 +246,7 @@ type Cfg struct {
 	PluginForcePublicKeyDownload     bool
 	PluginSkipPublicKeyDownload      bool
 	DisablePlugins                   []string
+	HideAngularDeprecation           []string
 	PluginInstallToken               string
 
 	PluginsCDNURLTemplate    string

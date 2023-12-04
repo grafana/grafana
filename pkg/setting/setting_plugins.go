@@ -48,6 +48,15 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		}
 	}
 
+	hideAngularDeprecation := pluginsSection.Key("hide_angular_deprecation").MustString("")
+	for _, id := range strings.Split(hideAngularDeprecation, ",") {
+		id = strings.TrimSpace(id)
+		if id == "" {
+			continue
+		}
+		cfg.HideAngularDeprecation = append(cfg.HideAngularDeprecation, id)
+	}
+
 	cfg.PluginCatalogURL = pluginsSection.Key("plugin_catalog_url").MustString("https://grafana.com/grafana/plugins/")
 	cfg.PluginAdminEnabled = pluginsSection.Key("plugin_admin_enabled").MustBool(true)
 	cfg.PluginAdminExternalManageEnabled = pluginsSection.Key("plugin_admin_external_manage_enabled").MustBool(false)

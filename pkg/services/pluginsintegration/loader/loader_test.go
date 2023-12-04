@@ -1322,6 +1322,21 @@ func TestLoader_HideAngularDeprecation(t *testing.T) {
 			},
 			Features: featuremgmt.WithFeatures(),
 		}},
+		{name: "with HideAngularDeprecation present", cfg: &config.Cfg{
+			AngularSupportEnabled:  true,
+			HideAngularDeprecation: []string{"one-app", "two-panel", "test-datasource", "three-datasource"},
+			Features:               featuremgmt.WithFeatures(),
+		}, expHideAngularDeprecation: true},
+		{name: "with HideAngularDeprecation not present", cfg: &config.Cfg{
+			AngularSupportEnabled:  true,
+			HideAngularDeprecation: []string{"one-app", "two-panel", "three-datasource"},
+			Features:               featuremgmt.WithFeatures(),
+		}, expHideAngularDeprecation: false},
+		{name: "with empty HideAngularDeprecation", cfg: &config.Cfg{
+			AngularSupportEnabled:  true,
+			HideAngularDeprecation: nil,
+			Features:               featuremgmt.WithFeatures(),
+		}, expHideAngularDeprecation: false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			l := newLoaderWithOpts(t, tc.cfg, loaderDepOpts{
