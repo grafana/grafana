@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 
-import { Avatar, CellProps, Column, InteractiveTable, Stack, Badge, Tooltip } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { Avatar, CellProps, Column, InteractiveTable, Badge, Tooltip } from '@grafana/ui';
 import { UserAnonymousDeviceDTO } from 'app/types';
 
 type Cell<T extends keyof UserAnonymousDeviceDTO = keyof UserAnonymousDeviceDTO> = CellProps<
