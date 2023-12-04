@@ -331,6 +331,7 @@ func UnmarshalPRQLCommand(rn *rawNode) (*PRQLCommand, error) {
 		return nil, fmt.Errorf("time range must be specified for refID %s", rn.RefID)
 	}
 
+	// TODO: replace with the refIds from SELECT and JOIN
 	rawVar, ok := rn.Query["expression"]
 	if !ok {
 		return nil, errors.New("no expression ID to resample. must be a reference to an existing query or expression")
