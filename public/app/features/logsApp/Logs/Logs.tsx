@@ -228,6 +228,11 @@ class UnthemedLogs extends PureComponent<Props, State> {
         visualisationType: this.props.panelState?.logs?.visualisationType ?? 'logs',
       });
     }
+    if (this.props.logRows !== prevProps.logRows) {
+      this.setState({
+        logDetailsRow: undefined
+      });
+    }
   }
 
   onLogRowHover = (row?: LogRowModel) => {
