@@ -54,23 +54,23 @@ const getStyles = (readOnly?: boolean) => {
       editor: css`
         .ͼo {
           background-color: rgba(40, 44, 52, 0.3);
-          color: rgba(171, 178, 191, 0.5);
+          color: rgba(171, 178, 191, 0.9);
 
           .cm-gutters {
             background-color: rgba(40, 44, 52, 0.3);
+            color: rgba(125, 135, 153, 0.4);
           }
           .ͼq {
-            color: rgba(224, 108, 117, 0.5);
+            color: rgba(224, 108, 117, 0.9);
           }
           .ͼu {
-            color: #e5c07b;
-            color: rgba(229, 192, 123, 0.5);
+            color: rgba(229, 192, 123, 0.9);
           }
           .ͼr {
-            color: rgba(97, 175, 239, 0.5);
+            color: rgba(97, 175, 239, 0.9);
           }
           .ͼv {
-            color: rgba(86, 182, 194, 0.5);
+            color: rgba(86, 182, 194, 0.9);
           }
         }
       `,
