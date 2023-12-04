@@ -37,6 +37,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
@@ -120,6 +121,7 @@ type service struct {
 	stopCh    chan struct{}
 	stoppedCh chan error
 
+	db       db.DB
 	rr       routing.RouteRegister
 	handler  http.Handler
 	builders []APIGroupBuilder
@@ -135,6 +137,7 @@ func ProvideService(
 	rr routing.RouteRegister,
 	authz authorizer.Authorizer,
 	tracing *tracing.TracingService,
+	db db.DB,
 ) (*service, error) {
 	s := &service{
 		config:     newConfig(cfg, features),
@@ -145,6 +148,7 @@ func ProvideService(
 		builders:   []APIGroupBuilder{},
 		authorizer: authz,
 		tracing:    tracing,
+		db:         db, // For Unified storage
 	}
 
 	// This will be used when running as a dskit service
@@ -279,8 +283,7 @@ func (s *service) start(ctx context.Context) error {
 		}
 
 	case StorageTypeUnified:
-		// TODO: support passing grafana db connection
-		eDB, err := entityDB.ProvideEntityDB(nil, s.cfg, s.features)
+		eDB, err := entityDB.ProvideEntityDB(s.db, s.cfg, s.features)
 		if err != nil {
 			return err
 		}

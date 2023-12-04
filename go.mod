@@ -291,8 +291,6 @@ require github.com/grafana/pyroscope/api v0.2.1 // @grafana/observability-traces
 
 require github.com/apache/arrow/go/v13 v13.0.0 // @grafana/observability-metrics
 
-require github.com/bwmarrin/snowflake v0.3.0 // @grafana/grafana-app-platform-squad
-
 require (
 	cloud.google.com/go v0.110.8 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
@@ -308,6 +306,7 @@ require (
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/bmatcuk/doublestar v1.1.1 // indirect
 	github.com/buildkite/yaml v2.1.0+incompatible // indirect
+	github.com/bwmarrin/snowflake v0.3.0 // @grafan/grafana-app-platform-squad
 	github.com/centrifugal/protocol v0.10.0 // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/cockroachdb/errors v1.9.1 // indirect

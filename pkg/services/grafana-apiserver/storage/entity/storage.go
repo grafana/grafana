@@ -23,7 +23,6 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -80,11 +79,6 @@ func NewStorage(
 // in seconds (0 means forever). If no error is returned and out is not nil, out will be
 // set to the read value from database.
 func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
-	ctx, err := utils.ContextWithGrafanaUser(ctx)
-	if err != nil {
-		return err
-	}
-
 	requestInfo, ok := request.RequestInfoFrom(ctx)
 	if !ok {
 		return apierrors.NewInternalError(fmt.Errorf("could not get request info"))
@@ -152,10 +146,6 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 func (s *Storage) Delete(
 	ctx context.Context, key string, out runtime.Object, preconditions *storage.Preconditions,
 	validateDeletion storage.ValidateObjectFunc, cachedExistingObject runtime.Object) error {
-	ctx, err := utils.ContextWithGrafanaUser(ctx)
-	if err != nil {
-		return apierrors.NewInternalError(err)
-	}
 
 	grn, err := keyToGRN(key)
 	if err != nil {
@@ -200,11 +190,6 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, objPtr runtime.Object) error {
-	ctx, err := utils.ContextWithGrafanaUser(ctx)
-	if err != nil {
-		return apierrors.NewInternalError(err)
-	}
-
 	rsp, err := s.store.Read(ctx, &entityStore.ReadEntityRequest{
 		Key:         key,
 		WithMeta:    true,
@@ -239,11 +224,6 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {
-	ctx, err := utils.ContextWithGrafanaUser(ctx)
-	if err != nil {
-		return apierrors.NewInternalError(err)
-	}
-
 	listPtr, err := meta.GetItemsPtr(listObj)
 	if err != nil {
 		return err
@@ -326,17 +306,12 @@ func (s *Storage) guaranteedUpdate(
 	tryUpdate storage.UpdateFunc,
 	cachedExistingObject runtime.Object,
 ) error {
-	ctx, err := utils.ContextWithGrafanaUser(ctx)
-	if err != nil {
-		return err
-	}
-
 	requestInfo, ok := request.RequestInfoFrom(ctx)
 	if !ok {
 		return apierrors.NewInternalError(fmt.Errorf("could not get request info"))
 	}
 
-	err = s.Get(ctx, key, storage.GetOptions{}, destination)
+	err := s.Get(ctx, key, storage.GetOptions{}, destination)
 	if err != nil {
 		return err
 	}
