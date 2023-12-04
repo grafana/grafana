@@ -333,6 +333,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 		Condition:       alertRule.Condition,
 	})
 	currentState.LastEvaluationString = result.EvaluationString
+	currentState.TrimPreviousStates()
 	currentState.TrimResults(alertRule)
 	oldState := currentState.State
 	oldReason := currentState.StateReason
@@ -386,6 +387,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 		result.State != eval.Alerting {
 		currentState.StateReason = result.State.String()
 	}
+	currentState.PreviousStates = append(currentState.PreviousStates, currentState.State)
 
 	// Set Resolved property so the scheduler knows to send a postable alert
 	// to Alertmanager.

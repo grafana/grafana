@@ -16,6 +16,11 @@ export const AlertInstanceDetails = ({ instance }: Props) => {
 
   return (
     <div>
+      {instance.flapping && (
+          <DetailsField label="Flapping" horizontal={true}>
+            This alert is flapping.
+          </DetailsField>
+      )}
       {instance.value && (
         <DetailsField label="Value" horizontal={true}>
           {instance.value}

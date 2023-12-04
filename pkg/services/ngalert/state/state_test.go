@@ -548,6 +548,34 @@ func TestResolve(t *testing.T) {
 	assert.Equal(t, expected, s)
 }
 
+func TestFlappingScore(t *testing.T) {
+	s := State{State: eval.Alerting}
+	assert.Equal(t, 0.0, s.FlappingScore())
+	// Score should be zero as no transitions have happened.
+	s.PreviousStates = append(s.PreviousStates, eval.Normal)
+	assert.Equal(t, 0.0, s.FlappingScore())
+	// Score should still be zero as no transitions have happened.
+	s.PreviousStates = append(s.PreviousStates, eval.Normal)
+	assert.Equal(t, 0.0, s.FlappingScore())
+	// Score should increase as there is a state transition.
+	s.PreviousStates = append(s.PreviousStates, eval.Pending)
+	assert.Condition(t, func() bool { score := s.FlappingScore(); return score > 0.69 && score < 0.70 })
+	// Score should be lower than before as the state has normalized.
+	s.PreviousStates = append(s.PreviousStates, eval.Pending)
+	assert.Equal(t, 0.225, s.FlappingScore())
+	// Show scores for sample sequences.
+	s.PreviousStates = []eval.State{eval.Normal, eval.Alerting, eval.Normal, eval.Alerting}
+	assert.Condition(t, func() bool { score := s.FlappingScore(); return score > 0.975 && score < 0.976 })
+	s.PreviousStates = []eval.State{eval.Normal, eval.Alerting, eval.Normal, eval.Normal}
+	assert.Equal(t, 0.3, s.FlappingScore())
+	s.PreviousStates = []eval.State{eval.Normal, eval.Alerting, eval.Normal, eval.Normal, eval.Normal}
+	assert.Condition(t, func() bool { score := s.FlappingScore(); return score > 0.09 && score < 0.1 })
+	s.PreviousStates = []eval.State{eval.Normal, eval.Pending, eval.Pending, eval.Pending, eval.Alerting, eval.Alerting}
+	assert.Condition(t, func() bool { score := s.FlappingScore(); return score > 0.230 && score < 0.231 }, s.FlappingScore())
+	s.PreviousStates = []eval.State{eval.Normal, eval.Pending, eval.Normal, eval.Pending, eval.Alerting, eval.Alerting}
+	assert.Condition(t, func() bool { score := s.FlappingScore(); return score > 0.32 && score < 0.33 }, s.FlappingScore())
+}
+
 func TestShouldTakeImage(t *testing.T) {
 	tests := []struct {
 		name          string

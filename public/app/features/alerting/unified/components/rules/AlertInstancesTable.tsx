@@ -65,10 +65,10 @@ const columns: AlertTableColumnProps[] = [
     // eslint-disable-next-line react/display-name
     renderCell: ({
       data: {
-        alert: { state },
+        alert: { state, flapping },
       },
-    }) => <AlertStateTag state={state} />,
-    size: '80px',
+    }) => <AlertStateTag state={state} isFlapping={flapping} />,
+    size: '100px',
   },
   {
     id: 'labels',

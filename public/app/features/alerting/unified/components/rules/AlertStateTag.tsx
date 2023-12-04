@@ -8,13 +8,14 @@ import { StateTag } from '../StateTag';
 interface Props {
   state: PromAlertingRuleState | GrafanaAlertState | GrafanaAlertStateWithReason | AlertState;
   size?: 'md' | 'sm';
+  isFlapping?: boolean;
   isPaused?: boolean;
   muted?: boolean;
 }
 
-export const AlertStateTag = React.memo(({ state, isPaused = false, size = 'md', muted = false }: Props) => (
+export const AlertStateTag = React.memo(({ state, isFlapping = false, isPaused = false, size = 'md', muted = false }: Props) => (
   <StateTag state={alertStateToState(state)} size={size} muted={muted}>
-    {alertStateToReadable(state)} {isPaused ? ' (Paused)' : ''}
+    {alertStateToReadable(state)} {isPaused ? ' (Paused)' : isFlapping ? ' (Flapping)' : ''}
   </StateTag>
 ));
 AlertStateTag.displayName = 'AlertStateTag';

@@ -167,6 +167,7 @@ type Alert struct {
 	Annotations overrideLabels `json:"annotations"`
 	// required: true
 	State    string     `json:"state"`
+	Flapping bool       `json:"flapping"`
 	ActiveAt *time.Time `json:"activeAt"`
 	// required: true
 	Value string `json:"value"`

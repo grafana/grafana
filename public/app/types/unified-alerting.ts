@@ -19,6 +19,7 @@ export type Alert = {
   annotations: { [key: string]: string };
   labels: { [key: string]: string };
   state: Exclude<PromAlertingRuleState | GrafanaAlertStateWithReason, PromAlertingRuleState.Inactive>;
+  flapping: boolean;
   value: string;
 };
 

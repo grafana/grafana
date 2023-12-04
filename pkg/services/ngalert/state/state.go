@@ -29,7 +29,8 @@ type State struct {
 	CacheID string
 
 	// State represents the current state.
-	State eval.State
+	State          eval.State
+	PreviousStates []eval.State
 
 	// StateReason is a textual description to explain why the state has its current state.
 	StateReason string
@@ -388,6 +389,47 @@ func (a *State) Equals(b *State) bool {
 		a.EndsAt == b.EndsAt &&
 		a.LastEvaluationTime == b.LastEvaluationTime &&
 		data.Labels(a.Annotations).String() == data.Labels(b.Annotations).String()
+}
+
+// FlappingScore returns a number between 0 and 1 (inclusive) representing
+// a confidence score that the state is flapping. The score is weighted
+// in favour of more recent evaluations, and older evaluations are aged out
+// over time.
+func (a *State) FlappingScore() float64 {
+	// If there are no previous states return zero.
+	if len(a.PreviousStates) == 0 {
+		return 0
+	}
+	transitions := make([]float64, len(a.PreviousStates))
+	for i := 1; i < len(a.PreviousStates); i++ {
+		if a.PreviousStates[i] != a.PreviousStates[i-1] {
+			transitions[i] = 1
+		}
+	}
+	// Weight is calculated as weight = (2 / (factor + 1)) where
+	// factor is N in the N-day EWMA.
+	const weight = 2.0 / (2.0 + 1.0)
+	var j int
+	var top, bottom float64
+	for i := len(transitions) - 1; i >= 0; i-- {
+		b := math.Pow(1-weight, float64(j))
+		top += b * float64(transitions[i])
+		bottom += b
+		j += 1
+	}
+	return top / bottom
+}
+
+// IsFlapping returns true if the state is flapping. Flapping is measured as
+// a confidence score of at least 0.5.
+func (a *State) IsFlapping() bool {
+	return a.FlappingScore() >= 0.5
+}
+
+func (a *State) TrimPreviousStates() {
+	if len(a.PreviousStates) >= 10 {
+		a.PreviousStates = a.PreviousStates[1:len(a.PreviousStates)]
+	}
 }
 
 func (a *State) TrimResults(alertRule *models.AlertRule) {
