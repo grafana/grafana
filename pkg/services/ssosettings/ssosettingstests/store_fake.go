@@ -31,7 +31,7 @@ func (f *FakeStore) Upsert(ctx context.Context, settings models.SSOSettings) err
 	return f.ExpectedError
 }
 
-func (f *FakeStore) Patch(ctx context.Context, provider string, data map[string]interface{}) error {
+func (f *FakeStore) Patch(ctx context.Context, provider string, data map[string]any) error {
 	return f.ExpectedError
 }
 
