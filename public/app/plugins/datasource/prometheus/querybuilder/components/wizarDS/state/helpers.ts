@@ -1,84 +1,32 @@
 import { AnyAction } from 'redux';
 
 import { llms } from '@grafana/experimental';
-import { reportInteraction } from '@grafana/runtime';
 import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
-import { getMetadataHelp, getMetadataType } from 'app/plugins/datasource/prometheus/language_provider';
 
-import { promQueryModeller } from '../../../PromQueryModeller';
-import { buildVisualQueryFromString } from '../../../parsing';
 import { PromVisualQuery } from '../../../types';
-import {
-  ExplainSystemPrompt,
-  GetExplainUserPrompt,
-  GetSuggestSystemPrompt,
-  SuggestSystemPromptParams,
-} from '../prompts';
+import { GetComponentSuggestionsUserPrompt, GetComponentSuggestionsSystemPrompt } from '../prompts';
 import { Interaction, Suggestion, SuggestionType } from '../types';
 
 import { createInteraction, stateSlice } from './state';
 import { getTemplateSuggestions } from './templates';
 
 const OPENAI_MODEL_NAME = 'gpt-3.5-turbo';
-const promQLTemplatesCollection = 'grafana.promql.templates';
+
 // actions to update the state
 const { updateInteraction } = stateSlice.actions;
 
-interface TemplateSearchResult {
-  description: string | null;
-  metric_type: string | null;
-  promql: string | null;
-}
-
-export function getExplainMessage(
-  query: string,
-  metric: string,
-  datasource: PrometheusDatasource
-): llms.openai.Message[] {
-  let metricMetadata = '';
-  let metricType = '';
-
-  const pvq = buildVisualQueryFromString(query);
-
-  if (datasource.languageProvider.metricsMetadata) {
-    metricType = getMetadataType(metric, datasource.languageProvider.metricsMetadata) ?? '';
-    metricMetadata = getMetadataHelp(metric, datasource.languageProvider.metricsMetadata) ?? '';
-  }
-
-  const documentationBody = pvq.query.operations
-    .map((op) => {
-      const def = promQueryModeller.getOperationDef(op.id);
-      if (!def) {
-        return '';
-      }
-      const title = def.renderer(op, def, '<expr>');
-      const body = def.explainHandler ? def.explainHandler(op, def) : def.documentation;
-
-      if (!body) {
-        return '';
-      }
-      return `### ${title}:\n${body}`;
-    })
-    .filter((item) => item !== '')
-    .join('\n');
-
+export function getExplainMessage(templates?: Suggestion[], question?: string): llms.openai.Message[] {
+  // Look at the templates and the promtps to make the AI return helpful things
   return [
-    { role: 'system', content: ExplainSystemPrompt },
+    {
+      role: 'system',
+      content: GetComponentSuggestionsSystemPrompt({ templates }),
+    },
     {
       role: 'user',
-      content: GetExplainUserPrompt({
-        documentation: documentationBody,
-        metricName: metric,
-        metricType: metricType,
-        metricMetadata: metricMetadata,
-        query: query,
-      }),
+      content: GetComponentSuggestionsUserPrompt({ question: question, templates }),
     },
   ];
-}
-
-function getSuggestMessage({ promql, question, labels, templates }: SuggestSystemPromptParams): llms.openai.Message[] {
-  return [{ role: 'system', content: GetSuggestSystemPrompt({ promql, question, labels, templates }) }];
 }
 
 /**
@@ -99,7 +47,7 @@ export async function promQailExplain(
 ) {
   const suggestedQuery = interaction.suggestions[suggIdx].component;
 
-  const promptMessages = getExplainMessage(suggestedQuery, query.metric, datasource);
+  const promptMessages = getExplainMessage(templates, interaction.prompt);
   const interactionToUpdate = interaction;
 
   return llms.openai
@@ -239,13 +187,13 @@ export async function promQailExplain(
  * @param types: list of metric types to include in the result
  * @returns the structure to pass to the vectorDB call.
  */
-function generateMetricTypeFilters(types: string[]) {
-  return types.map((type) => ({
-    metric_type: {
-      $eq: type,
-    },
-  }));
-}
+// function generateMetricTypeFilters(types: string[]) {
+//   return types.map((type) => ({
+//     metric_type: {
+//       $eq: type,
+//     },
+//   }));
+// }
 
 /**
  * Taking in a metric name, try to guess its corresponding metric _family_ name
@@ -273,42 +221,18 @@ export async function promQailSuggest(
   query: PromVisualQuery,
   labelNames: string[],
   datasource: PrometheusDatasource,
+  templates: Suggestion[],
   interaction?: Interaction
 ) {
   // when you're not running promqail
   // @ts-ignore llms types issue
-  const check = (await llms.openai.enabled()) && (await llms.vector.enabled());
+  const check = await llms.openai.enabled(); // && (await llms.vector.enabled());
 
   const interactionToUpdate = interaction ? interaction : createInteraction(SuggestionType.Historical);
 
-  // Decide metric type
-  let metricType = '';
-  // Makes sure we loaded the metadata for metrics. Usually this is done in the start() method of the
-  // provider but we only need the metadata here.
-  // if (!datasource.languageProvider.metricsMetadata) {
-  // await datasource.languageProvider.loadMetricsMetadata();
-  // }
-  // if (datasource.languageProvider.metricsMetadata) {
-  // `datasource.languageProvider.metricsMetadata` is a list of metric family names (with desired type)
-  // from the datasource metadata endoint, but unfortunately the expanded _sum, _count, _bucket raw
-  // metric names are also generated and populating this list (all of type counter). We want the metric
-  // family type, so need to guess the metric family name from the chosen metric name, and test if that
-  // metric family has a type specified.
-  // const metricFamilyGuess = guessMetricFamily(query.metric);
-  // metricType = getMetadataType(metricFamilyGuess, datasource.languageProvider.metricsMetadata) ?? '';
-  // }
-  // if (metricType === '') {
-  //   // fallback to heuristic guess
-  //   metricType = guessMetricType(query.metric, datasource.languageProvider.metrics);
-  // }
-
   if (!check || interactionToUpdate.suggestionType === SuggestionType.Historical) {
     return new Promise<void>((resolve) => {
-      // return setTimeout(() => {
       const suggestions = getTemplateSuggestions();
-      // query.metric,
-      // metricType,
-      // promQueryModeller.renderLabels(query.labels)
 
       const payload = {
         idx,
@@ -316,80 +240,28 @@ export async function promQailSuggest(
       };
       dispatch(updateInteraction(payload));
       resolve();
-      // }, 1000);
     });
   } else {
-    type SuggestionBody = {
-      metric: string;
-      labels: string;
-      prompt?: string;
-    };
+    // GET SUGGESTIONS FOR COMPONENTS
+    const promptMessages = getExplainMessage(templates, interaction?.prompt);
 
-    let feedTheAI: SuggestionBody = {
-      metric: query.metric,
-      labels: promQueryModeller.renderLabels(query.labels),
-    };
-
-    // @ts-ignore llms types issue
-    let results: Array<llms.vector.SearchResult<TemplateSearchResult>> = [];
-    if (interaction?.suggestionType === SuggestionType.AI) {
-      feedTheAI = { ...feedTheAI, prompt: interaction.prompt };
-
-      // @ts-ignore llms types issue
-      results = await llms.vector.search<TemplateSearchResult>({
-        query: interaction.prompt,
-        collection: promQLTemplatesCollection,
-        topK: 5,
-        filter: {
-          $or: generateMetricTypeFilters(metricType.split(',').concat(['*'])),
-        },
-      });
-      reportInteraction('grafana_prometheus_promqail_vector_results', {
-        metric: query.metric,
-        prompt: interaction.prompt,
-        results: results,
-      });
-      // TODO: handle errors from vector search
-    }
-
-    const resultsString = results
-      .map((r) => {
-        return `PromQL: ${r.payload.promql}\nDescription: ${r.payload.description}`;
-      })
-      .join('\n');
-
-    const promptMessages = getSuggestMessage({
-      promql: query.metric,
-      question: interaction ? interaction.prompt : '',
-      labels: labelNames.join(', '),
-      templates: resultsString,
+    const info = await llms.openai.chatCompletions({
+      model: OPENAI_MODEL_NAME,
+      messages: promptMessages,
+      temperature: 0,
     });
 
-    return llms.openai
-      .streamChatCompletions({
-        model: OPENAI_MODEL_NAME,
-        messages: promptMessages,
-        temperature: 0,
-      })
-      .pipe(llms.openai.accumulateContent())
-      .subscribe((response) => {
-        const payload = {
-          idx,
-          interaction: {
-            ...interactionToUpdate,
-            suggestions: [
-              {
-                component: response,
-                explanation: '',
-                testid: '',
-                order: 0,
-                link: '',
-              },
-            ],
-            isLoading: false,
-          },
-        };
-        dispatch(updateInteraction(payload));
-      });
+    const componentsArray = JSON.parse(info.choices[0].message.content);
+
+    const payload = {
+      idx,
+      interaction: {
+        ...interactionToUpdate,
+        suggestions: componentsArray,
+        isLoading: false,
+      },
+    };
+
+    dispatch(updateInteraction(payload));
   }
 }

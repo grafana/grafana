@@ -14,7 +14,7 @@ import { SuggestionContainer } from './SuggestionContainer';
 import AI_Logo_color from './resources/AI_Logo_color.svg';
 import { promQailExplain, promQailSuggest } from './state/helpers';
 import { initialState, stateSlice } from './state/state';
-import { Interaction, SuggestionType } from './types';
+import { Interaction, Suggestion, SuggestionType } from './types';
 
 // actions to update the state
 const { showStartingMessage, indicateCheckbox, addInteraction, updateInteraction } = stateSlice.actions;
@@ -23,12 +23,13 @@ export type WizarDSProps = {
   query: PromVisualQuery;
   closeDrawer: () => void;
   datasource: PrometheusDatasource;
+  templates: Suggestion[];
 };
 
 const SKIP_STARTING_MESSAGE = 'SKIP_STARTING_MESSAGE';
 
 export const WizarDS = (props: WizarDSProps) => {
-  const { query, closeDrawer, datasource } = props;
+  const { query, closeDrawer, datasource, templates } = props;
   const skipStartingMessage = store.getBool(SKIP_STARTING_MESSAGE, false);
 
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState(query, !skipStartingMessage));
@@ -192,7 +193,7 @@ export const WizarDS = (props: WizarDSProps) => {
                         //   promVisualQuery: query,
                         //   doYouKnow: 'no',
                         // });
-                        promQailSuggest(dispatch, 0, query, [], datasource);
+                        promQailSuggest(dispatch, 0, query, [], datasource, templates);
                       }}
                     >
                       Just walk me through everything
@@ -287,7 +288,7 @@ export const WizarDS = (props: WizarDSProps) => {
                                     // });
 
                                     dispatch(updateInteraction(payload));
-                                    promQailSuggest(dispatch, idx, query, [], datasource, newInteraction);
+                                    promQailSuggest(dispatch, idx, query, [], datasource, templates, newInteraction);
                                   }}
                                 >
                                   Show me everything instead.
@@ -314,7 +315,7 @@ export const WizarDS = (props: WizarDSProps) => {
 
                                     dispatch(updateInteraction(payload));
                                     // add the suggestions in the API call
-                                    promQailSuggest(dispatch, idx, query, [], datasource, interaction);
+                                    promQailSuggest(dispatch, idx, query, [], datasource, templates, interaction);
                                   }}
                                 >
                                   Submit

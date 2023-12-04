@@ -117,7 +117,8 @@ export function SuggestionContainer(props: Props) {
       <div className={cx(styles.secondaryText, styles.bottomMargin)}>{secondaryText}</div>
       <div className={styles.infoContainerWrapper}>
         <div className={styles.infoContainer}>
-          {suggestionType === SuggestionType.Historical &&
+          {
+            /*suggestionType === SuggestionType.Historical &&*/
             suggestions.map((qs: Suggestion, idx: number) => {
               return (
                 <SuggestionItem
@@ -136,7 +137,8 @@ export function SuggestionContainer(props: Props) {
                   prompt={prompt ?? ''}
                 />
               );
-            })}
+            })
+          }
         </div>
       </div>
       {!hasNextInteraction && (
