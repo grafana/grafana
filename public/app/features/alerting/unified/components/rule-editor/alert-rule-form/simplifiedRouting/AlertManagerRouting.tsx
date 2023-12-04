@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, CollapsableSection, Icon, Link, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
@@ -7,23 +7,27 @@ import { AlertManagerDataSource } from 'app/features/alerting/unified/utils/data
 import { createUrl } from 'app/features/alerting/unified/utils/url';
 
 import { useContactPointsWithStatus } from '../../../contact-points/useContactPoints';
+import { ContactPointWithMetadata } from '../../../contact-points/utils';
 
 import { ContactPointDetails } from './contactPoint/ContactPointDetails';
 import { ContactPointSelector } from './contactPoint/ContactPointSelector';
 import { MuteTimingFields } from './route-settings/MuteTimingFields';
 import { RoutingSettings } from './route-settings/RouteSettings';
 
+interface RouteSettings {
+  muteTimeIntervals: string[];
+  overrideGrouping: boolean;
+  groupBy: string[];
+  overrideTimings: boolean;
+  groupWaitValue: string;
+  groupIntervalValue: string;
+  repeatIntervalValue: string;
+}
 interface AlertManagerManualRoutingProps {
   alertManagerContactPoint: {
     alertManager: AlertManagerDataSource;
     selectedContactPoint: string;
-    muteTimeIntervals: string[];
-    overrideGrouping: boolean;
-    groupBy: string[];
-    overrideTimings: boolean;
-    groupWaitValue: string;
-    groupIntervalValue: string;
-    repeatIntervalValue: string;
+    routeSettings: RouteSettings;
   };
 }
 
@@ -32,8 +36,10 @@ export function AlertManagerManualRouting({ alertManagerContactPoint }: AlertMan
 
   const alertManagerName = alertManagerContactPoint.alertManager.name;
   const { isLoading, error: errorInContactPointStatus, contactPoints } = useContactPointsWithStatus();
-  const selectedContactPoint = contactPoints.find((cp) => cp.name === alertManagerContactPoint.selectedContactPoint);
   const shouldShowAM = true;
+  const [selectedContactPointWithMetadata, setSelectedContactPointWithMetadata] = useState<
+    ContactPointWithMetadata | undefined
+  >();
 
   if (errorInContactPointStatus) {
     return <Alert title="Failed to fetch contact points" severity="error" />;
@@ -55,11 +61,15 @@ export function AlertManagerManualRouting({ alertManagerContactPoint }: AlertMan
         </Stack>
       )}
       <Stack direction="row" gap={1} alignItems="center">
-        <ContactPointSelector alertManager={alertManagerName} contactPoints={contactPoints} />
+        <ContactPointSelector
+          alertManager={alertManagerName}
+          contactPoints={contactPoints}
+          onSelectContactPoint={setSelectedContactPointWithMetadata}
+        />
         <LinkToContactPoints />
       </Stack>
-      {selectedContactPoint?.grafana_managed_receiver_configs && (
-        <ContactPointDetails receivers={selectedContactPoint.grafana_managed_receiver_configs} />
+      {selectedContactPointWithMetadata?.grafana_managed_receiver_configs && (
+        <ContactPointDetails receivers={selectedContactPointWithMetadata.grafana_managed_receiver_configs} />
       )}
       <div className={styles.routingSection}>
         <CollapsableSection label="Muting, grouping and timings" isOpen={false} className={styles.collapsableSection}>

@@ -30,19 +30,21 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
   } = useFormContext<RuleFormValues>();
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues([]));
   const { groupBy, groupIntervalValue, groupWaitValue, repeatIntervalValue } = useGetDefaultsForRoutingSettings();
+  const overrideGrouping = watch(`contactPoints.${alertManager}.overrideGrouping`);
+  const overrideTimings = watch(`contactPoints.${alertManager}.overrideTimings`);
   return (
     <Stack direction="column">
       <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
         <Field label="Override grouping">
           <Switch id="override-grouping-toggle" {...register(`contactPoints.${alertManager}.overrideGrouping`)} />
         </Field>
-        {!watch(`contactPoints.${alertManager}.overrideGrouping`) && (
+        {!overrideGrouping && (
           <Text variant="body" color="secondary">
             Grouping: <strong>{groupBy.join(', ')}</strong>
           </Text>
         )}
       </Stack>
-      {watch(`contactPoints.${alertManager}.overrideGrouping`) && (
+      {overrideGrouping && (
         <Field
           label="Group by"
           description="Group alerts when you receive a notification based on labels. If empty it will be inherited from the default notification policy."
@@ -78,7 +80,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
         <Field label="Override timings">
           <Switch id="override-timings-toggle" {...register(`contactPoints.${alertManager}.overrideTimings`)} />
         </Field>
-        {!watch(`contactPoints.${alertManager}.overrideTimings`) && (
+        {!overrideTimings && (
           <Text variant="body" color="secondary">
             Group wait: <strong>{groupWaitValue}, </strong>
             Group interval: <strong>{groupIntervalValue}, </strong>
@@ -86,7 +88,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
           </Text>
         )}
       </Stack>
-      {watch(`contactPoints.${alertManager}.overrideTimings`) && <RouteTimmings alertManager={alertManager} />}
+      {overrideTimings && <RouteTimmings alertManager={alertManager} />}
     </Stack>
   );
 };

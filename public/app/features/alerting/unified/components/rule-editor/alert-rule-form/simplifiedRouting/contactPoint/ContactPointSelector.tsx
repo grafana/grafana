@@ -12,8 +12,9 @@ import { ContactPointWithMetadata } from '../../../../contact-points/utils';
 export interface ContactPointSelectorProps {
   alertManager: string;
   contactPoints: ContactPointWithMetadata[];
+  onSelectContactPoint: (contactPoint?: ContactPointWithMetadata) => void;
 }
-export function ContactPointSelector({ alertManager, contactPoints }: ContactPointSelectorProps) {
+export function ContactPointSelector({ alertManager, contactPoints, onSelectContactPoint }: ContactPointSelectorProps) {
   const styles = useStyles2(getStyles);
   const {
     register,
@@ -53,6 +54,7 @@ export function ContactPointSelector({ alertManager, contactPoints }: ContactPoi
                   aria-label="Contact point"
                   onChange={(value: SelectableValue<ContactPointWithMetadata>, _: ActionMeta) => {
                     onChange(value?.value?.name);
+                    onSelectContactPoint(value?.value);
                   }}
                   // We are passing a JSX.Element into the "description" for options, which isn't how the TS typings are defined.
                   // The regular Select component will render it just fine, but we can't update the typings because SelectableValue

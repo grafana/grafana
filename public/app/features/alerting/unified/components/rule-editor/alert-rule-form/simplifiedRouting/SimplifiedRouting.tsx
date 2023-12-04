@@ -30,13 +30,15 @@ export function SimplifiedRouting() {
         return {
           alertManager: am,
           selectedContactPoint: selectedContactPoint?.selectedContactPoint ?? '',
-          muteTimeIntervals: selectedContactPoint?.muteTimeIntervals ?? [],
-          overrideGrouping: selectedContactPoint?.overrideGrouping ?? false,
-          groupBy: selectedContactPoint?.groupBy ?? [],
-          overrideTimings: selectedContactPoint?.overrideTimings ?? false,
-          groupWaitValue: selectedContactPoint?.groupWaitValue ?? '',
-          groupIntervalValue: selectedContactPoint?.groupIntervalValue ?? '',
-          repeatIntervalValue: selectedContactPoint?.repeatIntervalValue ?? '',
+          routeSettings: {
+            muteTimeIntervals: selectedContactPoint?.muteTimeIntervals ?? [],
+            overrideGrouping: selectedContactPoint?.overrideGrouping ?? false,
+            groupBy: selectedContactPoint?.groupBy ?? [],
+            overrideTimings: selectedContactPoint?.overrideTimings ?? false,
+            groupWaitValue: selectedContactPoint?.groupWaitValue ?? '',
+            groupIntervalValue: selectedContactPoint?.groupIntervalValue ?? '',
+            repeatIntervalValue: selectedContactPoint?.repeatIntervalValue ?? '',
+          },
         };
       }),
     [alertManagersDataSourcesWithConfigAPI, contactPointsInAlert]
