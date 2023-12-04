@@ -73,9 +73,8 @@ const FlameGraphHeader = ({
           onChange={(v) => {
             setLocalSearch(v.currentTarget.value);
           }}
-          placeholder={'Search..'}
+          placeholder={'Search...'}
           suffix={suffix}
-          data-testid="searchInput"
         />
       </div>
 
