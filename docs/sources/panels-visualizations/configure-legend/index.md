@@ -13,7 +13,7 @@ weight: 70
 
 # Configure a legend
 
-A panel includes a legend that you can use to interpret data displayed in a visualization. Each legend option adds context and clarity to the data illustrated in a visualization.
+A panel includes a legend that you can use to identify and interpret data displayed in a visualization. Each legend option adds context and clarity to the data illustrated in a visualization.
 
 ## Supported visualizations
 
@@ -29,7 +29,7 @@ Legends are supported for the following visualizations:
 - [trend][]
 <!-- - xy chart -->
 
-[Geomaps][] and [heatmaps][] also have legends, but those but they only have the options to display or not display legends and don't support other legend options.
+[Geomaps][] and [heatmaps][] also have legends, but they only provide the the choice to display or not display a legend and don't support other legend options.
 
 ## Legend options
 
@@ -41,27 +41,27 @@ Not all of the options listed apply to all visualizations with legends.
 
 ### Visibility
 
-Set whether legends are displayed or not. Use the switch to toggle legends on or off.
+Set whether the legend is displayed or not. Use the switch to toggle a legend on or off.
 
 ### Mode
 
-Set the format in which legends are displayed. Choose from
+Set the format in which the legend is displayed. Choose from:
 
 - **List**
 - **Table**
 
-When you format legends as a table, other information about the legend, such as its [values](#values) or where it's located in the visualization, might be displayed as well.
+When you format a legend as a table, other information about the legend, such as associated [values](#values) or where it's located in the visualization, might be displayed as well.
 
 ### Placement
 
-Set where on the visualization legends are displayed. Choose from:
+Set where on the visualization a legend is displayed. Choose from:
 
 - **Bottom**
 - **Right**
 
 ### Width
 
-If you set the legend placement to **Right**, the **Width** option becomes available. Leave the field empty to allow Grafana to automatically set the legend width or enter a value in the field. The width is in [what measurement??].
+If you set the legend placement to **Right**, the **Width** option becomes available. Leave the field empty to allow Grafana to automatically set the legend width or enter a value in the field. The width is set in [what measurement??].
 
 ### Values
 
@@ -71,51 +71,43 @@ You can add more context to a visualization by adding series data values or [cal
 
 ## Change a series color
 
-By default, Grafana specifies the color of your series data, which you can change.
+By default, Grafana sets the colors of your series data, but you can change them through the panel legend. To change the series data color, follow these steps:
 
-1. Edit a panel.
-
+1. Navigate to the panel you want to update.
 1. In the legend, click the color bar associated with the series.
-
-1. Select a pre-set color or a custom color from the color palette.
-
-1. Click **Apply** to save your changes are navigate back to the dashboard.
+1. Select a pre-set color in the **Colors** tab or set a custom color in the **Custom** tab, using the picker or RGB values.
+1. Save the dashboard.
 
 ![Change legend series color](/static/img/docs/legend/legend-series-color-7-5.png)
 
 ## Isolate series data in a visualization
 
-Visualizations can often be visually complex, and include many data series. You can simplify the view by removing series data from the visualization, which isolates the data you want to see. Grafana automatically creates a new override in the **Override** tab.
+Visualizations can often be visually complex, and include many data series. You can simplify the view by removing series data from the visualization through the legend, which isolates the data you want to see. When you do this, Grafana automatically creates a new override in the **Override** section.
 
-When you apply your changes, the visualization changes appear to all users of the panel.
+To isolate a series, follow these steps:
 
-1. Open the panel.
-
+1. Navigate to the panel you want to update.
 1. In the legend, click the label of the series you want to isolate.
 
-   The system removes from view all other series data.
+   The system removes all other series data from view.
 
-1. To incrementally add series data to an isolated series, press the **Ctrl** or **Command** key and click the label of the series you want to add.
+1. To incrementally add series data back to an isolated series, press the **Ctrl** or **Command** key and click the label of the series you want to add.
+1. To save your changes so that they appear to all viewers of the panel, save the dashboard.
 
-1. To revert back to the default view that includes all data, click any series label twice.
-
-1. To save your changes so that they appear to all viewers of the panel, click **Apply**.
-
-<!--this might need to be chunked out -->
+To revert back to the default view that includes all data, click any series label twice.
 
 ## Sort series
 
-When your legend is formatted as a table and displays values, you can sort series by those values. To do so, follow these steps:
+When you format a legend as a table and add values to it, you can sort series in the table by those values. To do so, follow these steps:
 
-1. Edit the panel.
+1. Navigate to the panel you want to update.
+1. Hover over any part of the panel you want to work on to display the menu on the top right corner.
+1. Click the menu and select **Edit**.
+1. Scroll to the **Legend** section of the panel edit pane.
+1. Under **Mode**, select **Table**.
+1. Under **Values**, select the value or calculation that you want to show.
 
-1. Go to the Legend section.
-
-1. Under Mode, select Table.
-
-1. Under Values, select the value or calculation that you want to show.
-
-   Values are now added to the legend table.
+   The legend table now displays values.
 
 1. Click the calculation name header in the legend table to sort the values in the table in ascending or descending order.
 
@@ -124,7 +116,7 @@ When your legend is formatted as a table and displays values, you can sort serie
 ![Legend formatted as a table showing sorted values](screenshot-legend-sorted-10.3-v2.png)
 
 {{% admonition type="note" %}}
-This feature is only supported in these panels: Bar chart, Histogram, Time series.
+This feature is only supported for the following visualizations: bar chart, histogram, time series.
 {{% /admonition %}}
 
 {{% docs/reference %}}
