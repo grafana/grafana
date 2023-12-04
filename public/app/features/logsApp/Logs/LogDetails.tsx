@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 
 import { CoreApp, DataFrame, DataFrameType, Field, LinkModel, LogRowModel } from '@grafana/data';
 import { Themeable2, withTheme2 } from '@grafana/ui';
-import { LogRowStyles, getLogLevelStyles } from 'app/features/logs/components/getLogRowStyles';
+import { LogRowStyles } from 'app/features/logs/components/getLogRowStyles';
 import { createLogLineLinks, getAllFields } from 'app/features/logs/components/logParser';
 import { calculateLogsLabelStats, calculateStats } from 'app/features/logs/utils';
 
@@ -33,12 +33,9 @@ class UnThemedLogDetails extends PureComponent<Props> {
     const {
       app,
       row,
-      theme,
-      hasError,
       onClickFilterOutLabel,
       onClickFilterLabel,
       getRows,
-      showDuplicates,
       className,
       onClickShowField,
       onClickHideField,
@@ -47,7 +44,6 @@ class UnThemedLogDetails extends PureComponent<Props> {
       wrapLogMessage,
       styles,
     } = this.props;
-    const levelStyles = getLogLevelStyles(theme, row.logLevel);
     const labels = row.labels ? row.labels : {};
     const labelsAvailable = Object.keys(labels).length > 0;
     const fieldsAndLinks = getAllFields(row, getFieldLinks);
@@ -66,11 +62,6 @@ class UnThemedLogDetails extends PureComponent<Props> {
         : // for other frames, do not show the log message unless there is a link attached
           fieldsAndLinks.filter((f) => f.links?.length === 0 && f.fieldIndex !== row.entryFieldIndex).sort();
     const fieldsAvailable = fields && fields.length > 0;
-
-    // If logs with error, we are not showing the level color
-    const levelClassName = hasError
-      ? ''
-      : `${levelStyles.logsRowLevelColor} ${styles.logsRowLevel} ${styles.logsRowLevelDetails}`;
 
     return (
       <div className={cx(className, styles.logDetails)}>
