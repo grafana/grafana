@@ -63,6 +63,8 @@ import LogsNavigation from './LogsNavigation';
 import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { SETTINGS_KEYS } from './utils/logs';
+import { LogDetails } from 'app/features/logs/components/LogDetails';
+import { getLogRowStyles } from 'app/features/logs/components/getLogRowStyles';
 
 interface Props extends Themeable2 {
   width: number;
@@ -126,6 +128,7 @@ interface State {
   tableFrame?: DataFrame;
   visualisationType?: LogsVisualisationType;
   logsContainer?: HTMLDivElement;
+  logDetailsRow: LogRowModel | undefined;
 }
 
 // we need to define the order of these explicitly
@@ -158,6 +161,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     tableFrame: undefined,
     visualisationType: this.props.panelState?.logs?.visualisationType ?? 'logs',
     logsContainer: undefined,
+    logDetailsRow: undefined,
   };
 
   constructor(props: Props) {
@@ -518,6 +522,12 @@ class UnthemedLogs extends PureComponent<Props, State> {
     this.topLogsRef.current?.scrollIntoView();
   };
 
+  showDetails = (row: LogRowModel) => {
+    this.setState({
+      logDetailsRow: row,
+    });
+  }
+
   render() {
     const {
       width,
@@ -564,6 +574,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     const tableHeight = getLogsTableHeight();
     const styles = getStyles(theme, wrapLogMessage, tableHeight);
+    const logRowStyles = getLogRowStyles(theme);
     const hasData = logRows && logRows.length > 0;
     
     const filteredLogs = this.filterRows(logRows, hiddenLogLevels);
@@ -800,9 +811,28 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     containerRendered={!!this.state.logsContainer}
                     onClickFilterValue={this.props.onClickFilterValue}
                     onClickFilterOutValue={this.props.onClickFilterOutValue}
+                    showDetails={this.showDetails}
                   />
                 </InfiniteScroll>
               </div>
+            )}
+            {this.state.logDetailsRow && (
+              <LogDetails
+                showDuplicates={false}
+                getFieldLinks={getFieldLinks}
+                onClickFilterLabel={onClickFilterLabel}
+                onClickFilterOutLabel={onClickFilterOutLabel}
+                onClickShowField={this.showField}
+                onClickHideField={this.hideField}
+                getRows={() => logRows}
+                row={this.state.logDetailsRow}
+                wrapLogMessage={wrapLogMessage}
+                hasError={false}
+                displayedFields={displayedFields}
+                app={CoreApp.Explore}
+                styles={logRowStyles}
+                isFilterLabelActive={this.props.isFilterLabelActive}
+              />
             )}
             {!loading && !hasData && !scanning && (
               <div className={styles.logRows}>

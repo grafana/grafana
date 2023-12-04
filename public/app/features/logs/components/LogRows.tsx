@@ -63,6 +63,7 @@ export interface Props extends Themeable2 {
   overflowingContent?: boolean;
   onClickFilterValue?: (value: string, refId?: string) => void;
   onClickFilterOutValue?: (value: string, refId?: string) => void;
+  showDetails?: (row: LogRowModel) => void;
 }
 
 interface State {
