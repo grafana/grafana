@@ -1,4 +1,4 @@
-import { Completion, completeFromList, ifNotIn, snippetCompletion as snip } from '@codemirror/autocomplete';
+import { Completion, completeFromList, ifNotIn } from '@codemirror/autocomplete';
 
 const dontComplete = ['Comment', 'Docblock', 'String', 'FString', 'RString', 'SString'];
 
@@ -54,11 +54,11 @@ const globals: readonly Completion[] = ['false', 'null', 'true']
   .concat(['std'].map((n) => ({ label: n, type: 'namespace' })));
 
 export const snippets: readonly Completion[] = [
-  snip('from ${table_table}\nselect {${column_name}}\nfilter ${column_name} == ${condition}\ntake {amount}', {
-    label: 'from-select-filter-take',
-    detail: 'snippet',
-    type: 'text',
-  }),
+  // snippetCompletion('from ${table_table}\nselect {${column_name}}\nfilter ${column_name} == ${condition}\ntake {amount}', {
+  //   label: 'from-select-filter-take',
+  //   detail: 'snippet',
+  //   type: 'text',
+  // }),
 ];
 
 /// Autocompletion for built-in PRQL globals and keywords.

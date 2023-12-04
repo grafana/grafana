@@ -1,6 +1,8 @@
 import { styleTags, tags } from '@lezer/highlight';
 import { LRParser } from '@lezer/lr';
 
+console.log('tags', tags);
+
 const prqlHighlight = styleTags({
   'CallExpression/Identifier': tags.function(tags.variableName),
   let: tags.definitionKeyword,
@@ -26,6 +28,7 @@ const prqlHighlight = styleTags({
   LogicOp: tags.logicOperator,
   Equals: tags.definitionOperator,
   VariableName: tags.variableName,
+  DateTime: tags.keyword,
   '( )': tags.paren,
   '[ ]': tags.squareBracket,
   '{ }': tags.brace,

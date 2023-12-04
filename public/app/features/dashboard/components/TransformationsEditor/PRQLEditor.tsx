@@ -22,23 +22,24 @@ function myCompletions(context: CompletionContext, metricNames: string[]) {
   }
 
   let nodeBefore = syntaxTree(context.state).resolveInner(context.pos, -1);
+  // let nodeAfter = syntaxTree(context.state).resolveInner(context.pos, 1);
+  // console.log('context', context)
+  // console.log('nodeBefore', nodeBefore)
+  // console.log('nodeAfter', nodeAfter)
+
   // Top level selector, i.e. "from"
   if (nodeBefore?.type?.name === 'CallExpression' && nodeBefore?.parent?.type?.name === 'Pipeline') {
     //https://codemirror.net/docs/ref/#autocomplete
     return {
       from: word?.from,
       filter: false,
-      options: metricNames.map((metric) => ({ label: metric, type: 'constant', boost: 99 })),
+      options: metricNames.map((metric) => ({ label: metric, type: 'constant', boost: 99, section: 'metrics' })),
     };
   }
 
   return {
     from: word?.from,
-    options: [
-      { label: 'match', type: 'keyword' },
-      { label: 'hello', type: 'variable', info: '(World)' },
-      { label: 'magic', type: 'text', apply: '⠁⭒*.✩.*⭒⠁', detail: 'macro' },
-    ],
+    options: [],
   };
 }
 
