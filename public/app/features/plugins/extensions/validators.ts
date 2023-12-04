@@ -139,6 +139,9 @@ export function isReactComponent(component: unknown): component is React.Compone
   const isReactLazyComponent = (obj: unknown): obj is { $$typeof: Symbol } =>
     hasReactTypeProp(obj) && obj.$$typeof === Symbol.for('react.lazy');
 
+  const isReactLazyComponent = (obj: unknown): boolean =>
+    hasReactTypeProp(obj) && obj.$$typeof === Symbol.for('react.lazy');
+
   // We currently don't have any strict runtime-checking for this.
   // (The main reason is that we don't want to start depending on React implementation details.)
   return typeof component === 'function' || isReactMemoObject(component) || isReactLazyComponent(component);
