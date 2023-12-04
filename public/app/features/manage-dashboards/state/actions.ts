@@ -360,11 +360,11 @@ export function getFolderById(id: number): Promise<{ id: number; title: string }
 }
 
 export function deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<{ id: number; title: string }> {
-  return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${uid}/trash`, { showSuccessAlert });
+  return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${uid}`, { showSuccessAlert });
 }
 
-export function hardDeleteDashboard(uid: string) {
-  return getBackendSrv().delete(`/api/dashboards/uid/${uid}`);
+export function deleteDashboardPermanently(uid: string, showSuccessAlert: boolean) {
+  return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${uid}`, { showSuccessAlert }); //revisit this endpoint
 }
 
 function executeInOrder(tasks: any[]): Promise<unknown> {

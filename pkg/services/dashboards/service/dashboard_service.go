@@ -432,8 +432,8 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 
 	return dash, nil
 }
-func (dr *DashboardServiceImpl) TrashDashboardByUID(ctx context.Context, dashboardUID string) error {
-	return dr.dashboardStore.TrashDashboardByUID(ctx, dashboardUID)
+func (dr *DashboardServiceImpl) SoftDeleteDashboard(ctx context.Context, dashboardUID string) error {
+	return dr.dashboardStore.SoftDeleteDashboard(ctx, dashboardUID)
 }
 
 // DeleteDashboard removes dashboard from the DB. Errors out if the dashboard was provisioned. Should be used for

@@ -272,7 +272,7 @@ func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id in
 	return queryResult, nil
 }
 
-func (hs *HTTPServer) TrashDashboardByUID(c *contextmodel.ReqContext) response.Response {
+func (hs *HTTPServer) SoftDeleteDashboard(c *contextmodel.ReqContext) response.Response {
 	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), 0, web.Params(c.Req)[":uid"])
 	if rsp != nil {
 		return rsp
@@ -289,7 +289,7 @@ func (hs *HTTPServer) TrashDashboardByUID(c *contextmodel.ReqContext) response.R
 
 	uid := web.Params(c.Req)[":uid"]
 
-	err = hs.DashboardService.TrashDashboardByUID(c.Req.Context(), uid)
+	err = hs.DashboardService.SoftDeleteDashboard(c.Req.Context(), uid)
 	if err != nil {
 		return response.Error(http.StatusNotFound, "Dashboard coannot be trashed", err)
 	}
