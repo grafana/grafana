@@ -58,7 +58,7 @@ export class AppChromeService {
     }
   }
 
-  public setExtensionDrawerOpen(open: boolean) {
+  public setExtensionDrawerOpen(open: boolean, activeTab?: string) {
     const current = this.state.getValue();
     this.update({ extensionDrawer: { ...current.extensionDrawer, open } });
   }

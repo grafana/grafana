@@ -7,16 +7,20 @@ import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
 import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
+import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { useSelector } from 'app/types';
 
 import { Branding } from '../../Branding/Branding';
 import { ExtensionDrawerButton } from '../ExtensionDrawer/ExtensionDrawerButton';
 import { enrichHelpItem } from '../MegaMenu/utils';
+import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 import { NewsContainer } from '../News/NewsContainer';
 import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitcher';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
 import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
+import { InvestigationsButton } from './InvestigationsButtons';
 import { SignInLink } from './SignInLink';
 import { TopNavBarMenu } from './TopNavBarMenu';
 import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
@@ -26,6 +30,7 @@ export const TopSearchBar = React.memo(function TopSearchBar() {
   const styles = useStyles2(getStyles);
   const navIndex = useSelector((state) => state.navIndex);
   const location = useLocation();
+  const { installed: incidentInstalled } = usePluginBridge(SupportedPlugin.Incident);
 
   const helpNode = cloneDeep(navIndex['help']);
   const enrichedHelpNode = helpNode ? enrichHelpItem(helpNode) : undefined;
@@ -52,6 +57,8 @@ export const TopSearchBar = React.memo(function TopSearchBar() {
       <TopSearchBarSection align="right">
         <ExtensionDrawerButton />
         <QuickAdd />
+        {incidentInstalled && <InvestigationsButton count={1} collaborators={[]} />}
+        <NavToolbarSeparator className={styles.separator} />
         {enrichedHelpNode && (
           <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
             <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
@@ -106,5 +113,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
       marginRight: 0,
       width: '24px',
     },
+  }),
+  separator: css({
+    [theme.breakpoints.down('sm')]: {
+      display: 'none',
+    },
+    marginLeft: theme.spacing(1),
   }),
 });
