@@ -65,7 +65,7 @@ require (
 	github.com/grafana/cuetsy v0.1.10 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.19.1 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go v1.9.0 // @grafana/backend-platform
-	github.com/grafana/grafana-plugin-sdk-go v0.194.0 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana-plugin-sdk-go v0.195.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform
 	github.com/hashicorp/go-hclog v1.5.0 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-plugin v1.6.0 // @grafana/plugins-platform-backend
@@ -107,10 +107,10 @@ require (
 	go.opentelemetry.io/otel/exporters/jaeger v1.10.0 // @grafana/backend-platform
 	go.opentelemetry.io/otel/sdk v1.21.0 // @grafana/backend-platform
 	go.opentelemetry.io/otel/trace v1.21.0 // @grafana/backend-platform
-	golang.org/x/crypto v0.15.0 // @grafana/backend-platform
+	golang.org/x/crypto v0.16.0 // @grafana/backend-platform
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29 // @grafana/alerting-squad-backend
-	golang.org/x/net v0.18.0 // @grafana/oss-big-tent @grafana/partner-datasources
-	golang.org/x/oauth2 v0.14.0 // @grafana/grafana-authnz-team
+	golang.org/x/net v0.19.0 // @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/oauth2 v0.15.0 // @grafana/grafana-authnz-team
 	golang.org/x/sync v0.4.0 // @grafana/alerting-squad-backend
 	golang.org/x/time v0.3.0 // @grafana/backend-platform
 	golang.org/x/tools v0.13.0 // @grafana/grafana-as-code
@@ -216,7 +216,7 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.11.0 // @grafana/alerting-squad-backend
 	go.uber.org/goleak v1.3.0 // indirect
-	golang.org/x/sys v0.14.0 // indirect
+	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // @grafana/backend-platform
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
@@ -235,7 +235,7 @@ require (
 	github.com/bufbuild/connect-go v1.10.0 // @grafana/observability-traces-and-profiling
 	github.com/dlmiddlecote/sqlstats v1.0.2 // @grafana/backend-platform
 	github.com/drone/drone-cli v1.6.1 // @grafana/grafana-delivery
-	github.com/getkin/kin-openapi v0.120.0 // @grafana/grafana-operator-experience-squad
+	github.com/getkin/kin-openapi v0.122.0 // @grafana/grafana-operator-experience-squad
 	github.com/golang-migrate/migrate/v4 v4.7.0 // @grafana/backend-platform
 	github.com/google/go-github/v45 v45.2.0 // @grafana/grafana-delivery
 	github.com/grafana/codejen v0.0.3 // @grafana/dataviz-squad
@@ -404,7 +404,7 @@ require (
 	go.starlark.net v0.0.0-20221020143700-22309ac47eac // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/term v0.14.0 // indirect
+	golang.org/x/term v0.15.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20231002182017-d307bd883b97 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231012201019-e917dd12ba7a // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
