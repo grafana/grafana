@@ -1,4 +1,5 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { VisibilityMode } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 
@@ -80,6 +81,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
       });
 
     commonOptionsBuilder.addLegendOptions(builder, false);
-    commonOptionsBuilder.addTooltipOptions(builder, true);
+    commonOptionsBuilder.addTooltipOptions(builder, !config.featureToggles.newVizTooltips);
   })
   .setSuggestionsSupplier(new StatusHistorySuggestionsSupplier());

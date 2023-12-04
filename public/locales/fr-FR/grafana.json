@@ -779,6 +779,10 @@
       "title": "Explorer"
     },
     "frontend": {
+      "subtitle": "",
+      "title": ""
+    },
+    "frontend-app": {
       "title": "Frontend"
     },
     "global-orgs": {
@@ -806,6 +810,10 @@
       "title": "Incidents"
     },
     "infrastructure": {
+      "subtitle": "",
+      "title": ""
+    },
+    "integrations": {
       "title": "Intégrations"
     },
     "kubernetes": {
@@ -1239,6 +1247,7 @@
     "calendar": {
       "apply-button": "Appliquer la plage de temps",
       "cancel-button": "Annuler",
+      "close": "",
       "select-time": "Sélectionner une plage de temps"
     },
     "content": {
@@ -1258,6 +1267,7 @@
       "default-error": "Entrez une date dans le passé ou « maintenant »",
       "fiscal-year": "Exercice fiscal",
       "from-input": "De",
+      "open-input-calendar": "",
       "range-error": "« De » ne peut pas être ultérieur à « À »",
       "to-input": "À"
     },
@@ -1280,6 +1290,12 @@
       "select-search-input": "Tapez pour rechercher (pays, ville, abréviation)"
     }
   },
+  "transformations": {
+    "empty": {
+      "add-transformation-body": "",
+      "add-transformation-header": ""
+    }
+  },
   "user-orgs": {
     "current-org-button": "Actuel",
     "name-column": "Nom",
@@ -1294,6 +1310,9 @@
       "name-error": "Un nom est obligatoire",
       "name-label": "Nom",
       "username-label": "Nom d’utilisateur"
+    },
+    "tabs": {
+      "general": ""
     }
   },
   "user-session": {

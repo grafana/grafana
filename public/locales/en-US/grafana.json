@@ -773,6 +773,10 @@
       "title": "Explore"
     },
     "frontend": {
+      "subtitle": "Gain real user monitoring insights",
+      "title": "Frontend"
+    },
+    "frontend-app": {
       "title": "Frontend"
     },
     "global-orgs": {
@@ -800,6 +804,10 @@
       "title": "Incidents"
     },
     "infrastructure": {
+      "subtitle": "Understand your infrastructure's health",
+      "title": "Infrastructure"
+    },
+    "integrations": {
       "title": "Integrations"
     },
     "kubernetes": {
@@ -1233,6 +1241,7 @@
     "calendar": {
       "apply-button": "Apply time range",
       "cancel-button": "Cancel",
+      "close": "Close calendar",
       "select-time": "Select a time range"
     },
     "content": {
@@ -1252,6 +1261,7 @@
       "default-error": "Please enter a past date or \"now\"",
       "fiscal-year": "Fiscal year",
       "from-input": "From",
+      "open-input-calendar": "Open calendar",
       "range-error": "\"From\" can't be after \"To\"",
       "to-input": "To"
     },
@@ -1274,6 +1284,12 @@
       "select-search-input": "Type to search (country, city, abbreviation)"
     }
   },
+  "transformations": {
+    "empty": {
+      "add-transformation-body": "Transformations allow data to be changed in various ways before your visualization is shown.<1></1>This includes joining data together, renaming fields, making calculations, formatting data for display, and more.",
+      "add-transformation-header": "Start transforming data"
+    }
+  },
   "user-orgs": {
     "current-org-button": "Current",
     "name-column": "Name",
@@ -1288,6 +1304,9 @@
       "name-error": "Name is required",
       "name-label": "Name",
       "username-label": "Username"
+    },
+    "tabs": {
+      "general": "General"
     }
   },
   "user-session": {

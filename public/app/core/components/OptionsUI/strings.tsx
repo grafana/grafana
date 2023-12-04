@@ -92,19 +92,19 @@ export class StringArrayEditor extends React.PureComponent<Props, State> {
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    textInput: css`
-      margin-bottom: 5px;
-      &:hover {
-        border: 1px solid ${theme.components.input.borderHover};
-      }
-    `,
-    trashIcon: css`
-      color: ${theme.colors.text.secondary};
-      cursor: pointer;
+    textInput: css({
+      marginBottom: '5px',
+      '&:hover': {
+        border: `1px solid ${theme.components.input.borderHover}`,
+      },
+    }),
+    trashIcon: css({
+      color: theme.colors.text.secondary,
+      cursor: 'pointer',
 
-      &:hover {
-        color: ${theme.colors.text};
-      }
-    `,
+      '&:hover': {
+        color: theme.colors.text.primary,
+      },
+    }),
   };
 });

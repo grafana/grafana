@@ -124,7 +124,13 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridI
 function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]): SceneGridItemLike {
   if (Boolean(row.collapsed)) {
     if (row.panels) {
-      content = row.panels.map(buildGridItemForPanel);
+      content = row.panels.map((saveModel) => {
+        // Collapsed panels are not actually PanelModel instances
+        if (!(saveModel instanceof PanelModel)) {
+          saveModel = new PanelModel(saveModel);
+        }
+        return buildGridItemForPanel(saveModel);
+      });
     }
   }
 
@@ -219,8 +225,12 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
 
   return new DashboardScene({
     title: oldModel.title,
+    tags: oldModel.tags || [],
+    links: oldModel.links || [],
     uid: oldModel.uid,
     id: oldModel.id,
+    description: oldModel.description,
+    editable: oldModel.editable,
     meta: oldModel.meta,
     body: new SceneGridLayout({
       isLazy: true,
@@ -258,10 +268,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
                 intervals: oldModel.timepicker.refresh_intervals,
               }),
             ],
-        linkControls: new DashboardLinksControls({
-          links: oldModel.links,
-          dashboardUID: oldModel.uid,
-        }),
+        linkControls: new DashboardLinksControls({}),
       }),
     ],
   });

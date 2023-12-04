@@ -96,6 +96,7 @@ type UnifiedAlertingSettings struct {
 	ReservedLabels                UnifiedAlertingReservedLabelSettings
 	StateHistory                  UnifiedAlertingStateHistorySettings
 	RemoteAlertmanager            RemoteAlertmanagerSettings
+	Upgrade                       UnifiedAlertingUpgradeSettings
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
 	MaxStateSaveConcurrency int
 }
@@ -134,6 +135,11 @@ type UnifiedAlertingStateHistorySettings struct {
 	MultiPrimary          string
 	MultiSecondaries      []string
 	ExternalLabels        map[string]string
+}
+
+type UnifiedAlertingUpgradeSettings struct {
+	// CleanUpgrade controls whether the upgrade process should clean up UA data when upgrading from legacy alerting.
+	CleanUpgrade bool
 }
 
 // IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
@@ -398,6 +404,12 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.StateHistory = uaCfgStateHistory
 
 	uaCfg.MaxStateSaveConcurrency = ua.Key("max_state_save_concurrency").MustInt(1)
+
+	upgrade := iniFile.Section("unified_alerting.upgrade")
+	uaCfgUpgrade := UnifiedAlertingUpgradeSettings{
+		CleanUpgrade: upgrade.Key("clean_upgrade").MustBool(false),
+	}
+	uaCfg.Upgrade = uaCfgUpgrade
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil
