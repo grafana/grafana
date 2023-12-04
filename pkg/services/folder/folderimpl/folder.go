@@ -502,8 +502,8 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 			result = append(result, subfolders...)
 		}
 
-		for _, folder := range result {
-			dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, cmd.OrgID, folder)
+		for _, f := range result {
+			dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, cmd.OrgID, f)
 			if err != nil {
 				return err
 			}
