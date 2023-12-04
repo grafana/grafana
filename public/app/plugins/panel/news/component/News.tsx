@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
+import Skeleton from 'react-loading-skeleton';
 
 import { DataFrameView, GrafanaTheme2, textUtil, dateTimeFormat } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -45,6 +46,30 @@ export function News({ width, showImage, data, index }: NewsItemProps) {
   );
 }
 
+const NewsSkeleton = ({ width, showImage }: Pick<NewsItemProps, 'width' | 'showImage'>) => {
+  const styles = useStyles2(getStyles);
+  const useWideLayout = width > 600;
+
+  return (
+    <div className={cx(styles.item, useWideLayout && styles.itemWide)}>
+      {showImage && (
+        <Skeleton
+          containerClassName={cx(styles.socialImage, useWideLayout && styles.socialImageWide)}
+          width={useWideLayout ? '250px' : '100%'}
+          height={useWideLayout ? '150px' : width * 0.5}
+        />
+      )}
+      <div className={styles.body}>
+        <Skeleton containerClassName={styles.date} width={60} />
+        <Skeleton containerClassName={styles.title} width={250} />
+        <Skeleton containerClassName={styles.content} width="100%" count={6} />
+      </div>
+    </div>
+  );
+};
+
+News.Skeleton = NewsSkeleton;
+
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     height: '100%',
@@ -66,6 +91,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   body: css({
     display: 'flex',
     flexDirection: 'column',
+    flex: 1,
   }),
   socialImage: css({
     display: 'flex',
