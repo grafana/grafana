@@ -235,15 +235,6 @@ func addDashboardMigration(mg *Migrator) {
 		Name: "is_public", Type: DB_Bool, Nullable: false, Default: "0",
 	}))
 
-	mg.AddMigration("Add isDeleted for dashboard", NewAddColumnMigration(dashboardV2, &Column{
-		Name: "is_deleted", Type: DB_Bool, Nullable: false, Default: "0",
-	}))
-
-	mg.AddMigration("Add index for dashboard_is_deleted", NewAddIndexMigration(dashboardV2, &Index{
-		Cols: []string{"is_deleted"},
-		Type: IndexType,
-	}))
-
 	mg.AddMigration("Add deleted for dashboard", NewAddColumnMigration(dashboardV2, &Column{
 		Name: "deleted", Type: DB_DateTime, Nullable: true,
 	}))

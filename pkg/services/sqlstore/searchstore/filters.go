@@ -200,10 +200,13 @@ func (f FolderWithAlertsFilter) Where() (string, []any) {
 }
 
 type DeletedFilter struct {
-	Dialect migrator.Dialect
 	Deleted bool
 }
 
 func (f DeletedFilter) Where() (string, []any) {
-	return "dashboard.is_deleted = " + f.Dialect.BooleanStr(f.Deleted), nil
+	if f.Deleted {
+		return "dashboard.deleted IS NOT NULL", nil
+	}
+
+	return "dashboard.deleted IS NULL", nil
 }

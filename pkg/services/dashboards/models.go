@@ -39,6 +39,7 @@ type Dashboard struct {
 
 	Created time.Time
 	Updated time.Time
+	Deleted time.Time
 
 	UpdatedBy int64
 	CreatedBy int64
@@ -47,7 +48,6 @@ type Dashboard struct {
 	FolderUID string `xorm:"folder_uid"`
 	IsFolder  bool
 	HasACL    bool `xorm:"has_acl"`
-	IsDeleted bool `xorm:"is_deleted"`
 
 	Title string
 	Data  *simplejson.Json

@@ -861,7 +861,7 @@ func (d *dashboardStore) GetDashboard(ctx context.Context, query *dashboards.Get
 			mustCols = append(mustCols, "folder_id")
 		}
 
-		has, err := sess.Where("is_deleted=?", d.store.GetDialect().BooleanStr(false)).MustCols(mustCols...).Get(&dashboard)
+		has, err := sess.Where("deleted IS NULL").MustCols(mustCols...).Get(&dashboard)
 
 		if err != nil {
 			return err
@@ -912,7 +912,7 @@ func (d *dashboardStore) GetDashboards(ctx context.Context, query *dashboards.Ge
 			session = sess.Where("org_id = ?", query.OrgID)
 		}
 
-		session = sess.Where("is_deleted = ?", d.store.GetDialect().BooleanStr(false))
+		session = sess.Where("deleted IS NULL")
 		err := session.Find(&dashboards)
 		return err
 	})
@@ -979,7 +979,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 		})
 	}
 
-	filters = append(filters, searchstore.DeletedFilter{Dialect: d.store.GetDialect(), Deleted: query.IsDeleted})
+	filters = append(filters, searchstore.DeletedFilter{Deleted: query.IsDeleted})
 
 	var res []dashboards.DashboardSearchProjection
 	sb := &searchstore.Builder{Dialect: d.store.GetDialect(), Filters: filters, Features: d.features}
