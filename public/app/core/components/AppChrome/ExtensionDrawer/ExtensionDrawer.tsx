@@ -3,7 +3,7 @@ import React, { Suspense, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
 import { getPluginComponentExtensions } from '@grafana/runtime';
-import { Drawer, IconButton, Tab, TabsBar, useStyles2 } from '@grafana/ui';
+import { Drawer, IconButton, useStyles2 } from '@grafana/ui';
 
 type DrawerSize = 'sm' | 'md' | 'lg';
 
@@ -27,23 +27,25 @@ export function ExtensionDrawer({ open, onClose, selectedTab, onChangeTab }: Pro
     return extensions;
   }, []);
 
+  console.log(extensions);
+
   const activeTab = selectedTab ?? extensions[0]?.id;
 
-  const tabs = useMemo(() => {
-    return (
-      <TabsBar>
-        {extensions.map((extension, index) => (
-          <Tab
-            key={index}
-            label={extension.title}
-            active={activeTab === extension.id}
-            onChangeTab={() => onChangeTab(extension.id)}
-          />
-        ))}
-        {extensions.length === 0 && <Tab label="Example" active={true} onChangeTab={() => onChangeTab(undefined)} />}
-      </TabsBar>
-    );
-  }, [activeTab, extensions, onChangeTab]);
+  // const tabs = useMemo(() => {
+  //   return (
+  //     <TabsBar>
+  //       {extensions.map((extension, index) => (
+  //         <Tab
+  //           key={index}
+  //           label={extension.title}
+  //           active={activeTab === extension.id}
+  //           onChangeTab={() => onChangeTab(extension.id)}
+  //         />
+  //       ))}
+  //       {extensions.length === 0 && <Tab label="Example" active={true} onChangeTab={() => onChangeTab(undefined)} />}
+  //     </TabsBar>
+  //   );
+  // }, [activeTab, extensions, onChangeTab]);
 
   const children = useMemo(
     () =>
@@ -67,17 +69,10 @@ export function ExtensionDrawer({ open, onClose, selectedTab, onChangeTab }: Pro
   return (
     open && (
       <Drawer
-        tabs={tabs}
         onClose={onClose}
-        title="Extensions"
+        title=""
         subtitle={
           <div className={styles.wrapper}>
-            <div>
-              <div>Plugins can add tabs to this drawer to present globally accessible content.</div>
-              <div>
-                Tip: open this drawer from anywhere using your keyboard with <code>g i</code>.
-              </div>
-            </div>
             <IconButton
               name={buttonIcon}
               aria-label={buttonLabel}
