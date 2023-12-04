@@ -49,6 +49,7 @@ interface Props extends Themeable2 {
   containerRendered?: boolean;
   handleTextSelection?: (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => boolean;
   showDetails?: (row: LogRowModel) => void;
+  logDetailsRow?: LogRowModel;
 }
 
 interface State {
@@ -189,13 +190,14 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       forceEscape,
       app,
       styles,
+      logDetailsRow,
     } = this.props;
     const { showingContext, permalinked } = this.state;
     const levelStyles = getLogLevelStyles(theme, row.logLevel);
     const { errorMessage, hasError } = checkLogsError(row);
     const logRowBackground = cx(styles.logsRow, {
       [styles.errorLogRow]: hasError,
-      [styles.highlightBackground]: showingContext || permalinked,
+      [styles.highlightBackground]: showingContext || permalinked || logDetailsRow === row,
     });
 
     const processedRow = this.escapeRow(row, forceEscape);
