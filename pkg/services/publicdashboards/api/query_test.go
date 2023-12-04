@@ -5,9 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/dashboards/service"
-	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
-	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"net/http"
 	"strings"
 	"testing"
@@ -28,10 +25,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardStore "github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	datasourcesService "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardsStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
@@ -342,14 +342,12 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	ws := publicdashboardsService.ProvideServiceWrapper(store)
 	folderStore := folderimpl.ProvideDashboardFolderStore(db)
 	dashPermissionService := acmock.NewMockedPermissionsService()
-
-	//folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()),
-	//	cfg, dashboardStoreService, folderStore, db.InitTestDB(t), features)
 	dashService, err := service.ProvideDashboardServiceImpl(
 		cfg, dashboardStoreService, folderStore, nil,
 		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), dashPermissionService, ac,
 		foldertest.NewFakeService(),
 	)
+	require.NoError(t, err)
 
 	pds := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac, ws, dashService)
 	pubdash, err := pds.Create(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
