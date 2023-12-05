@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/login/social/models"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"golang.org/x/oauth2"
 )
 
@@ -19,6 +20,7 @@ type Service interface {
 
 //go:generate mockery --name SocialConnector --structname MockSocialConnector --outpkg socialtest --filename social_connector_mock.go --output ./socialtest/
 type SocialConnector interface {
+	ssosettings.Reloadable
 	UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*models.BasicUserInfo, error)
 	IsEmailAllowed(email string) bool
 	IsSignupAllowed() bool

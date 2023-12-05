@@ -11,6 +11,7 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/login/social/constants"
 	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -19,9 +20,8 @@ import (
 )
 
 const (
-	groupPerPage       = 50
-	accessLevelGuest   = "10"
-	GitlabProviderName = "gitlab"
+	groupPerPage     = 50
+	accessLevelGuest = "10"
 )
 
 type SocialGitlab struct {
@@ -52,9 +52,9 @@ type userData struct {
 }
 
 func NewGitLabProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGitlab, error) {
-	config := createOAuthConfig(info, cfg, GitlabProviderName)
+	config := createOAuthConfig(info, cfg, constants.GitlabProviderName)
 	provider := &SocialGitlab{
-		SocialBase:      newSocialBase(GitlabProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:      newSocialBase(constants.GitlabProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		apiUrl:          info.ApiUrl,
 		skipOrgRoleSync: cfg.GitLabSkipOrgRoleSync,
 		// FIXME: Move skipOrgRoleSync to OAuthInfo

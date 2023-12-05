@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/constants"
 	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -25,10 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const (
-	AzureADProviderName = "azuread"
-	forceUseGraphAPIKey = "force_use_graph_api" // #nosec G101 not a hardcoded credential
-)
+const forceUseGraphAPIKey = "force_use_graph_api" // #nosec G101 not a hardcoded credential
 
 var (
 	ExtraAzureADSettingKeys = []string{forceUseGraphAPIKey, allowedOrganizationsKey}
@@ -76,9 +74,9 @@ type keySetJWKS struct {
 }
 
 func NewAzureADProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) (*SocialAzureAD, error) {
-	config := createOAuthConfig(info, cfg, AzureADProviderName)
+	config := createOAuthConfig(info, cfg, constants.AzureADProviderName)
 	provider := &SocialAzureAD{
-		SocialBase:           newSocialBase(AzureADProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:           newSocialBase(constants.AzureADProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		cache:                cache,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 		forceUseGraphAPI:     MustBool(info.Extra[forceUseGraphAPIKey], false),

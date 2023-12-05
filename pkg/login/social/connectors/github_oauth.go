@@ -12,6 +12,7 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/login/social/constants"
 	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -20,8 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
-
-const GitHubProviderName = "github"
 
 var ExtraGithubSettingKeys = []string{allowedOrganizationsKey, teamIdsKey}
 
@@ -59,9 +58,9 @@ func NewGitHubProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featu
 		return nil, err
 	}
 
-	config := createOAuthConfig(info, cfg, GitHubProviderName)
+	config := createOAuthConfig(info, cfg, constants.GitHubProviderName)
 	provider := &SocialGithub{
-		SocialBase:           newSocialBase(GitHubProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:           newSocialBase(constants.GitHubProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		apiUrl:               info.ApiUrl,
 		teamIds:              teamIds,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),

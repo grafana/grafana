@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/connectors"
+	"github.com/grafana/grafana/pkg/login/social/constants"
 	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -25,8 +26,8 @@ import (
 )
 
 var (
-	allOauthes = []string{connectors.GitHubProviderName, connectors.GitlabProviderName, connectors.GoogleProviderName, connectors.GenericOAuthProviderName, connectors.GrafanaNetProviderName,
-		connectors.GrafanaComProviderName, connectors.AzureADProviderName, connectors.OktaProviderName}
+	allOauthes = []string{constants.GitHubProviderName, constants.GitlabProviderName, constants.GoogleProviderName, constants.GenericOAuthProviderName, constants.GrafanaNetProviderName,
+		constants.GrafanaComProviderName, constants.AzureADProviderName, constants.OktaProviderName}
 )
 
 type SocialService struct {
@@ -64,7 +65,11 @@ func ProvideService(cfg *setting.Cfg,
 				ss.log.Error("Failed to create OAuth provider", "error", err, "provider", ssoSetting.Provider)
 			}
 
-			// err = ssoSettings.RegisterReloadable(ssoSetting.Provider, conn)
+			// reloadable, ok := conn.(ssosettings.Reloadable)
+			// if ok {
+			// 	ssoSettings.RegisterReloadable(ssoSetting.Provider, reloadable)
+			// }
+			ssoSettings.RegisterReloadable(ssoSetting.Provider, conn)
 			ss.socialMap[ssoSetting.Provider] = conn
 		}
 	} else {
@@ -82,8 +87,8 @@ func ProvideService(cfg *setting.Cfg,
 				continue
 			}
 
-			if name == connectors.GrafanaNetProviderName {
-				name = connectors.GrafanaComProviderName
+			if name == constants.GrafanaNetProviderName {
+				name = constants.GrafanaComProviderName
 			}
 
 			conn, err := createOAuthConnector(name, info, cfg, features, cache)
@@ -220,19 +225,19 @@ func (ss *SocialService) getUsageStats(ctx context.Context) (map[string]any, err
 
 func createOAuthConnector(name string, info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) (social.SocialConnector, error) {
 	switch name {
-	case connectors.AzureADProviderName:
+	case constants.AzureADProviderName:
 		return connectors.NewAzureADProvider(info, cfg, features, cache)
-	case connectors.GenericOAuthProviderName:
+	case constants.GenericOAuthProviderName:
 		return connectors.NewGenericOAuthProvider(info, cfg, features)
-	case connectors.GitHubProviderName:
+	case constants.GitHubProviderName:
 		return connectors.NewGitHubProvider(info, cfg, features)
-	case connectors.GitlabProviderName:
+	case constants.GitlabProviderName:
 		return connectors.NewGitLabProvider(info, cfg, features)
-	case connectors.GoogleProviderName:
+	case constants.GoogleProviderName:
 		return connectors.NewGoogleProvider(info, cfg, features)
-	case connectors.GrafanaComProviderName:
+	case constants.GrafanaComProviderName:
 		return connectors.NewGrafanaComProvider(info, cfg, features)
-	case connectors.OktaProviderName:
+	case constants.OktaProviderName:
 		return connectors.NewOktaProvider(info, cfg, features)
 	default:
 		return nil, fmt.Errorf("unknown oauth provider: %s", name)

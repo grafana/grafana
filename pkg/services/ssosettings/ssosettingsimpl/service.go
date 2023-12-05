@@ -138,6 +138,9 @@ func (s *SSOSettingsService) Reload(ctx context.Context, provider string) {
 }
 
 func (s *SSOSettingsService) RegisterReloadable(provider string, reloadable ssosettings.Reloadable) {
+	if s.reloadables == nil {
+		s.reloadables = make(map[string]ssosettings.Reloadable)
+	}
 	s.reloadables[provider] = reloadable
 }
 

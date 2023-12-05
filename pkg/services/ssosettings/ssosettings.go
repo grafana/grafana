@@ -3,7 +3,7 @@ package ssosettings
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/login/social/connectors"
+	"github.com/grafana/grafana/pkg/login/social/constants"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 )
 
@@ -12,7 +12,7 @@ var (
 	// TODO: make it configurable
 	ConfigurableOAuthProviders = []string{"github", "gitlab", "google", "generic_oauth", "azuread", "okta"}
 
-	AllOAuthProviders = []string{connectors.GitHubProviderName, connectors.GitlabProviderName, connectors.GoogleProviderName, connectors.GenericOAuthProviderName, connectors.GrafanaComProviderName, connectors.AzureADProviderName, connectors.OktaProviderName}
+	AllOAuthProviders = []string{constants.GitHubProviderName, constants.GitlabProviderName, constants.GoogleProviderName, constants.GenericOAuthProviderName, constants.GrafanaComProviderName, constants.AzureADProviderName, constants.OktaProviderName}
 )
 
 // Service is a SSO settings service

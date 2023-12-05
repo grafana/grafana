@@ -10,6 +10,7 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/login/social/constants"
 	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
@@ -20,7 +21,6 @@ const (
 	legacyAPIURL            = "https://www.googleapis.com/oauth2/v1/userinfo"
 	googleIAMGroupsEndpoint = "https://content-cloudidentity.googleapis.com/v1/groups/-/memberships:searchDirectGroups"
 	googleIAMScope          = "https://www.googleapis.com/auth/cloud-identity.groups.readonly"
-	GoogleProviderName      = "google"
 )
 
 type SocialGoogle struct {
@@ -39,9 +39,9 @@ type googleUserData struct {
 }
 
 func NewGoogleProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGoogle, error) {
-	config := createOAuthConfig(info, cfg, GoogleProviderName)
+	config := createOAuthConfig(info, cfg, constants.GoogleProviderName)
 	provider := &SocialGoogle{
-		SocialBase:      newSocialBase(GoogleProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:      newSocialBase(constants.GoogleProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		hostedDomain:    info.HostedDomain,
 		apiUrl:          info.ApiUrl,
 		skipOrgRoleSync: cfg.GoogleSkipOrgRoleSync,

@@ -8,6 +8,7 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/login/social/constants"
 	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -15,12 +16,6 @@ import (
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-)
-
-const (
-	GrafanaComProviderName = "grafana_com"
-	// legacy/old settings for the provider
-	GrafanaNetProviderName = "grafananet"
 )
 
 var ExtraGrafanaComSettingKeys = []string{allowedOrganizationsKey}
@@ -42,9 +37,9 @@ func NewGrafanaComProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *f
 	info.TokenUrl = cfg.GrafanaComURL + "/api/oauth2/token"
 	info.AuthStyle = "inheader"
 
-	config := createOAuthConfig(info, cfg, GrafanaComProviderName)
+	config := createOAuthConfig(info, cfg, constants.GrafanaComProviderName)
 	provider := &SocialGrafanaCom{
-		SocialBase:           newSocialBase(GrafanaComProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:           newSocialBase(constants.GrafanaComProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		url:                  cfg.GrafanaComURL,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 		skipOrgRoleSync:      cfg.GrafanaComSkipOrgRoleSync,
