@@ -47,6 +47,7 @@ export const TutorialOverlay = ({ currentStep, step }: TutorialOverlayProps) => 
     let setStyles: any;
     let mouseMoveCallback: any;
     let scrollParent: Element | null;
+    let transitionend: (e: TransitionEvent) => void;
 
     if (step && triggerRef) {
       waitForElement(step.target).then((element) => {
@@ -65,6 +66,14 @@ export const TutorialOverlay = ({ currentStep, step }: TutorialOverlayProps) => 
           }
         };
 
+        transitionend = (e) => {
+          if (e.propertyName === 'left') {
+            setShowTooltip(true);
+          }
+        };
+
+        triggerRef.addEventListener(`transitionend`, transitionend);
+
         document.addEventListener('mousemove', mouseMoveCallback);
         scrollParent = element.closest('.scrollbar-view');
         setStyles().then(() => {
@@ -73,7 +82,10 @@ export const TutorialOverlay = ({ currentStep, step }: TutorialOverlayProps) => 
               advance();
             });
           }
-          setShowTooltip(true);
+
+          if (currentStep === 0) {
+            setShowTooltip(true);
+          }
         });
         scrollParent?.addEventListener('scroll', setStyles);
       });
@@ -82,6 +94,7 @@ export const TutorialOverlay = ({ currentStep, step }: TutorialOverlayProps) => 
     return () => {
       scrollParent?.removeEventListener('scroll', setStyles);
       document.removeEventListener('mousemove', mouseMoveCallback);
+      triggerRef?.removeEventListener(`transitionend`, transitionend);
     };
   }, [advance, currentStep, step, triggerRef]);
 
@@ -143,7 +156,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: `absolute`,
     boxSizing: `content-box`,
     borderRadius: theme.shape.radius.default,
-    transition: [`width`, `height`].map((prop) => `${prop} 0.2s ease-in-out`).join(', '),
+    transition: [`width`, `height`, `left`, `top`].map((prop) => `${prop} 0.2s ease-in-out`).join(', '),
     padding: spotlightOffset,
   }),
 });
