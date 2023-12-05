@@ -949,7 +949,26 @@ describe('calculateField transformer w/ timeseries', () => {
     });
   });
 
-  it('supports PRQL', () => {
+  it('generates PRQL for index field', () => {
+    expect(
+      normlines(
+        calculateFieldTransformer.toPRQL!({
+          mode: CalculateFieldMode.Index,
+          index: {
+            asPercentile: false,
+          },
+        })
+      )
+    ).toEqual(
+      normlines(`
+        derive const = 0
+        derive {row_count = count const}
+        select !{const}
+      `)
+    );
+  });
+
+  it('generates PRQL for percentage index field', () => {
     expect(
       normlines(
         calculateFieldTransformer.toPRQL!({
@@ -966,7 +985,9 @@ describe('calculateField transformer w/ timeseries', () => {
         select !{const}
       `)
     );
+  });
 
+  it('supports PRQL', () => {
     // Defaults to JSON model
     expect(
       normlines(
@@ -991,7 +1012,7 @@ describe('calculateField transformer w/ timeseries', () => {
   });
 });
 
-// this will fix the extra indenting caused by
+// removes all indentation (present in PRQL multiline JS strings)
 function normlines(v: string): string {
   return v
     .split(/\r?\n/)
