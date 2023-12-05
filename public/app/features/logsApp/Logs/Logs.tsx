@@ -986,7 +986,9 @@ export const Logs = withTheme2(UnthemedLogs);
 
 const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: number) => {
   return {
-    logsColumn: css({}),
+    logsColumn: css({
+      minHeight: '16vh'
+    }),
     noData: css({
       '& > *': {
         marginLeft: '0.5em',
@@ -1017,7 +1019,8 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
     radioButtons: css({
       margin: '0',
     }),
-    logsSection: css({}),
+    logsSection: css({
+    }),
     logsTable: css({
       maxHeight: `${tableHeight}px`,
     }),
