@@ -431,7 +431,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
 
       let possibleTraceId = findPossibleTraceIdInMessage(message);
       if (!possibleTraceId) {
-        findPossibleTraceIdInLabels(labels);
+        possibleTraceId = findPossibleTraceIdInLabels(labels);
       }
 
       const row: LogRowModel = {
@@ -1157,7 +1157,6 @@ export const findPossibleTraceIdInLabels = (labels: Labels | undefined): string 
     if (/^trace.?id/gi.test(key)) {
       return labels[key];
     }
-    break;
   }
   return undefined;
 };
