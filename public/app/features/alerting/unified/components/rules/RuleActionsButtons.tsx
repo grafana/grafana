@@ -191,7 +191,7 @@ export const RuleActionsButtons = ({ rule, rulesSource, onDragEnabled }: Props) 
           )}
         </Stack>
 
-        <div style={{ marginLeft: 10 }}>
+        <div style={{ marginLeft: 10, cursor: 'move' }}>
           <Icon
             name="draggabledots"
             size="sm"

@@ -17,7 +17,7 @@ interface HotEdgeProps {
 export const HotEdge = ({ position = 'right', hasData, onActivate }: HotEdgeProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isEnabled, setIsEnabled] = useState(false);
-  const styles = useStyles2(getHotEdgeStyles, { position, isEnabled });
+  const styles = useStyles2(getHotEdgeStyles, { position, hasData, isEnabled });
 
   const reset = () => {
     setIsHovered(false);
@@ -67,6 +67,7 @@ export const HotEdge = ({ position = 'right', hasData, onActivate }: HotEdgeProp
 
 interface GetHotEdgeStylesProps {
   position: HotEdgePosition;
+  hasData: boolean;
   isEnabled: boolean;
 }
 
@@ -99,6 +100,7 @@ const getHotEdgeStyles = (theme: GrafanaTheme2, props: GetHotEdgeStylesProps) =>
     transform: `translateX(${getPosition(props)})`,
     transition: 'transform 0.2s ease-in-out',
     top: 0,
+    pointerEvents: props.hasData ? 'none' : 'auto',
     [props.position]: 0,
   }),
 });

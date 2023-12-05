@@ -108,7 +108,7 @@ export const GraphContainer = ({
       statusMessage={statusMessage}
       actions={[
         <ExploreGraphLabel key="explore-graph-label" graphStyle={graphStyle} onChangeGraphStyle={onGraphStyleChange} />,
-        <div key="drag-enable" style={{ marginLeft: 10 }}>
+        <div key="drag-enable" style={{ marginLeft: 10, cursor: 'move' }}>
           <Icon
             name="draggabledots"
             size="sm"
