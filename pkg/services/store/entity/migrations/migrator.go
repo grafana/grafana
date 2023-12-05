@@ -8,21 +8,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
-
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func MigrateEntityStore(db sqlstash.EntityDB, features featuremgmt.FeatureToggles) error {
 	// Skip if feature flag is not enabled
 	if !features.IsEnabledGlobally(featuremgmt.FlagEntityStore) {
-		return nil
-	}
-
-	// !!! This should not run in production!
-	// The object store SQL schema is still in active development and this
-	// will only be called when the feature toggle is enabled
-	// this check should not be necessary, but is added as an extra check
-	if setting.Env == setting.Prod {
 		return nil
 	}
 

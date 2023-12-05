@@ -126,7 +126,7 @@ func ProvideService(
 	}
 
 	// This will be used when running as a dskit service
-	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.StorageAPIServer)
+	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.StorageServer)
 
 	return s, nil
 }

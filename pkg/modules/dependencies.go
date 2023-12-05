@@ -6,12 +6,12 @@ const (
 
 	Core             string = "core"
 	GrafanaAPIServer string = "grafana-apiserver"
-	StorageAPIServer string = "storage-apiserver"
+	StorageServer    string = "storage-server"
 )
 
 var dependencyMap = map[string][]string{
 	GrafanaAPIServer: {},
-	StorageAPIServer: {},
+	StorageServer:    {},
 	Core:             {},
 	All:              {Core},
 }

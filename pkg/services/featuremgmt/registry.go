@@ -225,7 +225,7 @@ var (
 			Name:            "entityStore",
 			Description:     "SQL-based entity store (requires storage flag also)",
 			Stage:           FeatureStageExperimental,
-			RequiresDevMode: true,
+			RequiresDevMode: false,
 			Owner:           grafanaAppPlatformSquad,
 			Created:         time.Date(2022, time.December, 1, 12, 0, 0, 0, time.UTC),
 		},
