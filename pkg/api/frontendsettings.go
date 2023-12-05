@@ -635,7 +635,7 @@ func (hs *HTTPServer) getEnabledOAuthProviders() map[string]any {
 }
 
 func (hs *HTTPServer) GetFrontendAssets(c *contextmodel.ReqContext) response.Response {
-	assets, err := webassets.LoadWebAssets(hs.Cfg)
+	assets, err := webassets.GetWebAssets(hs.Cfg)
 	if err != nil {
 		return response.Error(500, "Failed to load web assets manifest", err)
 	}

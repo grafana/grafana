@@ -1,10 +1,8 @@
-import * as H from 'history';
 import React, { Suspense, useEffect, useLayoutEffect } from 'react';
-import { Prompt } from 'react-router-dom';
 // @ts-ignore
 import Drop from 'tether-drop';
 
-import { locationSearchToObject, navigationLogger, reportPageview, locationService } from '@grafana/runtime';
+import { locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
 import { ErrorBoundary } from '@grafana/ui';
 
 import { useGrafana } from '../context/GrafanaContext';
@@ -16,7 +14,7 @@ import { GrafanaRouteComponentProps, RouteDescriptor } from './types';
 export interface Props extends Omit<GrafanaRouteComponentProps, 'queryParams'> {}
 
 export function GrafanaRoute(props: Props) {
-  const { chrome, keybindings } = useGrafana();
+  const { chrome, keybindings, newAssetsChecker } = useGrafana();
 
   chrome.setMatchedRoute(props.route);
 
@@ -30,6 +28,7 @@ export function GrafanaRoute(props: Props) {
     navigationLogger('GrafanaRoute', false, 'Mounted', props.match);
 
     return () => {
+      newAssetsChecker.reloadIfUpdateDetected();
       navigationLogger('GrafanaRoute', false, 'Unmounted', props.route);
       updateBodyClassNames(props.route, true);
     };
