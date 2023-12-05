@@ -208,34 +208,34 @@ var _ GrafanaResourceMetaAccessor = (*grafanaResourceMetaAccessor)(nil)
 var _ GrafanaResourceMetaAccessor = (*GrafanaResourceMetadata)(nil)
 
 type grafanaResourceMetaAccessor struct {
-	v1.Object
+	obj v1.Object
 }
 
 func MetaAccessor(obj v1.Object) GrafanaResourceMetaAccessor {
-	if obj.GetAnnotations() == nil {
-		obj.SetAnnotations(make(map[string]string))
-	}
-
 	return &grafanaResourceMetaAccessor{obj}
 }
 
 func (m *grafanaResourceMetaAccessor) set(key string, val string) {
-	anno := m.GetAnnotations()
+	anno := m.obj.GetAnnotations()
 	if val == "" {
 		if anno != nil {
 			delete(anno, key)
 		}
-		return
+	} else {
+		if anno == nil {
+			anno = make(map[string]string)
+		}
+		anno[key] = val
 	}
-	if anno == nil {
-		anno = make(map[string]string)
-		m.SetAnnotations(anno)
-	}
-	anno[key] = val
+	m.obj.SetAnnotations(anno)
+}
+
+func (m *grafanaResourceMetaAccessor) get(key string) string {
+	return m.obj.GetAnnotations()[key]
 }
 
 func (m *grafanaResourceMetaAccessor) GetUpdatedTimestamp() *time.Time {
-	v, ok := m.GetAnnotations()[annoKeyUpdatedTimestamp]
+	v, ok := m.obj.GetAnnotations()[annoKeyUpdatedTimestamp]
 	if !ok {
 		return nil
 	}
@@ -264,7 +264,7 @@ func (m *grafanaResourceMetaAccessor) SetUpdatedTimestamp(v *time.Time) {
 }
 
 func (m *grafanaResourceMetaAccessor) GetCreatedBy() string {
-	return m.GetAnnotations()[annoKeyCreatedBy]
+	return m.get(annoKeyCreatedBy)
 }
 
 func (m *grafanaResourceMetaAccessor) SetCreatedBy(user string) {
@@ -272,7 +272,7 @@ func (m *grafanaResourceMetaAccessor) SetCreatedBy(user string) {
 }
 
 func (m *grafanaResourceMetaAccessor) GetUpdatedBy() string {
-	return m.GetAnnotations()[annoKeyUpdatedBy]
+	return m.get(annoKeyUpdatedBy)
 }
 
 func (m *grafanaResourceMetaAccessor) SetUpdatedBy(user string) {
@@ -280,7 +280,7 @@ func (m *grafanaResourceMetaAccessor) SetUpdatedBy(user string) {
 }
 
 func (m *grafanaResourceMetaAccessor) GetFolder() string {
-	return m.GetAnnotations()[annoKeyFolder]
+	return m.get(annoKeyFolder)
 }
 
 func (m *grafanaResourceMetaAccessor) SetFolder(uid string) {
@@ -288,7 +288,7 @@ func (m *grafanaResourceMetaAccessor) SetFolder(uid string) {
 }
 
 func (m *grafanaResourceMetaAccessor) GetSlug() string {
-	return m.GetAnnotations()[annoKeySlug]
+	return m.get(annoKeySlug)
 }
 
 func (m *grafanaResourceMetaAccessor) SetSlug(v string) {
@@ -296,13 +296,13 @@ func (m *grafanaResourceMetaAccessor) SetSlug(v string) {
 }
 
 func (m *grafanaResourceMetaAccessor) SetOriginInfo(info *ResourceOriginInfo) {
-	anno := m.GetAnnotations()
+	anno := m.obj.GetAnnotations()
 	if anno == nil {
 		if info == nil {
 			return
 		}
-		anno = map[string]string{}
-		m.SetAnnotations(anno)
+		anno = make(map[string]string, 0)
+		m.obj.SetAnnotations(anno)
 	}
 
 	delete(anno, annoKeyOriginName)
@@ -321,10 +321,11 @@ func (m *grafanaResourceMetaAccessor) SetOriginInfo(info *ResourceOriginInfo) {
 			anno[annoKeyOriginTimestamp] = info.Timestamp.Format(time.RFC3339)
 		}
 	}
+	m.obj.SetAnnotations(anno)
 }
 
 func (m *grafanaResourceMetaAccessor) GetOriginInfo() *ResourceOriginInfo {
-	v, ok := m.GetAnnotations()[annoKeyOriginName]
+	v, ok := m.obj.GetAnnotations()[annoKeyOriginName]
 	if !ok {
 		return nil
 	}
@@ -337,19 +338,19 @@ func (m *grafanaResourceMetaAccessor) GetOriginInfo() *ResourceOriginInfo {
 }
 
 func (m *grafanaResourceMetaAccessor) GetOriginName() string {
-	return m.GetAnnotations()[annoKeyOriginName]
+	return m.get(annoKeyOriginName)
 }
 
 func (m *grafanaResourceMetaAccessor) GetOriginPath() string {
-	return m.GetAnnotations()[annoKeyOriginPath]
+	return m.get(annoKeyOriginPath)
 }
 
 func (m *grafanaResourceMetaAccessor) GetOriginKey() string {
-	return m.GetAnnotations()[annoKeyOriginKey]
+	return m.get(annoKeyOriginKey)
 }
 
 func (m *grafanaResourceMetaAccessor) GetOriginTimestamp() *time.Time {
-	v, ok := m.GetAnnotations()[annoKeyOriginTimestamp]
+	v, ok := m.obj.GetAnnotations()[annoKeyOriginTimestamp]
 	if !ok {
 		return nil
 	}
