@@ -74,6 +74,7 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       font-size: ${theme.typography.bodySmall.fontSize};
       width: 100%;
       position: relative;
+      border-collapse: collapse;
     `,
     logsRowsTableContain: css`
       contain: strict;
@@ -86,8 +87,12 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       width: 100%;
       cursor: pointer;
       vertical-align: top;
+      border-bottom: 1px dotted ${tinycolor(theme.colors.text.primary).setAlpha(0.25).toString()};
+      color: ${tinycolor(theme.colors.text.primary).setAlpha(0.8).toString()};
+      line-height: 20px !important;
 
       &:hover {
+        color: ${theme.colors.text.primary};
         .log-row-menu {
           z-index: 1;
         }
@@ -102,8 +107,6 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       > td:not(.log-row-menu-cell) {
         position: relative;
         padding-right: ${theme.spacing(1)};
-        border-top: 1px solid transparent;
-        border-bottom: 1px solid transparent;
         height: 100%;
       }
     `,
