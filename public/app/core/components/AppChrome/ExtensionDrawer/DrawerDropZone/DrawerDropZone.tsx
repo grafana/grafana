@@ -1,18 +1,19 @@
-import React, { useRef, useState, MouseEvent, ReactNode } from 'react';
+import React, { useRef, useState, DragEvent, ReactNode } from 'react';
 
+import { PluginExtensionGlobalDrawerDroppedData } from '@grafana/data';
 import { useSelector } from 'app/types';
 
 interface DrawerDropZoneProps {
   children: ReactNode;
-  onDrop: (x: unknown) => void;
+  onDrop: (data: PluginExtensionGlobalDrawerDroppedData) => void;
 }
 
 export const DrawerDropZone = ({ children, onDrop }: DrawerDropZoneProps) => {
-  const temp = useRef(null);
+  const temp = useRef<PluginExtensionGlobalDrawerDroppedData | undefined>(undefined);
   const [isDragging, setIsDragging] = useState(false);
-  const dragData = useSelector((state) => state.investigation.data);
+  const dragData = useSelector((state) => state.dragDrop.data);
 
-  const handleMoveEnter = (e: MouseEvent<HTMLDivElement, MouseEvent>) => {
+  const handleMoveEnter = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -22,25 +23,25 @@ export const DrawerDropZone = ({ children, onDrop }: DrawerDropZoneProps) => {
     }
   };
 
-  const handleMoveOver = (e: MouseEvent<HTMLDivElement, MouseEvent>) => {
+  const handleMoveOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
   };
 
-  const handleMoveLeave = (e: MouseEvent<HTMLDivElement, MouseEvent>) => {
+  const handleMoveLeave = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
 
     if (dragData) {
-      temp.current = null;
+      temp.current = undefined;
       setIsDragging(false);
     }
   };
 
-  const handleDrop = (e: MouseEvent<HTMLDivElement, MouseEvent>) => {
+  const handleDrop = () => {
     if (isDragging && temp.current) {
       onDrop(temp.current);
-      temp.current = null;
+      temp.current = undefined;
       setIsDragging(false);
     }
   };

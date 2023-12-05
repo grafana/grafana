@@ -27,7 +27,7 @@ export function AppChrome({ children }: Props) {
   const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const investigationDragData = useSelector((state) => state.investigation.data);
+  const dragData = useSelector((state) => state.dragDrop.data);
 
   const contentClass = cx({
     [styles.content]: true,
@@ -106,11 +106,7 @@ export function AppChrome({ children }: Props) {
       )}
       {config.featureToggles.extensionDrawer && (
         <>
-          <HotEdge
-            position="right"
-            hasData={!!investigationDragData}
-            onActivate={() => chrome.setExtensionDrawerOpen(true)}
-          />
+          <HotEdge position="right" hasData={!!dragData} onActivate={() => chrome.setExtensionDrawerOpen(true)} />
           <ExtensionDrawer
             open={state.extensionDrawer.open}
             onClose={() => chrome.setExtensionDrawerOpen(false)}

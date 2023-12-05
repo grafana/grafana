@@ -1,27 +1,29 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-interface InvestigationState {
-  data: object | object[] | undefined;
+import { PluginExtensionGlobalDrawerDroppedData } from '@grafana/data';
+
+interface DragDropState {
+  data?: PluginExtensionGlobalDrawerDroppedData;
 }
 
-export const initialState: InvestigationState = {
+export const initialState: DragDropState = {
   data: undefined,
 };
 
-const investigationSlice = createSlice({
-  name: 'investigation',
+const dragDropSlice = createSlice({
+  name: 'dragDrop',
   initialState,
   reducers: {
-    setDragData: (state: InvestigationState, action: PayloadAction<object | object[] | undefined>) => {
+    setDragData: (state: DragDropState, action: PayloadAction<PluginExtensionGlobalDrawerDroppedData | undefined>) => {
       state.data = action.payload;
     },
   },
 });
 
-export const { setDragData } = investigationSlice.actions;
+export const { setDragData } = dragDropSlice.actions;
 
-export const investigationReducer = investigationSlice.reducer;
+export const dragDropReducer = dragDropSlice.reducer;
 
 export default {
-  investigation: investigationReducer,
+  dragDrop: dragDropReducer,
 };
