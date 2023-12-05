@@ -98,7 +98,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   flapping: css({
     animation: `${flappingPulse} 2s infinite`,
-    backgroundColor: theme.colors.warning.shade,
-    border: `solid 1px ${theme.colors.warning.shade}`,
+    background: 'rgb(75 67 11)',
+    border: `1px solid rgb(133 125 89)`,
   }),
 });
