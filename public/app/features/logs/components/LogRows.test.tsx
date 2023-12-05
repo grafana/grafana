@@ -1,11 +1,21 @@
 import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { range } from 'lodash';
 import React from 'react';
 
-import { LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { CoreApp, LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 
 import { LogRows, PREVIEW_LIMIT } from './LogRows';
 import { createLogRow } from './__mocks__/logRow';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    featureToggles: {
+      logRowsPopoverMenu: true,
+    },
+  },
+}));
 
 describe('LogRows', () => {
   it('renders rows', () => {
@@ -193,5 +203,54 @@ describe('LogRows', () => {
     expect(screen.queryAllByRole('row').at(0)).toHaveTextContent('log message 3');
     expect(screen.queryAllByRole('row').at(1)).toHaveTextContent('log message 2');
     expect(screen.queryAllByRole('row').at(2)).toHaveTextContent('log message 1');
+  });
+});
+
+describe('Popover menu', () => {
+  function setup(app = CoreApp.Explore) {
+    const rows: LogRowModel[] = [createLogRow({ uid: '1' })];
+    return render(
+      <LogRows
+        logRows={rows}
+        dedupStrategy={LogsDedupStrategy.none}
+        showLabels={false}
+        showTime={false}
+        wrapLogMessage={true}
+        prettifyLogMessage={true}
+        timeZone={'utc'}
+        logsSortOrder={LogsSortOrder.Descending}
+        enableLogDetails={true}
+        displayedFields={[]}
+        onClickFilterOutValue={() => {}}
+        onClickFilterValue={() => {}}
+        app={app}
+      />
+    );
+  }
+  let orgGetSelection: () => Selection | null;
+  beforeAll(() => {
+    orgGetSelection = document.getSelection;
+    jest.spyOn(document, 'getSelection').mockReturnValue({
+      toString: () => 'selected log line',
+    } as Selection);
+  });
+  afterAll(() => {
+    document.getSelection = orgGetSelection;
+  });
+  it('Does not appear in the document', () => {
+    setup();
+    expect(screen.queryByText('Copy selection')).not.toBeInTheDocument();
+  });
+  it('Appears after selecting test', async () => {
+    setup();
+    await userEvent.click(screen.getByText('log message 1'));
+    expect(screen.getByText('Copy selection')).toBeInTheDocument();
+    expect(screen.getByText('Add as line contains filter')).toBeInTheDocument();
+    expect(screen.getByText('Add as line does not contain filter')).toBeInTheDocument();
+  });
+  it('Does not appear outside Explore', async () => {
+    setup(CoreApp.Unknown);
+    await userEvent.click(screen.getByText('log message 1'));
+    expect(screen.queryByText('Copy selection')).not.toBeInTheDocument();
   });
 });

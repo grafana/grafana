@@ -8,8 +8,8 @@ import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from '../utils/constants';
 import {
   AlertManagerDataSource,
-  getAlertmanagerDataSourceByName,
   GRAFANA_RULES_SOURCE_NAME,
+  getAlertmanagerDataSourceByName,
 } from '../utils/datasource';
 
 interface Context {
@@ -31,7 +31,10 @@ interface Props extends React.PropsWithChildren {
 
 const AlertmanagerProvider = ({ children, accessType, alertmanagerSourceName }: Props) => {
   const [queryParams, updateQueryParams] = useQueryParams();
-  const availableAlertManagers = useAlertManagersByPermission(accessType);
+  const allAvailableAlertManagers = useAlertManagersByPermission(accessType);
+  const availableAlertManagers = allAvailableAlertManagers.availableInternalDataSources.concat(
+    allAvailableAlertManagers.availableExternalDataSources
+  );
 
   const updateSelectedAlertmanager = React.useCallback(
     (selectedAlertManager: string) => {

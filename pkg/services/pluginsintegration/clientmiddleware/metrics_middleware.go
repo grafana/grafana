@@ -33,7 +33,7 @@ type MetricsMiddleware struct {
 
 func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service, features featuremgmt.FeatureToggles) *MetricsMiddleware {
 	var additionalLabels []string
-	if features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
+	if features.IsEnabledGlobally(featuremgmt.FlagPluginsInstrumentationStatusSource) {
 		additionalLabels = []string{"status_source"}
 	}
 	pluginRequestCounter := prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -122,7 +122,7 @@ func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginC
 	pluginRequestDurationLabels := []string{pluginCtx.PluginID, endpoint, target}
 	pluginRequestCounterLabels := []string{pluginCtx.PluginID, endpoint, status.String(), target}
 	pluginRequestDurationSecondsLabels := []string{"grafana-backend", pluginCtx.PluginID, endpoint, status.String(), target}
-	if m.features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
+	if m.features.IsEnabled(ctx, featuremgmt.FlagPluginsInstrumentationStatusSource) {
 		statusSource := pluginrequestmeta.StatusSourceFromContext(ctx)
 		pluginRequestDurationLabels = append(pluginRequestDurationLabels, string(statusSource))
 		pluginRequestCounterLabels = append(pluginRequestCounterLabels, string(statusSource))

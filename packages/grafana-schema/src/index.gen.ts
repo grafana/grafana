@@ -37,9 +37,7 @@ export type {
   RegexMap,
   SpecialValueMap,
   ValueMappingResult,
-  LibraryPanelRef,
-  GraphPanel,
-  HeatmapPanel
+  LibraryPanelRef
 } from './raw/dashboard/x/dashboard_types.gen';
 
 // Raw generated enums and default consts from dashboard kind.
@@ -75,6 +73,7 @@ export type {
   VariableModel,
   DataSourceRef,
   DataTransformerConfig,
+  TimePickerConfig,
   Panel,
   FieldConfigSource,
   MatcherConfig,
@@ -97,6 +96,7 @@ export {
   defaultAnnotationQuery,
   defaultVariableModel,
   VariableHide,
+  defaultTimePickerConfig,
   defaultPanel,
   defaultFieldConfigSource,
   defaultMatcherConfig,

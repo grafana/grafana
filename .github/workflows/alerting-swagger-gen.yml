@@ -31,7 +31,7 @@ jobs:
             Please review and merge.
           branch: update-alerting-swagger-spec
           delete-branch: true
-          labels: 'area/alerting,type/docs,no-backport,no-changelog'
+          labels: 'area/alerting,type/docs,no-changelog'
           team-reviewers: 'grafana/alerting-backend-product'
           draft: false
 

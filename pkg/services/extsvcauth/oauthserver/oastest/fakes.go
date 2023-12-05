@@ -25,6 +25,10 @@ func (s *FakeService) GetExternalService(ctx context.Context, id string) (*oauth
 	return s.ExpectedClient, s.ExpectedErr
 }
 
+func (s *FakeService) GetExternalServiceNames(ctx context.Context) ([]string, error) {
+	return nil, nil
+}
+
 func (s *FakeService) RemoveExternalService(ctx context.Context, name string) error {
 	return s.ExpectedErr
 }

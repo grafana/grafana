@@ -4,7 +4,7 @@ import context "context"
 
 type FakeFallbackStrategy struct {
 	ExpectedIsMatch bool
-	ExpectedConfig  map[string]interface{}
+	ExpectedConfig  any
 
 	ExpectedError error
 }
@@ -17,6 +17,6 @@ func (f *FakeFallbackStrategy) IsMatch(provider string) bool {
 	return f.ExpectedIsMatch
 }
 
-func (f *FakeFallbackStrategy) ParseConfigFromSystem(ctx context.Context) (map[string]interface{}, error) {
+func (f *FakeFallbackStrategy) GetProviderConfig(ctx context.Context, provider string) (any, error) {
 	return f.ExpectedConfig, f.ExpectedError
 }

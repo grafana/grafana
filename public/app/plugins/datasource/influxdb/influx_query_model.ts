@@ -141,6 +141,42 @@ export default class InfluxQueryModel {
     this.updatePersistedParts();
   }
 
+  private isOperatorTypeHandler(operator: string, value: string, fieldName: string) {
+    let textValue;
+    if (operator === 'Is Not') {
+      operator = '!=';
+    } else {
+      operator = '=';
+    }
+
+    // Tags should always quote
+    if (fieldName.endsWith('::tag')) {
+      textValue = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
+      return {
+        operator: operator,
+        value: textValue,
+      };
+    }
+
+    let lowerValue = value.toLowerCase();
+
+    // Try and discern type
+    if (!isNaN(parseFloat(value))) {
+      // Integer or float, don't quote
+      textValue = value;
+    } else if (['true', 'false'].includes(lowerValue)) {
+      // It's a boolean, don't quite
+      textValue = lowerValue;
+    } else {
+      // String or unrecognised: quote
+      textValue = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
+    }
+    return {
+      operator: operator,
+      value: textValue,
+    };
+  }
+
   private renderTagCondition(tag: InfluxQueryTag, index: number, interpolate?: boolean) {
     // FIXME: merge this function with query_builder/renderTagCondition
     let str = '';
@@ -163,7 +199,12 @@ export default class InfluxQueryModel {
       if (interpolate) {
         value = this.templateSrv.replace(value, this.scopedVars);
       }
-      if (operator !== '>' && operator !== '<') {
+
+      if (operator.startsWith('Is')) {
+        let r = this.isOperatorTypeHandler(operator, value, tag.key);
+        operator = r.operator;
+        value = r.value;
+      } else if ((!operator.startsWith('>') && !operator.startsWith('<')) || operator === '<>') {
         value = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
       }
     } else if (interpolate) {

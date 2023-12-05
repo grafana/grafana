@@ -1,4 +1,4 @@
-import { HistoryItem } from '@grafana/data';
+import { HistoryItem, dateTime } from '@grafana/data';
 
 import LokiLanguageProvider from '../../../LanguageProvider';
 import { LokiDatasource } from '../../../datasource';
@@ -51,9 +51,19 @@ const seriesLabels = { place: ['series', 'labels'], source: [], other: [] };
 const parserAndLabelKeys = {
   extractedLabelKeys: ['extracted', 'label', 'keys'],
   unwrapLabelKeys: ['unwrap', 'labels'],
+  structuredMetadataKeys: ['structured', 'metadata'],
   hasJSON: true,
   hasLogfmt: false,
   hasPack: false,
+};
+
+const mockTimeRange = {
+  from: dateTime(1546372800000),
+  to: dateTime(1546380000000),
+  raw: {
+    from: dateTime(1546372800000),
+    to: dateTime(1546380000000),
+  },
 };
 
 describe('CompletionDataProvider', () => {
@@ -63,7 +73,8 @@ describe('CompletionDataProvider', () => {
     datasource = createLokiDatasource();
     languageProvider = new LokiLanguageProvider(datasource);
     historyRef.current = history;
-    completionProvider = new CompletionDataProvider(languageProvider, historyRef);
+
+    completionProvider = new CompletionDataProvider(languageProvider, historyRef, mockTimeRange);
 
     jest.spyOn(languageProvider, 'getLabelKeys').mockReturnValue(labelKeys);
     jest.spyOn(languageProvider, 'fetchLabelValues').mockResolvedValue(labelValues);
@@ -161,6 +172,11 @@ describe('CompletionDataProvider', () => {
     expect(await completionProvider.getParserAndLabelKeys('')).toEqual(parserAndLabelKeys);
     expect(await completionProvider.getParserAndLabelKeys('')).toEqual(parserAndLabelKeys);
     expect(languageProvider.getParserAndLabelKeys).toHaveBeenCalledTimes(4);
+  });
+
+  test('Uses time range from CompletionProvider', async () => {
+    completionProvider.getParserAndLabelKeys('');
+    expect(languageProvider.getParserAndLabelKeys).toHaveBeenCalledWith('', { timeRange: mockTimeRange });
   });
 
   test('Returns the expected series labels', async () => {

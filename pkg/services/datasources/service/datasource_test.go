@@ -79,6 +79,85 @@ func TestService_AddDataSource(t *testing.T) {
 	})
 }
 
+func TestService_getAvailableName(t *testing.T) {
+	type testCase struct {
+		desc       string
+		dsType     string
+		existingDs []*datasources.DataSource
+		expected   string
+	}
+
+	testCases := []testCase{
+		{
+			desc:     "should return type as the name if no DS are passed in",
+			dsType:   "prometheus",
+			expected: "prometheus",
+		},
+		{
+			desc:   "should return type as the name if no DS with that name exists",
+			dsType: "prometheus",
+			existingDs: []*datasources.DataSource{
+				{Name: "graphite"},
+				{Name: "loki"},
+			},
+			expected: "prometheus",
+		},
+		{
+			desc:   "should return type-1 as the name if one data source with that name exists",
+			dsType: "prometheus",
+			existingDs: []*datasources.DataSource{
+				{Name: "graphite"},
+				{Name: "prometheus"},
+			},
+			expected: "prometheus-1",
+		},
+		{
+			desc:   "should correctly increment the number suffix of the name",
+			dsType: "prometheus",
+			existingDs: []*datasources.DataSource{
+				{Name: "prometheus"},
+				{Name: "prometheus-1"},
+				{Name: "prometheus-3"},
+			},
+			expected: "prometheus-2",
+		},
+		{
+			desc:   "should correctly increment the number suffix for multidigit numbers",
+			dsType: "prometheus",
+			existingDs: []*datasources.DataSource{
+				{Name: "prometheus"},
+				{Name: "prometheus-1"},
+				{Name: "prometheus-2"},
+				{Name: "prometheus-3"},
+				{Name: "prometheus-4"},
+				{Name: "prometheus-5"},
+				{Name: "prometheus-6"},
+				{Name: "prometheus-7"},
+				{Name: "prometheus-8"},
+				{Name: "prometheus-9"},
+				{Name: "prometheus-10"},
+			},
+			expected: "prometheus-11",
+		},
+		{
+			desc:   "name comparison should be case insensitive",
+			dsType: "prometheus",
+			existingDs: []*datasources.DataSource{
+				{Name: "Prometheus"},
+				{Name: "PROMETHEUS"},
+			},
+			expected: "prometheus-1",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			name := getAvailableName(tc.dsType, tc.existingDs)
+			assert.Equal(t, tc.expected, name)
+		})
+	}
+}
+
 func TestService_UpdateDataSource(t *testing.T) {
 	cfg := &setting.Cfg{}
 

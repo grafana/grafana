@@ -23,7 +23,7 @@ type Service struct {
 
 func ProvideService(cfg *config.Cfg, reg extsvcauth.ExternalServiceRegistry, settingsSvc pluginsettings.Service) *Service {
 	s := &Service{
-		featureEnabled: cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAuth) || cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAccounts),
+		featureEnabled: cfg.Features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAuth) || cfg.Features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
 		log:            log.New("plugins.external.registration"),
 		reg:            reg,
 		settingsSvc:    settingsSvc,
@@ -41,7 +41,7 @@ func (s *Service) HasExternalService(ctx context.Context, pluginID string) (bool
 }
 
 // RegisterExternalService is a simplified wrapper around SaveExternalService for the plugin use case.
-func (s *Service) RegisterExternalService(ctx context.Context, pluginID string, pType plugindef.Type, svc *plugindef.ExternalServiceRegistration) (*auth.ExternalService, error) {
+func (s *Service) RegisterExternalService(ctx context.Context, pluginID string, pType plugindef.Type, svc *plugindef.IAM) (*auth.ExternalService, error) {
 	if !s.featureEnabled {
 		s.log.Warn("Skipping External Service Registration. The feature is behind a feature toggle and needs to be enabled.")
 		return nil, nil

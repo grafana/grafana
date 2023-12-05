@@ -80,6 +80,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
+			// nolint:staticcheck
 			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID)
 
 			err := sc.service.ConnectLibraryPanelsForDashboard(sc.ctx, sc.user, dashInDB)
@@ -178,6 +179,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
+			// nolint:staticcheck
 			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID)
 
 			err = sc.service.ConnectLibraryPanelsForDashboard(sc.ctx, sc.user, dashInDB)
@@ -224,6 +226,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
+			// nolint:staticcheck
 			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID)
 
 			err := sc.service.ConnectLibraryPanelsForDashboard(sc.ctx, sc.user, dashInDB)
@@ -280,6 +283,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
+			// nolint:staticcheck
 			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID)
 			err = sc.elementService.ConnectElementsToDashboard(sc.ctx, sc.user, []string{sc.initialResult.Result.UID}, dashInDB.ID)
 			require.NoError(t, err)
@@ -429,6 +433,7 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 				model.GetLibraryElementCommand{UID: existingUID, FolderName: dashboards.RootFolderName})
 			require.NoError(t, err)
 
+			// nolint:staticcheck
 			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, simplejson.New(), panels, sc.folder.ID)
 			require.NoError(t, err)
 
@@ -705,6 +710,7 @@ func getExpected(t *testing.T, res model.LibraryElementDTO, UID string, name str
 }
 
 func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash *dashboards.Dashboard, folderID int64) *dashboards.Dashboard {
+	// nolint:staticcheck
 	dash.FolderID = folderID
 	dashItem := &dashboards.SaveDashboardDTO{
 		Dashboard: dash,
@@ -879,7 +885,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 
 		foldr := createFolder(t, sc, "ScenarioFolder")
 		sc.folder = &folder.Folder{
-			ID:        foldr.ID,
+			ID:        foldr.ID, // nolint:staticcheck
 			UID:       foldr.UID,
 			Title:     foldr.Title,
 			URL:       dashboards.GetFolderURL(foldr.UID, slugify.Slugify(foldr.Title)),

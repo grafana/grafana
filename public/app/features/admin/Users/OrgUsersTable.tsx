@@ -208,7 +208,7 @@ export const OrgUsersTable = ({
   );
 
   return (
-    <Stack gap={2} data-testid={selectors.container}>
+    <Stack direction={'column'} gap={2} data-testid={selectors.container}>
       <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.userId)} fetchData={fetchData} />
       <Stack justifyContent="flex-end">
         <Pagination onNavigate={changePage} currentPage={page} numberOfPages={totalPages} hideWhenSinglePage={true} />

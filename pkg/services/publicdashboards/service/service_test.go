@@ -312,6 +312,7 @@ func TestGetPublicDashboardForView(t *testing.T) {
 
 	// #nosec G101 -- This is dummy/test token
 	accessToken := "c54b1c4dd2b143a1a7a43005264d256d"
+	// nolint:staticcheck
 	d := &dashboards.Dashboard{UID: "mydashboard", Data: data, Slug: "dashboardSlug", Created: now, Updated: now, Version: 1, FolderID: 1}
 
 	testCases := []struct {
@@ -1854,7 +1855,7 @@ func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title st
 
 	cmd := dashboards.SaveDashboardCommand{
 		OrgID:     orgId,
-		FolderID:  folderId,
+		FolderID:  folderId, // nolint:staticcheck
 		FolderUID: folderUID,
 		IsFolder:  isFolder,
 		Dashboard: simplejson.NewFromAny(map[string]any{

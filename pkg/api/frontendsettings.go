@@ -66,7 +66,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			continue
 		}
 
-		if panel.ID == "datagrid" && !hs.Features.IsEnabled(featuremgmt.FlagEnableDatagridEditing) {
+		if panel.ID == "datagrid" && !hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagEnableDatagridEditing) {
 			continue
 		}
 

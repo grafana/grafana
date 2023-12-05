@@ -182,3 +182,7 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
 
   return null;
 }
+
+export function isPanelClone(key: string) {
+  return key.includes('clone');
+}

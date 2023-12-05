@@ -13,10 +13,10 @@ import {
   FieldType,
   MutableDataFrame,
   ScopedVars,
+  urlUtil,
 } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
-import { serializeParams } from 'app/core/utils/fetch';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { SpanBarOptions } from 'app/features/explore/TraceView/components';
 
@@ -235,7 +235,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
     data?: Record<string, unknown>,
     options?: Partial<BackendSrvRequest>
   ): Observable<Record<string, any>> {
-    const params = data ? serializeParams(data) : '';
+    const params = data ? urlUtil.serializeParams(data) : '';
     const url = `${this.instanceSettings.url}${apiUrl}${params.length ? `?${params}` : ''}`;
     const req = {
       ...options,

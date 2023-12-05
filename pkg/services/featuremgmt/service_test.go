@@ -43,8 +43,8 @@ func TestFeatureService(t *testing.T) {
 	require.NotNil(t, mgmt)
 
 	// Enterprise features do not fall though automatically
-	require.False(t, mgmt.IsEnabled("a.yes.default"))
-	require.False(t, mgmt.IsEnabled("a.yes")) // licensed, but not enabled
+	require.False(t, mgmt.IsEnabledGlobally("a.yes.default"))
+	require.False(t, mgmt.IsEnabledGlobally("a.yes")) // licensed, but not enabled
 }
 
 var (
