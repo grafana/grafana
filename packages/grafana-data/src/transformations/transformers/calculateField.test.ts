@@ -1068,7 +1068,6 @@ describe('calculateField transformer w/ timeseries', () => {
           },
           // defaults to `ceil(up)`
           alias: 'Rounded up',
-          // replaceFields: true,
         })
       )
     ).toEqual(normlines(`derive \`Rounded up\` = s"CEIL({up})"`));
