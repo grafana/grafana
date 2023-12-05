@@ -129,7 +129,6 @@ export const LogsVolumePanelList = ({
     return <span>Loading...</span>;
   }
 
-  console.log(logsCountData);
   return (
     <div className={styles.listContainer}>
       {logsCountData?.data && logsCountData?.state === LoadingState.Done && (
