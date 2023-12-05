@@ -2,6 +2,7 @@ package folderimpl
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 const (
@@ -9,35 +10,21 @@ const (
 	metricsSubSystem = "folders"
 )
 
-func newFoldersMetrics(r prometheus.Registerer) *foldersMetrics {
-	m := &foldersMetrics{
-		sharedWithMeFetchFoldersSuccessRequestsDuration: prometheus.NewHistogram(
-			prometheus.HistogramOpts{
-				Name:      "sharedwithme_fetch_folders_successes_duration_seconds",
-				Help:      "Histogram of fetching folders with permissions directly assigned to user",
-				Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
-				Namespace: metricsNamespace,
-				Subsystem: metricsSubSystem,
-			}),
-		sharedWithMeFetchFoldersFailureRequestsDuration: prometheus.NewHistogram(
-			prometheus.HistogramOpts{
-				Name:      "sharedwithme_fetch_folders_failures_duration_seconds",
-				Help:      "Histogram of failed requests for fetching folders with permissions directly assigned to user",
-				Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
-				Namespace: metricsNamespace,
-				Subsystem: metricsSubSystem,
-			}),
-	}
-
-	if r != nil {
-		r.MustRegister(m.sharedWithMeFetchFoldersSuccessRequestsDuration)
-		r.MustRegister(m.sharedWithMeFetchFoldersFailureRequestsDuration)
-	}
-
-	return m
+type foldersMetrics struct {
+	sharedWithMeFetchFoldersRequestsDuration *prometheus.HistogramVec
 }
 
-type foldersMetrics struct {
-	sharedWithMeFetchFoldersSuccessRequestsDuration prometheus.Histogram
-	sharedWithMeFetchFoldersFailureRequestsDuration prometheus.Histogram
+func newFoldersMetrics(r prometheus.Registerer) *foldersMetrics {
+	return &foldersMetrics{
+		sharedWithMeFetchFoldersRequestsDuration: promauto.With(r).NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name:      "sharedwithme_fetch_folders_duration_seconds",
+				Help:      "Duration of fetching folders with permissions directly assigned to user",
+				Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
+				Namespace: metricsNamespace,
+				Subsystem: metricsSubSystem,
+			},
+			[]string{"status"},
+		),
+	}
 }

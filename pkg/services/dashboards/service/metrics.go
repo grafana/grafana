@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 const (
@@ -9,25 +10,21 @@ const (
 	metricsSubSystem = "dashboards"
 )
 
+type dashboardsMetrics struct {
+	sharedWithMeFetchDashboardsRequestsDuration *prometheus.HistogramVec
+}
+
 func newDashboardsMetrics(r prometheus.Registerer) *dashboardsMetrics {
-	m := &dashboardsMetrics{
-		sharedWithMeFetchDashboardsSuccessRequestsDuration: prometheus.NewHistogram(
+	return &dashboardsMetrics{
+		sharedWithMeFetchDashboardsRequestsDuration: promauto.With(r).NewHistogramVec(
 			prometheus.HistogramOpts{
-				Name:      "sharedwithme_fetch_dashboards_successes_duration_seconds",
-				Help:      "Histogram of fetching dashboards with permissions directly assigned to user",
+				Name:      "sharedwithme_fetch_dashboards_duration_seconds",
+				Help:      "Duration of fetching dashboards with permissions directly assigned to user",
 				Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
 				Namespace: metricsNamespace,
 				Subsystem: metricsSubSystem,
-			}),
+			},
+			[]string{"status"},
+		),
 	}
-
-	if r != nil {
-		r.MustRegister(m.sharedWithMeFetchDashboardsSuccessRequestsDuration)
-	}
-
-	return m
-}
-
-type dashboardsMetrics struct {
-	sharedWithMeFetchDashboardsSuccessRequestsDuration prometheus.Histogram
 }

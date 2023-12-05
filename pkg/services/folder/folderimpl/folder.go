@@ -275,16 +275,16 @@ func (s *Service) GetSharedWithMe(ctx context.Context, cmd *folder.GetChildrenQu
 	start := time.Now()
 	availableNonRootFolders, err := s.getAvailableNonRootFolders(ctx, cmd.OrgID, cmd.SignedInUser)
 	if err != nil {
-		s.metrics.sharedWithMeFetchFoldersFailureRequestsDuration.Observe(time.Since(start).Seconds())
+		s.metrics.sharedWithMeFetchFoldersRequestsDuration.WithLabelValues("failure").Observe(time.Since(start).Seconds())
 		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders to which the user has explicit access: %w", err)
 	}
 	rootFolders, err := s.GetChildren(ctx, &folder.GetChildrenQuery{UID: "", OrgID: cmd.OrgID, SignedInUser: cmd.SignedInUser})
 	if err != nil {
-		s.metrics.sharedWithMeFetchFoldersFailureRequestsDuration.Observe(time.Since(start).Seconds())
+		s.metrics.sharedWithMeFetchFoldersRequestsDuration.WithLabelValues("failure").Observe(time.Since(start).Seconds())
 		return nil, folder.ErrInternal.Errorf("failed to fetch root folders to which the user has access: %w", err)
 	}
 	availableNonRootFolders = s.deduplicateAvailableFolders(ctx, availableNonRootFolders, rootFolders)
-	s.metrics.sharedWithMeFetchFoldersSuccessRequestsDuration.Observe(time.Since(start).Seconds())
+	s.metrics.sharedWithMeFetchFoldersRequestsDuration.WithLabelValues("success").Observe(time.Since(start).Seconds())
 	return availableNonRootFolders, nil
 }
 

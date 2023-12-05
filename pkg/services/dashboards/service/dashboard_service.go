@@ -634,12 +634,10 @@ func (dr *DashboardServiceImpl) getUserSharedDashboardUIDs(ctx context.Context, 
 
 func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	if dr.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && len(query.FolderUIDs) > 0 && slices.Contains(query.FolderUIDs, folder.SharedWithMeFolderUID) {
-		defer func(t time.Time) {
-			dr.metrics.sharedWithMeFetchDashboardsSuccessRequestsDuration.Observe(time.Since(t).Seconds())
-		}(time.Now())
-
+		start := time.Now()
 		userDashboardUIDs, err := dr.getUserSharedDashboardUIDs(ctx, query.SignedInUser)
 		if err != nil {
+			dr.metrics.sharedWithMeFetchDashboardsRequestsDuration.WithLabelValues("failure").Observe(time.Since(start).Seconds())
 			return nil, err
 		}
 		if len(userDashboardUIDs) == 0 {
@@ -647,6 +645,10 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 		}
 		query.DashboardUIDs = userDashboardUIDs
 		query.FolderUIDs = []string{}
+
+		defer func(t time.Time) {
+			dr.metrics.sharedWithMeFetchDashboardsRequestsDuration.WithLabelValues("success").Observe(time.Since(start).Seconds())
+		}(time.Now())
 	}
 	return dr.dashboardStore.FindDashboards(ctx, query)
 }
