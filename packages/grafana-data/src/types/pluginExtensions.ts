@@ -32,9 +32,26 @@ export type PluginExtensionLink = PluginExtensionBase & {
   category?: string;
 };
 
-export type PluginExtensionComponent = PluginExtensionBase & {
+export type PluginExtensionComponent<Context extends object = object> = PluginExtensionBase & {
   type: PluginExtensionTypes.component;
-  component: React.ComponentType;
+  component: React.ComponentType<{ context?: Context }>;
+};
+
+export type PluginExtensionGlobalDrawerComponent = PluginExtensionBase & {
+  id: PluginExtensionPoints.GlobalDrawer;
+  type: PluginExtensionTypes.component;
+  component: React.ComponentType<{ context?: PluginExtensionGlobalDrawerContext }>;
+};
+
+export type PluginExtensionGlobalDrawerDroppedDataType = 'explore' | 'panel' | 'alert-rule';
+
+export interface PluginExtensionGlobalDrawerDroppedData<T extends object = object> {
+  type: string;
+  data: T;
+}
+
+export type PluginExtensionGlobalDrawerContext<T extends object = object> = {
+  droppedData?: PluginExtensionGlobalDrawerDroppedData<T>;
 };
 
 export type PluginExtension = PluginExtensionLink | PluginExtensionComponent;

@@ -1,7 +1,13 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import React, { Suspense, useMemo, useState } from 'react';
 
-import { GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
+import {
+  GrafanaTheme2,
+  PluginExtensionComponent,
+  PluginExtensionGlobalDrawerDroppedData,
+  PluginExtensionGlobalDrawerContext,
+  PluginExtensionPoints,
+} from '@grafana/data';
 import { getPluginComponentExtensions } from '@grafana/runtime';
 import { Drawer, IconButton, useStyles2 } from '@grafana/ui';
 import { getCircularReplacer } from 'app/core/utils/object';
@@ -18,7 +24,7 @@ export interface Props {
 }
 
 function ExampleTab() {
-  const [data, setData] = useState<string | null>(null);
+  const [data, setData] = useState<PluginExtensionGlobalDrawerDroppedData | undefined>(undefined);
 
   return (
     <div>
@@ -33,7 +39,8 @@ function ExampleTab() {
 export function ExtensionDrawer({ open, onClose, selectedTab }: Props) {
   const styles = useStyles2(getStyles);
   const [size, setSize] = useState<DrawerSize>('md');
-  const extensions = useMemo(() => {
+  const [data, setData] = useState<PluginExtensionGlobalDrawerDroppedData | undefined>(undefined);
+  const extensions: Array<PluginExtensionComponent<PluginExtensionGlobalDrawerContext>> = useMemo(() => {
     const extensionPointId = PluginExtensionPoints.GlobalDrawer;
     const { extensions } = getPluginComponentExtensions({ extensionPointId });
     return extensions;
@@ -50,11 +57,13 @@ export function ExtensionDrawer({ open, onClose, selectedTab }: Props) {
           activeTab === extension.id && (
             // Support lazy components with a fallback.
             <Suspense key={index} fallback={'Loading...'}>
-              <extension.component />
+              <DrawerDropZone onDrop={setData}>
+                <extension.component context={{ droppedData: data }} />
+              </DrawerDropZone>
             </Suspense>
           )
       ),
-    [activeTab, extensions]
+    [activeTab, data, extensions]
   );
 
   const [buttonIcon, buttonLabel, newSize] =

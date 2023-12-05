@@ -63,5 +63,7 @@ export {
   type PluginExtensionEventHelpers,
   type PluginExtensionPanelContext,
   type PluginExtensionDataSourceConfigContext,
+  type PluginExtensionGlobalDrawerContext,
+  type PluginExtensionGlobalDrawerDroppedData,
   type PluginExtensionOpenModalOptions,
 } from './pluginExtensions';
