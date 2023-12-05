@@ -25220,13 +25220,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prql-js@npm:^0.10.1":
-  version: 0.10.1
-  resolution: "prql-js@npm:0.10.1"
-  checksum: 112b26a2a377b54b354c40fe12d891108939ac7550cff3c19257f770f2d3d61233c3aaefef3795e029b548032c2e309472245ce38f2f64f60c2319a61abd4a98
-  languageName: node
-  linkType: hard
-
 "prql-codemirror-demo@workspace:prql":
   version: 0.0.0-use.local
   resolution: "prql-codemirror-demo@workspace:prql"
@@ -25245,6 +25238,13 @@ __metadata:
     vite: "npm:^5.0.2"
   languageName: unknown
   linkType: soft
+
+"prql-js@npm:^0.10.1":
+  version: 0.10.1
+  resolution: "prql-js@npm:0.10.1"
+  checksum: 112b26a2a377b54b354c40fe12d891108939ac7550cff3c19257f770f2d3d61233c3aaefef3795e029b548032c2e309472245ce38f2f64f60c2319a61abd4a98
+  languageName: node
+  linkType: hard
 
 "prr@npm:~1.0.1":
   version: 1.0.1

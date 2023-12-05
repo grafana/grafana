@@ -31,6 +31,7 @@ import { Trans } from 'app/core/internationalization';
 import { PanelModel } from '../../state';
 import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
 
+import { PRQLEditor } from './PRQLEditor';
 import { TransformationOperationRows } from './TransformationOperationRows';
 import { TransformationPicker } from './TransformationPicker';
 import { TransformationPickerNg } from './TransformationPickerNg';
@@ -263,6 +264,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
           >
             <Trans key="transformations.empty.add-transformation-body">
               Transformations allow data to be changed in various ways before your visualization is shown.
+              <PRQLEditor metricNames={[]} queryString={'filter thing from @1019-01-01'} />
               <br />
               This includes joining data together, renaming fields, making calculations, formatting data for display,
               and more.
