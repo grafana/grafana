@@ -89,7 +89,7 @@ export const RulesTable = ({
         activeRowId={activeRuleId}
         pagination={{ itemsPerPage: DEFAULT_PER_PAGE_PAGINATION }}
         paginationStyles={styles.pagination}
-        onDragRow={(x) => dispatch(setDragData(createSafeObject(x)))}
+        onDragRow={(x) => dispatch(setDragData(x ? createSafeObject(x) : null))}
       />
     </div>
   );
@@ -273,7 +273,7 @@ function useColumns(
           <RuleActionsButtons
             rule={rule}
             rulesSource={rule.namespace.rulesSource}
-            onDragEnabled={() => setActiveRuleId(id)}
+            onDragEnabled={(isEnabled) => setActiveRuleId(isEnabled ? id : undefined)}
           />
         );
       },
