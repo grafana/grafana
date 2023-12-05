@@ -33,49 +33,59 @@ import (
 
 const (
 	OfflineAccessScope = "offline_access"
+	RoleGrafanaAdmin   = "GrafanaAdmin" // For AzureAD for example this value cannot contain spaces
 )
 
 type SocialService struct {
 	cfg *setting.Cfg
 
-	socialMap     map[string]SocialConnector
-	oAuthProvider map[string]*OAuthInfo
-	log           log.Logger
+	socialMap map[string]SocialConnector
+	log       log.Logger
 }
 
 type OAuthInfo struct {
+	AllowAssignGrafanaAdmin bool              `mapstructure:"allow_assign_grafana_admin" toml:"allow_assign_grafana_admin" json:"allowAssignGrafanaAdmin"`
+	AllowSignup             bool              `mapstructure:"allow_sign_up" toml:"allow_sign_up" json:"allowSignup"`
+	AllowedDomains          []string          `mapstructure:"allowed_domains" toml:"allowed_domains" json:"allowedDomains"`
+	AllowedGroups           []string          `mapstructure:"allowed_groups" toml:"allowed_groups" json:"allowedGroups"`
 	ApiUrl                  string            `mapstructure:"api_url" toml:"api_url" json:"apiUrl"`
-	AuthUrl                 string            `mapstructure:"auth_url" toml:"auth_url" json:"authUrl"`
 	AuthStyle               string            `mapstructure:"auth_style" toml:"auth_style" json:"authStyle"`
+	AuthUrl                 string            `mapstructure:"auth_url" toml:"auth_url" json:"authUrl"`
+	AutoLogin               bool              `mapstructure:"auto_login" toml:"auto_login" json:"autoLogin"`
 	ClientId                string            `mapstructure:"client_id" toml:"client_id" json:"clientId"`
 	ClientSecret            string            `mapstructure:"client_secret" toml:"-" json:"clientSecret"`
 	EmailAttributeName      string            `mapstructure:"email_attribute_name" toml:"email_attribute_name" json:"emailAttributeName"`
 	EmailAttributePath      string            `mapstructure:"email_attribute_path" toml:"email_attribute_path" json:"emailAttributePath"`
 	EmptyScopes             bool              `mapstructure:"empty_scopes" toml:"empty_scopes" json:"emptyScopes"`
+	Enabled                 bool              `mapstructure:"enabled" toml:"enabled" json:"enabled"`
 	GroupsAttributePath     string            `mapstructure:"groups_attribute_path" toml:"groups_attribute_path" json:"groupsAttributePath"`
 	HostedDomain            string            `mapstructure:"hosted_domain" toml:"hosted_domain" json:"hostedDomain"`
 	Icon                    string            `mapstructure:"icon" toml:"icon" json:"icon"`
 	Name                    string            `mapstructure:"name" toml:"name" json:"name"`
 	RoleAttributePath       string            `mapstructure:"role_attribute_path" toml:"role_attribute_path" json:"roleAttributePath"`
+	RoleAttributeStrict     bool              `mapstructure:"role_attribute_strict" toml:"role_attribute_strict" json:"roleAttributeStrict"`
+	Scopes                  []string          `mapstructure:"scopes" toml:"scopes" json:"scopes"`
+	SignoutRedirectUrl      string            `mapstructure:"signout_redirect_url" toml:"signout_redirect_url" json:"signoutRedirectUrl"`
+	SkipOrgRoleSync         bool              `mapstructure:"skip_org_role_sync" toml:"skip_org_role_sync" json:"skipOrgRoleSync"`
 	TeamIdsAttributePath    string            `mapstructure:"team_ids_attribute_path" toml:"team_ids_attribute_path" json:"teamIdsAttributePath"`
 	TeamsUrl                string            `mapstructure:"teams_url" toml:"teams_url" json:"teamsUrl"`
 	TlsClientCa             string            `mapstructure:"tls_client_ca" toml:"tls_client_ca" json:"tlsClientCa"`
 	TlsClientCert           string            `mapstructure:"tls_client_cert" toml:"tls_client_cert" json:"tlsClientCert"`
 	TlsClientKey            string            `mapstructure:"tls_client_key" toml:"tls_client_key" json:"tlsClientKey"`
-	TokenUrl                string            `mapstructure:"token_url" toml:"token_url" json:"tokenUrl"`
-	AllowedDomains          []string          `mapstructure:"allowed_domains" toml:"allowed_domains" json:"allowedDomains"`
-	AllowedGroups           []string          `mapstructure:"allowed_groups" toml:"allowed_groups" json:"allowedGroups"`
-	Scopes                  []string          `mapstructure:"scopes" toml:"scopes" json:"scopes"`
-	AllowAssignGrafanaAdmin bool              `mapstructure:"allow_assign_grafana_admin" toml:"allow_assign_grafana_admin" json:"allowAssignGrafanaAdmin"`
-	AllowSignup             bool              `mapstructure:"allow_sign_up" toml:"allow_sign_up" json:"allowSignup"`
-	AutoLogin               bool              `mapstructure:"auto_login" toml:"auto_login" json:"autoLogin"`
-	Enabled                 bool              `mapstructure:"enabled" toml:"enabled" json:"enabled"`
-	RoleAttributeStrict     bool              `mapstructure:"role_attribute_strict" toml:"role_attribute_strict" json:"roleAttributeStrict"`
 	TlsSkipVerify           bool              `mapstructure:"tls_skip_verify_insecure" toml:"tls_skip_verify_insecure" json:"tlsSkipVerify"`
+	TokenUrl                string            `mapstructure:"token_url" toml:"token_url" json:"tokenUrl"`
 	UsePKCE                 bool              `mapstructure:"use_pkce" toml:"use_pkce" json:"usePKCE"`
 	UseRefreshToken         bool              `mapstructure:"use_refresh_token" toml:"use_refresh_token" json:"useRefreshToken"`
-	SignoutRedirectUrl      string            `mapstructure:"signout_redirect_url" toml:"signout_redirect_url" json:"signoutRedirectUrl"`
 	Extra                   map[string]string `mapstructure:",remain" toml:"extra,omitempty" json:"extra"`
+}
+
+func NewOAuthInfo() *OAuthInfo {
+	return &OAuthInfo{
+		Scopes:         []string{},
+		AllowedDomains: []string{},
+		AllowedGroups:  []string{},
+		Extra:          map[string]string{},
+	}
 }
 
 func ProvideService(cfg *setting.Cfg,
@@ -85,10 +95,9 @@ func ProvideService(cfg *setting.Cfg,
 	cache remotecache.CacheStorage,
 ) *SocialService {
 	ss := &SocialService{
-		cfg:           cfg,
-		oAuthProvider: make(map[string]*OAuthInfo),
-		socialMap:     make(map[string]SocialConnector),
-		log:           log.New("login.social"),
+		cfg:       cfg,
+		socialMap: make(map[string]SocialConnector),
+		log:       log.New("login.social"),
 	}
 
 	usageStats.RegisterMetricsFunc(ss.getUsageStats)
@@ -107,8 +116,8 @@ func ProvideService(cfg *setting.Cfg,
 			continue
 		}
 
-		if name == "grafananet" {
-			name = grafanaCom
+		if name == GrafanaNetProviderName {
+			name = GrafanaComProviderName
 		}
 
 		conn, err := ss.createOAuthConnector(name, settingsKVs, cfg, features, cache)
@@ -117,7 +126,6 @@ func ProvideService(cfg *setting.Cfg,
 		}
 
 		ss.socialMap[name] = conn
-		ss.oAuthProvider[name] = ss.socialMap[name].GetOAuthInfo()
 	}
 
 	ss.registerSupportBundleCollectors(bundleRegistry)
@@ -180,15 +188,11 @@ func (e Error) Error() string {
 	return e.s
 }
 
-const (
-	grafanaCom       = "grafana_com"
-	RoleGrafanaAdmin = "GrafanaAdmin" // For AzureAD for example this value cannot contain spaces
-)
-
 var (
 	SocialBaseUrl = "/login/"
 	SocialMap     = make(map[string]SocialConnector)
-	allOauthes    = []string{"github", "gitlab", "google", "generic_oauth", "grafananet", grafanaCom, "azuread", "okta"}
+	allOauthes    = []string{GitHubProviderName, GitlabProviderName, GoogleProviderName, GenericOAuthProviderName, GrafanaNetProviderName,
+		GrafanaComProviderName, AzureADProviderName, OktaProviderName}
 )
 
 type Service interface {
@@ -322,20 +326,8 @@ func getRoleFromSearch(role string) (org.RoleType, bool) {
 func (ss *SocialService) GetOAuthProviders() map[string]bool {
 	result := map[string]bool{}
 
-	if ss.cfg == nil || ss.cfg.Raw == nil {
-		return result
-	}
-
-	for _, name := range allOauthes {
-		if name == "grafananet" {
-			name = grafanaCom
-		}
-
-		sec := ss.cfg.Raw.Section("auth." + name)
-		if sec == nil {
-			continue
-		}
-		result[name] = sec.Key("enabled").MustBool()
+	for name, conn := range ss.socialMap {
+		result[name] = conn.GetOAuthInfo().Enabled
 	}
 
 	return result
@@ -344,9 +336,14 @@ func (ss *SocialService) GetOAuthProviders() map[string]bool {
 func (ss *SocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
 	// The socialMap keys don't have "oauth_" prefix, but everywhere else in the system does
 	name = strings.TrimPrefix(name, "oauth_")
-	info, ok := ss.oAuthProvider[name]
+	provider, ok := ss.socialMap[name]
 	if !ok {
 		return nil, fmt.Errorf("could not find %q in OAuth Settings", name)
+	}
+
+	info := provider.GetOAuthInfo()
+	if !info.Enabled {
+		return nil, fmt.Errorf("oauth provider %q is not enabled", name)
 	}
 
 	// handle call back
@@ -404,11 +401,23 @@ func (ss *SocialService) GetConnector(name string) (SocialConnector, error) {
 }
 
 func (ss *SocialService) GetOAuthInfoProvider(name string) *OAuthInfo {
-	return ss.oAuthProvider[name]
+	connector, ok := ss.socialMap[name]
+	if !ok {
+		return nil
+	}
+	return connector.GetOAuthInfo()
 }
 
+// GetOAuthInfoProviders returns enabled OAuth providers
 func (ss *SocialService) GetOAuthInfoProviders() map[string]*OAuthInfo {
-	return ss.oAuthProvider
+	result := map[string]*OAuthInfo{}
+	for name, connector := range ss.socialMap {
+		info := connector.GetOAuthInfo()
+		if info.Enabled {
+			result[name] = info
+		}
+	}
+	return result
 }
 
 func (ss *SocialService) getUsageStats(ctx context.Context) (map[string]any, error) {
@@ -505,19 +514,19 @@ func (s *SocialBase) retrieveRawIDToken(idToken any) ([]byte, error) {
 
 func (ss *SocialService) createOAuthConnector(name string, settings map[string]any, cfg *setting.Cfg, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) (SocialConnector, error) {
 	switch name {
-	case azureADProviderName:
+	case AzureADProviderName:
 		return NewAzureADProvider(settings, cfg, features, cache)
-	case genericOAuthProviderName:
+	case GenericOAuthProviderName:
 		return NewGenericOAuthProvider(settings, cfg, features)
-	case gitHubProviderName:
+	case GitHubProviderName:
 		return NewGitHubProvider(settings, cfg, features)
-	case gitlabProviderName:
+	case GitlabProviderName:
 		return NewGitLabProvider(settings, cfg, features)
-	case googleProviderName:
+	case GoogleProviderName:
 		return NewGoogleProvider(settings, cfg, features)
-	case grafanaComProviderName:
+	case GrafanaComProviderName:
 		return NewGrafanaComProvider(settings, cfg, features)
-	case oktaProviderName:
+	case OktaProviderName:
 		return NewOktaProvider(settings, cfg, features)
 	default:
 		return nil, fmt.Errorf("unknown oauth provider: %s", name)

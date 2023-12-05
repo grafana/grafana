@@ -50,3 +50,15 @@ then:
 - A label matcher defined as `id=~[0-9]+` matches this alert rule.
 - A label matcher defined as `baz!~[0-9]+` matches this alert rule.
 - Two label matchers defined as `foo=bar` and `id=~[0-9]+` match this alert rule.
+
+## Exclude labels
+
+You can also write label matchers to exclude labels.
+
+Here is an example that shows how to exclude the label `Team`. You can choose between any of the values below to exclude labels.
+
+| Label  | Operator | Value |
+| ------ | -------- | ----- |
+| `team` | `=`      | `""`  |
+| `team` | `!~`     | `.+`  |
+| `team` | `=~`     | `^$`  |
