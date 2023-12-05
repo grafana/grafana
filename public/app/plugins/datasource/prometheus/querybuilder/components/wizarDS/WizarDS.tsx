@@ -12,9 +12,9 @@ import { PromVisualQuery } from '../../types';
 import { SuggestionContainer } from './SuggestionContainer';
 // @ts-ignore until we can get these added for icons
 import AI_Logo_color from './resources/AI_Logo_color.svg';
-import { promQailExplain, promQailSuggest } from './state/helpers';
+import { wizarDSExplain, wizarDSSuggest } from './state/helpers';
 import { initialState, stateSlice } from './state/state';
-import { Interaction, SuggestionType } from './types';
+import { Interaction, Suggestion, SuggestionType } from './types';
 
 // actions to update the state
 const { showStartingMessage, indicateCheckbox, addInteraction, updateInteraction } = stateSlice.actions;
@@ -23,12 +23,13 @@ export type WizarDSProps = {
   query: PromVisualQuery;
   closeDrawer: () => void;
   datasource: PrometheusDatasource;
+  templates: Suggestion[];
 };
 
 const SKIP_STARTING_MESSAGE = 'SKIP_STARTING_MESSAGE';
 
 export const WizarDS = (props: WizarDSProps) => {
-  const { query, closeDrawer, datasource } = props;
+  const { query, closeDrawer, datasource, templates } = props;
   const skipStartingMessage = store.getBool(SKIP_STARTING_MESSAGE, false);
 
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState(query, !skipStartingMessage));
@@ -192,7 +193,7 @@ export const WizarDS = (props: WizarDSProps) => {
                         //   promVisualQuery: query,
                         //   doYouKnow: 'no',
                         // });
-                        promQailSuggest(dispatch, 0, query, [], datasource);
+                        wizarDSSuggest(dispatch, 0, query, [], datasource, templates);
                       }}
                     >
                       Just walk me through everything
@@ -287,7 +288,7 @@ export const WizarDS = (props: WizarDSProps) => {
                                     // });
 
                                     dispatch(updateInteraction(payload));
-                                    promQailSuggest(dispatch, idx, query, [], datasource, newInteraction);
+                                    wizarDSSuggest(dispatch, idx, query, [], datasource, templates, newInteraction);
                                   }}
                                 >
                                   Show me everything instead.
@@ -314,7 +315,7 @@ export const WizarDS = (props: WizarDSProps) => {
 
                                     dispatch(updateInteraction(payload));
                                     // add the suggestions in the API call
-                                    promQailSuggest(dispatch, idx, query, [], datasource, interaction);
+                                    wizarDSSuggest(dispatch, idx, query, [], datasource, templates, interaction);
                                   }}
                                 >
                                   Submit
@@ -336,7 +337,7 @@ export const WizarDS = (props: WizarDSProps) => {
                           }}
                           explain={(suggIdx: number) =>
                             interaction.suggestions[suggIdx].explanation === ''
-                              ? promQailExplain(dispatch, idx, query, interaction, suggIdx, datasource)
+                              ? wizarDSExplain(dispatch, idx, query, interaction, suggIdx, datasource)
                               : interaction.suggestions[suggIdx].explanation
                           }
                           // onChange={onChange}
@@ -364,7 +365,7 @@ export const WizarDS = (props: WizarDSProps) => {
                       }}
                       explain={(suggIdx: number) =>
                         interaction.suggestions[suggIdx].explanation === ''
-                          ? promQailExplain(dispatch, idx, query, interaction, suggIdx, datasource)
+                          ? wizarDSExplain(dispatch, idx, query, interaction, suggIdx, datasource)
                           : interaction.suggestions[suggIdx].explanation
                       }
                       // onChange={onChange}
@@ -545,7 +546,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
 };
 
 export const testIds = {
-  promQail: 'prom-qail',
+  wizarDS: 'wizar-ds',
   securityInfoButton: 'security-info-button',
   clickForHistorical: 'click-for-historical',
   clickForAi: 'click-for-ai',

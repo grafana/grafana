@@ -52,16 +52,11 @@ export const stateSlice = createSlice({
 });
 
 /**
- * Initial state for PromQAIL
+ * Initial state for wizarDS
  * @param query the prometheus query with metric and possible labels
  */
-export function initialState(query?: PromVisualQuery, showStartingMessage?: boolean): PromQailState {
+export function initialState(query?: PromVisualQuery, showStartingMessage?: boolean): WizarDSState {
   return {
-    query: query ?? {
-      metric: '',
-      labels: [],
-      operations: [],
-    },
     showExplainer: false,
     showStartingMessage: showStartingMessage ?? true,
     indicateCheckbox: false,
@@ -71,10 +66,9 @@ export function initialState(query?: PromVisualQuery, showStartingMessage?: bool
 }
 
 /**
- * The PromQAIL state object
+ * The WizarDS state object
  */
-export interface PromQailState {
-  query: PromVisualQuery;
+export interface WizarDSState {
   showExplainer: boolean;
   showStartingMessage: boolean;
   indicateCheckbox: boolean;

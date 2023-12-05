@@ -22,6 +22,7 @@ import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
 import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 import { PromQueryCodeEditor } from './PromQueryCodeEditor';
 import { WizarDS } from './wizarDS/WizarDS';
+import { componentTemplates } from './wizarDS/state/templates';
 
 export const FORMAT_OPTIONS: Array<SelectableValue<PromQueryFormat>> = [
   { label: 'Time series', value: 'time_series' },
@@ -125,6 +126,8 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
             query={{ metric: '', labels: [], operations: [] }}
             closeDrawer={() => setWizarDSDrawerOpen(false)}
             datasource={props.datasource}
+            // add component templates so any DS can use this
+            templates={componentTemplates}
           />
         </Drawer>
       )}
