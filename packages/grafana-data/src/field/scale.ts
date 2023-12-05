@@ -9,7 +9,7 @@ import { getActiveThresholdForValue } from './thresholds';
 
 export interface ColorScaleValue {
   percent: number; // 0-1
-  threshold: Threshold;
+  threshold: Threshold | undefined;
   color: string;
 }
 
@@ -49,13 +49,13 @@ function getBooleanScaleCalculator(field: Field, theme: GrafanaTheme2): ScaleCal
   const trueValue: ColorScaleValue = {
     color: theme.visualization.getColorByName('green'),
     percent: 1,
-    threshold: undefined as unknown as Threshold,
+    threshold: undefined,
   };
 
   const falseValue: ColorScaleValue = {
     color: theme.visualization.getColorByName('red'),
     percent: 0,
-    threshold: undefined as unknown as Threshold,
+    threshold: undefined,
   };
 
   const mode = getFieldColorModeForField(field);
