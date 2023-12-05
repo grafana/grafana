@@ -33,10 +33,6 @@ export enum WindowAlignment {
   Centered = 'centered',
 }
 
-export interface PrqlExpression {
-  prql?: string;
-}
-
 export interface ReduceOptions {
   include?: string[]; // Assume all fields
   reducer: ReducerID;
@@ -54,7 +50,7 @@ export interface WindowOptions extends CumulativeOptions {
   windowAlignment?: WindowAlignment;
 }
 
-export interface UnaryOptions extends PrqlExpression {
+export interface UnaryOptions {
   operator: UnaryOperationID;
   fieldName: string;
 }
@@ -89,15 +85,6 @@ const defaultBinaryOptions: BinaryOptions = {
 const defaultUnaryOptions: UnaryOptions = {
   operator: UnaryOperationID.Abs,
   fieldName: '',
-  // TODO: Replace `up` with a reference to the column name here
-  // take inspiration from the ServerSideExpressions implementation
-  // Might need to also ASSIGN a new reference here too, somehow
-  prql: `
-    derive abs(up) = case [
-      up >= 0 => up,
-      up < 0 => -up,
-    ]
-  `,
 };
 
 export interface CalculateFieldTransformerOptions {
@@ -118,7 +105,9 @@ export interface CalculateFieldTransformerOptions {
 
   // Output field properties
   alias?: string; // The output field name
-  prql?: string; // The output PRQL expression
+
+  // The generated PRQL expression
+  prql?: string;
   // TODO: config?: FieldConfig; or maybe field overrides? since the UI exists
 }
 

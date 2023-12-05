@@ -67,7 +67,6 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
       transformations: transformations.map((t, i) => ({
         transformation: t,
         id: ids[i],
-        prql: ids[i],
       })),
       data: [],
       search: '',
@@ -187,7 +186,6 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
       ...transformations,
       {
         id: nextId,
-        prql: nextId,
         transformation: {
           id: selectable.value as string,
           options: {},

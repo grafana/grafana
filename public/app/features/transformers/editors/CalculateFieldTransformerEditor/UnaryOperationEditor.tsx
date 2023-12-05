@@ -26,55 +26,10 @@ export const UnaryOperationEditor = (props: {
     });
   };
 
-  const prqlString = (v: SelectableValue<UnaryOperationID>) => {
-    console.log('v', v);
-    switch (v.label) {
-      // TODO: For each of the below cases
-      // Namespace the column in the table?
-      // ie. something like `ref_A.up`
-      case UnaryOperationID.Abs:
-        return `
-          derive abs(up) = case [
-            up >= 0 => up,
-            up < 0 => -up,
-          ]
-        `;
-      case UnaryOperationID.Exp:
-        // Use the S-String "escape hatch" feature of PRQL
-        // and the `EXP()` function within DuckDB
-        // TODO: Namespace the column in the table?
-        // ie. something like `EXP({ref_A.up})`
-        return `
-          derive exp(up) = s"EXP({up})"
-        `;
-      case UnaryOperationID.Ln:
-        // Use the S-String "escape hatch" feature of PRQL
-        // and the `LN()` function within DuckDB
-        return `
-          derive ln(up) = s"LN({up})"
-        `;
-      case UnaryOperationID.Floor:
-        // Use the S-String "escape hatch" feature of PRQL
-        // and the `FLOOR()` function within DuckDB
-        return `
-          derive floor(up) = s"FLOOR({up})"
-        `;
-      case UnaryOperationID.Ceil:
-        // Use the S-String "escape hatch" feature of PRQL
-        // and the `CEIL()` function within DuckDB
-        return `
-          derive ceil(up) = s"CEIL({up})"
-        `;
-    }
-    // Typescript was complaining that "Not all code paths return a value."
-    return "didn't work";
-  };
-
   const onUnaryOperationChanged = (v: SelectableValue<UnaryOperationID>) => {
     updateUnaryOptions({
       ...unary!,
       operator: v.value!,
-      prql: prqlString(v),
     });
   };
 
@@ -103,11 +58,9 @@ export const UnaryOperationEditor = (props: {
     <>
       <InlineFieldRow>
         <InlineField label="Operation" labelWidth={LABEL_WIDTH}>
-          {/* When the "Operation" changes, update the PRQL */}
           <Select options={ops} value={unary?.operator ?? ops[0].value} onChange={onUnaryOperationChanged} />
         </InlineField>
         <InlineField label="(" labelWidth={2}>
-          {/* TODO: When the "Field" changes, ALSO update the PRQL */}
           <Select
             placeholder="Field"
             className="min-width-11"

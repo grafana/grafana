@@ -142,7 +142,6 @@ export const TransformationOperationRow = ({
     );
   };
 
-  configs[index].transformation.options.samExtraField = 'extra string';
   return (
     <>
       <QueryOperationRow
@@ -160,7 +159,6 @@ export const TransformationOperationRow = ({
         {filter && (
           <TransformationFilter index={index} config={configs[index].transformation} data={data} onChange={onChange} />
         )}
-        <p>{JSON.stringify(configs[index].transformation)}</p>
         <TransformationEditor
           debugMode={showDebug}
           index={index}
