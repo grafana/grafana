@@ -1,0 +1,9 @@
+{
+  "name": "prql-node",
+  "type": "module",
+  "packageManager": "yarn@4.0.0",
+  "dependencies": {
+    "node-sql-parser": "^4.12.0",
+    "prql-js": "^0.10.1"
+  }
+}

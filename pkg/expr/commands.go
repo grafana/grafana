@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/expr/prql"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
@@ -356,16 +357,25 @@ func UnmarshalPRQLCommand(rn *rawNode) (*PRQLCommand, error) {
 		return nil, fmt.Errorf("expected THE PRQL input to be type string, but got type %T", rawQuery)
 	}
 
-	// TODO:
-	// parse query to find the table+join names for "NeedsVars"
+	sql, err := prql.Convert(rawQuery)
+	if err != nil {
+		return nil, err
+	}
 
-	return NewPRQLCommand(rn.RefID, varToQuery, rawQuery, rn.TimeRange)
+	tables, err := prql.Tables(sql)
+	if err != nil {
+		return nil, err
+	}
+
+	vars := strings.Join(tables, ",")
+
+	return NewPRQLCommand(rn.RefID, vars, rawQuery, rn.TimeRange)
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies
 // to execute the command and allows the command to fulfill the Command interface.
 func (gr *PRQLCommand) NeedsVars() []string {
-	return []string{gr.VarToQuery}
+	return strings.Split(gr.VarToQuery, ",")
 }
 
 // Execute runs the command and returns the results or an error if the command
