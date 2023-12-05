@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Modal, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { getModKey } from 'app/core/utils/browser';
+import { registerAchievementCompleted } from 'app/features/achievements/AchievementsService';
+import { AchievementId } from 'app/features/achievements/types';
 
 const getShortcuts = (modKey: string) => {
   return [
@@ -134,6 +136,11 @@ export const HelpModal = ({ onDismiss }: HelpModalProps): JSX.Element => {
   const styles = useStyles2(getStyles);
   const modKey = useMemo(() => getModKey(), []);
   const shortcuts = useMemo(() => getShortcuts(modKey), [modKey]);
+
+  useEffect(() => {
+    registerAchievementCompleted(AchievementId.ExploreKeyboardShortcuts);
+  }, []);
+
   return (
     <Modal title={t('help-modal.title', 'Shortcuts')} isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
       <div className={styles.categories}>

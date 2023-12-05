@@ -3,8 +3,8 @@ import { AchievementId, AchievementLevel } from './types';
 // These are just hard coded for now loosely based on current available achievements
 export const achievementLevelThresholds = {
   [AchievementLevel.Novice]: 3,
-  [AchievementLevel.Beginner]: 8,
-  [AchievementLevel.Experienced]: 15,
+  [AchievementLevel.Beginner]: 9,
+  [AchievementLevel.Experienced]: 16,
   [AchievementLevel.Expert]: 30,
   [AchievementLevel.Wizard]: 40,
 };
@@ -47,8 +47,14 @@ export const achievements = [
     level: AchievementLevel.Beginner,
   },
   {
-    id: AchievementId.AddATitleAndDescriptionToAPanelInADashboard,
-    title: 'Add a title and description to a panel in a dashboard',
+    id: AchievementId.AddATitleToAPanelInADashboard,
+    title: 'Add a title to a panel in a dashboard',
+    description: '',
+    level: AchievementLevel.Beginner,
+  },
+  {
+    id: AchievementId.AddADescriptionToAPanelInADashboard,
+    title: 'Add a description to a panel in a dashboard',
     description: '',
     level: AchievementLevel.Beginner,
   },
