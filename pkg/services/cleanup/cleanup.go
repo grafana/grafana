@@ -105,7 +105,7 @@ func (srv *CleanUpService) clean(ctx context.Context) {
 		{"expire old user invites", srv.expireOldUserInvites},
 		{"delete stale short URLs", srv.deleteStaleShortURLs},
 		{"delete stale query history", srv.deleteStaleQueryHistory},
-		{"cleanup deleted dashboards", srv.cleanUpDeletedDashboards},
+		{"cleanup trash dashboards", srv.cleanUpTrashDashboards},
 	}
 
 	logger := srv.log.FromContext(ctx)
@@ -284,7 +284,7 @@ func (srv *CleanUpService) deleteStaleQueryHistory(ctx context.Context) {
 	}
 }
 
-func (srv *CleanUpService) cleanUpDeletedDashboards(ctx context.Context) {
+func (srv *CleanUpService) cleanUpTrashDashboards(ctx context.Context) {
 	logger := srv.log.FromContext(ctx)
 	affected, err := srv.dashboardService.CleanUpDeletedDashboards(ctx)
 	if err != nil {
