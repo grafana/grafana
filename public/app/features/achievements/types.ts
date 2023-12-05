@@ -41,5 +41,6 @@ export type Achievement = {
   description?: string;
   level: AchievementLevel;
   link?: string;
+  video?: string;
   completed?: boolean;
 };
