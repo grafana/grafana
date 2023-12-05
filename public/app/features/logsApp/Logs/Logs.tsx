@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { capitalize } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React, { createRef, PureComponent } from 'react';
 
@@ -21,7 +20,6 @@ import {
   LoadingState,
   LogRowContextOptions,
   LogRowModel,
-  LogsDedupDescription,
   LogsDedupStrategy,
   LogsMetaItem,
   LogsSortOrder,
@@ -39,9 +37,7 @@ import { DataQuery } from '@grafana/schema';
 import {
   Button,
   FeatureBadge,
-  InlineField,
-  InlineFieldRow,
-  InlineSwitch,
+  Icon,
   LinkButton,
   PanelChrome,
   RadioButtonGroup,
@@ -66,6 +62,7 @@ import { changePanelState } from '../state/explorePane';
 import { LogDetails } from './LogDetails';
 import { LogStats } from './LogStats';
 import { LogsFeedback } from './LogsFeedback';
+import { LogsOptions } from './LogsOptions';
 import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { SETTINGS_KEYS } from './utils/logs';
@@ -140,19 +137,14 @@ interface State {
   logDetailsRow: LogRowModel | undefined;
   groupByLabel?: string;
   paneSize: number;
+  showLogsOptions: boolean;
 }
-
-// we need to define the order of these explicitly
-const DEDUP_OPTIONS = [
-  LogsDedupStrategy.none,
-  LogsDedupStrategy.exact,
-  LogsDedupStrategy.numbers,
-  LogsDedupStrategy.signature,
-];
 
 const DETAILS_SIZE = 595;
 const INITIAL_PANE_SIZE = (window.innerWidth / 4) * 3;
-function getMaxPaneSize() { return window.innerWidth - DETAILS_SIZE; }
+function getMaxPaneSize() {
+  return window.innerWidth - DETAILS_SIZE;
+}
 
 class UnthemedLogs extends PureComponent<Props, State> {
   flipOrderTimer?: number;
@@ -178,7 +170,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
     logsContainer: undefined,
     logDetailsRow: undefined,
     groupByLabel: undefined,
-    paneSize: localStorage.getItem('logs.paneSize') ? parseInt(`${localStorage.getItem('logs.paneSize')}`, 10) : INITIAL_PANE_SIZE,
+    paneSize: localStorage.getItem('logs.paneSize')
+      ? parseInt(`${localStorage.getItem('logs.paneSize')}`, 10)
+      : INITIAL_PANE_SIZE,
+    showLogsOptions: false,
   };
 
   constructor(props: Props) {
@@ -565,11 +560,14 @@ class UnthemedLogs extends PureComponent<Props, State> {
       });
       return;
     }
-    this.setState({
-      logDetailsRow: row,
-    }, () => {
-      this.handlePaneResize(this.state.paneSize);
-    });
+    this.setState(
+      {
+        logDetailsRow: row,
+      },
+      () => {
+        this.handlePaneResize(this.state.paneSize);
+      }
+    );
   };
 
   handleKeyPress = (e: KeyboardEvent) => {
@@ -591,14 +589,14 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
 
     const delta = e.key === 'ArrowDown' ? 1 : -1;
-    
+
     let newIndex = currentIndex + delta;
     if (newIndex < 0) {
       newIndex = this.props.logRows.length - 1;
     } else if (newIndex >= this.props.logRows.length) {
       newIndex = 0;
     }
-    
+
     const logDetailsRow = this.props.logRows[newIndex];
     this.setState({
       logDetailsRow,
@@ -619,7 +617,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
     this.setState({ paneSize: size });
     localStorage.setItem('logs.paneSize', size.toString());
-  }
+  };
 
   render() {
     const {
@@ -689,7 +687,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     const log1Trace = logRows[0].possibleTraceId;
     const ds = getDataSourceSrv().getList({ tracing: true });
     const firstTracingDs = ds.find((d) => d.type === 'tempo');
-    
+
     const maxPaneSize = this.state.logDetailsRow ? getMaxPaneSize() : window.innerWidth;
 
     return (
@@ -780,120 +778,69 @@ class UnthemedLogs extends PureComponent<Props, State> {
           title={`Logs${
             this.state.hiddenLogLevels.length > 0 ? ` (filtered based on selected ${this.state.groupByLabel})` : ''
           }`}
-          actions={
-            <>
-              {config.featureToggles.logsExploreTableVisualisation && (
-                <div className={styles.visualisationType}>
-                  <RadioButtonGroup
-                    className={styles.visualisationTypeRadio}
-                    options={[
-                      {
-                        label: 'Logs',
-                        value: 'logs',
-                        description: 'Show results in logs visualisation',
-                      },
-                      {
-                        label: 'Table',
-                        value: 'table',
-                        description: 'Show results in table visualisation',
-                      },
-                    ]}
-                    size="sm"
-                    value={this.state.visualisationType}
-                    onChange={this.onChangeVisualisation}
-                  />
-                </div>
-              )}
-            </>
-          }
           loadingState={loading ? LoadingState.Loading : LoadingState.Done}
         >
           <div className={styles.stickyNavigation}>
-            {this.state.visualisationType !== 'table' && (
-              <div className={styles.logOptions}>
-                <InlineFieldRow>
-                  <InlineField label="Time" className={styles.horizontalInlineLabel} transparent>
-                    <InlineSwitch
-                      value={showTime}
-                      onChange={this.onChangeTime}
-                      className={styles.horizontalInlineSwitch}
-                      transparent
-                      id={`show-time_${exploreId}`}
-                    />
-                  </InlineField>
-                  <InlineField label="Unique labels" className={styles.horizontalInlineLabel} transparent>
-                    <InlineSwitch
-                      value={showLabels}
-                      onChange={this.onChangeLabels}
-                      className={styles.horizontalInlineSwitch}
-                      transparent
-                      id={`unique-labels_${exploreId}`}
-                    />
-                  </InlineField>
-                  <InlineField label="Wrap lines" className={styles.horizontalInlineLabel} transparent>
-                    <InlineSwitch
-                      value={wrapLogMessage}
-                      onChange={this.onChangeWrapLogMessage}
-                      className={styles.horizontalInlineSwitch}
-                      transparent
-                      id={`wrap-lines_${exploreId}`}
-                    />
-                  </InlineField>
-                  <InlineField label="Prettify JSON" className={styles.horizontalInlineLabel} transparent>
-                    <InlineSwitch
-                      value={prettifyLogMessage}
-                      onChange={this.onChangePrettifyLogMessage}
-                      className={styles.horizontalInlineSwitch}
-                      transparent
-                      id={`prettify_${exploreId}`}
-                    />
-                  </InlineField>
-                  <InlineField label="Deduplication" className={styles.horizontalInlineLabel} transparent>
+            <div className={styles.logsOptions}>
+              {this.state.visualisationType !== 'table' && (
+                <Button
+                  size="md"
+                  variant="secondary"
+                  onClick={() => this.setState({ showLogsOptions: !this.state.showLogsOptions })}
+                 >
+                  <Icon name="sliders-v-alt" size="md" />
+                  Logs settings
+                </Button>
+                )}
+                {this.state.showLogsOptions && (
+                  <LogsOptions
+                    styles={styles}
+                    showTime={showTime}
+                    showLabels={showLabels}
+                    wrapLogMessage={wrapLogMessage}
+                    prettifyLogMessage={prettifyLogMessage}
+                    isFlipping={isFlipping}
+                    dedupStrategy={dedupStrategy}
+                    exploreId={exploreId}
+                    logsSortOrder={logsSortOrder}
+                    onChangeTime={this.onChangeTime}
+                    onChangeLabels={this.onChangeLabels}
+                    onChangeWrapLogMessage={this.onChangeWrapLogMessage}
+                    onChangePrettifyLogMessage={this.onChangePrettifyLogMessage}
+                    onChangeDedup={this.onChangeDedup}
+                    onChangeLogsSortOrder={this.onChangeLogsSortOrder}
+                  />
+                )}
+                {config.featureToggles.logsExploreTableVisualisation && (
+                  <div className={styles.visualisationType}>
                     <RadioButtonGroup
-                      options={DEDUP_OPTIONS.map((dedupType) => ({
-                        label: capitalize(dedupType),
-                        value: dedupType,
-                        description: LogsDedupDescription[dedupType],
-                      }))}
-                      value={dedupStrategy}
-                      onChange={this.onChangeDedup}
-                      className={styles.radioButtons}
-                    />
-                  </InlineField>
-                </InlineFieldRow>
-
-                <div>
-                  <InlineField label="Display results" className={styles.horizontalInlineLabel} transparent>
-                    <RadioButtonGroup
-                      disabled={isFlipping}
                       options={[
                         {
-                          label: 'Newest first',
-                          value: LogsSortOrder.Descending,
-                          description: 'Show results newest to oldest',
+                          label: 'Logs',
+                          value: 'logs',
+                          description: 'Show results in logs visualisation',
                         },
                         {
-                          label: 'Oldest first',
-                          value: LogsSortOrder.Ascending,
-                          description: 'Show results oldest to newest',
+                          label: 'Table',
+                          value: 'table',
+                          description: 'Show results in table visualisation',
                         },
                       ]}
-                      value={logsSortOrder}
-                      onChange={this.onChangeLogsSortOrder}
-                      className={styles.radioButtons}
+                      size="md"
+                      value={this.state.visualisationType}
+                      onChange={this.onChangeVisualisation}
                     />
-                  </InlineField>
-                </div>
+                  </div>
+                )}
               </div>
-            )}
             <div ref={this.topLogsRef} />
           </div>
           <div
             className={cx(styles.logsSection, this.state.visualisationType === 'table' ? styles.logsTable : undefined)}
           >
-            <SplitPaneWrapper 
-              splitOrientation="vertical" 
-              paneSize={this.state.paneSize} 
+            <SplitPaneWrapper
+              splitOrientation="vertical"
+              paneSize={this.state.paneSize}
               parentStyle={{ position: 'relative' }}
               onDragFinished={this.handlePaneResize}
               maxSize={maxPaneSize}
@@ -1024,8 +971,13 @@ export const Logs = withTheme2(UnthemedLogs);
 
 const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: number) => {
   return {
+    logsOptions: css({
+      marginBottom: theme.spacing(2),
+      display: 'flex',
+      justifyContent: 'space-between',
+    }),
     logsColumn: css({
-      minHeight: '16vh'
+      minHeight: '16vh',
     }),
     noData: css({
       '& > *': {
@@ -1057,8 +1009,7 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
     radioButtons: css({
       margin: '0',
     }),
-    logsSection: css({
-    }),
+    logsSection: css({}),
     logsTable: css({
       maxHeight: `${tableHeight}px`,
     }),
@@ -1074,9 +1025,7 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
       width: '100%',
     }),
     visualisationType: css({
-      display: 'flex',
-      flex: '1',
-      justifyContent: 'space-between',
+      
     }),
     visualisationTypeRadio: css({
       margin: `0 0 0 ${theme.spacing(1)}`,
