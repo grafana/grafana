@@ -960,7 +960,7 @@ describe('calculateField transformer w/ timeseries', () => {
           },
         })
       )
-    ).toEqual(normlines(`derive abs(up) = s"ABS({up})"`));
+    ).toEqual(normlines(`derive \`abs(up)\` = s"ABS({up})"`));
   });
 
   it('generates PRQL for unary operations: exponential', async () => {
@@ -974,7 +974,7 @@ describe('calculateField transformer w/ timeseries', () => {
           },
         })
       )
-    ).toEqual(normlines(`derive exp(up) = s"EXP({up})"`));
+    ).toEqual(normlines(`derive \`exp(up)\` = s"EXP({up})"`));
   });
 
   it('generates PRQL for unary operations: natural logarithm', async () => {
@@ -988,7 +988,7 @@ describe('calculateField transformer w/ timeseries', () => {
           },
         })
       )
-    ).toEqual(normlines(`derive ln(up) = s"LN({up})"`));
+    ).toEqual(normlines(`derive \`ln(up)\` = s"LN({up})"`));
   });
 
   it('generates PRQL for unary operations: floor', async () => {
@@ -1002,7 +1002,7 @@ describe('calculateField transformer w/ timeseries', () => {
           },
         })
       )
-    ).toEqual(normlines(`derive floor(up) = s"FLOOR({up})"`));
+    ).toEqual(normlines(`derive \`floor(up)\` = s"FLOOR({up})"`));
   });
 
   it('generates PRQL for unary operations: ceiling', async () => {
@@ -1016,7 +1016,7 @@ describe('calculateField transformer w/ timeseries', () => {
           },
         })
       )
-    ).toEqual(normlines(`derive ceil(up) = s"CEIL({up})"`));
+    ).toEqual(normlines(`derive \`ceil(up)\` = s"CEIL({up})"`));
   });
 
   it('generates PRQL for index field', () => {
@@ -1055,6 +1055,23 @@ describe('calculateField transformer w/ timeseries', () => {
         select !{const}
       `)
     );
+  });
+
+  it('generates PRQL to alias the field name', async () => {
+    expect(
+      normlines(
+        calculateFieldTransformer.toPRQL!({
+          mode: CalculateFieldMode.UnaryOperation,
+          unary: {
+            operator: UnaryOperationID.Ceil,
+            fieldName: 'up',
+          },
+          // defaults to `ceil(up)`
+          alias: 'Rounded up',
+          // replaceFields: true,
+        })
+      )
+    ).toEqual(normlines(`derive \`Rounded up\` = s"CEIL({up})"`));
   });
 
   it('supports PRQL', () => {

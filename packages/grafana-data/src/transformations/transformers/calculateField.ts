@@ -152,18 +152,9 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
             `;
         }
       case CalculateFieldMode.UnaryOperation:
-        switch (options.unary?.operator) {
-          case UnaryOperationID.Abs:
-            return `derive abs(up) = s"ABS({up})"`;
-          case UnaryOperationID.Exp:
-            return `derive exp(up) = s"EXP({up})"`;
-          case UnaryOperationID.Ln:
-            return `derive ln(up) = s"LN({up})"`;
-          case UnaryOperationID.Floor:
-            return `derive floor(up) = s"FLOOR({up})"`;
-          default: // UnaryOperationID.Ceil
-            return `derive ceil(up) = s"CEIL({up})"`;
-        }
+        let alias = options.alias ?? `${options.unary?.operator.toLowerCase()}(${options.unary?.fieldName})`;
+
+        return `derive \`${alias}\` = s"${options.unary?.operator.toUpperCase()}({${options.unary?.fieldName}})"`;
     }
 
     return `# Not yet supported:\n` + `# ${JSON.stringify(options, null, '  ').replace(/(?:\r\n|\r|\n)/g, '\n# ')}`;
