@@ -629,7 +629,6 @@ func (dr *DashboardServiceImpl) CleanUpDeletedDashboards(ctx context.Context) (i
 	if err != nil {
 		return 0, err
 	}
-	// do something with dashboards
 	for _, dashboard := range deletedDashboards {
 		err = dr.DeleteDashboard(ctx, dashboard.ID, dashboard.OrgID)
 		if err != nil {
