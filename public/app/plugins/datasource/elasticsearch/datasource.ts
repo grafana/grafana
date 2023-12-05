@@ -48,7 +48,7 @@ import {
   getTemplateSrv,
 } from '@grafana/runtime';
 
-import { queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
+import { queryLogsCount, queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
 import { getLogLevelFromKey } from '../../../features/logs/utils';
 
 import { IndexPattern, intervalMap } from './IndexPattern';
@@ -543,13 +543,21 @@ export class ElasticDatasource
         return this.getLogsVolumeDataProvider(request);
       case SupplementaryQueryType.LogsSample:
         return this.getLogsSampleDataProvider(request);
+      case SupplementaryQueryType.LogsCount:
+        return this.getLogsCountDataProvider(request);
       default:
         return undefined;
     }
   }
 
   getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[] {
-    return [SupplementaryQueryType.LogsVolume, SupplementaryQueryType.LogsSample];
+    return [
+      SupplementaryQueryType.LogsVolume,
+      SupplementaryQueryType.LogsSample,
+      SupplementaryQueryType.LogsCount,
+      SupplementaryQueryType.LogsCountWithGroupBy,
+      SupplementaryQueryType.LogsVolumeWithGroupBy,
+    ];
   }
 
   getSupplementaryQuery(options: SupplementaryQueryOptions, query: ElasticsearchQuery): ElasticsearchQuery | undefined {
@@ -623,6 +631,35 @@ export class ElasticDatasource
           metrics: [{ type: 'logs', id: '1' }],
         };
 
+      case SupplementaryQueryType.LogsCount:
+        // it has to be a logs-producing range-query
+        isQuerySuitable = !!(query.metrics?.length === 1 && query.metrics[0].type === 'logs');
+        if (!isQuerySuitable) {
+          return undefined;
+        }
+
+        const bucketAggsCount: BucketAggregation[] = [];
+        const timeFieldCount = this.timeField ?? '@timestamp';
+
+        bucketAggsCount.push({
+          id: '3',
+          type: 'date_histogram',
+          settings: {
+            interval: 'auto',
+            min_doc_count: '0',
+            trimEdges: '0',
+          },
+          field: timeFieldCount,
+        });
+
+        return {
+          refId: `${REF_ID_STARTER_LOG_VOLUME}${query.refId}`,
+          query: query.query,
+          metrics: [{ type: 'count', id: '1' }],
+          timeField: timeFieldCount,
+          bucketAggs: bucketAggsCount,
+        };
+
       default:
         return undefined;
     }
@@ -661,6 +698,19 @@ export class ElasticDatasource
       return undefined;
     }
     return queryLogsSample(this, { ...logsSampleRequest, targets: elasticQueries });
+  }
+
+  getLogsCountDataProvider(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> | undefined {
+    const logsVolumeRequest = cloneDeep(request);
+    const targets = logsVolumeRequest.targets
+      .map((target) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsCount }, target))
+      .filter((query): query is ElasticsearchQuery => !!query);
+
+    if (!targets.length) {
+      return undefined;
+    }
+
+    return queryLogsCount(this, { ...logsVolumeRequest, targets });
   }
 
   query(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {

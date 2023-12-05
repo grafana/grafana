@@ -67,6 +67,7 @@ import {
 } from './state/query';
 import { isSplit } from './state/selectors';
 import { updateTimeRange } from './state/time';
+// import { ExploreToolbar } from './ExploreToolbar';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -582,6 +583,12 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
     return (
       <ContentOutlineContextProvider>
+        {/* <ExploreToolbar
+          exploreId={exploreId}
+          onChangeTime={this.onChangeTime}
+          onContentOutlineToogle={this.onContentOutlineToogle}
+          isContentOutlineOpen={contentOutlineVisible}
+        /> */}
         <div
           style={{
             position: 'relative',

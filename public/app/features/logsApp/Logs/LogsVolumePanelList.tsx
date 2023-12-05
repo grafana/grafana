@@ -129,6 +129,7 @@ export const LogsVolumePanelList = ({
     return <span>Loading...</span>;
   }
 
+  console.log(logsCountData);
   return (
     <div className={styles.listContainer}>
       {logsCountData?.data && logsCountData?.state === LoadingState.Done && (
@@ -138,6 +139,13 @@ export const LogsVolumePanelList = ({
           pluginId="stat"
           height={120}
           data={{ series: logsCountData?.data, state: logsCountData?.state } as PanelData}
+          options={{
+            reduceOptions: {
+              calcs: ['sum'],
+            },
+            colorMode: 'background',
+            graphMode: 'none',
+          }}
           fieldConfig={{
             defaults: {
               color: {
@@ -196,7 +204,6 @@ export const LogsVolumePanelList = ({
             // TODO: Support filtering level from multiple log levels
             onHiddenSeriesChanged={numberOfLogVolumes > 1 ? () => {} : onHiddenSeriesChanged}
             eventBus={eventBus}
-            isWithGroupBy={selectedLabel && selectedLabel.value !== 'none'}
           />
         );
       })}
