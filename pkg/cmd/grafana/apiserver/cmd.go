@@ -24,7 +24,7 @@ func newCommandStartExampleAPIServer(o *ExampleServerOptions, stopCh <-chan stru
 				return err
 			}
 
-			// Finish the config (applies all defaults)
+			// Finish the config (a noop for now)
 			if err := o.Complete(); err != nil {
 				return err
 			}

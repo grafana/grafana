@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"path"
 
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -14,13 +16,17 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/apiserver/pkg/util/openapi"
+	"k8s.io/client-go/tools/clientcmd"
 	netutils "k8s.io/utils/net"
 
 	"github.com/grafana/grafana/pkg/registry/apis/example"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 )
 
-const defaultEtcdPathPrefix = "/registry/example.grafana.app"
+const (
+	defaultEtcdPathPrefix = "/registry/example.grafana.app"
+	dataPath              = "example-apiserver"
+)
 
 var (
 	Scheme = runtime.NewScheme()
@@ -85,6 +91,45 @@ func (o *ExampleServerOptions) LoadAPIGroupBuilders(args []string) error {
 	return nil
 }
 
+// A copy of ApplyTo in recommended.go, but for >= 0.28, server pkg in apiserver does a bit extra causing
+// a panic when CoreAPI is set to nil
+func (o *ExampleServerOptions) ModifiedApplyTo(config *genericapiserver.RecommendedConfig) error {
+	if err := o.RecommendedOptions.Etcd.ApplyTo(&config.Config); err != nil {
+		return err
+	}
+	if err := o.RecommendedOptions.EgressSelector.ApplyTo(&config.Config); err != nil {
+		return err
+	}
+	if err := o.RecommendedOptions.Traces.ApplyTo(config.Config.EgressSelector, &config.Config); err != nil {
+		return err
+	}
+	if err := o.RecommendedOptions.SecureServing.ApplyTo(&config.Config.SecureServing, &config.Config.LoopbackClientConfig); err != nil {
+		return err
+	}
+	if err := o.RecommendedOptions.Authentication.ApplyTo(&config.Config.Authentication, config.SecureServing, config.OpenAPIConfig); err != nil {
+		return err
+	}
+	if err := o.RecommendedOptions.Authorization.ApplyTo(&config.Config.Authorization); err != nil {
+		return err
+	}
+	if err := o.RecommendedOptions.Audit.ApplyTo(&config.Config); err != nil {
+		return err
+	}
+	if err := o.RecommendedOptions.Features.ApplyTo(&config.Config); err != nil {
+		return err
+	}
+
+	if err := o.RecommendedOptions.CoreAPI.ApplyTo(config); err != nil {
+		return err
+	}
+
+	_, err := o.RecommendedOptions.ExtraAdmissionInitializers(config)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (o *ExampleServerOptions) Config() (*genericapiserver.RecommendedConfig, error) {
 	if err := o.RecommendedOptions.SecureServing.MaybeDefaultWithSelfSignedCerts("localhost", o.AlternateDNS, []net.IP{netutils.ParseIPSloppy("127.0.0.1")}); err != nil {
 		return nil, fmt.Errorf("error creating self-signed certificates: %v", err)
@@ -96,10 +141,20 @@ func (o *ExampleServerOptions) Config() (*genericapiserver.RecommendedConfig, er
 	o.RecommendedOptions.Admission = nil
 	o.RecommendedOptions.Etcd = nil
 
+	if o.RecommendedOptions.CoreAPI.CoreAPIKubeconfigPath == "" {
+		o.RecommendedOptions.CoreAPI = nil
+	}
+
 	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
 
-	if err := o.RecommendedOptions.ApplyTo(serverConfig); err != nil {
-		return nil, err
+	if o.RecommendedOptions.CoreAPI == nil {
+		if err := o.ModifiedApplyTo(serverConfig); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := o.RecommendedOptions.ApplyTo(serverConfig); err != nil {
+			return nil, err
+		}
 	}
 
 	// Add OpenAPI specs for each group+version
@@ -151,6 +206,13 @@ func (o *ExampleServerOptions) RunExampleServer(config *genericapiserver.Recomme
 		}
 		err = server.InstallAPIGroup(g)
 		if err != nil {
+			return err
+		}
+	}
+
+	// in standalone mode, persist the in-cluster config to disk
+	if o.RecommendedOptions.CoreAPI == nil {
+		if err = clientcmd.WriteToFile(utils.FormatKubeConfig(server.LoopbackClientConfig), path.Join(dataPath, "kubeconfig")); err != nil {
 			return err
 		}
 	}
