@@ -2307,8 +2307,10 @@ func TestIntegrationEval(t *testing.T) {
 								"from": 18000,
 								"to": 10800
 							},
-							"datasourceUid": "unknown",
+							"datasourceUid": "__expr__",
 							"model": {
+								"type":"math",
+								"expression":"1 > 2"
 							}
 						}
 					],
