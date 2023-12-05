@@ -1,24 +1,15 @@
 // import { locationService } from '@grafana/runtime';
 import { TUTORIAL_EXIT_EVENT } from './constants';
-import type { Step, RequiredAction, ClickAction, ChangeAction } from './types';
+import type { RequiredAction, ClickAction, ChangeAction } from './types';
 
-export function setupTutorialStep(step: Step, onComplete: () => void) {
-  waitForElement(step.target).then((element) => {
-    if (step.requiredActions) {
-      resolveRequiredActions(step.requiredActions).then(() => {
-        onComplete();
-      });
-    }
-  });
-}
-
-export function waitForElement<T extends Element = Element>(selector: string): Promise<T> {
-  return new Promise((resolve) => {
+export function waitForElement<T extends Element = Element>(selector: string, timeout = 500): Promise<T> {
+  return new Promise((resolve, reject) => {
     const interval = setInterval(() => {
       const element = document.querySelector<T>(selector);
 
       if (element) {
         clearInterval(interval);
+        clearTimeout(stopWaiting);
 
         hasElementStoppedAnimating(element).then(() => {
           requestAnimationFrame(() => {
@@ -27,6 +18,12 @@ export function waitForElement<T extends Element = Element>(selector: string): P
         });
       }
     }, 30);
+
+    const stopWaiting = setTimeout(() => {
+      clearInterval(interval);
+      clearTimeout(stopWaiting);
+      reject(null);
+    }, timeout);
   });
 }
 
@@ -53,7 +50,7 @@ function hasElementStoppedAnimating(element: Element) {
   });
 }
 
-async function resolveRequiredActions(requiredActions: RequiredAction[]) {
+export async function resolveRequiredActions(requiredActions: RequiredAction[]) {
   for (const action of requiredActions) {
     await setUpRequiredAction(action);
   }

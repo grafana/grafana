@@ -83,13 +83,12 @@ async function checkSkipConditions(tutorial: Tutorial, stepIndex: number, direct
   const steps = direction === 'forwards' ? tutorial.steps : [...tutorial.steps].reverse();
   const step = steps[stepIndex];
   const skipConditions = step?.skip;
-  const requiredActions = step?.requiredActions;
 
-  if (!skipConditions && !requiredActions) {
+  if (!skipConditions) {
     return stepIndex;
   }
 
-  const canSkipStep = await passedSkipConditions(skipConditions);
+  const canSkipStep = await passedSkipConditions(skipConditions, stepIndex);
   if (canSkipStep) {
     return checkSkipConditions(tutorial, stepIndex + 1, direction);
   }
@@ -97,14 +96,14 @@ async function checkSkipConditions(tutorial: Tutorial, stepIndex: number, direct
   return stepIndex;
 }
 
-async function passedSkipConditions(skipConditions?: SkipCondition[]) {
+async function passedSkipConditions(skipConditions: SkipCondition[], stepIndex: number) {
   let canSkipStep = false;
 
   if (skipConditions) {
     canSkipStep = true;
 
     for (const condition of skipConditions) {
-      const shouldSkipCondition = await shouldSkip(condition);
+      const shouldSkipCondition = await shouldSkip(condition, stepIndex);
       if (!shouldSkipCondition) {
         canSkipStep = false;
       }
@@ -114,34 +113,29 @@ async function passedSkipConditions(skipConditions?: SkipCondition[]) {
   return canSkipStep;
 }
 
-async function shouldSkip(condition: SkipCondition) {
-  if (condition.condition === 'visible') {
-    const target = await waitForElement(condition.target);
+async function shouldSkip(condition: SkipCondition, stepIndex: number) {
+  const timeout = stepIndex === 0 ? 0 : undefined;
 
-    if (!target) {
+  return waitForElement(condition.target, timeout)
+    .then((element) => {
+      if (condition.condition === 'visible') {
+        const { width, height } = element.getBoundingClientRect();
+        return width > 0 && height > 0;
+      }
+
+      if (condition.condition === 'match') {
+        const targetValue = element.getAttribute(condition.attribute.name);
+
+        if (!targetValue) {
+          return false;
+        }
+
+        return checkCorrectValue(targetValue, condition.attribute.value);
+      }
+
       return false;
-    }
-
-    return target.getBoundingClientRect().width > 0 && target.getBoundingClientRect().height > 0;
-  }
-
-  if (condition.condition === 'match') {
-    const target = await waitForElement(condition.target);
-
-    if (!target) {
-      return false;
-    }
-
-    const targetValue = target.getAttribute(condition.attribute.name);
-
-    if (!targetValue) {
-      return false;
-    }
-
-    return checkCorrectValue(targetValue, condition.attribute.value);
-  }
-
-  return false;
+    })
+    .catch(() => false);
 }
 
 export const { addTutorial, removeTutorial, resetCurrentTutorial, setCurrentStep, setCurrentTutorial } =

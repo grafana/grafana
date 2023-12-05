@@ -36,7 +36,7 @@ const TutorialProviderComponent = ({
   if (step) {
     return (
       <>
-        <TutorialOverlay step={step} />
+        <TutorialOverlay currentStep={currentStep} step={step} />
         <ConfirmModal
           confirmText="Stop tutorial"
           onDismiss={() => {}}

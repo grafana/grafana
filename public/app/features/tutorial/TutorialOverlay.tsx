@@ -8,16 +8,17 @@ import { useDispatch } from 'app/types';
 
 import { TutorialTooltip } from './TutorialTooltip';
 import { nextStep } from './slice';
-import { setupTutorialStep, waitForElement } from './tutorialProvider.utils';
+import { resolveRequiredActions, waitForElement } from './tutorialProvider.utils';
 import type { Step } from './types';
 
 type TutorialOverlayProps = {
+  currentStep: number;
   step: Step;
 };
 
 const spotlightOffset = 0;
 
-export const TutorialOverlay = ({ step }: TutorialOverlayProps) => {
+export const TutorialOverlay = ({ currentStep, step }: TutorialOverlayProps) => {
   const dispatch = useDispatch();
   const [showTooltip, setShowTooltip] = useState(false);
   const styles = useStyles2(getStyles);
@@ -51,8 +52,9 @@ export const TutorialOverlay = ({ step }: TutorialOverlayProps) => {
       waitForElement(step.target).then((element) => {
         setStyles = () =>
           new Promise((resolve) => {
+            setSpotlightStyles(getSpotlightStyles(element));
+
             requestAnimationFrame(() => {
-              setSpotlightStyles(getSpotlightStyles(element));
               resolve(true);
             });
           });
@@ -66,7 +68,11 @@ export const TutorialOverlay = ({ step }: TutorialOverlayProps) => {
         document.addEventListener('mousemove', mouseMoveCallback);
         scrollParent = element.closest('.scrollbar-view');
         setStyles().then(() => {
-          setupTutorialStep(step, advance);
+          if (step.requiredActions) {
+            resolveRequiredActions(step.requiredActions).then(() => {
+              advance();
+            });
+          }
           setShowTooltip(true);
         });
         scrollParent?.addEventListener('scroll', setStyles);
@@ -77,7 +83,7 @@ export const TutorialOverlay = ({ step }: TutorialOverlayProps) => {
       scrollParent?.removeEventListener('scroll', setStyles);
       document.removeEventListener('mousemove', mouseMoveCallback);
     };
-  }, [advance, step, triggerRef]);
+  }, [advance, currentStep, step, triggerRef]);
 
   return (
     <>
