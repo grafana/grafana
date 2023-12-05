@@ -31,20 +31,19 @@ export class AppChromeService {
   private currentRoute?: RouteDescriptor;
   private routeChangeHandled = true;
 
-  private megaMenuDocked = store.getBool(
-    DOCKED_LOCAL_STORAGE_KEY,
-    Boolean(config.featureToggles.dockedMegaMenu && window.innerWidth >= config.theme2.breakpoints.values.xxl)
+  private megaMenuDocked = Boolean(
+    config.featureToggles.dockedMegaMenu &&
+      store.getBool(
+        DOCKED_LOCAL_STORAGE_KEY,
+        Boolean(config.featureToggles.dockedMegaMenu && window.innerWidth >= config.theme2.breakpoints.values.xxl)
+      )
   );
 
   readonly state = new BehaviorSubject<AppChromeState>({
     chromeless: true, // start out hidden to not flash it on pages without chrome
     sectionNav: { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } },
     searchBarHidden: store.getBool(this.searchBarStorageKey, false),
-    megaMenuOpen: Boolean(
-      config.featureToggles.dockedMegaMenu &&
-        this.megaMenuDocked &&
-        store.getBool(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, true)
-    ),
+    megaMenuOpen: this.megaMenuDocked && store.getBool(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, true),
     megaMenuDocked: this.megaMenuDocked,
     kioskMode: null,
     layout: PageLayoutType.Canvas,
