@@ -121,7 +121,6 @@ export enum PluginExtensionPoints {
   DashboardPanelMenu = 'grafana/dashboard/panel/menu',
   DataSourceConfig = 'grafana/datasources/config',
   ExploreToolbarAction = 'grafana/explore/toolbar/action',
-  UserProfileTab = 'grafana/user/profile/tab',
 }
 
 export type PluginExtensionPanelContext = {

@@ -422,8 +422,6 @@ export const Components = {
     preferencesSaveButton: 'data-testid-shared-prefs-save',
     orgsTable: 'data-testid-user-orgs-table',
     sessionsTable: 'data-testid-user-sessions-table',
-    extensionPointTabs: 'data-testid-extension-point-tabs',
-    extensionPointTab: (tabId: string) => `data-testid-extension-point-tab-${tabId}`,
   },
   FileUpload: {
     inputField: 'data-testid-file-upload-input-field',
