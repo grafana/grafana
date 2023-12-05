@@ -17,15 +17,19 @@ export const registerAchievementCompleted = async (achievementId: AchievementId)
   const user = await api.loadUser();
 
   console.log('user: ', user);
+  //console.log(await getAchievements());
 
   // check if achievement is already completed
   if (userHasCompletedAchievement(achievementId, user)) {
+    console.log('already done');
     return;
   }
 
   // save achievement as completed on user object
   // TODO Fix this
-  // user.achievements?.push(achievementId);
+  const achievements = !user.achievements || user.achievements === '' ? [] : JSON.parse(user.achievements!) ?? [];
+  achievements.push(achievementId);
+  user.achievements = JSON.stringify(achievements);
 
   // check if achievement is a level up
   // if so, save new level on user object
@@ -58,8 +62,8 @@ const checkIfLevelUp = (user: UserDTO): boolean => {
   if (currentLevel === AchievementLevel.Wizard) {
     return false;
   }
-
-  const achievementsCompleted = user.achievements?.length ?? 0;
+  const achievements = !user.achievements || user.achievements === '' ? [] : JSON.parse(user.achievements!) ?? [];
+  const achievementsCompleted = achievements.length ?? 0;
   const nextThresholdIndex: keyof typeof achievementLevelThresholds = currentLevel + 1;
   const nextLevelThreshold = achievementLevelThresholds[nextThresholdIndex];
 
@@ -78,9 +82,9 @@ const updateUser = async (user: UserDTO): Promise<void> => {
 // function to check if a user has completed an achievement
 export const userHasCompletedAchievement = (achievementId: AchievementId, user: UserDTO): boolean => {
   // TODO: Fix this functionality
-  // const achievements = JSON.parse(user.achievements ?? '') ?? {};
-  // return achievements?.some((achievement: {id: string, value: number}) => achievement.id === achievementId) ?? false;
-  return false;
+  const achievements = !user.achievements || user.achievements === '' ? [] : JSON.parse(user.achievements!) ?? [];
+  return achievements?.some((id: string) => id === achievementId) ?? false;
+  // return false;
 };
 
 // function to provide all achievements for a user (with completion status)
