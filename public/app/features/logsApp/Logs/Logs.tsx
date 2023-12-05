@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { capitalize } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React, { createRef, PureComponent } from 'react';
 
@@ -21,7 +20,6 @@ import {
   LoadingState,
   LogRowContextOptions,
   LogRowModel,
-  LogsDedupDescription,
   LogsDedupStrategy,
   LogsMetaItem,
   LogsSortOrder,
@@ -38,11 +36,11 @@ import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
   Button,
+  Dropdown,
   FeatureBadge,
-  InlineField,
-  InlineFieldRow,
-  InlineSwitch,
+  Icon,
   LinkButton,
+  Menu,
   PanelChrome,
   RadioButtonGroup,
   Themeable2,
@@ -66,9 +64,11 @@ import { changePanelState } from '../state/explorePane';
 import { LogDetails } from './LogDetails';
 import { LogStats } from './LogStats';
 import { LogsFeedback } from './LogsFeedback';
+import { LogsOptions } from './LogsOptions';
 import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { SETTINGS_KEYS } from './utils/logs';
+import { LogsOrder } from './LogsOrder';
 
 interface Props extends Themeable2 {
   width: number;
@@ -140,19 +140,14 @@ interface State {
   logDetailsRow: LogRowModel | undefined;
   groupByLabel?: string;
   paneSize: number;
+  showLogsOptions: boolean;
 }
-
-// we need to define the order of these explicitly
-const DEDUP_OPTIONS = [
-  LogsDedupStrategy.none,
-  LogsDedupStrategy.exact,
-  LogsDedupStrategy.numbers,
-  LogsDedupStrategy.signature,
-];
 
 const DETAILS_SIZE = 595;
 const INITIAL_PANE_SIZE = (window.innerWidth / 4) * 3;
-function getMaxPaneSize() { return window.innerWidth - DETAILS_SIZE; }
+function getMaxPaneSize() {
+  return window.innerWidth - DETAILS_SIZE;
+}
 
 class UnthemedLogs extends PureComponent<Props, State> {
   flipOrderTimer?: number;
@@ -178,7 +173,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
     logsContainer: undefined,
     logDetailsRow: undefined,
     groupByLabel: undefined,
-    paneSize: localStorage.getItem('logs.paneSize') ? parseInt(`${localStorage.getItem('logs.paneSize')}`, 10) : INITIAL_PANE_SIZE,
+    paneSize: localStorage.getItem('logs.paneSize')
+      ? parseInt(`${localStorage.getItem('logs.paneSize')}`, 10)
+      : INITIAL_PANE_SIZE,
+    showLogsOptions: false,
   };
 
   constructor(props: Props) {
@@ -565,11 +563,14 @@ class UnthemedLogs extends PureComponent<Props, State> {
       });
       return;
     }
-    this.setState({
-      logDetailsRow: row,
-    }, () => {
-      this.handlePaneResize(this.state.paneSize);
-    });
+    this.setState(
+      {
+        logDetailsRow: row,
+      },
+      () => {
+        this.handlePaneResize(this.state.paneSize);
+      }
+    );
   };
 
   handleKeyPress = (e: KeyboardEvent) => {
@@ -591,14 +592,14 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
 
     const delta = e.key === 'ArrowDown' ? 1 : -1;
-    
+
     let newIndex = currentIndex + delta;
     if (newIndex < 0) {
       newIndex = this.props.logRows.length - 1;
     } else if (newIndex >= this.props.logRows.length) {
       newIndex = 0;
     }
-    
+
     const logDetailsRow = this.props.logRows[newIndex];
     this.setState({
       logDetailsRow,
@@ -619,7 +620,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
     this.setState({ paneSize: size });
     localStorage.setItem('logs.paneSize', size.toString());
-  }
+  };
 
   render() {
     const {
@@ -689,7 +690,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     const log1Trace = logRows[0].possibleTraceId;
     const ds = getDataSourceSrv().getList({ tracing: true });
     const firstTracingDs = ds.find((d) => d.type === 'tempo');
-    
+
     const maxPaneSize = this.state.logDetailsRow ? getMaxPaneSize() : window.innerWidth;
 
     return (
@@ -760,140 +761,63 @@ class UnthemedLogs extends PureComponent<Props, State> {
           }
         </PanelChrome>
         <PanelChrome
-          titleItems={[
-            config.featureToggles.logsExploreTableVisualisation
-              ? this.state.visualisationType === 'logs'
-                ? null
-                : [
-                    <PanelChrome.TitleItem title="Experimental" key="A">
-                      <FeatureBadge
-                        featureState={FeatureState.beta}
-                        tooltip="Table view is experimental and may change in future versions"
-                      />
-                    </PanelChrome.TitleItem>,
-                    <PanelChrome.TitleItem title="Feedback" key="B">
-                      <LogsFeedback feedbackUrl="https://forms.gle/5YyKdRQJ5hzq4c289" />
-                    </PanelChrome.TitleItem>,
-                  ]
-              : null,
-          ]}
           title={`Logs${
             this.state.hiddenLogLevels.length > 0 ? ` (filtered based on selected ${this.state.groupByLabel})` : ''
           }`}
-          actions={
-            <>
-              {config.featureToggles.logsExploreTableVisualisation && (
-                <div className={styles.visualisationType}>
-                  <RadioButtonGroup
-                    className={styles.visualisationTypeRadio}
-                    options={[
-                      {
-                        label: 'Logs',
-                        value: 'logs',
-                        description: 'Show results in logs visualisation',
-                      },
-                      {
-                        label: 'Table',
-                        value: 'table',
-                        description: 'Show results in table visualisation',
-                      },
-                    ]}
-                    size="sm"
-                    value={this.state.visualisationType}
-                    onChange={this.onChangeVisualisation}
-                  />
-                </div>
-              )}
-            </>
-          }
           loadingState={loading ? LoadingState.Loading : LoadingState.Done}
         >
           <div className={styles.stickyNavigation}>
-            {this.state.visualisationType !== 'table' && (
-              <div className={styles.logOptions}>
-                <InlineFieldRow>
-                  <InlineField label="Time" className={styles.horizontalInlineLabel} transparent>
-                    <InlineSwitch
-                      value={showTime}
-                      onChange={this.onChangeTime}
-                      className={styles.horizontalInlineSwitch}
-                      transparent
-                      id={`show-time_${exploreId}`}
-                    />
-                  </InlineField>
-                  <InlineField label="Unique labels" className={styles.horizontalInlineLabel} transparent>
-                    <InlineSwitch
-                      value={showLabels}
-                      onChange={this.onChangeLabels}
-                      className={styles.horizontalInlineSwitch}
-                      transparent
-                      id={`unique-labels_${exploreId}`}
-                    />
-                  </InlineField>
-                  <InlineField label="Wrap lines" className={styles.horizontalInlineLabel} transparent>
-                    <InlineSwitch
-                      value={wrapLogMessage}
-                      onChange={this.onChangeWrapLogMessage}
-                      className={styles.horizontalInlineSwitch}
-                      transparent
-                      id={`wrap-lines_${exploreId}`}
-                    />
-                  </InlineField>
-                  <InlineField label="Prettify JSON" className={styles.horizontalInlineLabel} transparent>
-                    <InlineSwitch
-                      value={prettifyLogMessage}
-                      onChange={this.onChangePrettifyLogMessage}
-                      className={styles.horizontalInlineSwitch}
-                      transparent
-                      id={`prettify_${exploreId}`}
-                    />
-                  </InlineField>
-                  <InlineField label="Deduplication" className={styles.horizontalInlineLabel} transparent>
-                    <RadioButtonGroup
-                      options={DEDUP_OPTIONS.map((dedupType) => ({
-                        label: capitalize(dedupType),
-                        value: dedupType,
-                        description: LogsDedupDescription[dedupType],
-                      }))}
-                      value={dedupStrategy}
-                      onChange={this.onChangeDedup}
-                      className={styles.radioButtons}
-                    />
-                  </InlineField>
-                </InlineFieldRow>
-
-                <div>
-                  <InlineField label="Display results" className={styles.horizontalInlineLabel} transparent>
-                    <RadioButtonGroup
-                      disabled={isFlipping}
-                      options={[
-                        {
-                          label: 'Newest first',
-                          value: LogsSortOrder.Descending,
-                          description: 'Show results newest to oldest',
-                        },
-                        {
-                          label: 'Oldest first',
-                          value: LogsSortOrder.Ascending,
-                          description: 'Show results oldest to newest',
-                        },
-                      ]}
-                      value={logsSortOrder}
-                      onChange={this.onChangeLogsSortOrder}
-                      className={styles.radioButtons}
-                    />
-                  </InlineField>
+            <div className={styles.logsOptions}>
+                <LogsOptions
+                  styles={styles}
+                  showTime={showTime}
+                  showLabels={showLabels}
+                  wrapLogMessage={wrapLogMessage}
+                  prettifyLogMessage={prettifyLogMessage}
+                  exploreId={exploreId}
+                  onChangeTime={this.onChangeTime}
+                  onChangeLabels={this.onChangeLabels}
+                  onChangeWrapLogMessage={this.onChangeWrapLogMessage}
+                  onChangePrettifyLogMessage={this.onChangePrettifyLogMessage}
+                />
+                <div className={styles.optionToggles}>
+                  {config.featureToggles.logsExploreTableVisualisation && (
+                    <div className={styles.visualisationType}>
+                      <RadioButtonGroup
+                        options={[
+                          {
+                            label: 'List',
+                            value: 'logs',
+                            description: 'Show results in logs visualisation',
+                          },
+                          {
+                            label: 'Table',
+                            value: 'table',
+                            description: 'Show results in table visualisation',
+                          },
+                        ]}
+                        size="md"
+                        value={this.state.visualisationType}
+                        onChange={this.onChangeVisualisation}
+                      />
+                    </div>
+                  )}
+                  <LogsOrder
+                    logsSortOrder={logsSortOrder}
+                    isFlipping={isFlipping}
+                    onChangeLogsSortOrder={this.onChangeLogsSortOrder}
+                    styles={styles}
+                  />
                 </div>
               </div>
-            )}
             <div ref={this.topLogsRef} />
           </div>
           <div
             className={cx(styles.logsSection, this.state.visualisationType === 'table' ? styles.logsTable : undefined)}
           >
-            <SplitPaneWrapper 
-              splitOrientation="vertical" 
-              paneSize={this.state.paneSize} 
+            <SplitPaneWrapper
+              splitOrientation="vertical"
+              paneSize={this.state.paneSize}
               parentStyle={{ position: 'relative' }}
               onDragFinished={this.handlePaneResize}
               maxSize={maxPaneSize}
@@ -1024,8 +948,27 @@ export const Logs = withTheme2(UnthemedLogs);
 
 const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: number) => {
   return {
+    optionToggles: css({
+      display: 'flex', 
+    }),
+    logOptionsMenu: css({
+      position: 'relative',
+      left: theme.spacing(2),
+      backgroundColor: theme.colors.background.secondary,
+      padding: theme.spacing(1),
+      paddingLeft: theme.spacing(0.5),
+    }),
+    logOptionMenuItem: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+    }),
+    logsOptions: css({
+      marginBottom: theme.spacing(2),
+      display: 'flex',
+      justifyContent: 'space-between',
+    }),
     logsColumn: css({
-      minHeight: '16vh'
+      minHeight: '16vh',
     }),
     noData: css({
       '& > *': {
@@ -1051,14 +994,10 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
         marginRight: '0',
       },
     }),
-    horizontalInlineSwitch: css({
-      padding: `0 ${theme.spacing(1)} 0 0`,
-    }),
     radioButtons: css({
       margin: '0',
     }),
-    logsSection: css({
-    }),
+    logsSection: css({}),
     logsTable: css({
       maxHeight: `${tableHeight}px`,
     }),
@@ -1074,9 +1013,7 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
       width: '100%',
     }),
     visualisationType: css({
-      display: 'flex',
-      flex: '1',
-      justifyContent: 'space-between',
+      
     }),
     visualisationTypeRadio: css({
       margin: `0 0 0 ${theme.spacing(1)}`,
