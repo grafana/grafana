@@ -3,6 +3,18 @@ import { type Step } from './tutorialProvider.utils';
 export const tutorialSteps: Step[] = [
   {
     route: `/`,
+    target: `[data-testid="data-testid Toggle menu"]`,
+    title: `Open the menu`,
+    content: `Click the menu button to open the menu!`,
+    requiredActions: [
+      {
+        target: `[data-testid="data-testid Toggle menu"]`,
+        action: 'click',
+      },
+    ],
+  },
+  {
+    route: `/`,
     target: `[href="/explore"]`,
     title: `Let's go find the Prometheus datasource!`,
     content: `The Prometheus datasource is a great place to start!`,

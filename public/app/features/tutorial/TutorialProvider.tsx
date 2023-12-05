@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
+import { ConfirmModal } from '@grafana/ui';
+
 import { TutorialOverlay } from './TutorialOverlay';
 import { tutorialSteps } from './hardCodedSteps';
 import {
@@ -11,13 +13,17 @@ import {
 } from './tutorialProvider.utils';
 
 export const TutorialProvider = () => {
-  const [stepIndex, setStepIndex] = useState(0);
+  const [stepIndex, setStepIndex] = useState<number | null>(null);
   const [showTooltip, setShowTooltip] = useState(false);
-  const step = tutorialSteps[stepIndex];
+  const [showExitTutorialModal, setShowExitTutorialModal] = useState(false);
+  const step = stepIndex && tutorialSteps[stepIndex];
 
   const advance = useCallback(() => {
     setShowTooltip(false);
-    setStepIndex(stepIndex + 1);
+
+    if (stepIndex) {
+      setStepIndex(stepIndex + 1);
+    }
   }, [stepIndex]);
 
   const onReady = useCallback(() => {
@@ -30,8 +36,35 @@ export const TutorialProvider = () => {
     }
   }, [advance, onReady, step]);
 
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowExitTutorialModal(true);
+      }
+    };
+
+    // TODO: why doesn't this work on keydown?
+    window.addEventListener('keyup', handler);
+
+    return () => {
+      window.removeEventListener('keyup', handler);
+    };
+  }, []);
+
   if (step) {
-    return <TutorialOverlay showTooltip={showTooltip} step={step} advance={step.requiredActions ? null : advance} />;
+    return (
+      <>
+        <TutorialOverlay showTooltip={showTooltip} step={step} advance={step.requiredActions ? null : advance} />
+        <ConfirmModal
+          confirmText="Stop tutorial"
+          onDismiss={() => {}}
+          isOpen={showExitTutorialModal}
+          title={`Exit tutorial?`}
+          body={`Do you want to stop the tutorial?`}
+          onConfirm={() => setStepIndex(null)}
+        />
+      </>
+    );
   }
 
   return null;
