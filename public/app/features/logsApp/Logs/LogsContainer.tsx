@@ -270,6 +270,7 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
       clearCache,
       logsVolume,
       logsCount,
+      logsVolumeWithGroupBy,
       logsCountWithGroupBy,
       scrollElement,
     } = this.props;
@@ -314,6 +315,7 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
             logsVolumeData={logsVolume.data}
             logsCountData={logsCount.data}
             logsCountWithGroupByData={logsCountWithGroupBy.data}
+            logsVolumeWithGroupByData={logsVolumeWithGroupBy.data}
             logsQueries={logsQueries}
             width={width}
             splitOpen={splitOpenFn}
@@ -375,6 +377,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   const logsVolume = supplementaryQueries[SupplementaryQueryType.LogsVolume];
   const logsCount = supplementaryQueries[SupplementaryQueryType.LogsCount];
   const logsCountWithGroupBy = supplementaryQueries[SupplementaryQueryType.LogsCountWithGroupBy];
+  const logsVolumeWithGroupBy = supplementaryQueries[SupplementaryQueryType.LogsVolumeWithGroupBy];
   return {
     loading,
     logRows: logsResult?.rows,
@@ -393,6 +396,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     logsVolume,
     logsCount,
     logsCountWithGroupBy,
+    logsVolumeWithGroupBy,
     panelState,
     logsFrames: item.queryResponse.logsFrames,
   };

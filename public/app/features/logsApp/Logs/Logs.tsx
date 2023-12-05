@@ -88,6 +88,7 @@ interface Props extends Themeable2 {
   logsCountEnabled: boolean;
   logsCountData: DataQueryResponse | undefined;
   logsCountWithGroupByData: DataQueryResponse | undefined;
+  logsVolumeWithGroupByData: DataQueryResponse | undefined;
   onSetLogsVolumeEnabled: (enabled: boolean) => void;
   loadLogsVolumeData: (suppQueryType?: SupplementaryQueryType) => void;
   showContextToggle?: (row: LogRowModel) => boolean;
@@ -534,6 +535,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       logsCountEnabled,
       logsCountData,
       logsCountWithGroupByData,
+      logsVolumeWithGroupByData,
       loadLogsVolumeData,
       loading = false,
       onClickFilterLabel,
@@ -615,6 +617,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 logsVolumeData={logsVolumeData}
                 logsCountData={logsCountData}
                 logsCountWithGroupByData={logsCountWithGroupByData}
+                logsVolumeWithGroupByData={logsVolumeWithGroupByData}
                 onUpdateTimeRange={onChangeTime}
                 timeZone={timeZone}
                 splitOpen={splitOpen}

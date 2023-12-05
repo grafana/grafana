@@ -25,6 +25,7 @@ export const supplementaryQueryTypes: SupplementaryQueryType[] = [
   SupplementaryQueryType.LogsSample,
   SupplementaryQueryType.LogsCount,
   SupplementaryQueryType.LogsCountWithGroupBy,
+  SupplementaryQueryType.LogsVolumeWithGroupBy,
 ];
 
 const getSupplementaryQuerySettingKey = (type: SupplementaryQueryType) => `grafana.explore.logs.enable${type}`;
@@ -40,6 +41,7 @@ export const loadSupplementaryQueries = (): SupplementaryQueries => {
     [SupplementaryQueryType.LogsSample]: { enabled: false },
     [SupplementaryQueryType.LogsCount]: { enabled: false },
     [SupplementaryQueryType.LogsCountWithGroupBy]: { enabled: false },
+    [SupplementaryQueryType.LogsVolumeWithGroupBy]: { enabled: false },
   };
 
   for (const type of supplementaryQueryTypes) {

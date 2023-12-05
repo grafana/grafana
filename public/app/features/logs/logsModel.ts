@@ -564,14 +564,13 @@ function adjustMetaInfo(logsModel: LogsModel, visibleRangeMs?: number, requested
 /**
  * Returns field configuration used to render logs volume bars
  */
-function getLogVolumeFieldConfig(level: LogLevel, oneLevelDetected: boolean) {
+function getLogVolumeFieldConfig(level: LogLevel, oneLevelDetected: boolean, fieldName?: string) {
   const name = oneLevelDetected && level === LogLevel.unknown ? 'logs' : level;
   const color = LogLevelColor[level];
-  return {
+  const config = {
     displayNameFromDS: name,
     color: {
-      mode: FieldColorModeId.Fixed,
-      fixedColor: color,
+      mode: FieldColorModeId.PaletteClassic,
     },
     custom: {
       drawStyle: GraphDrawStyle.Bars,
@@ -587,18 +586,27 @@ function getLogVolumeFieldConfig(level: LogLevel, oneLevelDetected: boolean) {
       },
     },
   };
+
+  if (!fieldName) {
+    config.color = {
+      mode: FieldColorModeId.Fixed,
+      fixedColor: color,
+    };
+  }
+  return config;
 }
 
 const updateLogsVolumeConfig = (
   dataFrame: DataFrame,
-  extractLevel: (dataFrame: DataFrame) => LogLevel,
-  oneLevelDetected: boolean
+  extractLevel: (dataFrame: DataFrame, fieldName: string) => LogLevel,
+  oneLevelDetected: boolean,
+  fieldName?: string
 ): DataFrame => {
   dataFrame.fields = dataFrame.fields.map((field) => {
     if (field.type === FieldType.number) {
       field.config = {
         ...field.config,
-        ...getLogVolumeFieldConfig(extractLevel(dataFrame), oneLevelDetected),
+        ...getLogVolumeFieldConfig(extractLevel(dataFrame, fieldName ?? ''), oneLevelDetected, fieldName),
       };
     }
     return field;
@@ -680,6 +688,121 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
               },
             };
             return updateLogsVolumeConfig(dataFrame, options.extractLevel, framesByRefId[dataFrame.refId].length === 1);
+          });
+
+          observer.next({
+            state: dataQueryResponse.state,
+            error: undefined,
+            data: logsVolumeData,
+          });
+        }
+      },
+      error: (error) => {
+        observer.next({
+          state: LoadingState.Error,
+          error: error,
+          data: [],
+        });
+        observer.error(error);
+      },
+    });
+    return () => {
+      subscription?.unsubscribe();
+    };
+  });
+}
+
+/**
+ * Creates an observable, which makes requests to get logs volume and aggregates results.
+ */
+export function queryLogsVolumeWithGroupBy<TQuery extends DataQuery, TOptions extends DataSourceJsonData>(
+  datasource: DataSourceApi<TQuery, TOptions>,
+  logsVolumeRequest: DataQueryRequest<TQuery>,
+  options: LogsVolumeQueryOptions<TQuery>
+): Observable<DataQueryResponse> {
+  const timespan = options.range.to.valueOf() - options.range.from.valueOf();
+  const intervalInfo = getIntervalInfo(logsVolumeRequest.scopedVars, timespan);
+
+  logsVolumeRequest.interval = intervalInfo.interval;
+  logsVolumeRequest.scopedVars.__interval = { value: intervalInfo.interval, text: intervalInfo.interval };
+
+  if (intervalInfo.intervalMs !== undefined) {
+    logsVolumeRequest.intervalMs = intervalInfo.intervalMs;
+    logsVolumeRequest.scopedVars.__interval_ms = { value: intervalInfo.intervalMs, text: intervalInfo.intervalMs };
+  }
+
+  logsVolumeRequest.hideFromInspector = true;
+
+  return new Observable((observer) => {
+    let logsVolumeData: DataFrame[] = [];
+    observer.next({
+      state: LoadingState.Loading,
+      error: undefined,
+      data: [],
+    });
+
+    let logsVolumeRequestUpdated = logsVolumeRequest;
+    if (datasource.type === 'loki') {
+      const newExpr =
+        datasource.groupByFilter && datasource.groupByFilter !== 'none'
+          ? `sum by (${datasource.groupByFilter}) (count_over_time(${logsVolumeRequestUpdated.targets[0].expr}[$__auto]))`
+          : `sum(count_over_time(${logsVolumeRequestUpdated.targets[0].expr}[$__auto]))`;
+
+      logsVolumeRequestUpdated = {
+        ...logsVolumeRequestUpdated,
+        targets: [
+          {
+            ...logsVolumeRequestUpdated.targets[0],
+            expr: newExpr,
+          },
+        ],
+      };
+    }
+
+    const queryResponse = datasource.query(logsVolumeRequestUpdated);
+    const queryObservable = isObservable(queryResponse) ? queryResponse : from(queryResponse);
+
+    const subscription = queryObservable.subscribe({
+      complete: () => {
+        observer.complete();
+      },
+      next: (dataQueryResponse: DataQueryResponse) => {
+        const { error } = dataQueryResponse;
+        if (error !== undefined) {
+          observer.next({
+            state: LoadingState.Error,
+            error,
+            data: [],
+          });
+          observer.error(error);
+        } else {
+          const framesByRefId = groupBy(dataQueryResponse.data, 'refId');
+          logsVolumeData = dataQueryResponse.data.map((dataFrame) => {
+            let sourceRefId = dataFrame.refId || '';
+            if (sourceRefId.startsWith('log-volume-')) {
+              sourceRefId = sourceRefId.substr('log-volume-'.length);
+            }
+
+            const logsVolumeCustomMetaData: LogsVolumeCustomMetaData = {
+              logsVolumeType: LogsVolumeType.FullRange,
+              absoluteRange: { from: options.range.from.valueOf(), to: options.range.to.valueOf() },
+              datasourceName: datasource.name,
+              sourceQuery: options.targets.find((dataQuery) => dataQuery.refId === sourceRefId)!,
+            };
+
+            dataFrame.meta = {
+              ...dataFrame.meta,
+              custom: {
+                ...dataFrame.meta?.custom,
+                ...logsVolumeCustomMetaData,
+              },
+            };
+            return updateLogsVolumeConfig(
+              dataFrame,
+              options.extractLevel,
+              framesByRefId[dataFrame.refId].length === 1,
+              datasource.groupByFilter
+            );
           });
 
           observer.next({
@@ -793,21 +916,25 @@ export function queryLogsCountWithGroupBy<TQuery extends DataQuery, TOptions ext
       data: [],
     });
 
-    const expr =
-      datasource.groupByFilter && datasource.groupByFilter !== 'none'
-        ? `sum by (${datasource.groupByFilter}) (count_over_time(${logsCountRequest.targets[0].expr}[$__auto]))`
-        : `sum(count_over_time(${logsCountRequest.targets[0].expr}[$__auto]))`;
+    let logsCountRequestUpdated = logsCountRequest;
 
-    const logsCountRequestWithGroupBy = {
-      ...logsCountRequest,
-      targets: [
-        {
-          ...logsCountRequest.targets[0],
-          expr,
-        },
-      ],
-    };
-    const queryResponse = datasource.query(logsCountRequestWithGroupBy);
+    if (datasource.type === 'loki') {
+      const expr =
+        datasource.groupByFilter && datasource.groupByFilter !== 'none'
+          ? `sum by (${datasource.groupByFilter}) (count_over_time(${logsCountRequest.targets[0].expr}[$__auto]))`
+          : `sum(count_over_time(${logsCountRequest.targets[0].expr}[$__auto]))`;
+
+      logsCountRequestUpdated = {
+        ...logsCountRequest,
+        targets: [
+          {
+            ...logsCountRequest.targets[0],
+            expr,
+          },
+        ],
+      };
+    }
+    const queryResponse = datasource.query(logsCountRequestUpdated);
     const queryObservable = isObservable(queryResponse) ? queryResponse : from(queryResponse);
 
     const subscription = queryObservable.subscribe({

@@ -183,6 +183,8 @@ export function ExploreGraph({
     [tooltipDisplayMode]
   );
 
+  console.log(dataWithConfig);
+
   return (
     <PanelContextProvider value={panelContext}>
       <PanelRenderer

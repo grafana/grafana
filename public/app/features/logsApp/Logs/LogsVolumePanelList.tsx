@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { flatten, groupBy, mapValues, sortBy } from 'lodash';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import {
   AbsoluteTimeRange,
@@ -29,6 +29,7 @@ type Props = {
   logsVolumeData: DataQueryResponse | undefined;
   logsCountData: DataQueryResponse | undefined;
   logsCountWithGroupByData: DataQueryResponse | undefined;
+  logsVolumeWithGroupByData: DataQueryResponse | undefined;
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
   splitOpen: SplitOpen;
@@ -45,6 +46,7 @@ export const LogsVolumePanelList = ({
   logsVolumeData,
   logsCountData,
   logsCountWithGroupByData,
+  logsVolumeWithGroupByData,
   absoluteRange,
   onUpdateTimeRange,
   width,
@@ -62,7 +64,8 @@ export const LogsVolumePanelList = ({
     maximumRange: allLogsVolumeMaximumRange,
   } = useMemo(() => {
     let maximumValue = -Infinity;
-    const sorted = sortBy(logsVolumeData?.data || [], 'meta.custom.datasourceName');
+    const sorted = sortBy(logsVolumeData?.data ?? logsVolumeWithGroupByData?.data ?? [], 'meta.custom.datasourceName');
+    console.log('sorted', sorted);
     const grouped = groupBy(sorted, 'meta.custom.datasourceName');
     const logVolumes = mapValues(grouped, (value) => {
       const mergedData = mergeLogsVolumeDataFrames(value);
@@ -75,14 +78,35 @@ export const LogsVolumePanelList = ({
       maximumRange,
       logVolumes,
     };
-  }, [logsVolumeData]);
+  }, [logsVolumeData, logsVolumeWithGroupByData]);
 
   const [state, setState] = useState<{
     labelNames?: SelectableValue[];
     isLoadingLabelNames?: boolean;
   }>({});
   const [labelNamesMenuOpen, setLabelNamesMenuOpen] = useState(false);
-  const [selectedLabel, setSelectedLabel] = useState<SelectableValue<string>>({ label: 'none', value: 'none' });
+  const [selectedLabel, setSelectedLabel] = useState<SelectableValue<string | undefined>>({
+    label: 'none',
+    value: 'none',
+  });
+  const [selectedQueryType, setSelectedQueryType] = useState<SupplementaryQueryType | undefined>(
+    SupplementaryQueryType.LogsVolume
+  );
+
+  useEffect(() => {
+    if (selectedQueryType) {
+      if (selectedLabel && selectedLabel.value !== 'none') {
+        if (selectedQueryType === SupplementaryQueryType.LogsVolume) {
+          onLoadLogsVolume(SupplementaryQueryType.LogsVolumeWithGroupBy);
+        }
+        if (selectedQueryType === SupplementaryQueryType.LogsCount) {
+          onLoadLogsVolume(SupplementaryQueryType.LogsCountWithGroupBy);
+        }
+      } else {
+        onLoadLogsVolume(selectedQueryType);
+      }
+    }
+  }, [selectedLabel, selectedQueryType]);
 
   const styles = useStyles2(getStyles);
 
@@ -120,7 +144,6 @@ export const LogsVolumePanelList = ({
               color: {
                 mode: FieldColorModeId.PaletteClassic,
               },
-              // unit: 'log lines',
               custom: {},
             },
             overrides: [],
@@ -174,9 +197,11 @@ export const LogsVolumePanelList = ({
             // TODO: Support filtering level from multiple log levels
             onHiddenSeriesChanged={numberOfLogVolumes > 1 ? () => {} : onHiddenSeriesChanged}
             eventBus={eventBus}
+            isWithGroupBy={selectedLabel && selectedLabel.value !== 'none'}
           />
         );
       })}
+
       <div className={styles.extraInfoContainer}>
         {containsZoomed && (
           <InlineField label="Reload log volume" transparent>
@@ -203,11 +228,15 @@ export const LogsVolumePanelList = ({
               width={20}
               value={selectedLabel}
               onChange={(change) => {
-                setSelectedLabel(change);
                 setLabelNamesMenuOpen(false);
                 if (change.value !== selectedLabel.value) {
-                  datasourceInstance.groupByFilter = change.value;
-                  onLoadLogsVolume(SupplementaryQueryType.LogsCountWithGroupBy);
+                  if (change.value === 'none') {
+                    setSelectedLabel(undefined);
+                    datasourceInstance.groupByFilter = undefined;
+                  } else {
+                    setSelectedLabel(change);
+                    datasourceInstance.groupByFilter = change.value;
+                  }
                 }
               }}
             />
@@ -219,22 +248,22 @@ export const LogsVolumePanelList = ({
                 size="xs"
                 variant="secondary"
                 style={{ marginLeft: '4px' }}
-                onClick={() => onLoadLogsVolume(SupplementaryQueryType.LogsVolume)}
+                onClick={() => setSelectedQueryType(SupplementaryQueryType.LogsVolume)}
               />
               <Button
                 icon="graph-bar"
                 size="xs"
                 variant="secondary"
                 style={{ marginLeft: '4px' }}
-                onClick={() => onLoadLogsVolume(SupplementaryQueryType.LogsCount)}
+                onClick={() => setSelectedQueryType(SupplementaryQueryType.LogsCount)}
               />
-              <Button
+              {/* <Button
                 icon="calculator-alt"
                 size="xs"
                 variant="secondary"
                 style={{ marginLeft: '4px' }}
-                onClick={() => onLoadLogsVolume(SupplementaryQueryType.LogsCount)}
-              />
+                onClick={() => setSelectedQueryType(SupplementaryQueryType.LogsCount)}
+              /> */}
             </>
           </InlineField>
         </div>
