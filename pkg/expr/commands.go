@@ -357,7 +357,7 @@ func UnmarshalPRQLCommand(rn *rawNode) (*PRQLCommand, error) {
 		return nil, fmt.Errorf("expected THE PRQL input to be type string, but got type %T", rawQuery)
 	}
 
-	sql, err := prql.Convert(rawQuery)
+	sql, err := prql.Convert(rawQuery, "")
 	if err != nil {
 		return nil, err
 	}
@@ -384,15 +384,34 @@ func (gr *PRQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.
 	_, span := tracer.Start(ctx, "SSE.ExecutePRQL")
 	defer span.End()
 
-	// Input to PRQL engine
-	upstream := vars[gr.VarToQuery]
-	fmt.Printf("USE: %v\n", upstream)
+	// insert all referenced results into duckdb. TODO: multi-thread this?
+	refs := strings.Split(gr.VarToQuery, ",")
+	for _, ref := range refs {
+		results := vars[ref]
+		frames := results.Values.AsDataFrames(ref)
+		duckdb := prql.DuckDB{Name: "db"}
+		err := duckdb.AppendAll(ctx, frames)
+		if err != nil {
+			return mathexp.Results{}, err
+		}
+	}
 
-	df := data.NewFrame("TODO")
-	v := mathexp.Scalar{Frame: df} // ??? what type?
+	frames, err := prql.Query("db", gr.RawQuery)
+	if err != nil {
+		return mathexp.Results{}, err
+	}
+
+	var values mathexp.Values
+	for _, f := range frames {
+		v := mathexp.Scalar{Frame: f}
+		values = append(values, v)
+	}
+
+	// df := data.NewFrame("TODO")
+	// v := mathexp.Scalar{Frame: df} // ??? what type?
 
 	return mathexp.Results{
-		Values: []mathexp.Value{v},
+		Values: values,
 	}, nil
 }
 

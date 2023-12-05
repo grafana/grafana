@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
+	"reflect"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
@@ -47,7 +49,10 @@ func (d *DuckDB) AppendAll(ctx context.Context, frames data.Frames) error {
 		err = db.Close()
 		fmt.Println("failed to close db")
 	}(db)
-	d.createTables(frames)
+	err = d.createTables(frames)
+	if err != nil {
+		return err
+	}
 	connector, err := duckdb.NewConnector(d.Name, nil)
 	if err != nil {
 		return err
@@ -71,6 +76,13 @@ func (d *DuckDB) AppendAll(ctx context.Context, frames data.Frames) error {
 			var row []driver.Value
 			for _, ff := range f.Fields {
 				val := ff.At(i)
+				// if isPointer(val) {
+				// 	val = getPointerValue(val)
+				// }
+				switch v := val.(type) {
+				case *float64:
+					val = *v
+				}
 				row = append(row, val)
 			}
 			err := appender.AppendRow(row...)
@@ -80,8 +92,22 @@ func (d *DuckDB) AppendAll(ctx context.Context, frames data.Frames) error {
 			}
 		}
 
+		err = appender.Flush()
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+
 	}
 	return nil
+}
+
+func isPointer(i interface{}) bool {
+	return reflect.ValueOf(i).Type().Kind() == reflect.Pointer
+}
+
+func getPointerValue(i any) any {
+	return reflect.Indirect(reflect.ValueOf(i))
 }
 
 func (d *DuckDB) createTables(frames data.Frames) error {
@@ -95,7 +121,8 @@ func (d *DuckDB) createTables(frames data.Frames) error {
 		sep := ""
 		for _, fld := range f.Fields {
 			createTable += sep
-			createTable += fld.Name
+			n := strings.ReplaceAll(fld.Name, "-", "_") // TODO - surround with brackets or backticks?
+			createTable += n
 			if fld.Type() == data.FieldTypeBool || fld.Type() == data.FieldTypeNullableBool {
 				createTable += " " + "BOOLEAN"
 			}

@@ -3509,7 +3509,7 @@ __metadata:
 
 "@grafana/prql@file:prql::locator=grafana%40workspace%3A.":
   version: 0.0.0
-  resolution: "@grafana/prql@file:prql#prql::hash=3bfd06&locator=grafana%40workspace%3A."
+  resolution: "@grafana/prql@file:prql#prql::hash=c40ba6&locator=grafana%40workspace%3A."
   dependencies:
     "@codemirror/autocomplete": "npm:^6.11.0"
     "@codemirror/commands": "npm:^6.3.0"
@@ -3521,7 +3521,7 @@ __metadata:
     "@codemirror/view": "npm:^6.22.0"
     "@lezer/highlight": "npm:^1.2.0"
     "@lezer/lr": "npm:^1.3.14"
-  checksum: 1d46ca1141243fb51136e62738deb6b4b5aae9437c9b0a902aae8a970cb3c2d9a3ff2f7a53da9b3d04a4d7cb036473099b432d5ac479a7e02775bef310844c8d
+  checksum: e16939c558fd3dfaa4cf9f3b7d8af33416388e1bd23bb2f55fcfd95a2cffde130fcd0f210dd186b93ac3f30489cb7a97ad13a05e02fee5a901c890e1a2126efb
   languageName: node
   linkType: hard
 
@@ -18020,7 +18020,6 @@ __metadata:
     prettier: "npm:3.0.0"
     prismjs: "npm:1.29.0"
     prop-types: "npm:15.8.1"
-    prql-js: "npm:^0.10.1"
     pseudoizer: "npm:^0.1.0"
     rc-cascader: "npm:3.20.0"
     rc-drawer: "npm:6.5.2"
@@ -25217,13 +25216,6 @@ __metadata:
   version: 1.1.0
   resolution: "proxy-from-env@npm:1.1.0"
   checksum: f0bb4a87cfd18f77bc2fba23ae49c3b378fb35143af16cc478171c623eebe181678f09439707ad80081d340d1593cd54a33a0113f3ccb3f4bc9451488780ee23
-  languageName: node
-  linkType: hard
-
-"prql-js@npm:^0.10.1":
-  version: 0.10.1
-  resolution: "prql-js@npm:0.10.1"
-  checksum: 112b26a2a377b54b354c40fe12d891108939ac7550cff3c19257f770f2d3d61233c3aaefef3795e029b548032c2e309472245ce38f2f64f60c2319a61abd4a98
   languageName: node
   linkType: hard
 

@@ -1,10 +1,11 @@
 import prqljs from "prql-js";
 
+// this converts to generic sql so we can run the ast parser and get the table namews
 const prql = process.argv[2];
 
 // TODO - need valid prql from ui
 const prql2 = `
-from employees
+from A
 filter start_date > @2021-01-01
 derive {
   gross_salary = salary + (tax ?? 0),
