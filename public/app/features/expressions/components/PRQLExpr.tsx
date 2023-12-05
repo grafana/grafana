@@ -3,7 +3,6 @@ import React from 'react';
 import { SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
-import { PRQLEditor } from '../../dashboard/components/TransformationsEditor/PRQLEditor';
 import { ExpressionQuery } from '../types';
 
 interface Props {
@@ -24,16 +23,6 @@ export const PRQLExpr = ({ labelWidth, onChange, refIds, query }: Props) => {
     });
   };
 
-  const onEditorChange = (queryString: string) => {
-    onChange({
-      ...query,
-      prql: {
-        ...query.prql,
-        rawQuery: queryString,
-      },
-    });
-  };
-
   return (
     <>
       <InlineFieldRow>
@@ -41,11 +30,12 @@ export const PRQLExpr = ({ labelWidth, onChange, refIds, query }: Props) => {
           <Select onChange={onRefIdChange} options={refIds} value={query.expression} width={20} />
         </InlineField>
       </InlineFieldRow>
-      <PRQLEditor
-        onEditorChange={onEditorChange}
-        queryString={query.prql?.rawQuery}
-        metricNames={['metric1', 'metric2']}
-      ></PRQLEditor>
+      <InlineFieldRow>
+        <div>
+          HELLO!!! expressions editor (PRQL)
+          <code>{JSON.stringify(query.prql ?? {})}</code>
+        </div>
+      </InlineFieldRow>
     </>
   );
 };

@@ -45,9 +45,8 @@ function myCompletions(context: CompletionContext, metricNames: string[]) {
 
 interface Props {
   metricNames: string[];
-  queryString?: string;
+  queryString: string;
   readOnly?: boolean; // transparent bg, make it obviously readonly
-  onEditorChange?: (queryString: string) => void;
 }
 
 const getStyles = (readOnly?: boolean) => {
@@ -86,21 +85,14 @@ const getStyles = (readOnly?: boolean) => {
 
 export const PRQLEditor = (props: Props) => {
   const editor = useRef(null);
-  const { queryString: doc, metricNames, readOnly, onEditorChange } = props;
+  const { queryString: doc, metricNames, readOnly } = props;
   const styles = useStyles2((theme) => getStyles(readOnly));
 
   // How to make readonly
   useEffect(() => {
-    const listener = PRQLEditorView.updateListener.of(({ state }) => {
-      if (onEditorChange) {
-        onEditorChange(state.doc.toString());
-      }
-    });
-
     const startState = EditorState.create({
       doc: doc,
       extensions: [
-        onEditorChange !== undefined ? listener : [],
         readOnly ? readonlySetup : basicSetup,
         oneDark,
         [
@@ -122,9 +114,7 @@ export const PRQLEditor = (props: Props) => {
     return () => {
       view.destroy();
     };
-    // Need to reorg components, for now don't re-render the editor when the props change
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [readOnly]);
+  }, [doc, metricNames, readOnly]);
 
   return (
     <div className={styles.editor} id="editor">
