@@ -40,9 +40,9 @@ export const MegaMenu = React.memo(
         chrome.setMegaMenuOpen(false);
       }
 
-      // refocus on dock/undock button when changing state
+      // refocus on undock/menu open button when changing state
       setTimeout(() => {
-        document.getElementById('dock-menu-button')?.focus();
+        document.getElementById(state.megaMenuDocked ? 'mega-menu-toggle' : 'dock-menu-button')?.focus();
       });
     };
 
