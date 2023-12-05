@@ -67,7 +67,10 @@ func NewTestMigrationStore(t testing.TB, sqlStore *sqlstore.SQLStore, cfg *setti
 
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, sqlStore.Cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
-	folderService := folderimpl.ProvideService(ac, bus, cfg, dashboardStore, folderStore, sqlStore, features)
+	folderService := folderimpl.ProvideService(ac, bus, cfg, dashboardStore, folderStore, sqlStore, features, nil)
+
+	err = folderService.RegisterService(alertingStore)
+	require.NoError(t, err)
 
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
 		features, routeRegister, sqlStore, ac, license, dashboardStore, folderService, acSvc, teamSvc, userSvc)
@@ -80,6 +83,7 @@ func NewTestMigrationStore(t testing.TB, sqlStore *sqlstore.SQLStore, cfg *setti
 		cfg, dashboardStore, folderStore, nil,
 		features, folderPermissions, dashboardPermissions, ac,
 		folderService,
+		nil,
 	)
 	require.NoError(t, err)
 	guardian.InitAccessControlGuardian(setting.NewCfg(), ac, dashboardService)

@@ -15,8 +15,12 @@ GENERATED_GO_MATCHERS = ./go/*.go
 SED_INPLACE := -i
 
 ifneq ($(OS),Windows_NT)
+	# If we're not using the GNU version of sed, we need to specify an argument to -i
 	UNAME := $(shell uname)
-	ifeq ($(UNAME),Darwin)
+	isGNU := $(shell sed --help 2>&1 | grep -c GNU)
+	ifneq ($(isGNU),0)
+		# Do nothing
+	else ifeq ($(UNAME),Darwin)
 		SED_INPLACE = -i ''
 	endif
 endif

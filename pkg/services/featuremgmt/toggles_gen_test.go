@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/olekukonko/tablewriter"
@@ -25,7 +26,6 @@ func TestFeatureToggleFiles(t *testing.T) {
 		"service-accounts":              true,
 		"database_metrics":              true,
 		"live-service-web-worker":       true,
-		"k8s":                           true, // Camel case does not like this one
 	}
 
 	t.Run("check registry constraints", func(t *testing.T) {
@@ -50,6 +50,10 @@ func TestFeatureToggleFiles(t *testing.T) {
 			}
 			if flag.AllowSelfServe != nil && flag.Stage != FeatureStageGeneralAvailability {
 				t.Errorf("only allow self-serving GA toggles")
+			}
+			if flag.Created.Year() < 2021 {
+				t.Errorf("flag requires a reasonable created date.  See: %s (%s)",
+					flag.Name, flag.Created.Format(time.DateOnly))
 			}
 		}
 	})
@@ -216,8 +220,9 @@ func generateCSV() string {
 	w := csv.NewWriter(&buf)
 	if err := w.Write([]string{
 		"Name",
-		"Stage",           //flag.Stage.String(),
-		"Owner",           //string(flag.Owner),
+		"Stage", //flag.Stage.String(),
+		"Owner", //string(flag.Owner),
+		"Created",
 		"requiresDevMode", //strconv.FormatBool(flag.RequiresDevMode),
 		"RequiresLicense", //strconv.FormatBool(flag.RequiresLicense),
 		"RequiresRestart", //strconv.FormatBool(flag.RequiresRestart),
@@ -226,11 +231,19 @@ func generateCSV() string {
 		log.Fatalln("error writing record to csv:", err)
 	}
 
+	dateFormatter := func(t time.Time) string {
+		if t.Year() < 2020 { // fake year
+			return ""
+		}
+		return t.Format(time.DateOnly)
+	}
+
 	for _, flag := range standardFeatureFlags {
 		if err := w.Write([]string{
 			flag.Name,
 			flag.Stage.String(),
 			string(flag.Owner),
+			dateFormatter(flag.Created),
 			strconv.FormatBool(flag.RequiresDevMode),
 			strconv.FormatBool(flag.RequiresLicense),
 			strconv.FormatBool(flag.RequiresRestart),

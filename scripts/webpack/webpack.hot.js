@@ -1,13 +1,11 @@
 'use strict';
 
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const path = require('path');
 const { DefinePlugin } = require('webpack');
 const { merge } = require('webpack-merge');
 
-const HTMLWebpackCSSChunks = require('./plugins/HTMLWebpackCSSChunks');
 const common = require('./webpack.common.js');
 
 module.exports = merge(common, {
@@ -80,14 +78,6 @@ module.exports = merge(common, {
     new MiniCssExtractPlugin({
       filename: 'grafana.[name].[contenthash].css',
     }),
-    new HtmlWebpackPlugin({
-      filename: path.resolve(__dirname, '../../public/views/index.html'),
-      template: path.resolve(__dirname, '../../public/views/index-template.html'),
-      inject: false,
-      chunksSortMode: 'none',
-      excludeChunks: ['dark', 'light'],
-    }),
-    new HTMLWebpackCSSChunks(),
     new ReactRefreshWebpackPlugin(),
     new DefinePlugin({
       'process.env': {
