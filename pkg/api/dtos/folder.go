@@ -10,6 +10,7 @@ type Folder struct {
 	// Deprecated: use Uid instead
 	Id            int64                  `json:"id"`
 	Uid           string                 `json:"uid"`
+	OrgId         int64                  `json:"orgId"`
 	Title         string                 `json:"title"`
 	Url           string                 `json:"url"`
 	HasACL        bool                   `json:"hasAcl" xorm:"has_acl"`

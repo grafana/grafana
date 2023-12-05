@@ -439,6 +439,7 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 		features             *featuremgmt.FeatureManager
 		expectedCode         int
 		expectedParentUIDs   []string
+		expectedParentOrgIDs []int64
 		expectedParentTitles []string
 		permissions          []accesscontrol.Permission
 		g                    *guardian.FakeDashboardGuardian
@@ -512,6 +513,7 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 
 			for i := 0; i < len(tc.expectedParentUIDs); i++ {
 				assert.Equal(t, tc.expectedParentUIDs[i], folder.Parents[i].Uid)
+				assert.Equal(t, tc.expectedParentOrgIDs[i], folder.Parents[i].OrgId)
 				assert.Equal(t, tc.expectedParentTitles[i], folder.Parents[i].Title)
 			}
 			require.NoError(t, resp.Body.Close())
