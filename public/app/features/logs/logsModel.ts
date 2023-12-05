@@ -102,13 +102,16 @@ export function dedupLogRows(rows: LogRowModel[], strategy?: LogsDedupStrategy):
   }, []);
 }
 
-export function filterLogLevels(logRows: LogRowModel[], hiddenLogLevels: Set<LogLevel>): LogRowModel[] {
-  if (hiddenLogLevels.size === 0) {
+export function filterLogLevels(
+  logRows: LogRowModel[],
+  hiddenLogLevels: Set<string>,
+  groupByLabel?: string
+): LogRowModel[] {
+  if (hiddenLogLevels.size === 0 || !groupByLabel) {
     return logRows;
   }
-
   return logRows.filter((row: LogRowModel) => {
-    return !hiddenLogLevels.has(row.logLevel);
+    return !hiddenLogLevels.has(row.labels[groupByLabel]);
   });
 }
 
