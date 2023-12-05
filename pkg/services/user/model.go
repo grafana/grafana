@@ -38,6 +38,9 @@ type User struct {
 	IsServiceAccount bool
 	OrgID            int64 `xorm:"org_id"`
 
+	Level        int64
+	Achievements string
+
 	Created    time.Time
 	Updated    time.Time
 	LastSeenAt time.Time
@@ -57,6 +60,8 @@ type CreateUserCommand struct {
 	SkipOrgSetup     bool
 	DefaultOrgRole   string
 	IsServiceAccount bool
+	Level            int64
+	Achievements     string
 }
 
 type GetUserByLoginQuery struct {
@@ -72,6 +77,7 @@ type UpdateUserCommand struct {
 	Email string `json:"email"`
 	Login string `json:"login"`
 	Theme string `json:"theme"`
+	Level int64  `json:"level"`
 
 	UserID int64 `json:"-"`
 }
@@ -115,6 +121,8 @@ type SearchUserQueryResult struct {
 
 type UserSearchHitDTO struct {
 	ID            int64                `json:"id" xorm:"id"`
+	Level         int64                `json:"level"`
+	Achievements  string               `json:"achievements"`
 	Name          string               `json:"name"`
 	Login         string               `json:"login"`
 	Email         string               `json:"email"`
@@ -138,6 +146,8 @@ type UserProfileDTO struct {
 	Login                          string          `json:"login"`
 	Theme                          string          `json:"theme"`
 	OrgID                          int64           `json:"orgId,omitempty"`
+	Level                          int64           `json:"level,omitempty"`
+	Achievements                   string          `json:"achievements"`
 	IsGrafanaAdmin                 bool            `json:"isGrafanaAdmin"`
 	IsDisabled                     bool            `json:"isDisabled"`
 	IsExternal                     bool            `json:"isExternal"`
@@ -177,6 +187,11 @@ type BatchDisableUsersCommand struct {
 type SetUserHelpFlagCommand struct {
 	HelpFlags1 HelpFlags1
 	UserID     int64 `xorm:"user_id"`
+}
+
+type SetUserLevelCommand struct {
+	Level  int64
+	UserID int64 `xorm:"user_id"`
 }
 
 type GetSignedInUserQuery struct {

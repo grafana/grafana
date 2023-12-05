@@ -475,6 +475,8 @@ func (ss *sqlStore) GetProfile(ctx context.Context, query *user.GetUserProfileQu
 			OrgID:          usr.OrgID,
 			UpdatedAt:      usr.Updated,
 			CreatedAt:      usr.Created,
+			Level:          usr.Level,
+			Achievements:   usr.Achievements,
 		}
 
 		return err
@@ -482,6 +484,7 @@ func (ss *sqlStore) GetProfile(ctx context.Context, query *user.GetUserProfileQu
 	return &userProfile, err
 }
 
+// TODO use this pattern to update achievements
 func (ss *sqlStore) SetHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCommand) error {
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		user := user.User{
