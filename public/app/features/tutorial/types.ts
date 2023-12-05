@@ -10,13 +10,32 @@ export type Tutorial = {
 };
 
 export type Step = {
-  route: string;
+  route?: string;
   target: string;
   content?: ReactNode;
   title?: ReactNode;
   placement?: Placement;
   requiredActions?: RequiredAction[];
+  skip?: SkipCondition[];
 };
+
+type Attribite = {
+  name: string;
+  value: string | RegExp;
+};
+
+type SkipConditionVisible = {
+  condition: 'visible';
+  target: string;
+};
+
+type SkipConditionMatch = {
+  condition: 'match';
+  target: string;
+  attribute: Attribite;
+};
+
+export type SkipCondition = SkipConditionVisible | SkipConditionMatch;
 
 type RequiredActionBase = {
   target: string;
@@ -28,7 +47,7 @@ export type ClickAction = RequiredActionBase & {
 
 export type ChangeAction = RequiredActionBase & {
   action: 'change';
-  attribute: { name: string; value: string };
+  attribute: Attribite;
 };
 
 export type RequiredAction = ClickAction | ChangeAction;

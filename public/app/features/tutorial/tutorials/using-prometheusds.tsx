@@ -8,7 +8,6 @@ const info = {
 
 const tutorialSteps: Step[] = [
   {
-    route: `/`,
     target: `[data-testid="data-testid Toggle menu"]`,
     title: `Open the menu`,
     content: `Click the menu button to open the menu!`,
@@ -19,9 +18,14 @@ const tutorialSteps: Step[] = [
         action: 'click',
       },
     ],
+    skip: [
+      {
+        target: `[href="/explore"]`,
+        condition: 'visible',
+      },
+    ],
   },
   {
-    route: `/`,
     target: `[href="/explore"]`,
     title: `Let's go find the Prometheus datasource!`,
     content: `The Prometheus datasource is a great place to start!`,
@@ -44,7 +48,17 @@ const tutorialSteps: Step[] = [
         action: 'change',
         attribute: {
           name: 'placeholder',
-          value: 'gdev-prometheus',
+          value: /prom/i,
+        },
+      },
+    ],
+    skip: [
+      {
+        target: `[data-testid*="Select a data source"]`,
+        condition: 'match',
+        attribute: {
+          name: 'placeholder',
+          value: /prom/i,
         },
       },
     ],

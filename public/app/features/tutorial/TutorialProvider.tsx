@@ -5,6 +5,7 @@ import { ConfirmModal } from '@grafana/ui';
 import { StoreState, useDispatch } from 'app/types';
 
 import { TutorialOverlay } from './TutorialOverlay';
+import { TUTORIAL_EXIT_EVENT } from './constants';
 import { setCurrentStep } from './slice';
 
 const TutorialProviderComponent = ({
@@ -35,7 +36,7 @@ const TutorialProviderComponent = ({
   if (step) {
     return (
       <>
-        <TutorialOverlay currentStep={currentStep} step={step} />
+        <TutorialOverlay step={step} />
         <ConfirmModal
           confirmText="Stop tutorial"
           onDismiss={() => {}}
@@ -47,6 +48,7 @@ const TutorialProviderComponent = ({
               dispatch(setCurrentStep(null));
               resolve();
               setShowExitTutorialModal(false);
+              document.dispatchEvent(new CustomEvent(TUTORIAL_EXIT_EVENT));
             })
           }
         />

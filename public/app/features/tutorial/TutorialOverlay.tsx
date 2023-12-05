@@ -7,18 +7,17 @@ import { useStyles2 } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
 import { TutorialTooltip } from './TutorialTooltip';
-import { setCurrentStep } from './slice';
+import { nextStep } from './slice';
 import { setupTutorialStep, waitForElement } from './tutorialProvider.utils';
 import type { Step } from './types';
 
 type TutorialOverlayProps = {
-  currentStep: number;
   step: Step;
 };
 
 const spotlightOffset = 0;
 
-export const TutorialOverlay = ({ currentStep, step }: TutorialOverlayProps) => {
+export const TutorialOverlay = ({ step }: TutorialOverlayProps) => {
   const dispatch = useDispatch();
   const [showTooltip, setShowTooltip] = useState(false);
   const styles = useStyles2(getStyles);
@@ -34,11 +33,8 @@ export const TutorialOverlay = ({ currentStep, step }: TutorialOverlayProps) => 
 
   const advance = useCallback(() => {
     setShowTooltip(false);
-
-    if (step) {
-      dispatch(setCurrentStep(currentStep + 1));
-    }
-  }, [currentStep, dispatch, step]);
+    dispatch(nextStep());
+  }, [dispatch]);
 
   useEffect(() => {
     if (!step) {
@@ -51,7 +47,7 @@ export const TutorialOverlay = ({ currentStep, step }: TutorialOverlayProps) => 
     let mouseMoveCallback: any;
     let scrollParent: Element | null;
 
-    if (step) {
+    if (step && triggerRef) {
       waitForElement(step.target).then((element) => {
         setStyles = () =>
           new Promise((resolve) => {

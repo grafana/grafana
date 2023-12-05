@@ -1,4 +1,5 @@
 // import { locationService } from '@grafana/runtime';
+import { TUTORIAL_EXIT_EVENT } from './constants';
 import type { Step, RequiredAction, ClickAction, ChangeAction } from './types';
 
 export function setupTutorialStep(step: Step, onComplete: () => void) {
@@ -76,41 +77,60 @@ function setUpRequiredAction(action: RequiredAction) {
 }
 
 function setupClickAction(targetElement: Element, onComplete: (value: unknown) => void) {
-  targetElement.addEventListener('click', onComplete, { once: true });
+  const removeOnComplete = () => {
+    targetElement.removeEventListener('click', handleOnComplete);
+  };
+  document.addEventListener(TUTORIAL_EXIT_EVENT, removeOnComplete);
+
+  const handleOnComplete = () => {
+    onComplete(true);
+    document.removeEventListener(TUTORIAL_EXIT_EVENT, removeOnComplete);
+  };
+
+  targetElement.addEventListener('click', handleOnComplete, { once: true });
 }
 
 function setupChangeAction(targetElement: Element, action: ChangeAction, onComplete: (value: unknown) => void) {
-  if (targetElement.getAttribute(action.attribute.name) === action.attribute.value) {
-    onComplete(action.attribute.value);
-    return;
-  }
-
   const observer = new MutationObserver((mutationsList, observer) => {
     for (let mutation of mutationsList) {
       const newValue = targetElement.getAttribute(action.attribute.name);
       const isCorrectAttribute = mutation.attributeName === action.attribute.name;
-      const isCorrectValue = newValue === action.attribute.value;
+      const isCorrectValue = checkCorrectValue(newValue, action.attribute.value);
 
       if (mutation.type === 'attributes' && isCorrectAttribute && isCorrectValue) {
         onComplete(newValue);
         observer.disconnect();
+        document.removeEventListener(TUTORIAL_EXIT_EVENT, observer.disconnect.bind(observer));
         return;
       }
     }
   });
 
   observer.observe(targetElement, { attributes: true, attributeFilter: [action.attribute.name] });
+  document.addEventListener(TUTORIAL_EXIT_EVENT, observer.disconnect.bind(observer));
 }
 
-function isClickAction(action: RequiredAction): action is ClickAction {
+export function isClickAction(action: RequiredAction): action is ClickAction {
   return action.action === 'click';
 }
 
-function isChangeAction(action: RequiredAction): action is ChangeAction {
+export function isChangeAction(action: RequiredAction): action is ChangeAction {
   return action.action === 'change';
 }
 
-export function getElementByXpath(path: string) {
-  const reactRoot = document.getElementById('reactRoot') as Element;
-  return document.evaluate(path, reactRoot, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+export function checkCorrectValue(valueProvided: string | null | undefined, valueToMatch: string | RegExp) {
+  if (!valueProvided) {
+    return false;
+  }
+
+  if (typeof valueToMatch === 'string') {
+    return valueProvided === valueToMatch;
+  }
+
+  return valueToMatch.test(valueProvided);
 }
+
+// export function getElementByXpath(path: string) {
+//   const reactRoot = document.getElementById('reactRoot') as Element;
+//   return document.evaluate(path, reactRoot, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+// }
