@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import leven from 'leven';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -22,7 +23,7 @@ import { Input, Text, useStyles2, InlineSwitch } from '@grafana/ui';
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { SelectMetricAction } from './SelectMetricAction';
 import { getVariablesWithMetricConstant, trailDS, VAR_FILTERS_EXPR, VAR_METRIC_NAMES } from './shared';
-import { getColorByIndex } from './utils';
+import { getColorByIndex, getTrailFor } from './utils';
 
 export interface MetricSelectSceneState extends SceneObjectState {
   body: SceneCSSGridLayout;
@@ -80,6 +81,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       return;
     }
 
+    const trail = getTrailFor(this);
+
     const variable = sceneGraph.lookupVariable(VAR_METRIC_NAMES, this);
 
     if (!(variable instanceof QueryVariable)) {
@@ -92,13 +95,30 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
     const searchRegex = new RegExp(this.state.searchQuery ?? '.*');
     const metricNames = variable.state.options;
+    const sortedMetricNames =
+      trail.state.metric !== undefined
+        ? metricNames.sort((a, b) => {
+            const aValue = String(a.value);
+            const aSplit = aValue.split('_');
+            const aHalf = aSplit.slice(0, aSplit.length / 2).join('_');
+
+            const bValue = String(b.value);
+            const bSplit = bValue.split('_');
+            const bHalf = bSplit.slice(0, bSplit.length / 2).join('_');
+
+            return (
+              (leven(aHalf, trail.state.metric!) || 0 + (leven(aValue, trail.state.metric!) || 0)) -
+              (leven(bHalf, trail.state.metric!) || 0 + (leven(bValue, trail.state.metric!) || 0))
+            );
+          })
+        : metricNames;
     const children: SceneFlexItem[] = [];
     const showPreviews = this.state.showPreviews;
     const previewLimit = 20;
     const cardLimit = 50;
 
-    for (let index = 0; index < metricNames.length; index++) {
-      const metric = metricNames[index];
+    for (let index = 0; index < sortedMetricNames.length; index++) {
+      const metric = sortedMetricNames[index];
 
       const metricName = String(metric.value);
       if (!metricName.match(searchRegex)) {
