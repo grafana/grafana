@@ -55,7 +55,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         text: t('panel.header-menu.view', `View`),
         iconClassName: 'eye',
         shortcut: 'v',
-        onClick: () => DashboardInteractions.panelMenuItemClicked({ item: 'view' }),
+        onClick: () => DashboardInteractions.panelMenuItemClicked('view'),
         href: getViewPanelUrl(panel),
       });
 
@@ -66,7 +66,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           text: t('panel.header-menu.edit', `Edit`),
           iconClassName: 'eye',
           shortcut: 'e',
-          onClick: () => () => DashboardInteractions.panelMenuItemClicked({ item: 'edit' }),
+          onClick: () => () => DashboardInteractions.panelMenuItemClicked('edit'),
           href: getDashboardUrl({
             uid: dashboard.state.uid,
             subPath: `/panel-edit/${panelId}`,
@@ -80,7 +80,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         text: t('panel.header-menu.share', `Share`),
         iconClassName: 'share-alt',
         onClick: () => {
-          DashboardInteractions.panelMenuItemClicked({ item: 'share' });
+          DashboardInteractions.panelMenuItemClicked('share');
           dashboard.showModal(new ShareModal({ panelRef: panel.getRef(), dashboardRef: dashboard.getRef() }));
         },
         shortcut: 'p s',
@@ -93,7 +93,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           text: t('panel.header-menu.create-library-panel', `Create library panel`),
           iconClassName: 'share-alt',
           onClick: () => {
-            DashboardInteractions.panelMenuItemClicked({ item: 'createLibraryPanel' });
+            DashboardInteractions.panelMenuItemClicked('createLibraryPanel');
             dashboard.showModal(
               new ShareModal({
                 panelRef: panel.getRef(),
@@ -116,7 +116,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         text: t('panel.header-menu.explore', `Explore`),
         iconClassName: 'compass',
         shortcut: 'p x',
-        onClick: () => DashboardInteractions.panelMenuItemClicked({ item: 'explore' }),
+        onClick: () => DashboardInteractions.panelMenuItemClicked('explore'),
         href: exploreUrl,
       });
     }
@@ -128,7 +128,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         onClick: (e) => {
           e.preventDefault();
           locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.Data });
-          DashboardInteractions.panelMenuItemClicked({ item: 'inspect', tab: InspectTab.Data });
+          DashboardInteractions.panelMenuInspectClicked(InspectTab.Data);
         },
       });
 
@@ -139,7 +139,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           onClick: (e) => {
             e.preventDefault();
             locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.Query });
-            DashboardInteractions.panelMenuItemClicked({ item: 'inspect', tab: InspectTab.Query });
+            DashboardInteractions.panelMenuInspectClicked(InspectTab.Query);
           },
         });
       }
@@ -151,7 +151,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       onClick: (e) => {
         e.preventDefault();
         locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.JSON });
-        DashboardInteractions.panelMenuItemClicked({ item: 'inspect', tab: InspectTab.JSON });
+        DashboardInteractions.panelMenuInspectClicked(InspectTab.JSON);
       },
     });
 
@@ -163,7 +163,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       onClick: (e) => {
         if (!e.isDefaultPrevented()) {
           locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.Data });
-          DashboardInteractions.panelMenuItemClicked({ item: 'inspect', tab: InspectTab.Data });
+          DashboardInteractions.panelMenuInspectClicked(InspectTab.Data);
         }
       },
       subMenu: inspectSubMenu.length > 0 ? inspectSubMenu : undefined,

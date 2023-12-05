@@ -1,4 +1,5 @@
 import { reportInteraction } from '@grafana/runtime';
+import { InspectTab } from 'app/features/inspector/types';
 
 export const DashboardInteractions = {
   // Dashboard interactions:
@@ -10,8 +11,24 @@ export const DashboardInteractions = {
   panelMenuShown: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('panelheader_menu', { ...properties, item: 'menu' });
   },
-  panelMenuItemClicked: (properties?: Record<string, unknown>) => {
-    reportDashboardInteraction('panelheader_menu', { ...properties });
+  panelMenuItemClicked: (
+    item:
+      | 'view'
+      | 'edit'
+      | 'share'
+      | 'createLibraryPanel'
+      | 'unlinkLibraryPanel'
+      | 'duplicate'
+      | 'copy'
+      | 'remove'
+      | 'explore'
+      | 'toggleLegend'
+      | 'create-alert'
+  ) => {
+    reportDashboardInteraction('panelheader_menu', { item });
+  },
+  panelMenuInspectClicked(tab: InspectTab) {
+    reportDashboardInteraction('panelheader_menu', { item: 'inspect', tab });
   },
   panelLinkClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('panelheader_datalink_clicked', { ...properties });

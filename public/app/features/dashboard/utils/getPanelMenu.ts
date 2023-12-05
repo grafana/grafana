@@ -44,7 +44,7 @@ export function getPanelMenu(
     locationService.partial({
       viewPanel: panel.id,
     });
-    DashboardInteractions.panelMenuItemClicked({ item: 'view' });
+    DashboardInteractions.panelMenuItemClicked('view');
   };
 
   const onEditPanel = (event: React.MouseEvent) => {
@@ -53,25 +53,25 @@ export function getPanelMenu(
       editPanel: panel.id,
     });
 
-    DashboardInteractions.panelMenuItemClicked({ item: 'edit' });
+    DashboardInteractions.panelMenuItemClicked('edit');
   };
 
   const onSharePanel = (event: React.MouseEvent) => {
     event.preventDefault();
     sharePanel(dashboard, panel);
-    DashboardInteractions.panelMenuItemClicked({ item: 'share' });
+    DashboardInteractions.panelMenuItemClicked('share');
   };
 
   const onAddLibraryPanel = (event: React.MouseEvent) => {
     event.preventDefault();
     addLibraryPanel(dashboard, panel);
-    DashboardInteractions.panelMenuItemClicked({ item: 'createLibraryPanel' });
+    DashboardInteractions.panelMenuItemClicked('createLibraryPanel');
   };
 
   const onUnlinkLibraryPanel = (event: React.MouseEvent) => {
     event.preventDefault();
     unlinkLibraryPanel(panel);
-    DashboardInteractions.panelMenuItemClicked({ item: 'unlinkLibraryPanel' });
+    DashboardInteractions.panelMenuItemClicked('unlinkLibraryPanel');
   };
 
   const onInspectPanel = (tab?: InspectTab) => {
@@ -79,7 +79,7 @@ export function getPanelMenu(
       inspect: panel.id,
       inspectTab: tab,
     });
-    DashboardInteractions.panelMenuItemClicked({ item: 'inspect', tab: tab ?? InspectTab.Data });
+    DashboardInteractions.panelMenuInspectClicked(tab ?? InspectTab.Data);
   };
 
   const onMore = (event: React.MouseEvent) => {
@@ -89,19 +89,19 @@ export function getPanelMenu(
   const onDuplicatePanel = (event: React.MouseEvent) => {
     event.preventDefault();
     duplicatePanel(dashboard, panel);
-    DashboardInteractions.panelMenuItemClicked({ item: 'duplicate' });
+    DashboardInteractions.panelMenuItemClicked('duplicate');
   };
 
   const onCopyPanel = (event: React.MouseEvent) => {
     event.preventDefault();
     copyPanel(panel);
-    DashboardInteractions.panelMenuItemClicked({ item: 'copy' });
+    DashboardInteractions.panelMenuItemClicked('copy');
   };
 
   const onRemovePanel = (event: React.MouseEvent) => {
     event.preventDefault();
     removePanel(dashboard, panel, true);
-    DashboardInteractions.panelMenuItemClicked({ item: 'remove' });
+    DashboardInteractions.panelMenuItemClicked('remove');
   };
 
   const onNavigateToExplore = (event: React.MouseEvent) => {
@@ -115,13 +115,13 @@ export function getPanelMenu(
         openInNewWindow,
       }) as any
     );
-    DashboardInteractions.panelMenuItemClicked({ item: 'explore' });
+    DashboardInteractions.panelMenuItemClicked('explore');
   };
 
   const onToggleLegend = (event: React.MouseEvent) => {
     event.preventDefault();
     toggleLegend(panel);
-    DashboardInteractions.panelMenuItemClicked({ item: 'toggleLegend' });
+    DashboardInteractions.panelMenuItemClicked('toggleLegend');
   };
 
   const menu: PanelMenuItem[] = [];
@@ -219,7 +219,7 @@ export function getPanelMenu(
   const onCreateAlert = (event: React.MouseEvent) => {
     event.preventDefault();
     createAlert();
-    DashboardInteractions.panelMenuItemClicked({ item: 'create-alert' });
+    DashboardInteractions.panelMenuItemClicked('create-alert');
   };
 
   const subMenu: PanelMenuItem[] = [];

@@ -69,8 +69,6 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
     toolbarActions.push(
       <Button
         onClick={() => {
-          // TODO: new interactions for scenes
-          // DashboardInteractions.toolbarBackFromPanelViewClick();
           locationService.partial({ viewPanel: null });
         }}
         tooltip=""
@@ -90,8 +88,6 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
       toolbarActions.push(
         <Button
           onClick={() => {
-            // TODO: new interactions for scenes
-            // DashboardInteractions.toolbarEditClick();
             dashboard.onEnterEditMode();
           }}
           tooltip="Enter edit mode"
@@ -109,8 +105,6 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
       toolbarActions.push(
         <Button
           onClick={() => {
-            // TODO: new interactions for scenes
-            // DashboardInteractions.toolbarSaveAsClick();
             dashboard.onSave();
           }}
           tooltip="Save as copy"
@@ -123,8 +117,6 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
       toolbarActions.push(
         <Button
           onClick={() => {
-            // TODO: new interactions for scenes
-            // DashboardInteractions.toolbarDiscardClick();
             dashboard.onDiscard();
           }}
           tooltip="Discard changes"

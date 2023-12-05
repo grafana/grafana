@@ -28,7 +28,7 @@ import {
   SceneDataLayerControls,
   AdHocFilterSet,
   TextBoxVariable,
-  VizPanelEvents,
+  UserActionEvent,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
@@ -466,18 +466,21 @@ const debouncedDescriptionReporting = debounce(() => {
 
 function registerPanelInteractionsReporter(scene: DashboardScene) {
   // Subscriptions set with subscribeToEvent are automatically unsubscribed when the scene deactivated
-
-  scene.subscribeToEvent(VizPanelEvents.DescriptionShown, (e) => {
-    debouncedDescriptionReporting();
-  });
-
-  scene.subscribeToEvent(VizPanelEvents.StatusMessageClicked, (_) => {
-    DashboardInteractions.panelStatusMessageClicked();
-  });
-  scene.subscribeToEvent(VizPanelEvents.CancelQueryClicked, (_) => {
-    DashboardInteractions.panelCancelQueryClicked();
-  });
-  scene.subscribeToEvent(VizPanelEvents.MenuShown, (_) => {
-    DashboardInteractions.panelMenuShown();
+  scene.subscribeToEvent(UserActionEvent, (e) => {
+    const { interaction } = e.payload;
+    switch (interaction) {
+      case 'panel-description-shown':
+        debouncedDescriptionReporting();
+        break;
+      case 'panel-status-message-clicked':
+        DashboardInteractions.panelStatusMessageClicked();
+        break;
+      case 'panel-cancel-query-clicked':
+        DashboardInteractions.panelCancelQueryClicked();
+        break;
+      case 'panel-menu-shown':
+        DashboardInteractions.panelMenuShown();
+        break;
+    }
   });
 }
