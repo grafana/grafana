@@ -254,6 +254,7 @@ export const LogsVolumePanelList = ({
                 variant="secondary"
                 style={{ marginLeft: '4px' }}
                 onClick={() => setSelectedQueryType(SupplementaryQueryType.LogsVolume)}
+                title="Count of logs over time"
               />
               <Button
                 icon="graph-bar"
@@ -261,6 +262,7 @@ export const LogsVolumePanelList = ({
                 variant="secondary"
                 style={{ marginLeft: '4px' }}
                 onClick={() => setSelectedQueryType(SupplementaryQueryType.LogsCount)}
+                title="Total count for selected time range"
               />
               {/* <Button
                 icon="calculator-alt"

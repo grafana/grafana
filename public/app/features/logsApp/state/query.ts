@@ -646,7 +646,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
           dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
 
           // Keep scanning for results if this was the last scanning transaction
-          if (getState().explore.panes[exploreId]!.scanning) {
+          if (getState().explore.panes[exploreId]?.scanning) {
             if (data.state === LoadingState.Done && data.series.length === 0) {
               const range = getShiftedTimeRange(-1, getState().explore.panes[exploreId]!.range);
               dispatch(updateTime({ exploreId, absoluteRange: range }));
@@ -666,7 +666,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
           // In case we don't get any response at all but the observable completed, make sure we stop loading state.
           // This is for cases when some queries are noop like running first query after load but we don't have any
           // actual query input.
-          if (getState().explore.panes[exploreId]!.queryResponse.state === LoadingState.Loading) {
+          if (getState().explore.panes[exploreId]?.queryResponse.state === LoadingState.Loading) {
             dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Done }));
           }
         },
@@ -683,6 +683,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
           dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
         }
       } else {
+        console.log('aaa');
         dispatch(
           handleSupplementaryQueries({
             exploreId,
