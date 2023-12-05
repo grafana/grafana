@@ -19,7 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-const gitHubProviderName = "github"
+const GitHubProviderName = "github"
+
+var ExtraGithubSettingKeys = []string{allowedOrganizationsKey, teamIdsKey}
 
 type SocialGithub struct {
 	*SocialBase
@@ -55,17 +57,14 @@ func NewGitHubProvider(settings map[string]any, cfg *setting.Cfg, features *feat
 		return nil, err
 	}
 
-	teamIds, err := mustInts(util.SplitString(info.Extra["team_ids"]))
-	if err != nil {
-		return nil, err
-	}
+	teamIds := mustInts(util.SplitString(info.Extra[teamIdsKey]))
 
-	config := createOAuthConfig(info, cfg, gitHubProviderName)
+	config := createOAuthConfig(info, cfg, GitHubProviderName)
 	provider := &SocialGithub{
-		SocialBase:           newSocialBase(gitHubProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:           newSocialBase(GitHubProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		apiUrl:               info.ApiUrl,
 		teamIds:              teamIds,
-		allowedOrganizations: util.SplitString(info.Extra["allowed_organizations"]),
+		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 		skipOrgRoleSync:      cfg.GitHubSkipOrgRoleSync,
 		// FIXME: Move skipOrgRoleSync to OAuthInfo
 		// skipOrgRoleSync: info.SkipOrgRoleSync
@@ -327,14 +326,15 @@ func convertToGroupList(t []GithubTeam) []string {
 	return groups
 }
 
-func mustInts(s []string) ([]int, error) {
+func mustInts(s []string) []int {
 	result := make([]int, 0, len(s))
 	for _, v := range s {
 		num, err := strconv.Atoi(v)
 		if err != nil {
-			return nil, err
+			// TODO: add log here
+			return []int{}
 		}
 		result = append(result, num)
 	}
-	return result, nil
+	return result
 }

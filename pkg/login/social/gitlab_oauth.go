@@ -19,7 +19,7 @@ import (
 const (
 	groupPerPage       = 50
 	accessLevelGuest   = "10"
-	gitlabProviderName = "gitlab"
+	GitlabProviderName = "gitlab"
 )
 
 type SocialGitlab struct {
@@ -55,9 +55,9 @@ func NewGitLabProvider(settings map[string]any, cfg *setting.Cfg, features *feat
 		return nil, err
 	}
 
-	config := createOAuthConfig(info, cfg, gitlabProviderName)
+	config := createOAuthConfig(info, cfg, GitlabProviderName)
 	provider := &SocialGitlab{
-		SocialBase:      newSocialBase(gitlabProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:      newSocialBase(GitlabProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		apiUrl:          info.ApiUrl,
 		skipOrgRoleSync: cfg.GitLabSkipOrgRoleSync,
 		// FIXME: Move skipOrgRoleSync to OAuthInfo
