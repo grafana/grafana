@@ -7,7 +7,6 @@ package server
 import (
 	"github.com/google/wire"
 
-	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
@@ -124,7 +123,6 @@ var wireExtsTestSet = wire.NewSet(
 var wireExtsBaseCLISet = wire.NewSet(
 	NewModuleRunner,
 
-	metrics.WireSet,
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
 	hooks.ProvideService,
