@@ -108,10 +108,10 @@ DataSourcesListCard.Skeleton = DataSourcesListCardSkeleton;
 const getSkeletonStyles = () => {
   return {
     button: css({
-      lineHeight: 0,
+      lineHeight: 1,
     }),
     figure: css({
-      lineHeight: 0,
+      lineHeight: 1,
     }),
   };
 };
