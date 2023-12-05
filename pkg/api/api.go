@@ -453,6 +453,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Dashboard
 		apiRoute.Group("/dashboards", func(dashboardRoute routing.RouteRegister) {
+			dashboardRoute.Get("/", authorize(ac.EvalPermission(dashboards.ActionDashboardsRead)), routing.Wrap(hs.GetDashboards))
 			dashboardRoute.Get("/uid/:uid", authorize(ac.EvalPermission(dashboards.ActionDashboardsRead)), routing.Wrap(hs.GetDashboard))
 			dashboardRoute.Delete("/uid/:uid", authorize(ac.EvalPermission(dashboards.ActionDashboardsDelete)), routing.Wrap(hs.DeleteDashboardByUID))
 			dashboardRoute.Group("/uid/:uid", func(dashUidRoute routing.RouteRegister) {
