@@ -12,7 +12,6 @@ import {
   GrafanaTheme2,
   hasToggleableQueryFiltersSupport,
   LoadingState,
-  PluginExtensionGlobalDrawerDroppedData,
   PluginExtensionGlobalDrawerDroppedExploreGraphData,
   QueryFixAction,
   RawTimeRange,
