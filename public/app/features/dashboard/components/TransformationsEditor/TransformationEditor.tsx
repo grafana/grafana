@@ -90,7 +90,7 @@ export const TransformationEditor = ({
         <PRQLEditor
           metricNames={['metric1', 'metric2', 'metric3']}
           readOnly={true}
-          queryString={`from invoices filter invoice_date >= @1970-01-16`}
+          queryString={uiConfig.transformation.toPrql!(config.transformation.options)}
         />
       }
       {debugMode && (

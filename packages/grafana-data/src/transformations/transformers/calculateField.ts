@@ -135,7 +135,23 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
     },
   },
   toPrql: (options) => {
-    return 'TODO: toPrql';
+    if (options.mode === CalculateFieldMode.Index) {
+      if (options.index?.asPercentile) {
+        return `
+          derive const = 0
+          derive quantile = (row_number foobar) / (count const)
+          select !{const}
+        `;
+      }
+
+      return `
+        derive const = 0
+        derive {row_count = count const}
+        select !{const}
+      `;
+    }
+
+    return '';
   },
   operator: (options, ctx) => (outerSource) => {
     const operator =
