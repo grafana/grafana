@@ -8,6 +8,7 @@ import { t } from 'app/core/internationalization';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 
 import { ShareModal } from '../sharing/ShareModal';
+import { DashboardInteractions } from '../utils/interactions';
 
 import { DashboardScene } from './DashboardScene';
 
@@ -33,6 +34,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
           iconType={meta.isStarred ? 'mono' : 'default'}
           iconSize="lg"
           onClick={() => {
+            DashboardInteractions.toolbarFavoritesClick();
             dashboard.onStarDashboard();
           }}
         />
@@ -45,6 +47,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
         icon="share-alt"
         iconSize="lg"
         onClick={() => {
+          DashboardInteractions.toolbarShareClick();
           dashboard.showModal(new ShareModal({ dashboardRef: dashboard.getRef() }));
         }}
       />
@@ -65,7 +68,11 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
   if (viewPanelScene) {
     toolbarActions.push(
       <Button
-        onClick={() => locationService.partial({ viewPanel: null })}
+        onClick={() => {
+          // TODO: new interactions for scenes
+          // DashboardInteractions.toolbarBackFromPanelViewClick();
+          locationService.partial({ viewPanel: null });
+        }}
         tooltip=""
         key="back"
         variant="primary"
@@ -82,7 +89,11 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
     if (dashboard.canEditDashboard()) {
       toolbarActions.push(
         <Button
-          onClick={dashboard.onEnterEditMode}
+          onClick={() => {
+            // TODO: new interactions for scenes
+            // DashboardInteractions.toolbarEditClick();
+            dashboard.onEnterEditMode();
+          }}
           tooltip="Enter edit mode"
           key="edit"
           variant="primary"
@@ -96,17 +107,44 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
   } else {
     if (dashboard.canEditDashboard()) {
       toolbarActions.push(
-        <Button onClick={dashboard.onSave} tooltip="Save as copy" fill="text" key="save-as">
+        <Button
+          onClick={() => {
+            // TODO: new interactions for scenes
+            // DashboardInteractions.toolbarSaveAsClick();
+            dashboard.onSave();
+          }}
+          tooltip="Save as copy"
+          fill="text"
+          key="save-as"
+        >
           Save as
         </Button>
       );
       toolbarActions.push(
-        <Button onClick={dashboard.onDiscard} tooltip="Discard changes" fill="text" key="discard" variant="destructive">
+        <Button
+          onClick={() => {
+            // TODO: new interactions for scenes
+            // DashboardInteractions.toolbarDiscardClick();
+            dashboard.onDiscard();
+          }}
+          tooltip="Discard changes"
+          fill="text"
+          key="discard"
+          variant="destructive"
+        >
           Discard
         </Button>
       );
       toolbarActions.push(
-        <Button onClick={dashboard.onSave} tooltip="Save changes" key="save" disabled={!isDirty}>
+        <Button
+          onClick={() => {
+            DashboardInteractions.toolbarSaveClick();
+            dashboard.onSave();
+          }}
+          tooltip="Save changes"
+          key="save"
+          disabled={!isDirty}
+        >
           Save
         </Button>
       );

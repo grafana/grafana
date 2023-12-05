@@ -5,7 +5,6 @@ import { useWindowSize } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { reportInteraction } from '@grafana/runtime';
 import { FieldSet } from '@grafana/ui';
 import {
   Button,
@@ -25,6 +24,7 @@ import {
   useReshareAccessToRecipientMutation,
   useUpdatePublicDashboardMutation,
 } from 'app/features/dashboard/api/publicDashboardApi';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { AccessControlAction, useSelector } from 'app/types';
 
 import { PublicDashboard, PublicDashboardShareType, validEmailRegex } from '../SharePublicDashboardUtils';
@@ -57,12 +57,12 @@ const EmailList = ({
   const isLoading = isDeleteLoading || isReshareLoading;
 
   const onDeleteEmail = (recipientUid: string) => {
-    reportInteraction('dashboards_sharing_public_email_revoke_clicked');
+    DashboardInteractions.revokePublicDashboardEmailClicked();
     deleteEmail({ recipientUid, dashboardUid: dashboardUid, uid: publicDashboardUid });
   };
 
   const onReshare = (recipientUid: string) => {
-    reportInteraction('dashboards_sharing_public_email_resend_clicked');
+    DashboardInteractions.resendPublicDashboardEmailClicked();
     reshareAccess({ recipientUid, uid: publicDashboardUid });
   };
 
@@ -150,7 +150,7 @@ export const EmailSharingConfiguration = () => {
   };
 
   const onSubmit = async (data: EmailSharingConfigurationForm) => {
-    reportInteraction('dashboards_sharing_public_email_invite_clicked');
+    DashboardInteractions.publicDashboardEmailInviteClicked();
     await addEmail({ recipient: data.email, uid: publicDashboard!.uid, dashboardUid: dashboard.uid }).unwrap();
     reset({ email: '', shareType: PublicDashboardShareType.EMAIL });
   };
@@ -170,7 +170,7 @@ export const EmailSharingConfiguration = () => {
                   size={width < 480 ? 'sm' : 'md'}
                   options={options}
                   onChange={(shareType: PublicDashboardShareType) => {
-                    reportInteraction('dashboards_sharing_public_can_view_clicked', {
+                    DashboardInteractions.publicDashboardShareTypeChange({
                       shareType: shareType === PublicDashboardShareType.EMAIL ? 'email' : 'public',
                     });
                     setValue('shareType', shareType);
