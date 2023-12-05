@@ -31,14 +31,14 @@ The Azure AD authentication allows you to use an Azure Active Directory tenant a
     - [Configure allowed tenants](#configure-allowed-tenants)
     - [Configure allowed groups](#configure-allowed-groups)
       - [Configure group membership claims on the Azure Portal](#configure-group-membership-claims-on-the-azure-portal)
-      - [Configure group membership claim in the manifest file](#configure-group-membership-claim-in-the-manifest-file)
+      - [Configure group membership claims in the manifest file](#configure-group-membership-claim-in-the-manifest-file)
     - [Configure allowed domains](#configure-allowed-domains)
     - [PKCE](#pkce)
     - [Configure automatic login](#configure-automatic-login)
     - [Team Sync (Enterprise only)](#team-sync-enterprise-only)
   - [Common troubleshooting](#common-troubleshooting)
     - [Users with over 200 Group assignments](#users-with-over-200-group-assignments)
-      - [Configure the required Graph API permissions](#configure-the-required-graph-api-permissions)
+      - [Configure Graph API permissions](#configure-the-required-graph-api-permissions)
     - [Force fetching groups from Microsoft graph API](#force-fetching-groups-from-microsoft-graph-api)
     - [Map roles](#map-roles)
   - [Skip organization role sync](#skip-organization-role-sync)
@@ -71,19 +71,21 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
 
 1. Click **Add** then copy the key value. This is the OAuth client secret.
 
-2. You can define the required Application Roles for Grafana [using the Azure Portal](#configure-application-roles-for-grafana-on-the-azure-portal) or [using the manifest file](#configure-application-roles-for-grafana-in-the-manifest-file).
+1. Define the required application roles for Grafana [using the Azure Portal](#configure-application-roles-for-grafana-on-the-azure-portal) or [using the manifest file](#configure-application-roles-for-grafana-in-the-manifest-file).
 
-3. Go to **Azure Active Directory** and then to **Enterprise Applications**. Search for your application and click on it.
+1. Go to **Azure Active Directory** and then to **Enterprise Applications**. 
+
+1. Search for your application and click it.
 
 4. Click on **Users and Groups** and add Users/Groups to the Grafana roles by using **Add User**.
 
-#### Configure Application roles for Grafana on the Azure Portal
+#### Configure application roles for Grafana in the Azure Portal
 
-In this seciont we'll go through how to setup basic Appplication roles for Grafana from the Azure Portal. More info can be found [here](https://learn.microsoft.com/en-us/entra/identity-platform/howto-add-app-roles-in-apps):
+This section describes setting up basic application roles for Grafana within the Azure Portal. For more information, refer [Add app roles to your application and receive them in the token](https://learn.microsoft.com/en-us/entra/identity-platform/howto-add-app-roles-in-apps).
 
-1. Go to **App Registrations**. Search for your application and click on it.
+1. Go to **App Registrations**, search for your application, and click it.
 
-1. Click on **App roles** and then **Create app role**.
+1. Click **App roles** and then **Create app role**.
 
 1. Define a role corresponding to each Grafana role: Viewer, Editor, and Admin. 
 
@@ -99,13 +101,15 @@ In this seciont we'll go through how to setup basic Appplication roles for Grafa
 
 #### Configure Application roles for Grafana in the manifest file
 
-1. Go to **App Registrations**. Search for your application and click on it.
+1. Go to **App Registrations**, search for your application, and click it.
         
-1. Click on **Manifest** and then **Edit**.
+1. Click **Manifest** and then click **Edit**.
 
-1. Every role requires a [Universally Unique Identifier](https://en.wikipedia.org/wiki/Universally_unique_identifier) which you can generate on Linux with `uuidgen`, and on Windows through Microsoft PowerShell with `New-Guid`.
+1. Add a Universally Unique Identifier to each role. 
 
-1. Generate a unique ID for each role and replace each "SOME_UNIQUE_ID" with the generated ID in the manifest file:
+   Every role requires a [Universally Unique Identifier](https://en.wikipedia.org/wiki/Universally_unique_identifier) which you can generate on Linux with `uuidgen`, and on Windows through Microsoft PowerShell with `New-Guid`.
+
+1. Replace each "SOME_UNIQUE_ID" with the generated ID in the manifest file:
 
     ```json
     	"appRoles": [
@@ -236,12 +240,14 @@ allowed_organizations = 8bab1c86-8fba-33e5-2089-1d1c80ec267d
 
 ### Configure allowed groups
 
-Azure AD groups can be used to limit user access to Grafana. More info about managing groups in Azure AD can be found [here](https://learn.microsoft.com/en-us/entra/fundamentals/how-to-manage-groups).
+Azure AD groups can be used to limit user access to Grafana. For more information about managing groups in Azure AD, refer to [Manage Microsoft Entra groups and group membership](https://learn.microsoft.com/en-us/entra/fundamentals/how-to-manage-groups).
 
 To limit access to authenticated users who are members of one or more AzureAD groups, set `allowed_groups`
 to a comma- or space-separated list of group object IDs. You can find object IDs for a specific group on the Azure portal:
 
-1. Go to **Azure Active Directory -> Groups**. If you want to only give access to members of the group `example` with an Object Id of `8bab1c86-8fba-33e5-2089-1d1c80ec267d`, then set the following:
+1. Go to **Azure Active Directory >  Groups**. 
+
+   If you want to only give access to members of the group `example` with an Object Id of `8bab1c86-8fba-33e5-2089-1d1c80ec267d`, then set the following:
 
    ```
    allowed_groups = 8bab1c86-8fba-33e5-2089-1d1c80ec267d
@@ -266,11 +272,11 @@ For more information, see [Configure groups optional claims](https://learn.micro
 
 #### Configure group membership claim in the manifest file
 
-1. Go to **App Registrations**. Search for your application and click on it.
+1. Go to **App Registrations**, search for your application, and click it.
 
-1. Click on **Manifest** and then **Edit**.
+1. Click **Manifest** and then click **Edit**.
 
-2. Add the following to the root of the manifest file:
+1. Add the following to the root of the manifest file:
     
        ```
        "groupMembershipClaims": "ApplicationGroup, SecurityGroup"
@@ -334,7 +340,7 @@ Grafana attempts to retrieve the user's group membership by calling the included
 {{% admonition type="note" %}}
 The 'App registration' must include the `GroupMember.Read.All` API permission for group overage claim calls to succeed.
 
-Admin consent may be required for this permission.
+Admin consent might be required for this permission.
 {{% /admonition %}}
 
 #### Configure the required Graph API permissions
