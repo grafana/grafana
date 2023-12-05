@@ -581,20 +581,24 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
     e.preventDefault();
     e.stopImmediatePropagation();
-    const delta = e.key === 'ArrowDown' ? 1 : -1;
+
     const currentIndex = this.props.logRows.indexOf(this.state.logDetailsRow);
-    if (!currentIndex) {
+    if (currentIndex < 0) {
       this.setState({
         logDetailsRow: undefined,
       });
       return;
     }
+
+    const delta = e.key === 'ArrowDown' ? 1 : -1;
+    
     let newIndex = currentIndex + delta;
     if (newIndex < 0) {
       newIndex = this.props.logRows.length - 1;
-    } else if (newIndex + 1 >= this.props.logRows.length) {
+    } else if (newIndex >= this.props.logRows.length) {
       newIndex = 0;
     }
+    
     const logDetailsRow = this.props.logRows[newIndex];
     this.setState({
       logDetailsRow,
