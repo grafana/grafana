@@ -135,47 +135,35 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
     },
   },
   toPRQL: (options) => {
-    if (options.mode === CalculateFieldMode.Index) {
-      if (options.index?.asPercentile) {
-        return `
-          derive const = 0
-          derive quantile = (row_number foobar) / (count const)
-          select !{const}
-        `;
-      }
-
-      return `
-        derive const = 0
-        derive {row_count = count const}
-        select !{const}
-      `;
-    }
-    if (options.mode === CalculateFieldMode.UnaryOperation) {
-      if (options.unary?.operator === UnaryOperationID.Abs) {
-        return `
-          derive abs(up) = s"ABS({up})"
-        `;
-      }
-      if (options.unary?.operator === UnaryOperationID.Exp) {
-        return `
-          derive exp(up) = s"EXP({up})"
-        `;
-      }
-      if (options.unary?.operator === UnaryOperationID.Ln) {
-        return `
-          derive ln(up) = s"LN({up})"
-        `;
-      }
-      if (options.unary?.operator === UnaryOperationID.Floor) {
-        return `
-          derive floor(up) = s"FLOOR({up})"
-        `;
-      }
-
-      // options.unary?.operator === UnaryOperationID.Ceil
-      return `
-        derive ceil(up) = s"CEIL({up})"
-      `;
+    switch (options.mode) {
+      case CalculateFieldMode.Index:
+        switch (options.index?.asPercentile) {
+          case true:
+            return `
+              derive const = 0
+              derive quantile = (row_number foobar) / (count const)
+              select !{const}
+            `;
+          default:
+            return `
+              derive const = 0
+              derive {row_count = count const}
+              select !{const}
+            `;
+        }
+      case CalculateFieldMode.UnaryOperation:
+        switch (options.unary?.operator) {
+          case UnaryOperationID.Abs:
+            return `derive abs(up) = s"ABS({up})"`;
+          case UnaryOperationID.Exp:
+            return `derive exp(up) = s"EXP({up})"`;
+          case UnaryOperationID.Ln:
+            return `derive ln(up) = s"LN({up})"`;
+          case UnaryOperationID.Floor:
+            return `derive floor(up) = s"FLOOR({up})"`;
+          default: // UnaryOperationID.Ceil
+            return `derive ceil(up) = s"CEIL({up})"`;
+        }
     }
 
     return `# Not yet supported:\n` + `# ${JSON.stringify(options, null, '  ').replace(/(?:\r\n|\r|\n)/g, '\n# ')}`;
