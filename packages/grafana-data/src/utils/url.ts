@@ -54,7 +54,7 @@ function toUrlParams(a: any, encodeAsAngularJS = true) {
         encodeURIComponentAsAngularJS(value, pctEncodeSpaces)
     : (value: EncodeURIComponentParams, _: boolean) => encodeURIComponent(value);
 
-  const isArray = (obj: any) => {
+  const isArray = (obj: unknown) => {
     return Object.prototype.toString.call(obj) === '[object Array]';
   };
 
