@@ -9,7 +9,6 @@ import { GetComponentSuggestionsUserPrompt, GetComponentSuggestionsSystemPrompt 
 import { Interaction, Suggestion, SuggestionType } from '../types';
 
 import { createInteraction, stateSlice } from './state';
-import { getTemplateSuggestions } from './templates';
 
 const OPENAI_MODEL_NAME = 'gpt-3.5-turbo';
 
@@ -233,7 +232,7 @@ export async function wizarDSSuggest(
 
   if (!check || interactionToUpdate.suggestionType === SuggestionType.Historical) {
     return new Promise<void>((resolve) => {
-      const suggestions = getTemplateSuggestions();
+      const suggestions = templates;
 
       const payload = {
         idx,
