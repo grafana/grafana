@@ -2,12 +2,10 @@ import React from 'react';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { SelectableValue } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, reportInteraction } from '@grafana/runtime';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { Button, ClipboardButton, Field, Input, Modal, RadioButtonGroup } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
-import { trackDashboardSharingActionPerType } from 'app/features/dashboard/components/ShareModal/analytics';
-import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { getDashboardSnapshotSrv, SnapshotSharingOptions } from 'app/features/dashboard/services/SnapshotSrv';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -124,7 +122,15 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
       const results: { deleteUrl: string; url: string } = await getBackendSrv().post(SNAPSHOTS_API_ENDPOINT, cmdData);
       return results;
     } finally {
-      trackDashboardSharingActionPerType(external ? 'publish_snapshot' : 'local_snapshot', shareDashboardType.snapshot);
+      if (external) {
+        reportInteraction('dashboards_sharing_snapshot_publish_clicked', {
+          expires: cmdData.expires,
+        });
+      } else {
+        reportInteraction('dashboards_sharing_snapshot_local_clicked', {
+          expires: cmdData.expires,
+        });
+      }
     }
   };
 }
