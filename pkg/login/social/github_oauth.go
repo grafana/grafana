@@ -57,10 +57,7 @@ func NewGitHubProvider(settings map[string]any, cfg *setting.Cfg, features *feat
 		return nil, err
 	}
 
-	teamIds, err := mustInts(util.SplitString(info.Extra[teamIdsKey]), true)
-	if err != nil {
-		return nil, err
-	}
+	teamIds := mustInts(util.SplitString(info.Extra[teamIdsKey]))
 
 	config := createOAuthConfig(info, cfg, GitHubProviderName)
 	provider := &SocialGithub{
@@ -329,17 +326,15 @@ func convertToGroupList(t []GithubTeam) []string {
 	return groups
 }
 
-func mustInts(s []string, returnEmptyOnError bool) ([]int, error) {
+func mustInts(s []string) []int {
 	result := make([]int, 0, len(s))
 	for _, v := range s {
 		num, err := strconv.Atoi(v)
 		if err != nil {
-			if returnEmptyOnError {
-				return []int{}, nil
-			}
-			return nil, err
+			// TODO: add log here
+			return []int{}
 		}
 		result = append(result, num)
 	}
-	return result, nil
+	return result
 }
