@@ -3,6 +3,9 @@ import React, { useMemo } from 'react';
 import { v4 } from 'uuid';
 
 import { CoreApp, DataFrame, DataFrameType, Field, LinkModel, LogRowModel } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { LinkButton } from '@grafana/ui';
+import { createUrl } from 'app/features/alerting/unified/utils/url';
 import { LogRowStyles } from 'app/features/logs/components/getLogRowStyles';
 import { createLogLineLinks, getAllFields } from 'app/features/logs/components/logParser';
 import { calculateLogsLabelStats, calculateStats } from 'app/features/logs/utils';
@@ -81,6 +84,15 @@ export const LogDetails = (props: Props) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const baseKey = useMemo(() => v4(), [rows, labels]);
   // Without baseKey, when a new query is run and LogDetailsRow doesn't fully re-render, it freezes the app
+
+  // For now, we support first tempo data source
+  const TempoDs = useMemo(
+    () =>
+      getDataSourceSrv()
+        .getList({ tracing: true })
+        .find((d) => d.type === 'tempo'),
+    []
+  );
 
   return (
     <div className={cx(className, styles.logDetails)}>
@@ -183,6 +195,27 @@ export const LogDetails = (props: Props) => {
                 />
               );
             })}
+
+            {row.possibleTraceId && TempoDs && (
+              <tr style={{ margin: '4px 0' }}>
+                <th colSpan={6}>
+                  <LinkButton
+                    size="sm"
+                    variant="primary"
+                    icon="compass"
+                    target="_blank"
+                    href={createUrl(`/explore`, {
+                      left: JSON.stringify({
+                        datasource: TempoDs.uid,
+                        queries: [{ refId: 'A', query: row.possibleTraceId }],
+                      }),
+                    })}
+                  >
+                    {`Open detected trace ${row.possibleTraceId}`}
+                  </LinkButton>
+                </th>
+              </tr>
+            )}
 
             {!fieldsAvailable && !labelsAvailable && !fieldsWithLinksAvailable && (
               <tr>

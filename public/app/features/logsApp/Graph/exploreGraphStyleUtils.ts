@@ -24,7 +24,6 @@ export function applyGraphStyle(config: FieldConfig, style: ExploreGraphStyle, m
         custom.drawStyle = GraphDrawStyle.Line;
         custom.stacking.mode = StackingMode.None;
         custom.fillOpacity = 0;
-        custom;
         break;
       case 'bars':
         custom.drawStyle = GraphDrawStyle.Bars;

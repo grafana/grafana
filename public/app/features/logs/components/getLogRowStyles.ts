@@ -168,6 +168,8 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       label: logs-row-details-table;
       line-height: 18px;
       width: 100%;
+      font-family: ${theme.typography.fontFamilyMonospace};
+      font-size: ${theme.typography.bodySmall.fontSize};
       td:last-child {
         width: 100%;
       }
