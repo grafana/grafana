@@ -150,6 +150,33 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
         select !{const}
       `;
     }
+    if (options.mode === CalculateFieldMode.UnaryOperation) {
+      if (options.unary?.operator === UnaryOperationID.Abs) {
+        return `
+          derive abs(up) = s"ABS({up})"
+        `;
+      }
+      if (options.unary?.operator === UnaryOperationID.Exp) {
+        return `
+          derive exp(up) = s"EXP({up})"
+        `;
+      }
+      if (options.unary?.operator === UnaryOperationID.Ln) {
+        return `
+          derive ln(up) = s"LN({up})"
+        `;
+      }
+      if (options.unary?.operator === UnaryOperationID.Floor) {
+        return `
+          derive floor(up) = s"FLOOR({up})"
+        `;
+      }
+
+      // options.unary?.operator === UnaryOperationID.Ceil
+      return `
+        derive ceil(up) = s"CEIL({up})"
+      `;
+    }
 
     return `# Not yet supported:\n` + `# ${JSON.stringify(options, null, '  ').replace(/(?:\r\n|\r|\n)/g, '\n# ')}`;
   },

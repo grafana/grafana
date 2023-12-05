@@ -949,6 +949,96 @@ describe('calculateField transformer w/ timeseries', () => {
     });
   });
 
+  it('generates PRQL for unary operations: absolute', async () => {
+    expect(
+      normlines(
+        calculateFieldTransformer.toPRQL!({
+          mode: CalculateFieldMode.UnaryOperation,
+          unary: {
+            operator: UnaryOperationID.Abs,
+            fieldName: 'up',
+          },
+        })
+      )
+    ).toEqual(
+      normlines(`
+        derive abs(up) = s"ABS({up})"
+      `)
+    );
+  });
+
+  it('generates PRQL for unary operations: exponential', async () => {
+    expect(
+      normlines(
+        calculateFieldTransformer.toPRQL!({
+          mode: CalculateFieldMode.UnaryOperation,
+          unary: {
+            operator: UnaryOperationID.Exp,
+            fieldName: 'up',
+          },
+        })
+      )
+    ).toEqual(
+      normlines(`
+        derive exp(up) = s"EXP({up})"
+      `)
+    );
+  });
+
+  it('generates PRQL for unary operations: natural logarithm', async () => {
+    expect(
+      normlines(
+        calculateFieldTransformer.toPRQL!({
+          mode: CalculateFieldMode.UnaryOperation,
+          unary: {
+            operator: UnaryOperationID.Ln,
+            fieldName: 'up',
+          },
+        })
+      )
+    ).toEqual(
+      normlines(`
+        derive ln(up) = s"LN({up})"
+      `)
+    );
+  });
+
+  it('generates PRQL for unary operations: floor', async () => {
+    expect(
+      normlines(
+        calculateFieldTransformer.toPRQL!({
+          mode: CalculateFieldMode.UnaryOperation,
+          unary: {
+            operator: UnaryOperationID.Floor,
+            fieldName: 'up',
+          },
+        })
+      )
+    ).toEqual(
+      normlines(`
+        derive floor(up) = s"FLOOR({up})"
+      `)
+    );
+  });
+
+  it('generates PRQL for unary operations: ceiling', async () => {
+    expect(
+      normlines(
+        calculateFieldTransformer.toPRQL!({
+          mode: CalculateFieldMode.UnaryOperation,
+          unary: {
+            operator: UnaryOperationID.Ceil,
+            fieldName: 'up',
+          },
+        })
+      )
+    ).toEqual(
+      normlines(`
+        derive ceil(up) = s"CEIL({up})"
+      `)
+    );
+  });
+
   it('generates PRQL for index field', () => {
     expect(
       normlines(
