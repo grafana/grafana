@@ -73,7 +73,6 @@ type UpdateServiceAccountResponse struct {
 Developers can re-create the OpenAPI v2 and v3 specifications using the following command:
 
 ```bash
-
 make swagger-clean && make openapi3-gen
 ```
 
