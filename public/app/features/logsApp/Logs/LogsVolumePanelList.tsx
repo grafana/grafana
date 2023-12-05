@@ -65,7 +65,6 @@ export const LogsVolumePanelList = ({
   } = useMemo(() => {
     let maximumValue = -Infinity;
     const sorted = sortBy(logsVolumeData?.data ?? logsVolumeWithGroupByData?.data ?? [], 'meta.custom.datasourceName');
-    console.log('sorted', sorted);
     const grouped = groupBy(sorted, 'meta.custom.datasourceName');
     const logVolumes = mapValues(grouped, (value) => {
       const mergedData = mergeLogsVolumeDataFrames(value);
