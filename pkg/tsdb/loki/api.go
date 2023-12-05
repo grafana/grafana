@@ -213,7 +213,7 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 
 	if res.Error != nil {
 		span.RecordError(res.Error)
-		span.SetStatus(codes.Error, err.Error())
+		span.SetStatus(codes.Error, res.Error.Error())
 		instrumentation.UpdatePluginParsingResponseDurationSeconds(ctx, time.Since(start), "error")
 		api.log.Error("Error parsing response from loki", "error", res.Error, "metricDataplane", responseOpts.metricDataplane, "duration", time.Since(start), "stage", stageParseResponse)
 		return nil, res.Error

@@ -21,7 +21,6 @@ import (
 	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
@@ -164,11 +163,6 @@ func quote(s string) string {
 
 // Create a notifier (PostableGrafanaReceiver) from a legacy notification channel
 func (om *OrgMigration) createNotifier(c *legacymodels.AlertNotification) (*apimodels.PostableGrafanaReceiver, error) {
-	uid, err := om.determineChannelUid(c)
-	if err != nil {
-		return nil, err
-	}
-
 	settings, secureSettings, err := om.migrateSettingsToSecureSettings(c.Type, c.Settings, c.SecureSettings)
 	if err != nil {
 		return nil, err
@@ -180,7 +174,7 @@ func (om *OrgMigration) createNotifier(c *legacymodels.AlertNotification) (*apim
 	}
 
 	return &apimodels.PostableGrafanaReceiver{
-		UID:                   uid,
+		UID:                   c.UID,
 		Name:                  c.Name,
 		Type:                  c.Type,
 		DisableResolveMessage: c.DisableResolveMessage,
@@ -360,26 +354,6 @@ func (om *OrgMigration) filterReceiversForAlert(name string, channelIDs []migrat
 	}
 
 	return filteredReceiverNames
-}
-
-func (om *OrgMigration) determineChannelUid(c *legacymodels.AlertNotification) (string, error) {
-	legacyUid := c.UID
-	if legacyUid == "" {
-		newUid := util.GenerateShortUID()
-		om.seenUIDs.add(newUid)
-		om.log.Info("Legacy notification had an empty uid, generating a new one", "id", c.ID, "uid", newUid)
-		return newUid, nil
-	}
-
-	if om.seenUIDs.contains(legacyUid) {
-		newUid := util.GenerateShortUID()
-		om.seenUIDs.add(newUid)
-		om.log.Warn("Legacy notification had a UID that collides with a migrated record, generating a new one", "id", c.ID, "old", legacyUid, "new", newUid)
-		return newUid, nil
-	}
-
-	om.seenUIDs.add(legacyUid)
-	return legacyUid, nil
 }
 
 var secureKeysToMigrate = map[string][]string{
