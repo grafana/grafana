@@ -73,11 +73,12 @@ type GetUserByEmailQuery struct {
 }
 
 type UpdateUserCommand struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
-	Login string `json:"login"`
-	Theme string `json:"theme"`
-	Level int64  `json:"level"`
+	Name         string `json:"name"`
+	Email        string `json:"email"`
+	Login        string `json:"login"`
+	Theme        string `json:"theme"`
+	Level        int64  `json:"level"`
+	Achievements string `json:"achievements"`
 
 	UserID int64 `json:"-"`
 }
