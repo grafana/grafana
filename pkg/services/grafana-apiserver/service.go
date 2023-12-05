@@ -14,7 +14,6 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"golang.org/x/mod/semver"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -32,6 +31,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/component-base/logs"
 	"k8s.io/klog/v2"
+
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
@@ -392,7 +393,10 @@ func (s *service) running(ctx context.Context) error {
 }
 
 func (s *service) ensureKubeConfig() error {
-	return clientcmd.WriteToFile(utils.FormatKubeConfig(s.restConfig), path.Join(s.config.dataPath, "grafana.kubeconfig"))
+	return clientcmd.WriteToFile(
+		utils.FormatKubeConfig(s.restConfig),
+		path.Join(s.config.dataPath, "grafana.kubeconfig"),
+	)
 }
 
 type roundTripperFunc struct {

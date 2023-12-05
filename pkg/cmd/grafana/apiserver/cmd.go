@@ -9,7 +9,7 @@ import (
 	"k8s.io/component-base/cli"
 )
 
-func newCommandStartExampleAPIServer(o *ExampleServerOptions, stopCh <-chan struct{}) *cobra.Command {
+func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}) *cobra.Command {
 	devAcknowledgementNotice := "The apiserver command is in heavy development.  The entire setup is subject to change without notice"
 
 	cmd := &cobra.Command{
@@ -34,7 +34,7 @@ func newCommandStartExampleAPIServer(o *ExampleServerOptions, stopCh <-chan stru
 				return err
 			}
 
-			if err := o.RunExampleServer(config, stopCh); err != nil {
+			if err := o.RunAPIServer(config, stopCh); err != nil {
 				return err
 			}
 			return nil
@@ -54,7 +54,7 @@ func newCommandStartExampleAPIServer(o *ExampleServerOptions, stopCh <-chan stru
 func RunCLI() int {
 	stopCh := genericapiserver.SetupSignalHandler()
 
-	options := newExampleServerOptions(os.Stdout, os.Stderr)
+	options := newAPIServerOptions(os.Stdout, os.Stderr)
 	cmd := newCommandStartExampleAPIServer(options, stopCh)
 
 	return cli.Run(cmd)
