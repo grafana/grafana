@@ -35,6 +35,7 @@ import {
   setPluginExtensionGetter,
   setAppEvents,
   type GetPluginExtensions,
+  getDataSourceSrv,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
@@ -190,6 +191,8 @@ export class GrafanaApp {
       dataSourceSrv.init(config.datasources, config.defaultDatasource);
       setDataSourceSrv(dataSourceSrv);
       initWindowRuntime();
+      console.log('calling getDataSourceSrv');
+      console.log(getDataSourceSrv());
 
       // init modal manager
       const modalManager = new ModalManager();

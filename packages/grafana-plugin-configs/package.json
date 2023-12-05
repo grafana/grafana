@@ -4,6 +4,10 @@
   "private": true,
   "version": "10.3.0-pre",
   "dependencies": {
+    "buffer": "6.0.3",
+    "events": "3.3.0",
+    "stream-browserify": "3.0.0",
+    "string_decoder": "1.2.0",
     "tslib": "2.6.0"
   },
   "devDependencies": {

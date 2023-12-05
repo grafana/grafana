@@ -23,9 +23,10 @@ import { CompartmentDependencyModule, PluginFactoryFunction, SandboxEnvironment 
 import { logError } from './utils';
 
 // Loads near membrane custom formatter for near membrane proxy objects.
-if (process.env.NODE_ENV !== 'production') {
-  require('@locker/near-membrane-dom/custom-devtools-formatter');
-}
+// here
+// if (process.env.NODE_ENV !== 'production') {
+//   require('@locker/near-membrane-dom/custom-devtools-formatter');
+// }
 
 const pluginImportCache = new Map<string, Promise<System.Module>>();
 const pluginLogCache: Record<string, boolean> = {};

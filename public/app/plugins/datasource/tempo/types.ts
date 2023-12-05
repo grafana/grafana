@@ -1,5 +1,5 @@
 import { DataSourceJsonData } from '@grafana/data/src';
-import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
+// import { TraceToLogsSettings } from '@grafana/traces';
 
 import { NodeGraphOptions } from './_importedDependencies/components/NodeGraphSettings';
 import { LokiQuery } from './_importedDependencies/datasources/loki/types';
@@ -15,7 +15,8 @@ export interface SearchQueryParams {
 }
 
 export interface TempoJsonData extends DataSourceJsonData {
-  tracesToLogs?: TraceToLogsOptions;
+  // tracesToLogs?: TraceToLogsSettings.TraceToLogsOptions;
+  tracesToLogs?: any;
   serviceMap?: {
     datasourceUid?: string;
   };

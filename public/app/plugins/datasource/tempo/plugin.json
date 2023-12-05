@@ -2,9 +2,8 @@
   "type": "datasource",
   "name": "Tempo",
   "id": "tempo",
-  "aliasIDs": ["tempo"],
   "category": "tracing",
-  "executable": "tempo",
+  "executable": "gpx_tempo",
 
   "metrics": true,
   "alerting": false,
