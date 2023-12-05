@@ -100,4 +100,12 @@ describe('Limit transformer', () => {
       expect(result[0].fields).toEqual(expected);
     });
   });
+
+  it('generates PRQL for limit operation', async () => {
+    expect(
+      limitTransformer.toPRQL!({
+        limitField: 13,
+      })
+    ).toEqual(`take 13`);
+  });
 });

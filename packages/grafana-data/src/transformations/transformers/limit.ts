@@ -18,6 +18,9 @@ export const limitTransformer: DataTransformerInfo<LimitTransformerOptions> = {
   defaultOptions: {
     limitField: DEFAULT_LIMIT_FIELD,
   },
+  toPRQL: (options) => {
+    return `take ${options.limitField}`;
+  },
 
   operator: (options, ctx) => (source) =>
     source.pipe(
