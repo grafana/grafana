@@ -6,7 +6,9 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 )
 
 // Service an OAuth token service suitable for tests.
@@ -21,6 +23,10 @@ func ProvideService() *Service {
 
 func (s *Service) GetCurrentOAuthToken(context.Context, identity.Requester) *oauth2.Token {
 	return s.Token
+}
+
+func (s *Service) IsOAuthPassThruEnabled(ds *datasources.DataSource) bool {
+	return oauthtoken.IsOAuthPassThruEnabled(ds)
 }
 
 func (s *Service) HasOAuthEntry(context.Context, identity.Requester) (*login.UserAuth, bool, error) {
