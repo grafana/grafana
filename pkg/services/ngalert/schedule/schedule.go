@@ -497,7 +497,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 				}()
 
 				var attempt int64
-				for attempt = 0; attempt < sch.maxAttempts; attempt++ {
+				for attempt = 1; attempt <= sch.maxAttempts; attempt++ {
 					isPaused := ctx.rule.IsPaused
 					f := ruleWithFolder{ctx.rule, ctx.folderTitle}.Fingerprint()
 					// Do not clean up state if the eval loop has just started.
