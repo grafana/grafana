@@ -8,15 +8,14 @@ import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useDispatch } from 'app/types';
 
-import { BrowseView } from '../browse-dashboards/components/BrowseView';
 import { SearchView } from '../browse-dashboards/components/SearchView';
 import { getFolderPermissions } from '../browse-dashboards/permissions';
 import { setAllSelection, useHasSelection } from '../browse-dashboards/state';
-import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 
-import { BrowseActions } from './components/BrowseActions/BrowseActions';
+import { TrashActions } from './components/BrowseActions/TrashActions';
 import { BrowseFilters } from './components/BrowseFilters';
+import { useTrashStateManager } from './hooks/useTrashStateManager';
 
 export interface Props extends GrafanaRouteComponentProps {}
 
@@ -24,7 +23,7 @@ const TrashDashboardsPage = memo(({ match }: Props) => {
   const dispatch = useDispatch();
 
   const styles = useStyles2(getStyles);
-  const [searchState, stateManager] = useSearchStateManager();
+  const [searchState, stateManager] = useTrashStateManager();
   const isSearching = stateManager.hasSearchFilters();
 
   const hasSelection = useHasSelection();
@@ -60,18 +59,18 @@ const TrashDashboardsPage = memo(({ match }: Props) => {
           escapeRegex={false}
           onChange={(e) => stateManager.onQueryChange(e)}
         />
-
-        {hasSelection ? <BrowseActions /> : <BrowseFilters />}
-
+        {hasSelection ? <TrashActions /> : <BrowseFilters />}
         <div className={styles.subView}>
           <AutoSizer>
-            {({ width, height }) =>
-              isSearching ? (
-                <SearchView canSelect={canSelect} width={width} height={height} />
-              ) : (
-                <BrowseView canSelect={canSelect} width={width} height={height} folderUID={undefined} />
-              )
-            }
+            {({ width, height }) => (
+              <SearchView
+                canSelect={canSelect}
+                width={width}
+                height={height}
+                searchStateManager={stateManager}
+                searchState={searchState}
+              />
+            )}
           </AutoSizer>
         </div>
       </Page.Contents>

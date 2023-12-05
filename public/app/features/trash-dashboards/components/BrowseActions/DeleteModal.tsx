@@ -2,7 +2,6 @@ import React from 'react';
 
 import { Space } from '@grafana/experimental';
 import { ConfirmModal, Text } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { DescendantCount } from 'app/features/browse-dashboards/components/BrowseActions/DescendantCount';
 import { DashboardTreeSelection } from 'app/features/browse-dashboards/types';
 
@@ -24,24 +23,16 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, isLoading, ..
     <ConfirmModal
       body={
         <>
-          <Text element="p">
-            <Trans i18nKey="browse-dashboards.action.delete-modal-text">
-              This action will delete the following content:
-            </Trans>
-          </Text>
+          <Text element="p">Are you sure you want to delete this content?</Text>
+          <Text element="p">This action cannot be undone</Text>
           <DescendantCount selectedItems={selectedItems} />
           <Space v={2} />
         </>
       }
-      confirmationText="Delete"
-      confirmText={
-        isLoading
-          ? t('browse-dashboards.action.deleting', 'Deleting...')
-          : t('browse-dashboards.action.delete-button', 'Delete')
-      }
+      confirmText={isLoading ? 'Deleting...' : 'Delete'}
       onDismiss={onDismiss}
       onConfirm={onDelete}
-      title={t('browse-dashboards.action.delete-modal-title', 'Delete')}
+      title="Delete"
       {...props}
     />
   );

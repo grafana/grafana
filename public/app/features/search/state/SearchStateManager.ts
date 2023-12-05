@@ -63,7 +63,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     const prevSort = localStorage.getItem(SEARCH_SELECTED_SORT) ?? undefined;
     const sort = layout === SearchLayout.List ? stateFromUrl.sort || prevSort : null;
 
-    stateManager.setState({
+    this.setState({
       ...initialState,
       ...stateFromUrl,
       layout,
@@ -71,6 +71,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       prevSort,
       folderUid: folderUid,
       eventTrackingNamespace: folderUid ? 'manage_dashboards' : 'dashboard_search',
+      //TODO this should be grabbed in another way
       deleted: locationService.getLocation().pathname === '/dashboards/trash',
     });
 
@@ -247,7 +248,6 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       query: this.state.query,
       tagCount: this.state.tag?.length,
       includePanels: this.state.includePanels,
-      deleted: this.state.deleted,
     };
 
     reportSearchQueryInteraction(this.state.eventTrackingNamespace, trackingInfo);

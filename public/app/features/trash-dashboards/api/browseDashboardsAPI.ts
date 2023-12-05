@@ -1,5 +1,4 @@
 import { browseDashboardsAPI, DeleteItemsArgs } from '../../browse-dashboards/api/browseDashboardsAPI';
-import { refreshParents } from '../../browse-dashboards/state';
 
 const trashDashboardsAPI = browseDashboardsAPI.injectEndpoints({
   endpoints: (builder) => ({
@@ -28,13 +27,6 @@ const trashDashboardsAPI = browseDashboardsAPI.injectEndpoints({
           });
         }
         return { data: undefined };
-      },
-      onQueryStarted: ({ selectedItems }, { queryFulfilled, dispatch }) => {
-        const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
-        const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
-        queryFulfilled.then(() => {
-          dispatch(refreshParents([...selectedFolders, ...selectedDashboards]));
-        });
       },
     }),
     restoreItems: builder.mutation<void, DeleteItemsArgs>({

@@ -399,10 +399,11 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 
 	if c.IsSignedIn {
 		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-			Text: "Trash",
-			Id:   "dashboards/trash",
-			Url:  s.cfg.AppSubURL + "/dashboards/trash",
-			Icon: "trash-alt",
+			Text:     "Trash",
+			SubTitle: "The content will be deleted after 30 days",
+			Id:       "dashboards/trash",
+			Url:      s.cfg.AppSubURL + "/dashboards/trash",
+			Icon:     "trash-alt",
 		})
 	}
 

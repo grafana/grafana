@@ -2,10 +2,11 @@ import React from 'react';
 
 import { ActionRow } from 'app/features/search/page/components/ActionRow';
 import { getGrafanaSearcher } from 'app/features/search/service';
-import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
+
+import { useTrashStateManager } from '../hooks/useTrashStateManager';
 
 export function BrowseFilters() {
-  const [searchState, stateManager] = useSearchStateManager();
+  const [searchState, stateManager] = useTrashStateManager();
 
   return (
     <div>
