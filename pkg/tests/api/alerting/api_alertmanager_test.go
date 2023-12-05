@@ -2317,12 +2317,40 @@ func TestIntegrationEval(t *testing.T) {
 				"now": "2021-04-11T14:38:14Z"
 			}
 			`,
-			expectedResponse: func() string { return "" },
-			expectedStatusCode: func() int {
-				return http.StatusBadRequest
-			},
-			expectedMessage: func() string {
-				return "Failed to build evaluator for queries and expressions: condition must not be empty"
+			expectedStatusCode: func() int { return http.StatusOK },
+			expectedMessage:    func() string { return "" },
+			expectedResponse: func() string {
+				return `{
+				"results": {
+				  "A": {
+					"status": 200,
+					"frames": [
+					  {
+						"schema": {
+						  "refId": "A",
+						  "fields": [
+							{
+							  "name": "A",
+							  "type": "number",
+							  "typeInfo": {
+								"frame": "float64",
+								"nullable": true
+							  }
+							}
+						  ]
+						},
+						"data": {
+						  "values": [
+							[
+							  0
+							]
+						  ]
+						}
+					  }
+					]
+				  }
+				}
+			}`
 			},
 		},
 	}

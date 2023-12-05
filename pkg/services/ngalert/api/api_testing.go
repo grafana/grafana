@@ -159,6 +159,9 @@ func (srv TestingApiSrv) RouteEvalQueries(c *contextmodel.ReqContext, cmd apimod
 		Condition: cmd.Condition,
 		Data:      queries,
 	}
+	if cond.Condition == "" && len(cond.Data) > 0 {
+		cond.Condition = cond.Data[len(cond.Data)-1].RefID
+	}
 
 	_, err := store.OptimizeAlertQueries(cond.Data)
 	if err != nil {
