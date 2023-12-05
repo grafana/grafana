@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -75,6 +74,9 @@ func RunTargetServer(opts ServerOptions) error {
 		}
 	}()
 
+	setBuildInfo(opts)
+	checkPrivileges()
+
 	configOptions := strings.Split(ConfigOverrides, " ")
 	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
 		Config:   ConfigFile,
@@ -85,9 +87,6 @@ func RunTargetServer(opts ServerOptions) error {
 	if err != nil {
 		return err
 	}
-
-	setBuildInfo(metrics.ProvideRegisterer(cfg), opts)
-	checkPrivileges()
 
 	s, err := server.InitializeModuleServer(
 		cfg,
