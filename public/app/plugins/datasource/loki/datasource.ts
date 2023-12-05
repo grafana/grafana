@@ -46,7 +46,13 @@ import { Duration } from '@grafana/lezer-logql';
 import { BackendSrvRequest, config, DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 
-import { queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
+import {
+  queryLogsCount,
+  queryLogsCountWithGroupBy,
+  queryLogsSample,
+  queryLogsVolume,
+  queryLogsVolumeWithGroupBy,
+} from '../../../features/logs/logsModel';
 import { getLogLevelFromKey } from '../../../features/logs/utils';
 import { replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
 
@@ -107,6 +113,7 @@ export const REF_ID_STARTER_ANNOTATION = 'annotation-';
 export const REF_ID_STARTER_LOG_ROW_CONTEXT = 'log-row-context-query-';
 export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
 export const REF_ID_STARTER_LOG_SAMPLE = 'log-sample-';
+export const REF_ID_STARTER_LOG_COUNT = 'log-count-';
 export const REF_ID_STARTER_STATS = 'log-stats-';
 
 const NS_IN_MS = 1000000;
@@ -148,6 +155,7 @@ export class LokiDatasource
   languageProvider: LanguageProvider;
   maxLines: number;
   predefinedOperations: string;
+  groupByFilter: string;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<LokiOptions>,
@@ -164,6 +172,7 @@ export class LokiDatasource
     };
     this.variables = new LokiVariableSupport(this);
     this.logContextProvider = new LogContextProvider(this);
+    this.groupByFilter = '';
   }
 
   /**
@@ -183,6 +192,12 @@ export class LokiDatasource
         return this.getLogsVolumeDataProvider(request);
       case SupplementaryQueryType.LogsSample:
         return this.getLogsSampleDataProvider(request);
+      case SupplementaryQueryType.LogsCount:
+        return this.getLogsCountDataProvider(request);
+      case SupplementaryQueryType.LogsCountWithGroupBy:
+        return this.getLogsCountWithGroupByDataProvider(request);
+      case SupplementaryQueryType.LogsVolumeWithGroupBy:
+        return this.getLogsVolumeWithGroupByDataProvider(request);
       default:
         return undefined;
     }
@@ -194,7 +209,13 @@ export class LokiDatasource
    * @returns An array of supported supplementary query types.
    */
   getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[] {
-    return [SupplementaryQueryType.LogsVolume, SupplementaryQueryType.LogsSample];
+    return [
+      SupplementaryQueryType.LogsVolume,
+      SupplementaryQueryType.LogsSample,
+      SupplementaryQueryType.LogsCount,
+      SupplementaryQueryType.LogsCountWithGroupBy,
+      SupplementaryQueryType.LogsVolumeWithGroupBy,
+    ];
   }
 
   /**
@@ -227,6 +248,21 @@ export class LokiDatasource
           expr: `sum by (level) (count_over_time(${expr}[$__auto]))`,
         };
 
+      case SupplementaryQueryType.LogsVolumeWithGroupBy:
+        // it has to be a logs-producing range-query
+        isQuerySuitable = !!(expr && isLogsQuery(expr) && normalizedQuery.queryType === LokiQueryType.Range);
+        if (!isQuerySuitable) {
+          return undefined;
+        }
+
+        return {
+          ...normalizedQuery,
+          refId: `${REF_ID_STARTER_LOG_VOLUME}${normalizedQuery.refId}`,
+          queryType: LokiQueryType.Range,
+          supportingQueryType: SupportingQueryType.LogsVolume,
+          expr,
+        };
+
       case SupplementaryQueryType.LogsSample:
         // it has to be a metric query
         isQuerySuitable = !!(expr && !isLogsQuery(expr));
@@ -236,9 +272,37 @@ export class LokiDatasource
         return {
           ...normalizedQuery,
           queryType: LokiQueryType.Range,
-          refId: `${REF_ID_STARTER_LOG_SAMPLE}${normalizedQuery.refId}`,
+          refId: `${REF_ID_STARTER_LOG_COUNT}${normalizedQuery.refId}`,
           expr: getLogQueryFromMetricsQuery(expr),
           maxLines: Number.isNaN(Number(options.limit)) ? this.maxLines : Number(options.limit),
+        };
+
+      case SupplementaryQueryType.LogsCount:
+        // it has to be a metric query
+        isQuerySuitable = !!(expr && isLogsQuery(expr));
+        if (!isQuerySuitable) {
+          return undefined;
+        }
+
+        return {
+          ...normalizedQuery,
+          queryType: LokiQueryType.Instant,
+          refId: `${REF_ID_STARTER_LOG_SAMPLE}${normalizedQuery.refId}`,
+          expr: `sum(count_over_time(${expr}[$__auto]))`,
+        };
+
+      case SupplementaryQueryType.LogsCountWithGroupBy:
+        // it has to be a metric query
+        isQuerySuitable = !!(expr && isLogsQuery(expr));
+        if (!isQuerySuitable) {
+          return undefined;
+        }
+
+        return {
+          ...normalizedQuery,
+          queryType: LokiQueryType.Instant,
+          refId: `${REF_ID_STARTER_LOG_SAMPLE}${normalizedQuery.refId}`,
+          expr,
         };
 
       default:
@@ -285,6 +349,67 @@ export class LokiDatasource
       return undefined;
     }
     return queryLogsSample(this, { ...logsSampleRequest, targets });
+  }
+
+  /**
+   * Private method used in the `getDataProvider` for DataSourceWithSupplementaryQueriesSupport, specifically for Logs sample queries.
+   * @returns An Observable of DataQueryResponse or undefined if no suitable queries are found.
+   */
+  private getLogsCountDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
+    const logsCountRequest = cloneDeep(request);
+    const targets = logsCountRequest.targets
+      .map((query) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsCount }, query))
+      .filter((query): query is LokiQuery => !!query);
+
+    if (!targets.length) {
+      return undefined;
+    }
+    return queryLogsCount(this, { ...logsCountRequest, targets });
+  }
+
+  /**
+   * Private method used in the `getDataProvider` for DataSourceWithSupplementaryQueriesSupport, specifically for Logs sample queries.
+   * @returns An Observable of DataQueryResponse or undefined if no suitable queries are found.
+   */
+  private getLogsCountWithGroupByDataProvider(
+    request: DataQueryRequest<LokiQuery>
+  ): Observable<DataQueryResponse> | undefined {
+    const logsCountRequest = cloneDeep(request);
+    const targets = logsCountRequest.targets
+      .map((query) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsCountWithGroupBy }, query))
+      .filter((query): query is LokiQuery => !!query);
+
+    if (!targets.length) {
+      return undefined;
+    }
+    return queryLogsCountWithGroupBy(this, { ...logsCountRequest, targets });
+  }
+
+  /**
+   * Private method used in the `getDataProvider` for DataSourceWithSupplementaryQueriesSupport, specifically for Logs sample queries.
+   * @returns An Observable of DataQueryResponse or undefined if no suitable queries are found.
+   */
+  private getLogsVolumeWithGroupByDataProvider(
+    request: DataQueryRequest<LokiQuery>
+  ): Observable<DataQueryResponse> | undefined {
+    const logsVolumeRequest = cloneDeep(request);
+    const targets = logsVolumeRequest.targets
+      .map((query) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsVolumeWithGroupBy }, query))
+      .filter((query): query is LokiQuery => !!query);
+
+    if (!targets.length) {
+      return undefined;
+    }
+
+    return queryLogsVolumeWithGroupBy(
+      this,
+      { ...logsVolumeRequest, targets },
+      {
+        extractLevel,
+        range: request.range,
+        targets: request.targets,
+      }
+    );
   }
 
   /**
@@ -1147,16 +1272,20 @@ export function lokiSpecialRegexEscape(value: any) {
   return value;
 }
 
-function extractLevel(dataFrame: DataFrame): LogLevel {
+function extractLevel(dataFrame: DataFrame, fieldName: string): LogLevel | string {
   let valueField;
   try {
     valueField = new FieldCache(dataFrame).getFirstFieldOfType(FieldType.number);
   } catch {}
-  return valueField?.labels ? getLogLevelFromLabels(valueField.labels) : LogLevel.unknown;
+  if (!fieldName) {
+    return valueField?.labels ? getLogLevelFromLabels(valueField.labels, fieldName) : LogLevel.unknown;
+  } else {
+    return valueField?.labels ? getFieldValueFromLabels(valueField.labels, fieldName) : LogLevel.unknown;
+  }
 }
 
-function getLogLevelFromLabels(labels: Labels): LogLevel {
-  const labelNames = ['level', 'lvl', 'loglevel'];
+function getLogLevelFromLabels(labels: Labels, fieldName: string): LogLevel {
+  const labelNames = ['level', 'lvl', 'loglevel', fieldName];
   let levelLabel;
   for (let labelName of labelNames) {
     if (labelName in labels) {
@@ -1165,4 +1294,8 @@ function getLogLevelFromLabels(labels: Labels): LogLevel {
     }
   }
   return levelLabel ? getLogLevelFromKey(labels[levelLabel]) : LogLevel.unknown;
+}
+
+function getFieldValueFromLabels(labels: Labels, fieldName: string): string {
+  return labels[fieldName];
 }

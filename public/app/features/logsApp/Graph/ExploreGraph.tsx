@@ -182,7 +182,6 @@ export function ExploreGraph({
     }),
     [tooltipDisplayMode]
   );
-
   return (
     <PanelContextProvider value={panelContext}>
       <PanelRenderer

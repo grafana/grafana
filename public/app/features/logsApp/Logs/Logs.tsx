@@ -10,6 +10,7 @@ import {
   DataHoverClearEvent,
   DataHoverEvent,
   DataQueryResponse,
+  DataSourceApi,
   EventBus,
   ExploreLogsPanelState,
   ExplorePanelsState,
@@ -29,6 +30,7 @@ import {
   RawTimeRange,
   serializeStateToUrlParam,
   SplitOpen,
+  SupplementaryQueryType,
   TimeRange,
   TimeZone,
   urlUtil,
@@ -86,8 +88,12 @@ interface Props extends Themeable2 {
   datasourceType?: string;
   logsVolumeEnabled: boolean;
   logsVolumeData: DataQueryResponse | undefined;
+  logsCountEnabled: boolean;
+  logsCountData: DataQueryResponse | undefined;
+  logsCountWithGroupByData: DataQueryResponse | undefined;
+  logsVolumeWithGroupByData: DataQueryResponse | undefined;
   onSetLogsVolumeEnabled: (enabled: boolean) => void;
-  loadLogsVolumeData: () => void;
+  loadLogsVolumeData: (suppQueryType?: SupplementaryQueryType) => void;
   showContextToggle?: (row: LogRowModel) => boolean;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
@@ -109,6 +115,7 @@ interface Props extends Themeable2 {
   onClickFilterValue?: (value: string, refId?: string) => void;
   onClickFilterOutValue?: (value: string, refId?: string) => void;
   loadMoreLogs?(range: AbsoluteTimeRange): void;
+  datasourceInstance: DataSourceApi<DataQuery>;
 }
 
 export type LogsVisualisationType = 'table' | 'logs';
@@ -584,6 +591,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
       logRows,
       logsVolumeEnabled,
       logsVolumeData,
+      logsCountEnabled,
+      logsCountData,
+      logsCountWithGroupByData,
+      logsVolumeWithGroupByData,
       loadLogsVolumeData,
       loading = false,
       onClickFilterLabel,
@@ -631,7 +642,12 @@ class UnthemedLogs extends PureComponent<Props, State> {
     const navigationRange = this.createNavigationRange(logRows);
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
-
+    const title =
+      logsVolumeData?.data || logsVolumeWithGroupByData?.data
+        ? 'Count over time'
+        : logsCountData?.data || logsCountWithGroupByData?.data
+        ? 'Total count'
+        : '';
     return (
       <>
         {getRowContext && contextRow && (
@@ -647,25 +663,35 @@ class UnthemedLogs extends PureComponent<Props, State> {
           />
         )}
         <PanelChrome
-          title="Logs volume"
+          title={title}
           collapsible
           collapsed={!logsVolumeEnabled}
           onToggleCollapse={this.onToggleLogsVolumeCollapse}
+          height={210}
+          width={width + 16}
         >
-          {logsVolumeEnabled && (
-            <LogsVolumePanelList
-              absoluteRange={absoluteRange}
-              width={width}
-              logsVolumeData={logsVolumeData}
-              onUpdateTimeRange={onChangeTime}
-              timeZone={timeZone}
-              splitOpen={splitOpen}
-              onLoadLogsVolume={loadLogsVolumeData}
-              onHiddenSeriesChanged={this.onToggleLogLevel}
-              eventBus={this.logsVolumeEventBus}
-              onClose={() => this.onToggleLogsVolumeCollapse(true)}
-            />
-          )}
+          {(w, h) =>
+            logsVolumeEnabled || logsCountEnabled ? (
+              <LogsVolumePanelList
+                absoluteRange={absoluteRange}
+                width={w}
+                logsVolumeData={logsVolumeData}
+                logsCountData={logsCountData}
+                logsCountWithGroupByData={logsCountWithGroupByData}
+                logsVolumeWithGroupByData={logsVolumeWithGroupByData}
+                onUpdateTimeRange={onChangeTime}
+                timeZone={timeZone}
+                splitOpen={splitOpen}
+                onLoadLogsVolume={loadLogsVolumeData}
+                onHiddenSeriesChanged={this.onToggleLogLevel}
+                eventBus={this.logsVolumeEventBus}
+                onClose={() => this.onToggleLogsVolumeCollapse(true)}
+                datasourceInstance={this.props.datasourceInstance}
+              />
+            ) : (
+              <></>
+            )
+          }
         </PanelChrome>
         <PanelChrome
           titleItems={[

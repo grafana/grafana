@@ -91,9 +91,7 @@ export const QueryRows = ({ exploreId, onChangeTime }: Props) => {
   };
 
   const dataSourceSettings = getDataSourceSettings(query, dsSettings);
-  const onChangeDataSourceSettings = dsSettings.meta.mixed
-    ? (settings: DataSourceInstanceSettings) => onDataSourceChange(settings, 0)
-    : undefined;
+  const onChangeDataSourceSettings = (settings: DataSourceInstanceSettings) => onDataSourceChange(settings, 0);
 
   return (
     <QueryEditorRow

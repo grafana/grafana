@@ -996,7 +996,15 @@ export function loadSupplementaryQueryData(exploreId: string, type: Supplementar
   return (dispatch, getState) => {
     const { supplementaryQueries } = getState().explore.panes[exploreId]!;
     const dataProvider = supplementaryQueries[type].dataProvider;
-
+    const suppQ = [...supplementaryQueryTypes];
+    const i = suppQ.indexOf(type);
+    if (i > -1) {
+      // only splice array when item is found
+      suppQ.splice(i, 1); // 2nd parameter means remove one item only
+    }
+    for (const type of suppQ) {
+      dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
+    }
     if (dataProvider) {
       const dataSubscription = dataProvider.subscribe({
         next: (supplementaryQueryData: DataQueryResponse) => {

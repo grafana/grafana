@@ -269,6 +269,9 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
       addResultsToCache,
       clearCache,
       logsVolume,
+      logsCount,
+      logsVolumeWithGroupBy,
+      logsCountWithGroupBy,
       scrollElement,
     } = this.props;
 
@@ -300,20 +303,27 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
           <Logs
             exploreId={exploreId}
             datasourceType={this.props.datasourceInstance?.type}
+            datasourceInstance={this.state.dsInstances['A']}
             logRows={logRows}
             logsMeta={logsMeta}
             logsSeries={logsSeries}
             logsVolumeEnabled={logsVolume.enabled}
+            logsCountEnabled={logsCount.enabled}
             onSetLogsVolumeEnabled={(enabled) =>
               setSupplementaryQueryEnabled(exploreId, enabled, SupplementaryQueryType.LogsVolume)
             }
             logsVolumeData={logsVolume.data}
+            logsCountData={logsCount.data}
+            logsCountWithGroupByData={logsCountWithGroupBy.data}
+            logsVolumeWithGroupByData={logsVolumeWithGroupBy.data}
             logsQueries={logsQueries}
             width={width}
             splitOpen={splitOpenFn}
             loading={loading}
             loadingState={loadingState}
-            loadLogsVolumeData={() => loadSupplementaryQueryData(exploreId, SupplementaryQueryType.LogsVolume)}
+            loadLogsVolumeData={(suppQueryType?: SupplementaryQueryType) =>
+              loadSupplementaryQueryData(exploreId, suppQueryType ?? SupplementaryQueryType.LogsCount)
+            }
             onChangeTime={this.onChangeTime}
             loadMoreLogs={this.loadMoreLogs}
             onClickFilterLabel={this.logDetailsFilterAvailable() ? onClickFilterLabel : undefined}
@@ -365,7 +375,9 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   const panelState = item.panelsState;
   const timeZone = getTimeZone(state.user);
   const logsVolume = supplementaryQueries[SupplementaryQueryType.LogsVolume];
-
+  const logsCount = supplementaryQueries[SupplementaryQueryType.LogsCount];
+  const logsCountWithGroupBy = supplementaryQueries[SupplementaryQueryType.LogsCountWithGroupBy];
+  const logsVolumeWithGroupBy = supplementaryQueries[SupplementaryQueryType.LogsVolumeWithGroupBy];
   return {
     loading,
     logRows: logsResult?.rows,
@@ -382,6 +394,9 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     range,
     absoluteRange,
     logsVolume,
+    logsCount,
+    logsCountWithGroupBy,
+    logsVolumeWithGroupBy,
     panelState,
     logsFrames: item.queryResponse.logsFrames,
   };

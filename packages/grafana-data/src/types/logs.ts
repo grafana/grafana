@@ -167,12 +167,20 @@ export const hasLogsContextSupport = (datasource: unknown): datasource is DataSo
 export enum SupplementaryQueryType {
   LogsVolume = 'LogsVolume',
   LogsSample = 'LogsSample',
+  LogsCount = 'LogsCount',
+  LogsCountWithGroupBy = 'LogsCountWithGroupBy',
+  LogsVolumeWithGroupBy = 'LogsVolumeWithGroupBy',
 }
 
 /**
  * @internal
  */
-export type SupplementaryQueryOptions = LogsVolumeOption | LogsSampleOptions;
+export type SupplementaryQueryOptions =
+  | LogsVolumeOption
+  | LogsSampleOptions
+  | LogsCountOptions
+  | LogsCountWithGroupByOptions
+  | LogsVolumeWithGroupByOptions;
 
 /**
  * @internal
@@ -187,6 +195,27 @@ export type LogsVolumeOption = {
 export type LogsSampleOptions = {
   type: SupplementaryQueryType.LogsSample;
   limit?: number;
+};
+
+/**
+ * @internal
+ */
+export type LogsCountOptions = {
+  type: SupplementaryQueryType.LogsCount;
+};
+
+/**
+ * @internal
+ */
+export type LogsCountWithGroupByOptions = {
+  type: SupplementaryQueryType.LogsCountWithGroupBy;
+};
+
+/**
+ * @internal
+ */
+export type LogsVolumeWithGroupByOptions = {
+  type: SupplementaryQueryType.LogsVolumeWithGroupBy;
 };
 
 /**
