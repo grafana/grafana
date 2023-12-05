@@ -35,6 +35,7 @@ const getReferencedIds = (model: ExpressionQuery, queries: AlertQuery[]): string
     case ExpressionQueryType.threshold:
       return getReferencedIdsForReduce(model);
   }
+  return undefined;  // TODO: quick fix for build failure
 };
 
 const getReferencedIdsForClassicCondition = (model: ExpressionQuery) => {

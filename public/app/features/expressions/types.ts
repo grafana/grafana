@@ -13,6 +13,7 @@ export enum ExpressionQueryType {
   resample = 'resample',
   classic = 'classic_conditions',
   threshold = 'threshold',
+  prql = 'prql',
 }
 
 export const getExpressionLabel = (type: ExpressionQueryType) => {
@@ -27,6 +28,8 @@ export const getExpressionLabel = (type: ExpressionQueryType) => {
       return 'Classic condition';
     case ExpressionQueryType.threshold:
       return 'Threshold';
+    case ExpressionQueryType.prql:
+      return 'PRQL';
   }
 };
 
@@ -58,6 +61,11 @@ export const expressionTypes: Array<SelectableValue<ExpressionQueryType>> = [
     label: 'Threshold',
     description:
       'Takes one or more time series returned from a query or an expression and checks if any of the series match the threshold condition.',
+  },
+  {
+    value: ExpressionQueryType.prql,
+    label: 'PRQL',
+    description: 'PRQL is a modern language for transforming data',
   },
 ];
 
@@ -122,12 +130,18 @@ export const thresholdFunctions: Array<SelectableValue<EvalFunction>> = [
 export interface ExpressionQuery extends DataQuery {
   type: ExpressionQueryType;
   reducer?: string;
-  expression?: string;
+  expression?: string; // ?? the input RefIDs?
   window?: string;
   downsampler?: string;
   upsampler?: string;
   conditions?: ClassicCondition[];
   settings?: ExpressionQuerySettings;
+  prql?: PRQLQuerySettings;
+}
+
+export interface PRQLQuerySettings {
+  // TODO: more... vars etc
+  rawQuery: string;
 }
 
 export interface ExpressionQuerySettings {

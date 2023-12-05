@@ -307,6 +307,85 @@ func (gr *ResampleCommand) Execute(ctx context.Context, now time.Time, vars math
 	return newRes, nil
 }
 
+// PRQLCommand is an expression to run PRQL over results
+type PRQLCommand struct {
+	RawQuery   string
+	VarToQuery string
+	TimeRange  TimeRange
+	refID      string // The output refid?
+}
+
+// NewPRQLCommand creates a new PRQLCMD.
+func NewPRQLCommand(refID, varToQuery, rawQuery string, tr TimeRange) (*PRQLCommand, error) {
+	return &PRQLCommand{
+		RawQuery:   rawQuery,
+		VarToQuery: varToQuery,
+		TimeRange:  tr,
+		refID:      refID,
+	}, nil
+}
+
+// UnmarshalPRQLCommand creates a PRQLCMD from Grafana's frontend query.
+func UnmarshalPRQLCommand(rn *rawNode) (*PRQLCommand, error) {
+	if rn.TimeRange == nil {
+		return nil, fmt.Errorf("time range must be specified for refID %s", rn.RefID)
+	}
+
+	// TODO: replace with the refIds from SELECT and JOIN
+	rawVar, ok := rn.Query["expression"]
+	if !ok {
+		return nil, errors.New("no expression ID to resample. must be a reference to an existing query or expression")
+	}
+	varToQuery, ok := rawVar.(string)
+	if !ok {
+		return nil, fmt.Errorf("expected prql input variable to be type string, but got type %T", rawVar)
+	}
+	varToQuery = strings.TrimPrefix(varToQuery, "$")
+
+	prqlQuerySettingsAny, ok := rn.Query["prql"] //
+	if !ok {
+		return nil, errors.New("no prql query specified")
+	}
+	prqlQuerySettings, ok := prqlQuerySettingsAny.(map[string]any)
+	if !ok {
+		return nil, errors.New("no prql node in query options")
+	}
+	rawQuery, ok := prqlQuerySettings["rawQuery"].(string)
+	fmt.Printf("QUERY (%s): %+v\n", rawQuery, rn.Query)
+	if !ok {
+		return nil, fmt.Errorf("expected THE PRQL input to be type string, but got type %T", rawQuery)
+	}
+
+	// TODO:
+	// parse query to find the table+join names for "NeedsVars"
+
+	return NewPRQLCommand(rn.RefID, varToQuery, rawQuery, rn.TimeRange)
+}
+
+// NeedsVars returns the variable names (refIds) that are dependencies
+// to execute the command and allows the command to fulfill the Command interface.
+func (gr *PRQLCommand) NeedsVars() []string {
+	return []string{gr.VarToQuery}
+}
+
+// Execute runs the command and returns the results or an error if the command
+// failed to execute.
+func (gr *PRQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error) {
+	_, span := tracer.Start(ctx, "SSE.ExecutePRQL")
+	defer span.End()
+
+	// Input to PRQL engine
+	upstream := vars[gr.VarToQuery]
+	fmt.Printf("USE: %v\n", upstream)
+
+	df := data.NewFrame("TODO")
+	v := mathexp.Scalar{Frame: df} // ??? what type?
+
+	return mathexp.Results{
+		Values: []mathexp.Value{v},
+	}, nil
+}
+
 // CommandType is the type of the expression command.
 type CommandType int
 
@@ -319,6 +398,8 @@ const (
 	TypeReduce
 	// TypeResample is the CMDType for a resampling expression.
 	TypeResample
+	// TypePRQL is the CMDType for evaluating PRQL
+	TypePRQL
 	// TypeClassicConditions is the CMDType for the classic condition operation.
 	TypeClassicConditions
 	// TypeThreshold is the CMDType for checking if a threshold has been crossed
@@ -333,6 +414,8 @@ func (gt CommandType) String() string {
 		return "reduce"
 	case TypeResample:
 		return "resample"
+	case TypePRQL:
+		return "prql"
 	case TypeClassicConditions:
 		return "classic_conditions"
 	default:
@@ -349,6 +432,8 @@ func ParseCommandType(s string) (CommandType, error) {
 		return TypeReduce, nil
 	case "resample":
 		return TypeResample, nil
+	case "prql":
+		return TypePRQL, nil
 	case "classic_conditions":
 		return TypeClassicConditions, nil
 	case "threshold":
