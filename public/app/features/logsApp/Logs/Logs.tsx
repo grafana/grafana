@@ -139,6 +139,7 @@ interface State {
   logsContainer?: HTMLDivElement;
   logDetailsRow: LogRowModel | undefined;
   groupByLabel?: string;
+  paneSize: number;
 }
 
 // we need to define the order of these explicitly
@@ -148,6 +149,10 @@ const DEDUP_OPTIONS = [
   LogsDedupStrategy.numbers,
   LogsDedupStrategy.signature,
 ];
+
+const DETAILS_SIZE = 595;
+const INITIAL_PANE_SIZE = (window.innerWidth / 4) * 3;
+function getMaxPaneSize() { return window.innerWidth - DETAILS_SIZE; }
 
 class UnthemedLogs extends PureComponent<Props, State> {
   flipOrderTimer?: number;
@@ -173,6 +178,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     logsContainer: undefined,
     logDetailsRow: undefined,
     groupByLabel: undefined,
+    paneSize: localStorage.getItem('logs.paneSize') ? parseInt(`${localStorage.getItem('logs.paneSize')}`, 10) : INITIAL_PANE_SIZE,
   };
 
   constructor(props: Props) {
@@ -553,8 +559,16 @@ class UnthemedLogs extends PureComponent<Props, State> {
   };
 
   showDetails = (row: LogRowModel) => {
+    if (row === this.state.logDetailsRow) {
+      this.setState({
+        logDetailsRow: undefined,
+      });
+      return;
+    }
     this.setState({
       logDetailsRow: row,
+    }, () => {
+      this.handlePaneResize(this.state.paneSize);
     });
   };
 
@@ -590,6 +604,18 @@ class UnthemedLogs extends PureComponent<Props, State> {
       block: 'center',
     });
   };
+
+  handlePaneResize = (size?: number) => {
+    if (!size) {
+      return;
+    }
+    const minSize = getMaxPaneSize();
+    if (this.state.logDetailsRow && size > minSize) {
+      size = minSize;
+    }
+    this.setState({ paneSize: size });
+    localStorage.setItem('logs.paneSize', size.toString());
+  }
 
   render() {
     const {
@@ -643,7 +669,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     const filteredLogs = this.filterRows(logRows, hiddenLogLevels, this.state.groupByLabel);
     const { dedupedRows } = this.dedupRows(filteredLogs, dedupStrategy);
-    const paneSize = (window.innerWidth / 4) * 3;
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
     let title =
@@ -660,6 +685,9 @@ class UnthemedLogs extends PureComponent<Props, State> {
     const log1Trace = logRows[0].possibleTraceId;
     const ds = getDataSourceSrv().getList({ tracing: true });
     const firstTracingDs = ds.find((d) => d.type === 'tempo');
+    
+    const maxPaneSize = this.state.logDetailsRow ? getMaxPaneSize() : window.innerWidth;
+
     return (
       <>
         {getRowContext && contextRow && (
@@ -859,7 +887,13 @@ class UnthemedLogs extends PureComponent<Props, State> {
           <div
             className={cx(styles.logsSection, this.state.visualisationType === 'table' ? styles.logsTable : undefined)}
           >
-            <SplitPaneWrapper splitOrientation="vertical" paneSize={paneSize} parentStyle={{ position: 'relative' }}>
+            <SplitPaneWrapper 
+              splitOrientation="vertical" 
+              paneSize={this.state.paneSize} 
+              parentStyle={{ position: 'relative' }}
+              onDragFinished={this.handlePaneResize}
+              maxSize={maxPaneSize}
+            >
               <div className={styles.logsColumn}>
                 {this.state.visualisationType === 'table' && hasData && (
                   <div className={styles.logRows} data-testid="logRowsTable">
@@ -986,7 +1020,9 @@ export const Logs = withTheme2(UnthemedLogs);
 
 const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: number) => {
   return {
-    logsColumn: css({}),
+    logsColumn: css({
+      minHeight: '16vh'
+    }),
     noData: css({
       '& > *': {
         marginLeft: '0.5em',
@@ -1017,7 +1053,8 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
     radioButtons: css({
       margin: '0',
     }),
-    logsSection: css({}),
+    logsSection: css({
+    }),
     logsTable: css({
       maxHeight: `${tableHeight}px`,
     }),
