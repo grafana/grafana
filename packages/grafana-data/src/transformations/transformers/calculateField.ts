@@ -137,6 +137,8 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
   toPRQL: (options) => {
     let alias;
     switch (options.mode) {
+      // TODO: Refactor this. Test coverage is not complete
+      // but it could be if we compose behaviour together, and test the units and the composition
       case CalculateFieldMode.Index:
         alias = options.alias ?? 'Row';
 
