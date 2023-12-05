@@ -33,6 +33,7 @@ export const storeSupplementaryQueryEnabled = (enabled: boolean, type: Supplemen
 
 export const loadSupplementaryQueries = (): SupplementaryQueries => {
   // We default to true for all supp queries
+  // @ts-ignore - this is in Explore
   let supplementaryQueries: SupplementaryQueries = {
     [SupplementaryQueryType.LogsVolume]: { enabled: true },
     [SupplementaryQueryType.LogsSample]: { enabled: false },

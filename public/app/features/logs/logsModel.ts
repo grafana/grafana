@@ -567,8 +567,9 @@ function adjustMetaInfo(logsModel: LogsModel, visibleRangeMs?: number, requested
 /**
  * Returns field configuration used to render logs volume bars
  */
-function getLogVolumeFieldConfig(level: LogLevel, oneLevelDetected: boolean, fieldName?: string) {
+function getLogVolumeFieldConfig(level: LogLevel | string, oneLevelDetected: boolean, fieldName?: string) {
   const name = oneLevelDetected && level === LogLevel.unknown ? 'logs' : level;
+  // @ts-ignore - we want to override color for ungrouped logs volume
   const color = LogLevelColor[level];
   const config = {
     displayNameFromDS: name,
@@ -593,6 +594,7 @@ function getLogVolumeFieldConfig(level: LogLevel, oneLevelDetected: boolean, fie
   if (!fieldName) {
     config.color = {
       mode: FieldColorModeId.Fixed,
+      // @ts-ignore - we want to override color for ungrouped logs volume
       fixedColor: color,
     };
   }
@@ -601,7 +603,7 @@ function getLogVolumeFieldConfig(level: LogLevel, oneLevelDetected: boolean, fie
 
 const updateLogsVolumeConfig = (
   dataFrame: DataFrame,
-  extractLevel: (dataFrame: DataFrame, fieldName: string) => LogLevel,
+  extractLevel: (dataFrame: DataFrame, fieldName: string) => LogLevel | string,
   oneLevelDetected: boolean,
   fieldName?: string
 ): DataFrame => {
@@ -618,7 +620,7 @@ const updateLogsVolumeConfig = (
 };
 
 type LogsVolumeQueryOptions<T extends DataQuery> = {
-  extractLevel: (dataFrame: DataFrame) => LogLevel;
+  extractLevel: (dataFrame: DataFrame, fieldName?: string) => LogLevel | string;
   targets: T[];
   range: TimeRange;
 };
@@ -747,9 +749,12 @@ export function queryLogsVolumeWithGroupBy<TQuery extends DataQuery, TOptions ex
     let logsVolumeRequestUpdated = logsVolumeRequest;
     if (datasource.type === 'loki') {
       const newExpr =
+        // @ts-ignore
         datasource.groupByFilter && datasource.groupByFilter !== 'none'
-          ? `sum by (${datasource.groupByFilter}) (count_over_time(${logsVolumeRequestUpdated.targets[0].expr}[$__auto]))`
-          : `sum(count_over_time(${logsVolumeRequestUpdated.targets[0].expr}[$__auto]))`;
+          ? // @ts-ignore
+            `sum by (${datasource.groupByFilter}) (count_over_time(${logsVolumeRequestUpdated.targets[0].expr}[$__auto]))`
+          : // @ts-ignore
+            `sum(count_over_time(${logsVolumeRequestUpdated.targets[0].expr}[$__auto]))`;
 
       logsVolumeRequestUpdated = {
         ...logsVolumeRequestUpdated,
@@ -764,11 +769,15 @@ export function queryLogsVolumeWithGroupBy<TQuery extends DataQuery, TOptions ex
 
     if (datasource.type === 'elasticsearch') {
       const target = logsVolumeRequestUpdated.targets[0];
+      // @ts-ignore - hackathon way to add group by filter to supplementary queries
       target.bucketAggs = [
         {
+          // @ts-ignore
           ...target.bucketAggs[0],
+          // @ts-ignore
           field: datasource.groupByFilter,
         },
+        // @ts-ignore
         target.bucketAggs[1],
       ];
 
@@ -820,6 +829,7 @@ export function queryLogsVolumeWithGroupBy<TQuery extends DataQuery, TOptions ex
               dataFrame,
               options.extractLevel,
               framesByRefId[dataFrame.refId].length === 1,
+              // @ts-ignore - hackathon way to add group by filter to supplementary queries
               datasource.groupByFilter
             );
           });
@@ -939,9 +949,12 @@ export function queryLogsCountWithGroupBy<TQuery extends DataQuery, TOptions ext
 
     if (datasource.type === 'loki') {
       const expr =
+        // @ts-ignore - this is horrible, but fastest way I was able to make it work for hackathon
         datasource.groupByFilter && datasource.groupByFilter !== 'none'
-          ? `sum by (${datasource.groupByFilter}) (count_over_time(${logsCountRequest.targets[0].expr}[$__auto]))`
-          : `sum(count_over_time(${logsCountRequest.targets[0].expr}[$__auto]))`;
+          ? // @ts-ignore
+            `sum by (${datasource.groupByFilter}) (count_over_time(${logsCountRequest.targets[0].expr}[$__auto]))`
+          : // @ts-ignore
+            `sum(count_over_time(${logsCountRequest.targets[0].expr}[$__auto]))`;
 
       logsCountRequestUpdated = {
         ...logsCountRequest,
@@ -956,9 +969,12 @@ export function queryLogsCountWithGroupBy<TQuery extends DataQuery, TOptions ext
 
     if (datasource.type === 'elasticsearch') {
       const target = logsCountRequest.targets[0];
+      // @ts-ignore
       target.bucketAggs = [
         {
+          // @ts-ignore
           ...target.bucketAggs[0],
+          // @ts-ignore
           field: datasource.groupByFilter,
         },
       ];

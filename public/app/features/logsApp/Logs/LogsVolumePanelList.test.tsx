@@ -15,6 +15,7 @@ jest.mock('../Graph/ExploreGraph', () => {
 
 function renderPanel(logsVolumeData?: DataQueryResponse, onLoadLogsVolume = () => {}) {
   render(
+    // @ts-ignore - test wasn't updated
     <LogsVolumePanelList
       absoluteRange={{ from: 0, to: 1 }}
       timeZone="timeZone"

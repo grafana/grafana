@@ -19,7 +19,6 @@ import { LogLabelStats } from 'app/features/logs/components/LogLabelStats';
 import { getLogRowStyles } from 'app/features/logs/components/getLogRowStyles';
 import { logRowToSingleRowDataFrame } from 'app/features/logs/logsModel';
 
-
 export interface Props extends Themeable2 {
   parsedValues: string[];
   parsedKeys: string[];

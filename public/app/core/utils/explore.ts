@@ -38,8 +38,8 @@ const MAX_HISTORY_ITEMS = 100;
 
 const LAST_USED_DATASOURCE_KEY = 'grafana.explore.datasource';
 const lastUsedDatasourceKeyForOrgId = (orgId: number) => `${LAST_USED_DATASOURCE_KEY}.${orgId}`;
-export const getLastUsedDatasourceUID = (orgId: number) =>
-  store.getObject<string>(lastUsedDatasourceKeyForOrgId(orgId));
+// We always want to show mixed data source
+export const getLastUsedDatasourceUID = (orgId: number) => '-- Mixed --';
 export const setLastUsedDatasourceUID = (orgId: number, datasourceUID: string) =>
   store.setObject(lastUsedDatasourceKeyForOrgId(orgId), datasourceUID);
 

@@ -407,6 +407,7 @@ export class LokiDatasource
       this,
       { ...logsVolumeRequest, targets },
       {
+        // @ts-ignore
         extractLevel,
         range: request.range,
         targets: request.targets,
@@ -1275,7 +1276,7 @@ export function lokiSpecialRegexEscape(value: any) {
   return value;
 }
 
-function extractLevel(dataFrame: DataFrame, fieldName: string): LogLevel | string {
+function extractLevel(dataFrame: DataFrame, fieldName?: string): LogLevel | string {
   let valueField;
   try {
     valueField = new FieldCache(dataFrame).getFirstFieldOfType(FieldType.number);
@@ -1287,8 +1288,11 @@ function extractLevel(dataFrame: DataFrame, fieldName: string): LogLevel | strin
   }
 }
 
-function getLogLevelFromLabels(labels: Labels, fieldName: string): LogLevel {
-  const labelNames = ['level', 'lvl', 'loglevel', fieldName];
+function getLogLevelFromLabels(labels: Labels, fieldName?: string): LogLevel {
+  const labelNames = ['level', 'lvl', 'loglevel'];
+  if (fieldName) {
+    labelNames.push(fieldName);
+  }
   let levelLabel;
   for (let labelName of labelNames) {
     if (labelName in labels) {
