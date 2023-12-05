@@ -1,37 +1,18 @@
-import { capitalize } from "lodash";
 import React from "react";
 
-import { LogsDedupDescription } from "@grafana/data";
-import { LogsDedupStrategy, LogsSortOrder } from "@grafana/schema";
-import { Button, Dropdown, Icon, InlineField, InlineFieldRow, InlineSwitch, RadioButtonGroup } from "@grafana/ui";
+import { Button, Dropdown, Icon, InlineField, InlineSwitch } from "@grafana/ui";
 
-// we need to define the order of these explicitly
-const DEDUP_OPTIONS = [
-  LogsDedupStrategy.none,
-  LogsDedupStrategy.exact,
-  LogsDedupStrategy.numbers,
-  LogsDedupStrategy.signature,
-];
-
-/**
- * Placeholder component for Log Details to clean up the UI and prepare for that.
- */
 interface Props {
   styles: Record<string, string>;
   showTime: boolean;
   showLabels: boolean;
   wrapLogMessage: boolean;
   prettifyLogMessage: boolean;
-  isFlipping: boolean;
-  dedupStrategy: LogsDedupStrategy;
   exploreId: string;
-  logsSortOrder: LogsSortOrder;
   onChangeTime(event: React.ChangeEvent<HTMLInputElement>): void;
   onChangeLabels(event: React.ChangeEvent<HTMLInputElement>): void;
   onChangeWrapLogMessage(event: React.ChangeEvent<HTMLInputElement>): void;
   onChangePrettifyLogMessage(event: React.ChangeEvent<HTMLInputElement>): void;
-  onChangeDedup(dedupStrategy: LogsDedupStrategy): void;
-  onChangeLogsSortOrder(): void;
 }
 
 export const LogsOptions = ({
@@ -45,11 +26,6 @@ export const LogsOptions = ({
   onChangeWrapLogMessage,
   onChangePrettifyLogMessage,
   prettifyLogMessage,
-  dedupStrategy,
-  onChangeDedup,
-  isFlipping,
-  logsSortOrder,
-  onChangeLogsSortOrder
 }: Props) => {
   const menu = (
     <div className={styles.logOptionsMenu}>

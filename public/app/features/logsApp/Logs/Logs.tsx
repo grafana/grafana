@@ -68,6 +68,7 @@ import { LogsOptions } from './LogsOptions';
 import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { SETTINGS_KEYS } from './utils/logs';
+import { LogsOrder } from './LogsOrder';
 
 interface Props extends Themeable2 {
   width: number;
@@ -773,38 +774,41 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   showLabels={showLabels}
                   wrapLogMessage={wrapLogMessage}
                   prettifyLogMessage={prettifyLogMessage}
-                  isFlipping={isFlipping}
-                  dedupStrategy={dedupStrategy}
                   exploreId={exploreId}
-                  logsSortOrder={logsSortOrder}
                   onChangeTime={this.onChangeTime}
                   onChangeLabels={this.onChangeLabels}
                   onChangeWrapLogMessage={this.onChangeWrapLogMessage}
                   onChangePrettifyLogMessage={this.onChangePrettifyLogMessage}
-                  onChangeDedup={this.onChangeDedup}
-                  onChangeLogsSortOrder={this.onChangeLogsSortOrder}
                 />
-                {config.featureToggles.logsExploreTableVisualisation && (
-                  <div className={styles.visualisationType}>
-                    <RadioButtonGroup
-                      options={[
-                        {
-                          label: 'Logs',
-                          value: 'logs',
-                          description: 'Show results in logs visualisation',
-                        },
-                        {
-                          label: 'Table',
-                          value: 'table',
-                          description: 'Show results in table visualisation',
-                        },
-                      ]}
-                      size="md"
-                      value={this.state.visualisationType}
-                      onChange={this.onChangeVisualisation}
-                    />
-                  </div>
-                )}
+                <div className={styles.optionToggles}>
+                  {config.featureToggles.logsExploreTableVisualisation && (
+                    <div className={styles.visualisationType}>
+                      <RadioButtonGroup
+                        options={[
+                          {
+                            label: 'List',
+                            value: 'logs',
+                            description: 'Show results in logs visualisation',
+                          },
+                          {
+                            label: 'Table',
+                            value: 'table',
+                            description: 'Show results in table visualisation',
+                          },
+                        ]}
+                        size="md"
+                        value={this.state.visualisationType}
+                        onChange={this.onChangeVisualisation}
+                      />
+                    </div>
+                  )}
+                  <LogsOrder
+                    logsSortOrder={logsSortOrder}
+                    isFlipping={isFlipping}
+                    onChangeLogsSortOrder={this.onChangeLogsSortOrder}
+                    styles={styles}
+                  />
+                </div>
               </div>
             <div ref={this.topLogsRef} />
           </div>
@@ -944,6 +948,9 @@ export const Logs = withTheme2(UnthemedLogs);
 
 const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: number) => {
   return {
+    optionToggles: css({
+      display: 'flex', 
+    }),
     logOptionsMenu: css({
       position: 'relative',
       left: theme.spacing(2),
