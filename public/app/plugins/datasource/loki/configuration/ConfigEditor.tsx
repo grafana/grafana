@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
 import {
@@ -12,7 +12,9 @@ import {
 import { config, reportInteraction } from '@grafana/runtime';
 import { SecureSocksProxySettings } from '@grafana/ui';
 import { Divider } from 'app/core/components/Divider';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
+import { LokiDatasource } from '../datasource';
 import { LokiOptions } from '../types';
 
 import { AlertingSettings } from './AlertingSettings';
@@ -36,6 +38,7 @@ const makeJsonUpdater =
 const setMaxLines = makeJsonUpdater('maxLines');
 const setPredefinedOperations = makeJsonUpdater('predefinedOperations');
 const setDerivedFields = makeJsonUpdater('derivedFields');
+const setDefaultLabel = makeJsonUpdater('defaultLabel');
 
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
@@ -47,6 +50,26 @@ export const ConfigEditor = (props: Props) => {
     },
     [options, onOptionsChange]
   );
+
+  useEffect(() => {
+    const { url, name } = options;
+    if (!url) {
+      return;
+    }
+    const saveLabels = async () => {
+      const datasource = (await getDatasourceSrv().loadDatasource(name)) as LokiDatasource;
+      const labels = await datasource.languageProvider.fetchLabels();
+
+      for (const label of ['job', 'app', 'cluster']) {
+        if (labels?.includes(label)) {
+          onOptionsChange(setDefaultLabel(options, label));
+          break;
+        }
+      }
+    };
+
+    saveLabels();
+  }, [options.url, options.name]);
 
   return (
     <>

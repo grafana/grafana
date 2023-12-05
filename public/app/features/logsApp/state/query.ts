@@ -492,13 +492,14 @@ async function handleHistory(
 interface RunQueriesOptions {
   exploreId: string;
   preserveCache?: boolean;
+  isFirstQuery?: boolean;
 }
 /**
  * Main action to run queries and dispatches sub-actions based on which result viewers are active
  */
 export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
   'explore/runQueries',
-  async ({ exploreId, preserveCache }, { dispatch, getState }) => {
+  async ({ exploreId, preserveCache, isFirstQuery }, { dispatch, getState }) => {
     dispatch(cancelQueries(exploreId));
 
     dispatch(updateTime({ exploreId }));
@@ -606,7 +607,9 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
         range,
         scanning,
         timeZone,
-        scopedVars
+        scopedVars,
+        isFirstQuery,
+        datasourceInstance
       );
 
       dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));

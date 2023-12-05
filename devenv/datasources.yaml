@@ -140,6 +140,7 @@ datasources:
     uid: gdev-elasticsearch
     access: proxy
     url: http://localhost:9200
+    # isDefault: true
     jsonData:
       index: "[logs-]YYYY.MM.DD"
       interval: Daily

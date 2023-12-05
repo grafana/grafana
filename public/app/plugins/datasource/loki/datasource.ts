@@ -156,6 +156,7 @@ export class LokiDatasource
   maxLines: number;
   predefinedOperations: string;
   groupByFilter: string;
+  defaultLabel: string;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<LokiOptions>,
@@ -173,6 +174,7 @@ export class LokiDatasource
     this.variables = new LokiVariableSupport(this);
     this.logContextProvider = new LogContextProvider(this);
     this.groupByFilter = '';
+    this.defaultLabel = settingsData.defaultLabel ?? 'job';
   }
 
   /**
@@ -1250,6 +1252,7 @@ export class LokiDatasource
 
     return {
       ...defaults,
+      expr: `{${this.defaultLabel}=~".+"}`,
       queryType: LokiQueryType.Range,
     };
   }

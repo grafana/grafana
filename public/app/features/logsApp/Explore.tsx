@@ -64,6 +64,7 @@ import {
   selectIsWaitingForData,
   setQueries,
   setSupplementaryQueryEnabled,
+  runQueries,
 } from './state/query';
 import { isSplit } from './state/selectors';
 import { updateTimeRange } from './state/time';
@@ -162,6 +163,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     };
     this.graphEventBus = props.eventBus.newScopedBus('graph', { onlyLocal: false });
     this.logsEventBus = props.eventBus.newScopedBus('logs', { onlyLocal: false });
+  }
+
+  componentDidMount(): void {
+    const { exploreId, runQueries } = this.props;
+    runQueries({ exploreId });
   }
 
   onChangeTime = (rawRange: RawTimeRange) => {
@@ -754,6 +760,7 @@ const mapDispatchToProps = {
   addQueryRow,
   splitOpen,
   setSupplementaryQueryEnabled,
+  runQueries,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
