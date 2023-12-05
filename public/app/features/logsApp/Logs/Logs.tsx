@@ -758,23 +758,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
           }
         </PanelChrome>
         <PanelChrome
-          titleItems={[
-            config.featureToggles.logsExploreTableVisualisation
-              ? this.state.visualisationType === 'logs'
-                ? null
-                : [
-                    <PanelChrome.TitleItem title="Experimental" key="A">
-                      <FeatureBadge
-                        featureState={FeatureState.beta}
-                        tooltip="Table view is experimental and may change in future versions"
-                      />
-                    </PanelChrome.TitleItem>,
-                    <PanelChrome.TitleItem title="Feedback" key="B">
-                      <LogsFeedback feedbackUrl="https://forms.gle/5YyKdRQJ5hzq4c289" />
-                    </PanelChrome.TitleItem>,
-                  ]
-              : null,
-          ]}
           title={`Logs${
             this.state.hiddenLogLevels.length > 0 ? ` (filtered based on selected ${this.state.groupByLabel})` : ''
           }`}
@@ -782,7 +765,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
         >
           <div className={styles.stickyNavigation}>
             <div className={styles.logsOptions}>
-              {this.state.visualisationType !== 'table' && (
                 <Button
                   size="md"
                   variant="secondary"
@@ -791,7 +773,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   <Icon name="sliders-v-alt" size="md" />
                   Logs settings
                 </Button>
-                )}
                 {this.state.showLogsOptions && (
                   <LogsOptions
                     styles={styles}
