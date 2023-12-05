@@ -68,6 +68,9 @@ func NewTestMigrationStore(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setti
 	require.NoError(t, err)
 	folderService := folderimpl.ProvideService(ac, bus, cfg, dashboardStore, folderStore, sqlStore, features)
 
+	err = folderService.RegisterService(alertingStore)
+	require.NoError(t, err)
+
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
 		features, routeRegister, sqlStore, ac, license, dashboardStore, folderService, acSvc, teamSvc, userSvc)
 	require.NoError(t, err)
