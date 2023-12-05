@@ -126,7 +126,7 @@ type AlertingRule struct {
 	// State can be "pending", "firing", "inactive".
 	// required: true
 	State    string `json:"state,omitempty"`
-	Flapping bool   `json:"flapping,omitempty"`
+	Flapping bool   `json:"flapping"`
 	// required: true
 	Name string `json:"name,omitempty"`
 	// required: true

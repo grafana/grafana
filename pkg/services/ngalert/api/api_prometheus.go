@@ -344,7 +344,7 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder
 			}
 			flapping := alertState.IsFlapping()
 			if flapping {
-				alertingRule.Flapping = true
+				alertingRule.Flapping = flapping
 			}
 			alert := apimodels.Alert{
 				Labels:      alertState.GetLabels(labelOptions...),
