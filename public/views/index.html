@@ -20,9 +20,9 @@
 
     <!-- If theme is "system", we inject the stylesheets with javascript further down the page -->
     [[ if eq .ThemeType "light" ]]
-    <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.light %>" />
+    <link rel="stylesheet" href="[[.ContentDeliveryURL]][[.Assets.CSSLight]]" />
     [[ else if eq .ThemeType "dark" ]]
-    <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.dark %>" />
+    <link rel="stylesheet" href="[[.ContentDeliveryURL]][[.Assets.CSSDark]]" />
     [[ end ]]
 
     <script nonce="[[.Nonce]]">
@@ -244,8 +244,8 @@
         settings: [[.Settings]],
         navTree: [[.NavTree]],
         themePaths: {
-          light: '[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.light %>',
-          dark: '[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.dark %>'
+          light: '[[.ContentDeliveryURL]][[.Assets.CSSLight]]',
+          dark: '[[.ContentDeliveryURL]][[.Assets.CSSDark]]'
         }
       };
 
@@ -327,21 +327,15 @@
       })(window, document, 'script', 'dataLayer', '[[.GoogleTagManagerId]]');
     </script>
     <!-- End Google Tag Manager -->
-    [[end]] <% for (index in htmlWebpackPlugin.files.js) { %> <% if (htmlWebpackPlugin.files.jsIntegrity) { %>
-    <script
-      nonce="[[.Nonce]]"
-      src="[[.ContentDeliveryURL]]<%= htmlWebpackPlugin.files.js[index] %>"
-      type="text/javascript"
-      integrity="<%= htmlWebpackPlugin.files.jsIntegrity[index] %>"
-      crossorigin="<%= webpackConfig.output.crossOriginLoading %>"
-    ></script>
-    <% } else { %>
-    <script
-      nonce="[[.Nonce]]"
-      src="[[.ContentDeliveryURL]]<%= htmlWebpackPlugin.files.js[index] %>"
+    [[end]]
+
+    [[range $asset := .Assets.JSFiles]]
+      <script
+      nonce="[[$.Nonce]]"
+      src="[[$.ContentDeliveryURL]][[$asset.FilePath]]"
       type="text/javascript"
     ></script>
-    <% } %> <% } %>
+    [[end]]
 
     <script nonce="[[.Nonce]]">
       performance.mark('frontend_boot_js_done_time_seconds');

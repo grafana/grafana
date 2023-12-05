@@ -862,6 +862,16 @@
         },
         "description": "(empty)"
       },
+      "getLibraryElementArrayResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/LibraryElementArrayResponse"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "getLibraryElementConnectionsResponse": {
         "content": {
           "application/json": {
@@ -6319,6 +6329,18 @@
             "type": "integer"
           }
         },
+        "type": "object"
+      },
+      "LibraryElementArrayResponse": {
+        "properties": {
+          "result": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryElementDTO"
+            },
+            "type": "array"
+          }
+        },
+        "title": "LibraryElementArrayResponse is a response struct for an array of LibraryElementDTO.",
         "type": "object"
       },
       "LibraryElementConnectionDTO": {
@@ -18659,7 +18681,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/components/responses/getLibraryElementResponse"
+            "$ref": "#/components/responses/getLibraryElementArrayResponse"
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
