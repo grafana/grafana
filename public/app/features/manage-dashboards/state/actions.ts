@@ -363,10 +363,6 @@ export function deleteDashboard(uid: string, showSuccessAlert: boolean) {
   return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${uid}`, { showSuccessAlert });
 }
 
-export function deleteDashboardPermanently(uid: string, showSuccessAlert: boolean) {
-  return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${uid}`, { showSuccessAlert }); //revisit this endpoint
-}
-
 function executeInOrder(tasks: any[]): Promise<unknown> {
   return tasks.reduce((acc, task) => {
     return Promise.resolve(acc).then(task);
