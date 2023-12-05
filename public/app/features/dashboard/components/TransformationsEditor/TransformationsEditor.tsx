@@ -45,7 +45,6 @@ import { AppNotificationSeverity } from '../../../../types';
 import { PanelModel } from '../../state';
 import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
 
-import { PRQLEditor } from './PRQLEditor';
 import { TransformationOperationRows } from './TransformationOperationRows';
 import { TransformationsEditorTransformation } from './types';
 
@@ -557,65 +556,6 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                 />
               </div>
             )}
-            {
-              <>
-                <div>
-                  <div className="readonly">
-                    <PRQLEditor
-                      metricNames={['metric1', 'metric2', 'metric3']}
-                      readOnly={true}
-                      queryString={`from invoices
-filter invoice_date >= @1970-01-16
-derive {
-  transaction_fees = 0.8,
-  income = total - transaction_fees
-}
-filter income > 1
-group customer_id (
-  aggregate {
-    average total,
-    sum_income = sum income,
-    ct = count total,
-  }
-)
-sort {-sum_income}
-take 10
-join c=customers (==customer_id)
-derive name = f"{c.last_name}, {c.first_name}"
-select {
-  c.customer_id, name, sum_income
-}
-derive db_version = s"version()"`}
-                    />
-                  </div>
-                  <PRQLEditor
-                    metricNames={['metric1', 'metric2', 'metric3']}
-                    queryString={`from invoices
-filter invoice_date >= @1970-01-16
-derive {
-  transaction_fees = 0.8,
-  income = total - transaction_fees
-}
-filter income > 1
-group customer_id (
-  aggregate {
-    average total,
-    sum_income = sum income,
-    ct = count total,
-  }
-)
-sort {-sum_income}
-take 10
-join c=customers (==customer_id)
-derive name = f"{c.last_name}, {c.first_name}"
-select {
-  c.customer_id, name, sum_income
-}
-derive db_version = s"version()"`}
-                  />
-                </div>
-              </>
-            }
             {hasTransforms && this.renderTransformationEditors()}
             {this.renderTransformsPicker()}
           </div>
