@@ -23,8 +23,8 @@ The Azure AD authentication allows you to use an Azure Active Directory tenant a
 
 - [Configure Azure AD OAuth2 authentication](#configure-azure-ad-oauth2-authentication)
   - [Create the Azure AD application](#create-the-azure-ad-application)
-      - [Configure application roles for Grafana in the Azure Portal](#configure-application-roles-for-grafana-in-the-azure-portal)
-      - [Configure Application roles for Grafana in the manifest file](#configure-application-roles-for-grafana-in-the-manifest-file)
+    - [Configure application roles for Grafana in the Azure Portal](#configure-application-roles-for-grafana-in-the-azure-portal)
+    - [Configure Application roles for Grafana in the manifest file](#configure-application-roles-for-grafana-in-the-manifest-file)
     - [Assign server administrator privileges](#assign-server-administrator-privileges)
   - [Enable Azure AD OAuth in Grafana](#enable-azure-ad-oauth-in-grafana)
     - [Configure refresh token](#configure-refresh-token)
@@ -73,12 +73,12 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
 
 1. Define the required application roles for Grafana [using the Azure Portal](#configure-application-roles-for-grafana-in-the-azure-portal) or [using the manifest file](#configure-application-roles-for-grafana-in-the-manifest-file).
 
-1. Go to **Azure Active Directory** and then to **Enterprise Applications**. 
+1. Go to **Azure Active Directory** and then to **Enterprise Applications**.
 
 1. Search for your application and click it.
 
 1. Click **Users and Groups**.
-1.  Click **Add user/group** to add a user or group to the Grafana roles.
+1. Click **Add user/group** to add a user or group to the Grafana roles.
 
 #### Configure application roles for Grafana in the Azure Portal
 
@@ -88,73 +88,75 @@ This section describes setting up basic application roles for Grafana within the
 
 1. Click **App roles** and then **Create app role**.
 
-1. Define a role corresponding to each Grafana role: Viewer, Editor, and Admin. 
+1. Define a role corresponding to each Grafana role: Viewer, Editor, and Admin.
 
-    1. Choose a **Display name** for the role. For example, "Grafana Editor".
-            
-    1. Set the **Allowed member types** to **Users/Groups**.
+   1. Choose a **Display name** for the role. For example, "Grafana Editor".
 
-    1. Ensure that the **Value** field matches the Grafana role name. For example, "Editor".
+   1. Set the **Allowed member types** to **Users/Groups**.
 
-    1. Choose a **Description** for the role. For example, "Grafana Editor Users".
+   1. Ensure that the **Value** field matches the Grafana role name. For example, "Editor".
 
-    1. Click **Apply**.
+   1. Choose a **Description** for the role. For example, "Grafana Editor Users".
+
+   1. Click **Apply**.
 
 #### Configure Application roles for Grafana in the manifest file
 
+If you prefer to configure the application roles for Grafana in the manifest file, complete the following steps:
+
 1. Go to **App Registrations**, search for your application, and click it.
-        
+
 1. Click **Manifest** and then click **Edit**.
 
-1. Add a Universally Unique Identifier to each role. 
+1. Add a Universally Unique Identifier to each role.
 
    Every role requires a [Universally Unique Identifier](https://en.wikipedia.org/wiki/Universally_unique_identifier) which you can generate on Linux with `uuidgen`, and on Windows through Microsoft PowerShell with `New-Guid`.
 
 1. Replace each "SOME_UNIQUE_ID" with the generated ID in the manifest file:
 
-    ```json
-    	"appRoles": [
-    			{
-    				"allowedMemberTypes": [
-    					"User"
-    				],
-    				"description": "Grafana org admin Users",
-    				"displayName": "Grafana Org Admin",
-    				"id": "SOME_UNIQUE_ID",
-    				"isEnabled": true,
-    				"lang": null,
-    				"origin": "Application",
-    				"value": "Admin"
-    			},
-    			{
-    				"allowedMemberTypes": [
-    					"User"
-    				],
-    				"description": "Grafana read only Users",
-    				"displayName": "Grafana Viewer",
-    				"id": "SOME_UNIQUE_ID",
-    				"isEnabled": true,
-    				"lang": null,
-    				"origin": "Application",
-    				"value": "Viewer"
-    			},
-    			{
-    				"allowedMemberTypes": [
-    					"User"
-    				],
-    				"description": "Grafana Editor Users",
-    				"displayName": "Grafana Editor",
-    				"id": "SOME_UNIQUE_ID",
-    				"isEnabled": true,
-    				"lang": null,
-    				"origin": "Application",
-    				"value": "Editor"
-    			}
-    		],
-    ```
-            
+   ```json
+   	"appRoles": [
+   			{
+   				"allowedMemberTypes": [
+   					"User"
+   				],
+   				"description": "Grafana org admin Users",
+   				"displayName": "Grafana Org Admin",
+   				"id": "SOME_UNIQUE_ID",
+   				"isEnabled": true,
+   				"lang": null,
+   				"origin": "Application",
+   				"value": "Admin"
+   			},
+   			{
+   				"allowedMemberTypes": [
+   					"User"
+   				],
+   				"description": "Grafana read only Users",
+   				"displayName": "Grafana Viewer",
+   				"id": "SOME_UNIQUE_ID",
+   				"isEnabled": true,
+   				"lang": null,
+   				"origin": "Application",
+   				"value": "Viewer"
+   			},
+   			{
+   				"allowedMemberTypes": [
+   					"User"
+   				],
+   				"description": "Grafana Editor Users",
+   				"displayName": "Grafana Editor",
+   				"id": "SOME_UNIQUE_ID",
+   				"isEnabled": true,
+   				"lang": null,
+   				"origin": "Application",
+   				"value": "Editor"
+   			}
+   		],
+   ```
+
 1. Click on **Save**.
-   
+
 ### Assign server administrator privileges
 
 > Available in Grafana v9.2 and later versions.
@@ -244,11 +246,11 @@ allowed_organizations = 8bab1c86-8fba-33e5-2089-1d1c80ec267d
 Azure AD groups can be used to limit user access to Grafana. For more information about managing groups in Azure AD, refer to [Manage Microsoft Entra groups and group membership](https://learn.microsoft.com/en-us/entra/fundamentals/how-to-manage-groups).
 
 To limit access to authenticated users who are members of one or more AzureAD groups, set `allowed_groups`
-to a comma- or space-separated list of group object IDs. 
+to a comma- or space-separated list of group object IDs.
 
-Complete the following step to find object IDs for a specific group on the Azure portal: 
+Complete the following step to find object IDs for a specific group on the Azure portal:
 
-1. Go to **Azure Active Directory > Groups**. 
+1. Go to **Azure Active Directory > Groups**.
 
    If you want to only give access to members of the group `example` with an Object Id of `8bab1c86-8fba-33e5-2089-1d1c80ec267d`, then set the following:
 
@@ -262,13 +264,14 @@ Complete the following step to find object IDs for a specific group on the Azure
 
 #### Configure group membership claims on the Azure Portal
 
-To ensure that the `groups` claim is included in the token, add the `groups` claim to the token configuration either through the Azure Portal UI or by editing the manifest file. 
+To ensure that the `groups` claim is included in the token, add the `groups` claim to the token configuration either through the Azure Portal UI or by editing the manifest file.
 
-To configure group membership claims from the Azure Portal UI, complete the following steps: 
+To configure group membership claims from the Azure Portal UI, complete the following steps:
+
 1. Navigate to the **App Registrations** page and select your application.
 1. Select **Token configuration**.
-1. Click **Add groups claim** and then select the relevant option for your use case (for example, **Security groups** and **Groups assigned to the application**). 
- 
+1. Click **Add groups claim** and then select the relevant option for your use case (for example, **Security groups** and **Groups assigned to the application**).
+
 For more information, see [Configure groups optional claims](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims#configure-groups-optional-claims).
 
 > If the user is a member of more than 200 groups, Azure AD does not emit the groups claim in the token and instead emits a group overage claim. To set up a group overage claim, see [Users with over 200 Group assignments](#users-with-over-200-group-assignments).
@@ -280,10 +283,10 @@ For more information, see [Configure groups optional claims](https://learn.micro
 1. Click **Manifest** and then click **Edit**.
 
 1. Add the following to the root of the manifest file:
-    
-       ```
-       "groupMembershipClaims": "ApplicationGroup, SecurityGroup"
-       ```
+
+   ```
+   "groupMembershipClaims": "ApplicationGroup, SecurityGroup"
+   ```
 
 ### Configure allowed domains
 
@@ -353,7 +356,7 @@ Admin consent might be required for this permission.
 1. Select **Microsoft Graph** from the list of APIs.
 1. Select **Delegated permissions**.
 1. Under the **GroupMember** section, select **GroupMember.Read.All**.
-1. Click **Add permissions**. 
+1. Click **Add permissions**.
 
 > Admin consent may be required for this permission.
 
