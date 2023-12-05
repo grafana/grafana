@@ -105,6 +105,7 @@ export const LogsVolumePanelList = ({
         onLoadLogsVolume(selectedQueryType);
       }
     }
+    // @ts-ignore - onLoadLogsVolume is omitted on purpose as we are creating new function and it creates re-rendering
   }, [groupByLabel, selectedQueryType]);
 
   const styles = useStyles2(getStyles);
@@ -237,9 +238,11 @@ export const LogsVolumePanelList = ({
                 if (change.value !== groupByLabel) {
                   if (change.value === 'none') {
                     onChangeGroupByLabel(undefined);
+                    // @ts-ignore - this is ugly, but the fastest way I could come up with filters for supplementary queries
                     datasourceInstance.groupByFilter = undefined;
                   } else {
                     onChangeGroupByLabel(change.value);
+                    // @ts-ignore - this is ugly, but the fastest way I could come up with filters for supplementary queries
                     datasourceInstance.groupByFilter = change.value;
                   }
                 }

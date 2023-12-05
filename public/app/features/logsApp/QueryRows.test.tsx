@@ -78,7 +78,7 @@ describe('Explore QueryRows', () => {
 
     render(
       <Provider store={store}>
-        <QueryRows exploreId={'left'} />
+        <QueryRows exploreId={'left'} onChangeTime={jest.fn()} />
       </Provider>
     );
 

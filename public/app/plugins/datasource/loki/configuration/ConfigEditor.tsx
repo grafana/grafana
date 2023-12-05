@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
 import {
@@ -52,12 +52,11 @@ export const ConfigEditor = (props: Props) => {
   );
 
   useEffect(() => {
-    const { url, name } = options;
-    if (!url) {
+    if (!options.url) {
       return;
     }
     const saveLabels = async () => {
-      const datasource = (await getDatasourceSrv().loadDatasource(name)) as LokiDatasource;
+      const datasource = (await getDatasourceSrv().loadDatasource(options.name)) as LokiDatasource;
       const labels = await datasource.languageProvider.fetchLabels();
 
       for (const label of ['job', 'app', 'cluster']) {
@@ -69,7 +68,7 @@ export const ConfigEditor = (props: Props) => {
     };
 
     saveLabels();
-  }, [options.url, options.name]);
+  }, [options, onOptionsChange]);
 
   return (
     <>

@@ -1338,7 +1338,7 @@ function createContextTimeRange(rowTimeEpochMs: number, direction: string, inter
   }
 }
 
-function extractLevel(dataFrame: DataFrame, fieldName: string): LogLevel | string {
+function extractLevel(dataFrame: DataFrame, fieldName?: string): LogLevel | string {
   const valueField = dataFrame.fields.find((f) => f.type === FieldType.number);
   if (!fieldName) {
     const name = valueField?.labels?.['level'] ?? '';

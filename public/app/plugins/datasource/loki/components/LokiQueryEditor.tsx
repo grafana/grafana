@@ -33,6 +33,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
   const { onChange, onRunQuery, onAddQuery, data, app, queries, datasource, range: timeRange } = props;
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [queryPatternsModalOpen, setQueryPatternsModalOpen] = useState(false);
+  // @ts-ignore for now, we want to always show button as primary
   const [dataIsStale, setDataIsStale] = useState(false);
   const [labelBrowserVisible, setLabelBrowserVisible] = useState(false);
   const [queryStats, setQueryStats] = useState<QueryStats | null>(null);

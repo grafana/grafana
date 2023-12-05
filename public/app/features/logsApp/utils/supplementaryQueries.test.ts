@@ -33,6 +33,9 @@ class MockDataSourceWithSupplementaryQuerySupport
   private supplementaryQueriesResults: Record<SupplementaryQueryType, DataFrame[] | undefined> = {
     [SupplementaryQueryType.LogsVolume]: undefined,
     [SupplementaryQueryType.LogsSample]: undefined,
+    [SupplementaryQueryType.LogsCount]: undefined,
+    [SupplementaryQueryType.LogsCountWithGroupBy]: undefined,
+    [SupplementaryQueryType.LogsVolumeWithGroupBy]: undefined,
   };
 
   withSupplementaryQuerySupport(type: SupplementaryQueryType, data: DataFrame[]) {

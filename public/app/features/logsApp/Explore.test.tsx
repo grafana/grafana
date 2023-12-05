@@ -50,6 +50,7 @@ const makeEmptyQueryResponse = (loadingState: LoadingState) => {
   return baseEmptyResponse;
 };
 
+// @ts-ignore - test wasn't updated
 const dummyProps: Props = {
   logsResult: undefined,
   changeSize: jest.fn(),

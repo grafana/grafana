@@ -30,6 +30,7 @@ class MockDataSourceWithSupplementaryQuerySupport
   extends MockDataSourceApi
   implements DataSourceWithSupplementaryQueriesSupport<DataQuery>
 {
+  // @ts-ignore - this is in Explore
   private supplementaryQueriesResults: Record<SupplementaryQueryType, DataFrame[] | undefined> = {
     [SupplementaryQueryType.LogsVolume]: undefined,
     [SupplementaryQueryType.LogsSample]: undefined,

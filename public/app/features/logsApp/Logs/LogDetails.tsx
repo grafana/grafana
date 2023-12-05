@@ -1,5 +1,6 @@
 import { cx } from '@emotion/css';
 import React, { useMemo } from 'react';
+import { v4 } from 'uuid';
 
 import { CoreApp, DataFrame, DataFrameType, Field, LinkModel, LogRowModel } from '@grafana/data';
 import { LogRowStyles } from 'app/features/logs/components/getLogRowStyles';
@@ -7,7 +8,6 @@ import { createLogLineLinks, getAllFields } from 'app/features/logs/components/l
 import { calculateLogsLabelStats, calculateStats } from 'app/features/logs/utils';
 
 import { LogDetailsRow } from './LogDetailsRow';
-import { v4 } from 'uuid';
 
 export interface Props {
   row: LogRowModel;
@@ -66,12 +66,15 @@ export const LogDetails = (props: Props) => {
     [displayedFieldsWithLinks, fieldsWithLinksFromVariableMap]
   );
 
-  const fields = useMemo(() => 
-    row.dataFrame.meta?.type === DataFrameType.LogLines
-      ? // for LogLines frames (dataplane) we don't want to show any additional fields besides already extracted labels and links
-        []
-      : // for other frames, do not show the log message unless there is a link attached
-        fieldsAndLinks.filter((f) => f.links?.length === 0 && f.fieldIndex !== row.entryFieldIndex).sort(), [fieldsAndLinks, row.dataFrame.meta?.type, row.entryFieldIndex]);
+  const fields = useMemo(
+    () =>
+      row.dataFrame.meta?.type === DataFrameType.LogLines
+        ? // for LogLines frames (dataplane) we don't want to show any additional fields besides already extracted labels and links
+          []
+        : // for other frames, do not show the log message unless there is a link attached
+          fieldsAndLinks.filter((f) => f.links?.length === 0 && f.fieldIndex !== row.entryFieldIndex).sort(),
+    [fieldsAndLinks, row.dataFrame.meta?.type, row.entryFieldIndex]
+  );
   const fieldsAvailable = useMemo(() => fields && fields.length > 0, [fields]);
 
   const labelKeys = useMemo(() => Object.keys(labels).sort(), [labels]);
@@ -92,27 +95,27 @@ export const LogDetails = (props: Props) => {
               </tr>
             )}
             {labelKeys.map((key, i) => {
-                const value = labels[key];
-                return (
-                  <LogDetailsRow
-                    key={`${key}=${value}-${i}-${baseKey}`}
-                    parsedKeys={[key]}
-                    parsedValues={[value]}
-                    isLabel={true}
-                    getStats={() => calculateLogsLabelStats(rows, key)}
-                    onClickFilterOutLabel={onClickFilterOutLabel}
-                    onClickFilterLabel={onClickFilterLabel}
-                    onClickShowField={onClickShowField}
-                    onClickHideField={onClickHideField}
-                    row={row}
-                    app={app}
-                    wrapLogMessage={wrapLogMessage}
-                    displayedFields={displayedFields}
-                    disableActions={false}
-                    isFilterLabelActive={props.isFilterLabelActive}
-                  />
-                );
-              })}
+              const value = labels[key];
+              return (
+                <LogDetailsRow
+                  key={`${key}=${value}-${i}-${baseKey}`}
+                  parsedKeys={[key]}
+                  parsedValues={[value]}
+                  isLabel={true}
+                  getStats={() => calculateLogsLabelStats(rows, key)}
+                  onClickFilterOutLabel={onClickFilterOutLabel}
+                  onClickFilterLabel={onClickFilterLabel}
+                  onClickShowField={onClickShowField}
+                  onClickHideField={onClickHideField}
+                  row={row}
+                  app={app}
+                  wrapLogMessage={wrapLogMessage}
+                  displayedFields={displayedFields}
+                  disableActions={false}
+                  isFilterLabelActive={props.isFilterLabelActive}
+                />
+              );
+            })}
             {fields.map((field, i) => {
               const { keys, values, fieldIndex } = field;
               return (
