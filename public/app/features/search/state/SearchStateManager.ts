@@ -25,6 +25,7 @@ export const initialState: SearchState = {
   sort: undefined,
   prevSort: undefined,
   eventTrackingNamespace: 'dashboard_search',
+  deleted: false,
 };
 
 export const defaultQueryParams: SearchQueryParams = {
@@ -62,7 +63,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     const prevSort = localStorage.getItem(SEARCH_SELECTED_SORT) ?? undefined;
     const sort = layout === SearchLayout.List ? stateFromUrl.sort || prevSort : null;
 
-    stateManager.setState({
+    this.setState({
       ...initialState,
       ...stateFromUrl,
       layout,
@@ -70,6 +71,8 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       prevSort,
       folderUid: folderUid,
       eventTrackingNamespace: folderUid ? 'manage_dashboards' : 'dashboard_search',
+      //TODO this should be grabbed in another way
+      deleted: locationService.getLocation().pathname === '/dashboards/trash',
     });
 
     if (doInitialSearch && this.hasSearchFilters()) {
@@ -195,6 +198,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       this.state.starred ||
       this.state.panel_type ||
       this.state.sort ||
+      this.state.deleted ||
       this.state.layout === SearchLayout.List
     );
   }
@@ -210,6 +214,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       explain: this.state.explain,
       withAllowedActions: this.state.explain, // allowedActions are currently not used for anything on the UI and added only in `explain` mode
       starred: this.state.starred,
+      deleted: this.state.deleted,
     };
 
     // Only dashboards have additional properties

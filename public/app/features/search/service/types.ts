@@ -25,6 +25,7 @@ export interface SearchQuery {
   limit?: number;
   from?: number;
   starred?: boolean;
+  deleted?: boolean;
 }
 
 export interface DashboardQueryResult {
