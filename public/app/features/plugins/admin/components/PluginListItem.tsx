@@ -47,7 +47,7 @@ const PluginListItemSkeleton = ({ displayMode = PluginListDisplayMode.Grid }: Pi
         containerClassName={cx(
           styles.pluginLogo,
           css({
-            lineHeight: 0,
+            lineHeight: 1,
           })
         )}
         width={LOGO_SIZE}
