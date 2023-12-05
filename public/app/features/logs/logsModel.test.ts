@@ -26,6 +26,8 @@ import {
   dataFrameToLogsModel,
   dedupLogRows,
   filterLogLevels,
+  findPossibleTraceIdInLabels,
+  findPossibleTraceIdInMessage,
   getSeriesProperties,
   LIMIT_LABEL,
   logRowToSingleRowDataFrame,
@@ -1508,5 +1510,35 @@ describe('logRowToDataFrame', () => {
     const result = logRowToSingleRowDataFrame({ ...mockLogRow, rowIndex: invalidRowIndex });
 
     expect(result).toBe(null);
+  });
+});
+
+describe('findPossibleTraceIdInLabels', () => {
+  it('should return traceId if found', () => {
+    const traceId = findPossibleTraceIdInLabels({ traceId: '123' });
+    expect(traceId).toBe('123');
+  });
+  it('should return traceId if found', () => {
+    const traceId = findPossibleTraceIdInLabels({ trace_id: '123' });
+    expect(traceId).toBe('123');
+  });
+  it('should return traceId if found', () => {
+    const traceId = findPossibleTraceIdInLabels({ TraceID: '123' });
+    expect(traceId).toBe('123');
+  });
+});
+
+describe('findPossibleTraceIdInMessage', () => {
+  it('should return traceId if found', () => {
+    const traceId = findPossibleTraceIdInMessage('abcde TraceID="7abc54" fghi');
+    expect(traceId).toBe('7abc54');
+  });
+  it('should return traceId if found', () => {
+    const traceId = findPossibleTraceIdInMessage('abcd trace_ID=7abc54 efghi');
+    expect(traceId).toBe('7abc54');
+  });
+  it('should return traceId if found', () => {
+    const traceId = findPossibleTraceIdInMessage('abcd {"trace_ID": "7abc54"} efghi');
+    expect(traceId).toBe('7abc54');
   });
 });

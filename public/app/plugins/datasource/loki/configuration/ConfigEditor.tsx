@@ -68,7 +68,8 @@ export const ConfigEditor = (props: Props) => {
     };
 
     saveLabels();
-  }, [options, onOptionsChange]);
+    // @ts-ignore
+  }, [options.url]);
 
   return (
     <>
