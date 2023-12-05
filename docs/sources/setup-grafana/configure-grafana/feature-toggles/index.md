@@ -74,7 +74,6 @@ Some features are enabled by default. You can disable these feature by setting t
 | `splitScopes`                    | Support faster dashboard and folder search by splitting permission scopes into parts                                                                                                         |
 | `dashgpt`                        | Enable AI powered features in dashboards                                                                                                                                                     |
 | `reportingRetries`               | Enables rendering retries for the reporting feature                                                                                                                                          |
-| `alertingContactPointsV2`        | Show the new contacpoints list view                                                                                                                                                          |
 | `transformationsVariableSupport` | Allows using variables in transformations                                                                                                                                                    |
 | `cloudWatchBatchQueries`         | Runs CloudWatch metrics queries as separate batches                                                                                                                                          |
 
@@ -167,6 +166,7 @@ Experimental features might be changed or removed without prior notice.
 | `pluginsSkipHostEnvVars`                    | Disables passing host environment variable to plugin processes                                                                                                                                                                                                                    |
 | `regressionTransformation`                  | Enables regression analysis transformation                                                                                                                                                                                                                                        |
 | `displayAnonymousStats`                     | Enables anonymous stats to be shown in the UI for Grafana                                                                                                                                                                                                                         |
+| `wizarDSToggle`                             | Enables an AI assisted wizard for the Prometheus data source                                                                                                                                                                                                                      |
 
 ## Development feature toggles
 

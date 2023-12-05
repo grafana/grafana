@@ -792,13 +792,6 @@ var (
 			HideFromAdminPage: true, // This is moving away from being a feature toggle.
 		},
 		{
-			Name:         "alertingContactPointsV2",
-			Description:  "Show the new contacpoints list view",
-			FrontendOnly: true,
-			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaAlertingSquad,
-		},
-		{
 			Name:        "externalCorePlugins",
 			Description: "Allow core plugins to be loaded as external",
 			Stage:       FeatureStageExperimental,
@@ -1094,6 +1087,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        identityAccessTeam,
+		},
+		{
+			Name:         "wizarDSToggle",
+			Description:  "Enables an AI assisted wizard for the Prometheus data source",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityMetricsSquad,
 		},
 	}
 )
