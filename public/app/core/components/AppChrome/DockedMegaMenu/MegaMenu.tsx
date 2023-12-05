@@ -36,6 +36,9 @@ export const MegaMenu = React.memo(
 
     const handleDockedMenu = () => {
       chrome.setMegaMenuDocked(!state.megaMenuDocked);
+      if (state.megaMenuDocked) {
+        chrome.setMegaMenuOpen(false);
+      }
 
       // refocus on dock/undock button when changing state
       setTimeout(() => {
