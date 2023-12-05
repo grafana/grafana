@@ -1038,6 +1038,18 @@ func (d *dashboardStore) DeleteDashboardsInFolder(
 	})
 }
 
+func (d *dashboardStore) GetSoftDeletedDashboards(ctx context.Context) ([]*dashboards.Dashboard, error) {
+	var dashboards = make([]*dashboards.Dashboard, 0)
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		err := sess.Where("deleted IS NOT NULL AND deleted < ?", time.Now().Add(-24*30*time.Hour)).Find(&dashboards)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return dashboards, nil
+}
+
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	limits := &quota.Map{}
 

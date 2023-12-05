@@ -734,3 +734,21 @@ func (dr *DashboardServiceImpl) DeleteInFolder(ctx context.Context, orgID int64,
 }
 
 func (dr *DashboardServiceImpl) Kind() string { return entity.StandardKindDashboard }
+
+func (dr *DashboardServiceImpl) CleanUpDeletedDashboards(ctx context.Context) (int64, error) {
+	var deletedDashboardsCount int64
+	deletedDashboards, err := dr.dashboardStore.GetSoftDeletedDashboards(ctx)
+	if err != nil {
+		return 0, err
+	}
+	for _, dashboard := range deletedDashboards {
+		err = dr.DeleteDashboard(ctx, dashboard.ID, dashboard.OrgID)
+		if err != nil {
+			dr.log.Warn("Failed to cleanup deleted dashboard", "dashboardUid", dashboard.UID, "error", err)
+			break
+		}
+		deletedDashboardsCount++
+	}
+
+	return deletedDashboardsCount, nil
+}
