@@ -125,7 +125,8 @@ func (s RuleGroupsSorter) Less(i, j int) bool { return s.by(&s.groups[i], &s.gro
 type AlertingRule struct {
 	// State can be "pending", "firing", "inactive".
 	// required: true
-	State string `json:"state,omitempty"`
+	State    string `json:"state,omitempty"`
+	Flapping bool   `json:"flapping,omitempty"`
 	// required: true
 	Name string `json:"name,omitempty"`
 	// required: true

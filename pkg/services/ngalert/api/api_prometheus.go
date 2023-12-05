@@ -342,6 +342,10 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder
 			if alertState.Error != nil && rule.ExecErrState != ngmodels.ErrorErrState {
 				totals["error"] += 1
 			}
+			flapping := alertState.IsFlapping()
+			if flapping {
+				alertingRule.Flapping = true
+			}
 			alert := apimodels.Alert{
 				Labels:      alertState.GetLabels(labelOptions...),
 				Annotations: alertState.Annotations,
@@ -349,7 +353,7 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder
 				// TODO: or should we make this two fields? Using one field lets the
 				// frontend use the same logic for parsing text on annotations and this.
 				State:    state.FormatStateAndReason(alertState.State, alertState.StateReason),
-				Flapping: alertState.IsFlapping(),
+				Flapping: flapping,
 				ActiveAt: &activeAt,
 				Value:    valString,
 			}
