@@ -94,6 +94,7 @@ export type RemotePlugin = {
   internal: boolean;
   json?: {
     dependencies: PluginDependencies;
+    iam?: IdentityAccessManagement;
     info: {
       links: Array<{
         name: string;
@@ -132,7 +133,6 @@ export type RemotePlugin = {
   versionSignedByOrgName: string;
   versionStatus: string;
   angularDetected?: boolean;
-  iam?: IdentityAccessManagement;
 };
 
 // The available status codes on GCOM are available here:

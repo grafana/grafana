@@ -219,7 +219,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     accessControl: local?.accessControl,
     angularDetected: local?.angularDetected || remote?.angularDetected,
     isFullyInstalled: Boolean(local) || isDisabled,
-    iam: local?.iam || remote?.iam,
+    iam: local?.iam || remote?.json?.iam,
   };
 }
 
