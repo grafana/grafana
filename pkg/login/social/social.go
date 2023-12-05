@@ -123,6 +123,7 @@ func ProvideService(cfg *setting.Cfg,
 		conn, err := ss.createOAuthConnector(name, settingsKVs, cfg, features, cache)
 		if err != nil {
 			ss.log.Error("Failed to create OAuth provider", "error", err, "provider", name)
+			continue
 		}
 
 		ss.socialMap[name] = conn
