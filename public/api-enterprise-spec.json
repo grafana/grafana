@@ -4764,6 +4764,18 @@
         }
       }
     },
+    "LibraryElementArrayResponse": {
+      "type": "object",
+      "title": "LibraryElementArrayResponse is a response struct for an array of LibraryElementDTO.",
+      "properties": {
+        "result": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LibraryElementDTO"
+          }
+        }
+      }
+    },
     "LibraryElementConnectionDTO": {
       "type": "object",
       "title": "LibraryElementConnectionDTO is the frontend DTO for element connections.",
@@ -8478,6 +8490,12 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/GetHomeDashboardResponse"
+      }
+    },
+    "getLibraryElementArrayResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/LibraryElementArrayResponse"
       }
     },
     "getLibraryElementConnectionsResponse": {
