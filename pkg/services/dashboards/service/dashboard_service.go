@@ -579,12 +579,30 @@ func (dr *DashboardServiceImpl) getDashboardsSharedWithUser(ctx context.Context,
 // filterUserSharedDashboards filter dashboards directly assigned to user, but not located in folders with view permissions
 func (dr *DashboardServiceImpl) filterUserSharedDashboards(ctx context.Context, user identity.Requester, userDashboards []*dashboards.Dashboard) ([]*dashboards.Dashboard, error) {
 	filteredDashboards := make([]*dashboards.Dashboard, 0)
+
+	folderUIDs := make([]string, 0)
+	for _, dashboard := range userDashboards {
+		folderUIDs = append(folderUIDs, dashboard.FolderUID)
+	}
+
+	dashFolders, err := dr.folderStore.GetFolders(ctx, user.GetOrgID(), folderUIDs)
+	if err != nil {
+		return nil, folder.ErrInternal.Errorf("failed to fetch parent folders from store: %w", err)
+	}
+
 	for _, dashboard := range userDashboards {
 		// Filter out dashboards if user has access to parent folder
 		if dashboard.FolderUID == "" {
 			continue
 		}
-		g, err := guardian.NewByUID(ctx, dashboard.FolderUID, user.GetOrgID(), user)
+
+		dashFolder, ok := dashFolders[dashboard.FolderUID]
+		if !ok {
+			dr.log.Error("failed to fetch folder by UID from store", "uid", dashboard.FolderUID)
+			continue
+		}
+
+		g, err := guardian.NewByFolder(ctx, dashFolder, user.GetOrgID(), user)
 		if err != nil {
 			dr.log.Error("failed to check folder permissions", "folder uid", dashboard.FolderUID, "error", err)
 			continue
