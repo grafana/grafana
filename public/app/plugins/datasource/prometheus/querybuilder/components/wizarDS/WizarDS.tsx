@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 // import { reportInteraction } from '@grafana/runtime';
 import { Button, Checkbox, Input, Spinner, useTheme2 } from '@grafana/ui';
 import store from 'app/core/store';
+import { LokiDatasource } from 'app/plugins/datasource/loki/datasource';
 
 import { PrometheusDatasource } from '../../../datasource';
 import { PromVisualQuery } from '../../types';
@@ -22,7 +23,7 @@ const { showStartingMessage, indicateCheckbox, addInteraction, updateInteraction
 export type WizarDSProps = {
   query: PromVisualQuery;
   closeDrawer: () => void;
-  datasource: PrometheusDatasource;
+  datasource: PrometheusDatasource | LokiDatasource;
   templates: Suggestion[];
 };
 

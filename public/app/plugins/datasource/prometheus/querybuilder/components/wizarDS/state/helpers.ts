@@ -1,6 +1,7 @@
 import { AnyAction } from 'redux';
 
 import { llms } from '@grafana/experimental';
+import { LokiDatasource } from 'app/plugins/datasource/loki/datasource';
 import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
 
 import { PromVisualQuery } from '../../../types';
@@ -43,7 +44,7 @@ export async function wizarDSExplain(
   query: PromVisualQuery,
   interaction: Interaction,
   suggIdx: number,
-  datasource: PrometheusDatasource
+  datasource: PrometheusDatasource | LokiDatasource
 ) {
   // const suggestedQuery = interaction.suggestions[suggIdx].component;
 
@@ -220,7 +221,7 @@ export async function wizarDSSuggest(
   idx: number,
   query: PromVisualQuery,
   labelNames: string[],
-  datasource: PrometheusDatasource,
+  datasource: PrometheusDatasource | LokiDatasource,
   templates: Suggestion[],
   interaction?: Interaction
 ) {
