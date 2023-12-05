@@ -8,6 +8,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { getPluginLinkExtensions } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
+import { setDragData } from '../drag-drop/state/reducers';
+
 import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineContext';
 import { Explore, Props } from './Explore';
 import { initialExploreState } from './state/main';
@@ -67,6 +69,7 @@ const dummyProps: Props = {
   modifyQueries: jest.fn(),
   scanStart: jest.fn(),
   scanStopAction: scanStopAction,
+  setDragData,
   setQueries: jest.fn(),
   queryKeys: [],
   queries: [],

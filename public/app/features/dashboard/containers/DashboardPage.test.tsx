@@ -19,6 +19,7 @@ import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { RouteDescriptor } from 'app/core/navigation/types';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
+import { setDragData } from 'app/features/drag-drop/state/reducers';
 import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types';
 
 import { configureStore } from '../../../store/configureStore';
@@ -127,6 +128,7 @@ function setup(propOverrides?: Partial<Props>) {
     templateVarsChangedInUrl: jest.fn(),
     dashboard: null,
     theme: createTheme(),
+    setDragData,
   };
 
   Object.assign(props, propOverrides);
@@ -211,6 +213,7 @@ describe('DashboardPage', () => {
         templateVarsChangedInUrl: jest.fn(),
         dashboard: getTestDashboard(),
         theme: createTheme(),
+        setDragData,
       };
 
       render(
