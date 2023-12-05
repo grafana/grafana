@@ -19,6 +19,16 @@ const MIN_HEIGHT = ITEM_HEIGHT * 5;
 
 export const FilterList = ({ options, values, caseSensitive, onChange }: Props) => {
   const [searchFilter, setSearchFilter] = useState('');
+  const onSearchFilterChanged = (value: string) => {
+    if (value === '') {
+      setSelectAll(false);
+    }
+    setSearchFilter(value);
+  };
+  const getItemLength = (): number => {
+    return searchFilter !== '' ? items.length + 1 : items.length;
+  };
+
   const regex = useMemo(() => new RegExp(searchFilter, caseSensitive ? undefined : 'i'), [searchFilter, caseSensitive]);
   const items = useMemo(
     () =>
@@ -34,7 +44,7 @@ export const FilterList = ({ options, values, caseSensitive, onChange }: Props) 
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const gutter = theme.spacing.gridSize;
-  const height = useMemo(() => Math.min(items.length * ITEM_HEIGHT, MIN_HEIGHT) + gutter, [gutter, items.length]);
+  const height = useMemo(() => Math.min(getItemLength() * ITEM_HEIGHT, MIN_HEIGHT) + gutter, [gutter, items.length]);
 
   const onCheckedChanged = useCallback(
     (option: SelectableValue) => (event: React.FormEvent<HTMLInputElement>) => {
@@ -47,20 +57,38 @@ export const FilterList = ({ options, values, caseSensitive, onChange }: Props) 
     [onChange, values]
   );
 
+  const [selectAll, setSelectAll] = useState(false);
+  const onSelectAllChanged = useCallback(
+    () => (event: React.FormEvent<HTMLInputElement>) => {
+      setSelectAll(!selectAll);
+      const newValues = event.currentTarget.checked ? values.concat(items) : [];
+      onChange(newValues);
+    },
+    [onChange, values, items]
+  );
+
   return (
     <VerticalGroup spacing="md">
-      <FilterInput placeholder="Filter values" onChange={setSearchFilter} value={searchFilter} />
+      <FilterInput placeholder="Filter values" onChange={onSearchFilterChanged} value={searchFilter} />
       {!items.length && <Label>No values</Label>}
       {items.length && (
         <List
           height={height}
-          itemCount={items.length}
+          itemCount={getItemLength()}
           itemSize={ITEM_HEIGHT}
           width="100%"
           className={styles.filterList}
         >
           {({ index, style }) => {
-            const option = items[index];
+            if (index === 0 && searchFilter !== '') {
+              return (
+                <div className={styles.filterListRow} style={style}>
+                  <Checkbox value={selectAll} label="Select All" onChange={onSelectAllChanged()} />
+                </div>
+              );
+            }
+
+            const option = items[searchFilter !== '' ? index - 1 : index];
             const { value, label } = option;
             const isChecked = values.find((s) => s.value === value) !== undefined;
 

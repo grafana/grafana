@@ -213,6 +213,114 @@ describe('Table', () => {
       expect(within(getTable()).getAllByRole('row')).toHaveLength(4);
     });
 
+    it("'Select All' checkbox should NOT be displayed if NO filter value is specified", async () => {
+      getTestContext({
+        data: toDataFrame({
+          name: 'A',
+          fields: [
+            {
+              name: 'number',
+              type: FieldType.number,
+              values: [1, 1, 1, 2, 2, 3, 4, 5],
+              config: {
+                custom: {
+                  filterable: true,
+                },
+              },
+            },
+          ],
+        }),
+      });
+
+      await userEvent.click(within(getColumnHeader(/number/)).getByRole('button', { name: '' }));
+
+      expect(screen.queryByLabelText('Select All')).not.toBeInTheDocument();
+    });
+
+    it("'Select All' checkbox should be displayed if filter value is specified", async () => {
+      getTestContext({
+        data: toDataFrame({
+          name: 'A',
+          fields: [
+            {
+              name: 'number',
+              type: FieldType.number,
+              values: [1, 1, 1, 2, 2, 3, 4, 5],
+              config: {
+                custom: {
+                  filterable: true,
+                },
+              },
+            },
+          ],
+        }),
+      });
+
+      await userEvent.click(within(getColumnHeader(/number/)).getByRole('button', { name: '' }));
+      await userEvent.type(screen.getByPlaceholderText('Filter values'), '1');
+
+      expect(screen.queryByLabelText('Select All')).toBeInTheDocument();
+    });
+
+    it("rows selected with 'Select All' checkbox should be filtered", async () => {
+      getTestContext({
+        data: toDataFrame({
+          name: 'A',
+          fields: [
+            {
+              name: 'number',
+              type: FieldType.number,
+              values: [1, 11, 111, 12, 2, 3, 4, 5],
+              config: {
+                custom: {
+                  filterable: true,
+                },
+              },
+            },
+          ],
+        }),
+      });
+
+      await userEvent.click(within(getColumnHeader(/number/)).getByRole('button', { name: '' }));
+      await userEvent.type(screen.getByPlaceholderText('Filter values'), '1');
+      await userEvent.click(screen.getByLabelText('Select All'));
+      await userEvent.click(screen.getByText('Ok'));
+
+      // 4 + header row
+      expect(within(getTable()).getAllByRole('row')).toHaveLength(5);
+    });
+
+    it("rows selected with chained 'Select All' checks should be filtered", async () => {
+      getTestContext({
+        data: toDataFrame({
+          name: 'A',
+          fields: [
+            {
+              name: 'number',
+              type: FieldType.number,
+              values: [1, 11, 111, 12, 2, 3, 4, 5],
+              config: {
+                custom: {
+                  filterable: true,
+                },
+              },
+            },
+          ],
+        }),
+      });
+
+      await userEvent.click(within(getColumnHeader(/number/)).getByRole('button', { name: '' }));
+      await userEvent.type(screen.getByPlaceholderText('Filter values'), '1');
+      await userEvent.click(screen.getByLabelText('Select All'));
+      await userEvent.click(screen.getByText('Clear'));
+      await userEvent.type(screen.getByPlaceholderText('Filter values'), '2');
+      await userEvent.click(screen.getByLabelText('Select All'));
+      await userEvent.click(screen.getByText('Ok'));
+
+      // 5 + header row
+      expect(within(getTable()).getAllByRole('row')).toHaveLength(6);
+    });
+
     it('should redo footer calculations', async () => {
       getTestContext({
         footerOptions: { show: true, reducer: ['sum'] },
