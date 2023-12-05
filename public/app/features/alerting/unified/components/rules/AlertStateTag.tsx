@@ -13,9 +13,11 @@ interface Props {
   muted?: boolean;
 }
 
-export const AlertStateTag = React.memo(({ state, isFlapping = false, isPaused = false, size = 'md', muted = false }: Props) => (
-  <StateTag state={alertStateToState(state)} size={size} muted={muted}>
-    {alertStateToReadable(state)} {isPaused ? ' (Paused)' : isFlapping ? ' (Flapping)' : ''}
-  </StateTag>
-));
+export const AlertStateTag = React.memo(
+  ({ state, isFlapping = false, isPaused = false, size = 'md', muted = false }: Props) => (
+    <StateTag state={alertStateToState(state)} size={size} muted={muted}>
+      {alertStateToReadable(state)} {isPaused ? ' (Paused)' : isFlapping ? ' (Flapping)' : ''}
+    </StateTag>
+  )
+);
 AlertStateTag.displayName = 'AlertStateTag';
