@@ -1,9 +1,10 @@
 import classNames from 'classnames';
-import React, { PureComponent, CSSProperties, MouseEvent } from 'react';
-import ReactGridLayout, { ItemCallback, Layout, LayoutItem } from 'react-grid-layout';
+import React, { PureComponent, CSSProperties } from 'react';
+import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { Subscription } from 'rxjs';
 
+import { PluginExtensionGlobalDrawerDroppedPanelData, getTimeZone } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Portal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
@@ -29,7 +30,7 @@ export interface Props {
   editPanel: PanelModel | null;
   viewPanel: PanelModel | null;
   hidePanelMenus?: boolean;
-  onDrag: (panel: PanelModel) => void;
+  onDrag?: (panel: PluginExtensionGlobalDrawerDroppedPanelData) => void;
 }
 
 interface State {
@@ -187,15 +188,11 @@ export class DashboardGrid extends PureComponent<Props, State> {
     this.updateGridPos(newItem, layout);
   };
 
-  onDragStart: ItemCallback = (
-    layout: Layout,
-    oldItem: LayoutItem,
-    newItem: LayoutItem,
-    placeholder: LayoutItem,
-    event: MouseEvent,
-    element: HTMLElement
-  ) => {
+  onDragStart: ItemCallback = (_layout, _oldItem, _newItem, _placeholder, _event, element: HTMLElement) => {
     const { dashboard, onDrag } = this.props;
+    if (!onDrag) {
+      return;
+    }
 
     // panels
     const panelId = Number(element.getAttribute('data-panelid'));
@@ -205,15 +202,32 @@ export class DashboardGrid extends PureComponent<Props, State> {
       return;
     }
 
-    onDrag(panel);
+    const dragData: PluginExtensionGlobalDrawerDroppedPanelData = {
+      type: 'panel',
+      data: {
+        pluginId: panel.type,
+        id: panel.id,
+        title: panel.title,
+        datasource: panel.datasource ?? undefined,
+        targets: panel.targets,
+        timeRange: dashboard.time,
+        timeZone: getTimeZone({ timeZone: dashboard.timezone }),
+        dashboard: {
+          uid: dashboard.uid,
+          title: dashboard.title,
+          tags: Array.from<string>(dashboard.tags),
+        },
+        scopedVars: panel.scopedVars,
+        data: panel.getQueryRunner().getLastResult(),
+      },
+    };
+    onDrag(dragData);
     this.setState({ isDraggingPanelId: panelId });
   };
 
-  onDragStop: ItemCallback = (layout, oldItem, newItem) => {
-    const { onDrag } = this.props;
-
+  onDragStop: ItemCallback = (layout, _, newItem) => {
     this.updateGridPos(newItem, layout);
-    this.setState({ isDraggingPanelId: null }, onDrag);
+    this.setState({ isDraggingPanelId: null });
   };
 
   getPanelScreenPos(panel: PanelModel, gridWidth: number): { top: number; bottom: number } {

@@ -40,7 +40,7 @@ export interface DynamicTableProps<T = unknown> {
   onCollapse?: (item: DynamicTableItemProps<T>) => void;
   onExpand?: (item: DynamicTableItemProps<T>) => void;
   isExpanded?: (item: DynamicTableItemProps<T>) => boolean;
-  activeRowId?: number | undefined;
+  activeRowId?: number | string;
   onDragRow?: (data?: object) => void;
 
   renderExpandedContent?: (

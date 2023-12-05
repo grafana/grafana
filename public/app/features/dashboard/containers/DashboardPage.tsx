@@ -15,7 +15,7 @@ import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { PanelModel } from 'app/features/dashboard/state';
-import { setDragData } from 'app/features/investigation/state/reducers';
+import { setDragData } from 'app/features/drag-drop/state/reducers';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { AngularDeprecationNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationNotice';
 import { getPageNavFromSlug, getRootContentNavModel } from 'app/features/storage/StorageFolderPage';

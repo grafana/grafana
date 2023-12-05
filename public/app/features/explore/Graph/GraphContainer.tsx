@@ -45,7 +45,7 @@ interface Props extends Pick<PanelChromeProps, 'statusMessage'> {
   loadingState: LoadingState;
   thresholdsConfig?: ThresholdsConfig;
   thresholdsStyle?: GraphThresholdsStyleConfig;
-  onDragEnabled: (enabled: boolean) => void;
+  onDragEnabled?: (enabled: boolean) => void;
 }
 
 export const GraphContainer = ({
@@ -112,8 +112,8 @@ export const GraphContainer = ({
           <Icon
             name="draggabledots"
             size="sm"
-            onMouseEnter={() => onDragEnabled(true)}
-            onMouseLeave={() => onDragEnabled(false)}
+            onMouseEnter={() => onDragEnabled?.(true)}
+            onMouseLeave={() => onDragEnabled?.(false)}
           />
         </div>,
       ]}

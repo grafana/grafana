@@ -66,5 +66,7 @@ export {
   type PluginExtensionGlobalDrawerContext,
   type PluginExtensionGlobalDrawerDroppedData,
   type PluginExtensionGlobalDrawerDroppedExploreGraphData,
+  type PluginExtensionGlobalDrawerDroppedPanelData,
+  type PluginExtensionGlobalDrawerDroppedQueryEditorData,
   type PluginExtensionOpenModalOptions,
 } from './pluginExtensions';

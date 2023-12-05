@@ -13,7 +13,7 @@ import {
 } from '@grafana/data';
 import { useStyles2, Tooltip } from '@grafana/ui';
 import { getCircularReplacer } from 'app/core/utils/object';
-import { setDragData } from 'app/features/investigation/state/reducers';
+import { setDragData } from 'app/features/drag-drop/state/reducers';
 import { useDispatch } from 'app/types';
 import { CombinedRule } from 'app/types/unified-alerting';
 
@@ -55,7 +55,7 @@ export const RulesTable = ({
   showSummaryColumn = false,
   showNextEvaluationColumn = false,
 }: Props) => {
-  const [activeRuleId, setActiveRuleId] = useState(false);
+  const [activeRuleId, setActiveRuleId] = useState<string | number | undefined>(undefined);
   const dispatch = useDispatch();
 
   const styles = useStyles2(getStyles);
@@ -89,6 +89,7 @@ export const RulesTable = ({
         activeRowId={activeRuleId}
         pagination={{ itemsPerPage: DEFAULT_PER_PAGE_PAGINATION }}
         paginationStyles={styles.pagination}
+        // TODO: convert this into a proper drag and drop object after it's dragged.
         onDragRow={(x) => dispatch(setDragData(x ? createSafeObject(x) : null))}
       />
     </div>
@@ -124,7 +125,7 @@ function useColumns(
   showSummaryColumn: boolean,
   showGroupColumn: boolean,
   showNextEvaluationColumn: boolean,
-  setActiveRuleId: number | undefined
+  setActiveRuleId: (id: string | number | undefined) => void
 ) {
   const { hasRuler, rulerRulesLoaded } = useHasRuler();
 

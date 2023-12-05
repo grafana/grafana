@@ -44,7 +44,7 @@ export type PluginExtensionGlobalDrawerComponent = PluginExtensionBase & {
   component: React.ComponentType<{ context?: PluginExtensionGlobalDrawerContext }>;
 };
 
-export type PluginExtensionGlobalDrawerDroppedDataType = 'explore-graph' | 'panel' | 'alert-rule';
+export type PluginExtensionGlobalDrawerDroppedDataType = 'explore-graph' | 'panel' | 'alert-rule' | 'query-editor';
 
 export interface PluginExtensionGlobalDrawerDroppedData<T extends object = object> {
   type: PluginExtensionGlobalDrawerDroppedDataType;
@@ -59,6 +59,31 @@ export interface PluginExtensionGlobalDrawerDroppedExploreGraphData {
     targets: DataQuery[];
     timeRange: AbsoluteTimeRange;
     timeZone: TimeZone;
+  };
+}
+
+export interface PluginExtensionGlobalDrawerDroppedPanelData {
+  type: 'panel';
+  data: {
+    pluginId: string;
+    id: number;
+    datasource?: DataSourceRef;
+    data?: PanelData;
+    targets: DataQuery[];
+    timeRange: RawTimeRange;
+    timeZone: TimeZone;
+    scopedVars?: ScopedVars;
+    title: string;
+    dashboard: Dashboard;
+  };
+}
+
+export interface PluginExtensionGlobalDrawerDroppedQueryEditorData {
+  type: 'query-editor';
+  data: {
+    datasource?: DataSourceRef;
+    data: PanelData;
+    query: DataQuery;
   };
 }
 

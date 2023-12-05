@@ -32,7 +32,7 @@ import {
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
 import { Draggable } from 'app/core/components/Draggable';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
-import { setDragData } from 'app/features/investigation/state/reducers';
+import { setDragData } from 'app/features/drag-drop/state/reducers';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
 import { StoreState } from 'app/types';

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState, MouseEvent } from 'react';
+import React, { useState, DragEvent } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -24,19 +24,19 @@ export const HotEdge = ({ position = 'right', hasData, onActivate }: HotEdgeProp
     setIsEnabled(false);
   };
 
-  const handleMoveEnter = (e: MouseEvent<HTMLDivElement, MouseEvent>) => {
+  const handleMoveEnter = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
 
     setIsHovered(true);
   };
 
-  const handleMoveOver = (e: MouseEvent<HTMLDivElement, MouseEvent>) => {
+  const handleMoveOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
   };
 
-  const handleMoveLeave = (e: MouseEvent<HTMLDivElement, MouseEvent>) => {
+  const handleMoveLeave = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
 

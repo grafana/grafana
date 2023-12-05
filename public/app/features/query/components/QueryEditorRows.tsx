@@ -10,9 +10,10 @@ import {
   EventBusExtended,
   HistoryItem,
   PanelData,
+  PluginExtensionGlobalDrawerDroppedQueryEditorData,
 } from '@grafana/data';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { setDragData } from 'app/features/investigation/state/reducers';
+import { setDragData } from 'app/features/drag-drop/state/reducers';
 
 import { QueryEditorRow } from './QueryEditorRow';
 
@@ -37,7 +38,7 @@ export interface Props {
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
 
-  setDragData: (x?: object[]) => void;
+  setDragData: (x?: PluginExtensionGlobalDrawerDroppedQueryEditorData) => void;
 }
 
 class BaseQueryEditorRows extends PureComponent<Props> {
@@ -94,10 +95,18 @@ class BaseQueryEditorRows extends PureComponent<Props> {
   }
 
   onDragStart = (result: DragStart) => {
-    const { queries, dsSettings, setDragData } = this.props;
+    const { queries, dsSettings, setDragData, data } = this.props;
 
     const query = queries[result.source.index];
-    setDragData(query);
+    const dragData: PluginExtensionGlobalDrawerDroppedQueryEditorData = {
+      type: 'query-editor',
+      data: {
+        query,
+        data,
+        datasource: dsSettings,
+      },
+    };
+    setDragData(dragData);
 
     reportInteraction('query_row_reorder_started', {
       startIndex: result.source.index,
