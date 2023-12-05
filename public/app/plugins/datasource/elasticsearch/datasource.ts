@@ -53,6 +53,7 @@ import {
   queryLogsCountWithGroupBy,
   queryLogsSample,
   queryLogsVolume,
+  queryLogsVolumeWithGroupBy,
 } from '../../../features/logs/logsModel';
 import { getLogLevelFromKey } from '../../../features/logs/utils';
 
@@ -554,6 +555,8 @@ export class ElasticDatasource
         return this.getLogsCountDataProvider(request);
       case SupplementaryQueryType.LogsCountWithGroupBy:
         return this.getLogsCountWithGroupByDataProvider(request);
+      case SupplementaryQueryType.LogsVolumeWithGroupBy:
+        return this.getLogsVolumeWithGroupByDataProvider(request);
       default:
         return undefined;
     }
@@ -586,20 +589,6 @@ export class ElasticDatasource
         const bucketAggs: BucketAggregation[] = [];
         const timeField = this.timeField ?? '@timestamp';
 
-        if (this.logLevelField) {
-          bucketAggs.push({
-            id: '2',
-            type: 'terms',
-            settings: {
-              min_doc_count: '0',
-              size: '0',
-              order: 'desc',
-              orderBy: '_count',
-              missing: LogLevel.unknown,
-            },
-            field: this.logLevelField,
-          });
-        }
         bucketAggs.push({
           id: '3',
           type: 'date_histogram',
@@ -617,6 +606,47 @@ export class ElasticDatasource
           metrics: [{ type: 'count', id: '1' }],
           timeField,
           bucketAggs,
+        };
+
+      case SupplementaryQueryType.LogsVolumeWithGroupBy:
+        // it has to be a logs-producing range-query
+        isQuerySuitable = !!(query.metrics?.length === 1 && query.metrics[0].type === 'logs');
+        if (!isQuerySuitable) {
+          return undefined;
+        }
+        const ba: BucketAggregation[] = [];
+        const t = this.timeField ?? '@timestamp';
+
+        ba.push({
+          id: '2',
+          type: 'terms',
+          settings: {
+            min_doc_count: '0',
+            size: '0',
+            order: 'desc',
+            orderBy: '_count',
+            missing: undefined,
+          },
+          field: this.logLevelField,
+        });
+
+        ba.push({
+          id: '3',
+          type: 'date_histogram',
+          settings: {
+            interval: 'auto',
+            min_doc_count: '0',
+            trimEdges: '0',
+          },
+          field: t,
+        });
+
+        return {
+          refId: `${REF_ID_STARTER_LOG_VOLUME}${query.refId}`,
+          query: query.query,
+          metrics: [{ type: 'count', id: '1' }],
+          timeField: t,
+          bucketAggs: ba,
         };
 
       case SupplementaryQueryType.LogsSample:
@@ -687,7 +717,7 @@ export class ElasticDatasource
             size: '0',
             order: 'desc',
             orderBy: '_count',
-            missing: LogLevel.unknown,
+            missing: undefined,
           },
           field: this.groupByFilter,
         });
@@ -716,6 +746,29 @@ export class ElasticDatasource
     }
 
     return queryLogsVolume(
+      this,
+      { ...logsVolumeRequest, targets },
+      {
+        range: request.range,
+        targets: request.targets,
+        extractLevel,
+      }
+    );
+  }
+
+  getLogsVolumeWithGroupByDataProvider(
+    request: DataQueryRequest<ElasticsearchQuery>
+  ): Observable<DataQueryResponse> | undefined {
+    const logsVolumeRequest = cloneDeep(request);
+    const targets = logsVolumeRequest.targets
+      .map((target) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsVolumeWithGroupBy }, target))
+      .filter((query): query is ElasticsearchQuery => !!query);
+
+    if (!targets.length) {
+      return undefined;
+    }
+
+    return queryLogsVolumeWithGroupBy(
       this,
       { ...logsVolumeRequest, targets },
       {
@@ -1277,8 +1330,12 @@ function createContextTimeRange(rowTimeEpochMs: number, direction: string, inter
   }
 }
 
-function extractLevel(dataFrame: DataFrame): LogLevel {
+function extractLevel(dataFrame: DataFrame, fieldName: string): LogLevel | string {
   const valueField = dataFrame.fields.find((f) => f.type === FieldType.number);
-  const name = valueField?.labels?.['level'] ?? '';
-  return getLogLevelFromKey(name);
+  if (!fieldName) {
+    const name = valueField?.labels?.['level'] ?? '';
+    return getLogLevelFromKey(name);
+  } else {
+    return valueField?.labels?.[fieldName] ?? '';
+  }
 }
