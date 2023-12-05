@@ -275,23 +275,28 @@ func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id in
 func (hs *HTTPServer) RestoreDashboard(c *contextmodel.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
 
+	// dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), 0, uid)
+	// if rsp != nil {
+	// 	return rsp
+	// }
+
+	// guardian, err := guardian.NewByDashboard(c.Req.Context(), dash, c.SignedInUser.GetOrgID(), c.SignedInUser)
+	// if err != nil {
+	// 	return response.Err(err)
+	// }
+
+	// if canRestore, err := guardian.CanDelete(); err != nil || !canRestore {
+	// 	return dashboardGuardianResponse(err)
+	// }
+
+	err := hs.DashboardService.RestoreDashboard(c.Req.Context(), uid)
+	if err != nil {
+		return response.Error(http.StatusNotFound, "Dashboard cannot be restored", err)
+	}
+
 	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), 0, uid)
 	if rsp != nil {
 		return rsp
-	}
-
-	guardian, err := guardian.NewByDashboard(c.Req.Context(), dash, c.SignedInUser.GetOrgID(), c.SignedInUser)
-	if err != nil {
-		return response.Err(err)
-	}
-
-	if canRestore, err := guardian.CanDelete(); err != nil || !canRestore {
-		return dashboardGuardianResponse(err)
-	}
-
-	err = hs.DashboardService.RestoreDashboard(c.Req.Context(), uid)
-	if err != nil {
-		return response.Error(http.StatusNotFound, "Dashboard cannot be restored", err)
 	}
 
 	return response.JSON(http.StatusOK, util.DynMap{
