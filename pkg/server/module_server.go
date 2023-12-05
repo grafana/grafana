@@ -130,7 +130,7 @@ func (s *ModuleServer) Run() error {
 	//	s.log.Debug("apiserver feature is disabled")
 	//}
 
-	m.RegisterModule(modules.StorageAPIServer, func() (services.Service, error) {
+	m.RegisterModule(modules.StorageServer, func() (services.Service, error) {
 		return storageServer.ProvideService(s.cfg, s.features)
 	})
 

@@ -52,6 +52,7 @@ func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
 	cfgSection := db.cfg.SectionWithEnvOverrides("entity_api")
 	dbType := cfgSection.Key("db_type").MustString("")
 
+	// if explicit connection settings are provided, use them
 	if dbType != "" {
 		dbHost := cfgSection.Key("db_host").MustString("")
 		dbName := cfgSection.Key("db_name").MustString("")
@@ -59,6 +60,7 @@ func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
 		dbPass := cfgSection.Key("db_pass").MustString("")
 
 		if dbType == "postgres" {
+			// TODO: support all postgres connection options
 			dbSslMode := cfgSection.Key("db_sslmode").MustString("disable")
 
 			addr, err := util.SplitHostPortDefault(dbHost, "127.0.0.1", "5432")
@@ -81,6 +83,7 @@ func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
 				return nil, err
 			}
 		} else if dbType == "mysql" {
+			// TODO: support all mysql connection options
 			protocol := "tcp"
 			if strings.HasPrefix(dbHost, "/") {
 				protocol = "unix"
@@ -103,6 +106,7 @@ func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
 				return nil, err
 			}
 		} else {
+			// TODO: sqlite support
 			return nil, fmt.Errorf("invalid db type specified: %s", dbType)
 		}
 
@@ -116,6 +120,7 @@ func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
 			engine.ShowSQL(true)
 			engine.ShowExecTime(true)
 		}
+		// otherwise, try to use the grafana db connection
 	} else {
 		if db.db == nil {
 			return nil, fmt.Errorf("no db connection provided")
