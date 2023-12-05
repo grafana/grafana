@@ -10,11 +10,11 @@ type HotEdgePosition = 'left' | 'right';
 
 interface HotEdgeProps {
   position: HotEdgePosition;
-  isDragging: boolean;
+  hasData: boolean;
   onActivate: () => void;
 }
 
-export const HotEdge = ({ position = 'right', isDragging, onActivate }: HotEdgeProps) => {
+export const HotEdge = ({ position = 'right', hasData, onActivate }: HotEdgeProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isEnabled, setIsEnabled] = useState(false);
   const styles = useStyles2(getHotEdgeStyles, { position, isEnabled });
@@ -29,14 +29,11 @@ export const HotEdge = ({ position = 'right', isDragging, onActivate }: HotEdgeP
     e.stopPropagation();
 
     setIsHovered(true);
-    console.log('handleMoveEnter');
   };
 
   const handleMoveOver = (e: MouseEvent<HTMLDivElement, MouseEvent>) => {
     e.preventDefault();
     e.stopPropagation();
-
-    console.log('handleMoveOver');
   };
 
   const handleMoveLeave = (e: MouseEvent<HTMLDivElement, MouseEvent>) => {
@@ -44,7 +41,6 @@ export const HotEdge = ({ position = 'right', isDragging, onActivate }: HotEdgeP
     e.stopPropagation();
 
     reset();
-    console.log('handleMoveLeave');
   };
 
   const handleActivated = () => {
@@ -53,7 +49,7 @@ export const HotEdge = ({ position = 'right', isDragging, onActivate }: HotEdgeP
   };
 
   useTimeout(() => setIsEnabled(true), isHovered ? 300 : null);
-  useTimeout(handleActivated, isEnabled && isDragging ? 300 : null);
+  useTimeout(handleActivated, isEnabled && hasData ? 300 : null);
 
   return (
     <div

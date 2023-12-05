@@ -29,8 +29,6 @@ export function AppChrome({ children }: Props) {
   const styles = useStyles2(getStyles);
   const investigationDragData = useSelector((state) => state.investigation.data);
 
-  console.log(investigationDragData);
-
   const contentClass = cx({
     [styles.content]: true,
     [styles.contentNoSearchBar]: searchBarHidden,
@@ -110,7 +108,7 @@ export function AppChrome({ children }: Props) {
         <>
           <HotEdge
             position="right"
-            isDragging={!!investigationDragData}
+            hasData={!!investigationDragData}
             onActivate={() => chrome.setExtensionDrawerOpen(true)}
           />
           <ExtensionDrawer
