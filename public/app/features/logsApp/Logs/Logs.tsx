@@ -36,9 +36,11 @@ import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
   Button,
+  Dropdown,
   FeatureBadge,
   Icon,
   LinkButton,
+  Menu,
   PanelChrome,
   RadioButtonGroup,
   Themeable2,
@@ -765,33 +767,23 @@ class UnthemedLogs extends PureComponent<Props, State> {
         >
           <div className={styles.stickyNavigation}>
             <div className={styles.logsOptions}>
-                <Button
-                  size="md"
-                  variant="secondary"
-                  onClick={() => this.setState({ showLogsOptions: !this.state.showLogsOptions })}
-                 >
-                  <Icon name="sliders-v-alt" size="md" />
-                  Logs settings
-                </Button>
-                {this.state.showLogsOptions && (
-                  <LogsOptions
-                    styles={styles}
-                    showTime={showTime}
-                    showLabels={showLabels}
-                    wrapLogMessage={wrapLogMessage}
-                    prettifyLogMessage={prettifyLogMessage}
-                    isFlipping={isFlipping}
-                    dedupStrategy={dedupStrategy}
-                    exploreId={exploreId}
-                    logsSortOrder={logsSortOrder}
-                    onChangeTime={this.onChangeTime}
-                    onChangeLabels={this.onChangeLabels}
-                    onChangeWrapLogMessage={this.onChangeWrapLogMessage}
-                    onChangePrettifyLogMessage={this.onChangePrettifyLogMessage}
-                    onChangeDedup={this.onChangeDedup}
-                    onChangeLogsSortOrder={this.onChangeLogsSortOrder}
-                  />
-                )}
+                <LogsOptions
+                  styles={styles}
+                  showTime={showTime}
+                  showLabels={showLabels}
+                  wrapLogMessage={wrapLogMessage}
+                  prettifyLogMessage={prettifyLogMessage}
+                  isFlipping={isFlipping}
+                  dedupStrategy={dedupStrategy}
+                  exploreId={exploreId}
+                  logsSortOrder={logsSortOrder}
+                  onChangeTime={this.onChangeTime}
+                  onChangeLabels={this.onChangeLabels}
+                  onChangeWrapLogMessage={this.onChangeWrapLogMessage}
+                  onChangePrettifyLogMessage={this.onChangePrettifyLogMessage}
+                  onChangeDedup={this.onChangeDedup}
+                  onChangeLogsSortOrder={this.onChangeLogsSortOrder}
+                />
                 {config.featureToggles.logsExploreTableVisualisation && (
                   <div className={styles.visualisationType}>
                     <RadioButtonGroup
@@ -952,6 +944,17 @@ export const Logs = withTheme2(UnthemedLogs);
 
 const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: number) => {
   return {
+    logOptionsMenu: css({
+      position: 'relative',
+      left: theme.spacing(2),
+      backgroundColor: theme.colors.background.secondary,
+      padding: theme.spacing(1),
+      paddingLeft: theme.spacing(0.5),
+    }),
+    logOptionMenuItem: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+    }),
     logsOptions: css({
       marginBottom: theme.spacing(2),
       display: 'flex',
@@ -983,9 +986,6 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
       '& > label': {
         marginRight: '0',
       },
-    }),
-    horizontalInlineSwitch: css({
-      padding: `0 ${theme.spacing(1)} 0 0`,
     }),
     radioButtons: css({
       margin: '0',
