@@ -4258,14 +4258,6 @@ exports[`better eslint`] = {
     "public/app/features/plugins/admin/components/PluginDetailsSignature.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
-    "public/app/features/plugins/admin/components/PluginListItem.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"],
-      [0, 0, 0, "Styles should be written using objects.", "5"]
-    ],
     "public/app/features/plugins/admin/components/PluginSignatureDetailsBadge.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
@@ -4292,11 +4284,7 @@ exports[`better eslint`] = {
     ],
     "public/app/features/plugins/admin/pages/Browse.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"],
-      [0, 0, 0, "Styles should be written using objects.", "5"]
+      [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "public/app/features/plugins/admin/state/actions.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
