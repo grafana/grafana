@@ -652,10 +652,11 @@ class UnthemedLogs extends PureComponent<Props, State> {
         ? 'Count over time'
         : logsCountData?.data || logsCountWithGroupByData?.data
         ? 'Total count'
-        : '';
+        : 'Log metrics';
     title = `${title}${
       this.state.hiddenLogLevels.length > 0 ? ` (filtered based on selected ${this.state.groupByLabel})` : ''
     }`;
+
     return (
       <>
         {getRowContext && contextRow && (

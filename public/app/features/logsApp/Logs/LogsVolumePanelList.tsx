@@ -138,6 +138,13 @@ export const LogsVolumePanelList = ({
           pluginId="stat"
           height={120}
           data={{ series: logsCountData?.data, state: logsCountData?.state } as PanelData}
+          options={{
+            reduceOptions: {
+              calcs: ['sum'],
+            },
+            colorMode: 'background',
+            graphMode: 'none',
+          }}
           fieldConfig={{
             defaults: {
               color: {
