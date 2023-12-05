@@ -162,11 +162,11 @@ func (evalResults Results) HasErrors() bool {
 // 2. The `Error` attribute is not nil
 // 3. The `Error` type is of `&invalidEvalResultFormatError`
 // Our thinking with this approach, is that we don't want to retry errors that have relation with invalid alert definition format.
-func (evalReuslts Results) HasNonRetryableErrors() bool {
+func (evalResults Results) HasNonRetryableErrors() bool {
 	var count int
-	for _, result := range evalReuslts {
-		if result.State == Error && result.Error != nil {
-			if errors.Is(result.Error, &invalidEvalResultFormatError{}) {
+	for _, r := range evalResults {
+		if r.State == Error && r.Error != nil {
+			if errors.Is(r.Error, &invalidEvalResultFormatError{}) {
 				count++
 			}
 		}
