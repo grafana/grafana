@@ -24,6 +24,7 @@ import userReducers from 'app/features/profile/state/reducers';
 import serviceAccountsReducer from 'app/features/serviceaccounts/state/reducers';
 import supportBundlesReducer from 'app/features/support-bundles/state/reducers';
 import teamsReducers from 'app/features/teams/state/reducers';
+import tutorialsReducer from 'app/features/tutorial/slice';
 import usersReducers from 'app/features/users/state/reducers';
 import templatingReducers from 'app/features/variables/state/keyedVariablesReducer';
 
@@ -52,6 +53,7 @@ const rootReducers = {
   ...templatingReducers,
   ...supportBundlesReducer,
   ...authConfigReducers,
+  ...tutorialsReducer,
   plugins: pluginsReducer,
   [alertingApi.reducerPath]: alertingApi.reducer,
   [publicDashboardApi.reducerPath]: publicDashboardApi.reducer,
