@@ -10,16 +10,17 @@ export enum AchievementId {
   NavigateToDashboard = 'NavigateToDashboard', // DONE
   NavigateToExplore = 'NavigateToExplore', // DONE
   WatchIntroToGrafanaVideo = 'WatchIntroToGrafanaVideo', // TBD by achievements page
-  ConnectYourFirstDatasource = 'ConnectYourFirstDatasource',
-  UseExploreToMakeAQuery = 'UseExploreToMakeAQuery',
-  AddExplorePanelToADashboard = 'AddExplorePanelToADashboard',
-  AddATitleAndDescriptionToAPanelInADashboard = 'AddATitleAndDescriptionToAPanelInADashboard',
-  ChangeTheTheme = 'ChangeTheTheme',
-  ExploreKeyboardShortcuts = 'ExploreKeyboardShortcuts',
-  ChangePanelSettings = 'ChangePanelSettings',
-  ImplementDataLink = 'ImplementDataLink',
-  AddTemplateVariable = 'AddTemplateVariable',
-  AddDataTransformation = 'AddDataTransformation',
+  ConnectYourFirstDatasource = 'ConnectYourFirstDatasource', // DONE
+  UseExploreToMakeAQuery = 'UseExploreToMakeAQuery', // DONE
+  AddExplorePanelToADashboard = 'AddExplorePanelToADashboard', // DONE
+  AddATitleToAPanelInADashboard = 'AddATitleToAPanelInADashboard', // DONE
+  AddADescriptionToAPanelInADashboard = 'AddADescriptionToAPanelInADashboard', // DONE
+  ChangeTheTheme = 'ChangeTheTheme', // DONE
+  ExploreKeyboardShortcuts = 'ExploreKeyboardShortcuts', // DONE
+  ChangePanelSettings = 'ChangePanelSettings', // SKIP (not sure how to best implement this)
+  ImplementDataLink = 'ImplementDataLink', // SKIP pain due to code being in grafana UI package
+  AddTemplateVariable = 'AddTemplateVariable', // DONE
+  AddDataTransformation = 'AddDataTransformation', // stopping point for today
   AddCanvasVisualization = 'AddCanvasVisualization',
   AddMetricValueElement = 'AddMetricValueElement',
   EnableCrosshairSharing = 'EnableCrosshairSharing',
@@ -40,5 +41,6 @@ export type Achievement = {
   description?: string;
   level: AchievementLevel;
   link?: string;
+  video?: string;
   completed?: boolean;
 };

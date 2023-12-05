@@ -7,6 +7,8 @@ import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Alert, Button, Field, InputControl, Modal, RadioButtonGroup } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { contextSrv } from 'app/core/services/context_srv';
+import { registerAchievementCompleted } from 'app/features/achievements/AchievementsService';
+import { AchievementId } from 'app/features/achievements/types';
 import { removeDashboardToFetchFromLocalStorage } from 'app/features/dashboard/state/initDashboard';
 import { AccessControlAction, useSelector } from 'app/types';
 
@@ -123,6 +125,8 @@ export function AddToDashboardForm(props: Props): ReactElement {
       }
       return;
     }
+
+    registerAchievementCompleted(AchievementId.AddExplorePanelToADashboard);
 
     const dashboardURL = getDashboardURL(dashboardUid);
     if (!openInNewTab) {

@@ -22,6 +22,8 @@ import { CORRELATION_EDITOR_POST_CONFIRM_ACTION } from 'app/types/explore';
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
 
 import { contextSrv } from '../../core/core';
+import { registerAchievementCompleted } from '../achievements/AchievementsService';
+import { AchievementId } from '../achievements/types';
 import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
 import { updateFiscalYearStartMonthForSession, updateTimeZoneForSession } from '../profile/state/reducers';
 import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors';
@@ -143,6 +145,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
     if (loading) {
       return dispatch(cancelQueries(exploreId));
     } else {
+      registerAchievementCompleted(AchievementId.UseExploreToMakeAQuery);
       return dispatch(runQueries({ exploreId }));
     }
   };

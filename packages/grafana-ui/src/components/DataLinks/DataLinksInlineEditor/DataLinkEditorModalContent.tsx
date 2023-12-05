@@ -23,6 +23,7 @@ export const DataLinkEditorModalContent = ({
   onCancel,
 }: DataLinkEditorModalContentProps) => {
   const [dirtyLink, setDirtyLink] = useState(link);
+
   return (
     <>
       <DataLinkEditor

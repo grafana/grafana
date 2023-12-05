@@ -18,6 +18,8 @@ import {
 import { updateNavIndex } from 'app/core/actions';
 import { appEvents, contextSrv } from 'app/core/core';
 import { getBackendSrv } from 'app/core/services/backend_srv';
+import { registerAchievementCompleted } from 'app/features/achievements/AchievementsService';
+import { AchievementId } from 'app/features/achievements/types';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
@@ -250,6 +252,8 @@ export function addDataSource(
       plugin_version: result.meta?.info?.version,
       path: editLink,
     });
+
+    registerAchievementCompleted(AchievementId.ConnectYourFirstDatasource);
 
     locationService.push(editLink);
   };

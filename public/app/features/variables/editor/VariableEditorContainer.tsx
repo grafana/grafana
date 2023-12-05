@@ -4,6 +4,8 @@ import { bindActionCreators } from 'redux';
 
 import { config, locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
+import { registerAchievementCompleted } from 'app/features/achievements/AchievementsService';
+import { AchievementId } from 'app/features/achievements/types';
 import { SettingsPageProps } from 'app/features/dashboard/components/DashboardSettings/types';
 
 import { StoreState, ThunkDispatch } from '../../../types';
@@ -81,6 +83,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props, State> {
 
   onNewVariable = () => {
     this.props.createNewVariable(this.props.dashboard.uid);
+    registerAchievementCompleted(AchievementId.AddTemplateVariable);
   };
 
   onChangeVariableOrder = (identifier: KeyedVariableIdentifier, fromIndex: number, toIndex: number) => {

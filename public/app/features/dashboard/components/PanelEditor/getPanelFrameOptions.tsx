@@ -2,6 +2,8 @@ import React from 'react';
 
 import { config } from '@grafana/runtime';
 import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
+import { registerAchievementCompleted } from 'app/features/achievements/AchievementsService';
+import { AchievementId } from 'app/features/achievements/types';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { GenAIPanelDescriptionButton } from '../GenAI/GenAIPanelDescriptionButton';
@@ -26,6 +28,8 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
       input.value = title;
       onPanelConfigChange('title', title);
     }
+
+    registerAchievementCompleted(AchievementId.AddATitleToAPanelInADashboard);
   };
 
   const setPanelDescription = (description: string) => {
@@ -34,6 +38,8 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
       input.value = description;
       onPanelConfigChange('description', description);
     }
+
+    registerAchievementCompleted(AchievementId.AddATitleToAPanelInADashboard);
   };
 
   return descriptor

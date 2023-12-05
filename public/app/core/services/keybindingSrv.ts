@@ -6,6 +6,8 @@ import { LegacyGraphHoverClearEvent, locationUtil } from '@grafana/data';
 import { LocationService } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
+import { registerAchievementCompleted } from 'app/features/achievements/AchievementsService';
+import { AchievementId } from 'app/features/achievements/types';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { DashboardModel } from 'app/features/dashboard/state';
@@ -48,7 +50,10 @@ export class KeybindingSrv {
       this.bindGlobalEsc();
     }
 
-    this.bind('c t', () => toggleTheme(false));
+    this.bind('c t', () => {
+      toggleTheme(false);
+      registerAchievementCompleted(AchievementId.ChangeTheTheme);
+    });
     this.bind('c r', () => toggleTheme(true));
   }
 

@@ -24,7 +24,8 @@ export const registerAchievementCompleted = async (achievementId: AchievementId)
   }
 
   // save achievement as completed on user object
-  user.achievements?.push(achievementId);
+  // TODO Fix this
+  // user.achievements?.push(achievementId);
 
   // check if achievement is a level up
   // if so, save new level on user object
@@ -76,7 +77,10 @@ const updateUser = async (user: UserDTO): Promise<void> => {
 
 // function to check if a user has completed an achievement
 export const userHasCompletedAchievement = (achievementId: AchievementId, user: UserDTO): boolean => {
-  return user.achievements?.some((achievement) => achievement === achievementId) ?? false;
+  // TODO: Fix this functionality
+  // const achievements = JSON.parse(user.achievements ?? '') ?? {};
+  // return achievements?.some((achievement: {id: string, value: number}) => achievement.id === achievementId) ?? false;
+  return false;
 };
 
 // function to provide all achievements for a user (with completion status)

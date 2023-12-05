@@ -3492,6 +3492,9 @@
         },
         "username": {
           "type": "string"
+        },
+        "username_file": {
+          "type": "string"
         }
       }
     },
@@ -3587,6 +3590,9 @@
         "Error": {
           "description": "Error is a property to be set if the corresponding DataQuery has an error.",
           "type": "string"
+        },
+        "ErrorSource": {
+          "$ref": "#/definitions/ErrorSource"
         },
         "Frames": {
           "$ref": "#/definitions/Frames"
@@ -3791,6 +3797,10 @@
           }
         }
       }
+    },
+    "ErrorSource": {
+      "description": "ErrorSource type defines the source of the error",
+      "type": "string"
     },
     "ErrorType": {
       "type": "string",
@@ -4832,7 +4842,7 @@
       "type": "object",
       "title": "MatchRegexps represents a map of Regexp.",
       "additionalProperties": {
-        "$ref": "#/definitions/Regexp"
+        "type": "string"
       }
     },
     "MatchType": {
@@ -5955,11 +5965,6 @@
         }
       }
     },
-    "Regexp": {
-      "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
-      "type": "object",
-      "title": "Regexp is the representation of a compiled regular expression."
-    },
     "RelativeTimeRange": {
       "description": "RelativeTimeRange is the per query start and end time\nfor requests.",
       "type": "object",
@@ -6864,8 +6869,9 @@
       }
     },
     "URL": {
+      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
       "type": "object",
-      "title": "URL is a custom URL type that allows validation at configuration load time.",
+      "title": "A URL represents a parsed URL (technically, a URI reference).",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -7105,6 +7111,7 @@
       }
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -7292,7 +7299,6 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -7350,6 +7356,7 @@
       "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
@@ -7502,6 +7509,7 @@
       }
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
