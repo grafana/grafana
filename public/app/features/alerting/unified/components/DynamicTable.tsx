@@ -79,8 +79,6 @@ export const DynamicTable = <T extends object>({
   footerRow,
   dataTestId,
 }: DynamicTableProps<T>) => {
-  console.log(items);
-
   const defaultPaginationStyles = useStyles2(getPaginationStyles);
 
   if ((onCollapse || onExpand || isExpanded) && !(onCollapse && onExpand && isExpanded)) {
