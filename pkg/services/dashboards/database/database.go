@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"xorm.io/xorm"
-
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -871,18 +869,20 @@ func (d *dashboardStore) GetDashboards(ctx context.Context, query *dashboards.Ge
 		if len(query.DashboardIDs) == 0 && len(query.DashboardUIDs) == 0 {
 			return star.ErrCommandValidationFailed
 		}
-		var session *xorm.Session
+
+		// remove soft deleted dashboards from the response
+		sess.Where("deleted IS NULL")
+
 		if len(query.DashboardIDs) > 0 {
-			session = sess.In("id", query.DashboardIDs)
+			sess.In("id", query.DashboardIDs)
 		} else {
-			session = sess.In("uid", query.DashboardUIDs)
+			sess.In("uid", query.DashboardUIDs)
 		}
 		if query.OrgID > 0 {
-			session = sess.Where("org_id = ?", query.OrgID)
+			sess.Where("org_id = ?", query.OrgID)
 		}
 
-		session = sess.Where("deleted IS NULL")
-		err := session.Find(&dashboards)
+		err := sess.Find(&dashboards)
 		return err
 	})
 	if err != nil {
