@@ -43,20 +43,27 @@ export interface DataTransformerInfo<TOptions = any> extends RegistryItemWithOpt
    * @param options
    */
   operator: (options: TOptions, context: DataTransformContext) => MonoTypeOperatorFunction<DataFrame[]>;
+
+  /**
+   * Render the current options into a PRQL query string
+   * @param options
+   * @returns a PRQL query string
+   */
+  toPRQL?: (options: TOptions) => string;
+
   /**
    * Function that is present will indicate whether a transformation is applicable
    * given the current data.
    * @param options
    */
   isApplicable?: (data: DataFrame[]) => TransformationApplicabilityScore;
+
   /**
    * A description of the applicator. Can either simply be a string
    * or function which when given the current dataset returns a string.
    * This way descriptions can be tailored relative to the underlying data.
    */
   isApplicableDescription?: string | ((data: DataFrame[]) => string);
-  // here
-  toPrql?: (options: TOptions) => string;
 }
 
 /**

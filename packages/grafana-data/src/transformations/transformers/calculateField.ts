@@ -134,7 +134,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
       reducer: ReducerID.sum,
     },
   },
-  toPrql: (options) => {
+  toPRQL: (options) => {
     if (options.mode === CalculateFieldMode.Index) {
       if (options.index?.asPercentile) {
         return `
@@ -151,7 +151,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
       `;
     }
 
-    return '';
+    return `# Not yet supported:\n` + `# ${JSON.stringify(options, null, '  ').replace(/(?:\r\n|\r|\n)/g, '\n# ')}`;
   },
   operator: (options, ctx) => (outerSource) => {
     const operator =

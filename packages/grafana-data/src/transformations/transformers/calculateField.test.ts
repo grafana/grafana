@@ -948,4 +948,53 @@ describe('calculateField transformer w/ timeseries', () => {
       expect(data.fields[1].values[3]).toBeCloseTo(0.6666666, 4);
     });
   });
+
+  it('supports PRQL', () => {
+    expect(
+      normlines(
+        calculateFieldTransformer.toPRQL!({
+          mode: CalculateFieldMode.Index,
+          index: {
+            asPercentile: true,
+          },
+        })
+      )
+    ).toEqual(
+      normlines(`
+        derive const = 0
+        derive quantile = (row_number foobar) / (count const)
+        select !{const}
+      `)
+    );
+
+    // Defaults to JSON model
+    expect(
+      normlines(
+        calculateFieldTransformer.toPRQL!({
+          mode: CalculateFieldMode.ReduceRow,
+          reduce: {
+            reducer: ReducerID.mean,
+          },
+          replaceFields: true,
+        })
+      )
+    ).toEqual(
+      normlines(`# Not yet supported:
+     # {
+     #   "mode": "reduceRow",
+     #   "reduce": {
+     #     "reducer": "mean"
+     #   },
+     #   "replaceFields": true
+     # }`)
+    );
+  });
 });
+
+// this will fix the extra indenting caused by
+function normlines(v: string): string {
+  return v
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .join('\n');
+}

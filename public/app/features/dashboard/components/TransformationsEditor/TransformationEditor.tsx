@@ -42,6 +42,14 @@ export const TransformationEditor = ({
   const [output, setOutput] = useState<DataFrame[]>([]);
   const config = useMemo(() => configs[index], [configs, index]);
 
+  const prql = useMemo(() => {
+    const { toPRQL } = uiConfig.transformation;
+    if (!toPRQL) {
+      return '';
+    }
+    return toPRQL(config.transformation.options);
+  }, [uiConfig, config.transformation.options]);
+
   useEffect(() => {
     const config = configs[index].transformation;
     const matcher = config.filter?.options ? getFrameMatchers(config.filter) : undefined;
@@ -86,13 +94,7 @@ export const TransformationEditor = ({
   return (
     <div className={styles.editor} data-testid={selectors.components.TransformTab.transformationEditor(uiConfig.name)}>
       {editor}
-      {
-        <PRQLEditor
-          metricNames={['metric1', 'metric2', 'metric3']}
-          readOnly={true}
-          queryString={uiConfig.transformation.toPrql!(config.transformation.options)}
-        />
-      }
+      {prql && <PRQLEditor metricNames={['metric1', 'metric2', 'metric3']} readOnly={true} queryString={prql} />}
       {debugMode && (
         <Drawer title="Debug transformation" subtitle={uiConfig.name} onClose={toggleShowDebug}>
           <div
