@@ -647,7 +647,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
         ? 'Count over time'
         : logsCountData?.data || logsCountWithGroupByData?.data
         ? 'Total count'
-        : '';
+        : 'Log metrics';
     return (
       <>
         {getRowContext && contextRow && (

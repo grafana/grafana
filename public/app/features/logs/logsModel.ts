@@ -759,6 +759,22 @@ export function queryLogsVolumeWithGroupBy<TQuery extends DataQuery, TOptions ex
       };
     }
 
+    if (datasource.type === 'elasticsearch') {
+      const target = logsVolumeRequestUpdated.targets[0];
+      target.bucketAggs = [
+        {
+          ...target.bucketAggs[0],
+          field: datasource.groupByFilter,
+        },
+        target.bucketAggs[1],
+      ];
+
+      logsVolumeRequestUpdated = {
+        ...logsVolumeRequestUpdated,
+        targets: [target],
+      };
+    }
+
     const queryResponse = datasource.query(logsVolumeRequestUpdated);
     const queryObservable = isObservable(queryResponse) ? queryResponse : from(queryResponse);
 
@@ -932,6 +948,21 @@ export function queryLogsCountWithGroupBy<TQuery extends DataQuery, TOptions ext
             expr,
           },
         ],
+      };
+    }
+
+    if (datasource.type === 'elasticsearch') {
+      const target = logsCountRequest.targets[0];
+      target.bucketAggs = [
+        {
+          ...target.bucketAggs[0],
+          field: datasource.groupByFilter,
+        },
+      ];
+
+      logsCountRequestUpdated = {
+        ...logsCountRequest,
+        targets: [target],
       };
     }
     const queryResponse = datasource.query(logsCountRequestUpdated);
