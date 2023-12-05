@@ -19,7 +19,9 @@ export const PRQLExpr = ({ labelWidth, onChange, refIds, query }: Props) => {
       ...query,
       expression: value.value,
       prql: {
-        rawQuery: `Something set here!!! (${Date.now()})`,
+        rawQuery: `from A
+        filter 'time' > @2021-01-01
+        take 1..20`,
       },
     });
   };
