@@ -197,7 +197,7 @@ export class GrafanaApp {
 
       let preloadResults: PluginPreloadResult[] = [];
 
-      if (contextSrv.isSignedIn) {
+      if (contextSrv.user.orgRole !== '') {
         // Preload selected app plugins
         preloadResults = await preloadPlugins(config.apps);
       }
