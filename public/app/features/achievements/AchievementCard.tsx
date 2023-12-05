@@ -40,8 +40,8 @@ export const AchievementCard = ({ title, progress = 20, level }: AchievementCard
           id="panel1a-header"
           sx={{ backgroundColor: theme.colors.background.secondary }}
         >
-          <Box sx={{ position: 'relative', display: 'inline-flex', marginRight: '10px' }}>
-            <CircularProgress color="secondary" variant="determinate" value={progress} />
+          <Box className={styles.progressBox}>
+            <CircularProgress variant="determinate" value={progress} sx={{ color: '#F55F3E' }} />
             <Box className={styles.progressText}>{`${Math.round(progress)}%`}</Box>
           </Box>
           <h4 style={{ color: theme.colors.text.primary }}>{title}</h4>
@@ -52,9 +52,9 @@ export const AchievementCard = ({ title, progress = 20, level }: AchievementCard
               <Card key={index} id={achievement.id}>
                 <Card.Figure>
                   {achievement.completed ? (
-                    <Icon name={'check'} aria-label={'check'} />
+                    <Icon name={'check-circle'} aria-label={'check-circle'} className={styles.achievementIcon} />
                   ) : (
-                    <Icon name={'grafana'} aria-label={'grafana'} />
+                    <Icon name={'grafana'} aria-label={'grafana'} className={styles.achievementIcon} />
                   )}
                 </Card.Figure>
                 <Card.Heading>{achievement.title}</Card.Heading>
@@ -118,5 +118,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     justifyContent: 'center',
     paddingRight: '5px',
+  }),
+  achievementIcon: css({
+    color: '#F55F3E',
+    height: '20px',
+    width: '20px',
+  }),
+  progressBox: css({
+    position: 'relative',
+    display: 'inline-flex',
+    marginRight: '10px',
   }),
 });
