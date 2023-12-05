@@ -225,8 +225,13 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	}
 
 	rsp, err := s.store.List(ctx, &entityStore.EntityListRequest{
-		Key:      []string{key},
-		WithBody: true,
+		Key:           []string{key},
+		WithBody:      true,
+		WithLabels:    true,
+		WithFields:    true,
+		NextPageToken: opts.Predicate.Continue,
+		Limit:         opts.Predicate.Limit,
+		// TODO push label/field matching down to storage
 	})
 	if err != nil {
 		return apierrors.NewInternalError(err)
@@ -238,6 +243,15 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		err := entityToResource(r, res)
 		if err != nil {
 			return apierrors.NewInternalError(err)
+		}
+
+		// TODO filter in storage
+		matches, err := opts.Predicate.Matches(res)
+		if err != nil {
+			return apierrors.NewInternalError(err)
+		}
+		if !matches {
+			continue
 		}
 
 		v.Set(reflect.Append(v, reflect.ValueOf(res).Elem()))
