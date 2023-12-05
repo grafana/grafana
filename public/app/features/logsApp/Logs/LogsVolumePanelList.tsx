@@ -40,6 +40,8 @@ type Props = {
   eventBus: EventBus;
   onClose?(): void;
   datasourceInstance: DataSourceApi<DataQuery>;
+  onChangeGroupByLabel: (label?: string) => void;
+  groupByLabel?: string;
 };
 
 export const LogsVolumePanelList = ({
@@ -57,6 +59,8 @@ export const LogsVolumePanelList = ({
   timeZone,
   onClose,
   datasourceInstance,
+  onChangeGroupByLabel,
+  groupByLabel,
 }: Props) => {
   const {
     logVolumes,
@@ -84,17 +88,13 @@ export const LogsVolumePanelList = ({
     isLoadingLabelNames?: boolean;
   }>({});
   const [labelNamesMenuOpen, setLabelNamesMenuOpen] = useState(false);
-  const [selectedLabel, setSelectedLabel] = useState<SelectableValue<string | undefined>>({
-    label: 'none',
-    value: 'none',
-  });
   const [selectedQueryType, setSelectedQueryType] = useState<SupplementaryQueryType | undefined>(
     SupplementaryQueryType.LogsVolume
   );
 
   useEffect(() => {
     if (selectedQueryType) {
-      if (selectedLabel && selectedLabel.value !== 'none') {
+      if (groupByLabel && groupByLabel !== 'none') {
         if (selectedQueryType === SupplementaryQueryType.LogsVolume) {
           onLoadLogsVolume(SupplementaryQueryType.LogsVolumeWithGroupBy);
         }
@@ -105,7 +105,7 @@ export const LogsVolumePanelList = ({
         onLoadLogsVolume(selectedQueryType);
       }
     }
-  }, [selectedLabel, selectedQueryType]);
+  }, [groupByLabel, selectedQueryType]);
 
   const styles = useStyles2(getStyles);
 
@@ -225,15 +225,15 @@ export const LogsVolumePanelList = ({
               isLoading={state.isLoadingLabelNames}
               options={state.labelNames}
               width={20}
-              value={selectedLabel}
+              value={{ label: groupByLabel ?? 'none', value: groupByLabel ?? 'none' }}
               onChange={(change) => {
                 setLabelNamesMenuOpen(false);
-                if (change.value !== selectedLabel.value) {
+                if (change.value !== groupByLabel) {
                   if (change.value === 'none') {
-                    setSelectedLabel(undefined);
+                    onChangeGroupByLabel(undefined);
                     datasourceInstance.groupByFilter = undefined;
                   } else {
-                    setSelectedLabel(change);
+                    onChangeGroupByLabel(change.value);
                     datasourceInstance.groupByFilter = change.value;
                   }
                 }

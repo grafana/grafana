@@ -19,7 +19,6 @@ import {
   GrafanaTheme2,
   LinkModel,
   LoadingState,
-  LogLevel,
   LogRowContextOptions,
   LogRowModel,
   LogsDedupDescription,
@@ -126,7 +125,7 @@ interface State {
   wrapLogMessage: boolean;
   prettifyLogMessage: boolean;
   dedupStrategy: LogsDedupStrategy;
-  hiddenLogLevels: LogLevel[];
+  hiddenLogLevels: string[];
   logsSortOrder: LogsSortOrder;
   isFlipping: boolean;
   displayedFields: string[];
@@ -137,6 +136,7 @@ interface State {
   visualisationType?: LogsVisualisationType;
   logsContainer?: HTMLDivElement;
   logDetailsRow: LogRowModel | undefined;
+  groupByLabel?: string;
 }
 
 // we need to define the order of these explicitly
@@ -170,6 +170,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     visualisationType: this.props.panelState?.logs?.visualisationType ?? 'logs',
     logsContainer: undefined,
     logDetailsRow: undefined,
+    groupByLabel: undefined,
   };
 
   constructor(props: Props) {
@@ -359,8 +360,12 @@ class UnthemedLogs extends PureComponent<Props, State> {
   };
 
   onToggleLogLevel = (hiddenRawLevels: string[]) => {
-    const hiddenLogLevels = hiddenRawLevels.map((level) => LogLevel[level as LogLevel]);
-    this.setState({ hiddenLogLevels });
+    // const hiddenLogLevels = hiddenRawLevels.map((level) => LogLevel[level as LogLevel]);
+    this.setState({ hiddenLogLevels: hiddenRawLevels });
+  };
+
+  onChangeGroupByLabel = (groupByLabel?: string) => {
+    this.setState({ groupByLabel });
   };
 
   onToggleLogsVolumeCollapse = (collapsed: boolean) => {
@@ -515,8 +520,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
     return { dedupedRows, dedupCount };
   });
 
-  filterRows = memoizeOne((logRows: LogRowModel[], hiddenLogLevels: LogLevel[]) => {
-    return filterLogLevels(logRows, new Set(hiddenLogLevels));
+  filterRows = memoizeOne((logRows: LogRowModel[], hiddenLogLevels: string[], groupByLabel?: string) => {
+    return filterLogLevels(logRows, new Set(hiddenLogLevels), groupByLabel);
   });
 
   createNavigationRange = memoizeOne((logRows: LogRowModel[]): { from: number; to: number } | undefined => {
@@ -637,7 +642,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     const logRowStyles = getLogRowStyles(theme);
     const hasData = logRows && logRows.length > 0;
 
-    const filteredLogs = this.filterRows(logRows, hiddenLogLevels);
+    const filteredLogs = this.filterRows(logRows, hiddenLogLevels, this.state.groupByLabel);
     const { dedupedRows } = this.dedupRows(filteredLogs, dedupStrategy);
     const navigationRange = this.createNavigationRange(logRows);
 
@@ -684,6 +689,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 splitOpen={splitOpen}
                 onLoadLogsVolume={loadLogsVolumeData}
                 onHiddenSeriesChanged={this.onToggleLogLevel}
+                onChangeGroupByLabel={this.onChangeGroupByLabel}
+                groupByLabel={this.state.groupByLabel}
                 eventBus={this.logsVolumeEventBus}
                 onClose={() => this.onToggleLogsVolumeCollapse(true)}
                 datasourceInstance={this.props.datasourceInstance}
@@ -711,7 +718,9 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   ]
               : null,
           ]}
-          title={'Logs'}
+          title={`Logs${
+            this.state.hiddenLogLevels.length > 0 ? ` (filtered based on selected ${this.state.groupByLabel})` : ''
+          }`}
           actions={
             <>
               {config.featureToggles.logsExploreTableVisualisation && (
