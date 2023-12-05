@@ -63,6 +63,9 @@ func getDatasourceScopesForRules(rules models.RulesGroup) []string {
 	var result []string
 	for _, rule := range rules {
 		for _, query := range rule.Data {
+			if query.QueryType == expr.DatasourceType {
+				continue
+			}
 			scope := datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID)
 			if _, ok := scopesMap[scope]; ok {
 				continue
@@ -108,17 +111,11 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 			},
 			permissions: func(c *store.GroupDelta) map[string][]string {
-				var scopes []string
-				for _, rule := range c.New {
-					for _, query := range rule.Data {
-						scopes = append(scopes, datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))
-					}
-				}
 				return map[string][]string{
 					ruleCreate: {
 						namespaceIdScope,
 					},
-					datasources.ActionQuery: scopes,
+					datasources.ActionQuery: getDatasourceScopesForRules(c.New),
 				}
 			},
 		},
@@ -284,33 +281,19 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 			},
 			permissions: func(c *store.GroupDelta) map[string][]string {
-				scopes := make(map[string]struct{})
+				scopeRules := make([]*models.AlertRule, 0)
 				for _, update := range c.Update {
-					for _, query := range update.New.Data {
-						scopes[datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID)] = struct{}{}
-					}
-					for _, query := range update.Existing.Data {
-						scopes[datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID)] = struct{}{}
-					}
+					scopeRules = append(scopeRules, update.New, update.Existing)
 				}
 				for _, rules := range c.AffectedGroups {
-					for _, rule := range rules {
-						for _, query := range rule.Data {
-							scopes[datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID)] = struct{}{}
-						}
-					}
-				}
-
-				dsScopes := make([]string, 0, len(scopes))
-				for key := range scopes {
-					dsScopes = append(dsScopes, key)
+					scopeRules = append(scopeRules, rules...)
 				}
 
 				return map[string][]string{
 					ruleUpdate: {
 						dashboards.ScopeFoldersProvider.GetResourceScopeUID(c.GroupKey.NamespaceUID),
 					},
-					datasources.ActionQuery: dsScopes,
+					datasources.ActionQuery: getDatasourceScopesForRules(scopeRules),
 				}
 			},
 		},

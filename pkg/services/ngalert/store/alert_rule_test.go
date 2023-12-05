@@ -2,12 +2,15 @@ package store
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -47,7 +50,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 		FolderService: setupFolderService(t, sqlStore, cfg),
 		Logger:        &logtest.Fake{},
 	}
-	generator := models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval), models.WithUniqueID())
+	generator := models.AlertRuleGen(models.WithIntervalMatching(store.Cfg.BaseInterval), models.WithUniqueID())
 
 	t.Run("should increase version", func(t *testing.T) {
 		rule := createRule(t, store, generator)
@@ -104,7 +107,7 @@ func TestIntegrationUpdateAlertRulesWithUniqueConstraintViolation(t *testing.T) 
 
 	idMutator := models.WithUniqueID()
 	createRuleInFolder := func(title string, orgID int64, namespaceUID string) *models.AlertRule {
-		generator := models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval), idMutator, models.WithNamespace(&folder.Folder{
+		generator := models.AlertRuleGen(models.WithIntervalMatching(store.Cfg.BaseInterval), idMutator, models.WithNamespace(&folder.Folder{
 			UID:   namespaceUID,
 			Title: namespaceUID,
 		}), withOrgID(orgID), models.WithTitle(title))
@@ -336,7 +339,7 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 		FeatureToggles: featuremgmt.WithFeatures(),
 	}
 
-	generator := models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval), models.WithUniqueID(), models.WithUniqueOrgID())
+	generator := models.AlertRuleGen(models.WithIntervalMatching(store.Cfg.BaseInterval), models.WithUniqueID(), models.WithUniqueOrgID())
 	rule1 := createRule(t, store, generator)
 	rule2 := createRule(t, store, generator)
 	createFolder(t, store, rule1.NamespaceUID, rule1.Title, rule1.OrgID)
@@ -408,13 +411,6 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 				require.Equal(t, tt.folders, query.ResultFoldersTitles)
 			}
 		})
-	}
-}
-
-func withIntervalMatching(baseInterval time.Duration) func(*models.AlertRule) {
-	return func(rule *models.AlertRule) {
-		rule.IntervalSeconds = int64(baseInterval.Seconds()) * (rand.Int63n(10) + 1)
-		rule.For = time.Duration(rule.IntervalSeconds*rand.Int63n(9)+1) * time.Second
 	}
 }
 
@@ -533,49 +529,114 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	sqlStore := db.InitTestDB(t)
-	cfg := setting.NewCfg()
-	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
-	store := &DBstore{
-		SQLStore:      sqlStore,
-		FolderService: setupFolderService(t, sqlStore, cfg),
-		Logger:        log.New("test-dbstore"),
-		Cfg:           cfg.UnifiedAlerting,
-	}
+	t.Run("ensure insert returns AlertRuleKeyWithIds in order", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		cfg := setting.NewCfg()
+		cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
+		store := &DBstore{
+			SQLStore:      sqlStore,
+			FolderService: setupFolderService(t, sqlStore, cfg),
+			Logger:        log.New("test-dbstore"),
+			Cfg:           cfg.UnifiedAlerting,
+		}
 
-	rules := models.GenerateAlertRules(5, models.AlertRuleGen(models.WithOrgID(1), withIntervalMatching(store.Cfg.BaseInterval)))
-	deref := make([]models.AlertRule, 0, len(rules))
-	for _, rule := range rules {
-		deref = append(deref, *rule)
-	}
+		rules := models.GenerateAlertRules(5, models.AlertRuleGen(models.WithOrgID(1), models.WithIntervalMatching(store.Cfg.BaseInterval)))
+		deref := make([]models.AlertRule, 0, len(rules))
+		for _, rule := range rules {
+			deref = append(deref, *rule)
+		}
 
-	ids, err := store.InsertAlertRules(context.Background(), deref)
-	require.NoError(t, err)
-	require.Len(t, ids, len(rules))
+		ids, err := store.InsertAlertRules(context.Background(), deref)
+		require.NoError(t, err)
+		require.Len(t, ids, len(rules))
 
-	dbRules, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
-		OrgID: 1,
+		dbRules, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			OrgID: 1,
+		})
+		require.NoError(t, err)
+		for idx, keyWithID := range ids {
+			found := false
+			for _, rule := range dbRules {
+				if rule.GetKey() == keyWithID.AlertRuleKey {
+					expected := rules[idx]
+					require.Equal(t, keyWithID.ID, rule.ID)
+					require.Equal(t, expected.Title, rule.Title)
+					found = true
+					break
+				}
+			}
+			require.Truef(t, found, "Rule with key %#v was not found in database", keyWithID)
+		}
 	})
-	require.NoError(t, err)
-	for idx, keyWithID := range ids {
-		found := false
-		for _, rule := range dbRules {
-			if rule.GetKey() == keyWithID.AlertRuleKey {
-				expected := rules[idx]
-				require.Equal(t, keyWithID.ID, rule.ID)
-				require.Equal(t, expected.Title, rule.Title)
-				found = true
-				break
+
+	t.Run("rules without maxDataPoints and intervalMs persist defaults to model and database", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		cfg := setting.NewCfg()
+		cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
+		store := &DBstore{
+			SQLStore:      sqlStore,
+			FolderService: setupFolderService(t, sqlStore, cfg),
+			Logger:        log.New("test-dbstore"),
+			Cfg:           cfg.UnifiedAlerting,
+		}
+
+		rules := models.GenerateAlertRules(5,
+			models.AlertRuleGen(
+				models.WithOrgID(1),
+				models.WithIntervalMatching(store.Cfg.BaseInterval),
+				models.WithQuery(models.GenerateSimpleReduceThreshold(
+					models.AlertQueryGen(
+						models.GenerateAlertQuery(),
+					))...,
+				),
+			),
+		)
+		deref := make([]models.AlertRule, 0, len(rules))
+		for _, rule := range rules {
+			deref = append(deref, *models.CopyRule(rule)) // Copy so that presave operations don't modify the original.
+		}
+
+		_, err := store.InsertAlertRules(context.Background(), deref)
+		require.NoError(t, err)
+
+		dbRules, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			OrgID: 1,
+		})
+		require.NoError(t, err)
+
+		// Add the default maxDataPoints and intervalMs to the expected rules.
+		for _, rule := range rules {
+			for i, q := range rule.Data {
+				models.WithDefaultMaxDataPoints()(&q)
+				models.WithDefaultIntervalMs()(&q)
+				rule.Data[i] = q
 			}
 		}
-		require.Truef(t, found, "Rule with key %#v was not found in database", keyWithID)
-	}
+
+		cOpt := []cmp.Option{
+			cmpopts.SortSlices(func(a, b *models.AlertRule) bool {
+				return a.ID < b.ID
+			}),
+			cmpopts.IgnoreUnexported(models.AlertRule{}, models.AlertQuery{}),
+			cmpopts.IgnoreFields(models.AlertRule{}, "Updated", "Version"),
+			cmp.Transformer("AlertQuery.Model", func(in json.RawMessage) (out map[string]any) {
+				if err := json.Unmarshal(in, &out); err != nil {
+					panic(err)
+				}
+				return out
+			}),
+		}
+		if !cmp.Equal([]*models.AlertRule(dbRules), rules, cOpt...) {
+			t.Errorf("Unexpected Rule: %v", cmp.Diff([]*models.AlertRule(dbRules), rules, cOpt...))
+		}
+	})
+
 }
 
 func createRule(t *testing.T, store *DBstore, generate func() *models.AlertRule) *models.AlertRule {
 	t.Helper()
 	if generate == nil {
-		generate = models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval), models.WithUniqueID())
+		generate = models.AlertRuleGen(models.WithIntervalMatching(store.Cfg.BaseInterval), models.WithUniqueID())
 	}
 	rule := generate()
 	err := store.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {

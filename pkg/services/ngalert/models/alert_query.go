@@ -12,6 +12,13 @@ import (
 const defaultMaxDataPoints float64 = 43200 // 12 hours at 1sec interval
 const defaultIntervalMS float64 = 1000
 
+const (
+	maxDataPointsKey = "maxDataPoints"
+	intervalMSKey    = "intervalMs"
+	exprKey          = "expr"
+	queryTypeKey     = "queryType"
+)
+
 var ErrNoQuery = errors.New("no `expr` property in the query model")
 
 // Duration is a type used for marshalling durations.
@@ -124,13 +131,13 @@ func (aq *AlertQuery) setMaxDatapoints() error {
 			return err
 		}
 	}
-	i, ok := aq.modelProps["maxDataPoints"] // GEL requires maxDataPoints inside the query JSON
+	i, ok := aq.modelProps[maxDataPointsKey] // GEL requires maxDataPoints inside the query JSON
 	if !ok {
-		aq.modelProps["maxDataPoints"] = defaultMaxDataPoints
+		aq.modelProps[maxDataPointsKey] = defaultMaxDataPoints
 	}
 	maxDataPoints, ok := i.(float64)
 	if !ok || maxDataPoints == 0 {
-		aq.modelProps["maxDataPoints"] = defaultMaxDataPoints
+		aq.modelProps[maxDataPointsKey] = defaultMaxDataPoints
 	}
 	return nil
 }
@@ -141,9 +148,9 @@ func (aq *AlertQuery) GetMaxDatapoints() (int64, error) {
 		return 0, err
 	}
 
-	maxDataPoints, ok := aq.modelProps["maxDataPoints"].(float64)
+	maxDataPoints, ok := aq.modelProps[maxDataPointsKey].(float64)
 	if !ok {
-		return 0, fmt.Errorf("failed to cast maxDataPoints to float64: %v", aq.modelProps["maxDataPoints"])
+		return 0, fmt.Errorf("failed to cast maxDataPoints to float64: %v", aq.modelProps[maxDataPointsKey])
 	}
 	return int64(maxDataPoints), nil
 }
@@ -156,13 +163,13 @@ func (aq *AlertQuery) setIntervalMS() error {
 			return err
 		}
 	}
-	i, ok := aq.modelProps["intervalMs"] // GEL requires intervalMs inside the query JSON
+	i, ok := aq.modelProps[intervalMSKey] // GEL requires intervalMs inside the query JSON
 	if !ok {
-		aq.modelProps["intervalMs"] = defaultIntervalMS
+		aq.modelProps[intervalMSKey] = defaultIntervalMS
 	}
 	intervalMs, ok := i.(float64)
 	if !ok || intervalMs == 0 {
-		aq.modelProps["intervalMs"] = defaultIntervalMS
+		aq.modelProps[intervalMSKey] = defaultIntervalMS
 	}
 	return nil
 }
@@ -173,9 +180,9 @@ func (aq *AlertQuery) getIntervalMS() (int64, error) {
 		return 0, err
 	}
 
-	intervalMs, ok := aq.modelProps["intervalMs"].(float64)
+	intervalMs, ok := aq.modelProps[intervalMSKey].(float64)
 	if !ok {
-		return 0, fmt.Errorf("failed to cast intervalMs to float64: %v", aq.modelProps["intervalMs"])
+		return 0, fmt.Errorf("failed to cast intervalMs to float64: %v", aq.modelProps[intervalMSKey])
 	}
 	return int64(intervalMs), nil
 }
@@ -186,9 +193,9 @@ func (aq *AlertQuery) GetIntervalDuration() (time.Duration, error) {
 		return 0, err
 	}
 
-	intervalMs, ok := aq.modelProps["intervalMs"].(float64)
+	intervalMs, ok := aq.modelProps[intervalMSKey].(float64)
 	if !ok {
-		return 0, fmt.Errorf("failed to cast intervalMs to float64: %v", aq.modelProps["intervalMs"])
+		return 0, fmt.Errorf("failed to cast intervalMs to float64: %v", aq.modelProps[intervalMSKey])
 	}
 	return time.Duration(intervalMs) * time.Millisecond, nil
 }
@@ -208,14 +215,14 @@ func (aq *AlertQuery) GetQuery() (string, error) {
 			return "", err
 		}
 	}
-	query, ok := aq.modelProps["expr"]
+	query, ok := aq.modelProps[exprKey]
 	if !ok {
 		return "", ErrNoQuery
 	}
 
 	q, ok := query.(string)
 	if !ok {
-		return "", fmt.Errorf("failed to cast query to string: %v", aq.modelProps["expr"])
+		return "", fmt.Errorf("failed to cast query to string: %v", aq.modelProps[exprKey])
 	}
 	return q, nil
 }
@@ -245,7 +252,7 @@ func (aq *AlertQuery) setQueryType() error {
 			return err
 		}
 	}
-	i, ok := aq.modelProps["queryType"]
+	i, ok := aq.modelProps[queryTypeKey]
 	if !ok {
 		return nil
 	}

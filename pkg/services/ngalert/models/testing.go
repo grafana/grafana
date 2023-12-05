@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/expr"
@@ -67,7 +68,7 @@ func AlertRuleGen(mutators ...AlertRuleMutator) func() *AlertRule {
 			OrgID:           rand.Int63n(1500) + 1, // Prevent OrgID=0 as this does not pass alert rule validation.
 			Title:           "TEST-ALERT-" + util.GenerateShortUID(),
 			Condition:       "A",
-			Data:            []AlertQuery{GenerateAlertQuery()},
+			Data:            GenerateSimpleReduceThreshold(GenerateAlertQuery()),
 			Updated:         time.Now().Add(-time.Duration(rand.Intn(100) + 1)),
 			IntervalSeconds: rand.Int63n(60) + 1,
 			Version:         rand.Int63n(1500), // Don't generate a rule ID too big for postgres
@@ -181,6 +182,13 @@ func WithNamespace(namespace *folder.Folder) AlertRuleMutator {
 func WithInterval(interval time.Duration) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.IntervalSeconds = int64(interval.Seconds())
+	}
+}
+
+func WithIntervalMatching(baseInterval time.Duration) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.IntervalSeconds = int64(baseInterval.Seconds()) * (rand.Int63n(10) + 1)
+		rule.For = time.Duration(rule.IntervalSeconds*rand.Int63n(9)+1) * time.Second
 	}
 }
 
@@ -302,6 +310,12 @@ func GenerateAlertQuery() AlertQuery {
 	}
 }
 
+func GenerateSimpleReduceThreshold(datasourceQuery AlertQuery) []AlertQuery {
+	reduceExpression := CreateReduceExpression(util.GenerateShortUID(), datasourceQuery.RefID, "last")
+	conditionExpression := CreateThresholdCondition(util.GenerateShortUID(), reduceExpression.RefID, "gt", 0.5)
+	return []AlertQuery{datasourceQuery, reduceExpression, conditionExpression}
+}
+
 // GenerateUniqueAlertRules generates many random alert rules and makes sure that they have unique UID.
 // It returns a tuple where first element is a map where keys are UID of alert rule and the second element is a slice of the same rules
 func GenerateUniqueAlertRules(count int, f func() *AlertRule) (map[string]*AlertRule, []*AlertRule) {
@@ -379,15 +393,7 @@ func CopyRule(r *AlertRule) *AlertRule {
 	}
 
 	for _, d := range r.Data {
-		q := AlertQuery{
-			RefID:             d.RefID,
-			QueryType:         d.QueryType,
-			RelativeTimeRange: d.RelativeTimeRange,
-			DatasourceUID:     d.DatasourceUID,
-		}
-		q.Model = make([]byte, 0, cap(d.Model))
-		q.Model = append(q.Model, d.Model...)
-		result.Data = append(result.Data, q)
+		result.Data = append(result.Data, CopyQuery(d))
 	}
 
 	if r.Annotations != nil {
@@ -405,6 +411,19 @@ func CopyRule(r *AlertRule) *AlertRule {
 	}
 
 	return &result
+}
+
+// CopyQuery creates a deep copy of AlertQuery
+func CopyQuery(d AlertQuery) AlertQuery {
+	q := AlertQuery{
+		RefID:             d.RefID,
+		QueryType:         d.QueryType,
+		RelativeTimeRange: d.RelativeTimeRange,
+		DatasourceUID:     d.DatasourceUID,
+	}
+	q.Model = make([]byte, 0, cap(d.Model))
+	q.Model = append(q.Model, d.Model...)
+	return q
 }
 
 func CreateClassicConditionExpression(refID string, inputRefID string, reducer string, operation string, threshold int) AlertQuery {
@@ -469,6 +488,35 @@ func CreateReduceExpression(refID string, inputRefID string, reducer string) Ale
 	}
 }
 
+func CreateThresholdCondition(refID string, inputRefID string, operation string, threshold float64) AlertQuery {
+	return AlertQuery{
+		RefID:         refID,
+		QueryType:     expr.DatasourceType,
+		DatasourceUID: expr.DatasourceUID,
+		Model: json.RawMessage(fmt.Sprintf(`
+		{
+			"refId": "%[1]s",
+            "hide": false,
+            "type": "threshold",
+			"expression": "%[2]s",
+            "datasource": {
+                "uid": "%[5]s",
+                "type": "%[6]s"
+            },
+            "conditions": [
+                {
+                    "evaluator": {
+                        "params": [
+                            %[4]f
+                        ],
+                        "type": "%[3]s"
+                    }
+                }
+            ]
+		}`, refID, inputRefID, operation, threshold, expr.DatasourceUID, expr.DatasourceType)),
+	}
+}
+
 func CreatePrometheusQuery(refID string, expr string, intervalMs int64, maxDataPoints int64, isInstant bool, datasourceUID string) AlertQuery {
 	return AlertQuery{
 		RefID:         refID,
@@ -509,6 +557,68 @@ func CreateLokiQuery(refID string, expr string, intervalMs int64, maxDataPoints 
             }
 		}`, refID, expr, intervalMs, maxDataPoints, queryType, datasourceUID, datasources.DS_LOKI)),
 	}
+}
+
+type AlertQueryMutator func(*AlertQuery)
+
+func WithRefID(refID string) AlertQueryMutator {
+	return func(q *AlertQuery) {
+		q.RefID = refID
+	}
+}
+
+func WithRelativeTimeRange(rtr RelativeTimeRange) AlertQueryMutator {
+	return func(q *AlertQuery) {
+		q.RelativeTimeRange = rtr
+	}
+}
+
+func WithQueryType(qt string) AlertQueryMutator {
+	return func(q *AlertQuery) {
+		q.QueryType = qt
+	}
+}
+
+func WithMaxDataPoints(maxDataPoints int64) AlertQueryMutator {
+	return WithModelKV(maxDataPointsKey, maxDataPoints)
+}
+
+func WithIntervalMs(intervalMs int64) AlertQueryMutator {
+	return WithModelKV(intervalMSKey, intervalMs)
+}
+
+func WithDefaultMaxDataPoints() AlertQueryMutator {
+	return WithModelKV(maxDataPointsKey, defaultMaxDataPoints)
+}
+
+func WithDefaultIntervalMs() AlertQueryMutator {
+	return WithModelKV(intervalMSKey, defaultIntervalMS)
+}
+
+func WithModelKV(key string, val any) AlertQueryMutator {
+	return func(q *AlertQuery) {
+		mp := make(map[string]any)
+		err := json.Unmarshal(q.Model, &mp)
+		if err != nil {
+			panic(err)
+		}
+		mp[key] = val
+
+		model, err := json.Marshal(mp)
+		if err != nil {
+			panic(err)
+		}
+		q.Model = model
+	}
+}
+
+// AlertQueryGen generates an AlertQuery using a base query and mutators.
+func AlertQueryGen(base AlertQuery, mutators ...AlertQueryMutator) AlertQuery {
+	q := CopyQuery(base)
+	for _, mutator := range mutators {
+		mutator(&q)
+	}
+	return q
 }
 
 type AlertInstanceMutator func(*AlertInstance)

@@ -7,10 +7,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -549,6 +553,163 @@ func TestValidate(t *testing.T) {
 	}
 }
 
+func TestCreate(t *testing.T) {
+	cacheService := &fakes.FakeCacheService{}
+	store := &pluginstore.FakePluginStore{}
+
+	dsQuery := models.AlertQueryGen(models.GenerateAlertQuery(), models.WithRefID("A"))
+	ds := &datasources.DataSource{
+		UID:  dsQuery.DatasourceUID,
+		Type: util.GenerateShortUID(),
+	}
+	cacheService.DataSources = append(cacheService.DataSources, ds)
+	store.PluginList = append(store.PluginList, pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:      ds.Type,
+			Backend: true,
+		},
+	})
+
+	genCond := func(dsQuery models.AlertQuery) models.Condition {
+		return models.Condition{
+			Condition: "B",
+			Data: []models.AlertQuery{
+				dsQuery,
+				models.CreateClassicConditionExpression("B", dsQuery.RefID, "last", "gt", rand.Int()),
+			},
+		}
+	}
+
+	baseRequest := func() *expr.Request {
+		exprNode, err := expr.DataSourceModelFromNodeType(expr.TypeCMDNode)
+		require.NoError(t, err)
+		return &expr.Request{
+			Headers: map[string]string{
+				"FromAlert":    "true",
+				"X-Cache-Skip": "true",
+			},
+			Debug: false,
+			OrgId: 0,
+			Queries: []expr.Query{
+				{
+					RefID:         "A",
+					TimeRange:     dsQuery.RelativeTimeRange.ToTimeRange(),
+					DataSource:    ds,
+					Interval:      time.Second,
+					QueryType:     dsQuery.QueryType,
+					MaxDataPoints: 43200,
+				},
+				{
+					RefID:         "B",
+					TimeRange:     (&models.RelativeTimeRange{}).ToTimeRange(),
+					DataSource:    exprNode,
+					Interval:      time.Second,
+					QueryType:     expr.DatasourceType,
+					MaxDataPoints: 43200,
+				},
+			},
+			User: nil,
+		}
+	}
+
+	testCases := []struct {
+		name       string
+		condition  models.Condition
+		expRequest expr.Request
+		error      bool
+	}{
+		{
+			name:      "if query contains maxDataPoints, it should be used in request",
+			error:     false,
+			condition: genCond(models.AlertQueryGen(dsQuery, models.WithMaxDataPoints(12345))),
+			expRequest: func(req *expr.Request) expr.Request {
+				req.Queries[0].MaxDataPoints = 12345
+				return *req
+			}(baseRequest()),
+		},
+		{
+			name:      "if query contains intervalMs, it should be used in request",
+			error:     false,
+			condition: genCond(models.AlertQueryGen(dsQuery, models.WithIntervalMs(12345))),
+			expRequest: func(req *expr.Request) expr.Request {
+				req.Queries[0].Interval = 12345 * time.Millisecond
+				return *req
+			}(baseRequest()),
+		},
+		{
+			name:      "if query contains queryType, it should be used in request",
+			error:     false,
+			condition: genCond(models.AlertQueryGen(dsQuery, models.WithQueryType("custom-query-type"))),
+			expRequest: func(req *expr.Request) expr.Request {
+				req.Queries[0].QueryType = "custom-query-type"
+				return *req
+			}(baseRequest()),
+		},
+		{
+			name:      "if query does not contain maxDataPoints, default should be used in request",
+			error:     false,
+			condition: genCond(models.AlertQueryGen(dsQuery)),
+			expRequest: func(req *expr.Request) expr.Request {
+				req.Queries[0].MaxDataPoints = 43200
+				return *req
+			}(baseRequest()),
+		},
+		{
+			name:      "if query does not contain intervalMs, default should be used in request",
+			error:     false,
+			condition: genCond(models.AlertQueryGen(dsQuery)),
+			expRequest: func(req *expr.Request) expr.Request {
+				req.Queries[0].Interval = 1 * time.Second
+				return *req
+			}(baseRequest()),
+		},
+		{
+			name:      "if query does not contain queryType, empty string should be used in request",
+			error:     false,
+			condition: genCond(models.AlertQueryGen(dsQuery, models.WithQueryType(""))),
+			expRequest: func(req *expr.Request) expr.Request {
+				req.Queries[0].QueryType = ""
+				return *req
+			}(baseRequest()),
+		},
+	}
+
+	for _, testCase := range testCases {
+		u := &user.SignedInUser{}
+
+		t.Run(testCase.name, func(t *testing.T) {
+
+			realService := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, &featuremgmt.FeatureManager{}, nil, tracing.InitializeTracerForTest())
+			// Verify that the cache service was called with the correct interval and max data points.
+			exprService := &fakeExpressionService{
+				buildHook: func(req *expr.Request) (expr.DataPipeline, error) {
+					cOpt := []cmp.Option{
+						cmpopts.IgnoreUnexported(expr.Request{}, datasources.DataSource{}, simplejson.Json{}),
+						cmpopts.IgnoreFields(expr.Request{}, "User"),
+					}
+					if !cmp.Equal(testCase.expRequest, *req, cOpt...) {
+						t.Errorf("Unexpected Rule: %v", cmp.Diff(testCase.expRequest, *req, cOpt...))
+					}
+
+					return realService.BuildPipeline(req)
+				},
+			}
+
+			// Set expected raw json to be the same as the model.
+			for i, query := range testCase.condition.Data {
+				model, err := query.GetModel()
+				require.NoError(t, err)
+				testCase.expRequest.Queries[i].JSON = model
+			}
+
+			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, exprService, store)
+			evalCtx := NewContext(context.Background(), u)
+			_, err := evaluator.Create(evalCtx, testCase.condition)
+			require.NoError(t, err)
+		})
+	}
+}
+
 func TestEvaluate(t *testing.T) {
 	cases := []struct {
 		name     string
@@ -720,7 +881,7 @@ func TestEvaluate(t *testing.T) {
 			ev := conditionEvaluator{
 				pipeline: nil,
 				expressionService: &fakeExpressionService{
-					hook: func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
+					executeHook: func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
 						return &tc.resp, nil
 					},
 				},
@@ -749,7 +910,7 @@ func TestEvaluateRaw(t *testing.T) {
 		e := conditionEvaluator{
 			pipeline: nil,
 			expressionService: &fakeExpressionService{
-				hook: func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
+				executeHook: func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
 					ts := time.Now()
 					for time.Since(ts) <= 10*time.Second {
 						if ctx.Err() != nil {
@@ -770,9 +931,14 @@ func TestEvaluateRaw(t *testing.T) {
 }
 
 type fakeExpressionService struct {
-	hook func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error)
+	executeHook func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error)
+	buildHook   func(req *expr.Request) (expr.DataPipeline, error)
 }
 
 func (f fakeExpressionService) ExecutePipeline(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
-	return f.hook(ctx, now, pipeline)
+	return f.executeHook(ctx, now, pipeline)
+}
+
+func (f fakeExpressionService) BuildPipeline(req *expr.Request) (expr.DataPipeline, error) {
+	return f.buildHook(req)
 }

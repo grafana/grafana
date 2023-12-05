@@ -45,6 +45,7 @@ type ConditionEvaluator interface {
 
 type expressionService interface {
 	ExecutePipeline(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error)
+	BuildPipeline(req *expr.Request) (expr.DataPipeline, error)
 }
 
 type conditionEvaluator struct {
@@ -89,14 +90,14 @@ func (r *conditionEvaluator) Evaluate(ctx context.Context, now time.Time) (Resul
 type evaluatorImpl struct {
 	evaluationTimeout time.Duration
 	dataSourceCache   datasources.CacheService
-	expressionService *expr.Service
+	expressionService expressionService
 	pluginsStore      pluginstore.Store
 }
 
 func NewEvaluatorFactory(
 	cfg setting.UnifiedAlertingSettings,
 	datasourceCache datasources.CacheService,
-	expressionService *expr.Service,
+	expressionService expressionService,
 	pluginsStore pluginstore.Store,
 ) EvaluatorFactory {
 	return &evaluatorImpl{

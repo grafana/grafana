@@ -18,7 +18,7 @@ func BenchmarkEvaluate(b *testing.B) {
 	seedDataResponse(&dataResp, 10000)
 	var evaluator ConditionEvaluator = &conditionEvaluator{
 		expressionService: &fakeExpressionService{
-			hook: func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
+			executeHook: func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
 				return &dataResp, nil
 			},
 		},
