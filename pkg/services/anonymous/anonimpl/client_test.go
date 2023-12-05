@@ -49,7 +49,7 @@ func TestAnonymous_Authenticate(t *testing.T) {
 				cfg:               tt.cfg,
 				log:               log.NewNopLogger(),
 				orgService:        &orgtest.FakeOrgService{ExpectedOrg: tt.org, ExpectedError: tt.err},
-				anonDeviceService: &anontest.FakeAnonymousSessionService{},
+				anonDeviceService: anontest.NewFakeService(),
 			}
 
 			identity, err := c.Authenticate(context.Background(), &authn.Request{})

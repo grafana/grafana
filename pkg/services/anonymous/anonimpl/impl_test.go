@@ -9,8 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
@@ -113,7 +115,7 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 			store := db.InitTestDB(t)
 			anonDBStore := anonstore.ProvideAnonDBStore(store)
 			anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{},
-				&authntest.FakeService{}, anonDBStore, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil)
+				&authntest.FakeService{}, anonDBStore, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{})
 
 			for _, req := range tc.req {
 				err := anonService.TagDevice(context.Background(), req.httpReq, req.kind)
@@ -149,7 +151,7 @@ func TestIntegrationAnonDeviceService_localCacheSafety(t *testing.T) {
 	store := db.InitTestDB(t)
 	anonDBStore := anonstore.ProvideAnonDBStore(store)
 	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{},
-		&authntest.FakeService{}, anonDBStore, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil)
+		&authntest.FakeService{}, anonDBStore, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{})
 
 	req := &http.Request{
 		Header: http.Header{

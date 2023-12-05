@@ -51,6 +51,7 @@ var config = {
     useIncognitoBrowserContext: false,
     standard: 'WCAG2AA',
     chromeLaunchConfig: {
+      executablePath: '/usr/bin/google-chrome',
       args: ['--no-sandbox'],
     },
     // see https://github.com/grafana/grafana/pull/41693#issuecomment-979921463 for context
