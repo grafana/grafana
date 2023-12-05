@@ -109,10 +109,10 @@ PanelTypeCard.Skeleton = PanelTypeCardSkeleton;
 const getSkeletonStyles = () => {
   return {
     deleteButton: css({
-      lineHeight: 0,
+      lineHeight: 1,
     }),
     image: css({
-      lineHeight: 0,
+      lineHeight: 1,
     }),
   };
 };
