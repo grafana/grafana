@@ -469,7 +469,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/tutorials',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "TutorialsPage"*/ 'app/features/tutorials/TutorialsPage')
+        () => import(/* webpackChunkName: "TutorialPage"*/ 'app/features/tutorial/tutorialpage/TutorialPage')
       ),
     },
     {

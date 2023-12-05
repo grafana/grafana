@@ -4,18 +4,26 @@ import React, { forwardRef } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Text, useStyles2 } from '@grafana/ui';
 
-import { type Step } from './tutorialProvider.utils';
+import { type Step } from './types';
 
-export const TutorialTooltip = forwardRef<HTMLDivElement, any>((props, ref) => {
+type TutorialTooltipProps = {
+  step: Step;
+  advance?: () => void;
+  getArrowProps: any;
+  getTooltipProps: any;
+};
+
+export const TutorialTooltip = forwardRef<HTMLDivElement, TutorialTooltipProps>((props, ref) => {
   const { getArrowProps, getTooltipProps, step, advance } = props;
   const styles = useStyles2(getStyles);
 
   return (
     <div ref={ref} {...getTooltipProps()} className={styles.instructions}>
+      {/* TODO: fix arrow */}
       <div {...getArrowProps({ className: 'tooltip-arrow' })} />
       {renderStepTitle(step.title)}
       {renderContent(step.content)}
-      {advance && (
+      {!step.requiredActions && (
         <div>
           <Button onClick={advance}>Next</Button>
         </div>

@@ -1,11 +1,18 @@
-import { type Step } from './tutorialProvider.utils';
+import type { Step, Tutorial } from '../types';
 
-export const tutorialSteps: Step[] = [
+const info = {
+  id: 'using-prometheusds',
+  name: 'Using the PrometheusDS',
+  description: `This is a tutorial to help you get started with the PrometheusDS`,
+};
+
+const tutorialSteps: Step[] = [
   {
     route: `/`,
     target: `[data-testid="data-testid Toggle menu"]`,
     title: `Open the menu`,
     content: `Click the menu button to open the menu!`,
+    placement: `right`,
     requiredActions: [
       {
         target: `[data-testid="data-testid Toggle menu"]`,
@@ -67,3 +74,8 @@ export const tutorialSteps: Step[] = [
     ],
   },
 ];
+
+export const tutorial: Tutorial = {
+  ...info,
+  steps: tutorialSteps,
+};
