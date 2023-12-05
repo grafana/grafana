@@ -57,6 +57,7 @@ const props: Props = {
     throw new Error('Function not implemented.');
   },
   data: createMockPanelData(),
+  setDragData: () => {},
 };
 
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {

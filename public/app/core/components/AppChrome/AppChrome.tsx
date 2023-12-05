@@ -4,10 +4,11 @@ import React, { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { useStyles2, LinkButton, useTheme2 } from '@grafana/ui';
+import { HotEdge } from 'app/core/components/HotEdge';
 import config from 'app/core/config';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
-import { KioskMode } from 'app/types';
+import { KioskMode, useSelector } from 'app/types';
 
 import { AppChromeMenu } from './AppChromeMenu';
 import { MegaMenu as DockedMegaMenu } from './DockedMegaMenu/MegaMenu';
@@ -26,6 +27,9 @@ export function AppChrome({ children }: Props) {
   const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+  const investigationDragData = useSelector((state) => state.investigation.data);
+
+  console.log(investigationDragData);
 
   const contentClass = cx({
     [styles.content]: true,
@@ -103,12 +107,19 @@ export function AppChrome({ children }: Props) {
         </>
       )}
       {config.featureToggles.extensionDrawer && (
-        <ExtensionDrawer
-          open={state.extensionDrawer.open}
-          onClose={() => chrome.setExtensionDrawerOpen(false)}
-          selectedTab={state.extensionDrawer.selectedTab}
-          onChangeTab={(id) => chrome.setExtensionDrawerTab(id)}
-        />
+        <>
+          <HotEdge
+            position="right"
+            isDragging={!!investigationDragData}
+            onActivate={() => chrome.setExtensionDrawerOpen(true)}
+          />
+          <ExtensionDrawer
+            open={state.extensionDrawer.open}
+            onClose={() => chrome.setExtensionDrawerOpen(false)}
+            selectedTab={state.extensionDrawer.selectedTab}
+            onChangeTab={(id) => chrome.setExtensionDrawerTab(id)}
+          />
+        </>
       )}
     </div>
   );

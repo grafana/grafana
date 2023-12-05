@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { isBefore, formatDuration } from 'date-fns';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import {
   GrafanaTheme2,
@@ -12,6 +12,9 @@ import {
   dateTime,
 } from '@grafana/data';
 import { useStyles2, Tooltip } from '@grafana/ui';
+import { getCircularReplacer } from 'app/core/utils/object';
+import { setDragData } from 'app/features/investigation/state/reducers';
+import { useDispatch } from 'app/types';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
@@ -52,6 +55,9 @@ export const RulesTable = ({
   showSummaryColumn = false,
   showNextEvaluationColumn = false,
 }: Props) => {
+  const [activeRuleId, setActiveRuleId] = useState(false);
+  const dispatch = useDispatch();
+
   const styles = useStyles2(getStyles);
 
   const wrapperClass = cx(styles.wrapper, className, { [styles.wrapperMargin]: showGuidelines });
@@ -65,7 +71,7 @@ export const RulesTable = ({
     });
   }, [rules]);
 
-  const columns = useColumns(showSummaryColumn, showGroupColumn, showNextEvaluationColumn);
+  const columns = useColumns(showSummaryColumn, showGroupColumn, showNextEvaluationColumn, setActiveRuleId);
 
   if (!rules.length) {
     return <div className={cx(wrapperClass, styles.emptyMessage)}>{emptyMessage}</div>;
@@ -80,8 +86,10 @@ export const RulesTable = ({
         isExpandable={true}
         items={items}
         renderExpandedContent={({ data: rule }) => <RuleDetails rule={rule} />}
+        activeRowId={activeRuleId}
         pagination={{ itemsPerPage: DEFAULT_PER_PAGE_PAGINATION }}
         paginationStyles={styles.pagination}
+        onDragRow={(x) => dispatch(setDragData(createSafeObject(x)))}
       />
     </div>
   );
@@ -112,7 +120,12 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
-function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showNextEvaluationColumn: boolean) {
+function useColumns(
+  showSummaryColumn: boolean,
+  showGroupColumn: boolean,
+  showNextEvaluationColumn: boolean,
+  setActiveRuleId: number | undefined
+) {
   const { hasRuler, rulerRulesLoaded } = useHasRuler();
 
   const calculateNextEvaluationDate = useCallback((rule: CombinedRule) => {
@@ -255,8 +268,14 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showNe
       id: 'actions',
       label: 'Actions',
       // eslint-disable-next-line react/display-name
-      renderCell: ({ data: rule }) => {
-        return <RuleActionsButtons rule={rule} rulesSource={rule.namespace.rulesSource} />;
+      renderCell: ({ id, data: rule }) => {
+        return (
+          <RuleActionsButtons
+            rule={rule}
+            rulesSource={rule.namespace.rulesSource}
+            onDragEnabled={() => setActiveRuleId(id)}
+          />
+        );
       },
       size: '200px',
     });
@@ -269,5 +288,8 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showNe
     hasRuler,
     rulerRulesLoaded,
     calculateNextEvaluationDate,
+    setActiveRuleId,
   ]);
 }
+
+const createSafeObject = (x: object) => JSON.parse(JSON.stringify(x, getCircularReplacer()));

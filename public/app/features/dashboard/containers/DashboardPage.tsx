@@ -15,6 +15,7 @@ import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { PanelModel } from 'app/features/dashboard/state';
+import { setDragData } from 'app/features/investigation/state/reducers';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { AngularDeprecationNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationNotice';
 import { getPageNavFromSlug, getRootContentNavModel } from 'app/features/storage/StorageFolderPage';
@@ -53,6 +54,7 @@ const mapDispatchToProps = {
   cleanUpDashboardAndVariables,
   notifyApp,
   cancelVariables,
+  setDragData,
   templateVarsChangedInUrl,
 };
 
@@ -312,7 +314,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, initError, queryParams } = this.props;
+    const { dashboard, initError, queryParams, setDragData } = this.props;
     const { editPanel, viewPanel, updateScrollTop, pageNav, sectionNav } = this.state;
     const kioskMode = getKioskMode(this.props.queryParams);
 
@@ -376,6 +378,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             isEditable={!!dashboard.meta.canEdit}
             viewPanel={viewPanel}
             editPanel={editPanel}
+            onDrag={setDragData}
           />
 
           {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}

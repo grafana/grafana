@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import { DragDropContext, DragStart, Droppable, DropResult } from 'react-beautiful-dnd';
+import { connect } from 'react-redux';
 
 import {
   CoreApp,
@@ -11,6 +12,7 @@ import {
   PanelData,
 } from '@grafana/data';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { setDragData } from 'app/features/investigation/state/reducers';
 
 import { QueryEditorRow } from './QueryEditorRow';
 
@@ -34,9 +36,11 @@ export interface Props {
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
+
+  setDragData: (x?: object[]) => void;
 }
 
-export class QueryEditorRows extends PureComponent<Props> {
+class BaseQueryEditorRows extends PureComponent<Props> {
   onRemoveQuery = (query: DataQuery) => {
     this.props.onQueriesChange(this.props.queries.filter((item) => item !== query));
   };
@@ -90,7 +94,10 @@ export class QueryEditorRows extends PureComponent<Props> {
   }
 
   onDragStart = (result: DragStart) => {
-    const { queries, dsSettings } = this.props;
+    const { queries, dsSettings, setDragData } = this.props;
+
+    const query = queries[result.source.index];
+    setDragData(query);
 
     reportInteraction('query_row_reorder_started', {
       startIndex: result.source.index,
@@ -109,6 +116,8 @@ export class QueryEditorRows extends PureComponent<Props> {
     const startIndex = result.source.index;
     const endIndex = result.destination.index;
     if (startIndex === endIndex) {
+      setDragData();
+
       reportInteraction('query_row_reorder_canceled', {
         startIndex,
         endIndex,
@@ -201,3 +210,5 @@ const getDataSourceSettings = (
   const querySettings = getDataSourceSrv().getInstanceSettings(query.datasource);
   return querySettings || groupSettings;
 };
+
+export const QueryEditorRows = connect(null, { setDragData })(BaseQueryEditorRows);

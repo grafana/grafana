@@ -35,9 +35,10 @@ export const matchesWidth = (width: number) => window.matchMedia(`(max-width: ${
 interface Props {
   rule: CombinedRule;
   rulesSource: RulesSource;
+  onDragEnabled: (isDragEnabled: boolean) => void;
 }
 
-export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
+export const RuleActionsButtons = ({ rule, rulesSource, onDragEnabled }: Props) => {
   const dispatch = useDispatch();
   const location = useLocation();
   const notifyApp = useAppNotification();
@@ -189,6 +190,16 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
             </Dropdown>
           )}
         </Stack>
+
+        <div style={{ marginLeft: 10 }}>
+          <Icon
+            name="draggabledots"
+            size="sm"
+            onMouseEnter={() => onDragEnabled(true)}
+            onMouseLeave={() => onDragEnabled(false)}
+          />
+        </div>
+
         {!!ruleToDelete && (
           <ConfirmModal
             isOpen={true}

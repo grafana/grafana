@@ -3,6 +3,7 @@ import React, { ReactNode, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, Pagination, useStyles2 } from '@grafana/ui';
+import { Draggable } from 'app/core/components/Draggable';
 
 import { usePagination } from '../hooks/usePagination';
 import { getPaginationStyles } from '../styles/pagination';
@@ -39,6 +40,8 @@ export interface DynamicTableProps<T = unknown> {
   onCollapse?: (item: DynamicTableItemProps<T>) => void;
   onExpand?: (item: DynamicTableItemProps<T>) => void;
   isExpanded?: (item: DynamicTableItemProps<T>) => boolean;
+  activeRowId?: number | undefined;
+  onDragRow?: (data?: object) => void;
 
   renderExpandedContent?: (
     item: DynamicTableItemProps<T>,
@@ -62,6 +65,8 @@ export const DynamicTable = <T extends object>({
   isExpandable = false,
   onCollapse,
   onExpand,
+  onDragRow,
+  activeRowId,
   isExpanded,
   renderExpandedContent,
   testIdGenerator,
@@ -74,6 +79,8 @@ export const DynamicTable = <T extends object>({
   footerRow,
   dataTestId,
 }: DynamicTableProps<T>) => {
+  console.log(items);
+
   const defaultPaginationStyles = useStyles2(getPaginationStyles);
 
   if ((onCollapse || onExpand || isExpanded) && !(onCollapse && onExpand && isExpanded)) {
@@ -114,38 +121,43 @@ export const DynamicTable = <T extends object>({
 
         {pageItems.map((item, index) => {
           const isItemExpanded = isExpanded ? isExpanded(item) : expandedIds.includes(item.id);
+
           return (
-            <div
-              className={styles.row}
+            <Draggable
               key={`${item.id}-${index}`}
-              data-testid={testIdGenerator?.(item, index) ?? 'row'}
+              data={item}
+              draggable={item.id === activeRowId}
+              onDragStart={onDragRow}
+              onDragEnd={onDragRow}
             >
-              {renderPrefixCell && renderPrefixCell(item, index, items)}
-              {isExpandable && (
-                <div className={cx(styles.cell, styles.expandCell)}>
-                  <IconButton
-                    tooltip={`${isItemExpanded ? 'Collapse' : 'Expand'} row`}
-                    data-testid="collapse-toggle"
-                    name={isItemExpanded ? 'angle-down' : 'angle-right'}
-                    onClick={() => toggleExpanded(item)}
-                  />
-                </div>
-              )}
-              {cols.map((col) => (
-                <div
-                  className={cx(styles.cell, styles.bodyCell, col.className)}
-                  data-column={col.label}
-                  key={`${item.id}-${col.id}`}
-                >
-                  {col.renderCell(item, index)}
-                </div>
-              ))}
-              {isItemExpanded && renderExpandedContent && (
-                <div className={styles.expandedContentRow} data-testid="expanded-content">
-                  {renderExpandedContent(item, index, items)}
-                </div>
-              )}
-            </div>
+              <div className={styles.row} data-testid={testIdGenerator?.(item, index) ?? 'row'}>
+                {renderPrefixCell && renderPrefixCell(item, index, items)}
+                {isExpandable && (
+                  <div className={cx(styles.cell, styles.expandCell)}>
+                    <IconButton
+                      tooltip={`${isItemExpanded ? 'Collapse' : 'Expand'} row`}
+                      data-testid="collapse-toggle"
+                      name={isItemExpanded ? 'angle-down' : 'angle-right'}
+                      onClick={() => toggleExpanded(item)}
+                    />
+                  </div>
+                )}
+                {cols.map((col) => (
+                  <div
+                    className={cx(styles.cell, styles.bodyCell, col.className)}
+                    data-column={col.label}
+                    key={`${item.id}-${col.id}`}
+                  >
+                    {col.renderCell(item, index)}
+                  </div>
+                ))}
+                {isItemExpanded && renderExpandedContent && (
+                  <div className={styles.expandedContentRow} data-testid="expanded-content">
+                    {renderExpandedContent(item, index, items)}
+                  </div>
+                )}
+              </div>
+            </Draggable>
           );
         })}
         {footerRow && <div className={cx(styles.row, styles.footerRow)}>{footerRow}</div>}

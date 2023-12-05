@@ -45,6 +45,7 @@ interface Props extends Pick<PanelChromeProps, 'statusMessage'> {
   loadingState: LoadingState;
   thresholdsConfig?: ThresholdsConfig;
   thresholdsStyle?: GraphThresholdsStyleConfig;
+  onDragEnabled: (enabled: boolean) => void;
 }
 
 export const GraphContainer = ({
@@ -61,6 +62,7 @@ export const GraphContainer = ({
   thresholdsStyle,
   loadingState,
   statusMessage,
+  onDragEnabled,
 }: Props) => {
   const [showAllSeries, toggleShowAllSeries] = useToggle(false);
   const [graphStyle, setGraphStyle] = useState(loadGraphStyle);
@@ -104,7 +106,17 @@ export const GraphContainer = ({
       height={height}
       loadingState={loadingState}
       statusMessage={statusMessage}
-      actions={<ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={onGraphStyleChange} />}
+      actions={[
+        <ExploreGraphLabel key="explore-graph-label" graphStyle={graphStyle} onChangeGraphStyle={onGraphStyleChange} />,
+        <div key="drag-enable" style={{ marginLeft: 10 }}>
+          <Icon
+            name="draggabledots"
+            size="sm"
+            onMouseEnter={() => onDragEnabled(true)}
+            onMouseLeave={() => onDragEnabled(false)}
+          />
+        </div>,
+      ]}
     >
       {(innerWidth, innerHeight) => (
         <ExploreGraph

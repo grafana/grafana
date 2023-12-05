@@ -1,10 +1,11 @@
 import classNames from 'classnames';
-import React, { PureComponent, CSSProperties } from 'react';
-import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
+import React, { PureComponent, CSSProperties, MouseEvent } from 'react';
+import ReactGridLayout, { ItemCallback, Layout, LayoutItem } from 'react-grid-layout';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { Subscription } from 'rxjs';
 
 import { config } from '@grafana/runtime';
+import { Portal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -28,10 +29,12 @@ export interface Props {
   editPanel: PanelModel | null;
   viewPanel: PanelModel | null;
   hidePanelMenus?: boolean;
+  onDrag: (panel: PanelModel) => void;
 }
 
 interface State {
   panelFilter?: RegExp;
+  isDraggingPanelId: number | null;
 }
 
 export class DashboardGrid extends PureComponent<Props, State> {
@@ -46,8 +49,10 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
   constructor(props: Props) {
     super(props);
+
     this.state = {
       panelFilter: undefined,
+      isDraggingPanelId: null,
     };
   }
 
@@ -182,8 +187,33 @@ export class DashboardGrid extends PureComponent<Props, State> {
     this.updateGridPos(newItem, layout);
   };
 
+  onDragStart: ItemCallback = (
+    layout: Layout,
+    oldItem: LayoutItem,
+    newItem: LayoutItem,
+    placeholder: LayoutItem,
+    event: MouseEvent,
+    element: HTMLElement
+  ) => {
+    const { dashboard, onDrag } = this.props;
+
+    // panels
+    const panelId = Number(element.getAttribute('data-panelid'));
+    const panel = dashboard.panels.find((panel) => panel.id === panelId);
+
+    if (!panel) {
+      return;
+    }
+
+    onDrag(panel);
+    this.setState({ isDraggingPanelId: panelId });
+  };
+
   onDragStop: ItemCallback = (layout, oldItem, newItem) => {
+    const { onDrag } = this.props;
+
     this.updateGridPos(newItem, layout);
+    this.setState({ isDraggingPanelId: null }, onDrag);
   };
 
   getPanelScreenPos(panel: PanelModel, gridWidth: number): { top: number; bottom: number } {
@@ -235,6 +265,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
           gridWidth={gridWidth}
           windowHeight={this.windowHeight}
           windowWidth={this.windowWidth}
+          isDragging={this.state.isDraggingPanelId === panel.id}
           isViewing={panel.isViewing}
         >
           {(width: number, height: number) => {
@@ -349,6 +380,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
                   draggableHandle=".grid-drag-handle"
                   draggableCancel=".grid-drag-cancel"
                   layout={this.buildLayout()}
+                  onDragStart={this.onDragStart}
                   onDragStop={this.onDragStop}
                   onResize={this.onResize}
                   onResizeStop={this.onResizeStop}
@@ -370,6 +402,7 @@ interface GrafanaGridItemProps extends React.HTMLAttributes<HTMLDivElement> {
   gridPos?: GridPos;
   descendingOrderIndex?: number;
   isViewing: boolean;
+  isDragging: boolean;
   windowHeight: number;
   windowWidth: number;
   children: any; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -383,7 +416,8 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
   let width = 100;
   let height = 100;
 
-  const { gridWidth, gridPos, isViewing, windowHeight, windowWidth, descendingOrderIndex, ...divProps } = props;
+  const { gridWidth, gridPos, isDragging, isViewing, windowHeight, windowWidth, descendingOrderIndex, ...divProps } =
+    props;
   const style: CSSProperties = props.style ?? {};
 
   if (isViewing) {
@@ -411,12 +445,18 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
     }
   }
 
+  const Wrapper = isDragging ? Portal : React.Fragment;
+
   // props.children[0] is our main children. RGL adds the drag handle at props.children[1]
   return (
-    <div {...divProps} style={{ ...divProps.style, zIndex: descendingOrderIndex }} ref={ref}>
-      {/* Pass width and height to children as render props */}
-      {[props.children[0](width, height), props.children.slice(1)]}
-    </div>
+    <Wrapper>
+      <div style={{ pointerEvents: isDragging ? 'none' : undefined }}>
+        <div {...divProps} style={{ ...divProps.style, zIndex: descendingOrderIndex }} ref={ref}>
+          {/* Pass width and height to children as render props */}
+          {[props.children[0](width, height), props.children.slice(1)]}
+        </div>
+      </div>
+    </Wrapper>
   );
 });
 

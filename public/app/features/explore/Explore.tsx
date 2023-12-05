@@ -24,12 +24,15 @@ import {
   AdHocFilterItem,
   CustomScrollbar,
   ErrorBoundaryAlert,
+  Icon,
   PanelContainer,
   Themeable2,
   withTheme2,
 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
+import { Draggable } from 'app/core/components/Draggable';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
+import { setDragData } from 'app/features/investigation/state/reducers';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
 import { StoreState } from 'app/types';
@@ -121,6 +124,7 @@ enum ExploreDrawer {
 interface ExploreState {
   openDrawer?: ExploreDrawer;
   contentOutlineVisible: boolean;
+  isDragEnabled: boolean;
 }
 
 export type Props = ExploreProps & ConnectedProps<typeof connector>;
@@ -161,6 +165,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     this.state = {
       openDrawer: undefined,
       contentOutlineVisible: false,
+      isDragEnabled: false,
     };
     this.graphEventBus = props.eventBus.newScopedBus('graph', { onlyLocal: false });
     this.logsEventBus = props.eventBus.newScopedBus('logs', { onlyLocal: false });
@@ -389,23 +394,27 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderGraphPanel(width: number) {
-    const { graphResult, absoluteRange, timeZone, queryResponse, showFlameGraph } = this.props;
+    const { graphResult, absoluteRange, timeZone, queryResponse, setDragData, showFlameGraph } = this.props;
+    const { isDragEnabled } = this.state;
 
     return (
-      <ContentOutlineItem title="Graph" icon="graph-bar">
-        <GraphContainer
-          data={graphResult!}
-          height={showFlameGraph ? 180 : 400}
-          width={width}
-          absoluteRange={absoluteRange}
-          timeZone={timeZone}
-          onChangeTime={this.onUpdateTimeRange}
-          annotations={queryResponse.annotations}
-          splitOpenFn={this.onSplitOpen('graph')}
-          loadingState={queryResponse.state}
-          eventBus={this.graphEventBus}
-        />
-      </ContentOutlineItem>
+      <Draggable data={graphResult} draggable={isDragEnabled} onDragStart={setDragData} onDragEnd={setDragData}>
+        <ContentOutlineItem title="Graph" icon="graph-bar">
+          <GraphContainer
+            data={graphResult!}
+            height={showFlameGraph ? 180 : 400}
+            width={width}
+            absoluteRange={absoluteRange}
+            timeZone={timeZone}
+            onChangeTime={this.onUpdateTimeRange}
+            annotations={queryResponse.annotations}
+            splitOpenFn={this.onSplitOpen('graph')}
+            loadingState={queryResponse.state}
+            eventBus={this.graphEventBus}
+            onDragEnabled={(enabled) => this.setState({ isDragEnabled: enabled })}
+          />
+        </ContentOutlineItem>
+      </Draggable>
     );
   }
 
@@ -772,6 +781,7 @@ const mapDispatchToProps = {
   updateTimeRange,
   addQueryRow,
   splitOpen,
+  setDragData,
   setSupplementaryQueryEnabled,
 };
 

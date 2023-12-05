@@ -1,9 +1,12 @@
 import { css } from '@emotion/css';
-import React, { Suspense, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
 import { getPluginComponentExtensions } from '@grafana/runtime';
 import { Drawer, IconButton, useStyles2 } from '@grafana/ui';
+import { getCircularReplacer } from 'app/core/utils/object';
+
+import { DrawerDropZone } from './DrawerDropZone';
 
 type DrawerSize = 'sm' | 'md' | 'lg';
 
@@ -15,7 +18,16 @@ export interface Props {
 }
 
 function ExampleTab() {
-  return <div>Example content from a plugin</div>;
+  const [data, setData] = useState<string | null>(null);
+
+  return (
+    <div>
+      <p>Example content from a plugin</p>
+      <DrawerDropZone onDrop={setData}>
+        {data ? JSON.stringify(data, getCircularReplacer()) : <h2>Drop something here</h2>}
+      </DrawerDropZone>
+    </div>
+  );
 }
 
 export function ExtensionDrawer({ open, onClose, selectedTab }: Props) {
