@@ -15,6 +15,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Icon, JSONFormatter, useStyles2, Drawer } from '@grafana/ui';
 
+import { PRQLEditor } from './PRQLEditor';
 import { TransformationsEditorTransformation } from './types';
 
 interface TransformationEditorProps {
@@ -85,6 +86,13 @@ export const TransformationEditor = ({
   return (
     <div className={styles.editor} data-testid={selectors.components.TransformTab.transformationEditor(uiConfig.name)}>
       {editor}
+      {
+        <PRQLEditor
+          metricNames={['metric1', 'metric2', 'metric3']}
+          readOnly={true}
+          queryString={`from invoices filter invoice_date >= @1970-01-16`}
+        />
+      }
       {debugMode && (
         <Drawer title="Debug transformation" subtitle={uiConfig.name} onClose={toggleShowDebug}>
           <div
