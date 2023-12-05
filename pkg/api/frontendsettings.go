@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -630,4 +632,13 @@ func (hs *HTTPServer) getEnabledOAuthProviders() map[string]any {
 		}
 	}
 	return providers
+}
+
+func (hs *HTTPServer) GetFrontendAssets(c *contextmodel.ReqContext) response.Response {
+	assets, err := webassets.LoadWebAssets(hs.Cfg)
+	if err != nil {
+		return response.Error(500, "Failed to load web assets manifest", err)
+	}
+
+	return response.JSON(http.StatusOK, assets)
 }

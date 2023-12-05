@@ -135,9 +135,10 @@ export interface BootData {
   user: CurrentUserDTO;
   settings: GrafanaConfig;
   navTree: NavLinkDTO[];
-  themePaths: {
-    light: string;
+  assets: {
+    jsFiles: Array<{ filePath: string }>;
     dark: string;
+    light: string;
   };
 }
 
@@ -221,6 +222,7 @@ export interface GrafanaConfig {
   rudderstackConfigUrl: string | undefined;
   rudderstackIntegrationsUrl: string | undefined;
   sqlConnectionLimits: SqlConnectionLimits;
+  jsAssets: string[];
 
   // The namespace to use for kubernetes apiserver requests
   namespace: string;

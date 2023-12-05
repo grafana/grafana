@@ -10,10 +10,10 @@
 
     <base href="[[.AppSubUrl]]/" />
 
-    [[ if eq .Theme "light" ]]
-    <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/[[.Assets.CSSLight]]" />
-    [[ else if eq .Theme "dark" ]]
-    <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/[[.Assets.CSSDark]]" />
+    [[ if eq .ThemeType "light" ]]
+    <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/[[.Assets.Light]]" />
+    [[ else if eq .ThemeType "dark" ]]
+    <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/[[.Assets.Dark]]" />
     [[ end ]]
 
     <link rel="icon" type="image/png" href="public/img/fav32.png" />

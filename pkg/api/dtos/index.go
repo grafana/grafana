@@ -38,12 +38,12 @@ type IndexViewData struct {
 }
 
 type EntryPointAssets struct {
-	JSFiles  []EntryPointAsset
-	CSSDark  string
-	CSSLight string
+	JSFiles []EntryPointAsset `json:"jsFiles"`
+	Dark    string            `json:"dark"`
+	Light   string            `json:"light"`
 }
 
 type EntryPointAsset struct {
-	FilePath  string
-	Integrity string
+	FilePath  string `json:"filePath"`
+	Integrity string `json:"integrity"`
 }

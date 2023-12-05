@@ -84,8 +84,8 @@ func readWebAssets(manifestpath string) (*dtos.EntryPointAssets, error) {
 	}
 
 	return &dtos.EntryPointAssets{
-		JSFiles:  entryPointJSAssets,
-		CSSDark:  entryPoints.Dark.Assets.CSS[0],
-		CSSLight: entryPoints.Light.Assets.CSS[0],
+		JSFiles: entryPointJSAssets,
+		Dark:    entryPoints.Dark.Assets.CSS[0],
+		Light:   entryPoints.Light.Assets.CSS[0],
 	}, nil
 }

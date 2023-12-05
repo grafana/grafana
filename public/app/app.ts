@@ -55,6 +55,7 @@ import { GrafanaContextType } from './core/context/GrafanaContext';
 import { initIconCache } from './core/icons/iconBundle';
 import { initializeI18n } from './core/internationalization';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
+import { FrontendAssetsUpdateChecker } from './core/services/FrontendAssetsUpdateChecker';
 import { ModalManager } from './core/services/ModalManager';
 import { backendSrv } from './core/services/backend_srv';
 import { contextSrv } from './core/services/context_srv';
@@ -135,6 +136,9 @@ export class GrafanaApp {
       setLocationSrv(locationService);
       setTimeZoneResolver(() => config.bootData.user.timezone);
       initGrafanaLive();
+
+      const assetsUpdateChecker = new FrontendAssetsUpdateChecker();
+      assetsUpdateChecker.start();
 
       initAuthConfig();
 

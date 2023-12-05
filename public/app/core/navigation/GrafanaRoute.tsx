@@ -1,8 +1,10 @@
+import * as H from 'history';
 import React, { Suspense, useEffect, useLayoutEffect } from 'react';
+import { Prompt } from 'react-router-dom';
 // @ts-ignore
 import Drop from 'tether-drop';
 
-import { locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
+import { locationSearchToObject, navigationLogger, reportPageview, locationService } from '@grafana/runtime';
 import { ErrorBoundary } from '@grafana/ui';
 
 import { useGrafana } from '../context/GrafanaContext';
