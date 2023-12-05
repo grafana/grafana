@@ -467,6 +467,12 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/tutorials',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "TutorialPage"*/ 'app/features/tutorial/tutorialpage/TutorialPage')
+      ),
+    },
+    {
       path: '/data-trails',
       chromeless: false,
       exact: false,

@@ -1,22 +1,26 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { usePopperTooltip } from 'react-popper-tooltip';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
+import { useDispatch } from 'app/types';
 
 import { TutorialTooltip } from './TutorialTooltip';
-import { type Step, waitForElement } from './tutorialProvider.utils';
+import { setCurrentStep } from './slice';
+import { setupTutorialStep, waitForElement } from './tutorialProvider.utils';
+import type { Step } from './types';
 
 type TutorialOverlayProps = {
-  advance: (() => void) | null;
+  currentStep: number;
   step: Step;
-  showTooltip: boolean;
 };
 
 const spotlightOffset = 0;
 
-export const TutorialOverlay = ({ advance, showTooltip, step }: TutorialOverlayProps) => {
+export const TutorialOverlay = ({ currentStep, step }: TutorialOverlayProps) => {
+  const dispatch = useDispatch();
+  const [showTooltip, setShowTooltip] = useState(false);
   const styles = useStyles2(getStyles);
   const [spotlightStyles, setSpotlightStyles] = useState({});
   const [canInteract, setCanInteract] = useState(false);
@@ -28,35 +32,56 @@ export const TutorialOverlay = ({ advance, showTooltip, step }: TutorialOverlayP
   });
   const { getArrowProps, getTooltipProps, setTooltipRef, setTriggerRef, triggerRef } = popper;
 
+  const advance = useCallback(() => {
+    setShowTooltip(false);
+
+    if (step) {
+      dispatch(setCurrentStep(currentStep + 1));
+    }
+  }, [currentStep, dispatch, step]);
+
+  useEffect(() => {
+    if (!step) {
+      setShowTooltip(false);
+    }
+  }, [step]);
+
   useEffect(() => {
     let setStyles: any;
     let mouseMoveCallback: any;
     let scrollParent: Element | null;
 
-    waitForElement(step.target).then((element) => {
-      setStyles = () => {
-        requestAnimationFrame(() => {
-          setSpotlightStyles(getSpotlightStyles(element));
+    if (step) {
+      waitForElement(step.target).then((element) => {
+        setStyles = () =>
+          new Promise((resolve) => {
+            requestAnimationFrame(() => {
+              setSpotlightStyles(getSpotlightStyles(element));
+              resolve(true);
+            });
+          });
+
+        mouseMoveCallback = (e: MouseEvent) => {
+          if (triggerRef) {
+            setCanInteract(isMouseOverSpotlight(e, triggerRef));
+          }
+        };
+
+        document.addEventListener('mousemove', mouseMoveCallback);
+        scrollParent = element.closest('.scrollbar-view');
+        setStyles().then(() => {
+          setupTutorialStep(step, advance);
+          setShowTooltip(true);
         });
-      };
-
-      mouseMoveCallback = (e: MouseEvent) => {
-        if (triggerRef) {
-          setCanInteract(isMouseOverSpotlight(e, triggerRef));
-        }
-      };
-
-      document.addEventListener('mousemove', mouseMoveCallback);
-      scrollParent = element.closest('.scrollbar-view');
-      setStyles();
-      scrollParent?.addEventListener('scroll', setStyles);
-    });
+        scrollParent?.addEventListener('scroll', setStyles);
+      });
+    }
 
     return () => {
       scrollParent?.removeEventListener('scroll', setStyles);
       document.removeEventListener('mousemove', mouseMoveCallback);
     };
-  }, [triggerRef, step]);
+  }, [advance, step, triggerRef]);
 
   return (
     <>
