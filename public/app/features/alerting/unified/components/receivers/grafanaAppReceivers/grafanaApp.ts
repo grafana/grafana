@@ -5,7 +5,7 @@ import { usePluginBridge } from '../../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../../types/pluginBridges';
 
 import { isOnCallReceiver } from './onCall/onCall';
-import { AmRouteReceiver, ReceiverWithTypes } from './types';
+import { AmRouteReceiver } from './types';
 
 export const useGetGrafanaReceiverTypeChecker = () => {
   const { installed: isOnCallEnabled } = usePluginBridge(SupportedPlugin.OnCall);
@@ -37,14 +37,4 @@ export const useGetAmRouteReceiverWithGrafanaAppTypes = (receivers: Receiver[]) 
   };
 
   return receivers.map(receiverToSelectableContactPointValue);
-};
-
-export const useGetReceiversWithGrafanaAppTypes = (receivers: Receiver[]): ReceiverWithTypes[] => {
-  const getGrafanaReceiverType = useGetGrafanaReceiverTypeChecker();
-  return receivers.map((receiver: Receiver) => {
-    return {
-      ...receiver,
-      grafanaAppReceiverType: getGrafanaReceiverType(receiver),
-    };
-  });
 };

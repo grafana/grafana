@@ -76,6 +76,16 @@ func TestIntegrationFolderService(t *testing.T) {
 		cfg := setting.NewCfg()
 		features := featuremgmt.WithFeatures()
 
+		ac := acmock.New().WithPermissions([]accesscontrol.Permission{
+			{Action: accesscontrol.ActionAlertingRuleDelete, Scope: dashboards.ScopeFoldersAll},
+		})
+		alertingStore := ngstore.DBstore{
+			SQLStore:      db,
+			Cfg:           cfg.UnifiedAlerting,
+			Logger:        log.New("test-alerting-store"),
+			AccessControl: ac,
+		}
+
 		service := &Service{
 			cfg:                  cfg,
 			log:                  log.New("test-folder-service"),
@@ -87,7 +97,10 @@ func TestIntegrationFolderService(t *testing.T) {
 			db:                   db,
 			accessControl:        acimpl.ProvideAccessControl(cfg),
 			metrics:              newFoldersMetrics(nil),
+			registry:             make(map[string]folder.RegistryService),
 		}
+
+		require.NoError(t, service.RegisterService(alertingStore))
 
 		t.Run("Given user has no permissions", func(t *testing.T) {
 			origNewGuardian := guardian.New
@@ -386,8 +399,10 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 
 	signedInUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
 		orgID: {
-			dashboards.ActionFoldersCreate: {},
-			dashboards.ActionFoldersWrite:  {dashboards.ScopeFoldersAll}},
+			dashboards.ActionFoldersCreate:         {},
+			dashboards.ActionFoldersWrite:          {dashboards.ScopeFoldersAll},
+			accesscontrol.ActionAlertingRuleDelete: {dashboards.ScopeFoldersAll},
+		},
 	}}
 	createCmd := folder.CreateFolderCommand{
 		OrgID:        orgID,
@@ -426,7 +441,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, nil, featuresFlagOn, folderPermissions, dashboardPermissions, ac, serviceWithFlagOn, nil)
 			require.NoError(t, err)
 
-			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOn, db, serviceWithFlagOn, dashSrv)
+			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOn, db, serviceWithFlagOn, dashSrv, ac)
 			require.NoError(t, err)
 
 			elementService := libraryelements.ProvideService(cfg, db, routeRegister, serviceWithFlagOn, featuresFlagOn, ac)
@@ -506,7 +521,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				folderPermissions, dashboardPermissions, ac, serviceWithFlagOff, nil)
 			require.NoError(t, err)
 
-			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOff, db, serviceWithFlagOff, dashSrv)
+			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOff, db, serviceWithFlagOff, dashSrv, ac)
 			require.NoError(t, err)
 
 			elementService := libraryelements.ProvideService(cfg, db, routeRegister, serviceWithFlagOff, featuresFlagOff, ac)
@@ -601,7 +616,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				prefix:       "flagon-noforce",
 				depth:        3,
 				forceDelete:  false,
-				deletionErr:  dashboards.ErrFolderContainsAlertRules,
+				deletionErr:  folder.ErrFolderNotEmpty,
 				desc:         "With nested folder feature flag on and no force deletion of rules",
 			},
 			{
@@ -621,7 +636,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				prefix:       "flagoff-noforce",
 				depth:        1,
 				forceDelete:  false,
-				deletionErr:  dashboards.ErrFolderContainsAlertRules,
+				deletionErr:  folder.ErrFolderNotEmpty,
 				desc:         "With nested folder feature flag off and no force deletion of rules",
 			},
 		}
@@ -648,7 +663,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 
 				dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, nil, tc.featuresFlag, folderPermissions, dashboardPermissions, ac, tc.service, nil)
 				require.NoError(t, err)
-				alertStore, err := ngstore.ProvideDBStore(cfg, tc.featuresFlag, db, tc.service, dashSrv)
+				alertStore, err := ngstore.ProvideDBStore(cfg, tc.featuresFlag, db, tc.service, dashSrv, ac)
 				require.NoError(t, err)
 
 				ancestorUIDs := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, tc.depth, tc.prefix, createCmd)

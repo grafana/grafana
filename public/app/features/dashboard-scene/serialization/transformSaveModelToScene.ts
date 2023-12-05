@@ -225,8 +225,12 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
 
   return new DashboardScene({
     title: oldModel.title,
+    tags: oldModel.tags || [],
+    links: oldModel.links || [],
     uid: oldModel.uid,
     id: oldModel.id,
+    description: oldModel.description,
+    editable: oldModel.editable,
     meta: oldModel.meta,
     body: new SceneGridLayout({
       isLazy: true,
@@ -264,10 +268,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
                 intervals: oldModel.timepicker.refresh_intervals,
               }),
             ],
-        linkControls: new DashboardLinksControls({
-          links: oldModel.links,
-          dashboardUID: oldModel.uid,
-        }),
+        linkControls: new DashboardLinksControls({}),
       }),
     ],
   });
