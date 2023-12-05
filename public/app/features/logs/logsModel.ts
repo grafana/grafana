@@ -429,6 +429,11 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
 
       const datasourceType = queries.find((query) => query.refId === series.refId)?.datasource?.type;
 
+      let possibleTraceId = findPossibleTraceIdInMessage(message);
+      if (!possibleTraceId) {
+        findPossibleTraceIdInLabels(labels);
+      }
+
       const row: LogRowModel = {
         entryFieldIndex: stringField.index,
         rowIndex: j,
@@ -449,6 +454,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
         // prepend refId to uid to make it unique across all series in a case when series contain duplicates
         uid: `${series.refId}_${idField ? idField.values[j] : j.toString()}`,
         datasourceType,
+        possibleTraceId,
       };
 
       if (idField !== null) {
@@ -1145,3 +1151,22 @@ export function logRowToSingleRowDataFrame(logRow: LogRowModel): DataFrame | nul
 
   return frame;
 }
+
+export const findPossibleTraceIdInLabels = (labels: Labels | undefined): string | undefined => {
+  for (const key in labels) {
+    if (/^trace.?id/gi.test(key)) {
+      return labels[key];
+    }
+    break;
+  }
+  return undefined;
+};
+
+export const findPossibleTraceIdInMessage = (message: string): string | undefined => {
+  const traceIdRegex = /trace.?id.?[:=]\s*"?([a-z0-9-]+)"?/gi;
+  const match = traceIdRegex.exec(message);
+  if (match) {
+    return match[1];
+  }
+  return undefined;
+};

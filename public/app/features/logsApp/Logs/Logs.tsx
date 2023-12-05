@@ -34,7 +34,7 @@ import {
   TimeZone,
   urlUtil,
 } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
   Button,
@@ -42,6 +42,7 @@ import {
   InlineField,
   InlineFieldRow,
   InlineSwitch,
+  LinkButton,
   PanelChrome,
   RadioButtonGroup,
   Themeable2,
@@ -50,6 +51,7 @@ import {
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import store from 'app/core/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
+import { createUrl } from 'app/features/alerting/unified/utils/url';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
 import { getLogRowStyles } from 'app/features/logs/components/getLogRowStyles';
 import { dispatch, getState } from 'app/store/store';
@@ -654,6 +656,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
       this.state.hiddenLogLevels.length > 0 ? ` (filtered based on selected ${this.state.groupByLabel})` : ''
     }`;
 
+    // This is here to just figure out the logic
+    const log1Trace = logRows[0].possibleTraceId;
+    const ds = getDataSourceSrv().getList({ tracing: true });
+    const firstTracingDs = ds.find((d) => d.type === 'tempo');
     return (
       <>
         {getRowContext && contextRow && (
@@ -667,6 +673,26 @@ class UnthemedLogs extends PureComponent<Props, State> {
             logsSortOrder={logsSortOrder}
             timeZone={timeZone}
           />
+        )}
+        {firstTracingDs && log1Trace && (
+          <LinkButton
+            size="md"
+            variant="secondary"
+            icon="compass"
+            target="_blank"
+            href={createUrl(`/explore`, {
+              left: JSON.stringify({
+                datasource: firstTracingDs.uid,
+                queries: [{ refId: 'A', query: log1Trace }],
+                range: {
+                  from: new Date(this.props.absoluteRange.from).toISOString(),
+                  to: new Date(this.props.absoluteRange.to).toISOString(),
+                },
+              }),
+            })}
+          >
+            View in Explore
+          </LinkButton>
         )}
         <PanelChrome
           title={title}
