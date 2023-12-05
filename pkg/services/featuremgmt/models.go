@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"time"
 )
 
 type FeatureToggles interface {
@@ -110,6 +111,7 @@ type FeatureFlag struct {
 	Description string           `json:"description"`
 	Stage       FeatureFlagStage `json:"stage,omitempty"`
 	DocsURL     string           `json:"docsURL,omitempty"`
+	Created     time.Time        `json:"created,omitempty"` // when the flag was introduced
 
 	// Owner person or team that owns this feature flag
 	Owner codeowner `json:"-"`

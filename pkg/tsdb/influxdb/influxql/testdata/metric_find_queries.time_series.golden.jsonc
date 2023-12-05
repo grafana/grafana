@@ -1,24 +1,31 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
-//  Frame[0] 
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "preferredVisualisationType": "graph",
+//      "executedQueryString": "Test raw query"
+//  }
 //  Name: measurements
 //  Dimensions: 1 Fields by 10 Rows
-//  +----------------+
-//  | Name: Value    |
-//  | Labels:        |
-//  | Type: []string |
-//  +----------------+
-//  | cpu            |
-//  | disk           |
-//  | diskio         |
-//  | kernel         |
-//  | logs           |
-//  | mem            |
-//  | myMeasurement  |
-//  | processes      |
-//  | swap           |
-//  | system         |
-//  +----------------+
+//  +-----------------+
+//  | Name: Value     |
+//  | Labels:         |
+//  | Type: []*string |
+//  +-----------------+
+//  | cpu             |
+//  | disk            |
+//  | diskio          |
+//  | kernel          |
+//  | logs            |
+//  | mem             |
+//  | myMeasurement   |
+//  | processes       |
+//  | swap            |
+//  | system          |
+//  +-----------------+
 //  
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
@@ -28,12 +35,21 @@
     {
       "schema": {
         "name": "measurements",
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
+          "preferredVisualisationType": "graph",
+          "executedQueryString": "Test raw query"
+        },
         "fields": [
           {
             "name": "Value",
             "type": "string",
             "typeInfo": {
-              "frame": "string"
+              "frame": "string",
+              "nullable": true
             }
           }
         ]

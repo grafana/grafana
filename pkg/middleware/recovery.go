@@ -23,6 +23,8 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/setting"
@@ -135,13 +137,19 @@ func Recovery(cfg *setting.Cfg) web.Middleware {
 						return
 					}
 
+					assets, _ := webassets.GetWebAssets(cfg)
+					if assets == nil {
+						assets = &dtos.EntryPointAssets{JSFiles: []dtos.EntryPointAsset{}}
+					}
+
 					data := struct {
 						Title     string
 						AppTitle  string
 						AppSubUrl string
 						Theme     string
 						ErrorMsg  string
-					}{"Server Error", "Grafana", cfg.AppSubURL, cfg.DefaultTheme, ""}
+						Assets    *dtos.EntryPointAssets
+					}{"Server Error", "Grafana", cfg.AppSubURL, cfg.DefaultTheme, "", assets}
 
 					if setting.Env == setting.Dev {
 						if err, ok := r.(error); ok {

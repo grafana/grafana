@@ -280,6 +280,9 @@
    },
    "type": "object"
   },
+  "AlertStateType": {
+   "type": "string"
+  },
   "AlertingFileExport": {
    "properties": {
     "apiVersion": {
@@ -401,6 +404,80 @@
    },
    "type": "object"
   },
+  "Annotation": {
+   "properties": {
+    "alertId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "alertName": {
+     "type": "string"
+    },
+    "avatarUrl": {
+     "type": "string"
+    },
+    "created": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "dashboardId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "dashboardUID": {
+     "type": "string"
+    },
+    "data": {
+     "$ref": "#/definitions/Json"
+    },
+    "email": {
+     "type": "string"
+    },
+    "id": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "login": {
+     "type": "string"
+    },
+    "newState": {
+     "type": "string"
+    },
+    "panelId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "prevState": {
+     "type": "string"
+    },
+    "tags": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "text": {
+     "type": "string"
+    },
+    "time": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "timeEnd": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "updated": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "userId": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "type": "object"
+  },
   "ApiRuleNode": {
    "properties": {
     "alert": {
@@ -512,6 +589,9 @@
     },
     "username": {
      "type": "string"
+    },
+    "username_file": {
+     "type": "string"
     }
    },
    "title": "BasicAuth contains basic HTTP authentication credentials.",
@@ -577,11 +657,74 @@
    },
    "type": "array"
   },
+  "CookieType": {
+   "type": "string"
+  },
   "CounterResetHint": {
    "description": "or alternatively that we are dealing with a gauge histogram, where counter resets do not apply.",
    "format": "uint8",
    "title": "CounterResetHint contains the known information about a counter reset,",
    "type": "integer"
+  },
+  "CreateLibraryElementCommand": {
+   "description": "CreateLibraryElementCommand is the command for adding a LibraryElement",
+   "properties": {
+    "folderId": {
+     "description": "ID of the folder where the library element is stored.\n\nDeprecated: use FolderUID instead",
+     "format": "int64",
+     "type": "integer"
+    },
+    "folderUid": {
+     "description": "UID of the folder where the library element is stored.",
+     "type": "string"
+    },
+    "kind": {
+     "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
+     "enum": [
+      1,
+      2
+     ],
+     "format": "int64",
+     "type": "integer"
+    },
+    "model": {
+     "description": "The JSON model for the library element.",
+     "type": "object"
+    },
+    "name": {
+     "description": "Name of the library element.",
+     "type": "string"
+    },
+    "uid": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "DashboardACLUpdateItem": {
+   "properties": {
+    "permission": {
+     "$ref": "#/definitions/PermissionType"
+    },
+    "role": {
+     "enum": [
+      "None",
+      "Viewer",
+      "Editor",
+      "Admin"
+     ],
+     "type": "string"
+    },
+    "teamId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "userId": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "type": "object"
   },
   "DataLink": {
    "description": "DataLink define what",
@@ -607,6 +750,9 @@
     "Error": {
      "description": "Error is a property to be set if the corresponding DataQuery has an error.",
      "type": "string"
+    },
+    "ErrorSource": {
+     "$ref": "#/definitions/ErrorSource"
     },
     "Frames": {
      "$ref": "#/definitions/Frames"
@@ -812,6 +958,10 @@
     }
    },
    "type": "object"
+  },
+  "ErrorSource": {
+   "description": "ErrorSource type defines the source of the error",
+   "type": "string"
   },
   "ErrorType": {
    "title": "ErrorType models the different API error types.",
@@ -1810,6 +1960,82 @@
    },
    "type": "array"
   },
+  "LegacyAlert": {
+   "properties": {
+    "Created": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "DashboardID": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "EvalData": {
+     "$ref": "#/definitions/Json"
+    },
+    "ExecutionError": {
+     "type": "string"
+    },
+    "For": {
+     "$ref": "#/definitions/Duration"
+    },
+    "Frequency": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "Handler": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "ID": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "Message": {
+     "type": "string"
+    },
+    "Name": {
+     "type": "string"
+    },
+    "NewStateDate": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "OrgID": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "PanelID": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "Settings": {
+     "$ref": "#/definitions/Json"
+    },
+    "Severity": {
+     "type": "string"
+    },
+    "Silenced": {
+     "type": "boolean"
+    },
+    "State": {
+     "$ref": "#/definitions/AlertStateType"
+    },
+    "StateChanges": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "Updated": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "Version": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "type": "object"
+  },
   "LinkTransformationConfig": {
    "properties": {
     "expression": {
@@ -1849,7 +2075,7 @@
   },
   "MatchRegexps": {
    "additionalProperties": {
-    "$ref": "#/definitions/Regexp"
+    "type": "string"
    },
    "title": "MatchRegexps represents a map of Regexp.",
    "type": "object"
@@ -1881,6 +2107,48 @@
    },
    "type": "array"
   },
+  "MetricRequest": {
+   "properties": {
+    "debug": {
+     "type": "boolean"
+    },
+    "from": {
+     "description": "From Start time in epoch timestamps in milliseconds or relative using Grafana time units.",
+     "example": "now-1h",
+     "type": "string"
+    },
+    "queries": {
+     "description": "queries.refId – Specifies an identifier of the query. Is optional and default to “A”.\nqueries.datasourceId – Specifies the data source to be queried. Each query in the request must have an unique datasourceId.\nqueries.maxDataPoints - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100.\nqueries.intervalMs - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.",
+     "example": [
+      {
+       "datasource": {
+        "uid": "PD8C576611E62080A"
+       },
+       "format": "table",
+       "intervalMs": 86400000,
+       "maxDataPoints": 1092,
+       "rawSql": "SELECT 1 as valueOne, 2 as valueTwo",
+       "refId": "A"
+      }
+     ],
+     "items": {
+      "$ref": "#/definitions/Json"
+     },
+     "type": "array"
+    },
+    "to": {
+     "description": "To End time in epoch timestamps in milliseconds or relative using Grafana time units.",
+     "example": "now",
+     "type": "string"
+    }
+   },
+   "required": [
+    "from",
+    "to",
+    "queries"
+   ],
+   "type": "object"
+  },
   "MultiStatus": {
    "type": "object"
   },
@@ -1911,6 +2179,24 @@
      "$ref": "#/definitions/GettableRuleGroupConfig"
     },
     "type": "array"
+   },
+   "type": "object"
+  },
+  "NewApiKeyResult": {
+   "properties": {
+    "id": {
+     "example": 1,
+     "format": "int64",
+     "type": "integer"
+    },
+    "key": {
+     "example": "glsa_yscW25imSKJIuav8zF37RZmnbiDvB05G_fcaaf58a",
+     "type": "string"
+    },
+    "name": {
+     "example": "grafana",
+     "type": "string"
+    }
    },
    "type": "object"
   },
@@ -2218,8 +2504,55 @@
    },
    "type": "object"
   },
+  "PatchPrefsCmd": {
+   "properties": {
+    "cookies": {
+     "items": {
+      "$ref": "#/definitions/CookieType"
+     },
+     "type": "array"
+    },
+    "homeDashboardId": {
+     "default": 0,
+     "description": "The numerical :id of a favorited dashboard",
+     "format": "int64",
+     "type": "integer"
+    },
+    "homeDashboardUID": {
+     "type": "string"
+    },
+    "language": {
+     "type": "string"
+    },
+    "queryHistory": {
+     "$ref": "#/definitions/QueryHistoryPreference"
+    },
+    "theme": {
+     "enum": [
+      "light",
+      "dark"
+     ],
+     "type": "string"
+    },
+    "timezone": {
+     "enum": [
+      "utc",
+      "browser"
+     ],
+     "type": "string"
+    },
+    "weekStart": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "PermissionDenied": {
    "type": "object"
+  },
+  "PermissionType": {
+   "format": "int64",
+   "type": "integer"
   },
   "Point": {
    "description": "If H is not nil, then this is a histogram point and only (T, H) is valid.\nIf H is nil, then only (T, V) is valid.",
@@ -2780,6 +3113,14 @@
    },
    "type": "object"
   },
+  "QueryHistoryPreference": {
+   "properties": {
+    "homeTab": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "QueryStat": {
    "description": "The embedded FieldConfig's display name must be set.\nIt corresponds to the QueryResultMetaStat on the frontend (https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L53).",
    "properties": {
@@ -2971,11 +3312,6 @@
     }
    },
    "title": "ReceiverExport is the provisioned file export of alerting.ReceiverV1.",
-   "type": "object"
-  },
-  "Regexp": {
-   "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
-   "title": "Regexp is the representation of a compiled regular expression.",
    "type": "object"
   },
   "RelativeTimeRange": {
@@ -3921,6 +4257,61 @@
    "title": "A URL represents a parsed URL (technically, a URI reference).",
    "type": "object"
   },
+  "UpdateDashboardACLCommand": {
+   "properties": {
+    "items": {
+     "items": {
+      "$ref": "#/definitions/DashboardACLUpdateItem"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "UpdatePrefsCmd": {
+   "properties": {
+    "cookies": {
+     "items": {
+      "$ref": "#/definitions/CookieType"
+     },
+     "type": "array"
+    },
+    "homeDashboardId": {
+     "default": 0,
+     "description": "The numerical :id of a favorited dashboard",
+     "format": "int64",
+     "type": "integer"
+    },
+    "homeDashboardUID": {
+     "type": "string"
+    },
+    "language": {
+     "type": "string"
+    },
+    "queryHistory": {
+     "$ref": "#/definitions/QueryHistoryPreference"
+    },
+    "theme": {
+     "enum": [
+      "light",
+      "dark",
+      "system"
+     ],
+     "type": "string"
+    },
+    "timezone": {
+     "enum": [
+      "utc",
+      "browser"
+     ],
+     "type": "string"
+    },
+    "weekStart": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "UpdateRuleGroupResponse": {
    "properties": {
     "created": {
@@ -4124,6 +4515,7 @@
    "type": "object"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -4308,6 +4700,7 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
@@ -4368,6 +4761,7 @@
    "type": "array"
   },
   "integration": {
+   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -4549,7 +4943,6 @@
    "type": "object"
   },
   "receiver": {
-   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",

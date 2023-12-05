@@ -138,6 +138,15 @@ func newValueFields(rows []models.Row, labels data.Labels, colIdxStart, colIdxEn
 				case "string":
 					value, ok := valuePair[colIdx].(string)
 					if ok {
+						// we handle null values by adding nil to floatArray
+						// if then we see the valueField should be a sting field
+						// we append those nil elements into the stringArray
+						// then we clear the floatArray
+						// these steps are necessary for the responses like in string_column_with_null_value.json
+						for range floatArray {
+							stringArray = append(stringArray, nil)
+						}
+						floatArray = nil
 						stringArray = append(stringArray, &value)
 					} else {
 						stringArray = append(stringArray, nil)
@@ -148,12 +157,37 @@ func newValueFields(rows []models.Row, labels data.Labels, colIdxStart, colIdxEn
 				case "bool":
 					value, ok := valuePair[colIdx].(bool)
 					if ok {
+						// we handle null values by adding nil to floatArray
+						// if then we see the valueField should be a bool field
+						// we append those nil elements into the boolArray
+						// then we clear the floatArray
+						for range floatArray {
+							boolArray = append(boolArray, nil)
+						}
+						floatArray = nil
 						boolArray = append(boolArray, &value)
 					} else {
 						boolArray = append(boolArray, nil)
 					}
 				case "null":
-					floatArray = append(floatArray, nil)
+					// If there is already a valueField, instead of adding nil to floatArray
+					// we add nil to the valueField and to the array of valueField constructed from
+					if valueField != nil {
+						valueFieldType := valueField.Type()
+						switch valueFieldType {
+						case data.FieldTypeNullableString:
+							stringArray = append(stringArray, nil)
+						case data.FieldTypeNullableBool:
+							boolArray = append(boolArray, nil)
+						default:
+							floatArray = append(floatArray, nil)
+						}
+						valueField.Append(nil)
+					} else {
+						// If there is no valueField created before we add the nil value to floatArray
+						// when we have the real value of the field these will be appended to the field
+						floatArray = append(floatArray, nil)
+					}
 				}
 			}
 
@@ -165,7 +199,9 @@ func newValueFields(rows []models.Row, labels data.Labels, colIdxStart, colIdxEn
 			case "bool":
 				valueField = data.NewField(row.Columns[colIdx], labels, boolArray)
 			case "null":
-				valueField = data.NewField(row.Columns[colIdx], labels, floatArray)
+				if valueField == nil {
+					valueField = data.NewField(row.Columns[colIdx], labels, floatArray)
+				}
 			}
 
 			valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: row.Columns[colIdx]})
@@ -285,20 +321,25 @@ func newFrameWithTimeField(row models.Row, column string, colIndex int, query mo
 }
 
 func newFrameWithoutTimeField(row models.Row, query models.Query) *data.Frame {
-	var values []string
+	var values []*string
 
 	for _, valuePair := range row.Values {
 		if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES")) {
 			if len(valuePair) >= 2 {
-				values = append(values, valuePair[1].(string))
+				values = append(values, util.ToPtr(valuePair[1].(string)))
 			}
 		} else {
 			if len(valuePair) >= 1 {
-				values = append(values, valuePair[0].(string))
+				values = append(values, util.ToPtr(valuePair[0].(string)))
 			}
 		}
 	}
 
 	field := data.NewField("Value", nil, values)
-	return data.NewFrame(row.Name, field)
+	frame := data.NewFrame(row.Name, field)
+	frame.Meta = &data.FrameMeta{
+		ExecutedQueryString:    query.RawQuery,
+		PreferredVisualization: util.GetVisType(query.ResultFormat),
+	}
+	return frame
 }
