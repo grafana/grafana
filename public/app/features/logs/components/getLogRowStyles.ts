@@ -87,7 +87,7 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       width: 100%;
       cursor: pointer;
       vertical-align: top;
-      border-bottom: 1px dotted ${tinycolor(theme.colors.text.primary).setAlpha(0.25).toString()};
+      border-bottom: ${theme.spacing(0.5)} dotted transparent;
       color: ${tinycolor(theme.colors.text.primary).setAlpha(0.8).toString()};
       line-height: 20px !important;
 
