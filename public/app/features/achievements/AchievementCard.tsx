@@ -76,15 +76,17 @@ export const AchievementCard = ({ title, progress = 20, level }: AchievementCard
                   )}
                 </Card.Actions>
                 <Card.SecondaryActions>
-                  <LinkButton
-                    href={achievement.link}
-                    icon="external-link-alt"
-                    target="_blank"
-                    size="sm"
-                    variant="secondary"
-                  >
-                    Learn more
-                  </LinkButton>
+                  {achievement.link && (
+                    <LinkButton
+                      href={achievement.link}
+                      icon="external-link-alt"
+                      target="_blank"
+                      size="sm"
+                      variant="secondary"
+                    >
+                      Learn more
+                    </LinkButton>
+                  )}
                 </Card.SecondaryActions>
               </Card>
             );
