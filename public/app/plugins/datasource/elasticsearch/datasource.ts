@@ -1256,6 +1256,14 @@ export class ElasticDatasource
     };
     return contextRequest;
   };
+
+  getDefaultQuery(app: CoreApp): ElasticsearchQuery {
+    const defaults = { refId: 'A' };
+    return {
+      ...defaults,
+      metrics: [{ type: 'logs', id: '1', settings: { limit: '500' } }],
+    };
+  }
 }
 
 export function enhanceDataFrameWithDataLinks(dataFrame: DataFrame, dataLinks: DataLinkConfig[]) {

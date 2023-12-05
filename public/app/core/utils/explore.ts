@@ -99,7 +99,9 @@ export function buildQueryTransaction(
   range: TimeRange,
   scanning: boolean,
   timeZone?: TimeZone,
-  scopedVars?: ScopedVars
+  scopedVars?: ScopedVars,
+  isFirstQuery?: boolean,
+  datasource?: DataSourceApi
 ): QueryTransaction {
   const key = queries.reduce((combinedKey, query) => {
     combinedKey += query.key;
@@ -107,6 +109,22 @@ export function buildQueryTransaction(
   }, '');
 
   const { interval, intervalMs } = getIntervals(range, queryOptions.minInterval, queryOptions.maxDataPoints);
+
+  let targets = queries;
+  if (
+    isFirstQuery &&
+    datasource &&
+    (queries.length === 0 || (queries.length === 1 && datasource?.getQueryDisplayText?.(queries[0]) === ''))
+  ) {
+    targets = [
+      {
+        ...datasource.getDefaultQuery?.(CoreApp.Explore),
+        refId: 'A',
+        key: generateKey(),
+        datasource: datasource.getRef(),
+      },
+    ];
+  }
 
   // Most datasource is using `panelId + query.refId` for cancellation logic.
   // Using `format` here because it relates to the view panel that the request is for.
@@ -124,7 +142,7 @@ export function buildQueryTransaction(
     // TODO: the query request expects number and we are using string here. Seems like it works so far but can create
     // issues down the road.
     panelId: panelId as any,
-    targets: queries, // Datasources rely on DataQueries being passed under the targets key.
+    targets, // Datasources rely on DataQueries being passed under the targets key.
     range,
     requestId: 'explore_' + exploreId,
     rangeRaw: range.raw,
