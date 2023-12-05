@@ -51,7 +51,7 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 				{
 					RefID:         "A",
 					DatasourceUID: "__expr__",
-					Model:         json.RawMessage(`{"conditions":[],"intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"classic_conditions"}`),
+					Model:         json.RawMessage(`{"conditions":[],"refId":"A","type":"classic_conditions"}`),
 				},
 			},
 			NamespaceUID:    namespaceUID,
@@ -747,6 +747,12 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 						cmpopts.IgnoreUnexported(ngModels.AlertRule{}, ngModels.AlertQuery{}),
 						cmpopts.IgnoreFields(ngModels.AlertRule{}, "ID", "Updated", "UID"),
 						cmpopts.IgnoreFields(dashboards.Dashboard{}, "ID", "Created", "Updated", "Data", "Slug"),
+						cmp.Transformer("AlertQuery.Model", func(in json.RawMessage) (out map[string]any) {
+							if err := json.Unmarshal(in, &out); err != nil {
+								panic(err)
+							}
+							return out
+						}),
 					}
 					if !cmp.Equal(tt.expected, actual, cOpt...) {
 						t.Errorf("Unexpected Rule: %v", cmp.Diff(tt.expected, actual, cOpt...))

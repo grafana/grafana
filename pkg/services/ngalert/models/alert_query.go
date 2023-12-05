@@ -132,12 +132,6 @@ func (aq *AlertQuery) PreSave() error {
 		aq.QueryType = queryType
 	}
 
-	model, err := json.Marshal(cm)
-	if err != nil {
-		return fmt.Errorf("failed to marshal query model: %w", err)
-	}
-	aq.Model = model
-
 	return nil
 }
 

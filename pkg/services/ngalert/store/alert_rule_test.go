@@ -569,7 +569,7 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		}
 	})
 
-	t.Run("rules without maxDataPoints and intervalMs persist defaults to model and database", func(t *testing.T) {
+	t.Run("rules without maxDataPoints and intervalMs don't persist defaults to model and database", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		cfg := setting.NewCfg()
 		cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
@@ -603,15 +603,6 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 			OrgID: 1,
 		})
 		require.NoError(t, err)
-
-		// Add the default maxDataPoints and intervalMs to the expected rules.
-		for _, rule := range rules {
-			for i, q := range rule.Data {
-				models.WithDefaultMaxDataPoints()(&q)
-				models.WithDefaultIntervalMs()(&q)
-				rule.Data[i] = q
-			}
-		}
 
 		cOpt := []cmp.Option{
 			cmpopts.SortSlices(func(a, b *models.AlertRule) bool {
