@@ -135,24 +135,18 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
     },
   },
   toPRQL: (options) => {
+    let alias;
     switch (options.mode) {
       case CalculateFieldMode.Index:
-        switch (options.index?.asPercentile) {
-          case true:
-            return `
-              derive const = 0
-              derive quantile = (row_number const) / (count const)
-              select !{const}
-            `;
-          default:
-            return `
-              derive const = 0
-              derive {row_count = count const}
-              select !{const}
-            `;
-        }
+        alias = options.alias ?? 'Row';
+
+        return `
+          derive const = 0
+          derive \`${alias}\` = ${options.index?.asPercentile ? '(row_number const) / ' : ''}(count const)
+          select !{const}
+        `;
       case CalculateFieldMode.UnaryOperation:
-        let alias = options.alias ?? `${options.unary?.operator.toLowerCase()}(${options.unary?.fieldName})`;
+        alias = options.alias ?? `${options.unary?.operator.toLowerCase()}(${options.unary?.fieldName})`;
 
         return `derive \`${alias}\` = s"${options.unary?.operator.toUpperCase()}({${options.unary?.fieldName}})"`;
     }

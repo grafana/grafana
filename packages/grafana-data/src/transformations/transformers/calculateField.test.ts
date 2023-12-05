@@ -1032,7 +1032,7 @@ describe('calculateField transformer w/ timeseries', () => {
     ).toEqual(
       normlines(`
         derive const = 0
-        derive {row_count = count const}
+        derive \`Row\` = (count const)
         select !{const}
       `)
     );
@@ -1049,15 +1049,38 @@ describe('calculateField transformer w/ timeseries', () => {
         })
       )
     ).toEqual(
+      // TODO: (outside of PRQL functionality)
+      // Alias should not default to `Row` when `asPercentile` is true
       normlines(`
         derive const = 0
-        derive quantile = (row_number const) / (count const)
+        derive \`Row\` = (row_number const) / (count const)
         select !{const}
       `)
     );
   });
 
-  it('generates PRQL to alias the field name', async () => {
+  it('generates PRQL to alias the field name, for row index', async () => {
+    expect(
+      normlines(
+        calculateFieldTransformer.toPRQL!({
+          mode: CalculateFieldMode.Index,
+          index: {
+            asPercentile: false,
+          },
+          // defaults to `Row`
+          alias: 'Rounded up',
+        })
+      )
+    ).toEqual(
+      normlines(`
+        derive const = 0
+        derive \`Rounded up\` = (count const)
+        select !{const}
+      `)
+    );
+  });
+
+  it('generates PRQL to alias the field name, for unary operation', async () => {
     expect(
       normlines(
         calculateFieldTransformer.toPRQL!({
