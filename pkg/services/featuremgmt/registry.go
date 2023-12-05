@@ -991,6 +991,14 @@ var (
 			Created:         time.Date(2023, time.November, 8, 12, 0, 0, 0, time.UTC),
 		},
 		{
+			Name:            "kubernetesSnapshots",
+			Description:     "Use the kubernetes API in the frontend to support playlists",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+			Created:         time.Date(2023, time.December, 4, 12, 0, 0, 0, time.UTC),
+		},
+		{
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStagePublicPreview,

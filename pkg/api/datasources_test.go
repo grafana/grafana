@@ -233,47 +233,52 @@ func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
 	}{
 		{
 			desc: "We should only allow for headers being X-Prom-Label-Policy",
-			data: datasources.TeamHTTPHeaders{tenantID: []datasources.TeamHTTPHeader{
-				{
-					Header: "Authorization",
-					Value:  "foo!=bar",
-				},
-			},
-			},
+			data: datasources.TeamHTTPHeaders{
+				Headers: datasources.TeamHeaders{
+					tenantID: []datasources.TeamHTTPHeader{
+						{
+							Header: "Authorization",
+							Value:  "foo!=bar",
+						},
+					},
+				}},
 			want: 400,
 		},
 		{
 			desc: "Allowed header but no team id",
-			data: datasources.TeamHTTPHeaders{"": []datasources.TeamHTTPHeader{
-				{
-					Header: "X-Prom-Label-Policy",
-					Value:  "foo=bar",
+			data: datasources.TeamHTTPHeaders{
+				Headers: datasources.TeamHeaders{"": []datasources.TeamHTTPHeader{
+					{
+						Header: "X-Prom-Label-Policy",
+						Value:  "foo=bar",
+					},
 				},
-			},
-			},
+				}},
 			want: 400,
 		},
 		{
 			desc: "Allowed team id and header name with invalid header values ",
-			data: datasources.TeamHTTPHeaders{tenantID: []datasources.TeamHTTPHeader{
-				{
-					Header: "X-Prom-Label-Policy",
-					Value:  "Bad value",
+			data: datasources.TeamHTTPHeaders{
+				Headers: datasources.TeamHeaders{tenantID: []datasources.TeamHTTPHeader{
+					{
+						Header: "X-Prom-Label-Policy",
+						Value:  "Bad value",
+					},
 				},
-			},
-			},
+				}},
 			want: 400,
 		},
 		// Complete valid case, with team id, header name and header value
 		{
 			desc: "Allowed header and header values ",
-			data: datasources.TeamHTTPHeaders{tenantID: []datasources.TeamHTTPHeader{
-				{
-					Header: "X-Prom-Label-Policy",
-					Value:  `1234:{ name!="value",foo!~"bar" }`,
+			data: datasources.TeamHTTPHeaders{
+				Headers: datasources.TeamHeaders{tenantID: []datasources.TeamHTTPHeader{
+					{
+						Header: "X-Prom-Label-Policy",
+						Value:  `1234:{ name!="value",foo!~"bar" }`,
+					},
 				},
-			},
-			},
+				}},
 			want: 200,
 		},
 	}
