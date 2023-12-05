@@ -117,12 +117,14 @@ export interface PromAlertingRuleDTO extends PromRuleDTOBase {
     state: Exclude<PromAlertingRuleState | GrafanaAlertStateWithReason, PromAlertingRuleState.Inactive>;
     activeAt: string;
     value: string;
+    flapping: boolean;
   }>;
   labels: Labels;
   annotations?: Annotations;
   duration?: number; // for
   state: PromAlertingRuleState;
   type: PromRuleType.Alerting;
+  flapping: boolean;
 }
 
 export interface PromRecordingRuleDTO extends PromRuleDTOBase {

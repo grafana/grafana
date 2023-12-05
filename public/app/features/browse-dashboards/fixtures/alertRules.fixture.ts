@@ -78,6 +78,7 @@ export function getPrometheusRulesResponse(folderName: string, seed = 1): PromRu
               type: PromRuleType.Alerting,
               lastEvaluation: '0001-01-01T00:00:00Z',
               evaluationTime: 0,
+              flapping: false,
             },
           ],
           interval: 60,

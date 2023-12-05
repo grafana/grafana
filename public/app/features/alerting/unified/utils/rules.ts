@@ -49,6 +49,10 @@ export function isAlertingRulerRule(rule?: RulerRuleDTO): rule is RulerAlertingR
   return typeof rule === 'object' && 'alert' in rule;
 }
 
+export function isFlappingRule(rule: Rule) {
+  return isAlertingRule(rule) && rule.flapping;
+}
+
 export function isRecordingRulerRule(rule?: RulerRuleDTO): rule is RulerRecordingRuleDTO {
   return typeof rule === 'object' && 'record' in rule;
 }

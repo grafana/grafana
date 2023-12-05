@@ -49,6 +49,7 @@ export interface AlertingRule extends RuleBase {
   totals?: Partial<Record<Lowercase<GrafanaAlertState>, number>>;
   totalsFiltered?: Partial<Record<Lowercase<GrafanaAlertState>, number>>;
   activeAt?: string; // ISO timestamp
+  flapping: boolean;
 }
 
 export interface RecordingRule extends RuleBase {

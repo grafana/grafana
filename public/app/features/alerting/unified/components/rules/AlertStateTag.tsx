@@ -15,7 +15,7 @@ interface Props {
 
 export const AlertStateTag = React.memo(
   ({ state, isFlapping = false, isPaused = false, size = 'md', muted = false }: Props) => (
-    <StateTag state={alertStateToState(state)} size={size} muted={muted}>
+    <StateTag state={alertStateToState(state)} size={size} muted={muted} flapping={isFlapping}>
       {alertStateToReadable(state)} {isPaused ? ' (Paused)' : isFlapping ? ' (Flapping)' : ''}
     </StateTag>
   )

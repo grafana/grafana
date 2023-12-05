@@ -129,6 +129,7 @@ describe('UnifiedAlertStatesWorker', () => {
         state: PromAlertingRuleState.Firing,
         labels: {},
         annotations: {},
+        flapping: false,
         ...overrides,
       };
     }

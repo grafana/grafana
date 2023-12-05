@@ -2,11 +2,11 @@ import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
-import { Spinner, useStyles2, Stack } from '@grafana/ui';
+import { Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { isAlertingRule, isRecordingRule, getFirstActiveAt } from '../../utils/rules';
+import { getFirstActiveAt, isAlertingRule, isFlappingRule, isRecordingRule } from '../../utils/rules';
 
 import { AlertStateTag } from './AlertStateTag';
 
@@ -66,9 +66,10 @@ export const RuleState = ({ rule, isDeleting, isCreating, isPaused }: Props) => 
       </Stack>
     );
   } else if (promRule && isAlertingRule(promRule)) {
+    const isFlapping = isFlappingRule(promRule);
     return (
       <Stack gap={1}>
-        <AlertStateTag state={promRule.state} isPaused={isPaused} />
+        <AlertStateTag state={promRule.state} isPaused={isPaused} isFlapping={isFlapping} />
         {forTime}
       </Stack>
     );

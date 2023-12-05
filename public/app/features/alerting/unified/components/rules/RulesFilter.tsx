@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, Field, Icon, Input, Label, RadioButtonGroup, Tooltip, useStyles2, Stack } from '@grafana/ui';
+import { Button, Field, Icon, Input, Label, RadioButtonGroup, Stack, Switch, Tooltip, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
@@ -52,6 +52,7 @@ const RuleHealthOptions: SelectableValue[] = [
 
 interface RulesFilerProps {
   onFilterCleared?: () => void;
+  onFlappingChange?: React.FormEventHandler<HTMLInputElement> | undefined;
 }
 
 const RuleStateOptions = Object.entries(PromAlertingRuleState).map(([key, value]) => ({
@@ -59,7 +60,7 @@ const RuleStateOptions = Object.entries(PromAlertingRuleState).map(([key, value]
   value,
 }));
 
-const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => {
+const RulesFilter = ({ onFilterCleared = () => undefined, onFlappingChange = () => undefined }: RulesFilerProps) => {
   const styles = useStyles2(getStyles);
   const [queryParams, setQueryParams] = useQueryParams();
   const { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters } = useRulesFilter();
@@ -185,6 +186,10 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
               onChange={handleRuleHealthChange}
             />
           </div>
+          <Stack direction="column" alignItems="center">
+            <Label>Rules flapping</Label>
+            <Switch checked={false} onChange={onFlappingChange} />
+          </Stack>
         </Stack>
         <Stack direction="column" gap={1}>
           <Stack direction="row" gap={1}>

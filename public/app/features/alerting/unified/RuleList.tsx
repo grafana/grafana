@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAsyncFn, useInterval } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, useStyles2, withErrorBoundary, Stack } from '@grafana/ui';
+import { Button, Stack, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 
@@ -25,6 +25,7 @@ import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAllPromAndRulerRulesAction } from './state/actions';
 import { RULE_LIST_POLL_INTERVAL_MS } from './utils/constants';
 import { getAllRulesSourceNames } from './utils/datasource';
+import { isFlappingRule } from './utils/rules';
 
 const VIEWS = {
   groups: RuleListGroupView,
@@ -100,14 +101,33 @@ const RuleList = withErrorBoundary(
       allPromLoaded && allPromEmpty && promRequests.length > 0 && allRulerEmpty && allRulerLoaded;
 
     const combinedNamespaces: CombinedRuleNamespace[] = useCombinedRuleNamespaces();
-    const filteredNamespaces = useFilteredRules(combinedNamespaces, filterState);
+    const filteredNamespacesBeforeFlappingFilter = useFilteredRules(combinedNamespaces, filterState);
+
+    const [flappingFilter, setFlappingFilter] = useState<boolean>(false);
+
+    const onFlappingChange = (event: React.FormEvent<HTMLInputElement> | undefined) => {
+      setFlappingFilter(event?.currentTarget.checked ?? false);
+    };
+    const filteredNamespacesFlapping = useMemo(() => {
+      return filteredNamespacesBeforeFlappingFilter.filter((namespace) => {
+        return namespace.groups.some((group) => {
+          return group.rules.some((rule) => {
+            return rule.group.rules.some((rule) => {
+              return rule.promRule ? isFlappingRule(rule.promRule) : false;
+            });
+          });
+        });
+      });
+    }, [filteredNamespacesBeforeFlappingFilter]);
+
+    const filteredNamespaces = flappingFilter ? filteredNamespacesFlapping : filteredNamespacesBeforeFlappingFilter;
 
     return (
       // We don't want to show the Loading... indicator for the whole page.
       // We show separate indicators for Grafana-managed and Cloud rules
       <AlertingPageWrapper pageId="alert-list" isLoading={false}>
         <RuleListErrors />
-        <RulesFilter onFilterCleared={onFilterCleared} />
+        <RulesFilter onFilterCleared={onFilterCleared} onFlappingChange={onFlappingChange} />
         {!hasNoAlertRulesCreatedYet && (
           <>
             <div className={styles.break} />

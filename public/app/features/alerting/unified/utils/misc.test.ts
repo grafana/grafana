@@ -1,10 +1,10 @@
-import { sortAlerts, wrapWithQuotes, escapeQuotes, createExploreLink } from 'app/features/alerting/unified/utils/misc';
+import { createExploreLink, escapeQuotes, sortAlerts, wrapWithQuotes } from 'app/features/alerting/unified/utils/misc';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import { Alert } from 'app/types/unified-alerting';
 import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 
 function withState(state: GrafanaAlertState, labels?: {}): Alert {
-  return { activeAt: '', annotations: {}, labels: labels || {}, state: state, value: '' };
+  return { activeAt: '', annotations: {}, labels: labels || {}, state: state, value: '', flapping: false };
 }
 
 function withDate(activeAt?: string, labels?: {}): Alert {
@@ -14,6 +14,7 @@ function withDate(activeAt?: string, labels?: {}): Alert {
     labels: labels || {},
     state: GrafanaAlertState.Alerting,
     value: '',
+    flapping: false,
   };
 }
 

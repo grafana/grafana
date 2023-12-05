@@ -15,16 +15,16 @@ import {
   ScopedVars,
   TestDataSourceResponse,
 } from '@grafana/data';
-import { config, DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
+import { DataSourceSrv, GetDataSourceListFilters, config } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import {
-  AlertmanagerAlert,
   AlertManagerCortexConfig,
+  AlertState,
+  AlertmanagerAlert,
   AlertmanagerGroup,
   AlertmanagerStatus,
-  AlertState,
   GrafanaManagedReceiverConfig,
   MatcherOperator,
   Silence,
@@ -92,6 +92,7 @@ export function mockDataSource<T extends DataSourceJsonData = DataSourceJsonData
 
 export const mockPromAlert = (partial: Partial<Alert> = {}): Alert => ({
   activeAt: '2021-03-18T13:47:05.04938691Z',
+  flapping: false,
   annotations: {
     message: 'alert with severity "warning"',
   },
@@ -200,6 +201,7 @@ export const mockPromAlertingRule = (partial: Partial<AlertingRule> = {}): Alert
     health: 'OK',
     totalsFiltered: { alerting: 1 },
     ...partial,
+    flapping: false,
   };
 };
 
@@ -684,7 +686,7 @@ export function getCloudRule(override?: Partial<CombinedRule>) {
 }
 
 export function mockAlertWithState(state: GrafanaAlertState, labels?: {}): Alert {
-  return { activeAt: '', annotations: {}, labels: labels || {}, state: state, value: '' };
+  return { activeAt: '', annotations: {}, labels: labels || {}, state: state, value: '', flapping: false };
 }
 
 export function mockDashboardSearchItem(searchItem: Partial<DashboardSearchItem>) {
