@@ -144,11 +144,15 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
           derive const = 0
           derive \`${alias}\` = ${options.index?.asPercentile ? '(row_number const) / ' : ''}(count const)
           select !{const}
+          ${options.replaceFields ? `select \`${alias}\`` : ''}
         `;
       case CalculateFieldMode.UnaryOperation:
         alias = options.alias ?? `${options.unary?.operator.toLowerCase()}(${options.unary?.fieldName})`;
 
-        return `derive \`${alias}\` = s"${options.unary?.operator.toUpperCase()}({${options.unary?.fieldName}})"`;
+        return `
+          derive \`${alias}\` = s"${options.unary?.operator.toUpperCase()}({${options.unary?.fieldName}})"
+          ${options.replaceFields ? `select \`${alias}\`` : ''}
+        `;
     }
 
     return `# Not yet supported:\n` + `# ${JSON.stringify(options, null, '  ').replace(/(?:\r\n|\r|\n)/g, '\n# ')}`;

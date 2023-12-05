@@ -949,7 +949,7 @@ describe('calculateField transformer w/ timeseries', () => {
     });
   });
 
-  it('generates PRQL for unary operations: absolute', async () => {
+  it('generates PRQL for unary operations: absolute', () => {
     expect(
       normlines(
         calculateFieldTransformer.toPRQL!({
@@ -963,7 +963,7 @@ describe('calculateField transformer w/ timeseries', () => {
     ).toEqual(normlines(`derive \`abs(up)\` = s"ABS({up})"`));
   });
 
-  it('generates PRQL for unary operations: exponential', async () => {
+  it('generates PRQL for unary operations: exponential', () => {
     expect(
       normlines(
         calculateFieldTransformer.toPRQL!({
@@ -977,7 +977,7 @@ describe('calculateField transformer w/ timeseries', () => {
     ).toEqual(normlines(`derive \`exp(up)\` = s"EXP({up})"`));
   });
 
-  it('generates PRQL for unary operations: natural logarithm', async () => {
+  it('generates PRQL for unary operations: natural logarithm', () => {
     expect(
       normlines(
         calculateFieldTransformer.toPRQL!({
@@ -991,7 +991,7 @@ describe('calculateField transformer w/ timeseries', () => {
     ).toEqual(normlines(`derive \`ln(up)\` = s"LN({up})"`));
   });
 
-  it('generates PRQL for unary operations: floor', async () => {
+  it('generates PRQL for unary operations: floor', () => {
     expect(
       normlines(
         calculateFieldTransformer.toPRQL!({
@@ -1005,7 +1005,7 @@ describe('calculateField transformer w/ timeseries', () => {
     ).toEqual(normlines(`derive \`floor(up)\` = s"FLOOR({up})"`));
   });
 
-  it('generates PRQL for unary operations: ceiling', async () => {
+  it('generates PRQL for unary operations: ceiling', () => {
     expect(
       normlines(
         calculateFieldTransformer.toPRQL!({
@@ -1059,7 +1059,7 @@ describe('calculateField transformer w/ timeseries', () => {
     );
   });
 
-  it('generates PRQL to alias the field name, for row index', async () => {
+  it('generates PRQL to alias the field name, for row index', () => {
     expect(
       normlines(
         calculateFieldTransformer.toPRQL!({
@@ -1080,7 +1080,7 @@ describe('calculateField transformer w/ timeseries', () => {
     );
   });
 
-  it('generates PRQL to alias the field name, for unary operation', async () => {
+  it('generates PRQL to alias the field name, for unary operation', () => {
     expect(
       normlines(
         calculateFieldTransformer.toPRQL!({
@@ -1094,6 +1094,26 @@ describe('calculateField transformer w/ timeseries', () => {
         })
       )
     ).toEqual(normlines(`derive \`Rounded up\` = s"CEIL({up})"`));
+  });
+
+  it('generates PRQL to replace other fields', () => {
+    expect(
+      normlines(
+        calculateFieldTransformer.toPRQL!({
+          mode: CalculateFieldMode.UnaryOperation,
+          unary: {
+            operator: UnaryOperationID.Ceil,
+            fieldName: 'up',
+          },
+          replaceFields: true,
+        })
+      )
+    ).toEqual(
+      normlines(`
+        derive \`ceil(up)\` = s"CEIL({up})"
+        select \`ceil(up)\`
+      `)
+    );
   });
 
   it('supports PRQL', () => {
@@ -1126,5 +1146,6 @@ function normlines(v: string): string {
   return v
     .split(/\r?\n/)
     .map((line) => line.trim())
+    .filter((line) => line.length > 0)
     .join('\n');
 }
