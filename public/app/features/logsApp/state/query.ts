@@ -683,7 +683,6 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
           dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
         }
       } else {
-        console.log('aaa');
         dispatch(
           handleSupplementaryQueries({
             exploreId,
