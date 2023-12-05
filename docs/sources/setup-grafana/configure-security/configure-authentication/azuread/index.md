@@ -23,7 +23,7 @@ The Azure AD authentication allows you to use an Azure Active Directory tenant a
 
 - [Configure Azure AD OAuth2 authentication](#configure-azure-ad-oauth2-authentication)
   - [Create the Azure AD application](#create-the-azure-ad-application)
-      - [Configure Application roles for Grafana on the Azure Portal](#configure-application-roles-for-grafana-on-the-azure-portal)
+      - [Configure application roles for Grafana in the Azure Portal](#configure-application-roles-for-grafana-in-the-azure-portal)
       - [Configure Application roles for Grafana in the manifest file](#configure-application-roles-for-grafana-in-the-manifest-file)
     - [Assign server administrator privileges](#assign-server-administrator-privileges)
   - [Enable Azure AD OAuth in Grafana](#enable-azure-ad-oauth-in-grafana)
@@ -31,14 +31,14 @@ The Azure AD authentication allows you to use an Azure Active Directory tenant a
     - [Configure allowed tenants](#configure-allowed-tenants)
     - [Configure allowed groups](#configure-allowed-groups)
       - [Configure group membership claims on the Azure Portal](#configure-group-membership-claims-on-the-azure-portal)
-      - [Configure group membership claims in the manifest file](#configure-group-membership-claim-in-the-manifest-file)
+      - [Configure group membership claim in the manifest file](#configure-group-membership-claim-in-the-manifest-file)
     - [Configure allowed domains](#configure-allowed-domains)
     - [PKCE](#pkce)
     - [Configure automatic login](#configure-automatic-login)
     - [Team Sync (Enterprise only)](#team-sync-enterprise-only)
   - [Common troubleshooting](#common-troubleshooting)
     - [Users with over 200 Group assignments](#users-with-over-200-group-assignments)
-      - [Configure Graph API permissions](#configure-the-required-graph-api-permissions)
+      - [Configure the required Graph API permissions](#configure-the-required-graph-api-permissions)
     - [Force fetching groups from Microsoft graph API](#force-fetching-groups-from-microsoft-graph-api)
     - [Map roles](#map-roles)
   - [Skip organization role sync](#skip-organization-role-sync)
@@ -71,13 +71,14 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
 
 1. Click **Add** then copy the key value. This is the OAuth client secret.
 
-1. Define the required application roles for Grafana [using the Azure Portal](#configure-application-roles-for-grafana-on-the-azure-portal) or [using the manifest file](#configure-application-roles-for-grafana-in-the-manifest-file).
+1. Define the required application roles for Grafana [using the Azure Portal](#configure-application-roles-for-grafana-in-the-azure-portal) or [using the manifest file](#configure-application-roles-for-grafana-in-the-manifest-file).
 
 1. Go to **Azure Active Directory** and then to **Enterprise Applications**. 
 
 1. Search for your application and click it.
 
-4. Click on **Users and Groups** and add Users/Groups to the Grafana roles by using **Add User**.
+1. Click **Users and Groups**.
+1.  Click **Add user/group** to add a user or group to the Grafana roles.
 
 #### Configure application roles for Grafana in the Azure Portal
 
@@ -243,9 +244,11 @@ allowed_organizations = 8bab1c86-8fba-33e5-2089-1d1c80ec267d
 Azure AD groups can be used to limit user access to Grafana. For more information about managing groups in Azure AD, refer to [Manage Microsoft Entra groups and group membership](https://learn.microsoft.com/en-us/entra/fundamentals/how-to-manage-groups).
 
 To limit access to authenticated users who are members of one or more AzureAD groups, set `allowed_groups`
-to a comma- or space-separated list of group object IDs. You can find object IDs for a specific group on the Azure portal:
+to a comma- or space-separated list of group object IDs. 
 
-1. Go to **Azure Active Directory >  Groups**. 
+Complete the following step to find object IDs for a specific group on the Azure portal: 
+
+1. Go to **Azure Active Directory > Groups**. 
 
    If you want to only give access to members of the group `example` with an Object Id of `8bab1c86-8fba-33e5-2089-1d1c80ec267d`, then set the following:
 
@@ -255,7 +258,7 @@ to a comma- or space-separated list of group object IDs. You can find object IDs
 
 > You can find the Object Id of a group by clicking on the group and then clicking on **Properties**. The object ID is listed under **Object ID**.
 
-1. You can enable adding the [group attribute](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims#configure-groups-optional-claims) to the tokens in your Azure AD App registration either [from the Azure Portal](#configure-group-membership-claims-on-the-azure-portal) or [from the manifest file](#configure-group-membership-claim-in-the-manifest-file).
+1. You must enable adding the [group attribute](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims#configure-groups-optional-claims) to the tokens in your Azure AD App registration either [from the Azure Portal](#configure-group-membership-claims-on-the-azure-portal) or [from the manifest file](#configure-group-membership-claim-in-the-manifest-file).
 
 #### Configure group membership claims on the Azure Portal
 
