@@ -1051,7 +1051,7 @@ describe('calculateField transformer w/ timeseries', () => {
     ).toEqual(
       normlines(`
         derive const = 0
-        derive quantile = (row_number foobar) / (count const)
+        derive quantile = (row_number const) / (count const)
         select !{const}
       `)
     );
