@@ -47,7 +47,7 @@ const (
 	evaluatorDefaultEvaluationTimeout       = 30 * time.Second
 	schedulerDefaultAdminConfigPollInterval = time.Minute
 	schedulereDefaultExecuteAlerts          = true
-	schedulerDefaultMaxAttempts             = 3
+	schedulerDefaultMaxAttempts             = 1
 	schedulerDefaultLegacyMinInterval       = 1
 	screenshotsDefaultCapture               = false
 	screenshotsDefaultCaptureTimeout        = 10 * time.Second
@@ -278,15 +278,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	}
 	uaCfg.EvaluationTimeout = uaEvaluationTimeout
 
-	uaMaxAttempts := ua.Key("max_attempts").MustInt64(schedulerDefaultMaxAttempts)
-	if uaMaxAttempts == schedulerDefaultMaxAttempts { // unified option or equals the default
-		legacyMaxAttempts := alerting.Key("max_attempts").MustInt64(schedulerDefaultMaxAttempts)
-		if legacyMaxAttempts != schedulerDefaultMaxAttempts {
-			cfg.Logger.Warn("falling back to legacy setting of 'max_attempts'; please use the configuration option in the `unified_alerting` section if Grafana 8 alerts are enabled.")
-		}
-		uaMaxAttempts = legacyMaxAttempts
-	}
-	uaCfg.MaxAttempts = uaMaxAttempts
+	uaCfg.MaxAttempts = ua.Key("max_attempts").MustInt64(schedulerDefaultMaxAttempts)
 
 	uaCfg.BaseInterval = SchedulerBaseInterval
 
