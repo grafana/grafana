@@ -1,29 +1,30 @@
 import { css } from '@emotion/css';
-import React, { useState, MouseEvent, ReactNode } from 'react';
+import React, { useState, DragEvent, ReactNode } from 'react';
 
-import { useStyles2, GrafanaTheme2 } from '@grafana/ui';
+import { GrafanaTheme2, PluginExtensionGlobalDrawerDroppedData } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
 import { useTimeout } from '../../hooks/useTimeout';
 
 interface DraggableProps {
   children: ReactNode;
-  data: unknown;
+  data: PluginExtensionGlobalDrawerDroppedData;
   draggable?: boolean;
-  onDragStart?: (data: unknown) => void;
+  onDragStart?: (data: PluginExtensionGlobalDrawerDroppedData) => void;
   onDragEnd?: () => void;
 }
 
 export const Draggable = ({ children, data, draggable = true, onDragStart, onDragEnd }: DraggableProps) => {
   const [isDragging, setIsDragging] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
+  const [isHovered] = useState(false);
   const styles = useStyles2(getDraggableStyles, { isDragging: isDragging, isHovered });
 
-  const handleDragStart = (e: MouseEvent<HTMLDivElement, MouseEvent>) => {
+  const handleDragStart = (_: DragEvent<HTMLDivElement>) => {
     setIsDragging(true);
     onDragStart?.(data);
   };
 
-  const handleDragEnd = (e: MouseEvent<HTMLDivElement, MouseEvent>) => {
+  const handleDragEnd = (_: DragEvent<HTMLDivElement>) => {
     setIsDragging(false);
     onDragEnd?.();
   };

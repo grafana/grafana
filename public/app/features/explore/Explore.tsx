@@ -12,6 +12,8 @@ import {
   GrafanaTheme2,
   hasToggleableQueryFiltersSupport,
   LoadingState,
+  PluginExtensionGlobalDrawerDroppedData,
+  PluginExtensionGlobalDrawerDroppedExploreGraphData,
   QueryFixAction,
   RawTimeRange,
   SplitOpenOptions,
@@ -24,7 +26,6 @@ import {
   AdHocFilterItem,
   CustomScrollbar,
   ErrorBoundaryAlert,
-  Icon,
   PanelContainer,
   Themeable2,
   withTheme2,
@@ -394,11 +395,31 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderGraphPanel(width: number) {
-    const { graphResult, absoluteRange, timeZone, queryResponse, setDragData, showFlameGraph } = this.props;
+    const {
+      datasourceInstance,
+      queries,
+      graphResult,
+      absoluteRange,
+      timeZone,
+      queryResponse,
+      setDragData,
+      showFlameGraph,
+    } = this.props;
     const { isDragEnabled } = this.state;
 
+    const dropData: PluginExtensionGlobalDrawerDroppedExploreGraphData = {
+      type: 'explore-graph',
+      data: {
+        datasource: datasourceInstance?.getRef(),
+        data: graphResult,
+        targets: queries,
+        timeRange: absoluteRange,
+        timeZone,
+      },
+    };
+
     return (
-      <Draggable data={graphResult} draggable={isDragEnabled} onDragStart={setDragData} onDragEnd={setDragData}>
+      <Draggable data={dropData} draggable={isDragEnabled} onDragStart={setDragData} onDragEnd={setDragData}>
         <ContentOutlineItem title="Graph" icon="graph-bar">
           <GraphContainer
             data={graphResult!}

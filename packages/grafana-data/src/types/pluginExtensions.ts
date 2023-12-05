@@ -1,12 +1,13 @@
 import React from 'react';
 
-import { DataQuery, DataSourceJsonData } from '@grafana/schema';
+import { DataQuery, DataSourceJsonData, DataSourceRef, TimeZone } from '@grafana/schema';
 
 import { ScopedVars } from './ScopedVars';
+import { DataFrame } from './dataFrame';
 import { DataSourcePluginMeta, DataSourceSettings } from './datasource';
 import { IconName } from './icon';
 import { PanelData } from './panel';
-import { RawTimeRange, TimeZone } from './time';
+import { AbsoluteTimeRange, RawTimeRange } from './time';
 
 // Plugin Extensions types
 // ---------------------------------------
@@ -43,11 +44,22 @@ export type PluginExtensionGlobalDrawerComponent = PluginExtensionBase & {
   component: React.ComponentType<{ context?: PluginExtensionGlobalDrawerContext }>;
 };
 
-export type PluginExtensionGlobalDrawerDroppedDataType = 'explore' | 'panel' | 'alert-rule';
+export type PluginExtensionGlobalDrawerDroppedDataType = 'explore-graph' | 'panel' | 'alert-rule';
 
 export interface PluginExtensionGlobalDrawerDroppedData<T extends object = object> {
-  type: string;
+  type: PluginExtensionGlobalDrawerDroppedDataType;
   data: T;
+}
+
+export interface PluginExtensionGlobalDrawerDroppedExploreGraphData {
+  type: 'explore-graph';
+  data: {
+    datasource?: DataSourceRef;
+    data: DataFrame[] | null;
+    targets: DataQuery[];
+    timeRange: AbsoluteTimeRange;
+    timeZone: TimeZone;
+  };
 }
 
 export type PluginExtensionGlobalDrawerContext<T extends object = object> = {
