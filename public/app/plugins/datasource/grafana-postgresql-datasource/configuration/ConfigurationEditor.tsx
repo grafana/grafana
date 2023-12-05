@@ -83,6 +83,10 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
     updateDatasourcePluginJsonDataOption(props, 'timescaledb', event.currentTarget.checked);
   };
 
+  const onQuestDBChanged = (event: SyntheticEvent<HTMLInputElement>) => {
+    updateDatasourcePluginJsonDataOption(props, 'questdb', event.currentTarget.checked);
+  };
+
   const onDSOptionChanged = (property: keyof PostgresOptions) => {
     return (event: SyntheticEvent<HTMLInputElement>) => {
       onOptionsChange({ ...options, ...{ [property]: event.currentTarget.value } });
@@ -397,6 +401,27 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
             }
           >
             <Switch value={jsonData.timescaledb || false} onChange={onTimeScaleDBChanged} width={WIDTH_LONG} />
+          </Field>
+          <Field
+            label={
+              <Label>
+                <Stack gap={0.5}>
+                  <span>QuestDB</span>
+                  <Tooltip
+                    content={
+                      <span>
+                        QuestDB is a time-series database supporting PostgreSQL wire protocol. If enabled, Grafana will
+                        use QuestDb specific functions.
+                      </span>
+                    }
+                  >
+                    <Icon name="info-circle" size="sm" />
+                  </Tooltip>
+                </Stack>
+              </Label>
+            }
+          >
+            <Switch value={jsonData.questdb || false} onChange={onQuestDBChanged} width={WIDTH_LONG} />
           </Field>
         </ConfigSubSection>
 

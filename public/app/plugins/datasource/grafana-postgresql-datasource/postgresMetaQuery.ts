@@ -6,8 +6,16 @@ export function getTimescaleDBVersion() {
   return "SELECT extversion FROM pg_extension WHERE extname = 'timescaledb'";
 }
 
-export function showTables() {
-  return `select quote_ident(table_name) as "table" from information_schema.tables
+export function getQuestDBVersion() {
+  return "SELECT extversion FROM pg_extension WHERE extname = 'questdb'";
+}
+
+export function showTables(isQuestDB: boolean) {
+  if (isQuestDB) {
+    return `select quote_ident(table_name) as "table"
+            from information_schema.tables`;
+  } else {
+    return `select quote_ident(table_name) as "table" from information_schema.tables
     where quote_ident(table_schema) not in ('information_schema',
                              'pg_catalog',
                              '_timescaledb_cache',
@@ -17,12 +25,20 @@ export function showTables() {
                              'timescaledb_information',
                              'timescaledb_experimental')
       and ${buildSchemaConstraint()}`;
+  }
 }
 
-export function getSchema(table?: string) {
-  return `select quote_ident(column_name) as "column", data_type as "type"
+export function getSchema(isQuestDB: boolean, table?: string) {
+  if (isQuestDB) {
+    // duplicated to prevent accidental changes breaking compatibility
+    return `select quote_ident(column_name) as "column", data_type as "type"
     from information_schema.columns
     where quote_ident(table_name) = '${table}'`;
+  } else {
+    return `select quote_ident(column_name) as "column", data_type as "type"
+    from information_schema.columns
+    where quote_ident(table_name) = '${table}'`;
+  }
 }
 
 function buildSchemaConstraint() {

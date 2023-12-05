@@ -19,6 +19,7 @@ export interface PostgresOptions extends SQLOptions {
   sslKeyFile?: string;
   postgresVersion?: number;
   timescaledb?: boolean;
+  questdb?: boolean;
   enableSecureSocksProxy?: boolean;
 }
 

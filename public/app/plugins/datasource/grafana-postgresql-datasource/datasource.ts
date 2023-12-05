@@ -6,16 +6,19 @@ import { DB, SQLQuery, SQLSelectableValue } from 'app/features/plugins/sql/types
 import { formatSQL } from 'app/features/plugins/sql/utils/formatSQL';
 
 import { PostgresQueryModel } from './PostgresQueryModel';
-import { getSchema, getTimescaleDBVersion, getVersion, showTables } from './postgresMetaQuery';
+import { getQuestDBVersion, getSchema, getTimescaleDBVersion, getVersion, showTables } from './postgresMetaQuery';
 import { fetchColumns, fetchTables, getSqlCompletionProvider } from './sqlCompletionProvider';
 import { getFieldConfig, toRawSql } from './sqlUtil';
 import { PostgresOptions } from './types';
 
 export class PostgresDatasource extends SqlDatasource {
   sqlLanguageDefinition: LanguageDefinition | undefined = undefined;
+  isQuestDB: boolean;
 
   constructor(instanceSettings: DataSourceInstanceSettings<PostgresOptions>) {
     super(instanceSettings);
+    const settingsData = instanceSettings.jsonData || {};
+    this.isQuestDB = settingsData.questdb || false;
   }
 
   getQueryModel(target?: SQLQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): PostgresQueryModel {
@@ -44,8 +47,19 @@ export class PostgresDatasource extends SqlDatasource {
     return results[0];
   }
 
+  async getQuestDBVersion(): Promise<string | undefined> {
+    const value = await this.runSql<{ extversion: string }>(getQuestDBVersion());
+    const results = value.fields.extversion?.values;
+
+    if (!results) {
+      return undefined;
+    }
+
+    return results[0];
+  }
+
   async fetchTables(): Promise<string[]> {
-    const tables = await this.runSql<{ table: string[] }>(showTables(), { refId: 'tables' });
+    const tables = await this.runSql<{ table: string[] }>(showTables(this.isQuestDB), { refId: 'tables' });
     return tables.fields.table?.values.flat() ?? [];
   }
 
@@ -67,7 +81,9 @@ export class PostgresDatasource extends SqlDatasource {
   }
 
   async fetchFields(query: SQLQuery): Promise<SQLSelectableValue[]> {
-    const schema = await this.runSql<{ column: string; type: string }>(getSchema(query.table), { refId: 'columns' });
+    const schema = await this.runSql<{ column: string; type: string }>(getSchema(this.isQuestDB, query.table), {
+      refId: 'columns',
+    });
     const result: SQLSelectableValue[] = [];
     for (let i = 0; i < schema.length; i++) {
       const column = schema.fields.column.values[i];

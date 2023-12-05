@@ -43,6 +43,13 @@ export function useAutoDetectFeatures({ props, setVersionOptions }: Options) {
           const version = await datasource.getVersion();
           const versionNumber = parseInt(version, 10);
 
+          if (!options.jsonData.questdb) {
+            const questdbVersion = await datasource.getQuestDBVersion();
+            if (questdbVersion) {
+              updateDatasourcePluginJsonDataOption({ options, onOptionsChange }, 'questdb', true);
+            }
+          }
+
           // timescaledb is only available for 9.6+
           if (versionNumber >= 906 && !options.jsonData.timescaledb) {
             const timescaledbVersion = await datasource.getTimescaleDBVersion();

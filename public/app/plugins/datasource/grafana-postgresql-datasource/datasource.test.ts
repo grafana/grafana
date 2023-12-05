@@ -338,6 +338,13 @@ describe('PostgreSQLDatasource', () => {
       expect(results.length).toBe(0);
     });
 
+    it('should return an empty array when fetchTables is called (QuestDB)', async () => {
+      const ds = setupTestContext(response).ds;
+      ds.isQuestDB = true;
+      const results = await ds.fetchTables();
+      expect(results.length).toBe(0);
+    });
+
     it('should return empty string when getVersion is called', async () => {
       const ds = setupTestContext(response).ds;
       const results = await ds.getVersion();
@@ -350,8 +357,26 @@ describe('PostgreSQLDatasource', () => {
       expect(results).toBe(undefined);
     });
 
+    it('should return undefined when getQuestDBVersion is called', async () => {
+      const ds = setupTestContext(response).ds;
+      const results = await ds.getQuestDBVersion();
+      expect(results).toBe(undefined);
+    });
+
     it('should return an empty array when fetchFields is called', async () => {
       const ds = setupTestContext(response).ds;
+      const query: SQLQuery = {
+        refId: 'refId',
+        table: 'schema.table',
+        dataset: 'dataset',
+      };
+      const results = await ds.fetchFields(query);
+      expect(results.length).toBe(0);
+    });
+
+    it('should return an empty array when fetchFields is called (QuestDB)', async () => {
+      const ds = setupTestContext(response).ds;
+      ds.isQuestDB = true;
       const query: SQLQuery = {
         refId: 'refId',
         table: 'schema.table',
@@ -380,6 +405,30 @@ describe('PostgreSQLDatasource', () => {
       };
 
       const { ds } = setupTestContext(fetchTableResponse);
+
+      const results = await ds.fetchTables();
+      expect(results.length).toBe(3);
+      expect(results).toEqual(['test1', 'test2', 'test3']);
+    });
+
+    it('should return a list of tables when fetchTables is called (QuestDB)', async () => {
+      const fetchTableResponse = {
+        results: {
+          tables: {
+            refId: 'tables',
+            frames: [
+              dataFrameToJSON(
+                createDataFrame({
+                  fields: [{ name: 'table', type: FieldType.string, values: ['test1', 'test2', 'test3'] }],
+                })
+              ),
+            ],
+          },
+        },
+      };
+
+      const { ds } = setupTestContext(fetchTableResponse);
+      ds.isQuestDB = true;
 
       const results = await ds.fetchTables();
       expect(results.length).toBe(3);
@@ -430,6 +479,28 @@ describe('PostgreSQLDatasource', () => {
       expect(version).toBe('test1');
     });
 
+    it('should return a version string when getQuestDBVersion is called', async () => {
+      const fetchVersionResponse = {
+        results: {
+          meta: {
+            refId: 'meta',
+            frames: [
+              dataFrameToJSON(
+                createDataFrame({
+                  fields: [{ name: 'extversion', type: FieldType.string, values: ['test2'] }],
+                })
+              ),
+            ],
+          },
+        },
+      };
+
+      const { ds } = setupTestContext(fetchVersionResponse);
+
+      const version = await ds.getQuestDBVersion();
+      expect(version).toBe('test2');
+    });
+
     it('should return a list of fields when fetchFields is called', async () => {
       const fetchFieldsResponse = {
         results: {
@@ -466,6 +537,46 @@ describe('PostgreSQLDatasource', () => {
       expect(results[1].type).toBe('char');
       expect(results[2].label).toBe('test3');
       expect(results[2].value).toBe('test3');
+      expect(results[2].type).toBe('bool');
+    });
+
+    it('should return a list of fields when fetchFields is called (QuestDB)', async () => {
+      const fetchFieldsResponse = {
+        results: {
+          columns: {
+            refId: 'columns',
+            frames: [
+              dataFrameToJSON(
+                createDataFrame({
+                  fields: [
+                    { name: 'column', type: FieldType.string, values: ['testA', 'testB', 'testC'] },
+                    { name: 'type', type: FieldType.string, values: ['int', 'char', 'bool'] },
+                  ],
+                })
+              ),
+            ],
+          },
+        },
+      };
+
+      const { ds } = setupTestContext(fetchFieldsResponse);
+      ds.isQuestDB = true;
+
+      const sqlQuery: SQLQuery = {
+        refId: 'fields',
+        table: 'table',
+        dataset: 'dataset',
+      };
+      const results = await ds.fetchFields(sqlQuery);
+      expect(results.length).toBe(3);
+      expect(results[0].label).toBe('testA');
+      expect(results[0].value).toBe('testA');
+      expect(results[0].type).toBe('int');
+      expect(results[1].label).toBe('testB');
+      expect(results[1].value).toBe('testB');
+      expect(results[1].type).toBe('char');
+      expect(results[2].label).toBe('testC');
+      expect(results[2].value).toBe('testC');
       expect(results[2].type).toBe('bool');
     });
   });
