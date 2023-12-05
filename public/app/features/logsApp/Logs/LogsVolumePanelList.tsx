@@ -196,7 +196,6 @@ export const LogsVolumePanelList = ({
             // TODO: Support filtering level from multiple log levels
             onHiddenSeriesChanged={numberOfLogVolumes > 1 ? () => {} : onHiddenSeriesChanged}
             eventBus={eventBus}
-            isWithGroupBy={selectedLabel && selectedLabel.value !== 'none'}
           />
         );
       })}
