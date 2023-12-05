@@ -153,6 +153,13 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
           derive \`${alias}\` = s"${options.unary?.operator.toUpperCase()}({${options.unary?.fieldName}})"
           ${options.replaceFields ? `select \`${alias}\`` : ''}
         `;
+      case CalculateFieldMode.BinaryOperation:
+        alias = options.alias ?? `${options.binary?.left} ${options.binary?.operator} ${options.binary?.right}`;
+
+        return `
+          derive \`${alias}\` = ${options.binary?.left} ${options.binary?.operator} ${options.binary?.right}
+          ${options.replaceFields ? `select \`${alias}\`` : ''}
+        `;
     }
 
     return `# Not yet supported:\n` + `# ${JSON.stringify(options, null, '  ').replace(/(?:\r\n|\r|\n)/g, '\n# ')}`;

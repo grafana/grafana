@@ -1096,6 +1096,45 @@ describe('calculateField transformer w/ timeseries', () => {
     ).toEqual(normlines(`derive \`Rounded up\` = s"CEIL({up})"`));
   });
 
+  it('generates PRQL for binary operation, with alias and replace-fields', () => {
+    expect(
+      normlines(
+        calculateFieldTransformer.toPRQL!({
+          mode: CalculateFieldMode.BinaryOperation,
+          binary: {
+            left: 'down',
+            operator: BinaryOperationID.Add,
+            right: '1',
+          },
+          // defaults to `down + 1`
+          alias: 'Rounded up',
+          replaceFields: true,
+        })
+      )
+    ).toEqual(
+      normlines(`
+        derive \`Rounded up\` = down + 1
+        select \`Rounded up\`
+    `)
+    );
+  });
+
+  it('generates PRQL for binary operation, without alias nor replace-fields', () => {
+    expect(
+      normlines(
+        calculateFieldTransformer.toPRQL!({
+          mode: CalculateFieldMode.BinaryOperation,
+          binary: {
+            left: 'down',
+            operator: BinaryOperationID.Add,
+            right: '1',
+          },
+          replaceFields: false,
+        })
+      )
+    ).toEqual(normlines(`derive \`down + 1\` = down + 1`));
+  });
+
   it('generates PRQL to replace other fields', () => {
     expect(
       normlines(
