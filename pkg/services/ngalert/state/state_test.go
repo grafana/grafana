@@ -622,6 +622,41 @@ func TestShouldTakeImage(t *testing.T) {
 	}
 }
 
+func TestTrimPreviousStates(t *testing.T) {
+	s := State{State: eval.Alerting}
+
+	// The test should start with no previous states.
+	assert.Len(t, s.PreviousStates, 0)
+
+	// Add 10 states.
+	original := make([]eval.State, 0, 10)
+	for i := 0; i < 10; i++ {
+		state := eval.RandomState()
+		original = append(original, state)
+		s.PreviousStates = append(s.PreviousStates, state)
+	}
+	assert.Len(t, s.PreviousStates, 10)
+	// No truncation should happen.
+	s.TrimPreviousStates()
+	assert.Len(t, s.PreviousStates, 10)
+
+	// Add an 11th evaluation and results should be truncated.
+	s.PreviousStates = append(s.PreviousStates, eval.Normal)
+	assert.Len(t, s.PreviousStates, 11)
+	s.TrimPreviousStates()
+	assert.Len(t, s.PreviousStates, 10)
+	// Check we have the expected states after truncation.
+	assert.Equal(t, s.PreviousStates, append(original[1:], eval.Normal))
+
+	// Add 2 more evaluations and results should be truncated.
+	s.PreviousStates = append(s.PreviousStates, eval.Pending, eval.Alerting)
+	assert.Len(t, s.PreviousStates, 12)
+	// Check we have the expected states after truncation.
+	s.TrimPreviousStates()
+	assert.Len(t, s.PreviousStates, 10)
+	assert.Equal(t, s.PreviousStates, append(original[3:], eval.Normal, eval.Pending, eval.Alerting))
+}
+
 func TestTakeImage(t *testing.T) {
 	t.Run("ErrNoDashboard should return nil", func(t *testing.T) {
 		ctrl := gomock.NewController(t)

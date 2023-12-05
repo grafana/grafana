@@ -428,7 +428,7 @@ func (a *State) IsFlapping() bool {
 
 func (a *State) TrimPreviousStates() {
 	if len(a.PreviousStates) >= 10 {
-		a.PreviousStates = a.PreviousStates[1:len(a.PreviousStates)]
+		a.PreviousStates = a.PreviousStates[len(a.PreviousStates)-10:]
 	}
 }
 
