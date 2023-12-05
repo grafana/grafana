@@ -5,17 +5,19 @@ import (
 	"io"
 	"net"
 
-	"github.com/grafana/grafana/pkg/registry/apis/example"
-	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
+	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
+	"k8s.io/apiserver/pkg/util/openapi"
 	netutils "k8s.io/utils/net"
+
+	"github.com/grafana/grafana/pkg/registry/apis/example"
+	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 )
 
 const defaultEtcdPathPrefix = "/registry/example.grafana.app"
@@ -64,7 +66,7 @@ func (o *ExampleServerOptions) LoadAPIGroupBuilders(args []string) error {
 		switch g {
 		// No dependencies for testing
 		case "example.grafana.app":
-			o.builders = append(o.builders, &example.TestingAPIBuilder{})
+			o.builders = append(o.builders, example.NewTestingAPIBuilder())
 		default:
 			return fmt.Errorf("unknown group: %s", g)
 		}
@@ -92,7 +94,6 @@ func (o *ExampleServerOptions) Config() (*genericapiserver.RecommendedConfig, er
 	o.RecommendedOptions.Authorization.RemoteKubeConfigFileOptional = true
 
 	o.RecommendedOptions.Admission = nil
-	o.RecommendedOptions.CoreAPI = nil
 	o.RecommendedOptions.Etcd = nil
 
 	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
@@ -100,6 +101,19 @@ func (o *ExampleServerOptions) Config() (*genericapiserver.RecommendedConfig, er
 	if err := o.RecommendedOptions.ApplyTo(serverConfig); err != nil {
 		return nil, err
 	}
+
+	// Add OpenAPI specs for each group+version
+	defsGetter := grafanaAPIServer.GetOpenAPIDefinitions(o.builders)
+	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
+		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
+		openapinamer.NewDefinitionNamer(Scheme))
+
+	serverConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(
+		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
+		openapinamer.NewDefinitionNamer(Scheme))
+
+	// Add the custom routes to service discovery
+	serverConfig.OpenAPIV3Config.PostProcessSpec3 = grafanaAPIServer.GetOpenAPIPostProcessor(o.builders)
 
 	return serverConfig, nil
 }
