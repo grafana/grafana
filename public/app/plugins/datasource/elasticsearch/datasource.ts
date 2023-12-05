@@ -48,7 +48,12 @@ import {
   getTemplateSrv,
 } from '@grafana/runtime';
 
-import { queryLogsCount, queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
+import {
+  queryLogsCount,
+  queryLogsCountWithGroupBy,
+  queryLogsSample,
+  queryLogsVolume,
+} from '../../../features/logs/logsModel';
 import { getLogLevelFromKey } from '../../../features/logs/utils';
 
 import { IndexPattern, intervalMap } from './IndexPattern';
@@ -131,6 +136,7 @@ export class ElasticDatasource
   isProxyAccess: boolean;
   databaseVersion: SemVer | null;
   legacyQueryRunner: LegacyQueryRunner;
+  groupByFilter: string;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
@@ -172,6 +178,7 @@ export class ElasticDatasource
     }
     this.languageProvider = new LanguageProvider(this);
     this.legacyQueryRunner = new LegacyQueryRunner(this, this.templateSrv);
+    this.groupByFilter = '';
   }
 
   getResourceRequest(path: string, params?: BackendSrvRequest['params'], options?: Partial<BackendSrvRequest>) {
@@ -545,6 +552,8 @@ export class ElasticDatasource
         return this.getLogsSampleDataProvider(request);
       case SupplementaryQueryType.LogsCount:
         return this.getLogsCountDataProvider(request);
+      case SupplementaryQueryType.LogsCountWithGroupBy:
+        return this.getLogsCountWithGroupByDataProvider(request);
       default:
         return undefined;
     }
@@ -660,6 +669,37 @@ export class ElasticDatasource
           bucketAggs: bucketAggsCount,
         };
 
+      case SupplementaryQueryType.LogsCountWithGroupBy:
+        // it has to be a logs-producing range-query
+        isQuerySuitable = !!(query.metrics?.length === 1 && query.metrics[0].type === 'logs');
+        if (!isQuerySuitable) {
+          return undefined;
+        }
+
+        const bucketAggsCountWith: BucketAggregation[] = [];
+        const timeFieldCountWith = this.timeField ?? '@timestamp';
+
+        bucketAggsCountWith.push({
+          id: '2',
+          type: 'terms',
+          settings: {
+            min_doc_count: '0',
+            size: '0',
+            order: 'desc',
+            orderBy: '_count',
+            missing: LogLevel.unknown,
+          },
+          field: this.groupByFilter,
+        });
+
+        return {
+          refId: `${REF_ID_STARTER_LOG_VOLUME}${query.refId}`,
+          query: query.query,
+          metrics: [{ type: 'count', id: '1' }],
+          timeField: timeFieldCountWith,
+          bucketAggs: bucketAggsCountWith,
+        };
+
       default:
         return undefined;
     }
@@ -711,6 +751,21 @@ export class ElasticDatasource
     }
 
     return queryLogsCount(this, { ...logsVolumeRequest, targets });
+  }
+
+  getLogsCountWithGroupByDataProvider(
+    request: DataQueryRequest<ElasticsearchQuery>
+  ): Observable<DataQueryResponse> | undefined {
+    const logsVolumeRequest = cloneDeep(request);
+    const targets = logsVolumeRequest.targets
+      .map((target) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsCountWithGroupBy }, target))
+      .filter((query): query is ElasticsearchQuery => !!query);
+
+    if (!targets.length) {
+      return undefined;
+    }
+
+    return queryLogsCountWithGroupBy(this, { ...logsVolumeRequest, targets });
   }
 
   query(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {

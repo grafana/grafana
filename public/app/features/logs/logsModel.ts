@@ -934,6 +934,21 @@ export function queryLogsCountWithGroupBy<TQuery extends DataQuery, TOptions ext
         ],
       };
     }
+
+    if (datasource.type === 'elasticsearch') {
+      const target = logsCountRequest.targets[0];
+      target.bucketAggs = [
+        {
+          ...target.bucketAggs[0],
+          field: datasource.groupByFilter,
+        },
+      ];
+
+      logsCountRequestUpdated = {
+        ...logsCountRequest,
+        targets: [target],
+      };
+    }
     const queryResponse = datasource.query(logsCountRequestUpdated);
     const queryObservable = isObservable(queryResponse) ? queryResponse : from(queryResponse);
 
