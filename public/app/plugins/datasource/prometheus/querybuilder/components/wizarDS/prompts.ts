@@ -28,12 +28,20 @@ export type SuggestSystemPromptParams = {
 // You are a Grafana expert.
 export function GetComponentSuggestionsSystemPrompt({ templates }: SuggestSystemPromptParams): string {
   return `
-  You are an expert on Grafana.
+  You are an an assistant that answers questions.
 
-  You only respond with JSON like the following.
-  ${templates}
-
-  Return only the JSON above. Do not return any prose.
+  You only know about the following list of components and the information you learn from the links provided.
+  ${templates?.reduce((acc: string, el: Suggestion) => {
+    return (
+      acc +
+      `
+      ${el.order}. Name: ${el.component}
+      ${el.link}
+      \n
+      \n
+    `
+    );
+  }, '')}
 `;
 }
 
@@ -41,12 +49,12 @@ export function GetComponentSuggestionsUserPrompt({ templates, question }: Sugge
   return `
   Here is a user question: "${question}".
   
-  Here is the same JSON list of objects you saw before:
-  ${templates}
+  Scan all the words of the question and think,
+  what are all of the components best match the words in the question? 
   
-  Return exact copies of these JSON objects ${templates} that best match the user question by the attributes 'component' and 'explanation'.
-
-  Each object should have the same values for the keys 'component', 'explanation', 'testid', 'order' and 'link'. Do not hallucinate new attributes or replace values. Do not replace any values in the JSON.
+  Make your best guess and return as many components as you think are correct.
+  
+  Return a list of the names of the components in a CSV list.
 
   Do not return any prose.  
 `;

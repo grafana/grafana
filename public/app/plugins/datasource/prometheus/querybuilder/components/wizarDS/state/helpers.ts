@@ -251,13 +251,15 @@ export async function wizarDSSuggest(
       temperature: 0,
     });
 
-    const componentsArray = JSON.parse(info.choices[0].message.content);
+    const suggestedList = info.choices[0].message.content.split(',').map((item) => item.trim());
+
+    const suggestedComponents = templates.filter((t: Suggestion) => suggestedList.includes(t.component));
 
     const payload = {
       idx,
       interaction: {
         ...interactionToUpdate,
-        suggestions: componentsArray,
+        suggestions: suggestedComponents,
         isLoading: false,
       },
     };
