@@ -95,20 +95,20 @@ describe('FlameGraphContainer', () => {
   it('should filter table items based on search input', async () => {
     // Render the FlameGraphContainer with necessary props
     render(<FlameGraphContainerWithProps />);
-  
+
     // Checking for presence of this function before filter
     const textBeforeFilter = 'net/http.HandlerFunc.ServeHTTP';
     const rowsBeforeFilter = screen.queryAllByText(textBeforeFilter);
     expect(rowsBeforeFilter.length).toBeGreaterThan(0);
-  
+
     // Apply the filter
     const searchInput = await screen.getByPlaceholderText('Search...');
     await userEvent.type(searchInput, textBeforeFilter);
-  
+
     // Verify that the table displays filtered item
     const filteredRows = screen.queryAllByText(textBeforeFilter);
     expect(filteredRows.length).toBeGreaterThan(0);
-  
+
     // Verify that rows with some other text are not shown after filter
     const rowsAfterFilter = screen.queryAllByText('compress/gzip.(*Writer).Write');
     expect(rowsAfterFilter.length).toBe(0);
