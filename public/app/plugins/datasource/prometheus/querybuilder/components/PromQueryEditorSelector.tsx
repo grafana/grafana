@@ -125,7 +125,6 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
             // remove all references to the query
             query={{ metric: '', labels: [], operations: [] }}
             closeDrawer={() => setWizarDSDrawerOpen(false)}
-            datasource={props.datasource}
             // add component templates so any DS can use this
             templates={componentTemplates}
           />

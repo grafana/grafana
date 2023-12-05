@@ -1,10 +1,7 @@
 import { AnyAction } from 'redux';
 
 import { llms } from '@grafana/experimental';
-import { LokiDatasource } from 'app/plugins/datasource/loki/datasource';
-import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
 
-import { PromVisualQuery } from '../../../types';
 import { GetComponentSuggestionsUserPrompt, GetComponentSuggestionsSystemPrompt } from '../prompts';
 import { Interaction, Suggestion, SuggestionType } from '../types';
 
@@ -40,10 +37,8 @@ export function getExplainMessage(templates?: Suggestion[], question?: string): 
 export async function wizarDSExplain(
   dispatch: React.Dispatch<AnyAction>,
   idx: number,
-  query: PromVisualQuery,
   interaction: Interaction,
   suggIdx: number,
-  datasource: PrometheusDatasource | LokiDatasource
 ) {
   // const suggestedQuery = interaction.suggestions[suggIdx].component;
 
@@ -218,9 +213,6 @@ export async function wizarDSExplain(
 export async function wizarDSSuggest(
   dispatch: React.Dispatch<AnyAction>,
   idx: number,
-  query: PromVisualQuery,
-  labelNames: string[],
-  datasource: PrometheusDatasource | LokiDatasource,
   templates: Suggestion[],
   interaction?: Interaction
 ) {

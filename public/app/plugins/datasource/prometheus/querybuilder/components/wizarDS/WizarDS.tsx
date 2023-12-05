@@ -5,9 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 // import { reportInteraction } from '@grafana/runtime';
 import { Button, Checkbox, Input, Spinner, useTheme2 } from '@grafana/ui';
 import store from 'app/core/store';
-import { LokiDatasource } from 'app/plugins/datasource/loki/datasource';
 
-import { PrometheusDatasource } from '../../../datasource';
 import { PromVisualQuery } from '../../types';
 
 import { SuggestionContainer } from './SuggestionContainer';
@@ -23,14 +21,13 @@ const { showStartingMessage, indicateCheckbox, addInteraction, updateInteraction
 export type WizarDSProps = {
   query: PromVisualQuery;
   closeDrawer: () => void;
-  datasource: PrometheusDatasource | LokiDatasource;
   templates: Suggestion[];
 };
 
 const SKIP_STARTING_MESSAGE = 'SKIP_STARTING_MESSAGE';
 
 export const WizarDS = (props: WizarDSProps) => {
-  const { query, closeDrawer, datasource, templates } = props;
+  const { query, closeDrawer, templates } = props;
   const skipStartingMessage = store.getBool(SKIP_STARTING_MESSAGE, false);
 
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState(query, !skipStartingMessage));
@@ -194,7 +191,7 @@ export const WizarDS = (props: WizarDSProps) => {
                         //   promVisualQuery: query,
                         //   doYouKnow: 'no',
                         // });
-                        wizarDSSuggest(dispatch, 0, query, [], datasource, templates);
+                        wizarDSSuggest(dispatch, 0, templates);
                       }}
                     >
                       Just walk me through everything
@@ -289,7 +286,7 @@ export const WizarDS = (props: WizarDSProps) => {
                                     // });
 
                                     dispatch(updateInteraction(payload));
-                                    wizarDSSuggest(dispatch, idx, query, [], datasource, templates, newInteraction);
+                                    wizarDSSuggest(dispatch, idx, templates, newInteraction);
                                   }}
                                 >
                                   Show me everything instead.
@@ -316,7 +313,7 @@ export const WizarDS = (props: WizarDSProps) => {
 
                                     dispatch(updateInteraction(payload));
                                     // add the suggestions in the API call
-                                    wizarDSSuggest(dispatch, idx, query, [], datasource, templates, interaction);
+                                    wizarDSSuggest(dispatch, idx, templates, interaction);
                                   }}
                                 >
                                   Submit
@@ -338,7 +335,7 @@ export const WizarDS = (props: WizarDSProps) => {
                           }}
                           explain={(suggIdx: number) =>
                             interaction.suggestions[suggIdx].explanation === ''
-                              ? wizarDSExplain(dispatch, idx, query, interaction, suggIdx, datasource)
+                              ? wizarDSExplain(dispatch, idx, interaction, suggIdx)
                               : interaction.suggestions[suggIdx].explanation
                           }
                           // onChange={onChange}
@@ -366,7 +363,7 @@ export const WizarDS = (props: WizarDSProps) => {
                       }}
                       explain={(suggIdx: number) =>
                         interaction.suggestions[suggIdx].explanation === ''
-                          ? wizarDSExplain(dispatch, idx, query, interaction, suggIdx, datasource)
+                          ? wizarDSExplain(dispatch, idx, interaction, suggIdx)
                           : interaction.suggestions[suggIdx].explanation
                       }
                       // onChange={onChange}
