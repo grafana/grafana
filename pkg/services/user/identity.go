@@ -30,6 +30,9 @@ type SignedInUser struct {
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
 	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
 	IDToken string `json:"-" xorm:"-"`
+	// Achievement Array
+	Level        int64
+	Achievements string
 }
 
 func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
