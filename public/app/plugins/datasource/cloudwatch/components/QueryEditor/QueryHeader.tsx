@@ -107,7 +107,7 @@ const QueryHeader = ({
           variant={dataIsStale ? 'primary' : 'secondary'}
           size="sm"
           onClick={onRunQuery}
-          icon={data?.state === LoadingState.Loading ? 'fa fa-spinner' : undefined}
+          icon={data?.state === LoadingState.Loading ? 'spinner' : undefined}
           disabled={data?.state === LoadingState.Loading || emptyLogsExpression}
         >
           Run queries

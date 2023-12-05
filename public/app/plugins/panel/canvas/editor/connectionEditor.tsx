@@ -24,9 +24,8 @@ export function getConnectionEditor(opts: CanvasConnectionEditorOptions): Nested
       getValue: (path: string) => {
         return lodashGet(opts.connection.info, path);
       },
-      // TODO: Fix this any (maybe a dimension supplier?)
-      onChange: (path: string, value: any) => {
-        console.log(value, typeof value);
+      // TODO: Fix this unknown (maybe a dimension supplier?)
+      onChange: (path: string, value: unknown) => {
         let options = opts.connection.info;
         options = setOptionImmutably(options, path, value);
         opts.scene.connections.onChange(opts.connection, options);

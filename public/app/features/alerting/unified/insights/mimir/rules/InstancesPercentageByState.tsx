@@ -23,7 +23,7 @@ export function getInstancesPercentageByStateScene(datasource: DataSourceRef, pa
     ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
-      .setDescription(panelTitle)
+      .setDescription('See what percentage of your alert rules are firing versus pending')
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setCustomFieldConfig('fillOpacity', 45)

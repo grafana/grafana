@@ -32,7 +32,7 @@ To see the permissions associated with basic roles, refer to the following basic
 
 | Basic role      | UID                   |
 | --------------- | --------------------- |
-| `No Basic Role` | `basic_none`          |
+| `None`          | `basic_none`          |
 | `Viewer`        | `basic_viewer`        |
 | `Editor`        | `basic_editor`        |
 | `Admin`         | `basic_admin`         |

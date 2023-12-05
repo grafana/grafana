@@ -18,6 +18,7 @@ import {
 import { sceneGraph, VariableCustomFormatterFn } from '@grafana/scenes';
 import { VariableFormatID } from '@grafana/schema';
 
+import { getVariablesCompatibility } from '../dashboard-scene/utils/getVariablesCompatibility';
 import { variableAdapters } from '../variables/adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/constants';
 import { isAdHoc } from '../variables/guard';
@@ -74,6 +75,11 @@ export class TemplateSrv implements BaseTemplateSrv {
   }
 
   getVariables(): TypedVariableModel[] {
+    // For scenes we have this backward compatiblity translation
+    if (window.__grafanaSceneContext) {
+      return getVariablesCompatibility(window.__grafanaSceneContext);
+    }
+
     return this.dependencies.getVariables();
   }
 
@@ -117,7 +123,7 @@ export class TemplateSrv implements BaseTemplateSrv {
    * Use filters property on the request (DataQueryRequest) or if this is called from
    * interpolateVariablesInQueries or applyTemplateVariables it is passed as a new argument
    **/
-  getAdhocFilters(datasourceName: string): AdHocVariableFilter[] {
+  getAdhocFilters(datasourceName: string, skipDeprecationWarning?: boolean): AdHocVariableFilter[] {
     let filters: any = [];
     let ds = getDataSourceSrv().getInstanceSettings(datasourceName);
 
@@ -125,7 +131,7 @@ export class TemplateSrv implements BaseTemplateSrv {
       return [];
     }
 
-    if (!this._adhocFiltersDeprecationWarningLogged.get(ds.type)) {
+    if (!skipDeprecationWarning && !this._adhocFiltersDeprecationWarningLogged.get(ds.type)) {
       if (process.env.NODE_ENV !== 'test') {
         deprecationWarning(
           `DataSource ${ds.type}`,

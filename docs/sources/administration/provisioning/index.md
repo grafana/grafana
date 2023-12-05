@@ -59,13 +59,14 @@ If you have a literal `$` in your value and want to avoid interpolation, `$$` ca
 
 Currently we do not provide any scripts/manifests for configuring Grafana. Rather than spending time learning and creating scripts/manifests for each tool, we think our time is better spent making Grafana easier to provision. Therefore, we heavily rely on the expertise of the community.
 
-| Tool      | Project                                                                                                        |
-| --------- | -------------------------------------------------------------------------------------------------------------- |
-| Puppet    | [https://forge.puppet.com/puppet/grafana](https://forge.puppet.com/puppet/grafana)                             |
-| Ansible   | [https://github.com/grafana/grafana-ansible-collection](https://github.com/grafana/grafana-ansible-collection) |
-| Chef      | [https://github.com/sous-chefs/chef-grafana](https://github.com/sous-chefs/chef-grafana)                       |
-| Saltstack | [https://github.com/salt-formulas/salt-formula-grafana](https://github.com/salt-formulas/salt-formula-grafana) |
-| Jsonnet   | [https://github.com/grafana/grafonnet-lib/](https://github.com/grafana/grafonnet-lib/)                         |
+| Tool      | Project                                                                                                                         |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Puppet    | [https://forge.puppet.com/puppet/grafana](https://forge.puppet.com/puppet/grafana)                                              |
+| Ansible   | [https://github.com/grafana/grafana-ansible-collection](https://github.com/grafana/grafana-ansible-collection)                  |
+| Chef      | [https://github.com/sous-chefs/chef-grafana](https://github.com/sous-chefs/chef-grafana)                                        |
+| Saltstack | [https://github.com/salt-formulas/salt-formula-grafana](https://github.com/salt-formulas/salt-formula-grafana)                  |
+| Jsonnet   | [https://github.com/grafana/grafonnet-lib/](https://github.com/grafana/grafonnet-lib/)                                          |
+| NixOS     | [services.grafana.provision module](https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/services/monitoring/grafana.nix) |
 
 ## Data sources
 
@@ -156,6 +157,8 @@ datasources:
       password:
       # <string> Sets the basic authorization password.
       basicAuthPassword:
+    # <int> Sets the version. Used to compare versions when
+    # updating. Ignored when creating a new data source.
     version: 1
     # <bool> Allows users to edit data sources from the
     # Grafana UI.

@@ -38,12 +38,14 @@ type gPRCServerService struct {
 	logger  log.Logger
 	server  *grpc.Server
 	address string
+	enabled bool
 }
 
-func ProvideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, tracer tracing.Tracer, registerer prometheus.Registerer) (Provider, error) {
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authenticator interceptors.Authenticator, tracer tracing.Tracer, registerer prometheus.Registerer) (Provider, error) {
 	s := &gPRCServerService{
-		cfg:    cfg,
-		logger: log.New("grpc-server"),
+		cfg:     cfg,
+		logger:  log.New("grpc-server"),
+		enabled: features.IsEnabledGlobally(featuremgmt.FlagGrpcServer),
 	}
 
 	// Register the metric here instead of an init() function so that we do
@@ -123,10 +125,7 @@ func (s *gPRCServerService) Run(ctx context.Context) error {
 }
 
 func (s *gPRCServerService) IsDisabled() bool {
-	if s.cfg == nil {
-		return true
-	}
-	return !s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrpcServer)
+	return !s.enabled
 }
 
 func (s *gPRCServerService) GetServer() *grpc.Server {

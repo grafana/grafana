@@ -104,6 +104,7 @@ export class PanelQueryRunner {
         state: LoadingState.Done,
         series: this.dataConfigSource.snapshotData.map((v) => toDataFrame(v)),
         timeRange: getDefaultTimeRange(), // Don't need real time range for snapshots
+        structureRev,
       };
       return of(snapshotPanelData);
     }
@@ -302,7 +303,7 @@ export class PanelQueryRunner {
 
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
-      request.filters = this.templateSrv.getAdhocFilters(ds.name);
+      request.filters = this.templateSrv.getAdhocFilters(ds.name, true);
 
       this.lastRequest = request;
 

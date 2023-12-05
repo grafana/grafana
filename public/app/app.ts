@@ -1,10 +1,10 @@
 import 'symbol-observable';
-import 'core-js';
 import 'regenerator-runtime/runtime';
 
 import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import 'file-saver';
 import 'jquery';
+import 'vendor/bootstrap/bootstrap';
 
 import 'app/features/all';
 
@@ -52,6 +52,7 @@ import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
 import { PluginPage } from './core/components/Page/PluginPage';
 import { GrafanaContextType } from './core/context/GrafanaContext';
+import { initIconCache } from './core/icons/iconBundle';
 import { initializeI18n } from './core/internationalization';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { ModalManager } from './core/services/ModalManager';
@@ -78,7 +79,7 @@ import { createPluginExtensionRegistry } from './features/plugins/extensions/cre
 import { getCoreExtensionConfigurations } from './features/plugins/extensions/getCoreExtensionConfigurations';
 import { getPluginExtensions } from './features/plugins/extensions/getPluginExtensions';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
-import { preloadPlugins } from './features/plugins/pluginPreloader';
+import { PluginPreloadResult, preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
 import { initWindowRuntime } from './features/runtime/init';
@@ -122,6 +123,7 @@ export class GrafanaApp {
 
       setBackendSrv(backendSrv);
       initEchoSrv();
+      initIconCache();
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
       addClassIfNoOverlayScrollbar();
@@ -193,8 +195,12 @@ export class GrafanaApp {
       const modalManager = new ModalManager();
       modalManager.init();
 
-      // Preload selected app plugins
-      const preloadResults = await preloadPlugins(config.apps);
+      let preloadResults: PluginPreloadResult[] = [];
+
+      if (contextSrv.isSignedIn) {
+        // Preload selected app plugins
+        preloadResults = await preloadPlugins(config.apps);
+      }
 
       // Create extension registry out of preloaded plugins and core extensions
       const extensionRegistry = createPluginExtensionRegistry([
@@ -263,7 +269,7 @@ function initEchoSrv() {
 
   window.addEventListener('load', (e) => {
     const loadMetricName = 'frontend_boot_load_time_seconds';
-    // Metrics below are marked in public/views/index-template.html
+    // Metrics below are marked in public/views/index.html
     const jsLoadMetricName = 'frontend_boot_js_done_time_seconds';
     const cssLoadMetricName = 'frontend_boot_css_time_seconds';
 
@@ -323,6 +329,7 @@ function initEchoSrv() {
         user: config.bootData.user,
         sdkUrl: config.rudderstackSdkUrl,
         configUrl: config.rudderstackConfigUrl,
+        integrationsUrl: config.rudderstackIntegrationsUrl,
         buildInfo: config.buildInfo,
       })
     );

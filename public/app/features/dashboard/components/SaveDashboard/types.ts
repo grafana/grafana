@@ -1,10 +1,11 @@
+import { Dashboard } from '@grafana/schema';
 import { CloneOptions, DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardDataDTO } from 'app/types';
 
 import { Diffs } from '../VersionHistory/utils';
 
 export interface SaveDashboardData {
-  clone: DashboardModel; // cloned copy
+  clone: Dashboard; // cloned copy
   diff: Diffs;
   diffCount: number; // cumulative count
   hasChanges: boolean; // not new and has changes
@@ -29,7 +30,7 @@ export interface SaveDashboardFormProps {
   isLoading: boolean;
   onCancel: () => void;
   onSuccess: () => void;
-  onSubmit?: (clone: DashboardModel, options: SaveDashboardOptions, dashboard: DashboardModel) => Promise<any>;
+  onSubmit?: (saveModel: Dashboard, options: SaveDashboardOptions, dashboard: DashboardModel) => Promise<any>;
 }
 
 export interface SaveDashboardModalProps {

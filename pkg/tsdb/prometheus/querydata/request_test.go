@@ -11,20 +11,20 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	p "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds/dataquery"
 
 	"github.com/grafana/kindsys"
 
-	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
-	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
@@ -428,10 +428,9 @@ type testContext struct {
 }
 
 func setup() (*testContext, error) {
-	tracer := tracing.InitializeTracerForTest()
 	httpProvider := &fakeHttpClientProvider{
-		opts: sdkhttpclient.Options{
-			Timeouts: &sdkhttpclient.DefaultTimeoutOptions,
+		opts: httpclient.Options{
+			Timeouts: &httpclient.DefaultTimeoutOptions,
 		},
 		res: &http.Response{
 			StatusCode: 200,
@@ -443,9 +442,8 @@ func setup() (*testContext, error) {
 		JSONData: json.RawMessage(`{"timeInterval": "15s"}`),
 	}
 
-	features := &fakeFeatureToggles{flags: map[string]bool{"prometheusBufferedClient": false}}
-
-	opts, err := client.CreateTransportOptions(settings, &setting.Cfg{}, &logtest.Fake{})
+	features := featuremgmt.WithFeatures()
+	opts, err := client.CreateTransportOptions(context.Background(), settings, &setting.Cfg{}, log.New())
 	if err != nil {
 		return nil, err
 	}
@@ -455,7 +453,7 @@ func setup() (*testContext, error) {
 		return nil, err
 	}
 
-	queryData, _ := querydata.New(httpClient, features, tracer, settings, &logtest.Fake{})
+	queryData, _ := querydata.New(httpClient, features, settings, log.New())
 
 	return &testContext{
 		httpProvider: httpProvider,
@@ -463,24 +461,16 @@ func setup() (*testContext, error) {
 	}, nil
 }
 
-type fakeFeatureToggles struct {
-	flags map[string]bool
-}
-
-func (f *fakeFeatureToggles) IsEnabled(feature string) bool {
-	return f.flags[feature]
-}
-
 type fakeHttpClientProvider struct {
 	httpclient.Provider
-	opts sdkhttpclient.Options
+	opts httpclient.Options
 	req  *http.Request
 	res  *http.Response
 }
 
-func (p *fakeHttpClientProvider) New(opts ...sdkhttpclient.Options) (*http.Client, error) {
+func (p *fakeHttpClientProvider) New(opts ...httpclient.Options) (*http.Client, error) {
 	p.opts = opts[0]
-	c, err := sdkhttpclient.New(opts[0])
+	c, err := httpclient.New(opts[0])
 	if err != nil {
 		return nil, err
 	}
@@ -488,7 +478,7 @@ func (p *fakeHttpClientProvider) New(opts ...sdkhttpclient.Options) (*http.Clien
 	return c, nil
 }
 
-func (p *fakeHttpClientProvider) GetTransport(opts ...sdkhttpclient.Options) (http.RoundTripper, error) {
+func (p *fakeHttpClientProvider) GetTransport(opts ...httpclient.Options) (http.RoundTripper, error) {
 	p.opts = opts[0]
 	return http.DefaultTransport, nil
 }

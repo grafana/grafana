@@ -193,7 +193,7 @@ export const createUsagesNetwork = (variables: VariableModel[], dashboard: Dashb
 
   const unUsed: VariableModel[] = [];
   let usages: VariableUsageTree[] = [];
-  const model = dashboard.getSaveModelClone();
+  const model = dashboard.getSaveModelCloneOld();
 
   for (const variable of variables) {
     const variableId = variable.id;
@@ -233,7 +233,7 @@ function createUnknownsNetwork(variables: VariableModel[], dashboard: DashboardM
   }
 
   let unknown: VariableUsageTree[] = [];
-  const model = dashboard.getSaveModelClone();
+  const model = dashboard.getSaveModelCloneOld();
 
   const unknownVariables = getUnknownVariableStrings(variables, model);
   for (const unknownVariable of unknownVariables) {

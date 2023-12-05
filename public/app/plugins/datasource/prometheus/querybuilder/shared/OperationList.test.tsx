@@ -73,7 +73,6 @@ function setup(query: PromVisualQuery = defaultQuery) {
         meta: {},
       } as DataSourceInstanceSettings<PromOptions>,
       undefined,
-      undefined,
       languageProvider
     ) as DataSourceApi,
     onRunQuery: () => {},

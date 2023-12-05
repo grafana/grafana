@@ -38,6 +38,16 @@ func TestUserService(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("create user should fail when username and email are empty", func(t *testing.T) {
+		_, err := userService.Create(context.Background(), &user.CreateUserCommand{
+			Email: "",
+			Login: "",
+			Name:  "name",
+		})
+
+		require.ErrorIs(t, err, user.ErrEmptyUsernameAndEmail)
+	})
+
 	t.Run("get user by ID", func(t *testing.T) {
 		userService.cfg = setting.NewCfg()
 		userService.cfg.CaseInsensitiveLogin = false

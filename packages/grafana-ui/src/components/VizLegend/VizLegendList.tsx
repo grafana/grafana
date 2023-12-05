@@ -56,26 +56,25 @@ export const VizLegendList = <T extends unknown>({
     }
     case 'bottom':
     default: {
+      const leftItems = items.filter((item) => item.yAxis === 1);
+      const rightItems = items.filter((item) => item.yAxis !== 1);
+
       const renderItem = (item: VizLegendItem<T>, index: number) => {
         return <span className={styles.itemBottom}>{itemRenderer!(item, index)}</span>;
       };
 
       return (
         <div className={cx(styles.bottomWrapper, className)}>
-          <div className={styles.section}>
-            <InlineList
-              items={items.filter((item) => item.yAxis === 1)}
-              renderItem={renderItem}
-              getItemKey={getItemKey}
-            />
-          </div>
-          <div className={cx(styles.section, styles.sectionRight)}>
-            <InlineList
-              items={items.filter((item) => item.yAxis !== 1)}
-              renderItem={renderItem}
-              getItemKey={getItemKey}
-            />
-          </div>
+          {leftItems.length > 0 && (
+            <div className={styles.section}>
+              <InlineList items={leftItems} renderItem={renderItem} getItemKey={getItemKey} />
+            </div>
+          )}
+          {rightItems.length > 0 && (
+            <div className={cx(styles.section, styles.sectionRight)}>
+              <InlineList items={rightItems} renderItem={renderItem} getItemKey={getItemKey} />
+            </div>
+          )}
         </div>
       );
     }
@@ -109,6 +108,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       justifyContent: 'space-between',
       width: '100%',
       paddingLeft: theme.spacing(0.5),
+      gap: '15px 25px',
     }),
     section: css({
       display: 'flex',
@@ -116,6 +116,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     sectionRight: css({
       justifyContent: 'flex-end',
       flexGrow: 1,
+      flexBasis: '50%',
     }),
   };
 };

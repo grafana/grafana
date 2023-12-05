@@ -12,7 +12,14 @@ import {
   VariableSupportType,
 } from '@grafana/data';
 import { setRunRequest } from '@grafana/runtime';
-import { ConstantVariable, CustomVariable, DataSourceVariable, QueryVariable, SceneVariableSet } from '@grafana/scenes';
+import {
+  ConstantVariable,
+  CustomVariable,
+  DataSourceVariable,
+  QueryVariable,
+  SceneVariableSet,
+  TextBoxVariable,
+} from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
 import { sceneVariablesSetToVariables } from './sceneVariablesSetToVariables';
@@ -122,6 +129,7 @@ describe('sceneVariablesSetToVariables', () => {
       "query": "query",
       "refresh": 1,
       "regex": "",
+      "type": "query",
     }
     `);
   });
@@ -165,7 +173,9 @@ describe('sceneVariablesSetToVariables', () => {
       "name": "test",
       "options": [],
       "query": "fake-std",
+      "refresh": 1,
       "regex": "",
+      "type": "datasource",
     }
     `);
   });
@@ -214,6 +224,7 @@ describe('sceneVariablesSetToVariables', () => {
       "name": "test",
       "options": [],
       "query": "test,test1,test2",
+      "type": "custom",
     }
     `);
   });
@@ -245,6 +256,39 @@ describe('sceneVariablesSetToVariables', () => {
       "name": "test",
       "query": "constant value",
       "skipUrlSync": true,
+      "type": "constant",
+    }
+    `);
+  });
+
+  it('should handle TextBoxVariable', () => {
+    const variable = new TextBoxVariable({
+      name: 'test',
+      label: 'test-label',
+      description: 'test-desc',
+      value: 'text value',
+      skipUrlSync: true,
+    });
+    const set = new SceneVariableSet({
+      variables: [variable],
+    });
+
+    const result = sceneVariablesSetToVariables(set);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchInlineSnapshot(`
+    {
+      "current": {
+        "text": "text value",
+        "value": "text value",
+      },
+      "description": "test-desc",
+      "hide": 2,
+      "label": "test-label",
+      "name": "test",
+      "query": "text value",
+      "skipUrlSync": true,
+      "type": "textbox",
     }
     `);
   });

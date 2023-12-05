@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng/proxyutil"
 	"github.com/stretchr/testify/require"
@@ -13,9 +14,16 @@ import (
 
 func TestMySQLProxyDialer(t *testing.T) {
 	settings := proxyutil.SetupTestSecureSocksProxySettings(t)
-
+	proxySettings := setting.SecureSocksDSProxySettings{
+		Enabled:      true,
+		ClientCert:   settings.ClientCert,
+		ClientKey:    settings.ClientKey,
+		RootCA:       settings.RootCA,
+		ProxyAddress: settings.ProxyAddress,
+		ServerName:   settings.ServerName,
+	}
 	protocol := "tcp"
-	opts := proxyutil.GetSQLProxyOptions(sqleng.DataSourceInfo{UID: "1", JsonData: sqleng.JsonData{SecureDSProxy: true}})
+	opts := proxyutil.GetSQLProxyOptions(proxySettings, sqleng.DataSourceInfo{UID: "1", JsonData: sqleng.JsonData{SecureDSProxy: true}})
 	dbURL := "localhost:5432"
 	network, err := registerProxyDialerContext(protocol, dbURL, opts)
 	require.NoError(t, err)

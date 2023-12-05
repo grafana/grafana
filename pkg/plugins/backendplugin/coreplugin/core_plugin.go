@@ -76,6 +76,7 @@ func (cp *corePlugin) CollectMetrics(_ context.Context, _ *backend.CollectMetric
 
 func (cp *corePlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	if cp.CheckHealthHandler != nil {
+		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
 		return cp.CheckHealthHandler.CheckHealth(ctx, req)
 	}
 
@@ -84,6 +85,7 @@ func (cp *corePlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthR
 
 func (cp *corePlugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if cp.QueryDataHandler != nil {
+		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
 		return cp.QueryDataHandler.QueryData(ctx, req)
 	}
 
@@ -92,6 +94,7 @@ func (cp *corePlugin) QueryData(ctx context.Context, req *backend.QueryDataReque
 
 func (cp *corePlugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if cp.CallResourceHandler != nil {
+		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
 		return cp.CallResourceHandler.CallResource(ctx, req, sender)
 	}
 
@@ -100,6 +103,7 @@ func (cp *corePlugin) CallResource(ctx context.Context, req *backend.CallResourc
 
 func (cp *corePlugin) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	if cp.StreamHandler != nil {
+		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
 		return cp.StreamHandler.SubscribeStream(ctx, req)
 	}
 	return nil, plugins.ErrMethodNotImplemented
@@ -107,6 +111,7 @@ func (cp *corePlugin) SubscribeStream(ctx context.Context, req *backend.Subscrib
 
 func (cp *corePlugin) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
 	if cp.StreamHandler != nil {
+		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
 		return cp.StreamHandler.PublishStream(ctx, req)
 	}
 	return nil, plugins.ErrMethodNotImplemented
@@ -114,6 +119,7 @@ func (cp *corePlugin) PublishStream(ctx context.Context, req *backend.PublishStr
 
 func (cp *corePlugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	if cp.StreamHandler != nil {
+		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
 		return cp.StreamHandler.RunStream(ctx, req, sender)
 	}
 	return plugins.ErrMethodNotImplemented

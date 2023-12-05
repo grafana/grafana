@@ -42,6 +42,30 @@ function move(node: SyntaxNode, direction: Direction): SyntaxNode | null {
   return node[direction];
 }
 
+/**
+ * Iteratively calls walk with given path until it returns null, then we return the last non-null node.
+ * @param node
+ * @param path
+ */
+function traverse(node: SyntaxNode, path: Path): SyntaxNode | null {
+  let current: SyntaxNode | null = node;
+  let next = walk(current, path);
+  while (next) {
+    let nextTmp = walk(next, path);
+    if (nextTmp) {
+      next = nextTmp;
+    } else {
+      return next;
+    }
+  }
+  return null;
+}
+
+/**
+ * Walks a single step from the provided node, following the path.
+ * @param node
+ * @param path
+ */
 function walk(node: SyntaxNode, path: Path): SyntaxNode | null {
   let current: SyntaxNode | null = node;
   for (const [direction, expectedNode] of path) {
@@ -161,7 +185,7 @@ const ERROR_NODE_ID = 0;
 
 const RESOLVERS: Resolver[] = [
   {
-    paths: [[Selector], [ERROR_NODE_ID, Matchers, Selector]],
+    paths: [[Selector], [Selector, Matchers], [Matchers], [ERROR_NODE_ID, Matchers, Selector]],
     fun: resolveSelector,
   },
   {
@@ -194,7 +218,10 @@ const RESOLVERS: Resolver[] = [
     fun: resolveLogRange,
   },
   {
-    paths: [[ERROR_NODE_ID, Matcher]],
+    paths: [
+      [ERROR_NODE_ID, Matcher],
+      [ERROR_NODE_ID, Matchers, Selector],
+    ],
     fun: resolveMatcher,
   },
   {
@@ -276,11 +303,25 @@ function getLabel(matcherNode: SyntaxNode, text: string): Label | null {
 }
 
 function getLabels(selectorNode: SyntaxNode, text: string): Label[] {
-  if (selectorNode.type.id !== Selector) {
+  if (selectorNode.type.id !== Selector && selectorNode.type.id !== Matchers) {
     return [];
   }
 
-  let listNode: SyntaxNode | null = walk(selectorNode, [['firstChild', Matchers]]);
+  let listNode: SyntaxNode | null = null;
+
+  // If parent node is selector, we want to start with the current Matcher node
+  if (selectorNode?.parent?.type.id === Selector) {
+    listNode = selectorNode;
+  } else {
+    // Parent node needs to be returned first because otherwise both of the other walks will return a non-null node and this function will return the labels on the left side of the current node, the other two walks should be mutually exclusive when the parent is null
+    listNode =
+      // Node in-between labels
+      traverse(selectorNode, [['parent', Matchers]]) ??
+      // Node after all other labels
+      walk(selectorNode, [['firstChild', Matchers]]) ??
+      // Node before all other labels
+      walk(selectorNode, [['lastChild', Matchers]]);
+  }
 
   const labels: Label[] = [];
 

@@ -46,7 +46,7 @@ class ColorGenerator {
   _getColorIndex(key: string): number {
     let i = this.cache.get(key);
     if (i == null) {
-      const hash = this.hashCode(key.toLowerCase());
+      const hash = this.hashCode(key ? key.toLowerCase() : '');
       i = Math.abs(hash % this.colorsHex.length);
 
       if (this.prevColorIndex !== undefined) {

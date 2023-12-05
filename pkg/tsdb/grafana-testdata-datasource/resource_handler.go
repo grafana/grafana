@@ -26,20 +26,22 @@ func (s *Service) registerRoutes() *http.ServeMux {
 }
 
 func (s *Service) testGetHandler(rw http.ResponseWriter, req *http.Request) {
-	s.logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
+	ctxLogger := s.logger.FromContext(req.Context())
+	ctxLogger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
 
 	if req.Method != http.MethodGet {
 		return
 	}
 
 	if _, err := rw.Write([]byte("Hello world from test datasource!")); err != nil {
-		s.logger.Error("Failed to write response", "error", err)
+		ctxLogger.Error("Failed to write response", "error", err)
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
 }
 
 func (s *Service) getScenariosHandler(rw http.ResponseWriter, req *http.Request) {
+	ctxLogger := s.logger.FromContext(req.Context())
 	result := make([]any, 0)
 
 	scenarioIds := make([]string, 0)
@@ -60,18 +62,19 @@ func (s *Service) getScenariosHandler(rw http.ResponseWriter, req *http.Request)
 
 	bytes, err := json.Marshal(&result)
 	if err != nil {
-		s.logger.Error("Failed to marshal response body to JSON", "error", err)
+		ctxLogger.Error("Failed to marshal response body to JSON", "error", err)
 	}
 
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(http.StatusOK)
 	if _, err := rw.Write(bytes); err != nil {
-		s.logger.Error("Failed to write response", "error", err)
+		ctxLogger.Error("Failed to write response", "error", err)
 	}
 }
 
 func (s *Service) testStreamHandler(rw http.ResponseWriter, req *http.Request) {
-	s.logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
+	ctxLogger := s.logger.FromContext(req.Context())
+	ctxLogger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
 
 	if req.Method != http.MethodGet {
 		return
@@ -96,7 +99,7 @@ func (s *Service) testStreamHandler(rw http.ResponseWriter, req *http.Request) {
 
 	for i := 1; i <= count; i++ {
 		if _, err := io.WriteString(rw, fmt.Sprintf("Message #%d", i)); err != nil {
-			s.logger.Error("Failed to write response", "error", err)
+			ctxLogger.Error("Failed to write response", "error", err)
 			return
 		}
 		rw.(http.Flusher).Flush()
@@ -106,25 +109,26 @@ func (s *Service) testStreamHandler(rw http.ResponseWriter, req *http.Request) {
 
 func createJSONHandler(logger log.Logger) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
+		ctxLogger := logger.FromContext(req.Context())
+		ctxLogger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
 
 		var reqData map[string]any
 		if req.Body != nil {
 			defer func() {
 				if err := req.Body.Close(); err != nil {
-					logger.Warn("Failed to close response body", "err", err)
+					ctxLogger.Warn("Failed to close response body", "err", err)
 				}
 			}()
 			b, err := io.ReadAll(req.Body)
 			if err != nil {
-				logger.Error("Failed to read request body to bytes", "error", err)
+				ctxLogger.Error("Failed to read request body to bytes", "error", err)
 			} else {
 				err := json.Unmarshal(b, &reqData)
 				if err != nil {
-					logger.Error("Failed to unmarshal request body to JSON", "error", err)
+					ctxLogger.Error("Failed to unmarshal request body to JSON", "error", err)
 				}
 
-				logger.Debug("Received resource call body", "body", reqData)
+				ctxLogger.Debug("Received resource call body", "body", reqData)
 			}
 		}
 
@@ -139,13 +143,13 @@ func createJSONHandler(logger log.Logger) http.Handler {
 		}
 		bytes, err := json.Marshal(&data)
 		if err != nil {
-			logger.Error("Failed to marshal response body to JSON", "error", err)
+			ctxLogger.Error("Failed to marshal response body to JSON", "error", err)
 		}
 
 		rw.Header().Set("Content-Type", "application/json")
 		rw.WriteHeader(http.StatusOK)
 		if _, err := rw.Write(bytes); err != nil {
-			logger.Error("Failed to write response", "error", err)
+			ctxLogger.Error("Failed to write response", "error", err)
 		}
 	})
 }

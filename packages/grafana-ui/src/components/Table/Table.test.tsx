@@ -520,7 +520,7 @@ describe('Table', () => {
   });
 
   describe('when mounted with nested data', () => {
-    it('then correct rows should be rendered and new table is rendered when expander is clicked', async () => {
+    beforeEach(() => {
       const nestedFrame = (idx: number) =>
         applyOverrides(
           toDataFrame({
@@ -539,6 +539,7 @@ describe('Table', () => {
             ],
           })
         );
+
       const defaultFrame = getDefaultDataFrame();
 
       getTestContext({
@@ -555,6 +556,9 @@ describe('Table', () => {
           ],
         }),
       });
+    });
+
+    it('then correct rows should be rendered and new table is rendered when expander is clicked', async () => {
       expect(getTable()).toBeInTheDocument();
       expect(screen.getAllByRole('columnheader')).toHaveLength(4);
       expect(getColumnHeader(/time/)).toBeInTheDocument();
@@ -592,6 +596,65 @@ describe('Table', () => {
       expect(within(subTableRows1[1]).getByText(/ok_1/)).toBeInTheDocument();
       expect(within(subTableRows1[2]).getByText(/17%_1/)).toBeInTheDocument();
       expect(within(subTableRows1[2]).getByText(/humid_1/)).toBeInTheDocument();
+    });
+
+    it('then properly handle row expansion and sorting', async () => {
+      expect(getTable()).toBeInTheDocument();
+      expect(screen.getAllByRole('columnheader')).toHaveLength(4);
+      expect(getColumnHeader(/time/)).toBeInTheDocument();
+      expect(getColumnHeader(/temperature/)).toBeInTheDocument();
+      expect(getColumnHeader(/img/)).toBeInTheDocument();
+
+      let rows = within(getTable()).getAllByRole('row');
+      expect(rows).toHaveLength(5);
+      expect(getRowsData(rows)).toEqual([
+        { time: '2021-01-01 00:00:00', temperature: '10', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 03:00:00', temperature: 'NaN', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 01:00:00', temperature: '11', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 02:00:00', temperature: '12', link: '${__value.text} interpolation' },
+      ]);
+
+      // Sort rows, and check the new order
+      const table = getTable();
+      await userEvent.click(within(table).getAllByTitle('Toggle SortBy')[0]);
+      rows = within(table).getAllByRole('row');
+      expect(rows).toHaveLength(5);
+      expect(getRowsData(rows)).toEqual([
+        { time: '2021-01-01 00:00:00', temperature: '10', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 01:00:00', temperature: '11', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 02:00:00', temperature: '12', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 03:00:00', temperature: 'NaN', link: '${__value.text} interpolation' },
+      ]);
+
+      // No sub table exists before expending a row
+      let tables = screen.getAllByRole('table');
+      expect(tables).toHaveLength(1);
+
+      // Expand a row, and check its height
+      rows = within(getTable()).getAllByRole('row');
+      await userEvent.click(within(rows[1]).getByLabelText('Expand row'));
+      tables = screen.getAllByRole('table');
+      expect(tables).toHaveLength(3);
+      let subTable = screen.getAllByRole('table')[2];
+      expect(subTable.style.height).toBe('108px');
+
+      // Sort again rows
+      tables = screen.getAllByRole('table');
+      await userEvent.click(within(tables[0]).getAllByTitle('Toggle SortBy')[0]);
+      rows = within(table).getAllByRole('row');
+      expect(rows).toHaveLength(5);
+      expect(getRowsData(rows)).toEqual([
+        { time: '2021-01-01 03:00:00', temperature: 'NaN', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 02:00:00', temperature: '12', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 01:00:00', temperature: '11', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 00:00:00', temperature: '10', link: '${__value.text} interpolation' },
+      ]);
+
+      // Expand another row
+      rows = within(getTable()).getAllByRole('row');
+      await userEvent.click(within(rows[1]).getByLabelText('Expand row'));
+      subTable = screen.getAllByRole('table')[2];
+      expect(subTable.style.height).toBe('108px');
     });
   });
 });

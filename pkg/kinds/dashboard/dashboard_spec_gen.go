@@ -52,16 +52,6 @@ const (
 	FieldColorSeriesByModeMin  FieldColorSeriesByMode = "min"
 )
 
-// Defines values for GraphPanelType.
-const (
-	GraphPanelTypeGraph GraphPanelType = "graph"
-)
-
-// Defines values for HeatmapPanelType.
-const (
-	HeatmapPanelTypeHeatmap HeatmapPanelType = "heatmap"
-)
-
 // Defines values for MappingType.
 const (
 	MappingTypeRange   MappingType = "range"
@@ -152,6 +142,8 @@ const (
 	VariableSortN4 VariableSort = 4
 	VariableSortN5 VariableSort = 5
 	VariableSortN6 VariableSort = 6
+	VariableSortN7 VariableSort = 7
+	VariableSortN8 VariableSort = 8
 )
 
 // Defines values for VariableType.
@@ -187,6 +179,9 @@ type AnnotationPanelFilter struct {
 // TODO docs
 // FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
 type AnnotationQuery struct {
+	// Set to 1 for the standard annotation query all dashboards have by default.
+	BuiltIn *float32 `json:"builtIn,omitempty"`
+
 	// Ref to a DataSource instance
 	Datasource DataSourceRef `json:"datasource"`
 
@@ -267,7 +262,7 @@ type Link struct {
 	Type LinkType `json:"type"`
 
 	// Link URL. Only required/valid if the type is link
-	Url string `json:"url"`
+	Url *string `json:"url,omitempty"`
 }
 
 // Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
@@ -448,21 +443,6 @@ type FieldConfigSource struct {
 	} `json:"overrides"`
 }
 
-// Support for legacy graph panel.
-// @deprecated this a deprecated panel type
-type GraphPanel struct {
-	// @deprecated this is part of deprecated graph panel
-	Legend *struct {
-		Show     bool    `json:"show"`
-		Sort     *string `json:"sort,omitempty"`
-		SortDesc *bool   `json:"sortDesc,omitempty"`
-	} `json:"legend,omitempty"`
-	Type GraphPanelType `json:"type"`
-}
-
-// GraphPanelType defines model for GraphPanel.Type.
-type GraphPanelType string
-
 // Position and dimensions of a panel in the grid
 type GridPos struct {
 	// Panel height. The height is the number of rows from the top edge of the panel.
@@ -480,15 +460,6 @@ type GridPos struct {
 	// Panel y. The y coordinate is the number of rows from the top edge of the grid
 	Y int `json:"y"`
 }
-
-// Support for legacy heatmap panel.
-// @deprecated this a deprecated panel type
-type HeatmapPanel struct {
-	Type HeatmapPanelType `json:"type"`
-}
-
-// HeatmapPanelType defines model for HeatmapPanel.Type.
-type HeatmapPanelType string
 
 // A library panel is a reusable panel that you can use in any dashboard.
 // When you make a change to a library panel, that change propagates to all instances of where the panel is used.
@@ -529,7 +500,7 @@ type Panel struct {
 	// The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
 	// Each column within this structure is called a field. A field can represent a single time series or table column.
 	// Field options allow you to change how the data is displayed in your visualizations.
-	FieldConfig FieldConfigSource `json:"fieldConfig"`
+	FieldConfig *FieldConfigSource `json:"fieldConfig,omitempty"`
 
 	// Position and dimensions of a panel in the grid
 	GridPos *GridPos `json:"gridPos,omitempty"`
@@ -562,7 +533,7 @@ type Panel struct {
 	MaxPerRow *float32 `json:"maxPerRow,omitempty"`
 
 	// It depends on the panel plugin. They are specified by the Options field in panel plugin schemas.
-	Options map[string]any `json:"options"`
+	Options map[string]any `json:"options,omitempty"`
 
 	// The version of the plugin that is used for this panel. This is used to find the plugin to display the panel and to migrate old panel configs.
 	PluginVersion *string `json:"pluginVersion,omitempty"`
@@ -602,10 +573,10 @@ type Panel struct {
 	// List of transformations that are applied to the panel data before rendering.
 	// When there are multiple transformations, Grafana applies them in the order they are listed.
 	// Each transformation creates a result set that then passes on to the next transformation in the processing pipeline.
-	Transformations []DataTransformerConfig `json:"transformations"`
+	Transformations []DataTransformerConfig `json:"transformations,omitempty"`
 
 	// Whether to display the panel without a background.
-	Transparent bool `json:"transparent"`
+	Transparent *bool `json:"transparent,omitempty"`
 
 	// The panel plugin type id. This is used to find the plugin to display the panel.
 	Type string `json:"type"`
@@ -667,7 +638,7 @@ type RowPanel struct {
 	Id int `json:"id"`
 
 	// List of panels in the row
-	Panels []any `json:"panels"`
+	Panels []Panel `json:"panels"`
 
 	// Name of template variable to repeat for.
 	Repeat *string `json:"repeat,omitempty"`
@@ -734,7 +705,7 @@ type Spec struct {
 	Description *string `json:"description,omitempty"`
 
 	// Whether a dashboard is editable or not.
-	Editable bool `json:"editable"`
+	Editable *bool `json:"editable,omitempty"`
 
 	// The month that the fiscal year starts on.  0 = January, 11 = December
 	FiscalYearStartMonth *int `json:"fiscalYearStartMonth,omitempty"`
@@ -745,7 +716,7 @@ type Spec struct {
 	// 0 for no shared crosshair or tooltip (default).
 	// 1 for shared crosshair.
 	// 2 for shared crosshair AND shared tooltip.
-	GraphTooltip CursorSync `json:"graphTooltip"`
+	GraphTooltip *CursorSync `json:"graphTooltip,omitempty"`
 
 	// Unique numeric identifier for the dashboard.
 	// `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
@@ -796,20 +767,9 @@ type Spec struct {
 		To   string `json:"to"`
 	} `json:"time,omitempty"`
 
-	// Configuration of the time picker shown at the top of a dashboard.
-	Timepicker *struct {
-		// Whether timepicker is collapsed or not. Has no effect on provisioned dashboard.
-		Collapse bool `json:"collapse"`
-
-		// Whether timepicker is visible or not.
-		Hidden bool `json:"hidden"`
-
-		// Interval options available in the refresh picker dropdown.
-		RefreshIntervals []string `json:"refresh_intervals"`
-
-		// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
-		TimeOptions []string `json:"time_options"`
-	} `json:"timepicker,omitempty"`
+	// Time picker configuration
+	// It defines the default config for the time picker and the refresh picker for the specific dashboard.
+	Timepicker *TimePickerConfig `json:"timepicker,omitempty"`
 
 	// Timezone of dashboard. Accepted values are IANA TZDB zone ID or "browser" or "utc".
 	Timezone *string `json:"timezone,omitempty"`
@@ -878,6 +838,19 @@ type ThresholdsConfig struct {
 
 // Thresholds can either be `absolute` (specific number) or `percentage` (relative to min or max, it will be values between 0 and 1).
 type ThresholdsMode string
+
+// Time picker configuration
+// It defines the default config for the time picker and the refresh picker for the specific dashboard.
+type TimePickerConfig struct {
+	// Whether timepicker is visible or not.
+	Hidden bool `json:"hidden"`
+
+	// Interval options available in the refresh picker dropdown.
+	RefreshIntervals []string `json:"refresh_intervals"`
+
+	// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
+	TimeOptions []string `json:"time_options"`
+}
 
 // Maps text values to a color or different display text and color.
 // For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
@@ -957,6 +930,8 @@ type VariableModel struct {
 	// `4`: Numerical DESC
 	// `5`: Alphabetical Case Insensitive ASC
 	// `6`: Alphabetical Case Insensitive DESC
+	// `7`: Natural ASC
+	// `8`: Natural DESC
 	Sort *VariableSort `json:"sort,omitempty"`
 
 	// Dashboard variable type
@@ -998,6 +973,8 @@ type VariableRefresh int
 // `4`: Numerical DESC
 // `5`: Alphabetical Case Insensitive ASC
 // `6`: Alphabetical Case Insensitive DESC
+// `7`: Natural ASC
+// `8`: Natural DESC
 type VariableSort int
 
 // Dashboard variable type

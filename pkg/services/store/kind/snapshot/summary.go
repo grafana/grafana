@@ -46,10 +46,10 @@ func GetEntitySummaryBuilder() entity.EntitySummaryBuilder {
 			Name:        obj.Name,
 			Description: obj.Description,
 			UID:         uid,
-			Fields: map[string]interface{}{
+			Fields: map[string]string{
 				"deleteKey":   obj.DeleteKey,
 				"externalURL": obj.ExternalURL,
-				"expires":     obj.Expires,
+				"expires":     fmt.Sprint(obj.Expires),
 			},
 			References: []*entity.EntityExternalReference{
 				{Family: entity.StandardKindDashboard, Identifier: obj.DashboardUID},

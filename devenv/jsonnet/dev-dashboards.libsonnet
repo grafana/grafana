@@ -149,6 +149,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('dashlist', import '../dev-dashboards/panel-dashlist/dashlist.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('datadata-macros', import '../dev-dashboards/feature-templating/datadata-macros.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -387,6 +394,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('loki_query_splitting', import '../dev-dashboards/datasource-loki/loki_query_splitting.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('migrations', import '../dev-dashboards/migrations/migrations.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -521,6 +535,13 @@ local dashboard = grafana.dashboard;
       }
     },
     dashboard.new('postgres_unittest', import '../dev-dashboards/datasource-postgres/postgres_unittest.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('regression-analysis', import '../dev-dashboards/transforms/regression-analysis.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
@@ -709,6 +730,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('timeseries-bars-high-density', import '../dev-dashboards/panel-timeseries/timeseries-bars-high-density.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('timeseries-by-value-color-schemes', import '../dev-dashboards/panel-timeseries/timeseries-by-value-color-schemes.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -808,6 +836,13 @@ local dashboard = grafana.dashboard;
       }
     },
     dashboard.new('trend_example', import '../dev-dashboards/panel-trend/trend_example.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('xychart-example', import '../dev-dashboards/panel-xychart/xychart-example.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {

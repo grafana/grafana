@@ -11,10 +11,10 @@ export interface Props {
 export const FeatureHighlight = ({ children }: Props): JSX.Element => {
   const styles = useStyles2(getStyles);
   return (
-    <div>
+    <>
       {children}
       <span className={styles.highlight} />
-    </div>
+    </>
   );
 };
 

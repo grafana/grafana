@@ -10,6 +10,7 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
   TransformerCategory,
+  getTimeZones,
 } from '@grafana/data';
 import {
   ConvertFieldTypeOptions,
@@ -18,8 +19,12 @@ import {
 import { Button, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 import { allFieldTypeIconOptions } from '@grafana/ui/src/components/MatchersUI/FieldTypeMatcherEditor';
-import { hasAlphaPanels } from 'app/core/config';
 import { findField } from 'app/features/dimensions';
+
+import { getTransformationContent } from '../docs/getTransformationContent';
+import { getTimezoneOptions } from '../utils';
+
+import { EnumMappingEditor } from './EnumMappingEditor';
 
 const fieldNamePickerSettings = {
   settings: { width: 24, isClearable: false },
@@ -31,6 +36,15 @@ export const ConvertFieldTypeTransformerEditor = ({
   onChange,
 }: TransformerUIProps<ConvertFieldTypeTransformerOptions>) => {
   const allTypes = allFieldTypeIconOptions.filter((v) => v.value !== FieldType.trace);
+  const timeZoneOptions: Array<SelectableValue<string>> = getTimezoneOptions(true);
+
+  // Format timezone options
+  const tzs = getTimeZones();
+  timeZoneOptions.push({ label: 'Browser', value: 'browser' });
+  timeZoneOptions.push({ label: 'UTC', value: 'utc' });
+  for (const tz of tzs) {
+    timeZoneOptions.push({ label: tz, value: tz });
+  }
 
   const onSelectField = useCallback(
     (idx: number) => (value: string | undefined) => {
@@ -90,6 +104,18 @@ export const ConvertFieldTypeTransformerEditor = ({
     [onChange, options]
   );
 
+  const onTzChange = useCallback(
+    (idx: number) => (value: SelectableValue<string>) => {
+      const conversions = options.conversions;
+      conversions[idx] = { ...conversions[idx], timezone: value?.value };
+      onChange({
+        ...options,
+        conversions: conversions,
+      });
+    },
+    [onChange, options]
+  );
+
   return (
     <>
       {options.conversions.map((c: ConvertFieldTypeOptions, idx: number) => {
@@ -128,14 +154,19 @@ export const ConvertFieldTypeTransformerEditor = ({
               )}
               {c.destinationType === FieldType.string &&
                 (c.dateFormat || findField(input?.[0], c.targetField)?.type === FieldType.time) && (
-                  <InlineField label="Date format" tooltip="Specify the output format.">
-                    <Input
-                      value={c.dateFormat}
-                      placeholder={'e.g. YYYY-MM-DD'}
-                      onChange={onInputFormat(idx)}
-                      width={24}
-                    />
-                  </InlineField>
+                  <>
+                    <InlineField label="Date format" tooltip="Specify the output format.">
+                      <Input
+                        value={c.dateFormat}
+                        placeholder={'e.g. YYYY-MM-DD'}
+                        onChange={onInputFormat(idx)}
+                        width={24}
+                      />
+                    </InlineField>
+                    <InlineField label="Set timezone" tooltip="Set the timezone of the date manually">
+                      <Select options={timeZoneOptions} value={c.timezone} onChange={onTzChange(idx)} isClearable />
+                    </InlineField>
+                  </>
                 )}
               <Button
                 size="md"
@@ -145,12 +176,8 @@ export const ConvertFieldTypeTransformerEditor = ({
                 aria-label={'Remove convert field type transformer'}
               />
             </InlineFieldRow>
-            {c.destinationType === FieldType.enum && hasAlphaPanels && (
-              <InlineFieldRow>
-                <InlineField label={''} labelWidth={6}>
-                  <div>TODO... show options here (alpha panels enabled)</div>
-                </InlineField>
-              </InlineFieldRow>
+            {c.destinationType === FieldType.enum && (
+              <EnumMappingEditor input={input} options={options} transformIndex={idx} onChange={onChange} />
             )}
           </div>
         );
@@ -175,4 +202,5 @@ export const convertFieldTypeTransformRegistryItem: TransformerRegistryItem<Conv
   name: standardTransformers.convertFieldTypeTransformer.name,
   description: standardTransformers.convertFieldTypeTransformer.description,
   categories: new Set([TransformerCategory.Reformat]),
+  help: getTransformationContent(DataTransformerID.convertFieldType).helperDocs,
 };

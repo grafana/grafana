@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng/proxyutil"
 	mssql "github.com/microsoft/go-mssqldb"
@@ -14,8 +15,16 @@ import (
 
 func TestMSSQLProxyDriver(t *testing.T) {
 	settings := proxyutil.SetupTestSecureSocksProxySettings(t)
+	proxySettings := setting.SecureSocksDSProxySettings{
+		Enabled:      true,
+		ClientCert:   settings.ClientCert,
+		ClientKey:    settings.ClientKey,
+		RootCA:       settings.RootCA,
+		ProxyAddress: settings.ProxyAddress,
+		ServerName:   settings.ServerName,
+	}
 	dialect := "mssql"
-	opts := proxyutil.GetSQLProxyOptions(sqleng.DataSourceInfo{UID: "1", JsonData: sqleng.JsonData{SecureDSProxy: true}})
+	opts := proxyutil.GetSQLProxyOptions(proxySettings, sqleng.DataSourceInfo{UID: "1", JsonData: sqleng.JsonData{SecureDSProxy: true}})
 	cnnstr := "server=127.0.0.1;port=1433;user id=sa;password=yourStrong(!)Password;database=db"
 	driverName, err := createMSSQLProxyDriver(cnnstr, "127.0.0.1", opts)
 	require.NoError(t, err)

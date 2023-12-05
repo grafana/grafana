@@ -50,13 +50,16 @@ export function NodeGraphSettings({ options, onOptionsChange }: Props) {
 }
 
 export const NodeGraphSection = ({ options, onOptionsChange }: DataSourcePluginOptionsEditorProps) => {
+  let suffix = options.type;
+  suffix += options.type === 'tempo' ? '/configure-tempo-data-source/#node-graph' : '/#node-graph';
+
   return (
     <ConfigSubSection
       title="Node graph"
       description={
         <ConfigDescriptionLink
           description="Show or hide the node graph visualization."
-          suffix={`${options.type}/#node-graph`}
+          suffix={suffix}
           feature="the node graph"
         />
       }
@@ -67,17 +70,17 @@ export const NodeGraphSection = ({ options, onOptionsChange }: DataSourcePluginO
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  infoText: css`
-    label: infoText;
-    padding-bottom: ${theme.spacing(2)};
-    color: ${theme.colors.text.secondary};
-  `,
-  container: css`
-    label: container;
-    width: 100%;
-  `,
-  row: css`
-    label: row;
-    align-items: baseline;
-  `,
+  infoText: css({
+    label: 'infoText',
+    paddingBottom: theme.spacing(2),
+    color: theme.colors.text.secondary,
+  }),
+  container: css({
+    label: 'container',
+    width: '100%',
+  }),
+  row: css({
+    label: 'row',
+    alignItems: 'baseline',
+  }),
 });

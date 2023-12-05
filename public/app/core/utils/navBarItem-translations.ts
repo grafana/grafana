@@ -21,7 +21,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'import':
       return t('nav.create-import.title', 'Import dashboard');
     case 'alert':
-      return t('nav.create-alert.title', 'Create alert rule');
+      return t('nav.create-alert.title', 'New alert rule');
     case 'starred':
       return t('nav.starred.title', 'Starred');
     case 'starred-empty':
@@ -74,6 +74,12 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.alerting-admin.title', 'Admin');
     case 'cfg':
       return t('nav.config.title', 'Administration');
+    case 'cfg/general':
+      return t('nav.config-general.title', 'General');
+    case 'cfg/plugins':
+      return t('nav.config-plugins.title', 'Plugins and data');
+    case 'cfg/access':
+      return t('nav.config-access.title', 'Users and access');
     case 'datasources':
       return t('nav.datasources.title', 'Data sources');
     case 'authentication':
@@ -112,6 +118,10 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.upgrading.title', 'Stats and license');
     case 'monitoring':
       return t('nav.monitoring.title', 'Observability');
+    case 'infrastructure':
+      return t('nav.infrastructure.title', 'Infrastructure');
+    case 'frontend':
+      return t('nav.frontend.title', 'Frontend');
     case 'apps':
       return t('nav.apps.title', 'Apps');
     case 'alerts-and-incidents':
@@ -129,11 +139,11 @@ export function getNavTitle(navId: string | undefined) {
     case 'plugin-page-grafana-k8s-app':
       return t('nav.kubernetes.title', 'Kubernetes');
     case 'plugin-page-grafana-app-observability-app':
-      return t('nav.application.title', 'Application (preview)');
+      return t('nav.application.title', 'Application');
     case 'plugin-page-grafana-pyroscope-app':
       return t('nav.profiles.title', 'Profiles');
     case 'plugin-page-grafana-kowalski-app':
-      return t('nav.frontend.title', 'Frontend');
+      return t('nav.frontend-app.title', 'Frontend');
     case 'plugin-page-grafana-synthetic-monitoring-app':
       return t('nav.synthetics.title', 'Synthetics');
     case 'help':
@@ -155,7 +165,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'connections-datasources':
       return t('nav.data-sources.title', 'Data sources');
     case 'standalone-plugin-page-/connections/infrastructure':
-      return t('nav.infrastructure.title', 'Integrations');
+      return t('nav.integrations.title', 'Integrations');
     case 'standalone-plugin-page-/connections/connect-data':
       return t('nav.connect-data.title', 'Connect data');
     case 'plugin-page-grafana-detect-app':
@@ -230,10 +240,20 @@ export function getNavSubTitle(navId: string | undefined) {
         'nav.admin.subtitle',
         'Manage server-wide settings and access to resources such as organizations, users, and licenses'
       );
+    case 'cfg/general':
+      return t('nav.config-general.subtitle', 'Manage default preferences and settings across Grafana');
+    case 'cfg/plugins':
+      return t('nav.config-plugins.subtitle', 'Install plugins and define the relationships between data');
+    case 'cfg/access':
+      return t('nav.config-access.subtitle', 'Configure access for individual users, teams, and service accounts');
     case 'apps':
       return t('nav.apps.subtitle', 'App plugins that extend the Grafana experience');
     case 'monitoring':
-      return t('nav.monitoring.subtitle', 'Monitoring and infrastructure apps');
+      return t('nav.monitoring.subtitle', 'Out-of-the-box observability solutions');
+    case 'infrastructure':
+      return t('nav.infrastructure.subtitle', "Understand your infrastructure's health");
+    case 'frontend':
+      return t('nav.frontend.subtitle', 'Gain real user monitoring insights');
     case 'alerts-and-incidents':
       return t('nav.alerts-and-incidents.subtitle', 'Alerting and incident management apps');
     case 'connections-add-new-connection':

@@ -52,8 +52,10 @@ interface PanelWithExportableLibraryPanel {
   libraryPanel: LibraryPanel;
 }
 
-function isExportableLibraryPanel(p: any): p is PanelWithExportableLibraryPanel {
-  return p.libraryPanel && typeof p.libraryPanel.name === 'string' && typeof p.libraryPanel.uid === 'string';
+function isExportableLibraryPanel(
+  p: PanelModel | PanelWithExportableLibraryPanel
+): p is PanelWithExportableLibraryPanel {
+  return Boolean(p.libraryPanel?.name && p.libraryPanel?.uid);
 }
 
 interface DataSources {
@@ -83,7 +85,7 @@ export class DashboardExporter {
     // this is pretty hacky and needs to be changed
     dashboard.cleanUpRepeats();
 
-    const saveModel = dashboard.getSaveModelClone();
+    const saveModel = dashboard.getSaveModelCloneOld();
     saveModel.id = null;
 
     // undo repeat cleanup

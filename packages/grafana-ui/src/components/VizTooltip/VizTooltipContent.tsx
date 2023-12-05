@@ -3,15 +3,16 @@ import React, { ReactElement } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { HorizontalGroup } from '..';
 import { useStyles2 } from '../../themes';
 
+import { VizTooltipRow } from './VizTooltipRow';
 import { LabelValue } from './types';
 
 interface Props {
   contentLabelValue: LabelValue[];
   customContent?: ReactElement | null;
 }
+
 export const VizTooltipContent = ({ contentLabelValue, customContent }: Props) => {
   const styles = useStyles2(getStyles);
 
@@ -19,11 +20,19 @@ export const VizTooltipContent = ({ contentLabelValue, customContent }: Props) =
     <div className={styles.wrapper}>
       <div>
         {contentLabelValue?.map((labelValue, i) => {
+          const { label, value, color, colorIndicator, colorPlacement, isActive } = labelValue;
           return (
-            <HorizontalGroup justify="space-between" spacing="lg" key={i}>
-              <div className={styles.label}>{labelValue.label}</div>
-              <div className={styles.value}>{labelValue.value}</div>
-            </HorizontalGroup>
+            <VizTooltipRow
+              key={i}
+              label={label}
+              value={value}
+              color={color}
+              colorIndicator={colorIndicator}
+              colorPlacement={colorPlacement}
+              colorFirst={false}
+              isActive={isActive}
+              justify={'space-between'}
+            />
           );
         })}
       </div>
@@ -39,16 +48,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: 1,
     gap: 4,
     borderTop: `1px solid ${theme.colors.border.medium}`,
-    padding: `${theme.spacing(1)} 0`,
+    padding: theme.spacing(1),
   }),
   customContentPadding: css({
     padding: `${theme.spacing(1)} 0`,
-  }),
-  label: css({
-    color: theme.colors.text.secondary,
-    fontWeight: 400,
-  }),
-  value: css({
-    fontWeight: 500,
   }),
 });

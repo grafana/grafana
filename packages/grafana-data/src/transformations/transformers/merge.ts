@@ -3,7 +3,7 @@ import { map } from 'rxjs/operators';
 
 import { MutableDataFrame } from '../../dataframe';
 import { DataFrame, Field } from '../../types/dataFrame';
-import { DataTransformerInfo } from '../../types/transformations';
+import { DataTransformerInfo, TransformationApplicabilityLevels } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
 
@@ -19,6 +19,14 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
   name: 'Merge series/tables',
   description: 'Merges multiple series/tables into a single serie/table',
   defaultOptions: {},
+  isApplicable: (data: DataFrame[]) => {
+    return data.length > 1
+      ? TransformationApplicabilityLevels.Applicable
+      : TransformationApplicabilityLevels.NotApplicable;
+  },
+  isApplicableDescription: (data: DataFrame[]) => {
+    return `The merge transformation requires at least 2 data series to work. There is currently ${data.length} data series.`;
+  },
   operator: (options) => (source) =>
     source.pipe(
       map((dataFrames) => {

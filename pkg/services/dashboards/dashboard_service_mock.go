@@ -64,20 +64,6 @@ func (_m *FakeDashboardService) CountInFolder(ctx context.Context, orgID int64, 
 	return r0, r1
 }
 
-// DeleteACLByUser provides a mock function with given fields: ctx, userID
-func (_m *FakeDashboardService) DeleteACLByUser(ctx context.Context, userID int64) error {
-	ret := _m.Called(ctx, userID)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64) error); ok {
-		r0 = rf(ctx, userID)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // DeleteDashboard provides a mock function with given fields: ctx, dashboardId, orgId
 func (_m *FakeDashboardService) DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error {
 	ret := _m.Called(ctx, dashboardId, orgId)
@@ -136,32 +122,6 @@ func (_m *FakeDashboardService) GetDashboard(ctx context.Context, query *GetDash
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *GetDashboardQuery) error); ok {
-		r1 = rf(ctx, query)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetDashboardACLInfoList provides a mock function with given fields: ctx, query
-func (_m *FakeDashboardService) GetDashboardACLInfoList(ctx context.Context, query *GetDashboardACLInfoListQuery) ([]*DashboardACLInfoDTO, error) {
-	ret := _m.Called(ctx, query)
-
-	var r0 []*DashboardACLInfoDTO
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *GetDashboardACLInfoListQuery) ([]*DashboardACLInfoDTO, error)); ok {
-		return rf(ctx, query)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *GetDashboardACLInfoListQuery) []*DashboardACLInfoDTO); ok {
-		r0 = rf(ctx, query)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*DashboardACLInfoDTO)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *GetDashboardACLInfoListQuery) error); ok {
 		r1 = rf(ctx, query)
 	} else {
 		r1 = ret.Error(1)
@@ -324,20 +284,6 @@ func (_m *FakeDashboardService) SearchDashboards(ctx context.Context, query *Fin
 	}
 
 	return r0, r1
-}
-
-// UpdateDashboardACL provides a mock function with given fields: ctx, uid, items
-func (_m *FakeDashboardService) UpdateDashboardACL(ctx context.Context, uid int64, items []*DashboardACL) error {
-	ret := _m.Called(ctx, uid, items)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, []*DashboardACL) error); ok {
-		r0 = rf(ctx, uid, items)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
 }
 
 type mockConstructorTestingTNewFakeDashboardService interface {

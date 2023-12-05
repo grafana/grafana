@@ -99,3 +99,6 @@ func (f *FakeOrgService) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUs
 func (f *FakeOrgService) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
 	return f.ExpectedSearchOrgUsersResult, f.ExpectedError
 }
+
+func (f *FakeOrgService) RegisterDelete(query string) {
+}

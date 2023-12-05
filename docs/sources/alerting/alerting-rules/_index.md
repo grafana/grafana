@@ -13,7 +13,7 @@ labels:
     - oss
 menuTitle: Configure
 title: Configure Alerting
-weight: 130
+weight: 120
 ---
 
 # Configure Alerting

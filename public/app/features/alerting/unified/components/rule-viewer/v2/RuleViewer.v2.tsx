@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 
-import { Stack } from '@grafana/experimental';
-import { Alert, Button, Icon, LoadingPlaceholder, Tab, TabContent, TabsBar, Text } from '@grafana/ui';
+import { Alert, Button, Icon, LoadingPlaceholder, Tab, TabContent, TabsBar, Text, Stack } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 
@@ -34,9 +33,9 @@ enum Tabs {
 // figure out why we needed <AlertingPageWrapper>
 // add provisioning and federation stuff back in
 const RuleViewer = ({ match }: RuleViewerProps) => {
-  const { id } = match.params;
   const [activeTab, setActiveTab] = useState<Tabs>(Tabs.Instances);
 
+  const id = ruleId.getRuleIdFromPathname(match.params);
   const identifier = useMemo(() => {
     if (!id) {
       throw new Error('Rule ID is required');

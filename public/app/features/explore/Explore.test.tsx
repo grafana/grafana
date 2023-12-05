@@ -8,6 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { getPluginLinkExtensions } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
+import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineContext';
 import { Explore, Props } from './Explore';
 import { initialExploreState } from './state/main';
 import { scanStopAction } from './state/query';
@@ -141,7 +142,9 @@ const setup = (overrideProps?: Partial<Props>) => {
 
   return render(
     <TestProvider store={store}>
-      <Explore {...exploreProps} />
+      <ContentOutlineContextProvider>
+        <Explore {...exploreProps} />
+      </ContentOutlineContextProvider>
     </TestProvider>
   );
 };

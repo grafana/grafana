@@ -51,6 +51,7 @@ import {
   Without,
   BinOpModifier,
   OnOrIgnoringModifier,
+  OrFilter,
 } from '@grafana/lezer-logql';
 
 import {
@@ -259,7 +260,7 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
 function getLabel(expr: string, node: SyntaxNode): QueryBuilderLabelFilter {
   const labelNode = node.getChild(Identifier);
   const label = getString(expr, labelNode);
-  const op = getString(expr, labelNode!.nextSibling);
+  const op = getString(expr, labelNode?.nextSibling);
   let value = getString(expr, node.getChild(String));
   // `value` is wrapped in double quotes, so we need to remove them. As a value can contain double quotes, we can't use RegEx here.
   value = value.substring(1, value.length - 1);
@@ -275,7 +276,6 @@ function getLineFilter(expr: string, node: SyntaxNode): GetOperationResult {
   const filter = getString(expr, node.getChild(Filter));
   const filterExpr = handleQuotes(getString(expr, node.getChild(String)));
   const ipLineFilter = node.getChild(FilterOp)?.getChild(Ip);
-
   if (ipLineFilter) {
     return {
       operation: {
@@ -284,6 +284,14 @@ function getLineFilter(expr: string, node: SyntaxNode): GetOperationResult {
       },
     };
   }
+
+  const params = [filterExpr];
+  let orFilter = node.getChild(OrFilter);
+  while (orFilter) {
+    params.push(handleQuotes(getString(expr, orFilter.getChild(String))));
+    orFilter = orFilter.getChild(OrFilter);
+  }
+
   const mapFilter: Record<string, LokiOperationId> = {
     '|=': LokiOperationId.LineContains,
     '!=': LokiOperationId.LineContainsNot,
@@ -294,7 +302,7 @@ function getLineFilter(expr: string, node: SyntaxNode): GetOperationResult {
   return {
     operation: {
       id: mapFilter[filter],
-      params: [filterExpr],
+      params,
     },
   };
 }

@@ -47,7 +47,7 @@ func TestFoldersCreateAPIEndpoint(t *testing.T) {
 			description:    "folder creation succeeds given the correct request for creating a folder",
 			input:          folderWithoutParentInput,
 			expectedCode:   http.StatusOK,
-			expectedFolder: &folder.Folder{ID: 1, UID: "uid", Title: "Folder"},
+			expectedFolder: &folder.Folder{ID: 1, UID: "uid", Title: "Folder"}, // nolint:staticcheck
 			permissions:    []accesscontrol.Permission{{Action: dashboards.ActionFoldersCreate}},
 		},
 		{
@@ -145,6 +145,7 @@ func TestFoldersCreateAPIEndpoint(t *testing.T) {
 			require.NoError(t, resp.Body.Close())
 
 			if tc.expectedCode == http.StatusOK {
+				// nolint:staticcheck
 				assert.Equal(t, int64(1), folder.Id)
 				assert.Equal(t, "uid", folder.Uid)
 				assert.Equal(t, "Folder", folder.Title)
@@ -168,7 +169,7 @@ func TestFoldersUpdateAPIEndpoint(t *testing.T) {
 		{
 			description:    "folder updating succeeds given the correct request and permissions to update a folder",
 			expectedCode:   http.StatusOK,
-			expectedFolder: &folder.Folder{ID: 1, UID: "uid", Title: "Folder upd"},
+			expectedFolder: &folder.Folder{ID: 1, UID: "uid", Title: "Folder upd"}, // nolint:staticcheck
 			permissions:    []accesscontrol.Permission{{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll}},
 		},
 		{
@@ -249,6 +250,7 @@ func TestFoldersUpdateAPIEndpoint(t *testing.T) {
 			require.NoError(t, resp.Body.Close())
 
 			if tc.expectedCode == http.StatusOK {
+				// nolint:staticcheck
 				assert.Equal(t, int64(1), folder.Id)
 				assert.Equal(t, "uid", folder.Uid)
 				assert.Equal(t, "Folder upd", folder.Title)
@@ -419,7 +421,7 @@ func TestFolderMoveAPIEndpoint(t *testing.T) {
 func TestFolderGetAPIEndpoint(t *testing.T) {
 	folderService := &foldertest.FakeService{
 		ExpectedFolder: &folder.Folder{
-			ID:    1,
+			ID:    1, // nolint:staticcheck
 			UID:   "uid",
 			Title: "uid title",
 		},

@@ -1,12 +1,14 @@
 import * as emotion from '@emotion/css';
 import * as emotionReact from '@emotion/react';
 import * as d3 from 'd3';
+import * as i18next from 'i18next';
 import jquery from 'jquery';
 import _ from 'lodash'; // eslint-disable-line lodash/import-scope
 import moment from 'moment'; // eslint-disable-line no-restricted-imports
 import prismjs from 'prismjs';
 import react from 'react';
 import reactDom from 'react-dom';
+import * as reactInlineSvg from 'react-inlinesvg';
 import * as reactRedux from 'react-redux'; // eslint-disable-line no-restricted-imports
 import * as reactRouterDom from 'react-router-dom';
 import * as reactRouterCompat from 'react-router-dom-v5-compat';
@@ -100,6 +102,8 @@ export const sharedDependenciesMap: Record<string, System.Module> = {
   },
   d3: d3,
   emotion: emotion,
+  // bundling grafana-ui in plugins requires sharing i18next state
+  i18next: i18next,
   jquery: {
     default: jquery,
     __useDefault: true,
@@ -116,6 +120,8 @@ export const sharedDependenciesMap: Record<string, System.Module> = {
   prismjs: prismjs,
   react: react,
   'react-dom': reactDom,
+  // bundling grafana-ui in plugins requires sharing react-inlinesvg for the icon cache
+  'react-inlinesvg': reactInlineSvg,
   'react-redux': reactRedux,
   // Migration - React Router v5 -> v6
   // =================================

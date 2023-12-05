@@ -1,6 +1,8 @@
 import { SelectableValue, WithAccessControlMetadata } from '@grafana/data';
+import { Role } from 'app/types';
 
 import { OrgRole } from '.';
+
 export interface OrgUser extends WithAccessControlMetadata {
   avatarUrl: string;
   email: string;
@@ -10,6 +12,8 @@ export interface OrgUser extends WithAccessControlMetadata {
   name: string;
   orgId: number;
   role: OrgRole;
+  // RBAC roles
+  roles?: Role[];
   userId: number;
   isDisabled: boolean;
   authLabels?: string[];
@@ -76,6 +80,7 @@ export interface UsersState {
   externalUserMngLinkName: string;
   externalUserMngInfo: string;
   isLoading: boolean;
+  rolesLoading?: boolean;
   page: number;
   perPage: number;
   totalPages: number;
@@ -125,4 +130,18 @@ export interface UserListAdminState {
   filters: UserFilter[];
   isLoading: boolean;
   sort?: string;
+}
+
+export interface UserAnonymousDeviceDTO {
+  login?: string;
+  clientIp: string;
+  deviceId: string;
+  userAgent: string;
+  updatedAt: string;
+  lastSeenAt: string;
+  avatarUrl?: string;
+}
+
+export interface UserListAnonymousDevicesState {
+  devices: UserAnonymousDeviceDTO[];
 }

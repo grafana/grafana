@@ -1,4 +1,4 @@
-import { HeaderLabelValueStyles } from './VizTooltipHeaderLabelValue';
+import { ColorIndicatorStyles } from './VizTooltipColorIndicator';
 import { ColorIndicator } from './types';
 
 export const calculateTooltipPosition = (
@@ -42,7 +42,7 @@ export const calculateTooltipPosition = (
   return { x, y };
 };
 
-export const getColorIndicatorClass = (colorIndicator: string, styles: HeaderLabelValueStyles) => {
+export const getColorIndicatorClass = (colorIndicator: string, styles: ColorIndicatorStyles) => {
   switch (colorIndicator) {
     case ColorIndicator.value:
       return styles.value;

@@ -14,6 +14,8 @@ type Service interface {
 	GetPluginArchiveByURL(ctx context.Context, archiveURL string, opts CompatOpts) (*PluginArchive, error)
 	// GetPluginArchiveInfo fetches information needed for downloading the requested plugin.
 	GetPluginArchiveInfo(ctx context.Context, pluginID, version string, opts CompatOpts) (*PluginArchiveInfo, error)
+	// PluginVersion will return plugin version based on the requested information.
+	PluginVersion(pluginID, version string, compatOpts CompatOpts) (VersionData, error)
 }
 
 type CompatOpts struct {

@@ -13,6 +13,8 @@ import { ReduceTransformerMode, ReduceTransformerOptions } from '@grafana/data/s
 import { selectors } from '@grafana/e2e-selectors';
 import { InlineField, Select, StatsPicker, InlineSwitch } from '@grafana/ui';
 
+import { getTransformationContent } from '../docs/getTransformationContent';
+
 // TODO:  Minimal implementation, needs some <3
 export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProps<ReduceTransformerOptions>) => {
   const modes: Array<SelectableValue<ReduceTransformerMode>> = [
@@ -56,7 +58,7 @@ export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProp
 
   return (
     <>
-      <InlineField label="Mode" aria-label={selectors.components.Transforms.Reduce.modeLabel} grow labelWidth={16}>
+      <InlineField label="Mode" data-testid={selectors.components.Transforms.Reduce.modeLabel} grow labelWidth={16}>
         <Select
           options={modes}
           value={modes.find((v) => v.value === options.mode) || modes[0]}
@@ -65,7 +67,7 @@ export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProp
       </InlineField>
       <InlineField
         label="Calculations"
-        aria-label={selectors.components.Transforms.Reduce.calculationsLabel}
+        data-testid={selectors.components.Transforms.Reduce.calculationsLabel}
         grow
         labelWidth={16}
       >
@@ -102,4 +104,5 @@ export const reduceTransformRegistryItem: TransformerRegistryItem<ReduceTransfor
   name: standardTransformers.reduceTransformer.name,
   description: standardTransformers.reduceTransformer.description,
   categories: new Set([TransformerCategory.CalculateNewFields]),
+  help: getTransformationContent(DataTransformerID.reduce).helperDocs,
 };

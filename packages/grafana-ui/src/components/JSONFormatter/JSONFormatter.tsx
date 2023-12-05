@@ -7,7 +7,7 @@ interface Props {
   json: {};
   config?: JsonExplorerConfig;
   open?: number;
-  onDidRender?: (formattedJson: any) => void;
+  onDidRender?: (formattedJson: {}) => void;
 }
 
 export class JSONFormatter extends PureComponent<Props> {

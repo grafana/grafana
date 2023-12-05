@@ -151,6 +151,21 @@ describe('ToolbarExtensionPoint', () => {
       });
     });
 
+    it('should pass a context with correct timeZone when fetching extensions', async () => {
+      const targets = [{ refId: 'A' }];
+      const data = createEmptyQueryResponse();
+
+      renderWithExploreStore(<ToolbarExtensionPoint exploreId="left" timeZone="" splitted={false} />, {
+        targets,
+        data,
+      });
+
+      const [options] = getPluginLinkExtensionsMock.mock.calls[0];
+      const { context } = options;
+
+      expect(context).toHaveProperty('timeZone', 'browser');
+    });
+
     it('should correct extension point id when fetching extensions', async () => {
       renderWithExploreStore(<ToolbarExtensionPoint exploreId="left" timeZone="browser" splitted={false} />);
 

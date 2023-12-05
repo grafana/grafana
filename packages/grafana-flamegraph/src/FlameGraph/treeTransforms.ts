@@ -91,6 +91,7 @@ export function mergeSubtrees(
       children: [],
       parents: [],
       start: 0,
+      level: args.level,
     };
 
     levels[args.level] = levels[args.level] || [];
@@ -119,6 +120,11 @@ export function mergeSubtrees(
   // Reverse the levels if we are doing callers tree, so we return levels in the correct order.
   if (direction === 'parents') {
     levels.reverse();
+    levels.forEach((level, index) => {
+      level.forEach((item) => {
+        item.level = index;
+      });
+    });
   }
 
   return levels;

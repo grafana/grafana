@@ -1,18 +1,20 @@
+import { parser } from '@grafana/lezer-logql';
+
 import { validateQuery } from './validation';
 
 describe('Monaco Query Validation', () => {
   test('Identifies empty queries as valid', () => {
-    expect(validateQuery('', '', [])).toBeFalsy();
+    expect(validateQuery('', '', [], parser)).toBeFalsy();
   });
 
   test('Identifies valid queries', () => {
     const query = '{place="luna"}';
-    expect(validateQuery(query, query, [])).toBeFalsy();
+    expect(validateQuery(query, query, [], parser)).toBeFalsy();
   });
 
   test('Validates logs queries', () => {
     let query = '{place="incomplete"';
-    expect(validateQuery(query, query, [query])).toEqual([
+    expect(validateQuery(query, query, [query], parser)).toEqual([
       {
         endColumn: 20,
         endLineNumber: 1,
@@ -23,7 +25,7 @@ describe('Monaco Query Validation', () => {
     ]);
 
     query = '{place="luna"} | notaparser';
-    expect(validateQuery(query, query, [query])).toEqual([
+    expect(validateQuery(query, query, [query], parser)).toEqual([
       {
         endColumn: 28,
         endLineNumber: 1,
@@ -34,7 +36,7 @@ describe('Monaco Query Validation', () => {
     ]);
 
     query = '{place="luna"} | logfmt |';
-    expect(validateQuery(query, query, [query])).toEqual([
+    expect(validateQuery(query, query, [query], parser)).toEqual([
       {
         endColumn: 26,
         endLineNumber: 1,
@@ -47,7 +49,7 @@ describe('Monaco Query Validation', () => {
 
   test('Validates metric queries', () => {
     let query = 'sum(count_over_time({place="luna" | unwrap request_time [5m])) by (level)';
-    expect(validateQuery(query, query, [query])).toEqual([
+    expect(validateQuery(query, query, [query], parser)).toEqual([
       {
         endColumn: 35,
         endLineNumber: 1,
@@ -58,7 +60,7 @@ describe('Monaco Query Validation', () => {
     ]);
 
     query = 'sum(count_over_time({place="luna"} | unwrap [5m])) by (level)';
-    expect(validateQuery(query, query, [query])).toEqual([
+    expect(validateQuery(query, query, [query], parser)).toEqual([
       {
         endColumn: 45,
         endLineNumber: 1,
@@ -69,7 +71,7 @@ describe('Monaco Query Validation', () => {
     ]);
 
     query = 'sum()';
-    expect(validateQuery(query, query, [query])).toEqual([
+    expect(validateQuery(query, query, [query], parser)).toEqual([
       {
         endColumn: 5,
         endLineNumber: 1,
@@ -88,7 +90,7 @@ describe('Monaco Query Validation', () => {
 unpack fail
 |= "a"`;
     const queryLines = query.split('\n');
-    expect(validateQuery(query, query, queryLines)).toEqual([
+    expect(validateQuery(query, query, queryLines, parser)).toEqual([
       {
         endColumn: 12,
         endLineNumber: 5,

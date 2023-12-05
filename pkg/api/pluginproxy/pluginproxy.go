@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"net/url"
 
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -17,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/grafana/grafana/pkg/web"
-	"go.opentelemetry.io/otel/attribute"
 )
 
 type PluginProxy struct {
@@ -161,7 +162,7 @@ func (proxy PluginProxy) director(req *http.Request) {
 
 	proxyutil.ApplyUserHeader(proxy.cfg.SendUserHeader, req, proxy.ctx.SignedInUser)
 
-	if proxy.features.IsEnabled(featuremgmt.FlagIdForwarding) {
+	if proxy.features.IsEnabled(req.Context(), featuremgmt.FlagIdForwarding) {
 		proxyutil.ApplyForwardIDHeader(req, proxy.ctx.SignedInUser)
 	}
 

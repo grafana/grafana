@@ -63,4 +63,5 @@ export {
   type PluginExtensionEventHelpers,
   type PluginExtensionPanelContext,
   type PluginExtensionDataSourceConfigContext,
+  type PluginExtensionOpenModalOptions,
 } from './pluginExtensions';

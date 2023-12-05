@@ -125,14 +125,14 @@ describe('LinksSettings', () => {
     // Checking the original order
     assertRowHasText(0, links[0].title);
     assertRowHasText(1, links[1].title);
-    assertRowHasText(2, links[2].url);
+    assertRowHasText(2, links[2].url!);
 
     await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'Move link down' })[0]);
     await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'Move link down' })[1]);
     await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'Move link up' })[0]);
 
     // Checking if it has changed the sorting accordingly
-    assertRowHasText(0, links[2].url);
+    assertRowHasText(0, links[2].url!);
     assertRowHasText(1, links[1].title);
     assertRowHasText(2, links[0].title);
   });

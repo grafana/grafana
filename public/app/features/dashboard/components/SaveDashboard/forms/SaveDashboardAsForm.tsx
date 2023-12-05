@@ -3,7 +3,7 @@ import React, { ChangeEvent } from 'react';
 import { config } from '@grafana/runtime';
 import { Button, Input, Switch, Form, Field, InputControl, HorizontalGroup, Label, TextArea } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
 import { GenAIDashDescriptionButton } from '../../GenAI/GenAIDashDescriptionButton';
@@ -26,11 +26,14 @@ const getSaveAsDashboardClone = (dashboard: DashboardModel) => {
 
   // remove alerts if source dashboard is already persisted
   // do not want to create alert dupes
-  if (dashboard.id > 0) {
-    clone.panels.forEach((panel: PanelModel) => {
+  if (dashboard.id > 0 && clone.panels) {
+    clone.panels.forEach((panel) => {
+      // @ts-expect-error
       if (panel.type === 'graph' && panel.alert) {
+        // @ts-expect-error
         delete panel.thresholds;
       }
+      // @ts-expect-error
       delete panel.alert;
     });
   }

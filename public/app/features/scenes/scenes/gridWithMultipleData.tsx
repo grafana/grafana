@@ -7,7 +7,7 @@ import {
   SceneGridItem,
   PanelBuilders,
 } from '@grafana/scenes';
-import { TestDataQueryType } from 'app/plugins/datasource/grafana-testdata-datasource/dataquery.gen';
+import { TestDataQueryType } from '@grafana-plugins/grafana-testdata-datasource/dataquery.gen';
 
 import { DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
 

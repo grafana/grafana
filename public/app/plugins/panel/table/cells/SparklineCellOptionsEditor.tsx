@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 
-import { createFieldConfigRegistry } from '@grafana/data';
+import { createFieldConfigRegistry, SetFieldConfigOptionsArgs } from '@grafana/data';
 import { GraphFieldConfig, TableSparklineCellOptions } from '@grafana/schema';
 import { VerticalGroup, Field, useStyles2 } from '@grafana/ui';
 import { defaultSparklineCellConfig } from '@grafana/ui/src/components/Table/SparklineCell';
@@ -11,7 +11,8 @@ import { TableCellEditorProps } from '../TableCellOptionEditor';
 
 type OptionKey = keyof TableSparklineCellOptions;
 
-const optionIds: Array<keyof GraphFieldConfig> = [
+const optionIds: Array<keyof TableSparklineCellOptions> = [
+  'hideValue',
   'drawStyle',
   'lineInterpolation',
   'barAlignment',
@@ -24,11 +25,25 @@ const optionIds: Array<keyof GraphFieldConfig> = [
   'pointSize',
 ];
 
+function getChartCellConfig(cfg: GraphFieldConfig): SetFieldConfigOptionsArgs<GraphFieldConfig> {
+  const graphFieldConfig = getGraphFieldConfig(cfg);
+  return {
+    ...graphFieldConfig,
+    useCustomConfig: (builder) => {
+      graphFieldConfig.useCustomConfig?.(builder);
+      builder.addBooleanSwitch({
+        path: 'hideValue',
+        name: 'Hide value',
+      });
+    },
+  };
+}
+
 export const SparklineCellOptionsEditor = (props: TableCellEditorProps<TableSparklineCellOptions>) => {
   const { cellOptions, onChange } = props;
 
   const registry = useMemo(() => {
-    const config = getGraphFieldConfig(defaultSparklineCellConfig);
+    const config = getChartCellConfig(defaultSparklineCellConfig);
     return createFieldConfigRegistry(config, 'ChartCell');
   }, []);
 

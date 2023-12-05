@@ -3,11 +3,9 @@ import { merge } from 'lodash';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
 import { TableCellOptions } from '@grafana/schema';
 import { Field, Select, TableCellDisplayMode, useStyles2 } from '@grafana/ui';
 
-import { INTERACTION_EVENT_NAME, INTERACTION_ITEM } from './TablePanel';
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
 import { SparklineCellOptionsEditor } from './cells/SparklineCellOptionsEditor';
@@ -44,8 +42,6 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
         value = merge(value, settingCache[value.type]);
       }
 
-      reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.CELL_TYPE_CHANGE, type: value.type });
-
       onChange(value);
     }
   };
@@ -77,14 +73,9 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
   );
 };
 
-const SparklineDisplayModeOption: SelectableValue<TableCellOptions> = {
-  value: { type: TableCellDisplayMode.Sparkline },
-  label: 'Sparkline',
-};
-
 const cellDisplayModeOptions: Array<SelectableValue<TableCellOptions>> = [
   { value: { type: TableCellDisplayMode.Auto }, label: 'Auto' },
-  ...(config.featureToggles.timeSeriesTable ? [SparklineDisplayModeOption] : []),
+  { value: { type: TableCellDisplayMode.Sparkline }, label: 'Sparkline' },
   { value: { type: TableCellDisplayMode.ColorText }, label: 'Colored text' },
   { value: { type: TableCellDisplayMode.ColorBackground }, label: 'Colored background' },
   { value: { type: TableCellDisplayMode.Gauge }, label: 'Gauge' },

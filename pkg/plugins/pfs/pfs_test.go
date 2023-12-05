@@ -107,6 +107,10 @@ func TestParsePluginTestdata(t *testing.T) {
 			rootid:  "test-datasource",
 			subpath: "plugin",
 		},
+		"plugin-with-dist": {
+			rootid:  "test-datasource",
+			subpath: "plugin",
+		},
 		"no-rootfile": {
 			err: ErrNoRootFile,
 		},
@@ -121,6 +125,10 @@ func TestParsePluginTestdata(t *testing.T) {
 			err:  ErrInvalidLineage,
 			skip: "TODO implement BindOption in thema, SatisfiesJoinSchema, then use it here",
 		},
+		"pluginRootWithDist": {
+			err:  ErrNoRootFile,
+			skip: "This folder is used to test multiple plugins in the same folder",
+		},
 		"name-mismatch-panel": {
 			err: ErrInvalidGrafanaPluginInstance,
 		},
@@ -132,6 +140,9 @@ func TestParsePluginTestdata(t *testing.T) {
 			subpath: "plugin",
 		},
 		"external-registration": {
+			rootid: "grafana-test-datasource",
+		},
+		"oauth-external-registration": {
 			rootid: "grafana-test-datasource",
 		},
 	}

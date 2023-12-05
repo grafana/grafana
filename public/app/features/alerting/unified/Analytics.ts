@@ -4,6 +4,9 @@ import { getBackendSrv, logError } from '@grafana/runtime';
 import { config, reportInteraction } from '@grafana/runtime/src';
 import { contextSrv } from 'app/core/core';
 
+import { RuleNamespace } from '../../../types/unified-alerting';
+import { RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
+
 export const USER_CREATION_MIN_DAYS = 7;
 
 export const LogMessages = {
@@ -48,6 +51,78 @@ export function withPerformanceLogging<TFunc extends (...args: any[]) => Promise
     });
 
     return response;
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function withPromRulesMetadataLogging<TFunc extends (...args: any[]) => Promise<RuleNamespace[]>>(
+  func: TFunc,
+  message: string,
+  context: Record<string, string>
+) {
+  return async (...args: Parameters<TFunc>) => {
+    const startLoadingTs = performance.now();
+    const response = await func(...args);
+
+    const { namespacesCount, groupsCount, rulesCount } = getPromRulesMetadata(response);
+
+    logInfo(message, {
+      loadTimeMs: (performance.now() - startLoadingTs).toFixed(0),
+      namespacesCount,
+      groupsCount,
+      rulesCount,
+      ...context,
+    });
+    return response;
+  };
+}
+
+function getPromRulesMetadata(promRules: RuleNamespace[]) {
+  const namespacesCount = promRules.length;
+  const groupsCount = promRules.flatMap((ns) => ns.groups).length;
+  const rulesCount = promRules.flatMap((ns) => ns.groups).flatMap((g) => g.rules).length;
+
+  const metadata = {
+    namespacesCount: namespacesCount.toFixed(0),
+    groupsCount: groupsCount.toFixed(0),
+    rulesCount: rulesCount.toFixed(0),
+  };
+
+  return metadata;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function withRulerRulesMetadataLogging<TFunc extends (...args: any[]) => Promise<RulerRulesConfigDTO>>(
+  func: TFunc,
+  message: string,
+  context: Record<string, string>
+) {
+  return async (...args: Parameters<TFunc>) => {
+    const startLoadingTs = performance.now();
+    const response = await func(...args);
+
+    const { namespacesCount, groupsCount, rulesCount } = getRulerRulesMetadata(response);
+
+    logInfo(message, {
+      loadTimeMs: (performance.now() - startLoadingTs).toFixed(0),
+      namespacesCount,
+      groupsCount,
+      rulesCount,
+      ...context,
+    });
+    return response;
+  };
+}
+
+function getRulerRulesMetadata(rulerRules: RulerRulesConfigDTO) {
+  const namespacesCount = Object.keys(rulerRules).length;
+  const groups = Object.values(rulerRules).flatMap((groups) => groups);
+  const rules = groups.flatMap((group) => group.rules);
+
+  return {
+    namespacesCount: namespacesCount.toFixed(0),
+    groupsCount: groups.length.toFixed(0),
+    rulesCount: rules.length.toFixed(0),
   };
 }
 

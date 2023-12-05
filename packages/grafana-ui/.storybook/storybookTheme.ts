@@ -1,7 +1,7 @@
 import { GrafanaTheme2, createTheme } from '@grafana/data';
 //@ts-ignore
 import { create } from '@storybook/theming';
-import '../src/components/Icon/iconBundle';
+import '../../../public/app/core/icons/iconBundle';
 
 const createStorybookTheme = (theme: GrafanaTheme2) => {
   return create({

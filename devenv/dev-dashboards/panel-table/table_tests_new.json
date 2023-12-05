@@ -393,6 +393,10 @@
                 "value": {
                   "mode": "continuous-GrYlRd"
                 }
+              },
+              {
+                "id": "unit",
+                "value": "r/sec"
               }
             ]
           },
@@ -538,6 +542,10 @@
                   "fixedColor": "red",
                   "mode": "fixed"
                 }
+              },
+              {
+                "id": "unit",
+                "value": "r/sec"
               }
             ]
           },
@@ -563,6 +571,10 @@
                   "fixedColor": "purple",
                   "mode": "fixed"
                 }
+              },
+              {
+                "id": "unit",
+                "value": "ms"
               }
             ]
           },

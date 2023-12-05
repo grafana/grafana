@@ -34,6 +34,7 @@ export interface RudderstackBackendOptions {
   user?: CurrentUserDTO;
   sdkUrl?: string;
   configUrl?: string;
+  integrationsUrl?: string;
 }
 
 export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, RudderstackBackendOptions> {
@@ -68,7 +69,10 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
       })(method);
     }
 
-    window.rudderanalytics?.load?.(options.writeKey, options.dataPlaneUrl, { configUrl: options.configUrl });
+    window.rudderanalytics?.load?.(options.writeKey, options.dataPlaneUrl, {
+      configUrl: options.configUrl,
+      destSDKBaseURL: options.integrationsUrl,
+    });
 
     if (options.user) {
       const { identifier, intercomIdentifier } = options.user.analytics;

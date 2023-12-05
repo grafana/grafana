@@ -60,6 +60,7 @@ describe('PlaylistNewPage', () => {
       await waitFor(() => expect(backendSrvMock).toHaveBeenCalledTimes(1));
       expect(backendSrvMock).toHaveBeenCalledWith('/api/playlists', {
         name: 'A new name',
+        uid: '',
         interval: '5m',
         items: [],
       });

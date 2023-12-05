@@ -9,9 +9,11 @@ import {
   transformDataFrame,
   TransformerRegistryItem,
   getFrameMatchers,
+  DataTransformContext,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Icon, JSONFormatter, useStyles2 } from '@grafana/ui';
+import { getTemplateSrv } from '@grafana/runtime';
+import { Icon, JSONFormatter, useStyles2, Drawer } from '@grafana/ui';
 
 import { TransformationsEditorTransformation } from './types';
 
@@ -22,6 +24,7 @@ interface TransformationEditorProps {
   uiConfig: TransformerRegistryItem<any>;
   configs: TransformationsEditorTransformation[];
   onChange: (index: number, config: DataTransformerConfig) => void;
+  toggleShowDebug: () => void;
 }
 
 export const TransformationEditor = ({
@@ -31,6 +34,7 @@ export const TransformationEditor = ({
   uiConfig,
   configs,
   onChange,
+  toggleShowDebug,
 }: TransformationEditorProps) => {
   const styles = useStyles2(getStyles);
   const [input, setInput] = useState<DataFrame[]>([]);
@@ -42,14 +46,19 @@ export const TransformationEditor = ({
     const matcher = config.filter?.options ? getFrameMatchers(config.filter) : undefined;
     const inputTransforms = configs.slice(0, index).map((t) => t.transformation);
     const outputTransforms = configs.slice(index, index + 1).map((t) => t.transformation);
-    const inputSubscription = transformDataFrame(inputTransforms, data).subscribe((v) => {
+
+    const ctx: DataTransformContext = {
+      interpolate: (v: string) => getTemplateSrv().replace(v),
+    };
+
+    const inputSubscription = transformDataFrame(inputTransforms, data, ctx).subscribe((v) => {
       if (matcher) {
         v = data.filter((v) => matcher(v));
       }
       setInput(v);
     });
-    const outputSubscription = transformDataFrame(inputTransforms, data)
-      .pipe(mergeMap((before) => transformDataFrame(outputTransforms, before)))
+    const outputSubscription = transformDataFrame(inputTransforms, data, ctx)
+      .pipe(mergeMap((before) => transformDataFrame(outputTransforms, before, ctx)))
       .subscribe(setOutput);
 
     return function unsubscribe() {
@@ -77,32 +86,32 @@ export const TransformationEditor = ({
     <div className={styles.editor} data-testid={selectors.components.TransformTab.transformationEditor(uiConfig.name)}>
       {editor}
       {debugMode && (
-        <div
-          className={styles.debugWrapper}
-          data-testid={selectors.components.TransformTab.transformationEditorDebugger(uiConfig.name)}
-        >
-          <div className={styles.debug}>
-            <div className={styles.debugTitle}>Transformation input data</div>
-            <div className={styles.debugJson}>
-              <JSONFormatter json={input} />
+        <Drawer title="Debug transformation" subtitle={uiConfig.name} onClose={toggleShowDebug}>
+          <div
+            className={styles.debugWrapper}
+            data-testid={selectors.components.TransformTab.transformationEditorDebugger(uiConfig.name)}
+          >
+            <div className={styles.debug}>
+              <div className={styles.debugTitle}>Input data</div>
+              <div className={styles.debugJson}>
+                <JSONFormatter json={input} />
+              </div>
+            </div>
+            <div className={styles.debugSeparator}>
+              <Icon name="arrow-right" />
+            </div>
+            <div className={styles.debug}>
+              <div className={styles.debugTitle}>Output data</div>
+              <div className={styles.debugJson}>{output && <JSONFormatter json={output} />}</div>
             </div>
           </div>
-          <div className={styles.debugSeparator}>
-            <Icon name="arrow-right" />
-          </div>
-          <div className={styles.debug}>
-            <div className={styles.debugTitle}>Transformation output data</div>
-            <div className={styles.debugJson}>{output && <JSONFormatter json={output} />}</div>
-          </div>
-        </div>
+        </Drawer>
       )}
     </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const debugBorder = theme.isLight ? theme.v1.palette.gray85 : theme.v1.palette.gray15;
-
   return {
     title: css`
       display: flex;
@@ -152,7 +161,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       font-family: ${theme.typography.fontFamilyMonospace};
       font-size: ${theme.typography.bodySmall.fontSize};
       color: ${theme.colors.text};
-      border-bottom: 1px solid ${debugBorder};
+      border-bottom: 1px solid ${theme.colors.border.weak};
       flex-grow: 0;
       flex-shrink: 1;
     `,
@@ -160,7 +169,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     debug: css`
       margin-top: ${theme.spacing(1)};
       padding: 0 ${theme.spacing(1, 1, 1)};
-      border: 1px solid ${debugBorder};
+      border: 1px solid ${theme.colors.border.weak};
       background: ${theme.isLight ? theme.v1.palette.white : theme.v1.palette.gray05};
       border-radius: ${theme.shape.radius.default};
       width: 100%;

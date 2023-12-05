@@ -15,8 +15,8 @@ interface GrafanaRuleExportPreviewProps {
 }
 
 const GrafanaRuleExportPreview = ({ alertUid, exportFormat, onClose }: GrafanaRuleExportPreviewProps) => {
-  const { currentData: ruleTextDefinition = '', isFetching } = alertRuleApi.useExportRuleQuery({
-    uid: alertUid,
+  const { currentData: ruleTextDefinition = '', isFetching } = alertRuleApi.endpoints.exportRules.useQuery({
+    ruleUid: alertUid,
     format: exportFormat,
   });
 

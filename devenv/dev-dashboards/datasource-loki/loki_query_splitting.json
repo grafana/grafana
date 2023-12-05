@@ -1,0 +1,900 @@
+{
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": 7004,
+    "links": [],
+    "liveNow": false,
+    "panels": [
+      {
+        "datasource": {
+          "type": "loki",
+          "uid": "gdev-loki"
+        },
+        "description": "Transformations:\n- Count\n- Sort by\n- Limit 10",
+        "gridPos": {
+          "h": 7,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "options": {
+          "dedupStrategy": "none",
+          "enableLogDetails": true,
+          "prettifyLogMessage": false,
+          "showCommonLabels": false,
+          "showLabels": false,
+          "showTime": false,
+          "sortOrder": "Descending",
+          "wrapLogMessage": false
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "loki",
+              "uid": "gdev-loki"
+            },
+            "editorMode": "code",
+            "expr": "{place=\"luna\"} | logfmt | label=\"val2\" | float > 60",
+            "maxLines": 5000,
+            "queryType": "range",
+            "refId": "A"
+          }
+        ],
+        "title": "Split logs",
+        "transformations": [
+          {
+            "id": "calculateField",
+            "options": {
+              "alias": "id_count",
+              "mode": "reduceRow",
+              "reduce": {
+                "include": [
+                  "id"
+                ],
+                "reducer": "count"
+              },
+              "replaceFields": false
+            }
+          },
+          {
+            "id": "sortBy",
+            "options": {
+              "fields": {},
+              "sort": [
+                {
+                  "desc": true,
+                  "field": "tsNs"
+                }
+              ]
+            }
+          },
+          {
+            "id": "limit",
+            "options": {
+              "limitField": 10
+            }
+          }
+        ],
+        "type": "logs"
+      },
+      {
+        "datasource": {
+          "type": "loki",
+          "uid": "gdev-loki"
+        },
+        "description": "Transformations:\n- Count\n- Sort by\n- Limit 10",
+        "gridPos": {
+          "h": 7,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        },
+        "id": 2,
+        "options": {
+          "dedupStrategy": "none",
+          "enableLogDetails": true,
+          "prettifyLogMessage": false,
+          "showCommonLabels": false,
+          "showLabels": false,
+          "showTime": false,
+          "sortOrder": "Descending",
+          "wrapLogMessage": false
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "loki",
+              "uid": "gdev-loki"
+            },
+            "editorMode": "code",
+            "expr": "{place=\"luna\"} | logfmt | label=\"val2\" | float > 60",
+            "maxLines": 5000,
+            "queryType": "range",
+            "refId": "do-not-chunk"
+          }
+        ],
+        "title": "Logs without splitting",
+        "transformations": [
+          {
+            "id": "calculateField",
+            "options": {
+              "alias": "id_count",
+              "mode": "reduceRow",
+              "reduce": {
+                "include": [
+                  "id"
+                ],
+                "reducer": "count"
+              },
+              "replaceFields": false
+            }
+          },
+          {
+            "id": "sortBy",
+            "options": {
+              "fields": {},
+              "sort": [
+                {
+                  "desc": true,
+                  "field": "tsNs"
+                }
+              ]
+            }
+          },
+          {
+            "id": "limit",
+            "options": {}
+          }
+        ],
+        "type": "logs"
+      },
+      {
+        "datasource": {
+          "type": "loki",
+          "uid": "gdev-loki"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "insertNulls": false,
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 7
+        },
+        "id": 3,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "loki",
+              "uid": "gdev-loki"
+            },
+            "editorMode": "code",
+            "expr": "count_over_time({place=\"luna\"} | logfmt | label=\"val2\" | float > 60 | drop wave, _entry, level, float, counter [$__auto])",
+            "queryType": "range",
+            "refId": "A"
+          }
+        ],
+        "title": "Split TS",
+        "transformations": [],
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "loki",
+          "uid": "gdev-loki"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "insertNulls": false,
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 7
+        },
+        "id": 4,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "loki",
+              "uid": "gdev-loki"
+            },
+            "editorMode": "code",
+            "expr": "count_over_time({place=\"luna\"} | logfmt | label=\"val2\" | float > 60 | drop wave, _entry, level, float, counter [$__auto])",
+            "queryType": "range",
+            "refId": "do-not-chunk"
+          }
+        ],
+        "title": "TS without splitting",
+        "transformations": [],
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "loki",
+          "uid": "gdev-loki"
+        },
+        "gridPos": {
+          "h": 5,
+          "w": 12,
+          "x": 0,
+          "y": 15
+        },
+        "id": 5,
+        "options": {
+          "dedupStrategy": "none",
+          "enableLogDetails": true,
+          "prettifyLogMessage": false,
+          "showCommonLabels": false,
+          "showLabels": false,
+          "showTime": false,
+          "sortOrder": "Descending",
+          "wrapLogMessage": false
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "loki",
+              "uid": "gdev-loki"
+            },
+            "editorMode": "code",
+            "expr": "{place=\"luna\"} | logfmt",
+            "maxLines": 5000,
+            "queryType": "range",
+            "refId": "A"
+          }
+        ],
+        "title": "Logs with filter transformation",
+        "transformations": [
+          {
+            "id": "filterByValue",
+            "options": {
+              "filters": [
+                {
+                  "config": {
+                    "id": "isNull",
+                    "options": {}
+                  },
+                  "fieldName": "TraceID"
+                }
+              ],
+              "match": "any",
+              "type": "exclude"
+            }
+          }
+        ],
+        "type": "logs"
+      },
+      {
+        "datasource": {
+          "type": "loki",
+          "uid": "gdev-loki"
+        },
+        "gridPos": {
+          "h": 5,
+          "w": 12,
+          "x": 12,
+          "y": 15
+        },
+        "id": 6,
+        "options": {
+          "dedupStrategy": "none",
+          "enableLogDetails": true,
+          "prettifyLogMessage": false,
+          "showCommonLabels": false,
+          "showLabels": false,
+          "showTime": false,
+          "sortOrder": "Descending",
+          "wrapLogMessage": false
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "loki",
+              "uid": "gdev-loki"
+            },
+            "editorMode": "code",
+            "expr": "{place=\"luna\"} | logfmt",
+            "maxLines": 5000,
+            "queryType": "range",
+            "refId": "do-not-chunk"
+          }
+        ],
+        "title": "Logs with filter transformation, no splitting",
+        "transformations": [
+          {
+            "id": "filterByValue",
+            "options": {
+              "filters": [
+                {
+                  "config": {
+                    "id": "isNull",
+                    "options": {}
+                  },
+                  "fieldName": "TraceID"
+                }
+              ],
+              "match": "any",
+              "type": "exclude"
+            }
+          }
+        ],
+        "type": "logs"
+      },
+      {
+        "datasource": {
+          "type": "loki",
+          "uid": "gdev-loki"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "custom": {
+              "align": "auto",
+              "cellOptions": {
+                "type": "auto"
+              },
+              "inspect": false
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 20
+        },
+        "id": 7,
+        "options": {
+          "cellHeight": "sm",
+          "footer": {
+            "countRows": false,
+            "fields": "",
+            "reducer": [
+              "sum"
+            ],
+            "show": false
+          },
+          "showHeader": true
+        },
+        "pluginVersion": "10.2.0-61469",
+        "targets": [
+          {
+            "datasource": {
+              "type": "loki",
+              "uid": "gdev-loki"
+            },
+            "editorMode": "code",
+            "expr": "{place=\"luna\", age=\"new\"}",
+            "maxLines": 5000,
+            "queryType": "range",
+            "refId": "A"
+          }
+        ],
+        "title": "Logs with extract fields transformation",
+        "transformations": [
+          {
+            "id": "extractFields",
+            "options": {
+              "format": "json",
+              "keepTime": true,
+              "replace": true,
+              "source": "labels"
+            }
+          },
+          {
+            "id": "calculateField",
+            "options": {
+              "alias": "Row",
+              "mode": "index",
+              "reduce": {
+                "reducer": "sum"
+              },
+              "replaceFields": false
+            }
+          }
+        ],
+        "type": "table"
+      },
+      {
+        "datasource": {
+          "type": "loki",
+          "uid": "gdev-loki"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "custom": {
+              "align": "auto",
+              "cellOptions": {
+                "type": "auto"
+              },
+              "inspect": false
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 20
+        },
+        "id": 8,
+        "options": {
+          "cellHeight": "sm",
+          "footer": {
+            "countRows": false,
+            "fields": "",
+            "reducer": [
+              "sum"
+            ],
+            "show": false
+          },
+          "showHeader": true
+        },
+        "pluginVersion": "10.2.0-61469",
+        "targets": [
+          {
+            "datasource": {
+              "type": "loki",
+              "uid": "gdev-loki"
+            },
+            "editorMode": "code",
+            "expr": "{place=\"luna\", age=\"new\"}",
+            "maxLines": 5000,
+            "queryType": "range",
+            "refId": "do-not-chunk"
+          }
+        ],
+        "title": "Logs with extract fields transformation, no splitting",
+        "transformations": [
+          {
+            "id": "extractFields",
+            "options": {
+              "format": "json",
+              "keepTime": true,
+              "replace": true,
+              "source": "labels"
+            }
+          },
+          {
+            "id": "calculateField",
+            "options": {
+              "alias": "Row",
+              "mode": "index",
+              "reduce": {
+                "reducer": "sum"
+              },
+              "replaceFields": false
+            }
+          }
+        ],
+        "type": "table"
+      },
+      {
+        "datasource": {
+          "type": "loki",
+          "uid": "gdev-loki"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "custom": {
+              "align": "auto",
+              "cellOptions": {
+                "type": "auto"
+              },
+              "inspect": false
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 28
+        },
+        "id": 9,
+        "options": {
+          "cellHeight": "sm",
+          "footer": {
+            "countRows": false,
+            "fields": "",
+            "reducer": [
+              "sum"
+            ],
+            "show": false
+          },
+          "showHeader": true
+        },
+        "pluginVersion": "10.2.0-61469",
+        "targets": [
+          {
+            "datasource": {
+              "type": "loki",
+              "uid": "gdev-loki"
+            },
+            "editorMode": "code",
+            "expr": "{place=\"moon\"}",
+            "maxLines": 5,
+            "queryType": "range",
+            "refId": "A"
+          }
+        ],
+        "title": "Logs with extract key=value and organize",
+        "transformations": [
+          {
+            "id": "extractFields",
+            "options": {
+              "format": "auto",
+              "keepTime": true,
+              "replace": true,
+              "source": "Line"
+            }
+          },
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "31": true,
+                "32": true,
+                "33": true,
+                "34": true,
+                "35": true,
+                "36": true,
+                "37": true,
+                "38": true,
+                "39": true,
+                "40": true,
+                "41": true,
+                "42": true,
+                "43": true,
+                "44": true,
+                "45": true,
+                "46": true,
+                "2023-09-20T14": true,
+                "33+00": true,
+                "caller": true,
+                "main.go": true,
+                "t": true,
+                "ts": true
+              },
+              "indexByName": {},
+              "renameByName": {
+                "level": "nivel",
+                "ts": ""
+              }
+            }
+          }
+        ],
+        "type": "table"
+      },
+      {
+        "datasource": {
+          "type": "loki",
+          "uid": "gdev-loki"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "custom": {
+              "align": "auto",
+              "cellOptions": {
+                "type": "auto"
+              },
+              "inspect": false
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 28
+        },
+        "id": 10,
+        "options": {
+          "cellHeight": "sm",
+          "footer": {
+            "countRows": false,
+            "fields": "",
+            "reducer": [
+              "sum"
+            ],
+            "show": false
+          },
+          "showHeader": true
+        },
+        "pluginVersion": "10.2.0-61469",
+        "targets": [
+          {
+            "datasource": {
+              "type": "loki",
+              "uid": "gdev-loki"
+            },
+            "editorMode": "code",
+            "expr": "{place=\"moon\"}",
+            "maxLines": 5,
+            "queryType": "range",
+            "refId": "do-not-chunk"
+          }
+        ],
+        "title": "Logs with extract key=value and organize, no splitting",
+        "transformations": [
+          {
+            "id": "extractFields",
+            "options": {
+              "format": "auto",
+              "keepTime": true,
+              "replace": true,
+              "source": "Line"
+            }
+          },
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "31": true,
+                "32": true,
+                "33": true,
+                "34": true,
+                "35": true,
+                "36": true,
+                "37": true,
+                "38": true,
+                "39": true,
+                "40": true,
+                "41": true,
+                "42": true,
+                "43": true,
+                "44": true,
+                "45": true,
+                "46": true,
+                "2023-09-20T14": true,
+                "33+00": true,
+                "caller": true,
+                "main.go": true,
+                "t": true,
+                "ts": true
+              },
+              "indexByName": {},
+              "renameByName": {
+                "level": "nivel",
+                "ts": ""
+              }
+            }
+          }
+        ],
+        "type": "table"
+      }
+    ],
+    "refresh": "",
+    "schemaVersion": 38,
+    "tags": [],
+    "templating": {
+      "list": []
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "Datasource tests - Loki query splitting",
+    "uid": "dc4ec947-7e6b-4c3b-be8f-0abec7b0652a",
+    "version": 13,
+    "weekStart": ""
+  }

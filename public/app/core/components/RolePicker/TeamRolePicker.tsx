@@ -12,6 +12,7 @@ export interface Props {
   orgId?: number;
   roleOptions: Role[];
   disabled?: boolean;
+  roles?: Role[];
   onApplyRoles?: (newRoles: Role[]) => void;
   pendingRoles?: Role[];
   /**
@@ -27,19 +28,27 @@ export interface Props {
    */
   apply?: boolean;
   maxWidth?: string | number;
+  width?: string | number;
+  isLoading?: boolean;
 }
 
 export const TeamRolePicker = ({
   teamId,
   roleOptions,
   disabled,
+  roles,
   onApplyRoles,
   pendingRoles,
   apply = false,
   maxWidth,
+  width,
+  isLoading,
 }: Props) => {
-  const [{ loading, value: appliedRoles = [] }, getTeamRoles] = useAsyncFn(async () => {
+  const [{ loading, value: appliedRoles = roles || [] }, getTeamRoles] = useAsyncFn(async () => {
     try {
+      if (roles) {
+        return roles;
+      }
       if (apply && Boolean(pendingRoles?.length)) {
         return pendingRoles;
       }
@@ -51,11 +60,11 @@ export const TeamRolePicker = ({
       console.error('Error loading options', e);
     }
     return [];
-  }, [teamId, pendingRoles]);
+  }, [teamId, pendingRoles, roles]);
 
   useEffect(() => {
     getTeamRoles();
-  }, [teamId, getTeamRoles, pendingRoles]);
+  }, [getTeamRoles]);
 
   const onRolesChange = async (roles: Role[]) => {
     if (!apply) {
@@ -76,11 +85,12 @@ export const TeamRolePicker = ({
       onRolesChange={onRolesChange}
       roleOptions={roleOptions}
       appliedRoles={appliedRoles}
-      isLoading={loading}
+      isLoading={loading || isLoading}
       disabled={disabled}
       basicRoleDisabled={true}
       canUpdateRoles={canUpdateRoles}
       maxWidth={maxWidth}
+      width={width}
     />
   );
 };

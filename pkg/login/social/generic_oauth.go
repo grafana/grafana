@@ -11,7 +11,21 @@ import (
 	"strconv"
 
 	"golang.org/x/oauth2"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
+
+const (
+	GenericOAuthProviderName = "generic_oauth"
+
+	nameAttributePathKey    = "name_attribute_path"
+	loginAttributePathKey   = "login_attribute_path"
+	idTokenAttributeNameKey = "id_token_attribute_name" // #nosec G101 not a hardcoded credential
+)
+
+var ExtraGenericOAuthSettingKeys = []string{nameAttributePathKey, loginAttributePathKey, idTokenAttributeNameKey, teamIdsKey, allowedOrganizationsKey}
 
 type SocialGenericOAuth struct {
 	*SocialBase
@@ -30,6 +44,36 @@ type SocialGenericOAuth struct {
 	skipOrgRoleSync      bool
 }
 
+func NewGenericOAuthProvider(settings map[string]any, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGenericOAuth, error) {
+	info, err := CreateOAuthInfoFromKeyValues(settings)
+	if err != nil {
+		return nil, err
+	}
+
+	config := createOAuthConfig(info, cfg, GenericOAuthProviderName)
+	provider := &SocialGenericOAuth{
+		SocialBase:           newSocialBase(GenericOAuthProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		apiUrl:               info.ApiUrl,
+		teamsUrl:             info.TeamsUrl,
+		emailAttributeName:   info.EmailAttributeName,
+		emailAttributePath:   info.EmailAttributePath,
+		nameAttributePath:    info.Extra[nameAttributePathKey],
+		groupsAttributePath:  info.GroupsAttributePath,
+		loginAttributePath:   info.Extra[loginAttributePathKey],
+		idTokenAttributeName: info.Extra[idTokenAttributeNameKey],
+		teamIdsAttributePath: info.TeamIdsAttributePath,
+		teamIds:              util.SplitString(info.Extra[teamIdsKey]),
+		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
+		allowedGroups:        info.AllowedGroups,
+		skipOrgRoleSync:      cfg.GenericOAuthSkipOrgRoleSync,
+		// FIXME: Move skipOrgRoleSync to OAuthInfo
+		// skipOrgRoleSync: info.SkipOrgRoleSync
+	}
+
+	return provider, nil
+}
+
+// TODOD: remove this in the next PR and use the isGroupMember from social.go
 func (s *SocialGenericOAuth) IsGroupMember(groups []string) bool {
 	if len(s.allowedGroups) == 0 {
 		return true
@@ -205,6 +249,10 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 	return userInfo, nil
 }
 
+func (s *SocialGenericOAuth) GetOAuthInfo() *OAuthInfo {
+	return s.info
+}
+
 func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson {
 	s.log.Debug("Extracting user info from OAuth token")
 
@@ -228,7 +276,7 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 
 	var data UserInfoJson
 	if err := json.Unmarshal(rawJSON, &data); err != nil {
-		s.log.Error("Error decoding id_token JSON", "raw_json", string(data.rawJSON), "error", err)
+		s.log.Error("Error decoding id_token JSON", "raw_json", string(rawJSON), "error", err)
 		return nil
 	}
 

@@ -156,11 +156,14 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
               allowFullScreen
               value={query.query}
               onChange={(e) => {
-                let newQueries = options.jsonData.tracesToMetrics?.queries.slice() ?? [];
-                newQueries[i].query = e.currentTarget.value;
+                const updatedQueries = (options.jsonData.tracesToMetrics?.queries ?? []).map(
+                  (traceToMetricQuery, index) => {
+                    return index === i ? { ...traceToMetricQuery, query: e.currentTarget.value } : traceToMetricQuery;
+                  }
+                );
                 updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
                   ...options.jsonData.tracesToMetrics,
-                  queries: newQueries,
+                  queries: updatedQueries,
                 });
               }}
             />
@@ -202,13 +205,16 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
 }
 
 export const TraceToMetricsSection = ({ options, onOptionsChange }: DataSourcePluginOptionsEditorProps) => {
+  let suffix = options.type;
+  suffix += options.type === 'tempo' ? '/configure-tempo-data-source/#trace-to-metrics' : '/#trace-to-metrics';
+
   return (
     <ConfigSection
       title="Trace to metrics"
       description={
         <ConfigDescriptionLink
           description="Navigate from a trace span to the selected data source's metrics."
-          suffix={`${options.type}/#trace-to-metrics`}
+          suffix={suffix}
           feature="trace to metrics"
         />
       }

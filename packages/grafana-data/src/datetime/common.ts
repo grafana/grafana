@@ -1,3 +1,5 @@
+import { isEmpty } from 'lodash';
+
 import { TimeZone, DefaultTimeZone } from '../types/time';
 
 /**
@@ -57,5 +59,8 @@ export const setTimeZoneResolver = (resolver: TimeZoneResolver) => {
  * @public
  */
 export const getTimeZone = <T extends TimeZoneOptions>(options?: T): TimeZone => {
-  return options?.timeZone ?? defaultTimeZoneResolver() ?? DefaultTimeZone;
+  if (options?.timeZone && !isEmpty(options.timeZone)) {
+    return options.timeZone;
+  }
+  return defaultTimeZoneResolver() ?? DefaultTimeZone;
 };

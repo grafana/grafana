@@ -44,7 +44,7 @@ export function getMostFiredRulesScene(datasource: DataSourceRef, panelTitle: st
           renameByName: {
             group: 'Group',
             labels_grafana_folder: 'Folder',
-            'Value #A': 'Fires this week',
+            'Value #A': 'Number of fires',
           },
         },
       },

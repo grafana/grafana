@@ -64,7 +64,7 @@
           ],
           "noDataState": "NoData",
           "execErrState": "Alerting",
-          "for": "0s",
+          "for": "2m",
           "isPaused": false
         },
         {

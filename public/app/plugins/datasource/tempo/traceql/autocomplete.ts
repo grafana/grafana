@@ -138,6 +138,20 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         'Child operator. Looks for spans matching {condB} that are direct child spans of a parent matching {condA}',
     },
     {
+      label: '<<',
+      insertText: '<<',
+      detail: 'Ancestor',
+      documentation:
+        'Ancestor operator. Looks for spans matching {condB} that are ancestors of a span matching {condA}',
+    },
+    {
+      label: '<',
+      insertText: '<',
+      detail: 'Parent',
+      documentation:
+        'Parent operator. Looks for spans matching {condB} that are direct parent spans of a child matching {condA}',
+    },
+    {
       label: '~',
       insertText: '~',
       detail: 'Sibling',

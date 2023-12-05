@@ -41,7 +41,6 @@ load(
 )
 load(
     "scripts/drone/utils/utils.star",
-    "drone_change_template",
     "failure_template",
     "notify_pipeline",
 )
@@ -65,24 +64,6 @@ trigger = {
 }
 
 def main_pipelines():
-    drone_change_trigger = {
-        "event": [
-            "push",
-        ],
-        "branch": "main",
-        "repo": [
-            "grafana/grafana",
-        ],
-        "paths": {
-            "include": [
-                ".drone.yml",
-            ],
-            "exclude": [
-                "exclude",
-            ],
-        },
-    }
-
     pipelines = [
         docs_pipelines(ver_mode, trigger_docs_main()),
         test_frontend(trigger, ver_mode),
@@ -92,13 +73,6 @@ def main_pipelines():
         build_e2e(trigger, ver_mode),
         integration_tests(trigger, prefix = ver_mode, ver_mode = ver_mode),
         windows(trigger, ver_mode = ver_mode),
-        notify_pipeline(
-            name = "notify-drone-changes",
-            slack_channel = "slack-webhooks-test",
-            trigger = drone_change_trigger,
-            template = drone_change_template,
-            secret = "drone-changes-webhook",
-        ),
         enterprise_downstream_pipeline(),
         notify_pipeline(
             name = "main-notify",

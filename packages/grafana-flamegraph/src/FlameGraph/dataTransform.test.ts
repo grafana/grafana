@@ -1,6 +1,7 @@
 import { createDataFrame, FieldType } from '@grafana/data';
 
-import { FlameGraphDataContainer, LevelItem, nestedSetToLevels } from './dataTransform';
+import { CollapsedMapContainer, FlameGraphDataContainer, LevelItem, nestedSetToLevels } from './dataTransform';
+import { textToDataContainer } from './testHelpers';
 
 describe('nestedSetToLevels', () => {
   it('converts nested set data frame to levels', () => {
@@ -17,17 +18,17 @@ describe('nestedSetToLevels', () => {
         { name: 'self', values: [0, 0, 0, 0, 0, 0, 0, 0, 0] },
       ],
     });
-    const [levels] = nestedSetToLevels(new FlameGraphDataContainer(frame));
+    const [levels] = nestedSetToLevels(new FlameGraphDataContainer(frame, { collapsing: true }));
 
-    const n9: LevelItem = { itemIndexes: [8], start: 5, children: [], value: 1 };
-    const n8: LevelItem = { itemIndexes: [7], start: 5, children: [n9], value: 2 };
-    const n7: LevelItem = { itemIndexes: [6], start: 5, children: [n8], value: 3 };
-    const n6: LevelItem = { itemIndexes: [5], start: 5, children: [n7], value: 4 };
-    const n5: LevelItem = { itemIndexes: [4], start: 3, children: [], value: 1 };
-    const n4: LevelItem = { itemIndexes: [3], start: 0, children: [], value: 1 };
-    const n3: LevelItem = { itemIndexes: [2], start: 0, children: [n4], value: 3 };
-    const n2: LevelItem = { itemIndexes: [1], start: 0, children: [n3, n5], value: 5 };
-    const n1: LevelItem = { itemIndexes: [0], start: 0, children: [n2, n6], value: 10 };
+    const n9: LevelItem = { itemIndexes: [8], start: 5, children: [], value: 1, level: 4 };
+    const n8: LevelItem = { itemIndexes: [7], start: 5, children: [n9], value: 2, level: 3 };
+    const n7: LevelItem = { itemIndexes: [6], start: 5, children: [n8], value: 3, level: 2 };
+    const n6: LevelItem = { itemIndexes: [5], start: 5, children: [n7], value: 4, level: 1 };
+    const n5: LevelItem = { itemIndexes: [4], start: 3, children: [], value: 1, level: 2 };
+    const n4: LevelItem = { itemIndexes: [3], start: 0, children: [], value: 1, level: 3 };
+    const n3: LevelItem = { itemIndexes: [2], start: 0, children: [n4], value: 3, level: 2 };
+    const n2: LevelItem = { itemIndexes: [1], start: 0, children: [n3, n5], value: 5, level: 1 };
+    const n1: LevelItem = { itemIndexes: [0], start: 0, children: [n2, n6], value: 10, level: 0 };
 
     n2.parents = [n1];
     n6.parents = [n1];
@@ -54,12 +55,12 @@ describe('nestedSetToLevels', () => {
         { name: 'self', values: [10, 5, 3, 1] },
       ],
     });
-    const [levels] = nestedSetToLevels(new FlameGraphDataContainer(frame));
+    const [levels] = nestedSetToLevels(new FlameGraphDataContainer(frame, { collapsing: true }));
 
-    const n4: LevelItem = { itemIndexes: [3], start: 8, children: [], value: 1 };
-    const n3: LevelItem = { itemIndexes: [2], start: 5, children: [], value: 3 };
-    const n2: LevelItem = { itemIndexes: [1], start: 0, children: [], value: 5 };
-    const n1: LevelItem = { itemIndexes: [0], start: 0, children: [n2, n3, n4], value: 10 };
+    const n4: LevelItem = { itemIndexes: [3], start: 8, children: [], value: 1, level: 1 };
+    const n3: LevelItem = { itemIndexes: [2], start: 5, children: [], value: 3, level: 1 };
+    const n2: LevelItem = { itemIndexes: [1], start: 0, children: [], value: 5, level: 1 };
+    const n1: LevelItem = { itemIndexes: [0], start: 0, children: [n2, n3, n4], value: 10, level: 0 };
 
     n2.parents = [n1];
     n3.parents = [n1];
@@ -67,5 +68,128 @@ describe('nestedSetToLevels', () => {
 
     expect(levels[0]).toEqual([n1]);
     expect(levels[1]).toEqual([n2, n3, n4]);
+  });
+});
+
+describe('FlameGraphDataContainer', () => {
+  it('creates correct collapse map', () => {
+    const container = textToDataContainer(`
+      [0//////////////]
+      [1][3//][6///]
+      [2][4]  [7///]
+         [5]  [8///]
+              [9///]
+    `)!;
+
+    const collapsedMap = container.getCollapsedMap();
+    expect(Array.from(collapsedMap.keys()).map((item) => item.itemIndexes[0])).toEqual([1, 2, 4, 5, 6, 7, 8, 9]);
+
+    expect(Array.from(collapsedMap.values())[0]).toMatchObject({
+      collapsed: true,
+      items: [{ itemIndexes: [1] }, { itemIndexes: [2] }],
+    });
+  });
+
+  it('creates correct collapse map 2', () => {
+    // Should not create any groups because even though the 1 is within threshold it has a sibling
+    const container = textToDataContainer(
+      `
+      [0////////////////////////////////]
+      [1/////////////////////////////][2]
+    `,
+      { collapsing: true, collapsingThreshold: 0.5 }
+    )!;
+
+    const collapsedMap = container.getCollapsedMap();
+    expect(Array.from(collapsedMap.keys()).length).toEqual(0);
+  });
+
+  it('creates empty collapse map if no items are similar', () => {
+    const container = textToDataContainer(`
+      [0//////////////]
+      [1][3//][6///]
+              [9/]
+    `)!;
+
+    const collapsedMap = container.getCollapsedMap();
+    expect(Array.from(collapsedMap.keys()).length).toEqual(0);
+  });
+});
+
+describe('CollapsedMapContainer', () => {
+  const defaultItem: LevelItem = {
+    itemIndexes: [0],
+    value: 100,
+    level: 0,
+    children: [],
+    start: 0,
+  };
+
+  it('groups items if they are within value threshold', () => {
+    const container = new CollapsedMapContainer();
+
+    const child2: LevelItem = {
+      ...defaultItem,
+      itemIndexes: [2],
+      value: 99.1,
+    };
+
+    const child1: LevelItem = {
+      ...defaultItem,
+      itemIndexes: [1],
+      children: [child2],
+    };
+
+    const parent: LevelItem = {
+      ...defaultItem,
+      children: [child1],
+    };
+
+    container.addItem(child1, parent);
+    container.addItem(child2, child1);
+    expect(container.getMap().get(child1)).toMatchObject({ collapsed: true, items: [parent, child1, child2] });
+    expect(container.getMap().get(child2)).toMatchObject({ collapsed: true, items: [parent, child1, child2] });
+    expect(container.getMap().get(parent)).toMatchObject({ collapsed: true, items: [parent, child1, child2] });
+  });
+
+  it("doesn't group items if they are outside value threshold", () => {
+    const container = new CollapsedMapContainer();
+
+    const parent: LevelItem = {
+      ...defaultItem,
+    };
+
+    const child: LevelItem = {
+      ...defaultItem,
+      itemIndexes: [1],
+      value: 98,
+    };
+
+    container.addItem(child, parent);
+    expect(container.getMap().size).toBe(0);
+  });
+
+  it("doesn't group items if parent has multiple children", () => {
+    const container = new CollapsedMapContainer();
+
+    const child1: LevelItem = {
+      ...defaultItem,
+      itemIndexes: [1],
+      value: 99.1,
+    };
+
+    const child2: LevelItem = {
+      ...defaultItem,
+      itemIndexes: [2],
+      value: 0.09,
+    };
+
+    const parent: LevelItem = {
+      ...defaultItem,
+      children: [child1, child2],
+    };
+
+    container.addItem(child1, parent);
+    expect(container.getMap().size).toBe(0);
   });
 });

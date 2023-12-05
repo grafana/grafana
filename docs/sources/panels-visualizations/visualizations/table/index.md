@@ -148,12 +148,9 @@ If you have a field value that is an image URL or a base64 encoded image you can
 
 ### Sparkline
 
-> **Note:** This cell type is available in Grafana 9.5+ as an opt-in beta feature.
-> Modify Grafana [configuration file][] to enable the `timeSeriesTable` [feature toggle][] to use it.
-
 Shows value rendered as a sparkline. Requires [time series to table][] data transform.
 
-{{< figure src="/static/img/docs/tables/sparkline.png" max-width="500px" caption="Sparkline" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/tables/sparkline2.png" max-width="500px" caption="Sparkline" class="docs-image--no-shadow" >}}
 
 ## Cell value inspect
 
@@ -218,8 +215,8 @@ The system applies the calculation to all numeric fields if you do not select a 
 If you want to show the number of rows in the dataset instead of the number of values in the selected fields, select the **Count** calculation and enable **Count rows**.
 
 {{% docs/reference %}}
-[calculations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
-[calculations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
+[calculations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/calculation-types"
+[calculations]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types"
 
 [time series to table]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/transform-data#time-series-to-table-transform"
 [time series to table]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/transform-data#time-series-to-table-transform"

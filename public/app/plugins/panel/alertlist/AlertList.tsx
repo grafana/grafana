@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { dateMath, dateTime, GrafanaTheme2, PanelProps } from '@grafana/data';
-import { getBackendSrv, getTemplateSrv } from '@grafana/runtime';
+import { getBackendSrv } from '@grafana/runtime';
 import { Card, CustomScrollbar, Icon, useStyles2 } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -23,10 +23,9 @@ export function AlertList(props: PanelProps<AlertListOptions>) {
     const params: any = {
       state: getStateFilter(props.options.stateFilter),
     };
-    const panel = getDashboardSrv().getCurrent()?.getPanelById(props.id)!;
 
     if (props.options.alertName) {
-      params.query = getTemplateSrv().replace(props.options.alertName, panel.scopedVars);
+      params.query = props.replaceVariables(props.options.alertName);
     }
 
     if (props.options.folderId >= 0) {

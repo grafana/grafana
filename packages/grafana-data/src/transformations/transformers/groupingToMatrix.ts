@@ -1,7 +1,14 @@
 import { map } from 'rxjs/operators';
 
 import { getFieldDisplayName } from '../../field/fieldState';
-import { DataFrame, DataTransformerInfo, Field, FieldType, SpecialValue } from '../../types';
+import {
+  DataFrame,
+  DataTransformerInfo,
+  Field,
+  FieldType,
+  SpecialValue,
+  TransformationApplicabilityLevels,
+} from '../../types';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
@@ -33,7 +40,29 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
     rowField: DEFAULT_ROW_FIELD,
     valueField: DEFAULT_VALUE_FIELD,
   },
+  /**
+   * Grouping to matrix requires at least 3 fields to work.
+   */
+  isApplicable: (data: DataFrame[]) => {
+    let numFields = 0;
 
+    for (const frame of data) {
+      numFields += frame.fields.length;
+    }
+
+    return numFields >= 3
+      ? TransformationApplicabilityLevels.Applicable
+      : TransformationApplicabilityLevels.NotApplicable;
+  },
+  isApplicableDescription: (data: DataFrame[]) => {
+    let numFields = 0;
+
+    for (const frame of data) {
+      numFields += frame.fields.length;
+    }
+
+    return `Grouping to matrix requiers at least 3 fields to work. Currently there are ${numFields} fields.`;
+  },
   operator: (options) => (source) =>
     source.pipe(
       map((data) => {

@@ -16,16 +16,18 @@ var ErrDatabaseError = errutil.Internal("folder.database-error")
 var ErrInternal = errutil.Internal("folder.internal")
 var ErrCircularReference = errutil.BadRequest("folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
 var ErrTargetRegistrySrvConflict = errutil.Internal("folder.target-registry-srv-conflict")
+var ErrFolderNotEmpty = errutil.BadRequest("folder.not-empty", errutil.WithPublicMessage("Folder cannot be deleted: folder is not empty"))
 
 const (
 	GeneralFolderUID     = "general"
 	RootFolderUID        = ""
-	MaxNestedFolderDepth = 8
+	MaxNestedFolderDepth = 4
 )
 
 var ErrFolderNotFound = errutil.NotFound("folder.notFound")
 
 type Folder struct {
+	// Deprecated: use UID instead
 	ID          int64  `xorm:"pk autoincr 'id'"`
 	OrgID       int64  `xorm:"org_id"`
 	UID         string `xorm:"uid"`
@@ -48,6 +50,7 @@ type Folder struct {
 var GeneralFolder = Folder{ID: 0, Title: "General"}
 
 func (f *Folder) IsGeneral() bool {
+	// nolint:staticcheck
 	return f.ID == GeneralFolder.ID && f.Title == GeneralFolder.Title
 }
 
@@ -125,15 +128,14 @@ type DeleteFolderCommand struct {
 
 // GetFolderQuery is used for all folder Get requests. Only one of UID, ID, or
 // Title should be set; if multiple fields are set by the caller the dashboard
-// service will select the field with the most specificity, in order: UID, ID
-// Title. If Title is set, it will fetch the folder in the root folder.
-// Callers can additionally set the ParentUID field to fetch a folder by title under a specific folder.
+// service will select the field with the most specificity, in order: ID, UID,
+// Title.
 type GetFolderQuery struct {
-	UID       *string
-	ParentUID *string
-	ID        *int64
-	Title     *string
-	OrgID     int64
+	UID *string
+	// Deprecated: use FolderUID instead
+	ID    *int64
+	Title *string
+	OrgID int64
 
 	SignedInUser identity.Requester `json:"-"`
 }

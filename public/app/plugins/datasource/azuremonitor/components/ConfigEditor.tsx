@@ -2,9 +2,8 @@ import React, { PureComponent } from 'react';
 
 import { DataSourcePluginOptionsEditorProps, SelectableValue, updateDatasourcePluginOption } from '@grafana/data';
 import { ConfigSection, DataSourceDescription } from '@grafana/experimental';
-import { getBackendSrv, getTemplateSrv, isFetchError, TemplateSrv } from '@grafana/runtime';
+import { getBackendSrv, getTemplateSrv, isFetchError, TemplateSrv, config } from '@grafana/runtime';
 import { Alert, Divider, SecureSocksProxySettings } from '@grafana/ui';
-import { config } from 'app/core/config';
 
 import ResponseParser from '../azure_monitor/response_parser';
 import {

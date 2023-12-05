@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
+import { dateTime, TimeRange } from '@grafana/data';
+
 import { PrometheusDatasource } from '../datasource';
 import PrometheusLanguageProvider from '../language_provider';
 import { migrateVariableEditorBackToVariableSupport } from '../migrations/variableMigration';
@@ -104,6 +106,27 @@ describe('PromVariableQueryEditor', () => {
     const migration: string = migrateVariableEditorBackToVariableSupport(query);
 
     const expected = 'label_values(metric{label="value"},name)';
+
+    expect(migration).toEqual(expected);
+  });
+
+  test('Migrates a query object with no metric and only label filters to an expression correctly', () => {
+    const query: PromVariableQuery = {
+      qryType: PromVariableQueryType.LabelValues,
+      label: 'name',
+      labelFilters: [
+        {
+          label: 'label',
+          op: '=',
+          value: 'value',
+        },
+      ],
+      refId: 'PrometheusDatasource-VariableQuery',
+    };
+
+    const migration: string = migrateVariableEditorBackToVariableSupport(query);
+
+    const expected = 'label_values({label="value"},name)';
 
     expect(migration).toEqual(expected);
   });
@@ -346,5 +369,25 @@ describe('PromVariableQueryEditor', () => {
       refId,
       qryType: 5,
     });
+  });
+
+  test('Calls language provider with the time range received in props', async () => {
+    const now = dateTime('2023-09-16T21:26:00Z');
+    const range: TimeRange = {
+      from: dateTime(now).subtract(2, 'days'),
+      to: now,
+      raw: {
+        from: 'now-2d',
+        to: 'now',
+      },
+    };
+    props.range = range;
+
+    const languageProviderStartMock = jest.fn();
+    props.datasource.languageProvider.start = languageProviderStartMock;
+
+    render(<PromVariableQueryEditor {...props} />);
+
+    expect(languageProviderStartMock).toHaveBeenCalledWith(range);
   });
 });

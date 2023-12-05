@@ -419,7 +419,7 @@ func Test_QueryData_response_data_frame_name_is_always_response_label(t *testing
 	api := mocks.MetricsAPI{Metrics: []*cloudwatch.Metric{
 		{MetricName: aws.String(""), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("InstanceId"), Value: aws.String("i-00645d91ed77d87ac")}}},
 	}}
-	api.On("ListMetricsPages").Return(nil)
+	api.On("ListMetricsPagesWithContext").Return(nil)
 
 	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
 		return &api

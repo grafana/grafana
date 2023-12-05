@@ -62,7 +62,7 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
         />
       ))}
       {hasResult && namespacesFormat?.length === 0 && <p>No rules found.</p>}
-      {!hasResult && loading && <Spinner size={24} className={styles.spinner} />}
+      {!hasResult && loading && <Spinner size="xl" className={styles.spinner} />}
       <Pagination
         className={styles.pagination}
         currentPage={page}

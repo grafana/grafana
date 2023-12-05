@@ -23,7 +23,7 @@ export function getInstancesByStateScene(datasource: DataSourceRef, panelTitle: 
     ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
-      .setDescription(panelTitle)
+      .setDescription('The number of firing and pending alert rule instances')
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })

@@ -99,6 +99,7 @@ export function ExploreGraph({
     defaults: {
       min: anchorToZero ? 0 : undefined,
       max: yAxisMaximum || undefined,
+      unit: 'short',
       color: {
         mode: FieldColorModeId.PaletteClassic,
       },

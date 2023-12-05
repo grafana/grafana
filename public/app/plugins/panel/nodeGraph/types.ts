@@ -16,6 +16,7 @@ export type NodeDatum = SimulationNodeDatum & {
   color?: Field;
   icon?: IconName;
   nodeRadius?: Field;
+  highlighted: boolean;
 };
 
 export type NodeDatumFromEdge = NodeDatum & { mainStatNumeric?: number; secondaryStatNumeric?: number };
@@ -34,6 +35,8 @@ export type EdgeDatum = LinkDatum & {
   dataFrameRowIndex: number;
   sourceNodeRadius: number;
   targetNodeRadius: number;
+  highlighted: boolean;
+  thickness: number;
 };
 
 // After layout is run D3 will change the string IDs for actual references to the nodes.
