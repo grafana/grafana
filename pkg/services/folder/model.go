@@ -45,6 +45,8 @@ type Folder struct {
 	UpdatedBy int64
 	CreatedBy int64
 	HasACL    bool
+
+	Fullpath string
 }
 
 var GeneralFolder = Folder{ID: 0, Title: "General"}
@@ -133,11 +135,13 @@ type DeleteFolderCommand struct {
 type GetFolderQuery struct {
 	UID *string
 	// Deprecated: use FolderUID instead
-	ID    *int64
-	Title *string
-	OrgID int64
+	ID        *int64
+	Title     *string
+	OrgID     int64
+	ParentUID *string
 
-	SignedInUser identity.Requester `json:"-"`
+	SignedInUser    identity.Requester `json:"-"`
+	IncludeFullpath bool               `json:"-"`
 }
 
 // GetParentsQuery captures the information required by the folder service to
@@ -158,6 +162,16 @@ type GetChildrenQuery struct {
 	// Pagination options
 	Limit int64
 	Page  int64
+
+	SignedInUser identity.Requester `json:"-"`
+}
+
+// GetFoldersQuery captures the information required by the folder service to
+// return a list of all folders of a given UIDs.
+type GetFoldersQuery struct {
+	UIDs            []string
+	OrgID           int64
+	IncludeFullpath bool `json:"-"`
 
 	SignedInUser identity.Requester `json:"-"`
 }
