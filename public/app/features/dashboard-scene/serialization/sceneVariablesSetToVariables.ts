@@ -15,6 +15,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
       type: variable.state.type,
     };
     if (sceneUtils.isQueryVariable(variable)) {
+      const isDefinitionSetInModel = variable.state.definition !== undefined;
       variables.push({
         ...commonProperties,
         current: {
@@ -25,7 +26,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
         },
         options: [],
         query: variable.state.query,
-        definition: variable.state.definition,
+        ...(isDefinitionSetInModel && { definition: variable.state.definition }),
         datasource: variable.state.datasource,
         sort: variable.state.sort,
         refresh: variable.state.refresh,
