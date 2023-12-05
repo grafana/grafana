@@ -47,6 +47,7 @@ import {
   Themeable2,
   withTheme2,
 } from '@grafana/ui';
+import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import store from 'app/core/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
@@ -63,11 +64,9 @@ import { changePanelState } from '../state/explorePane';
 import { LogDetails } from './LogDetails';
 import { LogStats } from './LogStats';
 import { LogsFeedback } from './LogsFeedback';
-import LogsNavigation from './LogsNavigation';
 import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { SETTINGS_KEYS } from './utils/logs';
-import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 
 interface Props extends Themeable2 {
   width: number;
@@ -840,6 +839,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
             <SplitPaneWrapper
               splitOrientation="vertical"
               paneSize={paneSize}
+              parentStyle={{ position: 'relative' }}
             >
               <div className={styles.logsColumn}>
                 {this.state.visualisationType === 'table' && hasData && (
