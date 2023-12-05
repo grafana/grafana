@@ -3509,7 +3509,7 @@ __metadata:
 
 "@grafana/prql@file:prql::locator=grafana%40workspace%3A.":
   version: 0.0.0
-  resolution: "@grafana/prql@file:prql#prql::hash=e908fb&locator=grafana%40workspace%3A."
+  resolution: "@grafana/prql@file:prql#prql::hash=3bfd06&locator=grafana%40workspace%3A."
   dependencies:
     "@codemirror/autocomplete": "npm:^6.11.0"
     "@codemirror/commands": "npm:^6.3.0"
@@ -3521,7 +3521,7 @@ __metadata:
     "@codemirror/view": "npm:^6.22.0"
     "@lezer/highlight": "npm:^1.2.0"
     "@lezer/lr": "npm:^1.3.14"
-  checksum: eebed947f56fdb7e7cc029dbb3d9d85e0a881de23263d9de87b23b7b1c0c35086f00643216a9543077ec79f0ec0f25acae92e2c53ec57a3c89765e0a5101137c
+  checksum: 1d46ca1141243fb51136e62738deb6b4b5aae9437c9b0a902aae8a970cb3c2d9a3ff2f7a53da9b3d04a4d7cb036473099b432d5ac479a7e02775bef310844c8d
   languageName: node
   linkType: hard
 
