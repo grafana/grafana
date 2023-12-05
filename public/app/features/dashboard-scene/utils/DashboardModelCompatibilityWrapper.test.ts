@@ -1,7 +1,17 @@
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
-import { behaviors, SceneGridItem, SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import {
+  behaviors,
+  SceneGridItem,
+  SceneGridLayout,
+  SceneRefreshPicker,
+  SceneQueryRunner,
+  SceneTimeRange,
+  VizPanel,
+} from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 
+import { DashboardControls } from '../scene/DashboardControls';
+import { DashboardLinksControls } from '../scene/DashboardLinksControls';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { DashboardModelCompatibilityWrapper } from './DashboardModelCompatibilityWrapper';
@@ -12,8 +22,14 @@ describe('DashboardModelCompatibilityWrapper', () => {
 
     expect(wrapper.uid).toBe('dash-1');
     expect(wrapper.title).toBe('hello');
-
+    expect(wrapper.description).toBe('hello description');
+    expect(wrapper.editable).toBe(false);
+    expect(wrapper.graphTooltip).toBe(DashboardCursorSync.Off);
+    expect(wrapper.tags).toEqual(['hello-tag']);
     expect(wrapper.time.from).toBe('now-6h');
+    expect(wrapper.timezone).toBe('America/New_York');
+    expect(wrapper.weekStart).toBe('friday');
+    expect(wrapper.timepicker.refresh_intervals).toEqual(['1s']);
   });
 
   it('Shared tooltip functions', () => {
@@ -25,6 +41,7 @@ describe('DashboardModelCompatibilityWrapper', () => {
 
     expect(wrapper.sharedTooltipModeEnabled()).toBe(true);
     expect(wrapper.sharedCrosshairModeOnly()).toBe(true);
+    expect(wrapper.graphTooltip).toBe(DashboardCursorSync.Crosshair);
   });
 
   it('Get timezone from time range', () => {
@@ -60,10 +77,25 @@ describe('DashboardModelCompatibilityWrapper', () => {
 function setup() {
   const scene = new DashboardScene({
     title: 'hello',
+    description: 'hello description',
+    tags: ['hello-tag'],
     uid: 'dash-1',
+    editable: false,
     $timeRange: new SceneTimeRange({
+      weekStart: 'friday',
       timeZone: 'America/New_York',
     }),
+    controls: [
+      new DashboardControls({
+        variableControls: [],
+        linkControls: new DashboardLinksControls({}),
+        timeControls: [
+          new SceneRefreshPicker({
+            intervals: ['1s'],
+          }),
+        ],
+      }),
+    ],
     body: new SceneGridLayout({
       children: [
         new SceneGridItem({
