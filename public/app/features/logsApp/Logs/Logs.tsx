@@ -647,12 +647,15 @@ class UnthemedLogs extends PureComponent<Props, State> {
     const navigationRange = this.createNavigationRange(logRows);
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
-    const title =
+    let title =
       logsVolumeData?.data || logsVolumeWithGroupByData?.data
         ? 'Count over time'
         : logsCountData?.data || logsCountWithGroupByData?.data
         ? 'Total count'
         : '';
+    title = `${title}${
+      this.state.hiddenLogLevels.length > 0 ? ` (filtered based on selected ${this.state.groupByLabel})` : ''
+    }`;
     return (
       <>
         {getRowContext && contextRow && (
