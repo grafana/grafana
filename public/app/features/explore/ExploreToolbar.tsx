@@ -258,9 +258,18 @@ export function ExploreToolbar({
               hideTextValue={showSmallDataSourcePicker}
               width={showSmallDataSourcePicker ? 8 : undefined}
             />
-            <Button variant="primary" size="sm" onClick={() => setOpenTutorial()} style={{ marginLeft: '10px' }}>
-              Take me on a magical journey
-            </Button>
+            {config.featureToggles.wizarDSToggle && (
+              <div
+                className={css({
+                  padding: '0 0 0 8px',
+                })}
+              >
+                <Button variant={'secondary'} onClick={() => setOpenTutorial()} title={'Get query suggestions.'}>
+                  <img height={16} src={`public/img/ai-icons/AI_Logo_color.svg`} alt="AI logo color" />
+                  {'\u00A0'}Query wizard
+                </Button>
+              </div>
+            )}
           </>,
         ].filter(Boolean)}
         forceShowLeftItems
