@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { usePopperTooltip } from 'react-popper-tooltip';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -24,6 +24,7 @@ export const TutorialOverlay = ({ currentStep, step }: TutorialOverlayProps) => 
   const styles = useStyles2(getStyles);
   const [spotlightStyles, setSpotlightStyles] = useState({});
   const [canInteract, setCanInteract] = useState(false);
+  const renderedFirstStep = useRef(false);
 
   const popper = usePopperTooltip({
     visible: showTooltip,
@@ -67,7 +68,9 @@ export const TutorialOverlay = ({ currentStep, step }: TutorialOverlayProps) => 
         };
 
         transitionend = (e) => {
-          if (e.propertyName === 'left') {
+          // TODO: if there are multiple steps on the same element
+          // with no transition the tooltip won't show
+          if (e.propertyName === 'left' || e.propertyName === 'width') {
             setShowTooltip(true);
           }
         };
@@ -83,8 +86,9 @@ export const TutorialOverlay = ({ currentStep, step }: TutorialOverlayProps) => 
             });
           }
 
-          if (currentStep === 0) {
+          if (!renderedFirstStep.current) {
             setShowTooltip(true);
+            renderedFirstStep.current = true;
           }
         });
         scrollParent?.addEventListener('scroll', setStyles);

@@ -19,7 +19,7 @@ const tutorialSteps: Step[] = [
         action: 'click',
       },
     ],
-    skip: [
+    skipConditions: [
       {
         target: `[href="/explore"]`,
         condition: 'visible',
@@ -53,7 +53,7 @@ const tutorialSteps: Step[] = [
         },
       },
     ],
-    skip: [
+    skipConditions: [
       {
         target: `[data-testid*="Select a data source"]`,
         condition: 'match',
