@@ -28,6 +28,9 @@ replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.
 // This will not be required in the next k8s release @v28-with-hook
 replace k8s.io/kube-openapi v0.0.0-20230717233707-2695361300d9 => github.com/ryantxu/kube-openapi v0.0.0-20231113051506-80b8e1dfdde6 // @grafana/grafana-app-platform-squad
 
+// The v0.120.0 is needed for now to be compatible with grafana/thema.
+replace github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.120.0
+
 require (
 	cloud.google.com/go/storage v1.30.1 // @grafana/backend-platform
 	cuelang.org/go v0.6.0-0.dev // @grafana/grafana-as-code
