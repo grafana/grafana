@@ -13,7 +13,6 @@ import {
   MutableDataFrame,
   QueryResultMeta,
   LogsVolumeType,
-  DataLink,
   Field,
   LinkModel,
 } from '@grafana/data';
@@ -146,9 +145,6 @@ export const attachLinks = (
     if (row !== undefined) {
       rowWithLinks.dataFrameWithLinks.forEach((generatedLinkDF) => {
         const rowField = row.dataFrame.fields[generatedLinkDF.fieldIndex];
-        if (rowField.config.links === undefined) {
-          rowField.config.links = [];
-        }
         if (generatedLinkDF.links && generatedLinkDF.links.length > 0) {
           if (rowField.config.links) {
             // if links already exist, merge generated links list with existing links, matching by origin data
@@ -158,18 +154,25 @@ export const attachLinks = (
                   (rowConfigLink) => JSON.stringify(rowConfigLink) === JSON.stringify(originLink)
                 );
                 if (rowLinkIndex !== undefined && rowLinkIndex !== -1) {
-                  const url = rowField.config.links![rowLinkIndex].url;
-                  const onClick = rowField.config.links![rowLinkIndex].onClick;
+                  let constructedLink = { ...rowField.config.links![rowLinkIndex] };
+                  const url = constructedLink.url;
+                  const onClick = constructedLink.onClick;
                   if (url === undefined || url === '') {
-                    rowField.config.links![rowLinkIndex].url = generatedLink.href;
+                    //rowField.config.links![rowLinkIndex].url = generatedLink.href;
+                    constructedLink.url = generatedLink.href;
                   }
                   if (onClick === undefined) {
-                    rowField.config.links![rowLinkIndex].onClick = generatedLink.onClick;
+                    //rowField.config.links![rowLinkIndex].onClick = generatedLink.onClick;
+                    constructedLink.onClick = generatedLink.onClick;
                   }
+                  if (row.links === undefined) {
+                    row.links = [];
+                  }
+                  row.links?.push(constructedLink);
                 }
               });
             });
-          } else {
+          } /*else {
             rowField.config.links = generatedLinkDF.links.map((linkFieldLink) => {
               const newDL: DataLink = {
                 title: linkFieldLink.title,
@@ -179,7 +182,7 @@ export const attachLinks = (
               };
               return newDL;
             });
-          }
+          } */
         }
       });
     }

@@ -59,19 +59,17 @@ export const LogRowMenuCell = React.memo(
     const getLogText = useCallback(() => logText, [logText]);
     const [isLinkMenuOpen, setIsLinkMenuOpen] = useState(false);
 
-    const links = row.dataFrame.fields
-      .map((field) => {
-        const wat = field.config
-          .links!.map((link) => {
+    const links = row.links
+      ? row.links
+          .map((link) => {
             return link.url ? { title: link.title, url: link.url, onClick: link.onClick } : undefined;
           })
           .filter(
             (v): v is { title: string; url: string; onClick: ((event: DataLinkClickEvent<any>) => void) | undefined } =>
               v !== undefined
-          );
-        return wat;
-      })
-      .flat();
+          )
+          .flat()
+      : [];
 
     const MenuActions = (
       <Menu>

@@ -4,6 +4,7 @@ import { DataQuery } from '@grafana/schema';
 
 import { KeyValue, Labels } from './data';
 import { DataFrame } from './dataFrame';
+import { DataLink } from './dataLink';
 import { DataQueryRequest, DataQueryResponse, QueryFixAction, QueryFixType } from './datasource';
 import { AbsoluteTimeRange } from './time';
 export { LogsDedupStrategy, LogsSortOrder } from '@grafana/schema';
@@ -81,6 +82,9 @@ export interface LogRowModel {
   uid: string;
   uniqueLabels?: Labels;
   datasourceType?: string;
+
+  //interpolated links for this row - this should also record the field if we want to use this for log details as well
+  links?: DataLink[];
 }
 
 export interface LogsModel {
