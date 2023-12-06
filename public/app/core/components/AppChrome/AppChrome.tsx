@@ -7,7 +7,6 @@ import { useStyles2, LinkButton, useTheme2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
-import { TutorialProvider } from 'app/features/tutorial/TutorialProvider';
 import { KioskMode } from 'app/types';
 
 import { AppChromeMenu } from './AppChromeMenu';
@@ -102,7 +101,6 @@ export function AppChrome({ children }: Props) {
           <CommandPalette />
         </>
       )}
-      <TutorialProvider />
     </div>
   );
 }

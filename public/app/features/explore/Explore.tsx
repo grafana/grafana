@@ -18,7 +18,7 @@ import {
   SupplementaryQueryType,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
   AdHocFilterItem,
@@ -29,8 +29,12 @@ import {
   withTheme2,
 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
+import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
+import { WizarDS } from 'app/plugins/datasource/prometheus/querybuilder/components/wizarDS/WizarDS';
+import { componentTemplates } from 'app/plugins/datasource/prometheus/querybuilder/components/wizarDS/state/templates';
 import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
 import { StoreState } from 'app/types';
 
@@ -120,6 +124,7 @@ enum ExploreDrawer {
 
 interface ExploreState {
   openDrawer?: ExploreDrawer;
+  openTutorial: boolean;
   contentOutlineVisible: boolean;
 }
 
@@ -160,6 +165,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     super(props);
     this.state = {
       openDrawer: undefined,
+      openTutorial: false,
       contentOutlineVisible: false,
     };
     this.graphEventBus = props.eventBus.newScopedBus('graph', { onlyLocal: false });
@@ -559,7 +565,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       correlationEditorDetails,
       correlationEditorHelperData,
     } = this.props;
-    const { openDrawer, contentOutlineVisible } = this.state;
+    const { openDrawer, openTutorial, contentOutlineVisible } = this.state;
     const styles = getStyles(theme);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
     const showRichHistory = openDrawer === ExploreDrawer.RichHistory;
@@ -585,13 +591,14 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       correlationsBox = <CorrelationHelper exploreId={exploreId} correlations={correlationEditorHelperData} />;
     }
 
-    return (
-      <ContentOutlineContextProvider>
+    const exploreContent = (
+      <>
         <ExploreToolbar
           exploreId={exploreId}
           onChangeTime={this.onChangeTime}
           onContentOutlineToogle={this.onContentOutlineToogle}
           isContentOutlineOpen={contentOutlineVisible}
+          setOpenTutorial={() => this.setState({ openTutorial: !openTutorial })}
         />
         <div
           style={{
@@ -697,6 +704,30 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
             </CustomScrollbar>
           </div>
         </div>
+      </>
+    );
+
+    return (
+      <ContentOutlineContextProvider>
+        <SplitPaneWrapper
+          splitOrientation="vertical"
+          paneSize={600}
+          minSize={400}
+          primary="second"
+          splitVisible={openTutorial}
+        >
+          <>{exploreContent}</>
+          {config.featureToggles.wizarDSToggle && openTutorial && (
+            <WizarDS
+              // remove all references to the query
+              query={{ metric: '', labels: [], operations: [] }}
+              closeDrawer={() => this.setState({ openTutorial: false })}
+              datasource={datasourceInstance as PrometheusDatasource}
+              // add component templates so any DS can use this
+              templates={componentTemplates}
+            />
+          )}
+        </SplitPaneWrapper>
       </ContentOutlineContextProvider>
     );
   }

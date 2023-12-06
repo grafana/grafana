@@ -4,8 +4,8 @@ import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 import { CoreApp, LoadingState, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { EditorHeader, EditorRows, FlexItem, Space } from '@grafana/experimental';
-import { config, reportInteraction } from '@grafana/runtime';
-import { Button, ConfirmModal, Drawer } from '@grafana/ui';
+import { reportInteraction } from '@grafana/runtime';
+import { Button, ConfirmModal } from '@grafana/ui';
 
 import { PromQueryEditorProps } from '../../components/types';
 import { PromQueryFormat } from '../../dataquery.gen';
@@ -21,8 +21,6 @@ import { changeEditorMode, getQueryWithDefaults } from '../state';
 import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
 import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 import { PromQueryCodeEditor } from './PromQueryCodeEditor';
-import { WizarDS } from './wizarDS/WizarDS';
-import { componentTemplates } from './wizarDS/state/templates';
 
 export const FORMAT_OPTIONS: Array<SelectableValue<PromQueryFormat>> = [
   { label: 'Time series', value: 'time_series' },
@@ -51,7 +49,6 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [queryPatternsModalOpen, setQueryPatternsModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
-  const [wizarDSDrawerOpen, setWizarDSDrawerOpen] = useState(false);
   const { flag: explain, setFlag: setExplain } = useFlag(promQueryEditorExplainKey);
 
   const query = getQueryWithDefaults(props.query, app, defaultEditor);
@@ -95,8 +92,6 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
     setExplain(e.currentTarget.checked);
   };
 
-  const wizarDSToggle = config.featureToggles.wizarDSToggle;
-
   return (
     <>
       <ConfirmModal
@@ -119,18 +114,6 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
         onChange={onChange}
         onAddQuery={onAddQuery}
       />
-      {wizarDSToggle && wizarDSDrawerOpen && (
-        <Drawer closeOnMaskClick={false} onClose={() => setWizarDSDrawerOpen(false)}>
-          <WizarDS
-            // remove all references to the query
-            query={{ metric: '', labels: [], operations: [] }}
-            closeDrawer={() => setWizarDSDrawerOpen(false)}
-            datasource={props.datasource}
-            // add component templates so any DS can use this
-            templates={componentTemplates}
-          />
-        </Drawer>
-      )}
       <EditorHeader>
         <Button
           aria-label={selectors.components.QueryBuilder.queryPatterns}
@@ -139,9 +122,6 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
           onClick={() => setQueryPatternsModalOpen((prevValue) => !prevValue)}
         >
           Kick start your query
-        </Button>
-        <Button variant="secondary" size="sm" onClick={() => setWizarDSDrawerOpen((prevValue) => !prevValue)}>
-          Take me on a magical journey
         </Button>
         <QueryHeaderSwitch label="Explain" value={explain} onChange={onShowExplainChange} />
         <FlexItem grow={1} />
