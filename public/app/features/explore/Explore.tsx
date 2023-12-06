@@ -32,7 +32,6 @@ import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/compon
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
 import { WizarDS } from 'app/plugins/datasource/prometheus/querybuilder/components/wizarDS/WizarDS';
 import { componentTemplates } from 'app/plugins/datasource/prometheus/querybuilder/components/wizarDS/state/templates';
 import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
