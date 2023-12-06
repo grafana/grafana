@@ -7,6 +7,8 @@ import { Button, Icon, LoadingPlaceholder } from '@grafana/ui';
 import { i18nDate, Trans } from 'app/core/internationalization';
 import { UserSession } from 'app/types';
 
+import { resetUser } from '../achievements/AchievementsService';
+
 interface Props {
   sessions: UserSession[];
   isLoading: boolean;
@@ -70,6 +72,9 @@ class UserSessions extends PureComponent<Props> {
                   ))}
                 </tbody>
               </table>
+              <Button variant="destructive" onClick={resetUser}>
+                Reset Achievements
+              </Button>
             </div>
           </>
         )}
