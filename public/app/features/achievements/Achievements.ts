@@ -6,7 +6,7 @@ export const achievementLevelThresholds = {
   [AchievementLevel.Beginner]: 9,
   [AchievementLevel.Experienced]: 16,
   [AchievementLevel.Expert]: 30,
-  [AchievementLevel.Golden]: 40,
+  [AchievementLevel.Wizard]: 40,
 };
 
 export const achievements = [
@@ -240,7 +240,7 @@ export const achievements = [
     id: AchievementId.StreamDataToGrafana,
     title: 'Stream data to Grafana',
     description: '',
-    level: AchievementLevel.Golden,
+    level: AchievementLevel.Wizard,
     link: 'https://grafana.com/docs/grafana/latest/setup-grafana/set-up-grafana-live/#set-up-grafana-live',
     video: '',
     icon: 'apps',
