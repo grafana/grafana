@@ -45,7 +45,7 @@ export const achievements = [
   {
     id: AchievementId.UseExploreToMakeAQuery,
     title: 'Use explore to make a query',
-    description: '',
+    description: 'Make a query in Explore and see the results in a table or graph',
     level: AchievementLevel.Beginner,
     link: '',
     video: '',

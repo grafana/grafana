@@ -6,13 +6,13 @@ import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import CircularProgress from '@mui/material/CircularProgress';
 import React from 'react';
-import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Card, Icon, LinkButton, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { getAchievements } from './AchievementsService';
 import { AchievementLevel } from './types';
+import { useAchievements } from './useAchievements';
+import { getProgress } from './utils';
 
 interface AchievementCardProps {
   title: string;
@@ -24,12 +24,16 @@ export const AchievementCard = ({ title, progress = 20, level }: AchievementCard
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
 
-  let achievementsListState = useAsync(async () => {
-    return await getAchievements();
-  }, []);
-
+  const { achievementsList } = useAchievements();
   const achievementsListByLevel =
-    achievementsListState && achievementsListState.value?.filter((achievement) => achievement.level === level);
+    achievementsList && achievementsList.filter((achievement) => achievement.level === level);
+
+  const progressByLevel = achievementsListByLevel
+    ? getProgress(
+        achievementsListByLevel?.filter((achievement) => achievement.completed).length!,
+        achievementsListByLevel.length
+      )
+    : 0;
 
   return (
     <div className={styles.wrapper}>
@@ -42,7 +46,7 @@ export const AchievementCard = ({ title, progress = 20, level }: AchievementCard
         >
           <Box className={styles.progressBox}>
             <CircularProgress variant="determinate" value={progress} sx={{ color: '#F55F3E' }} />
-            <Box className={styles.progressText}>{`${Math.round(progress)}%`}</Box>
+            <Box className={styles.progressText}>{`${progressByLevel}%`}</Box>
           </Box>
           <h4 style={{ color: theme.colors.text.primary }}>{title}</h4>
         </AccordionSummary>
