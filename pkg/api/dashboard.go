@@ -303,7 +303,6 @@ func (hs *HTTPServer) RestoreDashboard(c *contextmodel.ReqContext) response.Resp
 		"title":   dash.Title,
 		"message": fmt.Sprintf("Dashboard %s is restored", dash.Title),
 		"id":      dash.ID,
-		"deleted": dash.Deleted,
 	})
 }
 
@@ -332,7 +331,6 @@ func (hs *HTTPServer) SoftDeleteDashboard(c *contextmodel.ReqContext) response.R
 		"title":   dash.Title,
 		"message": fmt.Sprintf("Dashboard %s is in the Trash", dash.Title),
 		"id":      dash.ID,
-		"deleted": dash.Deleted,
 	})
 }
 
