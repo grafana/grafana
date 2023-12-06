@@ -170,6 +170,7 @@ export const SearchResultsTable = React.memo(
       return <div className={styles.noData}>No data</div>;
     }
 
+    console.log('hedaer groups', headerGroups);
     return (
       <div {...getTableProps()} aria-label="Search results table" role="table">
         {headerGroups.map((headerGroup) => {

@@ -72,12 +72,13 @@ type Hit struct {
 	Tags      []string `json:"tags"`
 	IsStarred bool     `json:"isStarred"`
 	// Deprecated: use FolderUID instead
-	FolderID     int64  `json:"folderId,omitempty"`
-	FolderUID    string `json:"folderUid,omitempty"`
-	FolderTitle  string `json:"folderTitle,omitempty"`
-	FolderURL    string `json:"folderUrl,omitempty"`
-	SortMeta     int64  `json:"sortMeta"`
-	SortMetaName string `json:"sortMetaName,omitempty"`
+	FolderID            int64  `json:"folderId,omitempty"`
+	FolderUID           string `json:"folderUid,omitempty"`
+	FolderTitle         string `json:"folderTitle,omitempty"`
+	FolderURL           string `json:"folderUrl,omitempty"`
+	SortMeta            int64  `json:"sortMeta"`
+	SortMetaName        string `json:"sortMetaName,omitempty"`
+	RemainingTrashAtAge string `json:"remainingTrashAtAge,omitempty"`
 }
 
 type HitList []*Hit

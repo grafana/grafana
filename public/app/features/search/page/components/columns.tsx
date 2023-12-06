@@ -39,6 +39,7 @@ export const generateColumns = (
   showingEverything?: boolean
 ): TableColumn[] => {
   const columns: TableColumn[] = [];
+  console.log('fields', response.view.fields);
   const access = response.view.fields;
   const uidField = access.uid;
   const kindField = access.kind;
@@ -259,6 +260,30 @@ export const generateColumns = (
       id: `column-score-field`,
       field: access.score,
       width: 100,
+    });
+  }
+
+  if (access.remaining_trash_at_age?.values) {
+    // Name column
+    width = Math.max(availableWidth * 0.2, 300);
+    columns.push({
+      Cell: (p) => {
+        const classNames = cx(styles.nameCellStyle);
+        const remainingDays = access.remaining_trash_at_age?.values[p.row.index]!;
+        return (
+          <div className={styles.cell} {...p.cellProps}>
+            {!response.isItemLoaded(p.row.index) ? (
+              <Skeleton width={200} />
+            ) : (
+              <div className={classNames}>{remainingDays}</div>
+            )}
+          </div>
+        );
+      },
+      id: `column-remaining-date`,
+      field: access.remaining_trash_at_age!,
+      Header: () => <div>Remaining Days</div>,
+      width: width,
     });
   }
 

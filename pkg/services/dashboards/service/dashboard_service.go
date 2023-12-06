@@ -711,6 +711,10 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 		if len(item.Term) > 0 {
 			hit.Tags = append(hit.Tags, item.Term)
 		}
+		//if item.Deleted != nil {
+		//	duration := (*item.Deleted).Add(24 * 30 * time.Hour).Sub(time.Now())
+		//	hit.RemainingTrashAtAge = util.GetAgeString(time.Now().Add(24 * 30 * time.Hour).Add(*item.Deleted))
+		//}
 	}
 	return hitList
 }
