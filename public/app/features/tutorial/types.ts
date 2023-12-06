@@ -13,8 +13,8 @@ export type Tutorial = {
 export type Step = {
   route?: string;
   target: string;
-  content?: ReactNode;
-  title?: ReactNode;
+  content: ReactNode;
+  title: ReactNode;
   placement?: Placement;
   requiredActions?: RequiredAction[];
   skipConditions?: SkipCondition[];

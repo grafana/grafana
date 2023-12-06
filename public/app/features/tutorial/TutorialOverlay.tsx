@@ -70,7 +70,7 @@ export const TutorialOverlay = ({ currentStep, step }: TutorialOverlayProps) => 
         transitionend = (e) => {
           // TODO: if there are multiple steps on the same element
           // with no transition the tooltip won't show
-          if (e.propertyName === 'left' || e.propertyName === 'width') {
+          if ([`width`, `height`, `top`, `left`].includes(e.propertyName)) {
             setShowTooltip(true);
           }
         };

@@ -90,7 +90,7 @@ const tutorialSteps: Step[] = [
   },
 ];
 
-export const tutorial: Tutorial = {
+export const usingPrometheusDSTutorial: Tutorial = {
   ...info,
   steps: tutorialSteps,
 };

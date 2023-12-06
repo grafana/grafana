@@ -16,8 +16,11 @@ const TutorialProviderComponent = ({
   const dispatch = useDispatch();
   const keyupUseDismissedIssue = useRef(false);
   const [showExitTutorialModal, setShowExitTutorialModal] = useState(false);
-  const currentTutorialSteps = availableTutorials.find((t) => t.id === currentTutorial)?.steps;
+  const currentTutorialState = availableTutorials.find((t) => t.id === currentTutorial);
+  const currentTutorialSteps = currentTutorialState?.steps;
   const step = currentStep !== null && currentTutorialSteps && currentTutorialSteps[currentStep];
+  // @ts-expect-error
+  window.dt = () => console.log({ currentTutorialState, step });
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
