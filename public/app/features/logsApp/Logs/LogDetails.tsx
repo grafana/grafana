@@ -73,7 +73,7 @@ export const LogDetails = (props: Props) => {
     [displayedFieldsWithLinks, fieldsWithLinksFromVariableMap]
   );
 
-  const [traceViewOpen, setTraceViewOpen] = useState(false);
+  const [traceViewOpen, setTraceViewOpen] = useState(true);
 
   const fields = useMemo(
     () =>
