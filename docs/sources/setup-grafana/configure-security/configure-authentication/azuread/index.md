@@ -82,7 +82,7 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
 
 #### Configure application roles for Grafana in the Azure Portal
 
-This section describes setting up basic application roles for Grafana within the Azure Portal. For more information, refer [Add app roles to your application and receive them in the token](https://learn.microsoft.com/en-us/entra/identity-platform/howto-add-app-roles-in-apps).
+This section describes setting up basic application roles for Grafana within the Azure Portal. For more information, see [Add app roles to your application and receive them in the token](https://learn.microsoft.com/en-us/entra/identity-platform/howto-add-app-roles-in-apps).
 
 1. Go to **App Registrations**, search for your application, and click it.
 
@@ -110,7 +110,9 @@ If you prefer to configure the application roles for Grafana in the manifest fil
 
 1. Add a Universally Unique Identifier to each role.
 
-   Every role requires a [Universally Unique Identifier](https://en.wikipedia.org/wiki/Universally_unique_identifier) which you can generate on Linux with `uuidgen`, and on Windows through Microsoft PowerShell with `New-Guid`.
+{{% admonition type="note" %}}
+Every role requires a [Universally Unique Identifier](https://en.wikipedia.org/wiki/Universally_unique_identifier) which you can generate on Linux with `uuidgen`, and on Windows through Microsoft PowerShell with `New-Guid`.
+{{% /admonition %}}
 
 1. Replace each "SOME_UNIQUE_ID" with the generated ID in the manifest file:
 
@@ -155,7 +157,7 @@ If you prefer to configure the application roles for Grafana in the manifest fil
    		],
    ```
 
-1. Click on **Save**.
+1. Click  **Save**.
 
 ### Assign server administrator privileges
 
@@ -246,7 +248,7 @@ allowed_organizations = 8bab1c86-8fba-33e5-2089-1d1c80ec267d
 Azure AD groups can be used to limit user access to Grafana. For more information about managing groups in Azure AD, refer to [Manage Microsoft Entra groups and group membership](https://learn.microsoft.com/en-us/entra/fundamentals/how-to-manage-groups).
 
 To limit access to authenticated users who are members of one or more AzureAD groups, set `allowed_groups`
-to a comma- or space-separated list of group object IDs.
+to a **comma-** or **space-separated** list of group object IDs.
 
 Complete the following step to find object IDs for a specific group on the Azure portal:
 
@@ -258,7 +260,9 @@ Complete the following step to find object IDs for a specific group on the Azure
    allowed_groups = 8bab1c86-8fba-33e5-2089-1d1c80ec267d
    ```
 
-> You can find the Object Id of a group by clicking on the group and then clicking on **Properties**. The object ID is listed under **Object ID**.
+{{% admonition type="note" %}}
+You can find the Object Id of a group by clicking on the group and then clicking on **Properties**. The object ID is listed under **Object ID**.
+{{% admonition type="note" %}}
 
 1. You must enable adding the [group attribute](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims#configure-groups-optional-claims) to the tokens in your Azure AD App registration either [from the Azure Portal](#configure-group-membership-claims-on-the-azure-portal) or [from the manifest file](#configure-group-membership-claim-in-the-manifest-file).
 
@@ -270,11 +274,13 @@ To configure group membership claims from the Azure Portal UI, complete the foll
 
 1. Navigate to the **App Registrations** page and select your application.
 1. Select **Token configuration**.
-1. Click **Add groups claim** and then select the relevant option for your use case (for example, **Security groups** and **Groups assigned to the application**).
+1. Click **Add groups claim** and select the relevant option for your use case (for example, **Security groups** and **Groups assigned to the application**).
 
 For more information, see [Configure groups optional claims](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims#configure-groups-optional-claims).
 
-> If the user is a member of more than 200 groups, Azure AD does not emit the groups claim in the token and instead emits a group overage claim. To set up a group overage claim, see [Users with over 200 Group assignments](#users-with-over-200-group-assignments).
+{{% admonition type="note" %}}
+If the user is a member of more than 200 groups, Azure AD does not emit the groups claim in the token and instead emits a group overage claim. To set up a group overage claim, see [Users with over 200 Group assignments](#users-with-over-200-group-assignments).
+{{% /admonition %}}
 
 #### Configure group membership claim in the manifest file
 
@@ -358,7 +364,9 @@ Admin consent might be required for this permission.
 1. Under the **GroupMember** section, select **GroupMember.Read.All**.
 1. Click **Add permissions**.
 
-> Admin consent may be required for this permission.
+{{% admonition type="note" %}}
+Admin consent may be required for this permission.
+{{% /admonition %}}
 
 ### Force fetching groups from Microsoft graph API
 
