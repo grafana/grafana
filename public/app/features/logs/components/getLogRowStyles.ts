@@ -81,6 +81,7 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
     `,
     highlightBackground: css`
       background-color: ${tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString()};
+      color: ${tinycolor(theme.colors.text.primary).brighten(20).toString()};
     `,
     logsRow: css`
       label: logs-row;
@@ -88,11 +89,11 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       cursor: pointer;
       vertical-align: top;
       border-bottom: ${theme.spacing(0.5)} dotted transparent;
-      color: ${tinycolor(theme.colors.text.primary).setAlpha(0.8).toString()};
+      color: ${theme.colors.text.primary};
       line-height: 20px !important;
 
       &:hover {
-        color: ${theme.colors.text.primary};
+        color: ${tinycolor(theme.colors.text.primary).brighten(20).toString()};
         .log-row-menu {
           z-index: 1;
         }
@@ -243,7 +244,7 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       padding: theme.spacing(1),
       backgroundColor: theme.colors.background.primary,
       marginRight: theme.spacing(1),
-      verticalAlign: 'baseline'
+      verticalAlign: 'baseline',
     }),
     detailsMenuCopyIcon: css({
       backgroundColor: theme.colors.background.primary,
@@ -253,7 +254,7 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       '> svg': css({
         margin: 0,
       }),
-      verticalAlign: 'baseline'
+      verticalAlign: 'baseline',
     }),
     detailsMenu: css({
       paddingTop: theme.spacing(1),

@@ -4144,9 +4144,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "30"],
       [0, 0, 0, "Styles should be written using objects.", "31"],
       [0, 0, 0, "Styles should be written using objects.", "32"],
-      [0, 0, 0, "Styles should be written using objects.", "33"],
-      [0, 0, 0, "Styles should be written using objects.", "34"],
-      [0, 0, 0, "Styles should be written using objects.", "35"]
+      [0, 0, 0, "Styles should be written using objects.", "33"]
     ],
     "public/app/features/logs/components/log-context/LoadingIndicator.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
