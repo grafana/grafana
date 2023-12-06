@@ -6,7 +6,7 @@ export const achievementLevelThresholds = {
   [AchievementLevel.Beginner]: 9,
   [AchievementLevel.Experienced]: 16,
   [AchievementLevel.Expert]: 30,
-  [AchievementLevel.Wizard]: 40,
+  [AchievementLevel.Golden]: 40,
 };
 
 export const achievements = [
@@ -29,23 +29,14 @@ export const achievements = [
     icon: 'compass',
   },
   {
-    id: AchievementId.ChangeTheTheme,
-    title: 'Change the theme',
-    description: 'Change the theme using the keyboard shortcut `ct`',
+    id: AchievementId.WatchIntroToGrafanaVideo,
+    title: 'Watch intro to Grafana video',
+    description: 'This is a  great intro video about how to use Grafana. Enjoy!',
     level: AchievementLevel.Novice,
-    link: 'https://grafana.com/docs/grafana/latest/administration/organization-preferences/#change-grafana-ui-theme',
-    video: '',
-    icon: 'palette',
+    link: '',
+    video: 'https://www.youtube.com/embed/k3RQVyeYdO8?si=96JCRzMkuo6fjn4O',
+    icon: 'grafana',
   },
-  // {
-  //   id: AchievementId.WatchIntroToGrafanaVideo,
-  //   title: 'Watch intro to Grafana video',
-  //   description: 'This is a  great intro video about how to use Grafana. Enjoy!',
-  //   level: AchievementLevel.Novice,
-  //   link: '',
-  //   video: 'https://www.youtube.com/embed/k3RQVyeYdO8?si=96JCRzMkuo6fjn4O',
-  //   icon: 'grafana',
-  // },
   {
     id: AchievementId.ConnectYourFirstDatasource,
     title: 'Connect your first datasource',
@@ -249,7 +240,7 @@ export const achievements = [
     id: AchievementId.StreamDataToGrafana,
     title: 'Stream data to Grafana',
     description: '',
-    level: AchievementLevel.Wizard,
+    level: AchievementLevel.Golden,
     link: 'https://grafana.com/docs/grafana/latest/setup-grafana/set-up-grafana-live/#set-up-grafana-live',
     video: '',
     icon: 'apps',

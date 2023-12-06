@@ -6,7 +6,7 @@ export enum AchievementLevel {
   Beginner = 2,
   Experienced = 3,
   Expert = 4,
-  Wizard = 5,
+  Golden = 5,
 }
 
 export enum AchievementId {

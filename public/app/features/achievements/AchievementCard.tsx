@@ -10,7 +10,8 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Card, Icon, LinkButton, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { AchievementLevel } from './types';
+import { registerAchievementCompleted } from './AchievementsService';
+import { AchievementId, AchievementLevel } from './types';
 import { useAchievements } from './useAchievements';
 import { getProgress } from './utils';
 
@@ -33,6 +34,10 @@ export const AchievementCard = ({ title, level }: AchievementCardProps) => {
         achievementsListByLevel.length
       )
     : 0;
+
+  const markVideoAsComplete = (id: AchievementId) => {
+    registerAchievementCompleted(id);
+  };
 
   return (
     <div className={styles.wrapper}>
@@ -73,12 +78,12 @@ export const AchievementCard = ({ title, level }: AchievementCardProps) => {
                 <Card.Actions>
                   {achievement.video && (
                     <iframe
-                      width="250"
-                      height="131"
+                      width="300"
+                      height="181"
                       src={achievement.video}
                       title="YouTube video player"
                       frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     ></iframe>
                   )}
                 </Card.Actions>
@@ -92,6 +97,16 @@ export const AchievementCard = ({ title, level }: AchievementCardProps) => {
                       variant="secondary"
                     >
                       Learn more
+                    </LinkButton>
+                  )}
+                  {achievement.video && (
+                    <LinkButton
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => markVideoAsComplete(achievement.id)}
+                      disabled={achievement.completed}
+                    >
+                      Mark as complete
                     </LinkButton>
                   )}
                 </Card.SecondaryActions>

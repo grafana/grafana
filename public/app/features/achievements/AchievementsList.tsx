@@ -3,7 +3,7 @@ import React from 'react';
 import { AchievementCard } from './AchievementCard';
 import { AchievementLevel } from './types';
 
-export const achievementsByName = ['Egg', 'Novice', 'Beginner', 'Experienced', 'Expert', 'Wizard'];
+export const achievementsByName = ['Egg', 'Novice', 'Beginner', 'Experienced', 'Expert', 'Golden'];
 
 export const AchievementsList = () => {
   return (
