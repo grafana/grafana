@@ -80,4 +80,5 @@ type Store interface {
 	DeleteDashboardsInFolder(ctx context.Context, request *DeleteDashboardsInFolderRequest) error
 	GetSoftDeletedDashboards(ctx context.Context) ([]*Dashboard, error)
 	SoftDeleteDashboard(ctx context.Context, dashboardUid string) error
+	RestoreDashboard(ctx context.Context, dashboardUid string) error
 }

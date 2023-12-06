@@ -342,20 +342,6 @@ func (_m *FakeDashboardStore) GetProvisionedDataByDashboardUID(ctx context.Conte
 	return r0, r1
 }
 
-// RestoreDashboard provides a mock function with given fields: ctx, dashboardUid
-func (_m *FakeDashboardStore) RestoreDashboard(ctx context.Context, dashboardUid string) error {
-	ret := _m.Called(ctx, dashboardUid)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, dashboardUid)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // GetSoftDeletedDashboards provides a mock function with given fields: ctx
 func (_m *FakeDashboardStore) GetSoftDeletedDashboards(ctx context.Context) ([]*Dashboard, error) {
 	ret := _m.Called(ctx)
@@ -380,6 +366,20 @@ func (_m *FakeDashboardStore) GetSoftDeletedDashboards(ctx context.Context) ([]*
 	}
 
 	return r0, r1
+}
+
+// RestoreDashboard provides a mock function with given fields: ctx, dashboardUid
+func (_m *FakeDashboardStore) RestoreDashboard(ctx context.Context, dashboardUid string) error {
+	ret := _m.Called(ctx, dashboardUid)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, dashboardUid)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // SaveAlerts provides a mock function with given fields: ctx, dashID, alerts
