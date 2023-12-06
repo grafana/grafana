@@ -242,8 +242,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
     if (this.state.logDetailsRow) {
       const included = this.props.logRows.includes(this.state.logDetailsRow);
-      const found = this.props.logRows.findIndex((row) => row.rowId === this.state.logDetailsRow?.rowId);
       if (!included) {
+        const found = this.props.logRows.findIndex((row) => row.rowId === this.state.logDetailsRow?.rowId);
         this.setState({
           logDetailsRow: found ? this.props.logRows[found] : undefined,
         });
@@ -436,18 +436,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
       contextOpen: true,
       contextRow: row,
     });
-    reportInteraction('grafana_explore_logs_log_context_opened', {
-      datasourceType: row.datasourceType,
-      logRowUid: row.uid,
-    });
     this.onCloseContext = () => {
       this.setState({
         contextOpen: false,
         contextRow: undefined,
-      });
-      reportInteraction('grafana_explore_logs_log_context_closed', {
-        datasourceType: row.datasourceType,
-        logRowUid: row.uid,
       });
       onClose?.();
     };
