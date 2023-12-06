@@ -16,7 +16,7 @@ export type Step = {
   title?: ReactNode;
   placement?: Placement;
   requiredActions?: RequiredAction[];
-  skip?: SkipCondition[];
+  skipConditions?: SkipCondition[];
 };
 
 export type StringAttribute = {

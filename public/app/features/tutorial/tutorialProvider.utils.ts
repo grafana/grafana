@@ -4,18 +4,27 @@ import type { Attribute, RequiredAction, ClickAction, ChangeAction, StringAttrib
 
 export function waitForElement<T extends Element = Element>(selector: string, timeout = 500): Promise<T> {
   return new Promise((resolve, reject) => {
+    const resolver = (element: T) =>
+      hasElementStoppedAnimating(element).then(() => {
+        requestAnimationFrame(() => {
+          resolve(element);
+        });
+      });
+
+    const element = document.querySelector<T>(selector);
+
+    if (element) {
+      resolver(element);
+      return;
+    }
+
     const interval = setInterval(() => {
       const element = document.querySelector<T>(selector);
 
       if (element) {
         clearInterval(interval);
         clearTimeout(stopWaiting);
-
-        hasElementStoppedAnimating(element).then(() => {
-          requestAnimationFrame(() => {
-            resolve(element);
-          });
-        });
+        resolver(element);
       }
     }, 30);
 
@@ -148,3 +157,8 @@ export function isStringAttribute(attribute: Attribute): attribute is StringAttr
 //   const reactRoot = document.getElementById('reactRoot') as Element;
 //   return document.evaluate(path, reactRoot, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 // }
+
+export function isElementVisible(element: Element) {
+  const { width, height } = element.getBoundingClientRect();
+  return width > 0 && height > 0;
+}

@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
 import { RootState } from 'app/store/configureStore';
 
-import { checkCorrectValue, waitForElement } from './tutorialProvider.utils';
+import { checkCorrectValue, isElementVisible, waitForElement } from './tutorialProvider.utils';
 import type { SkipCondition, Tutorial } from './types';
 
 type TutorialsState = {
@@ -33,9 +33,6 @@ const tutorialsSlice = createSlice({
       state.currentTutorial = action.payload;
     },
     setCurrentStep(state, action) {
-      state.currentStep = action.payload;
-    },
-    nextStep(state, action) {
       state.currentStep = action.payload;
     },
     resetCurrentTutorial(state) {
@@ -82,7 +79,7 @@ export function getStep(tutorial: Tutorial | undefined, step: number) {
 async function checkSkipConditions(tutorial: Tutorial, stepIndex: number, direction: 'forwards' | 'backwards') {
   const steps = direction === 'forwards' ? tutorial.steps : [...tutorial.steps].reverse();
   const step = steps[stepIndex];
-  const skipConditions = step?.skip;
+  const skipConditions = step?.skipConditions;
 
   if (!skipConditions) {
     return stepIndex;
@@ -119,8 +116,7 @@ async function shouldSkip(condition: SkipCondition, stepIndex: number) {
   return waitForElement(condition.target, timeout)
     .then((element) => {
       if (condition.condition === 'visible') {
-        const { width, height } = element.getBoundingClientRect();
-        return width > 0 && height > 0;
+        return isElementVisible(element);
       }
 
       if (condition.condition === 'match') {
