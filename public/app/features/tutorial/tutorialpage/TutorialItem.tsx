@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import React, { useCallback } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
 import { TutorialProgress } from 'app/features/tutorial/TutorialProgress';
-import { setCurrentTutorialId, nextStep } from 'app/features/tutorial/slice';
+import { startTutorial } from 'app/features/tutorial/slice';
 import { Tutorial } from 'app/features/tutorial/types';
 import { useDispatch } from 'app/types';
 
@@ -18,11 +18,6 @@ export const TutorialItem = ({ arePreviewing, onPreview, tutorial }: TutorialIte
   const dispatch = useDispatch();
   const { id, name, description } = tutorial;
   const styles = useStyles2(getStyles);
-
-  const startTutorial = useCallback(() => {
-    dispatch(setCurrentTutorialId(id));
-    dispatch(nextStep());
-  }, [dispatch, id]);
 
   return (
     <div className={styles.container} data-testid={`tutorial-item ${id}`}>
@@ -43,7 +38,12 @@ export const TutorialItem = ({ arePreviewing, onPreview, tutorial }: TutorialIte
         >
           Preview tutorial
         </Button>
-        <Button data-testid="tutorial-item start" onClick={startTutorial}>
+        <Button
+          data-testid="tutorial-item start"
+          onClick={() => {
+            dispatch(startTutorial(id));
+          }}
+        >
           Start tutorial
         </Button>
       </div>

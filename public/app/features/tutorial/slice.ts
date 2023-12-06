@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { Dispatch, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
 import { RootState } from 'app/store/configureStore';
 
@@ -38,9 +38,6 @@ const tutorialsSlice = createSlice({
     },
     setCurrentTutorialId(state, action) {
       state.currentTutorialId = action.payload;
-    },
-    setStepTransition(state, action) {
-      state.stepTransition = action.payload;
     },
     exitCurrentTutorial(state) {
       state.currentTutorialId = null;
@@ -92,8 +89,14 @@ export const nextStep = createAsyncThunk<number, void, { state: RootState }>(
   }
 );
 
-export const { addTutorial, addTutorials, removeTutorial, exitCurrentTutorial, setCurrentTutorialId } =
-  tutorialsSlice.actions;
+const { setCurrentTutorialId } = tutorialsSlice.actions;
+export const { addTutorial, addTutorials, removeTutorial, exitCurrentTutorial } = tutorialsSlice.actions;
+
+export const startTutorial = (tutorialId: Tutorial['id']) => (dispatch: Dispatch, getState: () => RootState) => {
+  dispatch(setCurrentTutorialId(tutorialId));
+  // @ts-expect-error
+  dispatch(nextStep());
+};
 
 export const tutorialsReducer = tutorialsSlice.reducer;
 
