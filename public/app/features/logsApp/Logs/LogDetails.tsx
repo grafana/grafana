@@ -17,6 +17,7 @@ import { TempoDatasource } from 'app/plugins/datasource/tempo/datasource';
 import { ExplainLogLine } from '../ExplainLogLine';
 
 import { LogDetailsRow } from './LogDetailsRow';
+import { LogRowMenu } from './LogRowMenu';
 
 export interface Props {
   row: LogRowModel;
@@ -27,7 +28,7 @@ export interface Props {
   hasError?: boolean;
   app?: CoreApp;
   styles: LogRowStyles;
-
+  prettifyLogMessage: boolean;
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
@@ -35,6 +36,9 @@ export interface Props {
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
+  onOpenContext: (row: LogRowModel) => void;
+  onPermalinkClick: (row: LogRowModel) => Promise<void>;
+  showContextToggle?: (row: LogRowModel) => boolean;
 }
 
 export const LogDetails = (props: Props) => {
@@ -150,11 +154,17 @@ export const LogDetails = (props: Props) => {
   return (
     <div className={cx(className, styles.logDetails)}>
       <div className={styles.logDetailsContainer}>
+        <LogRowMenu
+          row={row}
+          showContextToggle={props.showContextToggle}
+          prettifyLogMessage={props.prettifyLogMessage}
+          onOpenContext={props.onOpenContext}
+          onPermalinkClick={props.onPermalinkClick}
+          styles={styles}
+        />
+        <ExplainLogLine logLine={row.entry} />
         <table className={styles.logDetailsTable}>
           <tbody>
-            <tr>
-              <th colSpan={7}>{true && <ExplainLogLine logLine={row.entry} />}</th>
-            </tr>
             {(labelsAvailable || fieldsAvailable) && (
               <tr>
                 <td colSpan={100} className={styles.logDetailsHeading} aria-label="Fields">

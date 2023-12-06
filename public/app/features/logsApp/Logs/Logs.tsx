@@ -430,7 +430,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     });
   };
 
-  onOpenContext = (row: LogRowModel, onClose: () => void) => {
+  onOpenContext = (row: LogRowModel, onClose?: () => void) => {
     // we are setting the `contextOpen` open state and passing it down to the `LogRow` in order to highlight the row when a LogContext is open
     this.setState({
       contextOpen: true,
@@ -449,7 +449,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
         datasourceType: row.datasourceType,
         logRowUid: row.uid,
       });
-      onClose();
+      onClose?.();
     };
   };
 
@@ -876,6 +876,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                         onClickFilterOutValue={this.props.onClickFilterOutValue}
                         showDetails={this.showDetails}
                         logDetailsRow={this.state.logDetailsRow}
+                        noMenu
                       />
                     </InfiniteScroll>
                   </div>
@@ -919,6 +920,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     app={CoreApp.Explore}
                     styles={logRowStyles}
                     isFilterLabelActive={this.props.isFilterLabelActive}
+                    onOpenContext={this.onOpenContext}
+                    onPermalinkClick={this.onPermalinkClick}
+                    showContextToggle={showContextToggle}
+                    prettifyLogMessage={prettifyLogMessage}
                   />
                 ) : (
                   <LogStats styles={logRowStyles} rows={logRows} />

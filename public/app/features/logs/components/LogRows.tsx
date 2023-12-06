@@ -65,6 +65,7 @@ export interface Props extends Themeable2 {
   onClickFilterOutValue?: (value: string, refId?: string) => void;
   showDetails?: (row: LogRowModel) => void;
   logDetailsRow?: LogRowModel;
+  noMenu?: boolean;
 }
 
 interface State {
@@ -232,6 +233,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   isFilterLabelActive={this.props.isFilterLabelActive}
                   handleTextSelection={this.popoverMenuSupported() ? this.handleSelection : undefined}
                   logDetailsRow={this.props.logDetailsRow}
+                  noMenu={this.props.noMenu}
                   {...rest}
                 />
               ))}
@@ -255,6 +257,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   isFilterLabelActive={this.props.isFilterLabelActive}
                   handleTextSelection={this.popoverMenuSupported() ? this.handleSelection : undefined}
                   logDetailsRow={this.props.logDetailsRow}
+                  noMenu={this.props.noMenu}
                   {...rest}
                 />
               ))}
