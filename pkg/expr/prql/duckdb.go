@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -36,6 +38,51 @@ func (d *DuckDB) Query(q string) (data.Frames, error) {
 
 	// TODO - add any needed converters for duckdb
 	frame, err := sqlutil.FrameFromRows(results, -1, sqlutil.Converter{})
+
+	// convention for labels - join against the _meta table, it will contain all the lables
+	// ------
+	// from A
+	// join side:left _meta ("A"==_meta.ref)
+	// take 1..5
+
+	// lables are in a field called _lables fromt the _meta table.  get the values and remove the field
+	var labelsField *data.Field
+	var nonLabelsFields []*data.Field
+	for _, f := range frame.Fields {
+		if f.Name == "_labels" {
+			labelsField = f
+		} else {
+			nonLabelsFields = append(nonLabelsFields, f)
+		}
+	}
+
+	if labelsField != nil {
+		// get the labels and remove the _labels field from the frame
+		if labelsField.Len() > 0 {
+			slables := labelsField.At(0)
+			l, ok := slables.(*string)
+			if !ok {
+				return nil, errors.New("wtf")
+			}
+			var fieldLabels FieldLables
+			err := json.Unmarshal([]byte(*l), &fieldLabels)
+			if err != nil {
+				return nil, err
+			}
+			for _, f := range frame.Fields {
+				labels := fieldLabels[f.Name]
+				if labels == nil && strings.Contains(f.Name, "_") {
+					name := strings.ReplaceAll(f.Name, "_", "-")
+					labels = fieldLabels[name]
+				}
+				if labels != nil {
+					f.Labels = labels
+				}
+			}
+		}
+		frame.Fields = nonLabelsFields
+	}
+
 	return data.Frames{frame}, err
 }
 
@@ -125,24 +172,79 @@ func (d *DuckDB) AppendAll(ctx context.Context, frames data.Frames) error {
 
 	}
 
-	labelsAppender, err := duckdb.NewAppenderFromConn(conn, "", "labels")
+	// labels attempt 1 - creates multiple rows which is problematic
+	// labelsAppender, err := duckdb.NewAppenderFromConn(conn, "", "labels")
+	// if err != nil {
+	// 	return err
+	// }
+
+	// for refId, fieldLabels := range frameLables {
+	// 	for f, lbls := range fieldLabels {
+	// 		for name, value := range lbls {
+	// 			err := labelsAppender.AppendRow(refId, f, name, value)
+	// 			if err != nil {
+	// 				fmt.Println(err)
+	// 				return err
+	// 			}
+	// 		}
+	// 	}
+	// }
+
+	// err = labelsAppender.Flush()
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return err
+	// }
+
+	// labels attempt 2 - just add all as json in one column
+	metaAppender, err := duckdb.NewAppenderFromConn(conn, "", "_meta")
 	if err != nil {
 		return err
 	}
 
 	for refId, fieldLabels := range frameLables {
-		for f, lbls := range fieldLabels {
-			for name, value := range lbls {
-				err := labelsAppender.AppendRow(refId, f, name, value)
-				if err != nil {
-					fmt.Println(err)
-					return err
-				}
-			}
+
+		// TOOD - scrapped this idea and just used json
+		// allLabels := []string{}
+		// for f, lbls := range fieldLabels {
+		// 	labels := []string{}
+		// 	for name, value := range lbls {
+		// 		labels = append(labels, name+":"+value)
+		// 	}
+		// 	fieldLabels := strings.Join(labels, ",")
+
+		// 	allLabels = append(allLabels, f+"{"+fieldLabels+"}")
+		// 	// metaAppender.AppendRow(refId, f, fieldLabels)
+		// 	// if err != nil {
+		// 	// 	fmt.Println(err)
+		// 	// 	return err
+		// 	// }
+		// }
+		// all := strings.Join(allLabels, "|")
+		// fmt.Println(all)
+		// fmt.Println(fieldLabels)
+		// l := fmt.Sprint(fieldLabels)
+		// metaAppender.AppendRow(refId, l)
+		// if err != nil {
+		// 	fmt.Println(err)
+		// 	return err
+		// }
+
+		jsonData, err := json.Marshal(fieldLabels)
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+
+		jsonString := string(jsonData)
+		metaAppender.AppendRow(refId, jsonString)
+		if err != nil {
+			fmt.Println(err)
+			return err
 		}
 	}
 
-	err = labelsAppender.Flush()
+	err = metaAppender.Flush()
 	if err != nil {
 		fmt.Println(err)
 		return err
@@ -163,6 +265,15 @@ func (d *DuckDB) createTables(frames data.Frames) (FrameLables, error) {
 
 	stmt := "create or replace table labels (ref VARCHAR, col VARCHAR, name VARCHAR, value VARCHAR)"
 	_, err := d.DB.Query(stmt)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	// stmt = "create or replace table _meta (ref VARCHAR, _labels_col VARCHAR, _labels VARCHAR)"
+	// stmt = "create or replace table _meta (ref VARCHAR, _labels_col VARCHAR, _labels VARCHAR)"
+	stmt = "create or replace table _meta (ref VARCHAR, _labels VARCHAR)"
+	_, err = d.DB.Query(stmt)
 	if err != nil {
 		fmt.Println(err)
 		return nil, err

@@ -18,7 +18,7 @@ func Tables(sql string) ([]string, error) {
 	// the js lib returns tables like this
 	// \n  'select::null::table_0'\n]\n
 	for _, t := range tables {
-		if strings.Contains(t, "table_") { // ignore alias tables the prql to sql generates
+		if strings.Contains(t, "table_") || strings.Contains(t, "label") || strings.Contains(t, "_meta") { // ignore alias tables the prql to sql generates
 			continue
 		}
 		// strip junk
