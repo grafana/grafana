@@ -122,11 +122,9 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
 
   return (
     <>
-    {wizarDSToggle && wizarDSDrawerOpen && (
+      {wizarDSToggle && wizarDSDrawerOpen && (
         <Drawer closeOnMaskClick={false} onClose={() => setWizarDSDrawerOpen(false)}>
           <WizarDS
-            // remove all references to the query
-            query={{ metric: '', labels: [], operations: [] }}
             closeDrawer={() => setWizarDSDrawerOpen(false)}
             // add component templates so any DS can use this
             templates={componentTemplates}
