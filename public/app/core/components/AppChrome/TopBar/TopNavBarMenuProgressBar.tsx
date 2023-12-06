@@ -41,7 +41,7 @@ export function TopNavBarMenuProgressBar() {
   }, [level, achievementsList]);
 
   return (
-    <a href="/profile">
+    <a href="/profile/achievements">
       <div className={styles.progressBarHeader}>
         Level: <span>{currentLevel}</span>
       </div>
