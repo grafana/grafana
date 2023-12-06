@@ -17,6 +17,7 @@ import (
 
 const (
 	captionLengthLimit = 1024
+	messageThreadIDKey = "message_thread_id"
 )
 
 var (
@@ -41,13 +42,13 @@ func init() {
 				Secure:       true,
 			},
 			{
-				Label:        "Thread ID",
-				Element:      alerting.ElementTypeInput,
-				InputType:    alerting.InputTypeText,
-				Description:  "Optional Thread ID for Telegram",
-				PropertyName: "threadId",
-				Required:     false, // Set as needed
-			},
+      Label:        "Message Thread ID",
+      Element:      alerting.ElementTypeInput,
+      InputType:    alerting.InputTypeText,
+      Description:  "Integer Telegram Message Thread Identifier",
+      PropertyName: messageThreadIDKey,
+      Required:     false,
+            },
 			{
 				Label:        "Chat ID",
 				Element:      alerting.ElementTypeInput,
@@ -66,8 +67,8 @@ type TelegramNotifier struct {
 	NotifierBase
 	BotToken    string
 	ChatID      string
+	MessageThreadID string
 	UploadImage bool
-	threadId    string // New field for ThreadID
 	log         log.Logger
 }
 
@@ -80,7 +81,7 @@ func NewTelegramNotifier(model *models.AlertNotification, fn alerting.GetDecrypt
 	botToken := fn(context.Background(), model.SecureSettings, "bottoken", model.Settings.Get("bottoken").MustString(), setting.SecretKey)
 	chatID := model.Settings.Get("chatid").MustString()
 	uploadImage := model.Settings.Get("uploadImage").MustBool()
-	threadId := model.Settings.Get("threadId").MustString("") // Add this line for ThreadID
+	messageThreadID := model.Settings.Get(messageThreadIDKey).MustString("")
 
 	if botToken == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find Bot Token in settings"}
@@ -94,8 +95,8 @@ func NewTelegramNotifier(model *models.AlertNotification, fn alerting.GetDecrypt
 		NotifierBase: NewNotifierBase(model, ns),
 		BotToken:     botToken,
 		ChatID:       chatID,
+		MessageThreadID: messageThreadID,
 		UploadImage:  uploadImage,
-		threadId:     threadId, // Set the ThreadID field
 		log:          log.New("alerting.notifier.telegram"),
 	}, nil
 }
@@ -197,6 +198,14 @@ func (tn *TelegramNotifier) generateTelegramCmd(message string, messageField str
 		return nil, err
 	}
 
+	fw, err = w.CreateFormField("message_thread_id")
+	if err != nil {
+		return nil, err
+	}
+	if _, err := fw.Write([]byte(tn.MessageThreadID)); err != nil {
+		return nil, err
+	}
+	
 	fw, err = w.CreateFormField(messageField)
 	if err != nil {
 		return nil, err
