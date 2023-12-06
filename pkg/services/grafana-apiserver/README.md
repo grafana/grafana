@@ -60,7 +60,7 @@ app_mode = development
 
 [feature_toggles]
 grafanaAPIServer = true
-grafanaAPIServerSkipAutoDevHTTPs = true 
+grafanaAPIServerEnsureKubectlAccess = true 
 kubernetesPlaylists = true
 ```
 
