@@ -1,3 +1,5 @@
+import { IconName } from '@grafana/data';
+
 export enum AchievementLevel {
   Novice = 1,
   Beginner = 2,
@@ -43,4 +45,5 @@ export type Achievement = {
   link?: string;
   video?: string;
   completed?: boolean;
+  icon?: IconName;
 };

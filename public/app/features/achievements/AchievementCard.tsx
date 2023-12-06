@@ -16,11 +16,10 @@ import { getProgress } from './utils';
 
 interface AchievementCardProps {
   title: string;
-  progress?: number;
   level?: AchievementLevel;
 }
 
-export const AchievementCard = ({ title, progress = 20, level }: AchievementCardProps) => {
+export const AchievementCard = ({ title, level }: AchievementCardProps) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
 
@@ -56,9 +55,17 @@ export const AchievementCard = ({ title, progress = 20, level }: AchievementCard
               <Card key={index} id={achievement.id}>
                 <Card.Figure>
                   {achievement.completed ? (
-                    <Icon name={'check-circle'} aria-label={'check-circle'} className={styles.achievementIcon} />
+                    <Icon
+                      name={'check-circle'}
+                      aria-label={'check-circle'}
+                      className={styles.achievementCompleteIcon}
+                    />
                   ) : (
-                    <Icon name={'grafana'} aria-label={'grafana'} className={styles.achievementIcon} />
+                    <Icon
+                      name={achievement.icon ?? 'grafana'}
+                      aria-label={achievement.icon ?? 'grafana'}
+                      className={styles.achievementIcon}
+                    />
                   )}
                 </Card.Figure>
                 <Card.Heading>{achievement.title}</Card.Heading>
@@ -119,8 +126,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'center',
     paddingRight: '5px',
   }),
-  achievementIcon: css({
+  achievementCompleteIcon: css({
     color: '#F55F3E',
+    height: '20px',
+    width: '20px',
+  }),
+  achievementIcon: css({
+    color: theme.colors.text.secondary,
     height: '20px',
     width: '20px',
   }),
