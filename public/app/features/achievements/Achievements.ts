@@ -243,7 +243,7 @@ export const achievements = [
     level: AchievementLevel.Expert,
     link: 'https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/#make-a-dashboard-public',
     video: '',
-    icons: 'apps',
+    icon: 'apps',
   },
   {
     id: AchievementId.StreamDataToGrafana,
