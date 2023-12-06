@@ -131,6 +131,9 @@ func (c *K8sResourceClient) SanitizeJSON(v *unstructured.Unstructured) string {
 	if anno["grafana.app/updatedTimestamp"] != "" {
 		anno["grafana.app/updatedTimestamp"] = "${updatedTimestamp}"
 	}
+	if anno["grafana.app/originTimestamp"] != "" {
+		anno["grafana.app/originTimestamp"] = "${originTimestamp}"
+	}
 	deep.SetAnnotations(anno)
 	copy := deep.Object
 	meta, ok := copy["metadata"].(map[string]any)
