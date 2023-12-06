@@ -3,7 +3,7 @@ import { uniqueId } from 'lodash';
 import React, { FC, useCallback, useState } from 'react';
 
 import { DataFrame, dateTimeFormat, GrafanaTheme2, isTimeSeriesFrames, LoadingState, PanelData } from '@grafana/data';
-import { AutoSizeInput, Button, clearButtonStyles, IconButton, useStyles2, Stack } from '@grafana/ui';
+import { AutoSizeInput, Button, clearButtonStyles, IconButton, Stack, useStyles2 } from '@grafana/ui';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
@@ -17,6 +17,7 @@ import {
 } from 'app/features/expressions/types';
 import { AlertQuery, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
+import { PRQLEditor } from '../../../../dashboard/components/TransformationsEditor/PRQLEditor';
 import { usePagination } from '../../hooks/usePagination';
 import { HoverCard } from '../HoverCard';
 import { Spacer } from '../Spacer';
@@ -86,6 +87,22 @@ export const Expression: FC<ExpressionProps> = ({
 
         case ExpressionQueryType.threshold:
           return <Threshold onChange={onChangeQuery} query={query} labelWidth={'auto'} refIds={availableRefIds} />;
+
+        case ExpressionQueryType.prql:
+          return (
+            <PRQLEditor
+              metricNames={['metric1', 'metric2']}
+              queryString={query.prql?.rawQuery ?? ''}
+              onEditorChange={(queryEditorExpression) => {
+                return onChangeQuery({
+                  ...query,
+                  prql: {
+                    rawQuery: queryEditorExpression,
+                  },
+                });
+              }}
+            />
+          );
 
         default:
           return <>Expression not supported: {query.type}</>;
