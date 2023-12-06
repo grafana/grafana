@@ -997,7 +997,9 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
       overflowY: 'visible',
       width: '100%',
     }),
-    visualisationType: css({}),
+    visualisationType: css({
+      marginRight: theme.spacing(1),
+    }),
     visualisationTypeRadio: css({
       margin: `0 0 0 ${theme.spacing(1)}`,
     }),

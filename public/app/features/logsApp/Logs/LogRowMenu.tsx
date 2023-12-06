@@ -4,7 +4,6 @@ import { LogRowModel } from '@grafana/data';
 import { ClipboardButton, IconButton } from '@grafana/ui';
 import { LogRowStyles } from 'app/features/logs/components/getLogRowStyles';
 
-
 interface Props {
   row: LogRowModel;
   showContextToggle?: (row: LogRowModel) => boolean;
@@ -27,14 +26,7 @@ const restructureLog = (line: string, prettifyLogMessage: boolean): string => {
 };
 
 export const LogRowMenu = React.memo(
-  ({
-    onOpenContext,
-    onPermalinkClick,
-    row,
-    showContextToggle,
-    styles,
-    prettifyLogMessage
-  }: Props) => {
+  ({ onOpenContext, onPermalinkClick, row, showContextToggle, styles, prettifyLogMessage }: Props) => {
     const { raw } = row;
     const restructuredEntry = useMemo(() => restructureLog(raw, prettifyLogMessage), [raw, prettifyLogMessage]);
     const shouldShowContextToggle = showContextToggle ? showContextToggle(row) : false;
@@ -55,7 +47,7 @@ export const LogRowMenu = React.memo(
       <div className={styles.detailsMenu} onClick={onLogRowClick}>
         {shouldShowContextToggle && (
           <IconButton
-            size="lg"
+            size="md"
             variant="secondary"
             name="gf-show-context"
             onClick={onShowContextClick}
@@ -69,7 +61,7 @@ export const LogRowMenu = React.memo(
           icon="copy"
           variant="secondary"
           fill="text"
-          size="lg"
+          size="md"
           getText={getLogText}
           tooltip="Copy to clipboard"
           tooltipPlacement="top"
@@ -81,7 +73,7 @@ export const LogRowMenu = React.memo(
             variant="secondary"
             aria-label="Copy shortlink"
             tooltipPlacement="top"
-            size="lg"
+            size="md"
             name="share-alt"
             onClick={() => onPermalinkClick(row)}
             className={styles.detailsMenuIcon}
