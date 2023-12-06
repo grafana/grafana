@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { ConfirmModal } from '@grafana/ui';
@@ -14,14 +14,16 @@ const TutorialProviderComponent = ({
   currentTutorial,
 }: ConnectedProps<typeof connector>) => {
   const dispatch = useDispatch();
+  const keyupUseDismissedIssue = useRef(false);
   const [showExitTutorialModal, setShowExitTutorialModal] = useState(false);
   const currentTutorialSteps = availableTutorials.find((t) => t.id === currentTutorial)?.steps;
   const step = currentStep !== null && currentTutorialSteps && currentTutorialSteps[currentStep];
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' && !keyupUseDismissedIssue.current) {
         setShowExitTutorialModal(true);
+        keyupUseDismissedIssue.current = false;
       }
     };
 
@@ -39,7 +41,13 @@ const TutorialProviderComponent = ({
         <TutorialOverlay currentStep={currentStep} step={step} />
         <ConfirmModal
           confirmText="Stop tutorial"
-          onDismiss={() => {}}
+          onDismiss={() => {
+            keyupUseDismissedIssue.current = true;
+            setShowExitTutorialModal(false);
+            setTimeout(() => {
+              keyupUseDismissedIssue.current = false;
+            }, 300);
+          }}
           isOpen={showExitTutorialModal}
           title={`Exit tutorial`}
           body={`Do you want to stop the tutorial?`}

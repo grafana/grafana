@@ -5,6 +5,7 @@ export type Tutorial = {
   id: string;
   name: string;
   description: string;
+  author: string;
   steps: Step[];
   furthestStepCompleted?: number;
 };
