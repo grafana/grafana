@@ -310,7 +310,6 @@ func (gr *ResampleCommand) Execute(ctx context.Context, now time.Time, vars math
 
 // PRQLCommand is an expression to run PRQL over results
 type PRQLCommand struct {
-	rawPRQL     string
 	theSQL      string // converted to SQL
 	varsToQuery []string
 	timeRange   TimeRange
@@ -323,16 +322,19 @@ func NewPRQLCommand(refID, rawPRQL string, tr TimeRange) (*PRQLCommand, error) {
 	if err != nil {
 		// if that fails, assume we are using raw SQL
 		sql = rawPRQL
+		fmt.Printf("Assuming raw SQL for duckdb: %s\n", sql)
 	}
 
 	tables, err := prql.Tables(sql)
 	if err != nil {
 		// ??? perhaps it is just SELECT 1?
-		return nil, err
+		//return nil, err
+
+		fmt.Printf("Unable to get table names from: %s\n", sql)
+		tables = []string{"A"}
 	}
 
 	return &PRQLCommand{
-		rawPRQL:     rawPRQL,
 		theSQL:      sql,
 		varsToQuery: tables,
 		timeRange:   tr,
@@ -370,6 +372,8 @@ func (gr *PRQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.
 	_, span := tracer.Start(ctx, "SSE.ExecutePRQL")
 	defer span.End()
 
+	fmt.Printf("DuckDB Execute: %s\n", gr.theSQL)
+
 	// insert all referenced results into duckdb. TODO: multi-thread this?
 	for _, ref := range gr.varsToQuery {
 		results := vars[ref]
@@ -388,6 +392,7 @@ func (gr *PRQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.
 
 	var values mathexp.Values
 	for _, f := range frames {
+		f.RefID = gr.refID
 		v := mathexp.Scalar{Frame: f} // TODO?? is there a better type?
 		values = append(values, v)
 	}
