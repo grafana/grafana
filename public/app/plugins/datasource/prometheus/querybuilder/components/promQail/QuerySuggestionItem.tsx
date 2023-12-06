@@ -208,14 +208,13 @@ export function QuerySuggestionItem(props: Props) {
               <div className={styles.textPadding}>This query is trying to answer the question:</div>
               <div className={styles.textPadding}>{explanation}</div>
               <div className={styles.textPadding}>
-                Learn more with this{' '}
                 <a
                   className={styles.doc}
                   href={'https://prometheus.io/docs/prometheus/latest/querying/examples/#query-examples'}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Prometheus doc
+                  Learn more
                 </a>
               </div>
 

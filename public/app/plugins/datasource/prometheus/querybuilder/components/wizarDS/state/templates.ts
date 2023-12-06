@@ -4,9 +4,12 @@ export const componentTemplates: Suggestion[] = [
   {
     component: 'Kickstart your query',
     explanation: `Click to see a list of operation patterns that help you quickly get started adding multiple operations to your query. These include:
-
+      \n
+      \n
       Rate query starters
+      \n
       Histogram query starters
+      \n
       Binary query starters`,
     testid: 'wizard-prometheus-kickstart-your-query',
     order: 1,
@@ -28,8 +31,24 @@ export const componentTemplates: Suggestion[] = [
   },
   {
     component: 'Operations',
-    explanation:
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
+    explanation: `Select the + Operations button to add operations to your query.
+      \n
+      The query editor groups operations into the following sections:
+      \n
+      \n
+      Aggregations - for additional information see Aggregation operators.
+      \n
+      Range functions - for additional information see Functions.
+      \n
+      Functions - for additional information see Functions.
+      \n
+      Binary operations - for additional information see Binary operators.
+      \n
+      Trigonometric - for additional information see Trigonometric functions.
+      \n
+      Time functions - for additional information see Functions.
+      \n
+      All operations have function parameters under the operation header. Click the operator to see a full list of supported functions. Some operations allow you to apply specific labels to functions.`,
     testid: 'wizard-prometheus-operations',
     order: 4,
     link: 'https://grafana.com/docs/grafana/latest/datasources/prometheus/query-editor/#operations',
@@ -37,9 +56,12 @@ export const componentTemplates: Suggestion[] = [
   {
     component: 'Legend',
     explanation: `The Legend setting defines the time series’s name. You can use a predefined or custom format.
-
+      \n
+      \n
       Auto - Displays unique labels. Also displays all overlapping labels if a series has multiple labels.
+      \n
       Verbose - Displays all label names.
+      \n
       Custom - Uses templating to select which labels will be included. For example, {{hostname}} is replaced by the label value for the label hostname. Clear the input and click outside of it to select another mode.`,
     testid: 'wizard-prometheus-legend',
     order: 5,
@@ -55,9 +77,12 @@ export const componentTemplates: Suggestion[] = [
   {
     component: 'Format',
     explanation: `Switch between the following format options:
-
+      \n
+      \n
       Time series - The default time series format. See Time series kind formats for information on time series data frames and how time and value fields are structured.
+      \n
       Table - This works only in a Table panel.
+      \n
       Heatmap - Displays metrics of the Histogram type on a Heatmap panel by converting cumulative histograms to regular ones and sorting the series by the bucket bound.`,
     testid: 'wizard-prometheus-format',
     order: 7,
@@ -66,9 +91,12 @@ export const componentTemplates: Suggestion[] = [
   {
     component: 'Type',
     explanation: `The Type setting sets the query type. These include:
-
+      \n
+      \n
       Both - The default option. Returns results for both a Range query and an Instant query.
+      \n
       Range - Returns a range vector consisting of a set of time series data containing a range of data points over time for each time series. You can choose lines, bars, points, stacked lines or stacked bars
+      \n
       Instant - Returns one data point per query and only the most recent point in the time range provided. The results can be shown in table format or as raw data. To depict instant query results in the time series panel, first add a field override, next add a property to the override named Transform, and finally select Constant from the Transform dropdown.`,
     testid: 'wizard-prometheus-type',
     order: 8,
@@ -77,7 +105,7 @@ export const componentTemplates: Suggestion[] = [
   {
     component: 'Exemplars',
     explanation:
-      'Toggle Exemplars to run a query that includes exemplars in the graph. Exemplars are unique to Prometheus. For more information see Introduction to exemplars. https://grafana.com/docs/grafana/latest/datasources/prometheus/query-editor/#:~:text=Toggle%20Exemplars%20to%20run%20a%20query%20that%20includes%20exemplars%20in%20the%20graph.%20Exemplars%20are%20unique%20to%20Prometheus.%20For%20more%20information%20see%20Introduction%20to%20exemplars.',
+      'Toggle Exemplars to run a query that includes exemplars in the graph. Exemplars are unique to Prometheus.',
     testid: 'wizard-prometheus-exemplars',
     order: 9,
     link: 'https://grafana.com/docs/grafana/latest/datasources/prometheus/query-editor/#exemplars',
