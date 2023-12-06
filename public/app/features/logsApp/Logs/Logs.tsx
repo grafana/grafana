@@ -242,8 +242,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
     if (this.state.logDetailsRow) {
       const included = this.props.logRows.includes(this.state.logDetailsRow);
-      const found = this.props.logRows.findIndex((row) => row.rowId === this.state.logDetailsRow?.rowId);
       if (!included) {
+        const found = this.props.logRows.findIndex((row) => row.rowId === this.state.logDetailsRow?.rowId);
         this.setState({
           logDetailsRow: found ? this.props.logRows[found] : undefined,
         });
@@ -430,26 +430,18 @@ class UnthemedLogs extends PureComponent<Props, State> {
     });
   };
 
-  onOpenContext = (row: LogRowModel, onClose: () => void) => {
+  onOpenContext = (row: LogRowModel, onClose?: () => void) => {
     // we are setting the `contextOpen` open state and passing it down to the `LogRow` in order to highlight the row when a LogContext is open
     this.setState({
       contextOpen: true,
       contextRow: row,
-    });
-    reportInteraction('grafana_explore_logs_log_context_opened', {
-      datasourceType: row.datasourceType,
-      logRowUid: row.uid,
     });
     this.onCloseContext = () => {
       this.setState({
         contextOpen: false,
         contextRow: undefined,
       });
-      reportInteraction('grafana_explore_logs_log_context_closed', {
-        datasourceType: row.datasourceType,
-        logRowUid: row.uid,
-      });
-      onClose();
+      onClose?.();
     };
   };
 
@@ -475,15 +467,9 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     // append changed urlState to baseUrl
     const serializedState = serializeStateToUrlParam(urlState);
-    const baseUrl = /.*(?=\/explore)/.exec(`${window.location.href}`)![0];
-    const url = urlUtil.renderUrl(`${baseUrl}/explore`, { left: serializedState });
+    const baseUrl = /.*(?=\/logs)/.exec(`${window.location.href}`)![0];
+    const url = urlUtil.renderUrl(`${baseUrl}/logs`, { left: serializedState });
     await createAndCopyShortLink(url);
-
-    reportInteraction('grafana_explore_logs_permalink_clicked', {
-      datasourceType: row.datasourceType ?? 'unknown',
-      logRowUid: row.uid,
-      logRowLevel: row.logLevel,
-    });
   };
 
   scrollIntoView = (element: HTMLElement) => {
@@ -876,6 +862,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                         onClickFilterOutValue={this.props.onClickFilterOutValue}
                         showDetails={this.showDetails}
                         logDetailsRow={this.state.logDetailsRow}
+                        noMenu
                       />
                     </InfiniteScroll>
                   </div>
@@ -919,6 +906,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     app={CoreApp.Explore}
                     styles={logRowStyles}
                     isFilterLabelActive={this.props.isFilterLabelActive}
+                    onOpenContext={this.onOpenContext}
+                    onPermalinkClick={this.onPermalinkClick}
+                    showContextToggle={showContextToggle}
+                    prettifyLogMessage={prettifyLogMessage}
                   />
                 ) : (
                   <LogStats styles={logRowStyles} rows={logRows} />
