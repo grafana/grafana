@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 
@@ -88,8 +88,9 @@ const getStyles = (readOnly?: boolean) => {
 
 export const PRQLEditor = (props: Props) => {
   const editor = useRef(null);
-  const { queryString: doc, metricNames, readOnly, onEditorChange, mode } = props;
+  const { queryString: doc, metricNames, readOnly, onEditorChange } = props;
   const styles = useStyles2((theme) => getStyles(readOnly));
+  const [mode, setMode] = useState(props.mode);
 
   useEffect(() => {
     //@ts-ignore
@@ -131,7 +132,20 @@ export const PRQLEditor = (props: Props) => {
     };
     // Need to reorg components, for now don't re-render the editor when the props change
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [readOnly]);
+  }, [readOnly, mode]);
+
+  useEffect(() => {
+    const wordsFromFirstLine = doc?.split('\n')[0].split(' ');
+    if (wordsFromFirstLine?.length && wordsFromFirstLine[0]?.toLowerCase() === 'select') {
+      setMode('sql');
+      return;
+    }
+
+    if (wordsFromFirstLine?.length && wordsFromFirstLine[0]?.toLowerCase() === 'from') {
+      setMode('prql');
+      return;
+    }
+  }, [doc]);
 
   return (
     <div className={styles.editor} id="editor">
