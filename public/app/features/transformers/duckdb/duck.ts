@@ -30,6 +30,7 @@ export async function getDuckDB(): Promise<duckdb.AsyncDuckDB> {
   return (ddb = db);
 }
 
+// importing arrow is not the same as the one returned from query results... not sure the best approach here
 export function arrowTableToFrame(table: any /* arrow.Table */): DataFrame {
   const fields: Field[] = [];
 
