@@ -4,7 +4,7 @@ The data structure for documents. @nonabstract
 class Text {
   /**
     Get the line description around the given position.
-   */
+     */
   lineAt(pos) {
     if (pos < 0 || pos > this.length) {
       throw new RangeError(`Invalid position ${pos} in document of length ${this.length}`);
@@ -13,7 +13,7 @@ class Text {
   }
   /**
     Get the description for the given (1-based) line number.
-   */
+     */
   line(n) {
     if (n < 1 || n > this.lines) {
       throw new RangeError(`Invalid line number ${n} in ${this.lines}-line document`);
@@ -22,7 +22,7 @@ class Text {
   }
   /**
     Replace a range of the text with the given content.
-   */
+     */
   replace(from, to, text) {
     [from, to] = clip(this, from, to);
     let parts = [];
@@ -35,13 +35,13 @@ class Text {
   }
   /**
     Append another document to this one.
-   */
+     */
   append(other) {
     return this.replace(this.length, this.length, other);
   }
   /**
     Retrieve the text between the given points.
-   */
+     */
   slice(from, to = this.length) {
     [from, to] = clip(this, from, to);
     let parts = [];
@@ -50,7 +50,7 @@ class Text {
   }
   /**
     Test whether this text is equal to another instance.
-   */
+     */
   eq(other) {
     if (other == this) {
       return true;
@@ -79,14 +79,14 @@ class Text {
     Iterate over the text. When `dir` is `-1`, iteration happens
     from end to start. This will return lines and the breaks between
     them as separate strings.
-   */
+     */
   iter(dir = 1) {
     return new RawTextCursor(this, dir);
   }
   /**
     Iterate over a range of the text. When `from` > `to`, the
     iterator will run in reverse.
-   */
+     */
   iterRange(from, to = this.length) {
     return new PartialTextCursor(this, from, to);
   }
@@ -94,9 +94,9 @@ class Text {
     Return a cursor that iterates over the given range of lines,
     _without_ returning the line breaks between, and yielding empty
     strings for empty lines.
-   
+     
     When `from` and `to` are given, they should be 1-based line numbers.
-   */
+     */
   iterLines(from, to) {
     let inner;
     if (from == null) {
@@ -116,14 +116,14 @@ class Text {
   /**
     Return the document as a string, using newline characters to
     separate lines.
-   */
+     */
   toString() {
     return this.sliceString(0);
   }
   /**
     Convert the document to an array of lines (which can be
     deserialized again via [`Text.of`](https://codemirror.net/6/docs/ref/#state.Text^of)).
-   */
+     */
   toJSON() {
     let lines = [];
     this.flatten(lines);
@@ -131,11 +131,11 @@ class Text {
   }
   /**
     @internal
-   */
+     */
   constructor() {}
   /**
     Create a `Text` instance for the given array of lines.
-   */
+     */
   static of(text) {
     if (text.length == 0) {
       throw new RangeError('A document must have at least one line');
@@ -608,7 +608,7 @@ on-demand when lines are [queried](https://codemirror.net/6/docs/ref/#state.Text
 class Line {
   /**
     @internal
-   */
+     */
   constructor(
     /**
     The position of the start of the line.
@@ -635,7 +635,7 @@ class Line {
   }
   /**
     The length of the line (not including any line break after it).
-   */
+     */
   get length() {
     return this.to - this.from;
   }
@@ -774,19 +774,19 @@ var MapMode = /*@__PURE__*/ (function (MapMode) {
   /**
     Map a position to a valid new position, even when its context
     was deleted.
-   */
+     */
   MapMode[(MapMode['Simple'] = 0)] = 'Simple';
   /**
     Return null if deletion happens across the position.
-   */
+     */
   MapMode[(MapMode['TrackDel'] = 1)] = 'TrackDel';
   /**
     Return null if the character _before_ the position is deleted.
-   */
+     */
   MapMode[(MapMode['TrackBefore'] = 2)] = 'TrackBefore';
   /**
     Return null if the character _after_ the position is deleted.
-   */
+     */
   MapMode[(MapMode['TrackAfter'] = 3)] = 'TrackAfter';
   return MapMode;
 })(MapMode || (MapMode = {}));
@@ -803,7 +803,7 @@ class ChangeDesc {
   // 0), and a replacement two positive numbers.
   /**
     @internal
-   */
+     */
   constructor(
     /**
     @internal
@@ -814,7 +814,7 @@ class ChangeDesc {
   }
   /**
     The length of the document before the change.
-   */
+     */
   get length() {
     let result = 0;
     for (let i = 0; i < this.sections.length; i += 2) {
@@ -824,7 +824,7 @@ class ChangeDesc {
   }
   /**
     The length of the document after the change.
-   */
+     */
   get newLength() {
     let result = 0;
     for (let i = 0; i < this.sections.length; i += 2) {
@@ -835,7 +835,7 @@ class ChangeDesc {
   }
   /**
     False when there are actual changes in this set.
-   */
+     */
   get empty() {
     return this.sections.length == 0 || (this.sections.length == 2 && this.sections[1] < 0);
   }
@@ -843,7 +843,7 @@ class ChangeDesc {
     Iterate over the unchanged parts left by these changes. `posA`
     provides the position of the range in the old document, `posB`
     the new position in the changed document.
-   */
+     */
   iterGaps(f) {
     for (let i = 0, posA = 0, posB = 0; i < this.sections.length; ) {
       let len = this.sections[i++],
@@ -864,17 +864,17 @@ class ChangeDesc {
     `fromA`/`toA` provides the extent of the change in the starting
     document, `fromB`/`toB` the extent of the replacement in the
     changed document.
-   
+     
     When `individual` is true, adjacent changes (which are kept
     separate for [position mapping](https://codemirror.net/6/docs/ref/#state.ChangeDesc.mapPos)) are
     reported separately.
-   */
+     */
   iterChangedRanges(f, individual = false) {
     iterChanges(this, f, individual);
   }
   /**
     Get a description of the inverted form of these changes.
-   */
+     */
   get invertedDesc() {
     let sections = [];
     for (let i = 0; i < this.sections.length; ) {
@@ -892,7 +892,7 @@ class ChangeDesc {
     Compute the combined effect of applying another set of changes
     after this one. The length of the document after this set should
     match the length before `other`.
-   */
+     */
   composeDesc(other) {
     return this.empty ? other : other.empty ? this : composeSets(this, other);
   }
@@ -901,7 +901,7 @@ class ChangeDesc {
     as `other`, over another set of changes, so that it can be
     applied after it. When `before` is true, map as if the changes
     in `other` happened before the ones in `this`.
-   */
+     */
   mapDesc(other, before = false) {
     return other.empty ? this : mapSet(this, other, before);
   }
@@ -943,7 +943,7 @@ class ChangeDesc {
     Check whether these changes touch a given range. When one of the
     changes entirely covers the range, the string `"cover"` is
     returned.
-   */
+     */
   touchesRange(from, to = from) {
     for (let i = 0, pos = 0; i < this.sections.length && pos <= to; ) {
       let len = this.sections[i++],
@@ -958,7 +958,7 @@ class ChangeDesc {
   }
   /**
     @internal
-   */
+     */
   toString() {
     let result = '';
     for (let i = 0; i < this.sections.length; ) {
@@ -970,14 +970,14 @@ class ChangeDesc {
   }
   /**
     Serialize this change desc to a JSON-representable value.
-   */
+     */
   toJSON() {
     return this.sections;
   }
   /**
     Create a change desc from its JSON representation (as produced
     by [`toJSON`](https://codemirror.net/6/docs/ref/#state.ChangeDesc.toJSON).
-   */
+     */
   static fromJSON(json) {
     if (!Array.isArray(json) || json.length % 2 || json.some((a) => typeof a !== 'number')) {
       throw new RangeError('Invalid JSON representation of ChangeDesc');
@@ -986,7 +986,7 @@ class ChangeDesc {
   }
   /**
     @internal
-   */
+     */
   static create(sections) {
     return new ChangeDesc(sections);
   }
@@ -1010,7 +1010,7 @@ class ChangeSet extends ChangeDesc {
   /**
     Apply the changes to a document, returning the modified
     document.
-   */
+     */
   apply(doc) {
     if (this.length != doc.length) {
       throw new RangeError('Applying change set to a document with the wrong length');
@@ -1030,7 +1030,7 @@ class ChangeSet extends ChangeDesc {
     change set that represents the inverse of this set, which could
     be used to go from the document created by the changes back to
     the document as it existed before the changes.
-   */
+     */
   invert(doc) {
     let sections = this.sections.slice(),
       inserted = [];
@@ -1055,7 +1055,7 @@ class ChangeSet extends ChangeDesc {
     must start in the document produced by `this`. If `this` goes
     `docA` → `docB` and `other` represents `docB` → `docC`, the
     returned value will represent the change `docA` → `docC`.
-   */
+     */
   compose(other) {
     return this.empty ? other : other.empty ? this : composeSets(this, other, true);
   }
@@ -1065,13 +1065,13 @@ class ChangeSet extends ChangeDesc {
     applied to the document produced by applying `other`. When
     `before` is `true`, order changes as if `this` comes before
     `other`, otherwise (the default) treat `other` as coming first.
-   
+     
     Given two changes `A` and `B`, `A.compose(B.map(A))` and
     `B.compose(A.map(B, true))` will produce the same document. This
     provides a basic form of [operational
     transformation](https://en.wikipedia.org/wiki/Operational_transformation),
     and can be used for collaborative editing.
-   */
+     */
   map(other, before = false) {
     return other.empty ? this : mapSet(this, other, before, true);
   }
@@ -1080,23 +1080,23 @@ class ChangeSet extends ChangeDesc {
     each, with the range in the original document (`fromA`-`toA`)
     and the range that replaces it in the new document
     (`fromB`-`toB`).
-   
+     
     When `individual` is true, adjacent changes are reported
     separately.
-   */
+     */
   iterChanges(f, individual = false) {
     iterChanges(this, f, individual);
   }
   /**
     Get a [change description](https://codemirror.net/6/docs/ref/#state.ChangeDesc) for this change
     set.
-   */
+     */
   get desc() {
     return ChangeDesc.create(this.sections);
   }
   /**
     @internal
-   */
+     */
   filter(ranges) {
     let resultSections = [],
       resultInserted = [],
@@ -1134,7 +1134,7 @@ class ChangeSet extends ChangeDesc {
   }
   /**
     Serialize this change set to a JSON-representable value.
-   */
+     */
   toJSON() {
     let parts = [];
     for (let i = 0; i < this.sections.length; i += 2) {
@@ -1153,7 +1153,7 @@ class ChangeSet extends ChangeDesc {
   /**
     Create a change set for the given changes, for a document of the
     given length, using `lineSep` as line separator.
-   */
+     */
   static of(changes, length, lineSep) {
     let sections = [],
       inserted = [],
@@ -1214,14 +1214,14 @@ class ChangeSet extends ChangeDesc {
   }
   /**
     Create an empty changeset of the given length.
-   */
+     */
   static empty(length) {
     return new ChangeSet(length ? [length, -1] : [], []);
   }
   /**
     Create a changeset from its JSON representation (as produced by
     [`toJSON`](https://codemirror.net/6/docs/ref/#state.ChangeSet.toJSON).
-   */
+     */
   static fromJSON(json) {
     if (!Array.isArray(json)) {
       throw new RangeError('Invalid JSON representation of ChangeSet');
@@ -1252,7 +1252,7 @@ class ChangeSet extends ChangeDesc {
   }
   /**
     @internal
-   */
+     */
   static createSet(sections, inserted) {
     return new ChangeSet(sections, inserted);
   }
@@ -1515,20 +1515,20 @@ class SelectionRange {
   /**
     The anchor of the range—the side that doesn't move when you
     extend it.
-   */
+     */
   get anchor() {
     return this.flags & 32 /* RangeFlag.Inverted */ ? this.to : this.from;
   }
   /**
     The head of the range, which is moved when the range is
     [extended](https://codemirror.net/6/docs/ref/#state.SelectionRange.extend).
-   */
+     */
   get head() {
     return this.flags & 32 /* RangeFlag.Inverted */ ? this.from : this.to;
   }
   /**
     True when `anchor` and `head` are at the same position.
-   */
+     */
   get empty() {
     return this.from == this.to;
   }
@@ -1537,14 +1537,14 @@ class SelectionRange {
     character on one of its sides, this returns the side. -1 means
     the character before its position, 1 the character after, and 0
     means no association.
-   */
+     */
   get assoc() {
     return this.flags & 8 /* RangeFlag.AssocBefore */ ? -1 : this.flags & 16 /* RangeFlag.AssocAfter */ ? 1 : 0;
   }
   /**
     The bidirectional text level associated with this cursor, if
     any.
-   */
+     */
   get bidiLevel() {
     let level = this.flags & 7; /* RangeFlag.BidiLevelMask */
     return level == 7 ? null : level;
@@ -1554,7 +1554,7 @@ class SelectionRange {
     cursor. This is used to preserve the vertical position when
     [moving](https://codemirror.net/6/docs/ref/#view.EditorView.moveVertically) across
     lines of different length.
-   */
+     */
   get goalColumn() {
     let value = this.flags >> 6; /* RangeFlag.GoalColumnOffset */
     return value == 16777215 /* RangeFlag.NoGoalColumn */ ? undefined : value;
@@ -1562,7 +1562,7 @@ class SelectionRange {
   /**
     Map this range through a change, producing a valid range in the
     updated document.
-   */
+     */
   map(change, assoc = -1) {
     let from, to;
     if (this.empty) {
@@ -1575,7 +1575,7 @@ class SelectionRange {
   }
   /**
     Extend this range to cover at least `from` to `to`.
-   */
+     */
   extend(from, to = from) {
     if (from <= this.anchor && to >= this.anchor) {
       return EditorSelection.range(from, to);
@@ -1585,20 +1585,20 @@ class SelectionRange {
   }
   /**
     Compare this range to another range.
-   */
+     */
   eq(other) {
     return this.anchor == other.anchor && this.head == other.head;
   }
   /**
     Return a JSON-serializable object representing the range.
-   */
+     */
   toJSON() {
     return { anchor: this.anchor, head: this.head };
   }
   /**
     Convert a JSON representation of a range to a `SelectionRange`
     instance.
-   */
+     */
   static fromJSON(json) {
     if (!json || typeof json.anchor !== 'number' || typeof json.head !== 'number') {
       throw new RangeError('Invalid JSON representation for SelectionRange');
@@ -1607,7 +1607,7 @@ class SelectionRange {
   }
   /**
     @internal
-   */
+     */
   static create(from, to, flags) {
     return new SelectionRange(from, to, flags);
   }
@@ -1634,7 +1634,7 @@ class EditorSelection {
   /**
     Map a selection through a change. Used to adjust the selection
     position for changes.
-   */
+     */
   map(change, assoc = -1) {
     if (change.empty) {
       return this;
@@ -1646,7 +1646,7 @@ class EditorSelection {
   }
   /**
     Compare this selection to another selection.
-   */
+     */
   eq(other) {
     if (this.ranges.length != other.ranges.length || this.mainIndex != other.mainIndex) {
       return false;
@@ -1662,27 +1662,27 @@ class EditorSelection {
     Get the primary selection range. Usually, you should make sure
     your code applies to _all_ ranges, by using methods like
     [`changeByRange`](https://codemirror.net/6/docs/ref/#state.EditorState.changeByRange).
-   */
+     */
   get main() {
     return this.ranges[this.mainIndex];
   }
   /**
     Make sure the selection only has one range. Returns a selection
     holding only the main range from this selection.
-   */
+     */
   asSingle() {
     return this.ranges.length == 1 ? this : new EditorSelection([this.main], 0);
   }
   /**
     Extend this selection with an extra range.
-   */
+     */
   addRange(range, main = true) {
     return EditorSelection.create([range].concat(this.ranges), main ? 0 : this.mainIndex + 1);
   }
   /**
     Replace a given range with another range, and then normalize the
     selection to merge and sort ranges if necessary.
-   */
+     */
   replaceRange(range, which = this.mainIndex) {
     let ranges = this.ranges.slice();
     ranges[which] = range;
@@ -1691,13 +1691,13 @@ class EditorSelection {
   /**
     Convert this selection to an object that can be serialized to
     JSON.
-   */
+     */
   toJSON() {
     return { ranges: this.ranges.map((r) => r.toJSON()), main: this.mainIndex };
   }
   /**
     Create a selection from a JSON representation.
-   */
+     */
   static fromJSON(json) {
     if (!json || !Array.isArray(json.ranges) || typeof json.main !== 'number' || json.main >= json.ranges.length) {
       throw new RangeError('Invalid JSON representation for EditorSelection');
@@ -1709,14 +1709,14 @@ class EditorSelection {
   }
   /**
     Create a selection holding a single range.
-   */
+     */
   static single(anchor, head = anchor) {
     return new EditorSelection([EditorSelection.range(anchor, head)], 0);
   }
   /**
     Sort and merge the given set of ranges, creating a valid
     selection.
-   */
+     */
   static create(ranges, mainIndex = 0) {
     if (ranges.length == 0) {
       throw new RangeError('A selection needs at least one range');
@@ -1733,7 +1733,7 @@ class EditorSelection {
   /**
     Create a cursor selection range at the given position. You can
     safely ignore the optional arguments in most situations.
-   */
+     */
   static cursor(pos, assoc = 0, bidiLevel, goalColumn) {
     return SelectionRange.create(
       pos,
@@ -1746,7 +1746,7 @@ class EditorSelection {
   }
   /**
     Create a selection range.
-   */
+     */
   static range(anchor, head, goalColumn, bidiLevel) {
     let flags =
       ((goalColumn !== null && goalColumn !== void 0 ? goalColumn : 16777215) /* RangeFlag.NoGoalColumn */ <<
@@ -1758,7 +1758,7 @@ class EditorSelection {
   }
   /**
     @internal
-   */
+     */
   static normalized(ranges, mainIndex = 0) {
     let main = ranges[mainIndex];
     ranges.sort((a, b) => a.from - b.from);
@@ -1827,7 +1827,7 @@ class Facet {
     this.isStatic = isStatic;
     /**
         @internal
-     */
+         */
     this.id = nextID++;
     this.default = combine([]);
     this.extensions = typeof enables === 'function' ? enables(this) : enables;
@@ -1835,13 +1835,13 @@ class Facet {
   /**
     Returns a facet reader for this facet, which can be used to
     [read](https://codemirror.net/6/docs/ref/#state.EditorState.facet) it but not to define values for it.
-   */
+     */
   get reader() {
     return this;
   }
   /**
     Define a new facet.
-   */
+     */
   static define(config = {}) {
     return new Facet(
       config.combine || ((a) => a),
@@ -1853,7 +1853,7 @@ class Facet {
   }
   /**
     Returns an extension that adds the given value to this facet.
-   */
+     */
   of(value) {
     return new FacetProvider([], this, 0 /* Provider.Static */, value);
   }
@@ -1862,10 +1862,10 @@ class Facet {
     state. You must take care to declare the parts of the state that
     this value depends on, since your function is only called again
     for a new state when one of those parts changed.
-   
+     
     In cases where your value depends only on a single field, you'll
     want to use the [`from`](https://codemirror.net/6/docs/ref/#state.Facet.from) method instead.
-   */
+     */
   compute(deps, get) {
     if (this.isStatic) {
       throw new Error("Can't compute a static facet");
@@ -1875,7 +1875,7 @@ class Facet {
   /**
     Create an extension that computes zero or more values for this
     facet from a state.
-   */
+     */
   computeN(deps, get) {
     if (this.isStatic) {
       throw new Error("Can't compute a static facet");
@@ -2065,12 +2065,12 @@ class StateField {
     this.spec = spec;
     /**
         @internal
-     */
+         */
     this.provides = undefined;
   }
   /**
     Define a state field.
-   */
+     */
   static define(config) {
     let field = new StateField(nextID++, config.create, config.update, config.compare || ((a, b) => a === b), config);
     if (config.provide) {
@@ -2084,7 +2084,7 @@ class StateField {
   }
   /**
     @internal
-   */
+     */
   slot(addresses) {
     let idx = addresses[this.id] >> 1;
     return {
@@ -2115,7 +2115,7 @@ class StateField {
     Returns an extension that enables this field and overrides the
     way it is initialized. Can be useful when you need to provide a
     non-default starting value for the field.
-   */
+     */
   init(create) {
     return [this, initField.of({ field: this, create })];
   }
@@ -2123,7 +2123,7 @@ class StateField {
     State field instances can be used as
     [`Extension`](https://codemirror.net/6/docs/ref/#state.Extension) values to enable the field in a
     given state.
-   */
+     */
   get extension() {
     return this;
   }
@@ -2146,26 +2146,26 @@ const Prec = {
   /**
     The highest precedence level, for extensions that should end up
     near the start of the precedence ordering.
-   */
+     */
   highest: /*@__PURE__*/ prec(Prec_.highest),
   /**
     A higher-than-default precedence, for extensions that should
     come before those with default precedence.
-   */
+     */
   high: /*@__PURE__*/ prec(Prec_.high),
   /**
     The default precedence, which is also used for extensions
     without an explicit precedence.
-   */
+     */
   default: /*@__PURE__*/ prec(Prec_.default),
   /**
     A lower-than-default precedence.
-   */
+     */
   low: /*@__PURE__*/ prec(Prec_.low),
   /**
     The lowest precedence level. Meant for things that should end up
     near the end of the extension order.
-   */
+     */
   lowest: /*@__PURE__*/ prec(Prec_.lowest),
 };
 class PrecExtension {
@@ -2185,21 +2185,21 @@ class Compartment {
   /**
     Create an instance of this compartment to add to your [state
     configuration](https://codemirror.net/6/docs/ref/#state.EditorStateConfig.extensions).
-   */
+     */
   of(ext) {
     return new CompartmentInstance(this, ext);
   }
   /**
     Create an [effect](https://codemirror.net/6/docs/ref/#state.TransactionSpec.effects) that
     reconfigures this compartment.
-   */
+     */
   reconfigure(content) {
     return Compartment.reconfigure.of({ compartment: this, extension: content });
   }
   /**
     Get the current content of the compartment in the state, or
     `undefined` if it isn't present.
-   */
+     */
   get(state) {
     return state.config.compartments.get(this);
   }
@@ -2378,7 +2378,7 @@ effects](https://codemirror.net/6/docs/ref/#state.StateEffect) are more appropri
 class Annotation {
   /**
     @internal
-   */
+     */
   constructor(
     /**
     The annotation type.
@@ -2394,7 +2394,7 @@ class Annotation {
   }
   /**
     Define a new type of annotation.
-   */
+     */
   static define() {
     return new AnnotationType();
   }
@@ -2405,7 +2405,7 @@ Marker that identifies a type of [annotation](https://codemirror.net/6/docs/ref/
 class AnnotationType {
   /**
     Create an instance of this annotation.
-   */
+     */
   of(value) {
     return new Annotation(this, value);
   }
@@ -2417,7 +2417,7 @@ Representation of a type of state effect. Defined with
 class StateEffectType {
   /**
     @internal
-   */
+     */
   constructor(
     // The `any` types in these function types are there to work
     // around TypeScript issue #37631, where the type guard on
@@ -2433,7 +2433,7 @@ class StateEffectType {
   /**
     Create a [state effect](https://codemirror.net/6/docs/ref/#state.StateEffect) instance of this
     type.
-   */
+     */
   of(value) {
     return new StateEffect(this, value);
   }
@@ -2448,7 +2448,7 @@ document or selection changes.
 class StateEffect {
   /**
     @internal
-   */
+     */
   constructor(
     /**
     @internal
@@ -2465,7 +2465,7 @@ class StateEffect {
   /**
     Map this effect through a position mapping. Will return
     `undefined` when that ends up deleting the effect.
-   */
+     */
   map(mapping) {
     let mapped = this.type.map(this.value, mapping);
     return mapped === undefined ? undefined : mapped == this.value ? this : new StateEffect(this.type, mapped);
@@ -2473,7 +2473,7 @@ class StateEffect {
   /**
     Tells you whether this effect object is of a given
     [type](https://codemirror.net/6/docs/ref/#state.StateEffectType).
-   */
+     */
   is(type) {
     return this.type == type;
   }
@@ -2483,13 +2483,13 @@ class StateEffect {
     doesn't include `undefined`, since that is used in
     [mapping](https://codemirror.net/6/docs/ref/#state.StateEffect.map) to indicate that an effect is
     removed.
-   */
+     */
   static define(spec = {}) {
     return new StateEffectType(spec.map || ((v) => v));
   }
   /**
     Map an array of effects through a change set.
-   */
+     */
   static mapEffects(effects, mapping) {
     if (!effects.length) {
       return effects;
@@ -2562,11 +2562,11 @@ class Transaction {
     this.scrollIntoView = scrollIntoView;
     /**
         @internal
-     */
+         */
     this._doc = null;
     /**
         @internal
-     */
+         */
     this._state = null;
     if (selection) {
       checkSelection(selection, changes.newLength);
@@ -2577,7 +2577,7 @@ class Transaction {
   }
   /**
     @internal
-   */
+     */
   static create(startState, changes, selection, effects, annotations, scrollIntoView) {
     return new Transaction(startState, changes, selection, effects, annotations, scrollIntoView);
   }
@@ -2588,7 +2588,7 @@ class Transaction {
     recommended that [transaction
     filters](https://codemirror.net/6/docs/ref/#state.EditorState^transactionFilter) use this getter
     when they need to look at the new document.
-   */
+     */
   get newDoc() {
     return this._doc || (this._doc = this.changes.apply(this.startState.doc));
   }
@@ -2597,7 +2597,7 @@ class Transaction {
     [`this.selection`](https://codemirror.net/6/docs/ref/#state.Transaction.selection) is undefined,
     this will [map](https://codemirror.net/6/docs/ref/#state.EditorSelection.map) the start state's
     current selection through the changes made by the transaction.
-   */
+     */
   get newSelection() {
     return this.selection || this.startState.selection.map(this.changes);
   }
@@ -2606,7 +2606,7 @@ class Transaction {
     (but retained for subsequent access), so it is recommended not to
     access it in [transaction
     filters](https://codemirror.net/6/docs/ref/#state.EditorState^transactionFilter) when possible.
-   */
+     */
   get state() {
     if (!this._state) {
       this.startState.applyTransaction(this);
@@ -2615,7 +2615,7 @@ class Transaction {
   }
   /**
     Get the value of the given annotation type, if any.
-   */
+     */
   annotation(type) {
     for (let ann of this.annotations) {
       if (ann.type == type) {
@@ -2626,7 +2626,7 @@ class Transaction {
   }
   /**
     Indicates whether the transaction changed the document.
-   */
+     */
   get docChanged() {
     return !this.changes.empty;
   }
@@ -2635,7 +2635,7 @@ class Transaction {
     (through a [configuration compartment](https://codemirror.net/6/docs/ref/#state.Compartment) or
     with a top-level configuration
     [effect](https://codemirror.net/6/docs/ref/#state.StateEffect^reconfigure).
-   */
+     */
   get reconfigured() {
     return this.startState.config != this.state.config;
   }
@@ -2645,7 +2645,7 @@ class Transaction {
     or more specific than `event`. For example, if the transaction
     has `"select.pointer"` as user event, `"select"` and
     `"select.pointer"` will match it.
-   */
+     */
   isUserEvent(event) {
     let e = this.annotation(Transaction.userEvent);
     return !!(
@@ -2853,15 +2853,15 @@ do things like selecting by word.
 var CharCategory = /*@__PURE__*/ (function (CharCategory) {
   /**
     Word characters.
-   */
+     */
   CharCategory[(CharCategory['Word'] = 0)] = 'Word';
   /**
     Whitespace.
-   */
+     */
   CharCategory[(CharCategory['Space'] = 1)] = 'Space';
   /**
     Anything else.
-   */
+     */
   CharCategory[(CharCategory['Other'] = 2)] = 'Other';
   return CharCategory;
 })(CharCategory || (CharCategory = {}));
@@ -2974,13 +2974,13 @@ class EditorState {
     transaction contains the combined effect of all the different
     specs. For [selection](https://codemirror.net/6/docs/ref/#state.TransactionSpec.selection), later
     specs take precedence over earlier ones.
-   */
+     */
   update(...specs) {
     return resolveTransaction(this, specs, true);
   }
   /**
     @internal
-   */
+     */
   applyTransaction(tr) {
     let conf = this.config,
       { base, compartments } = conf;
@@ -3021,7 +3021,7 @@ class EditorState {
   /**
     Create a [transaction spec](https://codemirror.net/6/docs/ref/#state.TransactionSpec) that
     replaces every selection range with the given content.
-   */
+     */
   replaceSelection(text) {
     if (typeof text === 'string') {
       text = this.toText(text);
@@ -3041,7 +3041,7 @@ class EditorState {
     changeset and selection, and return it as a [transaction
     spec](https://codemirror.net/6/docs/ref/#state.TransactionSpec), which can be passed to
     [`update`](https://codemirror.net/6/docs/ref/#state.EditorState.update).
-   */
+     */
   changeByRange(f) {
     let sel = this.selection;
     let result1 = f(sel.ranges[0]);
@@ -3072,7 +3072,7 @@ class EditorState {
     Create a [change set](https://codemirror.net/6/docs/ref/#state.ChangeSet) from the given change
     description, taking the state's document length and line
     separator into account.
-   */
+     */
   changes(spec = []) {
     if (spec instanceof ChangeSet) {
       return spec;
@@ -3083,19 +3083,19 @@ class EditorState {
     Using the state's [line
     separator](https://codemirror.net/6/docs/ref/#state.EditorState^lineSeparator), create a
     [`Text`](https://codemirror.net/6/docs/ref/#state.Text) instance from the given string.
-   */
+     */
   toText(string) {
     return Text.of(string.split(this.facet(EditorState.lineSeparator) || DefaultSplit));
   }
   /**
     Return the given range of the document as a string.
-   */
+     */
   sliceDoc(from = 0, to = this.doc.length) {
     return this.doc.sliceString(from, to, this.lineBreak);
   }
   /**
     Get the value of a state [facet](https://codemirror.net/6/docs/ref/#state.Facet).
-   */
+     */
   facet(facet) {
     let addr = this.config.address[facet.id];
     if (addr == null) {
@@ -3109,7 +3109,7 @@ class EditorState {
     fields should be serialized, you can pass them in as an object
     mapping property names (in the resulting object, which should
     not use `doc` or `selection`) to fields.
-   */
+     */
   toJSON(fields) {
     let result = {
       doc: this.sliceDoc(),
@@ -3130,7 +3130,7 @@ class EditorState {
     fields should be deserialized, pass the same object you passed
     to [`toJSON`](https://codemirror.net/6/docs/ref/#state.EditorState.toJSON) when serializing as
     third argument.
-   */
+     */
   static fromJSON(json, config = {}, fields) {
     if (!json || typeof json.doc !== 'string') {
       throw new RangeError('Invalid JSON representation for EditorState');
@@ -3155,7 +3155,7 @@ class EditorState {
     Create a new state. You'll usually only need this when
     initializing an editor—updated states are created by applying
     transactions.
-   */
+     */
   static create(config = {}) {
     let configuration = Configuration.resolve(config.extensions || [], new Map());
     let doc =
@@ -3183,21 +3183,21 @@ class EditorState {
   /**
     The size (in columns) of a tab in the document, determined by
     the [`tabSize`](https://codemirror.net/6/docs/ref/#state.EditorState^tabSize) facet.
-   */
+     */
   get tabSize() {
     return this.facet(EditorState.tabSize);
   }
   /**
     Get the proper [line-break](https://codemirror.net/6/docs/ref/#state.EditorState^lineSeparator)
     string for this state.
-   */
+     */
   get lineBreak() {
     return this.facet(EditorState.lineSeparator) || '\n';
   }
   /**
     Returns true when the editor is
     [configured](https://codemirror.net/6/docs/ref/#state.EditorState^readOnly) to be read-only.
-   */
+     */
   get readOnly() {
     return this.facet(readOnly);
   }
@@ -3205,12 +3205,12 @@ class EditorState {
     Look up a translation for the given phrase (via the
     [`phrases`](https://codemirror.net/6/docs/ref/#state.EditorState^phrases) facet), or return the
     original string if no translation is found.
-   
+     
     If additional arguments are passed, they will be inserted in
     place of markers like `$1` (for the first value) and `$2`, etc.
     A single `$` is equivalent to `$1`, and `$$` will produce a
     literal dollar sign.
-   */
+     */
   phrase(phrase, ...insert) {
     for (let map of this.facet(EditorState.phrases)) {
       if (Object.prototype.hasOwnProperty.call(map, phrase)) {
@@ -3232,9 +3232,9 @@ class EditorState {
   /**
     Find the values for a given language data field, provided by the
     the [`languageData`](https://codemirror.net/6/docs/ref/#state.EditorState^languageData) facet.
-   
+     
     Examples of language data fields are...
-   
+     
     - [`"commentTokens"`](https://codemirror.net/6/docs/ref/#commands.CommentTokens) for specifying
       comment syntax.
     - [`"autocomplete"`](https://codemirror.net/6/docs/ref/#autocomplete.autocompletion^config.override)
@@ -3244,7 +3244,7 @@ class EditorState {
       language.
     - [`"closeBrackets"`](https://codemirror.net/6/docs/ref/#autocomplete.CloseBracketConfig) controls
       bracket closing behavior.
-   */
+     */
   languageDataAt(name, pos, side = -1) {
     let values = [];
     for (let provider of this.facet(languageData)) {
@@ -3260,13 +3260,13 @@ class EditorState {
     Return a function that can categorize strings (expected to
     represent a single [grapheme cluster](https://codemirror.net/6/docs/ref/#state.findClusterBreak))
     into one of:
-   
+     
      - Word (contains an alphanumeric character or a character
        explicitly listed in the local language's `"wordChars"`
        language data, which should be a string)
      - Space (contains only whitespace)
      - Other (anything else)
-   */
+     */
   charCategorizer(at) {
     return makeCategorizer(this.languageDataAt('wordChars', at).join(''));
   }
@@ -3275,7 +3275,7 @@ class EditorState {
     containing all [word](https://codemirror.net/6/docs/ref/#state.CharCategory.Word) characters
     around it. If no word characters are adjacent to the position,
     this returns null.
-   */
+     */
   wordAt(pos) {
     let { text, from, length } = this.doc.lineAt(pos);
     let cat = this.charCategorizer(pos);
@@ -3457,13 +3457,13 @@ class RangeValue {
     Unless you are only creating a fixed number of unique instances
     of your value type, it is a good idea to implement this
     properly.
-   */
+     */
   eq(other) {
     return this == other;
   }
   /**
     Create a [range](https://codemirror.net/6/docs/ref/#state.Range) with this value.
-   */
+     */
   range(from, to = from) {
     return Range$1.create(from, to, this);
   }
@@ -3495,7 +3495,7 @@ let Range$1 = class Range {
   }
   /**
     @internal
-   */
+     */
   static create(from, to, value) {
     return new Range(from, to, value);
   }
@@ -3633,20 +3633,20 @@ class RangeSet {
   }
   /**
     @internal
-   */
+     */
   static create(chunkPos, chunk, nextLayer, maxPoint) {
     return new RangeSet(chunkPos, chunk, nextLayer, maxPoint);
   }
   /**
     @internal
-   */
+     */
   get length() {
     let last = this.chunk.length - 1;
     return last < 0 ? 0 : Math.max(this.chunkEnd(last), this.nextLayer.length);
   }
   /**
     The number of ranges in the set.
-   */
+     */
   get size() {
     if (this.isEmpty) {
       return 0;
@@ -3659,19 +3659,19 @@ class RangeSet {
   }
   /**
     @internal
-   */
+     */
   chunkEnd(index) {
     return this.chunkPos[index] + this.chunk[index].length;
   }
   /**
     Update the range set, optionally adding new ranges or filtering
     out existing ones.
-   
+     
     (Note: The type parameter is just there as a kludge to work
     around TypeScript variance issues that prevented `RangeSet<X>`
     from being a subtype of `RangeSet<Y>` when `X` is a subtype of
     `Y`.)
-   */
+     */
   update(updateSpec) {
     let { add = [], sort = false, filterFrom = 0, filterTo = this.length } = updateSpec;
     let filter = updateSpec.filter;
@@ -3719,7 +3719,7 @@ class RangeSet {
   }
   /**
     Map this range set through a set of changes, return the new set.
-   */
+     */
   map(changes) {
     if (changes.empty || this.isEmpty) {
       return this;
@@ -3752,7 +3752,7 @@ class RangeSet {
     calling `f` for each. There is no guarantee that the ranges will
     be reported in any specific order. When the callback returns
     `false`, iteration stops.
-   */
+     */
   between(from, to, f) {
     if (this.isEmpty) {
       return;
@@ -3769,27 +3769,27 @@ class RangeSet {
   /**
     Iterate over the ranges in this set, in order, including all
     ranges that end at or after `from`.
-   */
+     */
   iter(from = 0) {
     return HeapCursor.from([this]).goto(from);
   }
   /**
     @internal
-   */
+     */
   get isEmpty() {
     return this.nextLayer == this;
   }
   /**
     Iterate over the ranges in a collection of sets, in order,
     starting from `from`.
-   */
+     */
   static iter(sets, from = 0) {
     return HeapCursor.from(sets).goto(from);
   }
   /**
     Iterate over two groups of sets, calling methods on `comparator`
     to notify it of possible differences.
-   */
+     */
   static compare(
     oldSets,
     newSets,
@@ -3818,7 +3818,7 @@ class RangeSet {
   /**
     Compare the contents of two groups of range sets, returning true
     if they are equivalent in the given range.
-   */
+     */
   static eq(oldSets, newSets, from = 0, to) {
     if (to == null) {
       to = 1000000000 /* C.Far */ - 1;
@@ -3855,7 +3855,7 @@ class RangeSet {
     content. Returns the open count (see
     [`SpanIterator.span`](https://codemirror.net/6/docs/ref/#state.SpanIterator.span)) at the end
     of the iteration.
-   */
+     */
   static spans(
     sets,
     from,
@@ -3894,7 +3894,7 @@ class RangeSet {
     position and, if two start at the same position,
     `value.startSide`). You can pass `true` as second argument to
     cause the method to sort them.
-   */
+     */
   static of(ranges, sort = false) {
     let build = new RangeSetBuilder();
     for (let range of ranges instanceof Range$1 ? [ranges] : sort ? lazySort(ranges) : ranges) {
@@ -3940,7 +3940,7 @@ class RangeSetBuilder {
   }
   /**
     Create an empty builder.
-   */
+     */
   constructor() {
     this.chunks = [];
     this.chunkPos = [];
@@ -3958,7 +3958,7 @@ class RangeSetBuilder {
   /**
     Add a range. Ranges should be added in sorted (by `from` and
     `value.startSide`) order.
-   */
+     */
   add(from, to, value) {
     if (!this.addInner(from, to, value)) {
       (this.nextLayer || (this.nextLayer = new RangeSetBuilder())).add(from, to, value);
@@ -3966,7 +3966,7 @@ class RangeSetBuilder {
   }
   /**
     @internal
-   */
+     */
   addInner(from, to, value) {
     let diff = from - this.lastTo || value.startSide - this.last.endSide;
     if (diff <= 0 && (from - this.lastFrom || value.startSide - this.last.startSide) < 0) {
@@ -3994,7 +3994,7 @@ class RangeSetBuilder {
   }
   /**
     @internal
-   */
+     */
   addChunk(from, chunk) {
     if ((from - this.lastTo || chunk.value[0].startSide - this.last.endSide) < 0) {
       return false;
@@ -4014,13 +4014,13 @@ class RangeSetBuilder {
   /**
     Finish the range set. Returns the new set. The builder can't be
     used anymore after this has been called.
-   */
+     */
   finish() {
     return this.finishInner(RangeSet.empty);
   }
   /**
     @internal
-   */
+     */
   finishInner(next) {
     if (this.from.length) {
       this.finishChunk(false);
@@ -5625,14 +5625,14 @@ let browser = {
   ie,
   ie_version: ie_upto10 ? doc.documentMode || 6 : ie_11up ? +ie_11up[1] : ie_edge ? +ie_edge[1] : 0,
   gecko,
-  gecko_version: gecko ? +(/*@__PURE__*/ (/Firefox\/(\d+)/.exec(nav.userAgent) || [0, 0])[1]) : 0,
+  gecko_version: gecko ? +/*@__PURE__*/ (/Firefox\/(\d+)/.exec(nav.userAgent) || [0, 0])[1] : 0,
   chrome: !!chrome,
   chrome_version: chrome ? +chrome[1] : 0,
   ios,
   android: /*@__PURE__*/ /Android\b/.test(nav.userAgent),
   webkit,
   safari,
-  webkit_version: webkit ? +(/*@__PURE__*/ (/\bAppleWebKit\/(\d+)/.exec(navigator.userAgent) || [0, 0])[1]) : 0,
+  webkit_version: webkit ? +/*@__PURE__*/ (/\bAppleWebKit\/(\d+)/.exec(navigator.userAgent) || [0, 0])[1] : 0,
   tabSize: doc.documentElement.style.tabSize != null ? 'tab-size' : '-moz-tab-size',
 };
 
@@ -5670,7 +5670,7 @@ class TextView extends ContentView {
       (source &&
         (!(source instanceof TextView) ||
           this.length - (to - from) + source.length > MaxJoinLen ||
-          source.flags & 8) /* ViewFlag.Composition */)
+          source.flags & 8 /* ViewFlag.Composition */))
     ) {
       return false;
     }
@@ -6447,7 +6447,7 @@ class WidgetType {
     decoration of the same type. The default implementation just
     returns `false`, which will cause new instances of the widget to
     always be redrawn.
-   */
+     */
   eq(widget) {
     return false;
   }
@@ -6457,13 +6457,13 @@ class WidgetType {
     true to indicate that it could update, false to indicate it
     couldn't (in which case the widget will be redrawn). The default
     implementation just returns false.
-   */
+     */
   updateDOM(dom, view) {
     return false;
   }
   /**
     @internal
-   */
+     */
   compare(other) {
     return this == other || (this.constructor == other.constructor && this.eq(other));
   }
@@ -6472,7 +6472,7 @@ class WidgetType {
     estimating the height of content that hasn't been drawn. May
     return -1 to indicate you don't know. The default implementation
     returns -1.
-   */
+     */
   get estimatedHeight() {
     return -1;
   }
@@ -6481,7 +6481,7 @@ class WidgetType {
     `inline-block`) and introduce line breaks (through `<br>` tags
     or textual newlines), this must indicate the amount of line
     breaks they introduce. Defaults to 0.
-   */
+     */
   get lineBreaks() {
     return 0;
   }
@@ -6489,7 +6489,7 @@ class WidgetType {
     Can be used to configure which kinds of events inside the widget
     should be ignored by the editor. The default is to ignore all
     events.
-   */
+     */
   ignoreEvent(event) {
     return true;
   }
@@ -6499,20 +6499,20 @@ class WidgetType {
     `side` the side of the position that is being queried—less than
     zero for before, greater than zero for after, and zero for
     directly at that position.
-   */
+     */
   coordsAt(dom, pos, side) {
     return null;
   }
   /**
     @internal
-   */
+     */
   get isHidden() {
     return false;
   }
   /**
     This is called when the an instance of the widget is removed
     from the editor view.
-   */
+     */
   destroy(dom) {}
 }
 /**
@@ -6521,19 +6521,19 @@ The different types of blocks that can occur in an editor view.
 var BlockType = /*@__PURE__*/ (function (BlockType) {
   /**
     A line of text.
-   */
+     */
   BlockType[(BlockType['Text'] = 0)] = 'Text';
   /**
     A block widget associated with the position after it.
-   */
+     */
   BlockType[(BlockType['WidgetBefore'] = 1)] = 'WidgetBefore';
   /**
     A block widget associated with the position before it.
-   */
+     */
   BlockType[(BlockType['WidgetAfter'] = 2)] = 'WidgetAfter';
   /**
     A block widget [replacing](https://codemirror.net/6/docs/ref/#view.Decoration^replace) a range of content.
-   */
+     */
   BlockType[(BlockType['WidgetRange'] = 3)] = 'WidgetRange';
   return BlockType;
 })(BlockType || (BlockType = {}));
@@ -6572,7 +6572,7 @@ class Decoration extends RangeValue {
   }
   /**
     @internal
-   */
+     */
   get heightRelevant() {
     return false;
   }
@@ -6584,14 +6584,14 @@ class Decoration extends RangeValue {
     the higher-precedence decorations creating the inner DOM nodes.
     Such elements are split on line boundaries and on the boundaries
     of lower-precedence decorations.
-   */
+     */
   static mark(spec) {
     return new MarkDecoration(spec);
   }
   /**
     Create a widget decoration, which displays a DOM element at the
     given position.
-   */
+     */
   static widget(spec) {
     let side = Math.max(-10000, Math.min(10000, spec.side || 0)),
       block = !!spec.block;
@@ -6608,7 +6608,7 @@ class Decoration extends RangeValue {
   /**
     Create a replace decoration which replaces the given range with
     a widget, or simply hides it.
-   */
+     */
   static replace(spec) {
     let block = !!spec.block,
       startSide,
@@ -6636,7 +6636,7 @@ class Decoration extends RangeValue {
   /**
     Create a line decoration, which can add DOM attributes to the
     line starting at the given position.
-   */
+     */
   static line(spec) {
     return new LineDecoration(spec);
   }
@@ -6644,13 +6644,13 @@ class Decoration extends RangeValue {
     Build a [`DecorationSet`](https://codemirror.net/6/docs/ref/#view.DecorationSet) from the given
     decorated range or ranges. If the ranges aren't already sorted,
     pass `true` for `sort` to make the library sort them for you.
-   */
+     */
   static set(of, sort = false) {
     return RangeSet.of(of, sort);
   }
   /**
     @internal
-   */
+     */
   hasHeight() {
     return this.widget ? this.widget.estimatedHeight > -1 : false;
   }
@@ -7088,7 +7088,7 @@ class ViewPlugin {
   /**
     Define a plugin from a constructor function that creates the
     plugin's value, given an editor view.
-   */
+     */
   static define(create, spec) {
     const { eventHandlers, eventObservers, provide, decorations: deco } = spec || {};
     return new ViewPlugin(nextPluginID++, create, eventHandlers, eventObservers, (plugin) => {
@@ -7110,7 +7110,7 @@ class ViewPlugin {
   /**
     Create a plugin for a class whose constructor takes a single
     editor view as argument.
-   */
+     */
   static fromClass(cls, spec) {
     return ViewPlugin.define((view) => new cls(view), spec);
   }
@@ -7320,7 +7320,7 @@ class ViewUpdate {
     this.transactions = transactions;
     /**
         @internal
-     */
+         */
     this.flags = 0;
     this.startState = view.state;
     this.changes = ChangeSet.empty(this.startState.doc.length);
@@ -7335,7 +7335,7 @@ class ViewUpdate {
   }
   /**
     @internal
-   */
+     */
   static create(view, state, transactions) {
     return new ViewUpdate(view, state, transactions);
   }
@@ -7343,45 +7343,45 @@ class ViewUpdate {
     Tells you whether the [viewport](https://codemirror.net/6/docs/ref/#view.EditorView.viewport) or
     [visible ranges](https://codemirror.net/6/docs/ref/#view.EditorView.visibleRanges) changed in this
     update.
-   */
+     */
   get viewportChanged() {
     return (this.flags & 4) /* UpdateFlag.Viewport */ > 0;
   }
   /**
     Indicates whether the height of a block element in the editor
     changed in this update.
-   */
+     */
   get heightChanged() {
     return (this.flags & 2) /* UpdateFlag.Height */ > 0;
   }
   /**
     Returns true when the document was modified or the size of the
     editor, or elements within the editor, changed.
-   */
+     */
   get geometryChanged() {
-    return this.docChanged || (this.flags & (8 /* UpdateFlag.Geometry */ | 2)) /* UpdateFlag.Height */ > 0;
+    return this.docChanged || (this.flags & (8 /* UpdateFlag.Geometry */ | 2) /* UpdateFlag.Height */) > 0;
   }
   /**
     True when this update indicates a focus change.
-   */
+     */
   get focusChanged() {
     return (this.flags & 1) /* UpdateFlag.Focus */ > 0;
   }
   /**
     Whether the document changed in this update.
-   */
+     */
   get docChanged() {
     return !this.changes.empty;
   }
   /**
     Whether the selection was explicitly set in this update.
-   */
+     */
   get selectionSet() {
     return this.transactions.some((tr) => tr.selection);
   }
   /**
     @internal
-   */
+     */
   get empty() {
     return this.flags == 0 && this.transactions.length == 0;
   }
@@ -7395,11 +7395,11 @@ var Direction = /*@__PURE__*/ (function (Direction) {
   // terms, of spans in that direction.)
   /**
     Left-to-right.
-   */
+     */
   Direction[(Direction['LTR'] = 0)] = 'LTR';
   /**
     Right-to-left.
-   */
+     */
   Direction[(Direction['RTL'] = 1)] = 'RTL';
   return Direction;
 })(Direction || (Direction = {}));
@@ -7457,13 +7457,13 @@ Represents a contiguous range of text that has a single direction
 class BidiSpan {
   /**
     The direction of this span.
-   */
+     */
   get dir() {
     return this.level % 2 ? RTL : LTR;
   }
   /**
     @internal
-   */
+     */
   constructor(
     /**
     The start of the span (relative to the start of the line).
@@ -7488,13 +7488,13 @@ class BidiSpan {
   }
   /**
     @internal
-   */
+     */
   side(end, dir) {
     return (this.dir == dir) == end ? this.to : this.from;
   }
   /**
     @internal
-   */
+     */
   static find(order, index, level, assoc) {
     let maybe = -1;
     for (let i = 0; i < order.length; i++) {
@@ -7852,7 +7852,7 @@ function emitSpans(line, from, to, level, baseLevel, isolates, order) {
   }
 }
 function computeSectionOrder(line, level, baseLevel, isolates, from, to, order) {
-  let outerType = level % 2 ? 2 /* T.R */ : 1; /* T.L */
+  let outerType = level % 2 ? 2 /* T.R */ : 1 /* T.L */;
   computeCharTypes(line, from, to, isolates, outerType);
   processBracketPairs(line, from, to, isolates, outerType);
   processNeutrals(from, to, isolates, outerType);
@@ -10185,7 +10185,7 @@ in the editor view.
 class BlockInfo {
   /**
     @internal
-   */
+     */
   constructor(
     /**
     The start of the element in the document.
@@ -10221,7 +10221,7 @@ class BlockInfo {
   /**
     The type of element this is. When querying lines, this may be
     an array of all the blocks that make up the line.
-   */
+     */
   get type() {
     return typeof this._content === 'number'
       ? BlockType.Text
@@ -10231,33 +10231,33 @@ class BlockInfo {
   }
   /**
     The end of the element as a document position.
-   */
+     */
   get to() {
     return this.from + this.length;
   }
   /**
     The bottom position of the element.
-   */
+     */
   get bottom() {
     return this.top + this.height;
   }
   /**
     If this is a widget block, this will return the widget
     associated with it.
-   */
+     */
   get widget() {
     return this._content instanceof PointDecoration ? this._content.widget : null;
   }
   /**
     If this is a textblock, this holds the number of line breaks
     that appear in widgets inside the block.
-   */
+     */
   get widgetLineBreaks() {
     return typeof this._content === 'number' ? this._content : 0;
   }
   /**
     @internal
-   */
+     */
   join(other) {
     let content = (Array.isArray(this._content) ? this._content : [this]).concat(
       Array.isArray(other._content) ? other._content : [other]
@@ -10436,7 +10436,7 @@ class HeightMapText extends HeightMapBlock {
     let node = nodes[0];
     if (
       nodes.length == 1 &&
-      (node instanceof HeightMapText || (node instanceof HeightMapGap && node.flags & 4) /* Flag.SingleLine */) &&
+      (node instanceof HeightMapText || (node instanceof HeightMapGap && node.flags & 4 /* Flag.SingleLine */)) &&
       Math.abs(this.length - node.length) < 10
     ) {
       if (node instanceof HeightMapGap) {
@@ -12972,7 +12972,7 @@ transactions for editing actions.
 class EditorView {
   /**
     The current editor state.
-   */
+     */
   get state() {
     return this.viewState.state;
   }
@@ -12982,7 +12982,7 @@ class EditorView {
     code that is visible (plus a margin around it) to the DOM. This
     property tells you the extent of the current drawn viewport, in
     document positions.
-   */
+     */
   get viewport() {
     return this.viewState.viewport;
   }
@@ -12993,14 +12993,14 @@ class EditorView {
     content in the viewport, it is preferable to only do so for
     these ranges, which are the subset of the viewport that is
     actually drawn.
-   */
+     */
   get visibleRanges() {
     return this.viewState.visibleRanges;
   }
   /**
     Returns false when the editor is entirely scrolled out of view
     or otherwise hidden.
-   */
+     */
   get inView() {
     return this.viewState.inView;
   }
@@ -13008,7 +13008,7 @@ class EditorView {
     Indicates whether the user is currently composing text via
     [IME](https://en.wikipedia.org/wiki/Input_method), and at least
     one change has been made in the current composition.
-   */
+     */
   get composing() {
     return this.inputState.composing > 0;
   }
@@ -13017,19 +13017,19 @@ class EditorView {
     that on some platforms, like Android, this will be the case a
     lot, since just putting the cursor on a word starts a
     composition there.
-   */
+     */
   get compositionStarted() {
     return this.inputState.composing >= 0;
   }
   /**
     The document or shadow root that the view lives in.
-   */
+     */
   get root() {
     return this._root;
   }
   /**
     @internal
-   */
+     */
   get win() {
     return this.dom.ownerDocument.defaultView || window;
   }
@@ -13037,7 +13037,7 @@ class EditorView {
     Construct a new view. You'll want to either provide a `parent`
     option, or put `view.dom` into your document after creating a
     view, so that the user can see the editor.
-   */
+     */
   constructor(config = {}) {
     this.plugins = [];
     this.pluginMap = new Map();
@@ -13047,15 +13047,15 @@ class EditorView {
     this.destroyed = false;
     /**
         @internal
-     */
+         */
     this.updateState = 2 /* UpdateState.Updating */;
     /**
         @internal
-     */
+         */
     this.measureScheduled = -1;
     /**
         @internal
-     */
+         */
     this.measureRequests = [];
     this.contentDOM = document.createElement('div');
     this.scrollDOM = document.createElement('div');
@@ -13111,7 +13111,7 @@ class EditorView {
     change. You should usually call
     [`dispatch`](https://codemirror.net/6/docs/ref/#view.EditorView.dispatch) instead, which uses this
     as a primitive.
-   */
+     */
   update(transactions) {
     if (this.updateState != 0 /* UpdateState.Idle */) {
       throw new Error('Calls to EditorView.update are not allowed while an update is in progress');
@@ -13245,7 +13245,7 @@ class EditorView {
     so you should probably only use it when the new state isn't
     derived from the old state. Otherwise, use
     [`dispatch`](https://codemirror.net/6/docs/ref/#view.EditorView.dispatch) instead.)
-   */
+     */
   setState(newState) {
     if (this.updateState != 0 /* UpdateState.Idle */) {
       throw new Error('Calls to EditorView.setState are not allowed while an update is in progress');
@@ -13315,7 +13315,7 @@ class EditorView {
   }
   /**
     @internal
-   */
+     */
   measure(flush = true) {
     if (this.destroyed) {
       return;
@@ -13439,7 +13439,7 @@ class EditorView {
   }
   /**
     Get the CSS classes for the currently active editor themes.
-   */
+     */
   get themeClasses() {
     return baseThemeID + ' ' + (this.state.facet(darkTheme) ? baseDarkID : baseLightID) + ' ' + this.state.facet(theme);
   }
@@ -13506,7 +13506,7 @@ class EditorView {
     example, an event handler, because it'll make sure measuring and
     drawing done by other components is synchronized, avoiding
     unnecessary DOM layout computations.
-   */
+     */
   requestMeasure(request) {
     if (this.measureScheduled < 0) {
       this.measureScheduled = this.win.requestAnimationFrame(() => this.measure());
@@ -13531,7 +13531,7 @@ class EditorView {
     plugins that crash can be dropped from a view, so even when you
     know you registered a given plugin, it is recommended to check
     the return value of this method.
-   */
+     */
   plugin(plugin) {
     let known = this.pluginMap.get(plugin);
     if (known === undefined || (known && known.spec != plugin)) {
@@ -13543,13 +13543,13 @@ class EditorView {
     The top position of the document, in screen coordinates. This
     may be negative when the editor is scrolled down. Points
     directly to the top of the first line, not above the padding.
-   */
+     */
   get documentTop() {
     return this.contentDOM.getBoundingClientRect().top + this.viewState.paddingTop;
   }
   /**
     Reports the padding above and below the document.
-   */
+     */
   get documentPadding() {
     return { top: this.viewState.paddingTop, bottom: this.viewState.paddingBottom };
   }
@@ -13557,13 +13557,13 @@ class EditorView {
     If the editor is transformed with CSS, this provides the scale
     along the X axis. Otherwise, it will just be 1. Note that
     transforms other than translation and scaling are not supported.
-   */
+     */
   get scaleX() {
     return this.viewState.scaleX;
   }
   /**
     Provide the CSS transformed scale along the Y axis.
-   */
+     */
   get scaleY() {
     return this.viewState.scaleY;
   }
@@ -13571,7 +13571,7 @@ class EditorView {
     Find the text line or block widget at the given vertical
     position (which is interpreted as relative to the [top of the
     document](https://codemirror.net/6/docs/ref/#view.EditorView.documentTop)).
-   */
+     */
   elementAtHeight(height) {
     this.readMeasured();
     return this.viewState.elementAtHeight(height);
@@ -13581,7 +13581,7 @@ class EditorView {
     [`lineBlockAt`](https://codemirror.net/6/docs/ref/#view.EditorView.lineBlockAt) at the given
     height, again interpreted relative to the [top of the
     document](https://codemirror.net/6/docs/ref/#view.EditorView.documentTop).
-   */
+     */
   lineBlockAtHeight(height) {
     this.readMeasured();
     return this.viewState.lineBlockAtHeight(height);
@@ -13591,7 +13591,7 @@ class EditorView {
     blocks](https://codemirror.net/6/docs/ref/#view.EditorView.lineBlockAt) in the viewport. Positions
     are relative to the [top of the
     document](https://codemirror.net/6/docs/ref/#view.EditorView.documentTop);
-   */
+     */
   get viewportLineBlocks() {
     return this.viewState.viewportLines;
   }
@@ -13602,13 +13602,13 @@ class EditorView {
     start/end of the document. It will usually just hold a line of
     text, but may be broken into multiple textblocks by block
     widgets.
-   */
+     */
   lineBlockAt(pos) {
     return this.viewState.lineBlockAt(pos);
   }
   /**
     The editor's total content height.
-   */
+     */
   get contentHeight() {
     return this.viewState.contentHeight;
   }
@@ -13621,13 +13621,13 @@ class EditorView {
     When the start position was the last one on the line, the
     returned position will be across the line break. If there is no
     further line, the original position is returned.
-   
+     
     By default, this method moves over a single cluster. The
     optional `by` argument can be used to move across more. It will
     be called with the first cluster as argument, and should return
     a predicate that determines, for each subsequent cluster,
     whether it should also be moved over.
-   */
+     */
   moveByChar(start, forward, by) {
     return skipAtoms(this, start, moveByChar(this, start, forward, by));
   }
@@ -13635,7 +13635,7 @@ class EditorView {
     Move a cursor position across the next group of either
     [letters](https://codemirror.net/6/docs/ref/#state.EditorState.charCategorizer) or non-letter
     non-whitespace characters.
-   */
+     */
   moveByGroup(start, forward) {
     return skipAtoms(
       this,
@@ -13649,7 +13649,7 @@ class EditorView {
     further wrap point on the current line, the wrap point will be
     returned. Otherwise this function will return the start or end
     of the line.
-   */
+     */
   moveToLineBoundary(start, forward, includeWrap = true) {
     return moveToLineBoundary(this, start, forward, includeWrap);
   }
@@ -13658,14 +13658,14 @@ class EditorView {
     it defaults to moving to the next line (including wrapped
     lines). Otherwise, `distance` should provide a positive distance
     in pixels.
-   
+     
     When `start` has a
     [`goalColumn`](https://codemirror.net/6/docs/ref/#state.SelectionRange.goalColumn), the vertical
     motion will use that as a target horizontal position. Otherwise,
     the cursor's own horizontal position is used. The returned
     cursor will have its goal column set to whichever column was
     used.
-   */
+     */
   moveVertically(start, forward, distance) {
     return skipAtoms(this, start, moveVertically(this, start, forward, distance));
   }
@@ -13673,12 +13673,12 @@ class EditorView {
     Find the DOM parent node and offset (child offset if `node` is
     an element, character offset when it is a text node) at the
     given document position.
-   
+     
     Note that for positions that aren't currently in
     `visibleRanges`, the resulting DOM position isn't necessarily
     meaningful (it may just point before or after a placeholder
     element).
-   */
+     */
   domAtPos(pos) {
     return this.docView.domAtPos(pos);
   }
@@ -13686,7 +13686,7 @@ class EditorView {
     Find the document position at the given DOM node. Can be useful
     for associating positions with DOM events. Will raise an error
     when `node` isn't part of the editor content.
-   */
+     */
   posAtDOM(node, offset = 0) {
     return this.docView.posFromDOM(node, offset);
   }
@@ -13700,7 +13700,7 @@ class EditorView {
     element before (-1) or after (1) the position (if no element is
     available on the given side, the method will transparently use
     another strategy to get reasonable coordinates).
-   */
+     */
   coordsAtPos(pos, side = 1) {
     this.readMeasured();
     let rect = this.docView.coordsAt(pos, side);
@@ -13718,7 +13718,7 @@ class EditorView {
     rendered (i.e. not replaced, not a line break), this will return
     null. For space characters that are a line wrap point, this will
     return the position before the line break.
-   */
+     */
   coordsForChar(pos) {
     this.readMeasured();
     return this.docView.coordsForChar(pos);
@@ -13727,14 +13727,14 @@ class EditorView {
     The default width of a character in the editor. May not
     accurately reflect the width of all characters (given variable
     width fonts or styling of invididual ranges).
-   */
+     */
   get defaultCharacterWidth() {
     return this.viewState.heightOracle.charWidth;
   }
   /**
     The default height of a line in the editor. May not be accurate
     for all lines.
-   */
+     */
   get defaultLineHeight() {
     return this.viewState.heightOracle.lineHeight;
   }
@@ -13742,7 +13742,7 @@ class EditorView {
     The text direction
     ([`direction`](https://developer.mozilla.org/en-US/docs/Web/CSS/direction)
     CSS property) of the editor's content element.
-   */
+     */
   get textDirection() {
     return this.viewState.defaultTextDirection;
   }
@@ -13754,7 +13754,7 @@ class EditorView {
     this will always return the same as
     [`textDirection`](https://codemirror.net/6/docs/ref/#view.EditorView.textDirection). Note that
     this may trigger a DOM layout.
-   */
+     */
   textDirectionAt(pos) {
     let perLine = this.state.facet(perLineTextDirection);
     if (!perLine || pos < this.viewport.from || pos > this.viewport.to) {
@@ -13768,7 +13768,7 @@ class EditorView {
     (as determined by the
     [`white-space`](https://developer.mozilla.org/en-US/docs/Web/CSS/white-space)
     CSS property of its content element).
-   */
+     */
   get lineWrapping() {
     return this.viewState.heightOracle.lineWrapping;
   }
@@ -13779,7 +13779,7 @@ class EditorView {
     direction](https://codemirror.net/6/docs/ref/#view.EditorView.textDirection)—if that is
     left-to-right, the leftmost spans come first, otherwise the
     rightmost spans come first.
-   */
+     */
   bidiSpans(line) {
     if (line.length > MaxBidiLine) {
       return trivialOrder(line.length);
@@ -13804,7 +13804,7 @@ class EditorView {
   }
   /**
     Check whether the editor has focus.
-   */
+     */
   get hasFocus() {
     let _a;
     // Safari return false for hasFocus when the context menu is open
@@ -13820,7 +13820,7 @@ class EditorView {
   }
   /**
     Put focus on the editor.
-   */
+     */
   focus() {
     this.observer.ignore(() => {
       focusPreventScroll(this.contentDOM);
@@ -13830,7 +13830,7 @@ class EditorView {
   /**
     Update the [root](https://codemirror.net/6/docs/ref/##view.EditorViewConfig.root) in which the editor lives. This is only
     necessary when moving the editor's existing DOM to a new window or shadow root.
-   */
+     */
   setRoot(root) {
     if (this._root != root) {
       this._root = root;
@@ -13843,7 +13843,7 @@ class EditorView {
     document, unregistering event handlers, and notifying
     plugins. The view instance can no longer be used after
     calling this.
-   */
+     */
   destroy() {
     for (let plugin of this.plugins) {
       plugin.destroy(this);
@@ -13861,7 +13861,7 @@ class EditorView {
     Returns an effect that can be
     [added](https://codemirror.net/6/docs/ref/#state.TransactionSpec.effects) to a transaction to
     cause it to scroll the given position or range into view.
-   */
+     */
   static scrollIntoView(pos, options = {}) {
     return scrollIntoView$1.of(
       new ScrollTarget(
@@ -13879,12 +13879,12 @@ class EditorView {
     only affects the editor's own scrollable element, not parents.
     See also
     [`EditorViewConfig.scrollTo`](https://codemirror.net/6/docs/ref/#view.EditorViewConfig.scrollTo).
-   
+     
     The effect should be used with a document identical to the one
     it was created for. Failing to do so is not an error, but may
     not scroll to the expected position. You can
     [map](https://codemirror.net/6/docs/ref/#state.StateEffect.map) the effect to account for changes.
-   */
+     */
   scrollSnapshot() {
     let { scrollTop, scrollLeft } = this.scrollDOM;
     let ref = this.viewState.scrollAnchorAt(scrollTop);
@@ -13903,7 +13903,7 @@ class EditorView {
     for `scroll` handlers, which will be called any time the
     editor's [scroll element](https://codemirror.net/6/docs/ref/#view.EditorView.scrollDOM) or one of
     its parent nodes is scrolled.
-   */
+     */
   static domEventHandlers(handlers) {
     return ViewPlugin.define(() => ({}), { eventHandlers: handlers });
   }
@@ -13914,7 +13914,7 @@ class EditorView {
     handler returning true. They also don't prevent other handlers
     and observers from running when they return true, and should not
     call `preventDefault`.
-   */
+     */
   static domEventObservers(observers) {
     return ViewPlugin.define(() => ({}), { eventObservers: observers });
   }
@@ -13923,19 +13923,19 @@ class EditorView {
     [`style-mod`](https://github.com/marijnh/style-mod#documentation)
     style spec providing the styles for the theme. These will be
     prefixed with a generated class for the style.
-   
+     
     Because the selectors will be prefixed with a scope class, rule
     that directly match the editor's [wrapper
     element](https://codemirror.net/6/docs/ref/#view.EditorView.dom)—to which the scope class will be
     added—need to be explicitly differentiated by adding an `&` to
     the selector for that element—for example
     `&.cm-focused`.
-   
+     
     When `dark` is set to true, the theme will be marked as dark,
     which will cause the `&dark` rules from [base
     themes](https://codemirror.net/6/docs/ref/#view.EditorView^baseTheme) to be used (as opposed to
     `&light` when a light theme is active).
-   */
+     */
   static theme(spec, options) {
     let prefix = StyleModule.newName();
     let result = [theme.of(prefix), styleModule.of(buildTheme(`.${prefix}`, spec))];
@@ -13950,14 +13950,14 @@ class EditorView {
     place of the editor wrapper element when directly targeting
     that. You can also use `&dark` or `&light` instead to only
     target editors with a dark or light theme.
-   */
+     */
   static baseTheme(spec) {
     return Prec.lowest(styleModule.of(buildTheme('.' + baseThemeID, spec, lightDarkIDs)));
   }
   /**
     Retrieve an editor view instance from the view's DOM
     representation.
-   */
+     */
   static findFromDOM(dom) {
     let _a;
     let content = dom.querySelector('.cm-content');
@@ -14439,7 +14439,7 @@ class RectangleMarker {
   /**
     Create a marker with the given class and dimensions. If `width`
     is null, the DOM element will get no width style.
-   */
+     */
   constructor(
     className,
     /**
@@ -14501,7 +14501,7 @@ class RectangleMarker {
     rectangle for empty ranges, and a set of selection-style
     rectangles covering the range's content (in a bidi-aware
     way) for non-empty ones.
-   */
+     */
   static forRange(view, className, range) {
     if (range.empty) {
       let pos = view.coordsAtPos(range.head, range.assoc || 1);
@@ -14987,7 +14987,7 @@ represent a matching configuration.
 class MatchDecorator {
   /**
     Create a decorator.
-   */
+     */
   constructor(config) {
     const { regexp, decoration, decorate, boundary, maxLength = 1000 } = config;
     if (!regexp.global) {
@@ -15015,7 +15015,7 @@ class MatchDecorator {
     Compute the full set of decorations for matches in the given
     view's viewport. You'll want to call this when initializing your
     plugin.
-   */
+     */
   createDeco(view) {
     let build = new RangeSetBuilder(),
       add = build.add.bind(build);
@@ -15028,7 +15028,7 @@ class MatchDecorator {
     Update a set of decorations for a view update. `deco` _must_ be
     the set of decorations produced by _this_ `MatchDecorator` for
     the view state before the update.
-   */
+     */
   updateDeco(update, deco) {
     let changeFrom = 1e9,
       changeTo = -1;
@@ -15157,7 +15157,7 @@ characters.
 function highlightSpecialChars(
   /**
 Configuration options.
-   */
+ */
   config = {}
 ) {
   return [specialCharConfig.of(config), specialCharPlugin()];
@@ -15794,7 +15794,7 @@ const tooltipPlugin = /*@__PURE__*/ ViewPlugin.fromClass(
           dom.style.left = left / scaleX + 'px';
         }
         if (arrow) {
-          let arrowLeft = pos.left + (ltr ? offset.x : -offset.x) - (left + 14 /* Arrow.Offset */ - 7); /* Arrow.Size */
+          let arrowLeft = pos.left + (ltr ? offset.x : -offset.x) - (left + 14 /* Arrow.Offset */ - 7) /* Arrow.Size */;
           arrow.style.left = arrowLeft / scaleX + 'px';
         }
         if (tView.overlap !== true) {
@@ -16393,20 +16393,20 @@ class.
 class GutterMarker extends RangeValue {
   /**
     @internal
-   */
+     */
   compare(other) {
     return this == other || (this.constructor == other.constructor && this.eq(other));
   }
   /**
     Compare this marker to another marker of the same type.
-   */
+     */
   eq(other) {
     return false;
   }
   /**
     Called if the marker has a `toDOM` method and its representation
     was removed from a gutter.
-   */
+     */
   destroy(dom) {}
 }
 GutterMarker.prototype.elementClass = '';
@@ -16937,7 +16937,7 @@ class represent prop names.
 class NodeProp {
   /**
     Create a new node prop type.
-   */
+     */
   constructor(config = {}) {
     this.id = nextPropID++;
     this.perNode = !!config.perNode;
@@ -16955,7 +16955,7 @@ class NodeProp {
     object](#common.NodeType^match) or function that returns undefined
     if the node type doesn't get this prop, and the prop's value if
     it does.
-   */
+     */
   add(match) {
     if (this.perNode) {
       throw new RangeError("Can't add per-node props to node types");
@@ -17039,7 +17039,7 @@ class MountedTree {
   }
   /**
     @internal
-   */
+     */
   static get(tree) {
     return tree && tree.props && tree.props[NodeProp.mounted.id];
   }
@@ -17051,7 +17051,7 @@ Each node in a syntax tree has a node type associated with it.
 class NodeType {
   /**
     @internal
-   */
+     */
   constructor(
     /**
     The name of the node type. Not necessarily unique, but if the
@@ -17081,7 +17081,7 @@ class NodeType {
   }
   /**
     Define a node type.
-   */
+     */
   static define(spec) {
     let props = spec.props && spec.props.length ? Object.create(null) : noProps;
     let flags =
@@ -17108,39 +17108,39 @@ class NodeType {
   /**
     Retrieves a node prop for this type. Will return `undefined` if
     the prop isn't present on this node.
-   */
+     */
   prop(prop) {
     return this.props[prop.id];
   }
   /**
     True when this is the top node of a grammar.
-   */
+     */
   get isTop() {
     return (this.flags & 1) /* NodeFlag.Top */ > 0;
   }
   /**
     True when this node is produced by a skip rule.
-   */
+     */
   get isSkipped() {
     return (this.flags & 2) /* NodeFlag.Skipped */ > 0;
   }
   /**
     Indicates whether this is an error node.
-   */
+     */
   get isError() {
     return (this.flags & 4) /* NodeFlag.Error */ > 0;
   }
   /**
     When true, this node type doesn't correspond to a user-declared
     named node, for example because it is used to cache repetition.
-   */
+     */
   get isAnonymous() {
     return (this.flags & 8) /* NodeFlag.Anonymous */ > 0;
   }
   /**
     Returns true when this node's name or one of its
     [groups](#common.NodeProp^group) matches the given string.
-   */
+     */
   is(name) {
     if (typeof name === 'string') {
       if (this.name == name) {
@@ -17158,7 +17158,7 @@ class NodeType {
     [`NodeProp.add`](#common.NodeProp.add). You can put multiple
     names, separated by spaces, in a single property name to map
     multiple node names to a single value.
-   */
+     */
   static match(map) {
     let direct = Object.create(null);
     for (let prop in map) {
@@ -17193,7 +17193,7 @@ class NodeSet {
   /**
     Create a set with the given types. The `id` property of each
     type should correspond to its position within the array.
-   */
+     */
   constructor(
     /**
     The node types in this set, by id.
@@ -17211,7 +17211,7 @@ class NodeSet {
     Create a copy of this set with some node properties added. The
     arguments to this method can be created with
     [`NodeProp.add`](#common.NodeProp.add).
-   */
+     */
   extend(...props) {
     let newTypes = [];
     for (let type of this.types) {
@@ -17242,26 +17242,26 @@ let IterMode;
     When enabled, iteration will only visit [`Tree`](#common.Tree)
     objects, not nodes packed into
     [`TreeBuffer`](#common.TreeBuffer)s.
-   */
+     */
   IterMode[(IterMode['ExcludeBuffers'] = 1)] = 'ExcludeBuffers';
   /**
     Enable this to make iteration include anonymous nodes (such as
     the nodes that wrap repeated grammar constructs into a balanced
     tree).
-   */
+     */
   IterMode[(IterMode['IncludeAnonymous'] = 2)] = 'IncludeAnonymous';
   /**
     By default, regular [mounted](#common.NodeProp^mounted) nodes
     replace their base node in iteration. Enable this to ignore them
     instead.
-   */
+     */
   IterMode[(IterMode['IgnoreMounts'] = 4)] = 'IgnoreMounts';
   /**
     This option only applies in
     [`enter`](#common.SyntaxNode.enter)-style methods. It tells the
     library to not enter mounted overlays if one covers the given
     position.
-   */
+     */
   IterMode[(IterMode['IgnoreOverlays'] = 8)] = 'IgnoreOverlays';
 })(IterMode || (IterMode = {}));
 /**
@@ -17283,7 +17283,7 @@ move around to adjacent nodes.
 class Tree {
   /**
     Construct a new tree. See also [`Tree.build`](#common.Tree^build).
-   */
+     */
   constructor(
     /**
     The type of the top node.
@@ -17313,7 +17313,7 @@ class Tree {
     this.length = length;
     /**
         @internal
-     */
+         */
     this.props = null;
     if (props && props.length) {
       this.props = Object.create(null);
@@ -17324,7 +17324,7 @@ class Tree {
   }
   /**
     @internal
-   */
+     */
   toString() {
     let mounted = MountedTree.get(this);
     if (mounted && !mounted.overlay) {
@@ -17349,7 +17349,7 @@ class Tree {
     Get a [tree cursor](#common.TreeCursor) positioned at the top of
     the tree. Mode can be used to [control](#common.IterMode) which
     nodes the cursor visits.
-   */
+     */
   cursor(mode = 0) {
     return new TreeCursor(this.topNode, mode);
   }
@@ -17357,7 +17357,7 @@ class Tree {
     Get a [tree cursor](#common.TreeCursor) pointing into this tree
     at the given position and side (see
     [`moveTo`](#common.TreeCursor.moveTo).
-   */
+     */
   cursorAt(pos, side = 0, mode = 0) {
     let scope = CachedNode.get(this) || this.topNode;
     let cursor = new TreeCursor(scope);
@@ -17368,7 +17368,7 @@ class Tree {
   /**
     Get a [syntax node](#common.SyntaxNode) object for the top of the
     tree.
-   */
+     */
   get topNode() {
     return new TreeNode(this, 0, 0, null);
   }
@@ -17378,11 +17378,11 @@ class Tree {
     position. If 1, it'll move into nodes that start at the
     position. With 0, it'll only enter nodes that cover the position
     from both sides.
-   
+     
     Note that this will not enter
     [overlays](#common.MountedTree.overlay), and you often want
     [`resolveInner`](#common.Tree.resolveInner) instead.
-   */
+     */
   resolve(pos, side = 0) {
     let node = resolveNode(CachedNode.get(this) || this.topNode, pos, side, false);
     CachedNode.set(this, node);
@@ -17394,7 +17394,7 @@ class Tree {
     pointing into the innermost overlaid tree at the given position
     (with parent links going through all parent structure, including
     the host trees).
-   */
+     */
   resolveInner(pos, side = 0) {
     let node = resolveNode(CachedInnerNode.get(this) || this.topNode, pos, side, true);
     CachedInnerNode.set(this, node);
@@ -17406,7 +17406,7 @@ class Tree {
     directly cover the position. This method gives you an iterator
     that will produce all nodes, from small to big, around the given
     position.
-   */
+     */
   resolveStack(pos, side = 0) {
     return stackIterator(this, pos, side);
   }
@@ -17416,7 +17416,7 @@ class Tree {
     running over such a node's children, and `leave` (if given) when
     leaving the node. When `enter` returns `false`, that node will
     not have its children iterated over (or `leave` called).
-   */
+     */
   iterate(spec) {
     let { enter, leave, from = 0, to = this.length } = spec;
     let mode = spec.mode || 0,
@@ -17446,7 +17446,7 @@ class Tree {
   /**
     Get the value of the given [node prop](#common.NodeProp) for this
     node. Works with both per-node and per-type props.
-   */
+     */
   prop(prop) {
     return !prop.perNode ? this.type.prop(prop) : this.props ? this.props[prop.id] : undefined;
   }
@@ -17454,7 +17454,7 @@ class Tree {
     Returns the node's [per-node props](#common.NodeProp.perNode) in a
     format that can be passed to the [`Tree`](#common.Tree)
     constructor.
-   */
+     */
   get propValues() {
     let result = [];
     if (this.props) {
@@ -17468,7 +17468,7 @@ class Tree {
     Balance the direct children of this tree, producing a copy of
     which may have children grouped into subtrees with type
     [`NodeType.none`](#common.NodeType^none).
-   */
+     */
   balance(config = {}) {
     return this.children.length <= 8 /* Balance.BranchFactor */
       ? this
@@ -17487,7 +17487,7 @@ class Tree {
   /**
     Build a tree from a postfix-ordered buffer of node information,
     or a cursor over such a buffer.
-   */
+     */
   static build(data) {
     return buildTree(data);
   }
@@ -17532,7 +17532,7 @@ children belong to it).
 class TreeBuffer {
   /**
     Create a tree buffer.
-   */
+     */
   constructor(
     /**
     The buffer's content.
@@ -17553,13 +17553,13 @@ class TreeBuffer {
   }
   /**
     @internal
-   */
+     */
   get type() {
     return NodeType.none;
   }
   /**
     @internal
-   */
+     */
   toString() {
     let result = [];
     for (let index = 0; index < this.buffer.length; ) {
@@ -17570,7 +17570,7 @@ class TreeBuffer {
   }
   /**
     @internal
-   */
+     */
   childString(index) {
     let id = this.buffer[index],
       endIndex = this.buffer[index + 3];
@@ -17592,7 +17592,7 @@ class TreeBuffer {
   }
   /**
     @internal
-   */
+     */
   findChild(startIndex, endIndex, dir, pos, side) {
     let { buffer } = this,
       pick = -1;
@@ -17608,7 +17608,7 @@ class TreeBuffer {
   }
   /**
     @internal
-   */
+     */
   slice(startI, endI, from) {
     let b = this.buffer;
     let copy = new Uint16Array(endI - startI),
@@ -17832,7 +17832,7 @@ class TreeNode extends BaseNode {
   }
   /**
     @internal
-   */
+     */
   toString() {
     return this._tree.toString();
   }
@@ -17976,7 +17976,7 @@ class BufferNode extends BaseNode {
   }
   /**
     @internal
-   */
+     */
   toString() {
     return this.context.buffer.childString(this.index);
   }
@@ -18039,13 +18039,13 @@ allows you to move to adjacent nodes.
 class TreeCursor {
   /**
     Shorthand for `.type.name`.
-   */
+     */
   get name() {
     return this.type.name;
   }
   /**
     @internal
-   */
+     */
   constructor(
     node,
     /**
@@ -18056,12 +18056,12 @@ class TreeCursor {
     this.mode = mode;
     /**
         @internal
-     */
+         */
     this.buffer = null;
     this.stack = [];
     /**
         @internal
-     */
+         */
     this.index = 0;
     this.bufferNode = null;
     if (node instanceof TreeNode) {
@@ -18096,7 +18096,7 @@ class TreeCursor {
   }
   /**
     @internal
-   */
+     */
   yield(node) {
     if (!node) {
       return false;
@@ -18110,13 +18110,13 @@ class TreeCursor {
   }
   /**
     @internal
-   */
+     */
   toString() {
     return this.buffer ? this.buffer.buffer.childString(this.index) : this._tree.toString();
   }
   /**
     @internal
-   */
+     */
   enterChild(dir, pos, side) {
     if (!this.buffer) {
       return this.yield(
@@ -18134,25 +18134,25 @@ class TreeCursor {
   /**
     Move the cursor to this node's first child. When this returns
     false, the node has no child, and the cursor has not been moved.
-   */
+     */
   firstChild() {
     return this.enterChild(1, 0, 4 /* Side.DontCare */);
   }
   /**
     Move the cursor to this node's last child.
-   */
+     */
   lastChild() {
     return this.enterChild(-1, 0, 4 /* Side.DontCare */);
   }
   /**
     Move the cursor to the first child that ends after `pos`.
-   */
+     */
   childAfter(pos) {
     return this.enterChild(1, pos, 2 /* Side.After */);
   }
   /**
     Move to the last child that starts before `pos`.
-   */
+     */
   childBefore(pos) {
     return this.enterChild(-1, pos, -2 /* Side.Before */);
   }
@@ -18162,7 +18162,7 @@ class TreeCursor {
     will also enter [overlaid](#common.MountedTree.overlay)
     [mounted](#common.NodeProp^mounted) trees unless `overlays` is
     set to false.
-   */
+     */
   enter(pos, side, mode = this.mode) {
     if (!this.buffer) {
       return this.yield(this._tree.enter(pos, side, mode));
@@ -18171,7 +18171,7 @@ class TreeCursor {
   }
   /**
     Move to the node's parent node, if this isn't the top node.
-   */
+     */
   parent() {
     if (!this.buffer) {
       return this.yieldNode(this.mode & IterMode.IncludeAnonymous ? this._tree._parent : this._tree.parent);
@@ -18186,7 +18186,7 @@ class TreeCursor {
   }
   /**
     @internal
-   */
+     */
   sibling(dir) {
     if (!this.buffer) {
       return !this._tree._parent
@@ -18216,13 +18216,13 @@ class TreeCursor {
   }
   /**
     Move to this node's next sibling, if any.
-   */
+     */
   nextSibling() {
     return this.sibling(1);
   }
   /**
     Move to this node's previous sibling, if any.
-   */
+     */
   prevSibling() {
     return this.sibling(-1);
   }
@@ -18282,7 +18282,7 @@ class TreeCursor {
     traversal, going from a node to its first child or, if the
     current node is empty or `enter` is false, its next sibling or
     the next sibling of the first parent node that has one.
-   */
+     */
   next(enter = true) {
     return this.move(1, enter);
   }
@@ -18291,7 +18291,7 @@ class TreeCursor {
     node is followed by its last child or, if it has none, its
     previous sibling or the previous sibling of the first parent
     node that has one.
-   */
+     */
   prev(enter = true) {
     return this.move(-1, enter);
   }
@@ -18299,7 +18299,7 @@ class TreeCursor {
     Move the cursor to the innermost node that covers `pos`. If
     `side` is -1, it will enter nodes that end at `pos`. If it is 1,
     it will enter nodes that start at `pos`.
-   */
+     */
   moveTo(pos, side = 0) {
     // Move up to a node that actually holds the position, if possible
     while (
@@ -18318,7 +18318,7 @@ class TreeCursor {
   /**
     Get a [syntax node](#common.SyntaxNode) at the cursor's current
     position.
-   */
+     */
   get node() {
     if (!this.buffer) {
       return this._tree;
@@ -18350,7 +18350,7 @@ class TreeCursor {
     Get the [tree](#common.Tree) that represents the current node, if
     any. Will return null when the node is in a [tree
     buffer](#common.TreeBuffer).
-   */
+     */
   get tree() {
     return this.buffer ? null : this._tree._tree;
   }
@@ -18359,7 +18359,7 @@ class TreeCursor {
     `enter` when entering a node and `leave`, if given, when leaving
     one. When `enter` returns `false`, any children of that node are
     skipped, and `leave` isn't called for it.
-   */
+     */
   iterate(enter, leave) {
     for (let depth = 0; ; ) {
       let mustLeave = false;
@@ -18393,7 +18393,7 @@ class TreeCursor {
     Test whether the current node matches a given context—a sequence
     of direct parent node names. Empty strings in the context array
     are treated as wildcards.
-   */
+     */
   matchContext(context) {
     if (!this.buffer) {
       return matchNodeContext(this.node, context);
@@ -18773,7 +18773,7 @@ class TreeFragment {
     [`addTree`](#common.TreeFragment^addTree) and
     [`applyChanges`](#common.TreeFragment^applyChanges) instead of
     calling this directly.
-   */
+     */
   constructor(
     /**
     The start of the unchanged range pointed to by this fragment.
@@ -18810,14 +18810,14 @@ class TreeFragment {
     parse, or the end of a change. (In the second case, it may not
     be safe to reuse some nodes at the start, depending on the
     parsing algorithm.)
-   */
+     */
   get openStart() {
     return (this.open & 1) /* Open.Start */ > 0;
   }
   /**
     Whether the end of the fragment represents the end of a
     full-document parse, or the start of a change.
-   */
+     */
   get openEnd() {
     return (this.open & 2) /* Open.End */ > 0;
   }
@@ -18828,7 +18828,7 @@ class TreeFragment {
     true, the parse is treated as incomplete, and the resulting
     fragment has [`openEnd`](#common.TreeFragment.openEnd) set to
     true.
-   */
+     */
   static addTree(tree, fragments = [], partial = false) {
     let result = [new TreeFragment(0, tree.length, tree, 0, false, partial)];
     for (let f of fragments) {
@@ -18842,7 +18842,7 @@ class TreeFragment {
     Apply a set of edits to an array of fragments, removing or
     splitting fragments as necessary to remove edited ranges, and
     adjusting offsets for fragments that moved.
-   */
+     */
   static applyChanges(fragments, changes, minGap = 128) {
     if (!changes.length) {
       return fragments;
@@ -18887,12 +18887,12 @@ class Parser {
     Start a parse, returning a [partial parse](#common.PartialParse)
     object. [`fragments`](#common.TreeFragment) can be passed in to
     make the parse incremental.
-   
+     
     By default, the entire input is parsed. You can pass `ranges`,
     which should be a sorted array of non-empty, non-overlapping
     ranges, to parse only those ranges. The tree returned in that
     case will start at `ranges[0].from`.
-   */
+     */
   startParse(input, fragments, ranges) {
     if (typeof input === 'string') {
       input = new StringInput(input);
@@ -18906,7 +18906,7 @@ class Parser {
   }
   /**
     Run a full parse, returning the resulting tree.
-   */
+     */
   parse(input, fragments, ranges) {
     let parse = this.startParse(input, fragments, ranges);
     for (;;) {
@@ -18959,7 +18959,7 @@ from standard tags to allow highlighters to fall back to those).
 class Tag {
   /**
     @internal
-   */
+     */
   constructor(
     /**
     The set of this tag and all its parent tags, starting with
@@ -18981,7 +18981,7 @@ class Tag {
     this.modified = modified;
     /**
         @internal
-     */
+         */
     this.id = nextTagID++;
   }
   /**
@@ -18990,7 +18990,7 @@ class Tag {
     [highlighters](#highlight.tagHighlighter) that don't mention
     this tag will try to fall back to the parent tag (or grandparent
     tag, etc).
-   */
+     */
   static define(parent) {
     if (parent === null || parent === void 0 ? void 0 : parent.base) {
       throw new Error('Can not derive from a modified tag');
@@ -19010,12 +19010,12 @@ class Tag {
     same modifier to a twice tag will return the same value (`m1(t1)
     == m1(t1)`) and applying multiple modifiers will, regardless or
     order, produce the same tag (`m1(m2(t1)) == m2(m1(t1))`).
-   
+     
     When multiple modifiers are applied to a given base tag, each
     smaller set of modifiers is registered as a parent, so that for
     example `m1(m2(m3(t1)))` is a subtype of `m1(m2(t1))`,
     `m1(m3(t1)`, and so on.
-   */
+     */
   static defineModifier() {
     let mod = new Modifier();
     return (tag) => {
@@ -19254,15 +19254,15 @@ function highlightTree(
 Assign styling to a region of the text. Will be called, in order
 of position, for any ranges where more than zero classes apply.
 `classes` is a space separated string of CSS classes.
-   */
+ */
   putStyle,
   /**
 The start of the range to highlight.
-   */
+ */
   from = 0,
   /**
 The end of the range.
-   */
+ */
   to = tree.length
 ) {
   let builder = new HighlightBuilder(from, Array.isArray(highlighter) ? highlighter : [highlighter], putStyle);
@@ -19419,358 +19419,358 @@ the parent.
 const tags = {
   /**
     A comment.
-   */
+     */
   comment,
   /**
     A line [comment](#highlight.tags.comment).
-   */
+     */
   lineComment: t(comment),
   /**
     A block [comment](#highlight.tags.comment).
-   */
+     */
   blockComment: t(comment),
   /**
     A documentation [comment](#highlight.tags.comment).
-   */
+     */
   docComment: t(comment),
   /**
     Any kind of identifier.
-   */
+     */
   name,
   /**
     The [name](#highlight.tags.name) of a variable.
-   */
+     */
   variableName: t(name),
   /**
     A type [name](#highlight.tags.name).
-   */
+     */
   typeName: typeName,
   /**
     A tag name (subtag of [`typeName`](#highlight.tags.typeName)).
-   */
+     */
   tagName: t(typeName),
   /**
     A property or field [name](#highlight.tags.name).
-   */
+     */
   propertyName: propertyName,
   /**
     An attribute name (subtag of [`propertyName`](#highlight.tags.propertyName)).
-   */
+     */
   attributeName: t(propertyName),
   /**
     The [name](#highlight.tags.name) of a class.
-   */
+     */
   className: t(name),
   /**
     A label [name](#highlight.tags.name).
-   */
+     */
   labelName: t(name),
   /**
     A namespace [name](#highlight.tags.name).
-   */
+     */
   namespace: t(name),
   /**
     The [name](#highlight.tags.name) of a macro.
-   */
+     */
   macroName: t(name),
   /**
     A literal value.
-   */
+     */
   literal,
   /**
     A string [literal](#highlight.tags.literal).
-   */
+     */
   string,
   /**
     A documentation [string](#highlight.tags.string).
-   */
+     */
   docString: t(string),
   /**
     A character literal (subtag of [string](#highlight.tags.string)).
-   */
+     */
   character: t(string),
   /**
     An attribute value (subtag of [string](#highlight.tags.string)).
-   */
+     */
   attributeValue: t(string),
   /**
     A number [literal](#highlight.tags.literal).
-   */
+     */
   number,
   /**
     An integer [number](#highlight.tags.number) literal.
-   */
+     */
   integer: t(number),
   /**
     A floating-point [number](#highlight.tags.number) literal.
-   */
+     */
   float: t(number),
   /**
     A boolean [literal](#highlight.tags.literal).
-   */
+     */
   bool: t(literal),
   /**
     Regular expression [literal](#highlight.tags.literal).
-   */
+     */
   regexp: t(literal),
   /**
     An escape [literal](#highlight.tags.literal), for example a
     backslash escape in a string.
-   */
+     */
   escape: t(literal),
   /**
     A color [literal](#highlight.tags.literal).
-   */
+     */
   color: t(literal),
   /**
     A URL [literal](#highlight.tags.literal).
-   */
+     */
   url: t(literal),
   /**
     A language keyword.
-   */
+     */
   keyword,
   /**
     The [keyword](#highlight.tags.keyword) for the self or this
     object.
-   */
+     */
   self: t(keyword),
   /**
     The [keyword](#highlight.tags.keyword) for null.
-   */
+     */
   null: t(keyword),
   /**
     A [keyword](#highlight.tags.keyword) denoting some atomic value.
-   */
+     */
   atom: t(keyword),
   /**
     A [keyword](#highlight.tags.keyword) that represents a unit.
-   */
+     */
   unit: t(keyword),
   /**
     A modifier [keyword](#highlight.tags.keyword).
-   */
+     */
   modifier: t(keyword),
   /**
     A [keyword](#highlight.tags.keyword) that acts as an operator.
-   */
+     */
   operatorKeyword: t(keyword),
   /**
     A control-flow related [keyword](#highlight.tags.keyword).
-   */
+     */
   controlKeyword: t(keyword),
   /**
     A [keyword](#highlight.tags.keyword) that defines something.
-   */
+     */
   definitionKeyword: t(keyword),
   /**
     A [keyword](#highlight.tags.keyword) related to defining or
     interfacing with modules.
-   */
+     */
   moduleKeyword: t(keyword),
   /**
     An operator.
-   */
+     */
   operator,
   /**
     An [operator](#highlight.tags.operator) that dereferences something.
-   */
+     */
   derefOperator: t(operator),
   /**
     Arithmetic-related [operator](#highlight.tags.operator).
-   */
+     */
   arithmeticOperator: t(operator),
   /**
     Logical [operator](#highlight.tags.operator).
-   */
+     */
   logicOperator: t(operator),
   /**
     Bit [operator](#highlight.tags.operator).
-   */
+     */
   bitwiseOperator: t(operator),
   /**
     Comparison [operator](#highlight.tags.operator).
-   */
+     */
   compareOperator: t(operator),
   /**
     [Operator](#highlight.tags.operator) that updates its operand.
-   */
+     */
   updateOperator: t(operator),
   /**
     [Operator](#highlight.tags.operator) that defines something.
-   */
+     */
   definitionOperator: t(operator),
   /**
     Type-related [operator](#highlight.tags.operator).
-   */
+     */
   typeOperator: t(operator),
   /**
     Control-flow [operator](#highlight.tags.operator).
-   */
+     */
   controlOperator: t(operator),
   /**
     Program or markup punctuation.
-   */
+     */
   punctuation,
   /**
     [Punctuation](#highlight.tags.punctuation) that separates
     things.
-   */
+     */
   separator: t(punctuation),
   /**
     Bracket-style [punctuation](#highlight.tags.punctuation).
-   */
+     */
   bracket,
   /**
     Angle [brackets](#highlight.tags.bracket) (usually `<` and `>`
     tokens).
-   */
+     */
   angleBracket: t(bracket),
   /**
     Square [brackets](#highlight.tags.bracket) (usually `[` and `]`
     tokens).
-   */
+     */
   squareBracket: t(bracket),
   /**
     Parentheses (usually `(` and `)` tokens). Subtag of
     [bracket](#highlight.tags.bracket).
-   */
+     */
   paren: t(bracket),
   /**
     Braces (usually `{` and `}` tokens). Subtag of
     [bracket](#highlight.tags.bracket).
-   */
+     */
   brace: t(bracket),
   /**
     Content, for example plain text in XML or markup documents.
-   */
+     */
   content,
   /**
     [Content](#highlight.tags.content) that represents a heading.
-   */
+     */
   heading,
   /**
     A level 1 [heading](#highlight.tags.heading).
-   */
+     */
   heading1: t(heading),
   /**
     A level 2 [heading](#highlight.tags.heading).
-   */
+     */
   heading2: t(heading),
   /**
     A level 3 [heading](#highlight.tags.heading).
-   */
+     */
   heading3: t(heading),
   /**
     A level 4 [heading](#highlight.tags.heading).
-   */
+     */
   heading4: t(heading),
   /**
     A level 5 [heading](#highlight.tags.heading).
-   */
+     */
   heading5: t(heading),
   /**
     A level 6 [heading](#highlight.tags.heading).
-   */
+     */
   heading6: t(heading),
   /**
     A prose separator (such as a horizontal rule).
-   */
+     */
   contentSeparator: t(content),
   /**
     [Content](#highlight.tags.content) that represents a list.
-   */
+     */
   list: t(content),
   /**
     [Content](#highlight.tags.content) that represents a quote.
-   */
+     */
   quote: t(content),
   /**
     [Content](#highlight.tags.content) that is emphasized.
-   */
+     */
   emphasis: t(content),
   /**
     [Content](#highlight.tags.content) that is styled strong.
-   */
+     */
   strong: t(content),
   /**
     [Content](#highlight.tags.content) that is part of a link.
-   */
+     */
   link: t(content),
   /**
     [Content](#highlight.tags.content) that is styled as code or
     monospace.
-   */
+     */
   monospace: t(content),
   /**
     [Content](#highlight.tags.content) that has a strike-through
     style.
-   */
+     */
   strikethrough: t(content),
   /**
     Inserted text in a change-tracking format.
-   */
+     */
   inserted: t(),
   /**
     Deleted text.
-   */
+     */
   deleted: t(),
   /**
     Changed text.
-   */
+     */
   changed: t(),
   /**
     An invalid or unsyntactic element.
-   */
+     */
   invalid: t(),
   /**
     Metadata or meta-instruction.
-   */
+     */
   meta,
   /**
     [Metadata](#highlight.tags.meta) that applies to the entire
     document.
-   */
+     */
   documentMeta: t(meta),
   /**
     [Metadata](#highlight.tags.meta) that annotates or adds
     attributes to a given syntactic element.
-   */
+     */
   annotation: t(meta),
   /**
     Processing instruction or preprocessor directive. Subtag of
     [meta](#highlight.tags.meta).
-   */
+     */
   processingInstruction: t(meta),
   /**
     [Modifier](#highlight.Tag^defineModifier) that indicates that a
     given element is being defined. Expected to be used with the
     various [name](#highlight.tags.name) tags.
-   */
+     */
   definition: Tag.defineModifier(),
   /**
     [Modifier](#highlight.Tag^defineModifier) that indicates that
     something is constant. Mostly expected to be used with
     [variable names](#highlight.tags.variableName).
-   */
+     */
   constant: Tag.defineModifier(),
   /**
     [Modifier](#highlight.Tag^defineModifier) used to indicate that
     a [variable](#highlight.tags.variableName) or [property
     name](#highlight.tags.propertyName) is being called or defined
     as a function.
-   */
+     */
   function: Tag.defineModifier(),
   /**
     [Modifier](#highlight.Tag^defineModifier) that can be applied to
     [names](#highlight.tags.name) to indicate that they belong to
     the language's standard environment.
-   */
+     */
   standard: Tag.defineModifier(),
   /**
     [Modifier](#highlight.Tag^defineModifier) that indicates a given
     [names](#highlight.tags.name) is local to some scope.
-   */
+     */
   local: Tag.defineModifier(),
   /**
     A generic variant [modifier](#highlight.Tag^defineModifier) that
@@ -19779,7 +19779,7 @@ const tags = {
     forms of at least the [string](#highlight.tags.string) and
     [variable name](#highlight.tags.variableName) tags, since those
     come up a lot.
-   */
+     */
   special: Tag.defineModifier(),
 };
 /**
@@ -19903,7 +19903,7 @@ class Language {
     [`defineLanguageFacet`](https://codemirror.net/6/docs/ref/#language.defineLanguageFacet), and then
     configure your parser to [attach](https://codemirror.net/6/docs/ref/#language.languageDataProp) it
     to the language's outer syntax node.
-   */
+     */
   constructor(
     /**
     The [language data](https://codemirror.net/6/docs/ref/#state.EditorState.languageDataAt) facet
@@ -19955,7 +19955,7 @@ class Language {
   }
   /**
     Query whether this language is active at the given position.
-   */
+     */
   isActiveAt(state, pos, side = -1) {
     return topNodeAt(state, pos, side).type.prop(languageDataProp) == this.data;
   }
@@ -19963,7 +19963,7 @@ class Language {
     Find the document regions that were parsed using this language.
     The returned regions will _include_ any nested languages rooted
     in this language, when those exist.
-   */
+     */
   findRegions(state) {
     let lang = state.facet(language);
     if ((lang === null || lang === void 0 ? void 0 : lang.data) == this.data) {
@@ -20010,7 +20010,7 @@ class Language {
   /**
     Indicates whether this language allows nested languages. The
     default implementation returns true.
-   */
+     */
   get allowsNesting() {
     return true;
   }
@@ -20043,7 +20043,7 @@ class LRLanguage extends Language {
   }
   /**
     Define a language from a parser.
-   */
+     */
   static define(spec) {
     let data = defineLanguageFacet(spec.languageData);
     return new LRLanguage(
@@ -20057,7 +20057,7 @@ class LRLanguage extends Language {
   /**
     Create a new instance of this language with a reconfigured
     version of its parser and optionally a new name.
-   */
+     */
   configure(options, name) {
     return new LRLanguage(this.data, this.parser.configure(options), name || this.name);
   }
@@ -20083,7 +20083,7 @@ object for a [`Text`](https://codemirror.net/6/docs/ref/#state.Text) object.
 class DocInput {
   /**
     Create an input object for the given document.
-   */
+     */
   constructor(doc) {
     this.doc = doc;
     this.cursorPos = 0;
@@ -20168,12 +20168,12 @@ class ParseContext {
     this.parse = null;
     /**
         @internal
-     */
+         */
     this.tempSkipped = [];
   }
   /**
     @internal
-   */
+     */
   static create(parser, state, viewport) {
     return new ParseContext(parser, state, [], Tree.empty, 0, viewport, [], null);
   }
@@ -20182,7 +20182,7 @@ class ParseContext {
   }
   /**
     @internal
-   */
+     */
   work(until, upto) {
     if (upto != null && upto >= this.state.doc.length) {
       upto = undefined;
@@ -20230,7 +20230,7 @@ class ParseContext {
   }
   /**
     @internal
-   */
+     */
   takeTree() {
     let pos, tree;
     if (this.parse && (pos = this.parse.parsedPos) >= this.treeLen) {
@@ -20263,7 +20263,7 @@ class ParseContext {
   }
   /**
     @internal
-   */
+     */
   changes(changes, newState) {
     let { fragments, tree, treeLen, viewport, skipped } = this;
     this.takeTree();
@@ -20289,7 +20289,7 @@ class ParseContext {
   }
   /**
     @internal
-   */
+     */
   updateViewport(viewport) {
     if (this.viewport.from == viewport.from && this.viewport.to == viewport.to) {
       return false;
@@ -20311,7 +20311,7 @@ class ParseContext {
   }
   /**
     @internal
-   */
+     */
   reset() {
     if (this.parse) {
       this.takeTree();
@@ -20322,7 +20322,7 @@ class ParseContext {
     Notify the parse scheduler that the given region was skipped
     because it wasn't in view, and the parse should be restarted
     when it comes into view.
-   */
+     */
   skipUntilInView(from, to) {
     this.skipped.push({ from, to });
   }
@@ -20331,10 +20331,10 @@ class ParseContext {
     asynchronously loading a nested parser. It'll skip its input and
     mark it as not-really-parsed, so that the next update will parse
     it again.
-   
+     
     When `until` is given, a reparse will be scheduled when that
     promise resolves.
-   */
+     */
   static getSkippingParser(until) {
     return new (class extends Parser {
       createParse(input, fragments, ranges) {
@@ -20364,7 +20364,7 @@ class ParseContext {
   }
   /**
     @internal
-   */
+     */
   isDone(upto) {
     upto = Math.min(upto, this.state.doc.length);
     let frags = this.fragments;
@@ -20373,7 +20373,7 @@ class ParseContext {
   /**
     Get the context for the current parse, or `null` if no editor
     parse is in progress.
-   */
+     */
   static get() {
     return currentContext;
   }
@@ -20583,7 +20583,7 @@ the main way for client code to use the package.
 class LanguageSupport {
   /**
     Create a language support object.
-   */
+     */
   constructor(
     /**
     The language object.
@@ -20693,7 +20693,7 @@ indentation reported for some lines.
 class IndentContext {
   /**
     Create an indent context.
-   */
+     */
   constructor(
     /**
     The editor state.
@@ -20715,7 +20715,7 @@ class IndentContext {
     into account. If there is such a break at `pos`, the `bias`
     argument determines whether the part of the line line before or
     after the break is used.
-   */
+     */
   lineAt(pos, bias = 1) {
     let line = this.state.doc.lineAt(pos);
     let { simulateBreak, simulateDoubleBreak } = this.options;
@@ -20733,7 +20733,7 @@ class IndentContext {
   /**
     Get the text directly after `pos`, either the entire line
     or the next 100 characters, whichever is shorter.
-   */
+     */
   textAfterPos(pos, bias = 1) {
     if (this.options.simulateDoubleBreak && pos == this.options.simulateBreak) {
       return '';
@@ -20743,7 +20743,7 @@ class IndentContext {
   }
   /**
     Find the column for the given position.
-   */
+     */
   column(pos, bias = 1) {
     let { text, from } = this.lineAt(pos, bias);
     let result = this.countColumn(text, pos - from);
@@ -20756,13 +20756,13 @@ class IndentContext {
   /**
     Find the column position (taking tabs into account) of the given
     position in the given string.
-   */
+     */
   countColumn(line, pos = line.length) {
     return countColumn(line, this.state.tabSize, pos);
   }
   /**
     Find the indentation column of the line at the given point.
-   */
+     */
   lineIndent(pos, bias = 1) {
     let { text, from } = this.lineAt(pos, bias);
     let override = this.options.overrideIndentation;
@@ -20778,7 +20778,7 @@ class IndentContext {
     Returns the [simulated line
     break](https://codemirror.net/6/docs/ref/#language.IndentContext.constructor^options.simulateBreak)
     for this context, if any.
-   */
+     */
   get simulatedBreak() {
     return this.options.simulateBreak || null;
   }
@@ -20859,20 +20859,20 @@ class TreeIndentContext extends IndentContext {
   /**
     The syntax tree node to which the indentation strategy
     applies.
-   */
+     */
   get node() {
     return this.context.node;
   }
   /**
     @internal
-   */
+     */
   static create(base, pos, context) {
     return new TreeIndentContext(base, pos, context);
   }
   /**
     Get the text directly after `this.pos`, either the entire line
     or the next 100 characters, whichever is shorter.
-   */
+     */
   get textAfter() {
     return this.textAfterPos(this.pos);
   }
@@ -20882,14 +20882,14 @@ class TreeIndentContext extends IndentContext {
     _not_ a parent of this node covering the start of that line. If
     so, the line at the start of that node is tried, again skipping
     on if it is covered by another such node.
-   */
+     */
   get baseIndent() {
     return this.baseIndentFor(this.node);
   }
   /**
     Get the indentation for the reference line of the given node
     (see [`baseIndent`](https://codemirror.net/6/docs/ref/#language.TreeIndentContext.baseIndent)).
-   */
+     */
   baseIndentFor(node) {
     let line = this.state.doc.lineAt(node.from);
     // Skip line starts that are covered by a sibling (or cousin, etc)
@@ -20908,7 +20908,7 @@ class TreeIndentContext extends IndentContext {
   /**
     Continue looking for indentations in the node's parent nodes,
     and return the result of that.
-   */
+     */
   continue() {
     return indentFor(this.context.next, this.base, this.pos);
   }
@@ -21551,13 +21551,13 @@ class HighlightStyle {
     that rely on external styling), or a
     [`style-mod`](https://github.com/marijnh/style-mod#documentation)-style
     set of CSS properties (which define the styling for those tags).
-   
+     
     The CSS rules created for a highlighter will be emitted in the
     order of the spec's properties. That means that for elements that
     have multiple tags associated with them, styles defined further
     down in the list will have a higher CSS precedence than styles
     defined earlier.
-   */
+     */
   static define(specs, options) {
     return new HighlightStyle(specs, options || {});
   }
@@ -21926,7 +21926,7 @@ class CompletionContext {
     Create a new completion context. (Mostly useful for testing
     completion sources—in the editor, the extension will create
     these for you.)
-   */
+     */
   constructor(
     /**
     The editor state that the completion happens in.
@@ -21949,13 +21949,13 @@ class CompletionContext {
     this.explicit = explicit;
     /**
         @internal
-     */
+         */
     this.abortListeners = [];
   }
   /**
     Get the extent, content, and (if there is a token) type of the
     token before `this.pos`.
-   */
+     */
   tokenBefore(types) {
     let token = syntaxTree(this.state).resolveInner(this.pos, -1);
     while (token && types.indexOf(token.name) < 0) {
@@ -21968,7 +21968,7 @@ class CompletionContext {
   /**
     Get the match of the given expression directly before the
     cursor.
-   */
+     */
   matchBefore(expr) {
     let line = this.state.doc.lineAt(this.pos);
     let start = Math.max(line.from, this.pos - 250);
@@ -21979,7 +21979,7 @@ class CompletionContext {
   /**
     Yields true when the query has been aborted. Can be useful in
     asynchronous queries to avoid doing work that will be ignored.
-   */
+     */
   get aborted() {
     return this.abortListeners == null;
   }
@@ -21987,7 +21987,7 @@ class CompletionContext {
     Allows you to register abort handlers, which will be called when
     the query is
     [aborted](https://codemirror.net/6/docs/ref/#autocomplete.CompletionContext.aborted).
-   */
+     */
   addEventListener(type, listener) {
     if (type == 'abort' && this.abortListeners) {
       this.abortListeners.push(listener);
@@ -22241,7 +22241,7 @@ class FuzzyMatcher {
             ? 1 /* Tp.Upper */
             : ch != ch.toUpperCase()
             ? 2 /* Tp.Lower */
-            : 0; /* Tp.NonWord */
+            : 0 /* Tp.NonWord */;
       if (
         !i ||
         (type == 1 /* Tp.Upper */ && hasLower) ||
@@ -26158,27 +26158,27 @@ class SearchCursor {
   /**
     Create a text cursor. The query is the search string, `from` to
     `to` provides the region to search.
-   
+     
     When `normalize` is given, it will be called, on both the query
     string and the content it is matched against, before comparing.
     You can, for example, create a case-insensitive search by
     passing `s => s.toLowerCase()`.
-   
+     
     Text is always normalized with
     [`.normalize("NFKD")`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/normalize)
     (when supported).
-   */
+     */
   constructor(text, query, from = 0, to = text.length, normalize, test) {
     this.test = test;
     /**
         The current match (only holds a meaningful value after
         [`next`](https://codemirror.net/6/docs/ref/#search.SearchCursor.next) has been called and when
         `done` is false).
-     */
+         */
     this.value = { from: 0, to: 0 };
     /**
         Whether the end of the iterated region has been reached.
-     */
+         */
     this.done = false;
     this.matches = [];
     this.buffer = '';
@@ -26205,7 +26205,7 @@ class SearchCursor {
     [`value`](https://codemirror.net/6/docs/ref/#search.SearchCursor.value) and
     [`done`](https://codemirror.net/6/docs/ref/#search.SearchCursor.done) properties. Should be called
     at least once before using the cursor.
-   */
+     */
   next() {
     while (this.matches.length) {
       this.matches.pop();
@@ -26216,7 +26216,7 @@ class SearchCursor {
     The `next` method will ignore matches that partially overlap a
     previous match. This method behaves like `next`, but includes
     such matches.
-   */
+     */
   nextOverlapping() {
     for (;;) {
       let next = this.peek();
@@ -26293,7 +26293,7 @@ class RegExpCursor {
     Create a cursor that will search the given range in the given
     document. `query` should be the raw pattern (as you'd pass it to
     `new RegExp`).
-   */
+     */
   constructor(text, query, options, from = 0, to = text.length) {
     this.text = text;
     this.to = to;
@@ -26301,13 +26301,13 @@ class RegExpCursor {
     /**
         Set to `true` when the cursor has reached the end of the search
         range.
-     */
+         */
     this.done = false;
     /**
         Will contain an object with the extent of the match and the
         match object when [`next`](https://codemirror.net/6/docs/ref/#search.RegExpCursor.next)
         sucessfully finds a match.
-     */
+         */
     this.value = empty;
     if (/\\[sWDnr]|\n|\r|\[\^/.test(query)) {
       return new MultilineRegExpCursor(text, query, options, from, to);
@@ -26345,7 +26345,7 @@ class RegExpCursor {
   }
   /**
     Move to the next match, if there is one.
-   */
+     */
   next() {
     for (let off = this.matchPos - this.curLineStart; ; ) {
       this.re.lastIndex = off;
@@ -26794,7 +26794,7 @@ A search query. Part of the editor's search state.
 class SearchQuery {
   /**
     Create a query object.
-   */
+     */
   constructor(config) {
     this.search = config.search;
     this.caseSensitive = !!config.caseSensitive;
@@ -26807,7 +26807,7 @@ class SearchQuery {
   }
   /**
     @internal
-   */
+     */
   unquote(text) {
     return this.literal
       ? text
@@ -26815,7 +26815,7 @@ class SearchQuery {
   }
   /**
     Compare this query to another query.
-   */
+     */
   eq(other) {
     return (
       this.search == other.search &&
@@ -26827,14 +26827,14 @@ class SearchQuery {
   }
   /**
     @internal
-   */
+     */
   create() {
     return this.regexp ? new RegExpQuery(this) : new StringQuery(this);
   }
   /**
     Get a search cursor for this query, searching through the given
     range in the given state.
-   */
+     */
   getCursor(state, from = 0, to) {
     let st = state.doc ? state : EditorState.create({ doc: state });
     if (to == null) {
@@ -27678,7 +27678,7 @@ about the parse state.
 class Stack {
   /**
     @internal
-   */
+     */
   constructor(
     /**
     The parse that this stack is part of @internal
@@ -27758,7 +27758,7 @@ class Stack {
   }
   /**
     @internal
-   */
+     */
   toString() {
     return `[${this.stack.filter((_, i) => i % 3 == 0).concat(this.state)}]@${this.pos}${
       this.score ? '!' + this.score : ''
@@ -27767,7 +27767,7 @@ class Stack {
   // Start an empty stack
   /**
     @internal
-   */
+     */
   static start(p, state, pos = 0) {
     let cx = p.parser.context;
     return new Stack(p, [], state, pos, pos, 0, [], 0, cx ? new StackContext(cx, cx.start) : null, 0, null);
@@ -27777,7 +27777,7 @@ class Stack {
     any. Its type will depend on the context tracker's type
     parameter, or it will be `null` if there is no context
     tracker.
-   */
+     */
   get context() {
     return this.curContext ? this.curContext.context : null;
   }
@@ -27785,7 +27785,7 @@ class Stack {
   // as the buffer base at that point.
   /**
     @internal
-   */
+     */
   pushState(state, start) {
     this.stack.push(this.state, start, this.bufferBase + this.buffer.length);
     this.state = state;
@@ -27793,7 +27793,7 @@ class Stack {
   // Apply a reduce action
   /**
     @internal
-   */
+     */
   reduce(action) {
     let _a;
     let depth = action >> 19 /* Action.ReduceDepthShift */,
@@ -27858,7 +27858,7 @@ class Stack {
   // Shift a value into the buffer
   /**
     @internal
-   */
+     */
   storeNode(term, start, end, size = 4, isReduce = false) {
     if (
       term == 0 /* Term.Err */ &&
@@ -27909,7 +27909,7 @@ class Stack {
   // Apply a shift action
   /**
     @internal
-   */
+     */
   shift(action, type, start, end) {
     if (action & 131072 /* Action.GotoFlag */) {
       this.pushState(action & 65535 /* Action.ValueMask */, this.pos);
@@ -27940,7 +27940,7 @@ class Stack {
   // Apply an action
   /**
     @internal
-   */
+     */
   apply(action, next, nextStart, nextEnd) {
     if (action & 65536 /* Action.ReduceFlag */) {
       this.reduce(action);
@@ -27951,7 +27951,7 @@ class Stack {
   // Add a prebuilt (reused) node into the buffer.
   /**
     @internal
-   */
+     */
   useNode(value, next) {
     let index = this.p.reused.length - 1;
     if (index < 0 || this.p.reused[index] != value) {
@@ -27978,7 +27978,7 @@ class Stack {
   // expensive.
   /**
     @internal
-   */
+     */
   split() {
     let parent = this;
     let off = parent.buffer.length;
@@ -28012,7 +28012,7 @@ class Stack {
   // Try to recover from an error by 'deleting' (ignoring) one token.
   /**
     @internal
-   */
+     */
   recoverByDelete(next, nextEnd) {
     let isNode = next <= this.p.parser.maxNode;
     if (isNode) {
@@ -28027,7 +28027,7 @@ class Stack {
     after some reductions) on this stack. This can be useful for
     external tokenizers that want to make sure they only provide a
     given token when it applies.
-   */
+     */
   canShift(term) {
     for (let sim = new SimulatedStack(this); ; ) {
       let action =
@@ -28046,7 +28046,7 @@ class Stack {
   // inserts some missing token or rule.
   /**
     @internal
-   */
+     */
   recoverByInsert(next) {
     if (this.stack.length >= 300 /* Recover.MaxInsertStackDepth */) {
       return [];
@@ -28092,7 +28092,7 @@ class Stack {
   // be done.
   /**
     @internal
-   */
+     */
   forceReduce() {
     let { parser } = this.p;
     let reduce = parser.stateSlot(this.state, 5 /* ParseState.ForcedReduce */);
@@ -28121,7 +28121,7 @@ class Stack {
     Try to scan through the automaton to find some kind of reduction
     that can be applied. Used when the regular ForcedReduce field
     isn't a valid action. @internal
-   */
+     */
   findForcedReduction() {
     let { parser } = this.p,
       seen = [];
@@ -28153,7 +28153,7 @@ class Stack {
   }
   /**
     @internal
-   */
+     */
   forceAll() {
     while (!this.p.parser.stateFlag(this.state, 2 /* StateFlag.Accepting */)) {
       if (!this.forceReduce()) {
@@ -28167,7 +28167,7 @@ class Stack {
     Check whether this state has no further actions (assumed to be a direct descendant of the
     top state, since any other states must be able to continue
     somehow). @internal
-   */
+     */
   get deadEnd() {
     if (this.stack.length != 3) {
       return false;
@@ -28182,7 +28182,7 @@ class Stack {
     Restart the stack (put it back in its start state). Only safe
     when this.stack.length == 3 (state is directly below the top
     state). @internal
-   */
+     */
   restart() {
     this.storeNode(0 /* Term.Err */, this.pos, this.pos, 4, true);
     this.state = this.stack[0];
@@ -28190,7 +28190,7 @@ class Stack {
   }
   /**
     @internal
-   */
+     */
   sameState(other) {
     if (this.state != other.state || this.stack.length != other.stack.length) {
       return false;
@@ -28204,14 +28204,14 @@ class Stack {
   }
   /**
     Get the parser used by this stack.
-   */
+     */
   get parser() {
     return this.p.parser;
   }
   /**
     Test whether a given dialect (by numeric ID, as exported from
     the terms file) is enabled.
-   */
+     */
   dialectEnabled(dialectID) {
     return this.p.parser.dialect.flags[dialectID];
   }
@@ -28231,7 +28231,7 @@ class Stack {
   }
   /**
     @internal
-   */
+     */
   emitContext() {
     let last = this.buffer.length - 1;
     if (last < 0 || this.buffer[last] != -3) {
@@ -28240,7 +28240,7 @@ class Stack {
   }
   /**
     @internal
-   */
+     */
   emitLookAhead() {
     let last = this.buffer.length - 1;
     if (last < 0 || this.buffer[last] != -4) {
@@ -28258,7 +28258,7 @@ class Stack {
   }
   /**
     @internal
-   */
+     */
   setLookAhead(lookAhead) {
     if (lookAhead > this.lookAhead) {
       this.emitLookAhead();
@@ -28267,7 +28267,7 @@ class Stack {
   }
   /**
     @internal
-   */
+     */
   close() {
     if (this.curContext && this.curContext.tracker.strict) {
       this.emitContext();
@@ -28419,7 +28419,7 @@ characters, tracking lookahead and hiding the complexity of
 class InputStream {
   /**
     @internal
-   */
+     */
   constructor(
     /**
     @internal
@@ -28434,25 +28434,25 @@ class InputStream {
     this.ranges = ranges;
     /**
         @internal
-     */
+         */
     this.chunk = '';
     /**
         @internal
-     */
+         */
     this.chunkOff = 0;
     /**
         Backup chunk
-     */
+         */
     this.chunk2 = '';
     this.chunk2Pos = 0;
     /**
         The character code of the next code unit in the input, or -1
         when the stream is at the end of the input.
-     */
+         */
     this.next = -1;
     /**
         @internal
-     */
+         */
     this.token = nullToken;
     this.rangeIndex = 0;
     this.pos = this.chunkPos = ranges[0].from;
@@ -28462,7 +28462,7 @@ class InputStream {
   }
   /**
     @internal
-   */
+     */
   resolveOffset(offset, assoc) {
     let range = this.range,
       index = this.rangeIndex;
@@ -28487,7 +28487,7 @@ class InputStream {
   }
   /**
     @internal
-   */
+     */
   clipPos(pos) {
     if (pos >= this.range.from && pos < this.range.to) {
       return pos;
@@ -28503,13 +28503,13 @@ class InputStream {
     Look at a code unit near the stream position. `.peek(0)` equals
     `.next`, `.peek(-1)` gives you the previous character, and so
     on.
-   
+     
     Note that looking around during tokenizing creates dependencies
     on potentially far-away content, which may reduce the
     effectiveness incremental parsing—when looking forward—or even
     cause invalid reparses when looking backward more than 25 code
     units, since the library does not track lookbehind.
-   */
+     */
   peek(offset) {
     let idx = this.chunkOff + offset,
       pos,
@@ -28547,7 +28547,7 @@ class InputStream {
     Accept a token. By default, the end of the token is set to the
     current stream position, but you can pass an offset (relative to
     the stream position) to change that.
-   */
+     */
   acceptToken(token, endOffset = 0) {
     let end = endOffset ? this.resolveOffset(endOffset, -1) : this.pos;
     if (end == null || end < this.token.start) {
@@ -28586,7 +28586,7 @@ class InputStream {
   /**
     Move the stream forward N (defaults to 1) code units. Returns
     the new value of [`next`](#lr.InputStream.next).
-   */
+     */
   advance(n = 1) {
     this.chunkOff += n;
     while (this.pos + n >= this.range.to) {
@@ -28611,7 +28611,7 @@ class InputStream {
   }
   /**
     @internal
-   */
+     */
   reset(pos, token) {
     if (token) {
       this.token = token;
@@ -28645,7 +28645,7 @@ class InputStream {
   }
   /**
     @internal
-   */
+     */
   read(from, to) {
     if (from >= this.chunkPos && to <= this.chunkPos + this.chunk.length) {
       return this.chunk.slice(from - this.chunkPos, to - this.chunkPos);
@@ -28694,7 +28694,7 @@ class ExternalTokenizer {
     recognizes at the stream's position, and calls
     [`acceptToken`](#lr.InputStream.acceptToken) when it finds
     one.
-   */
+     */
   constructor(
     /**
     @internal
@@ -29401,12 +29401,12 @@ content with.
 class LRParser extends Parser {
   /**
     @internal
-   */
+     */
   constructor(spec) {
     super();
     /**
         @internal
-     */
+         */
     this.wrappers = [];
     if (spec.version != 14 /* File.Version */) {
       throw new RangeError(`Parser version (${spec.version}) doesn't match runtime version (${14 /* File.Version */})`);
@@ -29494,7 +29494,7 @@ class LRParser extends Parser {
   }
   /**
     Get a goto table entry @internal
-   */
+     */
   getGoto(state, term, loose = false) {
     let table = this.goto;
     if (term >= table[0]) {
@@ -29519,7 +29519,7 @@ class LRParser extends Parser {
   }
   /**
     Check if this state has an action for a given terminal @internal
-   */
+     */
   hasAction(state, terminal) {
     let data = this.data;
     for (let set = 0; set < 2; set++) {
@@ -29542,25 +29542,25 @@ class LRParser extends Parser {
   }
   /**
     @internal
-   */
+     */
   stateSlot(state, slot) {
     return this.states[state * 6 /* ParseState.Size */ + slot];
   }
   /**
     @internal
-   */
+     */
   stateFlag(state, flag) {
     return (this.stateSlot(state, 0 /* ParseState.Flags */) & flag) > 0;
   }
   /**
     @internal
-   */
+     */
   validAction(state, action) {
     return !!this.allActions(state, (a) => (a == action ? true : null));
   }
   /**
     @internal
-   */
+     */
   allActions(state, action) {
     let deflt = this.stateSlot(state, 4 /* ParseState.DefaultReduce */);
     let result = deflt ? action(deflt) : undefined;
@@ -29579,7 +29579,7 @@ class LRParser extends Parser {
   /**
     Get the states that can follow this one through shift actions or
     goto jumps. @internal
-   */
+     */
   nextStates(state) {
     let result = [];
     for (let i = this.stateSlot(state, 1 /* ParseState.Actions */); ; i += 3) {
@@ -29603,7 +29603,7 @@ class LRParser extends Parser {
     Configure the parser. Returns a new parser instance that has the
     given settings modified. Settings not provided in `config` are
     kept from the original parser.
-   */
+     */
   configure(config) {
     // Hideous reflection-based kludge to make it easy to create a
     // slightly modified copy of a parser.
@@ -29656,7 +29656,7 @@ class LRParser extends Parser {
   /**
     Tells you whether any [parse wrappers](#lr.ParserConfig.wrap)
     are registered for this parser.
-   */
+     */
   hasWrappers() {
     return this.wrappers.length > 0;
   }
@@ -29665,7 +29665,7 @@ class LRParser extends Parser {
     work for all terms when the parser was generated with the
     `--names` option. By default, only the names of tagged terms are
     stored.
-   */
+     */
   getName(term) {
     return this.termNames
       ? this.termNames[term]
@@ -29674,26 +29674,26 @@ class LRParser extends Parser {
   /**
     The eof term id is always allocated directly after the node
     types. @internal
-   */
+     */
   get eofTerm() {
     return this.maxNode + 1;
   }
   /**
     The type of top node produced by the parser.
-   */
+     */
   get topNode() {
     return this.nodeSet.types[this.top[1]];
   }
   /**
     @internal
-   */
+     */
   dynamicPrecedence(term) {
     let prec = this.dynamicPrecedences;
     return prec == null ? 0 : prec[term] || 0;
   }
   /**
     @internal
-   */
+     */
   parseDialect(dialect) {
     let values = Object.keys(this.dialects),
       flags = values.map(() => false);
@@ -29718,7 +29718,7 @@ class LRParser extends Parser {
   /**
     Used by the output of the parser generator. Not available to
     user code. @hide
-   */
+     */
   static deserialize(spec) {
     return new LRParser(spec);
   }
@@ -30056,7 +30056,7 @@ function tokensFor(d) {
         input.acceptToken(Bits);
       }
     } else if (
-      (next == 48 /* _0 */ && (input.next == 120 /* x */ || input.next == 88)) /* X */ ||
+      (next == 48 /* _0 */ && (input.next == 120 /* x */ || input.next == 88) /* X */) ||
       ((next == 120 /* x */ || next == 88) /* X */ && input.next == 39) /* SingleQuote */
     ) {
       let quoted = input.next == 39; /* SingleQuote */
@@ -30397,13 +30397,13 @@ class SQLDialect {
   }
   /**
     Returns the language for this dialect as an extension.
-   */
+     */
   get extension() {
     return this.language.extension;
   }
   /**
     Define a new dialect.
-   */
+     */
   static define(spec) {
     let d = dialect(spec, spec.keywords, spec.types, spec.builtin);
     let language = LRLanguage.define({
@@ -30620,8 +30620,6 @@ const snippets = [
 ];
 /// Autocompletion for built-in PRQL globals and keywords.
 const globalCompletion = ifNotIn(dontComplete, completeFromList(globals.concat(snippets)));
-
-console.log('tags', tags);
 
 const prqlHighlight = styleTags({
   'CallExpression/Identifier': tags.function(tags.variableName),
