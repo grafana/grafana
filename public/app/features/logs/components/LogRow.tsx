@@ -133,10 +133,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   };
 
   onMouseLeave = () => {
-    this.setState({ mouseIsOver: false });
-    if (this.props.onLogRowHover) {
-      this.props.onLogRowHover(undefined);
-    }
   };
 
   componentDidMount() {
@@ -208,9 +204,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
           ref={this.logLineRef}
           className={logRowBackground}
           onClick={this.onRowClick}
-          onMouseEnter={this.onMouseEnter}
-          onMouseLeave={this.onMouseLeave}
-          onMouseMove={this.onMouseMove}
           id={`row-${row.rowId}`}
           /**
            * For better accessibility support, we listen to the onFocus event here (to display the LogRowMenuCell), and
@@ -267,7 +260,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               onPinLine={this.props.onPinLine}
               onUnpinLine={this.props.onUnpinLine}
               pinned={this.props.pinned}
-              mouseIsOver={this.state.mouseIsOver}
+              mouseIsOver={false}
               onBlur={this.onMouseLeave}
             />
           )}

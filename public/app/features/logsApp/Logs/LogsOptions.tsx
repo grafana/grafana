@@ -1,6 +1,6 @@
-import React from "react";
+import React from 'react';
 
-import { Button, Dropdown, Icon, InlineField, InlineSwitch } from "@grafana/ui";
+import { Button, Dropdown, Icon, InlineField, InlineSwitch } from '@grafana/ui';
 
 interface Props {
   styles: Record<string, string>;
@@ -30,20 +30,10 @@ export const LogsOptions = ({
   const menu = (
     <div className={styles.logOptionsMenu}>
       <InlineField label="Time" className={styles.logOptionMenuItem}>
-        <InlineSwitch
-          value={showTime}
-          onChange={onChangeTime}
-          transparent
-          id={`show-time_${exploreId}`}
-        />
+        <InlineSwitch value={showTime} onChange={onChangeTime} transparent id={`show-time_${exploreId}`} />
       </InlineField>
       <InlineField label="Unique labels" className={styles.logOptionMenuItem}>
-        <InlineSwitch
-          value={showLabels}
-          onChange={onChangeLabels}
-          transparent
-          id={`unique-labels_${exploreId}`}
-        />
+        <InlineSwitch value={showLabels} onChange={onChangeLabels} transparent id={`unique-labels_${exploreId}`} />
       </InlineField>
       <InlineField label="Wrap lines" className={styles.logOptionMenuItem}>
         <InlineSwitch
@@ -65,13 +55,10 @@ export const LogsOptions = ({
   );
   return (
     <Dropdown overlay={menu}>
-    <Button
-      size="md"
-      variant="secondary"
-    >
-      <Icon name="sliders-v-alt" size="md" />
-      Logs settings
-    </Button>
-  </Dropdown>
+      <Button size="md" variant="secondary">
+        Logs options
+        <Icon name="sliders-v-alt" size="md" style={{ marginLeft: '0.5em' }} />
+      </Button>
+    </Dropdown>
   );
 };
