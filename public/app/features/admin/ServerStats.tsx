@@ -13,7 +13,7 @@ import { getServerStats, ServerStat } from './state/apis';
 
 export const ServerStats = () => {
   const [stats, setStats] = useState<ServerStat | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const styles = useStyles2(getStyles);
 
   const hasAccessToDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesRead);
@@ -21,7 +21,6 @@ export const ServerStats = () => {
 
   useEffect(() => {
     if (contextSrv.hasPermission(AccessControlAction.ActionServerStatsRead)) {
-      setIsLoading(true);
       getServerStats().then((stats) => {
         setStats(stats);
         setIsLoading(false);
