@@ -1,4 +1,5 @@
 import { cx } from '@emotion/css';
+import classNames from 'classnames';
 import React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
@@ -111,19 +112,25 @@ export const generateColumns = (
   width = Math.max(availableWidth * 0.2, 300);
   columns.push({
     Cell: (p) => {
-      let classNames = cx(styles.nameCellStyle);
+      let cs = styles.nameCellStyle;
       let name = access.name.values[p.row.index];
       if (!name?.length) {
         const loading = p.row.index >= response.view.dataFrame.length;
         name = loading ? 'Loading...' : 'Missing title'; // normal for panels
-        classNames += ' ' + styles.missingTitleText;
+        cs = classNames(cs, styles.missingTitleText);
       }
+      const preventClickOnRow = access.remaining_trash_at_age?.values[p.row.index];
       return (
         <div className={styles.cell} {...p.cellProps}>
           {!response.isItemLoaded(p.row.index) ? (
             <Skeleton width={200} />
           ) : (
-            <a href={p.userProps.href} onClick={p.userProps.onClick} className={classNames} title={name}>
+            <a
+              href={p.userProps.href}
+              onClick={p.userProps.onClick}
+              className={classNames(cs, { [styles.preventClick]: preventClickOnRow })}
+              title={name}
+            >
               {name}
             </a>
           )}
@@ -165,6 +172,7 @@ export const generateColumns = (
     columns.push({
       Cell: (p) => {
         const parts = (access.location?.values[p.row.index] ?? '').split('/');
+        const preventClickOnRow = access.remaining_trash_at_age?.values[p.row.index];
         return (
           <div {...p.cellProps} className={styles.cell}>
             {!response.isItemLoaded(p.row.index) ? (
@@ -177,7 +185,11 @@ export const generateColumns = (
                     info = { kind: 'folder', url: '/dashboards', name: 'General' };
                   }
                   return info ? (
-                    <a key={p} href={info.url} className={styles.locationItem}>
+                    <a
+                      key={p}
+                      href={info.url}
+                      className={classNames(styles.locationItem, { [styles.preventClick]: preventClickOnRow })}
+                    >
                       <Icon name={getIconForKind(info.kind)} />
                       <Text variant="body" truncate>
                         {info.name}
@@ -264,7 +276,7 @@ export const generateColumns = (
   }
 
   if (access.remaining_trash_at_age?.values) {
-    // Name column
+    // Remaining days for permanent delete column
     width = Math.max(availableWidth * 0.2, 300);
     columns.push({
       Cell: (p) => {
