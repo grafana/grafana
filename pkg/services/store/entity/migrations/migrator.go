@@ -12,7 +12,7 @@ import (
 
 func MigrateEntityStore(db sqlstash.EntityDB, features featuremgmt.FeatureToggles) error {
 	// Skip if feature flag is not enabled
-	if !features.IsEnabledGlobally(featuremgmt.FlagEntityStore) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
 		return nil
 	}
 

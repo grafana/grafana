@@ -275,6 +275,10 @@ func (s *service) start(ctx context.Context) error {
 		}
 
 	case StorageTypeUnified:
+		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
+			return fmt.Errorf("unified storage requires the unifiedStorage feature flag (and app_mode = development)")
+		}
+
 		eDB, err := entityDB.ProvideEntityDB(s.db, s.cfg, s.features)
 		if err != nil {
 			return err
