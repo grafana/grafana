@@ -1,48 +1,46 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { usePopperTooltip } from 'react-popper-tooltip';
+import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
-import { useDispatch } from 'app/types';
+import { StoreState, useDispatch } from 'app/types';
 
 import { TutorialTooltip } from './TutorialTooltip';
 import { nextStep } from './slice';
 import { resolveRequiredActions, waitForElement } from './tutorialProvider.utils';
-import type { Step } from './types';
-
-type TutorialOverlayProps = {
-  currentStep: number;
-  step: Step;
-};
 
 const spotlightOffset = 0;
 
-export const TutorialOverlay = ({ currentStep, step }: TutorialOverlayProps) => {
+const TutorialOverlayComponent = ({
+  availableTutorials,
+  currentTutorialId,
+  currentStepIndex,
+  stepTransition,
+}: ConnectedProps<typeof connector>) => {
   const dispatch = useDispatch();
   const [showTooltip, setShowTooltip] = useState(false);
   const styles = useStyles2(getStyles);
   const [spotlightStyles, setSpotlightStyles] = useState({});
   const [canInteract, setCanInteract] = useState(false);
   const renderedFirstStep = useRef(false);
+  const currentTutorial = availableTutorials.find((t) => t.id === currentTutorialId);
+  const step = currentStepIndex !== null && currentTutorial ? currentTutorial.steps[currentStepIndex] : null;
+  const isTransitioning = stepTransition === `transitioning`;
 
   const popper = usePopperTooltip({
     visible: showTooltip,
-    placement: step.placement,
+    placement: step ? step.placement : undefined,
     defaultVisible: false,
   });
-  const { getArrowProps, getTooltipProps, setTooltipRef, setTriggerRef, triggerRef } = popper;
-
-  const advance = useCallback(() => {
-    setShowTooltip(false);
-    dispatch(nextStep());
-  }, [dispatch]);
+  const { getTooltipProps, setTooltipRef, setTriggerRef, triggerRef } = popper;
 
   useEffect(() => {
-    if (!step) {
+    if (!isTransitioning) {
       setShowTooltip(false);
     }
-  }, [step]);
+  }, [isTransitioning]);
 
   useEffect(() => {
     let setStyles: any;
@@ -70,7 +68,7 @@ export const TutorialOverlay = ({ currentStep, step }: TutorialOverlayProps) => 
         transitionend = (e) => {
           // TODO: if there are multiple steps on the same element
           // with no transition the tooltip won't show
-          if (e.propertyName === 'left' || e.propertyName === 'width') {
+          if ([`width`, `height`, `top`, `left`].includes(e.propertyName)) {
             setShowTooltip(true);
           }
         };
@@ -82,7 +80,7 @@ export const TutorialOverlay = ({ currentStep, step }: TutorialOverlayProps) => 
         setStyles().then(() => {
           if (step.requiredActions) {
             resolveRequiredActions(step.requiredActions).then(() => {
-              advance();
+              dispatch(nextStep());
             });
           }
 
@@ -100,7 +98,7 @@ export const TutorialOverlay = ({ currentStep, step }: TutorialOverlayProps) => 
       document.removeEventListener('mousemove', mouseMoveCallback);
       triggerRef?.removeEventListener(`transitionend`, transitionend);
     };
-  }, [advance, currentStep, step, triggerRef]);
+  }, [dispatch, step, triggerRef]);
 
   return (
     <>
@@ -108,13 +106,9 @@ export const TutorialOverlay = ({ currentStep, step }: TutorialOverlayProps) => 
         <div className={styles.spotlight} style={spotlightStyles} ref={setTriggerRef} />
       </div>
       {showTooltip && (
-        <TutorialTooltip
-          advance={advance}
-          getArrowProps={getArrowProps}
-          getTooltipProps={getTooltipProps}
-          ref={setTooltipRef}
-          step={step}
-        />
+        <div ref={setTooltipRef} {...getTooltipProps()} className={styles.instructions}>
+          <TutorialTooltip />
+        </div>
       )}
     </>
   );
@@ -163,4 +157,24 @@ const getStyles = (theme: GrafanaTheme2) => ({
     transition: [`width`, `height`, `left`, `top`].map((prop) => `${prop} 0.2s ease-in-out`).join(', '),
     padding: spotlightOffset,
   }),
+  instructions: css({
+    display: `flex`,
+    flexDirection: `column`,
+    gap: theme.spacing(2),
+    zIndex: 1059,
+    width: `300px`,
+    backgroundColor: theme.colors.background.primary,
+    padding: theme.spacing(2),
+    borderRadius: theme.shape.radius.default,
+  }),
 });
+
+const mapStateToProps = (state: StoreState) => {
+  return {
+    ...state.tutorials,
+  };
+};
+
+const connector = connect(mapStateToProps);
+
+export const TutorialOverlay = connector(TutorialOverlayComponent);

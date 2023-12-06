@@ -1,20 +1,24 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { Dispatch, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
 import { RootState } from 'app/store/configureStore';
 
-import { checkCorrectValue, isElementVisible, waitForElement } from './tutorialProvider.utils';
-import type { SkipCondition, Tutorial } from './types';
+import { checkSkipConditions, getFurthestStep, getTutorial } from './slice.utils';
+import type { Tutorial } from './types';
 
 type TutorialsState = {
   availableTutorials: Tutorial[];
-  currentTutorial: Tutorial['id'] | null;
-  currentStep: number | null;
+  currentTutorialId: Tutorial['id'] | null;
+  currentStepIndex: number | null;
+  stepTransition: StepTransition;
 };
+
+type StepTransition = 'transitioning' | 'none';
 
 const initialState: TutorialsState = {
   availableTutorials: [],
-  currentTutorial: null,
-  currentStep: null,
+  currentTutorialId: null,
+  currentStepIndex: null,
+  stepTransition: `none`,
 };
 
 const STATE_PREFIX = 'tutorials';
@@ -29,29 +33,46 @@ const tutorialsSlice = createSlice({
     addTutorial(state, action) {
       state.availableTutorials.push(action.payload);
     },
-    setCurrentTutorial(state, action) {
-      state.currentTutorial = action.payload;
+    addTutorials(state, action) {
+      state.availableTutorials = [...state.availableTutorials, ...action.payload];
     },
-    setCurrentStep(state, action) {
-      state.currentStep = action.payload;
+    setCurrentTutorialId(state, action) {
+      state.currentTutorialId = action.payload;
     },
-    resetCurrentTutorial(state) {
-      state.currentTutorial = null;
-      state.currentStep = null;
+    exitCurrentTutorial(state) {
+      state.currentTutorialId = null;
+      state.currentStepIndex = null;
     },
   },
   extraReducers: (builder) => {
+    builder.addCase(nextStep.pending, (state) => {
+      state.stepTransition = `transitioning`;
+    });
+
     builder.addCase(nextStep.fulfilled, (state, action) => {
-      const currentTutorial = getTutorial(state.availableTutorials, state.currentTutorial);
+      const currentTutorial = getTutorial(state.availableTutorials, state.currentTutorialId);
+
+      state.availableTutorials = state.availableTutorials.map((tutorial) => {
+        if (tutorial.id === state.currentTutorialId) {
+          return {
+            ...tutorial,
+            furthestStepCompleted: getFurthestStep(action.payload, tutorial.furthestStepCompleted),
+          };
+        }
+
+        return tutorial;
+      });
 
       if (action.payload < currentTutorial.steps.length) {
-        state.currentStep = action.payload;
+        state.currentStepIndex = action.payload;
       }
 
       if (action.payload >= currentTutorial.steps.length) {
-        state.currentTutorial = null;
-        state.currentStep = null;
+        state.currentTutorialId = null;
+        state.currentStepIndex = null;
       }
+
+      state.stepTransition = `none`;
     });
   },
 });
@@ -59,83 +80,23 @@ const tutorialsSlice = createSlice({
 export const nextStep = createAsyncThunk<number, void, { state: RootState }>(
   `${STATE_PREFIX}/nextStep`,
   async (_, thunkApi) => {
-    const { availableTutorials, currentStep, currentTutorial } = thunkApi.getState().tutorials;
-    const tutorial = getTutorial(availableTutorials, currentTutorial);
-    const nextStepIndex = currentStep === null ? 0 : currentStep + 1;
+    const { availableTutorials, currentStepIndex, currentTutorialId } = thunkApi.getState().tutorials;
+    const tutorial = getTutorial(availableTutorials, currentTutorialId);
+    const nextStepIndex = currentStepIndex === null ? 0 : currentStepIndex + 1;
     const realNextStepIndex = await checkSkipConditions(tutorial, nextStepIndex, 'forwards');
 
     return realNextStepIndex;
   }
 );
 
-export function getTutorial(availableTutorials: Tutorial[], tutorialId: Tutorial['id'] | null): Tutorial {
-  return availableTutorials.find((tutorial) => tutorial.id === tutorialId)!;
-}
+const { setCurrentTutorialId } = tutorialsSlice.actions;
+export const { addTutorial, addTutorials, removeTutorial, exitCurrentTutorial } = tutorialsSlice.actions;
 
-export function getStep(tutorial: Tutorial | undefined, step: number) {
-  return tutorial?.steps[step];
-}
-
-async function checkSkipConditions(tutorial: Tutorial, stepIndex: number, direction: 'forwards' | 'backwards') {
-  const steps = direction === 'forwards' ? tutorial.steps : [...tutorial.steps].reverse();
-  const step = steps[stepIndex];
-  const skipConditions = step?.skipConditions;
-
-  if (!skipConditions) {
-    return stepIndex;
-  }
-
-  const canSkipStep = await passedSkipConditions(skipConditions, stepIndex);
-  if (canSkipStep) {
-    return checkSkipConditions(tutorial, stepIndex + 1, direction);
-  }
-
-  return stepIndex;
-}
-
-async function passedSkipConditions(skipConditions: SkipCondition[], stepIndex: number) {
-  let canSkipStep = false;
-
-  if (skipConditions) {
-    canSkipStep = true;
-
-    for (const condition of skipConditions) {
-      const shouldSkipCondition = await shouldSkip(condition, stepIndex);
-      if (!shouldSkipCondition) {
-        canSkipStep = false;
-      }
-    }
-  }
-
-  return canSkipStep;
-}
-
-async function shouldSkip(condition: SkipCondition, stepIndex: number) {
-  const timeout = stepIndex === 0 ? 0 : undefined;
-
-  return waitForElement(condition.target, timeout)
-    .then((element) => {
-      if (condition.condition === 'visible') {
-        return isElementVisible(element);
-      }
-
-      if (condition.condition === 'match') {
-        const targetValue = element.getAttribute(condition.attribute.name);
-
-        if (!targetValue) {
-          return false;
-        }
-
-        return checkCorrectValue(targetValue, condition.attribute);
-      }
-
-      return false;
-    })
-    .catch(() => false);
-}
-
-export const { addTutorial, removeTutorial, resetCurrentTutorial, setCurrentStep, setCurrentTutorial } =
-  tutorialsSlice.actions;
+export const startTutorial = (tutorialId: Tutorial['id']) => (dispatch: Dispatch, getState: () => RootState) => {
+  dispatch(setCurrentTutorialId(tutorialId));
+  // @ts-expect-error
+  dispatch(nextStep());
+};
 
 export const tutorialsReducer = tutorialsSlice.reducer;
 

@@ -5,6 +5,7 @@ export type Tutorial = {
   id: string;
   name: string;
   description: string;
+  author: string;
   steps: Step[];
   furthestStepCompleted?: number;
 };
@@ -12,8 +13,8 @@ export type Tutorial = {
 export type Step = {
   route?: string;
   target: string;
-  content?: ReactNode;
-  title?: ReactNode;
+  content: ReactNode;
+  title: ReactNode;
   placement?: Placement;
   requiredActions?: RequiredAction[];
   skipConditions?: SkipCondition[];

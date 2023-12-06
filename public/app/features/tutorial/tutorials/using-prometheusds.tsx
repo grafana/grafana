@@ -3,7 +3,8 @@ import type { Step, Tutorial } from '../types';
 const info = {
   id: 'using-prometheusds',
   name: 'Using the PrometheusDS',
-  description: `This is a tutorial to help you get started with the PrometheusDS`,
+  description: `This is a tutorial to help you get started with the PrometheusDS.`,
+  author: `Grafana Labs`,
 };
 
 const tutorialSteps: Step[] = [
@@ -89,7 +90,7 @@ const tutorialSteps: Step[] = [
   },
 ];
 
-export const tutorial: Tutorial = {
+export const usingPrometheusDSTutorial: Tutorial = {
   ...info,
   steps: tutorialSteps,
 };
