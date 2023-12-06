@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { ConfirmModal } from '@grafana/ui';
@@ -6,22 +6,18 @@ import { StoreState, useDispatch } from 'app/types';
 
 import { TutorialOverlay } from './TutorialOverlay';
 import { TUTORIAL_EXIT_EVENT } from './constants';
-import { setCurrentStep } from './slice';
+import { exitCurrentTutorial } from './slice';
 
-const TutorialProviderComponent = ({
-  availableTutorials,
-  currentStep,
-  currentTutorial,
-}: ConnectedProps<typeof connector>) => {
+const TutorialProviderComponent = ({ currentTutorialId, ...props }: ConnectedProps<typeof connector>) => {
   const dispatch = useDispatch();
+  const keyupUseDismissedIssue = useRef(false);
   const [showExitTutorialModal, setShowExitTutorialModal] = useState(false);
-  const currentTutorialSteps = availableTutorials.find((t) => t.id === currentTutorial)?.steps;
-  const step = currentStep !== null && currentTutorialSteps && currentTutorialSteps[currentStep];
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' && !keyupUseDismissedIssue.current) {
         setShowExitTutorialModal(true);
+        keyupUseDismissedIssue.current = false;
       }
     };
 
@@ -33,19 +29,25 @@ const TutorialProviderComponent = ({
     };
   }, []);
 
-  if (step) {
+  if (currentTutorialId) {
     return (
       <>
-        <TutorialOverlay currentStep={currentStep} step={step} />
+        <TutorialOverlay />
         <ConfirmModal
           confirmText="Stop tutorial"
-          onDismiss={() => {}}
+          onDismiss={() => {
+            keyupUseDismissedIssue.current = true;
+            setShowExitTutorialModal(false);
+            setTimeout(() => {
+              keyupUseDismissedIssue.current = false;
+            }, 300);
+          }}
           isOpen={showExitTutorialModal}
           title={`Exit tutorial`}
           body={`Do you want to stop the tutorial?`}
           onConfirm={() =>
             new Promise((resolve) => {
-              dispatch(setCurrentStep(null));
+              dispatch(exitCurrentTutorial());
               resolve();
               setShowExitTutorialModal(false);
               document.dispatchEvent(new CustomEvent(TUTORIAL_EXIT_EVENT));

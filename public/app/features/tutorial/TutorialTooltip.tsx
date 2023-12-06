@@ -1,36 +1,37 @@
-import { css } from '@emotion/css';
-import React, { forwardRef } from 'react';
+import React from 'react';
+import { connect, ConnectedProps } from 'react-redux';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Text, useStyles2 } from '@grafana/ui';
+import { Button, Text } from '@grafana/ui';
+import { StoreState, useDispatch } from 'app/types';
 
+import { nextStep } from './slice';
 import { type Step } from './types';
 
-type TutorialTooltipProps = {
-  step: Step;
-  advance?: () => void;
-  getArrowProps: any;
-  getTooltipProps: any;
+const TutorialTooltipComponent = ({
+  availableTutorials,
+  currentTutorialId,
+  currentStepIndex,
+}: ConnectedProps<typeof connector>) => {
+  const dispatch = useDispatch();
+  const currentTutorial = availableTutorials.find((t) => t.id === currentTutorialId);
+  const step = currentStepIndex !== null && currentTutorial ? currentTutorial.steps[currentStepIndex] : null;
+
+  if (step) {
+    return (
+      <>
+        {renderStepTitle(step.title)}
+        {renderContent(step.content)}
+        {!step.requiredActions && (
+          <div>
+            <Button onClick={() => dispatch(nextStep())}>Next</Button>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  return null;
 };
-
-export const TutorialTooltip = forwardRef<HTMLDivElement, TutorialTooltipProps>((props, ref) => {
-  const { getArrowProps, getTooltipProps, step, advance } = props;
-  const styles = useStyles2(getStyles);
-
-  return (
-    <div ref={ref} {...getTooltipProps()} className={styles.instructions}>
-      {/* TODO: fix arrow */}
-      <div {...getArrowProps({ className: 'tooltip-arrow' })} />
-      {renderStepTitle(step.title)}
-      {renderContent(step.content)}
-      {!step.requiredActions && (
-        <div>
-          <Button onClick={advance}>Next</Button>
-        </div>
-      )}
-    </div>
-  );
-});
 
 function renderStepTitle(title: Step['title']) {
   if (!title) {
@@ -60,17 +61,14 @@ function renderContent(content: Step['content']) {
   return <div>{content}</div>;
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  instructions: css({
-    display: `flex`,
-    flexDirection: `column`,
-    gap: theme.spacing(2),
-    zIndex: 1059,
-    width: `300px`,
-    backgroundColor: theme.colors.background.primary,
-    padding: theme.spacing(2),
-    borderRadius: theme.shape.radius.default,
-  }),
-});
+TutorialTooltipComponent.displayName = 'TutorialTooltip';
 
-TutorialTooltip.displayName = 'TutorialTooltip';
+const mapStateToProps = (state: StoreState) => {
+  return {
+    ...state.tutorials,
+  };
+};
+
+const connector = connect(mapStateToProps);
+
+export const TutorialTooltip = connector(TutorialTooltipComponent);
