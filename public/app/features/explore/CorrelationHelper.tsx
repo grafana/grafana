@@ -150,7 +150,7 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
             }
             setShowTransformationAddModal(false);
           }}
-          fieldList={correlations.vars}
+          fieldList={correlations.origVars}
           transformationToEdit={
             transformationIdxToEdit !== undefined ? transformations[transformationIdxToEdit] : undefined
           }

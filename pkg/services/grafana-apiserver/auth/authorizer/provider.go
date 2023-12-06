@@ -1,11 +1,10 @@
 package authorizer
 
 import (
-	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/apiserver/pkg/authorization/authorizerfactory"
 	"k8s.io/apiserver/pkg/authorization/union"
 
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/auth/authorizer/impersonation"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/auth/authorizer/org"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/auth/authorizer/stack"
 	"github.com/grafana/grafana/pkg/setting"
@@ -18,10 +17,7 @@ func ProvideAuthorizer(
 	cfg *setting.Cfg,
 ) authorizer.Authorizer {
 	authorizers := []authorizer.Authorizer{
-		// This will allow privileged uses to do anything.
-		// In development mode, a privileged user is configured and saved into:
-		// ${data}/grafana-apiserver/grafana.kubeconfig
-		authorizerfactory.NewPrivilegedGroups(user.SystemPrivilegedGroup),
+		&impersonation.ImpersonationAuthorizer{},
 	}
 
 	// In Hosted grafana, the StackID replaces the orgID as a valid namespace

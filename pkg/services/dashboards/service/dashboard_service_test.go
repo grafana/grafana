@@ -54,6 +54,7 @@ func TestDashboardService(t *testing.T) {
 
 			t.Run("Should return validation error if it's a folder and have a folder id", func(t *testing.T) {
 				dto.Dashboard = dashboards.NewDashboardFolder("Folder")
+				// nolint:staticcheck
 				dto.Dashboard.FolderID = 1
 				_, err := service.SaveDashboard(context.Background(), dto, false)
 				require.Equal(t, err, dashboards.ErrDashboardFolderCannotHaveParent)
@@ -90,6 +91,16 @@ func TestDashboardService(t *testing.T) {
 					_, err := service.BuildSaveDashboardCommand(context.Background(), dto, true, false)
 					require.Equal(t, err, tc.Error)
 				}
+			})
+
+			t.Run("Should return validation error if a folder that is specified can't be found", func(t *testing.T) {
+				dto.Dashboard = dashboards.NewDashboard("Dash")
+				dto.Dashboard.FolderUID = "non-existing-folder"
+				folderStore := foldertest.FakeFolderStore{}
+				folderStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(nil, dashboards.ErrFolderNotFound).Once()
+				service.folderStore = &folderStore
+				_, err := service.SaveDashboard(context.Background(), dto, false)
+				require.Equal(t, err, dashboards.ErrFolderNotFound)
 			})
 
 			t.Run("Should return validation error if dashboard is provisioned", func(t *testing.T) {
@@ -206,7 +217,7 @@ func TestDashboardService(t *testing.T) {
 
 		t.Run("Given non provisioned dashboard", func(t *testing.T) {
 			t.Run("DeleteProvisionedDashboard should delete the dashboard", func(t *testing.T) {
-				args := &dashboards.DeleteDashboardCommand{OrgID: 1, ID: 1, ForceDeleteFolderRules: false}
+				args := &dashboards.DeleteDashboardCommand{OrgID: 1, ID: 1}
 				fakeStore.On("DeleteDashboard", mock.Anything, args).Return(nil).Once()
 				err := service.DeleteProvisionedDashboard(context.Background(), 1, 1)
 				require.NoError(t, err)
@@ -223,6 +234,7 @@ func TestDashboardService(t *testing.T) {
 
 		t.Run("Count dashboards in folder", func(t *testing.T) {
 			fakeStore.On("CountDashboardsInFolder", mock.Anything, mock.AnythingOfType("*dashboards.CountDashboardsInFolderRequest")).Return(int64(3), nil)
+			// nolint:staticcheck
 			folderSvc.ExpectedFolder = &folder.Folder{ID: 1}
 			// set up a ctx with signed in user
 			usr := &user.SignedInUser{UserID: 1}

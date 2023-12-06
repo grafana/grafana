@@ -19,7 +19,7 @@ exports[`alertmanager abilities should report Create / Update / Delete actions a
     false,
   ],
   "create-silence": [
-    false,
+    true,
     false,
   ],
   "decrypt-secrets": [
@@ -71,7 +71,7 @@ exports[`alertmanager abilities should report Create / Update / Delete actions a
     false,
   ],
   "update-silence": [
-    false,
+    true,
     false,
   ],
   "view-contact-point": [

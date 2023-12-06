@@ -29,9 +29,10 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/component-base/logs"
 	"k8s.io/klog/v2"
+
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
@@ -270,7 +271,7 @@ func (s *service) start(ctx context.Context) error {
 	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
 
 	// Add OpenAPI specs for each group+version
-	defsGetter := getOpenAPIDefinitions(builders)
+	defsGetter := GetOpenAPIDefinitions(builders)
 	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
 		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
 		openapinamer.NewDefinitionNamer(Scheme, scheme.Scheme))
@@ -280,7 +281,7 @@ func (s *service) start(ctx context.Context) error {
 		openapinamer.NewDefinitionNamer(Scheme, scheme.Scheme))
 
 	// Add the custom routes to service discovery
-	serverConfig.OpenAPIV3Config.PostProcessSpec3 = getOpenAPIPostProcessor(builders)
+	serverConfig.OpenAPIV3Config.PostProcessSpec3 = GetOpenAPIPostProcessor(builders)
 
 	// Set the swagger build versions
 	serverConfig.OpenAPIConfig.Info.Version = setting.BuildVersion
@@ -392,34 +393,10 @@ func (s *service) running(ctx context.Context) error {
 }
 
 func (s *service) ensureKubeConfig() error {
-	clusters := make(map[string]*clientcmdapi.Cluster)
-	clusters["default-cluster"] = &clientcmdapi.Cluster{
-		Server:                s.restConfig.Host,
-		InsecureSkipTLSVerify: true,
-	}
-
-	contexts := make(map[string]*clientcmdapi.Context)
-	contexts["default-context"] = &clientcmdapi.Context{
-		Cluster:   "default-cluster",
-		Namespace: "default",
-		AuthInfo:  "default",
-	}
-
-	authinfos := make(map[string]*clientcmdapi.AuthInfo)
-	authinfos["default"] = &clientcmdapi.AuthInfo{
-		Token: s.restConfig.BearerToken,
-	}
-
-	clientConfig := clientcmdapi.Config{
-		Kind:           "Config",
-		APIVersion:     "v1",
-		Clusters:       clusters,
-		Contexts:       contexts,
-		CurrentContext: "default-context",
-		AuthInfos:      authinfos,
-	}
-
-	return clientcmd.WriteToFile(clientConfig, path.Join(s.config.dataPath, "grafana.kubeconfig"))
+	return clientcmd.WriteToFile(
+		utils.FormatKubeConfig(s.restConfig),
+		path.Join(s.config.dataPath, "grafana.kubeconfig"),
+	)
 }
 
 type roundTripperFunc struct {
@@ -435,6 +412,10 @@ func getK8sApiserverVersion() (string, error) {
 	bi, ok := debug.ReadBuildInfo()
 	if !ok {
 		return "", fmt.Errorf("debug.ReadBuildInfo() failed")
+	}
+
+	if len(bi.Deps) == 0 {
+		return "v?.?", nil // this is normal while debugging
 	}
 
 	for _, dep := range bi.Deps {

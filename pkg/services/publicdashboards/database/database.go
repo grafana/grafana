@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -59,7 +60,7 @@ func (d *PublicDashboardStoreImpl) FindAllWithPagination(ctx context.Context, qu
 	pubdashBuilder.Write(" JOIN dashboard ON dashboard.uid = dashboard_public.dashboard_uid AND dashboard.org_id = dashboard_public.org_id")
 	pubdashBuilder.Write(` WHERE dashboard_public.org_id = ?`, query.OrgID)
 	if query.User.OrgRole != org.RoleAdmin {
-		pubdashBuilder.WriteDashboardPermissionFilter(query.User, dashboards.PERMISSION_VIEW, searchstore.TypeDashboard)
+		pubdashBuilder.WriteDashboardPermissionFilter(query.User, dashboardaccess.PERMISSION_VIEW, searchstore.TypeDashboard)
 	}
 	pubdashBuilder.Write(" ORDER BY dashboard.title")
 	pubdashBuilder.Write(d.sqlStore.GetDialect().LimitOffset(int64(query.Limit), int64(query.Offset)))
@@ -70,7 +71,7 @@ func (d *PublicDashboardStoreImpl) FindAllWithPagination(ctx context.Context, qu
 	counterBuilder.Write(" JOIN dashboard ON dashboard.uid = dashboard_public.dashboard_uid AND dashboard.org_id = dashboard_public.org_id")
 	counterBuilder.Write(` WHERE dashboard_public.org_id = ?`, query.OrgID)
 	if query.User.OrgRole != org.RoleAdmin {
-		counterBuilder.WriteDashboardPermissionFilter(query.User, dashboards.PERMISSION_VIEW, searchstore.TypeDashboard)
+		counterBuilder.WriteDashboardPermissionFilter(query.User, dashboardaccess.PERMISSION_VIEW, searchstore.TypeDashboard)
 	}
 
 	err = d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
@@ -88,28 +89,6 @@ func (d *PublicDashboardStoreImpl) FindAllWithPagination(ctx context.Context, qu
 	}
 
 	return resp, nil
-}
-
-// FindDashboard returns a dashboard by orgId and dashboardUid
-func (d *PublicDashboardStoreImpl) FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (*dashboards.Dashboard, error) {
-	dashboard := &dashboards.Dashboard{OrgID: orgId, UID: dashboardUid}
-
-	var found bool
-	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		var err error
-		found, err = sess.Get(dashboard)
-		return err
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	if !found {
-		return nil, nil
-	}
-
-	return dashboard, nil
 }
 
 // Find Returns public dashboard by Uid or nil if not found

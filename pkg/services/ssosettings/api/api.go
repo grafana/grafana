@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -43,13 +44,11 @@ func (api *Api) RegisterAPIEndpoints() {
 		auth := ac.Middleware(api.AccessControl)
 
 		scopeKey := ac.Parameter(":key")
-		settingsScope := ac.Scope("settings", "auth."+scopeKey, "*")
+		settingsScope := ac.ScopeSettingsOAuth(scopeKey)
 
-		reqWriteAccess := auth(ac.EvalAny(
-			ac.EvalPermission(ac.ActionSettingsWrite, ac.ScopeSettingsAuth),
-			ac.EvalPermission(ac.ActionSettingsWrite, settingsScope)))
+		reqWriteAccess := auth(ac.EvalPermission(ac.ActionSettingsWrite, settingsScope))
 
-		router.Get("/", auth(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAuth)), routing.Wrap(api.listAllProvidersSettings))
+		router.Get("/", auth(ac.EvalPermission(ac.ActionSettingsRead)), routing.Wrap(api.listAllProvidersSettings))
 		router.Get("/:key", auth(ac.EvalPermission(ac.ActionSettingsRead, settingsScope)), routing.Wrap(api.getProviderSettings))
 		router.Put("/:key", reqWriteAccess, routing.Wrap(api.updateProviderSettings))
 		router.Delete("/:key", reqWriteAccess, routing.Wrap(api.removeProviderSettings))
@@ -62,7 +61,18 @@ func (api *Api) listAllProvidersSettings(c *contextmodel.ReqContext) response.Re
 		return response.Error(500, "Failed to get providers", err)
 	}
 
-	return response.JSON(http.StatusOK, providers)
+	dtos := make([]*models.SSOSettingsDTO, 0)
+	for _, provider := range providers {
+		dto, err := provider.ToSSOSettingsDTO()
+		if err != nil {
+			api.Log.Warn("Failed to convert SSO Settings for provider " + provider.Provider)
+			continue
+		}
+
+		dtos = append(dtos, dto)
+	}
+
+	return response.JSON(http.StatusOK, dtos)
 }
 
 func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Response {
@@ -76,7 +86,12 @@ func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Respons
 		return response.Error(http.StatusNotFound, "The provider was not found", err)
 	}
 
-	return response.JSON(http.StatusOK, settings)
+	dto, err := settings.ToSSOSettingsDTO()
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "The provider is invalid", err)
+	}
+
+	return response.JSON(http.StatusOK, dto)
 }
 
 func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Response {
@@ -85,12 +100,19 @@ func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "Missing key", nil)
 	}
 
-	var newSettings models.SSOSetting
-	if err := web.Bind(c.Req, &newSettings); err != nil {
+	var settingsDTO models.SSOSettingsDTO
+	if err := web.Bind(c.Req, &settingsDTO); err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to parse request body", err)
 	}
 
-	err := api.SSOSettingsService.Upsert(c.Req.Context(), key, newSettings.Settings)
+	settings, err := settingsDTO.ToSSOSettings()
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Invalid request body", err)
+	}
+
+	settings.Provider = key
+
+	err = api.SSOSettingsService.Upsert(c.Req.Context(), *settings)
 	// TODO: first check whether the error is referring to validation errors
 
 	// other error
@@ -101,6 +123,20 @@ func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Resp
 	return response.JSON(http.StatusNoContent, nil)
 }
 
+// swagger:route DELETE /v1/sso-settings/{key} sso_settings removeProviderSettings
+//
+// # Remove SSO Settings
+//
+// # Remove an SSO Settings entry by Key
+//
+// You need to have a permission with action `settings:write` with scope `settings:auth.<provider>:*`.
+//
+// Responses:
+// 204: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (api *Api) removeProviderSettings(c *contextmodel.ReqContext) response.Response {
 	key, ok := web.Params(c.Req)[":key"]
 	if !ok {
@@ -109,8 +145,18 @@ func (api *Api) removeProviderSettings(c *contextmodel.ReqContext) response.Resp
 
 	err := api.SSOSettingsService.Delete(c.Req.Context(), key)
 	if err != nil {
+		if errors.Is(err, ssosettings.ErrNotFound) {
+			return response.Error(http.StatusNotFound, "The provider was not found", err)
+		}
 		return response.Error(http.StatusInternalServerError, "Failed to delete provider settings", err)
 	}
 
 	return response.JSON(http.StatusNoContent, nil)
+}
+
+// swagger:parameters removeProviderSettings
+type RemoveProviderSettingsParams struct {
+	// in:path
+	// required:true
+	Key string `json:"key"`
 }

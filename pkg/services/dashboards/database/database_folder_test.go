@@ -294,7 +294,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			guardian.New = origNewGuardian
 		})
 
-		folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(sqlStore), sqlStore, features)
+		folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(sqlStore), sqlStore, features, nil)
 
 		parentUID := ""
 		for i := 0; ; i++ {
@@ -339,7 +339,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			Dashboard: simplejson.NewFromAny(map[string]any{
 				"title": dashInParentTitle,
 			}),
-			FolderID:  nestedFolders[0].ID,
+			FolderID:  nestedFolders[0].ID, // nolint:staticcheck
 			FolderUID: nestedFolders[0].UID,
 		}
 		_, err = dashboardWriteStore.SaveDashboard(context.Background(), saveDashboardCmd)
@@ -352,7 +352,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			Dashboard: simplejson.NewFromAny(map[string]any{
 				"title": dashInSubfolderTitle,
 			}),
-			FolderID:  nestedFolders[1].ID,
+			FolderID:  nestedFolders[1].ID, // nolint:staticcheck
 			FolderUID: nestedFolders[1].UID,
 		}
 		_, err = dashboardWriteStore.SaveDashboard(context.Background(), saveDashboardCmd)
@@ -442,7 +442,7 @@ func moveDashboard(t *testing.T, dashboardStore dashboards.Store, orgId int64, d
 
 	cmd := dashboards.SaveDashboardCommand{
 		OrgID:     orgId,
-		FolderID:  newFolderId,
+		FolderID:  newFolderId, // nolint:staticcheck
 		FolderUID: newFolderUID,
 		Dashboard: dashboard,
 		Overwrite: true,
