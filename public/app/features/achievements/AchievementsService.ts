@@ -20,12 +20,14 @@ export const registerAchievementCompleted = async (achievementId: AchievementId)
 
   // check if achievement is already completed
   if (userHasCompletedAchievement(achievementId, user)) {
+    console.log('achievement already done');
     return;
   }
 
   // save achievement as completed on user object
-  // TODO Fix this
-  // user.achievements?.push(achievementId);
+  const achievements = parseAchievementString(user.achievements);
+  achievements.push(achievementId);
+  user.achievements = JSON.stringify(achievements);
 
   // check if achievement is a level up
   // if so, save new level on user object
@@ -38,13 +40,13 @@ export const registerAchievementCompleted = async (achievementId: AchievementId)
     // display error?
   }
 
-  // TODO notify user of achievement completion / level up!
+  // notify user of achievement completion / level up!
+  // TODO: decide if we want to display both level up and achievement completed notifications at same time / delayed etc
+  // right now behavior is to only show level up notification if user levels up and voids achievement completed notification
   if (isLevelUp) {
-    // TODO notify user of level up!
     console.log('level up! new level: ', user.level);
     appEvents.emit(AppEvents.alertSuccess, ['Level up!', `You are now a level ${user.level} Grafana user!`]);
   } else {
-    // TODO notify user of achievement completion!
     console.log('achievement completed!', achievementId);
     appEvents.emit(AppEvents.alertSuccess, [
       'Achievement completed!',
@@ -58,8 +60,8 @@ const checkIfLevelUp = (user: UserDTO): boolean => {
   if (currentLevel === AchievementLevel.Wizard) {
     return false;
   }
-
-  const achievementsCompleted = user.achievements?.length ?? 0;
+  const achievements = parseAchievementString(user.achievements);
+  const achievementsCompleted = achievements.length ?? 0;
   const nextThresholdIndex: keyof typeof achievementLevelThresholds = currentLevel + 1;
   const nextLevelThreshold = achievementLevelThresholds[nextThresholdIndex];
 
@@ -77,10 +79,8 @@ const updateUser = async (user: UserDTO): Promise<void> => {
 
 // function to check if a user has completed an achievement
 export const userHasCompletedAchievement = (achievementId: AchievementId, user: UserDTO): boolean => {
-  // TODO: Fix this functionality
-  // const achievements = JSON.parse(user.achievements ?? '') ?? {};
-  // return achievements?.some((achievement: {id: string, value: number}) => achievement.id === achievementId) ?? false;
-  return false;
+  const achievements = parseAchievementString(user.achievements);
+  return achievements?.some((id: string) => id === achievementId) ?? false;
 };
 
 // function to provide all achievements for a user (with completion status)
@@ -98,4 +98,8 @@ export const getAchievements = async (): Promise<Achievement[]> => {
 export const getUserLevel = async (): Promise<number> => {
   const user = await api.loadUser();
   return user.level ?? 0;
+};
+
+const parseAchievementString = (achievementString: string | undefined): string[] => {
+  return !achievementString || achievementString === '' ? [] : JSON.parse(achievementString) ?? [];
 };

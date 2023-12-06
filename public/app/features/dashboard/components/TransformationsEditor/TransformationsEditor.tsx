@@ -27,6 +27,8 @@ import {
 } from '@grafana/ui';
 import config from 'app/core/config';
 import { Trans } from 'app/core/internationalization';
+import { registerAchievementCompleted } from 'app/features/achievements/AchievementsService';
+import { AchievementId } from 'app/features/achievements/types';
 
 import { PanelModel } from '../../state';
 import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
@@ -178,6 +180,11 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
       action: 'add',
       transformationId: selectable.value,
     });
+
+    if (selectable.value === 'joinByField') {
+      registerAchievementCompleted(AchievementId.UseJoinByFieldTransformation);
+    }
+
     const { transformations } = this.state;
 
     const nextId = this.getTransformationNextId(selectable.value!);
@@ -274,6 +281,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
             size="md"
             onClick={() => {
               this.setState({ showPicker: true });
+              registerAchievementCompleted(AchievementId.BrowseDataTransformations);
             }}
             data-testid={selectors.components.Transforms.addTransformationButton}
           >

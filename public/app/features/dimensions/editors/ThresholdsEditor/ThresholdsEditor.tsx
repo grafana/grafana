@@ -12,6 +12,8 @@ import {
   ThemeContext,
 } from '@grafana/data';
 import { Button, ColorPicker, colors, IconButton, Input, Label, RadioButtonGroup, stylesFactory } from '@grafana/ui';
+import { registerAchievementCompleted } from 'app/features/achievements/AchievementsService';
+import { AchievementId } from 'app/features/achievements/types';
 
 const modes: Array<SelectableValue<ThresholdsMode>> = [
   { value: ThresholdsMode.Absolute, label: 'Absolute', description: 'Pick thresholds based on the absolute values' },
@@ -74,6 +76,8 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
       }
       this.onChange();
     });
+
+    registerAchievementCompleted(AchievementId.AddCustomThresholds);
   };
 
   onRemoveThreshold = (threshold: ThresholdWithKey) => {

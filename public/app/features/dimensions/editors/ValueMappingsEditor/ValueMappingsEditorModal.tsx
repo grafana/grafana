@@ -5,6 +5,8 @@ import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import { GrafanaTheme2, MappingType, SelectableValue, SpecialValueMatch, ValueMapping } from '@grafana/data';
 import { useStyles2, Modal, ValuePicker, Button } from '@grafana/ui';
+import { registerAchievementCompleted } from 'app/features/achievements/AchievementsService';
+import { AchievementId } from 'app/features/achievements/types';
 
 import { ValueMappingEditRow, ValueMappingEditRowModel } from './ValueMappingEditRow';
 
@@ -55,6 +57,8 @@ export function ValueMappingsEditorModal({ value, onChange, onClose, showIconPic
   ];
 
   const onAddValueMapping = (value: SelectableValue<MappingType>) => {
+    registerAchievementCompleted(AchievementId.AddValueMapping);
+
     updateRows([...rows, createRow({ type: value.value!, result: {}, isNew: true })]);
   };
 
