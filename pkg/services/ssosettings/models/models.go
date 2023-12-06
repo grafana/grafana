@@ -102,7 +102,7 @@ func (s SSOSettings) ToSSOSettingsDTO(includeDefaults ...bool) (*SSOSettingsDTO,
 		}
 	}
 
-	if _, ok := settings["ClientSecret"]; ok {
+	if clientSecret, ok := settings["ClientSecret"].(string); ok && len(clientSecret) > 0 {
 		settings["ClientSecret"] = "*********"
 	}
 
