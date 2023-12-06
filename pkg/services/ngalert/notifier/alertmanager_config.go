@@ -2,6 +2,8 @@ package notifier
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -64,7 +66,9 @@ func (moa *MultiOrgAlertmanager) ActivateHistoricalConfiguration(ctx context.Con
 		}
 	}
 
-	if err := am.SaveAndApplyConfig(ctx, cfg); err != nil {
+	if err := moa.SaveConfig(ctx, orgId, cfg, func(ctx context.Context) error {
+		return am.ApplyConfig(ctx, cfg)
+	}); err != nil {
 		moa.logger.Error("Unable to save and apply historical alertmanager configuration", "error", err, "org", orgId, "id", id)
 		return AlertmanagerConfigRejectedError{err}
 	}
@@ -155,6 +159,23 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 	return result, nil
 }
 
+func (moa *MultiOrgAlertmanager) ApplyDefaultAlertmanagerConfiguration(ctx context.Context, orgID int64) error {
+	am, err := moa.AlertmanagerFor(orgID)
+	if err != nil {
+		// It's okay if the alertmanager isn't ready yet, we're changing its config anyway.
+		if !errors.Is(err, ErrAlertmanagerNotReady) {
+			return err
+		}
+	}
+	defaultConfig := moa.defaultAlertmanagerConfig()
+	if err := moa.SaveConfig(ctx, orgID, defaultConfig, func(ctx context.Context) error {
+		return am.ApplyConfig(ctx, defaultConfig)
+	}); err != nil {
+		return fmt.Errorf("failed to save and apply default Alertmanager configuration: %w", err)
+	}
+	return nil
+}
+
 func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Context, org int64, config definitions.PostableUserConfig) error {
 	// Get the last known working configuration
 	_, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, org)
@@ -181,12 +202,43 @@ func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Cont
 		}
 	}
 
-	if err := am.SaveAndApplyConfig(ctx, &config); err != nil {
+	if err := moa.SaveConfig(ctx, org, &config, func(ctx context.Context) error {
+		return am.ApplyConfig(ctx, &config)
+	}); err != nil {
 		moa.logger.Error("Unable to save and apply alertmanager configuration", "error", err)
 		return AlertmanagerConfigRejectedError{err}
 	}
 
 	return nil
+}
+
+// SaveConfig saves the configuration the database.
+func (moa *MultiOrgAlertmanager) SaveConfig(ctx context.Context, orgID int64, cfg *definitions.PostableUserConfig, callback func(ctx context.Context) error) error {
+	rawConfig, err := json.Marshal(&cfg)
+	if err != nil {
+		return fmt.Errorf("failed to serialize to the Alertmanager configuration: %w", err)
+	}
+
+	// This is a different hash (PostableUserConfig) than the one used by GrafanaAlertmanager (PostableApiAlertingConfig).
+	// This shouldn't be an issue as they are never compared, but we could consider keeping the two in sync anyways.
+	hashHex := fmt.Sprintf("%x", md5.Sum(rawConfig))
+	cmd := &models.SaveAlertmanagerConfigurationCmd{
+		AlertmanagerConfiguration: string(rawConfig),
+		Default:                   hashHex == moa.defaultAlertmanagerConfigHash,
+		ConfigurationVersion:      fmt.Sprintf("v%d", models.AlertConfigurationVersion),
+		FetchedConfigurationHash:  hashHex,
+		OrgID:                     orgID,
+		LastApplied:               time.Now().UTC().Unix(),
+	}
+
+	return moa.configStore.InTransaction(ctx, func(ctx context.Context) error {
+		return moa.configStore.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
+			if callback == nil {
+				return nil
+			}
+			return callback(ctx)
+		})
+	})
 }
 
 // assignReceiverConfigsUIDs assigns missing UUIDs to receiver configs.

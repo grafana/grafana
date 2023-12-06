@@ -657,8 +657,8 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 	t.Helper()
 
 	configs := map[int64]*ngmodels.AlertConfiguration{
-		1: {AlertmanagerConfiguration: validConfig, OrgID: 1},
-		2: {AlertmanagerConfiguration: validConfig, OrgID: 2},
+		1: {AlertmanagerConfiguration: validConfig, OrgID: 1, ConfigurationHash: "9becf0edfa4598c092faa74d86ce1a44"},
+		2: {AlertmanagerConfiguration: validConfig, OrgID: 2, ConfigurationHash: "9becf0edfa4598c092faa74d86ce1a44"},
 		3: {AlertmanagerConfiguration: brokenConfig, OrgID: 3},
 	}
 	configStore := notifier.NewFakeConfigStore(t, configs)

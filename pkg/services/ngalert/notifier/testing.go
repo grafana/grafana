@@ -176,6 +176,10 @@ func (f *fakeConfigStore) GetHistoricalConfiguration(_ context.Context, orgID in
 	return &models.HistoricAlertConfiguration{}, store.ErrNoAlertmanagerConfiguration
 }
 
+func (f *fakeConfigStore) InTransaction(ctx context.Context, work func(ctx context.Context) error) error {
+	return work(ctx)
+}
+
 type FakeOrgStore struct {
 	orgs []int64
 }

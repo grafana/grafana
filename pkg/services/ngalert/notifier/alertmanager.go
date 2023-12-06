@@ -43,6 +43,12 @@ var silenceMaintenanceInterval = 15 * time.Minute
 type AlertingStore interface {
 	store.AlertingStore
 	store.ImageStore
+	TransactionManager
+}
+
+// TransactionManager represents the ability to issue and close transactions through contexts.
+type TransactionManager interface {
+	InTransaction(ctx context.Context, work func(ctx context.Context) error) error
 }
 
 type alertmanager struct {
@@ -160,79 +166,11 @@ func (am *alertmanager) StopAndWait() {
 	am.Base.StopAndWait()
 }
 
-// SaveAndApplyDefaultConfig saves the default configuration to the database and applies it to the Alertmanager.
-// It rolls back the save if we fail to apply the configuration.
-func (am *alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
-	var outerErr error
-	am.Base.WithLock(func() {
-		cmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
-			AlertmanagerConfiguration: am.Settings.UnifiedAlerting.DefaultConfiguration,
-			Default:                   true,
-			ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
-			OrgID:                     am.orgID,
-			LastApplied:               time.Now().UTC().Unix(),
-		}
-
-		cfg, err := Load([]byte(am.Settings.UnifiedAlerting.DefaultConfiguration))
-		if err != nil {
-			outerErr = err
-			return
-		}
-
-		err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
-			_, err := am.applyConfig(cfg)
-			return err
-		})
-		if err != nil {
-			outerErr = nil
-			return
-		}
-	})
-
-	return outerErr
-}
-
-// SaveAndApplyConfig saves the configuration the database and applies the configuration to the Alertmanager.
-// It rollbacks the save if we fail to apply the configuration.
-func (am *alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
-	rawConfig, err := json.Marshal(&cfg)
-	if err != nil {
-		return fmt.Errorf("failed to serialize to the Alertmanager configuration: %w", err)
-	}
-
-	var outerErr error
-	am.Base.WithLock(func() {
-		cmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
-			AlertmanagerConfiguration: string(rawConfig),
-			ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
-			OrgID:                     am.orgID,
-			LastApplied:               time.Now().UTC().Unix(),
-		}
-
-		err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
-			_, err := am.applyConfig(cfg)
-			return err
-		})
-		if err != nil {
-			outerErr = err
-			return
-		}
-	})
-
-	return outerErr
-}
-
 // ApplyConfig applies the configuration to the Alertmanager.
-func (am *alertmanager) ApplyConfig(ctx context.Context, dbCfg *ngmodels.AlertConfiguration) error {
-	var err error
-	cfg, err := Load([]byte(dbCfg.AlertmanagerConfiguration))
-	if err != nil {
-		return fmt.Errorf("failed to parse Alertmanager config: %w", err)
-	}
-
+func (am *alertmanager) ApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
 	var outerErr error
 	am.Base.WithLock(func() {
-		if err := am.applyAndMarkConfig(ctx, dbCfg.ConfigurationHash, cfg); err != nil {
+		if err := am.applyAndMarkConfig(ctx, cfg); err != nil {
 			outerErr = fmt.Errorf("unable to apply configuration: %w", err)
 			return
 		}
@@ -288,13 +226,14 @@ func (am *alertmanager) aggregateInhibitMatchers(rules []config.InhibitRule, amu
 // It is not safe to call concurrently.
 func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) (bool, error) {
 	// First, let's make sure this config is not already loaded
-	var amConfigChanged bool
+
+	// We use the PostableApiAlertingConfig as the source of truth for the configuration.
 	rawConfig, err := json.Marshal(cfg.AlertmanagerConfig)
 	if err != nil {
-		// In theory, this should never happen.
 		return false, err
 	}
 
+	var amConfigChanged bool
 	if am.Base.ConfigHash() != md5.Sum(rawConfig) {
 		amConfigChanged = true
 	}
@@ -332,7 +271,12 @@ func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) (bool, er
 }
 
 // applyAndMarkConfig applies a configuration and marks it as applied if no errors occur.
-func (am *alertmanager) applyAndMarkConfig(ctx context.Context, hash string, cfg *apimodels.PostableUserConfig) error {
+func (am *alertmanager) applyAndMarkConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
+	rawConfig, err := json.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+
 	configChanged, err := am.applyConfig(cfg)
 	if err != nil {
 		return err
@@ -340,8 +284,9 @@ func (am *alertmanager) applyAndMarkConfig(ctx context.Context, hash string, cfg
 
 	if configChanged {
 		markConfigCmd := ngmodels.MarkConfigurationAsAppliedCmd{
-			OrgID:             am.orgID,
-			ConfigurationHash: hash,
+			OrgID: am.orgID,
+			// This should be the same hash (PostableUserConfig) that is saved to the database.
+			ConfigurationHash: fmt.Sprintf("%x", md5.Sum(rawConfig)),
 		}
 		return am.Store.MarkConfigurationAsApplied(ctx, &markConfigCmd)
 	}

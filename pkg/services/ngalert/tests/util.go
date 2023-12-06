@@ -39,6 +39,32 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const DefaultAlertmanagerConfigJSON = `
+{
+	"template_files": null,
+	"alertmanager_config": {
+		"route": {
+			"receiver": "grafana-default-email",
+			"group_by": ["grafana_folder", "alertname"]
+		},
+		"templates": null,
+		"receivers": [{
+			"name": "grafana-default-email",
+			"grafana_managed_receiver_configs": [{
+				"uid": "",
+				"name": "email receiver",
+				"type": "email",
+				"disableResolveMessage": false,
+				"settings": {
+					"addresses": "\u003cexample@email.com\u003e"
+				},
+				"secureFields": {}
+			}]
+		}]
+	}
+}
+`
+
 // SetupTestEnv initializes a store to used by the tests.
 func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, *store.DBstore) {
 	tb.Helper()
@@ -50,6 +76,7 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 	// AlertNG database migrations run and the relative database tables are created only when it's enabled
 	cfg.UnifiedAlerting.Enabled = new(bool)
 	*cfg.UnifiedAlerting.Enabled = true
+	cfg.UnifiedAlerting.DefaultConfiguration = DefaultAlertmanagerConfigJSON
 
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
 	sqlStore := db.InitTestDB(tb)
