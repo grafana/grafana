@@ -8,6 +8,8 @@ import { TextDimensionMode } from '@grafana/schema';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 import { frameHasName, getFrameFieldsDisplayNames } from '@grafana/ui/src/components/MatchersUI/utils';
+import { registerAchievementCompleted } from 'app/features/achievements/AchievementsService';
+import { AchievementId } from 'app/features/achievements/types';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
@@ -83,6 +85,8 @@ const MetricValueEdit = (props: CanvasElementProps<TextConfig, TextData>) => {
             color: { field: field, fixed: options.background?.color?.fixed ?? '' },
           },
         });
+
+        registerAchievementCompleted(AchievementId.SetMetricValueElement);
 
         // Force a re-render (update scene data after config update)
         const scene = context.instanceState?.scene;

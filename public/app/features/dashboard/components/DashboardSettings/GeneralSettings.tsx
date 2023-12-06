@@ -17,6 +17,8 @@ import {
 import { Page } from 'app/core/components/Page/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { t, Trans } from 'app/core/internationalization';
+import { registerAchievementCompleted } from 'app/features/achievements/AchievementsService';
+import { AchievementId } from 'app/features/achievements/types';
 import { updateTimeZoneDashboard, updateWeekStartDashboard } from 'app/features/dashboard/state/actions';
 
 import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton';
@@ -70,6 +72,7 @@ export function GeneralSettingsUnconnected({
 
   const onTooltipChange = (graphTooltip: number) => {
     dashboard.graphTooltip = graphTooltip;
+    registerAchievementCompleted(AchievementId.EnableSharedCrosshairOrTooltip);
     setRenderCounter(renderCounter + 1);
   };
 

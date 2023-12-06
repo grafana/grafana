@@ -41,6 +41,8 @@ export const registerAchievementCompleted = async (achievementId: AchievementId)
   }
 
   // notify user of achievement completion / level up!
+  // TODO: decide if we want to display both level up and achievement completed notifications at same time / delayed etc
+  // right now behavior is to only show level up notification if user levels up and voids achievement completed notification
   if (isLevelUp) {
     console.log('level up! new level: ', user.level);
     appEvents.emit(AppEvents.alertSuccess, ['Level up!', `You are now a level ${user.level} Grafana user!`]);
