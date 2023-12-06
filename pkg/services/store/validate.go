@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -47,11 +49,11 @@ func fail(reason string) validationResult {
 }
 
 func (s *standardStorageService) detectMimeType(ctx context.Context, user *user.SignedInUser, uploadRequest *UploadRequest) string {
-	// if strings.HasSuffix(uploadRequest.Path, ".svg") {
-	// 	if svg.IsSVG(uploadRequest.Contents) {
-	// 		return "image/svg+xml"
-	// 	}
-	// }
+	if strings.HasSuffix(uploadRequest.Path, ".svg") {
+		if util.IsSVG(uploadRequest.Contents) {
+			return "image/svg+xml"
+		}
+	}
 
 	return http.DetectContentType(uploadRequest.Contents)
 }
