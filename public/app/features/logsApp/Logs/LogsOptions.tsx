@@ -8,11 +8,13 @@ interface Props {
   showLabels: boolean;
   wrapLogMessage: boolean;
   prettifyLogMessage: boolean;
+  highlightSearchwords: boolean;
   exploreId: string;
-  onChangeTime(event: React.ChangeEvent<HTMLInputElement>): void;
-  onChangeLabels(event: React.ChangeEvent<HTMLInputElement>): void;
-  onChangeWrapLogMessage(event: React.ChangeEvent<HTMLInputElement>): void;
-  onChangePrettifyLogMessage(event: React.ChangeEvent<HTMLInputElement>): void;
+  onChangeTime(value: boolean): void;
+  onChangeLabels(value: boolean): void;
+  onChangeWrapLogMessage(value: boolean): void;
+  onChangePrettifyLogMessage(value: boolean): void;
+  onChangeHighlightSearchwords(value: boolean): void;
 }
 
 export const LogsOptions = ({
@@ -25,34 +27,46 @@ export const LogsOptions = ({
   wrapLogMessage,
   onChangeWrapLogMessage,
   onChangePrettifyLogMessage,
+  onChangeHighlightSearchwords,
   prettifyLogMessage,
+  highlightSearchwords,
 }: Props) => {
   const menu = (
     <div className={styles.logOptionsMenu}>
-      <InlineField label="Time" className={styles.logOptionMenuItem}>
-        <InlineSwitch value={showTime} onChange={onChangeTime} transparent id={`show-time_${exploreId}`} />
+      <InlineField label="Time" className={styles.logOptionMenuItem} onClick={() => onChangeTime(!showTime)}>
+        <InlineSwitch value={showTime} transparent id={`show-time_${exploreId}`} />
       </InlineField>
-      <InlineField label="Unique labels" className={styles.logOptionMenuItem}>
-        <InlineSwitch value={showLabels} onChange={onChangeLabels} transparent id={`unique-labels_${exploreId}`} />
+      <InlineField
+        label="Unique labels"
+        className={styles.logOptionMenuItem}
+        onClick={() => onChangeLabels(!showLabels)}
+      >
+        <InlineSwitch value={showLabels} transparent id={`unique-labels_${exploreId}`} />
       </InlineField>
-      <InlineField label="Wrap lines" className={styles.logOptionMenuItem}>
-        <InlineSwitch
-          value={wrapLogMessage}
-          onChange={onChangeWrapLogMessage}
-          transparent
-          id={`wrap-lines_${exploreId}`}
-        />
+      <InlineField
+        label="Wrap lines"
+        className={styles.logOptionMenuItem}
+        onClick={() => onChangeWrapLogMessage(!wrapLogMessage)}
+      >
+        <InlineSwitch value={wrapLogMessage} transparent id={`wrap-lines_${exploreId}`} />
       </InlineField>
-      <InlineField label="Prettify JSON" className={styles.logOptionMenuItem}>
-        <InlineSwitch
-          value={prettifyLogMessage}
-          onChange={onChangePrettifyLogMessage}
-          transparent
-          id={`prettify_${exploreId}`}
-        />
+      <InlineField
+        label="Prettify JSON"
+        className={styles.logOptionMenuItem}
+        onClick={() => onChangePrettifyLogMessage(!prettifyLogMessage)}
+      >
+        <InlineSwitch value={prettifyLogMessage} transparent id={`prettify_${exploreId}`} />
+      </InlineField>
+      <InlineField
+        label="Highlight searchwords"
+        className={styles.logOptionMenuItem}
+        onClick={() => onChangeHighlightSearchwords(!highlightSearchwords)}
+      >
+        <InlineSwitch value={highlightSearchwords} transparent />
       </InlineField>
     </div>
   );
+
   return (
     <Dropdown overlay={menu}>
       <Button size="md" variant="secondary">

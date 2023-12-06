@@ -127,6 +127,7 @@ interface State {
   groupByLabel?: string;
   paneSize: number;
   sidebarVisible: boolean;
+  highlightSearchwords: boolean;
 }
 
 const DETAILS_SIZE = 595;
@@ -167,6 +168,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     groupByLabel: undefined,
     paneSize: localStorage.getItem('logs.sidebar') === 'true' ? getLastSize() : window.innerWidth - WINDOW_MARGINS,
     sidebarVisible: localStorage.getItem('logs.sidebar') === 'true' ? true : false,
+    highlightSearchwords: true,
   };
 
   constructor(props: Props) {
@@ -311,48 +313,44 @@ class UnthemedLogs extends PureComponent<Props, State> {
     this.setState({ dedupStrategy });
   };
 
-  onChangeLabels = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { target } = event;
-    if (target) {
-      const showLabels = target.checked;
-      this.setState({
-        showLabels,
-      });
-      store.set(SETTINGS_KEYS.showLabels, showLabels);
-    }
+  onChangeLabels = (value: boolean) => {
+    const showLabels = value;
+    this.setState({
+      showLabels,
+    });
+    store.set(SETTINGS_KEYS.showLabels, showLabels);
   };
 
-  onChangeTime = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { target } = event;
-    if (target) {
-      const showTime = target.checked;
-      this.setState({
-        showTime,
-      });
-      store.set(SETTINGS_KEYS.showTime, showTime);
-    }
+  onChangeTime = (value: boolean) => {
+    const showTime = value;
+    this.setState({
+      showTime,
+    });
+    store.set(SETTINGS_KEYS.showTime, showTime);
   };
 
-  onChangeWrapLogMessage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { target } = event;
-    if (target) {
-      const wrapLogMessage = target.checked;
-      this.setState({
-        wrapLogMessage,
-      });
-      store.set(SETTINGS_KEYS.wrapLogMessage, wrapLogMessage);
-    }
+  onChangeWrapLogMessage = (value: boolean) => {
+    const wrapLogMessage = value;
+    this.setState({
+      wrapLogMessage,
+    });
+    store.set(SETTINGS_KEYS.wrapLogMessage, wrapLogMessage);
   };
 
-  onChangePrettifyLogMessage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { target } = event;
-    if (target) {
-      const prettifyLogMessage = target.checked;
-      this.setState({
-        prettifyLogMessage,
-      });
-      store.set(SETTINGS_KEYS.prettifyLogMessage, prettifyLogMessage);
-    }
+  onChangePrettifyLogMessage = (value: boolean) => {
+    const prettifyLogMessage = value;
+    this.setState({
+      prettifyLogMessage,
+    });
+    store.set(SETTINGS_KEYS.prettifyLogMessage, prettifyLogMessage);
+  };
+
+  onChangeHighlightSearchwords = (value: boolean) => {
+    const highlightSearchwords = value;
+    this.setState({
+      highlightSearchwords,
+    });
+    store.set(SETTINGS_KEYS.highlightSearchwords, highlightSearchwords);
   };
 
   onToggleLogLevel = (hiddenRawLevels: string[]) => {
@@ -654,6 +652,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       forceEscape,
       contextOpen,
       contextRow,
+      highlightSearchwords,
     } = this.state;
 
     const tableHeight = getLogsTableHeight();
@@ -738,11 +737,13 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 showLabels={showLabels}
                 wrapLogMessage={wrapLogMessage}
                 prettifyLogMessage={prettifyLogMessage}
+                highlightSearchwords={highlightSearchwords}
                 exploreId={exploreId}
                 onChangeTime={this.onChangeTime}
                 onChangeLabels={this.onChangeLabels}
                 onChangeWrapLogMessage={this.onChangeWrapLogMessage}
                 onChangePrettifyLogMessage={this.onChangePrettifyLogMessage}
+                onChangeHighlightSearchwords={this.onChangeHighlightSearchwords}
               />
               <div className={styles.optionToggles}>
                 {config.featureToggles.logsExploreTableVisualisation && (
@@ -861,6 +862,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                         onClickFilterOutValue={this.props.onClickFilterOutValue}
                         showDetails={this.showDetails}
                         logDetailsRow={this.state.logDetailsRow}
+                        highlightSearchwords={highlightSearchwords}
                         noMenu
                       />
                     </InfiniteScroll>
