@@ -1,14 +1,18 @@
 import { cx } from '@emotion/css';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
+import { useAsync } from 'react-use';
+import { firstValueFrom } from 'rxjs';
 import { v4 } from 'uuid';
 
-import { CoreApp, DataFrame, DataFrameType, Field, LinkModel, LogRowModel } from '@grafana/data';
+import { CoreApp, DataFrame, DataFrameType, Field, LinkModel, LogRowModel, getDefaultTimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { LinkButton } from '@grafana/ui';
-import { createUrl } from 'app/features/alerting/unified/utils/url';
+import { Collapse } from '@grafana/ui';
+import { TraceView } from 'app/features/explore/TraceView/TraceView';
+import { transformDataFrames } from 'app/features/explore/TraceView/utils/transform';
 import { LogRowStyles } from 'app/features/logs/components/getLogRowStyles';
 import { createLogLineLinks, getAllFields } from 'app/features/logs/components/logParser';
 import { calculateLogsLabelStats, calculateStats } from 'app/features/logs/utils';
+import { TempoDatasource } from 'app/plugins/datasource/tempo/datasource';
 
 import { LogDetailsRow } from './LogDetailsRow';
 
@@ -69,6 +73,8 @@ export const LogDetails = (props: Props) => {
     [displayedFieldsWithLinks, fieldsWithLinksFromVariableMap]
   );
 
+  const [traceViewOpen, setTraceViewOpen] = useState(false);
+
   const fields = useMemo(
     () =>
       row.dataFrame.meta?.type === DataFrameType.LogLines
@@ -86,13 +92,58 @@ export const LogDetails = (props: Props) => {
   // Without baseKey, when a new query is run and LogDetailsRow doesn't fully re-render, it freezes the app
 
   // For now, we support first tempo data source
-  const TempoDs = useMemo(
+  const tempoDsSettings = useMemo(
     () =>
       getDataSourceSrv()
         .getList({ tracing: true })
         .find((d) => d.type === 'tempo'),
     []
   );
+
+  const tempoDs = useAsync(async () => {
+    if (!tempoDsSettings) {
+      return undefined;
+    }
+
+    return await getDataSourceSrv().get(tempoDsSettings.name);
+  }, [tempoDsSettings]);
+
+  const traceDf = useAsync(async () => {
+    if (!tempoDs.value || !row.possibleTraceId) {
+      return undefined;
+    }
+
+    const traceObservable = firstValueFrom(
+      (tempoDs.value as TempoDatasource).query({
+        targets: [
+          {
+            refId: 'A',
+            queryType: 'traceql',
+            query: row.possibleTraceId,
+            filters: [],
+          },
+        ],
+        requestId: v4(),
+        app: 'logsApp',
+        range: getDefaultTimeRange(),
+        interval: '1s',
+        intervalMs: 1000,
+        timezone: 'utc',
+        scopedVars: {},
+        startTime: row.timeEpochMs,
+      })
+    );
+    const traceData = await traceObservable;
+    return traceData.data as DataFrame[];
+  }, [tempoDs, row.possibleTraceId, row.timeEpochMs]);
+
+  const transformedTraceData = useMemo(() => {
+    if (!traceDf.value || !traceDf.value[0]) {
+      return null;
+    }
+
+    return transformDataFrames(traceDf.value[0]);
+  }, [traceDf.value]);
 
   return (
     <div className={cx(className, styles.logDetails)}>
@@ -196,23 +247,17 @@ export const LogDetails = (props: Props) => {
               );
             })}
 
-            {row.possibleTraceId && TempoDs && (
+            {row.possibleTraceId && tempoDs.value && traceDf.value && transformedTraceData && (
               <tr style={{ margin: '4px 0' }}>
                 <th colSpan={6}>
-                  <LinkButton
-                    size="sm"
-                    variant="primary"
-                    icon="compass"
-                    target="_blank"
-                    href={createUrl(`/explore`, {
-                      left: JSON.stringify({
-                        datasource: TempoDs.uid,
-                        queries: [{ refId: 'A', query: row.possibleTraceId }],
-                      }),
-                    })}
+                  <Collapse
+                    label="Trace"
+                    collapsible={true}
+                    isOpen={traceViewOpen}
+                    onToggle={(isOpen) => setTraceViewOpen(isOpen)}
                   >
-                    {`Open detected trace ${row.possibleTraceId}`}
-                  </LinkButton>
+                    <TraceView dataFrames={traceDf.value} traceProp={transformedTraceData} datasource={tempoDs.value} />
+                  </Collapse>
                 </th>
               </tr>
             )}
