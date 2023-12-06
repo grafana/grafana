@@ -159,14 +159,12 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       }
     `,
     //Log details specific CSS
-    logDetailsContainer: css`
-      label: logs-row-details-table;
-      border: 1px solid ${theme.colors.border.medium};
-      padding: 0 ${theme.spacing(1)} ${theme.spacing(1)};
-      border-radius: ${theme.shape.radius.default};
-      margin: ${theme.spacing(2.5)} ${theme.spacing(1)} ${theme.spacing(2.5)} ${theme.spacing(2)};
-      cursor: default;
-    `,
+    logDetailsContainer: css({
+      label: 'logs-row-details-table',
+      borderRadius: theme.shape.radius.default,
+      padding: `0 ${theme.spacing(1)}`,
+      cursor: 'default',
+    }),
     logDetailsTable: css`
       label: logs-row-details-table;
       line-height: 18px;
@@ -290,14 +288,10 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
         top: -3px;
       }
     `,
-    logDetails: css`
-      label: logDetailsDefaultCursor;
-      cursor: default;
-
-      &:hover {
-        background-color: ${theme.colors.background.primary};
-      }
-    `,
+    logDetails: css({
+      label: 'logDetailsDefaultCursor',
+      backgroundColor: theme.colors.background.secondary,
+    }),
     visibleRowMenu: css`
       label: visibleRowMenu;
       aspect-ratio: 1/1;
