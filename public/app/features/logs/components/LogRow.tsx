@@ -50,6 +50,7 @@ interface Props extends Themeable2 {
   handleTextSelection?: (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => boolean;
   showDetails?: (row: LogRowModel) => void;
   logDetailsRow?: LogRowModel;
+  highlightSearchwords: boolean;
 }
 
 interface State {
@@ -132,8 +133,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     }
   };
 
-  onMouseLeave = () => {
-  };
+  onMouseLeave = () => {};
 
   componentDidMount() {
     this.scrollToLogRow(this.state, true);
@@ -249,7 +249,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             />
           ) : (
             <LogRowMessage
-              row={processedRow}
+              row={this.props.highlightSearchwords ? processedRow : { ...processedRow, searchWords: [] }}
               showContextToggle={showContextToggle}
               wrapLogMessage={wrapLogMessage}
               prettifyLogMessage={prettifyLogMessage}

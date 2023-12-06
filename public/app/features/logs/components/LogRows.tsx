@@ -65,6 +65,7 @@ export interface Props extends Themeable2 {
   onClickFilterOutValue?: (value: string, refId?: string) => void;
   showDetails?: (row: LogRowModel) => void;
   logDetailsRow?: LogRowModel;
+  highlightSearchwords: boolean;
 }
 
 interface State {
