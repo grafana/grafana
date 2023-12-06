@@ -55,7 +55,8 @@ export const registerAchievementCompleted = async (achievementId: AchievementId)
 };
 
 const checkIfLevelUp = (user: UserDTO): boolean => {
-  const currentLevel = user.level ?? 0;
+  // User level of -1 or undefined are the same as 0
+  const currentLevel = user.level && user.level > 0 ? user.level : 0;
   if (currentLevel === AchievementLevel.Wizard) {
     return false;
   }
@@ -74,6 +75,20 @@ const checkIfLevelUp = (user: UserDTO): boolean => {
 
 const updateUser = async (user: UserDTO): Promise<void> => {
   await getBackendSrv().put('/api/user', user);
+};
+
+export const resetUser = async (): Promise<void> => {
+  const user = await api.loadUser();
+  user.level = -1; // setting this to 0 or undefined doesn't update the databse
+  user.achievements = '[]';
+  try {
+    updateUser(user);
+  } catch (err) {
+    console.error(err);
+    // display error?
+  }
+  console.log('User achievements reset!');
+  appEvents.emit(AppEvents.alertSuccess, ['User achievements reset!']);
 };
 
 // function to check if a user has completed an achievement
