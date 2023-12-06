@@ -104,53 +104,6 @@ export const WizarDS = (props: WizarDSProps) => {
           </>
         ) : (
           <div className={styles.bodySmall}>
-            {/* Ask if you know what you want to query? */}
-            {!state.askForHelp && state.interactions.length === 0 && (
-              <>
-                <div className={styles.queryQuestion}>
-                  Do you know what you want to learn about or would you like a walkthrough of all the components?
-                </div>
-                <div className={styles.rightButtonsWrapper}>
-                  <div className={styles.rightButtons}>
-                    <Button
-                      className={styles.leftButton}
-                      fill="solid"
-                      variant="secondary"
-                      data-testid={testIds.clickForHistorical}
-                      onClick={() => {
-                        const isLoading = true;
-                        const suggestionType = SuggestionType.Historical;
-                        dispatch(addInteraction({ suggestionType, isLoading }));
-                        // reportInteraction('grafana_prometheus_promqail_know_what_you_want_to_query', {
-                        //   promVisualQuery: query,
-                        //   doYouKnow: 'no',
-                        // });
-                        wizarDSSuggest(dispatch, 0, templates);
-                      }}
-                    >
-                      Just walk me through everything
-                    </Button>
-                    <Button
-                      fill="solid"
-                      variant="primary"
-                      data-testid={testIds.clickForAi}
-                      onClick={() => {
-                        // reportInteraction('grafana_prometheus_promqail_know_what_you_want_to_query', {
-                        //   promVisualQuery: query,
-                        //   doYouKnow: 'yes',
-                        // });
-                        const isLoading = false;
-                        const suggestionType = SuggestionType.AI;
-                        dispatch(addInteraction({ suggestionType, isLoading }));
-                      }}
-                    >
-                      I know what I want to explore
-                    </Button>
-                  </div>
-                </div>
-              </>
-            )}
-
             {state.interactions.map((interaction: Interaction, idx: number) => {
               return (
                 <div key={idx}>
@@ -198,7 +151,7 @@ export const WizarDS = (props: WizarDSProps) => {
                                 >
                                   Cancel
                                 </Button>
-                                <Button
+                                {/* <Button
                                   className={styles.leftButton}
                                   fill="outline"
                                   variant="secondary"
@@ -224,7 +177,7 @@ export const WizarDS = (props: WizarDSProps) => {
                                   }}
                                 >
                                   Show me everything instead.
-                                </Button>
+                                </Button> */}
                                 <Button
                                   fill="solid"
                                   variant="primary"
@@ -310,6 +263,38 @@ export const WizarDS = (props: WizarDSProps) => {
           </div>
         )}
       </div>
+      <Button
+        fill="text"
+        variant="secondary"
+        onClick={() => {
+          // reportInteraction('grafana_prometheus_promqail_know_what_you_want_to_query', {
+          //   promVisualQuery: query,
+          //   doYouKnow: 'no',
+          // });
+          // JUST SUGGEST QUERIES AND SHOW THE LIST
+          const currentInteractionIdx = state.interactions.length - 1;
+
+          const newInteraction: Interaction = {
+            ...state.interactions[currentInteractionIdx],
+            suggestionType: SuggestionType.Historical,
+            isLoading: true,
+          };
+
+          const payload = {
+            idx: currentInteractionIdx,
+            interaction: newInteraction,
+          };
+
+          // reportInteraction('grafana_prometheus_promqail_suggest_query_instead', {
+          //   promVisualQuery: query,
+          // });
+
+          dispatch(updateInteraction(payload));
+          wizarDSSuggest(dispatch, currentInteractionIdx, templates, newInteraction);
+        }}
+      >
+        Just walk me through everything
+      </Button>
       <div ref={responsesEndRef} />
     </div>
   );
@@ -473,6 +458,12 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     submitFeedback: css({
       padding: '16px 0',
+    }),
+    suggestEverything: css({
+      position: 'absolute',
+      left: 0,
+      bottom: '20px',
+      right: 0,
     }),
   };
 };

@@ -60,7 +60,7 @@ export function initialState(showStartingMessage?: boolean): WizarDSState {
     showStartingMessage: showStartingMessage ?? true,
     indicateCheckbox: false,
     askForHelp: false,
-    interactions: [],
+    interactions: [createInteraction(SuggestionType.AI)],
   };
 }
 
