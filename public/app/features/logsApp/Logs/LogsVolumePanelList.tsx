@@ -253,19 +253,35 @@ export const LogsVolumePanelList = ({
             <>
               <Button
                 icon="chart-line"
-                size="xs"
+                size="md"
                 variant="secondary"
                 style={{ marginLeft: '4px' }}
                 onClick={() => setSelectedQueryType(SupplementaryQueryType.LogsVolume)}
                 title="Count of logs over time"
+                className={
+                  selectedQueryType === SupplementaryQueryType.LogsVolume ||
+                  selectedQueryType === SupplementaryQueryType.LogsCountWithGroupBy
+                    ? undefined
+                    : css`
+                        background: transparent;
+                      `
+                }
               />
               <Button
                 icon="graph-bar"
-                size="xs"
+                size="md"
                 variant="secondary"
                 style={{ marginLeft: '4px' }}
                 onClick={() => setSelectedQueryType(SupplementaryQueryType.LogsCount)}
                 title="Total count for selected time range"
+                className={
+                  selectedQueryType === SupplementaryQueryType.LogsCount ||
+                  selectedQueryType === SupplementaryQueryType.LogsCountWithGroupBy
+                    ? undefined
+                    : css`
+                        background: transparent;
+                      `
+                }
               />
               {/* <Button
                 icon="calculator-alt"

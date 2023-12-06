@@ -723,12 +723,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
             )
           }
         </PanelChrome>
-        <PanelChrome
-          title={`Logs${
-            this.state.hiddenLogLevels.length > 0 ? ` (filtered based on selected ${this.state.groupByLabel})` : ''
-          }`}
-          loadingState={loading ? LoadingState.Loading : LoadingState.Done}
-        >
+        <PanelChrome hoverHeader={true} loadingState={loading ? LoadingState.Loading : LoadingState.Done}>
           <div className={styles.stickyNavigation}>
             <div className={styles.logsOptions}>
               <LogsOptions
@@ -997,7 +992,9 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
       overflowY: 'visible',
       width: '100%',
     }),
-    visualisationType: css({}),
+    visualisationType: css({
+      marginRight: theme.spacing(1),
+    }),
     visualisationTypeRadio: css({
       margin: `0 0 0 ${theme.spacing(1)}`,
     }),

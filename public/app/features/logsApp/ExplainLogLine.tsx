@@ -56,9 +56,7 @@ export const ExplainLogLine = ({ logLine }: Props) => {
         <Icon name={`${shouldRun ? 'angle-up' : 'angle-down'}`} />
       </Button>
       {shouldRun && (
-        <OperationExplainedBox title="Log line summary">
-          {llmReply === '' ? <Spinner /> : <pre>{llmReply}</pre>}
-        </OperationExplainedBox>
+        <OperationExplainedBox>{llmReply === '' ? <Spinner /> : <pre>{llmReply}</pre>}</OperationExplainedBox>
       )}
     </>
   );
