@@ -310,37 +310,30 @@ func (gr *ResampleCommand) Execute(ctx context.Context, now time.Time, vars math
 
 // PRQLCommand is an expression to run PRQL over results
 type PRQLCommand struct {
-	theSQL      string // converted to SQL
+	query       string
 	varsToQuery []string
 	timeRange   TimeRange
-	refID       string // The output refid?
-	PRQL        string
+	refID       string
 }
 
 // NewPRQLCommand creates a new PRQLCMD.
 func NewPRQLCommand(refID, rawPRQL string, tr TimeRange) (*PRQLCommand, error) {
 	sql, err := prql.Convert(rawPRQL, "")
 	if err != nil {
-		// if that fails, assume we are using raw SQL
 		sql = rawPRQL
-		fmt.Printf("Assuming raw SQL for duckdb: %s\n", sql)
 	}
 
 	tables, err := prql.Tables(sql)
 	if err != nil {
-		// ??? perhaps it is just SELECT 1?
-		//return nil, err
-
 		fmt.Printf("Unable to get table names from: %s\n", sql)
-		tables = []string{"A"}
+		//tables = []string{"A"}
 	}
 
 	return &PRQLCommand{
-		theSQL:      sql,
+		query:       rawPRQL,
 		varsToQuery: tables,
 		timeRange:   tr,
 		refID:       refID,
-		PRQL:        rawPRQL,
 	}, nil
 }
 
@@ -374,8 +367,6 @@ func (gr *PRQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.
 	_, span := tracer.Start(ctx, "SSE.ExecutePRQL")
 	defer span.End()
 
-	fmt.Printf("DuckDB Execute: %s\n", gr.theSQL)
-
 	// insert all referenced results into duckdb. TODO: multi-thread this?
 	for _, ref := range gr.varsToQuery {
 		results := vars[ref]
@@ -387,7 +378,7 @@ func (gr *PRQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.
 		}
 	}
 
-	frames, err := prql.Query("db", gr.PRQL)
+	frames, err := prql.Query("db", gr.query)
 	if err != nil {
 		return mathexp.Results{}, err
 	}
