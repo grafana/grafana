@@ -538,7 +538,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 						span.SetStatus(codes.Error, "rule evaluation cancelled")
 						span.End()
 						logger.Error("Skip evaluation and updating the state because the context has been cancelled", "version", ctx.rule.Version, "fingerprint", f, "attempt", attempt, "now", ctx.scheduledAt)
-						break
+						return
 					}
 
 					retry := attempt < sch.maxAttempts
@@ -551,7 +551,13 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 					}
 
 					logger.Error("Failed to evaluate rule", "version", ctx.rule.Version, "fingerprint", f, "attempt", attempt, "now", ctx.scheduledAt)
-					time.Sleep(retryDelay)
+					select {
+					case <-tracingCtx.Done():
+						logger.Error("Context has been cancelled while backing off", "version", ctx.rule.Version, "fingerprint", f, "attempt", attempt, "now", ctx.scheduledAt)
+						return
+					case <-time.After(retryDelay):
+						continue
+					}
 				}
 			}()
 
