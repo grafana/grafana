@@ -137,47 +137,52 @@ export const attachLinks = (
   getFieldLinks: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>
 ): LogRowModel[] => {
   const newRows = [...logRows];
-  let oldTime = Date.now();
-  const rowsWithLinks = newRows.map((row, i) => {
-    oldTime = Date.now();
-    return { rowIdx: i, dataFrameWithLinks: getDataframeFields(row, getFieldLinks) };
+  const rowsWithLinks = newRows.map((row) => {
+    return { rowIdx: row.rowIndex, dataFrameWithLinks: getDataframeFields(row, getFieldLinks) };
   });
 
   rowsWithLinks.forEach((rowWithLinks) => {
-    const row = newRows[rowWithLinks.rowIdx];
-    rowWithLinks.dataFrameWithLinks.forEach((generatedLinkDF) => {
-      const rowField = row.dataFrame.fields[generatedLinkDF.fieldIndex];
-      if (rowField.config.links === undefined) {
-        rowField.config.links = [];
-      }
-      if (generatedLinkDF.links) {
-        if (rowField.config.links) {
-          // if links already exist, merge generated links list with existing links, matching by origin data
-          generatedLinkDF.links.forEach((generatedLink) => {
-            generatedLink.origin.config.links?.forEach((originLink) => {
-              const rowLinkIndex = rowField.config.links?.findIndex(
-                (rowConfigLink) => JSON.stringify(rowConfigLink) === JSON.stringify(originLink)
-              );
-              if (rowLinkIndex !== undefined && rowLinkIndex !== -1) {
-                const url = rowField.config.links![rowLinkIndex].url;
-                if (url === undefined || url === '') {
-                  rowField.config.links![rowLinkIndex].url = generatedLink.href;
-                }
-              }
-            });
-          });
-        } else {
-          rowField.config.links = generatedLinkDF.links.map((linkFieldLink) => {
-            const newDL: DataLink = {
-              title: linkFieldLink.title,
-              url: linkFieldLink.href,
-              targetBlank: linkFieldLink.target === '_blank',
-            };
-            return newDL;
-          });
+    const row = newRows.find((row) => row.rowIndex === rowWithLinks.rowIdx);
+    if (row !== undefined) {
+      rowWithLinks.dataFrameWithLinks.forEach((generatedLinkDF) => {
+        const rowField = row.dataFrame.fields[generatedLinkDF.fieldIndex];
+        if (rowField.config.links === undefined) {
+          rowField.config.links = [];
         }
-      }
-    });
+        if (generatedLinkDF.links && generatedLinkDF.links.length > 0) {
+          if (rowField.config.links) {
+            // if links already exist, merge generated links list with existing links, matching by origin data
+            generatedLinkDF.links.forEach((generatedLink) => {
+              generatedLink.origin.config.links?.forEach((originLink) => {
+                const rowLinkIndex = rowField.config.links?.findIndex(
+                  (rowConfigLink) => JSON.stringify(rowConfigLink) === JSON.stringify(originLink)
+                );
+                if (rowLinkIndex !== undefined && rowLinkIndex !== -1) {
+                  const url = rowField.config.links![rowLinkIndex].url;
+                  const onClick = rowField.config.links![rowLinkIndex].onClick;
+                  if (url === undefined || url === '') {
+                    rowField.config.links![rowLinkIndex].url = generatedLink.href;
+                  }
+                  if (onClick === undefined) {
+                    rowField.config.links![rowLinkIndex].onClick = generatedLink.onClick;
+                  }
+                }
+              });
+            });
+          } else {
+            rowField.config.links = generatedLinkDF.links.map((linkFieldLink) => {
+              const newDL: DataLink = {
+                title: linkFieldLink.title,
+                url: linkFieldLink.href,
+                targetBlank: linkFieldLink.target === '_blank',
+                onClick: linkFieldLink.onClick,
+              };
+              return newDL;
+            });
+          }
+        }
+      });
+    }
   });
   return newRows;
 };

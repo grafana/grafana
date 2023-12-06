@@ -1,6 +1,6 @@
 import React, { FocusEvent, SyntheticEvent, useCallback, useState } from 'react';
 
-import { LogRowModel } from '@grafana/data';
+import { DataLinkClickEvent, LogRowModel } from '@grafana/data';
 import { ClipboardButton, Dropdown, IconButton, Menu } from '@grafana/ui';
 
 import { LogRowStyles } from './getLogRowStyles';
@@ -16,7 +16,7 @@ interface Props {
   pinned?: boolean;
   styles: LogRowStyles;
   mouseIsOver: boolean;
-  onBlur: () => void;
+  onBlur?: () => void;
 }
 
 export const LogRowMenuCell = React.memo(
@@ -63,21 +63,26 @@ export const LogRowMenuCell = React.memo(
       .map((field) => {
         const wat = field.config
           .links!.map((link) => {
-            return link.url ? { title: link.title, url: link.url } : undefined;
+            return link.url ? { title: link.title, url: link.url, onClick: link.onClick } : undefined;
           })
-          .filter((v): v is { title: string; url: string } => v !== undefined);
+          .filter(
+            (v): v is { title: string; url: string; onClick: ((event: DataLinkClickEvent<any>) => void) | undefined } =>
+              v !== undefined
+          );
         return wat;
       })
       .flat();
 
     const MenuActions = (
       <Menu>
-        {links.map((link) => (
+        {links.map((link, i) => (
           <Menu.Item
-            key={link.title}
+            key={`link-menu-${i}`}
             label={link.title}
-            onClick={() => {
-              window.location.href = link.url;
+            onClick={(e) => {
+              if (link.onClick) {
+                link.onClick(e as any);
+              }
             }}
           />
         ))}
