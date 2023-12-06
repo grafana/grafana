@@ -5,9 +5,11 @@ import { Button } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import { t } from 'app/core/internationalization';
+import { customLeftActions, customRightActions } from 'app/features/dashboard/components/DashNav/DashNav';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 
 import { ShareModal } from '../sharing/ShareModal';
+import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 
 import { DashboardScene } from './DashboardScene';
 
@@ -18,6 +20,8 @@ interface Props {
 export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
   const { actions = [], isEditing, viewPanelScene, isDirty, uid, meta, editview } = dashboard.useState();
   const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
+  const rightToolbarActions: JSX.Element[] = [];
+  const _legacyDashboardModelCompatibility = new DashboardModelCompatibilityWrapper(dashboard).asDashboardModel();
 
   if (uid && !editview) {
     if (meta.canStar) {
@@ -58,9 +62,30 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
         onClick={() => locationService.push(`/d/${uid}`)}
       />
     );
+    if (customLeftActions.length > 0) {
+      customLeftActions.map((action, index) => {
+        const Component = action.component;
+        const element = <Component dashboard={_legacyDashboardModelCompatibility} />;
+        typeof action.index === 'number'
+          ? toolbarActions.splice(action.index, 0, element)
+          : toolbarActions.push(element);
+      });
+    }
   }
 
   toolbarActions.push(<NavToolbarSeparator leftActionsSeparator key="separator" />);
+
+  if (customRightActions.length > 0) {
+    customRightActions.map((action, index) => {
+      const Component = action.component;
+      const element = <Component dashboard={_legacyDashboardModelCompatibility} key={`button-custom-${index}`} />;
+      typeof action.index === 'number'
+        ? rightToolbarActions.splice(action.index, 0, element)
+        : rightToolbarActions.push(element);
+    });
+
+    toolbarActions.push(...rightToolbarActions);
+  }
 
   if (viewPanelScene) {
     toolbarActions.push(

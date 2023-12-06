@@ -11,6 +11,7 @@ import {
   SceneGridRow,
   VizPanel,
 } from '@grafana/scenes';
+import { DashboardModel } from 'app/features/dashboard/state';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
@@ -63,6 +64,7 @@ export class DashboardModelCompatibilityWrapper {
   public get timepicker() {
     return {
       refresh_intervals: dashboardSceneGraph.getRefreshPicker(this._scene)?.state.intervals,
+      hidden: !Boolean(dashboardSceneGraph.getTimePicker(this._scene)),
     };
   }
 
@@ -198,6 +200,10 @@ export class DashboardModelCompatibilityWrapper {
   public destroy() {
     this.events.removeAllListeners();
     this._subs.unsubscribe();
+  }
+
+  public asDashboardModel(): DashboardModel {
+    return this as unknown as DashboardModel;
   }
 }
 

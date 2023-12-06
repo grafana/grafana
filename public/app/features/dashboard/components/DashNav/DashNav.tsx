@@ -70,8 +70,8 @@ interface DashNavButtonModel {
   index?: number | 'end';
 }
 
-const customLeftActions: DashNavButtonModel[] = [];
-const customRightActions: DashNavButtonModel[] = [];
+export const customLeftActions: DashNavButtonModel[] = [];
+export const customRightActions: DashNavButtonModel[] = [];
 
 export function addCustomLeftAction(content: DashNavButtonModel) {
   customLeftActions.push(content);
