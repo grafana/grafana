@@ -19,10 +19,17 @@ export type Step = {
   skip?: SkipCondition[];
 };
 
-type Attribite = {
+export type StringAttribute = {
   name: string;
-  value: string | RegExp;
+  value: string;
 };
+
+export type RegExpAttribute = {
+  name: string;
+  regEx: string;
+};
+
+export type Attribute = StringAttribute | RegExpAttribute;
 
 type SkipConditionVisible = {
   condition: 'visible';
@@ -32,7 +39,7 @@ type SkipConditionVisible = {
 type SkipConditionMatch = {
   condition: 'match';
   target: string;
-  attribute: Attribite;
+  attribute: Attribute;
 };
 
 export type SkipCondition = SkipConditionVisible | SkipConditionMatch;
@@ -47,7 +54,7 @@ export type ClickAction = RequiredActionBase & {
 
 export type ChangeAction = RequiredActionBase & {
   action: 'change';
-  attribute: Attribite;
+  attribute: Attribute;
 };
 
 export type RequiredAction = ClickAction | ChangeAction;

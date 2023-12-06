@@ -48,7 +48,7 @@ const tutorialSteps: Step[] = [
         action: 'change',
         attribute: {
           name: 'placeholder',
-          value: /prom/i,
+          regEx: `/prom/i`,
         },
       },
     ],
@@ -58,7 +58,7 @@ const tutorialSteps: Step[] = [
         condition: 'match',
         attribute: {
           name: 'placeholder',
-          value: /prom/i,
+          regEx: `/prom/i`,
         },
       },
     ],

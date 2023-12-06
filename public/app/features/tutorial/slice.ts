@@ -130,7 +130,7 @@ async function shouldSkip(condition: SkipCondition, stepIndex: number) {
           return false;
         }
 
-        return checkCorrectValue(targetValue, condition.attribute.value);
+        return checkCorrectValue(targetValue, condition.attribute);
       }
 
       return false;

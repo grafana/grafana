@@ -1,6 +1,6 @@
 // import { locationService } from '@grafana/runtime';
 import { TUTORIAL_EXIT_EVENT } from './constants';
-import type { RequiredAction, ClickAction, ChangeAction } from './types';
+import type { Attribute, RequiredAction, ClickAction, ChangeAction, StringAttribute, RegExpAttribute } from './types';
 
 export function waitForElement<T extends Element = Element>(selector: string, timeout = 500): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -92,7 +92,7 @@ function setupChangeAction(targetElement: Element, action: ChangeAction, onCompl
     for (let mutation of mutationsList) {
       const newValue = targetElement.getAttribute(action.attribute.name);
       const isCorrectAttribute = mutation.attributeName === action.attribute.name;
-      const isCorrectValue = checkCorrectValue(newValue, action.attribute.value);
+      const isCorrectValue = checkCorrectValue(newValue, action.attribute);
 
       if (mutation.type === 'attributes' && isCorrectAttribute && isCorrectValue) {
         onComplete(newValue);
@@ -115,16 +115,33 @@ export function isChangeAction(action: RequiredAction): action is ChangeAction {
   return action.action === 'change';
 }
 
-export function checkCorrectValue(valueProvided: string | null | undefined, valueToMatch: string | RegExp) {
+export function checkCorrectValue(valueProvided: string | null | undefined, attribute: Attribute) {
   if (!valueProvided) {
     return false;
   }
 
-  if (typeof valueToMatch === 'string') {
-    return valueProvided === valueToMatch;
+  if (isStringAttribute(attribute)) {
+    return valueProvided === attribute.value;
   }
 
-  return valueToMatch.test(valueProvided);
+  if (isRegexAttribute(attribute)) {
+    const regexString = '/prom/i';
+    const pattern = regexString.slice(1, regexString.lastIndexOf('/'));
+    const flags = regexString.slice(regexString.lastIndexOf('/') + 1);
+    const regex = new RegExp(pattern, flags);
+
+    return regex.test(valueProvided);
+  }
+
+  return false;
+}
+
+export function isRegexAttribute(attribute: Attribute): attribute is RegExpAttribute {
+  return attribute.hasOwnProperty('regEx');
+}
+
+export function isStringAttribute(attribute: Attribute): attribute is StringAttribute {
+  return attribute.hasOwnProperty('value');
 }
 
 // export function getElementByXpath(path: string) {
