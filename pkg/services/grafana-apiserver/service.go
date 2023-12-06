@@ -391,6 +391,8 @@ func (s *service) start(ctx context.Context) error {
 	s.handler = server.Handler
 	s.restConfig = server.LoopbackClientConfig
 
+	prepared := server.PrepareRun()
+
 	// When running in production, do not start a standalone https server
 	if !s.config.devMode {
 		return nil
@@ -401,7 +403,6 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	prepared := server.PrepareRun()
 	go func() {
 		s.stoppedCh <- prepared.Run(s.stopCh)
 	}()
