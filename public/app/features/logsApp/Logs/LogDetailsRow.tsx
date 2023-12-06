@@ -60,7 +60,7 @@ const getStyles = memoizeOne((theme: GrafanaTheme2) => {
       }
     `,
     adjoiningLinkButton: css`
-      margin-left: ${theme.spacing(1)};
+      padding-top: ${theme.spacing(1)};
     `,
     wrapLine: css`
       label: wrapLine;
@@ -210,9 +210,6 @@ class UnThemedLogDetailsRow extends PureComponent<Props> {
     const hasFilteringFunctionality = !disableActions && onClickFilterLabel && onClickFilterOutLabel;
     const refIdTooltip = row.dataFrame?.refId ? ` in query ${row.dataFrame?.refId}` : '';
 
-    const isMultiParsedValueWithNoContent =
-      !singleVal && parsedValues != null && !parsedValues.every((val) => val === '');
-
     const toggleFieldButton =
       displayedFields && parsedKeys != null && displayedFields.includes(parsedKeys[0]) ? (
         <IconButton variant="primary" tooltip="Hide this field" name="eye" onClick={this.hideField} />
@@ -250,13 +247,19 @@ class UnThemedLogDetailsRow extends PureComponent<Props> {
             <div className={styles.logDetailsValue}>
               {singleVal ? parsedValues[0] : this.generateMultiVal(parsedValues, true)}
               {singleVal && this.generateClipboardButton(parsedValues[0])}
-              <div className={cx((singleVal || isMultiParsedValueWithNoContent) && styles.adjoiningLinkButton)}>
-                {links?.map((link, i) => (
-                  <span key={`${link.title}-${i}`}>
-                    <DataLinkButton link={link} />
-                  </span>
-                ))}
-              </div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td>
+            <div className={styles.adjoiningLinkButton}>
+              {links?.map((link, i) => (
+                <span key={`${link.title}-${i}`}>
+                  <DataLinkButton link={link} />
+                </span>
+              ))}
             </div>
           </td>
         </tr>
