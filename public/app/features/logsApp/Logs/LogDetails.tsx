@@ -11,7 +11,6 @@ import { TraceView } from 'app/features/explore/TraceView/TraceView';
 import { transformDataFrames } from 'app/features/explore/TraceView/utils/transform';
 import { LogRowStyles } from 'app/features/logs/components/getLogRowStyles';
 import { createLogLineLinks, getAllFields } from 'app/features/logs/components/logParser';
-import { calculateLogsLabelStats, calculateStats } from 'app/features/logs/utils';
 import { TempoDatasource } from 'app/plugins/datasource/tempo/datasource';
 
 import { ExplainLogLine } from '../ExplainLogLine';
@@ -180,7 +179,6 @@ export const LogDetails = (props: Props) => {
                   parsedKeys={[key]}
                   parsedValues={[value]}
                   isLabel={true}
-                  getStats={() => calculateLogsLabelStats(rows, key)}
                   onClickFilterOutLabel={onClickFilterOutLabel}
                   onClickFilterLabel={onClickFilterLabel}
                   onClickShowField={onClickShowField}
@@ -195,7 +193,7 @@ export const LogDetails = (props: Props) => {
               );
             })}
             {fields.map((field, i) => {
-              const { keys, values, fieldIndex } = field;
+              const { keys, values } = field;
               return (
                 <LogDetailsRow
                   key={`${keys[0]}=${values[0]}-${i}-${baseKey}`}
@@ -205,7 +203,6 @@ export const LogDetails = (props: Props) => {
                   onClickHideField={onClickHideField}
                   onClickFilterOutLabel={onClickFilterOutLabel}
                   onClickFilterLabel={onClickFilterLabel}
-                  getStats={() => calculateStats(row.dataFrame.fields[fieldIndex].values)}
                   displayedFields={displayedFields}
                   wrapLogMessage={wrapLogMessage}
                   row={row}
@@ -224,7 +221,7 @@ export const LogDetails = (props: Props) => {
               </tr>
             )}
             {displayedFieldsWithLinks.map((field, i) => {
-              const { keys, values, links, fieldIndex } = field;
+              const { keys, values, links } = field;
               return (
                 <LogDetailsRow
                   key={`${keys[0]}=${values[0]}-${i}-${baseKey}`}
@@ -233,7 +230,6 @@ export const LogDetails = (props: Props) => {
                   links={links}
                   onClickShowField={onClickShowField}
                   onClickHideField={onClickHideField}
-                  getStats={() => calculateStats(row.dataFrame.fields[fieldIndex].values)}
                   displayedFields={displayedFields}
                   wrapLogMessage={wrapLogMessage}
                   row={row}
@@ -243,7 +239,7 @@ export const LogDetails = (props: Props) => {
               );
             })}
             {fieldsWithLinksFromVariableMap?.map((field, i) => {
-              const { keys, values, links, fieldIndex } = field;
+              const { keys, values, links } = field;
               return (
                 <LogDetailsRow
                   key={`${keys[0]}=${values[0]}-${i}-${baseKey}`}
@@ -252,7 +248,6 @@ export const LogDetails = (props: Props) => {
                   links={links}
                   onClickShowField={onClickShowField}
                   onClickHideField={onClickHideField}
-                  getStats={() => calculateStats(row.dataFrame.fields[fieldIndex].values)}
                   displayedFields={displayedFields}
                   wrapLogMessage={wrapLogMessage}
                   row={row}

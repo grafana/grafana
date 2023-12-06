@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { isEqual } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React, { PureComponent, useState } from 'react';
 
@@ -10,12 +9,10 @@ import {
   GrafanaTheme2,
   IconName,
   LinkModel,
-  LogLabelStatsModel,
   LogRowModel,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { ClipboardButton, DataLinkButton, IconButton, Themeable2, withTheme2 } from '@grafana/ui';
-import { LogLabelStats } from 'app/features/logs/components/LogLabelStats';
 import { getLogRowStyles } from 'app/features/logs/components/getLogRowStyles';
 import { logRowToSingleRowDataFrame } from 'app/features/logs/logsModel';
 
@@ -28,19 +25,12 @@ export interface Props extends Themeable2 {
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   links?: Array<LinkModel<Field>>;
-  getStats: () => LogLabelStatsModel[] | null;
   displayedFields?: string[];
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
   row: LogRowModel;
   app?: CoreApp;
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
-}
-
-interface State {
-  showFieldsStats: boolean;
-  fieldCount: number;
-  fieldStats: LogLabelStatsModel[] | null;
 }
 
 const getStyles = memoizeOne((theme: GrafanaTheme2) => {
@@ -102,19 +92,7 @@ const getStyles = memoizeOne((theme: GrafanaTheme2) => {
   };
 });
 
-class UnThemedLogDetailsRow extends PureComponent<Props, State> {
-  state: State = {
-    showFieldsStats: false,
-    fieldCount: 0,
-    fieldStats: null,
-  };
-
-  componentDidUpdate() {
-    if (this.state.showFieldsStats) {
-      this.updateStats();
-    }
-  }
-
+class UnThemedLogDetailsRow extends PureComponent<Props> {
   showField = () => {
     const { onClickShowField: onClickShowDetectedField, parsedKeys, row } = this.props;
     if (onClickShowDetectedField) {
@@ -175,40 +153,6 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     });
   };
 
-  updateStats = () => {
-    const { getStats } = this.props;
-    const fieldStats = getStats();
-    const fieldCount = fieldStats ? fieldStats.reduce((sum, stat) => sum + stat.count, 0) : 0;
-    if (!isEqual(this.state.fieldStats, fieldStats) || fieldCount !== this.state.fieldCount) {
-      this.setState({ fieldStats, fieldCount });
-    }
-  };
-
-  showStats = () => {
-    const { isLabel, row, app } = this.props;
-    const { showFieldsStats } = this.state;
-    if (!showFieldsStats) {
-      this.updateStats();
-    }
-    this.toggleFieldsStats();
-
-    reportInteraction('grafana_explore_logs_log_details_stats_clicked', {
-      dataSourceType: row.datasourceType,
-      fieldType: isLabel ? 'label' : 'detectedField',
-      type: showFieldsStats ? 'close' : 'open',
-      logRowUid: row.uid,
-      app,
-    });
-  };
-
-  toggleFieldsStats() {
-    this.setState((state) => {
-      return {
-        showFieldsStats: !state.showFieldsStats,
-      };
-    });
-  }
-
   generateClipboardButton(val: string) {
     const { theme } = this.props;
     const styles = getStyles(theme);
@@ -251,7 +195,6 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       theme,
       parsedKeys,
       parsedValues,
-      isLabel,
       links,
       displayedFields,
       wrapLogMessage,
@@ -260,7 +203,6 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       disableActions,
       row,
     } = this.props;
-    const { showFieldsStats, fieldStats, fieldCount } = this.state;
     const styles = getStyles(theme);
     const rowStyles = getLogRowStyles(theme);
     const singleKey = parsedKeys == null ? false : parsedKeys.length === 1;
@@ -299,16 +241,6 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                 </>
               )}
               {!disableActions && displayedFields && toggleFieldButton}
-              {!disableActions && (
-                <IconButton
-                  variant={showFieldsStats ? 'primary' : 'secondary'}
-                  name="signal"
-                  tooltip="Ad-hoc statistics"
-                  className="stats-button"
-                  disabled={!singleKey}
-                  onClick={this.showStats}
-                />
-              )}
             </div>
           </td>
 
@@ -328,29 +260,6 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
             </div>
           </td>
         </tr>
-        {showFieldsStats && singleKey && singleVal && (
-          <tr>
-            <td>
-              <IconButton
-                variant={showFieldsStats ? 'primary' : 'secondary'}
-                name="signal"
-                tooltip="Hide ad-hoc statistics"
-                onClick={this.showStats}
-              />
-            </td>
-            <td colSpan={2}>
-              <div className={styles.logDetailsStats}>
-                <LogLabelStats
-                  stats={fieldStats!}
-                  label={parsedKeys[0]}
-                  value={parsedValues[0]}
-                  rowCount={fieldCount}
-                  isLabel={isLabel}
-                />
-              </div>
-            </td>
-          </tr>
-        )}
       </>
     );
   }
@@ -366,7 +275,7 @@ const AsyncIconButton = ({ isActive, tooltipSuffix, ...rest }: AsyncIconButtonPr
   const [active, setActive] = useState(false);
   const tooltip = active ? 'Remove filter' : 'Filter for value';
 
-  /**
+  /**t
    * We purposely want to run this on every render to allow the active state to be updated
    * when log details remains open between updates.
    */
