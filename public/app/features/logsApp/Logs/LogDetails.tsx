@@ -94,7 +94,7 @@ export const LogDetails = (props: Props) => {
 
   const labelKeys = useMemo(() => Object.keys(labels).sort(), [labels]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const baseKey = useMemo(() => v4(), [rows, labels]);
+  const baseKey = useMemo(() => v4(), [rows, row, labels]);
   // Without baseKey, when a new query is run and LogDetailsRow doesn't fully re-render, it freezes the app
 
   // For now, we support first tempo data source
@@ -176,7 +176,7 @@ export const LogDetails = (props: Props) => {
               const value = labels[key];
               return (
                 <LogDetailsRow
-                  key={`${key}=${value}-${i}-${baseKey}`}
+                  key={`${key}=${value}-${i}-${baseKey}-${v4()}`}
                   parsedKeys={[key]}
                   parsedValues={[value]}
                   isLabel={true}
@@ -198,7 +198,7 @@ export const LogDetails = (props: Props) => {
               const { keys, values, fieldIndex } = field;
               return (
                 <LogDetailsRow
-                  key={`${keys[0]}=${values[0]}-${i}`}
+                  key={`${keys[0]}=${values[0]}-${i}-${baseKey}`}
                   parsedKeys={keys}
                   parsedValues={values}
                   onClickShowField={onClickShowField}
@@ -227,7 +227,7 @@ export const LogDetails = (props: Props) => {
               const { keys, values, links, fieldIndex } = field;
               return (
                 <LogDetailsRow
-                  key={`${keys[0]}=${values[0]}-${i}`}
+                  key={`${keys[0]}=${values[0]}-${i}-${baseKey}`}
                   parsedKeys={keys}
                   parsedValues={values}
                   links={links}
@@ -246,7 +246,7 @@ export const LogDetails = (props: Props) => {
               const { keys, values, links, fieldIndex } = field;
               return (
                 <LogDetailsRow
-                  key={`${keys[0]}=${values[0]}-${i}`}
+                  key={`${keys[0]}=${values[0]}-${i}-${baseKey}`}
                   parsedKeys={keys}
                   parsedValues={values}
                   links={links}
