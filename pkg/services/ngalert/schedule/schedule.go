@@ -34,6 +34,9 @@ type ScheduleService interface {
 	Run(context.Context) error
 }
 
+// retryDelay represents how long to wait between each failed rule evaluation.
+const retryDelay = 1 * time.Second
+
 // AlertsSender is an interface for a service that is responsible for sending notifications to the end-user.
 //
 //go:generate mockery --name AlertsSender --structname AlertsSenderMock --inpackage --filename alerts_sender_mock.go --with-expecter
@@ -539,6 +542,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 					}
 
 					logger.Error("Failed to evaluate rule", "version", ctx.rule.Version, "fingerprint", f, "attempt", attempt, "now", ctx.scheduledAt)
+					time.Sleep(retryDelay)
 				}
 			}()
 
