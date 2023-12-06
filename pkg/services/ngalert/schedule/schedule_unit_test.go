@@ -662,46 +662,49 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		sender.EXPECT().Send(mock.Anything, rule.GetKey(), mock.Anything).Return()
 
 		sch, ruleStore, _, reg := createSchedule(evalAppliedChan, &sender)
+		sch.maxAttempts = 3
 		ruleStore.PutRule(context.Background(), rule)
+
+		go func() {
+			ctx, cancel := context.WithCancel(context.Background())
+			t.Cleanup(cancel)
+			_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan ruleVersionAndPauseStatus))
+		}()
+
+		evalChan <- &evaluation{
+			scheduledAt: sch.clock.Now(),
+			rule:        rule,
+		}
+
+		waitForTimeChannel(t, evalAppliedChan)
+
 		t.Run("it should increase failure counter", func(t *testing.T) {
-			go func() {
-				ctx, cancel := context.WithCancel(context.Background())
-				t.Cleanup(cancel)
-				_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan ruleVersionAndPauseStatus))
-			}()
-
-			evalChan <- &evaluation{
-				scheduledAt: sch.clock.Now(),
-				rule:        rule,
-			}
-
-			waitForTimeChannel(t, evalAppliedChan)
 			// duration metric has 0 values because of mocked clock that do not advance
 			expectedMetric := fmt.Sprintf(
 				`# HELP grafana_alerting_rule_evaluation_duration_seconds The time to evaluate a rule.
         	            # TYPE grafana_alerting_rule_evaluation_duration_seconds histogram
-        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.01"} 1
-        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.1"} 1
-        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.5"} 1
-        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="1"} 1
-        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="5"} 1
-        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="10"} 1
-        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="15"} 1
-        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="30"} 1
-						grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="60"} 1
-						grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="120"} 1
-						grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="180"} 1
-						grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="240"} 1
-						grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="300"} 1
-        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="+Inf"} 1
+        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.01"} 3
+        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.1"} 3
+        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.5"} 3
+        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="1"} 3
+        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="5"} 3
+        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="10"} 3
+        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="15"} 3
+        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="30"} 3
+						grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="60"} 3
+						grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="120"} 3
+						grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="180"} 3
+						grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="240"} 3
+						grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="300"} 3
+        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="+Inf"} 3
         	            grafana_alerting_rule_evaluation_duration_seconds_sum{org="%[1]d"} 0
-        	            grafana_alerting_rule_evaluation_duration_seconds_count{org="%[1]d"} 1
+        	            grafana_alerting_rule_evaluation_duration_seconds_count{org="%[1]d"} 3
 						# HELP grafana_alerting_rule_evaluation_failures_total The total number of rule evaluation failures.
         	            # TYPE grafana_alerting_rule_evaluation_failures_total counter
-        	            grafana_alerting_rule_evaluation_failures_total{org="%[1]d"} 1
+        	            grafana_alerting_rule_evaluation_failures_total{org="%[1]d"} 3
         	            # HELP grafana_alerting_rule_evaluations_total The total number of rule evaluations.
         	            # TYPE grafana_alerting_rule_evaluations_total counter
-        	            grafana_alerting_rule_evaluations_total{org="%[1]d"} 1
+        	            grafana_alerting_rule_evaluations_total{org="%[1]d"} 3
 						# HELP grafana_alerting_rule_process_evaluation_duration_seconds The time to process the evaluation results for a rule.
 						# TYPE grafana_alerting_rule_process_evaluation_duration_seconds histogram
 						grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="0.01"} 1
@@ -745,51 +748,11 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		})
 
 		t.Run("it should send special alert DatasourceError", func(t *testing.T) {
-			go func() {
-				ctx, cancel := context.WithCancel(context.Background())
-				t.Cleanup(cancel)
-				_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan ruleVersionAndPauseStatus))
-			}()
-
-			evalChan <- &evaluation{
-				scheduledAt: sch.clock.Now(),
-				rule:        rule,
-			}
-
-			waitForTimeChannel(t, evalAppliedChan)
-
 			sender.AssertNumberOfCalls(t, "Send", 1)
 			args, ok := sender.Calls[0].Arguments[2].(definitions.PostableAlerts)
 			require.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls[0].Arguments[2]))
 			assert.Len(t, args.PostableAlerts, 1)
 			assert.Equal(t, state.ErrorAlertName, args.PostableAlerts[0].Labels[prometheusModel.AlertNameLabel])
-		})
-
-		t.Run("it should retry", func(t *testing.T) {
-			sch.maxAttempts = 3
-			go func() {
-				ctx, cancel := context.WithCancel(context.Background())
-				t.Cleanup(cancel)
-				_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan ruleVersionAndPauseStatus))
-			}()
-
-			evalChan <- &evaluation{
-				scheduledAt: sch.clock.Now(),
-				rule:        rule,
-			}
-
-			waitForTimeChannel(t, evalAppliedChan)
-			expectedMetric := fmt.Sprintf(
-				`# HELP grafana_alerting_rule_evaluation_failures_total The total number of rule evaluation failures.
-        	            # TYPE grafana_alerting_rule_evaluation_failures_total counter
-        	            grafana_alerting_rule_evaluation_failures_total{org="%[1]d"} 3
-        	            # HELP grafana_alerting_rule_evaluations_total The total number of rule evaluations.
-        	            # TYPE grafana_alerting_rule_evaluations_total counter
-        	            grafana_alerting_rule_evaluations_total{org="%[1]d"} 3
-				`, rule.OrgID)
-
-			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_evaluations_total", "grafana_alerting_rule_evaluation_failures_total")
-			require.NoError(t, err)
 		})
 	})
 
