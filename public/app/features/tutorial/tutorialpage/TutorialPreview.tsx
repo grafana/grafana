@@ -12,7 +12,6 @@ type TutorialPreviewProps = {
 export const TutorialPreview = ({ tutorial }: TutorialPreviewProps) => {
   const styles = useStyles2(getStyles);
   const furthestStep = tutorial.furthestStepCompleted ?? -1;
-  console.log(furthestStep);
 
   return (
     <div data-testid="tutorial-preview">

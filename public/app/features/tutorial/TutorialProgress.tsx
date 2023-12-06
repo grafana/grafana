@@ -18,12 +18,13 @@ export const TutorialProgress = ({ tutorial }: { tutorial: Tutorial }) => {
   const furshestStep = accountForZeroIndex(tutorial.furthestStepCompleted);
   const percent = (furshestStep / tutorial.steps.length) * 100;
   const strokeDashoffset = circumference - (percent / 100) * circumference;
+  const isComplete = percent === 100;
 
   return (
     <div className={styles.progressCircle} data-testid="tutorial-progress">
       <svg className={styles.svgCircle} width={CIRCLE_SIZE} height={CIRCLE_SIZE}>
         <circle
-          stroke={theme.colors.text.primary}
+          stroke={isComplete ? `green` : theme.colors.text.primary}
           strokeWidth={STROKE_WIDTH}
           fill="transparent"
           r={radius}
