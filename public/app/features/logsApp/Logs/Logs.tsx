@@ -621,12 +621,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
       if (sidebarVisible) {
         this.handlePaneResize(getMaxPaneSize());
       } else {
-        this.handlePaneResize(
-          window.innerWidth - WINDOW_MARGINS
-        );
+        this.handlePaneResize(window.innerWidth - WINDOW_MARGINS);
       }
     });
-  }
+  };
 
   render() {
     const {
@@ -796,7 +794,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   className={styles.sidebarToggle}
                   onClick={this.toggleSidebar}
                 >
-                  <Icon name={this.state.sidebarVisible ? 'angle-left' : 'angle-right'} size="md" />
+                  <Icon name={this.state.sidebarVisible ? 'angle-right' : 'angle-left'} size="md" />
                 </Button>
               </div>
             </div>
@@ -941,8 +939,8 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
     sidebarToggle: css({
       backgroundColor: 'transparent',
       border: 'none',
-      padding: `0 ${theme.spacing(1)}`
-    }), 
+      padding: `0 ${theme.spacing(1)}`,
+    }),
     optionToggles: css({
       display: 'flex',
     }),
