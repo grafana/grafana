@@ -1,9 +1,9 @@
-import React, { FC, useCallback, useEffect } from 'react';
+import React, { FC, useCallback, useEffect, useLayoutEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { useHistory } from 'react-router-dom';
 
-import { Field, Input, PageToolbar, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Field, Input, useStyles2, HorizontalGroup, Button } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 
@@ -22,7 +22,6 @@ const AddEditRoleForm: FC<React.PropsWithChildren<AddEditRoleFormProps>> = ({
   submitLabel,
   onSubmit,
 }) => {
-  const history = useHistory();
   const methods = useForm({
     defaultValues: initialValues,
   });
@@ -30,32 +29,37 @@ const AddEditRoleForm: FC<React.PropsWithChildren<AddEditRoleFormProps>> = ({
   const styles = useStyles2(getStyles);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const featureSelector = useCallback(getPerconaSettingFlag('enableAccessControl'), []);
+  const { chrome } = useGrafana();
 
   useEffect(() => {
     methods.reset(initialValues);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialValues]);
 
-  const handleGoBack = () => {
-    history.push('/roles');
-  };
+  useLayoutEffect(() => {
+    chrome.update({
+      actions: (
+        <HorizontalGroup height="auto" justify="flex-end">
+          <Button size="sm" variant="secondary" data-testid="add-edit-role-cancel" type="button" onClick={onCancel}>
+            {cancelLabel}
+          </Button>
+          <Button
+            data-testid="add-edit-role-submit"
+            size="sm"
+            type="submit"
+            variant="primary"
+            onClick={methods.handleSubmit(onSubmit)}
+          >
+            {submitLabel}
+          </Button>
+        </HorizontalGroup>
+      ),
+    });
+  });
 
   return (
     <FormProvider {...methods}>
-      <PageToolbar title={title} onGoBack={handleGoBack}>
-        <ToolbarButton data-testid="add-edit-role-cancel" type="button" onClick={onCancel}>
-          {cancelLabel}
-        </ToolbarButton>
-        <ToolbarButton
-          data-testid="add-edit-role-submit"
-          type="submit"
-          variant="primary"
-          onClick={methods.handleSubmit(onSubmit)}
-        >
-          {submitLabel}
-        </ToolbarButton>
-      </PageToolbar>
-      <Page.Contents isLoading={isLoading} className={styles.pageContainer}>
+      <Page.Contents isLoading={isLoading}>
         <FeatureLoader featureSelector={featureSelector}>
           <form onSubmit={methods.handleSubmit(onSubmit)}>
             <div className={styles.page}>

@@ -19,8 +19,7 @@ import {
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import AccessRoleCell from 'app/percona/rbac/AccessRoleCell';
 import AccessRoleHeader from 'app/percona/rbac/AccessRoleHeader';
-import { useAccessRolesEnabled } from 'app/percona/rbac/hooks/useAccessRolesEnabled';
-import { useFetchAccessRoles } from 'app/percona/rbac/hooks/useFetchAccessRoles';
+import { useAccessRolesEnabled, useFetchAccessRoles } from 'app/percona/rbac/hooks';
 import { UserDTO } from 'app/types';
 
 import { OrgUnits } from './OrgUnits';

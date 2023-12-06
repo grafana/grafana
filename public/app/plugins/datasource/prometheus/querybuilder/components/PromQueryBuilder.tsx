@@ -27,9 +27,6 @@ export interface Props {
   onRunQuery: () => void;
   data?: PanelData;
   showExplain: boolean;
-  // @PERCONA
-  hideMetric?: boolean;
-  hideOperations?: boolean;
 }
 
 export const PromQueryBuilder = React.memo<Props>((props) => {

@@ -19,6 +19,8 @@ export interface MetricsLabelsSectionProps {
   onChange: (update: PromVisualQuery) => void;
   variableEditor?: boolean;
   onBlur?: () => void;
+  // @PERCONA
+  hideMetric?: boolean;
 }
 
 export function MetricsLabelsSection({
@@ -27,6 +29,7 @@ export function MetricsLabelsSection({
   onChange,
   onBlur,
   variableEditor,
+  hideMetric,
 }: MetricsLabelsSectionProps) {
   // fixing the use of 'as' from refactoring
   // @ts-ignore
@@ -198,16 +201,18 @@ export function MetricsLabelsSection({
 
   return (
     <>
-      <MetricSelect
-        query={query}
-        onChange={onChange}
-        onGetMetrics={onGetMetrics}
-        datasource={datasource}
-        labelsFilters={query.labels}
-        metricLookupDisabled={datasource.lookupsDisabled}
-        onBlur={onBlur ? onBlur : () => {}}
-        variableEditor={variableEditor}
-      />
+      {!hideMetric && (
+        <MetricSelect
+          query={query}
+          onChange={onChange}
+          onGetMetrics={onGetMetrics}
+          datasource={datasource}
+          labelsFilters={query.labels}
+          metricLookupDisabled={datasource.lookupsDisabled}
+          onBlur={onBlur ? onBlur : () => {}}
+          variableEditor={variableEditor}
+        />
+      )}
       <LabelFilters
         debounceDuration={datasource.getDebounceTimeInMilliseconds()}
         getLabelValuesAutofillSuggestions={getLabelValuesAutocompleteSuggestions}

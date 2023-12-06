@@ -10,6 +10,7 @@ import { OrgUser, UserDTO, useSelector } from 'app/types';
 
 import { Messages } from './AccessRoleCell.messages';
 import { idsToOptions, toOptions } from './AccessRoleCell.utils';
+import { styles } from './AccessRolesCell.styles';
 
 interface AccessRoleCellProps {
   user: OrgUser | UserDTO;
@@ -45,20 +46,19 @@ const AccessRoleCell: FC<React.PropsWithChildren<AccessRoleCellProps>> = ({ user
   };
 
   return (
-    <td>
-      <Select
-        aria-label={Messages.label}
-        isMulti={isOpen || value.length !== 1}
-        value={value}
-        onChange={handleChange}
-        options={options}
-        isClearable={false}
-        closeMenuOnSelect={false}
-        isLoading={rolesLoading || usersLoading}
-        onOpenMenu={() => setIsOpen(true)}
-        onCloseMenu={() => setIsOpen(false)}
-      />
-    </td>
+    <Select
+      aria-label={Messages.label}
+      isMulti={isOpen || value.length !== 1}
+      value={value}
+      onChange={handleChange}
+      options={options}
+      isClearable={false}
+      closeMenuOnSelect={false}
+      isLoading={rolesLoading || usersLoading}
+      onOpenMenu={() => setIsOpen(true)}
+      onCloseMenu={() => setIsOpen(false)}
+      className={styles.cell}
+    />
   );
 };
 

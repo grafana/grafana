@@ -4,6 +4,10 @@ import { AppEvents } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
+import {
+  PMM_ACCESS_ROLE_CREATE_PAGE,
+  PMM_ACCESS_ROLES_PAGE,
+} from 'app/percona/shared/components/PerconaBootstrapper/PerconaNavigation';
 import { createRoleAction } from 'app/percona/shared/core/reducers/roles/roles';
 import { logger } from 'app/percona/shared/helpers/logger';
 import { useAppDispatch } from 'app/store/store';
@@ -30,7 +34,7 @@ const AddRolePage: FC<React.PropsWithChildren<unknown>> = () => {
   };
 
   return (
-    <Page>
+    <Page navId={PMM_ACCESS_ROLES_PAGE.id} pageNav={PMM_ACCESS_ROLE_CREATE_PAGE}>
       <AddEditRoleForm
         title={Messages.title}
         cancelLabel={Messages.cancel}

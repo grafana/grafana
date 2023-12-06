@@ -5,6 +5,10 @@ import { AppEvents } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import { appEvents } from 'app/core/core';
+import {
+  PMM_ACCESS_ROLES_PAGE,
+  PMM_ACCESS_ROLE_EDIT_PAGE,
+} from 'app/percona/shared/components/PerconaBootstrapper/PerconaNavigation/PerconaNavigation.constants';
 import { updateRoleAction } from 'app/percona/shared/core/reducers/roles/roles';
 import { logger } from 'app/percona/shared/helpers/logger';
 import RolesService from 'app/percona/shared/services/roles/Roles.service';
@@ -63,7 +67,7 @@ const EditRolePage: FC<React.PropsWithChildren<unknown>> = () => {
   };
 
   return (
-    <Page>
+    <Page navId={PMM_ACCESS_ROLES_PAGE.id} pageNav={PMM_ACCESS_ROLE_EDIT_PAGE}>
       <AddEditRoleForm
         isLoading={isLoading}
         initialValues={role}

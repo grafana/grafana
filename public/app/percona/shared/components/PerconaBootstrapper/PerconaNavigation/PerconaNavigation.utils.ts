@@ -18,6 +18,8 @@ import {
   PMM_ADD_INSTANCE_PAGE,
   PMM_ALERTING_PERCONA_ALERTS,
   WEIGHTS,
+  PMM_ACCESS_ROLE_CREATE_PAGE,
+  PMM_ACCESS_ROLE_EDIT_PAGE,
 } from './PerconaNavigation.constants';
 
 const DIVIDER: NavModelItem = {
@@ -128,6 +130,8 @@ export const addAccessRolesLink = (configNode: NavModelItem) => {
     configNode.children = [
       ...configNode.children.slice(0, usersIdx + 1),
       PMM_ACCESS_ROLES_PAGE,
+      PMM_ACCESS_ROLE_CREATE_PAGE,
+      PMM_ACCESS_ROLE_EDIT_PAGE,
       ...configNode.children.slice(usersIdx + 1),
     ];
   }

@@ -127,20 +127,18 @@ export const PMM_ACCESS_ROLE_CREATE_PAGE: NavModelItem = {
   id: 'rbac-create-role',
   url: `${config.appSubUrl}/roles/create`,
   icon: 'plus',
-  subTitle: 'Roles',
-  text: 'Roles',
-  hideFromTabs: false,
-  showIconInNavbar: false,
+  text: 'Create role',
+  hideFromTabs: true,
+  isCreateAction: true,
 };
 
 export const PMM_ACCESS_ROLE_EDIT_PAGE: NavModelItem = {
   id: 'rbac-edit-role',
-  url: `${config.appSubUrl}/roles/:id/create`,
+  url: `${config.appSubUrl}/roles/:id/edit`,
   icon: 'plus',
-  subTitle: 'Roles',
-  text: 'Roles',
-  hideFromTabs: false,
-  showIconInNavbar: false,
+  text: 'Edit role',
+  hideFromTabs: true,
+  isCreateAction: true,
 };
 
 export const PMM_ACCESS_ROLES_PAGE: NavModelItem = {
@@ -148,7 +146,6 @@ export const PMM_ACCESS_ROLES_PAGE: NavModelItem = {
   icon: 'user-square',
   url: `${config.appSubUrl}/roles`,
   text: 'Access Roles',
-  hideFromTabs: false,
 };
 
 export const getPmmSettingsPage = (alertingEnabled = false): NavModelItem => {

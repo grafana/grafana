@@ -39,7 +39,6 @@ const AccessRolesPage: FC<React.PropsWithChildren<unknown>> = () => {
     <Page navId="rbac-roles">
       <Page.Contents isLoading={isLoading}>
         <FeatureLoader featureSelector={featureSelector}>
-          <h2 data-testid="access-roles-title">{Messages.title}</h2>
           <p className={styles.description}>
             {Messages.subtitle.text}
             {Messages.subtitle.further}
