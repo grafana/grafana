@@ -18,9 +18,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/strategies"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var _ ssosettings.Service = (*SSOSettingsService)(nil)
+
+var (
+	errInvalidProvider = errutil.ValidationFailed("sso.invalidProvider", errutil.WithPublicMessage("provider is invalid"))
+)
 
 type SSOSettingsService struct {
 	log          log.Logger
@@ -117,14 +122,19 @@ func (s *SSOSettingsService) List(ctx context.Context, requester identity.Reques
 }
 
 func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSettings) error {
-	// TODO: validation (configurable provider? Contains the required fields? etc)
-
 	if isOAuthProvider(settings.Provider) {
+		err := settings.OAuthSettings.ValidateForProvider(settings.Provider)
+		if err != nil {
+			return err
+		}
+
 		encryptedClientSecret, err := s.secrets.Encrypt(ctx, []byte(settings.OAuthSettings.ClientSecret), secrets.WithoutScope())
 		if err != nil {
 			return err
 		}
 		settings.OAuthSettings.ClientSecret = string(encryptedClientSecret)
+	} else {
+		return errInvalidProvider.Errorf("provider %s is invalid", settings.Provider)
 	}
 
 	err := s.store.Upsert(ctx, settings)

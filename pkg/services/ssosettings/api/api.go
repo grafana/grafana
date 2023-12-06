@@ -50,7 +50,7 @@ func (api *Api) RegisterAPIEndpoints() {
 
 		router.Get("/", auth(ac.EvalPermission(ac.ActionSettingsRead)), routing.Wrap(api.listAllProvidersSettings))
 		router.Get("/:key", auth(ac.EvalPermission(ac.ActionSettingsRead, settingsScope)), routing.Wrap(api.getProviderSettings))
-		router.Put("/:key", reqWriteAccess, routing.Wrap(api.updateProviderSettings))
+		router.Put("/", auth(ac.EvalPermission(ac.ActionSettingsWrite)), routing.Wrap(api.updateProviderSettings))
 		router.Delete("/:key", reqWriteAccess, routing.Wrap(api.removeProviderSettings))
 	})
 }
@@ -95,14 +95,19 @@ func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Respons
 }
 
 func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Response {
-	key, ok := web.Params(c.Req)[":key"]
-	if !ok {
-		return response.Error(http.StatusBadRequest, "Missing key", nil)
-	}
-
 	var settingsDTO models.SSOSettingsDTO
 	if err := web.Bind(c.Req, &settingsDTO); err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to parse request body", err)
+	}
+
+	ev := ac.EvalPermission(ac.ActionSettingsWrite, ac.Scope("settings", "auth."+settingsDTO.Provider, "*"))
+	hasAccess, err := api.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, ev)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to evaluate access", err)
+	}
+
+	if !hasAccess {
+		return response.Error(http.StatusUnauthorized, "Unauthorized access", err)
 	}
 
 	settings, err := settingsDTO.ToSSOSettings()
@@ -110,14 +115,9 @@ func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "Invalid request body", err)
 	}
 
-	settings.Provider = key
-
 	err = api.SSOSettingsService.Upsert(c.Req.Context(), *settings)
-	// TODO: first check whether the error is referring to validation errors
-
-	// other error
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to update provider settings", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update provider settings", err)
 	}
 
 	return response.JSON(http.StatusNoContent, nil)
