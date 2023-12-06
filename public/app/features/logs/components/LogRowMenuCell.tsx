@@ -1,7 +1,7 @@
-import React, { FocusEvent, SyntheticEvent, useCallback } from 'react';
+import React, { FocusEvent, SyntheticEvent, useCallback, useState } from 'react';
 
 import { LogRowModel } from '@grafana/data';
-import { ClipboardButton, IconButton } from '@grafana/ui';
+import { ClipboardButton, Dropdown, IconButton, Menu } from '@grafana/ui';
 
 import { LogRowStyles } from './getLogRowStyles';
 
@@ -57,6 +57,33 @@ export const LogRowMenuCell = React.memo(
       [onBlur]
     );
     const getLogText = useCallback(() => logText, [logText]);
+    const [isLinkMenuOpen, setIsLinkMenuOpen] = useState(false);
+
+    const links = row.dataFrame.fields
+      .map((field) => {
+        const wat = field.config
+          .links!.map((link) => {
+            return link.url ? { title: link.title, url: link.url } : undefined;
+          })
+          .filter((v): v is { title: string; url: string } => v !== undefined);
+        return wat;
+      })
+      .flat();
+
+    const MenuActions = (
+      <Menu>
+        {links.map((link) => (
+          <Menu.Item
+            key={link.title}
+            label={link.title}
+            onClick={() => {
+              window.location.href = link.url;
+            }}
+          />
+        ))}
+      </Menu>
+    );
+
     return (
       // We keep this click listener here to prevent the row from being selected when clicking on the menu.
       // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
@@ -131,6 +158,19 @@ export const LogRowMenuCell = React.memo(
                 onClick={() => onPermalinkClick(row)}
                 tabIndex={0}
               />
+            )}
+            {links.length > 0 && (
+              <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={setIsLinkMenuOpen}>
+                <IconButton
+                  tooltip="Open links"
+                  aria-label="Open links"
+                  tooltipPlacement="top"
+                  size="md"
+                  name="link"
+                  onClick={() => setIsLinkMenuOpen(!isLinkMenuOpen)}
+                  tabIndex={0}
+                />
+              </Dropdown>
             )}
           </>
         )}

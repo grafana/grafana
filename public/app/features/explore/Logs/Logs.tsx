@@ -48,6 +48,7 @@ import {
 } from '@grafana/ui';
 import store from 'app/core/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
+import { attachLinks } from 'app/features/logs/utils';
 import { dispatch, getState } from 'app/store/store';
 
 import { ExploreItemState } from '../../../types';
@@ -492,6 +493,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
     return filterLogLevels(logRows, new Set(hiddenLogLevels));
   });
 
+  attachedLinks = memoizeOne((logRows: LogRowModel[], getFieldLinks) => {
+    return attachLinks(logRows, getFieldLinks);
+  });
+
   createNavigationRange = memoizeOne((logRows: LogRowModel[]): { from: number; to: number } | undefined => {
     if (!logRows || logRows.length === 0) {
       return undefined;
@@ -573,6 +578,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
     const navigationRange = this.createNavigationRange(logRows);
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
+
+    this.attachedLinks(logRows, getFieldLinks);
 
     return (
       <>

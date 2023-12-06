@@ -13,6 +13,9 @@ import {
   MutableDataFrame,
   QueryResultMeta,
   LogsVolumeType,
+  DataLink,
+  Field,
+  LinkModel,
 } from '@grafana/data';
 
 import { getDataframeFields } from './components/logParser';
@@ -128,6 +131,56 @@ export const sortLogsResult = (logsResult: LogsModel | null, sortOrder: LogsSort
 
 export const sortLogRows = (logRows: LogRowModel[], sortOrder: LogsSortOrder) =>
   sortOrder === LogsSortOrder.Ascending ? logRows.sort(sortInAscendingOrder) : logRows.sort(sortInDescendingOrder);
+
+export const attachLinks = (
+  logRows: LogRowModel[],
+  getFieldLinks: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>
+): LogRowModel[] => {
+  const newRows = [...logRows];
+  let oldTime = Date.now();
+  const rowsWithLinks = newRows.map((row, i) => {
+    oldTime = Date.now();
+    return { rowIdx: i, dataFrameWithLinks: getDataframeFields(row, getFieldLinks) };
+  });
+
+  rowsWithLinks.forEach((rowWithLinks) => {
+    const row = newRows[rowWithLinks.rowIdx];
+    rowWithLinks.dataFrameWithLinks.forEach((generatedLinkDF) => {
+      const rowField = row.dataFrame.fields[generatedLinkDF.fieldIndex];
+      if (rowField.config.links === undefined) {
+        rowField.config.links = [];
+      }
+      if (generatedLinkDF.links) {
+        if (rowField.config.links) {
+          // if links already exist, merge generated links list with existing links, matching by origin data
+          generatedLinkDF.links.forEach((generatedLink) => {
+            generatedLink.origin.config.links?.forEach((originLink) => {
+              const rowLinkIndex = rowField.config.links?.findIndex(
+                (rowConfigLink) => JSON.stringify(rowConfigLink) === JSON.stringify(originLink)
+              );
+              if (rowLinkIndex !== undefined && rowLinkIndex !== -1) {
+                const url = rowField.config.links![rowLinkIndex].url;
+                if (url === undefined || url === '') {
+                  rowField.config.links![rowLinkIndex].url = generatedLink.href;
+                }
+              }
+            });
+          });
+        } else {
+          rowField.config.links = generatedLinkDF.links.map((linkFieldLink) => {
+            const newDL: DataLink = {
+              title: linkFieldLink.title,
+              url: linkFieldLink.href,
+              targetBlank: linkFieldLink.target === '_blank',
+            };
+            return newDL;
+          });
+        }
+      }
+    });
+  });
+  return newRows;
+};
 
 // Currently supports only error condition in Loki logs
 export const checkLogsError = (logRow: LogRowModel): { hasError: boolean; errorMessage?: string } => {
