@@ -58,11 +58,7 @@ export const AchievementCard = ({ title, progress = 20, level }: AchievementCard
                   )}
                 </Card.Figure>
                 <Card.Heading>{achievement.title}</Card.Heading>
-                <Card.Description>
-                  {/*{achievement.description}*/}
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
-                  dolore magna aliqua. Semper feugiat nibh sed pulvinar proin gravida.
-                </Card.Description>
+                <Card.Description>{achievement.description}</Card.Description>
                 <Card.Actions>
                   {achievement.video && (
                     <iframe
