@@ -160,7 +160,7 @@ export function QueryOperationRow({
 const getQueryOperationRowStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css`
-      margin-bottom: ${theme.spacing(2)};
+      margin-bottom: ${theme.spacing(0)};
     `,
     content: css`
       margin-top: ${theme.spacing(0.5)};

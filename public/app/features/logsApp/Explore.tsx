@@ -83,7 +83,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     queryContainer: css({
       label: 'queryContainer',
-      padding: theme.spacing(1),
+      border: 'none',
+      backgroundColor: 'transparent',
+      padding: theme.spacing(0.5),
     }),
     exploreContainer: css({
       label: 'exploreContainer',
