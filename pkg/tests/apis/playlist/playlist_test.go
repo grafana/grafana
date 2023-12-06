@@ -95,8 +95,6 @@ func TestPlaylist(t *testing.T) {
 	})
 
 	t.Run("with dual write (unified storage)", func(t *testing.T) {
-		t.Skip() // NOT WORKING YET!
-
 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    true,
 			DisableAnonymous:     true,
@@ -287,6 +285,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 			Path:   "/api/playlists/" + uid,
 			Body:   []byte(legacyPayload),
 		}, &playlist.PlaylistDTO{})
+		require.Equal(t, 200, dtoResponse.Response.StatusCode)
 		require.Equal(t, uid, dtoResponse.Result.Uid)
 		require.Equal(t, "10m", dtoResponse.Result.Interval)
 
@@ -296,12 +295,13 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 		require.JSONEq(t, expectedResult, client.SanitizeJSON(found))
 
 		// Delete does not return anything
-		_ = apis.DoRequest(helper, apis.RequestParams{
+		deleteResponse := apis.DoRequest(helper, apis.RequestParams{
 			User:   client.Args.User,
 			Method: http.MethodDelete,
 			Path:   "/api/playlists/" + uid,
 			Body:   []byte(legacyPayload),
 		}, &playlist.PlaylistDTO{}) // response is empty
+		require.Equal(t, 200, deleteResponse.Response.StatusCode)
 
 		found, err = client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
 		statusError := helper.AsStatusError(err)
