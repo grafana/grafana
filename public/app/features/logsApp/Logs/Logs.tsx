@@ -13,7 +13,6 @@ import {
   EventBus,
   ExploreLogsPanelState,
   ExplorePanelsState,
-  FeatureState,
   Field,
   GrafanaTheme2,
   LinkModel,
@@ -32,24 +31,12 @@ import {
   TimeZone,
   urlUtil,
 } from '@grafana/data';
-import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import {
-  Button,
-  Dropdown,
-  FeatureBadge,
-  Icon,
-  LinkButton,
-  Menu,
-  PanelChrome,
-  RadioButtonGroup,
-  Themeable2,
-  withTheme2,
-} from '@grafana/ui';
+import { Button, PanelChrome, RadioButtonGroup, Themeable2, withTheme2 } from '@grafana/ui';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import store from 'app/core/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
-import { createUrl } from 'app/features/alerting/unified/utils/url';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
 import { getLogRowStyles } from 'app/features/logs/components/getLogRowStyles';
 import { dispatch, getState } from 'app/store/store';
@@ -63,12 +50,11 @@ import { changePanelState } from '../state/explorePane';
 
 import { LogDetails } from './LogDetails';
 import { LogStats } from './LogStats';
-import { LogsFeedback } from './LogsFeedback';
 import { LogsOptions } from './LogsOptions';
+import { LogsOrder } from './LogsOrder';
 import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { SETTINGS_KEYS } from './utils/logs';
-import { LogsOrder } from './LogsOrder';
 
 interface Props extends Themeable2 {
   width: number;
@@ -686,11 +672,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
       this.state.hiddenLogLevels.length > 0 ? ` (filtered based on selected ${this.state.groupByLabel})` : ''
     }`;
 
-    // This is here to just figure out the logic
-    const log1Trace = logRows[0].possibleTraceId;
-    const ds = getDataSourceSrv().getList({ tracing: true });
-    const firstTracingDs = ds.find((d) => d.type === 'tempo');
-
     const maxPaneSize = this.state.logDetailsRow ? getMaxPaneSize() : window.innerWidth;
 
     return (
@@ -706,26 +687,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
             logsSortOrder={logsSortOrder}
             timeZone={timeZone}
           />
-        )}
-        {firstTracingDs && log1Trace && (
-          <LinkButton
-            size="md"
-            variant="secondary"
-            icon="compass"
-            target="_blank"
-            href={createUrl(`/explore`, {
-              left: JSON.stringify({
-                datasource: firstTracingDs.uid,
-                queries: [{ refId: 'A', query: log1Trace }],
-                range: {
-                  from: new Date(this.props.absoluteRange.from).toISOString(),
-                  to: new Date(this.props.absoluteRange.to).toISOString(),
-                },
-              }),
-            })}
-          >
-            View in Explore
-          </LinkButton>
         )}
         <PanelChrome
           title={title}
@@ -768,48 +729,48 @@ class UnthemedLogs extends PureComponent<Props, State> {
         >
           <div className={styles.stickyNavigation}>
             <div className={styles.logsOptions}>
-                <LogsOptions
+              <LogsOptions
+                styles={styles}
+                showTime={showTime}
+                showLabels={showLabels}
+                wrapLogMessage={wrapLogMessage}
+                prettifyLogMessage={prettifyLogMessage}
+                exploreId={exploreId}
+                onChangeTime={this.onChangeTime}
+                onChangeLabels={this.onChangeLabels}
+                onChangeWrapLogMessage={this.onChangeWrapLogMessage}
+                onChangePrettifyLogMessage={this.onChangePrettifyLogMessage}
+              />
+              <div className={styles.optionToggles}>
+                {config.featureToggles.logsExploreTableVisualisation && (
+                  <div className={styles.visualisationType}>
+                    <RadioButtonGroup
+                      options={[
+                        {
+                          label: 'List',
+                          value: 'logs',
+                          description: 'Show results in logs visualisation',
+                        },
+                        {
+                          label: 'Table',
+                          value: 'table',
+                          description: 'Show results in table visualisation',
+                        },
+                      ]}
+                      size="md"
+                      value={this.state.visualisationType}
+                      onChange={this.onChangeVisualisation}
+                    />
+                  </div>
+                )}
+                <LogsOrder
+                  logsSortOrder={logsSortOrder}
+                  isFlipping={isFlipping}
+                  onChangeLogsSortOrder={this.onChangeLogsSortOrder}
                   styles={styles}
-                  showTime={showTime}
-                  showLabels={showLabels}
-                  wrapLogMessage={wrapLogMessage}
-                  prettifyLogMessage={prettifyLogMessage}
-                  exploreId={exploreId}
-                  onChangeTime={this.onChangeTime}
-                  onChangeLabels={this.onChangeLabels}
-                  onChangeWrapLogMessage={this.onChangeWrapLogMessage}
-                  onChangePrettifyLogMessage={this.onChangePrettifyLogMessage}
                 />
-                <div className={styles.optionToggles}>
-                  {config.featureToggles.logsExploreTableVisualisation && (
-                    <div className={styles.visualisationType}>
-                      <RadioButtonGroup
-                        options={[
-                          {
-                            label: 'List',
-                            value: 'logs',
-                            description: 'Show results in logs visualisation',
-                          },
-                          {
-                            label: 'Table',
-                            value: 'table',
-                            description: 'Show results in table visualisation',
-                          },
-                        ]}
-                        size="md"
-                        value={this.state.visualisationType}
-                        onChange={this.onChangeVisualisation}
-                      />
-                    </div>
-                  )}
-                  <LogsOrder
-                    logsSortOrder={logsSortOrder}
-                    isFlipping={isFlipping}
-                    onChangeLogsSortOrder={this.onChangeLogsSortOrder}
-                    styles={styles}
-                  />
-                </div>
               </div>
+            </div>
             <div ref={this.topLogsRef} />
           </div>
           <div
@@ -949,7 +910,7 @@ export const Logs = withTheme2(UnthemedLogs);
 const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: number) => {
   return {
     optionToggles: css({
-      display: 'flex', 
+      display: 'flex',
     }),
     logOptionsMenu: css({
       position: 'relative',
@@ -1012,9 +973,7 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
       overflowY: 'visible',
       width: '100%',
     }),
-    visualisationType: css({
-      
-    }),
+    visualisationType: css({}),
     visualisationTypeRadio: css({
       margin: `0 0 0 ${theme.spacing(1)}`,
     }),

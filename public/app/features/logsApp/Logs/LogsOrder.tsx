@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { LogsSortOrder } from '@grafana/schema';
-import { Icon, InlineField, RadioButtonGroup } from '@grafana/ui';
+import { InlineField, RadioButtonGroup } from '@grafana/ui';
 
 interface Props {
   logsSortOrder: LogsSortOrder;
@@ -10,12 +10,7 @@ interface Props {
   styles: Record<string, string>;
 }
 
-export const LogsOrder = ({
-  logsSortOrder,
-  onChangeLogsSortOrder,
-  isFlipping,
-  styles
-}: Props) => {
+export const LogsOrder = ({ logsSortOrder, onChangeLogsSortOrder, isFlipping, styles }: Props) => {
   return (
     <div>
       <InlineField className={styles.logOptionMenuItem}>
