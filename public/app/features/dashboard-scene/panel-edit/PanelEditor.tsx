@@ -18,6 +18,7 @@ import {
 import { DashboardScene } from '../scene/DashboardScene';
 import { getDashboardUrl } from '../utils/urlBuilders';
 
+import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
 import { PanelOptionsPane } from './PanelOptionsPane';
 
@@ -122,9 +123,15 @@ export function buildPanelEditScene(dashboard: DashboardScene, panel: VizPanel):
     $timeRange: dashboardStateCloned.$timeRange,
     body: new SplitLayout({
       direction: 'row',
-      primary: new SceneFlexLayout({
+      primary: new SplitLayout({
         direction: 'column',
-        children: [panelClone],
+        primary: new SceneFlexLayout({
+          direction: 'column',
+          children: [panelClone],
+        }),
+        secondary: new SceneFlexItem({
+          body: new PanelDataPane({ panelRef: panelClone.getRef() }),
+        }),
       }),
       secondary: new SceneFlexItem({
         width: '300px',
