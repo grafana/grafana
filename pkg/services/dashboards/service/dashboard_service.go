@@ -432,8 +432,8 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 
 	return dash, nil
 }
-func (dr *DashboardServiceImpl) GetSoftDeletedDashboard(ctx context.Context, query *dashboards.GetDashboardQuery) (*dashboards.Dashboard, error) {
-	return dr.dashboardStore.GetSoftDeletedDashboard(ctx, query)
+func (dr *DashboardServiceImpl) GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*dashboards.Dashboard, error) {
+	return dr.dashboardStore.GetSoftDeletedDashboard(ctx, orgID, uid)
 }
 
 func (dr *DashboardServiceImpl) RestoreDashboard(ctx context.Context, dashboardUID string) error {

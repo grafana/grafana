@@ -640,13 +640,12 @@ func (d *dashboardStore) GetDashboardsByPluginID(ctx context.Context, query *das
 	}
 	return dashboards, nil
 }
-func (d *dashboardStore) GetSoftDeletedDashboard(ctx context.Context, query *dashboards.GetDashboardQuery) (*dashboards.Dashboard, error) {
+func (d *dashboardStore) GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*dashboards.Dashboard, error) {
 	var queryResult *dashboards.Dashboard
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 
-		dashboard := dashboards.Dashboard{OrgID: query.OrgID, UID: query.UID}
-		mustCols := []string{}
-		has, err := sess.Where("deleted IS NOT NULL").MustCols(mustCols...).Get(&dashboard)
+		dashboard := dashboards.Dashboard{OrgID: orgID, UID: uid}
+		has, err := sess.Where("deleted IS NOT NULL").Get(&dashboard)
 
 		if err != nil {
 			return err
