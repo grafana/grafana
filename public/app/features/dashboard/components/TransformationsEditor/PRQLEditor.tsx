@@ -135,8 +135,6 @@ export const PRQLEditor = (props: Props) => {
   }, [readOnly, mode]);
 
   useEffect(() => {
-    console.log('split', doc?.split('\n'));
-    console.log('split', doc?.split('\n')[0].split(' '));
     const wordsFromFirstLine = doc?.split('\n')[0].split(' ');
     if (wordsFromFirstLine?.length && wordsFromFirstLine[0]?.toLowerCase() === 'select') {
       setMode('sql');
