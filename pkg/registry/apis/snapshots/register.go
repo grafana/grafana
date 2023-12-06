@@ -36,21 +36,28 @@ type SnapshotsAPIBuilder struct {
 	gv         schema.GroupVersion
 }
 
-func RegisterAPIService(
-	cfg *setting.Cfg,
-	features featuremgmt.FeatureToggles,
+func NewSnapshotsAPIBuilder(
 	p dashboardsnapshots.Service,
-	apiregistration grafanaapiserver.APIRegistrar,
+	cfg *setting.Cfg,
 ) *SnapshotsAPIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		return nil // skip registration unless opting into experimental apis
-	}
-	builder := &SnapshotsAPIBuilder{
+	return &SnapshotsAPIBuilder{
 		service:    p,
 		options:    newSharingOptionsGetter(cfg),
 		namespacer: request.GetNamespaceMapper(cfg),
 		gv:         schema.GroupVersion{Group: GroupName, Version: VersionID},
 	}
+}
+
+func RegisterAPIService(
+	p dashboardsnapshots.Service,
+	apiregistration grafanaapiserver.APIRegistrar,
+	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
+) *SnapshotsAPIBuilder {
+	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+		return nil // skip registration unless opting into experimental apis
+	}
+	builder := NewSnapshotsAPIBuilder(p, cfg)
 	apiregistration.RegisterAPI(builder)
 	return builder
 }

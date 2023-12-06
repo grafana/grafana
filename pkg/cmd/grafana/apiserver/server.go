@@ -20,7 +20,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 
-	"github.com/grafana/grafana/pkg/registry/apis/example"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 )
 
@@ -67,17 +66,8 @@ func newAPIServerOptions(out, errOut io.Writer) *APIServerOptions {
 	}
 }
 
-func (o *APIServerOptions) LoadAPIGroupBuilders(args []string) error {
-	o.builders = []grafanaAPIServer.APIGroupBuilder{}
-	for _, g := range args {
-		switch g {
-		// No dependencies for testing
-		case "example.grafana.app":
-			o.builders = append(o.builders, example.NewTestingAPIBuilder())
-		default:
-			return fmt.Errorf("unknown group: %s", g)
-		}
-	}
+func (o *APIServerOptions) LoadAPIGroupBuilders(builders []grafanaAPIServer.APIGroupBuilder) error {
+	o.builders = builders
 
 	if len(o.builders) < 1 {
 		return fmt.Errorf("expected group name(s) in the command line arguments")
