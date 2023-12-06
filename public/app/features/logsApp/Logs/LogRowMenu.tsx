@@ -52,41 +52,42 @@ export const LogRowMenu = React.memo(
     return (
       // We keep this click listener here to prevent the row from being selected when clicking on the menu.
       // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-      <span className={`log-row-menu ${styles.rowMenu}`} onClick={onLogRowClick}>
+      <div className={styles.detailsMenu} onClick={onLogRowClick}>
         {shouldShowContextToggle && (
           <IconButton
-            size="md"
+            size="lg"
+            variant="secondary"
             name="gf-show-context"
             onClick={onShowContextClick}
             tooltip="Show context"
             tooltipPlacement="top"
             aria-label="Show context"
-            tabIndex={0}
+            className={styles.detailsMenuIcon}
           />
         )}
         <ClipboardButton
-          className={styles.copyLogButton}
           icon="copy"
           variant="secondary"
           fill="text"
-          size="md"
+          size="lg"
           getText={getLogText}
           tooltip="Copy to clipboard"
           tooltipPlacement="top"
-          tabIndex={0}
+          className={styles.detailsMenuCopyIcon}
         />
         {onPermalinkClick && row.rowId !== undefined && row.uid && (
           <IconButton
             tooltip="Copy shortlink"
+            variant="secondary"
             aria-label="Copy shortlink"
             tooltipPlacement="top"
-            size="md"
+            size="lg"
             name="share-alt"
             onClick={() => onPermalinkClick(row)}
-            tabIndex={0}
+            className={styles.detailsMenuIcon}
           />
         )}
-      </span>
+      </div>
     );
   }
 );
