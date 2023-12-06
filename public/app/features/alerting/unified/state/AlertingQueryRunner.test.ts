@@ -6,14 +6,14 @@ import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import {
   DataFrame,
   DataFrameJSON,
+  DataSourceInstanceSettings,
   Field,
   FieldType,
-  getDefaultRelativeTimeRange,
   LoadingState,
+  getDefaultRelativeTimeRange,
   rangeUtil,
-  DataSourceInstanceSettings,
 } from '@grafana/data';
-import { DataSourceSrv, FetchResponse, DataSourceWithBackend } from '@grafana/runtime';
+import { DataSourceSrv, DataSourceWithBackend, FetchResponse } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
@@ -37,7 +37,7 @@ describe('AlertingQueryRunner', () => {
     );
 
     const data = runner.get();
-    runner.run([createQuery('A'), createQuery('B')]);
+    runner.run([createQuery('A'), createQuery('B')], 'B');
 
     await expect(data.pipe(take(1))).toEmitValuesWith((values) => {
       const [data] = values;
@@ -94,7 +94,7 @@ describe('AlertingQueryRunner', () => {
     );
 
     const data = runner.get();
-    runner.run([createQuery('A'), createQuery('B')]);
+    runner.run([createQuery('A'), createQuery('B')], 'B');
 
     await expect(data.pipe(take(1))).toEmitValuesWith((values) => {
       const [data] = values;
@@ -126,7 +126,7 @@ describe('AlertingQueryRunner', () => {
     );
 
     const data = runner.get();
-    runner.run([createQuery('A'), createQuery('B')]);
+    runner.run([createQuery('A'), createQuery('B')], 'B');
 
     await expect(data.pipe(take(2))).toEmitValuesWith((values) => {
       const [loading, data] = values;
@@ -181,7 +181,7 @@ describe('AlertingQueryRunner', () => {
     );
 
     const data = runner.get();
-    runner.run([createQuery('A'), createQuery('B')]);
+    runner.run([createQuery('A'), createQuery('B')], 'B');
 
     await expect(data.pipe(take(1))).toEmitValuesWith((values) => {
       const [data] = values;
@@ -203,7 +203,7 @@ describe('AlertingQueryRunner', () => {
     );
 
     const data = runner.get();
-    runner.run([createQuery('A'), createQuery('B')]);
+    runner.run([createQuery('A'), createQuery('B')], 'B');
 
     await expect(data.pipe(take(1))).toEmitValuesWith((values) => {
       const [data] = values;
@@ -231,15 +231,18 @@ describe('AlertingQueryRunner', () => {
     );
 
     const data = runner.get();
-    runner.run([
-      createQuery('A', {
-        model: {
-          refId: 'A',
-          hide: true,
-        },
-      }),
-      createQuery('B'),
-    ]);
+    runner.run(
+      [
+        createQuery('A', {
+          model: {
+            refId: 'A',
+            hide: true,
+          },
+        }),
+        createQuery('B'),
+      ],
+      'B'
+    );
 
     await expect(data.pipe(take(1))).toEmitValuesWith((values) => {
       const [loading, _data] = values;

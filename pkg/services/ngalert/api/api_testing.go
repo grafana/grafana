@@ -156,11 +156,11 @@ func (srv TestingApiSrv) RouteEvalQueries(c *contextmodel.ReqContext, cmd apimod
 	}
 
 	cond := ngmodels.Condition{
-		Condition: "",
+		Condition: cmd.Condition,
 		Data:      queries,
 	}
-	if len(cmd.Data) > 0 {
-		cond.Condition = cmd.Data[0].RefID
+	if cond.Condition == "" && len(cond.Data) > 0 {
+		cond.Condition = cond.Data[len(cond.Data)-1].RefID
 	}
 
 	_, err := store.OptimizeAlertQueries(cond.Data)
