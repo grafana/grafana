@@ -14,17 +14,11 @@ interface Props {
 }
 
 export const PRQLExpr = ({ labelWidth, onChange, refIds, query }: Props) => {
-  const onRefIdChange = (value: SelectableValue<string>) => {
-    onChange({
-      ...query,
-      expression: value.value,
-      prql: {
-        rawQuery: `from A
-        filter 'time' > @2021-01-01
-        take 1..20`,
-      },
-    });
-  };
+  const initialQuery =
+    query.prql?.rawQuery ||
+    `from ${refIds[0].value}
+  filter 'time' > @2021-01-01
+  take 1..20`;
 
   const onEditorChange = (queryString: string) => {
     onChange({
@@ -38,14 +32,9 @@ export const PRQLExpr = ({ labelWidth, onChange, refIds, query }: Props) => {
 
   return (
     <>
-      <InlineFieldRow>
-        <InlineField label="Input" labelWidth={labelWidth}>
-          <Select onChange={onRefIdChange} options={refIds} value={query.expression} width={20} />
-        </InlineField>
-      </InlineFieldRow>
       <PRQLEditor
         onEditorChange={onEditorChange}
-        queryString={query.prql?.rawQuery}
+        queryString={initialQuery}
         metricNames={['metric1', 'metric2']}
       ></PRQLEditor>
     </>
