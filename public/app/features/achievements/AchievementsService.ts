@@ -16,8 +16,6 @@ import { Achievement, AchievementId, AchievementLevel } from './types';
 export const registerAchievementCompleted = async (achievementId: AchievementId): Promise<void> => {
   const user = await api.loadUser();
 
-  console.log('user: ', user);
-
   // check if achievement is already completed
   if (userHasCompletedAchievement(achievementId, user)) {
     console.log('achievement already done');
