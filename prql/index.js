@@ -30621,8 +30621,6 @@ const snippets = [
 /// Autocompletion for built-in PRQL globals and keywords.
 const globalCompletion = ifNotIn(dontComplete, completeFromList(globals.concat(snippets)));
 
-console.log('tags', tags);
-
 const prqlHighlight = styleTags({
   'CallExpression/Identifier': tags.function(tags.variableName),
   let: tags.definitionKeyword,
