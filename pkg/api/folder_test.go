@@ -451,6 +451,7 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 			expectedCode:         http.StatusOK,
 			features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 			expectedParentUIDs:   []string{"parent", "subfolder"},
+			expectedParentOrgIDs: []int64{0, 0},
 			expectedParentTitles: []string{"parent title", "subfolder title"},
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
@@ -463,6 +464,7 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 			expectedCode:         http.StatusOK,
 			features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 			expectedParentUIDs:   []string{REDACTED, REDACTED},
+			expectedParentOrgIDs: []int64{0, 0},
 			expectedParentTitles: []string{REDACTED, REDACTED},
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
@@ -475,6 +477,7 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 			expectedCode:         http.StatusOK,
 			features:             featuremgmt.WithFeatures(),
 			expectedParentUIDs:   []string{},
+			expectedParentOrgIDs: []int64{0, 0},
 			expectedParentTitles: []string{},
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
