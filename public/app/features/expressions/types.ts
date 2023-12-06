@@ -136,12 +136,6 @@ export interface ExpressionQuery extends DataQuery {
   upsampler?: string;
   conditions?: ClassicCondition[];
   settings?: ExpressionQuerySettings;
-  prql?: PRQLQuerySettings;
-}
-
-export interface PRQLQuerySettings {
-  // TODO: more... vars etc
-  rawQuery: string;
 }
 
 export interface ExpressionQuerySettings {

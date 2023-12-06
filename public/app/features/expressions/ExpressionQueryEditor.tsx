@@ -93,7 +93,7 @@ export function ExpressionQueryEditor(props: Props) {
         return <Threshold onChange={onChange} query={query} labelWidth={labelWidth} refIds={refIds} />;
 
       case ExpressionQueryType.prql:
-        return <PRQLExpr onChange={onChange} query={query} labelWidth={labelWidth} refIds={refIds} />;
+        return <PRQLExpr onChange={onChange} query={query} refIds={refIds} />;
     }
   };
 

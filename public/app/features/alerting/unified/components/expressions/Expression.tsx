@@ -92,13 +92,11 @@ export const Expression: FC<ExpressionProps> = ({
           return (
             <PRQLEditor
               metricNames={['metric1', 'metric2']}
-              queryString={query.prql?.rawQuery ?? ''}
-              onEditorChange={(queryEditorExpression) => {
+              queryString={query.expression ?? ''}
+              onEditorChange={(expression) => {
                 return onChangeQuery({
                   ...query,
-                  prql: {
-                    rawQuery: queryEditorExpression,
-                  },
+                  expression,
                 });
               }}
             />

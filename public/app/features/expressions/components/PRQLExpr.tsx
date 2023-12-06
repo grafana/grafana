@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 
@@ -6,36 +6,26 @@ import { PRQLEditor } from '../../dashboard/components/TransformationsEditor/PRQ
 import { ExpressionQuery } from '../types';
 
 interface Props {
-  labelWidth: number | 'auto';
   refIds: Array<SelectableValue<string>>;
   query: ExpressionQuery;
   onChange: (query: ExpressionQuery) => void;
 }
 
-export const PRQLExpr = ({ labelWidth, onChange, refIds, query }: Props) => {
+export const PRQLExpr = ({ onChange, refIds, query }: Props) => {
+  const vars = useMemo(() => refIds.map((v) => v.value!), [refIds]);
+
   const initialQuery =
-    query.prql?.rawQuery ||
+    query.expression ||
     `from ${refIds[0].value}
   filter 'time' > @2021-01-01
   take 1..20`;
 
-  const onEditorChange = (queryString: string) => {
+  const onEditorChange = (expression: string) => {
     onChange({
       ...query,
-      prql: {
-        ...query.prql,
-        rawQuery: queryString,
-      },
+      expression,
     });
   };
 
-  return (
-    <>
-      <PRQLEditor
-        onEditorChange={onEditorChange}
-        queryString={initialQuery}
-        metricNames={['metric1', 'metric2']}
-      ></PRQLEditor>
-    </>
-  );
+  return <PRQLEditor onEditorChange={onEditorChange} queryString={initialQuery} metricNames={vars}></PRQLEditor>;
 };
