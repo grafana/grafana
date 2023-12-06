@@ -120,7 +120,6 @@ export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQue
         {renderExtras && <div className={styles.itemWrapper}>{renderExtras()}</div>}
         {disabled && <em className={styles.contextInfo}>Disabled</em>}
       </div>
-
       {collapsedText && <div className={styles.collapsedText}>{collapsedText}</div>}
     </>
   );
@@ -213,6 +212,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       font-style: italic;
       white-space: nowrap;
       text-overflow: ellipsis;
+      margin-left: 160px;
     `,
     contextInfo: css`
       font-size: ${theme.typography.bodySmall.fontSize};
