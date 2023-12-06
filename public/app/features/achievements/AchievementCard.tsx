@@ -45,7 +45,7 @@ export const AchievementCard = ({ title, progress = 20, level }: AchievementCard
           sx={{ backgroundColor: theme.colors.background.secondary }}
         >
           <Box className={styles.progressBox}>
-            <CircularProgress variant="determinate" value={progress} sx={{ color: '#F55F3E' }} />
+            <CircularProgress variant="determinate" value={progressByLevel} sx={{ color: '#F55F3E' }} />
             <Box className={styles.progressText}>{`${progressByLevel}%`}</Box>
           </Box>
           <h4 style={{ color: theme.colors.text.primary }}>{title}</h4>
