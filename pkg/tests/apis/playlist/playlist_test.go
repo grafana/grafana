@@ -96,7 +96,7 @@ func TestPlaylist(t *testing.T) {
 
 	t.Run("with dual write (unified storage)", func(t *testing.T) {
 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true, // required for  unified storage
+			AppModeProduction:    false, // required for  unified storage
 			DisableAnonymous:     true,
 			APIServerStorageType: "unified", // use the entity api tables
 			EnableFeatureToggles: []string{
