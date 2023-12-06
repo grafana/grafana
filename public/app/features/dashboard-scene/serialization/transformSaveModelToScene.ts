@@ -26,6 +26,7 @@ import {
   SceneDataLayerControls,
   AdHocFilterSet,
   TextBoxVariable,
+  UserActionEvent,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
@@ -44,6 +45,7 @@ import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
+import { DashboardInteractions } from '../utils/interactions';
 import {
   getCurrentValueForOldIntervalModel,
   getIntervalsFromOldIntervalModel,
@@ -223,7 +225,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     );
   }
 
-  return new DashboardScene({
+  const dashboardScene = new DashboardScene({
     title: oldModel.title,
     tags: oldModel.tags || [],
     links: oldModel.links || [],
@@ -249,6 +251,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       new behaviors.CursorSync({
         sync: oldModel.graphTooltip,
       }),
+      registerPanelInteractionsReporter,
     ],
     $data:
       layers.length > 0
@@ -272,6 +275,8 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       }),
     ],
   });
+
+  return dashboardScene;
 }
 
 export function createSceneVariableFromVariableModel(variable: TypedVariableModel): SceneVariable {
@@ -368,13 +373,15 @@ export function buildGridItemForLibPanel(panel: PanelModel) {
     return null;
   }
 
+  const body = new LibraryVizPanel({
+    title: panel.title,
+    uid: panel.libraryPanel.uid,
+    name: panel.libraryPanel.name,
+    key: getVizPanelKeyForPanelId(panel.id),
+  });
+
   return new SceneGridItem({
-    body: new LibraryVizPanel({
-      title: panel.title,
-      uid: panel.libraryPanel.uid,
-      name: panel.libraryPanel.name,
-      key: getVizPanelKeyForPanelId(panel.id),
-    }),
+    body,
     y: panel.gridPos.y,
     x: panel.gridPos.x,
     width: panel.gridPos.w,
@@ -438,14 +445,51 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
     });
   }
 
+  const body = new VizPanel(vizPanelState);
+
   return new SceneGridItem({
     key: `grid-item-${panel.id}`,
     x: panel.gridPos.x,
     y: panel.gridPos.y,
     width: panel.gridPos.w,
     height: panel.gridPos.h,
-    body: new VizPanel(vizPanelState),
+    body,
   });
 }
 
 const isAdhocVariable = (v: VariableModel): v is AdHocVariableModel => v.type === 'adhoc';
+
+const getLimitedDescriptionReporter = () => {
+  const reportedPanels: string[] = [];
+
+  return (key: string) => {
+    if (reportedPanels.includes(key)) {
+      return;
+    }
+    reportedPanels.push(key);
+    DashboardInteractions.panelDescriptionShown();
+  };
+};
+
+function registerPanelInteractionsReporter(scene: DashboardScene) {
+  const descriptionReporter = getLimitedDescriptionReporter();
+
+  // Subscriptions set with subscribeToEvent are automatically unsubscribed when the scene deactivated
+  scene.subscribeToEvent(UserActionEvent, (e) => {
+    const { interaction } = e.payload;
+    switch (interaction) {
+      case 'panel-description-shown':
+        descriptionReporter(e.payload.origin.state.key || '');
+        break;
+      case 'panel-status-message-clicked':
+        DashboardInteractions.panelStatusMessageClicked();
+        break;
+      case 'panel-cancel-query-clicked':
+        DashboardInteractions.panelCancelQueryClicked();
+        break;
+      case 'panel-menu-shown':
+        DashboardInteractions.panelMenuShown();
+        break;
+    }
+  });
+}

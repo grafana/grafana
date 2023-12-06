@@ -27,6 +27,7 @@ import AddPanelButton from 'app/features/dashboard/components/AddPanelButton/Add
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { KioskMode } from 'app/types';
@@ -41,15 +42,6 @@ import {
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
 import { ShareButton } from './ShareButton';
-import {
-  trackToolbarFavoritesClick,
-  trackToolbarRefreshClick,
-  trackToolbarSettingsClick,
-  trackToolbarTimePickerClick,
-  trackToolbarZoomClick,
-  trackToolbarSaveClick,
-  trackToolbarAddClick,
-} from './analytics';
 
 const mapDispatchToProps = {
   setStarred,
@@ -128,7 +120,7 @@ export const DashNav = React.memo<Props>((props) => {
   };
 
   const onStarDashboard = () => {
-    trackToolbarFavoritesClick();
+    DashboardInteractions.toolbarFavoritesClick();
     const dashboardSrv = getDashboardSrv();
     const { dashboard, setStarred } = props;
 
@@ -140,7 +132,7 @@ export const DashNav = React.memo<Props>((props) => {
   };
 
   const onOpenSettings = () => {
-    trackToolbarSettingsClick();
+    DashboardInteractions.toolbarSettingsClick();
     locationService.partial({ editview: 'settings' });
   };
 
@@ -254,9 +246,9 @@ export const DashNav = React.memo<Props>((props) => {
       <DashNavTimeControls
         dashboard={dashboard}
         onChangeTimeZone={updateTimeZoneForSession}
-        onToolbarRefreshClick={trackToolbarRefreshClick}
-        onToolbarZoomClick={trackToolbarZoomClick}
-        onToolbarTimePickerClick={trackToolbarTimePickerClick}
+        onToolbarRefreshClick={DashboardInteractions.toolbarRefreshClick}
+        onToolbarZoomClick={DashboardInteractions.toolbarZoomClick}
+        onToolbarTimePickerClick={DashboardInteractions.toolbarTimePickerClick}
         key="time-controls"
       />
     );
@@ -280,7 +272,11 @@ export const DashNav = React.memo<Props>((props) => {
     if (canEdit && !isFullscreen) {
       if (config.featureToggles.emptyDashboardPage) {
         buttons.push(
-          <AddPanelButton dashboard={dashboard} onToolbarAddMenuOpen={trackToolbarAddClick} key="panel-add-dropdown" />
+          <AddPanelButton
+            dashboard={dashboard}
+            onToolbarAddMenuOpen={DashboardInteractions.toolbarAddClick}
+            key="panel-add-dropdown"
+          />
         );
       } else {
         buttons.push(
@@ -303,7 +299,7 @@ export const DashNav = React.memo<Props>((props) => {
               tooltip={t('dashboard.toolbar.save', 'Save dashboard')}
               icon="save"
               onClick={() => {
-                trackToolbarSaveClick();
+                DashboardInteractions.toolbarSaveClick();
                 showModal(SaveDashboardDrawer, {
                   dashboard,
                   onDismiss: hideModal,

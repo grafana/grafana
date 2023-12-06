@@ -1,4 +1,4 @@
-package influxql
+package buffered
 
 import (
 	"encoding/json"
@@ -20,10 +20,13 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
-const shouldUpdate = false
+const (
+	shouldUpdate = false
+	testPath     = "../testdata"
+)
 
 func readJsonFile(filePath string) io.ReadCloser {
-	bytes, err := os.ReadFile(filepath.Join("testdata", filepath.Clean(filePath)+".json"))
+	bytes, err := os.ReadFile(filepath.Join(testPath, filepath.Clean(filePath)+".json"))
 	if err != nil {
 		panic(fmt.Sprintf("cannot read the file: %s", filePath))
 	}
@@ -42,10 +45,10 @@ func generateQuery(resFormat string, alias string) *models.Query {
 
 var testFiles = []string{
 	"all_values_are_null",
+	"influx_select_all_from_cpu",
 	"one_measurement_with_two_columns",
 	"response_with_weird_tag",
 	"some_values_are_null",
-	"error_on_top_level_response",
 	"simple_response",
 	"multiple_series_with_tags_and_multiple_columns",
 	"multiple_series_with_tags",
@@ -76,21 +79,16 @@ func TestReadInfluxAsTable(t *testing.T) {
 
 func runScenario(tf string, resultFormat string) func(t *testing.T) {
 	return func(t *testing.T) {
-		f, err := os.Open(path.Join("testdata", filepath.Clean(tf+".json")))
+		f, err := os.Open(path.Join(testPath, filepath.Clean(tf+".json")))
 		require.NoError(t, err)
 
 		query := generateQuery(resultFormat, "")
 
 		rsp := ResponseParse(io.NopCloser(f), 200, query)
-
-		if strings.Contains(tf, "error") {
-			require.Error(t, rsp.Error)
-			return
-		}
 		require.NoError(t, rsp.Error)
 
 		fname := tf + "." + resultFormat + ".golden"
-		experimental.CheckGoldenJSONResponse(t, "testdata", fname, rsp, shouldUpdate)
+		experimental.CheckGoldenJSONResponse(t, testPath, fname, rsp, shouldUpdate)
 	}
 }
 
