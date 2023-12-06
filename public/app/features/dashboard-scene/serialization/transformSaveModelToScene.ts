@@ -1,5 +1,3 @@
-import { debounce } from 'lodash';
-
 import { AdHocVariableModel, TypedVariableModel, VariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
@@ -461,17 +459,27 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
 
 const isAdhocVariable = (v: VariableModel): v is AdHocVariableModel => v.type === 'adhoc';
 
-const debouncedDescriptionReporting = debounce(() => {
-  DashboardInteractions.panelDescriptionShown();
-}, 100);
+const getLimitedDescriptionReporter = () => {
+  const reportedPanels: string[] = [];
+
+  return (key: string) => {
+    if (reportedPanels.includes(key)) {
+      return;
+    }
+    reportedPanels.push(key);
+    DashboardInteractions.panelDescriptionShown();
+  };
+};
 
 function registerPanelInteractionsReporter(scene: DashboardScene) {
+  const descriptionReporter = getLimitedDescriptionReporter();
+
   // Subscriptions set with subscribeToEvent are automatically unsubscribed when the scene deactivated
   scene.subscribeToEvent(UserActionEvent, (e) => {
     const { interaction } = e.payload;
     switch (interaction) {
       case 'panel-description-shown':
-        debouncedDescriptionReporting();
+        descriptionReporter(e.payload.origin.state.key || '');
         break;
       case 'panel-status-message-clicked':
         DashboardInteractions.panelStatusMessageClicked();
