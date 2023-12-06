@@ -377,7 +377,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		notify(states)
 	}
 
-	evaluate := func(ctx context.Context, f fingerprint, attempt int64, e *evaluation, span trace.Span, noRetry bool) error {
+	evaluate := func(ctx context.Context, f fingerprint, attempt int64, e *evaluation, span trace.Span, retry bool) error {
 		logger := logger.New("version", e.rule.Version, "fingerprint", f, "attempt", attempt, "now", e.scheduledAt).FromContext(ctx)
 		start := sch.clock.Now()
 
@@ -402,8 +402,8 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		if err != nil || results.HasErrors() {
 			evalTotalFailures.Inc()
 
-			// If we have reached the maximum number of retries - no-op on these return operations.
-			if !noRetry {
+			// Only retry (return errors) if this isn't the last attempt, otherwise skip these return operations.
+			if retry {
 				// The only thing that can return non-nil `err` from ruleEval.Evaluate is the server side expression pipeline.
 				// This includes transport errors such as transient network errors.
 				if err != nil {
@@ -499,8 +499,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 					sch.evalApplied(key, ctx.scheduledAt)
 				}()
 
-				var attempt int64
-				for attempt = 1; attempt <= sch.maxAttempts; attempt++ {
+				for attempt := int64(1); attempt <= sch.maxAttempts; attempt++ {
 					isPaused := ctx.rule.IsPaused
 					f := ruleWithFolder{ctx.rule, ctx.folderTitle}.Fingerprint()
 					// Do not clean up state if the eval loop has just started.
@@ -532,8 +531,8 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 						attribute.String("tick", utcTick),
 					))
 
-					noRetry := attempt == sch.maxAttempts
-					err := evaluate(tracingCtx, f, attempt, ctx, span, noRetry)
+					retry := attempt < sch.maxAttempts
+					err := evaluate(tracingCtx, f, attempt, ctx, span, retry)
 					// This is extremely confusing - when we exhaust all retry attempts, or we have no retryable errors
 					// we return nil - so technically, this is meaningless to know whether the evaluation has errors or not.
 					span.End()

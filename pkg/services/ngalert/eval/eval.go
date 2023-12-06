@@ -163,16 +163,15 @@ func (evalResults Results) HasErrors() bool {
 // 3. The `Error` type is of `&invalidEvalResultFormatError`
 // Our thinking with this approach, is that we don't want to retry errors that have relation with invalid alert definition format.
 func (evalResults Results) HasNonRetryableErrors() bool {
-	var count int
 	for _, r := range evalResults {
 		if r.State == Error && r.Error != nil {
-			if errors.Is(r.Error, &invalidEvalResultFormatError{}) {
-				count++
+			var nonRetryableError *invalidEvalResultFormatError
+			if errors.As(r.Error, &nonRetryableError) {
+				return true
 			}
 		}
 	}
-
-	return count > 0
+	return false
 }
 
 // HasErrors returns true when Results contains at least one element and all elements are errors
