@@ -34,9 +34,6 @@ type ScheduleService interface {
 	Run(context.Context) error
 }
 
-// retryDelay represents how long to wait between each failed rule evaluation.
-const retryDelay = 1 * time.Second
-
 // AlertsSender is an interface for a service that is responsible for sending notifications to the end-user.
 //
 //go:generate mockery --name AlertsSender --structname AlertsSenderMock --inpackage --filename alerts_sender_mock.go --with-expecter
@@ -377,7 +374,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		notify(states)
 	}
 
-	evaluate := func(ctx context.Context, f fingerprint, attempt int64, e *evaluation, span trace.Span, retry bool) error {
+	evaluate := func(ctx context.Context, f fingerprint, attempt int64, e *evaluation, span trace.Span) {
 		logger := logger.New("version", e.rule.Version, "fingerprint", f, "attempt", attempt, "now", e.scheduledAt).FromContext(ctx)
 		start := sch.clock.Now()
 
@@ -401,35 +398,16 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 
 		if err != nil || results.HasErrors() {
 			evalTotalFailures.Inc()
-
-			// Only retry (return errors) if this isn't the last attempt, otherwise skip these return operations.
-			if retry {
-				// The only thing that can return non-nil `err` from ruleEval.Evaluate is the server side expression pipeline.
-				// This includes transport errors such as transient network errors.
-				if err != nil {
-					span.SetStatus(codes.Error, "rule evaluation failed")
-					span.RecordError(err)
-					return fmt.Errorf("server side expressions pipeline returned an error: %w", err)
-				}
-
-				// If the pipeline executed successfully but have other types of errors that can be retryable, we should do so.
-				if !results.HasNonRetryableErrors() {
-					span.SetStatus(codes.Error, "rule evaluation failed")
-					span.RecordError(err)
-					return fmt.Errorf("the result-set has errors that can be retried: %w", results.Error())
-				}
-			}
-
-			// If results is nil, we assume that the error must be from the SSE pipeline (ruleEval.Evaluate) which is the only code that can actually return an `err`.
 			if results == nil {
 				results = append(results, eval.NewResultFromError(err, e.scheduledAt, dur))
 			}
-
-			// If err is nil, we assume that the SSS pipeline succeeded and that the error must be embedded in the results.
 			if err == nil {
-				err = results.Error()
+				for _, result := range results {
+					if result.Error != nil {
+						err = errors.Join(err, result.Error)
+					}
+				}
 			}
-
 			span.SetStatus(codes.Error, "rule evaluation failed")
 			span.RecordError(err)
 		} else {
@@ -440,7 +418,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		}
 		if ctx.Err() != nil { // check if the context is not cancelled. The evaluation can be a long-running task.
 			logger.Debug("Skip updating the state because the context has been cancelled")
-			return nil
+			return
 		}
 		start = sch.clock.Now()
 		processedStates := sch.stateManager.ProcessEvalResults(
@@ -462,8 +440,18 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			sch.alertsSender.Send(ctx, key, alerts)
 		}
 		sendDuration.Observe(sch.clock.Now().Sub(start).Seconds())
+	}
 
-		return nil
+	retryIfError := func(f func(attempt int64) error) error {
+		var attempt int64
+		var err error
+		for attempt = 0; attempt < sch.maxAttempts; attempt++ {
+			err = f(attempt)
+			if err == nil {
+				return nil
+			}
+		}
+		return err
 	}
 
 	evalRunning := false
@@ -499,7 +487,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 					sch.evalApplied(key, ctx.scheduledAt)
 				}()
 
-				for attempt := int64(1); attempt <= sch.maxAttempts; attempt++ {
+				err := retryIfError(func(attempt int64) error {
 					isPaused := ctx.rule.IsPaused
 					f := ruleWithFolder{ctx.rule, ctx.folderTitle}.Fingerprint()
 					// Do not clean up state if the eval loop has just started.
@@ -518,7 +506,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 					currentFingerprint = f
 					if isPaused {
 						logger.Debug("Skip rule evaluation because it is paused")
-						return
+						return nil
 					}
 
 					fpStr := currentFingerprint.String()
@@ -530,21 +518,15 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 						attribute.String("rule_fingerprint", fpStr),
 						attribute.String("tick", utcTick),
 					))
+					defer span.End()
 
-					retry := attempt < sch.maxAttempts
-					err := evaluate(tracingCtx, f, attempt, ctx, span, retry)
-					// This is extremely confusing - when we exhaust all retry attempts, or we have no retryable errors
-					// we return nil - so technically, this is meaningless to know whether the evaluation has errors or not.
-					span.End()
-					if err == nil {
-						return
-					}
-
-					logger.Error("Failed to evaluate rule", "version", ctx.rule.Version, "fingerprint", f, "attempt", attempt, "now", ctx.scheduledAt)
-					time.Sleep(retryDelay)
+					evaluate(tracingCtx, f, attempt, ctx, span)
+					return nil
+				})
+				if err != nil {
+					logger.Error("Evaluation failed after all retries", "error", err)
 				}
 			}()
-
 		case <-grafanaCtx.Done():
 			// clean up the state only if the reason for stopping the evaluation loop is that the rule was deleted
 			if errors.Is(grafanaCtx.Err(), errRuleDeleted) {
