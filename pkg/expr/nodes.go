@@ -439,9 +439,10 @@ func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasou
 			logger.Warn("Ignoring InfluxDB data frame due to missing numeric fields")
 			continue
 		}
-		if schema.Type != data.TimeSeriesTypeWide {
-			return "", mathexp.Results{}, fmt.Errorf("input data must be a wide series but got type %s (input refid)", schema.Type)
-		}
+		// TODO - support tabular data
+		// if schema.Type != data.TimeSeriesTypeWide {
+		// 	// return "", mathexp.Results{}, fmt.Errorf("input data must be a wide series but got type %s (input refid)", schema.Type)
+		// }
 		filtered = append(filtered, frame)
 		totalLen += len(schema.ValueIndices)
 	}
@@ -452,20 +453,29 @@ func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasou
 
 	maybeFixerFn := checkIfSeriesNeedToBeFixed(filtered, datasourceType)
 
-	vals := make([]mathexp.Value, 0, totalLen)
-	for _, frame := range filtered {
-		series, err := WideToMany(frame, maybeFixerFn)
-		if err != nil {
-			return "", mathexp.Results{}, err
-		}
-		for _, ser := range series {
-			vals = append(vals, ser)
-		}
-	}
 	dataType := "single frame series"
 	if len(filtered) > 1 {
 		dataType = "multi frame series"
 	}
+
+	vals := make([]mathexp.Value, 0, totalLen)
+	for _, frame := range filtered {
+		schema := frame.TimeSeriesSchema()
+		if schema.Type == data.TimeSeriesTypeWide {
+			series, err := WideToMany(frame, maybeFixerFn)
+			if err != nil {
+				return "", mathexp.Results{}, err
+			}
+			for _, ser := range series {
+				vals = append(vals, ser)
+			}
+		} else { // TODO - added for prql tabular data
+			v := mathexp.Scalar{Frame: frame}
+			vals = append(vals, v)
+			dataType = "single frame" // TODO - does this matter?
+		}
+	}
+
 	return dataType, mathexp.Results{
 		Values: vals,
 	}, nil

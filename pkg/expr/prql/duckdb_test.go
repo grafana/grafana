@@ -11,9 +11,14 @@ func TestAppend(t *testing.T) {
 
 	var fields []*data.Field
 	vals := []string{"test"}
-	f := data.NewField("name", nil, vals)
+	labels := data.Labels{
+		"foo": "bar",
+		"cat": "zzz",
+	}
+	f := data.NewField("name", labels, vals)
 	fields = append(fields, f)
 	frame := data.NewFrame("foo", fields...)
+	frame.RefID = "foo"
 
 	d := DuckDB{
 		Name: "test.db",

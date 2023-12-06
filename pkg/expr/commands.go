@@ -319,18 +319,16 @@ type PRQLCommand struct {
 
 // NewPRQLCommand creates a new PRQLCMD.
 func NewPRQLCommand(refID, rawPRQL string, tr TimeRange) (*PRQLCommand, error) {
-	fmt.Printf("PRQL: %s\n\n", rawPRQL)
 	sql, err := prql.Convert(rawPRQL, "")
 	if err != nil {
-		fmt.Printf("SQL ERROR: %v\n", err)
-		return nil, err
+		// if that fails, assume we are using raw SQL
+		sql = rawPRQL
 	}
 
-	tables, err := prql.Tables(rawPRQL)
+	tables, err := prql.Tables(sql)
 	if err != nil {
-		fmt.Printf("Tables ERROR: %v (SQL:%s)\n", err, sql)
-		tables = []string{"A"}
-		//		return nil, err
+		// ??? perhaps it is just SELECT 1?
+		return nil, err
 	}
 
 	return &PRQLCommand{
