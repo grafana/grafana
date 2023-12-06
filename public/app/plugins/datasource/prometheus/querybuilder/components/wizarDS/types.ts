@@ -4,6 +4,12 @@ export type Suggestion = {
   testid: string;
   link: string;
   order: number;
+
+  // update attrinbutes for Tutotial
+  route?: string;
+  target?: string;
+  title?: string;
+  content?: string;
 };
 
 export enum SuggestionType {
