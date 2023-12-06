@@ -260,25 +260,25 @@ func (_m *FakeDashboardService) GetDashboardsSharedWithUser(ctx context.Context,
 	return r0, r1
 }
 
-// GetSoftDeletedDashboard provides a mock function with given fields: ctx, query
-func (_m *FakeDashboardService) GetSoftDeletedDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error) {
-	ret := _m.Called(ctx, query)
+// GetSoftDeletedDashboard provides a mock function with given fields: ctx, orgID, uid
+func (_m *FakeDashboardService) GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*Dashboard, error) {
+	ret := _m.Called(ctx, orgID, uid)
 
 	var r0 *Dashboard
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *GetDashboardQuery) (*Dashboard, error)); ok {
-		return rf(ctx, query)
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) (*Dashboard, error)); ok {
+		return rf(ctx, orgID, uid)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *GetDashboardQuery) *Dashboard); ok {
-		r0 = rf(ctx, query)
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) *Dashboard); ok {
+		r0 = rf(ctx, orgID, uid)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*Dashboard)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *GetDashboardQuery) error); ok {
-		r1 = rf(ctx, query)
+	if rf, ok := ret.Get(1).(func(context.Context, int64, string) error); ok {
+		r1 = rf(ctx, orgID, uid)
 	} else {
 		r1 = ret.Error(1)
 	}
