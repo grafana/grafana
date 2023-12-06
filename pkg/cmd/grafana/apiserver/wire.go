@@ -42,7 +42,7 @@ import (
 	"github.com/google/wire"
 )
 
-var secretServiceWireSet = wire.NewSet(
+var secretsServiceWireSet = wire.NewSet(
 	encryptionprovider.ProvideEncryptionProvider,
 	wire.Bind(new(encryption.Provider), new(encryptionprovider.Provider)),
 	hooks.ProvideService,
