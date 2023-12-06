@@ -41,6 +41,14 @@ func init() {
 				Secure:       true,
 			},
 			{
+				Label:        "Thread ID",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Description:  "Optional Thread ID for Telegram",
+				PropertyName: "threadId",
+				Required:     false, // Set as needed
+			},
+			{
 				Label:        "Chat ID",
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
@@ -59,6 +67,7 @@ type TelegramNotifier struct {
 	BotToken    string
 	ChatID      string
 	UploadImage bool
+	threadId    string // New field for ThreadID
 	log         log.Logger
 }
 
@@ -71,6 +80,7 @@ func NewTelegramNotifier(model *models.AlertNotification, fn alerting.GetDecrypt
 	botToken := fn(context.Background(), model.SecureSettings, "bottoken", model.Settings.Get("bottoken").MustString(), setting.SecretKey)
 	chatID := model.Settings.Get("chatid").MustString()
 	uploadImage := model.Settings.Get("uploadImage").MustBool()
+	threadId := model.Settings.Get("threadId").MustString("") // Add this line for ThreadID
 
 	if botToken == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find Bot Token in settings"}
@@ -85,6 +95,7 @@ func NewTelegramNotifier(model *models.AlertNotification, fn alerting.GetDecrypt
 		BotToken:     botToken,
 		ChatID:       chatID,
 		UploadImage:  uploadImage,
+		threadId:     threadId, // Set the ThreadID field
 		log:          log.New("alerting.notifier.telegram"),
 	}, nil
 }
@@ -278,3 +289,4 @@ func (tn *TelegramNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	return nil
 }
+
