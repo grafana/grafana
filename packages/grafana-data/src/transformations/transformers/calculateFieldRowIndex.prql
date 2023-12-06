@@ -1,0 +1,11 @@
+# TODO: pick the table at the top of the pipeline
+from A
+# Row index
+derive const = 0
+derive `Row` = (row_number const) / (count const)
+select {!const}
+# Row percentile
+derive const = 0
+# TODO: Rename this if `Row` is already taken
+derive `Row` = (row_number const) / (count const) #
+select !{const}
