@@ -20,6 +20,7 @@ export interface Props {
   onRunQuery: () => void;
   showExplain: boolean;
   timeRange?: TimeRange;
+  runQueryButton?: React.ReactNode;
 }
 
 export interface State {
@@ -69,6 +70,7 @@ export function LokiQueryBuilderContainer(props: Props) {
         showExplain={showExplain}
         data-testid={testIds.editor}
         timeRange={timeRange}
+        runQueryButton={props.runQueryButton}
       />
       {query.expr !== '' && <QueryPreview query={query.expr} />}
     </>

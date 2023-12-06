@@ -20,7 +20,8 @@ export function QueryOptionGroup({ title, children, collapsedInfo, queryStats }:
 
   return (
     <div className={styles.wrapper}>
-      <Collapse
+      {title && (
+        <Collapse
         className={styles.collapse}
         collapsible
         isOpen={isOpen}
@@ -40,14 +41,16 @@ export function QueryOptionGroup({ title, children, collapsedInfo, queryStats }:
       >
         <div className={styles.body}>{children}</div>
       </Collapse>
-
-      {queryStats && config.featureToggles.lokiQuerySplitting && (
-        <Tooltip content="Note: the query will be split into multiple parts and executed in sequence. Query limits will only apply each individual part.">
-          <Icon tabIndex={0} name="info-circle" className={styles.tooltip} size="sm" />
-        </Tooltip>
       )}
 
-      {queryStats && <p className={styles.stats}>{generateQueryStats(queryStats)}</p>}
+      {queryStats && <p className={styles.stats}>
+        {config.featureToggles.lokiQuerySplitting && (
+          <Tooltip content="Note: the query will be split into multiple parts and executed in sequence. Query limits will only apply each individual part.">
+            <Icon tabIndex={0} name="info-circle" className={styles.tooltip} size="sm" />
+          </Tooltip>
+        )}
+        {generateQueryStats(queryStats)}
+      </p>}
     </div>
   );
 }

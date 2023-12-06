@@ -102,6 +102,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       right: 0,
       bottom: 0,
       display: 'flex',
+      paddingTop: theme.spacing(3),
     }),
   };
 };
@@ -589,12 +590,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
     return (
       <ContentOutlineContextProvider>
-        {/* <ExploreToolbar
-          exploreId={exploreId}
-          onChangeTime={this.onChangeTime}
-          onContentOutlineToogle={this.onContentOutlineToogle}
-          isContentOutlineOpen={contentOutlineVisible}
-        /> */}
         <div
           style={{
             position: 'relative',
@@ -603,11 +598,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           }}
         >
           <div className={styles.wrapper}>
-            {contentOutlineVisible && (
-              <div className={styles.left}>
-                <ContentOutline scroller={this.scrollElement} panelId={`content-outline-container-${exploreId}`} />
-              </div>
-            )}
             <CustomScrollbar
               testId={selectors.pages.Explore.General.scrollView}
               scrollRefCallback={(scrollElement) => (this.scrollElement = scrollElement || undefined)}

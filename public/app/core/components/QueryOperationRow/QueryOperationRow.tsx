@@ -164,7 +164,6 @@ const getQueryOperationRowStyles = (theme: GrafanaTheme2) => {
     `,
     content: css`
       margin-top: ${theme.spacing(0.5)};
-      margin-left: ${theme.spacing(3)};
     `,
   };
 };
