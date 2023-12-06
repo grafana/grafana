@@ -126,7 +126,6 @@ interface State {
   logDetailsRow: LogRowModel | undefined;
   groupByLabel?: string;
   paneSize: number;
-  showLogsOptions: boolean;
   sidebarVisible: boolean;
 }
 
@@ -166,8 +165,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     logsContainer: undefined,
     logDetailsRow: undefined,
     groupByLabel: undefined,
-    paneSize: getLastSize(),
-    showLogsOptions: false,
+    paneSize: localStorage.getItem('logs.sidebar') === 'true' ? getLastSize() : window.innerWidth - WINDOW_MARGINS,
     sidebarVisible: localStorage.getItem('logs.sidebar') === 'true' ? true : false,
   };
 
@@ -544,6 +542,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     this.setState(
       {
         logDetailsRow: row,
+        sidebarVisible: true,
       },
       () => {
         this.handlePaneResize(this.state.paneSize);
