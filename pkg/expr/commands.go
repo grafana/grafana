@@ -314,6 +314,7 @@ type PRQLCommand struct {
 	varsToQuery []string
 	timeRange   TimeRange
 	refID       string // The output refid?
+	PRQL        string
 }
 
 // NewPRQLCommand creates a new PRQLCMD.
@@ -339,6 +340,7 @@ func NewPRQLCommand(refID, rawPRQL string, tr TimeRange) (*PRQLCommand, error) {
 		varsToQuery: tables,
 		timeRange:   tr,
 		refID:       refID,
+		PRQL:        rawPRQL,
 	}, nil
 }
 
@@ -385,7 +387,7 @@ func (gr *PRQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.
 		}
 	}
 
-	frames, err := prql.Query("db", gr.theSQL)
+	frames, err := prql.Query("db", gr.PRQL)
 	if err != nil {
 		return mathexp.Results{}, err
 	}
