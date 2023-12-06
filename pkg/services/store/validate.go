@@ -6,10 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/filestorage"
-	"github.com/grafana/grafana/pkg/services/store/kind/svg"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -17,7 +15,6 @@ var (
 	allowedImageExtensions = map[string]bool{
 		".jpg":  true,
 		".jpeg": true,
-		".svg":  true,
 		".gif":  true,
 		".png":  true,
 		".webp": true,
@@ -28,7 +25,6 @@ var (
 		".gif":  {"image/gif": true},
 		".png":  {"image/png": true},
 		".webp": {"image/webp": true},
-		".svg":  {"image/svg+xml": true},
 	}
 )
 
@@ -51,11 +47,11 @@ func fail(reason string) validationResult {
 }
 
 func (s *standardStorageService) detectMimeType(ctx context.Context, user *user.SignedInUser, uploadRequest *UploadRequest) string {
-	if strings.HasSuffix(uploadRequest.Path, ".svg") {
-		if svg.IsSVG(uploadRequest.Contents) {
-			return "image/svg+xml"
-		}
-	}
+	// if strings.HasSuffix(uploadRequest.Path, ".svg") {
+	// 	if svg.IsSVG(uploadRequest.Contents) {
+	// 		return "image/svg+xml"
+	// 	}
+	// }
 
 	return http.DetectContentType(uploadRequest.Contents)
 }
