@@ -60,7 +60,7 @@ const getStyles = memoizeOne((theme: GrafanaTheme2) => {
       }
     `,
     adjoiningLinkButton: css`
-      margin-left: ${theme.spacing(1)};
+      padding-top: ${theme.spacing(1)};
     `,
     wrapLine: css`
       label: wrapLine;
@@ -86,7 +86,7 @@ const getStyles = memoizeOne((theme: GrafanaTheme2) => {
     buttonRow: css`
       display: flex;
       flex-direction: row;
-      gap: ${theme.spacing(0.5)};
+      gap: ${theme.spacing(0.25)};
       margin-left: ${theme.spacing(0.5)};
     `,
   };
@@ -210,14 +210,11 @@ class UnThemedLogDetailsRow extends PureComponent<Props> {
     const hasFilteringFunctionality = !disableActions && onClickFilterLabel && onClickFilterOutLabel;
     const refIdTooltip = row.dataFrame?.refId ? ` in query ${row.dataFrame?.refId}` : '';
 
-    const isMultiParsedValueWithNoContent =
-      !singleVal && parsedValues != null && !parsedValues.every((val) => val === '');
-
     const toggleFieldButton =
       displayedFields && parsedKeys != null && displayedFields.includes(parsedKeys[0]) ? (
-        <IconButton variant="primary" tooltip="Hide this field" name="eye" onClick={this.hideField} />
+        <IconButton variant="primary" tooltip="Hide this field" size="xs" name="eye" onClick={this.hideField} />
       ) : (
-        <IconButton tooltip="Show this field instead of the message" name="eye" onClick={this.showField} />
+        <IconButton tooltip="Show this field instead of the message" size="xs" name="eye" onClick={this.showField} />
       );
 
     return (
@@ -235,6 +232,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props> {
                   />
                   <IconButton
                     name="search-minus"
+                    size="xs"
                     tooltip={`Filter out value${refIdTooltip}`}
                     onClick={this.filterOutLabel}
                   />
@@ -250,16 +248,24 @@ class UnThemedLogDetailsRow extends PureComponent<Props> {
             <div className={styles.logDetailsValue}>
               {singleVal ? parsedValues[0] : this.generateMultiVal(parsedValues, true)}
               {singleVal && this.generateClipboardButton(parsedValues[0])}
-              <div className={cx((singleVal || isMultiParsedValueWithNoContent) && styles.adjoiningLinkButton)}>
+            </div>
+          </td>
+        </tr>
+        {links && (
+          <tr>
+            <td></td>
+            <td></td>
+            <td>
+              <div className={styles.adjoiningLinkButton}>
                 {links?.map((link, i) => (
                   <span key={`${link.title}-${i}`}>
                     <DataLinkButton link={link} />
                   </span>
                 ))}
               </div>
-            </div>
-          </td>
-        </tr>
+            </td>
+          </tr>
+        )}
       </>
     );
   }
@@ -281,7 +287,7 @@ const AsyncIconButton = ({ isActive, tooltipSuffix, ...rest }: AsyncIconButtonPr
    */
   isActive().then(setActive);
 
-  return <IconButton {...rest} variant={active ? 'primary' : undefined} tooltip={tooltip + tooltipSuffix} />;
+  return <IconButton {...rest} size="xs" variant={active ? 'primary' : undefined} tooltip={tooltip + tooltipSuffix} />;
 };
 
 export const LogDetailsRow = withTheme2(UnThemedLogDetailsRow);

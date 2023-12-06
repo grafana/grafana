@@ -180,15 +180,11 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       label: logs-row-details__icon;
       position: relative;
       color: ${theme.v1.palette.gray3};
-      padding-top: 1px;
-      padding-bottom: 1px;
-      padding-right: ${theme.spacing(0.75)};
+      padding-right: ${theme.spacing(2)};
     `,
     logDetailsLabel: css`
       label: logs-row-details__label;
-      max-width: 30em;
-      min-width: 20em;
-      padding: 0 ${theme.spacing(1)};
+      padding-right: ${theme.spacing(2)};
       overflow-wrap: break-word;
     `,
     logDetailsHeading: css`
@@ -312,6 +308,7 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
     logDetails: css({
       label: 'logDetailsDefaultCursor',
       backgroundColor: theme.colors.background.secondary,
+      paddingBottom: theme.spacing(2),
     }),
     visibleRowMenu: css`
       label: visibleRowMenu;
