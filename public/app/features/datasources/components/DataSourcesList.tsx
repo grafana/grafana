@@ -80,29 +80,31 @@ export function DataSourcesListView({
     );
   }
 
+  const getDataSourcesList = () => {
+    if (isLoading) {
+      return new Array(20)
+        .fill(null)
+        .map((_, index) => <DataSourcesListCard.Skeleton key={index} hasExploreRights={hasExploreRights} />);
+    }
+
+    return dataSources.map((dataSource) => (
+      <li key={dataSource.uid}>
+        <DataSourcesListCard
+          dataSource={dataSource}
+          hasWriteRights={hasWriteRights}
+          hasExploreRights={hasExploreRights}
+        />
+      </li>
+    ));
+  };
+
   return (
     <>
       {/* List Header */}
       <DataSourcesListHeader />
 
       {/* List */}
-      <ul className={styles.list}>
-        {isLoading
-          ? new Array(20)
-              .fill(null)
-              .map((_, index) => <DataSourcesListCard.Skeleton key={index} hasExploreRights={hasExploreRights} />)
-          : dataSources.map((dataSource) => {
-              return (
-                <li key={dataSource.uid}>
-                  <DataSourcesListCard
-                    dataSource={dataSource}
-                    hasWriteRights={hasWriteRights}
-                    hasExploreRights={hasExploreRights}
-                  />
-                </li>
-              );
-            })}
-      </ul>
+      <ul className={styles.list}>{getDataSourcesList()}</ul>
     </>
   );
 }
