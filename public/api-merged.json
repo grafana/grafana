@@ -15107,6 +15107,10 @@
             "$ref": "#/definitions/ImportDashboardInput"
           }
         },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
         "overwrite": {
           "type": "boolean"
         },
@@ -15149,6 +15153,10 @@
         },
         "importedUrl": {
           "type": "string"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
         },
         "path": {
           "type": "string"

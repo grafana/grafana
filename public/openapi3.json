@@ -6129,6 +6129,10 @@
             },
             "type": "array"
           },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
           "overwrite": {
             "type": "boolean"
           },
@@ -6171,6 +6175,10 @@
           },
           "importedUrl": {
             "type": "string"
+          },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
           },
           "path": {
             "type": "string"
