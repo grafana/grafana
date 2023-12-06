@@ -41,7 +41,10 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
 
     // clear custom options
     let newFieldConfig = { ...prevFieldConfig };
-    newFieldConfig.defaults.custom = {};
+    newFieldConfig.defaults = {
+      ...newFieldConfig.defaults,
+      custom: {},
+    };
     newFieldConfig.overrides = filterFieldConfigOverrides(newFieldConfig.overrides, isStandardFieldProp);
 
     this._cachedPluginOptions[prevPluginId] = { options: prevOptions, fieldConfig: prevFieldConfig };
