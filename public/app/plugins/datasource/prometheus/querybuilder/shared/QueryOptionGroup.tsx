@@ -94,6 +94,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     stats: css({
       margin: '0px',
+      marginTop: theme.spacing(1),
       color: theme.colors.text.secondary,
       fontSize: theme.typography.bodySmall.fontSize,
     }),
