@@ -277,11 +277,9 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 			"kind": "Playlist",
 			"metadata": {
 			  "annotations": {
-					"grafana.app/createdBy": "user:3:editor-1",
-					"grafana.app/originKey": "${originKey}",
-					"grafana.app/originName": "SQL",
-					"grafana.app/originTimestamp": "${originTimestamp}",
-					"grafana.app/updatedTimestamp": "${updatedTimestamp}"
+				"grafana.app/originKey": "${originKey}",
+				"grafana.app/originName": "SQL",
+				"grafana.app/updatedTimestamp": "${updatedTimestamp}"
 			  },
 			  "creationTimestamp": "${creationTimestamp}",
 			  "name": "` + uid + `",
@@ -319,12 +317,9 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 			"kind": "Playlist",
 			"metadata": {
 			  "annotations": {
-					"grafana.app/createdBy": "user:3:editor-1",
-					"grafana.app/originKey": "${originKey}",
-					"grafana.app/originName": "SQL",
-					"grafana.app/originTimestamp": "${originTimestamp}",
-					"grafana.app/updatedTimestamp": "${updatedTimestamp}",
-					"grafana.app/updatedBy": "user:3:editor-1"
+				"grafana.app/originKey": "${originKey}",
+				"grafana.app/originName": "SQL",
+				"grafana.app/updatedTimestamp": "${updatedTimestamp}"
 			  },
 			  "creationTimestamp": "${creationTimestamp}",
 			  "name": "` + uid + `",
