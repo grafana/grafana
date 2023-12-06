@@ -34,6 +34,7 @@ func (d *DuckDB) Query(q string) (data.Frames, error) {
 		return nil, err
 	}
 
+	// TODO - add any needed converters for duckdb
 	frame, err := sqlutil.FrameFromRows(results, -1, sqlutil.Converter{})
 	return data.Frames{frame}, err
 }
@@ -48,7 +49,7 @@ func (d *DuckDB) AppendAll(ctx context.Context, frames data.Frames) error {
 		err = db.Close()
 		fmt.Println("failed to close db")
 	}(db)
-	err = d.createTables(frames)
+	frameLables, err := d.createTables(frames)
 	if err != nil {
 		return err
 	}
@@ -123,6 +124,29 @@ func (d *DuckDB) AppendAll(ctx context.Context, frames data.Frames) error {
 		}
 
 	}
+
+	labelsAppender, err := duckdb.NewAppenderFromConn(conn, "", "labels")
+	if err != nil {
+		return err
+	}
+
+	for refId, fieldLabels := range frameLables {
+		for f, lbls := range fieldLabels {
+			for name, value := range lbls {
+				err := labelsAppender.AppendRow(refId, f, name, value)
+				if err != nil {
+					fmt.Println(err)
+					return err
+				}
+			}
+		}
+	}
+
+	err = labelsAppender.Flush()
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
 	return nil
 }
 
@@ -135,7 +159,17 @@ func (d *DuckDB) AppendAll(ctx context.Context, frames data.Frames) error {
 // 	return reflect.Indirect(reflect.ValueOf(i))
 // }
 
-func (d *DuckDB) createTables(frames data.Frames) error {
+func (d *DuckDB) createTables(frames data.Frames) (FrameLables, error) {
+
+	stmt := "create or replace table labels (ref VARCHAR, col VARCHAR, name VARCHAR, value VARCHAR)"
+	_, err := d.DB.Query(stmt)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	frameLables := FrameLables{}
+
 	for _, f := range frames {
 		name := f.RefID
 		if name == "" {
@@ -144,6 +178,7 @@ func (d *DuckDB) createTables(frames data.Frames) error {
 		fmt.Println("creating table " + name)
 		createTable := "create or replace table " + name + " ("
 		sep := ""
+		fieldLabels := FieldLables{}
 		for _, fld := range f.Fields {
 			createTable += sep
 			n := strings.ReplaceAll(fld.Name, "-", "_") // TODO - surround with brackets or backticks?
@@ -176,15 +211,21 @@ func (d *DuckDB) createTables(frames data.Frames) error {
 				createTable += " " + "BLOB"
 			}
 			sep = " ,"
+			fieldLabels[fld.Name] = fld.Labels
 		}
+		frameLables[f.RefID] = fieldLabels
 		createTable += ")"
 		fmt.Println(createTable)
 
 		_, err := d.DB.Query(createTable)
 		if err != nil {
 			fmt.Println(err)
-			return err
+			return nil, err
 		}
 	}
-	return nil
+	return frameLables, nil
 }
+
+type FieldLables = map[string]data.Labels
+
+type FrameLables = map[string]FieldLables
