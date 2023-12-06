@@ -96,7 +96,7 @@ export function enhanceContactPointsWithMetadata(
   result: AlertManagerCortexConfig,
   status: ReceiversStateDTO[] = [],
   notifiers: NotifierDTO[] = [],
-  onCallIntegrations: OnCallIntegrationDTO[] | null
+  onCallIntegrations: OnCallIntegrationDTO[] | undefined | null
 ): ContactPointWithMetadata[] {
   const contactPoints = result.alertmanager_config.receivers ?? [];
 

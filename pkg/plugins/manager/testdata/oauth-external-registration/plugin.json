@@ -17,9 +17,8 @@
     "updated": "2023-08-03",
     "version": "1.0.0"
   },
-  "externalServiceRegistration": {
+  "iam": {
     "impersonation": {
-      "enabled" : true,
       "groups" : true,
       "permissions" :  [
         {

@@ -10,7 +10,6 @@ export function BrowseFilters() {
   return (
     <div>
       <ActionRow
-        hideLayout
         showStarredFilter
         state={searchState}
         getTagOptions={stateManager.getTagOptions}

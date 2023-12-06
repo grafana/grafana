@@ -549,11 +549,11 @@ export const getValueFromEventItem = (eventItem: SyntheticEvent<HTMLInputElement
     return '';
   }
 
-  if (eventItem.hasOwnProperty('currentTarget')) {
+  if ('currentTarget' in eventItem) {
     return eventItem.currentTarget.value;
   }
 
-  return (eventItem as SelectableValue<string>).value;
+  return eventItem.value;
 };
 
 const onChangeHandler =

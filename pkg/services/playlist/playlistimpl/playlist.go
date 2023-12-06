@@ -68,6 +68,7 @@ func (s *Service) Get(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*
 		}
 	}
 	return &playlist.PlaylistDTO{
+		Id:        v.Id,
 		Uid:       v.UID,
 		Name:      v.Name,
 		Interval:  v.Interval,

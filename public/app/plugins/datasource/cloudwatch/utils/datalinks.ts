@@ -43,7 +43,7 @@ export async function addDataLinksToLogsResponse(
   }
 }
 
-async function createInternalXrayLink(datasourceUid: string, region: string) {
+async function createInternalXrayLink(datasourceUid: string, region: string): Promise<DataLink | undefined> {
   let ds;
   try {
     ds = await getDataSourceSrv().get(datasourceUid);
@@ -60,7 +60,7 @@ async function createInternalXrayLink(datasourceUid: string, region: string) {
       datasourceUid: datasourceUid,
       datasourceName: ds.name,
     },
-  } as DataLink;
+  };
 }
 
 function createAwsConsoleLink(

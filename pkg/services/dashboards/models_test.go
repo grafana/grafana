@@ -66,9 +66,11 @@ func TestSaveDashboardCommand_GetDashboardModel(t *testing.T) {
 		json := simplejson.New()
 		json.Set("title", "test dash")
 
+		// nolint:staticcheck
 		cmd := &SaveDashboardCommand{Dashboard: json, FolderID: 1, FolderUID: "1"}
 		dash := cmd.GetDashboardModel()
 
+		// nolint:staticcheck
 		assert.Equal(t, int64(1), dash.FolderID)
 	})
 }
@@ -103,6 +105,7 @@ func TestResourceConversion(t *testing.T) {
 	dash.CreatedBy = 10
 	dash.UpdatedBy = 11
 	dash.PluginID = "plugin-xyz"
+	// nolint:staticcheck
 	dash.FolderID = 1234
 	dash.SetID(12345) // should be removed in resource version
 
@@ -121,13 +124,13 @@ func TestResourceConversion(t *testing.T) {
 		  "resourceVersion": "10",
 		  "creationTimestamp": "2000-01-01T08:00:00Z",
 		  "annotations": {
-			"grafana.com/createdBy": "user:10",
-			"grafana.com/folder": "folder:1234",
-			"grafana.com/originKey": "plugin-xyz",
-			"grafana.com/originName": "plugin",
-			"grafana.com/slug": "test-dash",
-			"grafana.com/updatedBy": "user:11",
-			"grafana.com/updatedTimestamp": "2010-01-01T08:00:00Z"
+			"grafana.app/createdBy": "user:10",
+			"grafana.app/folder": "folder:1234",
+			"grafana.app/originKey": "plugin-xyz",
+			"grafana.app/originName": "plugin",
+			"grafana.app/slug": "test-dash",
+			"grafana.app/updatedBy": "user:11",
+			"grafana.app/updatedTimestamp": "2010-01-01T08:00:00Z"
 		  }
 		},
 		"spec": {

@@ -23,7 +23,7 @@ type ResourceOriginInfo struct {
 	Timestamp *time.Time `json:"time,omitempty"`
 
 	// Avoid extending
-	_ any
+	_ any `json:"-"`
 }
 
 // GrafanaResourceMetadata is standard k8s object metadata with helper functions
@@ -40,23 +40,36 @@ type GrafanaResource[Spec any, Status any] struct {
 	Status   *Status                 `json:"status,omitempty"`
 
 	// Avoid extending
-	_ any
+	_ any `json:"-"`
 }
 
 // Annotation keys
-const annoKeyCreatedBy = "grafana.com/createdBy"
-const annoKeyUpdatedTimestamp = "grafana.com/updatedTimestamp"
-const annoKeyUpdatedBy = "grafana.com/updatedBy"
+const annoKeyCreatedBy = "grafana.app/createdBy"
+const annoKeyUpdatedTimestamp = "grafana.app/updatedTimestamp"
+const annoKeyUpdatedBy = "grafana.app/updatedBy"
 
 // The folder identifier
-const annoKeyFolder = "grafana.com/folder"
-const annoKeySlug = "grafana.com/slug"
+const annoKeyFolder = "grafana.app/folder"
+const annoKeySlug = "grafana.app/slug"
 
 // Identify where values came from
-const annoKeyOriginName = "grafana.com/originName"
-const annoKeyOriginPath = "grafana.com/originPath"
-const annoKeyOriginKey = "grafana.com/originKey"
-const annoKeyOriginTime = "grafana.com/originTime"
+const annoKeyOriginName = "grafana.app/originName"
+const annoKeyOriginPath = "grafana.app/originPath"
+const annoKeyOriginKey = "grafana.app/originKey"
+const annoKeyOriginTimestamp = "grafana.app/originTimestamp"
+
+func (m *GrafanaResourceMetadata) set(key string, val string) {
+	if val == "" {
+		if m.Annotations != nil {
+			delete(m.Annotations, key)
+		}
+		return
+	}
+	if m.Annotations == nil {
+		m.Annotations = make(map[string]string)
+	}
+	m.Annotations[key] = val
+}
 
 func (m *GrafanaResourceMetadata) GetUpdatedTimestamp() *time.Time {
 	v, ok := m.Annotations[annoKeyUpdatedTimestamp]
@@ -69,12 +82,21 @@ func (m *GrafanaResourceMetadata) GetUpdatedTimestamp() *time.Time {
 	return nil
 }
 
-func (m *GrafanaResourceMetadata) SetUpdatedTimestamp(v *time.Time) {
-	if v == nil {
-		delete(m.Annotations, annoKeyUpdatedTimestamp)
+func (m *GrafanaResourceMetadata) SetUpdatedTimestampMillis(v int64) {
+	if v > 0 {
+		t := time.UnixMilli(v)
+		m.SetUpdatedTimestamp(&t)
 	} else {
-		m.Annotations[annoKeyUpdatedTimestamp] = v.Format(time.RFC3339)
+		m.SetUpdatedTimestamp(nil)
 	}
+}
+
+func (m *GrafanaResourceMetadata) SetUpdatedTimestamp(v *time.Time) {
+	txt := ""
+	if v != nil {
+		txt = v.UTC().Format(time.RFC3339)
+	}
+	m.set(annoKeyUpdatedTimestamp, txt)
 }
 
 func (m *GrafanaResourceMetadata) GetCreatedBy() string {
@@ -82,7 +104,7 @@ func (m *GrafanaResourceMetadata) GetCreatedBy() string {
 }
 
 func (m *GrafanaResourceMetadata) SetCreatedBy(user string) {
-	m.Annotations[annoKeyCreatedBy] = user // user GRN
+	m.set(annoKeyCreatedBy, user)
 }
 
 func (m *GrafanaResourceMetadata) GetUpdatedBy() string {
@@ -90,7 +112,7 @@ func (m *GrafanaResourceMetadata) GetUpdatedBy() string {
 }
 
 func (m *GrafanaResourceMetadata) SetUpdatedBy(user string) {
-	m.Annotations[annoKeyUpdatedBy] = user // user GRN
+	m.set(annoKeyUpdatedBy, user)
 }
 
 func (m *GrafanaResourceMetadata) GetFolder() string {
@@ -98,7 +120,7 @@ func (m *GrafanaResourceMetadata) GetFolder() string {
 }
 
 func (m *GrafanaResourceMetadata) SetFolder(uid string) {
-	m.Annotations[annoKeyFolder] = uid
+	m.set(annoKeyFolder, uid)
 }
 
 func (m *GrafanaResourceMetadata) GetSlug() string {
@@ -106,24 +128,20 @@ func (m *GrafanaResourceMetadata) GetSlug() string {
 }
 
 func (m *GrafanaResourceMetadata) SetSlug(v string) {
-	m.Annotations[annoKeySlug] = v
+	m.set(annoKeySlug, v)
 }
 
 func (m *GrafanaResourceMetadata) SetOriginInfo(info *ResourceOriginInfo) {
 	delete(m.Annotations, annoKeyOriginName)
 	delete(m.Annotations, annoKeyOriginPath)
 	delete(m.Annotations, annoKeyOriginKey)
-	delete(m.Annotations, annoKeyOriginTime)
-	if info != nil || info.Name != "" {
-		m.Annotations[annoKeyOriginName] = info.Name
-		if info.Path != "" {
-			m.Annotations[annoKeyOriginPath] = info.Path
-		}
-		if info.Key != "" {
-			m.Annotations[annoKeyOriginKey] = info.Key
-		}
+	delete(m.Annotations, annoKeyOriginTimestamp)
+	if info != nil && info.Name != "" {
+		m.set(annoKeyOriginName, info.Name)
+		m.set(annoKeyOriginKey, info.Key)
+		m.set(annoKeyOriginPath, info.Path)
 		if info.Timestamp != nil {
-			m.Annotations[annoKeyOriginTime] = info.Timestamp.Format(time.RFC3339)
+			m.Annotations[annoKeyOriginTimestamp] = info.Timestamp.Format(time.RFC3339)
 		}
 	}
 }
@@ -134,17 +152,211 @@ func (m *GrafanaResourceMetadata) GetOriginInfo() *ResourceOriginInfo {
 	if !ok {
 		return nil
 	}
-	info := &ResourceOriginInfo{
-		Name: v,
-		Path: m.Annotations[annoKeyOriginPath],
-		Key:  m.Annotations[annoKeyOriginKey],
+	return &ResourceOriginInfo{
+		Name:      v,
+		Path:      m.GetOriginPath(),
+		Key:       m.GetOriginKey(),
+		Timestamp: m.GetOriginTimestamp(),
 	}
-	v, ok = m.Annotations[annoKeyOriginTime]
-	if ok {
-		t, err := time.Parse(time.RFC3339, v)
-		if err != nil {
-			info.Timestamp = &t
+}
+
+func (m *GrafanaResourceMetadata) GetOriginName() string {
+	return m.Annotations[annoKeyOriginName]
+}
+
+func (m *GrafanaResourceMetadata) GetOriginPath() string {
+	return m.Annotations[annoKeyOriginPath]
+}
+
+func (m *GrafanaResourceMetadata) GetOriginKey() string {
+	return m.Annotations[annoKeyOriginKey]
+}
+
+func (m *GrafanaResourceMetadata) GetOriginTimestamp() *time.Time {
+	v, ok := m.Annotations[annoKeyOriginTimestamp]
+	if !ok {
+		return nil
+	}
+	t, err := time.Parse(time.RFC3339, v)
+	if err != nil {
+		return nil
+	}
+	return &t
+}
+
+// Accessor functions for k8s objects
+type GrafanaResourceMetaAccessor interface {
+	GetUpdatedTimestamp() *time.Time
+	SetUpdatedTimestamp(v *time.Time)
+	GetCreatedBy() string
+	SetCreatedBy(user string)
+	GetUpdatedBy() string
+	SetUpdatedBy(user string)
+	GetFolder() string
+	SetFolder(uid string)
+	GetSlug() string
+	SetSlug(v string)
+	GetOriginInfo() *ResourceOriginInfo
+	SetOriginInfo(info *ResourceOriginInfo)
+	GetOriginName() string
+	GetOriginPath() string
+	GetOriginKey() string
+	GetOriginTimestamp() *time.Time
+}
+
+var _ GrafanaResourceMetaAccessor = (*grafanaResourceMetaAccessor)(nil)
+var _ GrafanaResourceMetaAccessor = (*GrafanaResourceMetadata)(nil)
+
+type grafanaResourceMetaAccessor struct {
+	obj v1.Object
+}
+
+func MetaAccessor(obj v1.Object) GrafanaResourceMetaAccessor {
+	return &grafanaResourceMetaAccessor{obj}
+}
+
+func (m *grafanaResourceMetaAccessor) set(key string, val string) {
+	anno := m.obj.GetAnnotations()
+	if val == "" {
+		if anno != nil {
+			delete(anno, key)
+		}
+	} else {
+		if anno == nil {
+			anno = make(map[string]string)
+		}
+		anno[key] = val
+	}
+	m.obj.SetAnnotations(anno)
+}
+
+func (m *grafanaResourceMetaAccessor) get(key string) string {
+	return m.obj.GetAnnotations()[key]
+}
+
+func (m *grafanaResourceMetaAccessor) GetUpdatedTimestamp() *time.Time {
+	v, ok := m.obj.GetAnnotations()[annoKeyUpdatedTimestamp]
+	if !ok {
+		return nil
+	}
+	t, err := time.Parse(time.RFC3339, v)
+	if err != nil {
+		return nil
+	}
+	return &t
+}
+
+func (m *grafanaResourceMetaAccessor) SetUpdatedTimestampMillis(v int64) {
+	if v > 0 {
+		t := time.UnixMilli(v)
+		m.SetUpdatedTimestamp(&t)
+	} else {
+		m.SetUpdatedTimestamp(nil)
+	}
+}
+
+func (m *grafanaResourceMetaAccessor) SetUpdatedTimestamp(v *time.Time) {
+	txt := ""
+	if v != nil {
+		txt = v.UTC().Format(time.RFC3339)
+	}
+	m.set(annoKeyUpdatedTimestamp, txt)
+}
+
+func (m *grafanaResourceMetaAccessor) GetCreatedBy() string {
+	return m.get(annoKeyCreatedBy)
+}
+
+func (m *grafanaResourceMetaAccessor) SetCreatedBy(user string) {
+	m.set(annoKeyCreatedBy, user)
+}
+
+func (m *grafanaResourceMetaAccessor) GetUpdatedBy() string {
+	return m.get(annoKeyUpdatedBy)
+}
+
+func (m *grafanaResourceMetaAccessor) SetUpdatedBy(user string) {
+	m.set(annoKeyUpdatedBy, user)
+}
+
+func (m *grafanaResourceMetaAccessor) GetFolder() string {
+	return m.get(annoKeyFolder)
+}
+
+func (m *grafanaResourceMetaAccessor) SetFolder(uid string) {
+	m.set(annoKeyFolder, uid)
+}
+
+func (m *grafanaResourceMetaAccessor) GetSlug() string {
+	return m.get(annoKeySlug)
+}
+
+func (m *grafanaResourceMetaAccessor) SetSlug(v string) {
+	m.set(annoKeySlug, v)
+}
+
+func (m *grafanaResourceMetaAccessor) SetOriginInfo(info *ResourceOriginInfo) {
+	anno := m.obj.GetAnnotations()
+	if anno == nil {
+		if info == nil {
+			return
+		}
+		anno = make(map[string]string, 0)
+		m.obj.SetAnnotations(anno)
+	}
+
+	delete(anno, annoKeyOriginName)
+	delete(anno, annoKeyOriginPath)
+	delete(anno, annoKeyOriginKey)
+	delete(anno, annoKeyOriginTimestamp)
+	if info != nil && info.Name != "" {
+		anno[annoKeyOriginName] = info.Name
+		if info.Path != "" {
+			anno[annoKeyOriginPath] = info.Path
+		}
+		if info.Key != "" {
+			anno[annoKeyOriginKey] = info.Key
+		}
+		if info.Timestamp != nil {
+			anno[annoKeyOriginTimestamp] = info.Timestamp.Format(time.RFC3339)
 		}
 	}
-	return info
+	m.obj.SetAnnotations(anno)
+}
+
+func (m *grafanaResourceMetaAccessor) GetOriginInfo() *ResourceOriginInfo {
+	v, ok := m.obj.GetAnnotations()[annoKeyOriginName]
+	if !ok {
+		return nil
+	}
+	return &ResourceOriginInfo{
+		Name:      v,
+		Path:      m.GetOriginPath(),
+		Key:       m.GetOriginKey(),
+		Timestamp: m.GetOriginTimestamp(),
+	}
+}
+
+func (m *grafanaResourceMetaAccessor) GetOriginName() string {
+	return m.get(annoKeyOriginName)
+}
+
+func (m *grafanaResourceMetaAccessor) GetOriginPath() string {
+	return m.get(annoKeyOriginPath)
+}
+
+func (m *grafanaResourceMetaAccessor) GetOriginKey() string {
+	return m.get(annoKeyOriginKey)
+}
+
+func (m *grafanaResourceMetaAccessor) GetOriginTimestamp() *time.Time {
+	v, ok := m.obj.GetAnnotations()[annoKeyOriginTimestamp]
+	if !ok {
+		return nil
+	}
+	t, err := time.Parse(time.RFC3339, v)
+	if err != nil {
+		return nil
+	}
+	return &t
 }

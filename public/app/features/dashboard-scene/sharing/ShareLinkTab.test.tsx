@@ -29,6 +29,7 @@ describe('ShareLinkTab', () => {
     config.appUrl = 'http://dashboards.grafana.com/grafana/';
     config.rendererAvailable = true;
     config.bootData.user.orgId = 1;
+    config.featureToggles.dashboardSceneForViewers = true;
     locationService.push('/scenes/dashboard/dash-1?from=now-6h&to=now');
   });
 
@@ -98,6 +99,9 @@ function buildAndRenderScenario(options: ScenarioOptions) {
   const dashboard = new DashboardScene({
     title: 'hello',
     uid: 'dash-1',
+    meta: {
+      canEdit: true,
+    },
     $timeRange: new SceneTimeRange({}),
     body: new SceneGridLayout({
       children: [

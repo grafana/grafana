@@ -27,7 +27,7 @@ const formatTests: ValueFormatTest[] = [
   { id: 'ms', decimals: 4, value: 0.0024, result: '0.0024 ms' },
   { id: 'ms', decimals: 0, value: 100, result: '100 ms' },
   { id: 'ms', decimals: 2, value: 1250, result: '1.25 s' },
-  { id: 'ms', decimals: 1, value: 10000086.123, result: '2.8 hour' },
+  { id: 'ms', decimals: 1, value: 10000086.123, result: '2.8 hours' },
   { id: 'ms', decimals: 0, value: 1200, result: '1 s' },
   { id: 'short', decimals: 0, value: 98765, result: '99 K' },
   { id: 'short', decimals: 0, value: 9876543, result: '10 Mil' },

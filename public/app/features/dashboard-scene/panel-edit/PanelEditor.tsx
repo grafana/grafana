@@ -1,5 +1,6 @@
 import * as H from 'history';
 
+import { NavIndex } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
@@ -54,10 +55,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     getUrlSyncManager().initSync(this);
   }
 
-  public getPageNav(location: H.Location) {
+  public getPageNav(location: H.Location, navIndex: NavIndex) {
     return {
       text: 'Edit panel',
-      parentItem: this.state.dashboardRef.resolve().getPageNav(location),
+      parentItem: this.state.dashboardRef.resolve().getPageNav(location, navIndex),
     };
   }
 

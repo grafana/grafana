@@ -7,13 +7,21 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
+
+const GitHubProviderName = "github"
+
+var ExtraGithubSettingKeys = []string{allowedOrganizationsKey, teamIdsKey}
 
 type SocialGithub struct {
 	*SocialBase
@@ -42,6 +50,28 @@ var (
 		errutil.WithPublicMessage(
 			"User is not a member of one of the required organizations. Please contact identity provider administrator."))
 )
+
+func NewGitHubProvider(settings map[string]any, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGithub, error) {
+	info, err := CreateOAuthInfoFromKeyValues(settings)
+	if err != nil {
+		return nil, err
+	}
+
+	teamIds := mustInts(util.SplitString(info.Extra[teamIdsKey]))
+
+	config := createOAuthConfig(info, cfg, GitHubProviderName)
+	provider := &SocialGithub{
+		SocialBase:           newSocialBase(GitHubProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		apiUrl:               info.ApiUrl,
+		teamIds:              teamIds,
+		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
+		skipOrgRoleSync:      cfg.GitHubSkipOrgRoleSync,
+		// FIXME: Move skipOrgRoleSync to OAuthInfo
+		// skipOrgRoleSync: info.SkipOrgRoleSync
+	}
+
+	return provider, nil
+}
 
 func (s *SocialGithub) IsTeamMember(ctx context.Context, client *http.Client) bool {
 	if len(s.teamIds) == 0 {
@@ -276,6 +306,10 @@ func (t *GithubTeam) GetShorthand() (string, error) {
 	return fmt.Sprintf("@%s/%s", t.Organization.Login, t.Slug), nil
 }
 
+func (s *SocialGithub) GetOAuthInfo() *OAuthInfo {
+	return s.info
+}
+
 func convertToGroupList(t []GithubTeam) []string {
 	groups := make([]string, 0)
 	for _, team := range t {
@@ -290,4 +324,17 @@ func convertToGroupList(t []GithubTeam) []string {
 	}
 
 	return groups
+}
+
+func mustInts(s []string) []int {
+	result := make([]int, 0, len(s))
+	for _, v := range s {
+		num, err := strconv.Atoi(v)
+		if err != nil {
+			// TODO: add log here
+			return []int{}
+		}
+		result = append(result, num)
+	}
+	return result
 }

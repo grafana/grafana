@@ -270,7 +270,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		}
 	}
 
-	if proxy.features.IsEnabled(featuremgmt.FlagIdForwarding) && auth.IsIDForwardingEnabledForDataSource(proxy.ds) {
+	if proxy.features.IsEnabled(req.Context(), featuremgmt.FlagIdForwarding) && auth.IsIDForwardingEnabledForDataSource(proxy.ds) {
 		proxyutil.ApplyForwardIDHeader(req, proxy.ctx.SignedInUser)
 	}
 }

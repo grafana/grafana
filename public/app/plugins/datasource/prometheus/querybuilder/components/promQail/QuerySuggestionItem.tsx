@@ -168,6 +168,9 @@ export function QuerySuggestionItem(props: Props) {
             variant="primary"
             size="sm"
             onClick={() => {
+              reportInteraction('grafana_prometheus_promqail_use_query_button_clicked', {
+                query: querySuggestion.query,
+              });
               const pvq = buildVisualQueryFromString(querySuggestion.query);
               // check for errors!
               onChange(pvq.query);

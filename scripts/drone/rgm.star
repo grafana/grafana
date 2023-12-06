@@ -137,6 +137,8 @@ def rgm_run(name, script):
     """
     env = {
         "GO_VERSION": golang_version,
+        "ALPINE_BASE": images["alpine"],
+        "UBUNTU_BASE": images["ubuntu"],
     }
     rgm_run_step = {
         "name": name,

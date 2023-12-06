@@ -132,7 +132,7 @@ func ProvideService(
 		s.RegisterClient(clients.ProvideJWT(jwtService, cfg))
 	}
 
-	if s.cfg.ExtendedJWTAuthEnabled && features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+	if s.cfg.ExtendedJWTAuthEnabled && features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAuth) {
 		s.RegisterClient(clients.ProvideExtendedJWT(userService, cfg, signingKeysService, oauthServer))
 	}
 
@@ -159,7 +159,7 @@ func ProvideService(
 	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgRolesHook, 30)
 	s.RegisterPostAuthHook(userSyncService.SyncLastSeenHook, 120)
 
-	if features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
+	if features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) {
 		s.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService).SyncOauthTokenHook, 60)
 	}
 
@@ -190,6 +190,8 @@ type Service struct {
 func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	ctx, span := s.tracer.Start(ctx, "authn.Authenticate")
 	defer span.End()
+
+	r.OrgID = orgIDFromRequest(r)
 
 	var authErr error
 	for _, item := range s.clientQueue.items {
@@ -223,7 +225,6 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 }
 
 func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Request) (*authn.Identity, error) {
-	r.OrgID = orgIDFromRequest(r)
 	identity, err := c.Authenticate(ctx, r)
 	if err != nil {
 		s.errorLogFunc(ctx, err)("Failed to authenticate request", "client", c.Name(), "error", err)
@@ -267,6 +268,8 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 		attribute.String(attributeKeyClient, client),
 	))
 	defer span.End()
+
+	r.OrgID = orgIDFromRequest(r)
 
 	defer func() {
 		for _, hook := range s.postLoginHooks.items {

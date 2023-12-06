@@ -8,8 +8,3 @@
  * Once mature, they will be moved to the main export, be available to plugins, and
  * be subject to the standard policies
  */
-
-export * from './components/Layout/Flex/Flex';
-
-export { Grid } from './components/Layout/Grid/Grid';
-export { Stack, HorizontalStack } from './components/Layout/Stack';

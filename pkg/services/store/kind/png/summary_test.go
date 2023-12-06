@@ -22,12 +22,12 @@ func TestPNGSummary(t *testing.T) {
 	//fmt.Printf(string(asjson))
 	require.NoError(t, err)
 	require.JSONEq(t, `{
-		"uid": "hello.png",
+		"UID": "hello.png",
 		"kind": "svg",
 		"name": "hello",
 		"fields": {
-		  "height": 60,
-		  "width": 75
+		  "height": "60",
+		  "width": "75"
 		}
 	  }`, string(asjson))
 }

@@ -51,8 +51,14 @@ export const DefaultCell = (props: TableCellProps) => {
 
   const cellStyle = getCellStyle(tableStyles, cellOptions, displayValue, inspectEnabled, isStringValue);
 
-  if (isStringValue && cellProps.style?.justifyContent === 'flex-end') {
-    cellProps.style = { ...cellProps.style, textAlign: 'right' };
+  if (isStringValue) {
+    let justifyContent = cellProps.style?.justifyContent;
+
+    if (justifyContent === 'flex-end') {
+      cellProps.style = { ...cellProps.style, textAlign: 'right' };
+    } else if (justifyContent === 'center') {
+      cellProps.style = { ...cellProps.style, textAlign: 'center' };
+    }
   }
 
   return (

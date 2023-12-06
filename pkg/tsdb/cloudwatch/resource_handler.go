@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/routes"
 )
 
@@ -28,7 +29,7 @@ func (e *cloudWatchExecutor) newResourceMux() *http.ServeMux {
 	mux.HandleFunc("/external-id", routes.ResourceRequestMiddleware(routes.ExternalIdHandler, logger, e.getRequestContext))
 
 	// feature is enabled by default, just putting behind a feature flag in case of unexpected bugs
-	if e.features.IsEnabled("cloudwatchNewRegionsHandler") {
+	if e.features.IsEnabledGlobally(featuremgmt.FlagCloudwatchNewRegionsHandler) {
 		mux.HandleFunc("/regions", routes.ResourceRequestMiddleware(routes.RegionsHandler, logger, e.getRequestContext))
 	} else {
 		mux.HandleFunc("/regions", handleResourceReq(e.handleGetRegions))

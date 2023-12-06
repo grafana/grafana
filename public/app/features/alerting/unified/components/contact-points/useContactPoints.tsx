@@ -7,7 +7,7 @@ import { produce } from 'immer';
 import { remove } from 'lodash';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
-import { onCallApi } from '../../api/onCallApi';
+import { onCallApi, OnCallIntegrationDTO } from '../../api/onCallApi';
 import { usePluginBridge } from '../../hooks/usePluginBridge';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { SupportedPlugin } from '../../types/pluginBridges';
@@ -29,7 +29,7 @@ const RECEIVER_STATUS_POLLING_INTERVAL = 10 * 1000; // 10 seconds
  */
 export function useContactPointsWithStatus() {
   const { selectedAlertmanager, isGrafanaAlertmanager } = useAlertmanager();
-  const { installed: onCallPluginInstalled = false, loading: onCallPluginStatusLoading } = usePluginBridge(
+  const { installed: onCallPluginInstalled, loading: onCallPluginStatusLoading } = usePluginBridge(
     SupportedPlugin.OnCall
   );
 
@@ -55,6 +55,14 @@ export function useContactPointsWithStatus() {
       skip: !onCallPluginInstalled || !isGrafanaAlertmanager,
     });
 
+  // null = no installed, undefined = loading, [n] is installed with integrations
+  let onCallMetadata: null | undefined | OnCallIntegrationDTO[] = undefined;
+  if (onCallPluginInstalled) {
+    onCallMetadata = onCallIntegrations ?? [];
+  } else if (onCallPluginInstalled === false) {
+    onCallMetadata = null;
+  }
+
   // fetch the latest config from the Alertmanager
   const fetchAlertmanagerConfiguration = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useQuery(
     selectedAlertmanager!,
@@ -68,7 +76,7 @@ export function useContactPointsWithStatus() {
               result.data,
               fetchContactPointsStatus.data,
               fetchReceiverMetadata.data,
-              onCallPluginInstalled ? onCallIntegrations ?? [] : null
+              onCallMetadata
             )
           : [],
       }),
@@ -83,7 +91,7 @@ export function useContactPointsWithStatus() {
     onCallPluginStatusLoading ||
     onCallPluginIntegrationsLoading;
 
-  const contactPoints = fetchAlertmanagerConfiguration.contactPoints;
+  const contactPoints = fetchAlertmanagerConfiguration.contactPoints.sort((a, b) => a.name.localeCompare(b.name));
 
   return {
     error,

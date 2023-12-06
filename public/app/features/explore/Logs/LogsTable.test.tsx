@@ -65,7 +65,7 @@ const getComponent = (partialProps?: Partial<ComponentProps<typeof LogsTable>>, 
         to: toUtc('2019-01-01 16:00:00'),
         raw: { from: 'now-1h', to: 'now' },
       }}
-      logsFrames={[logs ?? testDataFrame]}
+      dataFrame={logs ?? testDataFrame}
       {...partialProps}
     />
   );
@@ -121,7 +121,13 @@ describe('LogsTable', () => {
 
   it('should render extracted labels as columns (elastic)', async () => {
     setup({
-      logsFrames: [getMockElasticFrame()],
+      dataFrame: getMockElasticFrame(),
+      columnsWithMeta: {
+        counter: { active: true, percentOfLinesWithLabel: 3 },
+        level: { active: true, percentOfLinesWithLabel: 3 },
+        line: { active: true, percentOfLinesWithLabel: 3 },
+        '@timestamp': { active: true, percentOfLinesWithLabel: 3 },
+      },
     });
 
     await waitFor(() => {
@@ -137,6 +143,8 @@ describe('LogsTable', () => {
     setup({
       columnsWithMeta: {
         foo: { active: true, percentOfLinesWithLabel: 3 },
+        Time: { active: true, percentOfLinesWithLabel: 3 },
+        line: { active: true, percentOfLinesWithLabel: 3 },
       },
     });
 
@@ -196,7 +204,16 @@ describe('LogsTable', () => {
     });
 
     it('should render a datalink for each row', async () => {
-      render(getComponent({}, getMockLokiFrameDataPlane()));
+      render(
+        getComponent(
+          {
+            columnsWithMeta: {
+              traceID: { active: true, percentOfLinesWithLabel: 3 },
+            },
+          },
+          getMockLokiFrameDataPlane()
+        )
+      );
 
       await waitFor(() => {
         const links = screen.getAllByRole('link');
@@ -205,11 +222,11 @@ describe('LogsTable', () => {
       });
     });
 
-    it('should not render `attributes`', async () => {
+    it('should not render `labels`', async () => {
       setup(undefined, getMockLokiFrameDataPlane());
 
       await waitFor(() => {
-        const columns = screen.queryAllByRole('columnheader', { name: 'attributes' });
+        const columns = screen.queryAllByRole('columnheader', { name: 'labels' });
 
         expect(columns.length).toBe(0);
       });
@@ -229,12 +246,13 @@ describe('LogsTable', () => {
       setup({
         columnsWithMeta: {
           foo: { active: true, percentOfLinesWithLabel: 3 },
+          line: { active: true, percentOfLinesWithLabel: 3 },
+          Time: { active: true, percentOfLinesWithLabel: 3 },
         },
       });
 
       await waitFor(() => {
         const columns = screen.getAllByRole('columnheader');
-
         expect(columns[0].textContent).toContain('Time');
         expect(columns[1].textContent).toContain('line');
         expect(columns[2].textContent).toContain('foo');

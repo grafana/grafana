@@ -685,216 +685,6 @@
         }
       }
     },
-    "/datasources/{datasourceId}/disable-permissions": {
-      "post": {
-        "description": "Disables permissions for the data source with the given id. All existing permissions will be removed and anyone will be able to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.",
-        "tags": [
-          "datasource_permissions",
-          "enterprise"
-        ],
-        "summary": "Disable permissions for a data source.",
-        "operationId": "disablePermissions",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "datasourceId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/createOrUpdateDatasourceResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/datasources/{datasourceId}/enable-permissions": {
-      "post": {
-        "description": "Enables permissions for the data source with the given id.\nNo one except Org Admins will be able to query the data source until permissions have been added\nwhich permit certain users or teams to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.",
-        "tags": [
-          "datasource_permissions",
-          "enterprise"
-        ],
-        "summary": "Enable permissions for a data source.",
-        "operationId": "enablePermissions",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "datasourceId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/createOrUpdateDatasourceResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/datasources/{datasourceId}/permissions": {
-      "get": {
-        "description": "Gets all existing permissions for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.\nDeprecated. Please use GET /api/access-control/datasources/:uid",
-        "tags": [
-          "datasource_permissions",
-          "enterprise"
-        ],
-        "summary": "Get permissions for a data source.",
-        "operationId": "getAllPermissions",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "datasourceId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getAllPermissionseResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "post": {
-        "description": "You need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.\nDeprecated. Please use POST /api/access-control/datasources/:uid/users/:id, /api/access-control/datasources/:uid/teams/:id or /api/access-control/datasources/:uid/buildInRoles/:id",
-        "tags": [
-          "datasource_permissions",
-          "enterprise"
-        ],
-        "summary": "Add permissions for a data source.",
-        "operationId": "addPermission",
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "userId",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "teamId",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "builtinRole",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "permission",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "datasourceId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/addPermissionResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/datasources/{datasourceId}/permissions/{permissionId}": {
-      "delete": {
-        "description": "Removes the permission with the given permissionId for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:delete` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.\nDeprecated. Please use POST /api/access-control/datasources/:uid/users/:id, /api/access-control/datasources/:uid/teams/:id or /api/access-control/datasources/:uid/buildInRoles/:id",
-        "tags": [
-          "datasource_permissions",
-          "enterprise"
-        ],
-        "summary": "Remove permission for a data source.",
-        "operationId": "deletePermissions",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "datasourceId",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "permissionId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          }
-        }
-      }
-    },
     "/licensing/check": {
       "get": {
         "tags": [
@@ -919,10 +709,8 @@
         ],
         "summary": "Get custom permissions report.",
         "operationId": "getCustomPermissionsReport",
+        "deprecated": true,
         "responses": {
-          "200": {
-            "$ref": "#/responses/getCustomPermissionsReportResponse"
-          },
           "500": {
             "$ref": "#/responses/internalServerError"
           }
@@ -941,10 +729,8 @@
         ],
         "summary": "Get custom permissions report in CSV format.",
         "operationId": "getCustomPermissionsCSV",
+        "deprecated": true,
         "responses": {
-          "200": {
-            "$ref": "#/responses/getCustomPermissionsReportResponse"
-          },
           "500": {
             "$ref": "#/responses/internalServerError"
           }
@@ -1407,7 +1193,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CreateOrUpdateConfigCmd"
+              "$ref": "#/definitions/CreateOrUpdateReportConfig"
             }
           }
         ],
@@ -1448,7 +1234,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/ReportEmailDTO"
+              "$ref": "#/definitions/ReportEmail"
             }
           }
         ],
@@ -1576,6 +1362,21 @@
             "type": "string",
             "name": "layout",
             "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "title",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "scaleFactor",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "includeTables",
+            "in": "query"
           }
         ],
         "responses": {
@@ -1632,7 +1433,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/SettingsDTO"
+              "$ref": "#/definitions/ReportSettings"
             }
           }
         ],
@@ -1670,7 +1471,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CreateOrUpdateConfigCmd"
+              "$ref": "#/definitions/CreateOrUpdateReportConfig"
             }
           }
         ],
@@ -1749,7 +1550,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CreateOrUpdateConfigCmd"
+              "$ref": "#/definitions/CreateOrUpdateReportConfig"
             }
           },
           {
@@ -2090,7 +1891,7 @@
         }
       }
     },
-    "AddCommand": {
+    "AddAPIKeyCommand": {
       "type": "object",
       "properties": {
         "name": {
@@ -2199,25 +2000,6 @@
         }
       }
     },
-    "AddPermissionDTO": {
-      "type": "object",
-      "properties": {
-        "builtinRole": {
-          "type": "string"
-        },
-        "permission": {
-          "$ref": "#/definitions/DsPermissionType"
-        },
-        "teamId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "AddServiceAccountTokenCommand": {
       "type": "object",
       "properties": {
@@ -2318,6 +2100,10 @@
       "type": "object",
       "properties": {
         "activeAdmins": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "activeDevices": {
           "type": "integer",
           "format": "int64"
         },
@@ -2621,6 +2407,80 @@
         }
       }
     },
+    "Annotation": {
+      "type": "object",
+      "properties": {
+        "alertId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "alertName": {
+          "type": "string"
+        },
+        "avatarUrl": {
+          "type": "string"
+        },
+        "created": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dashboardId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dashboardUID": {
+          "type": "string"
+        },
+        "data": {
+          "$ref": "#/definitions/Json"
+        },
+        "email": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "login": {
+          "type": "string"
+        },
+        "newState": {
+          "type": "string"
+        },
+        "panelId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "prevState": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "text": {
+          "type": "string"
+        },
+        "time": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "timeEnd": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updated": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "AnnotationActions": {
       "type": "object",
       "properties": {
@@ -2635,6 +2495,67 @@
         }
       }
     },
+    "AnnotationEvent": {
+      "type": "object",
+      "properties": {
+        "color": {
+          "type": "string"
+        },
+        "dashboardId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "isRegion": {
+          "type": "boolean"
+        },
+        "panelId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "source": {
+          "$ref": "#/definitions/AnnotationQuery"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "text": {
+          "type": "string"
+        },
+        "time": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "timeEnd": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "AnnotationPanelFilter": {
+      "type": "object",
+      "title": "AnnotationPanelFilter defines model for AnnotationPanelFilter.",
+      "properties": {
+        "exclude": {
+          "description": "Should the specified panels be included or excluded",
+          "type": "boolean"
+        },
+        "ids": {
+          "description": "Panel IDs that should be included or excluded",
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      }
+    },
     "AnnotationPermission": {
       "type": "object",
       "properties": {
@@ -2643,6 +2564,72 @@
         },
         "organization": {
           "$ref": "#/definitions/AnnotationActions"
+        }
+      }
+    },
+    "AnnotationQuery": {
+      "description": "TODO docs\nFROM: AnnotationQuery in grafana-data/src/types/annotations.ts",
+      "type": "object",
+      "properties": {
+        "builtIn": {
+          "description": "Set to 1 for the standard annotation query all dashboards have by default.",
+          "type": "number",
+          "format": "float"
+        },
+        "datasource": {
+          "$ref": "#/definitions/DataSourceRef"
+        },
+        "enable": {
+          "description": "When enabled the annotation query is issued with every dashboard refresh",
+          "type": "boolean"
+        },
+        "filter": {
+          "$ref": "#/definitions/AnnotationPanelFilter"
+        },
+        "hide": {
+          "description": "Annotation queries can be toggled on or off at the top of the dashboard.\nWhen hide is true, the toggle is not shown in the dashboard.",
+          "type": "boolean"
+        },
+        "iconColor": {
+          "description": "Color to use for the annotation event markers",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name of annotation.",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/definitions/AnnotationTarget"
+        },
+        "type": {
+          "description": "TODO -- this should not exist here, it is based on the --grafana-- datasource",
+          "type": "string"
+        }
+      }
+    },
+    "AnnotationTarget": {
+      "description": "TODO: this should be a regular DataQuery that depends on the selected dashboard\nthese match the properties of the \"grafana\" datasouce that is default in most dashboards",
+      "type": "object",
+      "properties": {
+        "limit": {
+          "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
+          "type": "integer",
+          "format": "int64"
+        },
+        "matchAny": {
+          "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
+          "type": "boolean"
+        },
+        "tags": {
+          "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "type": {
+          "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
+          "type": "string"
         }
       }
     },
@@ -2686,26 +2673,6 @@
           "$ref": "#/definitions/ObjectIdentifier"
         },
         "Value": {}
-      }
-    },
-    "BrandingOptionsDTO": {
-      "type": "object",
-      "properties": {
-        "emailFooterLink": {
-          "type": "string"
-        },
-        "emailFooterMode": {
-          "type": "string"
-        },
-        "emailFooterText": {
-          "type": "string"
-        },
-        "emailLogoUrl": {
-          "type": "string"
-        },
-        "reportLogoUrl": {
-          "type": "string"
-        }
       }
     },
     "CalculateDiffTarget": {
@@ -2981,88 +2948,6 @@
       "type": "number",
       "format": "double"
     },
-    "ConfigDTO": {
-      "description": "ConfigDTO is model representation in transfer",
-      "type": "object",
-      "properties": {
-        "created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardName": {
-          "type": "string"
-        },
-        "dashboardUid": {
-          "type": "string"
-        },
-        "dashboards": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DashboardDTO"
-          }
-        },
-        "enableCsv": {
-          "type": "boolean"
-        },
-        "enableDashboardUrl": {
-          "type": "boolean"
-        },
-        "formats": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Type"
-          }
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "message": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "options": {
-          "$ref": "#/definitions/ReportOptionsDTO"
-        },
-        "orgId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "recipients": {
-          "type": "string"
-        },
-        "replyTo": {
-          "type": "string"
-        },
-        "scaleFactor": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "schedule": {
-          "$ref": "#/definitions/ScheduleDTO"
-        },
-        "state": {
-          "$ref": "#/definitions/State"
-        },
-        "templateVars": {
-          "type": "object"
-        },
-        "updated": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "CookiePreferences": {
       "type": "object",
       "title": "CookiePreferences defines model for CookiePreferences.",
@@ -3333,7 +3218,7 @@
       "type": "object",
       "properties": {
         "folderId": {
-          "description": "ID of the folder where the library element is stored.",
+          "description": "ID of the folder where the library element is stored.\n\nDeprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -3363,7 +3248,7 @@
         }
       }
     },
-    "CreateOrUpdateConfigCmd": {
+    "CreateOrUpdateReportConfig": {
       "type": "object",
       "properties": {
         "dashboardId": {
@@ -3376,7 +3261,7 @@
         "dashboards": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/DashboardDTO"
+            "$ref": "#/definitions/ReportDashboard"
           }
         },
         "enableCsv": {
@@ -3398,7 +3283,7 @@
           "type": "string"
         },
         "options": {
-          "$ref": "#/definitions/ReportOptionsDTO"
+          "$ref": "#/definitions/ReportOptions"
         },
         "recipients": {
           "type": "string"
@@ -3411,7 +3296,7 @@
           "format": "int64"
         },
         "schedule": {
-          "$ref": "#/definitions/ScheduleDTO"
+          "$ref": "#/definitions/ReportSchedule"
         },
         "state": {
           "$ref": "#/definitions/State"
@@ -3533,53 +3418,6 @@
         }
       }
     },
-    "CustomPermissionsRecordDTO": {
-      "type": "object",
-      "properties": {
-        "customPermissions": {
-          "type": "string"
-        },
-        "granteeName": {
-          "type": "string"
-        },
-        "granteeType": {
-          "type": "string"
-        },
-        "granteeUrl": {
-          "type": "string"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "isFolder": {
-          "type": "boolean"
-        },
-        "orgId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "orgRole": {
-          "type": "string"
-        },
-        "slug": {
-          "type": "string"
-        },
-        "title": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        },
-        "url": {
-          "type": "string"
-        },
-        "usersCount": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "DashboardACLInfoDTO": {
       "type": "object",
       "properties": {
@@ -3592,6 +3430,7 @@
           "format": "int64"
         },
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -3688,20 +3527,6 @@
         }
       }
     },
-    "DashboardDTO": {
-      "type": "object",
-      "properties": {
-        "dashboard": {
-          "$ref": "#/definitions/DashboardReportDTO"
-        },
-        "reportVariables": {
-          "type": "object"
-        },
-        "timeRange": {
-          "$ref": "#/definitions/TimeRangeDTO"
-        }
-      }
-    },
     "DashboardFullWithMeta": {
       "type": "object",
       "properties": {
@@ -3746,6 +3571,7 @@
           "format": "date-time"
         },
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -3812,21 +3638,6 @@
         }
       }
     },
-    "DashboardReportDTO": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        }
-      }
-    },
     "DashboardSnapshotDTO": {
       "description": "DashboardSnapshotDTO without dashboard map",
       "type": "object",
@@ -3845,27 +3656,15 @@
         "externalUrl": {
           "type": "string"
         },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
         "key": {
           "type": "string"
         },
         "name": {
           "type": "string"
         },
-        "orgId": {
-          "type": "integer",
-          "format": "int64"
-        },
         "updated": {
           "type": "string",
           "format": "date-time"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -4087,80 +3886,17 @@
         }
       }
     },
-    "DataSourcePermissionRuleDTO": {
+    "DataSourceRef": {
+      "description": "Ref to a DataSource instance",
       "type": "object",
       "properties": {
-        "builtInRole": {
+        "type": {
+          "description": "The plugin type-id",
           "type": "string"
         },
-        "created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "datasourceId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "isManaged": {
-          "type": "boolean"
-        },
-        "permission": {
-          "$ref": "#/definitions/DsPermissionType"
-        },
-        "permissionName": {
+        "uid": {
+          "description": "Specific datasource instance",
           "type": "string"
-        },
-        "team": {
-          "type": "string"
-        },
-        "teamAvatarUrl": {
-          "type": "string"
-        },
-        "teamEmail": {
-          "type": "string"
-        },
-        "teamId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "updated": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "userAvatarUrl": {
-          "type": "string"
-        },
-        "userEmail": {
-          "type": "string"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "userLogin": {
-          "type": "string"
-        }
-      }
-    },
-    "DataSourcePermissionsDTO": {
-      "type": "object",
-      "properties": {
-        "datasourceId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "enabled": {
-          "type": "boolean"
-        },
-        "permissions": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DataSourcePermissionRuleDTO"
-          }
         }
       }
     },
@@ -4205,6 +3941,17 @@
       "description": "A Duration represents the elapsed time between two instants\nas an int64 nanosecond count. The representation limits the\nlargest representable duration to approximately 290 years.",
       "type": "integer",
       "format": "int64"
+    },
+    "EmailDTO": {
+      "type": "object",
+      "properties": {
+        "recipient": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
     },
     "EnumFieldConfig": {
       "description": "Enum field config\nVector values are used as lookup keys into the enum fields",
@@ -4467,6 +4214,7 @@
           "type": "boolean"
         },
         "id": {
+          "description": "Deprecated: use Uid instead",
           "type": "integer",
           "format": "int64"
         },
@@ -4666,6 +4414,7 @@
       "type": "object",
       "properties": {
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -4774,6 +4523,7 @@
           "$ref": "#/definitions/Json"
         },
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -4809,6 +4559,7 @@
           "type": "string"
         },
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -4879,80 +4630,6 @@
           "items": {
             "$ref": "#/definitions/LinkTransformationConfig"
           }
-        }
-      }
-    },
-    "ItemDTO": {
-      "type": "object",
-      "properties": {
-        "alertId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "alertName": {
-          "type": "string"
-        },
-        "avatarUrl": {
-          "type": "string"
-        },
-        "created": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardUID": {
-          "type": "string"
-        },
-        "data": {
-          "$ref": "#/definitions/Json"
-        },
-        "email": {
-          "type": "string"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "login": {
-          "type": "string"
-        },
-        "newState": {
-          "type": "string"
-        },
-        "panelId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "prevState": {
-          "type": "string"
-        },
-        "tags": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "text": {
-          "type": "string"
-        },
-        "time": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "timeEnd": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "updated": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -5087,6 +4764,18 @@
         }
       }
     },
+    "LibraryElementArrayResponse": {
+      "type": "object",
+      "title": "LibraryElementArrayResponse is a response struct for an array of LibraryElementDTO.",
+      "properties": {
+        "result": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LibraryElementDTO"
+          }
+        }
+      }
+    },
     "LibraryElementConnectionDTO": {
       "type": "object",
       "title": "LibraryElementConnectionDTO is the frontend DTO for element connections.",
@@ -5139,6 +4828,7 @@
           "type": "string"
         },
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -5604,7 +5294,7 @@
       "type": "object",
       "properties": {
         "folderId": {
-          "description": "ID of the folder where the library element is stored.",
+          "description": "ID of the folder where the library element is stored.\n\nDeprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -5914,6 +5604,38 @@
         }
       }
     },
+    "Preferences": {
+      "description": "Spec defines user, team or org Grafana preferences",
+      "type": "object",
+      "properties": {
+        "cookiePreferences": {
+          "$ref": "#/definitions/CookiePreferences"
+        },
+        "homeDashboardUID": {
+          "description": "UID for the home dashboard",
+          "type": "string"
+        },
+        "language": {
+          "description": "Selected language (beta)",
+          "type": "string"
+        },
+        "queryHistory": {
+          "$ref": "#/definitions/QueryHistoryPreference"
+        },
+        "theme": {
+          "description": "Theme light, dark, empty is default",
+          "type": "string"
+        },
+        "timezone": {
+          "description": "The timezone selection\nTODO: this should use the timezone defined in common",
+          "type": "string"
+        },
+        "weekStart": {
+          "description": "WeekStart day of the week (sunday, monday, etc)",
+          "type": "string"
+        }
+      }
+    },
     "PrometheusRemoteWriteTargetJSON": {
       "type": "object",
       "properties": {
@@ -5925,6 +5647,120 @@
         },
         "remote_write_path": {
           "type": "string"
+        }
+      }
+    },
+    "PublicDashboard": {
+      "type": "object",
+      "properties": {
+        "accessToken": {
+          "type": "string"
+        },
+        "annotationsEnabled": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdBy": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dashboardUid": {
+          "type": "string"
+        },
+        "isEnabled": {
+          "type": "boolean"
+        },
+        "recipients": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EmailDTO"
+          }
+        },
+        "share": {
+          "$ref": "#/definitions/ShareType"
+        },
+        "timeSelectionEnabled": {
+          "type": "boolean"
+        },
+        "uid": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedBy": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "PublicDashboardDTO": {
+      "type": "object",
+      "properties": {
+        "accessToken": {
+          "type": "string"
+        },
+        "annotationsEnabled": {
+          "type": "boolean"
+        },
+        "isEnabled": {
+          "type": "boolean"
+        },
+        "share": {
+          "$ref": "#/definitions/ShareType"
+        },
+        "timeSelectionEnabled": {
+          "type": "boolean"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "PublicDashboardListResponse": {
+      "type": "object",
+      "properties": {
+        "accessToken": {
+          "type": "string"
+        },
+        "dashboardUid": {
+          "type": "string"
+        },
+        "isEnabled": {
+          "type": "boolean"
+        },
+        "title": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "PublicDashboardListResponseWithPagination": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "perPage": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "publicDashboards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PublicDashboardListResponse"
+          }
+        },
+        "totalCount": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -5985,8 +5821,10 @@
     },
     "QueryHistoryPreference": {
       "type": "object",
+      "title": "QueryHistoryPreference defines model for QueryHistoryPreference.",
       "properties": {
         "homeTab": {
+          "description": "HomeTab one of: '' | 'query' | 'starred';",
           "type": "string"
         }
       }
@@ -6184,7 +6022,138 @@
         }
       }
     },
-    "ReportEmailDTO": {
+    "Report": {
+      "description": "ConfigDTO is model representation in transfer",
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dashboardId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dashboardName": {
+          "type": "string"
+        },
+        "dashboardUid": {
+          "type": "string"
+        },
+        "dashboards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ReportDashboard"
+          }
+        },
+        "enableCsv": {
+          "type": "boolean"
+        },
+        "enableDashboardUrl": {
+          "type": "boolean"
+        },
+        "formats": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Type"
+          }
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "message": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "options": {
+          "$ref": "#/definitions/ReportOptions"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "recipients": {
+          "type": "string"
+        },
+        "replyTo": {
+          "type": "string"
+        },
+        "scaleFactor": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "schedule": {
+          "$ref": "#/definitions/ReportSchedule"
+        },
+        "state": {
+          "$ref": "#/definitions/State"
+        },
+        "templateVars": {
+          "type": "object"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "ReportBrandingOptions": {
+      "type": "object",
+      "properties": {
+        "emailFooterLink": {
+          "type": "string"
+        },
+        "emailFooterMode": {
+          "type": "string"
+        },
+        "emailFooterText": {
+          "type": "string"
+        },
+        "emailLogoUrl": {
+          "type": "string"
+        },
+        "reportLogoUrl": {
+          "type": "string"
+        }
+      }
+    },
+    "ReportDashboard": {
+      "type": "object",
+      "properties": {
+        "dashboard": {
+          "$ref": "#/definitions/ReportDashboardID"
+        },
+        "reportVariables": {
+          "type": "object"
+        },
+        "timeRange": {
+          "$ref": "#/definitions/ReportTimeRange"
+        }
+      }
+    },
+    "ReportDashboardID": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "ReportEmail": {
       "type": "object",
       "properties": {
         "email": {
@@ -6205,7 +6174,7 @@
         }
       }
     },
-    "ReportOptionsDTO": {
+    "ReportOptions": {
       "type": "object",
       "properties": {
         "layout": {
@@ -6215,7 +6184,81 @@
           "type": "string"
         },
         "timeRange": {
-          "$ref": "#/definitions/TimeRangeDTO"
+          "$ref": "#/definitions/ReportTimeRange"
+        }
+      }
+    },
+    "ReportSchedule": {
+      "type": "object",
+      "properties": {
+        "day": {
+          "type": "string"
+        },
+        "dayOfMonth": {
+          "type": "string"
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "frequency": {
+          "type": "string"
+        },
+        "hour": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "intervalAmount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "intervalFrequency": {
+          "type": "string"
+        },
+        "minute": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "timeZone": {
+          "type": "string"
+        },
+        "workdaysOnly": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ReportSettings": {
+      "type": "object",
+      "properties": {
+        "branding": {
+          "$ref": "#/definitions/ReportBrandingOptions"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "ReportTimeRange": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
         }
       }
     },
@@ -6348,49 +6391,6 @@
         "userId": {
           "type": "integer",
           "format": "int64"
-        }
-      }
-    },
-    "ScheduleDTO": {
-      "type": "object",
-      "properties": {
-        "day": {
-          "type": "string"
-        },
-        "dayOfMonth": {
-          "type": "string"
-        },
-        "endDate": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "frequency": {
-          "type": "string"
-        },
-        "hour": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "intervalAmount": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "intervalFrequency": {
-          "type": "string"
-        },
-        "minute": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "startDate": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "timeZone": {
-          "type": "string"
-        },
-        "workdaysOnly": {
-          "type": "boolean"
         }
       }
     },
@@ -6631,6 +6631,10 @@
           "format": "int64",
           "example": 1
         },
+        "requiredBy": {
+          "type": "string",
+          "example": "grafana-app"
+        },
         "role": {
           "type": "string",
           "example": "Editor"
@@ -6705,61 +6709,12 @@
         }
       }
     },
-    "SettingsDTO": {
-      "type": "object",
-      "properties": {
-        "branding": {
-          "$ref": "#/definitions/BrandingOptionsDTO"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "orgId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
+    "ShareType": {
+      "type": "string"
     },
     "SignatureAlgorithm": {
       "type": "integer",
       "format": "int64"
-    },
-    "Spec": {
-      "type": "object",
-      "title": "Spec defines model for Spec.",
-      "properties": {
-        "cookiePreferences": {
-          "$ref": "#/definitions/CookiePreferences"
-        },
-        "homeDashboardUID": {
-          "description": "UID for the home dashboard",
-          "type": "string"
-        },
-        "language": {
-          "description": "Selected language (beta)",
-          "type": "string"
-        },
-        "queryHistory": {
-          "$ref": "#/definitions/QueryHistoryPreference"
-        },
-        "theme": {
-          "description": "Theme light, dark, empty is default",
-          "type": "string"
-        },
-        "timezone": {
-          "description": "The timezone selection\nTODO: this should use the timezone defined in common",
-          "type": "string"
-        },
-        "weekStart": {
-          "description": "WeekStart day of the week (sunday, monday, etc)",
-          "type": "string"
-        }
-      }
     },
     "State": {
       "type": "string"
@@ -7040,17 +6995,6 @@
         }
       }
     },
-    "TimeRangeDTO": {
-      "type": "object",
-      "properties": {
-        "from": {
-          "type": "string"
-        },
-        "to": {
-          "type": "string"
-        }
-      }
-    },
     "Token": {
       "type": "object",
       "properties": {
@@ -7209,28 +7153,6 @@
       "type": "array",
       "items": {
         "$ref": "#/definitions/Transformation"
-      }
-    },
-    "TrimDashboardCommand": {
-      "type": "object",
-      "properties": {
-        "dashboard": {
-          "$ref": "#/definitions/Json"
-        },
-        "meta": {
-          "$ref": "#/definitions/Json"
-        }
-      }
-    },
-    "TrimDashboardFullWithMeta": {
-      "type": "object",
-      "properties": {
-        "dashboard": {
-          "$ref": "#/definitions/Json"
-        },
-        "meta": {
-          "$ref": "#/definitions/Json"
-        }
       }
     },
     "Type": {
@@ -7922,6 +7844,62 @@
     "VisType": {
       "type": "string",
       "title": "VisType is used to indicate how the data should be visualized in explore."
+    },
+    "deviceDTO": {
+      "type": "object",
+      "properties": {
+        "avatarUrl": {
+          "type": "string"
+        },
+        "clientIp": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "deviceId": {
+          "type": "string"
+        },
+        "lastSeenAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "userAgent": {
+          "type": "string"
+        }
+      }
+    },
+    "publicError": {
+      "description": "PublicError is derived from Error and only contains information\navailable to the end user.",
+      "type": "object",
+      "required": [
+        "statusCode",
+        "messageId"
+      ],
+      "properties": {
+        "extra": {
+          "description": "Extra Additional information about the error",
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "message": {
+          "description": "Message A human readable message",
+          "type": "string"
+        },
+        "messageId": {
+          "description": "MessageID A unique identifier for the error",
+          "type": "string"
+        },
+        "statusCode": {
+          "description": "StatusCode The HTTP status code returned",
+          "type": "integer",
+          "format": "int64"
+        }
+      }
     }
   },
   "responses": {
@@ -7932,21 +7910,6 @@
       "description": "AcceptedResponse",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
-      }
-    },
-    "addPermissionResponse": {
-      "description": "",
-      "schema": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string"
-          },
-          "permissionId": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
       }
     },
     "adminCreateUserResponse": {
@@ -7980,6 +7943,12 @@
       "description": "BadRequestError is returned when the request is invalid and it cannot be processed.",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "badRequestPublicError": {
+      "description": "BadRequestPublicError is returned when the request is invalid and it cannot be processed.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
       }
     },
     "calculateDashboardDiffResponse": {
@@ -8101,6 +8070,12 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/Playlist"
+      }
+    },
+    "createPublicDashboardResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/PublicDashboard"
       }
     },
     "createReportResponse": {
@@ -8281,6 +8256,15 @@
         }
       }
     },
+    "devicesResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/deviceDTO"
+        }
+      }
+    },
     "folderResponse": {
       "description": "",
       "schema": {
@@ -8291,6 +8275,12 @@
       "description": "ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "forbiddenPublicError": {
+      "description": "ForbiddenPublicError is returned if the user/token has insufficient permissions to access the requested resource.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
       }
     },
     "genericError": {
@@ -8353,12 +8343,6 @@
         }
       }
     },
-    "getAllPermissionseResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/DataSourcePermissionsDTO"
-      }
-    },
     "getAllRolesResponse": {
       "description": "",
       "schema": {
@@ -8371,7 +8355,7 @@
     "getAnnotationByIDResponse": {
       "description": "",
       "schema": {
-        "$ref": "#/definitions/ItemDTO"
+        "$ref": "#/definitions/Annotation"
       }
     },
     "getAnnotationTagsResponse": {
@@ -8385,7 +8369,7 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/ItemDTO"
+          "$ref": "#/definitions/Annotation"
         }
       }
     },
@@ -8417,15 +8401,6 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/OrgDetailsDTO"
-      }
-    },
-    "getCustomPermissionsReportResponse": {
-      "description": "",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/CustomPermissionsRecordDTO"
-        }
       }
     },
     "getDashboardPermissionsListResponse": {
@@ -8515,6 +8490,12 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/GetHomeDashboardResponse"
+      }
+    },
+    "getLibraryElementArrayResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/LibraryElementArrayResponse"
       }
     },
     "getLibraryElementConnectionsResponse": {
@@ -8613,7 +8594,22 @@
     "getPreferencesResponse": {
       "description": "",
       "schema": {
-        "$ref": "#/definitions/Spec"
+        "$ref": "#/definitions/Preferences"
+      }
+    },
+    "getPublicAnnotationsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/AnnotationEvent"
+        }
+      }
+    },
+    "getPublicDashboardResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/PublicDashboard"
       }
     },
     "getQueryHistoryDeleteQueryResponse": {
@@ -8646,13 +8642,13 @@
     "getReportResponse": {
       "description": "",
       "schema": {
-        "$ref": "#/definitions/ConfigDTO"
+        "$ref": "#/definitions/Report"
       }
     },
     "getReportSettingsResponse": {
       "description": "",
       "schema": {
-        "$ref": "#/definitions/SettingsDTO"
+        "$ref": "#/definitions/ReportSettings"
       }
     },
     "getReportsResponse": {
@@ -8660,7 +8656,7 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/ConfigDTO"
+          "$ref": "#/definitions/Report"
         }
       }
     },
@@ -8798,6 +8794,12 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
+    "internalServerPublicError": {
+      "description": "InternalServerPublicError is a general error indicating something went wrong internally.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
+    },
     "jwksResponse": {
       "description": "",
       "schema": {
@@ -8822,6 +8824,12 @@
             "$ref": "#/definitions/RoleDTO"
           }
         }
+      }
+    },
+    "listPublicDashboardsResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/PublicDashboardListResponseWithPagination"
       }
     },
     "listRecordingRulesResponse": {
@@ -8865,13 +8873,22 @@
     "listTokensResponse": {
       "description": "",
       "schema": {
-        "$ref": "#/definitions/TokenDTO"
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/TokenDTO"
+        }
       }
     },
     "notFoundError": {
       "description": "NotFoundError is returned when the requested resource was not found.",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "notFoundPublicError": {
+      "description": "NotFoundPublicError is returned when the requested resource was not found.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
       }
     },
     "okResponse": {
@@ -8968,6 +8985,10 @@
           "url"
         ],
         "properties": {
+          "folderUid": {
+            "description": "FolderUID The unique identifier (uid) of the folder the dashboard belongs to.",
+            "type": "string"
+          },
           "id": {
             "description": "ID The unique identifier (id) of the created/updated dashboard.",
             "type": "integer",
@@ -9012,7 +9033,19 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
+    "publicErrorResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
+    },
     "queryMetricsWithExpressionsRespons": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/QueryDataResponse"
+      }
+    },
+    "queryPublicDashboardResponse": {
       "description": "",
       "schema": {
         "$ref": "#/definitions/QueryDataResponse"
@@ -9123,16 +9156,16 @@
         "$ref": "#/definitions/AlertTestResult"
       }
     },
-    "trimDashboardResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/TrimDashboardFullWithMeta"
-      }
-    },
     "unauthorisedError": {
       "description": "UnauthorizedError is returned when the request is not authenticated.",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "unauthorisedPublicError": {
+      "description": "UnauthorisedPublicError is returned when the request is not authenticated.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
       }
     },
     "unprocessableEntityError": {
@@ -9151,6 +9184,12 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/PlaylistDTO"
+      }
+    },
+    "updatePublicDashboardResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/PublicDashboard"
       }
     },
     "updateServiceAccountResponse": {
@@ -9180,15 +9219,10 @@
         "$ref": "#/definitions/UserProfileDTO"
       }
     },
-    "validateDashboardResponse": {
+    "viewPublicDashboardResponse": {
       "description": "",
-      "headers": {
-        "isValid": {
-          "type": "boolean"
-        },
-        "message": {
-          "type": "string"
-        }
+      "schema": {
+        "$ref": "#/definitions/DashboardFullWithMeta"
       }
     }
   },

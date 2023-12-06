@@ -13,7 +13,6 @@ import {
   ScopedVars,
   TimeRange,
 } from '@grafana/data';
-import { toDataQueryResponse } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -23,14 +22,7 @@ import { AppNotificationTimeout } from 'app/types';
 import { ThrottlingErrorMessage } from '../components/Errors/ThrottlingErrorMessage';
 import memoizedDebounce from '../memoizedDebounce';
 import { migrateMetricQuery } from '../migrations/metricQueryMigrations';
-import {
-  CloudWatchJsonData,
-  CloudWatchMetricsQuery,
-  CloudWatchQuery,
-  DataQueryError,
-  MetricQuery,
-  MetricRequest,
-} from '../types';
+import { CloudWatchJsonData, CloudWatchMetricsQuery, CloudWatchQuery, DataQueryError } from '../types';
 import { filterMetricsQuery } from '../utils/utils';
 
 import { CloudWatchRequest } from './CloudWatchRequest';
@@ -53,8 +45,12 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
     AppNotificationTimeout.Error
   );
 
-  constructor(instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>, templateSrv: TemplateSrv) {
-    super(instanceSettings, templateSrv);
+  constructor(
+    instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
+    templateSrv: TemplateSrv,
+    queryFn: (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>
+  ) {
+    super(instanceSettings, templateSrv, queryFn);
   }
 
   handleMetricQueries = (
@@ -66,31 +62,28 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
       format: 'Z',
     }).replace(':', '');
 
-    const validMetricsQueries = metricQueries
-      .filter(this.filterMetricQuery)
-      .map((q: CloudWatchMetricsQuery): MetricQuery => {
-        const migratedQuery = migrateMetricQuery(q);
-        const migratedAndIterpolatedQuery = this.replaceMetricQueryVars(migratedQuery, options.scopedVars);
+    const validMetricsQueries = metricQueries.filter(this.filterMetricQuery).map((q) => {
+      const migratedQuery = migrateMetricQuery(q);
+      const migratedAndIterpolatedQuery = this.replaceMetricQueryVars(migratedQuery, options.scopedVars);
 
-        return {
-          timezoneUTCOffset,
-          intervalMs: options.intervalMs,
-          maxDataPoints: options.maxDataPoints,
-          ...migratedAndIterpolatedQuery,
-          type: 'timeSeriesQuery',
-          datasource: this.ref,
-        };
-      });
+      return {
+        timezoneUTCOffset,
+        intervalMs: options.intervalMs,
+        maxDataPoints: options.maxDataPoints,
+        ...migratedAndIterpolatedQuery,
+        type: 'timeSeriesQuery',
+        datasource: this.ref,
+      };
+    });
 
     // No valid targets, return the empty result to save a round trip.
     if (isEmpty(validMetricsQueries)) {
       return of({ data: [] });
     }
 
-    const request = {
-      from: options?.range?.from.valueOf().toString(),
-      to: options?.range?.to.valueOf().toString(),
-      queries: validMetricsQueries,
+    const request: DataQueryRequest<CloudWatchQuery> = {
+      ...options,
+      targets: validMetricsQueries,
     };
 
     return this.performTimeSeriesQuery(request, options.range);
@@ -114,15 +107,18 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
     };
   }
 
-  performTimeSeriesQuery(request: MetricRequest, { from, to }: TimeRange): Observable<DataQueryResponse> {
-    return this.awsRequest(this.dsQueryEndpoint, request).pipe(
+  performTimeSeriesQuery(
+    request: DataQueryRequest<CloudWatchQuery>,
+    { from, to }: TimeRange
+  ): Observable<DataQueryResponse> {
+    return this.query(request).pipe(
       map((res) => {
-        const dataframes: DataFrame[] = toDataQueryResponse(res).data;
+        const dataframes: DataFrame[] = res.data;
         if (!dataframes || dataframes.length <= 0) {
           return { data: [] };
         }
 
-        const lastError = findLast(res.data.results, (v) => !!v.error);
+        const lastError = findLast(res.data, (v) => !!v.error);
 
         dataframes.forEach((frame) => {
           frame.fields.forEach((field) => {
@@ -156,7 +152,7 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
 
         if (results.some((r) => r.error && /^Throttling:.*/.test(r.error))) {
           const failedRedIds = Object.keys(err.data?.results ?? {});
-          const regionsAffected = Object.values(request.queries).reduce(
+          const regionsAffected = Object.values(request.targets).reduce(
             (res: string[], { refId, region }) =>
               (refId && !failedRedIds.includes(refId)) || res.includes(region) ? res : [...res, region],
             []

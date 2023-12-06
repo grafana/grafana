@@ -71,14 +71,8 @@ func (m *mockLogsSyncClient) StartQueryWithContext(ctx context.Context, input *c
 	return args.Get(0).(*cloudwatchlogs.StartQueryOutput), args.Error(1)
 }
 
-func (m *fakeCWLogsClient) DescribeLogGroups(input *cloudwatchlogs.DescribeLogGroupsInput) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
-	m.calls.describeLogGroups = append(m.calls.describeLogGroups, input)
-	output := &m.logGroups[m.logGroupsIndex]
-	m.logGroupsIndex++
-	return output, nil
-}
-
 func (m *fakeCWLogsClient) DescribeLogGroupsWithContext(ctx context.Context, input *cloudwatchlogs.DescribeLogGroupsInput, option ...request.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
+	m.calls.describeLogGroups = append(m.calls.describeLogGroups, input)
 	output := &m.logGroups[m.logGroupsIndex]
 	m.logGroupsIndex++
 	return output, nil
@@ -207,14 +201,14 @@ func (c fakeCheckHealthClient) ListMetricsPagesWithContext(ctx aws.Context, inpu
 	return nil
 }
 
-func (c fakeCheckHealthClient) DescribeLogGroups(input *cloudwatchlogs.DescribeLogGroupsInput) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
+func (c fakeCheckHealthClient) DescribeLogGroupsWithContext(ctx context.Context, input *cloudwatchlogs.DescribeLogGroupsInput, option ...request.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
 	if c.describeLogGroups != nil {
 		return c.describeLogGroups(input)
 	}
 	return nil, nil
 }
 
-func (c fakeCheckHealthClient) GetLogGroupFields(input *cloudwatchlogs.GetLogGroupFieldsInput) (*cloudwatchlogs.GetLogGroupFieldsOutput, error) {
+func (c fakeCheckHealthClient) GetLogGroupFieldsWithContext(ctx context.Context, input *cloudwatchlogs.GetLogGroupFieldsInput, option ...request.Option) (*cloudwatchlogs.GetLogGroupFieldsOutput, error) {
 	return nil, nil
 }
 

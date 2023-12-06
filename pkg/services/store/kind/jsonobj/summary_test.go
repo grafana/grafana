@@ -32,7 +32,7 @@ func TestDataFrameSummary(t *testing.T) {
 	require.NoError(t, err)
 	require.JSONEq(t, `{
 		"name": "item",
-		"uid": "path/to/item",
+		"UID": "path/to/item",
 		"kind": "jsonobj"
 	  }`, string(asjson))
 }

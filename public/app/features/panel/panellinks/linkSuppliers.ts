@@ -139,7 +139,10 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
   };
 };
 
-export const getPanelLinksSupplier = (panel: PanelModel): LinkModelSupplier<PanelModel> | undefined => {
+export const getPanelLinksSupplier = (
+  panel: PanelModel,
+  replaceVariables?: InterpolateFunction
+): LinkModelSupplier<PanelModel> | undefined => {
   const links = panel.links;
 
   if (!links || links.length === 0) {
@@ -149,7 +152,7 @@ export const getPanelLinksSupplier = (panel: PanelModel): LinkModelSupplier<Pane
   return {
     getLinks: () => {
       return links.map((link) => {
-        return getLinkSrv().getDataLinkUIModel(link, panel.replaceVariables, panel);
+        return getLinkSrv().getDataLinkUIModel(link, replaceVariables || panel.replaceVariables, panel);
       });
     },
   };

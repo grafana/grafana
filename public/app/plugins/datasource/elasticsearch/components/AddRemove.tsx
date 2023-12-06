@@ -5,7 +5,7 @@ import { Button } from '@grafana/ui';
 
 interface Props {
   index: number;
-  elements: any[];
+  elements: unknown[];
   onAdd: () => void;
   onRemove: () => void;
 }

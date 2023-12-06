@@ -1,8 +1,9 @@
 import { countBy, keyBy } from 'lodash';
+import { createSelector } from 'reselect';
 
 import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceSettings } from '@grafana/data';
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
-import { useSelector } from 'app/types';
+import { StoreState, useSelector } from 'app/types';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { getAlertManagerDataSources } from '../utils/datasource';
@@ -20,10 +21,10 @@ export function useExternalDataSourceAlertmanagers(): ExternalDataSourceAM[] {
 
   const externalDsAlertManagers = getAlertManagerDataSources().filter((ds) => ds.jsonData.handleGrafanaManagedAlerts);
 
-  const alertmanagerDatasources = useSelector((state) =>
-    keyBy(
-      state.dataSources.dataSources.filter((ds) => ds.type === 'alertmanager'),
-      (ds) => ds.uid
+  const alertmanagerDatasources = useSelector(
+    createSelector(
+      (state: StoreState) => state.dataSources.dataSources.filter((ds) => ds.type === 'alertmanager'),
+      (datasources) => keyBy(datasources, (ds) => ds.uid)
     )
   );
 

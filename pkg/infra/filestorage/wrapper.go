@@ -200,12 +200,12 @@ func (b wrapper) Upsert(ctx context.Context, file *UpsertFileCommand) error {
 func (b wrapper) pagingOptionsWithDefaults(paging *Paging) *Paging {
 	if paging == nil {
 		return &Paging{
-			First: 100,
+			Limit: 100,
 		}
 	}
 
-	if paging.First <= 0 {
-		paging.First = 100
+	if paging.Limit <= 0 {
+		paging.Limit = 100
 	}
 	if paging.After != "" {
 		paging.After = b.addRoot(paging.After)
@@ -381,7 +381,7 @@ func (b wrapper) List(ctx context.Context, folderPath string, paging *Paging, op
 }
 
 func (b wrapper) isFolderEmpty(ctx context.Context, path string) (bool, error) {
-	resp, err := b.List(ctx, path, &Paging{First: 1}, &ListOptions{Recursive: true, WithFolders: true, WithFiles: true})
+	resp, err := b.List(ctx, path, &Paging{Limit: 1}, &ListOptions{Recursive: true, WithFolders: true, WithFiles: true})
 	if err != nil {
 		return false, err
 	}

@@ -11,111 +11,84 @@ import { Labels } from 'app/types/unified-alerting-dto';
 
 import { Label, normalizeMatchers } from './matchers';
 
-type OperatorPredicate = (labelValue: string, matcherValue: string) => boolean;
-
-const OperatorFunctions: Record<MatcherOperator, OperatorPredicate> = {
-  [MatcherOperator.equal]: (lv, mv) => lv === mv,
-  [MatcherOperator.notEqual]: (lv, mv) => lv !== mv,
-  [MatcherOperator.regex]: (lv, mv) => Boolean(lv.match(new RegExp(mv))),
-  [MatcherOperator.notRegex]: (lv, mv) => !Boolean(lv.match(new RegExp(mv))),
-};
-
-function isLabelMatch(matcher: ObjectMatcher, label: Label) {
-  const [labelKey, labelValue] = label;
-  const [matcherKey, operator, matcherValue] = matcher;
-
-  // not interested, keys don't match
-  if (labelKey !== matcherKey) {
-    return false;
-  }
-
-  const matchFunction = OperatorFunctions[operator];
-  if (!matchFunction) {
-    throw new Error(`no such operator: ${operator}`);
-  }
-
-  return matchFunction(labelValue, matcherValue);
-}
-
+// If a policy has no matchers it still can be a match, hence matchers can be empty and match can be true
+// So we cannot use null as an indicator of no match
 interface LabelMatchResult {
   match: boolean;
-  matchers: ObjectMatcher[];
+  matcher: ObjectMatcher | null;
 }
+
+type LabelsMatch = Map<Label, LabelMatchResult>;
 
 interface MatchingResult {
   matches: boolean;
-  details: Map<ObjectMatcher, Label[]>;
-  labelsMatch: Map<Label, LabelMatchResult>;
+  labelsMatch: LabelsMatch;
 }
 
-// check if every matcher returns "true" for the set of labels
-function matchLabels(matchers: ObjectMatcher[], labels: Label[]): MatchingResult {
-  const details = new Map<ObjectMatcher, Label[]>();
+// returns a match results for given set of matchers (from a policy for instance) and a set of labels
+export function matchLabels(matchers: ObjectMatcher[], labels: Label[]): MatchingResult {
+  const matches = matchLabelsSet(matchers, labels);
 
-  // If a policy has no matchers it still can be a match, hence matchers can be empty and match can be true
-  // So we cannot use empty array of matchers as an indicator of no match
-  const labelsMatch = new Map<Label, { match: boolean; matchers: ObjectMatcher[] }>(
-    labels.map((label) => [label, { match: false, matchers: [] }])
-  );
+  // create initial map of label => match result
+  const labelsMatch: LabelsMatch = new Map(labels.map((label) => [label, { match: false, matcher: null }]));
 
-  const matches = matchers.every((matcher) => {
-    const matchingLabels = labels.filter((label) => isLabelMatch(matcher, label));
+  // for each matcher, check which label it matched for
+  matchers.forEach((matcher) => {
+    const matchingLabel = labels.find((label) => isLabelMatch(matcher, label));
 
-    matchingLabels.forEach((label) => {
-      const labelMatch = labelsMatch.get(label);
-      // The condition is just to satisfy TS. The map should have all the labels due to the previous map initialization
-      if (labelMatch) {
-        labelMatch.match = true;
-        labelMatch.matchers.push(matcher);
-      }
-    });
-
-    if (matchingLabels.length === 0) {
-      return false;
+    // record that matcher for the label
+    if (matchingLabel) {
+      labelsMatch.set(matchingLabel, {
+        match: true,
+        matcher,
+      });
     }
-
-    details.set(matcher, matchingLabels);
-    return matchingLabels.length > 0;
   });
 
-  return { matches, details, labelsMatch };
+  return { matches, labelsMatch };
+}
+
+// Compare set of matchers to set of label
+export function matchLabelsSet(matchers: ObjectMatcher[], labels: Label[]): boolean {
+  for (const matcher of matchers) {
+    if (!isLabelMatchInSet(matcher, labels)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 export interface AlertInstanceMatch {
   instance: Labels;
-  matchDetails: Map<ObjectMatcher, Labels>;
-  labelsMatch: Map<Label, LabelMatchResult>;
+  labelsMatch: LabelsMatch;
 }
 
 export interface RouteMatchResult<T extends Route> {
   route: T;
-  details: Map<ObjectMatcher, Label[]>;
-  labelsMatch: Map<Label, LabelMatchResult>;
+  labelsMatch: LabelsMatch;
 }
 
 // Match does a depth-first left-to-right search through the route tree
 // and returns the matching routing nodes.
 
 // If the current node is not a match, return nothing
-// const normalizedMatchers = normalizeMatchers(root);
 // Normalization should have happened earlier in the code
-function findMatchingRoutes<T extends Route>(root: T, labels: Label[]): Array<RouteMatchResult<T>> {
-  let matches: Array<RouteMatchResult<T>> = [];
+function findMatchingRoutes<T extends Route>(route: T, labels: Label[]): Array<RouteMatchResult<T>> {
+  let childMatches: Array<RouteMatchResult<T>> = [];
 
   // If the current node is not a match, return nothing
-  const matchResult = matchLabels(root.object_matchers ?? [], labels);
+  const matchResult = matchLabels(route.object_matchers ?? [], labels);
   if (!matchResult.matches) {
     return [];
   }
 
   // If the current node matches, recurse through child nodes
-  if (root.routes) {
-    for (let index = 0; index < root.routes.length; index++) {
-      let child = root.routes[index];
+  if (route.routes) {
+    for (const child of route.routes) {
       let matchingChildren = findMatchingRoutes(child, labels);
       // TODO how do I solve this typescript thingy? It looks correct to me /shrug
       // @ts-ignore
-      matches = matches.concat(matchingChildren);
+      childMatches = childMatches.concat(matchingChildren);
       // we have matching children and we don't want to continue, so break here
       if (matchingChildren.length && !child.continue) {
         break;
@@ -124,11 +97,11 @@ function findMatchingRoutes<T extends Route>(root: T, labels: Label[]): Array<Ro
   }
 
   // If no child nodes were matches, the current node itself is a match.
-  if (matches.length === 0) {
-    matches.push({ route: root, details: matchResult.details, labelsMatch: matchResult.labelsMatch });
+  if (childMatches.length === 0) {
+    childMatches.push({ route, labelsMatch: matchResult.labelsMatch });
   }
 
-  return matches;
+  return childMatches;
 }
 
 // This is a performance improvement to normalize matchers only once and use the normalized version later on
@@ -249,4 +222,48 @@ export function computeInheritedTree<T extends Route>(parent: T): T {
   };
 }
 
-export { findMatchingAlertGroups, findMatchingRoutes, getInheritedProperties };
+type OperatorPredicate = (labelValue: string, matcherValue: string) => boolean;
+const OperatorFunctions: Record<MatcherOperator, OperatorPredicate> = {
+  [MatcherOperator.equal]: (lv, mv) => lv === mv,
+  [MatcherOperator.notEqual]: (lv, mv) => lv !== mv,
+  [MatcherOperator.regex]: (lv, mv) => new RegExp(mv).test(lv),
+  [MatcherOperator.notRegex]: (lv, mv) => !new RegExp(mv).test(lv),
+};
+
+function isLabelMatchInSet(matcher: ObjectMatcher, labels: Label[]): boolean {
+  const [matcherKey, operator, matcherValue] = matcher;
+
+  let labelValue = ''; // matchers that have no labels are treated as empty string label values
+  const labelForMatcher = Object.fromEntries(labels)[matcherKey];
+  if (labelForMatcher) {
+    labelValue = labelForMatcher;
+  }
+
+  const matchFunction = OperatorFunctions[operator];
+  if (!matchFunction) {
+    throw new Error(`no such operator: ${operator}`);
+  }
+
+  return matchFunction(labelValue, matcherValue);
+}
+
+// ⚠️ DO NOT USE THIS FUNCTION FOR ROUTE SELECTION ALGORITHM
+// for route selection algorithm, always compare a single matcher to the entire label set
+// see "matchLabelsSet"
+function isLabelMatch(matcher: ObjectMatcher, label: Label): boolean {
+  let [labelKey, labelValue] = label;
+  const [matcherKey, operator, matcherValue] = matcher;
+
+  if (labelKey !== matcherKey) {
+    return false;
+  }
+
+  const matchFunction = OperatorFunctions[operator];
+  if (!matchFunction) {
+    throw new Error(`no such operator: ${operator}`);
+  }
+
+  return matchFunction(labelValue, matcherValue);
+}
+
+export { findMatchingAlertGroups, findMatchingRoutes, getInheritedProperties, isLabelMatchInSet };

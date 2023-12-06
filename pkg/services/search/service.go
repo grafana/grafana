@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -37,10 +38,11 @@ type Query struct {
 	Type          string
 	DashboardUIDs []string
 	DashboardIds  []int64
-	FolderIds     []int64
-	FolderUIDs    []string
-	Permission    dashboards.PermissionType
-	Sort          string
+	// Deprecated: use FolderUID instead
+	FolderIds  []int64
+	FolderUIDs []string
+	Permission dashboardaccess.PermissionType
+	Sort       string
 }
 
 type Service interface {
@@ -83,7 +85,7 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.
 		DashboardUIDs: query.DashboardUIDs,
 		DashboardIds:  query.DashboardIds,
 		Type:          query.Type,
-		FolderIds:     query.FolderIds,
+		FolderIds:     query.FolderIds, // nolint:staticcheck
 		FolderUIDs:    query.FolderUIDs,
 		Tags:          query.Tags,
 		Limit:         query.Limit,

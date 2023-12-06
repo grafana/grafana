@@ -35,10 +35,11 @@ interface Props {
   folderName: ResourceFolderName;
   newValue: string;
   setNewValue: Dispatch<SetStateAction<string>>;
+  maxFiles?: number;
 }
 
 export const FolderPickerTab = (props: Props) => {
-  const { value, mediaType, folderName, newValue, setNewValue } = props;
+  const { value, mediaType, folderName, newValue, setNewValue, maxFiles } = props;
   const styles = useStyles2(getStyles);
 
   const folders = getFolders(mediaType).map((v) => ({
@@ -75,7 +76,7 @@ export const FolderPickerTab = (props: Props) => {
       getDatasourceSrv()
         .get('-- Grafana --')
         .then((ds) => {
-          (ds as GrafanaDatasource).listFiles(folder).subscribe({
+          (ds as GrafanaDatasource).listFiles(folder, maxFiles).subscribe({
             next: (frame) => {
               const cards: ResourceItem[] = [];
               frame.forEach((item) => {
@@ -95,7 +96,7 @@ export const FolderPickerTab = (props: Props) => {
           });
         });
     }
-  }, [mediaType, currentFolder]);
+  }, [mediaType, currentFolder, maxFiles]);
 
   return (
     <>

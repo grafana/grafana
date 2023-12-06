@@ -71,22 +71,6 @@ func getAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, 
 			sub.HandleFunc(route.Path, route.Handler).
 				Methods(methods...)
 		}
-
-		//	getter := makeGetter(restConfig)
-		for resource, route := range routes.Resource {
-			err = validPath(route.Path)
-			if err != nil {
-				return nil, err
-			}
-			fmt.Printf("TODO: %s/%v\n", resource, route)
-
-			// get a client for that resource kind
-			//getter := makeGetter(restConfig)
-
-			useful = true
-			// sub.HandleFunc(v.Slug, SubresourceHandlerWrapper(v.Handler, getter)).
-			// 	Methods(methods...)
-		}
 	}
 
 	if !useful {
@@ -155,7 +139,7 @@ func (h *methodNotAllowedHandler) ServeHTTP(w http.ResponseWriter, req *http.Req
 // Modify the the OpenAPI spec to include the additional routes.
 // Currently this requires: https://github.com/kubernetes/kube-openapi/pull/420
 // In future k8s release, the hook will use Config3 rather than the same hook for both v2 and v3
-func getOpenAPIPostProcessor(builders []APIGroupBuilder) func(*spec3.OpenAPI) (*spec3.OpenAPI, error) {
+func GetOpenAPIPostProcessor(builders []APIGroupBuilder) func(*spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	return func(s *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 		if s.Paths == nil {
 			return s, nil
@@ -180,12 +164,6 @@ func getOpenAPIPostProcessor(builders []APIGroupBuilder) func(*spec3.OpenAPI) (*
 
 				for _, route := range routes.Namespace {
 					copy.Paths.Paths[prefix+"/namespaces/{namespace}"+route.Path] = &spec3.Path{
-						PathProps: *route.Spec,
-					}
-				}
-
-				for resource, route := range routes.Resource {
-					copy.Paths.Paths[prefix+"/namespaces/{namespace}/"+resource+"{name}"+route.Path] = &spec3.Path{
 						PathProps: *route.Spec,
 					}
 				}

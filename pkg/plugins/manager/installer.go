@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
@@ -24,16 +25,18 @@ type PluginInstaller struct {
 	pluginRegistry       registry.Service
 	pluginLoader         loader.Service
 	log                  log.Logger
+	serviceRegistry      auth.ExternalServiceRegistry
 }
 
 func ProvideInstaller(cfg *config.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
-	pluginRepo repo.Service) *PluginInstaller {
+	pluginRepo repo.Service, serviceRegistry auth.ExternalServiceRegistry) *PluginInstaller {
 	return New(pluginRegistry, pluginLoader, pluginRepo,
-		storage.FileSystem(log.NewPrettyLogger("installer.fs"), cfg.PluginsPath), storage.SimpleDirNameGeneratorFunc)
+		storage.FileSystem(log.NewPrettyLogger("installer.fs"), cfg.PluginsPath), storage.SimpleDirNameGeneratorFunc, serviceRegistry)
 }
 
 func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRepo repo.Service,
-	pluginStorage storage.ZipExtractor, pluginStorageDirFunc storage.DirNameGeneratorFunc) *PluginInstaller {
+	pluginStorage storage.ZipExtractor, pluginStorageDirFunc storage.DirNameGeneratorFunc,
+	serviceRegistry auth.ExternalServiceRegistry) *PluginInstaller {
 	return &PluginInstaller{
 		pluginLoader:         pluginLoader,
 		pluginRegistry:       pluginRegistry,
@@ -41,6 +44,7 @@ func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRep
 		pluginStorage:        pluginStorage,
 		pluginStorageDirFunc: pluginStorageDirFunc,
 		log:                  log.New("plugin.installer"),
+		serviceRegistry:      serviceRegistry,
 	}
 }
 
@@ -156,7 +160,11 @@ func (m *PluginInstaller) Remove(ctx context.Context, pluginID string) error {
 		}
 	}
 
-	return nil
+	has, err := m.serviceRegistry.HasExternalService(ctx, pluginID)
+	if err == nil && has {
+		return m.serviceRegistry.RemoveExternalService(ctx, pluginID)
+	}
+	return err
 }
 
 // plugin finds a plugin with `pluginID` from the store

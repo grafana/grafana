@@ -11,11 +11,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	acMock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval/eval_mocks"
@@ -140,7 +141,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			data1 := models.GenerateAlertQuery()
 			data2 := models.GenerateAlertQuery()
 
-			ac := acMock.New().WithPermissions([]accesscontrol.Permission{
+			ac := acMock.New().WithPermissions([]ac.Permission{
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data1.DatasourceUID)},
 			})
 
@@ -162,7 +163,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			data1 := models.GenerateAlertQuery()
 			data2 := models.GenerateAlertQuery()
 
-			ac := acMock.New().WithPermissions([]accesscontrol.Permission{
+			ac := acMock.New().WithPermissions([]ac.Permission{
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data1.DatasourceUID)},
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data2.DatasourceUID)},
 			})
@@ -211,13 +212,11 @@ func TestRouteEvalQueries(t *testing.T) {
 			data1 := models.GenerateAlertQuery()
 			data2 := models.GenerateAlertQuery()
 
-			ac := acMock.New().WithPermissions([]accesscontrol.Permission{
-				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data1.DatasourceUID)},
-			})
-
 			srv := &TestingApiSrv{
-				accessControl: ac,
-				tracer:        tracing.InitializeTracerForTest(),
+				authz: accesscontrol.NewRuleService(acMock.New().WithPermissions([]ac.Permission{
+					{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data1.DatasourceUID)},
+				})),
+				tracer: tracing.InitializeTracerForTest(),
 			}
 
 			response := srv.RouteEvalQueries(rc, definitions.EvalQueriesPayload{
@@ -234,7 +233,7 @@ func TestRouteEvalQueries(t *testing.T) {
 
 			currentTime := time.Now()
 
-			ac := acMock.New().WithPermissions([]accesscontrol.Permission{
+			ac := acMock.New().WithPermissions([]ac.Permission{
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data1.DatasourceUID)},
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data2.DatasourceUID)},
 			})
@@ -276,7 +275,7 @@ func createTestingApiSrv(t *testing.T, ds *fakes.FakeCacheService, ac *acMock.Mo
 
 	return &TestingApiSrv{
 		DatasourceCache: ds,
-		accessControl:   ac,
+		authz:           accesscontrol.NewRuleService(ac),
 		evaluator:       evaluator,
 		cfg:             config(t),
 		tracer:          tracing.InitializeTracerForTest(),
