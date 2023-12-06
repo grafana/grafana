@@ -136,7 +136,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/store"
 	entityDB "github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
-	"github.com/grafana/grafana/pkg/services/store/kind"
 	"github.com/grafana/grafana/pkg/services/store/resolver"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
@@ -342,7 +341,6 @@ var wireBasicSet = wire.NewSet(
 	grpcserver.ProvideHealthService,
 	grpcserver.ProvideReflectionService,
 	interceptors.ProvideAuthenticator,
-	kind.ProvideService, // The registry of known kinds
 	entityDB.ProvideEntityDB,
 	wire.Bind(new(sqlstash.EntityDB), new(*entityDB.EntityDB)),
 	sqlstash.ProvideSQLEntityServer,
