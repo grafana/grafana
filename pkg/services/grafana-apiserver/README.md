@@ -75,5 +75,5 @@ kubectl api-resources
 
 The Kubernetes compatible API can be accessed using existing Grafana AuthN at: [http://localhost:3000/apis](http://localhost:3000/apis).
 
-The equivolent openapi docs can be seen in [http://localhost:3000/swagger](http://localhost:3000/swagger), 
+The equivalent openapi docs can be seen in [http://localhost:3000/swagger](http://localhost:3000/swagger), 
 select the relevant API from the dropdown in the upper right.
