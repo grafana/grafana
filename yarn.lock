@@ -11120,26 +11120,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"apache-arrow@npm:^14.0.1":
-  version: 14.0.1
-  resolution: "apache-arrow@npm:14.0.1"
-  dependencies:
-    "@types/command-line-args": "npm:5.2.0"
-    "@types/command-line-usage": "npm:5.0.2"
-    "@types/node": "npm:20.3.0"
-    "@types/pad-left": "npm:2.1.1"
-    command-line-args: "npm:5.2.1"
-    command-line-usage: "npm:7.0.1"
-    flatbuffers: "npm:23.5.26"
-    json-bignum: "npm:^0.0.3"
-    pad-left: "npm:^2.1.0"
-    tslib: "npm:^2.5.3"
-  bin:
-    arrow2csv: bin/arrow2csv.js
-  checksum: 09c31f00354de413b3b6961a6cb2848fe744407477ed3fc1461c1e5fbb55183662a711d4755266a3599b2ca3531f2801b94be93ebde5f8c9cbf084f6bcf7de4e
-  languageName: node
-  linkType: hard
-
 "app-root-dir@npm:^1.0.2":
   version: 1.0.2
   resolution: "app-root-dir@npm:1.0.2"
@@ -18078,7 +18058,6 @@ __metadata:
     angular-route: "npm:1.8.3"
     angular-sanitize: "npm:1.8.3"
     ansicolor: "npm:1.1.100"
-    apache-arrow: "npm:^14.0.1"
     app: "link:./public/app"
     autoprefixer: "npm:10.4.14"
     babel-jest: "npm:29.7.0"
