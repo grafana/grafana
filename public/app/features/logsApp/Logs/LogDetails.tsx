@@ -14,6 +14,7 @@ import { createLogLineLinks, getAllFields } from 'app/features/logs/components/l
 import { TempoDatasource } from 'app/plugins/datasource/tempo/datasource';
 
 import { ExplainLogLine } from '../ExplainLogLine';
+import { FindSimilarLogLines } from '../FindSimilarLogLines';
 
 import { LogDetailsRow } from './LogDetailsRow';
 import { LogRowMenu } from './LogRowMenu';
@@ -162,6 +163,8 @@ export const LogDetails = (props: Props) => {
           styles={styles}
         />
         <ExplainLogLine logLine={row.entry} />
+        <FindSimilarLogLines logLine={row.entry} allLogLines={rows} />
+
         <table className={styles.logDetailsTable}>
           <tbody>
             {(labelsAvailable || fieldsAvailable) && (
