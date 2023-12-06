@@ -1,31 +1,38 @@
 // import { locationService } from '@grafana/runtime';
-import type { Step, RequiredAction, ClickAction, ChangeAction } from './types';
+import { TUTORIAL_EXIT_EVENT } from './constants';
+import type { Attribute, RequiredAction, ClickAction, ChangeAction, StringAttribute, RegExpAttribute } from './types';
 
-export function setupTutorialStep(step: Step, onComplete: () => void) {
-  waitForElement(step.target).then((element) => {
-    if (step.requiredActions) {
-      resolveRequiredActions(step.requiredActions).then(() => {
-        onComplete();
+export function waitForElement<T extends Element = Element>(selector: string, timeout = 500): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const resolver = (element: T) =>
+      hasElementStoppedAnimating(element).then(() => {
+        requestAnimationFrame(() => {
+          resolve(element);
+        });
       });
-    }
-  });
-}
 
-export function waitForElement<T extends Element = Element>(selector: string): Promise<T> {
-  return new Promise((resolve) => {
+    const element = document.querySelector<T>(selector);
+
+    if (element) {
+      resolver(element);
+      return;
+    }
+
     const interval = setInterval(() => {
       const element = document.querySelector<T>(selector);
 
       if (element) {
         clearInterval(interval);
-
-        hasElementStoppedAnimating(element).then(() => {
-          requestAnimationFrame(() => {
-            resolve(element);
-          });
-        });
+        clearTimeout(stopWaiting);
+        resolver(element);
       }
     }, 30);
+
+    const stopWaiting = setTimeout(() => {
+      clearInterval(interval);
+      clearTimeout(stopWaiting);
+      reject(null);
+    }, timeout);
   });
 }
 
@@ -52,7 +59,7 @@ function hasElementStoppedAnimating(element: Element) {
   });
 }
 
-async function resolveRequiredActions(requiredActions: RequiredAction[]) {
+export async function resolveRequiredActions(requiredActions: RequiredAction[]) {
   for (const action of requiredActions) {
     await setUpRequiredAction(action);
   }
@@ -76,41 +83,82 @@ function setUpRequiredAction(action: RequiredAction) {
 }
 
 function setupClickAction(targetElement: Element, onComplete: (value: unknown) => void) {
-  targetElement.addEventListener('click', onComplete, { once: true });
+  const removeOnComplete = () => {
+    targetElement.removeEventListener('click', handleOnComplete);
+  };
+  document.addEventListener(TUTORIAL_EXIT_EVENT, removeOnComplete);
+
+  const handleOnComplete = () => {
+    onComplete(true);
+    document.removeEventListener(TUTORIAL_EXIT_EVENT, removeOnComplete);
+  };
+
+  targetElement.addEventListener('click', handleOnComplete, { once: true });
 }
 
 function setupChangeAction(targetElement: Element, action: ChangeAction, onComplete: (value: unknown) => void) {
-  if (targetElement.getAttribute(action.attribute.name) === action.attribute.value) {
-    onComplete(action.attribute.value);
-    return;
-  }
-
   const observer = new MutationObserver((mutationsList, observer) => {
     for (let mutation of mutationsList) {
       const newValue = targetElement.getAttribute(action.attribute.name);
       const isCorrectAttribute = mutation.attributeName === action.attribute.name;
-      const isCorrectValue = newValue === action.attribute.value;
+      const isCorrectValue = checkCorrectValue(newValue, action.attribute);
 
       if (mutation.type === 'attributes' && isCorrectAttribute && isCorrectValue) {
         onComplete(newValue);
         observer.disconnect();
+        document.removeEventListener(TUTORIAL_EXIT_EVENT, observer.disconnect.bind(observer));
         return;
       }
     }
   });
 
   observer.observe(targetElement, { attributes: true, attributeFilter: [action.attribute.name] });
+  document.addEventListener(TUTORIAL_EXIT_EVENT, observer.disconnect.bind(observer));
 }
 
-function isClickAction(action: RequiredAction): action is ClickAction {
+export function isClickAction(action: RequiredAction): action is ClickAction {
   return action.action === 'click';
 }
 
-function isChangeAction(action: RequiredAction): action is ChangeAction {
+export function isChangeAction(action: RequiredAction): action is ChangeAction {
   return action.action === 'change';
 }
 
-export function getElementByXpath(path: string) {
-  const reactRoot = document.getElementById('reactRoot') as Element;
-  return document.evaluate(path, reactRoot, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+export function checkCorrectValue(valueProvided: string | null | undefined, attribute: Attribute) {
+  if (!valueProvided) {
+    return false;
+  }
+
+  if (isStringAttribute(attribute)) {
+    return valueProvided === attribute.value;
+  }
+
+  if (isRegexAttribute(attribute)) {
+    const regexString = '/prom/i';
+    const pattern = regexString.slice(1, regexString.lastIndexOf('/'));
+    const flags = regexString.slice(regexString.lastIndexOf('/') + 1);
+    const regex = new RegExp(pattern, flags);
+
+    return regex.test(valueProvided);
+  }
+
+  return false;
+}
+
+export function isRegexAttribute(attribute: Attribute): attribute is RegExpAttribute {
+  return attribute.hasOwnProperty('regEx');
+}
+
+export function isStringAttribute(attribute: Attribute): attribute is StringAttribute {
+  return attribute.hasOwnProperty('value');
+}
+
+// export function getElementByXpath(path: string) {
+//   const reactRoot = document.getElementById('reactRoot') as Element;
+//   return document.evaluate(path, reactRoot, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+// }
+
+export function isElementVisible(element: Element) {
+  const { width, height } = element.getBoundingClientRect();
+  return width > 0 && height > 0;
 }

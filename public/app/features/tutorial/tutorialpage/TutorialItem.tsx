@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import { Button } from '@grafana/ui';
-import { setCurrentTutorial, setCurrentStep } from 'app/features/tutorial/slice';
+import { setCurrentTutorial, nextStep } from 'app/features/tutorial/slice';
 import { Tutorial } from 'app/features/tutorial/types';
 import { useDispatch } from 'app/types';
 
@@ -13,10 +13,10 @@ export const TutorialItem = ({ tutorial }: TutorialItemProps) => {
   const dispatch = useDispatch();
   const { id, name, description } = tutorial;
 
-  const startTutorial = () => {
+  const startTutorial = useCallback(() => {
     dispatch(setCurrentTutorial(id));
-    dispatch(setCurrentStep(0));
-  };
+    dispatch(nextStep());
+  }, [dispatch, id]);
 
   return (
     <div>

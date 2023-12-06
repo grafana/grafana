@@ -1,6 +1,9 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
-import type { Tutorial } from './types';
+import { RootState } from 'app/store/configureStore';
+
+import { checkCorrectValue, isElementVisible, waitForElement } from './tutorialProvider.utils';
+import type { SkipCondition, Tutorial } from './types';
 
 type TutorialsState = {
   availableTutorials: Tutorial[];
@@ -14,8 +17,10 @@ const initialState: TutorialsState = {
   currentStep: null,
 };
 
+const STATE_PREFIX = 'tutorials';
+
 const tutorialsSlice = createSlice({
-  name: 'tutorials',
+  name: STATE_PREFIX,
   initialState,
   reducers: {
     removeTutorial(state, action) {
@@ -35,9 +40,101 @@ const tutorialsSlice = createSlice({
       state.currentStep = null;
     },
   },
+  extraReducers: (builder) => {
+    builder.addCase(nextStep.fulfilled, (state, action) => {
+      const currentTutorial = getTutorial(state.availableTutorials, state.currentTutorial);
+
+      if (action.payload < currentTutorial.steps.length) {
+        state.currentStep = action.payload;
+      }
+
+      if (action.payload >= currentTutorial.steps.length) {
+        state.currentTutorial = null;
+        state.currentStep = null;
+      }
+    });
+  },
 });
 
-export const { removeTutorial, addTutorial, setCurrentTutorial, setCurrentStep, resetCurrentTutorial } =
+export const nextStep = createAsyncThunk<number, void, { state: RootState }>(
+  `${STATE_PREFIX}/nextStep`,
+  async (_, thunkApi) => {
+    const { availableTutorials, currentStep, currentTutorial } = thunkApi.getState().tutorials;
+    const tutorial = getTutorial(availableTutorials, currentTutorial);
+    const nextStepIndex = currentStep === null ? 0 : currentStep + 1;
+    const realNextStepIndex = await checkSkipConditions(tutorial, nextStepIndex, 'forwards');
+
+    return realNextStepIndex;
+  }
+);
+
+export function getTutorial(availableTutorials: Tutorial[], tutorialId: Tutorial['id'] | null): Tutorial {
+  return availableTutorials.find((tutorial) => tutorial.id === tutorialId)!;
+}
+
+export function getStep(tutorial: Tutorial | undefined, step: number) {
+  return tutorial?.steps[step];
+}
+
+async function checkSkipConditions(tutorial: Tutorial, stepIndex: number, direction: 'forwards' | 'backwards') {
+  const steps = direction === 'forwards' ? tutorial.steps : [...tutorial.steps].reverse();
+  const step = steps[stepIndex];
+  const skipConditions = step?.skipConditions;
+
+  if (!skipConditions) {
+    return stepIndex;
+  }
+
+  const canSkipStep = await passedSkipConditions(skipConditions, stepIndex);
+  if (canSkipStep) {
+    return checkSkipConditions(tutorial, stepIndex + 1, direction);
+  }
+
+  return stepIndex;
+}
+
+async function passedSkipConditions(skipConditions: SkipCondition[], stepIndex: number) {
+  let canSkipStep = false;
+
+  if (skipConditions) {
+    canSkipStep = true;
+
+    for (const condition of skipConditions) {
+      const shouldSkipCondition = await shouldSkip(condition, stepIndex);
+      if (!shouldSkipCondition) {
+        canSkipStep = false;
+      }
+    }
+  }
+
+  return canSkipStep;
+}
+
+async function shouldSkip(condition: SkipCondition, stepIndex: number) {
+  const timeout = stepIndex === 0 ? 0 : undefined;
+
+  return waitForElement(condition.target, timeout)
+    .then((element) => {
+      if (condition.condition === 'visible') {
+        return isElementVisible(element);
+      }
+
+      if (condition.condition === 'match') {
+        const targetValue = element.getAttribute(condition.attribute.name);
+
+        if (!targetValue) {
+          return false;
+        }
+
+        return checkCorrectValue(targetValue, condition.attribute);
+      }
+
+      return false;
+    })
+    .catch(() => false);
+}
+
+export const { addTutorial, removeTutorial, resetCurrentTutorial, setCurrentStep, setCurrentTutorial } =
   tutorialsSlice.actions;
 
 export const tutorialsReducer = tutorialsSlice.reducer;

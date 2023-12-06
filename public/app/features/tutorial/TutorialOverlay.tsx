@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { usePopperTooltip } from 'react-popper-tooltip';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -7,8 +7,8 @@ import { useStyles2 } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
 import { TutorialTooltip } from './TutorialTooltip';
-import { setCurrentStep } from './slice';
-import { setupTutorialStep, waitForElement } from './tutorialProvider.utils';
+import { nextStep } from './slice';
+import { resolveRequiredActions, waitForElement } from './tutorialProvider.utils';
 import type { Step } from './types';
 
 type TutorialOverlayProps = {
@@ -24,6 +24,7 @@ export const TutorialOverlay = ({ currentStep, step }: TutorialOverlayProps) => 
   const styles = useStyles2(getStyles);
   const [spotlightStyles, setSpotlightStyles] = useState({});
   const [canInteract, setCanInteract] = useState(false);
+  const renderedFirstStep = useRef(false);
 
   const popper = usePopperTooltip({
     visible: showTooltip,
@@ -34,11 +35,8 @@ export const TutorialOverlay = ({ currentStep, step }: TutorialOverlayProps) => 
 
   const advance = useCallback(() => {
     setShowTooltip(false);
-
-    if (step) {
-      dispatch(setCurrentStep(currentStep + 1));
-    }
-  }, [currentStep, dispatch, step]);
+    dispatch(nextStep());
+  }, [dispatch]);
 
   useEffect(() => {
     if (!step) {
@@ -50,13 +48,15 @@ export const TutorialOverlay = ({ currentStep, step }: TutorialOverlayProps) => 
     let setStyles: any;
     let mouseMoveCallback: any;
     let scrollParent: Element | null;
+    let transitionend: (e: TransitionEvent) => void;
 
-    if (step) {
+    if (step && triggerRef) {
       waitForElement(step.target).then((element) => {
         setStyles = () =>
           new Promise((resolve) => {
+            setSpotlightStyles(getSpotlightStyles(element));
+
             requestAnimationFrame(() => {
-              setSpotlightStyles(getSpotlightStyles(element));
               resolve(true);
             });
           });
@@ -67,11 +67,29 @@ export const TutorialOverlay = ({ currentStep, step }: TutorialOverlayProps) => 
           }
         };
 
+        transitionend = (e) => {
+          // TODO: if there are multiple steps on the same element
+          // with no transition the tooltip won't show
+          if (e.propertyName === 'left' || e.propertyName === 'width') {
+            setShowTooltip(true);
+          }
+        };
+
+        triggerRef.addEventListener(`transitionend`, transitionend);
+
         document.addEventListener('mousemove', mouseMoveCallback);
         scrollParent = element.closest('.scrollbar-view');
         setStyles().then(() => {
-          setupTutorialStep(step, advance);
-          setShowTooltip(true);
+          if (step.requiredActions) {
+            resolveRequiredActions(step.requiredActions).then(() => {
+              advance();
+            });
+          }
+
+          if (!renderedFirstStep.current) {
+            setShowTooltip(true);
+            renderedFirstStep.current = true;
+          }
         });
         scrollParent?.addEventListener('scroll', setStyles);
       });
@@ -80,8 +98,9 @@ export const TutorialOverlay = ({ currentStep, step }: TutorialOverlayProps) => 
     return () => {
       scrollParent?.removeEventListener('scroll', setStyles);
       document.removeEventListener('mousemove', mouseMoveCallback);
+      triggerRef?.removeEventListener(`transitionend`, transitionend);
     };
-  }, [advance, step, triggerRef]);
+  }, [advance, currentStep, step, triggerRef]);
 
   return (
     <>
@@ -141,7 +160,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: `absolute`,
     boxSizing: `content-box`,
     borderRadius: theme.shape.radius.default,
-    transition: [`width`, `height`].map((prop) => `${prop} 0.2s ease-in-out`).join(', '),
+    transition: [`width`, `height`, `left`, `top`].map((prop) => `${prop} 0.2s ease-in-out`).join(', '),
     padding: spotlightOffset,
   }),
 });
