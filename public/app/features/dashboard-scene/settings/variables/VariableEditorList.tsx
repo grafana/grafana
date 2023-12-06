@@ -2,31 +2,30 @@ import { css } from '@emotion/css';
 import React, { ReactElement } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
-import { TypedVariableModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { SceneVariables, SceneVariableState } from '@grafana/scenes';
+import { SceneVariables } from '@grafana/scenes';
 import { useStyles2, Stack } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { hasOptions } from 'app/features/variables/guard';
-import { KeyedVariableIdentifier } from 'app/features/variables/state/types';
+
+import { VariableEditorListRow } from './VariableEditorListRow';
 
 export interface Props {
   variablesSet: SceneVariables;
-  variables: TypedVariableModel[];
   onAdd: () => void;
-  onChangeOrder: (identifier: KeyedVariableIdentifier, fromIndex: number, toIndex: number) => void;
-  onDuplicate: (identifier: KeyedVariableIdentifier) => void;
-  onDelete: (identifier: KeyedVariableIdentifier) => void;
+  onChangeOrder: (identifier: string, fromIndex: number, toIndex: number) => void;
+  onDuplicate: (identifier: string) => void;
+  onDelete: (identifier: string) => void;
+  onEdit: (identifier: string) => void;
 }
 
 export function VariableEditorList({
-  variables,
   variablesSet,
   onChangeOrder,
   onDelete,
   onDuplicate,
   onAdd,
+  onEdit,
 }: Props): ReactElement {
   const styles = useStyles2(getStyles);
   const onDragEnd = (result: DropResult) => {
@@ -35,17 +34,17 @@ export function VariableEditorList({
     }
     reportInteraction('Variable drag and drop');
     const identifier = JSON.parse(result.draggableId);
-    onChangeOrder(identifier, variables[result.source.index].index, variables[result.destination.index].index);
+    onChangeOrder(identifier, result.source.index, result.destination.index);
   };
 
-  const variablesSetState = variablesSet.state.variables;
+  const variablesSetState = variablesSet?.state?.variables ?? [];
 
   return (
     <div>
       <div>
-        {variables.length === 0 && <EmptyVariablesList onAdd={onAdd} />}
+        {variablesSetState.length === 0 && <EmptyVariablesList onAdd={onAdd} />}
 
-        {variablesSet && (
+        {variablesSetState && (
           <Stack direction="column" gap={4}>
             <div className={styles.tableContainer}>
               <table
@@ -64,51 +63,17 @@ export function VariableEditorList({
                   <Droppable droppableId="variables-list" direction="vertical">
                     {(provided) => (
                       <tbody ref={provided.innerRef} {...provided.droppableProps}>
-                        {variablesSetState.map((variable, index) => {
-                          const definition = getDefinition(variable.state);
+                        {variablesSetState.map((variableScene, index) => {
+                          const variable = variableScene.state;
                           return (
-                            <tr key={`${variable.state.name}-${index}`}>
-                              <td>{variable.state.name}</td>
-                              <td>{definition}</td>
-                            </tr>
-                          );
-                        })}
-                        {provided.placeholder}
-                      </tbody>
-                    )}
-                  </Droppable>
-                </DragDropContext>
-              </table>
-            </div>
-          </Stack>
-        )}
-        {/** Test Using old variable format witouth VariableEditorListRow -- triggered some error regarding identifier */}
-        {variables.length > 0 && (
-          <Stack direction="column" gap={4}>
-            <div className={styles.tableContainer}>
-              <table
-                className="filter-table filter-table--hover"
-                aria-label={selectors.pages.Dashboard.Settings.Variables.List.table}
-                role="grid"
-              >
-                <thead>
-                  <tr>
-                    <th>Variable</th>
-                    <th>Definition</th>
-                    <th colSpan={5} />
-                  </tr>
-                </thead>
-                <DragDropContext onDragEnd={onDragEnd}>
-                  <Droppable droppableId="variables-list" direction="vertical">
-                    {(provided) => (
-                      <tbody ref={provided.innerRef} {...provided.droppableProps}>
-                        {variables.map((variable, index) => {
-                          const definition = getDefinition(variable);
-                          return (
-                            <tr key={`${variable.name}-${index}`}>
-                              <td>{variable.name}</td>
-                              <td>{definition}</td>
-                            </tr>
+                            <VariableEditorListRow
+                              index={index}
+                              key={`${variable.name}-${index}`}
+                              variable={variable}
+                              onDelete={onDelete}
+                              onDuplicate={onDuplicate}
+                              onEdit={onEdit}
+                            />
                           );
                         })}
                         {provided.placeholder}
@@ -152,21 +117,6 @@ function EmptyVariablesList({ onAdd }: { onAdd: () => void }): ReactElement {
       />
     </div>
   );
-}
-
-function getDefinition(model: SceneVariableState): string {
-  let definition = '';
-  if (model.type === 'query') {
-    if (model.definition) {
-      definition = model.definition;
-    } else if (typeof model.query === 'string') {
-      definition = model.query;
-    }
-  } else if (hasOptions(model)) {
-    definition = model.query;
-  }
-
-  return definition;
 }
 
 const getStyles = () => ({

@@ -21,20 +21,53 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     const dashboard = getDashboardSceneFor(model);
     const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
     // get variables from dashboard state
+    const variablesSet =
+      dashboard.useState().$variables ||
+      new SceneVariableSet({
+        variables: [],
+      });
 
-    const variablesSet = dashboard.useState().$variables;
-    let variables: VariableModel[] = [];
+    const onDelete = (identifier: string) => {
+      return 'not implemented';
+    };
 
-    if (variablesSet instanceof SceneVariableSet) {
-      variables = sceneVariablesSetToVariables(variablesSet);
-    }
+    const onDuplicated = (identifier: string) => {
+      return 'not implemented';
+    };
 
-    console.log('Variables scenes', variables);
+    const onOrderChanged = (identifier: string, fromIndex: number, toIndex: number) => {
+      const variablesSetState = variablesSet?.state.variables;
+      if (!variablesSetState) {
+        return;
+      }
+      // in the array of variables change the order based on the identifier
+      const getVariableIndex = (identifier: string) => {
+        return variablesSetState.findIndex((variable) => variable.state.name === identifier);
+      };
+
+      const fromVariableIndex = getVariableIndex(identifier);
+      const varEntries = variablesSetState.splice(fromVariableIndex, 1);
+      variablesSetState.splice(toIndex, 0, varEntries[0]);
+
+      // TODO: how do we update the state in the scenes model to the backend?
+      console.log('variablesSetState', variablesSet);
+    };
+
+    const onEdit = (identifier: string) => {
+      return 'not implemented';
+    };
+
     return (
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
         <NavToolbarActions dashboard={dashboard} />
-        <VariableEditorList variables={variables} variablesSet={variablesSet} />
-        <div>variables todo</div>
+        <VariableEditorList
+          variablesSet={variablesSet}
+          onDelete={onDelete}
+          onDuplicate={onDuplicated}
+          onChangeOrder={onOrderChanged}
+          onAdd={() => {}}
+          onEdit={onEdit}
+        />
       </Page>
     );
   };
