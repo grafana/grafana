@@ -103,7 +103,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       right: 0,
       bottom: 0,
       display: 'flex',
-      paddingTop: theme.spacing(3),
+      paddingTop: theme.spacing(2),
     }),
   };
 };
