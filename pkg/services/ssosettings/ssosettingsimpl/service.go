@@ -10,6 +10,7 @@ import (
 	sm "github.com/grafana/grafana/pkg/login/social/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/api"
 	"github.com/grafana/grafana/pkg/services/ssosettings/database"
@@ -21,17 +22,19 @@ import (
 var _ ssosettings.Service = (*SSOSettingsService)(nil)
 
 type SSOSettingsService struct {
-	log          log.Logger
-	cfg          *setting.Cfg
-	store        ssosettings.Store
-	ac           ac.AccessControl
-	fbStrategies []ssosettings.FallbackStrategy
+	log     log.Logger
+	cfg     *setting.Cfg
+	store   ssosettings.Store
+	ac      ac.AccessControl
+	secrets secrets.Service
 
-	reloadables map[string]ssosettings.Reloadable
+	fbStrategies []ssosettings.FallbackStrategy
+	reloadables  map[string]ssosettings.Reloadable
 }
 
 func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
-	routeRegister routing.RouteRegister, features *featuremgmt.FeatureManager) *SSOSettingsService {
+	routeRegister routing.RouteRegister, features *featuremgmt.FeatureManager,
+	secrets secrets.Service) *SSOSettingsService {
 	strategies := []ssosettings.FallbackStrategy{
 		strategies.NewOAuthStrategy(cfg),
 		// register other strategies here, for example SAML
@@ -45,6 +48,8 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 		store:        store,
 		ac:           ac,
 		fbStrategies: strategies,
+		secrets:      secrets,
+		reloadables:  make(map[string]ssosettings.Reloadable),
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
@@ -87,7 +92,6 @@ func (s *SSOSettingsService) List(ctx context.Context) ([]*models.SSOSettings, e
 	}
 
 	for _, provider := range ssosettings.AllOAuthProviders {
-
 		settings := getSettingsByProvider(provider, storedSettings)
 		if len(settings) == 0 {
 			// If there is no data in the DB then we need to load the settings using the fallback strategy
@@ -105,23 +109,22 @@ func (s *SSOSettingsService) List(ctx context.Context) ([]*models.SSOSettings, e
 }
 
 func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSettings) error {
-	// TODO: validation (configurable provider? Contains the required fields? etc)
+	// TODO: also check whether the provider is configurable
+	// Get the connector for the provider (from the reloadables) and call Validate
 
-	// TODO: also check whether the provider is configurable using the
-	connector, ok := s.reloadables[settings.Provider]
-	if !ok {
-		s.log.Warn("No validation handler found for provider", "provider", settings.Provider)
+	if isOAuthProvider(settings.Provider) {
+		encryptedClientSecret, err := s.secrets.Encrypt(ctx, []byte(settings.OAuthSettings.ClientSecret), secrets.WithoutScope())
+		if err != nil {
+			return err
+		}
+		settings.OAuthSettings.ClientSecret = string(encryptedClientSecret)
 	}
 
-	err := connector.Validate(ctx, settings)
+	err := s.store.Upsert(ctx, settings)
 	if err != nil {
 		return err
 	}
 
-	err = s.store.Upsert(ctx, settings)
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -188,4 +191,14 @@ func (s *SSOSettingsService) getFallBackstrategyFor(provider string) (ssosetting
 		}
 	}
 	return nil, false
+}
+
+func isOAuthProvider(provider string) bool {
+	for _, oAuthProvider := range ssosettings.AllOAuthProviders {
+		if oAuthProvider == provider {
+			return true
+		}
+	}
+
+	return false
 }
