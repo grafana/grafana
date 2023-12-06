@@ -312,7 +312,7 @@ func TestGetPublicDashboardForView(t *testing.T) {
 
 	// #nosec G101 -- This is dummy/test token
 	accessToken := "c54b1c4dd2b143a1a7a43005264d256d"
-	d := &dashboards.Dashboard{UID: "mydashboard", OrgID: 0, Data: data, Slug: "dashboardSlug", Created: now, Updated: now, Version: 1}
+	d := &dashboards.Dashboard{UID: "mydashboard", OrgID: 0, Data: data, Slug: "dashboardSlug", Created: now, Updated: now, Version: 1, FolderUID: "myFolder"}
 
 	testCases := []struct {
 		Name        string
