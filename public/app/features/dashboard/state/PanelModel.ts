@@ -630,9 +630,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   }
 
   setTransformations(transformations: DataTransformerConfig[]) {
-    console.log('==============setTransformations===========');
     this.transformations = transformations;
-    console.log(this.transformations);
     this.resendLastResult();
     this.configRev++;
     this.events.publish(new PanelTransformationsChangedEvent());

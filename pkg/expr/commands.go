@@ -310,19 +310,35 @@ func (gr *ResampleCommand) Execute(ctx context.Context, now time.Time, vars math
 
 // PRQLCommand is an expression to run PRQL over results
 type PRQLCommand struct {
-	RawQuery   string
-	VarToQuery string
-	TimeRange  TimeRange
-	refID      string // The output refid?
+	rawPRQL     string
+	theSQL      string // converted to SQL
+	varsToQuery []string
+	timeRange   TimeRange
+	refID       string // The output refid?
 }
 
 // NewPRQLCommand creates a new PRQLCMD.
-func NewPRQLCommand(refID, varToQuery, rawQuery string, tr TimeRange) (*PRQLCommand, error) {
+func NewPRQLCommand(refID, rawPRQL string, tr TimeRange) (*PRQLCommand, error) {
+	fmt.Printf("PRQL: %s\n\n", rawPRQL)
+	sql, err := prql.Convert(rawPRQL, "")
+	if err != nil {
+		fmt.Printf("SQL ERROR: %v\n", err)
+		return nil, err
+	}
+
+	tables, err := prql.Tables(rawPRQL)
+	if err != nil {
+		fmt.Printf("Tables ERROR: %v (SQL:%s)\n", err, sql)
+		tables = []string{"A"}
+		//		return nil, err
+	}
+
 	return &PRQLCommand{
-		RawQuery:   rawQuery,
-		VarToQuery: varToQuery,
-		TimeRange:  tr,
-		refID:      refID,
+		rawPRQL:     rawPRQL,
+		theSQL:      sql,
+		varsToQuery: tables,
+		timeRange:   tr,
+		refID:       refID,
 	}, nil
 }
 
@@ -332,50 +348,22 @@ func UnmarshalPRQLCommand(rn *rawNode) (*PRQLCommand, error) {
 		return nil, fmt.Errorf("time range must be specified for refID %s", rn.RefID)
 	}
 
-	// TODO: replace with the refIds from SELECT and JOIN
-	rawVar, ok := rn.Query["expression"]
+	expressionRaw, ok := rn.Query["expression"]
 	if !ok {
-		return nil, errors.New("no expression ID to resample. must be a reference to an existing query or expression")
+		return nil, errors.New("no expression in the query")
 	}
-	varToQuery, ok := rawVar.(string)
+	expression, ok := expressionRaw.(string)
 	if !ok {
-		return nil, fmt.Errorf("expected prql input variable to be type string, but got type %T", rawVar)
-	}
-	varToQuery = strings.TrimPrefix(varToQuery, "$")
-
-	prqlQuerySettingsAny, ok := rn.Query["prql"] //
-	if !ok {
-		return nil, errors.New("no prql query specified")
-	}
-	prqlQuerySettings, ok := prqlQuerySettingsAny.(map[string]any)
-	if !ok {
-		return nil, errors.New("no prql node in query options")
-	}
-	rawQuery, ok := prqlQuerySettings["rawQuery"].(string)
-	fmt.Printf("QUERY (%s): %+v\n", rawQuery, rn.Query)
-	if !ok {
-		return nil, fmt.Errorf("expected THE PRQL input to be type string, but got type %T", rawQuery)
+		return nil, fmt.Errorf("expected prql expression to be type string, but got type %T", expressionRaw)
 	}
 
-	sql, err := prql.Convert(rawQuery, "")
-	if err != nil {
-		return nil, err
-	}
-
-	tables, err := prql.Tables(sql)
-	if err != nil {
-		return nil, err
-	}
-
-	vars := strings.Join(tables, ",")
-
-	return NewPRQLCommand(rn.RefID, vars, rawQuery, rn.TimeRange)
+	return NewPRQLCommand(rn.RefID, expression, rn.TimeRange)
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies
 // to execute the command and allows the command to fulfill the Command interface.
 func (gr *PRQLCommand) NeedsVars() []string {
-	return strings.Split(gr.VarToQuery, ",")
+	return gr.varsToQuery
 }
 
 // Execute runs the command and returns the results or an error if the command
@@ -385,8 +373,7 @@ func (gr *PRQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.
 	defer span.End()
 
 	// insert all referenced results into duckdb. TODO: multi-thread this?
-	refs := strings.Split(gr.VarToQuery, ",")
-	for _, ref := range refs {
+	for _, ref := range gr.varsToQuery {
 		results := vars[ref]
 		frames := results.Values.AsDataFrames(ref)
 		duckdb := prql.DuckDB{Name: "db"}
@@ -396,19 +383,16 @@ func (gr *PRQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.
 		}
 	}
 
-	frames, err := prql.Query("db", gr.RawQuery)
+	frames, err := prql.Query("db", gr.theSQL)
 	if err != nil {
 		return mathexp.Results{}, err
 	}
 
 	var values mathexp.Values
 	for _, f := range frames {
-		v := mathexp.Scalar{Frame: f}
+		v := mathexp.Scalar{Frame: f} // TODO?? is there a better type?
 		values = append(values, v)
 	}
-
-	// df := data.NewFrame("TODO")
-	// v := mathexp.Scalar{Frame: df} // ??? what type?
 
 	return mathexp.Results{
 		Values: values,
