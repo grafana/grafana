@@ -37,9 +37,8 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
       body={
         <>
           <Text element="p">
-            <Trans i18nKey="browse-dashboards.action.delete-modal-text">
-              This action will delete the following content:
-            </Trans>
+            This action will move the following items to the Trash and will stay there for 30 days before permanent
+            deletion.
           </Text>
           <DescendantCount selectedItems={selectedItems} />
           <Space v={2} />
@@ -59,7 +58,6 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
           ) : null}
         </>
       }
-      confirmationText="Delete"
       confirmText={
         isDeleting
           ? t('browse-dashboards.action.deleting', 'Deleting...')
