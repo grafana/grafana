@@ -19,12 +19,12 @@ weight: 800
 
 # Configure Azure AD OAuth2 authentication
 
-The Azure AD authentication allows you to use an Azure Active Directory tenant as an identity provider for Grafana. You can use Azure AD Application Roles to assign users and groups to Grafana roles from the Azure Portal. This topic has the following sections:
+The Azure AD authentication allows you to use an Azure Active Directory tenant as an identity provider for Grafana. You can use Azure AD application roles to assign users and groups to Grafana roles from the Azure Portal. This topic has the following sections:
 
 - [Configure Azure AD OAuth2 authentication](#configure-azure-ad-oauth2-authentication)
   - [Create the Azure AD application](#create-the-azure-ad-application)
-    - [Configure application roles for Grafana in the Azure Portal](#configure-application-roles-for-grafana-in-the-azure-portal)
-    - [Configure Application roles for Grafana in the manifest file](#configure-application-roles-for-grafana-in-the-manifest-file)
+      - [Configure application roles for Grafana in the Azure Portal](#configure-application-roles-for-grafana-in-the-azure-portal)
+      - [Configure application roles for Grafana in the manifest file](#configure-application-roles-for-grafana-in-the-manifest-file)
     - [Assign server administrator privileges](#assign-server-administrator-privileges)
   - [Enable Azure AD OAuth in Grafana](#enable-azure-ad-oauth-in-grafana)
     - [Configure refresh token](#configure-refresh-token)
@@ -100,7 +100,7 @@ This section describes setting up basic application roles for Grafana within the
 
    1. Click **Apply**.
 
-#### Configure Application roles for Grafana in the manifest file
+#### Configure application roles for Grafana in the manifest file
 
 If you prefer to configure the application roles for Grafana in the manifest file, complete the following steps:
 
@@ -157,7 +157,7 @@ Every role requires a [Universally Unique Identifier](https://en.wikipedia.org/w
    		],
    ```
 
-1. Click  **Save**.
+1. Click **Save**.
 
 ### Assign server administrator privileges
 
@@ -254,14 +254,13 @@ Complete the following step to find object IDs for a specific group on the Azure
 
 1. Go to **Azure Active Directory > Groups**.
 
-   If you want to only give access to members of the group `example` with an Object Id of `8bab1c86-8fba-33e5-2089-1d1c80ec267d`, then set the following:
-
-   ```
-   allowed_groups = 8bab1c86-8fba-33e5-2089-1d1c80ec267d
-   ```
-
 {{% admonition type="note" %}}
-You can find the Object Id of a group by clicking on the group and then clicking on **Properties**. The object ID is listed under **Object ID**.
+You can find the Object Id of a group by clicking on the group and then clicking on **Properties**. The object ID is listed under **Object ID**. If you want to only give access to members of the group `example` with an Object Id of `8bab1c86-8fba-33e5-2089-1d1c80ec267d`, then set the following:
+
+```
+  allowed_groups = 8bab1c86-8fba-33e5-2089-1d1c80ec267d
+```
+
 {{% admonition type="note" %}}
 
 1. You must enable adding the [group attribute](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims#configure-groups-optional-claims) to the tokens in your Azure AD App registration either [from the Azure Portal](#configure-group-membership-claims-on-the-azure-portal) or [from the manifest file](#configure-group-membership-claim-in-the-manifest-file).
