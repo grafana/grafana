@@ -24,7 +24,7 @@ dataConnectionsConsole,GA,@grafana/plugins-platform-backend,2022-06-01,false,fal
 topnav,deprecated,@grafana/grafana-frontend-platform,2022-06-20,false,false,false,false
 dockedMegaMenu,experimental,@grafana/grafana-frontend-platform,2023-09-18,false,false,false,true
 grpcServer,preview,@grafana/grafana-app-platform-squad,2022-09-27,false,false,false,false
-entityStore,experimental,@grafana/grafana-app-platform-squad,2022-12-01,true,false,false,false
+entityStore,experimental,@grafana/grafana-app-platform-squad,2022-12-01,false,false,false,false
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,2022-11-28,false,false,false,false
 redshiftAsyncQueryDataSupport,GA,@grafana/aws-datasources,2022-08-27,false,false,false,false
 athenaAsyncQueryDataSupport,GA,@grafana/aws-datasources,2022-08-27,false,false,false,true
