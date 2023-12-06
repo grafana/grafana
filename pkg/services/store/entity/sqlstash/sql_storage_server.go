@@ -976,6 +976,16 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		current.Version = s.snowflake.Generate().String()
 
 		values := map[string]any{
+			// below are only set in history table
+			"guid":       current.Guid,
+			"key":        current.Key,
+			"tenant_id":  grn.TenantID,
+			"group":      grn.ResourceGroup,
+			"kind":       grn.ResourceKind,
+			"uid":        grn.ResourceIdentifier,
+			"created_at": current.CreatedAt,
+			"created_by": current.CreatedBy,
+			// below are updated
 			"group_version": current.GroupVersion,
 			"folder":        current.Folder,
 			"slug":          current.Slug,
@@ -1012,6 +1022,17 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		}
 
 		// 2. update the main `entity` table
+
+		// remove values that are only set at insert
+		delete(values, "guid")
+		delete(values, "key")
+		delete(values, "tenant_id")
+		delete(values, "group")
+		delete(values, "kind")
+		delete(values, "uid")
+		delete(values, "created_at")
+		delete(values, "created_by")
+
 		query, args, err = s.dialect.UpdateQuery(
 			"entity",
 			values,
@@ -1318,7 +1339,7 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 
 	query, args := entityQuery.toQuery()
 
-	s.log.Info("searching", "query", query, "args", args)
+	s.log.Info("listing", "query", query, "args", args)
 
 	rows, err := s.sess.Query(ctx, query, args...)
 	if err != nil {
