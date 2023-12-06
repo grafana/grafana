@@ -425,7 +425,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       updateTimeRange(timeRange.raw);
     };
     const renderHeaderExtras = () => (
-      <div style={{ position: 'absolute', top: '13px' }}>
+      <div style={{ position: 'absolute', top: '8px' }}>
         <TimeRangeInput value={range ?? getDefaultLogsTimeRange()} onChange={onChangeTime} />
       </div>
     );
