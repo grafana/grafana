@@ -25,7 +25,7 @@ export function TopNavBarMenuProgressBar({
   }%`;
 
   return (
-    <div>
+    <a href="/profile">
       <div className={styles.progressBarHeader}>
         Level: <span>{currentLevel}</span>
       </div>
@@ -37,7 +37,7 @@ export function TopNavBarMenuProgressBar({
           ))}
         </div>
       </div>
-    </div>
+    </a>
   );
 }
 
