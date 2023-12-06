@@ -1,28 +1,44 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
+import { achievementsByName } from 'app/features/achievements/AchievementsList';
+import { getUserLevel } from 'app/features/achievements/AchievementsService';
+import { useAchievements } from 'app/features/achievements/useAchievements';
+import { getProgress } from 'app/features/achievements/utils';
 
-interface Props {
-  levels: string[];
-  currentLevel: string;
-  totalLevelAchievements: number;
-  currentLevelAchievement: number;
-}
-
-export function TopNavBarMenuProgressBar({
-  levels,
-  currentLevel,
-  totalLevelAchievements,
-  currentLevelAchievement,
-}: Props) {
+export function TopNavBarMenuProgressBar() {
   const styles = useStyles2(getStyles);
+  const [level, setLevel] = useState(0);
+  const [currentLevel, setCurrentLevel] = useState(achievementsByName[0]);
+  const [levelProgress, setLevelProgress] = useState(0);
+
+  getUserLevel().then((level) => {
+    setLevel(level);
+  });
+  const { achievementsList } = useAchievements();
+  const levels = achievementsByName;
 
   const progressWidth = `${
-    (levels.indexOf(currentLevel) / levels.length) * 100 +
-    ((100 / levels.length) * currentLevelAchievement) / totalLevelAchievements
+    (levels.indexOf(currentLevel) / levels.length) * 100 + ((100 / levels.length) * levelProgress) / 100
   }%`;
+
+  useEffect(() => {
+    const levelValidated = level && level > 0 ? level : 0;
+    setCurrentLevel(achievementsByName[levelValidated]);
+
+    const achievementsListByLevel =
+      achievementsList && achievementsList.filter((achievement) => achievement.level === levelValidated + 1);
+
+    const progressByLevel = achievementsListByLevel
+      ? getProgress(
+          achievementsListByLevel?.filter((achievement) => achievement.completed).length!,
+          achievementsListByLevel.length
+        )
+      : 0;
+    setLevelProgress(progressByLevel);
+  }, [level, achievementsList]);
 
   return (
     <a href="/profile">

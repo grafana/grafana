@@ -21,12 +21,6 @@ export function TopNavBarMenu({ node: nodePlain }: TopNavBarMenuProps) {
     return null;
   }
 
-  // stub achievement data
-  const levels = ['Novice', 'Beginner', 'Experienced', 'Expert', 'Boss'];
-  const currentLevel = 'Expert';
-  const totalLevelAchievements = 10;
-  const currentLevelAchievement = 6;
-
   return (
     <Menu
       header={
@@ -37,12 +31,7 @@ export function TopNavBarMenu({ node: nodePlain }: TopNavBarMenuProps) {
           <div>{node.text}</div>
           {node.subTitle && <div className={styles.subTitle}>{node.subTitle}</div>}
 
-          <TopNavBarMenuProgressBar
-            levels={levels}
-            currentLevel={currentLevel}
-            totalLevelAchievements={totalLevelAchievements}
-            currentLevelAchievement={currentLevelAchievement}
-          />
+          <TopNavBarMenuProgressBar />
         </div>
       }
     >

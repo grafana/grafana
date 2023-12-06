@@ -1,4 +1,5 @@
 export enum AchievementLevel {
+  Egg = 0,
   Novice = 1,
   Beginner = 2,
   Experienced = 3,
