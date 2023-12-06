@@ -120,6 +120,7 @@ describe('sceneVariablesSetToVariables', () => {
         "type": "fake-std",
         "uid": "fake-std",
       },
+      "definition": undefined,
       "description": "test-desc",
       "includeAll": true,
       "label": "test-label",
