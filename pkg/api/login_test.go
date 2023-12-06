@@ -53,6 +53,11 @@ func fakeSetIndexViewData(t *testing.T) {
 			User:     &dtos.CurrentUser{},
 			Settings: &dtos.FrontendSettingsDTO{},
 			NavTree:  &navtree.NavTreeRoot{},
+			Assets: &dtos.EntryPointAssets{
+				JSFiles:  []dtos.EntryPointAsset{},
+				CSSDark:  "dark.css",
+				CSSLight: "light.css",
+			},
 		}
 		return data, nil
 	}
@@ -64,7 +69,7 @@ func fakeViewIndex(t *testing.T) {
 		getViewIndex = origGetViewIndex
 	})
 	getViewIndex = func() string {
-		return "index-template"
+		return "index"
 	}
 }
 

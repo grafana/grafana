@@ -52,11 +52,13 @@ var (
 			"User is not a member of one of the required organizations. Please contact identity provider administrator."))
 )
 
-func NewGitHubProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGithub, error) {
-	teamIds, err := mustInts(util.SplitString(info.Extra[teamIdsKey]))
+func NewGitHubProvider(settings map[string]any, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGithub, error) {
+	info, err := CreateOAuthInfoFromKeyValues(settings)
 	if err != nil {
 		return nil, err
 	}
+
+	teamIds := mustInts(util.SplitString(info.Extra[teamIdsKey]))
 
 	config := createOAuthConfig(info, cfg, constants.GitHubProviderName)
 	provider := &SocialGithub{
@@ -333,14 +335,15 @@ func convertToGroupList(t []GithubTeam) []string {
 	return groups
 }
 
-func mustInts(s []string) ([]int, error) {
+func mustInts(s []string) []int {
 	result := make([]int, 0, len(s))
 	for _, v := range s {
 		num, err := strconv.Atoi(v)
 		if err != nil {
-			return nil, err
+			// TODO: add log here
+			return []int{}
 		}
 		result = append(result, num)
 	}
-	return result, nil
+	return result
 }
