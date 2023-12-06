@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"math/rand"
 	"os"
@@ -13,7 +14,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
@@ -185,13 +185,13 @@ func TestIntegrationPostgres(t *testing.T) {
 
 	x := InitPostgresTestDB(t)
 
-	origXormEngine := sqleng.NewXormEngine
+	origDB := sqleng.NewDB
 	origInterpolate := sqleng.Interpolate
 	t.Cleanup(func() {
-		sqleng.NewXormEngine = origXormEngine
+		sqleng.NewDB = origDB
 		sqleng.Interpolate = origInterpolate
 	})
-	sqleng.NewXormEngine = func(d, c string) (*xorm.Engine, error) {
+	sqleng.NewDB = func(d, c string) (*sql.DB, error) {
 		return x, nil
 	}
 	sqleng.Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) (string, error) {
@@ -229,9 +229,7 @@ func TestIntegrationPostgres(t *testing.T) {
 
 	require.NoError(t, err)
 
-	sess := x.NewSession()
-	t.Cleanup(sess.Close)
-	db := sess.DB()
+	db := x
 	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 
 	t.Run("Given a table with different native data types", func(t *testing.T) {
@@ -615,17 +613,17 @@ func TestIntegrationPostgres(t *testing.T) {
 	t.Run("Given a table with metrics having multiple values and measurements", func(t *testing.T) {
 		type metric_values struct {
 			Time                time.Time
-			TimeInt64           int64    `xorm:"bigint 'timeInt64' not null"`
-			TimeInt64Nullable   *int64   `xorm:"bigint 'timeInt64Nullable' null"`
-			TimeFloat64         float64  `xorm:"double 'timeFloat64' not null"`
-			TimeFloat64Nullable *float64 `xorm:"double 'timeFloat64Nullable' null"`
-			TimeInt32           int32    `xorm:"int(11) 'timeInt32' not null"`
-			TimeInt32Nullable   *int32   `xorm:"int(11) 'timeInt32Nullable' null"`
-			TimeFloat32         float32  `xorm:"double 'timeFloat32' not null"`
-			TimeFloat32Nullable *float32 `xorm:"double 'timeFloat32Nullable' null"`
+			TimeInt64           int64
+			TimeInt64Nullable   *int64
+			TimeFloat64         float64
+			TimeFloat64Nullable *float64
+			TimeInt32           int32
+			TimeInt32Nullable   *int32
+			TimeFloat32         float32
+			TimeFloat32Nullable *float32
 			Measurement         string
-			ValueOne            int64 `xorm:"integer 'valueOne'"`
-			ValueTwo            int64 `xorm:"integer 'valueTwo'"`
+			ValueOne            int64
+			ValueTwo            int64
 		}
 
 		_, err := db.Exec("DROP TABLE IF EXISTS metric_values")
@@ -1392,16 +1390,10 @@ func TestIntegrationPostgres(t *testing.T) {
 	})
 }
 
-func InitPostgresTestDB(t *testing.T) *xorm.Engine {
+func InitPostgresTestDB(t *testing.T) *sql.DB {
 	connStr := postgresTestDBConnString()
-	x, err := xorm.NewEngine("postgres", connStr)
+	x, err := sql.Open("postgres", connStr)
 	require.NoError(t, err, "Failed to init postgres DB")
-
-	x.DatabaseTZ = time.UTC
-	x.TZLocation = time.UTC
-
-	// x.ShowSQL()
-
 	return x
 }
 

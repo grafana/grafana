@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -41,6 +43,7 @@ type Service struct {
 
 	mutex    sync.RWMutex
 	registry map[string]folder.RegistryService
+	metrics  *foldersMetrics
 }
 
 func ProvideService(
@@ -51,6 +54,7 @@ func ProvideService(
 	folderStore folder.FolderStore,
 	db db.DB, // DB for the (new) nested folder store
 	features featuremgmt.FeatureToggles,
+	r prometheus.Registerer,
 ) folder.Service {
 	store := ProvideStore(db, cfg, features)
 	srv := &Service{
@@ -64,6 +68,7 @@ func ProvideService(
 		bus:                  bus,
 		db:                   db,
 		registry:             make(map[string]folder.RegistryService),
+		metrics:              newFoldersMetrics(r),
 	}
 	srv.DBMigration(db)
 
@@ -113,6 +118,10 @@ func (s *Service) DBMigration(db db.DB) {
 func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
 	if cmd.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
+	}
+
+	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && cmd.UID != nil && *cmd.UID == folder.SharedWithMeFolderUID {
+		return folder.SharedWithMeFolder.WithURL(), nil
 	}
 
 	var dashFolder *folder.Folder
@@ -185,6 +194,10 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
+	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && cmd.UID == folder.SharedWithMeFolderUID {
+		return s.GetSharedWithMe(ctx, cmd)
+	}
+
 	if cmd.UID != "" {
 		g, err := guardian.NewByUID(ctx, cmd.UID, cmd.OrgID, cmd.SignedInUser)
 		if err != nil {
@@ -249,31 +262,40 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		}
 	}
 
+	if len(filtered) < len(children) {
+		// add "shared with me" folder
+		filtered = append(filtered, &folder.SharedWithMeFolder)
+	}
+
 	return filtered, nil
 }
 
 // GetSharedWithMe returns folders available to user, which cannot be accessed from the root folders
 func (s *Service) GetSharedWithMe(ctx context.Context, cmd *folder.GetChildrenQuery) ([]*folder.Folder, error) {
+	start := time.Now()
 	availableNonRootFolders, err := s.getAvailableNonRootFolders(ctx, cmd.OrgID, cmd.SignedInUser)
 	if err != nil {
+		s.metrics.sharedWithMeFetchFoldersRequestsDuration.WithLabelValues("failure").Observe(time.Since(start).Seconds())
 		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders to which the user has explicit access: %w", err)
 	}
 	rootFolders, err := s.GetChildren(ctx, &folder.GetChildrenQuery{UID: "", OrgID: cmd.OrgID, SignedInUser: cmd.SignedInUser})
 	if err != nil {
+		s.metrics.sharedWithMeFetchFoldersRequestsDuration.WithLabelValues("failure").Observe(time.Since(start).Seconds())
 		return nil, folder.ErrInternal.Errorf("failed to fetch root folders to which the user has access: %w", err)
 	}
 	availableNonRootFolders = s.deduplicateAvailableFolders(ctx, availableNonRootFolders, rootFolders)
+	s.metrics.sharedWithMeFetchFoldersRequestsDuration.WithLabelValues("success").Observe(time.Since(start).Seconds())
 	return availableNonRootFolders, nil
 }
 
 func (s *Service) getAvailableNonRootFolders(ctx context.Context, orgID int64, user identity.Requester) ([]*folder.Folder, error) {
 	permissions := user.GetPermissions()
-	folderPermissions := permissions["folders:read"]
-	folderPermissions = append(folderPermissions, permissions["dashboards:read"]...)
+	folderPermissions := permissions[dashboards.ActionFoldersRead]
+	folderPermissions = append(folderPermissions, permissions[dashboards.ActionDashboardsRead]...)
 	nonRootFolders := make([]*folder.Folder, 0)
 	folderUids := make([]string, 0)
 	for _, p := range folderPermissions {
-		if folderUid, found := strings.CutPrefix(p, "folders:uid:"); found {
+		if folderUid, found := strings.CutPrefix(p, dashboards.ScopeFoldersPrefix); found {
 			if !slices.Contains(folderUids, folderUid) {
 				folderUids = append(folderUids, folderUid)
 			}
@@ -335,6 +357,9 @@ func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*
 	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		return nil, nil
 	}
+	if q.UID == folder.SharedWithMeFolderUID {
+		return []*folder.Folder{&folder.SharedWithMeFolder}, nil
+	}
 	return s.store.GetParents(ctx, q)
 }
 
@@ -375,6 +400,10 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 			return nil, dashboards.ErrFolderAccessDenied
 		}
 		dashFolder.FolderUID = cmd.ParentUID
+	}
+
+	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && cmd.UID == folder.SharedWithMeFolderUID {
+		return nil, folder.ErrBadRequest.Errorf("cannot create folder with UID %s", folder.SharedWithMeFolderUID)
 	}
 
 	trimmedUID := strings.TrimSpace(cmd.UID)
