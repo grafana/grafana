@@ -4,11 +4,13 @@ import { FormState, UseFormRegister } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { reportInteraction } from '@grafana/runtime';
 import { Button, Form, Spinner, useStyles2 } from '@grafana/ui/src';
+import { registerAchievementCompleted } from 'app/features/achievements/AchievementsService';
+import { AchievementId } from 'app/features/achievements/types';
 import { useCreatePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { contextSrv } from '../../../../../../core/services/context_srv';
 import { AccessControlAction, useSelector } from '../../../../../../types';
@@ -46,7 +48,8 @@ export const CreatePublicDashboardBase = ({
   const [createPublicDashboard, { isLoading, isError }] = useCreatePublicDashboardMutation();
   const onCreate = () => {
     createPublicDashboard({ dashboard, payload: { isEnabled: true } });
-    reportInteraction('dashboards_sharing_public_generate_url_clicked', {});
+    DashboardInteractions.generatePublicDashboardUrlClicked({});
+    registerAchievementCompleted(AchievementId.MakePublicDashboard);
   };
 
   const disableInputs = !hasWritePermissions || isLoading || isError || hasError;

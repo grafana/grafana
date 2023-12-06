@@ -237,7 +237,7 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserC
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update user", err)
 	}
 
-	return response.Success("User updated")
+	return response.Success("")
 }
 
 func (hs *HTTPServer) isExternalUser(ctx context.Context, userID int64) (bool, error) {

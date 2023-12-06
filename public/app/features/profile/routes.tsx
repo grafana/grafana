@@ -29,6 +29,12 @@ const profileRoutes: RouteDescriptor[] = [
       () => import(/* webpackChunkName: "NotificationsPage"*/ 'app/features/notifications/NotificationsPage')
     ),
   },
+  {
+    path: '/profile/achievements',
+    component: SafeDynamicImport(
+      () => import(/* webpackChunkName: "AchievementsPage"*/ 'app/features/achievements/AchievementsPage')
+    ),
+  },
 ];
 
 export function getProfileRoutes(cfg = config): RouteDescriptor[] {

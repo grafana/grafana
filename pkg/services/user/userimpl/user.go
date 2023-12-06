@@ -141,6 +141,8 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		Updated:          timeNow(),
 		LastSeenAt:       timeNow().AddDate(-10, 0, 0),
 		IsServiceAccount: cmd.IsServiceAccount,
+		Level:            cmd.Level,
+		Achievements:     "",
 	}
 
 	salt, err := util.GetRandomString(10)
@@ -203,6 +205,7 @@ func (s *Service) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error
 }
 
 func (s *Service) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*user.User, error) {
+	// Get user based on query ID
 	user, err := s.store.GetByID(ctx, query.ID)
 	if err != nil {
 		return nil, err

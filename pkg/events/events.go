@@ -40,11 +40,13 @@ type SignUpCompleted struct {
 }
 
 type UserUpdated struct {
-	Timestamp time.Time `json:"timestamp"`
-	Id        int64     `json:"id"`
-	Name      string    `json:"name"`
-	Login     string    `json:"login"`
-	Email     string    `json:"email"`
+	Timestamp    time.Time `json:"timestamp"`
+	Id           int64     `json:"id"`
+	Name         string    `json:"name"`
+	Login        string    `json:"login"`
+	Email        string    `json:"email"`
+	Level        int64     `json:"level"`
+	Achievements string    `json:"achievements"`
 }
 
 type DataSourceDeleted struct {

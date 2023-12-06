@@ -307,6 +307,16 @@ func TestSocialGitHub_InitializeExtraFields(t *testing.T) {
 				allowedOrganizations: []string{},
 			},
 		},
+		{
+			name: "should not error when teamIds are not integers",
+			settings: map[string]any{
+				"team_ids": "abc1234,5678",
+			},
+			want: settingFields{
+				teamIds:              []int{},
+				allowedOrganizations: []string{},
+			},
+		},
 	}
 
 	for _, tc := range testCases {

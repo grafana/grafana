@@ -11,6 +11,9 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useSelector } from 'app/types';
 import { ExploreQueryParams } from 'app/types/explore';
 
+import { registerAchievementCompleted } from '../achievements/AchievementsService';
+import { AchievementId } from '../achievements/types';
+
 import { CorrelationEditorModeBar } from './CorrelationEditorModeBar';
 import { ExploreActions } from './ExploreActions';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
@@ -50,6 +53,11 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   }, [chrome, navModel]);
 
   useKeyboardShortcuts();
+
+  // register achievement
+  useEffect(() => {
+    registerAchievementCompleted(AchievementId.NavigateToExplore);
+  }, []);
 
   return (
     <div

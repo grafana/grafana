@@ -8,6 +8,8 @@ import { config } from '@grafana/runtime';
 import { Button, CustomScrollbar, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { Field } from '@grafana/ui/src/components/Forms/Field';
 import { LS_VISUALIZATION_SELECT_TAB_KEY, LS_WIDGET_SELECT_TAB_KEY } from 'app/core/constants';
+import { registerAchievementCompleted } from 'app/features/achievements/AchievementsService';
+import { AchievementId } from 'app/features/achievements/types';
 import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
 import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
@@ -46,6 +48,10 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
   const onVizChange = useCallback(
     (pluginChange: VizTypeChangeDetails) => {
       dispatch(changePanelPlugin({ panel: panel, ...pluginChange }));
+
+      if (pluginChange.pluginId === 'canvas') {
+        registerAchievementCompleted(AchievementId.AddCanvasVisualization);
+      }
 
       // close viz picker unless a mod key is pressed while clicking
       if (!pluginChange.withModKey) {
@@ -115,34 +121,14 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
         <CustomScrollbar autoHeightMin="100%">
           <div className={styles.scrollContent}>
             {listMode === VisualizationSelectPaneTab.Visualizations && (
-              <VizTypePicker
-                current={plugin.meta}
-                onChange={onVizChange}
-                searchQuery={searchQuery}
-                data={data}
-                onClose={() => {}}
-              />
+              <VizTypePicker pluginId={plugin.meta.id} onChange={onVizChange} searchQuery={searchQuery} />
             )}
             {listMode === VisualizationSelectPaneTab.Widgets && (
-              <VizTypePicker
-                current={plugin.meta}
-                onChange={onVizChange}
-                searchQuery={searchQuery}
-                data={data}
-                onClose={() => {}}
-                isWidget
-              />
+              <VizTypePicker pluginId={plugin.meta.id} onChange={onVizChange} searchQuery={searchQuery} isWidget />
             )}
 
             {listMode === VisualizationSelectPaneTab.Suggestions && (
-              <VisualizationSuggestions
-                current={plugin.meta}
-                onChange={onVizChange}
-                searchQuery={searchQuery}
-                panel={panel}
-                data={data}
-                onClose={() => {}}
-              />
+              <VisualizationSuggestions onChange={onVizChange} searchQuery={searchQuery} panel={panel} data={data} />
             )}
             {listMode === VisualizationSelectPaneTab.LibraryPanels && (
               <PanelLibraryOptionsGroup

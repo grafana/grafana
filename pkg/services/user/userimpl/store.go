@@ -327,11 +327,13 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		user := user.User{
-			Name:    cmd.Name,
-			Email:   cmd.Email,
-			Login:   cmd.Login,
-			Theme:   cmd.Theme,
-			Updated: time.Now(),
+			Name:         cmd.Name,
+			Email:        cmd.Email,
+			Login:        cmd.Login,
+			Theme:        cmd.Theme,
+			Level:        cmd.Level,
+			Achievements: cmd.Achievements,
+			Updated:      time.Now(),
 		}
 
 		if _, err := sess.ID(cmd.UserID).Where(ss.notServiceAccountFilter()).Update(&user); err != nil {
@@ -345,11 +347,13 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 		}
 
 		sess.PublishAfterCommit(&events.UserUpdated{
-			Timestamp: user.Created,
-			Id:        user.ID,
-			Name:      user.Name,
-			Login:     user.Login,
-			Email:     user.Email,
+			Timestamp:    user.Created,
+			Id:           user.ID,
+			Name:         user.Name,
+			Login:        user.Login,
+			Email:        user.Email,
+			Level:        user.Level,
+			Achievements: cmd.Achievements,
 		})
 
 		return nil
@@ -475,6 +479,8 @@ func (ss *sqlStore) GetProfile(ctx context.Context, query *user.GetUserProfileQu
 			OrgID:          usr.OrgID,
 			UpdatedAt:      usr.Updated,
 			CreatedAt:      usr.Created,
+			Level:          usr.Level,
+			Achievements:   usr.Achievements,
 		}
 
 		return err
@@ -482,6 +488,7 @@ func (ss *sqlStore) GetProfile(ctx context.Context, query *user.GetUserProfileQu
 	return &userProfile, err
 }
 
+// TODO use this pattern to update achievements
 func (ss *sqlStore) SetHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCommand) error {
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		user := user.User{

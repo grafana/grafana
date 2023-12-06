@@ -371,6 +371,7 @@ function runGrafanaLiveQuery(target: TestData, req: DataQueryRequest<TestData>):
   if (!target.channel) {
     throw new Error(`Missing channel config`);
   }
+
   return getGrafanaLiveSrv().getDataStream({
     addr: {
       scope: LiveChannelScope.Plugin,
