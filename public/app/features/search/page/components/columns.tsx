@@ -40,7 +40,6 @@ export const generateColumns = (
   showingEverything?: boolean
 ): TableColumn[] => {
   const columns: TableColumn[] = [];
-  console.log('fields', response.view.fields);
   const access = response.view.fields;
   const uidField = access.uid;
   const kindField = access.kind;
@@ -277,7 +276,7 @@ export const generateColumns = (
 
   if (access.remaining_trash_at_age?.values) {
     // Remaining days for permanent delete column
-    width = Math.max(availableWidth * 0.2, 300);
+    width = Math.max(availableWidth * 0.2, 200);
     columns.push({
       Cell: (p) => {
         const classNames = cx(styles.nameCellStyle);
