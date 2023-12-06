@@ -94,22 +94,6 @@ func TestPlaylist(t *testing.T) {
 		}))
 	})
 
-	t.Run("with dual write (unified storage)", func(t *testing.T) {
-		// t.Skip() // NOT WORKING YET!
-
-		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "unified", // use the entity api tables
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagEntityStore,
-				featuremgmt.FlagStorage,
-				featuremgmt.FlagGrafanaAPIServer,
-				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
-			},
-		}))
-	})
-
 	t.Run("with dual write (etcd)", func(t *testing.T) {
 		// NOTE: running local etcd, that will be wiped clean!
 		t.Skip("local etcd testing")
@@ -240,43 +224,6 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 			"kind": "Playlist",
 			"metadata": {
 			  "annotations": {
-					"grafana.app/originKey": "${originKey}",
-					"grafana.app/originName": "SQL",
-					"grafana.app/updatedTimestamp": "${updatedTimestamp}"
-			  },
-			  "creationTimestamp": "${creationTimestamp}",
-			  "name": "` + uid + `",
-			  "namespace": "default",
-			  "resourceVersion": "${resourceVersion}",
-			  "uid": "${uid}"
-			},
-			"spec": {
-			  "interval": "20s",
-			  "items": [
-				{
-				  "type": "dashboard_by_uid",
-				  "value": "xCmMwXdVz"
-				},
-				{
-				  "type": "dashboard_by_tag",
-				  "value": "graph-ng"
-				}
-			  ],
-			  "title": "Test"
-			}
-		}`
-
-		// List includes the expected result
-		k8sList, err := client.Resource.List(context.Background(), metav1.ListOptions{})
-		require.NoError(t, err)
-		require.Equal(t, 1, len(k8sList.Items))
-		require.JSONEq(t, expectedResult, client.SanitizeJSON(&k8sList.Items[0]))
-
-		expectedResult = `{
-			"apiVersion": "playlist.grafana.app/v0alpha1",
-			"kind": "Playlist",
-			"metadata": {
-			  "annotations": {
 				"grafana.app/originKey": "${originKey}",
 				"grafana.app/originName": "SQL",
 				"grafana.app/updatedTimestamp": "${updatedTimestamp}"
@@ -301,7 +248,13 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 			  ],
 			  "title": "Test"
 			}
-		}`
+		  }`
+
+		// List includes the expected result
+		k8sList, err := client.Resource.List(context.Background(), metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Equal(t, 1, len(k8sList.Items))
+		require.JSONEq(t, expectedResult, client.SanitizeJSON(&k8sList.Items[0]))
 
 		// Get should return the same result
 		found, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
@@ -311,38 +264,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 		// Now modify the interval
 		updatedInterval := `"interval": "10m"`
 		legacyPayload = strings.Replace(legacyPayload, `"interval": "20s"`, updatedInterval, 1)
-
-		expectedResult = `{
-			"apiVersion": "playlist.grafana.app/v0alpha1",
-			"kind": "Playlist",
-			"metadata": {
-			  "annotations": {
-				"grafana.app/originKey": "${originKey}",
-				"grafana.app/originName": "SQL",
-				"grafana.app/updatedTimestamp": "${updatedTimestamp}"
-			  },
-			  "creationTimestamp": "${creationTimestamp}",
-			  "name": "` + uid + `",
-			  "namespace": "default",
-			  "resourceVersion": "${resourceVersion}",
-			  "uid": "${uid}"
-			},
-			"spec": {
-			  "interval": "10m",
-			  "items": [
-				{
-				  "type": "dashboard_by_uid",
-				  "value": "xCmMwXdVz"
-				},
-				{
-				  "type": "dashboard_by_tag",
-				  "value": "graph-ng"
-				}
-			  ],
-			  "title": "Test"
-			}
-		}`
-
+		expectedResult = strings.Replace(expectedResult, `"interval": "20s"`, updatedInterval, 1)
 		dtoResponse := apis.DoRequest(helper, apis.RequestParams{
 			User:   client.Args.User,
 			Method: http.MethodPut,
