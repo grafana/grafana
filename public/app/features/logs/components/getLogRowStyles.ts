@@ -239,6 +239,26 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       display: block;
       margin-left: 0px;
     `,
+    detailsMenuIcon: css({
+      padding: theme.spacing(1),
+      backgroundColor: theme.colors.background.primary,
+      marginRight: theme.spacing(1),
+      verticalAlign: 'baseline'
+    }),
+    detailsMenuCopyIcon: css({
+      backgroundColor: theme.colors.background.primary,
+      padding: theme.spacing(1),
+      marginRight: theme.spacing(1),
+      height: 'auto',
+      '> svg': css({
+        margin: 0,
+      }),
+      verticalAlign: 'baseline'
+    }),
+    detailsMenu: css({
+      paddingTop: theme.spacing(1),
+      marginBottom: theme.spacing(1),
+    }),
     rowMenu: css`
       label: rowMenu;
       display: flex;

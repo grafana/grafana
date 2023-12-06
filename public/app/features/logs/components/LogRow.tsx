@@ -51,6 +51,7 @@ interface Props extends Themeable2 {
   showDetails?: (row: LogRowModel) => void;
   logDetailsRow?: LogRowModel;
   highlightSearchwords: boolean;
+  noMenu?: boolean;
 }
 
 interface State {
@@ -116,7 +117,9 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   }
 
   onMouseEnter = () => {
-    this.setState({ mouseIsOver: true });
+    if (!this.props.noMenu) {
+      this.setState({ mouseIsOver: true });
+    }
     if (this.props.onLogRowHover) {
       this.props.onLogRowHover(this.props.row);
     }
@@ -133,7 +136,14 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     }
   };
 
-  onMouseLeave = () => {};
+  onMouseLeave = () => {
+    if (!this.props.noMenu) {
+      this.setState({ mouseIsOver: false });
+    }
+    if (this.props.onLogRowHover) {
+      this.props.onLogRowHover(undefined);
+    }
+  };
 
   componentDidMount() {
     this.scrollToLogRow(this.state, true);
