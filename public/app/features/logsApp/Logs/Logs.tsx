@@ -723,12 +723,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
             )
           }
         </PanelChrome>
-        <PanelChrome
-          title={`Logs${
-            this.state.hiddenLogLevels.length > 0 ? ` (filtered based on selected ${this.state.groupByLabel})` : ''
-          }`}
-          loadingState={loading ? LoadingState.Loading : LoadingState.Done}
-        >
+        <PanelChrome hoverHeader={true} loadingState={loading ? LoadingState.Loading : LoadingState.Done}>
           <div className={styles.stickyNavigation}>
             <div className={styles.logsOptions}>
               <LogsOptions
