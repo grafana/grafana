@@ -156,11 +156,14 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
               allowFullScreen
               value={query.query}
               onChange={(e) => {
-                let newQueries = options.jsonData.tracesToMetrics?.queries.slice() ?? [];
-                newQueries[i].query = e.currentTarget.value;
+                const updatedQueries = (options.jsonData.tracesToMetrics?.queries ?? []).map(
+                  (traceToMetricQuery, index) => {
+                    return index === i ? { ...traceToMetricQuery, query: e.currentTarget.value } : traceToMetricQuery;
+                  }
+                );
                 updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
                   ...options.jsonData.tracesToMetrics,
-                  queries: newQueries,
+                  queries: updatedQueries,
                 });
               }}
             />

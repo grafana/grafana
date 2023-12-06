@@ -22,7 +22,15 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const azureADProviderName = "azuread"
+const (
+	AzureADProviderName = "azuread"
+	forceUseGraphAPIKey = "force_use_graph_api" // #nosec G101 not a hardcoded credential
+)
+
+var (
+	ExtraAzureADSettingKeys = []string{forceUseGraphAPIKey, allowedOrganizationsKey}
+	errAzureADMissingGroups = &Error{"either the user does not have any group membership or the groups claim is missing from the token."}
+)
 
 var _ SocialConnector = (*SocialAzureAD)(nil)
 
@@ -65,17 +73,17 @@ type keySetJWKS struct {
 }
 
 func NewAzureADProvider(settings map[string]any, cfg *setting.Cfg, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) (*SocialAzureAD, error) {
-	info, err := createOAuthInfoFromKeyValues(settings)
+	info, err := CreateOAuthInfoFromKeyValues(settings)
 	if err != nil {
 		return nil, err
 	}
 
-	config := createOAuthConfig(info, cfg, azureADProviderName)
+	config := createOAuthConfig(info, cfg, AzureADProviderName)
 	provider := &SocialAzureAD{
-		SocialBase:           newSocialBase(azureADProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:           newSocialBase(AzureADProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		cache:                cache,
-		allowedOrganizations: util.SplitString(info.Extra["allowed_organizations"]),
-		forceUseGraphAPI:     mustBool(info.Extra["force_use_graph_api"], false),
+		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
+		forceUseGraphAPI:     MustBool(info.Extra[forceUseGraphAPIKey], false),
 		skipOrgRoleSync:      cfg.AzureADSkipOrgRoleSync,
 		// FIXME: Move skipOrgRoleSync to OAuthInfo
 		// skipOrgRoleSync: info.SkipOrgRoleSync
@@ -130,6 +138,11 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 	}
 	s.log.Debug("AzureAD OAuth: extracted groups", "email", email, "groups", fmt.Sprintf("%v", groups))
 	if !s.isGroupMember(groups) {
+		if len(groups) == 0 {
+			// either they do not have a group or misconfiguration
+			return nil, errAzureADMissingGroups
+		}
+		// user is not a member of any of the allowed groups
 		return nil, errMissingGroupMembership
 	}
 
@@ -275,6 +288,7 @@ type getAzureGroupResponse struct {
 // extractGroups retrieves groups from the claims.
 // Note: If user groups exceeds 200 no groups will be found in claims and URL to target the Graph API will be
 // given instead.
+//
 // See https://docs.microsoft.com/en-us/azure/active-directory/develop/id-tokens#groups-overage-claim
 func (s *SocialAzureAD) extractGroups(ctx context.Context, client *http.Client, claims *azureClaims, token *oauth2.Token) ([]string, error) {
 	if !s.forceUseGraphAPI {
@@ -318,10 +332,10 @@ func (s *SocialAzureAD) extractGroups(ctx context.Context, client *http.Client, 
 
 	if res.StatusCode != http.StatusOK {
 		if res.StatusCode == http.StatusForbidden {
-			s.log.Warn("AzureAD OAuh: Token need GroupMember.Read.All permission to fetch all groups")
+			s.log.Warn("AzureAD OAuth: Token need GroupMember.Read.All permission to fetch all groups")
 		} else {
 			body, _ := io.ReadAll(res.Body)
-			s.log.Warn("AzureAD OAuh: could not fetch user groups", "code", res.StatusCode, "body", string(body))
+			s.log.Warn("AzureAD OAuth: could not fetch user groups", "code", res.StatusCode, "body", string(body))
 		}
 		return []string{}, nil
 	}

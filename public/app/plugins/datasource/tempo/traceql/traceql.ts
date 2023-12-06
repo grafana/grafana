@@ -24,6 +24,7 @@ export const languageConfiguration: languages.LanguageConfiguration = {
 };
 
 export const operators = ['=', '!=', '>', '<', '>=', '<=', '=~', '!~'];
+export const keywordOperators = ['=', '!='];
 export const stringOperators = ['=', '!=', '=~', '!~'];
 export const numberOperators = ['=', '!=', '>', '<', '>=', '<='];
 
