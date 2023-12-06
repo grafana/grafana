@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
@@ -31,6 +31,12 @@ import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { KioskMode } from 'app/types';
 import { DashboardMetaChangedEvent, ShowModalReactEvent } from 'app/types/events';
+
+import {
+  DynamicDashNavButtonModel,
+  dynamicDashNavActions,
+  registerDynamicDashNavAction,
+} from '../../../dashboard-scene/utils/registerDynamicDashNavAction';
 
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
@@ -64,21 +70,12 @@ export interface OwnProps {
   onAddPanel: () => void;
 }
 
-interface DashNavButtonModel {
-  show: (props: Props) => boolean;
-  component: FC<Partial<Props>>;
-  index?: number | 'end';
+export function addCustomLeftAction(content: DynamicDashNavButtonModel) {
+  registerDynamicDashNavAction('left', content);
 }
 
-export const customLeftActions: DashNavButtonModel[] = [];
-export const customRightActions: DashNavButtonModel[] = [];
-
-export function addCustomLeftAction(content: DashNavButtonModel) {
-  customLeftActions.push(content);
-}
-
-export function addCustomRightAction(content: DashNavButtonModel) {
-  customRightActions.push(content);
+export function addCustomRightAction(content: DynamicDashNavButtonModel) {
+  registerDynamicDashNavAction('right', content);
 }
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
@@ -160,7 +157,7 @@ export const DashNav = React.memo<Props>((props) => {
     forceUpdate();
   };
 
-  const addCustomContent = (actions: DashNavButtonModel[], buttons: ReactNode[]) => {
+  const addCustomContent = (actions: DynamicDashNavButtonModel[], buttons: ReactNode[]) => {
     actions.map((action, index) => {
       const Component = action.component;
       const element = <Component {...props} key={`button-custom-${index}`} />;
@@ -221,7 +218,7 @@ export const DashNav = React.memo<Props>((props) => {
       );
     }
 
-    addCustomContent(customLeftActions, buttons);
+    addCustomContent(dynamicDashNavActions.left, buttons);
     return buttons;
   };
 
@@ -340,7 +337,7 @@ export const DashNav = React.memo<Props>((props) => {
       );
     }
 
-    addCustomContent(customRightActions, buttons);
+    addCustomContent(dynamicDashNavActions.right, buttons);
 
     buttons.push(renderTimeControls());
 

@@ -5,11 +5,11 @@ import { Button } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import { t } from 'app/core/internationalization';
-import { customLeftActions, customRightActions } from 'app/features/dashboard/components/DashNav/DashNav';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 
 import { ShareModal } from '../sharing/ShareModal';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
+import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardScene } from './DashboardScene';
 
@@ -62,8 +62,8 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
         onClick={() => locationService.push(`/d/${uid}`)}
       />
     );
-    if (customLeftActions.length > 0) {
-      customLeftActions.map((action, index) => {
+    if (dynamicDashNavActions.left.length > 0) {
+      dynamicDashNavActions.left.map((action, index) => {
         const Component = action.component;
         const element = <Component dashboard={_legacyDashboardModelCompatibility} />;
         typeof action.index === 'number'
@@ -75,8 +75,8 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
 
   toolbarActions.push(<NavToolbarSeparator leftActionsSeparator key="separator" />);
 
-  if (customRightActions.length > 0) {
-    customRightActions.map((action, index) => {
+  if (dynamicDashNavActions.right.length > 0) {
+    dynamicDashNavActions.right.map((action, index) => {
       const Component = action.component;
       const element = <Component dashboard={_legacyDashboardModelCompatibility} key={`button-custom-${index}`} />;
       typeof action.index === 'number'
