@@ -13,7 +13,7 @@ import {
   CompletionContext,
   syntaxTree,
   readonlySetup,
-} from '../../../../../../prql';
+} from '../../../../../../prql/index';
 
 function myCompletions(context: CompletionContext, metricNames: string[]) {
   let word = context.matchBefore(/\w*/);
@@ -91,6 +91,7 @@ export const PRQLEditor = (props: Props) => {
 
   // How to make readonly
   useEffect(() => {
+    //@ts-ignore
     const listener = PRQLEditorView.updateListener.of(({ state }) => {
       if (onEditorChange) {
         onEditorChange(state.doc.toString());

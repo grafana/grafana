@@ -256,7 +256,6 @@
     "@grafana/lezer-logql": "0.2.2",
     "@grafana/lezer-traceql": "0.0.11",
     "@grafana/monaco-logql": "^0.0.7",
-    "@grafana/prql": "file:prql",
     "@grafana/runtime": "workspace:*",
     "@grafana/scenes": "^1.24.6",
     "@grafana/schema": "workspace:*",
