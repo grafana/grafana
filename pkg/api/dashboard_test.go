@@ -259,7 +259,7 @@ func TestHTTPServer_DeleteDashboardByUID_AccessControl(t *testing.T) {
 
 			dashSvc := dashboards.NewFakeDashboardService(t)
 			dashSvc.On("GetDashboard", mock.Anything, mock.Anything).Return(dash, nil).Maybe()
-			dashSvc.On("DeleteDashboard", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+			dashSvc.On("SoftDeleteDashboard", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 			hs.DashboardService = dashSvc
 
 			hs.Cfg = setting.NewCfg()

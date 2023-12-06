@@ -433,6 +433,14 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 	return dash, nil
 }
 
+func (dr *DashboardServiceImpl) RestoreDashboard(ctx context.Context, dashboardUID string) error {
+	return dr.dashboardStore.RestoreDashboard(ctx, dashboardUID)
+}
+
+func (dr *DashboardServiceImpl) SoftDeleteDashboard(ctx context.Context, dashboardUID string) error {
+	return dr.dashboardStore.SoftDeleteDashboard(ctx, dashboardUID)
+}
+
 // DeleteDashboard removes dashboard from the DB. Errors out if the dashboard was provisioned. Should be used for
 // operations by the user where we want to make sure user does not delete provisioned dashboard.
 func (dr *DashboardServiceImpl) DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error {

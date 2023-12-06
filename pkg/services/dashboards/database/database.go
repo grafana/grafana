@@ -641,6 +641,22 @@ func (d *dashboardStore) GetDashboardsByPluginID(ctx context.Context, query *das
 	return dashboards, nil
 }
 
+func (d *dashboardStore) RestoreDashboard(ctx context.Context, dashboardUID string) error {
+	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		sql := "UPDATE dashboard SET deleted=NULL WHERE uid=?"
+		_, err := sess.Exec(sql, dashboardUID)
+		return err
+	})
+}
+
+func (d *dashboardStore) SoftDeleteDashboard(ctx context.Context, dashboardUID string) error {
+	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		sql := "UPDATE dashboard SET deleted=? WHERE uid=?"
+		_, err := sess.Exec(sql, time.Now(), dashboardUID)
+		return err
+	})
+}
+
 func (d *dashboardStore) DeleteDashboard(ctx context.Context, cmd *dashboards.DeleteDashboardCommand) error {
 	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		return d.deleteDashboard(cmd, sess, d.emitEntityEvent())
