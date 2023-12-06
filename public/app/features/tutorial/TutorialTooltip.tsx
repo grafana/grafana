@@ -1,10 +1,12 @@
+import { css } from '@emotion/css';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { Button, Text } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, IconButton, Text, useStyles2 } from '@grafana/ui';
 import { StoreState, useDispatch } from 'app/types';
 
-import { nextStep } from './slice';
+import { exitCurrentTutorial, nextStep } from './slice';
 import { type Step } from './types';
 
 const TutorialTooltipComponent = ({
@@ -12,6 +14,7 @@ const TutorialTooltipComponent = ({
   currentTutorialId,
   currentStepIndex,
 }: ConnectedProps<typeof connector>) => {
+  const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const currentTutorial = availableTutorials.find((t) => t.id === currentTutorialId);
   const step = currentStepIndex !== null && currentTutorial ? currentTutorial.steps[currentStepIndex] : null;
@@ -26,6 +29,14 @@ const TutorialTooltipComponent = ({
             <Button onClick={() => dispatch(nextStep())}>Next</Button>
           </div>
         )}
+        <IconButton
+          className={styles.exit}
+          name="times"
+          onClick={() => {
+            dispatch(exitCurrentTutorial());
+          }}
+          tooltip="Exit tutorial"
+        />
       </>
     );
   }
@@ -60,6 +71,14 @@ function renderContent(content: Step['content']) {
 
   return <div>{content}</div>;
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  exit: css({
+    position: 'absolute',
+    top: theme.spacing(1),
+    right: theme.spacing(1),
+  }),
+});
 
 TutorialTooltipComponent.displayName = 'TutorialTooltip';
 

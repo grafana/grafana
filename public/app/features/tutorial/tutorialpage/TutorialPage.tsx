@@ -3,7 +3,7 @@ import React, { useCallback, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import { addTutorials } from 'app/features/tutorial/slice';
@@ -32,15 +32,20 @@ export function TutorialPage({ availableTutorials }: ConnectedProps<typeof conne
       navId="tutorials"
       navModel={{ node, main: node }}
       actions={
-        <Button
-          data-testid={`import-tutorials`}
-          onClick={() => {
-            console.log(`hook me up yo`);
-          }}
-          variant="secondary"
-        >
-          Import tutorials
-        </Button>
+        <Stack>
+          <LinkButton icon="external-link-alt" href="https://grafana.com/tutorials" rel="noreferrer" target="_blank">
+            See tutorials
+          </LinkButton>
+          <Button
+            data-testid={`import-tutorials`}
+            onClick={() => {
+              console.log(`hook me up yo`);
+            }}
+            variant="secondary"
+          >
+            Import tutorials
+          </Button>
+        </Stack>
       }
     >
       <Page.Contents>

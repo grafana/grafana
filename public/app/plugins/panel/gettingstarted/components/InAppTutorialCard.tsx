@@ -1,29 +1,31 @@
 import { css } from '@emotion/css';
-import React, { MouseEvent } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
-import store from 'app/core/store';
+import { addTutorial, startTutorial } from 'app/features/tutorial/slice';
+import { useDispatch } from 'app/types';
 
-import { TutorialCardType } from '../types';
+import { InAppTutorialCardType } from '../types';
 
 import { cardContent, cardStyle, iconStyle } from './sharedStyles';
 
 interface Props {
-  card: TutorialCardType;
+  card: InAppTutorialCardType;
 }
 
-export const TutorialCard = ({ card }: Props) => {
+export const InAppTutorialCard = ({ card }: Props) => {
+  const dispatch = useDispatch();
   const styles = useStyles2(getStyles, card.done);
   const iconStyles = useStyles2(iconStyle, card.done);
 
   return (
-    <a
+    <button
       className={styles.card}
-      target="_blank"
-      rel="noreferrer"
-      href={`${card.href}?utm_source=grafana_gettingstarted`}
-      onClick={(event: MouseEvent<HTMLAnchorElement>) => handleTutorialClick(event, card)}
+      onClick={() => {
+        dispatch(addTutorial(card.tutorial));
+        dispatch(startTutorial(card.tutorial.id));
+      }}
     >
       <div className={cardContent}>
         <div className={styles.heading}>{card.done ? 'complete' : card.heading}</div>
@@ -31,16 +33,8 @@ export const TutorialCard = ({ card }: Props) => {
         <div className={styles.info}>{card.info}</div>
         <Icon className={iconStyles} name={card.icon} size="xxl" />
       </div>
-    </a>
+    </button>
   );
-};
-
-const handleTutorialClick = (event: MouseEvent<HTMLAnchorElement>, card: TutorialCardType) => {
-  event.preventDefault();
-  const isSet = store.get(card.key);
-  if (!isSet) {
-    store.set(card.key, true);
-  }
 };
 
 const getStyles = (theme: GrafanaTheme2, complete: boolean) => {

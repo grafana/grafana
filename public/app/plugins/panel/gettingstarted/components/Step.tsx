@@ -7,6 +7,7 @@ import { useStyles2 } from '@grafana/ui';
 import { SetupStep } from '../types';
 
 import { DocsCard } from './DocsCard';
+import { InAppTutorialCard } from './InAppTutorialCard';
 import { TutorialCard } from './TutorialCard';
 
 interface Props {
@@ -27,6 +28,10 @@ export const Step = ({ step }: Props) => {
           const key = `${card.title}-${index}`;
           if (card.type === 'tutorial') {
             return <TutorialCard key={key} card={card} />;
+          }
+
+          if (card.type === `inapp-tutorial`) {
+            return <InAppTutorialCard key={key} card={card} />;
           }
           return <DocsCard key={key} card={card} />;
         })}

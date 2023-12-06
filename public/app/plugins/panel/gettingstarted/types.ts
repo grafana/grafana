@@ -1,4 +1,5 @@
 import { IconName } from '@grafana/ui';
+import { Tutorial } from 'app/features/tutorial/types';
 
 export interface Card {
   title: string;
@@ -18,11 +19,16 @@ export interface TutorialCardType extends Omit<Card, 'type'> {
   key: string;
 }
 
+export interface InAppTutorialCardType extends Omit<TutorialCardType, 'type' | 'href'> {
+  type: 'inapp-tutorial';
+  tutorial: Tutorial;
+}
+
 export interface SetupStep {
   heading: string;
   subheading: string;
   title: string;
   info: string;
-  cards: Array<Card | TutorialCardType>;
+  cards: Array<Card | TutorialCardType | InAppTutorialCardType>;
   done: boolean;
 }

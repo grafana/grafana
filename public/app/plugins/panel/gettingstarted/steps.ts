@@ -1,14 +1,17 @@
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import store from 'app/core/store';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { settingUpADatasourceTutorial } from 'app/features/tutorial/tutorials/setting-up-a-data-source';
 
 import { SetupStep } from './types';
 
 const step1TutorialTitle = 'Grafana fundamentals';
 const step2TutorialTitle = 'Create users and teams';
+const dataSourcesTutorialTitle = 'Add your first data source';
 const keyPrefix = 'getting.started.';
 const step1Key = `${keyPrefix}${step1TutorialTitle.replace(' ', '-').trim().toLowerCase()}`;
 const step2Key = `${keyPrefix}${step2TutorialTitle.replace(' ', '-').trim().toLowerCase()}`;
+const dataSourcesTutorialKey = `${keyPrefix}${step2TutorialTitle.replace(' ', '-').trim().toLowerCase()}`;
 
 export const getSteps = (): SetupStep[] => [
   {
@@ -30,12 +33,12 @@ export const getSteps = (): SetupStep[] => [
         done: false,
       },
       {
-        type: 'docs',
-        title: 'Add your first data source',
+        type: 'inapp-tutorial',
+        title: dataSourcesTutorialTitle,
         heading: 'data sources',
         icon: 'database',
         learnHref: 'https://grafana.com/docs/grafana/latest/features/datasources/add-a-data-source',
-        href: 'datasources/new',
+        tutorial: settingUpADatasourceTutorial,
         check: () => {
           return new Promise((resolve) => {
             resolve(
@@ -47,6 +50,7 @@ export const getSteps = (): SetupStep[] => [
             );
           });
         },
+        key: dataSourcesTutorialKey,
         done: false,
       },
       {
