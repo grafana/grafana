@@ -38,7 +38,7 @@ type googleUserData struct {
 	rawJSON       []byte `json:"-"`
 }
 
-func NewGoogleProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGoogle, error) {
+func NewGoogleProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) *SocialGoogle {
 	config := createOAuthConfig(info, cfg, constants.GoogleProviderName)
 	provider := &SocialGoogle{
 		SocialBase:      newSocialBase(constants.GoogleProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
@@ -53,7 +53,7 @@ func NewGoogleProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featu
 		provider.log.Warn("Using legacy Google API URL, please update your configuration")
 	}
 
-	return provider, nil
+	return provider
 }
 
 func (s *SocialGoogle) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {

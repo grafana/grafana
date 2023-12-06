@@ -73,7 +73,7 @@ type keySetJWKS struct {
 	jose.JSONWebKeySet
 }
 
-func NewAzureADProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) (*SocialAzureAD, error) {
+func NewAzureADProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) *SocialAzureAD {
 	config := createOAuthConfig(info, cfg, constants.AzureADProviderName)
 	provider := &SocialAzureAD{
 		SocialBase:           newSocialBase(constants.AzureADProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
@@ -89,7 +89,7 @@ func NewAzureADProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *feat
 		appendUniqueScope(config, models.OfflineAccessScope)
 	}
 
-	return provider, nil
+	return provider
 }
 
 func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*models.BasicUserInfo, error) {

@@ -45,7 +45,7 @@ type SocialGenericOAuth struct {
 	skipOrgRoleSync      bool
 }
 
-func NewGenericOAuthProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGenericOAuth, error) {
+func NewGenericOAuthProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) *SocialGenericOAuth {
 	config := createOAuthConfig(info, cfg, constants.GenericOAuthProviderName)
 	provider := &SocialGenericOAuth{
 		SocialBase:           newSocialBase(constants.GenericOAuthProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
@@ -66,7 +66,7 @@ func NewGenericOAuthProvider(info *models.OAuthInfo, cfg *setting.Cfg, features 
 		// skipOrgRoleSync: info.SkipOrgRoleSync
 	}
 
-	return provider, nil
+	return provider
 }
 
 func (s *SocialGenericOAuth) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {

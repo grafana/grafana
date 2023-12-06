@@ -52,12 +52,7 @@ var (
 			"User is not a member of one of the required organizations. Please contact identity provider administrator."))
 )
 
-func NewGitHubProvider(settings map[string]any, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGithub, error) {
-	info, err := CreateOAuthInfoFromKeyValues(settings)
-	if err != nil {
-		return nil, err
-	}
-
+func NewGitHubProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) *SocialGithub {
 	teamIds := mustInts(util.SplitString(info.Extra[teamIdsKey]))
 
 	config := createOAuthConfig(info, cfg, constants.GitHubProviderName)
@@ -71,7 +66,7 @@ func NewGitHubProvider(settings map[string]any, cfg *setting.Cfg, features *feat
 		// skipOrgRoleSync: info.SkipOrgRoleSync
 	}
 
-	return provider, nil
+	return provider
 }
 
 func (s *SocialGithub) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {

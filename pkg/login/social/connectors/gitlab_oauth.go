@@ -51,7 +51,7 @@ type userData struct {
 	IsGrafanaAdmin *bool             `json:"-"`
 }
 
-func NewGitLabProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGitlab, error) {
+func NewGitLabProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) *SocialGitlab {
 	config := createOAuthConfig(info, cfg, constants.GitlabProviderName)
 	provider := &SocialGitlab{
 		SocialBase:      newSocialBase(constants.GitlabProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
@@ -61,7 +61,7 @@ func NewGitLabProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featu
 		// skipOrgRoleSync: info.SkipOrgRoleSync
 	}
 
-	return provider, nil
+	return provider
 }
 
 func (s *SocialGitlab) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {

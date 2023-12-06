@@ -59,16 +59,12 @@ func ProvideService(cfg *setting.Cfg,
 		}
 
 		for _, ssoSetting := range allSettings {
-			// decrypt the client_secret
 			conn, err := createOAuthConnector(ssoSetting.Provider, ssoSetting.OAuthSettings, cfg, features, cache)
 			if err != nil {
 				ss.log.Error("Failed to create OAuth provider", "error", err, "provider", ssoSetting.Provider)
+				continue
 			}
 
-			// reloadable, ok := conn.(ssosettings.Reloadable)
-			// if ok {
-			// 	ssoSettings.RegisterReloadable(ssoSetting.Provider, reloadable)
-			// }
 			ssoSettings.RegisterReloadable(ssoSetting.Provider, conn)
 			ss.socialMap[ssoSetting.Provider] = conn
 		}
@@ -91,10 +87,7 @@ func ProvideService(cfg *setting.Cfg,
 				name = constants.GrafanaComProviderName
 			}
 
-			conn, err := createOAuthConnector(name, info, cfg, features, cache)
-			if err != nil {
-				ss.log.Error("Failed to create OAuth provider", "error", err, "provider", name)
-			}
+			conn, _ := createOAuthConnector(name, info, cfg, features, cache)
 
 			ss.socialMap[name] = conn
 		}
@@ -226,19 +219,19 @@ func (ss *SocialService) getUsageStats(ctx context.Context) (map[string]any, err
 func createOAuthConnector(name string, info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) (social.SocialConnector, error) {
 	switch name {
 	case constants.AzureADProviderName:
-		return connectors.NewAzureADProvider(info, cfg, features, cache)
+		return connectors.NewAzureADProvider(info, cfg, features, cache), nil
 	case constants.GenericOAuthProviderName:
-		return connectors.NewGenericOAuthProvider(info, cfg, features)
+		return connectors.NewGenericOAuthProvider(info, cfg, features), nil
 	case constants.GitHubProviderName:
-		return connectors.NewGitHubProvider(info, cfg, features)
+		return connectors.NewGitHubProvider(info, cfg, features), nil
 	case constants.GitlabProviderName:
-		return connectors.NewGitLabProvider(info, cfg, features)
+		return connectors.NewGitLabProvider(info, cfg, features), nil
 	case constants.GoogleProviderName:
-		return connectors.NewGoogleProvider(info, cfg, features)
+		return connectors.NewGoogleProvider(info, cfg, features), nil
 	case constants.GrafanaComProviderName:
-		return connectors.NewGrafanaComProvider(info, cfg, features)
+		return connectors.NewGrafanaComProvider(info, cfg, features), nil
 	case constants.OktaProviderName:
-		return connectors.NewOktaProvider(info, cfg, features)
+		return connectors.NewOktaProvider(info, cfg, features), nil
 	default:
 		return nil, fmt.Errorf("unknown oauth provider: %s", name)
 	}

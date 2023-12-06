@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -181,22 +182,22 @@ func TestSocialGoogle_retrieveGroups(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s, err := NewGoogleProvider(map[string]any{
-				"api_url":                    "",
-				"scopes":                     tt.fields.Scopes,
-				"hosted_domain":              "",
-				"allowed_domains":            []string{},
-				"allow_sign_up":              false,
-				"role_attribute_path":        "",
-				"role_attribute_strict":      false,
-				"allow_assign_grafana_admin": false,
-			},
+			s := NewGoogleProvider(
+				&models.OAuthInfo{
+					ApiUrl:                  "",
+					Scopes:                  tt.fields.Scopes,
+					HostedDomain:            "",
+					AllowedDomains:          []string{},
+					AllowSignup:             false,
+					RoleAttributePath:       "",
+					RoleAttributeStrict:     false,
+					AllowAssignGrafanaAdmin: false,
+				},
 				&setting.Cfg{
 					AutoAssignOrgRole:     "",
 					GoogleSkipOrgRoleSync: false,
 				},
 				featuremgmt.WithFeatures())
-			require.NoError(t, err)
 
 			got, err := s.retrieveGroups(context.Background(), tt.args.client, tt.args.userData)
 			if (err != nil) != tt.wantErr {
@@ -259,7 +260,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 		name       string
 		fields     fields
 		args       args
-		wantData   *BasicUserInfo
+		wantData   *models.BasicUserInfo
 		wantErr    bool
 		wantErrMsg string
 	}{
@@ -272,7 +273,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 			args: args{
 				token: tokenWithID,
 			},
-			wantData: &BasicUserInfo{
+			wantData: &models.BasicUserInfo{
 				Id:    "88888888888888",
 				Login: "test@example.com",
 				Email: "test@example.com",
@@ -309,7 +310,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 					},
 				},
 			},
-			wantData: &BasicUserInfo{
+			wantData: &models.BasicUserInfo{
 				Id:     "88888888888888",
 				Login:  "test@example.com",
 				Email:  "test@example.com",
@@ -341,7 +342,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 					},
 				},
 			},
-			wantData: &BasicUserInfo{
+			wantData: &models.BasicUserInfo{
 				Id:    "99999999999999",
 				Login: "test@example.com",
 				Email: "test@example.com",
@@ -459,7 +460,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 					},
 				},
 			},
-			wantData: &BasicUserInfo{
+			wantData: &models.BasicUserInfo{
 				Id:    "92222222222222222",
 				Name:  "Test User",
 				Email: "test@example.com",
@@ -521,7 +522,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 					},
 				},
 			},
-			wantData: &BasicUserInfo{
+			wantData: &models.BasicUserInfo{
 				Id:     "88888888888888",
 				Login:  "test@example.com",
 				Email:  "test@example.com",
@@ -542,7 +543,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 			args: args{
 				token: tokenWithID,
 			},
-			wantData: &BasicUserInfo{
+			wantData: &models.BasicUserInfo{
 				Id:     "88888888888888",
 				Login:  "test@example.com",
 				Email:  "test@example.com",
@@ -562,7 +563,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 			args: args{
 				token: tokenWithID,
 			},
-			wantData: &BasicUserInfo{
+			wantData: &models.BasicUserInfo{
 				Id:             "88888888888888",
 				Login:          "test@example.com",
 				Email:          "test@example.com",
@@ -582,7 +583,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 			args: args{
 				token: tokenWithID,
 			},
-			wantData: &BasicUserInfo{
+			wantData: &models.BasicUserInfo{
 				Id:             "88888888888888",
 				Login:          "test@example.com",
 				Email:          "test@example.com",
@@ -621,7 +622,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 					},
 				},
 			},
-			wantData: &BasicUserInfo{
+			wantData: &models.BasicUserInfo{
 				Id:     "88888888888888",
 				Login:  "test@example.com",
 				Email:  "test@example.com",
@@ -635,20 +636,22 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s, err := NewGoogleProvider(map[string]any{
-				"api_url":                    tt.fields.apiURL,
-				"scopes":                     tt.fields.Scopes,
-				"allowed_groups":             tt.fields.allowedGroups,
-				"allow_sign_up":              false,
-				"role_attribute_path":        tt.fields.roleAttributePath,
-				"role_attribute_strict":      tt.fields.roleAttributeStrict,
-				"allow_assign_grafana_admin": tt.fields.allowAssignGrafanaAdmin,
-			},
+			s := NewGoogleProvider(
+				&models.OAuthInfo{
+					ApiUrl:                  tt.fields.apiURL,
+					Scopes:                  tt.fields.Scopes,
+					AllowedGroups:           tt.fields.allowedGroups,
+					AllowSignup:             false,
+					RoleAttributePath:       tt.fields.roleAttributePath,
+					RoleAttributeStrict:     tt.fields.roleAttributeStrict,
+					AllowAssignGrafanaAdmin: tt.fields.allowAssignGrafanaAdmin,
+					// TODO: use this setting when SkipOrgRoleSync has moved to OAuthInfo
+					// SkipOrgRoleSync: tt.fields.skipOrgRoleSync,
+				},
 				&setting.Cfg{
 					GoogleSkipOrgRoleSync: tt.fields.skipOrgRoleSync,
 				},
 				featuremgmt.WithFeatures())
-			require.NoError(t, err)
 
 			gotData, err := s.UserInfo(context.Background(), tt.args.client, tt.args.token)
 			if tt.wantErr {

@@ -44,7 +44,7 @@ type OktaClaims struct {
 	Name              string `json:"name"`
 }
 
-func NewOktaProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialOkta, error) {
+func NewOktaProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) *SocialOkta {
 	config := createOAuthConfig(info, cfg, constants.OktaProviderName)
 	provider := &SocialOkta{
 		SocialBase:    newSocialBase(constants.OktaProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
@@ -59,7 +59,7 @@ func NewOktaProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *feature
 		appendUniqueScope(config, models.OfflineAccessScope)
 	}
 
-	return provider, nil
+	return provider
 }
 
 func (s *SocialOkta) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {

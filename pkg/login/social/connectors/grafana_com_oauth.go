@@ -31,7 +31,7 @@ type OrgRecord struct {
 	Login string `json:"login"`
 }
 
-func NewGrafanaComProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGrafanaCom, error) {
+func NewGrafanaComProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) *SocialGrafanaCom {
 	// Override necessary settings
 	info.AuthUrl = cfg.GrafanaComURL + "/oauth2/authorize"
 	info.TokenUrl = cfg.GrafanaComURL + "/api/oauth2/token"
@@ -47,7 +47,7 @@ func NewGrafanaComProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *f
 		// skipOrgRoleSync: info.SkipOrgRoleSync
 	}
 
-	return provider, nil
+	return provider
 }
 
 func (s *SocialGrafanaCom) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
