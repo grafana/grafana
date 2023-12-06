@@ -130,7 +130,7 @@ interface State {
   highlightSearchwords: boolean;
 }
 
-const DETAILS_SIZE = 595;
+const DETAILS_SIZE = 410;
 const WINDOW_MARGINS = 60;
 const INITIAL_PANE_SIZE = (window.innerWidth / 4) * 3;
 function getMaxPaneSize() {
@@ -938,7 +938,7 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
     }),
     logOptionsMenu: css({
       position: 'relative',
-      left: theme.spacing(2),
+      left: theme.spacing(3),
       backgroundColor: theme.colors.background.secondary,
       padding: theme.spacing(1),
       paddingLeft: theme.spacing(0.5),
