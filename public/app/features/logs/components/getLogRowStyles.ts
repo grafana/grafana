@@ -165,6 +165,7 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.default,
       padding: `0 ${theme.spacing(1)}`,
       cursor: 'default',
+      height: '100%',
     }),
     logDetailsTable: css`
       label: logs-row-details-table;

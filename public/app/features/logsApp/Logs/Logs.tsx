@@ -637,6 +637,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       getLogRowContextUi,
       getRowContextQuery,
       loadMoreLogs,
+      logsMeta,
     } = this.props;
 
     const {
@@ -908,7 +909,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     prettifyLogMessage={prettifyLogMessage}
                   />
                 ) : (
-                  <LogStats styles={logRowStyles} rows={logRows} />
+                  <LogStats styles={logRowStyles} rows={logRows} logsMeta={logsMeta} />
                 )}
               </div>
             </SplitPaneWrapper>

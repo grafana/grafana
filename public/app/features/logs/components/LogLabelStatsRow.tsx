@@ -55,14 +55,20 @@ export interface Props {
   count: number;
   proportion: number;
   value?: string;
+  total: number;
 }
 
-export const LogLabelStatsRow = ({ active, count, proportion, value }: Props) => {
+export const LogLabelStatsRow = ({ active, count, proportion, value, total }: Props) => {
   const style = useStyles2(getStyles);
   const percent = `${Math.round(proportion * 100)}%`;
   const barStyle = { width: percent };
   const className = active ? cx([style.logsStatsRow, style.logsStatsRowActive]) : cx([style.logsStatsRow]);
 
+  return (
+    <div>
+      {count}/{total} {percent}% {value} + -
+    </div>
+  );
   return (
     <div className={className}>
       <div className={cx([style.logsStatsRowLabel])}>

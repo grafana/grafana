@@ -18,6 +18,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       word-break: break-all;
       width: fit-content;
       max-width: 100%;
+      margin: ${theme.spacing(2)} 0;
     `,
     logsStatsHeader: css`
       label: logs-stats__header;
@@ -57,7 +58,7 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
     const { label, rowCount, stats, value, theme, isLabel } = this.props;
     const style = getStyles(theme);
     const topRows = stats.slice(0, STATS_ROW_LIMIT);
-    let activeRow = topRows.find((row) => row.value === value);
+    let activeRow = undefined;
     let otherRows = stats.slice(STATS_ROW_LIMIT);
     const insertActiveRow = !activeRow;
 
@@ -74,18 +75,19 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
 
     return (
       <div className={style.logsStats} data-testid="logLabelStats">
-        <div className={style.logsStatsHeader}>
-          <div className={style.logsStatsTitle}>
-            {label}: {total} of {rowCount} rows have that {isLabel ? 'label' : 'field'}
-          </div>
-        </div>
+        <div className={style.logsStatsTitle}>{label}</div>
         <div className={style.logsStatsBody}>
           {topRows.map((stat) => (
-            <LogLabelStatsRow key={stat.value} {...stat} active={stat.value === value} />
+            <LogLabelStatsRow key={stat.value} {...stat} active={false} total={total} />
           ))}
-          {insertActiveRow && activeRow && <LogLabelStatsRow key={activeRow.value} {...activeRow} active />}
           {otherCount > 0 && (
-            <LogLabelStatsRow key="__OTHERS__" count={otherCount} value="Other" proportion={otherProportion} />
+            <LogLabelStatsRow
+              key="__OTHERS__"
+              count={otherCount}
+              value="Other"
+              proportion={otherProportion}
+              total={total}
+            />
           )}
         </div>
       </div>
