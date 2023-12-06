@@ -640,6 +640,26 @@ func (d *dashboardStore) GetDashboardsByPluginID(ctx context.Context, query *das
 	}
 	return dashboards, nil
 }
+func (d *dashboardStore) GetSoftDeletedDashboard(ctx context.Context, query *dashboards.GetDashboardQuery) (*dashboards.Dashboard, error) {
+	var queryResult *dashboards.Dashboard
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+
+		dashboard := dashboards.Dashboard{OrgID: query.OrgID, UID: query.UID}
+		mustCols := []string{}
+		has, err := sess.Where("deleted IS NOT NULL").MustCols(mustCols...).Get(&dashboard)
+
+		if err != nil {
+			return err
+		} else if !has {
+			return dashboards.ErrDashboardNotFound
+		}
+
+		queryResult = &dashboard
+		return nil
+	})
+
+	return queryResult, err
+}
 
 func (d *dashboardStore) RestoreDashboard(ctx context.Context, dashboardUID string) error {
 	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
@@ -665,7 +685,7 @@ func (d *dashboardStore) DeleteDashboard(ctx context.Context, cmd *dashboards.De
 
 func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand, sess *db.Session, emitEntityEvent bool) error {
 	dashboard := dashboards.Dashboard{ID: cmd.ID, OrgID: cmd.OrgID}
-	has, err := sess.Get(&dashboard)
+	has, err := sess.Where("deleted IS NOT NULL").Get(&dashboard)
 	if err != nil {
 		return err
 	} else if !has {

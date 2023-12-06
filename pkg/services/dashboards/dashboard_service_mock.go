@@ -260,6 +260,32 @@ func (_m *FakeDashboardService) GetDashboardsSharedWithUser(ctx context.Context,
 	return r0, r1
 }
 
+// GetSoftDeletedDashboard provides a mock function with given fields: ctx, query
+func (_m *FakeDashboardService) GetSoftDeletedDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error) {
+	ret := _m.Called(ctx, query)
+
+	var r0 *Dashboard
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *GetDashboardQuery) (*Dashboard, error)); ok {
+		return rf(ctx, query)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *GetDashboardQuery) *Dashboard); ok {
+		r0 = rf(ctx, query)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*Dashboard)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *GetDashboardQuery) error); ok {
+		r1 = rf(ctx, query)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ImportDashboard provides a mock function with given fields: ctx, dto
 func (_m *FakeDashboardService) ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (*Dashboard, error) {
 	ret := _m.Called(ctx, dto)
