@@ -14,6 +14,8 @@ import { createLogLineLinks, getAllFields } from 'app/features/logs/components/l
 import { calculateLogsLabelStats, calculateStats } from 'app/features/logs/utils';
 import { TempoDatasource } from 'app/plugins/datasource/tempo/datasource';
 
+import { ExplainLogLine } from '../ExplainLogLine';
+
 import { LogDetailsRow } from './LogDetailsRow';
 
 export interface Props {
@@ -150,6 +152,9 @@ export const LogDetails = (props: Props) => {
       <div className={styles.logDetailsContainer}>
         <table className={styles.logDetailsTable}>
           <tbody>
+            <tr>
+              <th colSpan={7}>{true && <ExplainLogLine logLine={row.entry} />}</th>
+            </tr>
             {(labelsAvailable || fieldsAvailable) && (
               <tr>
                 <td colSpan={100} className={styles.logDetailsHeading} aria-label="Fields">
