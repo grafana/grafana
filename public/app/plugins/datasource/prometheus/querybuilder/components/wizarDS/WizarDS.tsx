@@ -6,8 +6,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Checkbox, Input, Spinner, useTheme2 } from '@grafana/ui';
 import store from 'app/core/store';
 
-import { PromVisualQuery } from '../../types';
-
 import { SuggestionContainer } from './SuggestionContainer';
 // @ts-ignore until we can get these added for icons
 import AI_Logo_color from './resources/AI_Logo_color.svg';
@@ -19,7 +17,6 @@ import { Interaction, Suggestion, SuggestionType } from './types';
 const { showStartingMessage, indicateCheckbox, addInteraction, updateInteraction } = stateSlice.actions;
 
 export type WizarDSProps = {
-  query: PromVisualQuery;
   closeDrawer: () => void;
   templates: Suggestion[];
 };
@@ -27,12 +24,10 @@ export type WizarDSProps = {
 const SKIP_STARTING_MESSAGE = 'SKIP_STARTING_MESSAGE';
 
 export const WizarDS = (props: WizarDSProps) => {
-  const { query, closeDrawer, templates } = props;
+  const { closeDrawer, templates } = props;
   const skipStartingMessage = store.getBool(SKIP_STARTING_MESSAGE, false);
 
-  const [state, dispatch] = useReducer(stateSlice.reducer, initialState(query, !skipStartingMessage));
-
-  // const [labelNames, setLabelNames] = useState<string[]>([]);
+  const [state, dispatch] = useReducer(stateSlice.reducer, initialState(!skipStartingMessage));
 
   const suggestions = state.interactions.reduce((acc, int) => acc + int.suggestions.length, 0);
 
@@ -45,27 +40,10 @@ export const WizarDS = (props: WizarDSProps) => {
     }
   };
 
-  // closeDrawer();
-  // const els = document.querySelector('[data-testid=clicker]') as HTMLElement;
-  // els?.click();
-
   useEffect(() => {
     // only scroll when an interaction has been added or the suggestions have been updated
     scrollToBottom();
   }, [state.interactions.length, suggestions]);
-
-  // useEffect(() => {
-  //   const fetchLabels = async () => {
-  //     let labelsIndex: Record<string, string[]>;
-  //     if (datasource.hasLabelsMatchAPISupport()) {
-  //       labelsIndex = await datasource.languageProvider.fetchSeriesLabelsMatch(query.metric);
-  //     } else {
-  //       labelsIndex = await datasource.languageProvider.fetchSeriesLabels(query.metric);
-  //     }
-  //     setLabelNames(Object.keys(labelsIndex));
-  //   };
-  //   fetchLabels();
-  // }, [query, datasource]);
 
   const theme = useTheme2();
   const styles = getStyles(theme);
@@ -75,31 +53,24 @@ export const WizarDS = (props: WizarDSProps) => {
       {/* WizarDS */}
       {/* header */}
       <div className={styles.header}>
-        <h3>WizarDS, aka the Wizard for Data Sources</h3>
+        <h3>Query wizard</h3>
         <Button icon="times" fill="text" variant="secondary" onClick={closeDrawer} />
       </div>
       {/* Starting message */}
       <div>
         <div className={styles.iconSection}>
-          <img src={AI_Logo_color} alt="AI logo color" /> WizarDS
+          <img src={`public/img/ai-icons/AI_Logo_color.svg`} alt="AI logo color" /> Query wizard
         </div>
         {state.showStartingMessage ? (
           <>
             <div className={styles.textPadding}>
-              The WizarDS can take you on a journey through the Prometheus UI using AI
+              The Query wizard can take you on a journey through the Prometheus UI using AI
             </div>
-            <div className={styles.textPadding}>The WizarDS will connect to OpenAI using your API key.</div>
-            {/* <div className={styles.dataList}>
-              <ul>
-                <li>Metrics</li>
-                <li>Labels</li>
-                <li>Metrics metadata</li>
-              </ul>
-            </div> */}
+            <div className={styles.textPadding}>The Query wizard will connect to OpenAI using your API key.</div>
             <div className={styles.textPadding}>Check with OpenAI to understand how your data is being used.</div>
             <div>
-              The WizarDS information comes from Grafana docs and is interpreted by ChatGPT when you enter a prompt.
-              Please be aware that ChatGPT can hallucinate.
+              The Query wizard information comes from Grafana docs and is interpreted by ChatGPT when you enter a
+              prompt. Please be aware of the limitations of using LLMs and double check the accuracy of the suggestions.
             </div>
 
             {/* don't show this message again, store in localstorage */}
@@ -133,43 +104,6 @@ export const WizarDS = (props: WizarDSProps) => {
           </>
         ) : (
           <div className={styles.bodySmall}>
-            {/* MAKE THIS TABLE RESPONSIVE */}
-            {/* FIT SUPER LONG METRICS AND LABELS IN HERE */}
-            {/* <div className={styles.textPadding}>Here is the metric you have selected:</div>
-            <div className={styles.infoContainerWrapper}>
-              <div className={styles.infoContainer}>
-                <table className={styles.metricTable}>
-                  <tbody>
-                    <tr>
-                      <td className={styles.metricTableName}>metric</td>
-                      <td className={styles.metricTableValue}>{state.query.metric}</td>
-                      <td>
-                        <Button
-                          fill="outline"
-                          variant="secondary"
-                          onClick={closeDrawer}
-                          className={styles.metricTableButton}
-                          size={'sm'}
-                        >
-                          Choose new metric
-                        </Button>
-                      </td>
-                    </tr>
-                    {state.query.labels.map((label, idx) => {
-                      const text = idx === 0 ? 'labels' : '';
-                      return (
-                        <tr key={`${label.label}-${idx}`}>
-                          <td>{text}</td>
-                          <td className={styles.metricTableValue}>{`${label.label}${label.op}${label.value}`}</td>
-                          <td> </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div> */}
-
             {/* Ask if you know what you want to query? */}
             {!state.askForHelp && state.interactions.length === 0 && (
               <>

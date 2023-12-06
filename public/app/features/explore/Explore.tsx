@@ -719,11 +719,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           <>{exploreContent}</>
           {config.featureToggles.wizarDSToggle && openTutorial && (
             <WizarDS
-              // remove all references to the query
-              query={{ metric: '', labels: [], operations: [] }}
               closeDrawer={() => this.setState({ openTutorial: false })}
-              datasource={datasourceInstance as PrometheusDatasource}
               // add component templates so any DS can use this
+              // add components based on some logic for the DS in the picker??
               templates={componentTemplates}
             />
           )}

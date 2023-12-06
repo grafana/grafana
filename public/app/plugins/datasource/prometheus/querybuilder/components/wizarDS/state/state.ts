@@ -1,6 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { PromVisualQuery } from '../../../types';
 import { Interaction, SuggestionType } from '../types';
 
 export const stateSlice = createSlice({
@@ -55,7 +54,7 @@ export const stateSlice = createSlice({
  * Initial state for wizarDS
  * @param query the prometheus query with metric and possible labels
  */
-export function initialState(query?: PromVisualQuery, showStartingMessage?: boolean): WizarDSState {
+export function initialState(showStartingMessage?: boolean): WizarDSState {
   return {
     showExplainer: false,
     showStartingMessage: showStartingMessage ?? true,
