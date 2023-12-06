@@ -779,7 +779,6 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			}
 
 			waitForTimeChannel(t, evalAppliedChan)
-			// duration metric has 0 values because of mocked clock that do not advance
 			expectedMetric := fmt.Sprintf(
 				`# HELP grafana_alerting_rule_evaluation_failures_total The total number of rule evaluation failures.
         	            # TYPE grafana_alerting_rule_evaluation_failures_total counter
