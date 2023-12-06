@@ -16422,7 +16422,7 @@ Markers given to this facet should _only_ define an
 in all gutters for the line).
  */
 const gutterLineClass = /*@__PURE__*/ Facet.define();
-const defaults$1 = {
+const defaults$2 = {
   class: '',
   renderEmptyElements: false,
   elementStyle: '',
@@ -16440,7 +16440,7 @@ Define an editor gutter. The order in which the gutters appear is
 determined by their extension priority.
  */
 function gutter(config) {
-  return [gutters(), activeGutters.of(Object.assign(Object.assign({}, defaults$1), config))];
+  return [gutters(), activeGutters.of(Object.assign(Object.assign({}, defaults$2), config))];
 }
 const unfixGutters = /*@__PURE__*/ Facet.define({
   combine: (values) => values.some((x) => x),
@@ -20969,6 +20969,20 @@ function delimitedStrategy(context, align, units, closing, closedAt) {
   }
   return context.baseIndent + (closed ? 0 : context.unit * units);
 }
+/**
+Creates an indentation strategy that, by default, indents
+continued lines one unit more than the node's base indentation.
+You can provide `except` to prevent indentation of lines that
+match a pattern (for example `/^else\b/` in `if`/`else`
+constructs), and you can change the amount of units used with the
+`units` option.
+ */
+function continuedIndent({ except, units = 1 } = {}) {
+  return (context) => {
+    let matchExcept = except && except.test(context.textAfter);
+    return context.baseIndent + (matchExcept ? 0 : units * context.unit);
+  };
+}
 const DontIndentBeyond = 200;
 /**
 Enables reindentation on input. When a language defines an
@@ -23499,7 +23513,7 @@ const baseTheme$3 = /*@__PURE__*/ EditorView.baseTheme({
   },
 });
 
-const defaults = {
+const defaults$1 = {
   brackets: ['(', '[', '{', "'", '"'],
   before: ')]}:;>',
   stringPrefixes: [],
@@ -23551,7 +23565,7 @@ function closing(ch) {
   return fromCodePoint(ch < 128 ? ch : ch + 1);
 }
 function config(state, pos) {
-  return state.languageDataAt('closeBrackets', pos)[0] || defaults;
+  return state.languageDataAt('closeBrackets', pos)[0] || defaults$1;
 }
 const android = typeof navigator === 'object' && /*@__PURE__*/ /Android\b/.test(navigator.userAgent);
 const inputHandler = /*@__PURE__*/ EditorView.inputHandler.of((view, from, to, insert) => {
@@ -23583,7 +23597,7 @@ const deleteBracketPair = ({ state, dispatch }) => {
     return false;
   }
   let conf = config(state, state.selection.main.head);
-  let tokens = conf.brackets || defaults.brackets;
+  let tokens = conf.brackets || defaults$1.brackets;
   let dont = null,
     changes = state.changeByRange((range) => {
       if (range.empty) {
@@ -23622,13 +23636,13 @@ take care of running this for user input.)
  */
 function insertBracket(state, bracket) {
   let conf = config(state, state.selection.main.head);
-  let tokens = conf.brackets || defaults.brackets;
+  let tokens = conf.brackets || defaults$1.brackets;
   for (let tok of tokens) {
     let closed = closing(codePointAt(tok, 0));
     if (bracket == tok) {
       return closed == tok
         ? handleSame(state, tok, tokens.indexOf(tok + tok + tok) > -1, conf)
-        : handleOpen(state, tok, closed, conf.before || defaults.before);
+        : handleOpen(state, tok, closed, conf.before || defaults$1.before);
     }
     if (bracket == closed && closedBracketAt(state, state.selection.main.from)) {
       return handleClose(state, tok, closed);
@@ -23704,7 +23718,7 @@ function handleClose(state, _open, close) {
 // Handles cases where the open and close token are the same, and
 // possibly triple quotes (as in `"""abc"""`-style quoting).
 function handleSame(state, token, allowTriple, config) {
-  let stringPrefixes = config.stringPrefixes || defaults.stringPrefixes;
+  let stringPrefixes = config.stringPrefixes || defaults$1.stringPrefixes;
   let dont = null,
     changes = state.changeByRange((range) => {
       if (!range.empty) {
@@ -27655,150 +27669,6 @@ the highlight style).
  */
 const oneDark = [oneDarkTheme, /*@__PURE__*/ syntaxHighlighting(oneDarkHighlightStyle)];
 
-// This file a copy of https://github.com/codemirror/basic-setup/blob/main/src/codemirror.ts
-// (The superfluous function calls around the list of extensions work
-// around current limitations in tree-shaking software.)
-/// This is an extension value that just pulls together a number of
-/// extensions that you might want in a basic editor. It is meant as a
-/// convenient helper to quickly set up CodeMirror without installing
-/// and importing a lot of separate packages.
-///
-/// Specifically, it includes...
-///
-///  - [the default command bindings](#commands.defaultKeymap)
-///  - [line numbers](#view.lineNumbers)
-///  - [special character highlighting](#view.highlightSpecialChars)
-///  - [the undo history](#commands.history)
-///  - [a fold gutter](#language.foldGutter)
-///  - [custom selection drawing](#view.drawSelection)
-///  - [drop cursor](#view.dropCursor)
-///  - [multiple selections](#state.EditorState^allowMultipleSelections)
-///  - [reindentation on input](#language.indentOnInput)
-///  - [the default highlight style](#language.defaultHighlightStyle) (as fallback)
-///  - [bracket matching](#language.bracketMatching)
-///  - [bracket closing](#autocomplete.closeBrackets)
-///  - [autocompletion](#autocomplete.autocompletion)
-///  - [rectangular selection](#view.rectangularSelection) and [crosshair cursor](#view.crosshairCursor)
-///  - [active line highlighting](#view.highlightActiveLine)
-///  - [active line gutter highlighting](#view.highlightActiveLineGutter)
-///  - [selection match highlighting](#search.highlightSelectionMatches)
-///  - [search](#search.searchKeymap)
-///  - [linting](#lint.lintKeymap)
-///
-/// (You'll probably want to add some language package to your setup
-/// too.)
-///
-/// This extension does not allow customization. The idea is that,
-/// once you decide you want to configure your editor more precisely,
-/// you take this package's source (which is just a bunch of imports
-/// and an array literal), copy it into your own code, and adjust it
-/// as desired.
-const basicSetup = (() => [
-  lineNumbers(),
-  highlightActiveLineGutter(),
-  highlightSpecialChars(),
-  history(),
-  foldGutter(),
-  drawSelection(),
-  dropCursor(),
-  EditorState.allowMultipleSelections.of(true),
-  indentOnInput(),
-  syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
-  bracketMatching(),
-  closeBrackets(),
-  autocompletion(),
-  rectangularSelection(),
-  crosshairCursor(),
-  highlightActiveLine(),
-  highlightSelectionMatches(),
-  keymap.of([
-    ...closeBracketsKeymap,
-    ...defaultKeymap,
-    ...searchKeymap,
-    ...historyKeymap,
-    ...foldKeymap,
-    ...completionKeymap,
-    ...lintKeymap,
-  ]),
-])();
-/// A minimal set of extensions to create a functional editor. Only
-/// includes [the default keymap](#commands.defaultKeymap), [undo
-/// history](#commands.history), [special character
-/// highlighting](#view.highlightSpecialChars), [custom selection
-/// drawing](#view.drawSelection), and [default highlight
-/// style](#language.defaultHighlightStyle).
-const readonlySetup = (() => [
-  lineNumbers(),
-  highlightSpecialChars(),
-  foldGutter(),
-  drawSelection(),
-  dropCursor(),
-  syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
-  bracketMatching(),
-  closeBrackets(),
-])();
-
-const dontComplete = ['Comment', 'Docblock', 'String', 'FString', 'RString', 'SString'];
-const globals = ['false', 'null', 'true']
-  .map((n) => ({ label: n, type: 'constant' }))
-  .concat(
-    ['bool', 'float', 'int', 'int8', 'int16', 'int32', 'int64', 'int128', 'text', 'date', 'time', 'timestamp'].map(
-      (n) => ({ label: n, type: 'type' })
-    )
-  )
-  .concat(
-    [
-      // aggregate-functions
-      'any',
-      'average',
-      'concat_array',
-      'count',
-      'every',
-      'max',
-      'min',
-      'stddev',
-      'sum',
-      // file-reading-functions
-      'read_csv',
-      'read_parquet',
-      // list-functions
-      'all',
-      'map',
-      'zip',
-      '_eq',
-      '_is_null',
-      // misc-functions
-      'from_text',
-      // string-functions
-      'lower',
-      'upper',
-      // window-functions
-      'lag',
-      'lead',
-      'first',
-      'last',
-      'rank',
-      'rank_dense',
-      'row_number',
-    ].map((n) => ({ label: n, type: 'function' }))
-  )
-  .concat(
-    ['aggregate', 'derive', 'filter', 'from', 'group', 'join', 'select', 'sort', 'take', 'window'].map((n) => ({
-      label: n,
-      type: 'keyword',
-    }))
-  )
-  .concat(['std'].map((n) => ({ label: n, type: 'namespace' })));
-const snippets = [
-  // snippetCompletion('from ${table_table}\nselect {${column_name}}\nfilter ${column_name} == ${condition}\ntake {amount}', {
-  //   label: 'from-select-filter-take',
-  //   detail: 'snippet',
-  //   type: 'text',
-  // }),
-];
-/// Autocompletion for built-in PRQL globals and keywords.
-const globalCompletion = ifNotIn(dontComplete, completeFromList(globals.concat(snippets)));
-
 /**
 A parse stack. These are used internally by the parser to track
 parsing progress. They also provide some properties and methods
@@ -28813,6 +28683,31 @@ class TokenGroup {
 }
 TokenGroup.prototype.contextual = TokenGroup.prototype.fallback = TokenGroup.prototype.extend = false;
 TokenGroup.prototype.fallback = TokenGroup.prototype.extend = false;
+/**
+`@external tokens` declarations in the grammar should resolve to
+an instance of this class.
+ */
+class ExternalTokenizer {
+  /**
+    Create a tokenizer. The first argument is the function that,
+    given an input stream, scans for the types of tokens it
+    recognizes at the stream's position, and calls
+    [`acceptToken`](#lr.InputStream.acceptToken) when it finds
+    one.
+     */
+  constructor(
+    /**
+    @internal
+     */
+    token,
+    options = {}
+  ) {
+    this.token = token;
+    this.contextual = !!options.contextual;
+    this.fallback = !!options.fallback;
+    this.extend = !!options.extend;
+  }
+}
 // Tokenizer data is stored a big uint16 array containing, for each
 // state:
 //
@@ -29853,6 +29748,879 @@ function getSpecializer(spec) {
   return spec.get;
 }
 
+// This file was generated by lezer-generator. You probably shouldn't edit it.
+const whitespace = 36,
+  LineComment = 1,
+  BlockComment = 2,
+  String$1 = 3,
+  Number = 4,
+  Bool = 5,
+  Null = 6,
+  ParenL = 7,
+  ParenR = 8,
+  BraceL = 9,
+  BraceR = 10,
+  BracketL = 11,
+  BracketR = 12,
+  Semi = 13,
+  Dot = 14,
+  Operator = 15,
+  Punctuation = 16,
+  SpecialVar = 17,
+  Identifier = 18,
+  QuotedIdentifier = 19,
+  Keyword = 20,
+  Type = 21,
+  Bits = 22,
+  Bytes = 23,
+  Builtin = 24;
+
+function isAlpha(ch) {
+  return (
+    (ch >= 65 /* A */ && ch <= 90) /* Z */ ||
+    (ch >= 97 /* a */ && ch <= 122) /* z */ ||
+    (ch >= 48 /* _0 */ && ch <= 57) /* _9 */
+  );
+}
+function isHexDigit(ch) {
+  return (
+    (ch >= 48 /* _0 */ && ch <= 57) /* _9 */ ||
+    (ch >= 97 /* a */ && ch <= 102) /* f */ ||
+    (ch >= 65 /* A */ && ch <= 70) /* F */
+  );
+}
+function readLiteral(input, endQuote, backslashEscapes) {
+  for (let escaped = false; ; ) {
+    if (input.next < 0) {
+      return;
+    }
+    if (input.next == endQuote && !escaped) {
+      input.advance();
+      return;
+    }
+    escaped = backslashEscapes && !escaped && input.next == 92 /* Backslash */;
+    input.advance();
+  }
+}
+function readDoubleDollarLiteral(input) {
+  for (;;) {
+    if (input.next < 0 || input.peek(1) < 0) {
+      return;
+    }
+    if (input.next == 36 /* Dollar */ && input.peek(1) == 36 /* Dollar */) {
+      input.advance(2);
+      return;
+    }
+    input.advance();
+  }
+}
+function readPLSQLQuotedLiteral(input, openDelim) {
+  let matchingDelim = '[{<('.indexOf(String.fromCharCode(openDelim));
+  let closeDelim = matchingDelim < 0 ? openDelim : ']}>)'.charCodeAt(matchingDelim);
+  for (;;) {
+    if (input.next < 0) {
+      return;
+    }
+    if (input.next == closeDelim && input.peek(1) == 39 /* SingleQuote */) {
+      input.advance(2);
+      return;
+    }
+    input.advance();
+  }
+}
+function readWord(input, result) {
+  for (;;) {
+    if (input.next != 95 /* Underscore */ && !isAlpha(input.next)) {
+      break;
+    }
+    if (result != null) {
+      result += String.fromCharCode(input.next);
+    }
+    input.advance();
+  }
+  return result;
+}
+function readWordOrQuoted(input) {
+  if (input.next == 39 /* SingleQuote */ || input.next == 34 /* DoubleQuote */ || input.next == 96 /* Backtick */) {
+    let quote = input.next;
+    input.advance();
+    readLiteral(input, quote, false);
+  } else {
+    readWord(input);
+  }
+}
+function readBits(input, endQuote) {
+  while (input.next == 48 /* _0 */ || input.next == 49 /* _1 */) {
+    input.advance();
+  }
+  if (endQuote && input.next == endQuote) {
+    input.advance();
+  }
+}
+function readNumber(input, sawDot) {
+  for (;;) {
+    if (input.next == 46 /* Dot */) {
+      if (sawDot) {
+        break;
+      }
+      sawDot = true;
+    } else if (input.next < 48 /* _0 */ || input.next > 57 /* _9 */) {
+      break;
+    }
+    input.advance();
+  }
+  if (input.next == 69 /* E */ || input.next == 101 /* e */) {
+    input.advance();
+    if (input.next == 43 /* Plus */ || input.next == 45 /* Dash */) {
+      input.advance();
+    }
+    while (input.next >= 48 /* _0 */ && input.next <= 57 /* _9 */) {
+      input.advance();
+    }
+  }
+}
+function eol(input) {
+  while (!((input.next < 0 || input.next == 10) /* Newline */)) {
+    input.advance();
+  }
+}
+function inString(ch, str) {
+  for (let i = 0; i < str.length; i++) {
+    if (str.charCodeAt(i) == ch) {
+      return true;
+    }
+  }
+  return false;
+}
+const Space = ' \t\r\n';
+function keywords(keywords, types, builtin) {
+  let result = Object.create(null);
+  result['true'] = result['false'] = Bool;
+  result['null'] = result['unknown'] = Null;
+  for (let kw of keywords.split(' ')) {
+    if (kw) {
+      result[kw] = Keyword;
+    }
+  }
+  for (let tp of types.split(' ')) {
+    if (tp) {
+      result[tp] = Type;
+    }
+  }
+  for (let kw of (builtin || '').split(' ')) {
+    if (kw) {
+      result[kw] = Builtin;
+    }
+  }
+  return result;
+}
+const SQLTypes =
+  'array binary bit boolean char character clob date decimal double float int integer interval large national nchar nclob numeric object precision real smallint time timestamp varchar varying ';
+const SQLKeywords =
+  'absolute action add after all allocate alter and any are as asc assertion at authorization before begin between both breadth by call cascade cascaded case cast catalog check close collate collation column commit condition connect connection constraint constraints constructor continue corresponding count create cross cube current current_date current_default_transform_group current_transform_group_for_type current_path current_role current_time current_timestamp current_user cursor cycle data day deallocate declare default deferrable deferred delete depth deref desc describe descriptor deterministic diagnostics disconnect distinct do domain drop dynamic each else elseif end end-exec equals escape except exception exec execute exists exit external fetch first for foreign found from free full function general get global go goto grant group grouping handle having hold hour identity if immediate in indicator initially inner inout input insert intersect into is isolation join key language last lateral leading leave left level like limit local localtime localtimestamp locator loop map match method minute modifies module month names natural nesting new next no none not of old on only open option or order ordinality out outer output overlaps pad parameter partial path prepare preserve primary prior privileges procedure public read reads recursive redo ref references referencing relative release repeat resignal restrict result return returns revoke right role rollback rollup routine row rows savepoint schema scroll search second section select session session_user set sets signal similar size some space specific specifictype sql sqlexception sqlstate sqlwarning start state static system_user table temporary then timezone_hour timezone_minute to trailing transaction translation treat trigger under undo union unique unnest until update usage user using value values view when whenever where while with without work write year zone ';
+const defaults = {
+  backslashEscapes: false,
+  hashComments: false,
+  spaceAfterDashes: false,
+  slashComments: false,
+  doubleQuotedStrings: false,
+  doubleDollarQuotedStrings: false,
+  unquotedBitLiterals: false,
+  treatBitsAsBytes: false,
+  charSetCasts: false,
+  plsqlQuotingMechanism: false,
+  operatorChars: '*+-%<>!=&|~^/',
+  specialVar: '?',
+  identifierQuotes: '"',
+  words: /*@__PURE__*/ keywords(SQLKeywords, SQLTypes),
+};
+function dialect(spec, kws, types, builtin) {
+  let dialect = {};
+  for (let prop in defaults) {
+    dialect[prop] = (spec.hasOwnProperty(prop) ? spec : defaults)[prop];
+  }
+  if (kws) {
+    dialect.words = keywords(kws, types || '', builtin);
+  }
+  return dialect;
+}
+function tokensFor(d) {
+  return new ExternalTokenizer((input) => {
+    let _a;
+    let { next } = input;
+    input.advance();
+    if (inString(next, Space)) {
+      while (inString(input.next, Space)) {
+        input.advance();
+      }
+      input.acceptToken(whitespace);
+    } else if (next == 36 /* Dollar */ && input.next == 36 /* Dollar */ && d.doubleDollarQuotedStrings) {
+      readDoubleDollarLiteral(input);
+      input.acceptToken(String$1);
+    } else if (next == 39 /* SingleQuote */ || (next == 34 /* DoubleQuote */ && d.doubleQuotedStrings)) {
+      readLiteral(input, next, d.backslashEscapes);
+      input.acceptToken(String$1);
+    } else if (
+      (next == 35 /* Hash */ && d.hashComments) ||
+      (next == 47 /* Slash */ && input.next == 47 /* Slash */ && d.slashComments)
+    ) {
+      eol(input);
+      input.acceptToken(LineComment);
+    } else if (
+      next == 45 /* Dash */ &&
+      input.next == 45 /* Dash */ &&
+      (!d.spaceAfterDashes || input.peek(1) == 32) /* Space */
+    ) {
+      eol(input);
+      input.acceptToken(LineComment);
+    } else if (next == 47 /* Slash */ && input.next == 42 /* Star */) {
+      input.advance();
+      for (let depth = 1; ; ) {
+        let cur = input.next;
+        if (input.next < 0) {
+          break;
+        }
+        input.advance();
+        if (cur == 42 /* Star */ && input.next == 47 /* Slash */) {
+          depth--;
+          input.advance();
+          if (!depth) {
+            break;
+          }
+        } else if (cur == 47 /* Slash */ && input.next == 42 /* Star */) {
+          depth++;
+          input.advance();
+        }
+      }
+      input.acceptToken(BlockComment);
+    } else if ((next == 101 /* e */ || next == 69) /* E */ && input.next == 39 /* SingleQuote */) {
+      input.advance();
+      readLiteral(input, 39 /* SingleQuote */, true);
+    } else if ((next == 110 /* n */ || next == 78) /* N */ && input.next == 39 /* SingleQuote */ && d.charSetCasts) {
+      input.advance();
+      readLiteral(input, 39 /* SingleQuote */, d.backslashEscapes);
+      input.acceptToken(String$1);
+    } else if (next == 95 /* Underscore */ && d.charSetCasts) {
+      for (let i = 0; ; i++) {
+        if (input.next == 39 /* SingleQuote */ && i > 1) {
+          input.advance();
+          readLiteral(input, 39 /* SingleQuote */, d.backslashEscapes);
+          input.acceptToken(String$1);
+          break;
+        }
+        if (!isAlpha(input.next)) {
+          break;
+        }
+        input.advance();
+      }
+    } else if (
+      d.plsqlQuotingMechanism &&
+      (next == 113 /* q */ || next == 81) /* Q */ &&
+      input.next == 39 /* SingleQuote */ &&
+      input.peek(1) > 0 &&
+      !inString(input.peek(1), Space)
+    ) {
+      let openDelim = input.peek(1);
+      input.advance(2);
+      readPLSQLQuotedLiteral(input, openDelim);
+      input.acceptToken(String$1);
+    } else if (next == 40 /* ParenL */) {
+      input.acceptToken(ParenL);
+    } else if (next == 41 /* ParenR */) {
+      input.acceptToken(ParenR);
+    } else if (next == 123 /* BraceL */) {
+      input.acceptToken(BraceL);
+    } else if (next == 125 /* BraceR */) {
+      input.acceptToken(BraceR);
+    } else if (next == 91 /* BracketL */) {
+      input.acceptToken(BracketL);
+    } else if (next == 93 /* BracketR */) {
+      input.acceptToken(BracketR);
+    } else if (next == 59 /* Semi */) {
+      input.acceptToken(Semi);
+    } else if (d.unquotedBitLiterals && next == 48 /* _0 */ && input.next == 98 /* b */) {
+      input.advance();
+      readBits(input);
+      input.acceptToken(Bits);
+    } else if (
+      (next == 98 /* b */ || next == 66) /* B */ &&
+      (input.next == 39 /* SingleQuote */ || input.next == 34) /* DoubleQuote */
+    ) {
+      const quoteStyle = input.next;
+      input.advance();
+      if (d.treatBitsAsBytes) {
+        readLiteral(input, quoteStyle, d.backslashEscapes);
+        input.acceptToken(Bytes);
+      } else {
+        readBits(input, quoteStyle);
+        input.acceptToken(Bits);
+      }
+    } else if (
+      (next == 48 /* _0 */ && (input.next == 120 /* x */ || input.next == 88) /* X */) ||
+      ((next == 120 /* x */ || next == 88) /* X */ && input.next == 39) /* SingleQuote */
+    ) {
+      let quoted = input.next == 39; /* SingleQuote */
+      input.advance();
+      while (isHexDigit(input.next)) {
+        input.advance();
+      }
+      if (quoted && input.next == 39 /* SingleQuote */) {
+        input.advance();
+      }
+      input.acceptToken(Number);
+    } else if (next == 46 /* Dot */ && input.next >= 48 /* _0 */ && input.next <= 57 /* _9 */) {
+      readNumber(input, true);
+      input.acceptToken(Number);
+    } else if (next == 46 /* Dot */) {
+      input.acceptToken(Dot);
+    } else if (next >= 48 /* _0 */ && next <= 57 /* _9 */) {
+      readNumber(input, false);
+      input.acceptToken(Number);
+    } else if (inString(next, d.operatorChars)) {
+      while (inString(input.next, d.operatorChars)) {
+        input.advance();
+      }
+      input.acceptToken(Operator);
+    } else if (inString(next, d.specialVar)) {
+      if (input.next == next) {
+        input.advance();
+      }
+      readWordOrQuoted(input);
+      input.acceptToken(SpecialVar);
+    } else if (inString(next, d.identifierQuotes)) {
+      readLiteral(input, next, false);
+      input.acceptToken(QuotedIdentifier);
+    } else if (next == 58 /* Colon */ || next == 44 /* Comma */) {
+      input.acceptToken(Punctuation);
+    } else if (isAlpha(next)) {
+      let word = readWord(input, String.fromCharCode(next));
+      input.acceptToken(
+        input.next == 46 /* Dot */
+          ? Identifier
+          : (_a = d.words[word.toLowerCase()]) !== null && _a !== void 0
+          ? _a
+          : Identifier
+      );
+    }
+  });
+}
+const tokens = /*@__PURE__*/ tokensFor(defaults);
+
+// This file was generated by lezer-generator. You probably shouldn't edit it.
+const parser$1 = /*@__PURE__*/ LRParser.deserialize({
+  version: 14,
+  states:
+    "%vQ]QQOOO#wQRO'#DSO$OQQO'#CwO%eQQO'#CxO%lQQO'#CyO%sQQO'#CzOOQQ'#DS'#DSOOQQ'#C}'#C}O'UQRO'#C{OOQQ'#Cv'#CvOOQQ'#C|'#C|Q]QQOOQOQQOOO'`QQO'#DOO(xQRO,59cO)PQQO,59cO)UQQO'#DSOOQQ,59d,59dO)cQQO,59dOOQQ,59e,59eO)jQQO,59eOOQQ,59f,59fO)qQQO,59fOOQQ-E6{-E6{OOQQ,59b,59bOOQQ-E6z-E6zOOQQ,59j,59jOOQQ-E6|-E6|O+VQRO1G.}O+^QQO,59cOOQQ1G/O1G/OOOQQ1G/P1G/POOQQ1G/Q1G/QP+kQQO'#C}O+rQQO1G.}O)PQQO,59cO,PQQO'#Cw",
+  stateData:
+    ",[~OtOSPOSQOS~ORUOSUOTUOUUOVROXSOZTO]XO^QO_UO`UOaPObPOcPOdUOeUOfUOgUOhUO~O^]ORvXSvXTvXUvXVvXXvXZvX]vX_vX`vXavXbvXcvXdvXevXfvXgvXhvX~OsvX~P!jOa_Ob_Oc_O~ORUOSUOTUOUUOVROXSOZTO^tO_UO`UOa`Ob`Oc`OdUOeUOfUOgUOhUO~OWaO~P$ZOYcO~P$ZO[eO~P$ZORUOSUOTUOUUOVROXSOZTO^QO_UO`UOaPObPOcPOdUOeUOfUOgUOhUO~O]hOsoX~P%zOajObjOcjO~O^]ORkaSkaTkaUkaVkaXkaZka]ka_ka`kaakabkackadkaekafkagkahka~Oska~P'kO^]O~OWvXYvX[vX~P!jOWnO~P$ZOYoO~P$ZO[pO~P$ZO^]ORkiSkiTkiUkiVkiXkiZki]ki_ki`kiakibkickidkiekifkigkihki~Oski~P)xOWkaYka[ka~P'kO]hO~P$ZOWkiYki[ki~P)xOasObsOcsO~O",
+  goto: '#hwPPPPPPPPPPPPPPPPPPPPPPPPPPx||||!Y!^!d!xPPP#[TYOZeUORSTWZbdfqT[OZQZORiZSWOZQbRQdSQfTZgWbdfqQ^PWk^lmrQl_Qm`RrseVORSTWZbdfq',
+  nodeNames:
+    '⚠ LineComment BlockComment String Number Bool Null ( ) { } [ ] ; . Operator Punctuation SpecialVar Identifier QuotedIdentifier Keyword Type Bits Bytes Builtin Script Statement CompositeIdentifier Parens Braces Brackets Statement',
+  maxTerm: 38,
+  skippedNodes: [0, 1, 2],
+  repeatNodeCount: 3,
+  tokenData: 'RORO',
+  tokenizers: [0, tokens],
+  topRules: { Script: [0, 25] },
+  tokenPrec: 0,
+});
+
+function tokenBefore(tree) {
+  let cursor = tree.cursor().moveTo(tree.from, -1);
+  while (/Comment/.test(cursor.name)) {
+    cursor.moveTo(cursor.from, -1);
+  }
+  return cursor.node;
+}
+function idName(doc, node) {
+  let text = doc.sliceString(node.from, node.to);
+  let quoted = /^([`'"])(.*)\1$/.exec(text);
+  return quoted ? quoted[2] : text;
+}
+function plainID(node) {
+  return node && (node.name == 'Identifier' || node.name == 'QuotedIdentifier');
+}
+function pathFor(doc, id) {
+  if (id.name == 'CompositeIdentifier') {
+    let path = [];
+    for (let ch = id.firstChild; ch; ch = ch.nextSibling) {
+      if (plainID(ch)) {
+        path.push(idName(doc, ch));
+      }
+    }
+    return path;
+  }
+  return [idName(doc, id)];
+}
+function parentsFor(doc, node) {
+  for (let path = []; ; ) {
+    if (!node || node.name != '.') {
+      return path;
+    }
+    let name = tokenBefore(node);
+    if (!plainID(name)) {
+      return path;
+    }
+    path.unshift(idName(doc, name));
+    node = tokenBefore(name);
+  }
+}
+function sourceContext(state, startPos) {
+  let pos = syntaxTree(state).resolveInner(startPos, -1);
+  let aliases = getAliases(state.doc, pos);
+  if (pos.name == 'Identifier' || pos.name == 'QuotedIdentifier' || pos.name == 'Keyword') {
+    return {
+      from: pos.from,
+      quoted: pos.name == 'QuotedIdentifier' ? state.doc.sliceString(pos.from, pos.from + 1) : null,
+      parents: parentsFor(state.doc, tokenBefore(pos)),
+      aliases,
+    };
+  }
+  if (pos.name == '.') {
+    return { from: startPos, quoted: null, parents: parentsFor(state.doc, pos), aliases };
+  } else {
+    return { from: startPos, quoted: null, parents: [], empty: true, aliases };
+  }
+}
+const EndFrom = /*@__PURE__*/ new Set(
+  /*@__PURE__*/ 'where group having order union intersect except all distinct limit offset fetch for'.split(' ')
+);
+function getAliases(doc, at) {
+  let statement;
+  for (let parent = at; !statement; parent = parent.parent) {
+    if (!parent) {
+      return null;
+    }
+    if (parent.name == 'Statement') {
+      statement = parent;
+    }
+  }
+  let aliases = null;
+  for (let scan = statement.firstChild, sawFrom = false, prevID = null; scan; scan = scan.nextSibling) {
+    let kw = scan.name == 'Keyword' ? doc.sliceString(scan.from, scan.to).toLowerCase() : null;
+    let alias = null;
+    if (!sawFrom) {
+      sawFrom = kw == 'from';
+    } else if (kw == 'as' && prevID && plainID(scan.nextSibling)) {
+      alias = idName(doc, scan.nextSibling);
+    } else if (kw && EndFrom.has(kw)) {
+      break;
+    } else if (prevID && plainID(scan)) {
+      alias = idName(doc, scan);
+    }
+    if (alias) {
+      if (!aliases) {
+        aliases = Object.create(null);
+      }
+      aliases[alias] = pathFor(doc, prevID);
+    }
+    prevID = /Identifier$/.test(scan.name) ? scan : null;
+  }
+  return aliases;
+}
+function maybeQuoteCompletions(quote, completions) {
+  if (!quote) {
+    return completions;
+  }
+  return completions.map((c) =>
+    Object.assign(Object.assign({}, c), { label: quote + c.label + quote, apply: undefined })
+  );
+}
+const Span = /^\w*$/,
+  QuotedSpan = /^[`'"]?\w*[`'"]?$/;
+class CompletionLevel {
+  constructor() {
+    this.list = [];
+    this.children = undefined;
+  }
+  child(name, idQuote) {
+    let children = this.children || (this.children = Object.create(null));
+    let found = children[name];
+    if (found) {
+      return found;
+    }
+    if (name) {
+      this.list.push(nameCompletion(name, 'type', idQuote));
+    }
+    return (children[name] = new CompletionLevel());
+  }
+  addCompletions(list) {
+    for (let option of list) {
+      let found = this.list.findIndex((o) => o.label == option.label);
+      if (found > -1) {
+        this.list[found] = option;
+      } else {
+        this.list.push(option);
+      }
+    }
+  }
+}
+function nameCompletion(label, type, idQuote) {
+  if (!/[^\w\xb5-\uffff]/.test(label)) {
+    return { label, type };
+  }
+  return { label, type, apply: idQuote + label + idQuote };
+}
+function completeFromSchema(schema, tables, schemas, defaultTableName, defaultSchemaName, dialect) {
+  let _a;
+  let top = new CompletionLevel();
+  let idQuote =
+    ((_a = dialect === null || dialect === void 0 ? void 0 : dialect.spec.identifierQuotes) === null || _a === void 0
+      ? void 0
+      : _a[0]) || '"';
+  let defaultSchema = top.child(defaultSchemaName || '', idQuote);
+  for (let table in schema) {
+    let parts = table.replace(/\\?\./g, (p) => (p == '.' ? '\0' : p)).split('\0');
+    let base = parts.length == 1 ? defaultSchema : top;
+    for (let part of parts) {
+      base = base.child(part.replace(/\\\./g, '.'), idQuote);
+    }
+    for (let option of schema[table]) {
+      if (option) {
+        base.list.push(typeof option === 'string' ? nameCompletion(option, 'property', idQuote) : option);
+      }
+    }
+  }
+  if (tables) {
+    defaultSchema.addCompletions(tables);
+  }
+  if (schemas) {
+    top.addCompletions(schemas);
+  }
+  top.addCompletions(defaultSchema.list);
+  if (defaultTableName) {
+    top.addCompletions(defaultSchema.child(defaultTableName, idQuote).list);
+  }
+  return (context) => {
+    let { parents, from, quoted, empty, aliases } = sourceContext(context.state, context.pos);
+    if (empty && !context.explicit) {
+      return null;
+    }
+    if (aliases && parents.length == 1) {
+      parents = aliases[parents[0]] || parents;
+    }
+    let level = top;
+    for (let name of parents) {
+      while (!level.children || !level.children[name]) {
+        if (level == top) {
+          level = defaultSchema;
+        } else if (level == defaultSchema && defaultTableName) {
+          level = level.child(defaultTableName, idQuote);
+        } else {
+          return null;
+        }
+      }
+      level = level.child(name, idQuote);
+    }
+    let quoteAfter = quoted && context.state.sliceDoc(context.pos, context.pos + 1) == quoted;
+    let options = level.list;
+    if (level == top && aliases) {
+      options = options.concat(Object.keys(aliases).map((name) => ({ label: name, type: 'constant' })));
+    }
+    return {
+      from,
+      to: quoteAfter ? context.pos + 1 : undefined,
+      options: maybeQuoteCompletions(quoted, options),
+      validFor: quoted ? QuotedSpan : Span,
+    };
+  };
+}
+function completeKeywords(keywords, upperCase) {
+  let completions = Object.keys(keywords).map((keyword) => ({
+    label: upperCase ? keyword.toUpperCase() : keyword,
+    type: keywords[keyword] == Type ? 'type' : keywords[keyword] == Keyword ? 'keyword' : 'variable',
+    boost: -1,
+  }));
+  return ifNotIn(
+    ['QuotedIdentifier', 'SpecialVar', 'String', 'LineComment', 'BlockComment', '.'],
+    completeFromList(completions)
+  );
+}
+
+let parser$2 = /*@__PURE__*/ parser$1.configure({
+  props: [
+    /*@__PURE__*/ indentNodeProp.add({
+      Statement: /*@__PURE__*/ continuedIndent(),
+    }),
+    /*@__PURE__*/ foldNodeProp.add({
+      Statement(tree) {
+        return { from: tree.firstChild.to, to: tree.to };
+      },
+      BlockComment(tree) {
+        return { from: tree.from + 2, to: tree.to - 2 };
+      },
+    }),
+    /*@__PURE__*/ styleTags({
+      Keyword: tags.keyword,
+      Type: tags.typeName,
+      Builtin: /*@__PURE__*/ tags.standard(tags.name),
+      Bits: tags.number,
+      Bytes: tags.string,
+      Bool: tags.bool,
+      Null: tags.null,
+      Number: tags.number,
+      String: tags.string,
+      Identifier: tags.name,
+      QuotedIdentifier: /*@__PURE__*/ tags.special(tags.string),
+      SpecialVar: /*@__PURE__*/ tags.special(tags.name),
+      LineComment: tags.lineComment,
+      BlockComment: tags.blockComment,
+      Operator: tags.operator,
+      'Semi Punctuation': tags.punctuation,
+      '( )': tags.paren,
+      '{ }': tags.brace,
+      '[ ]': tags.squareBracket,
+    }),
+  ],
+});
+/**
+Represents an SQL dialect.
+ */
+class SQLDialect {
+  constructor(
+    /**
+    @internal
+     */
+    dialect,
+    /**
+    The language for this dialect.
+     */
+    language,
+    /**
+    The spec used to define this dialect.
+     */
+    spec
+  ) {
+    this.dialect = dialect;
+    this.language = language;
+    this.spec = spec;
+  }
+  /**
+    Returns the language for this dialect as an extension.
+     */
+  get extension() {
+    return this.language.extension;
+  }
+  /**
+    Define a new dialect.
+     */
+  static define(spec) {
+    let d = dialect(spec, spec.keywords, spec.types, spec.builtin);
+    let language = LRLanguage.define({
+      name: 'sql',
+      parser: parser$2.configure({
+        tokenizers: [{ from: tokens, to: tokensFor(d) }],
+      }),
+      languageData: {
+        commentTokens: { line: '--', block: { open: '/*', close: '*/' } },
+        closeBrackets: { brackets: ['(', '[', '{', "'", '"', '`'] },
+      },
+    });
+    return new SQLDialect(d, language, spec);
+  }
+}
+/**
+Returns a completion source that provides keyword completion for
+the given SQL dialect.
+ */
+function keywordCompletionSource(dialect, upperCase = false) {
+  return completeKeywords(dialect.dialect.words, upperCase);
+}
+/**
+FIXME remove on 1.0 @internal
+ */
+function keywordCompletion(dialect, upperCase = false) {
+  return dialect.language.data.of({
+    autocomplete: keywordCompletionSource(dialect, upperCase),
+  });
+}
+/**
+Returns a completion sources that provides schema-based completion
+for the given configuration.
+ */
+function schemaCompletionSource(config) {
+  return config.schema
+    ? completeFromSchema(
+        config.schema,
+        config.tables,
+        config.schemas,
+        config.defaultTable,
+        config.defaultSchema,
+        config.dialect || StandardSQL
+      )
+    : () => null;
+}
+/**
+FIXME remove on 1.0 @internal
+ */
+function schemaCompletion(config) {
+  return config.schema
+    ? (config.dialect || StandardSQL).language.data.of({
+        autocomplete: schemaCompletionSource(config),
+      })
+    : [];
+}
+/**
+SQL language support for the given SQL dialect, with keyword
+completion, and, if provided, schema-based completion as extra
+extensions.
+ */
+function sql(config = {}) {
+  let lang = config.dialect || StandardSQL;
+  return new LanguageSupport(lang.language, [
+    schemaCompletion(config),
+    keywordCompletion(lang, !!config.upperCaseKeywords),
+  ]);
+}
+/**
+The standard SQL dialect.
+ */
+const StandardSQL = /*@__PURE__*/ SQLDialect.define({});
+
+// This file a copy of https://github.com/codemirror/basic-setup/blob/main/src/codemirror.ts
+// (The superfluous function calls around the list of extensions work
+// around current limitations in tree-shaking software.)
+/// This is an extension value that just pulls together a number of
+/// extensions that you might want in a basic editor. It is meant as a
+/// convenient helper to quickly set up CodeMirror without installing
+/// and importing a lot of separate packages.
+///
+/// Specifically, it includes...
+///
+///  - [the default command bindings](#commands.defaultKeymap)
+///  - [line numbers](#view.lineNumbers)
+///  - [special character highlighting](#view.highlightSpecialChars)
+///  - [the undo history](#commands.history)
+///  - [a fold gutter](#language.foldGutter)
+///  - [custom selection drawing](#view.drawSelection)
+///  - [drop cursor](#view.dropCursor)
+///  - [multiple selections](#state.EditorState^allowMultipleSelections)
+///  - [reindentation on input](#language.indentOnInput)
+///  - [the default highlight style](#language.defaultHighlightStyle) (as fallback)
+///  - [bracket matching](#language.bracketMatching)
+///  - [bracket closing](#autocomplete.closeBrackets)
+///  - [autocompletion](#autocomplete.autocompletion)
+///  - [rectangular selection](#view.rectangularSelection) and [crosshair cursor](#view.crosshairCursor)
+///  - [active line highlighting](#view.highlightActiveLine)
+///  - [active line gutter highlighting](#view.highlightActiveLineGutter)
+///  - [selection match highlighting](#search.highlightSelectionMatches)
+///  - [search](#search.searchKeymap)
+///  - [linting](#lint.lintKeymap)
+///
+/// (You'll probably want to add some language package to your setup
+/// too.)
+///
+/// This extension does not allow customization. The idea is that,
+/// once you decide you want to configure your editor more precisely,
+/// you take this package's source (which is just a bunch of imports
+/// and an array literal), copy it into your own code, and adjust it
+/// as desired.
+const basicSetup = (() => [
+  lineNumbers(),
+  highlightActiveLineGutter(),
+  highlightSpecialChars(),
+  history(),
+  foldGutter(),
+  drawSelection(),
+  dropCursor(),
+  EditorState.allowMultipleSelections.of(true),
+  indentOnInput(),
+  syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+  bracketMatching(),
+  closeBrackets(),
+  autocompletion(),
+  rectangularSelection(),
+  crosshairCursor(),
+  highlightActiveLine(),
+  highlightSelectionMatches(),
+  keymap.of([
+    ...closeBracketsKeymap,
+    ...defaultKeymap,
+    ...searchKeymap,
+    ...historyKeymap,
+    ...foldKeymap,
+    ...completionKeymap,
+    ...lintKeymap,
+  ]),
+])();
+/// A minimal set of extensions to create a functional editor. Only
+/// includes [the default keymap](#commands.defaultKeymap), [undo
+/// history](#commands.history), [special character
+/// highlighting](#view.highlightSpecialChars), [custom selection
+/// drawing](#view.drawSelection), and [default highlight
+/// style](#language.defaultHighlightStyle).
+const readonlySetup = (() => [
+  lineNumbers(),
+  highlightSpecialChars(),
+  foldGutter(),
+  drawSelection(),
+  dropCursor(),
+  syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+  bracketMatching(),
+  closeBrackets(),
+])();
+
+const dontComplete = ['Comment', 'Docblock', 'String', 'FString', 'RString', 'SString'];
+const globals = ['false', 'null', 'true']
+  .map((n) => ({ label: n, type: 'constant' }))
+  .concat(
+    ['bool', 'float', 'int', 'int8', 'int16', 'int32', 'int64', 'int128', 'text', 'date', 'time', 'timestamp'].map(
+      (n) => ({ label: n, type: 'type' })
+    )
+  )
+  .concat(
+    [
+      // aggregate-functions
+      'any',
+      'average',
+      'concat_array',
+      'count',
+      'every',
+      'max',
+      'min',
+      'stddev',
+      'sum',
+      // file-reading-functions
+      'read_csv',
+      'read_parquet',
+      // list-functions
+      'all',
+      'map',
+      'zip',
+      '_eq',
+      '_is_null',
+      // misc-functions
+      'from_text',
+      // string-functions
+      'lower',
+      'upper',
+      // window-functions
+      'lag',
+      'lead',
+      'first',
+      'last',
+      'rank',
+      'rank_dense',
+      'row_number',
+    ].map((n) => ({ label: n, type: 'function' }))
+  )
+  .concat(
+    ['aggregate', 'derive', 'filter', 'from', 'group', 'join', 'select', 'sort', 'take', 'window'].map((n) => ({
+      label: n,
+      type: 'keyword',
+    }))
+  )
+  .concat(['std'].map((n) => ({ label: n, type: 'namespace' })));
+const snippets = [
+  // snippetCompletion('from ${table_table}\nselect {${column_name}}\nfilter ${column_name} == ${condition}\ntake {amount}', {
+  //   label: 'from-select-filter-take',
+  //   detail: 'snippet',
+  //   type: 'text',
+  // }),
+];
+/// Autocompletion for built-in PRQL globals and keywords.
+const globalCompletion = ifNotIn(dontComplete, completeFromList(globals.concat(snippets)));
+
 console.log('tags', tags);
 
 const prqlHighlight = styleTags({
@@ -29964,5 +30732,6 @@ export {
   prql,
   prqlLanguage,
   readonlySetup,
+  sql,
   syntaxTree,
 };

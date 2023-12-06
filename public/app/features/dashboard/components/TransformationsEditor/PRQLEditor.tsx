@@ -13,6 +13,7 @@ import {
   CompletionContext,
   syntaxTree,
   readonlySetup,
+  sql,
 } from '../../../../../../prql/index';
 
 function myCompletions(context: CompletionContext, metricNames: string[]) {
@@ -48,6 +49,7 @@ interface Props {
   queryString?: string;
   readOnly?: boolean; // transparent bg, make it obviously readonly
   onEditorChange?: (queryString: string) => void;
+  mode?: 'prql' | 'sql';
 }
 
 const getStyles = (readOnly?: boolean) => {
@@ -86,10 +88,9 @@ const getStyles = (readOnly?: boolean) => {
 
 export const PRQLEditor = (props: Props) => {
   const editor = useRef(null);
-  const { queryString: doc, metricNames, readOnly, onEditorChange } = props;
+  const { queryString: doc, metricNames, readOnly, onEditorChange, mode } = props;
   const styles = useStyles2((theme) => getStyles(readOnly));
 
-  // How to make readonly
   useEffect(() => {
     //@ts-ignore
     const listener = PRQLEditorView.updateListener.of(({ state }) => {
@@ -98,18 +99,23 @@ export const PRQLEditor = (props: Props) => {
       }
     });
 
+    const languageExtensions =
+      mode === 'sql'
+        ? [sql()]
+        : [
+            prqlLanguage.data.of({
+              autocomplete: (context: CompletionContext) => myCompletions(context, metricNames),
+            }),
+            prql(),
+          ];
+
     const startState = EditorState.create({
       doc: doc,
       extensions: [
         onEditorChange !== undefined ? listener : [],
         readOnly ? readonlySetup : basicSetup,
         oneDark,
-        [
-          prqlLanguage.data.of({
-            autocomplete: (context: CompletionContext) => myCompletions(context, metricNames),
-          }),
-          prql(),
-        ],
+        languageExtensions,
         [EditorState.readOnly.of(readOnly ?? false)],
       ],
     });

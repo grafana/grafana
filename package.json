@@ -238,6 +238,7 @@
     "yargs": "^17.5.1"
   },
   "dependencies": {
+    "@codemirror/lang-sql": "^6.5.4",
     "@daybrush/utils": "1.13.0",
     "@duckdb/duckdb-wasm": "^1.28.0",
     "@emotion/css": "11.11.2",
