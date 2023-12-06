@@ -35,6 +35,7 @@ describe('LogRows', () => {
         onClickFilterOutLabel={() => {}}
         onClickHideField={() => {}}
         onClickShowField={() => {}}
+        highlightSearchwords={false}
       />
     );
 
@@ -58,6 +59,7 @@ describe('LogRows', () => {
         timeZone={'utc'}
         previewLimit={1}
         enableLogDetails={true}
+        highlightSearchwords={false}
       />
     );
 
@@ -84,6 +86,7 @@ describe('LogRows', () => {
         onClickFilterOutLabel={() => {}}
         onClickHideField={() => {}}
         onClickShowField={() => {}}
+        highlightSearchwords={false}
       />
     );
 
@@ -114,6 +117,7 @@ describe('LogRows', () => {
         onClickFilterOutLabel={() => {}}
         onClickHideField={() => {}}
         onClickShowField={() => {}}
+        highlightSearchwords={false}
       />
     );
     expect(screen.queryAllByRole('row')).toHaveLength(2);
@@ -139,6 +143,7 @@ describe('LogRows', () => {
         onClickFilterOutLabel={() => {}}
         onClickHideField={() => {}}
         onClickShowField={() => {}}
+        highlightSearchwords={false}
       />
     );
 
@@ -168,6 +173,7 @@ describe('LogRows', () => {
         onClickFilterOutLabel={() => {}}
         onClickHideField={() => {}}
         onClickShowField={() => {}}
+        highlightSearchwords={false}
       />
     );
 
@@ -197,6 +203,7 @@ describe('LogRows', () => {
         onClickFilterOutLabel={() => {}}
         onClickHideField={() => {}}
         onClickShowField={() => {}}
+        highlightSearchwords={false}
       />
     );
 
@@ -224,6 +231,7 @@ describe('Popover menu', () => {
         onClickFilterOutValue={() => {}}
         onClickFilterValue={() => {}}
         app={app}
+        highlightSearchwords={false}
       />
     );
   }

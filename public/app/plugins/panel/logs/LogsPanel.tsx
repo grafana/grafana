@@ -120,6 +120,7 @@ export const LogsPanel = ({
           previewLimit={isAscending ? logRows.length : undefined}
           onLogRowHover={onLogRowHover}
           app={CoreApp.Dashboard}
+          highlightSearchwords={false}
         />
         {showCommonLabels && isAscending && renderCommonLabels()}
       </div>

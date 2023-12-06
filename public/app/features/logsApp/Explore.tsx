@@ -35,7 +35,6 @@ import { StoreState } from 'app/types';
 
 import { getTimeZone } from '../profile/state/selectors';
 
-import { ContentOutline } from './ContentOutline/ContentOutline';
 import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineContext';
 import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
 import { CorrelationHelper } from './CorrelationHelper';
@@ -565,7 +564,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       correlationEditorDetails,
       correlationEditorHelperData,
     } = this.props;
-    const { openDrawer, contentOutlineVisible } = this.state;
+    const { openDrawer } = this.state;
     const styles = getStyles(theme);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
     const showRichHistory = openDrawer === ExploreDrawer.RichHistory;
