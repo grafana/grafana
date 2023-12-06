@@ -721,10 +721,7 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 			hit.Tags = append(hit.Tags, item.Term)
 		}
 		if item.Deleted != nil {
-			now := time.Now()
-			timeSinceDeleted := now.Sub(*item.Deleted).Abs()
-			remainingTime := now.Add(-remainingTrashDays - timeSinceDeleted)
-			hit.RemainingTrashAtAge = util.GetAgeString(remainingTime)
+			hit.RemainingTrashAtAge = util.RemainingDaysUntil((*item.Deleted).Add(remainingTrashDays))
 		}
 	}
 	return hitList
