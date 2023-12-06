@@ -134,7 +134,7 @@ export const achievements = [
     level: AchievementLevel.Experienced,
     link: 'https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/',
     video: '',
-    icon: 'apps',
+    icon: 'process',
   },
   {
     id: AchievementId.AddCanvasVisualization,
@@ -143,7 +143,7 @@ export const achievements = [
     level: AchievementLevel.Experienced,
     link: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/canvas',
     video: '',
-    icon: 'apps',
+    icon: 'edit',
   },
   {
     id: AchievementId.SetMetricValueElement,
@@ -152,7 +152,7 @@ export const achievements = [
     level: AchievementLevel.Experienced,
     link: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/canvas/#metric-value',
     video: '',
-    icon: 'apps',
+    icon: 'edit',
   },
   {
     id: AchievementId.EnableSharedCrosshairOrTooltip,
@@ -161,7 +161,7 @@ export const achievements = [
     level: AchievementLevel.Experienced,
     link: '',
     video: '',
-    icon: 'apps',
+    icon: 'crosshair',
   },
   {
     id: AchievementId.LegendChangeSeriesColor,
@@ -216,7 +216,7 @@ export const achievements = [
     level: AchievementLevel.Expert,
     link: 'https://grafana.com/docs/grafana/latest/panels-visualizations/configure-data-links/#template-variables',
     video: '',
-    icon: 'apps',
+    icon: 'link',
   },
   {
     id: AchievementId.UseJoinByFieldTransformation,
