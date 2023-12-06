@@ -27,7 +27,7 @@ export const WizarDS = (props: WizarDSProps) => {
   const { closeDrawer, templates } = props;
   const skipStartingMessage = store.getBool(SKIP_STARTING_MESSAGE, false);
 
-  const [state, dispatch] = useReducer(stateSlice.reducer, initialState(!skipStartingMessage));
+  const [state, dispatch] = useReducer(stateSlice.reducer, initialState(templates, !skipStartingMessage));
 
   const suggestions = state.interactions.reduce((acc, int) => acc + int.suggestions.length, 0);
 

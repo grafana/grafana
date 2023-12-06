@@ -1,10 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { Interaction, SuggestionType } from '../types';
+import { Interaction, Suggestion, SuggestionType } from '../types';
 
 export const stateSlice = createSlice({
   name: 'metrics-modal-state',
-  initialState: initialState(),
+  initialState: initialState([]),
   reducers: {
     showExplainer: (state, action: PayloadAction<boolean>) => {
       state.showExplainer = action.payload;
@@ -18,15 +18,11 @@ export const stateSlice = createSlice({
     askForHelp: (state, action: PayloadAction<boolean>) => {
       state.askForHelp = action.payload;
     },
-    /*
-     * start working on a collection of interactions
-     * {
-     *  askForhelp y n
-     *  prompt question
-     *  queries querySuggestions
-     * }
-     *
-     */
+    updateTutorialSteps: (state, action: PayloadAction<Suggestion[]>) => {
+      const tutorial = state.tutorial;
+      const id = tutorial.id + Math.random();
+      state.tutorial = { ...tutorial, id, steps: action.payload };
+    },
     addInteraction: (state, action: PayloadAction<{ suggestionType: SuggestionType; isLoading: boolean }>) => {
       // AI or Historical?
       const interaction = createInteraction(action.payload.suggestionType, action.payload.isLoading);
@@ -54,13 +50,19 @@ export const stateSlice = createSlice({
  * Initial state for wizarDS
  * @param query the prometheus query with metric and possible labels
  */
-export function initialState(showStartingMessage?: boolean): WizarDSState {
+export function initialState(templates: Suggestion[], showStartingMessage?: boolean): WizarDSState {
   return {
     showExplainer: false,
     showStartingMessage: showStartingMessage ?? true,
     indicateCheckbox: false,
     askForHelp: false,
     interactions: [createInteraction(SuggestionType.AI)],
+    tutorial: {
+      id: 'wizard-prometheus-version-',
+      name: 'Using the PrometheusDS',
+      description: `This is a tutorial to help you get started with the PrometheusDS`,
+      steps: templates,
+    },
   };
 }
 
@@ -73,7 +75,15 @@ export interface WizarDSState {
   indicateCheckbox: boolean;
   askForHelp: boolean;
   interactions: Interaction[];
+  tutorial: Tutorial;
 }
+
+export type Tutorial = {
+  id: string; //'using-prometheusds',
+  name: string; //'Using the PrometheusDS',
+  description: string; // `This is a tutorial to help you get started with the PrometheusDS`,
+  steps: Suggestion[];
+};
 
 export function createInteraction(suggestionType: SuggestionType, isLoading?: boolean): Interaction {
   return {
