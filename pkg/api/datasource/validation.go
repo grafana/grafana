@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/tsdb/mssql"
@@ -69,7 +70,7 @@ func ValidateURL(typeName, urlStr string) (*url.URL, error) {
 	var err error
 	switch strings.ToLower(typeName) {
 	case "mssql":
-		u, err = mssql.ParseURL(urlStr)
+		u, err = mssql.ParseURL(urlStr, backend.NewLoggerWith("logger", "tsdb.postgres"))
 	default:
 		logger.Debug("Applying default URL parsing for this data source type", "type", typeName, "url", urlStr)
 
