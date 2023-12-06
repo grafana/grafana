@@ -317,6 +317,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       isMulti: variable.multi,
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
+      definition: variable.definition,
     });
   } else if (variable.type === 'datasource') {
     return new DataSourceVariable({
