@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/prometheus/common/model"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
@@ -65,27 +67,14 @@ func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, da *migr
 	}
 
 	// Here we ensure that the alert rule title is unique within the folder.
-	titleDedupSet := om.AlertTitleDeduplicator(info.NewFolderUID)
-	name := truncate(da.Name, store.AlertDefinitionMaxTitleLength)
-	if titleDedupSet.contains(name) {
-		dedupedName := titleDedupSet.deduplicate(name)
-		l.Debug("Duplicate alert rule name detected, renaming", "oldName", name, "newName", dedupedName)
-		name = dedupedName
+	titleDeduplicator := om.titleDeduplicatorForFolder(info.NewFolderUID)
+	name, err := titleDeduplicator.Deduplicate(da.Name)
+	if err != nil {
+		return nil, err
 	}
-	titleDedupSet.add(name)
-
-	// Here we ensure that the alert rule group is unique within the folder.
-	// This is so that we don't have to ensure that the alerts rules have the same interval.
-	groupDedupSet := om.AlertTitleDeduplicator(info.NewFolderUID)
-	panelSuffix := fmt.Sprintf(" - %d", da.PanelID)
-	truncatedDashboard := truncate(info.DashboardName, store.AlertRuleMaxRuleGroupNameLength-len(panelSuffix))
-	groupName := fmt.Sprintf("%s%s", truncatedDashboard, panelSuffix) // Unique to this dash alert but still contains useful info.
-	if groupDedupSet.contains(groupName) {
-		dedupedGroupName := groupDedupSet.deduplicate(groupName)
-		l.Debug("Duplicate alert rule group name detected, renaming", "oldGroup", groupName, "newGroup", dedupedGroupName)
-		groupName = dedupedGroupName
+	if name != da.Name {
+		l.Info(fmt.Sprintf("Alert rule title modified to be unique within the folder and fit within the maximum length of %d", store.AlertDefinitionMaxTitleLength), "old", da.Name, "new", name)
 	}
-	groupDedupSet.add(groupName)
 
 	dashUID := info.DashboardUID
 	ar := &ngmodels.AlertRule{
@@ -99,7 +88,7 @@ func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, da *migr
 		NamespaceUID:    info.NewFolderUID,
 		DashboardUID:    &dashUID,
 		PanelID:         &da.PanelID,
-		RuleGroup:       groupName,
+		RuleGroup:       groupName(ruleAdjustInterval(da.Frequency), info.DashboardName),
 		For:             da.For,
 		Updated:         time.Now().UTC(),
 		Annotations:     annotations,
@@ -303,4 +292,13 @@ func extractChannelIDs(d *migrationStore.DashAlert) (channelUids []migrationStor
 	}
 
 	return channelUids
+}
+
+// groupName constructs a group name from the dashboard title and the interval. It truncates the dashboard title
+// if necessary to ensure that the group name is not longer than the maximum allowed length.
+func groupName(interval int64, dashboardTitle string) string {
+	duration := model.Duration(time.Duration(interval) * time.Second) // Humanize.
+	panelSuffix := fmt.Sprintf(" - %s", duration.String())
+	truncatedDashboard := truncate(dashboardTitle, store.AlertRuleMaxRuleGroupNameLength-len(panelSuffix))
+	return fmt.Sprintf("%s%s", truncatedDashboard, panelSuffix)
 }

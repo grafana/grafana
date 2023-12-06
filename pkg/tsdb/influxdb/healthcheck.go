@@ -7,8 +7,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/flux"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/fsql"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql"
@@ -35,7 +37,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	case influxVersionFlux:
 		return CheckFluxHealth(ctx, dsInfo, req)
 	case influxVersionInfluxQL:
-		return CheckInfluxQLHealth(ctx, dsInfo)
+		return CheckInfluxQLHealth(ctx, dsInfo, s.features)
 	case influxVersionSQL:
 		return CheckSQLHealth(ctx, dsInfo, req)
 	default:
@@ -78,10 +80,10 @@ func CheckFluxHealth(ctx context.Context, dsInfo *models.DatasourceInfo,
 	return getHealthCheckMessage(logger, "", errors.New("error getting flux query buckets"))
 }
 
-func CheckInfluxQLHealth(ctx context.Context, dsInfo *models.DatasourceInfo) (*backend.CheckHealthResult, error) {
+func CheckInfluxQLHealth(ctx context.Context, dsInfo *models.DatasourceInfo, features featuremgmt.FeatureToggles) (*backend.CheckHealthResult, error) {
 	logger := logger.FromContext(ctx)
-
-	resp, err := influxql.Query(ctx, dsInfo, &backend.QueryDataRequest{
+	tracer := tracing.DefaultTracer()
+	resp, err := influxql.Query(ctx, tracer, dsInfo, &backend.QueryDataRequest{
 		Queries: []backend.DataQuery{
 			{
 				RefID:     refID,
@@ -89,7 +91,7 @@ func CheckInfluxQLHealth(ctx context.Context, dsInfo *models.DatasourceInfo) (*b
 				JSON:      []byte(`{"query": "SHOW measurements", "rawQuery": true}`),
 			},
 		},
-	})
+	}, features)
 	if err != nil {
 		return getHealthCheckMessage(logger, "error performing influxQL query", err)
 	}

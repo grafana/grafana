@@ -118,7 +118,7 @@ type JSONData struct {
 	Executable string `json:"executable,omitempty"`
 
 	// App Service Auth Registration
-	ExternalServiceRegistration *plugindef.ExternalServiceRegistration `json:"externalServiceRegistration,omitempty"`
+	IAM *plugindef.IAM `json:"iam,omitempty"`
 }
 
 func ReadPluginJSON(reader io.Reader) (JSONData, error) {
