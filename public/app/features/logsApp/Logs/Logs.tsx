@@ -33,7 +33,7 @@ import {
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { Button, PanelChrome, RadioButtonGroup, Themeable2, withTheme2 } from '@grafana/ui';
+import { Button, Icon, PanelChrome, RadioButtonGroup, Themeable2, withTheme2 } from '@grafana/ui';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import store from 'app/core/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
@@ -127,12 +127,19 @@ interface State {
   groupByLabel?: string;
   paneSize: number;
   showLogsOptions: boolean;
+  sidebarVisible: boolean;
 }
 
 const DETAILS_SIZE = 595;
+const WINDOW_MARGINS = 60;
 const INITIAL_PANE_SIZE = (window.innerWidth / 4) * 3;
 function getMaxPaneSize() {
   return window.innerWidth - DETAILS_SIZE;
+}
+function getLastSize() {
+  return localStorage.getItem('logs.paneSize')
+    ? parseInt(`${localStorage.getItem('logs.paneSize')}`, 10)
+    : INITIAL_PANE_SIZE;
 }
 
 class UnthemedLogs extends PureComponent<Props, State> {
@@ -159,10 +166,9 @@ class UnthemedLogs extends PureComponent<Props, State> {
     logsContainer: undefined,
     logDetailsRow: undefined,
     groupByLabel: undefined,
-    paneSize: localStorage.getItem('logs.paneSize')
-      ? parseInt(`${localStorage.getItem('logs.paneSize')}`, 10)
-      : INITIAL_PANE_SIZE,
+    paneSize: getLastSize(),
     showLogsOptions: false,
+    sidebarVisible: localStorage.getItem('logs.sidebar') === 'true' ? true : false,
   };
 
   constructor(props: Props) {
@@ -608,6 +614,20 @@ class UnthemedLogs extends PureComponent<Props, State> {
     localStorage.setItem('logs.paneSize', size.toString());
   };
 
+  toggleSidebar = () => {
+    const sidebarVisible = !this.state.sidebarVisible;
+    this.setState({ sidebarVisible }, () => {
+      localStorage.setItem('logs.sidebar', sidebarVisible.toString());
+      if (sidebarVisible) {
+        this.handlePaneResize(getMaxPaneSize());
+      } else {
+        this.handlePaneResize(
+          window.innerWidth - WINDOW_MARGINS
+        );
+      }
+    });
+  }
+
   render() {
     const {
       width,
@@ -769,6 +789,15 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   onChangeLogsSortOrder={this.onChangeLogsSortOrder}
                   styles={styles}
                 />
+                <Button
+                  aria-label={this.state.sidebarVisible ? 'Hide sidebar' : 'Show sidebar'}
+                  variant="secondary"
+                  size="md"
+                  className={styles.sidebarToggle}
+                  onClick={this.toggleSidebar}
+                >
+                  <Icon name={this.state.sidebarVisible ? 'angle-left' : 'angle-right'} size="md" />
+                </Button>
               </div>
             </div>
             <div ref={this.topLogsRef} />
@@ -875,7 +904,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   </div>
                 )}
               </div>
-              <div>
+              <div style={{ display: this.state.sidebarVisible ? '' : 'none' }}>
                 {this.state.logDetailsRow ? (
                   <LogDetails
                     showDuplicates={false}
@@ -909,6 +938,11 @@ export const Logs = withTheme2(UnthemedLogs);
 
 const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: number) => {
   return {
+    sidebarToggle: css({
+      backgroundColor: 'transparent',
+      border: 'none',
+      padding: `0 ${theme.spacing(1)}`
+    }), 
     optionToggles: css({
       display: 'flex',
     }),
