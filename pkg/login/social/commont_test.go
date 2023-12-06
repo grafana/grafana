@@ -83,6 +83,7 @@ signout_redirect_url = https://oauth.com/signout?post_logout_redirect_uri=https:
 		AuthStyle:               "",
 		AllowAssignGrafanaAdmin: true,
 		UseRefreshToken:         true,
+		SkipOrgRoleSync:         true,
 		HostedDomain:            "test_hosted_domain",
 		SignoutRedirectUrl:      "https://oauth.com/signout?post_logout_redirect_uri=https://grafana.com",
 		Extra: map[string]string{
@@ -90,7 +91,6 @@ signout_redirect_url = https://oauth.com/signout?post_logout_redirect_uri=https:
 			"id_token_attribute_name": "id_token",
 			"login_attribute_path":    "login",
 			"name_attribute_path":     "name",
-			"skip_org_role_sync":      "true",
 			"team_ids":                "first, second",
 		},
 	}
