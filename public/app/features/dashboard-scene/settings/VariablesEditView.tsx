@@ -8,7 +8,6 @@ import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { sceneVariablesSetToVariables } from '../serialization/sceneVariablesSetToVariables';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { GeneralSettingsEditView } from './GeneralSettings';
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
 import { VariableEditorList } from './variables/VariableEditorList';
 export interface VariablesEditViewState extends DashboardEditViewState {}
@@ -18,7 +17,7 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     return 'variables';
   }
 
-  static Component = ({ model }: SceneComponentProps<GeneralSettingsEditView>) => {
+  static Component = ({ model }: SceneComponentProps<VariablesEditView>) => {
     const dashboard = getDashboardSceneFor(model);
     const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
     // get variables from dashboard state

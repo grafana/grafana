@@ -406,6 +406,14 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       showIf: (opts) => opts.tooltip.show,
     });
 
+    builder.addBooleanSwitch({
+      path: 'tooltip.showColorScale',
+      name: 'Show color scale',
+      defaultValue: defaultOptions.tooltip.showColorScale,
+      category,
+      showIf: (opts) => opts.tooltip.show && config.featureToggles.newVizTooltips,
+    });
+
     category = ['Legend'];
     builder.addBooleanSwitch({
       path: 'legend.show',

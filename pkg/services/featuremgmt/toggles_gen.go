@@ -431,10 +431,6 @@ const (
 	// Show the new alerting insights landing page
 	FlagAlertingInsights = "alertingInsights"
 
-	// FlagAlertingContactPointsV2
-	// Show the new contacpoints list view
-	FlagAlertingContactPointsV2 = "alertingContactPointsV2"
-
 	// FlagExternalCorePlugins
 	// Allow core plugins to be loaded as external
 	FlagExternalCorePlugins = "externalCorePlugins"
@@ -478,6 +474,10 @@ const (
 	// FlagKubernetesPlaylists
 	// Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
+
+	// FlagKubernetesSnapshots
+	// Use the kubernetes API in the frontend to support playlists
+	FlagKubernetesSnapshots = "kubernetesSnapshots"
 
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
