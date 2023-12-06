@@ -11,10 +11,10 @@ import { QueryEditorModeToggle } from 'app/plugins/datasource/prometheus/querybu
 import { QueryHeaderSwitch } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryHeaderSwitch';
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 
+import { QueryOptionGroup } from '../../prometheus/querybuilder/shared/QueryOptionGroup';
 import { lokiQueryEditorExplainKey, useFlag } from '../../prometheus/querybuilder/shared/hooks/useFlag';
 import { LabelBrowserModal } from '../querybuilder/components/LabelBrowserModal';
 import { LokiQueryBuilderContainer } from '../querybuilder/components/LokiQueryBuilderContainer';
-import { LokiQueryBuilderOptions } from '../querybuilder/components/LokiQueryBuilderOptions';
 import { LokiQueryCodeEditor } from '../querybuilder/components/LokiQueryCodeEditor';
 import { QueryPatternsModal } from '../querybuilder/components/QueryPatternsModal';
 import { buildVisualQueryFromString } from '../querybuilder/parsing';
@@ -116,6 +116,17 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
     }
   }, [datasource, timeRange, previousTimeRange, query, previousQueryExpr, previousQueryType, setQueryStats, id]);
 
+  const runQuery = (<Button
+    variant="primary"
+    size="md"
+    onClick={onRunQuery}
+    icon={data?.state === LoadingState.Loading ? 'spinner' : undefined}
+    disabled={data?.state === LoadingState.Loading}
+    style={{ marginLeft: '0.5em' }}
+  >
+    {queries && queries.length > 1 ? `Run queries` : `Run query`}
+  </Button>);
+
   return (
     <>
       <ConfirmModal
@@ -153,7 +164,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
           <Button
             aria-label={selectors.components.QueryBuilder.queryPatterns}
             variant="secondary"
-            size="sm"
+            size="md"
             onClick={() => {
               setQueryPatternsModalOpen((prevValue) => !prevValue);
 
@@ -167,29 +178,20 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
               });
             }}
           >
-            Kick start your query
+            Template operations
           </Button>
-          <Button variant="secondary" size="sm" onClick={onClickLabelBrowserButton} data-testid="label-browser-button">
+          <Button variant="secondary" size="md" onClick={onClickLabelBrowserButton} data-testid="label-browser-button">
             Label browser
           </Button>
         </Stack>
         <QueryHeaderSwitch label="Explain query" value={explain} onChange={onExplainChange} />
         <FlexItem grow={1} />
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={onRunQuery}
-          icon={data?.state === LoadingState.Loading ? 'spinner' : undefined}
-          disabled={data?.state === LoadingState.Loading}
-        >
-          {queries && queries.length > 1 ? `Run queries` : `Run query`}
-        </Button>
         <QueryEditorModeToggle mode={editorMode!} onChange={onEditorModeChange} />
       </EditorHeader>
       <Space v={0.5} />
       <EditorRows>
         {editorMode === QueryEditorMode.Code && (
-          <LokiQueryCodeEditor {...props} query={query} onChange={onChangeInternal} showExplain={explain} />
+          <LokiQueryCodeEditor {...props} query={query} onChange={onChangeInternal} showExplain={explain} runQueryButton={runQuery} />
         )}
         {editorMode === QueryEditorMode.Builder && (
           <LokiQueryBuilderContainer
@@ -199,16 +201,14 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
             onRunQuery={props.onRunQuery}
             showExplain={explain}
             timeRange={timeRange}
+            runQueryButton={runQuery}
           />
         )}
-        <LokiQueryBuilderOptions
-          query={query}
-          onChange={onChange}
-          onRunQuery={onRunQuery}
-          app={app}
-          maxLines={datasource.maxLines}
+        <QueryOptionGroup
+          title=""
+          collapsedInfo={[]}
           queryStats={queryStats}
-        />
+        ><></></QueryOptionGroup>
       </EditorRows>
     </>
   );

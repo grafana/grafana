@@ -32,9 +32,10 @@ export interface Props {
   timeRange?: TimeRange;
   onChange: (update: LokiVisualQuery) => void;
   onRunQuery: () => void;
+  runQueryButton?: React.ReactNode;
 }
 export const LokiQueryBuilder = React.memo<Props>(
-  ({ datasource, query, onChange, onRunQuery, showExplain, timeRange }) => {
+  ({ datasource, query, onChange, onRunQuery, showExplain, timeRange, runQueryButton }) => {
     const [sampleData, setSampleData] = useState<PanelData>();
     const [highlightedOp, setHighlightedOp] = useState<QueryBuilderOperation | undefined>(undefined);
 
@@ -149,6 +150,13 @@ export const LokiQueryBuilder = React.memo<Props>(
             queryModeller={lokiQueryModeller}
             buildVisualQueryFromString={buildVisualQueryFromString}
           />
+        </OperationsEditorRow>
+        <OperationsEditorRow>
+          <>
+            {runQueryButton}
+            <br/>
+            <br/>
+          </>
         </OperationsEditorRow>
         {showExplain && (
           <OperationListExplained<LokiVisualQuery>
