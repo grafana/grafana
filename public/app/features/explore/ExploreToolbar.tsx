@@ -13,6 +13,7 @@ import {
   ToolbarButton,
   ButtonGroup,
   useStyles2,
+  Button,
 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { t, Trans } from 'app/core/internationalization';
@@ -62,9 +63,16 @@ interface Props {
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
   onContentOutlineToogle: () => void;
   isContentOutlineOpen: boolean;
+  setOpenTutorial: () => void;
 }
 
-export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle, isContentOutlineOpen }: Props) {
+export function ExploreToolbar({
+  exploreId,
+  onChangeTime,
+  onContentOutlineToogle,
+  isContentOutlineOpen,
+  setOpenTutorial,
+}: Props) {
   const dispatch = useDispatch();
   const splitted = useSelector(isSplit);
   const styles = useStyles2(getStyles, splitted);
@@ -241,14 +249,19 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
               Outline
             </ToolbarButton>
           ),
-          <DataSourcePicker
-            key={`${exploreId}-ds-picker`}
-            mixed={!isCorrelationsEditorMode}
-            onChange={onChangeDatasource}
-            current={datasourceInstance?.getRef()}
-            hideTextValue={showSmallDataSourcePicker}
-            width={showSmallDataSourcePicker ? 8 : undefined}
-          />,
+          <>
+            <DataSourcePicker
+              key={`${exploreId}-ds-picker`}
+              mixed={!isCorrelationsEditorMode}
+              onChange={onChangeDatasource}
+              current={datasourceInstance?.getRef()}
+              hideTextValue={showSmallDataSourcePicker}
+              width={showSmallDataSourcePicker ? 8 : undefined}
+            />
+            <Button variant="primary" size="sm" onClick={() => setOpenTutorial()} style={{ marginLeft: '10px' }}>
+              Take me on a magical journey
+            </Button>
+          </>,
         ].filter(Boolean)}
         forceShowLeftItems
       >
