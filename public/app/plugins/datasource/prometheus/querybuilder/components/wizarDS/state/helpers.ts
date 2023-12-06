@@ -1,14 +1,11 @@
 import { AnyAction } from 'redux';
 
 import { llms } from '@grafana/experimental';
-import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
 
-import { PromVisualQuery } from '../../../types';
 import { GetComponentSuggestionsUserPrompt, GetComponentSuggestionsSystemPrompt } from '../prompts';
 import { Interaction, Suggestion, SuggestionType } from '../types';
 
 import { createInteraction, stateSlice } from './state';
-import { getTemplateSuggestions } from './templates';
 
 const OPENAI_MODEL_NAME = 'gpt-3.5-turbo';
 
@@ -40,10 +37,8 @@ export function getExplainMessage(templates?: Suggestion[], question?: string): 
 export async function wizarDSExplain(
   dispatch: React.Dispatch<AnyAction>,
   idx: number,
-  query: PromVisualQuery,
   interaction: Interaction,
   suggIdx: number,
-  datasource: PrometheusDatasource
 ) {
   // const suggestedQuery = interaction.suggestions[suggIdx].component;
 
@@ -218,9 +213,6 @@ export async function wizarDSExplain(
 export async function wizarDSSuggest(
   dispatch: React.Dispatch<AnyAction>,
   idx: number,
-  query: PromVisualQuery,
-  labelNames: string[],
-  datasource: PrometheusDatasource,
   templates: Suggestion[],
   interaction?: Interaction
 ) {
@@ -232,7 +224,7 @@ export async function wizarDSSuggest(
 
   if (!check || interactionToUpdate.suggestionType === SuggestionType.Historical) {
     return new Promise<void>((resolve) => {
-      const suggestions = getTemplateSuggestions();
+      const suggestions = templates;
 
       const payload = {
         idx,

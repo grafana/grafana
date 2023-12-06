@@ -205,14 +205,13 @@ export function SuggestionItem(props: Props) {
             <div className={cx(styles.bodySmall, styles.explainPadding)}>
               <div className={styles.textPadding}>{explanation}</div>
               <div className={styles.textPadding}>
-                Learn more with this{' '}
                 <a
                   className={styles.doc}
-                  href={'https://prometheus.io/docs/prometheus/latest/querying/examples/#query-examples'}
+                  href={suggestion.link}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Prometheus doc
+                  Learn more
                 </a>
               </div>
 
