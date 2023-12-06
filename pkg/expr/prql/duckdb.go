@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
-	"reflect"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -79,8 +78,33 @@ func (d *DuckDB) AppendAll(ctx context.Context, frames data.Frames) error {
 				// if isPointer(val) {
 				// 	val = getPointerValue(val)
 				// }
+				// TODO - is there a way to use generics here?
 				switch v := val.(type) {
 				case *float64:
+					val = *v
+				case *float32:
+					val = *v
+				case *string:
+					val = *v
+				case *int:
+					val = *v
+				case *int8:
+					val = *v
+				case *int32:
+					val = *v
+				case *int64:
+					val = *v
+				case *uint:
+					val = *v
+				case *uint8:
+					val = *v
+				case *uint16:
+					val = *v
+				case *uint32:
+					val = *v
+				case *uint64:
+					val = *v
+				case *bool:
 					val = *v
 				}
 				row = append(row, val)
@@ -102,13 +126,14 @@ func (d *DuckDB) AppendAll(ctx context.Context, frames data.Frames) error {
 	return nil
 }
 
-func isPointer(i interface{}) bool {
-	return reflect.ValueOf(i).Type().Kind() == reflect.Pointer
-}
+// TODO - use reflection instead of checking each type?
+// func isPointer(i interface{}) bool {
+// 	return reflect.ValueOf(i).Type().Kind() == reflect.Pointer
+// }
 
-func getPointerValue(i any) any {
-	return reflect.Indirect(reflect.ValueOf(i))
-}
+// func getPointerValue(i any) any {
+// 	return reflect.Indirect(reflect.ValueOf(i))
+// }
 
 func (d *DuckDB) createTables(frames data.Frames) error {
 	for _, f := range frames {
