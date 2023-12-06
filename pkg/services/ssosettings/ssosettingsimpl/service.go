@@ -171,6 +171,7 @@ func getSettingsByProvider(provider string, settings []*models.SSOSettings) []*m
 			result = append(result, item)
 		}
 	}
+
 	return result
 }
 

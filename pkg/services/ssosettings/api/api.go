@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/login/social"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -89,25 +90,9 @@ func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Respons
 		return response.Error(http.StatusNotFound, "The provider was not found", err)
 	}
 
-	if c.QueryBool("includeDefaults") {
-		return response.JSON(200, settings)
-	}
+	etag := generateSHA1ETag(settings.OAuthSettings)
 
-	// defaultSettings := getDefaultOAuthInfoForProvider(settings.provider)
-
-	for key, defaultValue := range defaultSettings {
-		if value, exists := settings.OAuthSettings[key]; exists && value == defaultValue {
-			delete(settings.OAuthSettings, key)
-		}
-	}
-
-	if _, exists := settings.Settings["client_secret"]; exists {
-		settings.Settings["client_secret"] = "*********"
-	}
-
-	etag := generateSHA1ETag(settings.Settings)
-
-	dto, err := settings.ToSSOSettingsDTO()
+	dto, err := settings.ToSSOSettingsDTO(c.QueryBool("includeDefaults"))
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "The provider is invalid", err)
 	}
@@ -115,9 +100,9 @@ func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Respons
 	return response.JSON(http.StatusOK, dto).SetHeader("ETag", etag)
 }
 
-func generateSHA1ETag(settings map[string]interface{}) string {
+func generateSHA1ETag(OAuthSettings *social.OAuthInfo) string {
 	hasher := sha1.New()
-	data, _ := json.Marshal(settings)
+	data, _ := json.Marshal(OAuthSettings)
 	hasher.Write(data)
 	return fmt.Sprintf("%x", hasher.Sum(nil))
 }

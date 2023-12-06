@@ -9,6 +9,19 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+var DefaultOAuthSettings = &social.OAuthInfo{
+	AllowAssignGrafanaAdmin: false,
+	AllowSignup:             false,
+	AutoLogin:               false,
+	EmptyScopes:             false,
+	Enabled:                 false,
+	RoleAttributeStrict:     false,
+	SkipOrgRoleSync:         false,
+	TlsSkipVerify:           false,
+	UsePKCE:                 false,
+	UseRefreshToken:         false,
+}
+
 type OAuthStrategy struct {
 	cfg                *setting.Cfg
 	settingsByProvider map[string]*social.OAuthInfo
@@ -90,31 +103,6 @@ func (s *OAuthStrategy) loadSettingsForProvider(provider string) *social.OAuthIn
 		TokenUrl:                section.Key("token_url").Value(),
 		UsePKCE:                 section.Key("use_pkce").MustBool(false),
 		UseRefreshToken:         section.Key("use_refresh_token").MustBool(false),
-		Extra:                   map[string]string{},
-	}
-
-	extraFields := extraKeysByProvider[provider]
-	for _, key := range extraFields {
-		result.Extra[key] = section.Key(key).Value()
-	}
-
-	return result
-}
-
-func (s *OAuthStrategy) GetDefaultSettingsForProvider(provider string) *social.OAuthInfo {
-	section := s.cfg.SectionWithEnvOverrides("auth." + provider)
-
-	result := &social.OAuthInfo{
-		AllowAssignGrafanaAdmin: false,
-		AllowSignup:             false,
-		AutoLogin:               false,
-		EmptyScopes:             false,
-		Enabled:                 false,
-		RoleAttributeStrict:     false,
-		SkipOrgRoleSync:         false,
-		TlsSkipVerify:           false,
-		UsePKCE:                 false,
-		UseRefreshToken:         false,
 		Extra:                   map[string]string{},
 	}
 

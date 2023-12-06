@@ -3,9 +3,11 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/ssosettings/strategies"
 )
 
 type SettingsSource int
@@ -73,7 +75,12 @@ func (s SSOSettingsDTO) ToSSOSettings() (*SSOSettings, error) {
 	}, nil
 }
 
-func (s SSOSettings) ToSSOSettingsDTO() (*SSOSettingsDTO, error) {
+func (s SSOSettings) ToSSOSettingsDTO(includeDefaults ...bool) (*SSOSettingsDTO, error) {
+	includeDefaultSettings := true
+	if len(includeDefaults) > 0 {
+		includeDefaultSettings = includeDefaults[0]
+	}
+
 	settingsEncoded, err := json.Marshal(s.OAuthSettings)
 	if err != nil {
 		return nil, err
@@ -83,6 +90,20 @@ func (s SSOSettings) ToSSOSettingsDTO() (*SSOSettingsDTO, error) {
 	err = json.Unmarshal(settingsEncoded, &settings)
 	if err != nil {
 		return nil, err
+	}
+
+	if !includeDefaultSettings {
+		for key, value := range settings {
+			defaultValue := reflect.ValueOf(DefaultOAuthSettings).FieldByName(key).Interface()
+
+			if reflect.DeepEqual(value, defaultValue) {
+				delete(settings, key)
+			}
+		}
+	}
+
+	if _, ok := settings["ClientSecret"]; ok {
+		settings["ClientSecret"] = "*********"
 	}
 
 	return &SSOSettingsDTO{
