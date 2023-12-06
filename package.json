@@ -239,6 +239,7 @@
   },
   "dependencies": {
     "@daybrush/utils": "1.13.0",
+    "@duckdb/duckdb-wasm": "^1.28.0",
     "@emotion/css": "11.11.2",
     "@emotion/react": "11.11.1",
     "@fingerprintjs/fingerprintjs": "^3.4.2",

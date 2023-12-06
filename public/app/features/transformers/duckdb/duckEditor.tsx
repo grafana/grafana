@@ -8,8 +8,6 @@ import { getTransformationContent } from '../docs/getTransformationContent';
 
 import { DuckDBTransformer, DuckTransformerOptions, QueryType } from './duckTransformer';
 
-const LABEL_WIDTH = 20;
-
 export const DuckTransformerEditor = ({ input, options, onChange }: TransformerUIProps<DuckTransformerOptions>) => {
   const refIDs = useMemo(() => {
     const ids = new Set<string>();
@@ -26,16 +24,15 @@ export const DuckTransformerEditor = ({ input, options, onChange }: TransformerU
     { label: 'SQL', value: QueryType.sql },
   ];
 
+  const changeQueryType = (type: QueryType) => {
+    console.log('CHANGE Query Type:', options, type);
+    onChange({ ...options, type });
+  };
+
   return (
     <>
-      <InlineField labelWidth={LABEL_WIDTH} label="Query syntax">
-        <RadioButtonGroup
-          options={queryTypeOptions}
-          value={options.type}
-          onChange={(v) => {
-            onChange({ ...options, type: v });
-          }}
-        />
+      <InlineField label="Query syntax">
+        <RadioButtonGroup options={queryTypeOptions} value={options.type} onChange={changeQueryType} />
       </InlineField>
       <PRQLEditor
         metricNames={refIDs}
