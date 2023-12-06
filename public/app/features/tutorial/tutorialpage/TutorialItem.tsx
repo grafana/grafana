@@ -4,7 +4,7 @@ import React, { useCallback } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
 import { TutorialProgress } from 'app/features/tutorial/TutorialProgress';
-import { setCurrentTutorial, nextStep } from 'app/features/tutorial/slice';
+import { setCurrentTutorialId, nextStep } from 'app/features/tutorial/slice';
 import { Tutorial } from 'app/features/tutorial/types';
 import { useDispatch } from 'app/types';
 
@@ -20,7 +20,7 @@ export const TutorialItem = ({ arePreviewing, onPreview, tutorial }: TutorialIte
   const styles = useStyles2(getStyles);
 
   const startTutorial = useCallback(() => {
-    dispatch(setCurrentTutorial(id));
+    dispatch(setCurrentTutorialId(id));
     dispatch(nextStep());
   }, [dispatch, id]);
 

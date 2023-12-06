@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -12,6 +12,7 @@ type TutorialPreviewProps = {
 export const TutorialPreview = ({ tutorial }: TutorialPreviewProps) => {
   const styles = useStyles2(getStyles);
   const furthestStep = tutorial.furthestStepCompleted ?? -1;
+  console.log(furthestStep);
 
   return (
     <div data-testid="tutorial-preview">
@@ -22,15 +23,22 @@ export const TutorialPreview = ({ tutorial }: TutorialPreviewProps) => {
 
           return (
             <div className={styles.card} key={index}>
-              <div className={styles.header}>
+              <div
+                className={cx(styles.step, {
+                  [styles.completed]: isCompleted,
+                })}
+              >
+                {index + 1}
+                {isCompleted && <Icon name={'check'} color={`green`} />}
+              </div>
+              <div className={styles.info}>
                 {step.title && (
                   <Text element="h3" variant="h5">
                     {step.title}
                   </Text>
                 )}
-                {isCompleted && <Icon name={`check-circle`} color={`green`} size="xl" />}
+                <div>{step.content}</div>
               </div>
-              <p>{step.content}</p>
             </div>
           );
         })}
@@ -39,19 +47,46 @@ export const TutorialPreview = ({ tutorial }: TutorialPreviewProps) => {
   );
 };
 
+const ICON_SIZE = `32px`;
+
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     display: `grid`,
     gap: theme.spacing(1),
   }),
   card: css({
+    display: `grid`,
+    gridTemplateColumns: `${ICON_SIZE} 1fr`,
+    gap: theme.spacing(2),
     padding: theme.spacing(2),
     background: theme.colors.background.secondary,
     borderRadius: theme.shape.radius.default,
   }),
-  header: css({
-    display: `flex`,
+  info: css({
+    display: `grid`,
     gap: theme.spacing(1),
+  }),
+  step: css({
+    display: `flex`,
     alignItems: `center`,
+    justifyContent: `center`,
+    width: ICON_SIZE,
+    height: ICON_SIZE,
+    borderRadius: `50%`,
+    backgroundColor: theme.colors.background.primary,
+    border: `2px solid ${theme.colors.border.weak}`,
+    position: `relative`,
+
+    [`& > svg`]: {
+      position: `absolute`,
+      top: `-8px`,
+      right: `-8px`,
+      background: theme.colors.background.primary,
+      borderRadius: `50%`,
+      color: theme.colors.text.primary,
+    },
+  }),
+  completed: css({
+    border: `2px solid green`,
   }),
 });

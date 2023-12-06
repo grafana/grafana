@@ -6,21 +6,12 @@ import { StoreState, useDispatch } from 'app/types';
 
 import { TutorialOverlay } from './TutorialOverlay';
 import { TUTORIAL_EXIT_EVENT } from './constants';
-import { setCurrentStep } from './slice';
+import { exitCurrentTutorial } from './slice';
 
-const TutorialProviderComponent = ({
-  availableTutorials,
-  currentStep,
-  currentTutorial,
-}: ConnectedProps<typeof connector>) => {
+const TutorialProviderComponent = ({ currentTutorialId, ...props }: ConnectedProps<typeof connector>) => {
   const dispatch = useDispatch();
   const keyupUseDismissedIssue = useRef(false);
   const [showExitTutorialModal, setShowExitTutorialModal] = useState(false);
-  const currentTutorialState = availableTutorials.find((t) => t.id === currentTutorial);
-  const currentTutorialSteps = currentTutorialState?.steps;
-  const step = currentStep !== null && currentTutorialSteps && currentTutorialSteps[currentStep];
-  // @ts-expect-error
-  window.dt = () => console.log({ currentTutorialState, step });
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -38,10 +29,10 @@ const TutorialProviderComponent = ({
     };
   }, []);
 
-  if (step) {
+  if (currentTutorialId) {
     return (
       <>
-        <TutorialOverlay currentStep={currentStep} step={step} />
+        <TutorialOverlay />
         <ConfirmModal
           confirmText="Stop tutorial"
           onDismiss={() => {
@@ -56,7 +47,7 @@ const TutorialProviderComponent = ({
           body={`Do you want to stop the tutorial?`}
           onConfirm={() =>
             new Promise((resolve) => {
-              dispatch(setCurrentStep(null));
+              dispatch(exitCurrentTutorial());
               resolve();
               setShowExitTutorialModal(false);
               document.dispatchEvent(new CustomEvent(TUTORIAL_EXIT_EVENT));

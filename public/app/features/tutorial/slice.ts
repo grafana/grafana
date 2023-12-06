@@ -7,14 +7,18 @@ import type { Tutorial } from './types';
 
 type TutorialsState = {
   availableTutorials: Tutorial[];
-  currentTutorial: Tutorial['id'] | null;
-  currentStep: number | null;
+  currentTutorialId: Tutorial['id'] | null;
+  currentStepIndex: number | null;
+  stepTransition: StepTransition;
 };
+
+type StepTransition = 'transitioning' | 'none';
 
 const initialState: TutorialsState = {
   availableTutorials: [],
-  currentTutorial: null,
-  currentStep: null,
+  currentTutorialId: null,
+  currentStepIndex: null,
+  stepTransition: `none`,
 };
 
 const STATE_PREFIX = 'tutorials';
@@ -32,23 +36,27 @@ const tutorialsSlice = createSlice({
     addTutorials(state, action) {
       state.availableTutorials = [...state.availableTutorials, ...action.payload];
     },
-    setCurrentTutorial(state, action) {
-      state.currentTutorial = action.payload;
+    setCurrentTutorialId(state, action) {
+      state.currentTutorialId = action.payload;
     },
-    setCurrentStep(state, action) {
-      state.currentStep = action.payload;
+    setStepTransition(state, action) {
+      state.stepTransition = action.payload;
     },
-    resetCurrentTutorial(state) {
-      state.currentTutorial = null;
-      state.currentStep = null;
+    exitCurrentTutorial(state) {
+      state.currentTutorialId = null;
+      state.currentStepIndex = null;
     },
   },
   extraReducers: (builder) => {
+    builder.addCase(nextStep.pending, (state) => {
+      state.stepTransition = `transitioning`;
+    });
+
     builder.addCase(nextStep.fulfilled, (state, action) => {
-      const currentTutorial = getTutorial(state.availableTutorials, state.currentTutorial);
+      const currentTutorial = getTutorial(state.availableTutorials, state.currentTutorialId);
 
       state.availableTutorials = state.availableTutorials.map((tutorial) => {
-        if (tutorial.id === state.currentTutorial) {
+        if (tutorial.id === state.currentTutorialId) {
           return {
             ...tutorial,
             furthestStepCompleted: getFurthestStep(action.payload, tutorial.furthestStepCompleted),
@@ -59,13 +67,15 @@ const tutorialsSlice = createSlice({
       });
 
       if (action.payload < currentTutorial.steps.length) {
-        state.currentStep = action.payload;
+        state.currentStepIndex = action.payload;
       }
 
       if (action.payload >= currentTutorial.steps.length) {
-        state.currentTutorial = null;
-        state.currentStep = null;
+        state.currentTutorialId = null;
+        state.currentStepIndex = null;
       }
+
+      state.stepTransition = `none`;
     });
   },
 });
@@ -73,16 +83,16 @@ const tutorialsSlice = createSlice({
 export const nextStep = createAsyncThunk<number, void, { state: RootState }>(
   `${STATE_PREFIX}/nextStep`,
   async (_, thunkApi) => {
-    const { availableTutorials, currentStep, currentTutorial } = thunkApi.getState().tutorials;
-    const tutorial = getTutorial(availableTutorials, currentTutorial);
-    const nextStepIndex = currentStep === null ? 0 : currentStep + 1;
+    const { availableTutorials, currentStepIndex, currentTutorialId } = thunkApi.getState().tutorials;
+    const tutorial = getTutorial(availableTutorials, currentTutorialId);
+    const nextStepIndex = currentStepIndex === null ? 0 : currentStepIndex + 1;
     const realNextStepIndex = await checkSkipConditions(tutorial, nextStepIndex, 'forwards');
 
     return realNextStepIndex;
   }
 );
 
-export const { addTutorial, addTutorials, removeTutorial, resetCurrentTutorial, setCurrentStep, setCurrentTutorial } =
+export const { addTutorial, addTutorials, removeTutorial, exitCurrentTutorial, setCurrentTutorialId } =
   tutorialsSlice.actions;
 
 export const tutorialsReducer = tutorialsSlice.reducer;

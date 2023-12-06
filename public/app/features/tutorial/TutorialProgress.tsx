@@ -23,7 +23,7 @@ export const TutorialProgress = ({ tutorial }: { tutorial: Tutorial }) => {
     <div className={styles.progressCircle} data-testid="tutorial-progress">
       <svg className={styles.svgCircle} width={CIRCLE_SIZE} height={CIRCLE_SIZE}>
         <circle
-          stroke={theme.isDark ? `white` : `black`}
+          stroke={theme.colors.text.primary}
           strokeWidth={STROKE_WIDTH}
           fill="transparent"
           r={radius}
