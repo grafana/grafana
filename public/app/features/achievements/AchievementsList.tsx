@@ -3,12 +3,15 @@ import React from 'react';
 import { AchievementCard } from './AchievementCard';
 import { AchievementLevel } from './types';
 
-const achievementsByName = ['Novice', 'Beginner', 'Experienced', 'Expert', 'Wizard'];
+export const achievementsByName = ['Egg', 'Novice', 'Beginner', 'Experienced', 'Expert', 'Wizard'];
 
 export const AchievementsList = () => {
   return (
     <>
       {achievementsByName.map((achievement, index) => {
+        if (index === 0) {
+          return null;
+        }
         return (
           <AchievementCard
             key={index}

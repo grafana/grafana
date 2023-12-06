@@ -7,6 +7,8 @@ import { Menu, MenuItem, useStyles2 } from '@grafana/ui';
 
 import { enrichWithInteractionTracking } from '../MegaMenu/utils';
 
+import { TopNavBarMenuProgressBar } from './TopNavBarMenuProgressBar';
+
 export interface TopNavBarMenuProps {
   node: NavModelItem;
 }
@@ -28,6 +30,8 @@ export function TopNavBarMenu({ node: nodePlain }: TopNavBarMenuProps) {
         <div onClick={(e) => e.stopPropagation()} className={styles.header}>
           <div>{node.text}</div>
           {node.subTitle && <div className={styles.subTitle}>{node.subTitle}</div>}
+
+          <TopNavBarMenuProgressBar />
         </div>
       }
     >
