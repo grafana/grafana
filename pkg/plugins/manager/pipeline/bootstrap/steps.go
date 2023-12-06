@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"context"
+	"fmt"
 	"path"
 	"strings"
 
@@ -134,6 +135,8 @@ func setDefaultNavURL(p *plugins.Plugin) {
 // AppChildDecorateFunc is a DecorateFunc that configures child plugins of app plugins.
 func AppChildDecorateFunc(cfg *config.Cfg) DecorateFunc {
 	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+		fmt.Print("fabrifmt", p)
+		fmt.Print("fabrifmt parent", p.Parent)
 		if p.Parent != nil && p.Parent.IsApp() {
 			configureAppChildPlugin(cfg, p.Parent, p)
 		}
@@ -147,7 +150,6 @@ func configureAppChildPlugin(cfg *config.Cfg, parent *plugins.Plugin, child *plu
 	}
 	child.IncludedInAppID = parent.ID
 	child.BaseURL = parent.BaseURL
-
 	appSubPath := strings.ReplaceAll(strings.Replace(child.FS.Base(), parent.FS.Base(), "", 1), "\\", "/")
 	if parent.IsCorePlugin() {
 		child.Module = path.Join("core:plugin", parent.ID, appSubPath)

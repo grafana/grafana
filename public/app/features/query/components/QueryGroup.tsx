@@ -109,6 +109,8 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   async setNewQueriesAndDatasource(options: QueryGroupOptions) {
     try {
+      console.log('setNewQueriesAndDatasource, this.dataSourceSrv', this.dataSourceSrv, options.dataSource);
+
       const ds = await this.dataSourceSrv.get(options.dataSource);
       const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource);
 
@@ -127,7 +129,8 @@ export class QueryGroup extends PureComponent<Props, State> {
         defaultDataSource,
       });
     } catch (error) {
-      console.log('failed to load data source', error);
+      console.log(this.dataSourceSrv, options.dataSource);
+      console.error('failed to load data source', error);
     }
   }
 
@@ -256,6 +259,7 @@ export class QueryGroup extends PureComponent<Props, State> {
           )}
         </div>
         {dataSource && isAngularDatasourcePluginAndNotHidden(dataSource.uid) && (
+          // angular notice
           <AngularDeprecationPluginNotice
             pluginId={dataSource.type}
             pluginType={PluginType.datasource}

@@ -28,13 +28,10 @@ import {
   getDataSourceSrv,
   getTemplateSrv,
   reportInteraction,
-  setDataSourceSrv,
   TemplateSrv,
 } from '@grafana/runtime';
 import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@grafana/schema';
-// import { TraceToLogsSettings } from '@grafana/traces';
-
-import { DatasourceSrv } from '/Users/fabriziocasatigrafana/Documents/github_repos/grafana/public/app/features/plugins/datasource_srv';
+import { TraceToLogsSettings } from '@grafana/traces';
 
 import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
 import { TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
@@ -101,8 +98,7 @@ interface ServiceMapQueryResponseWithRates {
 }
 
 export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJsonData> {
-  // tracesToLogs?: TraceToLogsSettings.TraceToLogsOptions;
-  tracesToLogs?: any;
+  tracesToLogs?: TraceToLogsSettings.TraceToLogsOptions;
   serviceMap?: {
     datasourceUid?: string;
   };
@@ -131,6 +127,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
+
+    // @ts-ignore
+    getDataSourceSrv().defaultName = 'gdev-tempo';
+    console.log('TempoDatasource - constructor', getDataSourceSrv());
+
     this.tracesToLogs = instanceSettings.jsonData.tracesToLogs;
     this.serviceMap = instanceSettings.jsonData.serviceMap;
     this.search = instanceSettings.jsonData.search;
@@ -226,11 +227,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       )
     );
     this.tempoVersion = response.data.version;
-
-    const dataSourceSrv = new DatasourceSrv();
-    dataSourceSrv.init(config.datasources, config.defaultDatasource);
-    setDataSourceSrv(dataSourceSrv);
-    console.log('TempoDatasource - init', getDataSourceSrv());
   };
 
   /**
