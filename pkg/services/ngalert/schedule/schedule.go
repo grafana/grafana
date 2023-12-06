@@ -348,6 +348,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	return readyToRun, registeredDefinitions, updatedRules
 }
 
+//nolint:gocyclo
 func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertRuleKey, evalCh <-chan *evaluation, updateCh <-chan ruleVersionAndPauseStatus) error {
 	grafanaCtx = ngmodels.WithRuleKey(grafanaCtx, key)
 	logger := sch.log.FromContext(grafanaCtx)
