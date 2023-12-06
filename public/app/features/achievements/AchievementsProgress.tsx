@@ -14,7 +14,7 @@ export const AchievementsProgress = ({ value = 30 }: LinearProgressProps) => {
         <p>Progress</p>
         <span>30 of 100 complete</span>
       </div>
-      <LinearProgress variant="determinate" value={value} />
+      <LinearProgress variant="determinate" value={value} className={styles.progressBar} />
     </div>
   );
 };
@@ -30,5 +30,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
+  }),
+  progressBar: css({
+    '& > *': {
+      backgroundColor: '#F55F3E !important',
+    },
+    backgroundColor: `${theme.colors.background.secondary} !important`,
   }),
 });
