@@ -77,8 +77,8 @@ type Store interface {
 	// CountDashboardsInFolder returns the number of dashboards associated with
 	// the given parent folder ID.
 	CountDashboardsInFolder(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
-	DeleteDashboardsInFolder(ctx context.Context, request *DeleteDashboardsInFolderRequest) error
 	GetSoftDeletedDashboards(ctx context.Context) ([]*Dashboard, error)
 	SoftDeleteDashboard(ctx context.Context, dashboardUid string) error
+	SoftDeleteDashboardsInFolder(ctx context.Context, folderUid string) error
 	RestoreDashboard(ctx context.Context, dashboardUid string) error
 }

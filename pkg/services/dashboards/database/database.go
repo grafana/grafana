@@ -651,8 +651,14 @@ func (d *dashboardStore) RestoreDashboard(ctx context.Context, dashboardUID stri
 
 func (d *dashboardStore) SoftDeleteDashboard(ctx context.Context, dashboardUID string) error {
 	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		sql := "UPDATE dashboard SET deleted=? WHERE uid=?"
-		_, err := sess.Exec(sql, time.Now(), dashboardUID)
+		_, err := sess.Exec("UPDATE dashboard SET deleted=?, folder_id=0, folder_uid=NULL WHERE uid=?", time.Now(), dashboardUID)
+		return err
+	})
+}
+
+func (d *dashboardStore) SoftDeleteDashboardsInFolder(ctx context.Context, folderUid string) error {
+	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Exec("UPDATE dashboard SET deleted=?, folder_id=0, folder_uid=NULL WHERE folder_uid=?", time.Now(), folderUid)
 		return err
 	})
 }
@@ -1031,27 +1037,6 @@ func (d *dashboardStore) CountDashboardsInFolder(
 		return err
 	})
 	return count, err
-}
-
-func (d *dashboardStore) DeleteDashboardsInFolder(
-	ctx context.Context, req *dashboards.DeleteDashboardsInFolderRequest) error {
-	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		dashboard := dashboards.Dashboard{OrgID: req.OrgID}
-		has, err := sess.Where("uid = ? AND org_id = ?", req.FolderUID, req.OrgID).Get(&dashboard)
-		if err != nil {
-			return err
-		}
-		if !has {
-			return dashboards.ErrFolderNotFound
-		}
-
-		if err := d.deleteChildrenDashboardAssociations(sess, &dashboard); err != nil {
-			return err
-		}
-
-		_, err = sess.Where("folder_id = ? AND org_id = ? AND is_folder = ?", dashboard.ID, dashboard.OrgID, false).Delete(&dashboards.Dashboard{})
-		return err
-	})
 }
 
 func (d *dashboardStore) GetSoftDeletedDashboards(ctx context.Context) ([]*dashboards.Dashboard, error) {
