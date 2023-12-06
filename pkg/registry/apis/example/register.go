@@ -36,14 +36,18 @@ type TestingAPIBuilder struct {
 	gv     schema.GroupVersion
 }
 
+func NewTestingAPIBuilder() *TestingAPIBuilder {
+	return &TestingAPIBuilder{
+		gv: schema.GroupVersion{Group: GroupName, Version: VersionID},
+	}
+}
+
 func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration grafanaapiserver.APIRegistrar) *TestingAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
-	builder := &TestingAPIBuilder{
-		gv: schema.GroupVersion{Group: GroupName, Version: VersionID},
-	}
-	apiregistration.RegisterAPI(builder)
+	builder := NewTestingAPIBuilder()
+	apiregistration.RegisterAPI(NewTestingAPIBuilder())
 	return builder
 }
 
