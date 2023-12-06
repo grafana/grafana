@@ -1996,9 +1996,8 @@ func (cfg *Cfg) GetContentDeliveryURL(prefix string) (string, error) {
 		return "", errors.New("BuildVersion is not set")
 	}
 	url := *cfg.CDNRootURL
-	preReleaseFolder := ""
 
-	url.Path = path.Join(url.Path, prefix, preReleaseFolder, cfg.BuildVersion)
+	url.Path = path.Join(url.Path, prefix, cfg.BuildVersion)
 	return url.String() + "/", nil
 }
 
