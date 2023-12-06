@@ -21,11 +21,11 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/sqleng/proxyutil"
 )
 
-var logger = log.New("tsdb.postgres")
-
 func ProvideService(cfg *setting.Cfg) *Service {
+	logger := log.New("tsdb.postgres")
 	s := &Service{
 		tlsManager: newTLSManager(logger, cfg.DataPath),
+		logger:     logger,
 	}
 	s.im = datasource.NewInstanceManager(s.newInstanceSettings(cfg))
 	return s
@@ -34,6 +34,7 @@ func ProvideService(cfg *setting.Cfg) *Service {
 type Service struct {
 	tlsManager tlsSettingsProvider
 	im         instancemgmt.InstanceManager
+	logger     log.Logger
 }
 
 func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
@@ -54,6 +55,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 }
 
 func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
+	logger := s.logger
 	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		logger.Debug("Creating Postgres query endpoint")
 		jsonData := sqleng.JsonData{
@@ -133,6 +135,7 @@ func escape(input string) string {
 }
 
 func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string, error) {
+	logger := s.logger
 	var host string
 	var port int
 	if strings.HasPrefix(dsInfo.URL, "/") {
@@ -219,8 +222,8 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	err = dsHandler.Ping()
 
 	if err != nil {
-		logger.Error("Check health failed", "error", err)
-		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: dsHandler.TransformQueryError(logger, err).Error()}, nil
+		s.logger.Error("Check health failed", "error", err)
+		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: dsHandler.TransformQueryError(s.logger, err).Error()}, nil
 	}
 
 	return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "Database Connection OK"}, nil
