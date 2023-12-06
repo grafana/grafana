@@ -69,8 +69,9 @@ export const WizarDS = (props: WizarDSProps) => {
             <div className={styles.textPadding}>The Query wizard will connect to OpenAI using your API key.</div>
             <div className={styles.textPadding}>Check with OpenAI to understand how your data is being used.</div>
             <div>
-              The Query wizard information comes from Grafana docs and is interpreted by ChatGPT when you enter a
-              prompt. Please be aware of the limitations of using LLMs and double check the accuracy of the suggestions.
+              The Query wizard information comes from the Grafana documentation and is interpreted by ChatGPT when you
+              enter a prompt. Please be aware of the limitations of using LLMs and double check the accuracy of the
+              suggestions.
             </div>
 
             {/* don't show this message again, store in localstorage */}
