@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"math/rand"
 	"os"
@@ -11,7 +12,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
-	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
@@ -39,14 +39,14 @@ func TestIntegrationMySQL(t *testing.T) {
 
 	x := InitMySQLTestDB(t)
 
-	origXormEngine := sqleng.NewXormEngine
+	origDB := sqleng.NewDB
 	origInterpolate := sqleng.Interpolate
 	t.Cleanup(func() {
-		sqleng.NewXormEngine = origXormEngine
+		sqleng.NewDB = origDB
 		sqleng.Interpolate = origInterpolate
 	})
 
-	sqleng.NewXormEngine = func(d, c string) (*xorm.Engine, error) {
+	sqleng.NewDB = func(d, c string) (*sql.DB, error) {
 		return x, nil
 	}
 
@@ -77,9 +77,7 @@ func TestIntegrationMySQL(t *testing.T) {
 
 	require.NoError(t, err)
 
-	sess := x.NewSession()
-	t.Cleanup(sess.Close)
-	db := sess.DB()
+	db := x
 	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC)
 
 	t.Run("Given a table with different native data types", func(t *testing.T) {
@@ -100,7 +98,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		sql += "`atimestamp` timestamp NOT NULL,"
 		sql += "`adatetime` datetime NOT NULL,"
 		sql += "`atime` time NOT NULL,"
-		sql += "`ayear` year," // Crashes xorm when running cleandb
+		sql += "`ayear` year,"
 		sql += "`abit` bit(1),"
 		sql += "`atinytext` tinytext,"
 		sql += "`atinyblob` tinyblob,"
@@ -419,21 +417,21 @@ func TestIntegrationMySQL(t *testing.T) {
 
 	t.Run("Given a table with metrics having multiple values and measurements", func(t *testing.T) {
 		type metric_values struct {
-			Time                time.Time  `xorm:"datetime 'time' not null"`
-			TimeNullable        *time.Time `xorm:"datetime(6) 'timeNullable' null"`
-			TimeInt64           int64      `xorm:"bigint(20) 'timeInt64' not null"`
-			TimeInt64Nullable   *int64     `xorm:"bigint(20) 'timeInt64Nullable' null"`
-			TimeFloat64         float64    `xorm:"double 'timeFloat64' not null"`
-			TimeFloat64Nullable *float64   `xorm:"double 'timeFloat64Nullable' null"`
-			TimeInt32           int32      `xorm:"int(11) 'timeInt32' not null"`
-			TimeInt32Nullable   *int32     `xorm:"int(11) 'timeInt32Nullable' null"`
-			TimeFloat32         float32    `xorm:"double 'timeFloat32' not null"`
-			TimeFloat32Nullable *float32   `xorm:"double 'timeFloat32Nullable' null"`
+			Time                time.Time
+			TimeNullable        *time.Time
+			TimeInt64           int64
+			TimeInt64Nullable   *int64
+			TimeFloat64         float64
+			TimeFloat64Nullable *float64
+			TimeInt32           int32
+			TimeInt32Nullable   *int32
+			TimeFloat32         float32
+			TimeFloat32Nullable *float32
 			Measurement         string
-			ValueOne            int64 `xorm:"integer 'valueOne'"`
-			ValueTwo            int64 `xorm:"integer 'valueTwo'"`
-			ValueThree          int64 `xorm:"tinyint(1) null 'valueThree'"`
-			ValueFour           int64 `xorm:"smallint(1) null 'valueFour'"`
+			ValueOne            int64
+			ValueTwo            int64
+			ValueThree          int64
+			ValueFour           int64
 		}
 
 		_, err := db.Exec("DROP TABLE IF EXISTS metric_values")
@@ -1291,17 +1289,12 @@ func TestIntegrationMySQL(t *testing.T) {
 	})
 }
 
-func InitMySQLTestDB(t *testing.T) *xorm.Engine {
+func InitMySQLTestDB(t *testing.T) *sql.DB {
 	connStr := mySQLTestDBConnStr()
-	x, err := xorm.NewEngine("mysql", connStr)
+	x, err := sql.Open("mysql", connStr)
 	if err != nil {
 		t.Fatalf("Failed to init mysql db %v", err)
 	}
-
-	x.DatabaseTZ = time.UTC
-	x.TZLocation = time.UTC
-
-	// x.ShowSQL()
 
 	return x
 }
