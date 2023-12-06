@@ -433,6 +433,14 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 	return dash, nil
 }
 
+func (dr *DashboardServiceImpl) RestoreDashboard(ctx context.Context, dashboardUID string) error {
+	return dr.dashboardStore.RestoreDashboard(ctx, dashboardUID)
+}
+
+func (dr *DashboardServiceImpl) SoftDeleteDashboard(ctx context.Context, dashboardUID string) error {
+	return dr.dashboardStore.SoftDeleteDashboard(ctx, dashboardUID)
+}
+
 // DeleteDashboard removes dashboard from the DB. Errors out if the dashboard was provisioned. Should be used for
 // operations by the user where we want to make sure user does not delete provisioned dashboard.
 func (dr *DashboardServiceImpl) DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error {
@@ -738,3 +746,21 @@ func (dr *DashboardServiceImpl) DeleteInFolder(ctx context.Context, orgID int64,
 }
 
 func (dr *DashboardServiceImpl) Kind() string { return entity.StandardKindDashboard }
+
+func (dr *DashboardServiceImpl) CleanUpDeletedDashboards(ctx context.Context) (int64, error) {
+	var deletedDashboardsCount int64
+	deletedDashboards, err := dr.dashboardStore.GetSoftDeletedDashboards(ctx)
+	if err != nil {
+		return 0, err
+	}
+	for _, dashboard := range deletedDashboards {
+		err = dr.DeleteDashboard(ctx, dashboard.ID, dashboard.OrgID)
+		if err != nil {
+			dr.log.Warn("Failed to cleanup deleted dashboard", "dashboardUid", dashboard.UID, "error", err)
+			break
+		}
+		deletedDashboardsCount++
+	}
+
+	return deletedDashboardsCount, nil
+}
