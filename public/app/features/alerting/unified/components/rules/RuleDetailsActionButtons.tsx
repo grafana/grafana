@@ -17,7 +17,6 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { PreviewDashboardButton } from 'app/features/dashboard-scene/embedding/PreviewDashboardButton';
 import { useDispatch } from 'app/types';
 import { CombinedRule, RuleIdentifier, RulesSource } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
@@ -147,7 +146,6 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
           Go to dashboard
         </LinkButton>
       );
-      buttons.push(<PreviewDashboardButton uid={dashboardUID}>Preview dashboard</PreviewDashboardButton>);
       const panelId = rule.annotations[Annotation.panelID];
       if (panelId) {
         buttons.push(

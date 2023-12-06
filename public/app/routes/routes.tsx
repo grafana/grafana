@@ -71,6 +71,16 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      // We currently have no core usage of the embedded dashboard so is to have a page for e2e to test
+      path: '/dashboards/embedding-test',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "DashboardPage"*/ 'app/features/dashboard-scene/embedding/EmbeddedDashboardTestPage'
+          )
+      ),
+    },
+    {
       path: '/d-solo/:uid/:slug',
       pageClass: 'dashboard-solo',
       routeName: DashboardRoutes.Normal,
