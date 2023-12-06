@@ -13,17 +13,17 @@ func addPanelMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("Create panel table", migrator.NewRawSQLMigration("").
 		SQLite(
 			fmt.Sprintf(
-				"CREATE TABLE panel (title text, %s int, %s int);",
+				"CREATE TABLE panel (title text, %s text, %s int);",
 				DashUIDinPanelTable,
 				OrgIDinPanelTable)).
 		Mysql(
 			fmt.Sprintf(
-				"CREATE TABLE panel (title text, %s int, %s int);",
+				"CREATE TABLE panel (title varchar(255), %s varchar(255), %s int) COLLATE utf8mb4_unicode_ci;",
 				DashUIDinPanelTable,
 				OrgIDinPanelTable)).
 		Postgres(
 			fmt.Sprintf(
-				"CREATE TABLE panel (title tsvector, %s int, %s int);",
+				"CREATE TABLE panel (title tsvector, %s varchar(255), %s int);",
 				DashUIDinPanelTable,
 				OrgIDinPanelTable)))
 

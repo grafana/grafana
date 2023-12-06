@@ -145,7 +145,7 @@ func setupDBPanelTitle(b testing.TB) benchScenario {
 			}
 
 			panels = append(panels, &dashboards.PanelTitle{
-				DashboardUID: dashID,
+				DashboardUID: str,
 				Title:        panelTitle,
 				OrgID:        signedInUser.OrgID,
 			})

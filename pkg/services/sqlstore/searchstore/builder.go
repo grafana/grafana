@@ -54,7 +54,7 @@ func (b *Builder) ToSQL(limit, page int64) (string, []any) {
 	if b.Features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearchInV1) && b.SearchType == TypePanel {
 		b.sql.WriteString(
 			fmt.Sprintf(
-				"\nINNER JOIN pt ON dashboard.id = pt.%s AND dashboard.org_id = pt.%s",
+				"\nINNER JOIN pt ON dashboard.uid = pt.%s AND dashboard.org_id = pt.%s",
 				migrations.DashUIDinPanelTable,
 				migrations.OrgIDinPanelTable))
 	}

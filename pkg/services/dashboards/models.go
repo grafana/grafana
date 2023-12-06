@@ -490,7 +490,7 @@ type FindPersistedDashboardsQuery struct {
 }
 
 type PanelTitle struct {
-	DashboardUID int64 `xorm:"dashboard_uid"`
+	DashboardUID string `xorm:"dashboard_uid"`
 	Title        string
 	OrgID        int64 `xorm:"org_id"`
 }

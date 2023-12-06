@@ -101,10 +101,10 @@ func (d *dashboardStore) DBMigration(db db.DB) {
 			for _, p := range panels {
 				_, err = sess.Exec(
 					fmt.Sprintf(
-						"INSERT INTO panel (%s, %s, title) VALUES (%d, %d, %s)",
+						`INSERT INTO panel (%s, %s, title) VALUES ("%s", %d, "%s");`,
 						migrations.DashUIDinPanelTable,
 						migrations.OrgIDinPanelTable,
-						d.ID,
+						d.UID,
 						d.OrgID,
 						p))
 				if err != nil {
@@ -568,9 +568,9 @@ func (d *dashboardStore) saveDashboard(sess *db.Session, cmd *dashboards.SaveDas
 func (d *dashboardStore) savePanels(sess *db.Session, dash *dashboards.Dashboard) error {
 	if _, err := sess.Exec(
 		fmt.Sprintf(
-			"DELETE FROM panel WHERE %s = %d AND %s = %d",
+			"DELETE FROM panel WHERE %s = %s AND %s = %d",
 			migrations.DashUIDinPanelTable,
-			dash.ID,
+			dash.UID,
 			migrations.OrgIDinPanelTable,
 			dash.OrgID,
 		)); err != nil {
@@ -580,10 +580,10 @@ func (d *dashboardStore) savePanels(sess *db.Session, dash *dashboards.Dashboard
 	for _, p := range getPanelTitles(dash) {
 		_, err := sess.Exec(
 			fmt.Sprintf(
-				"INSERT INTO panel (%s, %s, title) VALUES (%d, %d, %s)",
+				"INSERT INTO panel (%s, %s, title) VALUES (%s, %d, %s)",
 				migrations.DashUIDinPanelTable,
 				migrations.OrgIDinPanelTable,
-				dash.ID,
+				dash.UID,
 				dash.OrgID,
 				p))
 		if err != nil {
