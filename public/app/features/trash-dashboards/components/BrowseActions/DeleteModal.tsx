@@ -29,6 +29,7 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, isLoading, ..
           <Space v={2} />
         </>
       }
+      confirmationText="Delete"
       confirmText={isLoading ? 'Deleting...' : 'Delete'}
       onDismiss={onDismiss}
       onConfirm={onDelete}
