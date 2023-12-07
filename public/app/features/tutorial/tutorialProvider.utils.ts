@@ -3,11 +3,11 @@ import { TUTORIAL_EXIT_EVENT } from './constants';
 import type { Attribute, RequiredAction, ClickAction, ChangeAction, StringAttribute, RegExpAttribute } from './types';
 
 export function waitForElement<T extends Element = Element>(selector: string, timeout = 500): Promise<T> {
-  console.log(selector);
   return new Promise((resolve, reject) => {
     const resolver = (element: T) =>
       hasElementStoppedAnimating(element).then(() => {
         requestAnimationFrame(() => {
+          console.log(`${selector}: Found element `);
           resolve(element);
         });
       });
@@ -32,6 +32,7 @@ export function waitForElement<T extends Element = Element>(selector: string, ti
     const stopWaiting = setTimeout(() => {
       clearInterval(interval);
       clearTimeout(stopWaiting);
+      console.error(`${selector}: waitForElement timed out waiting`);
       reject(null);
     }, timeout);
   });
