@@ -279,8 +279,8 @@ func TestIntegrationFolderService(t *testing.T) {
 				}).Return(nil).Once()
 
 				var folderUid string
-				dashStore.On("SoftDeleteDashboardsInFolder", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-					folderUid = args.Get(1).(string)
+				dashStore.On("SoftDeleteDashboardsInFolder", mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+					folderUid = args.Get(2).(string)
 				}).Return(nil).Once()
 
 				expectedForceDeleteRules := rand.Int63()%2 == 0
