@@ -17513,6 +17513,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"goober@npm:^2.1.10":
+  version: 2.1.13
+  resolution: "goober@npm:2.1.13"
+  peerDependencies:
+    csstype: ^3.0.10
+  checksum: 0f073d7271bf1b53ec0db3744a0596c40889b01cad2db0a73709d24e081d3f47585eb21e3f5dd873138c12c587469f9a73b25c94681d0a57533063e038bf00ed
+  languageName: node
+  linkType: hard
+
 "gopd@npm:^1.0.1":
   version: 1.0.1
   resolution: "gopd@npm:1.0.1"
@@ -17826,6 +17835,7 @@ __metadata:
     react-grid-layout: "npm:1.4.2"
     react-highlight-words: "npm:0.20.0"
     react-hook-form: "npm:7.5.3"
+    react-hot-toast: "npm:^2.4.1"
     react-i18next: "npm:^12.0.0"
     react-inlinesvg: "npm:3.0.2"
     react-loading-skeleton: "npm:3.3.1"
@@ -25843,6 +25853,18 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17
   checksum: ee359714c538ee8f328e147732aba629269849e159a88f96662c2e2d8ca175a6015e5364304bb8bada0249de0c335bafa64835abe09b5db895b702bce9159912
+  languageName: node
+  linkType: hard
+
+"react-hot-toast@npm:^2.4.1":
+  version: 2.4.1
+  resolution: "react-hot-toast@npm:2.4.1"
+  dependencies:
+    goober: "npm:^2.1.10"
+  peerDependencies:
+    react: ">=16"
+    react-dom: ">=16"
+  checksum: 9af91efdb98837e39a126aff084b54db0336c5f88a7dad7c42daf7ee873d06a79d6e59f398412cc250a35ddf1a73c25700fe90b3c3a2a0c394fd17d99b2bcf8b
   languageName: node
   linkType: hard
 

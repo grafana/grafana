@@ -1,5 +1,8 @@
 // mix of util / helper functions to save achievement data, and to check if an achievement has been completed
 
+import React from 'react';
+import toast from 'react-hot-toast';
+
 import { AppEvents } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
@@ -7,6 +10,7 @@ import { UserDTO } from 'app/types/user';
 
 import { api } from '../profile/api';
 
+import { AchievementNotification } from './AchievementNotification';
 import { achievementLevelThresholds, achievements } from './Achievements';
 import { Achievement, AchievementId, AchievementLevel } from './types';
 
@@ -23,9 +27,9 @@ export const registerAchievementCompleted = async (achievementId: AchievementId)
   }
 
   // save achievement as completed on user object
-  const achievements = parseAchievementString(user.achievements);
-  achievements.push(achievementId);
-  user.achievements = JSON.stringify(achievements);
+  const userAchievements = parseAchievementString(user.achievements);
+  userAchievements.push(achievementId);
+  // user.achievements = JSON.stringify(userAchievements);
 
   // check if achievement is a level up
   // if so, save new level on user object
@@ -38,6 +42,10 @@ export const registerAchievementCompleted = async (achievementId: AchievementId)
     // display error?
   }
 
+  // bool to check if grafana theme is light or dark
+  const isDarkTheme = $('body').hasClass('theme-dark');
+
+  const achievementTitle = achievements.find((achievement) => achievement.id === achievementId)?.title;
   // notify user of achievement completion / level up!
   // TODO: always show achievement completed, after delay show level up if applicable
   if (isLevelUp) {
@@ -45,10 +53,15 @@ export const registerAchievementCompleted = async (achievementId: AchievementId)
     appEvents.emit(AppEvents.alertSuccess, ['Level up!', `You are now a level ${user.level} Grafana user!`]);
   } else {
     console.log('achievement completed!', achievementId);
-    appEvents.emit(AppEvents.alertSuccess, [
-      'Achievement completed!',
-      `You have completed the ${achievementId} achievement!`,
-    ]);
+    toast((t) => <AchievementNotification title={achievementTitle ?? ''} level={user.level ?? 0} />, {
+      icon: '🎉',
+      style: {
+        borderRadius: '25px',
+        background: isDarkTheme ? '#333' : '#fff',
+        color: isDarkTheme ? '#fff' : '#333',
+      },
+      duration: 5000,
+    });
   }
 };
 
@@ -77,7 +90,7 @@ const updateUser = async (user: UserDTO): Promise<void> => {
 
 export const resetUser = async (): Promise<void> => {
   const user = await api.loadUser();
-  user.level = -1; // setting this to 0 or undefined doesn't update the databse
+  user.level = -1; // setting this to 0 or undefined doesn't update the database
   user.achievements = '[]';
   try {
     updateUser(user);

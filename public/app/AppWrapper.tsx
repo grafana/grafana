@@ -1,5 +1,6 @@
 import { Action, KBarProvider } from 'kbar';
 import React, { ComponentType } from 'react';
+import { Toaster } from 'react-hot-toast';
 import { Provider } from 'react-redux';
 import { Router, Redirect, Switch, RouteComponentProps } from 'react-router-dom';
 import { CompatRouter, CompatRoute } from 'react-router-dom-v5-compat';
@@ -104,6 +105,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
               >
                 <ModalsProvider>
                   <GlobalStyles />
+                  <Toaster position="top-right" />
                   <div className="grafana-app">
                     <Router history={locationService.getHistory()}>
                       <CompatRouter>
