@@ -6,12 +6,15 @@ import { Button, Icon, Spinner } from '@grafana/ui';
 import { OperationExplainedBox } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationExplainedBox';
 
 type Props = {
-  logLine: string;
+  logLines: string[];
 };
 
-export const ExplainLogLine = ({ logLine }: Props) => {
+export const ExplainAllLogLines = ({ logLines }: Props) => {
   const [shouldRun, setShouldRun] = useState(false);
   const [llmReply, setLLMReply] = useState('');
+
+  // prevents sending too much data to the API
+  const logLinesString = logLines.join('\n').slice(0, 5000);
 
   useAsync(async () => {
     if (shouldRun) {
@@ -21,15 +24,15 @@ export const ExplainLogLine = ({ logLine }: Props) => {
           {
             role: 'system',
             content:
-              'As a seasoned expert in log analysis, your task is to elucidate the significance of the provided log line sentences and elucidate their utility in log analysis, encapsulating the key insights in 2-3 sentences each. Should any log lines contain errors, offer practical tips on how to effectively address and resolve them for a more streamlined analysis process:',
+              "As an expert in log analysis, I'm seeking your insights on a set of log lines that I've encountered. Please provide a comprehensive overview of these log entries, condensing your analysis into up to 10 sentences. Additionally, if any errors or anomalies are identified within the logs, kindly summarize those for further clarity:",
           },
-          { role: 'user', content: logLine },
+          { role: 'user', content: logLinesString },
         ],
       });
 
       setLLMReply(info.choices[0].message.content);
     }
-  }, [logLine, shouldRun]);
+  }, [logLinesString, shouldRun]);
 
   useEffect(() => {
     // Reset when line changed
@@ -41,7 +44,7 @@ export const ExplainLogLine = ({ logLine }: Props) => {
       setLLMReply('');
       setShouldRun(false);
     };
-  }, [logLine]);
+  }, [logLinesString]);
 
   return (
     <>
@@ -52,7 +55,7 @@ export const ExplainLogLine = ({ logLine }: Props) => {
         onClick={() => setShouldRun(!shouldRun)}
         icon="ai"
       >
-        Help me understand this log line
+        Help me understand my log lines
         <Icon name={`${shouldRun ? 'angle-up' : 'angle-down'}`} />
       </Button>
       {shouldRun && (

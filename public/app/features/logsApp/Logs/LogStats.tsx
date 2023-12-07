@@ -1,11 +1,13 @@
 import React from 'react';
 
 import { DataFrame, Labels, LogRowModel, LogsMetaItem } from '@grafana/data';
-import { Icon, Button } from '@grafana/ui';
+import { Icon } from '@grafana/ui';
 import { LogLabelStats } from 'app/features/logs/components/LogLabelStats';
 import { LogRowStyles } from 'app/features/logs/components/getLogRowStyles';
 import { COMMON_LABELS, UNIQUE_LABELS } from 'app/features/logs/logsModel';
 import { calculateLogsLabelStats } from 'app/features/logs/utils';
+
+import { ExplainAllLogLines } from '../ExplainAllLogLines';
 
 export interface Props {
   rows: LogRowModel[];
@@ -26,10 +28,7 @@ export const LogStats = ({ styles, rows, logsMeta, onClickFilterLabel, onClickFi
       <div className={styles.logDetailsContainer}>
         <div style={{ fontFamily: "'Roboto Mono', monospace", fontSize: '12px', padding: '8px 0' }}>
           <div style={{ fontWeight: 500, fontSize: '12px', marginBottom: '8px' }}>Log results ad hoc statistics</div>
-          <Button style={{ margin: '4px 0 8px 0' }} size="sm" variant="secondary" icon="ai">
-            Help me understand my log lines
-            <Icon name={`${false ? 'angle-up' : 'angle-down'}`} />
-          </Button>
+          <ExplainAllLogLines logLines={rows.map((row) => row.entry)} />
           {/**todo angles are not working yet */}
           {uniqueLabel && (
             <>
