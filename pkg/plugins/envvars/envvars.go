@@ -142,6 +142,7 @@ func (s *Service) GetConfigMap(ctx context.Context, _ string, _ *auth.ExternalSe
 		m[proxy.PluginSecureSocksProxyRootCACert] = s.cfg.ProxySettings.RootCA
 		m[proxy.PluginSecureSocksProxyProxyAddress] = s.cfg.ProxySettings.ProxyAddress
 		m[proxy.PluginSecureSocksProxyServerName] = s.cfg.ProxySettings.ServerName
+		m[proxy.PluginSecureSocksProxyAllowInsecure] = strconv.FormatBool(s.cfg.ProxySettings.AllowInsecure)
 	}
 
 	// TODO add support via plugin SDK
@@ -254,6 +255,7 @@ func (s *Service) secureSocksProxyEnvVars() []string {
 			proxy.PluginSecureSocksProxyProxyAddress + "=" + s.cfg.ProxySettings.ProxyAddress,
 			proxy.PluginSecureSocksProxyServerName + "=" + s.cfg.ProxySettings.ServerName,
 			proxy.PluginSecureSocksProxyEnabled + "=" + strconv.FormatBool(s.cfg.ProxySettings.Enabled),
+			proxy.PluginSecureSocksProxyAllowInsecure + "=" + strconv.FormatBool(s.cfg.ProxySettings.AllowInsecure),
 		}
 	}
 	return nil
