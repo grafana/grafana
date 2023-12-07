@@ -19,18 +19,16 @@ export const DuckDBTransformer: DataTransformerInfo<DuckTransformerOptions> = {
   id: DataTransformerID.duckdb,
   name: 'DuckDB query',
   operator: (options) => (source) => {
-    const prqlOptions = new CompileOptions();
-    prqlOptions.format = false;
+    let sql = `SELECT * FROM generate_series(1, 20, 2) t(v)`;
 
-    if (options.type === QueryType.prql) {
-      //@ts-ignore
-      const sql2 = compile(options.query, prqlOptions);
-      console.log(sql2);
-    }
-
-    let sql = options.query;
-    if (!sql?.length) {
-      sql = `SELECT * FROM generate_series(1, 20, 2) t(v)`;
+    if (options.query) {
+      if (options.type === QueryType.prql) {
+        const prqlOptions = new CompileOptions();
+        prqlOptions.format = false;
+        sql = compile(options.query, prqlOptions) ?? '';
+      } else {
+        sql = options.query;
+      }
     }
 
     const subj = new Subject<DataFrame[]>();
