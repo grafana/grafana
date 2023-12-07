@@ -190,7 +190,19 @@ export const ServiceAccountsListPageUnconnected = ({
   );
 
   return (
-    <Page navId="serviceaccounts" subTitle={subTitle}>
+    <Page
+      navId="serviceaccounts"
+      subTitle={subTitle}
+      actions={
+        <>
+          {!noServiceAccountsCreated && contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate) && (
+            <LinkButton href="org/serviceaccounts/create" variant="primary">
+              Add service account
+            </LinkButton>
+          )}
+        </>
+      }
+    >
       <Page.Contents>
         <div className="page-action-bar">
           <InlineField grow>
@@ -207,11 +219,6 @@ export const ServiceAccountsListPageUnconnected = ({
             value={serviceAccountStateFilter}
             className={styles.filter}
           />
-          {!noServiceAccountsCreated && contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate) && (
-            <LinkButton href="org/serviceaccounts/create" variant="primary">
-              Add service account
-            </LinkButton>
-          )}
         </div>
         {isLoading && <PageLoader />}
         {!isLoading && noServiceAccountsCreated && (
