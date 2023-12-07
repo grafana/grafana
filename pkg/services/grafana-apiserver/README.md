@@ -3,8 +3,6 @@
 ## Basic Setup
 
 ```ini
-app_mode = development
-
 [feature_toggles]
 grafanaAPIServer = true
 kubernetesPlaylists = true
@@ -55,7 +53,19 @@ data/grafana-apiserver
 
 ### `kubectl` access
 
-From the root of the Grafanaa repository, run the following:
+For kubectl to work, grafana needs to run over https.  To simplify development, you can use:
+
+```ini
+app_mode = development
+
+[feature_toggles]
+grafanaAPIServer = true
+grafanaAPIServerEnsureKubectlAccess = true 
+kubernetesPlaylists = true
+```
+
+This will create a development kubeconfig and start a parallel ssl listener.  It can be registered by
+navigating to the root grafana folder, then running:
 ```bash
 export KUBECONFIG=$PWD/data/grafana-apiserver/grafana.kubeconfig
 kubectl api-resources
@@ -64,3 +74,6 @@ kubectl api-resources
 ### Grafana API Access
 
 The Kubernetes compatible API can be accessed using existing Grafana AuthN at: [http://localhost:3000/apis](http://localhost:3000/apis).
+
+The equivalent openapi docs can be seen in [http://localhost:3000/swagger](http://localhost:3000/swagger), 
+select the relevant API from the dropdown in the upper right.

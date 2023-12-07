@@ -5156,7 +5156,11 @@
             "type": "boolean"
           },
           "id": {
-            "description": "Deprecated: use Uid instead",
+            "description": "Deprecated: use UID instead",
+            "format": "int64",
+            "type": "integer"
+          },
+          "orgId": {
             "format": "int64",
             "type": "integer"
           },
