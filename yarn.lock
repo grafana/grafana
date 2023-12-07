@@ -3046,6 +3046,7 @@ __metadata:
     moment-timezone: "npm:0.5.43"
     ol: "npm:7.4.0"
     papaparse: "npm:5.4.1"
+    prql-js: "npm:^0.10.1"
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
     react-test-renderer: "npm:18.2.0"
@@ -3529,6 +3530,7 @@ __metadata:
     ol: "npm:7.4.0"
     prismjs: "npm:1.29.0"
     process: "npm:^0.11.10"
+    prql-js: "npm:^0.10.1"
     rc-cascader: "npm:3.20.0"
     rc-drawer: "npm:6.5.2"
     rc-slider: "npm:10.3.1"
@@ -17778,6 +17780,7 @@ __metadata:
     prettier: "npm:3.0.0"
     prismjs: "npm:1.29.0"
     prop-types: "npm:15.8.1"
+    prql-js: "npm:^0.10.1"
     pseudoizer: "npm:^0.1.0"
     rc-cascader: "npm:3.20.0"
     rc-drawer: "npm:6.5.2"
@@ -25036,6 +25039,13 @@ __metadata:
   resolution: "prql-grafana@workspace:prql"
   languageName: unknown
   linkType: soft
+
+"prql-js@npm:^0.10.1":
+  version: 0.10.1
+  resolution: "prql-js@npm:0.10.1"
+  checksum: 112b26a2a377b54b354c40fe12d891108939ac7550cff3c19257f770f2d3d61233c3aaefef3795e029b548032c2e309472245ce38f2f64f60c2319a61abd4a98
+  languageName: node
+  linkType: hard
 
 "prr@npm:~1.0.1":
   version: 1.0.1

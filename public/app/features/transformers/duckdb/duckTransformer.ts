@@ -1,3 +1,4 @@
+import { compile } from "prql-js/dist/bundler";
 import { Subject } from 'rxjs';
 
 import { DataTransformerID, DataTransformerInfo, DataFrame } from '@grafana/data';
@@ -18,6 +19,9 @@ export const DuckDBTransformer: DataTransformerInfo<DuckTransformerOptions> = {
   id: DataTransformerID.duckdb,
   name: 'DuckDB query',
   operator: (options) => (source) => {
+    const sql2 = compile(`from employees | select first_name`);
+    console.log(sql2);
+
     let sql = options.query;
     if (!sql?.length) {
       sql = `SELECT * FROM generate_series(1, 20, 2) t(v)`;

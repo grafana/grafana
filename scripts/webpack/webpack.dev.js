@@ -24,6 +24,10 @@ module.exports = (env = {}) => {
     devtool: 'source-map',
     mode: 'development',
 
+    experiments: {
+      asyncWebAssembly: true,
+    },
+
     entry: {
       app: './public/app/index.ts',
       dark: './public/sass/grafana.dark.scss',
