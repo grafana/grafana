@@ -26,10 +26,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       color: ${theme.colors.text.primary};
       word-break: break-all;
       margin: ${theme.spacing(0.5)} 0;
-      padding: ${theme.spacing(1)};
-      &:hover {
-        background: ${theme.colors.background.primary};
-      }
+      padding: 0 ${theme.spacing(1)};
     `,
     logsStatsHeader: css`
       label: logs-stats__header;
@@ -44,6 +41,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       white-space: nowrap;
       text-overflow: ellipsis;
       flex-grow: 1;
+      padding-top: ${theme.spacing(0.5)};
     `,
     logsStatsClose: css`
       label: logs-stats__close;
@@ -51,7 +49,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     `,
     logsStatsBody: css`
       label: logs-stats__body;
-      padding: 5px 0px;
+      padding: 0;
       display: flex;
     `,
   };
@@ -125,8 +123,8 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
           <div style={{ width: '25%', display: 'flex', justifyContent: 'center', alignItems: 'cent' }}>
             <PanelRenderer
               pluginId="piechart"
-              height={100}
-              width={100}
+              height={95}
+              width={95}
               title="Pie Chart"
               data={{
                 series: [frame],
