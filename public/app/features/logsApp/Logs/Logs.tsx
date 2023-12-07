@@ -129,6 +129,7 @@ interface State {
   paneSize: number;
   sidebarVisible: boolean;
   highlightSearchwords: boolean;
+  similaritySetting?: { row: LogRowModel; type: 'show' | 'hide' };
   resolution: number;
 }
 
@@ -171,6 +172,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     paneSize: localStorage.getItem('logs.sidebar') === 'true' ? getLastSize() : window.innerWidth - WINDOW_MARGINS,
     sidebarVisible: localStorage.getItem('logs.sidebar') === 'true' ? true : false,
     highlightSearchwords: true,
+    similaritySetting: undefined,
     resolution: 0,
   };
 
@@ -612,6 +614,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
     });
   };
 
+  onLogsSimilarityChange = (row: LogRowModel, type: 'show' | 'hide') => {
+    this.setState({ similaritySetting: { row, type } });
+  };
+
   handleResolutionChange = (resolution: number) => {
     this.setState({
       resolution,
@@ -736,20 +742,33 @@ class UnthemedLogs extends PureComponent<Props, State> {
         <PanelChrome hoverHeader={true} loadingState={loading ? LoadingState.Loading : LoadingState.Done}>
           <div className={styles.stickyNavigation}>
             <div className={styles.logsOptions}>
-              <LogsOptions
-                styles={styles}
-                showTime={showTime}
-                showLabels={showLabels}
-                wrapLogMessage={wrapLogMessage}
-                prettifyLogMessage={prettifyLogMessage}
-                highlightSearchwords={highlightSearchwords}
-                exploreId={exploreId}
-                onChangeTime={this.onChangeTime}
-                onChangeLabels={this.onChangeLabels}
-                onChangeWrapLogMessage={this.onChangeWrapLogMessage}
-                onChangePrettifyLogMessage={this.onChangePrettifyLogMessage}
-                onChangeHighlightSearchwords={this.onChangeHighlightSearchwords}
-              />
+              <div>
+                <LogsOptions
+                  styles={styles}
+                  showTime={showTime}
+                  showLabels={showLabels}
+                  wrapLogMessage={wrapLogMessage}
+                  prettifyLogMessage={prettifyLogMessage}
+                  highlightSearchwords={highlightSearchwords}
+                  exploreId={exploreId}
+                  onChangeTime={this.onChangeTime}
+                  onChangeLabels={this.onChangeLabels}
+                  onChangeWrapLogMessage={this.onChangeWrapLogMessage}
+                  onChangePrettifyLogMessage={this.onChangePrettifyLogMessage}
+                  onChangeHighlightSearchwords={this.onChangeHighlightSearchwords}
+                />
+                {this.state.similaritySetting && (
+                  <Button
+                    size="md"
+                    variant="secondary"
+                    onClick={() => this.setState({ similaritySetting: undefined })}
+                    style={{ marginLeft: '0.5em' }}
+                  >
+                    Clear similarity filter
+                    <Icon name="multiply" size="md" style={{ marginLeft: '0.5em' }} />
+                  </Button>
+                )}
+              </div>
               <div className={styles.optionToggles}>
                 {config.featureToggles.logsExploreTableVisualisation && (
                   <div className={styles.visualisationType}>
@@ -869,6 +888,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                         logDetailsRow={this.state.logDetailsRow}
                         highlightSearchwords={highlightSearchwords}
                         noMenu
+                        similaritySetting={this.state.similaritySetting}
                         resolution={this.state.resolution}
                       />
                     </InfiniteScroll>
@@ -917,6 +937,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     onPermalinkClick={this.onPermalinkClick}
                     showContextToggle={showContextToggle}
                     prettifyLogMessage={prettifyLogMessage}
+                    onSimilarityChange={this.onLogsSimilarityChange}
                   />
                 ) : (
                   <>
