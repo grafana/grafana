@@ -3,20 +3,23 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
-import { Tutorial } from 'app/features/tutorial/types';
 
 const DIV_SIZE = 40;
 const STROKE_WIDTH = 2;
 const CIRCLE_SIZE = DIV_SIZE + STROKE_WIDTH * 2;
 
-export const TutorialProgress = ({ tutorial }: { tutorial: Tutorial }) => {
+type TutorialProgressProps = {
+  currentStep: number;
+  totalSteps: number;
+};
+
+export const TutorialProgress = ({ currentStep, totalSteps }: TutorialProgressProps) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const half = CIRCLE_SIZE / 2;
   const radius = half - STROKE_WIDTH / 2;
   const circumference = radius * 2 * Math.PI;
-  const furshestStep = accountForZeroIndex(tutorial.furthestStepCompleted);
-  const percent = (furshestStep / tutorial.steps.length) * 100;
+  const percent = (currentStep / totalSteps) * 100;
   const strokeDashoffset = circumference - (percent / 100) * circumference;
   const isComplete = percent === 100;
 
@@ -57,11 +60,3 @@ const getStyles = (theme: GrafanaTheme2) => ({
     transform: `translate(-50%, -50%) rotate(-90deg)`,
   }),
 });
-
-function accountForZeroIndex(furtherstStep?: number) {
-  if (furtherstStep === undefined) {
-    return 0;
-  }
-
-  return furtherstStep + 1;
-}

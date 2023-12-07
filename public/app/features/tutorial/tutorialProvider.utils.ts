@@ -1,9 +1,19 @@
 // import { locationService } from '@grafana/runtime';
 import { TUTORIAL_EXIT_EVENT } from './constants';
-import type { Attribute, RequiredAction, ClickAction, ChangeAction, StringAttribute, RegExpAttribute } from './types';
+import type {
+  Attribute,
+  RequiredAction,
+  ClickAction,
+  ChangeAction,
+  InputAction,
+  StringAttribute,
+  RegExpAttribute,
+} from './types';
 
 export function waitForElement<T extends Element = Element>(selector: string, timeout = 500): Promise<T> {
   return new Promise((resolve, reject) => {
+    let stopWaiting: NodeJS.Timeout;
+
     const resolver = (element: T) =>
       hasElementStoppedAnimating(element).then(() => {
         requestAnimationFrame(() => {
@@ -11,6 +21,13 @@ export function waitForElement<T extends Element = Element>(selector: string, ti
           resolve(element);
         });
       });
+
+    const rejecter = () => {
+      clearInterval(interval);
+      clearTimeout(stopWaiting);
+      console.error(`${selector}: waitForElement timed out waiting`);
+      reject(null);
+    };
 
     const element = document.querySelector<T>(selector);
 
@@ -29,12 +46,21 @@ export function waitForElement<T extends Element = Element>(selector: string, ti
       }
     }, 30);
 
-    const stopWaiting = setTimeout(() => {
-      clearInterval(interval);
-      clearTimeout(stopWaiting);
-      console.error(`${selector}: waitForElement timed out waiting`);
-      reject(null);
-    }, timeout);
+    const giveUp = () => {
+      const spinnerPresent = document.querySelector('[data-testid="Spinner"]');
+
+      if (spinnerPresent) {
+        console.log(`Found spinner, will wait for another ${timeout}ms`);
+        clearTimeout(stopWaiting);
+        stopWaiting = setTimeout(giveUp, timeout);
+      }
+
+      if (!spinnerPresent) {
+        rejecter();
+      }
+    };
+
+    stopWaiting = setTimeout(giveUp, timeout);
   });
 }
 
@@ -80,6 +106,10 @@ function setUpRequiredAction(action: RequiredAction) {
       if (isChangeAction(action)) {
         setupChangeAction(targetElement, action, resolve);
       }
+
+      if (isInputAction(action)) {
+        setupInputAction(targetElement, action, resolve);
+      }
     });
   });
 }
@@ -118,12 +148,32 @@ function setupChangeAction(targetElement: Element, action: ChangeAction, onCompl
   document.addEventListener(TUTORIAL_EXIT_EVENT, observer.disconnect.bind(observer));
 }
 
+function setupInputAction(targetElement: Element, action: InputAction, onComplete: (value: unknown) => void) {
+  const removeOnComplete = () => {
+    targetElement.removeEventListener('input', listener);
+  };
+  document.addEventListener(TUTORIAL_EXIT_EVENT, removeOnComplete);
+
+  const listener = (e: any) => {
+    if (checkRegEx(e.target.value, action.regEx)) {
+      onComplete(true);
+      document.removeEventListener(TUTORIAL_EXIT_EVENT, removeOnComplete);
+    }
+  };
+
+  targetElement.addEventListener('input', listener);
+}
+
 export function isClickAction(action: RequiredAction): action is ClickAction {
   return action.action === 'click';
 }
 
 export function isChangeAction(action: RequiredAction): action is ChangeAction {
   return action.action === 'change';
+}
+
+export function isInputAction(action: RequiredAction): action is InputAction {
+  return action.action === 'input';
 }
 
 export function checkCorrectValue(valueProvided: string | null | undefined, attribute: Attribute) {
@@ -136,15 +186,19 @@ export function checkCorrectValue(valueProvided: string | null | undefined, attr
   }
 
   if (isRegexAttribute(attribute)) {
-    const regexString = '/prom/i';
-    const pattern = regexString.slice(1, regexString.lastIndexOf('/'));
-    const flags = regexString.slice(regexString.lastIndexOf('/') + 1);
-    const regex = new RegExp(pattern, flags);
-
-    return regex.test(valueProvided);
+    return checkRegEx(valueProvided, attribute.regEx);
   }
 
   return false;
+}
+
+function checkRegEx(value: string, regEx: string) {
+  const regexString = regEx;
+  const pattern = regexString.slice(1, regexString.lastIndexOf('/'));
+  const flags = regexString.slice(regexString.lastIndexOf('/') + 1);
+  const regex = new RegExp(pattern, flags);
+
+  return regex.test(value);
 }
 
 export function isRegexAttribute(attribute: Attribute): attribute is RegExpAttribute {

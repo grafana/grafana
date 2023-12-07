@@ -25,7 +25,10 @@ export const TutorialItem = ({ arePreviewing, onPreview, tutorial }: TutorialIte
         <h3 className="h4">{name}</h3>
         <div className={styles.progressHeader}>
           Progress:
-          <TutorialProgress tutorial={tutorial} />
+          <TutorialProgress
+            currentStep={accountForZeroIndex(tutorial.furthestStepCompleted)}
+            totalSteps={tutorial.steps.length}
+          />
         </div>
       </div>
       <p>{description}</p>
@@ -50,6 +53,14 @@ export const TutorialItem = ({ arePreviewing, onPreview, tutorial }: TutorialIte
     </div>
   );
 };
+
+function accountForZeroIndex(furtherstStep?: number) {
+  if (furtherstStep === undefined) {
+    return 0;
+  }
+
+  return furtherstStep + 1;
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({

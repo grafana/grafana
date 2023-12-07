@@ -1,4 +1,6 @@
-import type { Step, Tutorial } from '../types';
+import type { Step, Tutorial } from 'app/features/tutorial/types';
+
+import { checkMenuStep } from './reusable/check-menu';
 
 const info = {
   id: 'using-prometheusds',
@@ -8,28 +10,11 @@ const info = {
 };
 
 const tutorialSteps: Step[] = [
-  {
-    target: `[data-testid="data-testid Toggle menu"]`,
-    title: `Open the menu`,
-    content: `Click the menu button to open the menu!`,
-    placement: `right`,
-    requiredActions: [
-      {
-        target: `[data-testid="data-testid Toggle menu"]`,
-        action: 'click',
-      },
-    ],
-    skipConditions: [
-      {
-        target: `[href="/explore"]`,
-        condition: 'visible',
-      },
-    ],
-  },
+  checkMenuStep,
   {
     target: `[href="/explore"]`,
-    title: `Let's go find the Prometheus datasource!`,
-    content: `The Prometheus datasource is a great place to start!`,
+    title: `Go to Explore`,
+    content: `You can see all your datasources in Explore.`,
     placement: `right`,
     requiredActions: [
       {

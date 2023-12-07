@@ -38,7 +38,7 @@ export function SuggestionContainer({
   return (
     <>
       <div className={styles.container}>
-        <Stack gap={4} direction={'column'}>
+        <Stack gap={3} direction={'column'}>
           <div className={styles.infoContainer}>
             {suggestions.map((qs: Suggestion, idx: number) => {
               return (

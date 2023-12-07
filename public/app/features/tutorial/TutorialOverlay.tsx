@@ -24,7 +24,7 @@ const TutorialOverlayComponent = ({
   const styles = useStyles2(getStyles);
   const [spotlightStyles, setSpotlightStyles] = useState({});
   const [canInteract, setCanInteract] = useState(false);
-  const renderedFirstStep = useRef(false);
+  const previousLocationCoords = useRef(``);
   const currentTutorial = availableTutorials.find((t) => t.id === currentTutorialId);
   const step = currentStepIndex !== null && currentTutorial ? currentTutorial.steps[currentStepIndex] : null;
   const isTransitioning = stepTransition === `transitioning`;
@@ -37,13 +37,8 @@ const TutorialOverlayComponent = ({
   const { getTooltipProps, setTooltipRef, setTriggerRef, triggerRef } = popper;
 
   useEffect(() => {
-    if (renderedFirstStep.current && !isTransitioning && currentTutorial) {
+    if (previousLocationCoords.current && !isTransitioning && currentTutorial) {
       setShowTooltip(false);
-
-      // TODO: this could fire before the transitionend event. It is a fallback in case the transitionend event doesn't fire
-      setTimeout(() => {
-        setShowTooltip(true);
-      }, 500);
     }
   }, [currentTutorial, isTransitioning]);
 
@@ -55,6 +50,7 @@ const TutorialOverlayComponent = ({
 
     if (step && triggerRef) {
       waitForElement(step.target).then((element) => {
+        const newCoords = getStringCoords(element);
         setStyles = () =>
           new Promise((resolve) => {
             setSpotlightStyles(getSpotlightStyles(element));
@@ -70,11 +66,17 @@ const TutorialOverlayComponent = ({
           }
         };
 
+        if (previousLocationCoords.current === newCoords) {
+          setShowTooltip(true);
+          previousLocationCoords.current = newCoords;
+        }
+
         transitionend = (e) => {
           // TODO: if there are multiple steps on the same element
           // with no transition the tooltip won't show
           if ([`width`, `height`, `top`, `left`].includes(e.propertyName)) {
             setShowTooltip(true);
+            previousLocationCoords.current = newCoords;
           }
         };
 
@@ -89,9 +91,9 @@ const TutorialOverlayComponent = ({
             });
           }
 
-          if (!renderedFirstStep.current) {
+          if (!previousLocationCoords.current) {
             setShowTooltip(true);
-            renderedFirstStep.current = true;
+            previousLocationCoords.current = newCoords;
           }
         });
         scrollParent?.addEventListener('scroll', setStyles);
@@ -144,6 +146,8 @@ function isMouseOverSpotlight(mouseEvent: MouseEvent, spotlightElement: HTMLElem
   return inSpotlight;
 }
 
+const ZIndex = 1061;
+
 // TODO: LEFT / TOP TRANSITION BUT NOT WHEN SCROLLING
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
@@ -151,11 +155,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: '100%',
     position: 'absolute',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    zIndex: 1058,
+    zIndex: ZIndex,
     mixBlendMode: 'hard-light',
   }),
   spotlight: css({
-    backgroundColor: `#939393`,
+    backgroundColor: `gray`,
     position: `absolute`,
     boxSizing: `content-box`,
     borderRadius: theme.shape.radius.default,
@@ -166,13 +170,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: `flex`,
     flexDirection: `column`,
     gap: theme.spacing(2),
-    zIndex: 1059,
+    zIndex: ZIndex + 1,
     width: `300px`,
     backgroundColor: theme.colors.background.primary,
     padding: theme.spacing(2),
     borderRadius: theme.shape.radius.default,
   }),
 });
+
+function getStringCoords(element: Element) {
+  const { width, height, x, y } = element.getBoundingClientRect();
+
+  return [width, height, x, y].join(`,`);
+}
 
 const mapStateToProps = (state: StoreState) => {
   return {

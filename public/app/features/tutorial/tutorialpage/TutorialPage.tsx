@@ -9,6 +9,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { addTutorials } from 'app/features/tutorial/slice';
 import { TutorialPreview } from 'app/features/tutorial/tutorialpage//TutorialPreview';
 import { TutorialList } from 'app/features/tutorial/tutorialpage/TutorialList';
+import { creatingAk6Project } from 'app/features/tutorial/tutorials/creating-a-k6-project';
 import { tutorialPageTutorial } from 'app/features/tutorial/tutorials/tutorial-page';
 import { usingPrometheusDSTutorial } from 'app/features/tutorial/tutorials/using-prometheusds';
 import type { Tutorial } from 'app/features/tutorial/types';
@@ -24,7 +25,7 @@ const node: NavModelItem = {
 export function TutorialPage({ availableTutorials }: ConnectedProps<typeof connector>) {
   const dispatch = useDispatch();
   const addDSTutorial = () => {
-    dispatch(addTutorials([usingPrometheusDSTutorial, tutorialPageTutorial]));
+    dispatch(addTutorials([usingPrometheusDSTutorial, tutorialPageTutorial, creatingAk6Project]));
   };
 
   return (

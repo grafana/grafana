@@ -21,14 +21,14 @@ const TutorialTooltipComponent = ({
   const isLastStep = currentTutorial ? currentStepIndex === currentTutorial.steps.length - 1 : false;
   const step = currentStepIndex !== null && currentTutorial ? currentTutorial.steps[currentStepIndex] : null;
 
-  if (step && currentTutorial) {
+  if (step && currentTutorial && currentStepIndex !== null) {
     return (
       <>
         <StepTitle title={step.title} />
         <StepContent content={step.content} />
         <Stack alignItems={`center`} justifyContent={`space-between`}>
           <StepActions isLastStep={isLastStep} step={step} />
-          <TutorialProgress tutorial={currentTutorial} />
+          <TutorialProgress currentStep={currentStepIndex} totalSteps={currentTutorial.steps.length} />
         </Stack>
         <IconButton
           className={styles.exit}

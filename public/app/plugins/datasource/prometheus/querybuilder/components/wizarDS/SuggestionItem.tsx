@@ -126,7 +126,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   longCode: css({
     width: '90%',
     textWrap: 'nowrap',
-    overflow: 'scroll',
+    overflow: 'auto',
     maskImage: `linear-gradient(to right, rgba(0, 0, 0, 1) 90%, rgba(0, 0, 0, 0))`,
 
     div: {

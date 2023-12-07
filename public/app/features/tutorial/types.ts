@@ -50,7 +50,7 @@ type RequiredActionBase = {
 };
 
 export type ClickAction = RequiredActionBase & {
-  action: 'click' | 'change';
+  action: 'click';
 };
 
 export type ChangeAction = RequiredActionBase & {
@@ -58,4 +58,9 @@ export type ChangeAction = RequiredActionBase & {
   attribute: Attribute;
 };
 
-export type RequiredAction = ClickAction | ChangeAction;
+export type InputAction = RequiredActionBase & {
+  action: 'input';
+  regEx: string;
+};
+
+export type RequiredAction = ClickAction | ChangeAction | InputAction;
