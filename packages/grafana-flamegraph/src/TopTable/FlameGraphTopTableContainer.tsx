@@ -30,7 +30,10 @@ type Props = {
   data: FlameGraphDataContainer;
   onSymbolClick: (symbol: string) => void;
   height?: number;
+  // This is used for highlighting the search button in case there is exact match.
   search?: string;
+  // We use these to filter out rows in the table if users is doing text search.
+  matchedLabels: Set<string> | undefined;
   sandwichItem?: string;
   onSearch: (str: string) => void;
   onSandwich: (str?: string) => void;
@@ -39,7 +42,18 @@ type Props = {
 };
 
 const FlameGraphTopTableContainer = React.memo(
-  ({ data, onSymbolClick, height, search, onSearch, sandwichItem, onSandwich, onTableSort, vertical }: Props) => {
+  ({
+    data,
+    onSymbolClick,
+    height,
+    search,
+    matchedLabels,
+    onSearch,
+    sandwichItem,
+    onSandwich,
+    onTableSort,
+    vertical,
+  }: Props) => {
     const table = useMemo(() => {
       // Group the data by label, we show only one row per label and sum the values
       // TODO: should be by filename + funcName + linenumber?
@@ -50,8 +64,8 @@ const FlameGraphTopTableContainer = React.memo(
         const self = data.getSelf(i);
         const label = data.getLabel(i);
 
-        // Check if the label includes the search string
-        if (!search || label.toLowerCase().includes(search.toLowerCase())) {
+        // If user is doing text search we filter out labels in the same way we highlight them in flamegraph.
+        if (!matchedLabels || matchedLabels.has(label)) {
           filteredTable[label] = filteredTable[label] || {};
           filteredTable[label].self = filteredTable[label].self ? filteredTable[label].self + self : self;
           filteredTable[label].total = filteredTable[label].total ? filteredTable[label].total + value : value;
@@ -61,7 +75,7 @@ const FlameGraphTopTableContainer = React.memo(
         }
       }
       return filteredTable;
-    }, [data, search]);
+    }, [data, matchedLabels]);
 
     const rowHeight = 35;
     // When we use normal layout we size the table to have the same height as the flamegraph to look good side by side.
