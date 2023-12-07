@@ -54,7 +54,11 @@ export const AchievementCard = ({ title, level }: AchievementCardProps) => {
               <GrotIcon level={level} height={25} />
             </span>
             <Box className={styles.progressBox}>
-              <CircularProgress variant="determinate" value={progressByLevel} sx={{ color: '#F55F3E' }} />
+              <CircularProgress
+                variant="determinate"
+                value={progressByLevel}
+                sx={{ color: theme.colors.warning.main }}
+              />
               <Box className={styles.progressText}>{`${progressByLevel}%`}</Box>
             </Box>
             <h4 style={{ color: theme.colors.text.primary, marginTop: '10px' }}>{title}</h4>
@@ -148,7 +152,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     paddingRight: '5px',
   }),
   achievementCompleteIcon: css({
-    color: '#F55F3E',
+    color: theme.colors.warning.main,
     height: '20px',
     width: '20px',
   }),
