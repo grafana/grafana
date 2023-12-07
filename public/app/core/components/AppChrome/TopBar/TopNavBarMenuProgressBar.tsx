@@ -44,7 +44,7 @@ export function TopNavBarMenuProgressBar() {
   return (
     <a href="/profile/achievements">
       <div className={styles.progressBarWrapper}>
-        <div className={styles.progressBarIcon}>
+        <div>
           <GrotIcon level={level} height={30} />
         </div>
         <div className={styles.progressBarRight}>
@@ -70,11 +70,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     progressBarWrapper: css({
       display: 'flex',
     }),
-    progressBarIcon: css({
-      display: 'flex: 1',
-    }),
     progressBarRight: css({
-      display: 'flex: 3',
       width: '100%',
     }),
     progressBarHeader: css({
