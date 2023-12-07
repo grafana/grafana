@@ -1,6 +1,10 @@
 export const Messages = {
   pageTitleSelection: 'Inventory / Add service / Step 1 of 2',
   pageTitleConfiguration: 'Inventory / Add service / Step 2 of 2',
+  selection: {
+    sectionTitle: 'Select service type',
+    description: 'Select the service type you want to configure and then add it to your inventory.',
+  },
   selectionStep: {
     cancel: 'Cancel',
     next: 'Next step: Configuration',

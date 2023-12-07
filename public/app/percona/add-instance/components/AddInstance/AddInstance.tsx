@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions */
-import React, { FC, useMemo } from 'react';
+import React, { FC, useLayoutEffect, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { Card, Icon, useStyles2 } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
+import { PMM_ADD_INSTANCE_PAGE } from 'app/percona/shared/components/PerconaBootstrapper/PerconaNavigation';
 import { Databases } from 'app/percona/shared/core';
 import * as UserFlow from 'app/percona/shared/core/reducers/userFlow';
 import { useDispatch } from 'app/types';
@@ -13,7 +15,12 @@ import { Messages } from './AddInstance.messages';
 import { getStyles } from './AddInstance.styles';
 import { AddInstanceProps, InstanceListItem, SelectInstanceProps } from './AddInstance.types';
 
-export const SelectInstance: FC<React.PropsWithChildren<SelectInstanceProps>> = ({ type, isSelected, icon, selectInstanceType, title }) => {
+export const SelectInstance: FC<React.PropsWithChildren<SelectInstanceProps>> = ({
+  type,
+  icon,
+  selectInstanceType,
+  title,
+}) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -27,8 +34,13 @@ export const SelectInstance: FC<React.PropsWithChildren<SelectInstanceProps>> = 
   );
 };
 
-export const AddInstance: FC<React.PropsWithChildren<AddInstanceProps>> = ({ selectedInstanceType, onSelectInstanceType, showAzure }) => {
+export const AddInstance: FC<React.PropsWithChildren<AddInstanceProps>> = ({
+  selectedInstanceType,
+  onSelectInstanceType,
+  showAzure,
+}) => {
   const styles2 = useStyles2(getStyles);
+  const { chrome } = useGrafana();
   const instanceList = useMemo<InstanceListItem[]>(
     () => [
       { type: InstanceTypesExtra.rds, title: Messages.titles.rds },
@@ -56,10 +68,18 @@ export const AddInstance: FC<React.PropsWithChildren<AddInstanceProps>> = ({ sel
     onSelectInstanceType({ type: type as InstanceAvailableType });
   };
 
+  useLayoutEffect(() => {
+    chrome.update({
+      pageNav: {
+        id: PMM_ADD_INSTANCE_PAGE.id,
+        text: Messages.sectionTitle,
+        subTitle: Messages.description,
+      },
+    });
+  });
+
   return (
     <section className={styles2.Content}>
-      <h2>{Messages.sectionTitle}</h2>
-      <p className={styles2.Description}>{Messages.description}</p>
       <nav className={styles2.NavigationPanel}>
         {instanceList
           .filter(({ isHidden }) => !isHidden)

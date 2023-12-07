@@ -13,7 +13,7 @@ import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { logger } from 'app/percona/shared/helpers/logger';
 
 import { ADD_INSTANCE_FORM_NAME } from '../../panel.constants';
-import { InstanceTypesExtra, InstanceTypes, INSTANCE_TYPES_LABELS, InstanceAvailableType } from '../../panel.types';
+import { InstanceTypesExtra, InstanceTypes, INSTANCE_TYPES_LABELS } from '../../panel.types';
 
 import { ADD_AZURE_CANCEL_TOKEN, ADD_RDS_CANCEL_TOKEN } from './AddRemoteInstance.constants';
 import { Messages } from './AddRemoteInstance.messages';
@@ -114,33 +114,22 @@ const AddRemoteInstance: FC<React.PropsWithChildren<AddRemoteInstanceProps>> = (
   );
 
   const formParts = useMemo(
-    () => (form: FormApi) =>
-      (
-        <>
-          <ConnectionDetails form={form} type={type} />
-          <Labels />
-          {type !== InstanceTypesExtra.external && (
-            <AdditionalOptions
-              remoteInstanceCredentials={remoteInstanceCredentials}
-              loading={loading}
-              instanceType={type}
-              form={form}
-            />
-          )}
-        </>
-      ),
+    () => (form: FormApi) => (
+      <>
+        <ConnectionDetails form={form} type={type} />
+        <Labels />
+        {type !== InstanceTypesExtra.external && (
+          <AdditionalOptions
+            remoteInstanceCredentials={remoteInstanceCredentials}
+            loading={loading}
+            instanceType={type}
+            form={form}
+          />
+        )}
+      </>
+    ),
     [ConnectionDetails, loading, remoteInstanceCredentials, type]
   );
-
-  const getHeader = (databaseType: InstanceAvailableType) => {
-    if (databaseType === InstanceTypesExtra.external) {
-      return Messages.form.titles.addExternalService;
-    }
-    if (databaseType === '') {
-      return Messages.form.titles.addRemoteInstance;
-    }
-    return `Configuring ${INSTANCE_TYPES_LABELS[databaseType]} service`;
-  };
 
   return (
     <div className={styles.formWrapper}>
@@ -154,7 +143,6 @@ const AddRemoteInstance: FC<React.PropsWithChildren<AddRemoteInstanceProps>> = (
         }}
         render={({ form, handleSubmit }) => (
           <form id={ADD_INSTANCE_FORM_NAME} onSubmit={handleSubmit} data-testid="add-remote-instance-form">
-            <h3 className={styles.addRemoteInstanceTitle}>{getHeader(type)}</h3>
             {formParts(form)}
           </form>
         )}

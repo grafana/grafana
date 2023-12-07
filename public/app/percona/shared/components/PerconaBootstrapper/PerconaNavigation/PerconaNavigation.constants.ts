@@ -78,26 +78,27 @@ export const PMM_ALERTING_PERCONA_ALERTS: NavModelItem[] = [
   },
 ];
 
+export const PMM_SERVICES_PAGE: NavModelItem = {
+  id: 'inventory-services',
+  text: 'Services',
+  url: `${config.appSubUrl}/inventory/services`,
+  hideFromMenu: true,
+};
+
+export const PMM_NODES_PAGE: NavModelItem = {
+  id: 'inventory-nodes',
+  text: 'Nodes',
+  url: `${config.appSubUrl}/inventory/nodes`,
+  hideFromMenu: true,
+};
+
 export const PMM_INVENTORY_PAGE: NavModelItem = {
   id: 'inventory',
   icon: 'server-network',
   text: 'PMM Inventory',
   url: `${config.appSubUrl}/inventory`,
   subTitle: 'Percona PMM Inventory',
-  children: [
-    {
-      id: 'inventory-services',
-      text: 'Services',
-      url: `${config.appSubUrl}/inventory/services`,
-      hideFromMenu: true,
-    },
-    {
-      id: 'inventory-nodes',
-      text: 'Nodes',
-      url: `${config.appSubUrl}/inventory/nodes`,
-      hideFromMenu: true,
-    },
-  ],
+  children: [PMM_SERVICES_PAGE, PMM_NODES_PAGE],
 };
 
 export const PMM_HEADING_LINK: NavModelItem = {
@@ -113,6 +114,7 @@ export const PMM_ADD_INSTANCE_PAGE: NavModelItem = {
   text: 'Add Service',
   hideFromTabs: true,
   showIconInNavbar: true,
+  isCreateAction: true,
 };
 
 export const PMM_EDIT_INSTANCE_PAGE: NavModelItem = {

@@ -3,13 +3,14 @@ import { Form } from 'react-final-form';
 import { useHistory, useParams } from 'react-router-dom';
 
 import { AppEvents } from '@grafana/data';
-import { Alert, Button, Modal, PageToolbar, ToolbarButton, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Modal, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import { InventoryService } from 'app/percona/inventory/Inventory.service';
 import { useAppDispatch } from 'app/store/store';
 
 import { Labels } from '../add-instance/components/AddRemoteInstance/FormParts';
+import { PMM_EDIT_INSTANCE_PAGE, PMM_SERVICES_PAGE } from '../shared/components/PerconaBootstrapper/PerconaNavigation';
 import { useCancelToken } from '../shared/components/hooks/cancelToken.hook';
 import { updateServiceAction } from '../shared/core/reducers/services';
 import { logger } from '../shared/helpers/logger';
@@ -20,6 +21,7 @@ import { Messages } from './EditInstance.messages';
 import { getStyles } from './EditInstance.styles';
 import { EditInstanceFormValues, EditInstanceRouteParams } from './EditInstance.types';
 import { getInitialValues, getService, toPayload } from './EditInstance.utils';
+import EditInstanceActions from './components/EditInstanceActions';
 
 const EditInstancePage: React.FC<React.PropsWithChildren<unknown>> = () => {
   const history = useHistory();
@@ -95,6 +97,7 @@ const EditInstancePage: React.FC<React.PropsWithChildren<unknown>> = () => {
       onSubmit={handleSubmit}
       render={({ handleSubmit, submitting, values }) => (
         <>
+          <EditInstanceActions onCancel={handleCancel} onSubmit={handleSubmit} submitting={submitting} />
           <Modal
             isOpen={isModalOpen}
             title={Messages.formTitle(service?.service_name || '')}
@@ -124,17 +127,12 @@ const EditInstancePage: React.FC<React.PropsWithChildren<unknown>> = () => {
               </Button>
             </Modal.ButtonRow>
           </Modal>
-          <Page>
-            <PageToolbar title={Messages.title} onGoBack={handleCancel}>
-              <ToolbarButtonRow>
-                <ToolbarButton onClick={handleCancel}>{Messages.cancel}</ToolbarButton>
-                <ToolbarButton onClick={handleOpenModal} variant="primary" disabled={submitting}>
-                  {Messages.saveChanges}
-                </ToolbarButton>
-              </ToolbarButtonRow>
-            </PageToolbar>
+          <Page
+            navId={PMM_SERVICES_PAGE.id}
+            pageNav={PMM_EDIT_INSTANCE_PAGE}
+            renderTitle={() => <h1>{Messages.formTitle(service?.service_name || '')}</h1>}
+          >
             <Page.Contents isLoading={isLoading}>
-              <h3>{Messages.formTitle(service?.service_name || '')}</h3>
               <form onSubmit={handleOpenModal}>
                 <Labels showNodeFields={false} />
                 {/* enable submit by keyboard */}

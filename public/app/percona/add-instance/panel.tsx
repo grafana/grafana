@@ -1,14 +1,16 @@
 /* eslint-disable react/display-name,@typescript-eslint/consistent-type-assertions,@typescript-eslint/no-explicit-any */
-import React, { MouseEventHandler, useMemo, useState } from 'react';
+import React, { MouseEventHandler, useLayoutEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 
-import { PageToolbar, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { HorizontalGroup, Button } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { getPerconaSettings } from 'app/percona/shared/core/selectors';
 import { useSelector } from 'app/types';
 
 import { Databases } from '../../percona/shared/core';
 import { FeatureLoader } from '../shared/components/Elements/FeatureLoader';
+import { PMM_SERVICES_PAGE } from '../shared/components/PerconaBootstrapper/PerconaNavigation';
 
 import { AddInstance } from './components/AddInstance/AddInstance';
 import AddRemoteInstance from './components/AddRemoteInstance/AddRemoteInstance';
@@ -16,8 +18,14 @@ import { Messages } from './components/AddRemoteInstance/AddRemoteInstance.messa
 import AzureDiscovery from './components/AzureDiscovery/Discovery';
 import Discovery from './components/Discovery/Discovery';
 import { ADD_INSTANCE_FORM_NAME } from './panel.constants';
-import { getStyles } from './panel.styles';
-import { InstanceTypesExtra, InstanceAvailable, AvailableTypes, AddInstanceRouteParams } from './panel.types';
+import {
+  InstanceTypesExtra,
+  InstanceAvailable,
+  AvailableTypes,
+  AddInstanceRouteParams,
+  InstanceAvailableType,
+  INSTANCE_TYPES_LABELS,
+} from './panel.types';
 
 const availableInstanceTypes: AvailableTypes[] = [
   InstanceTypesExtra.rds,
@@ -40,7 +48,7 @@ const AddInstancePanel = () => {
   const [showSelection, setShowSelection] = useState(!instanceType);
   const [submitting, setSubmitting] = useState(false);
   const history = useHistory();
-  const styles = useStyles2(getStyles);
+  const { chrome } = useGrafana();
 
   const handleSubmit = async (submitPromise: Promise<void>) => {
     setSubmitting(true);
@@ -49,20 +57,19 @@ const AddInstancePanel = () => {
   };
 
   const InstanceForm = useMemo(
-    () => () =>
-      (
-        <>
-          {selectedInstance.type === InstanceTypesExtra.rds && (
-            <Discovery onSubmit={handleSubmit} selectInstance={selectInstance} />
-          )}
-          {selectedInstance.type === InstanceTypesExtra.azure && (
-            <AzureDiscovery onSubmit={handleSubmit} selectInstance={selectInstance} />
-          )}
-          {selectedInstance.type !== InstanceTypesExtra.rds && selectedInstance.type !== InstanceTypesExtra.azure && (
-            <AddRemoteInstance onSubmit={handleSubmit} instance={selectedInstance} selectInstance={selectInstance} />
-          )}
-        </>
-      ),
+    () => () => (
+      <>
+        {selectedInstance.type === InstanceTypesExtra.rds && (
+          <Discovery onSubmit={handleSubmit} selectInstance={selectInstance} />
+        )}
+        {selectedInstance.type === InstanceTypesExtra.azure && (
+          <AzureDiscovery onSubmit={handleSubmit} selectInstance={selectInstance} />
+        )}
+        {selectedInstance.type !== InstanceTypesExtra.rds && selectedInstance.type !== InstanceTypesExtra.azure && (
+          <AddRemoteInstance onSubmit={handleSubmit} instance={selectedInstance} selectInstance={selectInstance} />
+        )}
+      </>
+    ),
     [selectedInstance]
   );
 
@@ -92,22 +99,51 @@ const AddInstancePanel = () => {
     setShowSelection(false);
   };
 
+  const getTitle = (databaseType: InstanceAvailableType) => {
+    if (databaseType === InstanceTypesExtra.external) {
+      return Messages.form.titles.addExternalService;
+    }
+    if (databaseType === '') {
+      return Messages.form.titles.addRemoteInstance;
+    }
+    return `Configuring ${INSTANCE_TYPES_LABELS[databaseType]} service`;
+  };
+
+  useLayoutEffect(() => {
+    chrome.update({
+      actions: (
+        <HorizontalGroup height="auto" justify="flex-end">
+          <Button size="sm" variant="secondary" data-testid="add-edit-role-cancel" type="button" onClick={handleCancel}>
+            {showSelection ? Messages.selectionStep.cancel : Messages.configurationStep.cancel}
+          </Button>
+          {!showSelection && (
+            <Button
+              disabled={submitting}
+              data-testid="add-edit-role-submit"
+              form={ADD_INSTANCE_FORM_NAME}
+              size="sm"
+              type="submit"
+              variant="primary"
+            >
+              {submitLabel}
+            </Button>
+          )}
+        </HorizontalGroup>
+      ),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showSelection]);
+
   return (
-    <Page>
-      <PageToolbar
-        title={showSelection ? Messages.pageTitleSelection : Messages.pageTitleConfiguration}
-        onGoBack={history.goBack}
-      >
-        <ToolbarButton onClick={handleCancel}>
-          {showSelection ? Messages.selectionStep.cancel : Messages.configurationStep.cancel}
-        </ToolbarButton>
-        {!showSelection && (
-          <ToolbarButton form={ADD_INSTANCE_FORM_NAME} disabled={submitting} variant="primary">
-            {submitLabel}
-          </ToolbarButton>
-        )}
-      </PageToolbar>
-      <Page.Contents className={styles.page}>
+    <Page
+      navId={PMM_SERVICES_PAGE.id}
+      pageNav={
+        showSelection
+          ? { text: Messages.selection.sectionTitle, subTitle: Messages.selection.description }
+          : { text: getTitle(selectedInstance.type) }
+      }
+    >
+      <Page.Contents>
         <FeatureLoader>
           {showSelection ? (
             <AddInstance
