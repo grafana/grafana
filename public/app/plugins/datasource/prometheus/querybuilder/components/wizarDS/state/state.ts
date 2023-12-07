@@ -3,7 +3,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Interaction, Suggestion, SuggestionType } from '../types';
 
 export const stateSlice = createSlice({
-  name: 'metrics-modal-state',
+  name: 'wizards-state',
   initialState: initialState([]),
   reducers: {
     showExplainer: (state, action: PayloadAction<boolean>) => {
@@ -61,6 +61,7 @@ export function initialState(templates: Suggestion[], showStartingMessage?: bool
       id: 'wizard-prometheus-version-',
       name: 'Using the PrometheusDS',
       description: `This is a tutorial to help you get started with the PrometheusDS`,
+      author: 'LLM-app',
       steps: templates,
     },
   };
@@ -82,6 +83,7 @@ export type Tutorial = {
   id: string; //'using-prometheusds',
   name: string; //'Using the PrometheusDS',
   description: string; // `This is a tutorial to help you get started with the PrometheusDS`,
+  author: string;
   steps: Suggestion[];
 };
 

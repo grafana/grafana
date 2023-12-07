@@ -1,4 +1,6 @@
-export type Suggestion = {
+import { Step } from 'app/features/tutorial/types';
+
+export type Suggestion = Step & {
   component: string;
   explanation: string;
   testid: string;
@@ -6,10 +8,10 @@ export type Suggestion = {
   order: number;
 
   // update attrinbutes for Tutotial
-  route?: string;
-  target?: string;
-  title?: string;
-  content?: string;
+  // route: string;
+  // target: string;
+  // title: string;
+  // content: string;
 };
 
 export enum SuggestionType {

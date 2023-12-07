@@ -10,7 +10,7 @@ import { createInteraction, stateSlice } from './state';
 const OPENAI_MODEL_NAME = 'gpt-3.5-turbo';
 
 // actions to update the state
-const { updateInteraction } = stateSlice.actions;
+const { updateInteraction, updateTutorialSteps } = stateSlice.actions;
 
 export function getExplainMessage(templates?: Suggestion[], question?: string): llms.openai.Message[] {
   // Look at the templates and the promtps to make the AI return helpful things
@@ -38,7 +38,7 @@ export async function wizarDSExplain(
   dispatch: React.Dispatch<AnyAction>,
   idx: number,
   interaction: Interaction,
-  suggIdx: number,
+  suggIdx: number
 ) {
   // const suggestedQuery = interaction.suggestions[suggIdx].component;
 
@@ -61,6 +61,10 @@ export async function wizarDSExplain(
             testid: '',
             order: 0,
             link: '',
+            route: '',
+            target: '',
+            title: '',
+            content: '',
           };
         }
 
@@ -231,6 +235,7 @@ export async function wizarDSSuggest(
         interaction: { ...interactionToUpdate, suggestions: suggestions, isLoading: false },
       };
       dispatch(updateInteraction(payload));
+      dispatch(updateTutorialSteps(suggestions));
       resolve();
     });
   } else {
@@ -257,5 +262,6 @@ export async function wizarDSSuggest(
     };
 
     dispatch(updateInteraction(payload));
+    dispatch(updateTutorialSteps(suggestedComponents));
   }
 }
