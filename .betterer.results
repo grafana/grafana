@@ -2638,10 +2638,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "4"],
       [0, 0, 0, "Do not use any type assertions.", "5"]
     ],
-    "public/app/features/dashboard-scene/utils/DashboardModelCompatibilityWrapper.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
     "public/app/features/dashboard-scene/utils/test-utils.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
