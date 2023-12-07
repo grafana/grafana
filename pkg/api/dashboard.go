@@ -289,7 +289,7 @@ func (hs *HTTPServer) RestoreDashboard(c *contextmodel.ReqContext) response.Resp
 		return dashboardGuardianResponse(err)
 	}
 
-	err = hs.DashboardService.RestoreDashboard(c.Req.Context(), uid)
+	err = hs.DashboardService.RestoreDashboard(c.Req.Context(), c.SignedInUser.GetOrgID(), uid)
 	if err != nil {
 		return response.Error(http.StatusNotFound, "Dashboard cannot be restored", err)
 	}
@@ -317,9 +317,15 @@ func (hs *HTTPServer) SoftDeleteDashboard(c *contextmodel.ReqContext) response.R
 		return dashboardGuardianResponse(err)
 	}
 
-	err = hs.DashboardService.SoftDeleteDashboard(c.Req.Context(), uid)
+	err = hs.DashboardService.SoftDeleteDashboard(c.Req.Context(), c.SignedInUser.GetOrgID(), uid)
 	if err != nil {
-		return response.Error(http.StatusNotFound, "Dashboard coannot be trashed", err)
+		var dashboardErr dashboards.DashboardErr
+		if ok := errors.As(err, &dashboardErr); ok {
+			if errors.Is(err, dashboards.ErrDashboardCannotDeleteProvisionedDashboard) {
+				return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), err)
+			}
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to delete dashboard", err)
 	}
 
 	return response.JSON(http.StatusOK, util.DynMap{

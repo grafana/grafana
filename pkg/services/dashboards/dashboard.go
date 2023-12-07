@@ -26,8 +26,8 @@ type DashboardService interface {
 	SearchDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) (model.HitList, error)
 	CountInFolder(ctx context.Context, orgID int64, folderUID string, user identity.Requester) (int64, error)
 	GetDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*Dashboard, error)
-	SoftDeleteDashboard(ctx context.Context, dashboardUid string) error
-	RestoreDashboard(ctx context.Context, dashboardUid string) error
+	SoftDeleteDashboard(ctx context.Context, orgID int64, dashboardUid string) error
+	RestoreDashboard(ctx context.Context, orgID int64, dashboardUid string) error
 	CleanUpDeletedDashboards(ctx context.Context) (int64, error)
 	GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*Dashboard, error)
 }
@@ -80,8 +80,8 @@ type Store interface {
 	// the given parent folder ID.
 	CountDashboardsInFolder(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
 	GetSoftDeletedExpiredDashboards(ctx context.Context, duration time.Duration) ([]*Dashboard, error)
-	SoftDeleteDashboard(ctx context.Context, dashboardUid string) error
-	SoftDeleteDashboardsInFolder(ctx context.Context, folderUid string) error
-	RestoreDashboard(ctx context.Context, dashboardUid string) error
+	SoftDeleteDashboard(ctx context.Context, orgID int64, dashboardUid string) error
+	SoftDeleteDashboardsInFolder(ctx context.Context, orgID int64, folderUid string) error
+	RestoreDashboard(ctx context.Context, orgID int64, dashboardUid string) error
 	GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*Dashboard, error)
 }
