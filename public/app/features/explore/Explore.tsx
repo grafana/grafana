@@ -33,6 +33,7 @@ import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPane
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { WizarDS } from 'app/plugins/datasource/prometheus/querybuilder/components/wizarDS/WizarDS';
+import { Suggestion } from 'app/plugins/datasource/prometheus/querybuilder/components/wizarDS/types';
 import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
 import { StoreState } from 'app/types';
 
@@ -72,7 +73,6 @@ import {
 } from './state/query';
 import { isSplit } from './state/selectors';
 import { updateTimeRange } from './state/time';
-import { Suggestion } from 'app/plugins/datasource/prometheus/querybuilder/components/wizarDS/types';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

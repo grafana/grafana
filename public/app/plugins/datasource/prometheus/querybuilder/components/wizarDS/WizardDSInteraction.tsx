@@ -33,9 +33,8 @@ export const WizardDSInteraction = ({
     <Stack direction={'column'}>
       <AskAQuestion
         data-testid={dataTestId}
-        hasSuggestions={hasSuggestions}
+        isDisabled={hasSuggestions || isLoading}
         isLoading={isLoading}
-        onCancel={onCancel}
         onSubmit={onSubmit}
       />
       {hasSuggestions && (

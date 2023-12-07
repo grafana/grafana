@@ -111,41 +111,33 @@ export const WizarDS = (props: WizarDSProps) => {
           </div>
         )}
       </div>
-      {!state.showStartingMessage && (
-        <div className={styles.seeItAll}>
-          <Button fill="text" variant="secondary" onClick={() => {}}>
-            See examples
-          </Button>
-          <Button
-            fill="text"
-            variant="secondary"
-            onClick={() => {
-              // reportInteraction('grafana_prometheus_promqail_know_what_you_want_to_query', {
-              //   promVisualQuery: query,
-              //   doYouKnow: 'no',
-              // });
-              // JUST SUGGEST QUERIES AND SHOW THE LIST
-              // use the most current interaction
-              const currentInteractionIdx = state.interactions.length - 1;
+      <div className={styles.seeItAll}>
+        <Button fill="text" variant="secondary" onClick={() => {}}>
+          See examples
+        </Button>
+        <Button
+          fill="text"
+          variant="secondary"
+          onClick={() => {
+            const currentInteractionIdx = state.interactions.length - 1;
 
-              const newInteraction: Interaction = {
-                ...state.interactions[currentInteractionIdx],
-                suggestionType: SuggestionType.Historical,
-                isLoading: true,
-              };
+            const newInteraction: Interaction = {
+              ...state.interactions[currentInteractionIdx],
+              suggestionType: SuggestionType.Historical,
+              isLoading: true,
+            };
 
-              const payload = {
-                idx: currentInteractionIdx,
-                interaction: newInteraction,
-              };
-              dispatch(updateInteraction(payload));
-              wizarDSSuggest(dispatch, currentInteractionIdx, templates, newInteraction);
-            }}
-          >
-            Show me everything
-          </Button>
-        </div>
-      )}
+            const payload = {
+              idx: currentInteractionIdx,
+              interaction: newInteraction,
+            };
+            dispatch(updateInteraction(payload));
+            wizarDSSuggest(dispatch, currentInteractionIdx, templates, newInteraction);
+          }}
+        >
+          Show me everything
+        </Button>
+      </div>
       <div ref={responsesEndRef} />
     </div>
   );
