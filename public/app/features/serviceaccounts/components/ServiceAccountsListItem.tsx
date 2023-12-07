@@ -163,33 +163,33 @@ ServiceAccountListItem.displayName = 'ServiceAccountListItem';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    iconRow: css`
-      svg {
-        margin-left: ${theme.spacing(0.5)};
-      }
-    `,
+    iconRow: css({
+      svg: {
+        marginLeft: theme.spacing(0.5),
+      },
+    }),
     accountId: cx(
       'ellipsis',
-      css`
-        color: ${theme.colors.text.secondary};
-      `
+      css({
+        color: theme.colors.text.secondary,
+      })
     ),
-    deleteButton: css`
-      color: ${theme.colors.text.secondary};
-    `,
-    tokensInfo: css`
-      span {
-        margin-right: ${theme.spacing(1)};
-      }
-    `,
-    tokensInfoSecondary: css`
-      color: ${theme.colors.text.secondary};
-    `,
-    disabled: css`
-      td a {
-        color: ${theme.colors.text.secondary};
-      }
-    `,
+    deleteButton: css({
+      color: theme.colors.text.secondary,
+    }),
+    tokensInfo: css({
+      span: {
+        marginRight: theme.spacing(1),
+      },
+    }),
+    tokensInfoSecondary: css({
+      color: theme.colors.text.secondary,
+    }),
+    disabled: css({
+      'td a': {
+        color: theme.colors.text.secondary,
+      },
+    }),
     actionButton: css({
       minWidth: 85,
     }),
