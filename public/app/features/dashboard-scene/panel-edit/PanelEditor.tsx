@@ -21,6 +21,8 @@ import { getDashboardUrl } from '../utils/urlBuilders';
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
 import { PanelOptionsPane } from './PanelOptionsPane';
+import { PanelVizTypePicker } from './PanelVizTypePicker';
+import { VizPanelManager } from './VizPanelManager';
 
 export interface PanelEditorState extends SceneObjectState {
   body: SceneObject;
@@ -33,7 +35,7 @@ export interface PanelEditorState extends SceneObjectState {
 
   dashboardRef: SceneObjectRef<DashboardScene>;
   sourcePanelRef: SceneObjectRef<VizPanel>;
-  panelRef: SceneObjectRef<VizPanel>;
+  panelRef: SceneObjectRef<VizPanelManager>;
 }
 
 export class PanelEditor extends SceneObjectBase<PanelEditorState> {
@@ -112,12 +114,13 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
 export function buildPanelEditScene(dashboard: DashboardScene, panel: VizPanel): PanelEditor {
   const panelClone = panel.clone();
+  const vizPanelMgr = new VizPanelManager(panelClone);
   const dashboardStateCloned = sceneUtils.cloneSceneObjectState(dashboard.state);
 
   return new PanelEditor({
     dashboardRef: dashboard.getRef(),
     sourcePanelRef: panel.getRef(),
-    panelRef: panelClone.getRef(),
+    panelRef: vizPanelMgr.getRef(),
     controls: dashboardStateCloned.controls,
     $variables: dashboardStateCloned.$variables,
     $timeRange: dashboardStateCloned.$timeRange,
@@ -133,9 +136,9 @@ export function buildPanelEditScene(dashboard: DashboardScene, panel: VizPanel):
           body: new PanelDataPane({ panelRef: panelClone.getRef() }),
         }),
       }),
-      secondary: new SceneFlexItem({
-        width: '300px',
-        body: new PanelOptionsPane(panelClone),
+      secondary: new SceneFlexLayout({
+        direction: 'column',
+        children: [new PanelOptionsPane(vizPanelMgr), new PanelVizTypePicker(vizPanelMgr)],
       }),
     }),
   });

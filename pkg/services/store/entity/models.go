@@ -1,19 +1,15 @@
 package entity
 
+import context "context"
+
 //-----------------------------------------------------------------------------------------------------
 // NOTE: the object store is in heavy development, and the locations will likely continue to move
 //-----------------------------------------------------------------------------------------------------
 
-import (
-	"context"
-)
-
 const (
-	StandardKindDashboard   = "dashboard"
-	StandardKindPlaylist    = "playlist"
-	StandardKindSnapshot    = "snapshot"
-	StandardKindFolder      = "folder"
-	StandardKindPreferences = "preferences"
+	StandardKindDashboard = "dashboard"
+	StandardKindPlaylist  = "playlist"
+	StandardKindFolder    = "folder"
 
 	// StandardKindDataSource: not a real kind yet, but used to define references from dashboards
 	// Types: influx, prometheus, testdata, ...
@@ -22,18 +18,6 @@ const (
 	// StandardKindPanel: only used for searchV2 right now
 	// Standalone panel is not an object kind yet -- library panel, or nested in dashboard
 	StandardKindPanel = "panel"
-
-	// entity.StandardKindSVG SVG file support
-	StandardKindSVG = "svg"
-
-	// StandardKindPNG PNG file support
-	StandardKindPNG = "png"
-
-	// StandardKindGeoJSON represents spatial data
-	StandardKindGeoJSON = "geojson"
-
-	// StandardKindDataFrame data frame
-	StandardKindDataFrame = "frame"
 
 	// StandardKindJSONObj generic json object
 	StandardKindJSONObj = "jsonobj"
@@ -63,28 +47,6 @@ const (
 	// UIDs include: joinByField, organize, seriesToColumns, etc
 	ExternalEntityReferenceRuntime_Transformer = "transformer"
 )
-
-// EntityKindInfo describes information needed from the object store
-// All non-raw types will have a schema that can be used to validate
-type EntityKindInfo struct {
-	// Unique short id for this kind
-	ID string `json:"id,omitempty"`
-
-	// Display name (may be equal to the ID)
-	Name string `json:"name,omitempty"`
-
-	// Kind description
-	Description string `json:"description,omitempty"`
-
-	// The format is not controlled by a schema
-	IsRaw bool `json:"isRaw,omitempty"`
-
-	// The preferred save extension (svg, png, parquet, etc) if one exists
-	FileExtension string `json:"fileExtension,omitempty"`
-
-	// The correct mime-type to return for raw objects
-	MimeType string `json:"mimeType,omitempty"`
-}
 
 // EntitySummaryBuilder will read an object, validate it, and return a summary, sanitized payload, or an error
 // This should not include values that depend on system state, only the raw object

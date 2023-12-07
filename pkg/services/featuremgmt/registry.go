@@ -222,10 +222,11 @@ var (
 			Created:           time.Date(2022, time.September, 27, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:            "entityStore",
-			Description:     "SQL-based entity store (requires storage flag also)",
+			Name:            "unifiedStorage",
+			Description:     "SQL-based k8s storage",
 			Stage:           FeatureStageExperimental,
 			RequiresDevMode: true,
+			RequiresRestart: true, // new SQL tables created
 			Owner:           grafanaAppPlatformSquad,
 			Created:         time.Date(2022, time.December, 1, 12, 0, 0, 0, time.UTC),
 		},
@@ -737,6 +738,15 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaAppPlatformSquad,
 			Created:      time.Date(2023, time.October, 6, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:            "grafanaAPIServerEnsureKubectlAccess",
+			Description:     "Start an additional https handler and write kubectl options",
+			Stage:           FeatureStageExperimental,
+			RequiresDevMode: true,
+			RequiresRestart: true,
+			Owner:           grafanaAppPlatformSquad,
+			Created:         time.Date(2023, time.December, 6, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:            "featureToggleAdminPage",
