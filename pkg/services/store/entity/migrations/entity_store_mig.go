@@ -126,7 +126,8 @@ func initEntityTables(mg *migrator.Migrator) string {
 		Name: "entity_folder",
 		Columns: []*migrator.Column{
 			{Name: "guid", Type: migrator.DB_NVarchar, Length: 36, Nullable: false, IsPrimaryKey: true},
-
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 63, Nullable: false},
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "slug_path", Type: migrator.DB_Text, Nullable: false}, // /slug/slug/slug/
 			{Name: "tree", Type: migrator.DB_Text, Nullable: false},      // JSON []{uid, title}
 			{Name: "depth", Type: migrator.DB_Int, Nullable: false},      // starts at 1

@@ -477,16 +477,17 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 			return err
 		}
 
-		/*
+		switch current.Group {
+		case entity.FolderGroupName:
 			switch current.Resource {
-			case entity.StandardKindFolder:
-				err = updateFolderTree(ctx, tx, r.Entity.Namespace)
+			case entity.FolderResourceName:
+				err = updateFolderTree(ctx, tx, current.Namespace)
 				if err != nil {
 					s.log.Error("error updating folder tree", "msg", err.Error())
 					return err
 				}
 			}
-		*/
+		}
 
 		rsp.Entity = current
 
@@ -714,16 +715,17 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 			return err
 		}
 
-		/*
+		switch current.Group {
+		case entity.FolderGroupName:
 			switch current.Resource {
-			case entity.StandardKindFolder:
-				err = updateFolderTree(ctx, tx, r.Entity.Namespace)
+			case entity.FolderResourceName:
+				err = updateFolderTree(ctx, tx, current.Namespace)
 				if err != nil {
 					s.log.Error("error updating folder tree", "msg", err.Error())
 					return err
 				}
 			}
-		*/
+		}
 
 		rsp.Entity = current
 
@@ -800,7 +802,7 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 			return fmt.Errorf("optimistic lock failed")
 		}
 
-		err = doDelete(ctx, tx, rsp.Entity)
+		err = s.doDelete(ctx, tx, rsp.Entity)
 		if err != nil {
 			rsp.Status = entity.DeleteEntityResponse_ERROR
 			return err
@@ -813,7 +815,7 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 	return rsp, err
 }
 
-func doDelete(ctx context.Context, tx *session.SessionTx, ent *entity.Entity) error {
+func (s *sqlEntityServer) doDelete(ctx context.Context, tx *session.SessionTx, ent *entity.Entity) error {
 	_, err := tx.Exec(ctx, "DELETE FROM entity WHERE guid=?", ent.Guid)
 	if err != nil {
 		return err
@@ -833,14 +835,17 @@ func doDelete(ctx context.Context, tx *session.SessionTx, ent *entity.Entity) er
 		return err
 	}
 
-	/*
-		if ent.Resource == entity.StandardKindFolder {
+	switch ent.Group {
+	case entity.FolderGroupName:
+		switch ent.Resource {
+		case entity.FolderResourceName:
 			err = updateFolderTree(ctx, tx, ent.Namespace)
 			if err != nil {
+				s.log.Error("error updating folder tree", "msg", err.Error())
 				return err
 			}
 		}
-	*/
+	}
 
 	return nil
 }
