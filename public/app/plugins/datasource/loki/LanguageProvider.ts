@@ -11,7 +11,7 @@ import {
   extractUnwrapLabelKeysFromDataFrame,
 } from './responseUtils';
 import syntax from './syntax';
-import { ParserAndLabelKeysResult, LokiQuery, LokiQueryType } from './types';
+import { ParserAndLabelKeysResult, LokiQuery, LokiQueryType, LabelType } from './types';
 
 const NS_IN_MS = 1000000;
 
@@ -267,17 +267,25 @@ export default class LokiLanguageProvider extends LanguageProvider {
         refId: 'data-samples',
         maxLines: options?.maxLines || DEFAULT_MAX_LINES_SAMPLE,
       },
-      options?.timeRange
+      options?.timeRange ?? this.getDefaultTimeRange()
     );
 
     if (!series.length) {
-      return { extractedLabelKeys: [], unwrapLabelKeys: [], hasJSON: false, hasLogfmt: false, hasPack: false };
+      return {
+        extractedLabelKeys: [],
+        structuredMetadataKeys: [],
+        unwrapLabelKeys: [],
+        hasJSON: false,
+        hasLogfmt: false,
+        hasPack: false,
+      };
     }
 
     const { hasLogfmt, hasJSON, hasPack } = extractLogParserFromDataFrame(series[0]);
 
     return {
       extractedLabelKeys: extractLabelKeysFromDataFrame(series[0]),
+      structuredMetadataKeys: extractLabelKeysFromDataFrame(series[0], LabelType.StructuredMetadata),
       unwrapLabelKeys: extractUnwrapLabelKeysFromDataFrame(series[0]),
       hasJSON,
       hasPack,

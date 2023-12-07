@@ -1377,6 +1377,27 @@ export const transformationDocsContent: TransformationDocsContentType = {
       },
     ],
   },
+  regression: {
+    name: 'Regression analysis',
+    getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
+      return `
+  Use this transformation to create a new data frame containing values predicted by a statistical model. This is useful for finding a trend in chaotic data. It works by fitting a mathematical function to the data, using either linear or polynomial regression. The data frame can then be used in a visualization to display a trendline.
+
+  There are two different models:
+
+  - **Linear regression** - Fits a linear function to the data.
+  ${buildImageContent('/static/img/docs/transformations/linear-regression.png', imageRenderType, 'Linear regression')}
+  - **Polynomial regression** - Fits a polynomial function to the data.
+  ${buildImageContent(
+    '/static/img/docs/transformations/polynomial-regression.png',
+    imageRenderType,
+    'Polynomial regression'
+  )}
+
+  > **Note:** This transformation is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the \`regressionTransformation\` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
+  `;
+    },
+  },
 };
 
 export function getLinkToDocs(): string {

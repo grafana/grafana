@@ -32,7 +32,7 @@ type Props = {
   data: FlameGraphDataContainer;
   rangeMin: number;
   rangeMax: number;
-  search: string;
+  matchedLabels?: Set<string>;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
   style?: React.CSSProperties;
@@ -44,6 +44,7 @@ type Props = {
   onFocusPillClick: () => void;
   onSandwichPillClick: () => void;
   colorScheme: ColorScheme | ColorSchemeDiff;
+  showFlameGraphOnly?: boolean;
   collapsing?: boolean;
 };
 
@@ -51,7 +52,7 @@ const FlameGraph = ({
   data,
   rangeMin,
   rangeMax,
-  search,
+  matchedLabels,
   setRangeMin,
   setRangeMax,
   onItemFocused,
@@ -62,6 +63,7 @@ const FlameGraph = ({
   onFocusPillClick,
   onSandwichPillClick,
   colorScheme,
+  showFlameGraphOnly,
   collapsing,
 }: Props) => {
   const styles = getStyles();
@@ -106,7 +108,7 @@ const FlameGraph = ({
     data,
     rangeMin,
     rangeMax,
-    search,
+    matchedLabels,
     setRangeMin,
     setRangeMax,
     onItemFocused,
@@ -117,6 +119,7 @@ const FlameGraph = ({
     totalProfileTicks,
     totalProfileTicksRight,
     totalViewTicks,
+    showFlameGraphOnly,
     collapsedMap,
     setCollapsedMap,
     collapsing,
@@ -175,7 +178,6 @@ const getStyles = () => ({
   graph: css`
     label: graph;
     overflow: auto;
-    height: 100%;
     flex-grow: 1;
     flex-basis: 50%;
   `,

@@ -365,6 +365,10 @@ func GetOrgRoles(user identity.Requester) []string {
 	roles := []string{string(user.GetOrgRole())}
 
 	if user.GetIsGrafanaAdmin() {
+		if user.GetOrgID() == GlobalOrgID {
+			// A server admin is the admin of the global organization
+			return []string{RoleGrafanaAdmin, string(org.RoleAdmin)}
+		}
 		roles = append(roles, RoleGrafanaAdmin)
 	}
 
