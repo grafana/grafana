@@ -234,7 +234,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
         <table className={cx(styles.logsRowsTable, this.props.overflowingContent ? '' : styles.logsRowsTableContain)}>
           <tbody>
             {hasData &&
-              logRows.map((row, index) =>
+              orderedRows.map((row, index) =>
                 index % resolutionIndex === 0 ? (
                   <LogRow
                     key={keyMaker.getKey(row.uid)}
