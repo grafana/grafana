@@ -89,10 +89,14 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
     }
     return (
       <div className={style.logsStats} data-testid="logLabelStats">
-        <div className={style.logsStatsTitle}>{label}</div>
         <div className={style.logsStatsBody}>
           <table style={{ width: '75%' }}>
             <tbody>
+              <tr>
+                <td colSpan={4}>
+                  <div className={style.logsStatsTitle}>{label}</div>
+                </td>
+              </tr>
               {topRows.map((stat) => (
                 <LogLabelStatsRow
                   key={stat.value}

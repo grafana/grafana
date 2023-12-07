@@ -60,6 +60,7 @@ export const LogStats = ({ styles, rows, logsMeta, onClickFilterLabel, onClickFi
               </div>
             </>
           )}
+          <br />
           {commonLabels && (
             <>
               <div
