@@ -17,6 +17,7 @@ type DuckDB struct {
 	// TODO - might need this if/when we change to in memory database
 	// for now creates/connects to a file using "name"
 	// db     *sql.DB
+	conn   driver.Connector
 	name   string
 	lookup map[string]*data.Field
 }
@@ -41,7 +42,7 @@ func (d *DuckDB) QueryPRQL(ctx context.Context, prql string) (*data.Frame, error
 }
 
 func (d *DuckDB) Query(ctx context.Context, query string) (*data.Frame, error) {
-	connector, err := duckdb.NewConnector(d.name, nil)
+	connector, err := d.connector(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +227,7 @@ func (d *DuckDB) createTables(ctx context.Context, frames data.Frames) error {
 
 // connect returns a connector for the appender
 func (d *DuckDB) connect(ctx context.Context) (driver.Conn, error) {
-	connector, err := duckdb.NewConnector(d.name, nil)
+	connector, err := d.connector(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -235,4 +236,28 @@ func (d *DuckDB) connect(ctx context.Context) (driver.Conn, error) {
 		return nil, err
 	}
 	return conn, nil
+}
+
+func (d *DuckDB) connector(ctx context.Context) (driver.Connector, error) {
+	if d.conn == nil {
+		connector, err := duckdb.NewConnector(d.name, func(execer driver.ExecerContext) error {
+			bootQueries := []string{
+				"INSTALL 'json'",
+				"LOAD 'json'",
+			}
+
+			for _, qry := range bootQueries {
+				_, err := execer.ExecContext(ctx, qry, nil)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			d.conn = connector
+		}
+		return connector, err
+	}
+	return d.conn, nil
 }
