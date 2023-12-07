@@ -4,8 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -15,24 +13,42 @@ import (
 )
 
 type DuckDB struct {
-	DB   *sql.DB
-	Name string
+	db     *sql.DB
+	name   string
+	lookup map[string]*data.Field
 }
 
-func (d *DuckDB) Query(q string) (data.Frames, error) {
-	db, err := sql.Open("duckdb", d.Name)
+func NewDuckDB(name string) (*DuckDB, error) {
+	db, err := sql.Open("duckdb", name) // empty?  what about the previous call??
 	if err != nil {
 		return nil, err
 	}
-	d.DB = db
-	defer func(db *sql.DB) {
-		err = db.Close()
-		if err != nil {
-			fmt.Printf("failed to close db after query: %v\n", err)
-		}
-	}(db)
 
-	results, err := d.DB.Query(q)
+	return &DuckDB{
+		name:   name,
+		db:     db,
+		lookup: make(map[string]*data.Field),
+	}, nil
+}
+
+func (d *DuckDB) Close() error {
+	return d.db.Close()
+}
+
+func (d *DuckDB) QueryPRQL(ctx context.Context, prql string) (*data.Frame, error) {
+	sql, err := Convert(prql, "duckdb")
+	if err != nil {
+		// TODO... should check for first non-comment token?
+		// if !strings.Contains(strings.ToLower(prql), "select") {
+		// 	return nil, err
+		// }
+		sql = prql // just try it as regular query (will also have a syntax error)
+	}
+	return d.Query(ctx, sql)
+}
+
+func (d *DuckDB) Query(ctx context.Context, sql string) (*data.Frame, error) {
+	results, err := d.db.QueryContext(ctx, sql)
 	if err != nil {
 		fmt.Printf("failed to query db: %v\n", err)
 		return nil, err
@@ -44,74 +60,35 @@ func (d *DuckDB) Query(q string) (data.Frames, error) {
 		return nil, err
 	}
 
-	// convention for labels - join against the _meta table, it will contain all the lables
-	// ------
-	// from A
-	// join side:left _meta ("A"==_meta.ref)
-	// take 1..5
-
-	// lables are in a field called _lables fromt the _meta table.  get the values and remove the field
-	var labelsField *data.Field
-	var nonLabelsFields []*data.Field
-	for _, f := range frame.Fields {
-		if f.Name == "_labels" {
-			labelsField = f
-		} else {
-			nonLabelsFields = append(nonLabelsFields, f)
+	// Copy of the input metadata
+	for _, field := range frame.Fields {
+		match, ok := d.lookup[field.Name]
+		if ok && match != nil {
+			field.Labels = match.Labels
+			field.Config = match.Config
 		}
 	}
 
-	if labelsField != nil {
-		// get the labels and remove the _labels field from the frame
-		if labelsField.Len() > 0 {
-			slables := labelsField.At(0)
-			l, ok := slables.(*string)
-			if !ok {
-				return nil, errors.New("wtf")
-			}
-			var fieldLabels FieldLables
-			err := json.Unmarshal([]byte(*l), &fieldLabels)
-			if err != nil {
-				return nil, err
-			}
-			for _, f := range frame.Fields {
-				labels := fieldLabels[f.Name]
-				if labels == nil && strings.Contains(f.Name, "_") {
-					name := strings.ReplaceAll(f.Name, "_", "-")
-					labels = fieldLabels[name]
-				}
-				if labels != nil {
-					f.Labels = labels
-				}
-			}
-		}
-		frame.Fields = nonLabelsFields
+	// Attach the executed query string
+	if frame.Meta == nil {
+		frame.Meta = &data.FrameMeta{}
 	}
+	frame.Meta.ExecutedQueryString = sql
 
-	return data.Frames{frame}, err
+	return frame, err
 }
 
 func (d *DuckDB) AppendAll(ctx context.Context, frames data.Frames) error {
-	db, err := sql.Open("duckdb", d.Name)
+	err := d.createTables(frames)
 	if err != nil {
 		return err
 	}
-	d.DB = db
-	defer func(db *sql.DB) {
-		err = db.Close()
-		if err != nil {
-			fmt.Printf("failed to close db after append: %v\n", err)
-		}
-	}(db)
-	frameLables, err := d.createTables(frames)
+
+	connector, err := duckdb.NewConnector(d.name, nil)
 	if err != nil {
 		return err
 	}
-	connector, err := duckdb.NewConnector(d.Name, nil)
-	if err != nil {
-		return err
-	}
-	conn, err := connector.Connect(context.Background())
+	conn, err := connector.Connect(ctx)
 	if err != nil {
 		return err
 	}
@@ -176,118 +153,21 @@ func (d *DuckDB) AppendAll(ctx context.Context, frames data.Frames) error {
 			fmt.Println(err)
 			return err
 		}
-
 	}
 
-	// labels attempt 1 - creates multiple rows which is problematic
-	// labelsAppender, err := duckdb.NewAppenderFromConn(conn, "", "labels")
-	// if err != nil {
-	// 	return err
-	// }
-
-	// for refId, fieldLabels := range frameLables {
-	// 	for f, lbls := range fieldLabels {
-	// 		for name, value := range lbls {
-	// 			err := labelsAppender.AppendRow(refId, f, name, value)
-	// 			if err != nil {
-	// 				fmt.Println(err)
-	// 				return err
-	// 			}
-	// 		}
-	// 	}
-	// }
-
-	// err = labelsAppender.Flush()
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return err
-	// }
-
-	// labels attempt 2 - just add all as json in one column
-	metaAppender, err := duckdb.NewAppenderFromConn(conn, "", "_meta")
+	// reload the data (now that we updated it)
+	db, err := sql.Open("duckdb", d.name)
 	if err != nil {
 		return err
 	}
-
-	for refId, fieldLabels := range frameLables {
-
-		// TOOD - scrapped this idea and just used json
-		// allLabels := []string{}
-		// for f, lbls := range fieldLabels {
-		// 	labels := []string{}
-		// 	for name, value := range lbls {
-		// 		labels = append(labels, name+":"+value)
-		// 	}
-		// 	fieldLabels := strings.Join(labels, ",")
-
-		// 	allLabels = append(allLabels, f+"{"+fieldLabels+"}")
-		// 	// metaAppender.AppendRow(refId, f, fieldLabels)
-		// 	// if err != nil {
-		// 	// 	fmt.Println(err)
-		// 	// 	return err
-		// 	// }
-		// }
-		// all := strings.Join(allLabels, "|")
-		// fmt.Println(all)
-		// fmt.Println(fieldLabels)
-		// l := fmt.Sprint(fieldLabels)
-		// metaAppender.AppendRow(refId, l)
-		// if err != nil {
-		// 	fmt.Println(err)
-		// 	return err
-		// }
-
-		jsonData, err := json.Marshal(fieldLabels)
-		if err != nil {
-			fmt.Println(err)
-			return err
-		}
-
-		jsonString := string(jsonData)
-		metaAppender.AppendRow(refId, jsonString)
-		if err != nil {
-			fmt.Println(err)
-			return err
-		}
+	if d.db != nil {
+		d.db.Close()
 	}
-
-	err = metaAppender.Flush()
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
+	d.db = db
 	return nil
 }
 
-// TODO - use reflection instead of checking each type?
-// func isPointer(i interface{}) bool {
-// 	return reflect.ValueOf(i).Type().Kind() == reflect.Pointer
-// }
-
-// func getPointerValue(i any) any {
-// 	return reflect.Indirect(reflect.ValueOf(i))
-// }
-
-func (d *DuckDB) createTables(frames data.Frames) (FrameLables, error) {
-
-	stmt := "create or replace table labels (ref VARCHAR, col VARCHAR, name VARCHAR, value VARCHAR)"
-	_, err := d.DB.Query(stmt)
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
-	}
-
-	// stmt = "create or replace table _meta (ref VARCHAR, _labels_col VARCHAR, _labels VARCHAR)"
-	// stmt = "create or replace table _meta (ref VARCHAR, _labels_col VARCHAR, _labels VARCHAR)"
-	stmt = "create or replace table _meta (ref VARCHAR, _labels VARCHAR)"
-	_, err = d.DB.Query(stmt)
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
-	}
-
-	frameLables := FrameLables{}
-
+func (d *DuckDB) createTables(frames data.Frames) error {
 	for _, f := range frames {
 		name := f.RefID
 		if name == "" {
@@ -296,10 +176,12 @@ func (d *DuckDB) createTables(frames data.Frames) (FrameLables, error) {
 		fmt.Println("creating table " + name)
 		createTable := "create or replace table " + name + " ("
 		sep := ""
-		fieldLabels := FieldLables{}
 		for _, fld := range f.Fields {
 			createTable += sep
-			n := strings.ReplaceAll(fld.Name, "-", "_") // TODO - surround with brackets or backticks?
+			n := fld.Name
+			if strings.ContainsAny(n, "- :,#@") {
+				n = fmt.Sprintf(`"%s"`, n) // escape the string
+			}
 			createTable += n
 			if fld.Type() == data.FieldTypeBool || fld.Type() == data.FieldTypeNullableBool {
 				createTable += " " + "BOOLEAN"
@@ -329,21 +211,20 @@ func (d *DuckDB) createTables(frames data.Frames) (FrameLables, error) {
 				createTable += " " + "BLOB"
 			}
 			sep = " ,"
-			fieldLabels[fld.Name] = fld.Labels
+
+			// Keep a map of the input field names
+			if len(fld.Labels) > 0 || fld.Config != nil {
+				d.lookup[fld.Name] = fld
+			}
 		}
-		frameLables[f.RefID] = fieldLabels
 		createTable += ")"
 		fmt.Println(createTable)
 
-		_, err := d.DB.Query(createTable)
+		_, err := d.db.Query(createTable)
 		if err != nil {
 			fmt.Println(err)
-			return nil, err
+			return err
 		}
 	}
-	return frameLables, nil
+	return nil
 }
-
-type FieldLables = map[string]data.Labels
-
-type FrameLables = map[string]FieldLables
