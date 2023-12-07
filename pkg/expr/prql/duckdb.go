@@ -42,19 +42,7 @@ func (d *DuckDB) QueryPRQL(ctx context.Context, prql string) (*data.Frame, error
 }
 
 func (d *DuckDB) Query(ctx context.Context, query string) (*data.Frame, error) {
-	connector, err := d.connector(ctx)
-	if err != nil {
-		return nil, err
-	}
-	db := sql.OpenDB(connector)
-	defer func() {
-		err = db.Close()
-		if err != nil {
-			fmt.Printf("failed to close db after query: %v\n", err)
-		}
-	}()
-
-	results, err := db.QueryContext(ctx, query)
+	results, err := d.runQuery(ctx, query)
 	if err != nil {
 		fmt.Printf("failed to query db: %v\n", err)
 		return nil, err
@@ -216,7 +204,7 @@ func (d *DuckDB) createTables(ctx context.Context, frames data.Frames) error {
 		createTable += ")"
 		fmt.Println(createTable)
 
-		_, err := d.Query(ctx, createTable)
+		_, err := d.runQuery(ctx, createTable)
 		if err != nil {
 			fmt.Println(err)
 			return err
@@ -260,4 +248,25 @@ func (d *DuckDB) connector(ctx context.Context) (driver.Connector, error) {
 		return connector, err
 	}
 	return d.conn, nil
+}
+
+func (d *DuckDB) runQuery(ctx context.Context, query string) (*sql.Rows, error) {
+	connector, err := d.connector(ctx)
+	if err != nil {
+		return nil, err
+	}
+	db := sql.OpenDB(connector)
+	defer func() {
+		err = db.Close()
+		if err != nil {
+			fmt.Printf("failed to close db after query: %v\n", err)
+		}
+	}()
+
+	results, err := db.QueryContext(ctx, query)
+	if err != nil {
+		fmt.Printf("failed to query db: %v\n", err)
+		return nil, err
+	}
+	return results, nil
 }
