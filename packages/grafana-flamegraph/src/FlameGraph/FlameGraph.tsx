@@ -32,7 +32,7 @@ type Props = {
   data: FlameGraphDataContainer;
   rangeMin: number;
   rangeMax: number;
-  matchedLabels: Set<string> | undefined;
+  matchedLabels?: Set<string>;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
   style?: React.CSSProperties;
