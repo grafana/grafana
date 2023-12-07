@@ -255,12 +255,35 @@ func (srv *ProvisioningSrv) RouteGetMuteTiming(c *contextmodel.ReqContext, name 
 	return response.Empty(http.StatusNotFound)
 }
 
+func (srv *ProvisioningSrv) RouteGetMuteTimingExport(c *contextmodel.ReqContext, name string) response.Response {
+	timings, err := srv.muteTimings.GetMuteTimings(c.Req.Context(), c.SignedInUser.GetOrgID())
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	for _, timing := range timings {
+		if name == timing.Name {
+			e := AlertingFileExportFromMuteTimings(c.SignedInUser.GetOrgID(), []definitions.MuteTimeInterval{timing})
+			return exportResponse(c, e)
+		}
+	}
+	return response.Empty(http.StatusNotFound)
+}
+
 func (srv *ProvisioningSrv) RouteGetMuteTimings(c *contextmodel.ReqContext) response.Response {
 	timings, err := srv.muteTimings.GetMuteTimings(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	return response.JSON(http.StatusOK, timings)
+}
+
+func (srv *ProvisioningSrv) RouteGetMuteTimingsExport(c *contextmodel.ReqContext) response.Response {
+	timings, err := srv.muteTimings.GetMuteTimings(c.Req.Context(), c.SignedInUser.GetOrgID())
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	e := AlertingFileExportFromMuteTimings(c.SignedInUser.GetOrgID(), timings)
+	return exportResponse(c, e)
 }
 
 func (srv *ProvisioningSrv) RoutePostMuteTiming(c *contextmodel.ReqContext, mt definitions.MuteTimeInterval) response.Response {
