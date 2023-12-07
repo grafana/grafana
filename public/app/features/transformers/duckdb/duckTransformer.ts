@@ -1,4 +1,4 @@
-// import { compile } from "prql-js/dist/bundler";
+import { compile, CompileOptions } from 'prql-js/dist/bundler';
 import { Subject } from 'rxjs';
 
 import { DataTransformerID, DataTransformerInfo, DataFrame } from '@grafana/data';
@@ -19,8 +19,14 @@ export const DuckDBTransformer: DataTransformerInfo<DuckTransformerOptions> = {
   id: DataTransformerID.duckdb,
   name: 'DuckDB query',
   operator: (options) => (source) => {
-    // const sql2 = compile(`from employees | select first_name`);
-    // console.log(sql2);
+    const prqlOptions = new CompileOptions();
+    prqlOptions.format = false;
+
+    if (options.type === QueryType.prql) {
+      //@ts-ignore
+      const sql2 = compile(options.query, prqlOptions);
+      console.log(sql2);
+    }
 
     let sql = options.query;
     if (!sql?.length) {
@@ -38,7 +44,7 @@ export const DuckDBTransformer: DataTransformerInfo<DuckTransformerOptions> = {
         for await (const frame of data) {
           const data: Record<string, unknown[]> = {};
 
-          frame.fields.forEach(field => {
+          frame.fields.forEach((field) => {
             data[field.name] = field.values;
           });
 
@@ -52,14 +58,14 @@ export const DuckDBTransformer: DataTransformerInfo<DuckTransformerOptions> = {
         const df = arrowTableToFrame(result);
         subj.next([df]);
 
-        for await (const frame of data) {
-          let tableName = frame.refId ?? 'A';
-
-          // hmm, this doesnt work and we're stuck with DuckDB singleton?
-          // do we re-create the db on each transfomer invoke?
-          // or truncate all existing tables?
-          await conn.query(`DROP TABLE IF EXISTS ${tableName}`);
-        }
+        // for await (const frame of data) {
+        //   let tableName = frame.refId ?? 'A';
+        //
+        //   // hmm, this doesnt work and we're stuck with DuckDB singleton?
+        //   // do we re-create the db on each transfomer invoke?
+        //   // or truncate all existing tables?
+        //   await conn.query(`DROP TABLE IF EXISTS ${tableName}`);
+        // }
 
         await db.flushFiles();
         await db.dropFiles();

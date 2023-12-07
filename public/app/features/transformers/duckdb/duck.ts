@@ -2,12 +2,12 @@ import * as duckdb from '@duckdb/duckdb-wasm';
 
 import { DataFrame, FieldType, Field } from '@grafana/data';
 
-let ddb: duckdb.AsyncDuckDB | undefined = undefined;
+// let ddb: duckdb.AsyncDuckDB | undefined = undefined;
 
 export async function getDuckDB(): Promise<duckdb.AsyncDuckDB> {
-  if (ddb) {
-    return ddb;
-  }
+  // if (ddb) {
+  //   return ddb;
+  // }
   // TODO??? only load once!!!! (share the loading promise)
 
   console.log('loading duckdb');
@@ -27,7 +27,8 @@ export async function getDuckDB(): Promise<duckdb.AsyncDuckDB> {
   await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
   URL.revokeObjectURL(worker_url);
   console.log('loaded duckdb', db);
-  return (ddb = db);
+  // return (ddb = db);
+  return db;
 }
 
 // importing arrow is not the same as the one returned from query results... not sure the best approach here
