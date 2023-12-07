@@ -16,7 +16,6 @@ import {
 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
-import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { StoreState, ServiceAccountDTO, AccessControlAction, ServiceAccountStateFilter } from 'app/types';
@@ -220,7 +219,6 @@ export const ServiceAccountsListPageUnconnected = ({
             className={styles.filter}
           />
         </div>
-        {isLoading && <PageLoader />}
         {!isLoading && noServiceAccountsCreated && (
           <>
             <EmptyListCTA
@@ -237,7 +235,7 @@ export const ServiceAccountsListPageUnconnected = ({
           </>
         )}
 
-        {!isLoading && serviceAccounts.length !== 0 && (
+        {(isLoading || serviceAccounts.length !== 0) && (
           <>
             <div className={cx(styles.table, 'admin-list-table')}>
               <table className="filter-table filter-table--hover">
@@ -252,18 +250,26 @@ export const ServiceAccountsListPageUnconnected = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {serviceAccounts.map((serviceAccount: ServiceAccountDTO) => (
-                    <ServiceAccountListItem
-                      serviceAccount={serviceAccount}
-                      key={serviceAccount.id}
-                      roleOptions={roleOptions}
-                      onRoleChange={onRoleChange}
-                      onRemoveButtonClick={onRemoveButtonClick}
-                      onDisable={onDisableButtonClick}
-                      onEnable={onEnable}
-                      onAddTokenClick={onTokenAdd}
-                    />
-                  ))}
+                  {isLoading ? (
+                    <>
+                      <ServiceAccountListItem.Skeleton />
+                      <ServiceAccountListItem.Skeleton />
+                      <ServiceAccountListItem.Skeleton />
+                    </>
+                  ) : (
+                    serviceAccounts.map((serviceAccount) => (
+                      <ServiceAccountListItem
+                        serviceAccount={serviceAccount}
+                        key={serviceAccount.id}
+                        roleOptions={roleOptions}
+                        onRoleChange={onRoleChange}
+                        onRemoveButtonClick={onRemoveButtonClick}
+                        onDisable={onDisableButtonClick}
+                        onEnable={onEnable}
+                        onAddTokenClick={onTokenAdd}
+                      />
+                    ))
+                  )}
                 </tbody>
               </table>
 
