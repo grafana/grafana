@@ -58,6 +58,8 @@ func (am *Alertmanager) GetAuthedClient() *http.Client {
 	return am.httpClient
 }
 
+// IsReadyWithBackoff executes a readiness check against the `/-/ready` Alertmanager endpoint.
+// If it takes more than 10s to get a response back - we abort the check.
 func (am *Alertmanager) IsReadyWithBackoff(ctx context.Context) (bool, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
