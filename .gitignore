@@ -216,3 +216,4 @@ public/app/plugins/**/dist/
 
 # prql - TODO
 db
+*.wal

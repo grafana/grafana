@@ -371,32 +371,31 @@ func (gr *PRQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.
 	_, span := tracer.Start(ctx, "SSE.ExecutePRQL")
 	defer span.End()
 
+	// ??? is this a totally clean instance?
+	db, err := prql.NewDuckDB("db")
+	if err != nil {
+		return mathexp.Results{}, err
+	}
+
 	// insert all referenced results into duckdb. TODO: multi-thread this?
 	for _, ref := range gr.varsToQuery {
 		results := vars[ref]
 		frames := results.Values.AsDataFrames(ref)
-		duckdb := prql.DuckDB{Name: "db"}
-		err := duckdb.AppendAll(ctx, frames)
+		err := db.AppendAll(ctx, frames)
 		if err != nil {
 			return mathexp.Results{}, err
 		}
 	}
 
-	frames, err := prql.Query("db", gr.query)
-	if err != nil {
-		return mathexp.Results{}, err
+	rsp := mathexp.Results{}
+	frame, err := db.QueryPRQL(ctx, gr.query)
+	if frame != nil {
+		frame.RefID = gr.refID
+		rsp.Values = mathexp.Values{
+			mathexp.Scalar{Frame: frame}, // TODO?? can we detect the type??
+		}
 	}
-
-	var values mathexp.Values
-	for _, f := range frames {
-		f.RefID = gr.refID
-		v := mathexp.Scalar{Frame: f} // TODO?? is there a better type?
-		values = append(values, v)
-	}
-
-	return mathexp.Results{
-		Values: values,
-	}, nil
+	return rsp, err
 }
 
 // CommandType is the type of the expression command.

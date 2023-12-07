@@ -2,15 +2,17 @@ package prql
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAppend(t *testing.T) {
-
+	ctx := context.Background()
 	var fields []*data.Field
-	vals := []string{"test"}
+	vals := []string{"v1", "v2", "v3"}
 	labels := data.Labels{
 		"foo": "bar",
 		"cat": "zzz",
@@ -21,20 +23,27 @@ func TestAppend(t *testing.T) {
 		"aaa": "bbb",
 		"ccc": "ddd",
 	}
-	vals2 := []string{"val"}
+	vals2 := []string{"x1", "x2", "x3"}
 	f2 := data.NewField("value", labels2, vals2)
 
 	fields = append(fields, f)
 	fields = append(fields, f2)
-	frame := data.NewFrame("foo", fields...)
+	frame := data.NewFrame("x", fields...)
 	frame.RefID = "foo"
 
-	d := DuckDB{
-		Name: "test.db",
-	}
+	d, err := NewDuckDB("test.db")
+	require.NoError(t, err)
 
-	err := d.AppendAll(context.Background(), data.Frames{frame})
-	if err != nil {
-		t.Fail()
-	}
+	err = d.AppendAll(ctx, data.Frames{frame})
+	require.NoError(t, err)
+
+	out, err := d.Query(ctx, "SELECT * FROM foo LIMIT 1")
+	require.NoError(t, err)
+	require.Equal(t, 1, out.Rows())
+	require.Equal(t, "SELECT * FROM foo LIMIT 1", out.Meta.ExecutedQueryString)
+
+	txt, err := out.StringTable(-1, -1)
+	require.NoError(t, err)
+
+	fmt.Printf("GOT: %s", txt)
 }
