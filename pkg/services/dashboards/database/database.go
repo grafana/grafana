@@ -677,7 +677,7 @@ func (d *dashboardStore) SoftDeleteDashboard(ctx context.Context, dashboardUID s
 
 func (d *dashboardStore) SoftDeleteDashboardsInFolder(ctx context.Context, folderUid string) error {
 	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Exec("UPDATE dashboard SET deleted=?, folder_id=0, folder_uid=NULL WHERE folder_uid=?", time.Now(), folderUid)
+		_, err := sess.Exec("UPDATE dashboard SET deleted=?, folder_id=0, folder_uid=NULL WHERE folder_uid=? and is_folder=?", time.Now(), folderUid, d.store.GetDialect().BooleanStr(false))
 		return err
 	})
 }
