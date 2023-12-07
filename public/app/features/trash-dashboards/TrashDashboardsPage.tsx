@@ -11,7 +11,6 @@ import { useDispatch } from 'app/types';
 import { SearchView } from '../browse-dashboards/components/SearchView';
 import { getFolderPermissions } from '../browse-dashboards/permissions';
 import { setAllSelection, useHasSelection } from '../browse-dashboards/state';
-import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 
 import { TrashActions } from './components/BrowseActions/TrashActions';
 import { BrowseFilters } from './components/BrowseFilters';
@@ -54,7 +53,7 @@ const TrashDashboardsPage = memo(({ match }: Props) => {
     <Page navId="dashboards/trash">
       <Page.Contents className={styles.pageContents}>
         <FilterInput
-          placeholder={getSearchPlaceholder(false)}
+          placeholder="Search for dashboards"
           value={searchState.query}
           escapeRegex={false}
           onChange={(e) => stateManager.onQueryChange(e)}
