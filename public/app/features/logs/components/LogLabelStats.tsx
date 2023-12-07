@@ -1,7 +1,15 @@
 import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
-import { LogLabelStatsModel, GrafanaTheme2 } from '@grafana/data';
+import {
+  LogLabelStatsModel,
+  GrafanaTheme2,
+  createDataFrame,
+  FieldType,
+  LoadingState,
+  getDefaultTimeRange,
+} from '@grafana/data';
+import { PanelRenderer } from '@grafana/runtime';
 import { stylesFactory, withTheme2, Themeable2 } from '@grafana/ui';
 
 //Components
@@ -18,7 +26,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       word-break: break-all;
       width: fit-content;
       max-width: 100%;
-      margin: ${theme.spacing(2)} 0;
+      margin: ${theme.spacing(0.5)} 0;
+      padding: ${theme.spacing(1)};
+      &:hover {
+        background: ${theme.colors.background.primary};
+      }
     `,
     logsStatsHeader: css`
       label: logs-stats__header;
@@ -41,6 +53,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     logsStatsBody: css`
       label: logs-stats__body;
       padding: 5px 0px;
+      display: flex;
     `,
   };
 });
@@ -51,11 +64,12 @@ interface Props extends Themeable2 {
   value: string;
   rowCount: number;
   isLabel?: boolean;
+  shouldFilter: boolean;
 }
 
 class UnThemedLogLabelStats extends PureComponent<Props> {
   render() {
-    const { label, rowCount, stats, value, theme, isLabel } = this.props;
+    const { label, stats, value, theme, shouldFilter } = this.props;
     const style = getStyles(theme);
     const topRows = stats.slice(0, STATS_ROW_LIMIT);
     let activeRow = undefined;
@@ -73,22 +87,63 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
     const total = topCount + otherCount;
     const otherProportion = otherCount / total;
 
+    const frame = createDataFrame({
+      fields: stats.map((stat) => {
+        return { name: `{${label}="${stat.value}"}`, type: FieldType.number, values: [stat.count] };
+      }),
+    });
+
     return (
       <div className={style.logsStats} data-testid="logLabelStats">
         <div className={style.logsStatsTitle}>{label}</div>
         <div className={style.logsStatsBody}>
-          {topRows.map((stat) => (
-            <LogLabelStatsRow key={stat.value} {...stat} active={false} total={total} />
-          ))}
-          {otherCount > 0 && (
-            <LogLabelStatsRow
-              key="__OTHERS__"
-              count={otherCount}
-              value="Other"
-              proportion={otherProportion}
-              total={total}
+          <div style={{ width: '70%' }}>
+            {topRows.map((stat) => (
+              <LogLabelStatsRow key={stat.value} {...stat} active={false} total={total} shouldFilter={shouldFilter} />
+            ))}
+            {otherCount > 0 && (
+              <LogLabelStatsRow
+                key="__OTHERS__"
+                count={otherCount}
+                value="Other"
+                proportion={otherProportion}
+                total={total}
+                shouldFilter={shouldFilter}
+              />
+            )}
+          </div>
+          <div style={{ width: '30%', marginLeft: '50px', marginTop: '-30px' }}>
+            <PanelRenderer
+              pluginId="piechart"
+              height={100}
+              width={100}
+              title="Pie Chart"
+              data={{
+                series: [frame],
+                timeRange: getDefaultTimeRange(),
+                state: LoadingState.Done,
+              }}
+              options={{
+                reduceOptions: {
+                  values: false,
+                  calcs: ['lastNotNull'],
+                  fields: '',
+                },
+                pieType: 'pie',
+                tooltip: {
+                  mode: 'single',
+                  sort: 'none',
+                },
+                legend: {
+                  showLegend: false,
+                  displayMode: 'table',
+                  placement: 'right',
+                  values: ['percent'],
+                },
+                displayLabels: ['percent', 'value'],
+              }}
             />
-          )}
+          </div>
         </div>
       </div>
     );

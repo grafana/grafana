@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { IconButton, useStyles2 } from '@grafana/ui';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   logsStatsRow: css`
@@ -56,33 +56,55 @@ export interface Props {
   proportion: number;
   value?: string;
   total: number;
+  shouldFilter: boolean;
 }
 
-export const LogLabelStatsRow = ({ active, count, proportion, value, total }: Props) => {
+export const LogLabelStatsRow = ({ active, count, proportion, value, total, shouldFilter }: Props) => {
   const style = useStyles2(getStyles);
   const percent = `${Math.round(proportion * 100)}%`;
-  const barStyle = { width: percent };
-  const className = active ? cx([style.logsStatsRow, style.logsStatsRowActive]) : cx([style.logsStatsRow]);
+  // const barStyle = { width: percent };
+  // const className = active ? cx([style.logsStatsRow, style.logsStatsRowActive]) : cx([style.logsStatsRow]);
 
   return (
-    <div>
-      {count}/{total} {percent}% {value} + -
-    </div>
-  );
-  return (
-    <div className={className}>
-      <div className={cx([style.logsStatsRowLabel])}>
-        <div className={cx([style.logsStatsRowValue])} title={value}>
-          {value}
+    <div style={{ display: 'flex' }}>
+      {shouldFilter && (
+        <div style={{ width: '40px', marginTop: '3px' }}>
+          <IconButton size="xs" name="search-plus" aria-label="search-plus" />
+          <IconButton size="xs" name="search-minus" aria-label="search-minus" />
         </div>
-        <div className={cx([style.logsStatsRowCount])}>{count}</div>
-        <div className={cx([style.logsStatsRowPercent])}>{percent}</div>
+      )}
+      <div
+        style={{
+          width: '180px',
+          textOverflow: 'ellipsis',
+          overflow: 'hidden',
+          whiteSpace: 'nowrap',
+          marginRight: '20px',
+        }}
+      >
+        {value}
       </div>
-      <div className={cx([style.logsStatsRowBar])}>
-        <div className={cx([style.logsStatsRowInnerBar])} style={barStyle} />
+      <div style={{ width: '80px' }}>
+        {count}/{total}
       </div>
+      <div style={{ width: '44px' }}>{percent}</div>
     </div>
   );
+
+  // return (
+  //   <div className={className}>
+  //     <div className={cx([style.logsStatsRowLabel])}>
+  //       <div className={cx([style.logsStatsRowValue])} title={value}>
+  //         {value}
+  //       </div>
+  //       <div className={cx([style.logsStatsRowCount])}>{count}</div>
+  //       <div className={cx([style.logsStatsRowPercent])}>{percent}</div>
+  //     </div>
+  //     <div className={cx([style.logsStatsRowBar])}>
+  //       <div className={cx([style.logsStatsRowInnerBar])} style={barStyle} />
+  //     </div>
+  //   </div>
+  // );
 };
 
 LogLabelStatsRow.displayName = 'LogLabelStatsRow';
