@@ -4,23 +4,23 @@ import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { SceneVariables } from '@grafana/scenes';
+import { SceneVariable, SceneVariableState } from '@grafana/scenes';
 import { useStyles2, Stack } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 
 import { VariableEditorListRow } from './VariableEditorListRow';
 
 export interface Props {
-  variablesSet: SceneVariables;
+  variables: Array<SceneVariable<SceneVariableState>>;
   onAdd: () => void;
-  onChangeOrder: (identifier: string, fromIndex: number, toIndex: number) => void;
+  onChangeOrder: (fromIndex: number, toIndex: number) => void;
   onDuplicate: (identifier: string) => void;
   onDelete: (identifier: string) => void;
   onEdit: (identifier: string) => void;
 }
 
 export function VariableEditorList({
-  variablesSet,
+  variables,
   onChangeOrder,
   onDelete,
   onDuplicate,
@@ -33,18 +33,15 @@ export function VariableEditorList({
       return;
     }
     reportInteraction('Variable drag and drop');
-    const identifier = JSON.parse(result.draggableId);
-    onChangeOrder(identifier, result.source.index, result.destination.index);
+    onChangeOrder(result.source.index, result.destination.index);
   };
-
-  const variablesSetState = variablesSet?.state?.variables ?? [];
 
   return (
     <div>
       <div>
-        {variablesSetState.length === 0 && <EmptyVariablesList onAdd={onAdd} />}
+        {variables.length === 0 && <EmptyVariablesList onAdd={onAdd} />}
 
-        {variablesSetState && (
+        {variables && (
           <Stack direction="column" gap={4}>
             <div className={styles.tableContainer}>
               <table
@@ -63,7 +60,7 @@ export function VariableEditorList({
                   <Droppable droppableId="variables-list" direction="vertical">
                     {(provided) => (
                       <tbody ref={provided.innerRef} {...provided.droppableProps}>
-                        {variablesSetState.map((variableScene, index) => {
+                        {variables.map((variableScene, index) => {
                           const variable = variableScene.state;
                           return (
                             <VariableEditorListRow
