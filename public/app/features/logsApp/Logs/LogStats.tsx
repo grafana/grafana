@@ -6,7 +6,6 @@ import { LogLabelStats } from 'app/features/logs/components/LogLabelStats';
 import { LogRowStyles } from 'app/features/logs/components/getLogRowStyles';
 import { COMMON_LABELS, UNIQUE_LABELS } from 'app/features/logs/logsModel';
 import { calculateLogsLabelStats } from 'app/features/logs/utils';
-// import { LogLabelStats } from 'app/features/logs/components/LogLabelStats';
 
 export interface Props {
   rows: LogRowModel[];

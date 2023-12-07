@@ -74,8 +74,6 @@ export const LogLabelStatsRow = ({
 }: Props) => {
   // const style = useStyles2(getStyles);
   const percent = `${Math.round(proportion * 100)}%`;
-  // const barStyle = { width: percent };
-  // const className = active ? cx([style.logsStatsRow, style.logsStatsRowActive]) : cx([style.logsStatsRow]);
 
   return (
     <div style={{ display: 'flex' }}>
@@ -112,21 +110,6 @@ export const LogLabelStatsRow = ({
       <div style={{ width: '44px' }}>{percent}</div>
     </div>
   );
-
-  // return (
-  //   <div className={className}>
-  //     <div className={cx([style.logsStatsRowLabel])}>
-  //       <div className={cx([style.logsStatsRowValue])} title={value}>
-  //         {value}
-  //       </div>
-  //       <div className={cx([style.logsStatsRowCount])}>{count}</div>
-  //       <div className={cx([style.logsStatsRowPercent])}>{percent}</div>
-  //     </div>
-  //     <div className={cx([style.logsStatsRowBar])}>
-  //       <div className={cx([style.logsStatsRowInnerBar])} style={barStyle} />
-  //     </div>
-  //   </div>
-  // );
 };
 
 LogLabelStatsRow.displayName = 'LogLabelStatsRow';

@@ -72,19 +72,10 @@ interface Props extends Themeable2 {
 
 class UnThemedLogLabelStats extends PureComponent<Props> {
   render() {
-    const { label, stats, value, theme, shouldFilter, onClickFilterLabel, onClickFilterOutLabel } = this.props;
+    const { label, stats, theme, shouldFilter, onClickFilterLabel, onClickFilterOutLabel } = this.props;
     const style = getStyles(theme);
     const topRows = stats.slice(0, STATS_ROW_LIMIT);
-    let activeRow = undefined;
     let otherRows = stats.slice(STATS_ROW_LIMIT);
-    const insertActiveRow = !activeRow;
-
-    // Remove active row from other to show extra
-    if (insertActiveRow) {
-      activeRow = otherRows.find((row) => row.value === value);
-      otherRows = otherRows.filter((row) => row.value !== value);
-    }
-
     const otherCount = otherRows.reduce((sum, row) => sum + row.count, 0);
     const topCount = topRows.reduce((sum, row) => sum + row.count, 0);
     const total = topCount + otherCount;
@@ -96,7 +87,7 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
       }),
     });
 
-    if (otherProportion >= 0.99) {
+    if (otherProportion >= 0.97) {
       // guard check for when there are too many unique values
       return <></>;
     }
