@@ -110,6 +110,5 @@ export function GetSuggestUserPrompt({
   Available Prometheus metric labels: ${labels}
   User question: ${question}
   
-  \`\`\`promql
-`;
+  \`\`\`promql`;
 }
