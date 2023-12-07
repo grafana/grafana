@@ -8,6 +8,7 @@ import { COMMON_LABELS, UNIQUE_LABELS } from 'app/features/logs/logsModel';
 import { calculateLogsLabelStats } from 'app/features/logs/utils';
 
 import { ExplainAllLogLines } from '../ExplainAllLogLines';
+import { calculateResolutionIndex } from 'app/features/logs/components/LogRows';
 
 export interface Props {
   rows: LogRowModel[];
@@ -15,9 +16,10 @@ export interface Props {
   logsMeta: LogsMetaItem[] | undefined;
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  resolution: number;
 }
 
-export const LogStats = ({ styles, rows, logsMeta, onClickFilterLabel, onClickFilterOutLabel }: Props) => {
+export const LogStats = ({ styles, rows, logsMeta, onClickFilterLabel, onClickFilterOutLabel, resolution }: Props) => {
   const [uniqueExpanded, setUniqueExpanded] = useState(true);
   const [commonExpanded, setCommonExpanded] = useState(true);
   //@ts-ignore
@@ -29,6 +31,10 @@ export const LogStats = ({ styles, rows, logsMeta, onClickFilterLabel, onClickFi
     <div className={styles.logDetails}>
       <div className={styles.logDetailsContainer}>
         <div style={{ fontFamily: "'Roboto Mono', monospace", fontSize: '12px', padding: '8px 0' }}>
+          <div>
+            <p>Total log lines: {rows.length}</p>
+            {resolution > 0 && <p>Rendered: {Math.round(rows.length / calculateResolutionIndex(resolution, rows.length))}</p>}
+          </div>
           <ExplainAllLogLines logLines={rows.map((row) => row.entry)} />
           {/**todo angles are not working yet */}
           {uniqueLabel && (
@@ -40,7 +46,7 @@ export const LogStats = ({ styles, rows, logsMeta, onClickFilterLabel, onClickFi
                 Unique fields
                 <Icon name={!uniqueExpanded ? 'angle-up' : 'angle-down'} />
               </div>
-              <div style={{ display: uniqueExpanded ? '' : 'none'}}>
+              <div style={{ display: uniqueExpanded ? '' : 'none' }}>
                 {Object.keys(uniqueLabel).map((key) => {
                   const stats = calculateLogsLabelStats(rows, key);
                   return (
@@ -70,7 +76,7 @@ export const LogStats = ({ styles, rows, logsMeta, onClickFilterLabel, onClickFi
                 Common fields
                 <Icon name={!commonExpanded ? 'angle-up' : 'angle-down'} />
               </div>
-              <div style={{ display: commonExpanded ? '' : 'none'}}>
+              <div style={{ display: commonExpanded ? '' : 'none' }}>
                 {Object.keys(commonLabels as Labels).map((key: string) => {
                   return (
                     <div key={key}>

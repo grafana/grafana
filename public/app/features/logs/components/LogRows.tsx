@@ -26,6 +26,23 @@ import { getLogRowStyles } from './getLogRowStyles';
 
 export const PREVIEW_LIMIT = 100;
 
+export function resolutionRounding(num: number) {
+  const decimal = num - Math.floor(num);
+  if (decimal < 0.25) {
+    return Math.floor(num);
+  } else if (decimal <= 0.5) {
+    return Math.floor(num) + 0.5;
+  } else if (decimal <= 0.75) {
+    return Math.floor(num) + 0.75;
+  } else {
+    return Math.ceil(num);
+  }
+}
+
+export function calculateResolutionIndex(resolution: number, length: number) {
+  return resolution !== undefined && resolution > 0 ? resolutionRounding(length / resolution) : 1;
+}
+
 export interface Props extends Themeable2 {
   logRows?: LogRowModel[];
   deduplicatedRows?: LogRowModel[];
@@ -216,8 +233,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
     const keyMaker = new UniqueKeyMaker();
     const { resolution } = this.props;
-    const resolutionIndex =
-      resolution !== undefined && resolution > 0 && logRows ? Math.ceil(logRows.length / resolution) : 1;
+    const resolutionIndex = calculateResolutionIndex(resolution, logRows.length);
 
     return (
       <div className={styles.logRows} ref={this.logRowsRef}>
@@ -235,7 +251,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
           <tbody>
             {hasData &&
               orderedRows.map((row, index) =>
-                index % resolutionIndex === 0 ? (
+                index % resolutionIndex <= 0.5 ? (
                   <LogRow
                     key={keyMaker.getKey(row.uid)}
                     getRows={getRows}
