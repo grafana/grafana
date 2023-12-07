@@ -82,20 +82,6 @@ func (_m *FakeDashboardStore) DeleteDashboard(ctx context.Context, cmd *DeleteDa
 	return r0
 }
 
-// DeleteDashboardsInFolder provides a mock function with given fields: ctx, request
-func (_m *FakeDashboardStore) DeleteDashboardsInFolder(ctx context.Context, request *DeleteDashboardsInFolderRequest) error {
-	ret := _m.Called(ctx, request)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *DeleteDashboardsInFolderRequest) error); ok {
-		r0 = rf(ctx, request)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // DeleteOrphanedProvisionedDashboards provides a mock function with given fields: ctx, cmd
 func (_m *FakeDashboardStore) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *DeleteOrphanedProvisionedDashboardsCommand) error {
 	ret := _m.Called(ctx, cmd)
@@ -344,6 +330,32 @@ func (_m *FakeDashboardStore) GetProvisionedDataByDashboardUID(ctx context.Conte
 	return r0, r1
 }
 
+// GetSoftDeletedDashboard provides a mock function with given fields: ctx, orgID, uid
+func (_m *FakeDashboardStore) GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*Dashboard, error) {
+	ret := _m.Called(ctx, orgID, uid)
+
+	var r0 *Dashboard
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) (*Dashboard, error)); ok {
+		return rf(ctx, orgID, uid)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) *Dashboard); ok {
+		r0 = rf(ctx, orgID, uid)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*Dashboard)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int64, string) error); ok {
+		r1 = rf(ctx, orgID, uid)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetSoftDeletedExpiredDashboards provides a mock function with given fields: ctx, duration
 func (_m *FakeDashboardStore) GetSoftDeletedExpiredDashboards(ctx context.Context, duration time.Duration) ([]*Dashboard, error) {
 	ret := _m.Called(ctx, duration)
@@ -457,6 +469,20 @@ func (_m *FakeDashboardStore) SoftDeleteDashboard(ctx context.Context, dashboard
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
 		r0 = rf(ctx, dashboardUid)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// SoftDeleteDashboardsInFolder provides a mock function with given fields: ctx, folderUid
+func (_m *FakeDashboardStore) SoftDeleteDashboardsInFolder(ctx context.Context, folderUid string) error {
+	ret := _m.Called(ctx, folderUid)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, folderUid)
 	} else {
 		r0 = ret.Error(0)
 	}
