@@ -10,9 +10,10 @@ import { default as grot2 } from './assets/grotLevel2.svg';
 import { default as grot3 } from './assets/grotLevel3.svg';
 import { default as grot4 } from './assets/grotLevel4.svg';
 import { default as grot5 } from './assets/grotLevel5.svg';
+import { AchievementLevel } from './types';
 
 interface GrotLevelProps {
-  level: number;
+  level: AchievementLevel;
   height?: number;
   width?: number;
 }

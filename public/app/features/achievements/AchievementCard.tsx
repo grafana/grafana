@@ -11,13 +11,14 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Card, Icon, LinkButton, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { registerAchievementCompleted } from './AchievementsService';
+import { GrotIcon } from './GrotIcon';
 import { AchievementId, AchievementLevel } from './types';
 import { useAchievements } from './useAchievements';
 import { getProgress } from './utils';
 
 interface AchievementCardProps {
   title: string;
-  level?: AchievementLevel;
+  level: AchievementLevel;
 }
 
 export const AchievementCard = ({ title, level }: AchievementCardProps) => {
@@ -48,11 +49,14 @@ export const AchievementCard = ({ title, level }: AchievementCardProps) => {
           id="panel1a-header"
           sx={{ backgroundColor: theme.colors.background.secondary }}
         >
-          <Box className={styles.progressBox}>
-            <CircularProgress variant="determinate" value={progressByLevel} sx={{ color: '#F55F3E' }} />
-            <Box className={styles.progressText}>{`${progressByLevel}%`}</Box>
-          </Box>
-          <h4 style={{ color: theme.colors.text.primary }}>{title}</h4>
+          <div className={styles.summaryContent}>
+            <GrotIcon level={level} height={25} />
+            <Box className={styles.progressBox}>
+              <CircularProgress variant="determinate" value={progressByLevel} sx={{ color: '#F55F3E' }} />
+              <Box className={styles.progressText}>{`${progressByLevel}%`}</Box>
+            </Box>
+            <h4 style={{ color: theme.colors.text.primary, marginTop: '10px' }}>{title}</h4>
+          </div>
         </AccordionSummary>
         <AccordionDetails sx={{ backgroundColor: theme.colors.background.primary }}>
           {achievementsListByLevel?.map((achievement, index) => {
@@ -155,5 +159,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'relative',
     display: 'inline-flex',
     marginRight: '10px',
+  }),
+  summaryContent: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   }),
 });
