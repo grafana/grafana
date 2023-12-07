@@ -135,6 +135,7 @@ export const Components = {
       contract: 'Drawer contract',
       close: 'Drawer close',
       rcContentWrapper: () => '.rc-drawer-content-wrapper',
+      subtitle: 'data-testid drawer subtitle',
     },
   },
   PanelEditor: {

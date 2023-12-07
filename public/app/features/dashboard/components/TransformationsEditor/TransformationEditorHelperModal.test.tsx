@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
 import { TransformerRegistryItem } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { TransformationEditorHelperModal } from './TransformationEditorHelperModal';
@@ -22,7 +23,8 @@ describe('TransformationEditorHelperModal', () => {
       );
 
       // Check if the modal title is rendered with the correct text
-      expect(screen.getByText(`Transformation help - ${transformer.transformation.name}`)).toBeInTheDocument();
+      expect(screen.getByText(`Transformation help`)).toBeInTheDocument();
+      expect(screen.getByTestId(selectors.components.Drawer.General.subtitle)).toBeInTheDocument();
 
       // Unmount the component to clean up
       unmount();
@@ -39,7 +41,7 @@ describe('TransformationEditorHelperModal', () => {
     );
 
     // Find and click the modal's close button
-    const closeButton = screen.getByRole('button', { name: 'Close' });
+    const closeButton = screen.getByRole('button', { name: 'Drawer close' });
     fireEvent.click(closeButton);
 
     // Ensure that the onCloseClick function was called with the correct argument
@@ -56,7 +58,7 @@ describe('TransformationEditorHelperModal', () => {
     );
 
     // Ensure that the modal is not rendered
-    expect(screen.queryByText(`Transformation help - ${singleTestTransformer.name}`)).toBeNull();
+    expect(screen.queryByText(`Transformation help`)).toBeNull();
   });
 
   it('renders a default message when help content is not provided', () => {

@@ -120,6 +120,7 @@ export function Drawer({
                   icon="times"
                   variant="secondary"
                   fill="text"
+                  role="button"
                   onClick={onClose}
                   aria-label={selectors.components.Drawer.General.close}
                 />
@@ -128,7 +129,11 @@ export function Drawer({
                 <Text element="h3" {...titleProps}>
                   {title}
                 </Text>
-                {subtitle && <div className={styles.subtitle}>{subtitle}</div>}
+                {subtitle && (
+                  <div className={styles.subtitle} data-testid={selectors.components.Drawer.General.subtitle}>
+                    {subtitle}
+                  </div>
+                )}
                 {tabs && <div className={styles.tabsWrapper}>{tabs}</div>}
               </div>
             </div>
