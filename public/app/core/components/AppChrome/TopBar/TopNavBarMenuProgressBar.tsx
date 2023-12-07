@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import React, { CSSProperties, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -10,10 +10,10 @@ import { useAchievements } from 'app/features/achievements/useAchievements';
 import { getProgress } from 'app/features/achievements/utils';
 
 interface TopNavBarMenuProgressBarProps {
-  iconHeight?: number;
+  iconStyles?: CSSProperties;
 }
 
-export function TopNavBarMenuProgressBar({ iconHeight = 30 }: TopNavBarMenuProgressBarProps) {
+export function TopNavBarMenuProgressBar({ iconStyles }: TopNavBarMenuProgressBarProps) {
   const styles = useStyles2(getStyles);
   const [level, setLevel] = useState(0);
   const [currentLevel, setCurrentLevel] = useState(achievementsByName[0]);
@@ -48,8 +48,8 @@ export function TopNavBarMenuProgressBar({ iconHeight = 30 }: TopNavBarMenuProgr
   return (
     <a href="/profile/achievements">
       <div className={styles.progressBarWrapper}>
-        <div>
-          <GrotIcon level={level} height={iconHeight} />
+        <div style={iconStyles}>
+          <GrotIcon level={level} height={iconStyles ? (iconStyles.height as number) : 30} />
         </div>
         <div className={styles.progressBarRight}>
           <div className={styles.progressBarHeader}>

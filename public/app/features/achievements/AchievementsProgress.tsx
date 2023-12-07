@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { CSSProperties } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -7,9 +7,15 @@ import { TopNavBarMenuProgressBar } from 'app/core/components/AppChrome/TopBar/T
 
 export const AchievementsProgress = () => {
   const styles = useStyles2(getStyles);
+  const iconStyles: CSSProperties = {
+    height: '90px',
+    marginTop: '-13px',
+    marginRight: '10px',
+  };
+
   return (
     <div className={styles.wrapper}>
-      <TopNavBarMenuProgressBar iconHeight={60} />
+      <TopNavBarMenuProgressBar iconStyles={iconStyles} />
     </div>
   );
 };
