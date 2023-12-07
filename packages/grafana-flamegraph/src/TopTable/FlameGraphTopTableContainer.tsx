@@ -33,7 +33,7 @@ type Props = {
   // This is used for highlighting the search button in case there is exact match.
   search?: string;
   // We use these to filter out rows in the table if users is doing text search.
-  matchedLabels: Set<string> | undefined;
+  matchedLabels?: Set<string>;
   sandwichItem?: string;
   onSearch: (str: string) => void;
   onSandwich: (str?: string) => void;

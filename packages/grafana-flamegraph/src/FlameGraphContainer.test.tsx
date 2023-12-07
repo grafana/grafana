@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -97,20 +97,21 @@ describe('FlameGraphContainer', () => {
     render(<FlameGraphContainerWithProps />);
 
     // Checking for presence of this function before filter
-    const textBeforeFilter = 'net/http.HandlerFunc.ServeHTTP';
-    const rowsBeforeFilter = screen.queryAllByText(textBeforeFilter);
-    expect(rowsBeforeFilter.length).toBeGreaterThan(0);
+    const matchingText = 'net/http.HandlerFunc.ServeHTTP';
+    const nonMatchingText = 'runtime.systemstack';
+
+    expect(screen.queryAllByText(matchingText).length).toBe(1);
+    expect(screen.queryAllByText(nonMatchingText).length).toBe(1);
 
     // Apply the filter
     const searchInput = await screen.getByPlaceholderText('Search...');
-    await userEvent.type(searchInput, textBeforeFilter);
+    await userEvent.type(searchInput, 'Handler serve');
 
-    // Verify that the table displays filtered item
-    const filteredRows = screen.queryAllByText(textBeforeFilter);
-    expect(filteredRows.length).toBeGreaterThan(0);
-
-    // Verify that rows with some other text are not shown after filter
-    const rowsAfterFilter = screen.queryAllByText('compress/gzip.(*Writer).Write');
-    expect(rowsAfterFilter.length).toBe(0);
+    // We have to wait for filter to take effect
+    await waitFor(() => {
+      expect(screen.queryAllByText(nonMatchingText).length).toBe(0);
+    });
+    // Check we didn't lose the one that should match
+    expect(screen.queryAllByText(matchingText).length).toBe(1);
   });
 });
