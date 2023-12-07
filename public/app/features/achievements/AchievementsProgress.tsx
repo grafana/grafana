@@ -9,7 +9,7 @@ export const AchievementsProgress = () => {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.wrapper}>
-      <TopNavBarMenuProgressBar />
+      <TopNavBarMenuProgressBar iconHeight={60} />
     </div>
   );
 };

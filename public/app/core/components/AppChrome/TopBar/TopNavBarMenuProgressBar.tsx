@@ -9,7 +9,11 @@ import { GrotIcon } from 'app/features/achievements/GrotIcon';
 import { useAchievements } from 'app/features/achievements/useAchievements';
 import { getProgress } from 'app/features/achievements/utils';
 
-export function TopNavBarMenuProgressBar() {
+interface TopNavBarMenuProgressBarProps {
+  iconHeight?: number;
+}
+
+export function TopNavBarMenuProgressBar({ iconHeight = 30 }: TopNavBarMenuProgressBarProps) {
   const styles = useStyles2(getStyles);
   const [level, setLevel] = useState(0);
   const [currentLevel, setCurrentLevel] = useState(achievementsByName[0]);
@@ -45,7 +49,7 @@ export function TopNavBarMenuProgressBar() {
     <a href="/profile/achievements">
       <div className={styles.progressBarWrapper}>
         <div>
-          <GrotIcon level={level} height={30} />
+          <GrotIcon level={level} height={iconHeight} />
         </div>
         <div className={styles.progressBarRight}>
           <div className={styles.progressBarHeader}>
@@ -104,7 +108,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: '100%',
 
       span: {
-        borderRight: `1px solid ${theme.colors.text.secondary}`,
+        borderRight: `2px solid #F55F3E`,
       },
 
       'span:last-child': {
