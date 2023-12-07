@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	sm "github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -163,7 +163,7 @@ func (s *SSOSettingsService) loadSettingsUsingFallbackStrategy(ctx context.Conte
 	}
 
 	switch settingsFromSystem := settingsFromSystem.(type) {
-	case *sm.OAuthInfo:
+	case *social.OAuthInfo:
 		return &models.SSOSettings{
 			Provider:      provider,
 			Source:        models.System,

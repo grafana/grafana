@@ -29,7 +29,7 @@ const (
 )
 
 var (
-	errMissingGroupMembership = &Error{"user not a member of one of the required groups"}
+	errMissingGroupMembership = &SocialError{"user not a member of one of the required groups"}
 )
 
 type httpGetResponse struct {

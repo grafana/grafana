@@ -57,7 +57,7 @@ func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings sso
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
-		ssoSettings.RegisterReloadable(social.GitlabProviderName, provider)
+		ssoSettings.RegisterReloadable(social.GoogleProviderName, provider)
 	}
 
 	return provider

@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	sm "github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
@@ -28,7 +28,7 @@ func TestIntegrationGetSSOSettings(t *testing.T) {
 		ssoSettingsStore = ProvideStore(sqlStore)
 
 		template := models.SSOSettings{
-			OAuthSettings: &sm.OAuthInfo{
+			OAuthSettings: &social.OAuthInfo{
 				Enabled: true,
 			},
 		}
@@ -41,7 +41,7 @@ func TestIntegrationGetSSOSettings(t *testing.T) {
 
 		expected := &models.SSOSettings{
 			Provider:      "azuread",
-			OAuthSettings: &sm.OAuthInfo{Enabled: true},
+			OAuthSettings: &social.OAuthInfo{Enabled: true},
 		}
 
 		actual, err := ssoSettingsStore.Get(context.Background(), "azuread")
@@ -88,7 +88,7 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 
 		settings := models.SSOSettings{
 			Provider: "azuread",
-			OAuthSettings: &sm.OAuthInfo{
+			OAuthSettings: &social.OAuthInfo{
 				Enabled:  true,
 				ClientId: "azuread-client",
 			},
@@ -118,7 +118,7 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 
 		provider := "github"
 		template := models.SSOSettings{
-			OAuthSettings: &sm.OAuthInfo{
+			OAuthSettings: &social.OAuthInfo{
 				Enabled:      true,
 				ClientId:     "github-client",
 				ClientSecret: "this-is-a-secret",
@@ -129,7 +129,7 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 
 		newSettings := models.SSOSettings{
 			Provider: provider,
-			OAuthSettings: &sm.OAuthInfo{
+			OAuthSettings: &social.OAuthInfo{
 				Enabled:      true,
 				ClientId:     "new-github-client",
 				ClientSecret: "this-is-a-new-secret",
@@ -157,7 +157,7 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 
 		provider := "azuread"
 		template := models.SSOSettings{
-			OAuthSettings: &sm.OAuthInfo{
+			OAuthSettings: &social.OAuthInfo{
 				Enabled:      true,
 				ClientId:     "azuread-client",
 				ClientSecret: "this-is-a-secret",
@@ -169,7 +169,7 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 
 		newSettings := models.SSOSettings{
 			Provider: provider,
-			OAuthSettings: &sm.OAuthInfo{
+			OAuthSettings: &social.OAuthInfo{
 				Enabled:      true,
 				ClientId:     "new-azuread-client",
 				ClientSecret: "this-is-a-new-secret",
@@ -198,7 +198,7 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 
 		providers := []string{"github", "gitlab", "google"}
 		template := models.SSOSettings{
-			OAuthSettings: &sm.OAuthInfo{
+			OAuthSettings: &social.OAuthInfo{
 				Enabled:      true,
 				ClientId:     "my-client",
 				ClientSecret: "this-is-a-secret",
@@ -209,7 +209,7 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 
 		newSettings := models.SSOSettings{
 			Provider: providers[0],
-			OAuthSettings: &sm.OAuthInfo{
+			OAuthSettings: &social.OAuthInfo{
 				Enabled:      true,
 				ClientId:     "my-new-client",
 				ClientSecret: "this-is-my-new-secret",
@@ -244,7 +244,7 @@ func TestIntegrationListSSOSettings(t *testing.T) {
 		ssoSettingsStore = ProvideStore(sqlStore)
 
 		template := models.SSOSettings{
-			OAuthSettings: &sm.OAuthInfo{
+			OAuthSettings: &social.OAuthInfo{
 				Enabled: true,
 			},
 		}
@@ -252,7 +252,7 @@ func TestIntegrationListSSOSettings(t *testing.T) {
 		require.NoError(t, err)
 
 		template = models.SSOSettings{
-			OAuthSettings: &sm.OAuthInfo{
+			OAuthSettings: &social.OAuthInfo{
 				Enabled: false,
 			},
 		}
@@ -288,7 +288,7 @@ func TestIntegrationDeleteSSOSettings(t *testing.T) {
 
 		providers := []string{"azuread", "github", "google"}
 		template := models.SSOSettings{
-			OAuthSettings: &sm.OAuthInfo{
+			OAuthSettings: &social.OAuthInfo{
 				Enabled: true,
 			},
 		}
@@ -310,7 +310,7 @@ func TestIntegrationDeleteSSOSettings(t *testing.T) {
 		providers := []string{"github", "google", "okta"}
 		invalidProvider := "azuread"
 		template := models.SSOSettings{
-			OAuthSettings: &sm.OAuthInfo{
+			OAuthSettings: &social.OAuthInfo{
 				Enabled: true,
 			},
 		}
@@ -332,7 +332,7 @@ func TestIntegrationDeleteSSOSettings(t *testing.T) {
 
 		providers := []string{"azuread", "github", "google"}
 		template := models.SSOSettings{
-			OAuthSettings: &sm.OAuthInfo{
+			OAuthSettings: &social.OAuthInfo{
 				Enabled: true,
 			},
 			IsDeleted: true,
@@ -355,7 +355,7 @@ func TestIntegrationDeleteSSOSettings(t *testing.T) {
 
 		provider := "azuread"
 		template := models.SSOSettings{
-			OAuthSettings: &sm.OAuthInfo{
+			OAuthSettings: &social.OAuthInfo{
 				Enabled: true,
 			},
 		}

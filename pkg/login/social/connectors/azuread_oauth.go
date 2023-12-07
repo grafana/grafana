@@ -29,7 +29,7 @@ const forceUseGraphAPIKey = "force_use_graph_api" // #nosec G101 not a hardcoded
 
 var (
 	ExtraAzureADSettingKeys = []string{forceUseGraphAPIKey, allowedOrganizationsKey}
-	errAzureADMissingGroups = &Error{"either the user does not have any group membership or the groups claim is missing from the token."}
+	errAzureADMissingGroups = &SocialError{"either the user does not have any group membership or the groups claim is missing from the token."}
 )
 
 var _ social.SocialConnector = (*SocialAzureAD)(nil)
@@ -185,17 +185,17 @@ func (s *SocialAzureAD) validateClaims(ctx context.Context, client *http.Client,
 	}
 
 	if claims.OAuthVersion == "1.0" {
-		return nil, &Error{"AzureAD OAuth: version 1.0 is not supported. Please ensure the auth_url and token_url are set to the v2.0 endpoints."}
+		return nil, &SocialError{"AzureAD OAuth: version 1.0 is not supported. Please ensure the auth_url and token_url are set to the v2.0 endpoints."}
 	}
 
 	s.log.Debug("Validating audience", "audience", claims.Audience, "client_id", s.ClientID)
 	if claims.Audience != s.ClientID {
-		return nil, &Error{"AzureAD OAuth: audience mismatch"}
+		return nil, &SocialError{"AzureAD OAuth: audience mismatch"}
 	}
 
 	s.log.Debug("Validating tenant", "tenant", claims.TenantID, "allowed_tenants", s.allowedOrganizations)
 	if !s.isAllowedTenant(claims.TenantID) {
-		return nil, &Error{"AzureAD OAuth: tenant mismatch"}
+		return nil, &SocialError{"AzureAD OAuth: tenant mismatch"}
 	}
 	return claims, nil
 }
@@ -234,7 +234,7 @@ func (s *SocialAzureAD) validateIDTokenSignature(ctx context.Context, client *ht
 
 	s.log.Warn("AzureAD OAuth: signing key not found", "kid", keyID)
 
-	return nil, &Error{"AzureAD OAuth: signing key not found"}
+	return nil, &SocialError{"AzureAD OAuth: signing key not found"}
 }
 
 func (claims *azureClaims) extractEmail() string {

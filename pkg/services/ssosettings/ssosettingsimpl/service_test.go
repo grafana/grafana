@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	sm "github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	secretsFakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -32,13 +32,13 @@ func TestSSOSettingsService_GetForProvider(t *testing.T) {
 			setup: func(env testEnv) {
 				env.store.ExpectedSSOSetting = &models.SSOSettings{
 					Provider:      "github",
-					OAuthSettings: &sm.OAuthInfo{Enabled: true},
+					OAuthSettings: &social.OAuthInfo{Enabled: true},
 					Source:        models.DB,
 				}
 			},
 			want: &models.SSOSettings{
 				Provider:      "github",
-				OAuthSettings: &sm.OAuthInfo{Enabled: true},
+				OAuthSettings: &social.OAuthInfo{Enabled: true},
 			},
 			wantErr: false,
 		},
@@ -53,11 +53,11 @@ func TestSSOSettingsService_GetForProvider(t *testing.T) {
 			setup: func(env testEnv) {
 				env.store.ExpectedError = ssosettings.ErrNotFound
 				env.fallbackStrategy.ExpectedIsMatch = true
-				env.fallbackStrategy.ExpectedConfig = &sm.OAuthInfo{Enabled: true}
+				env.fallbackStrategy.ExpectedConfig = &social.OAuthInfo{Enabled: true}
 			},
 			want: &models.SSOSettings{
 				Provider:      "github",
-				OAuthSettings: &sm.OAuthInfo{Enabled: true},
+				OAuthSettings: &social.OAuthInfo{Enabled: true},
 				Source:        models.System,
 			},
 			wantErr: false,
@@ -116,90 +116,57 @@ func TestSSOSettingsService_List(t *testing.T) {
 				env.store.ExpectedSSOSettings = []*models.SSOSettings{
 					{
 						Provider:      "github",
-						OAuthSettings: &sm.OAuthInfo{Enabled: true},
+						OAuthSettings: &social.OAuthInfo{Enabled: true},
 						Source:        models.DB,
 					},
 					{
 						Provider:      "okta",
-						OAuthSettings: &sm.OAuthInfo{Enabled: false},
+						OAuthSettings: &social.OAuthInfo{Enabled: false},
 						Source:        models.DB,
 					},
 				}
 				env.fallbackStrategy.ExpectedIsMatch = true
-				env.fallbackStrategy.ExpectedConfig = &sm.OAuthInfo{Enabled: false}
+				env.fallbackStrategy.ExpectedConfig = &social.OAuthInfo{Enabled: false}
 			},
 			want: []*models.SSOSettings{
 				{
 					Provider:      "github",
-					OAuthSettings: &sm.OAuthInfo{Enabled: true},
+					OAuthSettings: &social.OAuthInfo{Enabled: true},
 					Source:        models.DB,
 				},
 				{
 					Provider:      "okta",
-					OAuthSettings: &sm.OAuthInfo{Enabled: false},
+					OAuthSettings: &social.OAuthInfo{Enabled: false},
 					Source:        models.DB,
 				},
 				{
 					Provider:      "gitlab",
-					OAuthSettings: &sm.OAuthInfo{Enabled: false},
+					OAuthSettings: &social.OAuthInfo{Enabled: false},
 					Source:        models.System,
 				},
 				{
 					Provider:      "generic_oauth",
-					OAuthSettings: &sm.OAuthInfo{Enabled: false},
+					OAuthSettings: &social.OAuthInfo{Enabled: false},
 					Source:        models.System,
 				},
 				{
 					Provider:      "google",
-					OAuthSettings: &sm.OAuthInfo{Enabled: false},
+					OAuthSettings: &social.OAuthInfo{Enabled: false},
 					Source:        models.System,
 				},
 				{
 					Provider:      "azuread",
-					OAuthSettings: &sm.OAuthInfo{Enabled: false},
+					OAuthSettings: &social.OAuthInfo{Enabled: false},
 					Source:        models.System,
 				},
 				{
 					Provider:      "grafana_com",
-					OAuthSettings: &sm.OAuthInfo{Enabled: false},
+					OAuthSettings: &social.OAuthInfo{Enabled: false},
 					Source:        models.System,
 				},
 			},
 			wantErr: false,
 		},
-		// {
-		// 	name: "should return the settings that the user has access to",
-		// 	setup: func(env testEnv) {
-		// 		env.store.ExpectedSSOSettings = []*models.SSOSettings{
-		// 			{
-		// 				Provider:      "github",
-		// 				OAuthSettings: &sm.OAuthInfo{Enabled: true},
-		// 				Source:        models.DB,
-		// 			},
-		// 			{
-		// 				Provider:      "okta",
-		// 				OAuthSettings: &sm.OAuthInfo{Enabled: true},
-		// 				Source:        models.DB,
-		// 			},
-		// 		}
-		// 		env.fallbackStrategy.ExpectedIsMatch = true
-		// 		env.fallbackStrategy.ExpectedConfig = &sm.OAuthInfo{Enabled: false}
-		// 	},
-		// 	identity: scopedIdentity,
-		// 	want: []*models.SSOSettings{
-		// 		{
-		// 			Provider:      "github",
-		// 			OAuthSettings: &sm.OAuthInfo{Enabled: true},
-		// 			Source:        models.DB,
-		// 		},
-		// 		{
-		// 			Provider:      "azuread",
-		// 			OAuthSettings: &sm.OAuthInfo{Enabled: false},
-		// 			Source:        models.System,
-		// 		},
-		// 	},
-		// 	wantErr: false,
-		// },
 		{
 			name:    "should return error if store returns an error",
 			setup:   func(env testEnv) { env.store.ExpectedError = fmt.Errorf("error") },
@@ -211,42 +178,42 @@ func TestSSOSettingsService_List(t *testing.T) {
 			setup: func(env testEnv) {
 				env.store.ExpectedSSOSettings = []*models.SSOSettings{}
 				env.fallbackStrategy.ExpectedIsMatch = true
-				env.fallbackStrategy.ExpectedConfig = &sm.OAuthInfo{Enabled: false}
+				env.fallbackStrategy.ExpectedConfig = &social.OAuthInfo{Enabled: false}
 			},
 			want: []*models.SSOSettings{
 				{
 					Provider:      "github",
-					OAuthSettings: &sm.OAuthInfo{Enabled: false},
+					OAuthSettings: &social.OAuthInfo{Enabled: false},
 					Source:        models.System,
 				},
 				{
 					Provider:      "okta",
-					OAuthSettings: &sm.OAuthInfo{Enabled: false},
+					OAuthSettings: &social.OAuthInfo{Enabled: false},
 					Source:        models.System,
 				},
 				{
 					Provider:      "gitlab",
-					OAuthSettings: &sm.OAuthInfo{Enabled: false},
+					OAuthSettings: &social.OAuthInfo{Enabled: false},
 					Source:        models.System,
 				},
 				{
 					Provider:      "generic_oauth",
-					OAuthSettings: &sm.OAuthInfo{Enabled: false},
+					OAuthSettings: &social.OAuthInfo{Enabled: false},
 					Source:        models.System,
 				},
 				{
 					Provider:      "google",
-					OAuthSettings: &sm.OAuthInfo{Enabled: false},
+					OAuthSettings: &social.OAuthInfo{Enabled: false},
 					Source:        models.System,
 				},
 				{
 					Provider:      "azuread",
-					OAuthSettings: &sm.OAuthInfo{Enabled: false},
+					OAuthSettings: &social.OAuthInfo{Enabled: false},
 					Source:        models.System,
 				},
 				{
 					Provider:      "grafana_com",
-					OAuthSettings: &sm.OAuthInfo{Enabled: false},
+					OAuthSettings: &social.OAuthInfo{Enabled: false},
 					Source:        models.System,
 				},
 			},
@@ -288,7 +255,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 
 		settings := models.SSOSettings{
 			Provider: "azuread",
-			OAuthSettings: &sm.OAuthInfo{
+			OAuthSettings: &social.OAuthInfo{
 				ClientId:     "client-id",
 				ClientSecret: "client-secret",
 				Enabled:      true,
@@ -307,7 +274,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 
 		settings := models.SSOSettings{
 			Provider: "azuread",
-			OAuthSettings: &sm.OAuthInfo{
+			OAuthSettings: &social.OAuthInfo{
 				ClientId:     "client-id",
 				ClientSecret: "client-secret",
 				Enabled:      true,
@@ -326,7 +293,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 
 		settings := models.SSOSettings{
 			Provider: "azuread",
-			OAuthSettings: &sm.OAuthInfo{
+			OAuthSettings: &social.OAuthInfo{
 				ClientId:     "client-id",
 				ClientSecret: "client-secret",
 				Enabled:      true,
