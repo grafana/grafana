@@ -56,7 +56,7 @@ export const LogRowMenu = React.memo(
       <div className={styles.detailsMenu} onClick={onLogRowClick}>
         {shouldShowContextToggle && (
           <IconButton
-            size="lg"
+            size="md"
             variant="secondary"
             name="gf-show-context"
             onClick={onShowContextClick}
@@ -70,7 +70,7 @@ export const LogRowMenu = React.memo(
           icon="copy"
           variant="secondary"
           fill="text"
-          size="lg"
+          size="md"
           getText={getLogText}
           tooltip="Copy to clipboard"
           tooltipPlacement="top"
@@ -82,7 +82,7 @@ export const LogRowMenu = React.memo(
             variant="secondary"
             aria-label="Copy shortlink"
             tooltipPlacement="top"
-            size="lg"
+            size="md"
             name="share-alt"
             onClick={() => onPermalinkClick(row)}
             className={styles.detailsMenuIcon}

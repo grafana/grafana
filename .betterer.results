@@ -4246,7 +4246,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "2"],
       [0, 0, 0, "Styles should be written using objects.", "3"],
       [0, 0, 0, "Styles should be written using objects.", "4"],
-      [0, 0, 0, "Styles should be written using objects.", "5"]
+      [0, 0, 0, "Styles should be written using objects.", "5"],
+      [0, 0, 0, "Styles should be written using objects.", "6"],
+      [0, 0, 0, "Styles should be written using objects.", "7"]
     ],
     "public/app/features/logsApp/Logs/utils/LogsCrossFadeTransition.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],

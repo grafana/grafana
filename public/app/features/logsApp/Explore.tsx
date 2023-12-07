@@ -75,7 +75,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'exploreMain',
       // Is needed for some transition animations to work.
       position: 'relative',
-      marginTop: '21px',
+      marginTop: '16px',
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
@@ -84,7 +84,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'queryContainer',
       border: 'none',
       backgroundColor: 'transparent',
-      padding: theme.spacing(0.5),
+      padding: theme.spacing(0.5, 0),
     }),
     exploreContainer: css({
       label: 'exploreContainer',
@@ -103,7 +103,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       right: 0,
       bottom: 0,
       display: 'flex',
-      paddingTop: theme.spacing(3),
+      paddingTop: theme.spacing(2),
     }),
   };
 };

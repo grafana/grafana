@@ -45,14 +45,18 @@ export const ExplainLogLine = ({ logLine }: Props) => {
 
   return (
     <>
-      <Button style={{ margin: '4px 0' }} size="sm" variant="secondary" onClick={() => setShouldRun(!shouldRun)}>
-        Help me understand this message
+      <Button
+        style={{ margin: '4px 0' }}
+        size="sm"
+        variant="secondary"
+        onClick={() => setShouldRun(!shouldRun)}
+        icon="ai"
+      >
+        Help me understand this log line
         <Icon name={`${shouldRun ? 'angle-up' : 'angle-down'}`} />
       </Button>
       {shouldRun && (
-        <OperationExplainedBox title="Log line summary">
-          {llmReply === '' ? <Spinner /> : <pre>{llmReply}</pre>}
-        </OperationExplainedBox>
+        <OperationExplainedBox>{llmReply === '' ? <Spinner /> : <pre>{llmReply}</pre>}</OperationExplainedBox>
       )}
     </>
   );

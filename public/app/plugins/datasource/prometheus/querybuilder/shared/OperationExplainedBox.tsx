@@ -36,12 +36,12 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     box: css({
       background: theme.colors.background.secondary,
-      padding: theme.spacing(1),
+      padding: theme.spacing(1, 0.5, 1, 0),
       borderRadius: theme.shape.radius.default,
       position: 'relative',
     }),
     boxInner: css({
-      marginLeft: theme.spacing(4),
+      marginLeft: -theme.spacing(1),
     }),
     stepNumber: css({
       fontWeight: theme.typography.fontWeightMedium,
@@ -62,6 +62,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       fontFamily: theme.typography.fontFamilyMonospace,
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
     }),
     body: css({
       color: theme.colors.text.secondary,

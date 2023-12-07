@@ -49,6 +49,7 @@ import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 import { changePanelState } from '../state/explorePane';
 
 import { LogDetails } from './LogDetails';
+import { LogResolutionPicker } from './LogResolutionPicker';
 import { LogStats } from './LogStats';
 import { LogsOptions } from './LogsOptions';
 import { LogsOrder } from './LogsOrder';
@@ -128,8 +129,8 @@ interface State {
   paneSize: number;
   sidebarVisible: boolean;
   highlightSearchwords: boolean;
-  hiddenRows: LogRowModel[];
   similaritySetting?: { row: LogRowModel; type: 'show' | 'hide' };
+  resolution: number;
 }
 
 const DETAILS_SIZE = 410;
@@ -171,8 +172,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
     paneSize: localStorage.getItem('logs.sidebar') === 'true' ? getLastSize() : window.innerWidth - WINDOW_MARGINS,
     sidebarVisible: localStorage.getItem('logs.sidebar') === 'true' ? true : false,
     highlightSearchwords: true,
-    hiddenRows: [],
     similaritySetting: undefined,
+    resolution: 0,
   };
 
   constructor(props: Props) {
@@ -617,6 +618,12 @@ class UnthemedLogs extends PureComponent<Props, State> {
     this.setState({ similaritySetting: { row, type } });
   };
 
+  handleResolutionChange = (resolution: number) => {
+    this.setState({
+      resolution,
+    });
+  }
+
   render() {
     const {
       width,
@@ -661,7 +668,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
       contextOpen,
       contextRow,
       highlightSearchwords,
-      hiddenRows,
     } = this.state;
 
     const tableHeight = getLogsTableHeight();
@@ -732,12 +738,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
             )
           }
         </PanelChrome>
-        <PanelChrome
-          title={`Logs${
-            this.state.hiddenLogLevels.length > 0 ? ` (filtered based on selected ${this.state.groupByLabel})` : ''
-          }`}
-          loadingState={loading ? LoadingState.Loading : LoadingState.Done}
-        >
+        <PanelChrome hoverHeader={true} loadingState={loading ? LoadingState.Loading : LoadingState.Done}>
           <div className={styles.stickyNavigation}>
             <div className={styles.logsOptions}>
               <div>
@@ -887,6 +888,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                         highlightSearchwords={highlightSearchwords}
                         noMenu
                         similaritySetting={this.state.similaritySetting}
+                        resolution={this.state.resolution}
                       />
                     </InfiniteScroll>
                   </div>
@@ -937,7 +939,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     onSimilarityChange={this.onLogsSimilarityChange}
                   />
                 ) : (
-                  <LogStats styles={logRowStyles} rows={logRows} />
+                  <>
+                    <LogResolutionPicker rows={logRows?.length || 0} onResolutionChange={this.handleResolutionChange} />
+                    <LogStats styles={logRowStyles} rows={logRows} />
+                  </>
                 )}
               </div>
             </SplitPaneWrapper>
@@ -1021,7 +1026,9 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
       overflowY: 'visible',
       width: '100%',
     }),
-    visualisationType: css({}),
+    visualisationType: css({
+      marginRight: theme.spacing(1),
+    }),
     visualisationTypeRadio: css({
       margin: `0 0 0 ${theme.spacing(1)}`,
     }),

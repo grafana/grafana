@@ -22,35 +22,37 @@ export function QueryOptionGroup({ title, children, collapsedInfo, queryStats }:
     <div className={styles.wrapper}>
       {title && (
         <Collapse
-        className={styles.collapse}
-        collapsible
-        isOpen={isOpen}
-        onToggle={toggleOpen}
-        label={
-          <Stack gap={0}>
-            <h6 className={styles.title}>{title}</h6>
-            {!isOpen && (
-              <div className={styles.description}>
-                {collapsedInfo.map((x, i) => (
-                  <span key={i}>{x}</span>
-                ))}
-              </div>
-            )}
-          </Stack>
-        }
-      >
-        <div className={styles.body}>{children}</div>
-      </Collapse>
+          className={styles.collapse}
+          collapsible
+          isOpen={isOpen}
+          onToggle={toggleOpen}
+          label={
+            <Stack gap={0}>
+              <h6 className={styles.title}>{title}</h6>
+              {!isOpen && (
+                <div className={styles.description}>
+                  {collapsedInfo.map((x, i) => (
+                    <span key={i}>{x}</span>
+                  ))}
+                </div>
+              )}
+            </Stack>
+          }
+        >
+          <div className={styles.body}>{children}</div>
+        </Collapse>
       )}
 
-      {queryStats && <p className={styles.stats}>
-        {config.featureToggles.lokiQuerySplitting && (
-          <Tooltip content="Note: the query will be split into multiple parts and executed in sequence. Query limits will only apply each individual part.">
-            <Icon tabIndex={0} name="info-circle" className={styles.tooltip} size="sm" />
-          </Tooltip>
-        )}
-        {generateQueryStats(queryStats)}
-      </p>}
+      {queryStats && (
+        <p className={styles.stats}>
+          {config.featureToggles.lokiQuerySplitting && (
+            <Tooltip content="Note: the query will be split into multiple parts and executed in sequence. Query limits will only apply each individual part.">
+              <Icon tabIndex={0} name="info-circle" className={styles.tooltip} size="sm" />
+            </Tooltip>
+          )}
+          {generateQueryStats(queryStats)}
+        </p>
+      )}
     </div>
   );
 }
@@ -100,6 +102,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     tooltip: css({
       marginRight: theme.spacing(0.25),
+      marginBottom: theme.spacing(0.25),
     }),
   };
 };
