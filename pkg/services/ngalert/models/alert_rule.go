@@ -316,13 +316,20 @@ func (alertRule *AlertRule) GetEvalCondition() Condition {
 // Diff calculates diff between two alert rules. Returns nil if two rules are equal. Otherwise, returns cmputil.DiffReport
 func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) cmputil.DiffReport {
 	var reporter cmputil.DiffReporter
-	ops := make([]cmp.Option, 0, 5)
+	ops := make([]cmp.Option, 0, 6)
 
 	// json.RawMessage is a slice of bytes and therefore cmp's default behavior is to compare it by byte, which is not really useful
 	var jsonCmp = cmp.Transformer("", func(in json.RawMessage) string {
 		return string(in)
 	})
-	ops = append(ops, cmp.Reporter(&reporter), cmpopts.IgnoreFields(AlertQuery{}, "modelProps"), jsonCmp, cmpopts.EquateEmpty())
+	ops = append(
+		ops,
+		cmp.Reporter(&reporter),
+		cmpopts.IgnoreFields(AlertQuery{}, "modelProps"),
+		cmpopts.IgnoreFields(NotificationSettings{}, "hash"),
+		jsonCmp,
+		cmpopts.EquateEmpty(),
+	)
 
 	if len(ignore) > 0 {
 		ops = append(ops, cmpopts.IgnoreFields(AlertRule{}, ignore...))

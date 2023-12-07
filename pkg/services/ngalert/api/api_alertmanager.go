@@ -124,7 +124,7 @@ func (srv AlertmanagerSrv) RouteDeleteSilence(c *contextmodel.ReqContext, silenc
 }
 
 func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *contextmodel.ReqContext) response.Response {
-	config, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.SignedInUser.GetOrgID())
+	config, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.SignedInUser.GetOrgID(), true)
 	if err != nil {
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -264,7 +264,7 @@ func (srv AlertmanagerSrv) RoutePostGrafanaAlertingConfigHistoryActivate(c *cont
 }
 
 func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *contextmodel.ReqContext, body apimodels.PostableUserConfig) response.Response {
-	currentConfig, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.SignedInUser.GetOrgID())
+	currentConfig, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.SignedInUser.GetOrgID(), false)
 	// If a config is present and valid we proceed with the guard, otherwise we
 	// just bypass the guard which is okay as we are anyway in an invalid state.
 	if err == nil {
