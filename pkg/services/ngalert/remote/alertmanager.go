@@ -152,6 +152,8 @@ func (am *Alertmanager) checkReadiness(ctx context.Context) error {
 	}
 
 	if ready {
+		am.log.Debug("Alertmanager readiness check successful")
+		am.ready = true
 		return nil
 	}
 
