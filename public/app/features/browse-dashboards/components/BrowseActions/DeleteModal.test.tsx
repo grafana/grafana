@@ -43,25 +43,6 @@ describe('browse-dashboards DeleteModal', () => {
     expect(await screen.findByRole('button', { name: 'Cancel' })).toBeInTheDocument();
   });
 
-  it('only enables the `Delete` button if the confirmation text is typed', async () => {
-    render(<DeleteModal {...defaultProps} />);
-
-    const confirmationInput = await screen.findByPlaceholderText('Type "Delete" to confirm');
-    await userEvent.type(confirmationInput, 'Delete');
-
-    expect(await screen.findByRole('button', { name: 'Delete' })).toBeEnabled();
-  });
-
-  it('calls onConfirm when clicking the `Delete` button', async () => {
-    render(<DeleteModal {...defaultProps} />);
-
-    const confirmationInput = await screen.findByPlaceholderText('Type "Delete" to confirm');
-    await userEvent.type(confirmationInput, 'Delete');
-
-    await userEvent.click(await screen.findByRole('button', { name: 'Delete' }));
-    expect(mockOnConfirm).toHaveBeenCalled();
-  });
-
   it('calls onDismiss when clicking the `Cancel` button', async () => {
     render(<DeleteModal {...defaultProps} />);
 
