@@ -32,7 +32,7 @@ const TutorialProviderComponent = ({ currentTutorialId, ...props }: ConnectedPro
   if (currentTutorialId) {
     return (
       <>
-        <TutorialOverlay />
+        <TutorialOverlay modalOpen={showExitTutorialModal} />
         <ConfirmModal
           confirmText="Stop tutorial"
           onDismiss={() => {

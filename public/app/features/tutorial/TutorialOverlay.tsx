@@ -12,16 +12,24 @@ import { nextStep } from './slice';
 import { resolveRequiredActions, waitForElement } from './tutorialProvider.utils';
 
 const spotlightOffset = 0;
+const STARTING_ZINDEX = 1061;
+const MODAL_OPEN_ZINDEX = 1000;
+
+type TutorialOverlayProps = ConnectedProps<typeof connector> & {
+  modalOpen: boolean;
+};
 
 const TutorialOverlayComponent = ({
+  modalOpen,
   availableTutorials,
   currentTutorialId,
   currentStepIndex,
   stepTransition,
-}: ConnectedProps<typeof connector>) => {
+}: TutorialOverlayProps) => {
   const dispatch = useDispatch();
+  const [dynamicZIndex, setDynamicZIndex] = useState(STARTING_ZINDEX);
   const [showTooltip, setShowTooltip] = useState(false);
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2((theme) => getStyles(theme, dynamicZIndex));
   const [spotlightStyles, setSpotlightStyles] = useState({});
   const [canInteract, setCanInteract] = useState(false);
   const previousLocationCoords = useRef(``);
@@ -35,6 +43,16 @@ const TutorialOverlayComponent = ({
     defaultVisible: false,
   });
   const { getTooltipProps, setTooltipRef, setTriggerRef, triggerRef } = popper;
+
+  useEffect(() => {
+    const resetZIndex = dynamicZIndex;
+    setDynamicZIndex(modalOpen ? MODAL_OPEN_ZINDEX : resetZIndex);
+
+    return () => {
+      setDynamicZIndex(resetZIndex);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modalOpen]);
 
   useEffect(() => {
     if (previousLocationCoords.current && !isTransitioning && currentTutorial) {
@@ -146,16 +164,14 @@ function isMouseOverSpotlight(mouseEvent: MouseEvent, spotlightElement: HTMLElem
   return inSpotlight;
 }
 
-const ZIndex = 1061;
-
 // TODO: LEFT / TOP TRANSITION BUT NOT WHEN SCROLLING
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, zIndex: number) => ({
   container: css({
     height: '100%',
     width: '100%',
     position: 'absolute',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    zIndex: ZIndex,
+    zIndex: zIndex,
     mixBlendMode: 'hard-light',
   }),
   spotlight: css({
@@ -170,7 +186,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: `flex`,
     flexDirection: `column`,
     gap: theme.spacing(2),
-    zIndex: ZIndex + 1,
+    zIndex: zIndex + 1,
     width: `300px`,
     backgroundColor: theme.colors.background.primary,
     padding: theme.spacing(2),
