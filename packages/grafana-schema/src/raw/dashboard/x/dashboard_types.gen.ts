@@ -143,6 +143,10 @@ export interface VariableModel {
    */
   hide?: VariableHide;
   /**
+   * Option to include all variables
+   */
+  includeAll?: boolean;
+  /**
    * Optional display name
    */
   label?: string;
@@ -164,6 +168,11 @@ export interface VariableModel {
   query?: (string | Record<string, unknown>);
   refresh?: VariableRefresh;
   /**
+   * Optional field, if you want to extract part of a series name or metric node segment.
+   * Named capture groups can be used to separate the display text and value.
+   */
+  regex?: string;
+  /**
    * Whether the variable value should be managed by URL query params or not
    */
   skipUrlSync?: boolean;
@@ -178,6 +187,7 @@ export interface VariableModel {
 }
 
 export const defaultVariableModel: Partial<VariableModel> = {
+  includeAll: false,
   multi: false,
   options: [],
   skipUrlSync: false,

@@ -897,6 +897,9 @@ type VariableModel struct {
 	// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing).
 	Hide *VariableHide `json:"hide,omitempty"`
 
+	// Option to include all variables
+	IncludeAll *bool `json:"includeAll,omitempty"`
+
 	// Optional display name
 	Label *string `json:"label,omitempty"`
 
@@ -917,6 +920,10 @@ type VariableModel struct {
 	// `1`: Queries the data source every time the dashboard loads.
 	// `2`: Queries the data source when the dashboard time range changes.
 	Refresh *VariableRefresh `json:"refresh,omitempty"`
+
+	// Optional field, if you want to extract part of a series name or metric node segment.
+	// Named capture groups can be used to separate the display text and value.
+	Regex *string `json:"regex,omitempty"`
 
 	// Whether the variable value should be managed by URL query params or not
 	SkipUrlSync *bool `json:"skipUrlSync,omitempty"`

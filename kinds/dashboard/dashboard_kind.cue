@@ -202,6 +202,11 @@ lineage: schemas: [{
 			refresh?: #VariableRefresh
 			// Options sort order
 			sort?: #VariableSort
+			// Option to include all variables
+			includeAll?: bool | *false
+			// Optional field, if you want to extract part of a series name or metric node segment.
+			// Named capture groups can be used to separate the display text and value.
+			regex?: string
 			...
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
