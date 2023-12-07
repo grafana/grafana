@@ -373,6 +373,7 @@
     "re-resizable": "6.9.9",
     "react": "18.2.0",
     "react-beautiful-dnd": "13.1.1",
+    "react-confetti": "^6.1.0",
     "react-diff-viewer": "^3.1.1",
     "react-dom": "18.2.0",
     "react-draggable": "4.4.5",

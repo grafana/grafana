@@ -12,8 +12,8 @@ export const achievementLevelThresholds = {
 export const achievements = [
   {
     id: AchievementId.NavigateToDashboard,
-    title: 'Navigate to the dashboard page',
-    description: 'Explore Grafana by navigating to a dashboard page',
+    title: 'Navigate to the dashboards page',
+    description: 'Explore Grafana by navigating to the Dashboards page',
     level: AchievementLevel.Novice,
     link: 'https://grafana.com/docs/grafana/latest/dashboards/use-dashboards/',
     video: '',

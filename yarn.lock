@@ -17828,6 +17828,7 @@ __metadata:
     re-resizable: "npm:6.9.9"
     react: "npm:18.2.0"
     react-beautiful-dnd: "npm:13.1.1"
+    react-confetti: "npm:^6.1.0"
     react-diff-viewer: "npm:^3.1.1"
     react-dom: "npm:18.2.0"
     react-draggable: "npm:4.4.5"
@@ -25627,6 +25628,17 @@ __metadata:
     react-css-styled: "npm:^1.0.4"
     react-moveable: "npm:~0.46.1"
   checksum: 84d0de349bae5c2806432d0417bec71b13a5d012b4ddebf2a79fff0bd68f1c9cf575acedabc4eeb4b6360b89ced174d16d612cf25d758275240fe57fecd19bd9
+  languageName: node
+  linkType: hard
+
+"react-confetti@npm:^6.1.0":
+  version: 6.1.0
+  resolution: "react-confetti@npm:6.1.0"
+  dependencies:
+    tween-functions: "npm:^1.2.0"
+  peerDependencies:
+    react: ^16.3.0 || ^17.0.1 || ^18.0.0
+  checksum: 33423767c42362b29e0c8fd09f60bcf40d64aeb721fd63564f85c61357706a6080563ec40f33435d210d5b5b1af7277aef4545deccf771d08785a3cb19749470
   languageName: node
   linkType: hard
 

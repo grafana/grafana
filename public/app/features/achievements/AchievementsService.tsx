@@ -12,6 +12,7 @@ import { api } from '../profile/api';
 
 import { AchievementNotification } from './AchievementNotification';
 import { achievementLevelThresholds, achievements } from './Achievements';
+import { LevelUpNotification } from './LevelUpNotification';
 import { Achievement, AchievementId, AchievementLevel } from './types';
 
 // function to use across Grafana to register an achievement as completed
@@ -49,20 +50,29 @@ export const registerAchievementCompleted = async (achievementId: AchievementId)
   // notify user of achievement completion / level up!
   // TODO: always show achievement completed, after delay show level up if applicable
   if (isLevelUp) {
-    console.log('level up! new level: ', user.level);
-    appEvents.emit(AppEvents.alertSuccess, ['Level up!', `You are now a level ${user.level} Grafana user!`]);
-  } else {
-    console.log('achievement completed!', achievementId);
-    toast((t) => <AchievementNotification title={achievementTitle ?? ''} level={user.level ?? 0} />, {
-      style: {
-        borderRadius: '64px',
-        background: isDarkTheme ? '#333' : '#fff',
-        color: isDarkTheme ? '#fff' : '#333',
-        border: '2px solid #FF9900',
-      },
-      duration: 5000,
-    });
+    setTimeout(() => {
+      toast((t) => <LevelUpNotification title={achievementTitle ?? ''} level={user.level ?? 0} toaster={t} />, {
+        style: {
+          borderRadius: '64px',
+          background: isDarkTheme ? '#333' : '#fff',
+          color: isDarkTheme ? '#fff' : '#333',
+          border: '1px solid #FF9900',
+        },
+        duration: 30000,
+        position: 'top-center',
+      });
+    }, 5000);
   }
+
+  toast((t) => <AchievementNotification title={achievementTitle ?? ''} level={user.level ?? 0} />, {
+    style: {
+      borderRadius: '64px',
+      background: isDarkTheme ? '#333' : '#fff',
+      color: isDarkTheme ? '#fff' : '#333',
+      border: '2px solid #FF9900',
+    },
+    duration: 5000,
+  });
 };
 
 const checkIfLevelUp = (user: UserDTO): boolean => {
