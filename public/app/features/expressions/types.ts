@@ -64,7 +64,7 @@ export const expressionTypes: Array<SelectableValue<ExpressionQueryType>> = [
   },
   {
     value: ExpressionQueryType.prql,
-    label: 'PRQL',
+    label: 'PRQL / SQL',
     description: 'PRQL is a modern language for transforming data',
   },
 ];
