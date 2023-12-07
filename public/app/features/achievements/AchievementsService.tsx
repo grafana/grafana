@@ -54,11 +54,11 @@ export const registerAchievementCompleted = async (achievementId: AchievementId)
   } else {
     console.log('achievement completed!', achievementId);
     toast((t) => <AchievementNotification title={achievementTitle ?? ''} level={user.level ?? 0} />, {
-      icon: '🎉',
       style: {
-        borderRadius: '25px',
+        borderRadius: '64px',
         background: isDarkTheme ? '#333' : '#fff',
         color: isDarkTheme ? '#fff' : '#333',
+        border: '2px solid #FF9900',
       },
       duration: 5000,
     });

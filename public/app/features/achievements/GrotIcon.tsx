@@ -16,10 +16,11 @@ interface GrotLevelProps {
   level: AchievementLevel;
   height?: number;
   width?: number;
+  animation?: string;
 }
 
-export const GrotIcon = ({ level, height, width }: GrotLevelProps) => {
-  const styles = useStyles2(getStyles);
+export const GrotIcon = ({ level, height, width, animation }: GrotLevelProps) => {
+  const styles = useStyles2(getStyles, animation);
   const grotIcon = () => {
     switch (level) {
       case 0:
@@ -42,10 +43,11 @@ export const GrotIcon = ({ level, height, width }: GrotLevelProps) => {
   return <img className={styles.image} src={grotIcon()} alt={'grot icon'} height={height} width={width} />;
 };
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, animation?: string) => {
   return {
     image: css({
       paddingRight: '5px',
+      animation: animation ? `${animation} 1s ease infinite` : 'none',
     }),
   };
 };
