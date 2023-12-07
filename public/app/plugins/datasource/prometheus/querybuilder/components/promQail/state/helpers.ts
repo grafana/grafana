@@ -353,13 +353,15 @@ export async function promQailSuggest(
       prompt?: string;
     };
 
-    const allLabels = await datasource.languageProvider.fetchSeriesLabels(query.metric);
+    // get all available labels
+    const metricLabels = await datasource.languageProvider.fetchSeriesLabelsMatch(query.metric);
 
     let feedTheAI: SuggestionBody = {
       metric: query.metric,
-      // get all available labels
-      // labels: promQueryModeller.renderLabels(query.labels),
-      labels: Object.keys(allLabels).join(', '),
+      // drop __name__ label because it's not useful
+      labels: Object.keys(metricLabels)
+        .filter((label) => label !== '__name__')
+        .join(','),
     };
 
     // @ts-ignore llms types issue
