@@ -245,7 +245,6 @@ const getStyles = () => ({
   graph: css({
     label: 'graph',
     overflow: 'auto',
-    height: '100%',
     flexGrow: 1,
     flexBasis: '50%',
   }),

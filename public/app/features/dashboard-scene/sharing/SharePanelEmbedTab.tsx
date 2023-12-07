@@ -4,7 +4,7 @@ import { TimeRange } from '@grafana/data';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import { ShareEmbed } from 'app/features/dashboard/components/ShareModal/ShareEmbed';
-import { buildParams } from 'app/features/dashboard/components/ShareModal/utils';
+import { buildParams, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { getDashboardUrl } from '../utils/urlBuilders';
@@ -18,7 +18,7 @@ export interface SharePanelEmbedTabState extends SceneShareTabState {
 }
 
 export class SharePanelEmbedTab extends SceneObjectBase<SharePanelEmbedTabState> {
-  public tabId = 'Embed';
+  public tabId = shareDashboardType.embed;
   static Component = SharePanelEmbedTabRenderer;
 
   public constructor(state: SharePanelEmbedTabState) {
