@@ -114,20 +114,29 @@ function getUnloadEvaluatorTypeFromEvaluatorType(type: EvalFunction) {
 }
 
 export function isInvalid(condition: ClassicCondition) {
+  // first check if the unload evaluator values are not empty
   const { unloadEvaluator, evaluator } = condition;
-
-  if (unloadEvaluator?.params[0] === undefined) {
-    return { errorMsg: 'This value cannot be empty' };
-  }
-
   if (!evaluator) {
     return;
   }
+  if (unloadEvaluator?.params[0] === undefined || Number.isNaN(unloadEvaluator?.params[0])) {
+    return { errorMsg: 'This value cannot be empty' };
+  }
 
+  const { type, params: loadParams } = evaluator;
+  const { params: unloadParams } = unloadEvaluator;
+
+  if (type === EvalFunction.IsWithinRange || type === EvalFunction.IsOutsideRange) {
+    if (unloadParams[0] === undefined || Number.isNaN(unloadParams[0])) {
+      return { errorMsgFrom: 'This value cannot be empty' };
+    }
+    if (unloadParams[1] === undefined || Number.isNaN(unloadParams[1])) {
+      return { errorMsgTo: 'This value cannot be empty' };
+    }
+  }
+  // check if the unload evaluator values are valid for the current load evaluator values
   const [firstParamInUnloadEvaluator, secondParamInUnloadEvaluator] = unloadEvaluator.params;
-
-  const { type, params } = evaluator;
-  const [firstParamInEvaluator, secondParamInEvaluator] = params;
+  const [firstParamInEvaluator, secondParamInEvaluator] = loadParams;
 
   switch (type) {
     case EvalFunction.IsAbove:

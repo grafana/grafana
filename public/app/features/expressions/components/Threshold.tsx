@@ -133,16 +133,32 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError }: Prop
 
     const onHysteresisCheckChange = (event: FormEvent<HTMLInputElement>) => {
       dispatch(updateHysteresisChecked({ hysteresisChecked: event.currentTarget.checked, onError }));
+      allowOnblurFromUnload.current = true;
     };
+    const allowOnblurFromUnload = React.useRef(true);
+    const onHysteresisCheckDown: React.MouseEventHandler<HTMLDivElement> | undefined = () => {
+      allowOnblurFromUnload.current = false;
+    };
+
     return (
       <div className={styles.hysteresis}>
-        <InlineSwitch
-          showLabel={true}
-          label="Custom recovery threshold"
-          value={hasHysteresis}
-          onChange={onHysteresisCheckChange}
-          className={styles.switch}
-        />
+        {/* This is to enhance the user experience for mouse users. 
+        The onBlur event in RecoveryThresholdRow inputs triggers validations, 
+        but we want to skip them when the switch is clicked as this click should inmount this component. 
+        To achieve this, we use the onMouseDown event to set a flag, which is later utilized in the onBlur event to bypass validations. 
+        The onMouseDown event precedes the onBlur event, unlike onchange. */}
+
+        {/*Disabling the a11y rules here as the InlineSwitch handles keyboard interactions */}
+        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+        <div onMouseDown={onHysteresisCheckDown}>
+          <InlineSwitch
+            showLabel={true}
+            label="Custom recovery threshold"
+            value={hasHysteresis}
+            onChange={onHysteresisCheckChange}
+            className={styles.switch}
+          />
+        </div>
 
         {hasHysteresis && (
           <RecoveryThresholdRow
@@ -151,6 +167,7 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError }: Prop
             labelWidth={labelWidth}
             onError={onError}
             dispatch={dispatch}
+            allowOnblur={allowOnblurFromUnload}
           />
         )}
       </div>
@@ -164,9 +181,17 @@ interface RecoveryThresholdRowProps {
   labelWidth: number | 'auto';
   onError?: (error: string | undefined) => void;
   dispatch: React.Dispatch<AnyAction>;
+  allowOnblur: React.MutableRefObject<boolean>;
 }
 
-function RecoveryThresholdRow({ isRange, condition, labelWidth, onError, dispatch }: RecoveryThresholdRowProps) {
+function RecoveryThresholdRow({
+  isRange,
+  condition,
+  labelWidth,
+  onError,
+  dispatch,
+  allowOnblur,
+}: RecoveryThresholdRowProps) {
   const styles = useStyles2(getStyles);
 
   const onUnloadValueChange = (event: FormEvent<HTMLInputElement>, paramIndex: number) => {
@@ -180,12 +205,19 @@ function RecoveryThresholdRow({ isRange, condition, labelWidth, onError, dispatc
   const { errorMsg: invalidErrorMsg, errorMsgFrom, errorMsgTo } = error ?? {};
 
   if (isRange) {
-    return <RecoveryForRange />;
+    return <RecoveryForRange allowOnblur={allowOnblur} />;
   } else {
-    return <RecoveryForSingleValue />;
+    return <RecoveryForSingleValue allowOnblur={allowOnblur} />;
   }
 
-  function RecoveryForRange() {
+  /* We prioritize the onMouseDown event over the onBlur event. This is because the onBlur event is executed before the onChange event that we have 
+   in the hysteresis checkbox, and because of that, we were validating when unchecking the switch.
+  We need to uncheck the switch before the onBlur event is executed.*/
+  interface RecoveryProps {
+    allowOnblur: React.MutableRefObject<boolean>;
+  }
+
+  function RecoveryForRange({ allowOnblur }: RecoveryProps) {
     if (condition.evaluator.type === EvalFunction.IsWithinRange) {
       return (
         <InlineFieldRow className={styles.hysteresis}>
@@ -196,7 +228,7 @@ function RecoveryThresholdRow({ isRange, condition, labelWidth, onError, dispatc
                   <Input
                     type="number"
                     width={10}
-                    onBlur={(event) => onUnloadValueChange(event, 0)}
+                    onBlur={(event) => allowOnblur.current && onUnloadValueChange(event, 0)}
                     defaultValue={condition.unloadEvaluator?.params[0]}
                   />
                 </InlineField>
@@ -207,7 +239,7 @@ function RecoveryThresholdRow({ isRange, condition, labelWidth, onError, dispatc
                   <Input
                     type="number"
                     width={10}
-                    onBlur={(event) => onUnloadValueChange(event, 1)}
+                    onBlur={(event) => allowOnblur.current && onUnloadValueChange(event, 1)}
                     defaultValue={condition.unloadEvaluator?.params[1]}
                   />
                 </InlineField>
@@ -226,7 +258,7 @@ function RecoveryThresholdRow({ isRange, condition, labelWidth, onError, dispatc
                   <Input
                     type="number"
                     width={10}
-                    onBlur={(event) => onUnloadValueChange(event, 0)}
+                    onBlur={(event) => allowOnblur.current && onUnloadValueChange(event, 0)}
                     defaultValue={condition.unloadEvaluator?.params[0]}
                   />
                 </InlineField>
@@ -238,7 +270,7 @@ function RecoveryThresholdRow({ isRange, condition, labelWidth, onError, dispatc
                   <Input
                     type="number"
                     width={10}
-                    onBlur={(event) => onUnloadValueChange(event, 1)}
+                    onBlur={(event) => allowOnblur.current && onUnloadValueChange(event, 1)}
                     defaultValue={condition.unloadEvaluator?.params[1]}
                   />
                 </InlineField>
@@ -250,7 +282,7 @@ function RecoveryThresholdRow({ isRange, condition, labelWidth, onError, dispatc
     }
   }
 
-  function RecoveryForSingleValue() {
+  function RecoveryForSingleValue({ allowOnblur }: RecoveryProps) {
     if (condition.evaluator.type === EvalFunction.IsAbove) {
       return (
         <InlineFieldRow className={styles.hysteresis}>
@@ -263,7 +295,9 @@ function RecoveryThresholdRow({ isRange, condition, labelWidth, onError, dispatc
             <Input
               type="number"
               width={10}
-              onBlur={(event) => onUnloadValueChange(event, 0)}
+              onBlur={(event) => {
+                allowOnblur.current && onUnloadValueChange(event, 0);
+              }}
               defaultValue={condition.unloadEvaluator?.params[0]}
             />
           </InlineField>
@@ -281,7 +315,9 @@ function RecoveryThresholdRow({ isRange, condition, labelWidth, onError, dispatc
             <Input
               type="number"
               width={10}
-              onBlur={(event) => onUnloadValueChange(event, 0)}
+              onBlur={(event) => {
+                allowOnblur.current && onUnloadValueChange(event, 0);
+              }}
               defaultValue={condition.unloadEvaluator?.params[0]}
             />
           </InlineField>
