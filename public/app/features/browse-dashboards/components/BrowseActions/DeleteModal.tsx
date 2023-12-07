@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { Space } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
@@ -21,6 +21,19 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
   const { data } = useGetAffectedItemsQuery(selectedItems);
   const deleteIsInvalid = !config.featureToggles.nestedFolders && data && (data.alertRule || data.libraryPanel);
   const [isDeleting, setIsDeleting] = useState(false);
+  const containsDashboards = data?.dashboard && data.dashboard > 0;
+  const containsFolders = data?.folder && data.folder > 0;
+
+  const description = useMemo(() => {
+    if (containsDashboards) {
+      if (containsFolders) {
+        return 'Are you sure you want to delete this content? Folders will be permanently deleted but dashboards will be moved to trash and permanently deleted after 30 days.';
+      }
+      return 'Are you sure you want to delete this content? It will be moved to trash and permanently deleted after 30 days.';
+    }
+    return 'This action will delete the following content:';
+  }, [containsDashboards, containsFolders]);
+
   const onDelete = async () => {
     setIsDeleting(true);
     try {
@@ -36,10 +49,7 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
     <ConfirmModal
       body={
         <>
-          <Text element="p">
-            This action will move the following items to the Trash and will stay there for 30 days before permanent
-            deletion.
-          </Text>
+          <Text element="p">{description}</Text>
           <DescendantCount selectedItems={selectedItems} />
           <Space v={2} />
         </>
@@ -65,7 +75,7 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
       }
       onDismiss={onDismiss}
       onConfirm={onDelete}
-      title={t('browse-dashboards.action.delete-modal-title', 'Delete')}
+      title={containsDashboards ? 'Move to trash' : t('browse-dashboards.action.delete-modal-title', 'Delete')}
       {...props}
     />
   );

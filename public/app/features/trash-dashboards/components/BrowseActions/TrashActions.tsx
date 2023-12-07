@@ -74,7 +74,7 @@ export function TrashActions() {
         Restore
       </Button>
       <Button onClick={showDeleteModal} variant="destructive">
-        Delete
+        Delete permanently
       </Button>
     </div>
   );
