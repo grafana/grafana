@@ -42,12 +42,10 @@ export const AchievementCard = ({ title, level }: AchievementCardProps) => {
   const achievementsListByLevel =
     achievementsList && achievementsList.filter((achievement) => achievement.level === level);
 
-  const progressByLevel = achievementsListByLevel
-    ? getProgress(
-        achievementsListByLevel?.filter((achievement) => achievement.completed).length!,
-        achievementsListByLevel.length
-      )
-    : 0;
+  const achievementsCompleted = achievementsListByLevel?.filter((achievement) => achievement.completed).length!;
+  const totalAchievementsByLevel = achievementsListByLevel?.length!;
+
+  const progressByLevel = achievementsListByLevel ? getProgress(achievementsCompleted, totalAchievementsByLevel) : 0;
 
   const markVideoAsComplete = (id: AchievementId) => {
     registerAchievementCompleted(id);
@@ -62,7 +60,7 @@ export const AchievementCard = ({ title, level }: AchievementCardProps) => {
           id={title}
           sx={{ backgroundColor: theme.colors.background.secondary }}
         >
-          <div className={styles.summaryContent}>
+          <div className={styles.summaryContent} style={{ width: '90%', flexShrink: 0 }}>
             <span className={styles.levelIcon}>
               <GrotIcon level={level} height={25} />
             </span>
@@ -75,6 +73,9 @@ export const AchievementCard = ({ title, level }: AchievementCardProps) => {
               <Box className={styles.progressText}>{`${progressByLevel}%`}</Box>
             </Box>
             <h4 style={{ color: theme.colors.text.primary, marginTop: '10px' }}>{title}</h4>
+          </div>
+          <div className={styles.summaryContent} style={{ color: theme.colors.text.secondary }}>
+            {achievementsCompleted} / {totalAchievementsByLevel} completed
           </div>
         </AccordionSummary>
         <AccordionDetails sx={{ backgroundColor: theme.colors.background.primary }}>
@@ -183,7 +184,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   summaryContent: css({
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
   }),
   levelIcon: css({
     minWidth: '30px',
