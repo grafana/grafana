@@ -13,11 +13,7 @@ import (
 	amclient "github.com/prometheus/alertmanager/api/v2/client"
 )
 
-type AlertmanagerClient interface {
-	amclient.AlertmanagerAPI
-}
-
-const alertmanagerAPIMounthPath = "/alertmanager"
+const alertmanagerAPIMountPath = "/alertmanager"
 const alertmanagerReadyPath = "/-/ready"
 
 type AlertmanagerConfig struct {
@@ -45,7 +41,7 @@ func NewAlertmanager(cfg *AlertmanagerConfig) (*Alertmanager, error) {
 	apiEndpoint := *cfg.URL
 
 	// Next, make sure you set the right path.
-	u := apiEndpoint.JoinPath(alertmanagerAPIMounthPath, amclient.DefaultBasePath)
+	u := apiEndpoint.JoinPath(alertmanagerAPIMountPath, amclient.DefaultBasePath)
 	transport := httptransport.NewWithClient(u.Host, u.Path, []string{u.Scheme}, c)
 
 	return &Alertmanager{
@@ -63,6 +59,9 @@ func (am *Alertmanager) GetAuthedClient() *http.Client {
 }
 
 func (am *Alertmanager) IsReadyWithBackoff(ctx context.Context) (bool, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	attempt := func() (int, error) {
 		readyURL := am.url.JoinPath(am.url.Path, alertmanagerReadyPath)
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, readyURL.String(), nil)
@@ -105,6 +104,7 @@ func (am *Alertmanager) IsReadyWithBackoff(ctx context.Context) (bool, error) {
 
 			return true, nil
 		case <-time.After(10 * time.Second):
+			cancel()
 			return false, errors.New("ready check timed out")
 		}
 	}
