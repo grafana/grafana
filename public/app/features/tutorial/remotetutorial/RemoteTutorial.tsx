@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { Button } from '@grafana/ui';
 import { addTutorials, resetTutorials, startTutorial } from 'app/features/tutorial/slice';
@@ -12,8 +12,13 @@ type TutorialItemProps = {
 export const RemoteTutorial = ({ tutorial }: TutorialItemProps) => {
   const dispatch = useDispatch();
   const { id } = tutorial;
-  dispatch(resetTutorials());
-  dispatch(addTutorials([tutorial]));
+
+  useEffect(() => {
+    if (tutorial) {
+      dispatch(resetTutorials());
+      dispatch(addTutorials([tutorial]));
+    }
+  }, [dispatch, tutorial]);
 
   return (
     <Button

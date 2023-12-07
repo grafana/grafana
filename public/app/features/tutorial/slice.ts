@@ -27,16 +27,16 @@ const tutorialsSlice = createSlice({
   name: STATE_PREFIX,
   initialState,
   reducers: {
-    removeTutorial(state, action) {
+    removeTutorial(state, action: { payload: Tutorial['id'] }) {
       state.availableTutorials = state.availableTutorials.filter((tutorial) => tutorial.id !== action.payload);
     },
-    addTutorial(state, action) {
+    addTutorial(state, action: { payload: Tutorial }) {
       state.availableTutorials.push(action.payload);
     },
-    addTutorials(state, action) {
+    addTutorials(state, action: { payload: Tutorial[] }) {
       state.availableTutorials = [...state.availableTutorials, ...action.payload];
     },
-    setCurrentTutorialId(state, action) {
+    setCurrentTutorialId(state, action: { payload: Tutorial['id'] }) {
       state.currentTutorialId = action.payload;
     },
     exitCurrentTutorial(state) {

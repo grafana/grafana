@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -10,6 +10,8 @@ import { testIds } from './WizarDS';
 import { Tutorial } from './state/state';
 import { Suggestion, SuggestionType } from './types';
 
+const LLM_OF_CHOICE = `OpenAI ChatGPT`;
+
 export type Props = {
   suggestions: Suggestion[];
   suggestionType: SuggestionType;
@@ -20,40 +22,25 @@ export type Props = {
   tutorial: Tutorial;
 };
 
-export function SuggestionContainer(props: Props) {
-  const { suggestionType, suggestions, closeDrawer, nextInteraction, explain, prompt, tutorial } = props;
-
+export function SuggestionContainer({
+  suggestionType,
+  suggestions,
+  closeDrawer,
+  nextInteraction,
+  explain,
+  prompt,
+  tutorial,
+}: Props) {
   const [hasNextInteraction, updateHasNextInteraction] = useState<boolean>(false);
-
   const theme = useTheme2();
   const styles = getStyles(theme);
 
-  let text, secondaryText, refineText;
-
-  if (suggestionType === SuggestionType.Historical) {
-    text = `Here is a list of the components from the Prometheus UI:`;
-    secondaryText = '';
-    refineText = 'I want ask a question';
-  } else if (suggestionType === SuggestionType.AI) {
-    text = text = 'Here are is your answer from the LLM:';
-    secondaryText = 'This information is from Grafana docs and your LLM of choice';
-    refineText = 'Refine prompt';
-  }
-
   return (
     <>
-      <p>{text}</p>
-      <div className={cx(styles.secondaryText, styles.bottomMargin)}>
-        {secondaryText}
-        <div>
-          <RemoteTutorial tutorial={tutorial} />
-        </div>
-      </div>
-      <div className={styles.infoContainerWrapper}>
-        <div className={styles.infoContainer}>
-          {
-            /*suggestionType === SuggestionType.Historical &&*/
-            suggestions.map((qs: Suggestion, idx: number) => {
+      <div className={styles.container}>
+        <Stack gap={4} direction={'column'}>
+          <div className={styles.infoContainer}>
+            {suggestions.map((qs: Suggestion, idx: number) => {
               return (
                 <SuggestionItem
                   historical={suggestionType === SuggestionType.Historical}
@@ -61,44 +48,45 @@ export function SuggestionContainer(props: Props) {
                   key={idx}
                   order={idx + 1}
                   explain={explain}
-                  // onChange={onChange}
                   closeDrawer={closeDrawer}
                   last={idx === 8}
-                  // for feedback rudderstack events
                   allSuggestions={suggestions.reduce((acc: string, qs: Suggestion) => {
                     return acc + '$$' + qs.component;
                   }, '')}
                   prompt={prompt ?? ''}
+                  chosenLLM={LLM_OF_CHOICE}
                 />
               );
-            })
-          }
-        </div>
+            })}
+          </div>
+          <Stack alignItems={`center`} justifyContent={`space-between`}>
+            <div className={styles.secondaryText}>{`This information is from Grafana docs and ${LLM_OF_CHOICE}.`}</div>
+            <RemoteTutorial tutorial={tutorial} />
+          </Stack>
+        </Stack>
       </div>
       {!hasNextInteraction && (
         <div className={styles.nextInteractionHeight}>
-          <div className={cx(styles.afterButtons, styles.textPadding)}>
-            <Button
-              onClick={() => {
-                updateHasNextInteraction(true);
-                nextInteraction();
-              }}
-              data-testid={testIds.refinePrompt}
-              fill="outline"
-              variant="secondary"
-              size="md"
-            >
-              {refineText}
-            </Button>
-          </div>
-          <div className={styles.textPadding}>
-            <Stack justifyContent="space-between">
-              <div />
+          <Stack justifyContent="space-between">
+            <div />
+            <Stack>
               <Button fill="outline" variant="secondary" size="md" onClick={closeDrawer}>
                 Cancel
               </Button>
+              <Button
+                onClick={() => {
+                  updateHasNextInteraction(true);
+                  nextInteraction();
+                }}
+                data-testid={testIds.refinePrompt}
+                fill="outline"
+                variant="primary"
+                size="md"
+              >
+                Refine prompt
+              </Button>
             </Stack>
-          </div>
+          </Stack>
         </div>
       )}
     </>
@@ -106,15 +94,11 @@ export function SuggestionContainer(props: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  infoContainerWrapper: css({
-    paddingBottom: '24px',
+  container: css({
+    marginBottom: theme.spacing(4),
   }),
   secondaryText: css({
     color: `${theme.colors.text.secondary}`,
-  }),
-  afterButtons: css({
-    display: 'flex',
-    justifyContent: 'flex-end',
   }),
   infoContainer: css({
     border: `${theme.colors.border.strong}`,
@@ -123,13 +107,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: `8px`,
     borderBottomLeftRadius: 0,
   }),
-  bottomMargin: css({
-    marginBottom: '20px',
-  }),
   nextInteractionHeight: css({
     height: '88px',
-  }),
-  textPadding: css({
-    paddingBottom: '12px',
   }),
 });

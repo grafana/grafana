@@ -12,6 +12,7 @@ type WizardDSInteractionProps = {
   interaction: Interaction;
   onExplain: (suggIdx: number) => void;
   onCancel: () => void;
+  onChange: (prompt: string) => void;
   onSubmit: (prompt: string) => void;
   onNextInteraction: () => void;
   tutorial: Tutorial;
@@ -21,6 +22,7 @@ export const WizardDSInteraction = ({
   'data-testid': dataTestId,
   interaction,
   onCancel,
+  onChange,
   onExplain,
   onSubmit,
   onNextInteraction,
@@ -28,14 +30,17 @@ export const WizardDSInteraction = ({
 }: WizardDSInteractionProps) => {
   const isLoading = interaction.isLoading;
   const hasSuggestions = interaction.suggestions.length !== 0;
+  const prompt = interaction.prompt ?? '';
 
   return (
-    <Stack direction={'column'}>
+    <Stack direction={'column'} gap={2}>
       <AskAQuestion
         data-testid={dataTestId}
         isDisabled={hasSuggestions || isLoading}
         isLoading={isLoading}
+        onChange={onChange}
         onSubmit={onSubmit}
+        value={prompt}
       />
       {hasSuggestions && (
         <SuggestionContainer

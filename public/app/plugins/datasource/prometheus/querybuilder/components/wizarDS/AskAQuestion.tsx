@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 import { Button, Input, Stack } from '@grafana/ui';
 
@@ -6,12 +6,19 @@ type AskAQuestionprops = {
   'data-testid': string;
   isDisabled: boolean;
   isLoading: boolean;
+  onChange: (promot: string) => void;
   onSubmit: (prompt: string) => void;
+  value: string;
 };
 
-export const AskAQuestion = ({ 'data-testid': dataTestId, isDisabled, isLoading, onSubmit }: AskAQuestionprops) => {
-  const [value, setValue] = useState<string>('');
-
+export const AskAQuestion = ({
+  'data-testid': dataTestId,
+  isDisabled,
+  isLoading,
+  onChange,
+  onSubmit,
+  value,
+}: AskAQuestionprops) => {
   return (
     <form
       onSubmit={(e) => {
@@ -31,9 +38,7 @@ export const AskAQuestion = ({ 'data-testid': dataTestId, isDisabled, isLoading,
             spellCheck={false}
             placeholder="Enter prompt"
             disabled={isDisabled}
-            onChange={(e) => {
-              setValue(e.currentTarget.value);
-            }}
+            onChange={(e) => onChange(e.currentTarget.value)}
           />
 
           <Button

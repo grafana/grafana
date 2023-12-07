@@ -79,6 +79,17 @@ export const WizarDS = (props: WizarDSProps) => {
                   interaction={interaction}
                   data-testid={testIds.submitPrompt + idx}
                   onCancel={closeDrawer}
+                  onChange={(prompt: string) =>
+                    dispatch(
+                      updateInteraction({
+                        idx,
+                        interaction: {
+                          ...interaction,
+                          prompt,
+                        },
+                      })
+                    )
+                  }
                   onSubmit={(prompt) => {
                     const newInteraction = {
                       ...interaction,
@@ -111,33 +122,36 @@ export const WizarDS = (props: WizarDSProps) => {
           </div>
         )}
       </div>
-      <div className={styles.seeItAll}>
-        <Button fill="text" variant="secondary" onClick={() => {}}>
-          See examples
-        </Button>
-        <Button
-          fill="text"
-          variant="secondary"
-          onClick={() => {
-            const currentInteractionIdx = state.interactions.length - 1;
+      {!state.showStartingMessage && (
+        <div className={styles.seeItAll}>
+          <Button fill="text" variant="secondary" onClick={() => {}}>
+            See examples
+          </Button>
+          <Button
+            fill="text"
+            variant="secondary"
+            onClick={() => {
+              const currentInteractionIdx = state.interactions.length - 1;
 
-            const newInteraction: Interaction = {
-              ...state.interactions[currentInteractionIdx],
-              suggestionType: SuggestionType.Historical,
-              isLoading: true,
-            };
+              const newInteraction: Interaction = {
+                ...state.interactions[currentInteractionIdx],
+                suggestionType: SuggestionType.Historical,
+                prompt: `Show me everything`,
+                isLoading: true,
+              };
 
-            const payload = {
-              idx: currentInteractionIdx,
-              interaction: newInteraction,
-            };
-            dispatch(updateInteraction(payload));
-            wizarDSSuggest(dispatch, currentInteractionIdx, templates, newInteraction);
-          }}
-        >
-          Show me everything
-        </Button>
-      </div>
+              const payload = {
+                idx: currentInteractionIdx,
+                interaction: newInteraction,
+              };
+              dispatch(updateInteraction(payload));
+              wizarDSSuggest(dispatch, currentInteractionIdx, templates, newInteraction);
+            }}
+          >
+            Show me everything
+          </Button>
+        </div>
+      )}
       <div ref={responsesEndRef} />
     </div>
   );
