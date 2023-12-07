@@ -11,7 +11,6 @@ import {
   SceneGridRow,
   VizPanel,
 } from '@grafana/scenes';
-import { DashboardModel } from 'app/features/dashboard/state';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
@@ -200,10 +199,6 @@ export class DashboardModelCompatibilityWrapper {
   public destroy() {
     this.events.removeAllListeners();
     this._subs.unsubscribe();
-  }
-
-  public asDashboardModel(): DashboardModel {
-    return this as unknown as DashboardModel;
   }
 }
 
