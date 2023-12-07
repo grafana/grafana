@@ -5,7 +5,7 @@ import { TransformerRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
-import { TransformationEditorHelperModal } from './TransformationEditorHelperModal';
+import { TransformationEditorHelpDisplay } from './TransformationEditorHelpDisplay';
 
 // Mock the onCloseClick function
 const mockOnCloseClick = jest.fn();
@@ -14,12 +14,12 @@ const standardTransformers: Array<TransformerRegistryItem<null>> = getStandardTr
 
 const singleTestTransformer: TransformerRegistryItem<null> = standardTransformers[0];
 
-describe('TransformationEditorHelperModal', () => {
+describe('TransformationEditorHelpDisplay', () => {
   it('renders the modal with the correct title and content', () => {
     // Test each transformer
     standardTransformers.forEach((transformer) => {
       const { unmount } = render(
-        <TransformationEditorHelperModal isOpen={true} onCloseClick={mockOnCloseClick} transformer={transformer} />
+        <TransformationEditorHelpDisplay isOpen={true} onCloseClick={mockOnCloseClick} transformer={transformer} />
       );
 
       // Check if the modal title is rendered with the correct text
@@ -33,7 +33,7 @@ describe('TransformationEditorHelperModal', () => {
 
   it('calls onCloseClick when the modal is dismissed', () => {
     render(
-      <TransformationEditorHelperModal
+      <TransformationEditorHelpDisplay
         isOpen={true}
         onCloseClick={mockOnCloseClick}
         transformer={singleTestTransformer}
@@ -50,7 +50,7 @@ describe('TransformationEditorHelperModal', () => {
 
   it('does not render when isOpen is false', () => {
     render(
-      <TransformationEditorHelperModal
+      <TransformationEditorHelpDisplay
         isOpen={false}
         onCloseClick={mockOnCloseClick}
         transformer={singleTestTransformer}
@@ -65,7 +65,7 @@ describe('TransformationEditorHelperModal', () => {
     const transformerWithoutHelp = { ...singleTestTransformer, help: undefined };
 
     render(
-      <TransformationEditorHelperModal
+      <TransformationEditorHelpDisplay
         isOpen={true}
         onCloseClick={mockOnCloseClick}
         transformer={transformerWithoutHelp}
@@ -82,7 +82,7 @@ describe('TransformationEditorHelperModal', () => {
     const transformerWithCustomHelp = { ...singleTestTransformer, help: customHelpContent };
 
     render(
-      <TransformationEditorHelperModal
+      <TransformationEditorHelpDisplay
         isOpen={true}
         onCloseClick={mockOnCloseClick}
         transformer={transformerWithCustomHelp}

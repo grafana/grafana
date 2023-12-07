@@ -6,17 +6,17 @@ import { OperationRowHelp } from 'app/core/components/QueryOperationRow/Operatio
 
 import { getLinkToDocs } from '../../../transformers/docs/content';
 
-interface TransformationEditorHelperModalProps {
+interface TransformationEditorHelpDisplayProps {
   isOpen: boolean;
   onCloseClick: (value: boolean) => void;
   transformer: TransformerRegistryItem<null>;
 }
 
-export const TransformationEditorHelperModal = ({
+export const TransformationEditorHelpDisplay = ({
   isOpen,
   onCloseClick,
   transformer,
-}: TransformationEditorHelperModalProps) => {
+}: TransformationEditorHelpDisplayProps) => {
   const {
     transformation: { name },
     help,
