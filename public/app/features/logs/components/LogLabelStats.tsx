@@ -94,31 +94,33 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
         <div className={style.logsStatsTitle}>{label}</div>
         <div className={style.logsStatsBody}>
           <table style={{ width: '75%' }}>
-            {topRows.map((stat) => (
-              <LogLabelStatsRow
-                key={stat.value}
-                {...stat}
-                active={false}
-                total={total}
-                shouldFilter={shouldFilter}
-                onClickFilterLabel={onClickFilterLabel}
-                onClickFilterOutLabel={onClickFilterOutLabel}
-                keyField={label}
-              />
-            ))}
-            {otherCount > 0 && (
-              <LogLabelStatsRow
-                key="__OTHERS__"
-                count={otherCount}
-                value="Other"
-                proportion={otherProportion}
-                total={total}
-                shouldFilter={false}
-                keyField={label}
-                onClickFilterLabel={onClickFilterLabel}
-                onClickFilterOutLabel={onClickFilterOutLabel}
-              />
-            )}
+            <tbody>
+              {topRows.map((stat) => (
+                <LogLabelStatsRow
+                  key={stat.value}
+                  {...stat}
+                  active={false}
+                  total={total}
+                  shouldFilter={shouldFilter}
+                  onClickFilterLabel={onClickFilterLabel}
+                  onClickFilterOutLabel={onClickFilterOutLabel}
+                  keyField={label}
+                />
+              ))}
+              {otherCount > 0 && (
+                <LogLabelStatsRow
+                  key="__OTHERS__"
+                  count={otherCount}
+                  value="Other"
+                  proportion={otherProportion}
+                  total={total}
+                  shouldFilter={false}
+                  keyField={label}
+                  onClickFilterLabel={onClickFilterLabel}
+                  onClickFilterOutLabel={onClickFilterOutLabel}
+                />
+              )}
+            </tbody>
           </table>
           <div style={{ width: '25%', display: 'flex', justifyContent: 'center', alignItems: 'cent' }}>
             <PanelRenderer

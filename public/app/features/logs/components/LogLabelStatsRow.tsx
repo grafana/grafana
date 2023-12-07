@@ -62,7 +62,6 @@ export interface Props {
 }
 
 export const LogLabelStatsRow = ({
-  active,
   count,
   proportion,
   value,
@@ -72,7 +71,6 @@ export const LogLabelStatsRow = ({
   onClickFilterOutLabel,
   keyField,
 }: Props) => {
-  // const style = useStyles2(getStyles);
   const percent = `${Math.round(proportion * 100)}%`;
 
   return (
