@@ -394,11 +394,6 @@ func FromDashboard(dash *Dashboard) *folder.Folder {
 	}
 }
 
-type DeleteDashboardsInFolderRequest struct {
-	FolderUID string
-	OrgID     int64
-}
-
 //
 // DASHBOARD ACL
 //

@@ -741,7 +741,7 @@ func (dr DashboardServiceImpl) CountInFolder(ctx context.Context, orgID int64, f
 }
 
 func (dr *DashboardServiceImpl) DeleteInFolder(ctx context.Context, orgID int64, folderUID string, u identity.Requester) error {
-	return dr.dashboardStore.DeleteDashboardsInFolder(ctx, &dashboards.DeleteDashboardsInFolderRequest{FolderUID: folderUID, OrgID: orgID})
+	return dr.dashboardStore.SoftDeleteDashboardsInFolder(ctx, folderUID)
 }
 
 func (dr *DashboardServiceImpl) Kind() string { return entity.StandardKindDashboard }
