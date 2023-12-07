@@ -93,7 +93,7 @@ export const LogRowMenu = React.memo(
           variant="secondary"
           aria-label="Show similar log lines"
           tooltipPlacement="top"
-          size="lg"
+          size="md"
           name="search-plus"
           onClick={() => {
             onSimilarityChange(row, 'show');
@@ -105,7 +105,7 @@ export const LogRowMenu = React.memo(
           variant="secondary"
           aria-label="Hide similar log lines"
           tooltipPlacement="top"
-          size="lg"
+          size="md"
           name="search-minus"
           onClick={() => {
             onSimilarityChange(row, 'hide');
