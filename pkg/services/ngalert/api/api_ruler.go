@@ -170,7 +170,7 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *contextmodel.ReqContext, nam
 }
 
 // RouteGetRulesGroupConfig returns rules that belong to a specific group in a specific namespace (folder).
-// If user does not have access to at least one of the rule in the group, returns status 401 Unauthorized
+// If user does not have access to at least one of the rule in the group, returns status 403 Forbidden
 func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespaceTitle string, ruleGroup string) response.Response {
 	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
