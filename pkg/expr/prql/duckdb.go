@@ -13,26 +13,18 @@ import (
 )
 
 type DuckDB struct {
-	db     *sql.DB
+	// TODO - might need this if/when we change to in memory database
+	// for now creates/connects to a file using "name"
+	// db     *sql.DB
 	name   string
 	lookup map[string]*data.Field
 }
 
 func NewDuckDB(name string) (*DuckDB, error) {
-	db, err := sql.Open("duckdb", name) // empty?  what about the previous call??
-	if err != nil {
-		return nil, err
-	}
-
 	return &DuckDB{
 		name:   name,
-		db:     db,
 		lookup: make(map[string]*data.Field),
 	}, nil
-}
-
-func (d *DuckDB) Close() error {
-	return d.db.Close()
 }
 
 func (d *DuckDB) QueryPRQL(ctx context.Context, prql string) (*data.Frame, error) {
@@ -47,8 +39,20 @@ func (d *DuckDB) QueryPRQL(ctx context.Context, prql string) (*data.Frame, error
 	return d.Query(ctx, sql)
 }
 
-func (d *DuckDB) Query(ctx context.Context, sql string) (*data.Frame, error) {
-	results, err := d.db.QueryContext(ctx, sql)
+func (d *DuckDB) Query(ctx context.Context, query string) (*data.Frame, error) {
+	connector, err := duckdb.NewConnector(d.name, nil)
+	if err != nil {
+		return nil, err
+	}
+	db := sql.OpenDB(connector)
+	defer func() {
+		err = db.Close()
+		if err != nil {
+			fmt.Printf("failed to close db after query: %v\n", err)
+		}
+	}()
+
+	results, err := db.QueryContext(ctx, query)
 	if err != nil {
 		fmt.Printf("failed to query db: %v\n", err)
 		return nil, err
@@ -73,22 +77,18 @@ func (d *DuckDB) Query(ctx context.Context, sql string) (*data.Frame, error) {
 	if frame.Meta == nil {
 		frame.Meta = &data.FrameMeta{}
 	}
-	frame.Meta.ExecutedQueryString = sql
+	frame.Meta.ExecutedQueryString = query
 
 	return frame, err
 }
 
 func (d *DuckDB) AppendAll(ctx context.Context, frames data.Frames) error {
-	err := d.createTables(frames)
+	err := d.createTables(ctx, frames)
 	if err != nil {
 		return err
 	}
 
-	connector, err := duckdb.NewConnector(d.name, nil)
-	if err != nil {
-		return err
-	}
-	conn, err := connector.Connect(ctx)
+	conn, err := d.connect(ctx)
 	if err != nil {
 		return err
 	}
@@ -155,19 +155,11 @@ func (d *DuckDB) AppendAll(ctx context.Context, frames data.Frames) error {
 		}
 	}
 
-	// reload the data (now that we updated it)
-	db, err := sql.Open("duckdb", d.name)
-	if err != nil {
-		return err
-	}
-	if d.db != nil {
-		d.db.Close()
-	}
-	d.db = db
 	return nil
 }
 
-func (d *DuckDB) createTables(frames data.Frames) error {
+func (d *DuckDB) createTables(ctx context.Context, frames data.Frames) error {
+
 	for _, f := range frames {
 		name := f.RefID
 		if name == "" {
@@ -220,11 +212,24 @@ func (d *DuckDB) createTables(frames data.Frames) error {
 		createTable += ")"
 		fmt.Println(createTable)
 
-		_, err := d.db.Query(createTable)
+		_, err := d.Query(ctx, createTable)
 		if err != nil {
 			fmt.Println(err)
 			return err
 		}
 	}
 	return nil
+}
+
+// connect returns a connector for the appender
+func (d *DuckDB) connect(ctx context.Context) (driver.Conn, error) {
+	connector, err := duckdb.NewConnector(d.name, nil)
+	if err != nil {
+		return nil, err
+	}
+	conn, err := connector.Connect(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return conn, nil
 }

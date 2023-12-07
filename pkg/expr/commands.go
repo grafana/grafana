@@ -376,12 +376,6 @@ func (gr *PRQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.
 	if err != nil {
 		return mathexp.Results{}, err
 	}
-	defer func() {
-		err = db.Close()
-		if err != nil {
-			fmt.Printf("failed to close db after query: %v\n", err)
-		}
-	}()
 
 	// insert all referenced results into duckdb. TODO: multi-thread this?
 	for _, ref := range gr.varsToQuery {
@@ -394,7 +388,7 @@ func (gr *PRQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.
 	}
 
 	rsp := mathexp.Results{}
-	frame, err := db.Query(ctx, gr.query)
+	frame, err := db.QueryPRQL(ctx, gr.query)
 	if frame != nil {
 		frame.RefID = gr.refID
 		rsp.Values = mathexp.Values{
