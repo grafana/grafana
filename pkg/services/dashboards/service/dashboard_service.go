@@ -38,10 +38,11 @@ var (
 		{Action: datasources.ActionRead, Scope: datasources.ScopeAll},
 	}
 	// DashboardServiceImpl implements the DashboardService interface
-	_           dashboards.DashboardService             = (*DashboardServiceImpl)(nil)
-	_           dashboards.DashboardProvisioningService = (*DashboardServiceImpl)(nil)
-	_           dashboards.PluginService                = (*DashboardServiceImpl)(nil)
-	daysInTrash                                         = 24 * 30 * time.Hour
+	_ dashboards.DashboardService             = (*DashboardServiceImpl)(nil)
+	_ dashboards.DashboardProvisioningService = (*DashboardServiceImpl)(nil)
+	_ dashboards.PluginService                = (*DashboardServiceImpl)(nil)
+
+	daysInTrash = 24 * 30 * time.Hour
 )
 
 type DashboardServiceImpl struct {
