@@ -8,6 +8,7 @@ import { t } from 'app/core/internationalization';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 
 import { ShareModal } from '../sharing/ShareModal';
+import { DashboardInteractions } from '../utils/interactions';
 
 import { DashboardScene } from './DashboardScene';
 
@@ -16,10 +17,10 @@ interface Props {
 }
 
 export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
-  const { actions = [], isEditing, viewPanelKey, isDirty, uid, meta } = dashboard.useState();
+  const { actions = [], isEditing, viewPanelScene, isDirty, uid, meta, editview } = dashboard.useState();
   const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
 
-  if (uid) {
+  if (uid && !editview) {
     if (meta.canStar) {
       let desc = meta.isStarred
         ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
@@ -33,6 +34,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
           iconType={meta.isStarred ? 'mono' : 'default'}
           iconSize="lg"
           onClick={() => {
+            DashboardInteractions.toolbarFavoritesClick();
             dashboard.onStarDashboard();
           }}
         />
@@ -45,6 +47,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
         icon="share-alt"
         iconSize="lg"
         onClick={() => {
+          DashboardInteractions.toolbarShareClick();
           dashboard.showModal(new ShareModal({ dashboardRef: dashboard.getRef() }));
         }}
       />
@@ -62,10 +65,12 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
 
   toolbarActions.push(<NavToolbarSeparator leftActionsSeparator key="separator" />);
 
-  if (viewPanelKey) {
+  if (viewPanelScene) {
     toolbarActions.push(
       <Button
-        onClick={() => locationService.partial({ viewPanel: null })}
+        onClick={() => {
+          locationService.partial({ viewPanel: null });
+        }}
         tooltip=""
         key="back"
         variant="primary"
@@ -82,7 +87,9 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
     if (dashboard.canEditDashboard()) {
       toolbarActions.push(
         <Button
-          onClick={dashboard.onEnterEditMode}
+          onClick={() => {
+            dashboard.onEnterEditMode();
+          }}
           tooltip="Enter edit mode"
           key="edit"
           variant="primary"
@@ -96,17 +103,40 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
   } else {
     if (dashboard.canEditDashboard()) {
       toolbarActions.push(
-        <Button onClick={dashboard.onSave} tooltip="Save as copy" fill="text" key="save-as">
+        <Button
+          onClick={() => {
+            dashboard.onSave();
+          }}
+          tooltip="Save as copy"
+          fill="text"
+          key="save-as"
+        >
           Save as
         </Button>
       );
       toolbarActions.push(
-        <Button onClick={dashboard.onDiscard} tooltip="Save changes" fill="text" key="discard" variant="destructive">
+        <Button
+          onClick={() => {
+            dashboard.onDiscard();
+          }}
+          tooltip="Discard changes"
+          fill="text"
+          key="discard"
+          variant="destructive"
+        >
           Discard
         </Button>
       );
       toolbarActions.push(
-        <Button onClick={dashboard.onSave} tooltip="Save changes" key="save" disabled={!isDirty}>
+        <Button
+          onClick={() => {
+            DashboardInteractions.toolbarSaveClick();
+            dashboard.onSave();
+          }}
+          tooltip="Save changes"
+          key="save"
+          disabled={!isDirty}
+        >
           Save
         </Button>
       );

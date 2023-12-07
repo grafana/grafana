@@ -163,7 +163,7 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
     if (false) {
       subscriptions.add(
         eventBus.subscribe(DataHoverEvent, (event) => {
-          const time: number = event.payload?.point?.time;
+          const time = event.payload?.point?.time;
           if (time) {
             const lineTime = new Date(time);
             const nightLinePoints = sourceLine.getCoordinates(lineTime.toString(), 'line');

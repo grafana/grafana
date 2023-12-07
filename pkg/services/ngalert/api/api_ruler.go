@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type ConditionValidator interface {
@@ -96,7 +97,7 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceT
 				return err
 			}
 			if totalGroups > 0 && len(deletionCandidates) == 0 {
-				return fmt.Errorf("%w to delete any existing rules in the namespace", accesscontrol.ErrAuthorization)
+				return accesscontrol.NewAuthorizationErrorGeneric("delete any existing rules in the namespace")
 			}
 		}
 		rulesToDelete := make([]string, 0)
@@ -131,8 +132,8 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceT
 	})
 
 	if err != nil {
-		if errors.Is(err, accesscontrol.ErrAuthorization) {
-			return ErrResp(http.StatusUnauthorized, err, "failed to delete rule group")
+		if errors.As(err, &errutil.Error{}) {
+			return response.Err(err)
 		}
 		if errors.Is(err, errProvisionedResource) {
 			return ErrResp(http.StatusBadRequest, err, "failed to delete rule group")
@@ -161,6 +162,7 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *contextmodel.ReqContext, nam
 	result := apimodels.NamespaceConfigResponse{}
 
 	for groupKey, rules := range ruleGroups {
+		// nolint:staticcheck
 		result[namespaceTitle] = append(result[namespaceTitle], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, namespace.ID, provenanceRecords))
 	}
 
@@ -190,6 +192,7 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespa
 	}
 
 	result := apimodels.RuleGroupConfigResponse{
+		// nolint:staticcheck
 		GettableRuleGroupConfig: toGettableRuleGroupConfig(ruleGroup, rules, namespace.ID, provenanceRecords),
 	}
 	return response.JSON(http.StatusAccepted, result)
@@ -239,6 +242,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 			continue
 		}
 		namespace := folder.Title
+		// nolint:staticcheck
 		result[namespace] = append(result[namespace], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, folder.ID, provenanceRecords))
 	}
 	return response.JSON(http.StatusOK, result)
@@ -362,14 +366,14 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 	})
 
 	if err != nil {
-		if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
+		if errors.As(err, &errutil.Error{}) {
+			return response.Err(err)
+		} else if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
 			return ErrResp(http.StatusNotFound, err, "failed to update rule group")
 		} else if errors.Is(err, ngmodels.ErrAlertRuleFailedValidation) || errors.Is(err, errProvisionedResource) {
 			return ErrResp(http.StatusBadRequest, err, "failed to update rule group")
 		} else if errors.Is(err, ngmodels.ErrQuotaReached) {
 			return ErrResp(http.StatusForbidden, err, "")
-		} else if errors.Is(err, accesscontrol.ErrAuthorization) {
-			return ErrResp(http.StatusUnauthorized, err, "")
 		} else if errors.Is(err, store.ErrOptimisticLock) {
 			return ErrResp(http.StatusConflict, err, "")
 		}
@@ -518,8 +522,8 @@ func (srv RulerSrv) getAuthorizedRuleByUid(ctx context.Context, c *contextmodel.
 	if err != nil {
 		return ngmodels.AlertRule{}, err
 	}
-	if !srv.authz.AuthorizeAccessToRuleGroup(ctx, c.SignedInUser, rules) {
-		return ngmodels.AlertRule{}, fmt.Errorf("%w to access rules in this group", accesscontrol.ErrAuthorization)
+	if err := srv.authz.AuthorizeAccessToRuleGroup(ctx, c.SignedInUser, rules); err != nil {
+		return ngmodels.AlertRule{}, err
 	}
 	for _, rule := range rules {
 		if rule.UID == ruleUID {
@@ -542,8 +546,8 @@ func (srv RulerSrv) getAuthorizedRuleGroup(ctx context.Context, c *contextmodel.
 	if err != nil {
 		return nil, err
 	}
-	if !srv.authz.AuthorizeAccessToRuleGroup(ctx, c.SignedInUser, rules) {
-		return nil, fmt.Errorf("%w to access rules in this group", accesscontrol.ErrAuthorization)
+	if err := srv.authz.AuthorizeAccessToRuleGroup(ctx, c.SignedInUser, rules); err != nil {
+		return nil, err
 	}
 	return rules, nil
 }
@@ -566,7 +570,10 @@ func (srv RulerSrv) searchAuthorizedAlertRules(ctx context.Context, c *contextmo
 	byGroupKey := ngmodels.GroupByAlertRuleGroupKey(rules)
 	totalGroups := len(byGroupKey)
 	for groupKey, rulesGroup := range byGroupKey {
-		if !srv.authz.AuthorizeAccessToRuleGroup(ctx, c.SignedInUser, rulesGroup) {
+		if ok, err := srv.authz.HasAccessToRuleGroup(ctx, c.SignedInUser, rulesGroup); !ok || err != nil {
+			if err != nil {
+				return nil, 0, err
+			}
 			delete(byGroupKey, groupKey)
 		}
 	}

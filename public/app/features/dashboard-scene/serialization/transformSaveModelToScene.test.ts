@@ -6,6 +6,7 @@ import {
   QueryVariableModel,
   IntervalVariableModel,
   TypedVariableModel,
+  TextBoxVariableModel,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { config } from '@grafana/runtime';
@@ -117,7 +118,7 @@ describe('transformSaveModelToScene', () => {
 
       const scene = createDashboardSceneFromDashboardModel(oldModel);
 
-      expect(scene.state.$behaviors).toHaveLength(2);
+      expect(scene.state.$behaviors).toHaveLength(3);
       expect(scene.state.$behaviors![1]).toBeInstanceOf(behaviors.CursorSync);
       expect((scene.state.$behaviors![1] as behaviors.CursorSync).state.sync).toEqual(DashboardCursorSync.Crosshair);
     });
@@ -454,7 +455,7 @@ describe('transformSaveModelToScene', () => {
       });
     });
 
-    it('should migrate query variable', () => {
+    it('should migrate query variable with definition', () => {
       const variable: QueryVariableModel = {
         allValue: null,
         current: {
@@ -466,7 +467,7 @@ describe('transformSaveModelToScene', () => {
           uid: 'P15396BDD62B2BE29',
           type: 'influxdb',
         },
-        definition: '',
+        definition: 'SHOW TAG VALUES  WITH KEY = "datacenter"',
         hide: 0,
         includeAll: false,
         label: 'Datacenter',
@@ -535,6 +536,7 @@ describe('transformSaveModelToScene', () => {
         type: 'query',
         value: 'America',
         hide: 0,
+        definition: 'SHOW TAG VALUES  WITH KEY = "datacenter"',
       });
     });
 
@@ -679,6 +681,7 @@ describe('transformSaveModelToScene', () => {
         error: null,
         description: null,
       };
+
       const migrated = createSceneVariableFromVariableModel(variable);
       const { key, ...rest } = migrated.state;
       expect(rest).toEqual({
@@ -696,13 +699,83 @@ describe('transformSaveModelToScene', () => {
         value: '1m',
       });
     });
-    it.each(['textbox', 'system'])('should throw for unsupported (yet) variables', (type) => {
+
+    it('should migrate textbox variable', () => {
+      const variable: TextBoxVariableModel = {
+        id: 'query0',
+        global: false,
+        index: 0,
+        state: LoadingState.Done,
+        error: null,
+        name: 'textboxVar',
+        label: 'Textbox Label',
+        description: 'Textbox Description',
+        type: 'textbox',
+        rootStateKey: 'N4XLmH5Vz',
+        current: {},
+        hide: 0,
+        options: [],
+        query: 'defaultValue',
+        originalQuery: 'defaultValue',
+        skipUrlSync: false,
+      };
+
+      const migrated = createSceneVariableFromVariableModel(variable);
+      const { key, ...rest } = migrated.state;
+      expect(rest).toEqual({
+        description: 'Textbox Description',
+        hide: 0,
+        label: 'Textbox Label',
+        name: 'textboxVar',
+        skipUrlSync: false,
+        type: 'textbox',
+        value: 'defaultValue',
+      });
+    });
+
+    it.each(['system'])('should throw for unsupported (yet) variables', (type) => {
       const variable = {
         name: 'query0',
         type: type as VariableType,
       };
 
       expect(() => createSceneVariableFromVariableModel(variable as TypedVariableModel)).toThrow();
+    });
+
+    it('should handle variable without current', () => {
+      // @ts-expect-error
+      const variable: TypedVariableModel = {
+        id: 'query1',
+        name: 'query1',
+        type: 'datasource',
+        global: false,
+        regex: '/^gdev/',
+        options: [],
+        query: 'prometheus',
+        multi: true,
+        includeAll: true,
+        refresh: 1,
+        allValue: 'Custom all',
+      };
+
+      const migrated = createSceneVariableFromVariableModel(variable);
+      const { key, ...rest } = migrated.state;
+
+      expect(migrated).toBeInstanceOf(DataSourceVariable);
+      expect(rest).toEqual({
+        allValue: 'Custom all',
+        defaultToAll: true,
+        includeAll: true,
+        label: undefined,
+        name: 'query1',
+        options: [],
+        pluginId: 'prometheus',
+        regex: '/^gdev/',
+        text: '',
+        type: 'datasource',
+        value: '',
+        isMulti: true,
+      });
     });
   });
 

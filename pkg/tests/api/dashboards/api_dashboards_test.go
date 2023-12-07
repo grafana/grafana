@@ -329,7 +329,7 @@ func TestIntegrationCreate(t *testing.T) {
 		err = json.NewEncoder(buf1).Encode(dashboards.SaveDashboardCommand{
 			Dashboard: dashboardDataOne,
 			OrgID:     0,
-			FolderUID: folder.Uid,
+			FolderUID: folder.UID,
 		})
 		require.NoError(t, err)
 		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/db", grafanaListedAddr)
@@ -348,7 +348,7 @@ func TestIntegrationCreate(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotEmpty(t, m["id"])
 		assert.NotEmpty(t, m["uid"])
-		assert.Equal(t, folder.Uid, m["folderUid"])
+		assert.Equal(t, folder.UID, m["folderUid"])
 	})
 
 	t.Run("create dashboard under folder (using deprecated folder sequential ID) should succeed", func(t *testing.T) {
@@ -360,7 +360,7 @@ func TestIntegrationCreate(t *testing.T) {
 		err = json.NewEncoder(buf1).Encode(dashboards.SaveDashboardCommand{
 			Dashboard: dashboardDataOne,
 			OrgID:     0,
-			FolderUID: folder.Uid,
+			FolderUID: folder.UID,
 		})
 		require.NoError(t, err)
 		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/db", grafanaListedAddr)
@@ -379,7 +379,7 @@ func TestIntegrationCreate(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotEmpty(t, m["id"])
 		assert.NotEmpty(t, m["uid"])
-		assert.Equal(t, folder.Uid, m["folderUid"])
+		assert.Equal(t, folder.UID, m["folderUid"])
 	})
 
 	t.Run("create dashboard under unknow folder should fail", func(t *testing.T) {
