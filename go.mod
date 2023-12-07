@@ -108,7 +108,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.21.0 // @grafana/backend-platform
 	go.opentelemetry.io/otel/trace v1.21.0 // @grafana/backend-platform
 	golang.org/x/crypto v0.15.0 // @grafana/backend-platform
-	golang.org/x/exp v0.0.0-20230321023759-10a507213a29 // @grafana/alerting-squad-backend
+	golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1 // @grafana/alerting-squad-backend
 	golang.org/x/net v0.18.0 // @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.14.0 // @grafana/grafana-authnz-team
 	golang.org/x/sync v0.4.0 // @grafana/alerting-squad-backend
@@ -267,7 +267,7 @@ require (
 	github.com/ory/fosite v0.44.1-0.20230317114349-45a6785cc54f // @grafana/grafana-authnz-team
 	github.com/redis/go-redis/v9 v9.0.2 // @grafana/alerting-squad-backend
 	github.com/weaveworks/common v0.0.0-20230511094633-334485600903 // @grafana/alerting-squad-backend
-	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // @grafana/grafana-as-code
+	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // @grafana/grafana-as-code
 	go.opentelemetry.io/contrib/samplers/jaegerremote v0.15.1 // @grafana/backend-platform
 	golang.org/x/mod v0.12.0 // @grafana/backend-platform
 	gopkg.in/square/go-jose.v2 v2.6.0 // @grafana/grafana-authnz-team
@@ -483,8 +483,12 @@ require (
 )
 
 require (
+	github.com/Flagsmith/flagsmith-go-client/v3 v3.1.1 // indirect
+	github.com/go-resty/resty/v2 v2.10.0 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0 // indirect
+	github.com/open-feature/go-sdk v1.5.1 // indirect
+	github.com/open-feature/go-sdk-contrib/providers/flagsmith v0.1.4 // indirect
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream

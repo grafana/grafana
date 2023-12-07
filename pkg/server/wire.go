@@ -67,6 +67,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver/oasimpl"
 	extsvcreg "github.com/grafana/grafana/pkg/services/extsvcauth/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/flagsmith"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
@@ -293,6 +294,7 @@ var wireBasicSet = wire.NewSet(
 	expr.ProvideService,
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
+	flagsmith.ProvideFlagsmithOfClient,
 	dashboardservice.ProvideDashboardServiceImpl,
 	dashboardservice.ProvideDashboardService,
 	dashboardservice.ProvideDashboardProvisioningService,

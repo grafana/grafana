@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/flagsmith"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -34,6 +35,7 @@ type ServiceImpl struct {
 	pluginSettings       pluginsettings.Service
 	starService          star.Service
 	features             *featuremgmt.FeatureManager
+	flagsmith            *flagsmith.FlagsmithOfClient
 	dashboardService     dashboards.DashboardService
 	accesscontrolService ac.Service
 	kvStore              kvstore.KVStore
@@ -52,7 +54,7 @@ type NavigationAppConfig struct {
 	Icon       string
 }
 
-func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service, starService star.Service, features *featuremgmt.FeatureManager, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service, license licensing.Licensing) navtree.Service {
+func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service, starService star.Service, features *featuremgmt.FeatureManager, flagsmith *flagsmith.FlagsmithOfClient, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service, license licensing.Licensing) navtree.Service {
 	service := &ServiceImpl{
 		cfg:                  cfg,
 		log:                  log.New("navtree service"),
@@ -61,6 +63,7 @@ func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStor
 		pluginSettings:       pluginSettings,
 		starService:          starService,
 		features:             features,
+		flagsmith:            flagsmith,
 		dashboardService:     dashboardService,
 		accesscontrolService: accesscontrolService,
 		kvStore:              kvStore,

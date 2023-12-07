@@ -310,7 +310,8 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"k6-app":                           {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAlertsAndIncidents + 1, Text: "Performance testing", Icon: "k6"},
 	}
 
-	if s.features.IsEnabledGlobally(featuremgmt.FlagCostManagementUi) {
+	costmanagementFlag, _ := s.flagsmith.IsEnabled("dbfe_cost_management_ui")
+	if costmanagementFlag {
 		// if cost management is enabled we want to nest adaptive metrics and log volume explorer under that plugin
 		// in the admin section
 		s.navigationAppConfig["grafana-adaptive-metrics-app"] = NavigationAppConfig{SectionID: navtree.NavIDCfg}
