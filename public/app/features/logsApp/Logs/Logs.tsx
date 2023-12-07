@@ -769,6 +769,9 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   </Button>
                 )}
               </div>
+              <div className={styles.resolutionContainer}>
+                <LogResolutionPicker rows={logRows?.length || 0} onResolutionChange={this.handleResolutionChange} />
+              </div>
               <div className={styles.optionToggles}>
                 {config.featureToggles.logsExploreTableVisualisation && (
                   <div className={styles.visualisationType}>
@@ -940,16 +943,13 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     onSimilarityChange={this.onLogsSimilarityChange}
                   />
                 ) : (
-                  <>
-                    <LogResolutionPicker rows={logRows?.length || 0} onResolutionChange={this.handleResolutionChange} />
-                    <LogStats
-                      styles={logRowStyles}
-                      rows={logRows}
-                      logsMeta={logsMeta}
-                      onClickFilterLabel={onClickFilterLabel}
-                      onClickFilterOutLabel={onClickFilterOutLabel}
-                    />
-                  </>
+                  <LogStats
+                    styles={logRowStyles}
+                    rows={logRows}
+                    logsMeta={logsMeta}
+                    onClickFilterLabel={onClickFilterLabel}
+                    onClickFilterOutLabel={onClickFilterOutLabel}
+                  />
                 )}
               </div>
             </SplitPaneWrapper>
@@ -964,6 +964,11 @@ export const Logs = withTheme2(UnthemedLogs);
 
 const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: number) => {
   return {
+    resolutionContainer: css({
+      paddingTop: theme.spacing(1),
+      width: '400px',
+      opacity: .5,
+    }),
     sidebarToggle: css({
       // backgroundColor: 'transparent',
       // border: 'none',
