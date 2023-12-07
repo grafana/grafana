@@ -1,10 +1,13 @@
+import { css } from '@emotion/css';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { Button, Text } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import { TutorialProgress } from 'app/features/tutorial/TutorialProgress';
 import { StoreState, useDispatch } from 'app/types';
 
-import { nextStep } from './slice';
+import { exitCurrentTutorial, nextStep } from './slice';
 import { type Step } from './types';
 
 const TutorialTooltipComponent = ({
@@ -12,20 +15,29 @@ const TutorialTooltipComponent = ({
   currentTutorialId,
   currentStepIndex,
 }: ConnectedProps<typeof connector>) => {
+  const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const currentTutorial = availableTutorials.find((t) => t.id === currentTutorialId);
+  const isLastStep = currentTutorial ? currentStepIndex === currentTutorial.steps.length - 1 : false;
   const step = currentStepIndex !== null && currentTutorial ? currentTutorial.steps[currentStepIndex] : null;
 
-  if (step) {
+  if (step && currentTutorial) {
     return (
       <>
-        {renderStepTitle(step.title)}
-        {renderContent(step.content)}
-        {!step.requiredActions && (
-          <div>
-            <Button onClick={() => dispatch(nextStep())}>Next</Button>
-          </div>
-        )}
+        <StepTitle title={step.title} />
+        <StepContent content={step.content} />
+        <Stack alignItems={`center`} justifyContent={`space-between`}>
+          <StepActions isLastStep={isLastStep} step={step} />
+          <TutorialProgress tutorial={currentTutorial} />
+        </Stack>
+        <IconButton
+          className={styles.exit}
+          name="times"
+          onClick={() => {
+            dispatch(exitCurrentTutorial());
+          }}
+          tooltip="Exit tutorial"
+        />
       </>
     );
   }
@@ -33,7 +45,7 @@ const TutorialTooltipComponent = ({
   return null;
 };
 
-function renderStepTitle(title: Step['title']) {
+const StepTitle = ({ title }: { title: Step['title'] }) => {
   if (!title) {
     return null;
   }
@@ -47,9 +59,9 @@ function renderStepTitle(title: Step['title']) {
   }
 
   return <div>{title}</div>;
-}
+};
 
-function renderContent(content: Step['content']) {
+const StepContent = ({ content }: { content: Step['content'] }) => {
   if (!content) {
     return null;
   }
@@ -59,7 +71,34 @@ function renderContent(content: Step['content']) {
   }
 
   return <div>{content}</div>;
-}
+};
+
+const StepActions = ({ isLastStep, step }: { isLastStep: boolean; step: Step }) => {
+  const dispatch = useDispatch();
+  const styles = useStyles2(getStyles);
+
+  if (step.requiredActions) {
+    return <div className={styles.required}>{`Required action${isLastStep ? ' to finish' : ``}`}</div>;
+  }
+
+  return (
+    <div>
+      <Button onClick={() => dispatch(nextStep())}>{isLastStep ? 'Finish' : 'Next'}</Button>
+    </div>
+  );
+};
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  exit: css({
+    position: 'absolute',
+    top: theme.spacing(1),
+    right: theme.spacing(1),
+  }),
+  required: css({
+    fontStyle: `italic`,
+    color: `#a28900`,
+  }),
+});
 
 TutorialTooltipComponent.displayName = 'TutorialTooltip';
 

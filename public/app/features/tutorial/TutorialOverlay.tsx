@@ -37,10 +37,15 @@ const TutorialOverlayComponent = ({
   const { getTooltipProps, setTooltipRef, setTriggerRef, triggerRef } = popper;
 
   useEffect(() => {
-    if (!isTransitioning) {
+    if (renderedFirstStep.current && !isTransitioning && currentTutorial) {
       setShowTooltip(false);
+
+      // TODO: this could fire before the transitionend event. It is a fallback in case the transitionend event doesn't fire
+      setTimeout(() => {
+        setShowTooltip(true);
+      }, 500);
     }
-  }, [isTransitioning]);
+  }, [currentTutorial, isTransitioning]);
 
   useEffect(() => {
     let setStyles: any;
