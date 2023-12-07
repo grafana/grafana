@@ -1,9 +1,5 @@
-import { css } from '@emotion/css';
 import React from 'react';
 import Skeleton from 'react-loading-skeleton';
-
-import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
 
 import { Settings } from './AdminSettings';
 
@@ -12,8 +8,6 @@ interface Props {
 }
 
 export const AdminSettingsTable = ({ settings }: Props) => {
-  const styles = useStyles2(getStyles);
-
   return (
     <table className="filter-table">
       <tbody>
@@ -25,8 +19,8 @@ export const AdminSettingsTable = ({ settings }: Props) => {
             </tr>
             {Object.entries(sectionSettings).map(([settingName, settingValue], j) => (
               <tr key={`property-${j}`}>
-                <td className={styles.key}>{settingName}</td>
-                <td className={styles.value}>{settingValue}</td>
+                <td style={{ paddingLeft: '25px' }}>{settingName}</td>
+                <td style={{ whiteSpace: 'break-spaces' }}>{settingValue}</td>
               </tr>
             ))}
           </React.Fragment>
@@ -40,8 +34,6 @@ export const AdminSettingsTable = ({ settings }: Props) => {
 const randomValues = new Array(50).fill(null).map(() => Math.random());
 
 const AdminSettingsTableSkeleton = () => {
-  const styles = useStyles2(getStyles);
-
   return (
     <table className="filter-table">
       <tbody>
@@ -59,7 +51,7 @@ const AdminSettingsTableSkeleton = () => {
                 </tr>
               )}
               <tr>
-                <td className={styles.key}>
+                <td style={{ paddingLeft: '25px' }}>
                   <Skeleton width={getRandomInRange(60, 100, randomValue)} />
                 </td>
                 <td>
@@ -79,12 +71,3 @@ function getRandomInRange(min: number, max: number, randomSeed: number) {
 }
 
 AdminSettingsTable.Skeleton = AdminSettingsTableSkeleton;
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  key: css({
-    paddingLeft: `${theme.spacing(3)} !important`,
-  }),
-  value: css({
-    whiteSpace: 'break-spaces',
-  }),
-});
