@@ -6,13 +6,11 @@ import { CoreApp, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { EditorHeader, EditorRows, FlexItem, Space, Stack } from '@grafana/experimental';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, ConfirmModal, Drawer } from '@grafana/ui';
+import { Button, ConfirmModal } from '@grafana/ui';
 import { QueryEditorModeToggle } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryEditorModeToggle';
 import { QueryHeaderSwitch } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryHeaderSwitch';
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 
-import { WizarDS } from '../../prometheus/querybuilder/components/wizarDS/WizarDS';
-import { componentTemplates } from '../../prometheus/querybuilder/components/wizarDS/state/templatesLoki';
 import { lokiQueryEditorExplainKey, useFlag } from '../../prometheus/querybuilder/shared/hooks/useFlag';
 import { LabelBrowserModal } from '../querybuilder/components/LabelBrowserModal';
 import { LokiQueryBuilderContainer } from '../querybuilder/components/LokiQueryBuilderContainer';
@@ -38,7 +36,6 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
   const [dataIsStale, setDataIsStale] = useState(false);
   const [labelBrowserVisible, setLabelBrowserVisible] = useState(false);
   const [queryStats, setQueryStats] = useState<QueryStats | null>(null);
-  const [wizarDSDrawerOpen, setWizarDSDrawerOpen] = useState(false);
   const { flag: explain, setFlag: setExplain } = useFlag(lokiQueryEditorExplainKey);
 
   const predefinedOperations = datasource.predefinedOperations;
@@ -118,19 +115,8 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
     }
   }, [datasource, timeRange, previousTimeRange, query, previousQueryExpr, previousQueryType, setQueryStats, id]);
 
-  const wizarDSToggle = config.featureToggles.wizarDSToggle;
-
   return (
     <>
-      {wizarDSToggle && wizarDSDrawerOpen && (
-        <Drawer closeOnMaskClick={false} onClose={() => setWizarDSDrawerOpen(false)}>
-          <WizarDS
-            closeDrawer={() => setWizarDSDrawerOpen(false)}
-            // add component templates so any DS can use this
-            templates={componentTemplates}
-          />
-        </Drawer>
-      )}
       <ConfirmModal
         isOpen={parseModalOpen}
         title="Query parsing"
@@ -181,9 +167,6 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
             }}
           >
             Kick start your query
-          </Button>
-          <Button variant="secondary" size="sm" onClick={() => setWizarDSDrawerOpen((prevValue) => !prevValue)}>
-            Take me on a magical journey
           </Button>
           <Button variant="secondary" size="sm" onClick={onClickLabelBrowserButton} data-testid="label-browser-button">
             Label browser
