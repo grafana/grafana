@@ -262,7 +262,7 @@ export const LogDetails = (props: Props) => {
             })}
 
             {row.possibleTraceId && tempoDs.value && traceDf.value && transformedTraceData && (
-              <tr style={{ margin: '4px 0' }}>
+              <tr style={{ margin: '4px 0', marginTop: '1em' }}>
                 <th colSpan={6}>
                   <Collapse
                     label="Trace"
