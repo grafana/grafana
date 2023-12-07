@@ -11,8 +11,8 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/login/social/constants"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -22,6 +22,9 @@ const (
 	googleIAMGroupsEndpoint = "https://content-cloudidentity.googleapis.com/v1/groups/-/memberships:searchDirectGroups"
 	googleIAMScope          = "https://www.googleapis.com/auth/cloud-identity.groups.readonly"
 )
+
+var _ social.SocialConnector = (*SocialGoogle)(nil)
+var _ ssosettings.Reloadable = (*SocialGoogle)(nil)
 
 type SocialGoogle struct {
 	*SocialBase
@@ -39,9 +42,9 @@ type googleUserData struct {
 }
 
 func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) *SocialGoogle {
-	config := createOAuthConfig(info, cfg, constants.GoogleProviderName)
+	config := createOAuthConfig(info, cfg, social.GoogleProviderName)
 	provider := &SocialGoogle{
-		SocialBase:      newSocialBase(constants.GoogleProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:      newSocialBase(social.GoogleProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		hostedDomain:    info.HostedDomain,
 		apiUrl:          info.ApiUrl,
 		skipOrgRoleSync: cfg.GoogleSkipOrgRoleSync,

@@ -13,9 +13,9 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/login/social/constants"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -23,6 +23,9 @@ import (
 )
 
 var ExtraGithubSettingKeys = []string{allowedOrganizationsKey, teamIdsKey}
+
+var _ social.SocialConnector = (*SocialGithub)(nil)
+var _ ssosettings.Reloadable = (*SocialGithub)(nil)
 
 type SocialGithub struct {
 	*SocialBase
@@ -55,9 +58,9 @@ var (
 func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) *SocialGithub {
 	teamIds := mustInts(util.SplitString(info.Extra[teamIdsKey]))
 
-	config := createOAuthConfig(info, cfg, constants.GitHubProviderName)
+	config := createOAuthConfig(info, cfg, social.GitHubProviderName)
 	provider := &SocialGithub{
-		SocialBase:           newSocialBase(constants.GitHubProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:           newSocialBase(social.GitHubProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		apiUrl:               info.ApiUrl,
 		teamIds:              teamIds,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),

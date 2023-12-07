@@ -16,10 +16,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/login/social/constants"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -33,6 +33,7 @@ var (
 )
 
 var _ social.SocialConnector = (*SocialAzureAD)(nil)
+var _ ssosettings.Reloadable = (*SocialAzureAD)(nil)
 
 type SocialAzureAD struct {
 	*SocialBase
@@ -73,9 +74,9 @@ type keySetJWKS struct {
 }
 
 func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) *SocialAzureAD {
-	config := createOAuthConfig(info, cfg, constants.AzureADProviderName)
+	config := createOAuthConfig(info, cfg, social.AzureADProviderName)
 	provider := &SocialAzureAD{
-		SocialBase:           newSocialBase(constants.AzureADProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:           newSocialBase(social.AzureADProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		cache:                cache,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 		forceUseGraphAPI:     MustBool(info.Extra[forceUseGraphAPIKey], false),

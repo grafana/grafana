@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/connectors"
-	"github.com/grafana/grafana/pkg/login/social/constants"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -17,11 +16,11 @@ type OAuthStrategy struct {
 }
 
 var extraKeysByProvider = map[string][]string{
-	constants.AzureADProviderName:      connectors.ExtraAzureADSettingKeys,
-	constants.GenericOAuthProviderName: connectors.ExtraGenericOAuthSettingKeys,
-	constants.GitHubProviderName:       connectors.ExtraGithubSettingKeys,
-	constants.GrafanaComProviderName:   connectors.ExtraGrafanaComSettingKeys,
-	constants.GrafanaNetProviderName:   connectors.ExtraGrafanaComSettingKeys,
+	social.AzureADProviderName:      connectors.ExtraAzureADSettingKeys,
+	social.GenericOAuthProviderName: connectors.ExtraGenericOAuthSettingKeys,
+	social.GitHubProviderName:       connectors.ExtraGithubSettingKeys,
+	social.GrafanaComProviderName:   connectors.ExtraGrafanaComSettingKeys,
+	social.GrafanaNetProviderName:   connectors.ExtraGrafanaComSettingKeys,
 }
 
 var _ ssosettings.FallbackStrategy = (*OAuthStrategy)(nil)
@@ -46,11 +45,11 @@ func (s *OAuthStrategy) GetProviderConfig(_ context.Context, provider string) (a
 }
 
 func (s *OAuthStrategy) loadAllSettings() {
-	allProviders := append(ssosettings.AllOAuthProviders, constants.GrafanaNetProviderName)
+	allProviders := append(ssosettings.AllOAuthProviders, social.GrafanaNetProviderName)
 	for _, provider := range allProviders {
 		settings := s.loadSettingsForProvider(provider)
-		if provider == constants.GrafanaNetProviderName {
-			provider = constants.GrafanaComProviderName
+		if provider == social.GrafanaNetProviderName {
+			provider = social.GrafanaComProviderName
 		}
 		s.settingsByProvider[provider] = settings
 	}

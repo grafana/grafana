@@ -13,8 +13,8 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/login/social/constants"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -27,6 +27,9 @@ const (
 )
 
 var ExtraGenericOAuthSettingKeys = []string{nameAttributePathKey, loginAttributePathKey, idTokenAttributeNameKey, teamIdsKey, allowedOrganizationsKey}
+
+var _ social.SocialConnector = (*SocialGenericOAuth)(nil)
+var _ ssosettings.Reloadable = (*SocialGenericOAuth)(nil)
 
 type SocialGenericOAuth struct {
 	*SocialBase
@@ -46,9 +49,9 @@ type SocialGenericOAuth struct {
 }
 
 func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) *SocialGenericOAuth {
-	config := createOAuthConfig(info, cfg, constants.GenericOAuthProviderName)
+	config := createOAuthConfig(info, cfg, social.GenericOAuthProviderName)
 	provider := &SocialGenericOAuth{
-		SocialBase:           newSocialBase(constants.GenericOAuthProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:           newSocialBase(social.GenericOAuthProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		apiUrl:               info.ApiUrl,
 		teamsUrl:             info.TeamsUrl,
 		emailAttributeName:   info.EmailAttributeName,

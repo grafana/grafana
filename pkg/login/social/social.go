@@ -13,6 +13,16 @@ import (
 const (
 	OfflineAccessScope = "offline_access"
 	RoleGrafanaAdmin   = "GrafanaAdmin" // For AzureAD for example this value cannot contain spaces
+
+	AzureADProviderName      = "azuread"
+	GenericOAuthProviderName = "generic_oauth"
+	GitHubProviderName       = "github"
+	GitlabProviderName       = "gitlab"
+	GoogleProviderName       = "google"
+	GrafanaComProviderName   = "grafana_com"
+	// legacy/old settings for the provider
+	GrafanaNetProviderName = "grafananet"
+	OktaProviderName       = "okta"
 )
 
 var (

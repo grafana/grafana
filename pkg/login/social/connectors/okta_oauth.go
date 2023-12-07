@@ -11,12 +11,15 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/login/social/constants"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+var _ social.SocialConnector = (*SocialOkta)(nil)
+var _ ssosettings.Reloadable = (*SocialOkta)(nil)
 
 type SocialOkta struct {
 	*SocialBase
@@ -45,9 +48,9 @@ type OktaClaims struct {
 }
 
 func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) *SocialOkta {
-	config := createOAuthConfig(info, cfg, constants.OktaProviderName)
+	config := createOAuthConfig(info, cfg, social.OktaProviderName)
 	provider := &SocialOkta{
-		SocialBase:    newSocialBase(constants.OktaProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:    newSocialBase(social.OktaProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		apiUrl:        info.ApiUrl,
 		allowedGroups: info.AllowedGroups,
 		// FIXME: Move skipOrgRoleSync to OAuthInfo

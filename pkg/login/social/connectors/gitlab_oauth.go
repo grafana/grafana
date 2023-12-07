@@ -12,9 +12,9 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/login/social/constants"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -23,6 +23,9 @@ const (
 	groupPerPage     = 50
 	accessLevelGuest = "10"
 )
+
+var _ social.SocialConnector = (*SocialGitlab)(nil)
+var _ ssosettings.Reloadable = (*SocialGitlab)(nil)
 
 type SocialGitlab struct {
 	*SocialBase
@@ -52,9 +55,9 @@ type userData struct {
 }
 
 func NewGitLabProvider(info *social.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) *SocialGitlab {
-	config := createOAuthConfig(info, cfg, constants.GitlabProviderName)
+	config := createOAuthConfig(info, cfg, social.GitlabProviderName)
 	provider := &SocialGitlab{
-		SocialBase:      newSocialBase(constants.GitlabProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:      newSocialBase(social.GitlabProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		apiUrl:          info.ApiUrl,
 		skipOrgRoleSync: cfg.GitLabSkipOrgRoleSync,
 		// FIXME: Move skipOrgRoleSync to OAuthInfo
