@@ -690,7 +690,7 @@ func (d *dashboardStore) DeleteDashboard(ctx context.Context, cmd *dashboards.De
 
 func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand, sess *db.Session, emitEntityEvent bool) error {
 	dashboard := dashboards.Dashboard{ID: cmd.ID, OrgID: cmd.OrgID}
-	has, err := sess.Where("deleted IS NULL").Get(&dashboard)
+	has, err := sess.Get(&dashboard)
 	if err != nil {
 		return err
 	} else if !has {
