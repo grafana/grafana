@@ -78,7 +78,6 @@ func TestNewAlertmanager(t *testing.T) {
 			require.Equal(tt, am.url, test.url)
 			require.Equal(tt, am.orgID, test.orgID)
 			require.NotNil(tt, am.amClient)
-			require.NotNil(tt, am.httpClient)
 		})
 	}
 }

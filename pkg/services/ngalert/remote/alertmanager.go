@@ -34,7 +34,6 @@ type Alertmanager struct {
 	url      string
 
 	amClient    *remoteClient.Alertmanager
-	httpClient  *http.Client
 	mimirClient remoteClient.MimirClient
 }
 
