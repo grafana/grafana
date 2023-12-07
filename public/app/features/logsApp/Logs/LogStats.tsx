@@ -32,8 +32,10 @@ export const LogStats = ({ styles, rows, logsMeta, onClickFilterLabel, onClickFi
       <div className={styles.logDetailsContainer}>
         <div style={{ fontFamily: "'Roboto Mono', monospace", fontSize: '12px', padding: '8px 0' }}>
           <div>
-            <p>Total log lines: {rows.length}</p>
-            {resolution > 0 && <p>Rendered: {Math.round(rows.length / calculateResolutionIndex(resolution, rows.length))}</p>}
+            <p>
+              Total log lines: {rows.length}<br />
+              {resolution > 0 && <>Rendered: {Math.round(rows.length / calculateResolutionIndex(resolution, rows.length))}</>}
+            </p>
           </div>
           <ExplainAllLogLines logLines={rows.map((row) => row.entry)} />
           {/**todo angles are not working yet */}
