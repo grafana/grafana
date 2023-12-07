@@ -39,7 +39,7 @@ export function SuggestionItem(props: Props) {
             variant="secondary"
             size="sm"
             onClick={() => {
-              const tutorialid = `component-locator`;
+              const tutorialid = `${props.suggestion.component}-component-locator`;
               dispatch(
                 addTutorial({
                   id: tutorialid,
