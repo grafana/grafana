@@ -64,7 +64,6 @@ describe('hooks', () => {
   describe('useDimensionKeys', () => {
     it('should interpolate variables before calling api', async () => {
       const { datasource } = setupMockedDataSource({
-        mockGetVariableName: true,
         variables: [regionVariable, namespaceVariable, accountIdVariable, metricVariable, dimensionVariable],
       });
       const getDimensionKeysMock = jest.fn().mockResolvedValue([]);

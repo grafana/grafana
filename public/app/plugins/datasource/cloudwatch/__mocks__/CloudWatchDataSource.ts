@@ -6,10 +6,11 @@ import {
   DataSourcePluginMeta,
   PluginMetaInfo,
   PluginType,
+  ScopedVars,
   VariableHide,
 } from '@grafana/data';
-import { getBackendSrv, setBackendSrv, DataSourceWithBackend } from '@grafana/runtime';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { getBackendSrv, setBackendSrv, DataSourceWithBackend, TemplateSrv } from '@grafana/runtime';
+
 
 import { initialCustomVariableModelState } from '../__mocks__/variables';
 import { CloudWatchDatasource } from '../datasource';
@@ -18,10 +19,30 @@ import { CloudWatchJsonData } from '../types';
 const queryMock = jest.fn().mockReturnValue(of({ data: [] }));
 jest.spyOn(DataSourceWithBackend.prototype, 'query').mockImplementation((args) => queryMock(args));
 
-export function setupMockedTemplateService(variables: CustomVariableModel[]) {
-  const templateService = new TemplateSrv();
-  templateService.init(variables);
-  templateService.getVariables = jest.fn().mockReturnValue(variables);
+export function setupMockedTemplateService(variables?: CustomVariableModel[]): TemplateSrv {
+  const templateService = {
+    replace: jest.fn().mockImplementation((input: string, scopedVars?: ScopedVars, format?: string | Function) => {
+      if (!variables) {
+        return input;
+      }
+
+      let output = input;
+      variables.forEach((variable) => {
+        let repVal = '';
+        let value = format === 'text' ? variable.current.text : variable.current.value;
+        if (Array.isArray(value)) {
+          repVal = value.join(' + ');
+        } else {
+          repVal = value;
+        }
+        output = output.replace('$' + variable.name, repVal);
+      });
+      return output;
+    }),
+    getVariables: jest.fn().mockReturnValue(variables ?? []),
+    containsTemplate: jest.fn(),
+    updateTimeRange: jest.fn(),
+  };
   return templateService;
 }
 
@@ -62,22 +83,14 @@ export const CloudWatchSettings: DataSourceInstanceSettings<CloudWatchJsonData> 
 
 export function setupMockedDataSource({
   variables,
-  mockGetVariableName = true,
   getMock = jest.fn(),
   customInstanceSettings = CloudWatchSettings,
 }: {
   getMock?: jest.Func;
   variables?: CustomVariableModel[];
-  mockGetVariableName?: boolean;
   customInstanceSettings?: DataSourceInstanceSettings<CloudWatchJsonData>;
 } = {}) {
-  let templateService = new TemplateSrv();
-  if (variables) {
-    templateService = setupMockedTemplateService(variables);
-    if (mockGetVariableName) {
-      templateService.getVariableName = (name: string) => name.replace('$', '');
-    }
-  }
+  const templateService = setupMockedTemplateService(variables);
 
   const datasource = new CloudWatchDatasource(customInstanceSettings, templateService);
   datasource.getVariables = () => ['test'];
@@ -199,8 +212,8 @@ export const logGroupNamesVariable: CustomVariableModel = {
     selected: true,
   },
   options: [
-    { value: 'templatedGroup-1', text: 'templatedGroup-1', selected: true },
-    { value: 'templatedGroup-2', text: 'templatedGroup-2', selected: true },
+    { value: 'templatedGroup-arn-1', text: 'templatedGroup-1', selected: true },
+    { value: 'templatedGroup-arn-2', text: 'templatedGroup-2', selected: true },
   ],
   multi: true,
 };

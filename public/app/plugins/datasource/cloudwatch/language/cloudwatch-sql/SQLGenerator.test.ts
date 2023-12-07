@@ -1,10 +1,9 @@
-import { TemplateSrv } from 'app/features/templating/template_srv';
-
 import {
   aggregationvariable,
   labelsVariable,
   metricVariable,
   namespaceVariable,
+  setupMockedTemplateService,
 } from '../../__mocks__/CloudWatchDataSource';
 import {
   createFunctionWithParameter,
@@ -353,8 +352,12 @@ describe('SQLGenerator', () => {
   });
 
   describe('using variables', () => {
-    const templateService = new TemplateSrv();
-    templateService.init([metricVariable, namespaceVariable, labelsVariable, aggregationvariable]);
+    const templateService = setupMockedTemplateService([
+      metricVariable,
+      namespaceVariable,
+      labelsVariable,
+      aggregationvariable,
+    ]);
 
     it('should interpolate variables correctly', () => {
       let query: SQLExpression = {

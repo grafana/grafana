@@ -1,6 +1,10 @@
 import { CustomVariableModel } from '@grafana/data';
 import { getBackendSrv, setBackendSrv } from '@grafana/runtime';
+<<<<<<< HEAD
 import { TemplateSrv } from 'app/features/templating/template_srv';
+=======
+import { CustomVariableModel } from 'app/features/variables/types';
+>>>>>>> 50c578ff7d (CloudWatch: Remove dependency on templateSrv)
 
 import { ResourcesAPI } from '../resources/ResourcesAPI';
 
@@ -16,7 +20,7 @@ export function setupMockedResourcesAPI({
   variables?: CustomVariableModel[];
   mockGetVariableName?: boolean;
 } = {}) {
-  let templateService = variables ? setupMockedTemplateService(variables) : new TemplateSrv();
+  let templateService = setupMockedTemplateService(variables);
 
   const api = new ResourcesAPI(CloudWatchSettings, templateService);
   let resourceRequestMock = getMock ? getMock : jest.fn().mockReturnValue(response);

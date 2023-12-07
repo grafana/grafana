@@ -1,4 +1,4 @@
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import {
   QueryEditorArrayExpression,

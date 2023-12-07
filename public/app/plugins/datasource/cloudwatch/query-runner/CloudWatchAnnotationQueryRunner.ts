@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs';
 
 import { DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/data';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TemplateSrv } from '@grafana/runtime';
 
 import { CloudWatchAnnotationQuery, CloudWatchJsonData, CloudWatchQuery } from '../types';
 
