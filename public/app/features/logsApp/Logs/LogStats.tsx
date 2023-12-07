@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import { DataFrame, Labels, LogRowModel, LogsMetaItem } from '@grafana/data';
 import { Icon } from '@grafana/ui';
@@ -18,6 +18,8 @@ export interface Props {
 }
 
 export const LogStats = ({ styles, rows, logsMeta, onClickFilterLabel, onClickFilterOutLabel }: Props) => {
+  const [uniqueExpanded, setUniqueExpanded] = useState(true);
+  const [commonExpanded, setCommonExpanded] = useState(true);
   //@ts-ignore
   const commonLabels: Labels = logsMeta?.find((meta) => meta.label === COMMON_LABELS)?.value ?? ({} as Labels);
   //@ts-ignore
@@ -27,16 +29,18 @@ export const LogStats = ({ styles, rows, logsMeta, onClickFilterLabel, onClickFi
     <div className={styles.logDetails}>
       <div className={styles.logDetailsContainer}>
         <div style={{ fontFamily: "'Roboto Mono', monospace", fontSize: '12px', padding: '8px 0' }}>
-          <div style={{ fontWeight: 500, fontSize: '12px', marginBottom: '8px' }}>Log results ad hoc statistics</div>
           <ExplainAllLogLines logLines={rows.map((row) => row.entry)} />
           {/**todo angles are not working yet */}
           {uniqueLabel && (
             <>
-              <div style={{ fontSize: '12px', marginTop: '8px' }}>
+              <div
+                style={{ fontSize: '12px', marginTop: '8px', cursor: 'pointer' }}
+                onClick={() => setUniqueExpanded(!uniqueExpanded)}
+              >
                 Unique fields
-                <Icon name="angle-down" />
+                <Icon name={!uniqueExpanded ? 'angle-up' : 'angle-down'} />
               </div>
-              <div>
+              <div style={{ display: uniqueExpanded ? '' : 'none'}}>
                 {Object.keys(uniqueLabel).map((key) => {
                   const stats = calculateLogsLabelStats(rows, key);
                   return (
@@ -56,27 +60,33 @@ export const LogStats = ({ styles, rows, logsMeta, onClickFilterLabel, onClickFi
               </div>
             </>
           )}
+          <br />
           {commonLabels && (
             <>
-              <div style={{ fontSize: '12px', marginTop: '8px' }}>
+              <div
+                style={{ fontSize: '12px', marginTop: '8px', cursor: 'pointer' }}
+                onClick={() => setCommonExpanded(!commonExpanded)}
+              >
                 Common fields
-                <Icon name="angle-down" />
+                <Icon name={!commonExpanded ? 'angle-up' : 'angle-down'} />
               </div>
-              {Object.keys(commonLabels as Labels).map((key: string) => {
-                return (
-                  <div key={key}>
-                    <LogLabelStats
-                      stats={[{ count: rows.length, proportion: 1, value: commonLabels[key] as string }]}
-                      label={key}
-                      value={''}
-                      rowCount={rows.length}
-                      shouldFilter={true}
-                      onClickFilterLabel={onClickFilterLabel}
-                      onClickFilterOutLabel={onClickFilterOutLabel}
-                    />
-                  </div>
-                );
-              })}
+              <div style={{ display: commonExpanded ? '' : 'none'}}>
+                {Object.keys(commonLabels as Labels).map((key: string) => {
+                  return (
+                    <div key={key}>
+                      <LogLabelStats
+                        stats={[{ count: rows.length, proportion: 1, value: commonLabels[key] as string }]}
+                        label={key}
+                        value={''}
+                        rowCount={rows.length}
+                        shouldFilter={true}
+                        onClickFilterLabel={onClickFilterLabel}
+                        onClickFilterOutLabel={onClickFilterOutLabel}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             </>
           )}
         </div>

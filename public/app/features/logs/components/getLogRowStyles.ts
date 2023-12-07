@@ -309,6 +309,8 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       label: 'logDetailsDefaultCursor',
       backgroundColor: theme.colors.background.secondary,
       paddingBottom: theme.spacing(2),
+      maxHeight: '75vh',
+      overflowY: 'scroll',
     }),
     visibleRowMenu: css`
       label: visibleRowMenu;

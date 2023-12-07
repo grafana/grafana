@@ -43,16 +43,18 @@ export function QueryOptionGroup({ title, children, collapsedInfo, queryStats }:
         </Collapse>
       )}
 
-      {queryStats && (
-        <p className={styles.stats}>
-          {config.featureToggles.lokiQuerySplitting && (
-            <Tooltip content="Note: the query will be split into multiple parts and executed in sequence. Query limits will only apply each individual part.">
-              <Icon tabIndex={0} name="info-circle" className={styles.tooltip} size="sm" />
-            </Tooltip>
-          )}
-          {generateQueryStats(queryStats)}
-        </p>
-      )}
+      <div className={styles.stats}>
+        {queryStats && (
+          <>
+            {config.featureToggles.lokiQuerySplitting && (
+              <Tooltip content="Note: the query will be split into multiple parts and executed in sequence. Query limits will only apply each individual part.">
+                <Icon tabIndex={0} name="info-circle" className={styles.tooltip} size="sm" />
+              </Tooltip>
+            )}
+            {generateQueryStats(queryStats)}
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -99,6 +101,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginTop: theme.spacing(1),
       color: theme.colors.text.secondary,
       fontSize: theme.typography.bodySmall.fontSize,
+      minHeight: 19,
+      width: '100%',
+      textAlign: 'right',
     }),
     tooltip: css({
       marginRight: theme.spacing(0.25),

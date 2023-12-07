@@ -26,10 +26,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       color: ${theme.colors.text.primary};
       word-break: break-all;
       margin: ${theme.spacing(0.5)} 0;
-      padding: ${theme.spacing(1)};
-      &:hover {
-        background: ${theme.colors.background.primary};
-      }
+      padding: 0 ${theme.spacing(1)};
     `,
     logsStatsHeader: css`
       label: logs-stats__header;
@@ -44,6 +41,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       white-space: nowrap;
       text-overflow: ellipsis;
       flex-grow: 1;
+      padding-top: ${theme.spacing(0.5)};
     `,
     logsStatsClose: css`
       label: logs-stats__close;
@@ -51,7 +49,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     `,
     logsStatsBody: css`
       label: logs-stats__body;
-      padding: 5px 0px;
+      padding: 0;
       display: flex;
     `,
   };
@@ -91,40 +89,46 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
     }
     return (
       <div className={style.logsStats} data-testid="logLabelStats">
-        <div className={style.logsStatsTitle}>{label}</div>
         <div className={style.logsStatsBody}>
           <table style={{ width: '75%' }}>
-            {topRows.map((stat) => (
-              <LogLabelStatsRow
-                key={stat.value}
-                {...stat}
-                active={false}
-                total={total}
-                shouldFilter={shouldFilter}
-                onClickFilterLabel={onClickFilterLabel}
-                onClickFilterOutLabel={onClickFilterOutLabel}
-                keyField={label}
-              />
-            ))}
-            {otherCount > 0 && (
-              <LogLabelStatsRow
-                key="__OTHERS__"
-                count={otherCount}
-                value="Other"
-                proportion={otherProportion}
-                total={total}
-                shouldFilter={false}
-                keyField={label}
-                onClickFilterLabel={onClickFilterLabel}
-                onClickFilterOutLabel={onClickFilterOutLabel}
-              />
-            )}
+            <tbody>
+              <tr>
+                <td colSpan={4}>
+                  <div className={style.logsStatsTitle}>{label}</div>
+                </td>
+              </tr>
+              {topRows.map((stat) => (
+                <LogLabelStatsRow
+                  key={stat.value}
+                  {...stat}
+                  active={false}
+                  total={total}
+                  shouldFilter={shouldFilter}
+                  onClickFilterLabel={onClickFilterLabel}
+                  onClickFilterOutLabel={onClickFilterOutLabel}
+                  keyField={label}
+                />
+              ))}
+              {otherCount > 0 && (
+                <LogLabelStatsRow
+                  key="__OTHERS__"
+                  count={otherCount}
+                  value="Other"
+                  proportion={otherProportion}
+                  total={total}
+                  shouldFilter={false}
+                  keyField={label}
+                  onClickFilterLabel={onClickFilterLabel}
+                  onClickFilterOutLabel={onClickFilterOutLabel}
+                />
+              )}
+            </tbody>
           </table>
           <div style={{ width: '25%', display: 'flex', justifyContent: 'center', alignItems: 'cent' }}>
             <PanelRenderer
               pluginId="piechart"
-              height={100}
-              width={100}
+              height={95}
+              width={95}
               title="Pie Chart"
               data={{
                 series: [frame],
