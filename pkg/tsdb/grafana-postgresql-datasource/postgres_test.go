@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 
@@ -140,6 +141,7 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			svc := Service{
 				tlsManager: &tlsTestManager{settings: tt.tlsSettings},
+				logger:     log.New("tsdb.postgres"),
 			}
 
 			ds := sqleng.DataSourceInfo{
@@ -224,6 +226,7 @@ func TestIntegrationPostgres(t *testing.T) {
 
 	queryResultTransformer := postgresQueryResultTransformer{}
 
+	logger := log.New("postgres.test")
 	exe, err := sqleng.NewQueryDataHandler(cfg, config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
 		logger)
 
