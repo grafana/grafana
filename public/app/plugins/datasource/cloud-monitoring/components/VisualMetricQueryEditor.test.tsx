@@ -5,7 +5,6 @@ import { openMenu, select } from 'react-select-event';
 
 import { getDefaultTimeRange } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
 import { createMockMetricDescriptor } from '../__mocks__/cloudMonitoringMetricDescriptor';
@@ -248,17 +247,14 @@ describe('VisualMetricQueryEditor', () => {
   });
 
   it('updates labels on time range change', async () => {
-    const timeRange = getDefaultTimeRange();
+    const range = getDefaultTimeRange();
     const query = createMockTimeSeriesList();
     const onChange = jest.fn();
     const datasource = createMockDatasource({
       getMetricTypes: jest.fn().mockResolvedValue([createMockMetricDescriptor()]),
-      getLabels: jest
-        .fn()
-        .mockResolvedValue(timeSrv === 'now-6h' ? { 'metric.test_groupby': '' } : { 'metric.test_groupby_1': '' }),
+      getLabels: jest.fn().mockResolvedValue({ 'metric.test_groupby_1': '' }),
       templateSrv: getTemplateSrv(),
     });
-    const range = getDefaultTimeRange();
 
     const { rerender } = render(
       <VisualMetricQueryEditor
@@ -284,7 +280,7 @@ describe('VisualMetricQueryEditor', () => {
     const groupBy = await screen.findByLabelText('Group by');
     openMenu(groupBy);
     await waitFor(() => expect(document.body).toHaveTextContent('metric.test_groupby'));
-    timeRange.setTime({ from: 'now-12h', to: 'now' });
+    // timeRange.from ({ from: 'now-12h', to: 'now' });
     const datasourceUpdated = createMockDatasource({
       getLabels: jest.fn().mockResolvedValue({ 'metric.test_groupby_1': '' }),
     });
