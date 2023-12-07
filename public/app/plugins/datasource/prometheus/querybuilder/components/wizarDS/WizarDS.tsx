@@ -228,6 +228,7 @@ export const WizarDS = (props: WizarDSProps) => {
                           }
                           // onChange={onChange}
                           prompt={interaction.prompt ?? ''}
+                          tutorial={state.tutorial}
                         />
                       )}
                     </>
@@ -256,6 +257,7 @@ export const WizarDS = (props: WizarDSProps) => {
                       }
                       // onChange={onChange}
                       prompt={interaction.prompt ?? ''}
+                      tutorial={state.tutorial}
                     />
                   )}
                 </div>
@@ -341,6 +343,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     containerPadding: css({
       padding: '28px',
+      background: `${theme.colors.background.primary}`,
+      overflow: 'scroll',
     }),
     infoContainer: css({
       border: `${theme.colors.border.strong}`,

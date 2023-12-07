@@ -83,15 +83,17 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
         </OperationExplainedBox>
       )}
       <OperationsEditorRow>
-        <OperationList<PromVisualQuery>
-          queryModeller={promQueryModeller}
-          // eslint-ignore
-          datasource={datasource as DataSourceApi}
-          query={query}
-          onChange={onChange}
-          onRunQuery={onRunQuery}
-          highlightedOp={highlightedOp}
-        />
+        <div data-testid="prometheus-operations">
+          <OperationList<PromVisualQuery>
+            queryModeller={promQueryModeller}
+            // eslint-ignore
+            datasource={datasource as DataSourceApi}
+            query={query}
+            onChange={onChange}
+            onRunQuery={onRunQuery}
+            highlightedOp={highlightedOp}
+          />
+        </div>
         {prometheusPromQAIL && (
           <div
             className={css({

@@ -32,7 +32,7 @@ export const componentTemplates: Suggestion[] = [
   },
   {
     route: `/explore`,
-    target: `[data-testid="prometheus-dimensions-filter-item"]`,
+    target: `[aria-label="label-filters"]`,
     title: 'Label filters',
     content: 'Label filters',
     component: 'Label filters',
@@ -43,7 +43,7 @@ export const componentTemplates: Suggestion[] = [
   },
   {
     route: `/explore`,
-    target: `[data-testid="operation-button"]`,
+    target: `[data-testid="prometheus-operations"]`,
     title: 'Operations',
     content: 'Operations',
     component: 'Operations',
@@ -72,7 +72,7 @@ export const componentTemplates: Suggestion[] = [
   {
     route: `/explore`,
     // needs actual target data-testid
-    target: `[aria-label="metric-select"]`,
+    target: `[aria-label="prometheus-legend]`,
     title: 'Legend',
     content: 'Legend',
     component: 'Legend',
@@ -90,8 +90,8 @@ export const componentTemplates: Suggestion[] = [
   },
   {
     route: `/explore`,
-    // needs actual target data-testid
-    target: `[aria-label="metric-select"]`,
+    // needs actual target aria-label
+    target: `[aria-label="prometheus-minstep]`,
     title: 'Min step',
     content: 'Min step',
     component: 'Min step',
@@ -102,8 +102,8 @@ export const componentTemplates: Suggestion[] = [
   },
   {
     route: `/explore`,
-    // needs actual target data-testid
-    target: `[aria-label="metric-select"]`,
+    // needs actual target aria-label
+    target: `[aria-label="prometheus-format]`,
     title: 'Format',
     content: 'Format',
     component: 'Format',
@@ -121,8 +121,8 @@ export const componentTemplates: Suggestion[] = [
   },
   {
     route: `/explore`,
-    // needs actual target data-testid
-    target: `[aria-label="metric-select"]`,
+    // needs actual target aria-label
+    target: `[aria-label="prometheus-type]`,
     title: 'Type',
     content: 'Type',
     component: 'Type',
@@ -140,8 +140,8 @@ export const componentTemplates: Suggestion[] = [
   },
   {
     route: `/explore`,
-    // needs actual target data-testid
-    target: `[aria-label="metric-select"]`,
+    // needs actual target aria-label
+    target: `[aria-label="prometheus-exemplars]`,
     title: 'Exemplars',
     content: 'Exemplars',
     component: 'Exemplars',

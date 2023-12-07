@@ -43,6 +43,9 @@ const tutorialsSlice = createSlice({
       state.currentTutorialId = null;
       state.currentStepIndex = null;
     },
+    resetTutorials(state) {
+      state.availableTutorials = [];
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(nextStep.pending, (state) => {
@@ -90,7 +93,8 @@ export const nextStep = createAsyncThunk<number, void, { state: RootState }>(
 );
 
 const { setCurrentTutorialId } = tutorialsSlice.actions;
-export const { addTutorial, addTutorials, removeTutorial, exitCurrentTutorial } = tutorialsSlice.actions;
+export const { addTutorial, addTutorials, removeTutorial, exitCurrentTutorial, resetTutorials } =
+  tutorialsSlice.actions;
 
 export const startTutorial = (tutorialId: Tutorial['id']) => (dispatch: Dispatch, getState: () => RootState) => {
   dispatch(setCurrentTutorialId(tutorialId));

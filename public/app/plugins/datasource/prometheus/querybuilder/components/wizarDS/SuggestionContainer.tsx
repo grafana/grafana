@@ -2,9 +2,11 @@ import { cx } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { Button, useTheme2 } from '@grafana/ui';
+import { RemoteTutorial } from 'app/features/tutorial/remotetutorial/RemoteTutorial';
 
 import { SuggestionItem } from './SuggestionItem';
 import { getStyles, testIds } from './WizarDS';
+import { Tutorial } from './state/state';
 import { Suggestion, SuggestionType } from './types';
 
 export type Props = {
@@ -14,10 +16,11 @@ export type Props = {
   nextInteraction: () => void;
   explain: (idx: number) => void;
   prompt: string;
+  tutorial: Tutorial;
 };
 
 export function SuggestionContainer(props: Props) {
-  const { suggestionType, suggestions, closeDrawer, nextInteraction, explain, prompt } = props;
+  const { suggestionType, suggestions, closeDrawer, nextInteraction, explain, prompt, tutorial } = props;
 
   const [hasNextInteraction, updateHasNextInteraction] = useState<boolean>(false);
 
@@ -39,7 +42,12 @@ export function SuggestionContainer(props: Props) {
   return (
     <>
       <div className={styles.textPadding}>{text}</div>
-      <div className={cx(styles.secondaryText, styles.bottomMargin)}>{secondaryText}</div>
+      <div className={cx(styles.secondaryText, styles.bottomMargin)}>
+        {secondaryText}
+        <div>
+          <RemoteTutorial tutorial={tutorial} />
+        </div>
+      </div>
       <div className={styles.infoContainerWrapper}>
         <div className={styles.infoContainer}>
           {

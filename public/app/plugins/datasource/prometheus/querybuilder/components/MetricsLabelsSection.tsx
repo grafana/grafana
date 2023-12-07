@@ -198,25 +198,29 @@ export function MetricsLabelsSection({
 
   return (
     <>
-      <MetricSelect
-        query={query}
-        onChange={onChange}
-        onGetMetrics={onGetMetrics}
-        datasource={datasource}
-        labelsFilters={query.labels}
-        metricLookupDisabled={datasource.lookupsDisabled}
-        onBlur={onBlur ? onBlur : () => {}}
-        variableEditor={variableEditor}
-      />
-      <LabelFilters
-        debounceDuration={datasource.getDebounceTimeInMilliseconds()}
-        getLabelValuesAutofillSuggestions={getLabelValuesAutocompleteSuggestions}
-        labelsFilters={query.labels}
-        onChange={onChangeLabels}
-        onGetLabelNames={(forLabel) => withTemplateVariableOptions(onGetLabelNames(forLabel))}
-        onGetLabelValues={(forLabel) => withTemplateVariableOptions(onGetLabelValues(forLabel))}
-        variableEditor={variableEditor}
-      />
+      <div aria-label="metric-select">
+        <MetricSelect
+          query={query}
+          onChange={onChange}
+          onGetMetrics={onGetMetrics}
+          datasource={datasource}
+          labelsFilters={query.labels}
+          metricLookupDisabled={datasource.lookupsDisabled}
+          onBlur={onBlur ? onBlur : () => {}}
+          variableEditor={variableEditor}
+        />
+      </div>
+      <div aria-label="label-filters">
+        <LabelFilters
+          debounceDuration={datasource.getDebounceTimeInMilliseconds()}
+          getLabelValuesAutofillSuggestions={getLabelValuesAutocompleteSuggestions}
+          labelsFilters={query.labels}
+          onChange={onChangeLabels}
+          onGetLabelNames={(forLabel) => withTemplateVariableOptions(onGetLabelNames(forLabel))}
+          onGetLabelValues={(forLabel) => withTemplateVariableOptions(onGetLabelValues(forLabel))}
+          variableEditor={variableEditor}
+        />
+      </div>
     </>
   );
 }
