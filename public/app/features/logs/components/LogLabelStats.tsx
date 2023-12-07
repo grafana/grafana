@@ -120,7 +120,7 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
               />
             )}
           </table>
-          <div style={{ width: '25%', marginTop: '-30px' }}>
+          <div style={{ width: '25%', display: 'flex', justifyContent: 'center', alignItems: 'cent' }}>
             <PanelRenderer
               pluginId="piechart"
               height={100}
