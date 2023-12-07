@@ -91,7 +91,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/alertmanager v0.25.0 // @grafana/alerting-squad-backend
 	github.com/prometheus/client_golang v1.17.0 // @grafana/alerting-squad-backend
-	github.com/prometheus/client_model v0.4.1-0.20230718164431-9a2bf3000d16 // @grafana/backend-platform
+	github.com/prometheus/client_model v0.5.0 // @grafana/backend-platform
 	github.com/prometheus/common v0.45.0 // @grafana/alerting-squad-backend
 	github.com/prometheus/prometheus v1.8.2-0.20221021121301-51a44e6657c3 // @grafana/alerting-squad-backend
 	github.com/robfig/cron/v3 v3.0.1 // @grafana/backend-platform
@@ -222,7 +222,7 @@ require (
 	golang.org/x/text v0.14.0 // @grafana/backend-platform
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20231002182017-d307bd883b97 // indirect; @grafana/backend-platform
+	google.golang.org/genproto v0.0.0-20231012201019-e917dd12ba7a // indirect; @grafana/backend-platform
 )
 
 require (
@@ -290,7 +290,7 @@ require (
 
 require github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 // @grafana/sharing-squad
 
-require github.com/grafana/pyroscope/api v0.2.1 // @grafana/observability-traces-and-profiling
+require github.com/grafana/pyroscope/api v0.3.0 // @grafana/observability-traces-and-profiling
 
 require github.com/apache/arrow/go/v13 v13.0.0 // @grafana/observability-metrics
 
@@ -409,7 +409,7 @@ require (
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/term v0.15.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20231002182017-d307bd883b97 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20231012201019-e917dd12ba7a // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20231016165738-49dd2c1f3d0b // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
