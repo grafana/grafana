@@ -574,36 +574,53 @@ func exportResponse(c *contextmodel.ReqContext, body definitions.AlertingFileExp
 }
 
 func exportHcl(download bool, body definitions.AlertingFileExport) response.Response {
-	resources := make([]hcl.Resource, 0, len(body.Groups)+len(body.ContactPoints)+len(body.Policies))
-	for idx, group := range body.Groups {
-		gr := group
-		resources = append(resources, hcl.Resource{
-			Type: "grafana_rule_group",
-			Name: fmt.Sprintf("rule_group_%04d", idx),
-			Body: &gr,
-		})
-	}
-	for idx, cp := range body.ContactPoints {
-		upd, err := ContactPointFromContactPointExport(cp)
-		if err != nil {
-			return response.Error(http.StatusInternalServerError, "failed to convert contact points to HCL", err)
+	resources := make([]hcl.Resource, 0, len(body.Groups)+len(body.ContactPoints)+len(body.Policies)+len(body.MuteTimings))
+	convertToResources := func() error {
+		for idx, group := range body.Groups {
+			gr := group
+			resources = append(resources, hcl.Resource{
+				Type: "grafana_rule_group",
+				Name: fmt.Sprintf("rule_group_%04d", idx),
+				Body: &gr,
+			})
 		}
-		resources = append(resources, hcl.Resource{
-			Type: "grafana_contact_point",
-			Name: fmt.Sprintf("contact_point_%d", idx),
-			Body: &upd,
-		})
-	}
+		for idx, cp := range body.ContactPoints {
+			upd, err := ContactPointFromContactPointExport(cp)
+			if err != nil {
+				return fmt.Errorf("failed to convert contact points to HCL:%w", err)
+			}
+			resources = append(resources, hcl.Resource{
+				Type: "grafana_contact_point",
+				Name: fmt.Sprintf("contact_point_%d", idx),
+				Body: &upd,
+			})
+		}
 
-	for idx, cp := range body.Policies {
-		policy := cp.RouteExport
-		resources = append(resources, hcl.Resource{
-			Type: "grafana_notification_policy",
-			Name: fmt.Sprintf("notification_policy_%d", idx+1),
-			Body: policy,
-		})
-	}
+		for idx, cp := range body.Policies {
+			policy := cp.RouteExport
+			resources = append(resources, hcl.Resource{
+				Type: "grafana_notification_policy",
+				Name: fmt.Sprintf("notification_policy_%d", idx+1),
+				Body: policy,
+			})
+		}
 
+		for idx, mt := range body.MuteTimings {
+			mthcl, err := MuteTimingIntervalToMuteTimeIntervalHclExport(mt)
+			if err != nil {
+				return fmt.Errorf("failed to convert mute timing [%s] to HCL:%w", mt.Name, err)
+			}
+			resources = append(resources, hcl.Resource{
+				Type: "grafana_mute_timing",
+				Name: fmt.Sprintf("mute_timing_%d", idx+1),
+				Body: mthcl,
+			})
+		}
+		return nil
+	}
+	if err := convertToResources(); err != nil {
+		return response.Error(500, "failed to convert to HCL resources", err)
+	}
 	hclBody, err := hcl.Encode(resources...)
 	if err != nil {
 		return response.Error(500, "body hcl encode", err)

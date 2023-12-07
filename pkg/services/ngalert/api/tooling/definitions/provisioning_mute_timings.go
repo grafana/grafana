@@ -100,3 +100,25 @@ type MuteTimeIntervalExport struct {
 	OrgID                   int64
 	config.MuteTimeInterval `json:",inline" yaml:",inline"`
 }
+
+// MuteTimeIntervalExportHcl is a representation of the MuteTimeInterval in HCL
+type MuteTimeIntervalExportHcl struct {
+	Name          string                  `json:"name" hcl:"name"`
+	TimeIntervals []TimeIntervalExportHcl `json:"time_intervals" hcl:"intervals,block"`
+}
+
+// TimeIntervalExportHcl is a representation of the timeinterval.TimeInterval in HCL
+type TimeIntervalExportHcl struct {
+	Times       []TimeRangeExportHcl `json:"times,omitempty" hcl:"times,block"`
+	Weekdays    *[]string            `json:"weekdays,omitempty" hcl:"weekdays"`
+	DaysOfMonth *[]string            `json:"days_of_month,omitempty" hcl:"days_of_month"`
+	Months      *[]string            `json:"months,omitempty" hcl:"months"`
+	Years       *[]string            `json:"years,omitempty" hcl:"years"`
+	Location    *string              `json:"location,omitempty" hcl:"location"`
+}
+
+// TimeRangeExportHcl is a representation of the timeinterval.TimeRange in HCL
+type TimeRangeExportHcl struct {
+	StartMinute string `json:"start_time" hcl:"start"`
+	EndMinute   string `json:"end_time" hcl:"end"`
+}

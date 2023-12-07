@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -359,4 +360,16 @@ func MuteTimeIntervalExportFromMuteTiming(orgID int64, m definitions.MuteTimeInt
 		OrgID:            orgID,
 		MuteTimeInterval: m.MuteTimeInterval,
 	}
+}
+
+// Converts definitions.MuteTimeIntervalExport to definitions.MuteTimeIntervalExportHcl using JSON marshalling. Returns error if structure could not be marshalled\unmarshalled
+func MuteTimingIntervalToMuteTimeIntervalHclExport(m definitions.MuteTimeIntervalExport) (definitions.MuteTimeIntervalExportHcl, error) {
+	result := definitions.MuteTimeIntervalExportHcl{}
+	j := jsoniter.ConfigCompatibleWithStandardLibrary
+	mdata, err := j.Marshal(m)
+	if err != nil {
+		return result, err
+	}
+	err = j.Unmarshal(mdata, &result)
+	return result, err
 }
