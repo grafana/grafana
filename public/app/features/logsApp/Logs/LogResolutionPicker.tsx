@@ -15,7 +15,6 @@ export const LogResolutionPicker = ({ rows, onResolutionChange }: Props) => {
       setCurrentValue(value);
       value = 10 - value;
       const resolution = Math.ceil((rows * (10 - value)) / 10);
-      console.log(resolution);
       onResolutionChange(resolution);
     },
     [onResolutionChange, rows]
