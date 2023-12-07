@@ -9,6 +9,7 @@ import { Badge, useStyles2, Stack } from '@grafana/ui';
 import { mapRelativeTimeRangeToOption } from '@grafana/ui/src/components/DateTimePickers/RelativeTimeRangePicker/utils';
 
 import { AlertQuery } from '../../../types/unified-alerting-dto';
+import { PRQLEditor } from '../../dashboard/components/TransformationsEditor/PRQLEditor';
 import { isExpressionQuery } from '../../expressions/guards';
 import {
   downsamplingTypes,
@@ -181,6 +182,9 @@ function ExpressionPreview({ refId, model, evalData, isAlertCondition }: Express
 
       case ExpressionQueryType.threshold:
         return <ThresholdExpressionViewer model={model} />;
+
+      case ExpressionQueryType.prql:
+        return <PRQLEditor metricNames={['']} readOnly={true} queryString={model.expression} />;
 
       default:
         return <>Expression not supported: {model.type}</>;
