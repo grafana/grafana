@@ -4,7 +4,6 @@ import { LogRowModel } from '@grafana/data';
 import { ClipboardButton, IconButton } from '@grafana/ui';
 import { LogRowStyles } from 'app/features/logs/components/getLogRowStyles';
 
-
 interface Props {
   row: LogRowModel;
   showContextToggle?: (row: LogRowModel) => boolean;
@@ -13,6 +12,7 @@ interface Props {
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   pinned?: boolean;
   styles: LogRowStyles;
+  onSimilarityChange: (row: LogRowModel, type: 'show' | 'hide') => void;
 }
 
 const restructureLog = (line: string, prettifyLogMessage: boolean): string => {
@@ -33,7 +33,8 @@ export const LogRowMenu = React.memo(
     row,
     showContextToggle,
     styles,
-    prettifyLogMessage
+    prettifyLogMessage,
+    onSimilarityChange,
   }: Props) => {
     const { raw } = row;
     const restructuredEntry = useMemo(() => restructureLog(raw, prettifyLogMessage), [raw, prettifyLogMessage]);
@@ -87,6 +88,30 @@ export const LogRowMenu = React.memo(
             className={styles.detailsMenuIcon}
           />
         )}
+        <IconButton
+          tooltip="Show similar log lines"
+          variant="secondary"
+          aria-label="Show similar log lines"
+          tooltipPlacement="top"
+          size="lg"
+          name="search-plus"
+          onClick={() => {
+            onSimilarityChange(row, 'show');
+          }}
+          className={styles.detailsMenuIcon}
+        />
+        <IconButton
+          tooltip="Hide similar log lines"
+          variant="secondary"
+          aria-label="Hide similar log lines"
+          tooltipPlacement="top"
+          size="lg"
+          name="search-minus"
+          onClick={() => {
+            onSimilarityChange(row, 'hide');
+          }}
+          className={styles.detailsMenuIcon}
+        />
       </div>
     );
   }

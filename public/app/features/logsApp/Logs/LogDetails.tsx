@@ -14,7 +14,6 @@ import { createLogLineLinks, getAllFields } from 'app/features/logs/components/l
 import { TempoDatasource } from 'app/plugins/datasource/tempo/datasource';
 
 import { ExplainLogLine } from '../ExplainLogLine';
-import { FindSimilarLogLines } from '../FindSimilarLogLines';
 
 import { LogDetailsRow } from './LogDetailsRow';
 import { LogRowMenu } from './LogRowMenu';
@@ -39,6 +38,7 @@ export interface Props {
   onOpenContext: (row: LogRowModel) => void;
   onPermalinkClick: (row: LogRowModel) => Promise<void>;
   showContextToggle?: (row: LogRowModel) => boolean;
+  onSimilarityChange: (row: LogRowModel, type: 'show' | 'hide') => void;
 }
 
 export const LogDetails = (props: Props) => {
@@ -55,6 +55,7 @@ export const LogDetails = (props: Props) => {
     getFieldLinks,
     wrapLogMessage,
     styles,
+    onSimilarityChange,
   } = props;
   const labels = useMemo(() => (row.labels ? row.labels : {}), [row.labels]);
   const labelsAvailable = useMemo(() => Object.keys(labels).length > 0, [labels]);
@@ -161,9 +162,9 @@ export const LogDetails = (props: Props) => {
           onOpenContext={props.onOpenContext}
           onPermalinkClick={props.onPermalinkClick}
           styles={styles}
+          onSimilarityChange={onSimilarityChange}
         />
         <ExplainLogLine logLine={row.entry} />
-        <FindSimilarLogLines logLine={row.entry} allLogLines={rows} />
 
         <table className={styles.logDetailsTable}>
           <tbody>
