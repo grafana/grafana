@@ -29,7 +29,7 @@ export const registerAchievementCompleted = async (achievementId: AchievementId)
   // save achievement as completed on user object
   const userAchievements = parseAchievementString(user.achievements);
   userAchievements.push(achievementId);
-  // user.achievements = JSON.stringify(userAchievements);
+  user.achievements = JSON.stringify(userAchievements);
 
   // check if achievement is a level up
   // if so, save new level on user object
