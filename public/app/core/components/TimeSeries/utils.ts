@@ -607,6 +607,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 
       return hoveredIdx;
     },
+    focus: {
+      bias: 1,
+      prox: 30,
+    }
   };
 
   if (sync && sync() !== DashboardCursorSync.Off && xField.type === FieldType.time) {
