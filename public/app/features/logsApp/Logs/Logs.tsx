@@ -690,7 +690,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       this.state.hiddenLogLevels.length > 0 ? ` (filtered based on selected ${this.state.groupByLabel})` : ''
     }`;
 
-    const maxPaneSize = this.state.logDetailsRow ? getMaxPaneSize() : window.innerWidth;
+    const maxPaneSize = getMaxPaneSize();
 
     return (
       <>

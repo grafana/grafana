@@ -25,8 +25,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       background: inherit;
       color: ${theme.colors.text.primary};
       word-break: break-all;
-      width: fit-content;
-      max-width: 100%;
       margin: ${theme.spacing(0.5)} 0;
       padding: ${theme.spacing(1)};
       &:hover {
@@ -95,7 +93,7 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
       <div className={style.logsStats} data-testid="logLabelStats">
         <div className={style.logsStatsTitle}>{label}</div>
         <div className={style.logsStatsBody}>
-          <div style={{ width: '70%' }}>
+          <table style={{ width: '75%' }}>
             {topRows.map((stat) => (
               <LogLabelStatsRow
                 key={stat.value}
@@ -121,8 +119,8 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
                 onClickFilterOutLabel={onClickFilterOutLabel}
               />
             )}
-          </div>
-          <div style={{ width: '30%', marginLeft: '50px', marginTop: '-30px' }}>
+          </table>
+          <div style={{ width: '25%', marginTop: '-30px' }}>
             <PanelRenderer
               pluginId="piechart"
               height={100}
