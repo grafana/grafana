@@ -27,17 +27,22 @@ func (d *DuckDB) Query(q string) (data.Frames, error) {
 	d.DB = db
 	defer func(db *sql.DB) {
 		err = db.Close()
-		fmt.Println("failed to close db")
+		if err != nil {
+			fmt.Printf("failed to close db after query: %v\n", err)
+		}
 	}(db)
 
 	results, err := d.DB.Query(q)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("failed to query db: %v\n", err)
 		return nil, err
 	}
 
 	// TODO - add any needed converters for duckdb
 	frame, err := sqlutil.FrameFromRows(results, -1, sqlutil.Converter{})
+	if err != nil {
+		return nil, err
+	}
 
 	// convention for labels - join against the _meta table, it will contain all the lables
 	// ------
@@ -94,7 +99,9 @@ func (d *DuckDB) AppendAll(ctx context.Context, frames data.Frames) error {
 	d.DB = db
 	defer func(db *sql.DB) {
 		err = db.Close()
-		fmt.Println("failed to close db")
+		if err != nil {
+			fmt.Printf("failed to close db after append: %v\n", err)
+		}
 	}(db)
 	frameLables, err := d.createTables(frames)
 	if err != nil {

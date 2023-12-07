@@ -326,7 +326,11 @@ func NewPRQLCommand(refID, rawPRQL string, tr TimeRange) (*PRQLCommand, error) {
 	tables, err := prql.Tables(sql)
 	if err != nil {
 		fmt.Printf("Unable to get table names from: %s\n", sql)
-		//tables = []string{"A"}
+		tables = []string{"A"} // should not be required!!!
+	}
+	// this happens with SELECT 1,2,3
+	if len(tables) < 1 {
+		tables = []string{"A"} // should not be required!!!
 	}
 
 	return &PRQLCommand{

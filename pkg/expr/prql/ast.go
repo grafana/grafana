@@ -30,7 +30,9 @@ func Tables(sql string) ([]string, error) {
 		table = strings.ReplaceAll(table, "\n", "")
 		table = strings.ReplaceAll(table, "'", "")
 		table = strings.TrimSpace(table)
-		cleanTables = append(cleanTables, table)
+		if len(table) > 0 {
+			cleanTables = append(cleanTables, table)
+		}
 	}
 	return cleanTables, nil
 }
