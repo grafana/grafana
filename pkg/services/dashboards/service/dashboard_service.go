@@ -438,12 +438,21 @@ func (dr *DashboardServiceImpl) GetSoftDeletedDashboard(ctx context.Context, org
 	return dr.dashboardStore.GetSoftDeletedDashboard(ctx, orgID, uid)
 }
 
-func (dr *DashboardServiceImpl) RestoreDashboard(ctx context.Context, dashboardUID string) error {
-	return dr.dashboardStore.RestoreDashboard(ctx, dashboardUID)
+func (dr *DashboardServiceImpl) RestoreDashboard(ctx context.Context, orgID int64, dashboardUID string) error {
+	return dr.dashboardStore.RestoreDashboard(ctx, orgID, dashboardUID)
 }
 
-func (dr *DashboardServiceImpl) SoftDeleteDashboard(ctx context.Context, dashboardUID string) error {
-	return dr.dashboardStore.SoftDeleteDashboard(ctx, dashboardUID)
+func (dr *DashboardServiceImpl) SoftDeleteDashboard(ctx context.Context, orgID int64, dashboardUID string) error {
+	provisionedData, err := dr.GetProvisionedDashboardDataByDashboardUID(ctx, orgID, dashboardUID)
+	if err != nil {
+		return fmt.Errorf("%v: %w", "failed to check if dashboard is provisioned", err)
+	}
+
+	if provisionedData != nil {
+		return dashboards.ErrDashboardCannotDeleteProvisionedDashboard
+	}
+
+	return dr.dashboardStore.SoftDeleteDashboard(ctx, orgID, dashboardUID)
 }
 
 // DeleteDashboard removes dashboard from the DB. Errors out if the dashboard was provisioned. Should be used for
@@ -746,7 +755,7 @@ func (dr DashboardServiceImpl) CountInFolder(ctx context.Context, orgID int64, f
 }
 
 func (dr *DashboardServiceImpl) DeleteInFolder(ctx context.Context, orgID int64, folderUID string, u identity.Requester) error {
-	return dr.dashboardStore.SoftDeleteDashboardsInFolder(ctx, folderUID)
+	return dr.dashboardStore.SoftDeleteDashboardsInFolder(ctx, orgID, folderUID)
 }
 
 func (dr *DashboardServiceImpl) Kind() string { return entity.StandardKindDashboard }

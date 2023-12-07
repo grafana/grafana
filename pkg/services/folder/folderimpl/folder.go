@@ -707,10 +707,11 @@ func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folde
 
 func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderCommand, dashFolder *folder.Folder) error {
 	// soft delete dashboards and remove folder reference
-	if err := s.dashboardStore.SoftDeleteDashboardsInFolder(ctx, dashFolder.UID); err != nil {
+	if err := s.dashboardStore.SoftDeleteDashboardsInFolder(ctx, cmd.OrgID, dashFolder.UID); err != nil {
 		return toFolderError(err)
 	}
 	// only hard delete the folder representation in the dashboard store
+	// nolint:staticcheck
 	deleteCmd := dashboards.DeleteDashboardCommand{OrgID: cmd.OrgID, ID: dashFolder.ID, ForceDeleteFolderRules: cmd.ForceDeleteRules}
 	if err := s.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
 		return toFolderError(err)
