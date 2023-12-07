@@ -622,7 +622,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     this.setState({
       resolution,
     });
-  }
+  };
 
   render() {
     const {
@@ -942,13 +942,13 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 ) : (
                   <>
                     <LogResolutionPicker rows={logRows?.length || 0} onResolutionChange={this.handleResolutionChange} />
-                                      <LogStats
-                    styles={logRowStyles}
-                    rows={logRows}
-                    logsMeta={logsMeta}
-                    onClickFilterLabel={onClickFilterLabel}
-                    onClickFilterOutLabel={onClickFilterOutLabel}
-                  />
+                    <LogStats
+                      styles={logRowStyles}
+                      rows={logRows}
+                      logsMeta={logsMeta}
+                      onClickFilterLabel={onClickFilterLabel}
+                      onClickFilterOutLabel={onClickFilterOutLabel}
+                    />
                   </>
                 )}
               </div>
