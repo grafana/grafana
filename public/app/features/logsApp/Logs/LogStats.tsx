@@ -27,7 +27,6 @@ export const LogStats = ({ styles, rows, logsMeta, onClickFilterLabel, onClickFi
     <div className={styles.logDetails}>
       <div className={styles.logDetailsContainer}>
         <div style={{ fontFamily: "'Roboto Mono', monospace", fontSize: '12px', padding: '8px 0' }}>
-          <div style={{ fontWeight: 500, fontSize: '12px', marginBottom: '8px' }}>Log results ad hoc statistics</div>
           <ExplainAllLogLines logLines={rows.map((row) => row.entry)} />
           {/**todo angles are not working yet */}
           {uniqueLabel && (
