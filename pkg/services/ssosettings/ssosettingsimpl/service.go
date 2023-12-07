@@ -11,6 +11,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/api"
 	"github.com/grafana/grafana/pkg/services/ssosettings/database"
@@ -27,10 +28,12 @@ type SSOSettingsService struct {
 	store        ssosettings.Store
 	ac           ac.AccessControl
 	fbStrategies []ssosettings.FallbackStrategy
+	secrets      secrets.Service
 }
 
 func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
-	routeRegister routing.RouteRegister, features *featuremgmt.FeatureManager) *SSOSettingsService {
+	routeRegister routing.RouteRegister, features *featuremgmt.FeatureManager,
+	secrets secrets.Service) *SSOSettingsService {
 	strategies := []ssosettings.FallbackStrategy{
 		strategies.NewOAuthStrategy(cfg),
 		// register other strategies here, for example SAML
@@ -44,6 +47,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 		store:        store,
 		ac:           ac,
 		fbStrategies: strategies,
+		secrets:      secrets,
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
@@ -114,6 +118,15 @@ func (s *SSOSettingsService) List(ctx context.Context, requester identity.Reques
 
 func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSettings) error {
 	// TODO: validation (configurable provider? Contains the required fields? etc)
+
+	if isOAuthProvider(settings.Provider) {
+		encryptedClientSecret, err := s.secrets.Encrypt(ctx, []byte(settings.OAuthSettings.ClientSecret), secrets.WithoutScope())
+		if err != nil {
+			return err
+		}
+		settings.OAuthSettings.ClientSecret = string(encryptedClientSecret)
+	}
+
 	err := s.store.Upsert(ctx, settings)
 	if err != nil {
 		return err
@@ -181,4 +194,14 @@ func (s *SSOSettingsService) getFallBackstrategyFor(provider string) (ssosetting
 		}
 	}
 	return nil, false
+}
+
+func isOAuthProvider(provider string) bool {
+	for _, oAuthProvider := range ssosettings.AllOAuthProviders {
+		if oAuthProvider == provider {
+			return true
+		}
+	}
+
+	return false
 }

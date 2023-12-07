@@ -73,14 +73,14 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 
 	t.Run("when fine-grained access is enabled", func(t *testing.T) {
 		t.Run("and group argument is empty", func(t *testing.T) {
-			t.Run("return 401 if user is not authorized to access any group in the folder", func(t *testing.T) {
+			t.Run("return Forbidden if user is not authorized to access any group in the folder", func(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
 				ruleStore.PutRule(context.Background(), models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))...)
 
 				request := createRequestContextWithPerms(orgID, map[int64]map[string][]string{}, nil)
 
 				response := createService(ruleStore).RouteDeleteAlertRules(request, folder.Title, "")
-				require.Equalf(t, 401, response.Status(), "Expected 401 but got %d: %v", response.Status(), string(response.Body()))
+				require.Equalf(t, http.StatusForbidden, response.Status(), "Expected 403 but got %d: %v", response.Status(), string(response.Body()))
 
 				require.Empty(t, getRecordedCommand(ruleStore))
 			})
@@ -139,7 +139,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 		})
 		t.Run("and group argument is not empty", func(t *testing.T) {
 			groupName := util.GenerateShortUID()
-			t.Run("return 401 if user is not authorized to access the group", func(t *testing.T) {
+			t.Run("return Forbidden if user is not authorized to access the group", func(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
 
 				authorizedRulesInGroup := models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup(groupName)))
@@ -152,7 +152,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 
 				response := createService(ruleStore).RouteDeleteAlertRules(requestCtx, folder.Title, groupName)
 
-				require.Equalf(t, 401, response.Status(), "Expected 401 but got %d: %v", response.Status(), string(response.Body()))
+				require.Equalf(t, http.StatusForbidden, response.Status(), "Expected 403 but got %d: %v", response.Status(), string(response.Body()))
 				deleteCommands := getRecordedCommand(ruleStore)
 				require.Empty(t, deleteCommands)
 			})
@@ -396,14 +396,14 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 			expectedRules := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withGroupKey(groupKey)))
 			ruleStore.PutRule(context.Background(), expectedRules...)
 
-			t.Run("and return 401 if user does not have access one of rules", func(t *testing.T) {
+			t.Run("and return Forbidden if user does not have access one of rules", func(t *testing.T) {
 				permissions := createPermissionsForRules(expectedRules[1:], orgID)
 				request := createRequestContextWithPerms(orgID, permissions, map[string]string{
 					":Namespace": folder.Title,
 					":Groupname": groupKey.RuleGroup,
 				})
 				response := createService(ruleStore).RouteGetRulesGroupConfig(request, folder.Title, groupKey.RuleGroup)
-				require.Equal(t, http.StatusUnauthorized, response.Status())
+				require.Equal(t, http.StatusForbidden, response.Status())
 			})
 
 			t.Run("and return rules if user has access to all of them", func(t *testing.T) {

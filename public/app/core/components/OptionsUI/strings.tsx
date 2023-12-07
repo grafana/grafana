@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { FieldConfigEditorProps, StringFieldConfigSettings, GrafanaTheme2 } from '@grafana/data';
+import { StandardEditorProps, StringFieldConfigSettings, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { stylesFactory, Button, Icon, Input } from '@grafana/ui';
 
-type Props = FieldConfigEditorProps<string[], StringFieldConfigSettings>;
+type Props = StandardEditorProps<string[], StringFieldConfigSettings>;
 interface State {
   showAdd: boolean;
 }

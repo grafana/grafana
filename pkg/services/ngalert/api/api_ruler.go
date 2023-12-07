@@ -50,7 +50,7 @@ var (
 
 // RouteDeleteAlertRules deletes all alert rules the user is authorized to access in the given namespace
 // or, if non-empty, a specific group of rules in the namespace.
-// Returns http.StatusUnauthorized if user does not have access to any of the rules that match the filter.
+// Returns http.StatusForbidden if user does not have access to any of the rules that match the filter.
 // Returns http.StatusBadRequest if all rules that match the filter and the user is authorized to delete are provisioned.
 func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceTitle string, group string) response.Response {
 	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.GetOrgID(), c.SignedInUser)
@@ -170,7 +170,7 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *contextmodel.ReqContext, nam
 }
 
 // RouteGetRulesGroupConfig returns rules that belong to a specific group in a specific namespace (folder).
-// If user does not have access to at least one of the rule in the group, returns status 401 Unauthorized
+// If user does not have access to at least one of the rule in the group, returns status 403 Forbidden
 func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespaceTitle string, ruleGroup string) response.Response {
 	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
