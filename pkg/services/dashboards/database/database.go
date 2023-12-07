@@ -1054,7 +1054,7 @@ func (d *dashboardStore) DeleteDashboardsInFolder(
 	})
 }
 
-func (d *dashboardStore) GetSoftDeletedDashboardsByTime(ctx context.Context, duration time.Duration) ([]*dashboards.Dashboard, error) {
+func (d *dashboardStore) GetSoftDeletedExpiredDashboards(ctx context.Context, duration time.Duration) ([]*dashboards.Dashboard, error) {
 	var dashboards = make([]*dashboards.Dashboard, 0)
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		err := sess.Where("deleted IS NOT NULL AND deleted < ?", time.Now().Add(-duration)).Find(&dashboards)

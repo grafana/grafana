@@ -357,7 +357,7 @@ type DashboardSearchProjection struct {
 	FolderSlug  string
 	FolderTitle string
 	SortMeta    int64
-	Deleted     *time.Time `xorm:"deleted"`
+	Deleted     *time.Time
 }
 
 const (

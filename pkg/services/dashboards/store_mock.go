@@ -344,8 +344,8 @@ func (_m *FakeDashboardStore) GetProvisionedDataByDashboardUID(ctx context.Conte
 	return r0, r1
 }
 
-// GetSoftDeletedDashboardsByTime provides a mock function with given fields: ctx, duration
-func (_m *FakeDashboardStore) GetSoftDeletedDashboardsByTime(ctx context.Context, duration time.Duration) ([]*Dashboard, error) {
+// GetSoftDeletedExpiredDashboards provides a mock function with given fields: ctx, duration
+func (_m *FakeDashboardStore) GetSoftDeletedExpiredDashboards(ctx context.Context, duration time.Duration) ([]*Dashboard, error) {
 	ret := _m.Called(ctx, duration)
 
 	var r0 []*Dashboard

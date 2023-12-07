@@ -79,7 +79,7 @@ type Store interface {
 	// the given parent folder ID.
 	CountDashboardsInFolder(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
 	DeleteDashboardsInFolder(ctx context.Context, request *DeleteDashboardsInFolderRequest) error
-	GetSoftDeletedDashboardsByTime(ctx context.Context, duration time.Duration) ([]*Dashboard, error)
+	GetSoftDeletedExpiredDashboards(ctx context.Context, duration time.Duration) ([]*Dashboard, error)
 	SoftDeleteDashboard(ctx context.Context, dashboardUid string) error
 	RestoreDashboard(ctx context.Context, dashboardUid string) error
 }
