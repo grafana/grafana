@@ -29,6 +29,7 @@ export interface DashboardSearchHit extends WithAccessControlMetadata {
   url: string;
   sortMeta?: number;
   sortMetaName?: string;
+  remainingTrashAtAge?: string;
 }
 
 /**

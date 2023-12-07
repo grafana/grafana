@@ -2,6 +2,7 @@ package dashboards
 
 import (
 	"context"
+	"time"
 
 	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -78,7 +79,7 @@ type Store interface {
 	// CountDashboardsInFolder returns the number of dashboards associated with
 	// the given parent folder ID.
 	CountDashboardsInFolder(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
-	GetSoftDeletedDashboards(ctx context.Context) ([]*Dashboard, error)
+	GetSoftDeletedExpiredDashboards(ctx context.Context, duration time.Duration) ([]*Dashboard, error)
 	SoftDeleteDashboard(ctx context.Context, dashboardUid string) error
 	SoftDeleteDashboardsInFolder(ctx context.Context, folderUid string) error
 	RestoreDashboard(ctx context.Context, dashboardUid string) error

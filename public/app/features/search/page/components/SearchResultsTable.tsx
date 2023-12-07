@@ -317,6 +317,9 @@ const getColumnStyles = (theme: GrafanaTheme2) => {
       gap: 4px;
       overflow: hidden;
     `,
+    preventClick: css({
+      pointerEvents: 'none',
+    }),
     explainItem: css`
       cursor: pointer;
     `,

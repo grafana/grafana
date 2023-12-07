@@ -41,6 +41,8 @@ var (
 	_ dashboards.DashboardService             = (*DashboardServiceImpl)(nil)
 	_ dashboards.DashboardProvisioningService = (*DashboardServiceImpl)(nil)
 	_ dashboards.PluginService                = (*DashboardServiceImpl)(nil)
+
+	daysInTrash = 24 * 30 * time.Hour
 )
 
 type DashboardServiceImpl struct {
@@ -722,6 +724,9 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 		if len(item.Term) > 0 {
 			hit.Tags = append(hit.Tags, item.Term)
 		}
+		if item.Deleted != nil {
+			hit.RemainingTrashAtAge = util.RemainingDaysUntil((*item.Deleted).Add(daysInTrash))
+		}
 	}
 	return hitList
 }
@@ -748,7 +753,7 @@ func (dr *DashboardServiceImpl) Kind() string { return entity.StandardKindDashbo
 
 func (dr *DashboardServiceImpl) CleanUpDeletedDashboards(ctx context.Context) (int64, error) {
 	var deletedDashboardsCount int64
-	deletedDashboards, err := dr.dashboardStore.GetSoftDeletedDashboards(ctx)
+	deletedDashboards, err := dr.dashboardStore.GetSoftDeletedExpiredDashboards(ctx, daysInTrash)
 	if err != nil {
 		return 0, err
 	}
