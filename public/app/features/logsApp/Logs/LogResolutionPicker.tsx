@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useState } from 'react';
 
-import { Icon, Slider, Tooltip } from '@grafana/ui';
+import { Slider, Tooltip } from '@grafana/ui';
 
 interface Props {
   onResolutionChange(resolution: number): void;
