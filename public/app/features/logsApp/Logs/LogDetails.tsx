@@ -1,14 +1,24 @@
 import { cx } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useAsync } from 'react-use';
 import { firstValueFrom } from 'rxjs';
 import { v4 } from 'uuid';
 
-import { CoreApp, DataFrame, DataFrameType, Field, LinkModel, LogRowModel, getDefaultTimeRange } from '@grafana/data';
+import {
+  CoreApp,
+  DataFrame,
+  DataFrameType,
+  Field,
+  LinkModel,
+  LogRowModel,
+  LogsDedupStrategy,
+  getDefaultTimeRange,
+} from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Collapse } from '@grafana/ui';
 import { TraceView } from 'app/features/explore/TraceView/TraceView';
 import { transformDataFrames } from 'app/features/explore/TraceView/utils/transform';
+import { LogRows } from 'app/features/logs/components/LogRows';
 import { LogRowStyles } from 'app/features/logs/components/getLogRowStyles';
 import { createLogLineLinks, getAllFields } from 'app/features/logs/components/logParser';
 import { TempoDatasource } from 'app/plugins/datasource/tempo/datasource';
@@ -81,6 +91,7 @@ export const LogDetails = (props: Props) => {
   );
 
   const [traceViewOpen, setTraceViewOpen] = useState(true);
+  const [traceLogsViewOpen, setTraceLogsViewOpen] = useState(true);
 
   const fields = useMemo(
     () =>
@@ -151,6 +162,18 @@ export const LogDetails = (props: Props) => {
 
     return transformDataFrames(traceDf.value[0]);
   }, [traceDf.value]);
+
+  const [correlatedLogs, setCorrelatedLogs] = useState<LogRowModel[]>([]);
+
+  useEffect(() => {
+    let logs: LogRowModel[] = [];
+    if (row.possibleTraceId) {
+      logs = rows.filter((r) => r.possibleTraceId === row.possibleTraceId);
+    } else if (row.possibleCorrelationId) {
+      logs = rows.filter((r) => r.possibleCorrelationId === row.possibleCorrelationId);
+    }
+    setCorrelatedLogs(logs);
+  }, [rows, row.possibleTraceId, row.possibleCorrelationId]);
 
   return (
     <div className={cx(className, styles.logDetails)}>
@@ -265,12 +288,37 @@ export const LogDetails = (props: Props) => {
               <tr style={{ margin: '4px 0' }}>
                 <th colSpan={6}>
                   <Collapse
-                    label="Trace"
+                    label="Trace View"
                     collapsible={true}
                     isOpen={traceViewOpen}
                     onToggle={(isOpen) => setTraceViewOpen(isOpen)}
                   >
                     <TraceView dataFrames={traceDf.value} traceProp={transformedTraceData} datasource={tempoDs.value} />
+                  </Collapse>
+                </th>
+              </tr>
+            )}
+            {correlatedLogs.length > 0 && (
+              <tr style={{ margin: '4px 0' }}>
+                <th colSpan={6}>
+                  <Collapse
+                    label={`${row.possibleTraceId ? 'Trace' : 'Correlated'} Logs`}
+                    collapsible={true}
+                    isOpen={traceLogsViewOpen}
+                    onToggle={(isOpen) => setTraceLogsViewOpen(isOpen)}
+                  >
+                    <LogRows
+                      logRows={correlatedLogs}
+                      dedupStrategy={LogsDedupStrategy.none}
+                      showLabels={false}
+                      showTime={false}
+                      wrapLogMessage={true}
+                      prettifyLogMessage={false}
+                      enableLogDetails={false}
+                      timeZone={'utc'}
+                      displayedFields={displayedFields}
+                      highlightSearchwords={false}
+                    />
                   </Collapse>
                 </th>
               </tr>

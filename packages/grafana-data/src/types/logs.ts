@@ -82,6 +82,7 @@ export interface LogRowModel {
   uniqueLabels?: Labels;
   datasourceType?: string;
   possibleTraceId?: string;
+  possibleCorrelationId?: string;
 }
 
 export interface LogsModel {
