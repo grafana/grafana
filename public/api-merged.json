@@ -14143,6 +14143,10 @@
           "type": "integer",
           "format": "int64"
         },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
         "parentUid": {
           "description": "only used if nested folders are enabled",
           "type": "string"

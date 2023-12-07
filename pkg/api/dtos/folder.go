@@ -10,8 +10,9 @@ type Folder struct {
 	// Deprecated: use UID instead
 	ID            int64                  `json:"id" xorm:"pk autoincr 'id'"`
 	UID           string                 `json:"uid" xorm:"uid"`
+	OrgID         int64                  `json:"orgId" xorm:"org_id"`
 	Title         string                 `json:"title"`
-	URL           string                 `json:"url" xoem:"url"`
+	URL           string                 `json:"url" xorm:"url"`
 	HasACL        bool                   `json:"hasAcl" xorm:"has_acl"`
 	CanSave       bool                   `json:"canSave"`
 	CanEdit       bool                   `json:"canEdit"`

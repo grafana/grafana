@@ -328,6 +328,7 @@ func TestIntegrationCreate(t *testing.T) {
 		buf1 := &bytes.Buffer{}
 		err = json.NewEncoder(buf1).Encode(dashboards.SaveDashboardCommand{
 			Dashboard: dashboardDataOne,
+			OrgID:     0,
 			FolderUID: folder.UID,
 		})
 		require.NoError(t, err)
@@ -358,7 +359,8 @@ func TestIntegrationCreate(t *testing.T) {
 		buf1 := &bytes.Buffer{}
 		err = json.NewEncoder(buf1).Encode(dashboards.SaveDashboardCommand{
 			Dashboard: dashboardDataOne,
-			FolderID:  folder.ID, // nolint:staticcheck
+			OrgID:     0,
+			FolderUID: folder.UID,
 		})
 		require.NoError(t, err)
 		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/db", grafanaListedAddr)

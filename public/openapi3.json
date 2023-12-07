@@ -5160,6 +5160,10 @@
             "format": "int64",
             "type": "integer"
           },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
           "parentUid": {
             "description": "only used if nested folders are enabled",
             "type": "string"
