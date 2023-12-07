@@ -94,9 +94,9 @@ export const PRQLEditor = (props: Props) => {
 
   useEffect(() => {
     //@ts-ignore
-    const listener = PRQLEditorView.updateListener.of(({ state }) => {
-      if (onEditorChange) {
-        onEditorChange(state.doc.toString());
+    const listener = PRQLEditorView.updateListener.of((update) => {
+      if (update.changedRanges.length > 0 && onEditorChange) {
+        onEditorChange(update.state.doc.toString());
       }
     });
 
