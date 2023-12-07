@@ -8,7 +8,7 @@ import { setAllSelection, useActionSelectionState } from 'app/features/browse-da
 import { useDispatch } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
-import { useHardDeleteItemsMutation, useRestoreItemsMutation } from '../../api/browseDashboardsAPI';
+import { useHardDeleteItemsMutation, useRestoreItemsMutation } from '../../api/trashDashboardsAPI';
 import { useTrashStateManager } from '../../hooks/useTrashStateManager';
 
 import { DeleteModal } from './DeleteModal';
