@@ -436,9 +436,14 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
 
       const datasourceType = queries.find((query) => query.refId === series.refId)?.datasource?.type;
 
-      let possibleTraceId = findPossibleTraceIdInMessage(message);
+      let possibleTraceId = findPossibleIdInMessage(message, 'trace');
       if (!possibleTraceId) {
-        possibleTraceId = findPossibleTraceIdInLabels(labels);
+        possibleTraceId = findPossibleIdInLabels(labels, 'trace');
+      }
+
+      let possibleCorrelationId = findPossibleIdInMessage(message, '(correlation|request|session)');
+      if (!possibleCorrelationId) {
+        possibleCorrelationId = findPossibleIdInLabels(labels, '(correlation|request|session)');
       }
 
       const row: LogRowModel = {
@@ -462,6 +467,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
         uid: `${series.refId}_${idField ? idField.values[j] : j.toString()}`,
         datasourceType,
         possibleTraceId,
+        possibleCorrelationId,
       };
 
       if (idField !== null) {
@@ -1166,17 +1172,17 @@ export function logRowToSingleRowDataFrame(logRow: LogRowModel): DataFrame | nul
   return frame;
 }
 
-export const findPossibleTraceIdInLabels = (labels: Labels | undefined): string | undefined => {
+export const findPossibleIdInLabels = (labels: Labels | undefined, type = 'trace'): string | undefined => {
   for (const key in labels) {
-    if (/^trace.?id/gi.test(key)) {
+    if (new RegExp(`${type}.?id`, 'gi').test(key)) {
       return labels[key];
     }
   }
   return undefined;
 };
 
-export const findPossibleTraceIdInMessage = (message: string): string | undefined => {
-  const traceIdRegex = /trace.?id.?[:=]\s*"?([a-z0-9-]+)"?/gi;
+export const findPossibleIdInMessage = (message: string, type = 'trace'): string | undefined => {
+  const traceIdRegex = new RegExp(`${type}.?id.?[:=]\s*"?([a-z0-9-]+)"?`, 'gi');
   const match = traceIdRegex.exec(message);
   if (match) {
     return match[1];
