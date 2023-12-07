@@ -1,4 +1,4 @@
-import { compile } from "prql-js/dist/bundler";
+// import { compile } from "prql-js/dist/bundler";
 import { Subject } from 'rxjs';
 
 import { DataTransformerID, DataTransformerInfo, DataFrame } from '@grafana/data';
@@ -19,8 +19,8 @@ export const DuckDBTransformer: DataTransformerInfo<DuckTransformerOptions> = {
   id: DataTransformerID.duckdb,
   name: 'DuckDB query',
   operator: (options) => (source) => {
-    const sql2 = compile(`from employees | select first_name`);
-    console.log(sql2);
+    // const sql2 = compile(`from employees | select first_name`);
+    // console.log(sql2);
 
     let sql = options.query;
     if (!sql?.length) {
@@ -32,18 +32,27 @@ export const DuckDBTransformer: DataTransformerInfo<DuckTransformerOptions> = {
     // ??? need an unsubscribe!!!
     source.subscribe(async (data) => {
       const db = await getDuckDB();
-      console.log('TODO: ', sql);
-
-      // ... or column-major format
-      const jsonColContent = {
-        col1: [1, 2],
-        col2: ['foo', 'bar'],
-      };
-      await db.registerFileText('columns.json', JSON.stringify(jsonColContent));
       const conn = await db.connect();
 
       try {
-        // TODO!!! load the required data!
+        for await (const frame of data) {
+          const data: Record<string, unknown[]> = {};
+
+          frame.fields.forEach(field => {
+            data[field.name] = field.values;
+          });
+
+          let tableName = frame.refId ?? 'A';
+
+          // hmm, this doesnt work and we're stuck with DuckDB singleton?
+          // do we re-create the db on each transfomer invoke?
+          // or truncate all existing tables?
+          await conn.query(`DROP TABLE IF EXISTS ${tableName}`);
+
+          await db.registerFileText(`${tableName}.json`, JSON.stringify(data));
+          await conn.insertJSONFromPath(`${tableName}.json`, { name: tableName });
+        }
+
         const result = await conn.query(sql);
         const df = arrowTableToFrame(result);
         subj.next([df]);
