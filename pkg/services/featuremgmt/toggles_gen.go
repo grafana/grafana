@@ -107,9 +107,9 @@ const (
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
 
-	// FlagEntityStore
-	// SQL-based entity store (requires storage flag also)
-	FlagEntityStore = "entityStore"
+	// FlagUnifiedStorage
+	// SQL-based k8s storage
+	FlagUnifiedStorage = "unifiedStorage"
 
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
@@ -354,6 +354,10 @@ const (
 	// FlagGrafanaAPIServerWithExperimentalAPIs
 	// Register experimental APIs with the k8s API server
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
+
+	// FlagGrafanaAPIServerEnsureKubectlAccess
+	// Start an additional https handler and write kubectl options
+	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
 
 	// FlagFeatureToggleAdminPage
 	// Enable admin page for managing feature toggles from the Grafana front-end

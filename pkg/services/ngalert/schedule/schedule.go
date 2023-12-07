@@ -348,6 +348,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	return readyToRun, registeredDefinitions, updatedRules
 }
 
+//nolint:gocyclo
 func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertRuleKey, evalCh <-chan *evaluation, updateCh <-chan ruleVersionAndPauseStatus) error {
 	grafanaCtx = ngmodels.WithRuleKey(grafanaCtx, key)
 	logger := sch.log.FromContext(grafanaCtx)
@@ -399,6 +400,12 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		evalTotal.Inc()
 		evalDuration.Observe(dur.Seconds())
 
+		if ctx.Err() != nil { // check if the context is not cancelled. The evaluation can be a long-running task.
+			span.SetStatus(codes.Error, "rule evaluation cancelled")
+			logger.Debug("Skip updating the state because the context has been cancelled")
+			return nil
+		}
+
 		if err != nil || results.HasErrors() {
 			evalTotalFailures.Inc()
 
@@ -437,10 +444,6 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			span.AddEvent("rule evaluated", trace.WithAttributes(
 				attribute.Int64("results", int64(len(results))),
 			))
-		}
-		if ctx.Err() != nil { // check if the context is not cancelled. The evaluation can be a long-running task.
-			logger.Debug("Skip updating the state because the context has been cancelled")
-			return nil
 		}
 		start = sch.clock.Now()
 		processedStates := sch.stateManager.ProcessEvalResults(
@@ -531,6 +534,14 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 						attribute.String("tick", utcTick),
 					))
 
+					// Check before any execution if the context was cancelled so that we don't do any evaluations.
+					if tracingCtx.Err() != nil {
+						span.SetStatus(codes.Error, "rule evaluation cancelled")
+						span.End()
+						logger.Error("Skip evaluation and updating the state because the context has been cancelled", "version", ctx.rule.Version, "fingerprint", f, "attempt", attempt, "now", ctx.scheduledAt)
+						return
+					}
+
 					retry := attempt < sch.maxAttempts
 					err := evaluate(tracingCtx, f, attempt, ctx, span, retry)
 					// This is extremely confusing - when we exhaust all retry attempts, or we have no retryable errors
@@ -541,7 +552,13 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 					}
 
 					logger.Error("Failed to evaluate rule", "version", ctx.rule.Version, "fingerprint", f, "attempt", attempt, "now", ctx.scheduledAt)
-					time.Sleep(retryDelay)
+					select {
+					case <-tracingCtx.Done():
+						logger.Error("Context has been cancelled while backing off", "version", ctx.rule.Version, "fingerprint", f, "attempt", attempt, "now", ctx.scheduledAt)
+						return
+					case <-time.After(retryDelay):
+						continue
+					}
 				}
 			}()
 
