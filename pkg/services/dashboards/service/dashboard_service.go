@@ -443,12 +443,8 @@ func (dr *DashboardServiceImpl) RestoreDashboard(ctx context.Context, orgID int6
 }
 
 func (dr *DashboardServiceImpl) SoftDeleteDashboard(ctx context.Context, orgID int64, dashboardUID string) error {
-	provisionedData, err := dr.GetProvisionedDashboardDataByDashboardUID(ctx, orgID, dashboardUID)
-	if err != nil {
-		return fmt.Errorf("%v: %w", "failed to check if dashboard is provisioned", err)
-	}
-
-	if provisionedData != nil {
+	provisionedData, _ := dr.GetProvisionedDashboardDataByDashboardUID(ctx, orgID, dashboardUID)
+	if provisionedData != nil && provisionedData.ID != 0 {
 		return dashboards.ErrDashboardCannotDeleteProvisionedDashboard
 	}
 
