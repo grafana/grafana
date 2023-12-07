@@ -90,7 +90,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: '100%',
 
       span: {
-        borderRight: `2px solid ${theme.colors.background.primary}`,
+        borderRight: `2px solid ${theme.colors.primary.text}`,
       },
 
       'span:last-child': {
