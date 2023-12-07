@@ -646,6 +646,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       getLogRowContextUi,
       getRowContextQuery,
       loadMoreLogs,
+      logsMeta,
     } = this.props;
 
     const {
@@ -920,7 +921,13 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 ) : (
                   <>
                     <LogResolutionPicker rows={logRows?.length || 0} onResolutionChange={this.handleResolutionChange} />
-                    <LogStats styles={logRowStyles} rows={logRows} />
+                                      <LogStats
+                    styles={logRowStyles}
+                    rows={logRows}
+                    logsMeta={logsMeta}
+                    onClickFilterLabel={onClickFilterLabel}
+                    onClickFilterOutLabel={onClickFilterOutLabel}
+                  />
                   </>
                 )}
               </div>
@@ -937,8 +944,8 @@ export const Logs = withTheme2(UnthemedLogs);
 const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: number) => {
   return {
     sidebarToggle: css({
-      backgroundColor: 'transparent',
-      border: 'none',
+      // backgroundColor: 'transparent',
+      // border: 'none',
       padding: `0 ${theme.spacing(1)}`,
     }),
     optionToggles: css({
