@@ -44,11 +44,6 @@ export const DuckDBTransformer: DataTransformerInfo<DuckTransformerOptions> = {
 
           let tableName = frame.refId ?? 'A';
 
-          // hmm, this doesnt work and we're stuck with DuckDB singleton?
-          // do we re-create the db on each transfomer invoke?
-          // or truncate all existing tables?
-          await conn.query(`DROP TABLE IF EXISTS ${tableName}`);
-
           await db.registerFileText(`${tableName}.json`, JSON.stringify(data));
           await conn.insertJSONFromPath(`${tableName}.json`, { name: tableName });
         }
@@ -56,6 +51,19 @@ export const DuckDBTransformer: DataTransformerInfo<DuckTransformerOptions> = {
         const result = await conn.query(sql);
         const df = arrowTableToFrame(result);
         subj.next([df]);
+
+        for await (const frame of data) {
+          let tableName = frame.refId ?? 'A';
+
+          // hmm, this doesnt work and we're stuck with DuckDB singleton?
+          // do we re-create the db on each transfomer invoke?
+          // or truncate all existing tables?
+          await conn.query(`DROP TABLE IF EXISTS ${tableName}`);
+        }
+
+        await db.flushFiles();
+        await db.dropFiles();
+        await conn.close();
       } catch (err) {
         subj.error(err); // tell the parent
       }
