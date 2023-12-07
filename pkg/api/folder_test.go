@@ -146,8 +146,8 @@ func TestFoldersCreateAPIEndpoint(t *testing.T) {
 
 			if tc.expectedCode == http.StatusOK {
 				// nolint:staticcheck
-				assert.Equal(t, int64(1), folder.Id)
-				assert.Equal(t, "uid", folder.Uid)
+				assert.Equal(t, int64(1), folder.ID)
+				assert.Equal(t, "uid", folder.UID)
 				assert.Equal(t, "Folder", folder.Title)
 			}
 		})
@@ -251,8 +251,8 @@ func TestFoldersUpdateAPIEndpoint(t *testing.T) {
 
 			if tc.expectedCode == http.StatusOK {
 				// nolint:staticcheck
-				assert.Equal(t, int64(1), folder.Id)
-				assert.Equal(t, "uid", folder.Uid)
+				assert.Equal(t, int64(1), folder.ID)
+				assert.Equal(t, "uid", folder.UID)
 				assert.Equal(t, "Folder upd", folder.Title)
 			}
 		})
@@ -515,7 +515,7 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 			require.Equal(t, len(folder.Parents), len(tc.expectedParentTitles))
 
 			for i := 0; i < len(tc.expectedParentUIDs); i++ {
-				assert.Equal(t, tc.expectedParentUIDs[i], folder.Parents[i].Uid)
+				assert.Equal(t, tc.expectedParentUIDs[i], folder.Parents[i].UID)
 				assert.Equal(t, tc.expectedParentTitles[i], folder.Parents[i].Title)
 			}
 			require.NoError(t, resp.Body.Close())

@@ -7,11 +7,11 @@ import (
 )
 
 type Folder struct {
-	// Deprecated: use Uid instead
-	Id            int64                  `json:"id"`
-	Uid           string                 `json:"uid"`
+	// Deprecated: use UID instead
+	ID            int64                  `json:"id" xorm:"pk autoincr 'id'"`
+	UID           string                 `json:"uid" xorm:"uid"`
 	Title         string                 `json:"title"`
-	Url           string                 `json:"url"`
+	URL           string                 `json:"url" xoem:"url"`
 	HasACL        bool                   `json:"hasAcl" xorm:"has_acl"`
 	CanSave       bool                   `json:"canSave"`
 	CanEdit       bool                   `json:"canEdit"`
@@ -30,8 +30,8 @@ type Folder struct {
 }
 
 type FolderSearchHit struct {
-	Id        int64  `json:"id"`
-	Uid       string `json:"uid"`
+	ID        int64  `json:"id" xorm:"pk autoincr 'id'"`
+	UID       string `json:"uid" xorm:"uid"`
 	Title     string `json:"title"`
 	ParentUID string `json:"parentUid,omitempty"`
 }

@@ -14139,7 +14139,7 @@
           "type": "boolean"
         },
         "id": {
-          "description": "Deprecated: use Uid instead",
+          "description": "Deprecated: use UID instead",
           "type": "integer",
           "format": "int64"
         },
