@@ -19,11 +19,12 @@ func initEntityTables(mg *migrator.Migrator) string {
 			{Name: "version", Type: migrator.DB_NVarchar, Length: 128, Nullable: false},
 
 			// The entity identifier
-			{Name: "tenant_id", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "key", Type: migrator.DB_Text, Nullable: false},
+			// k8s namespace names must be RFC1123 label names, 63 characters or less
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 63, Nullable: false},
 			{Name: "group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "group_version", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
-			{Name: "kind", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "resource", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "uid", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 
 			{Name: "folder", Type: migrator.DB_NVarchar, Length: 190, Nullable: false}, // uid of folder
@@ -59,7 +60,7 @@ func initEntityTables(mg *migrator.Migrator) string {
 			{Name: "errors", Type: migrator.DB_Text, Nullable: true},   // JSON object
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"tenant_id", "kind", "uid"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"namespace", "group", "resource", "uid"}, Type: migrator.UniqueIndex},
 			{Cols: []string{"folder"}, Type: migrator.IndexType},
 		},
 	})
@@ -73,11 +74,12 @@ func initEntityTables(mg *migrator.Migrator) string {
 			{Name: "version", Type: migrator.DB_NVarchar, Length: 128, Nullable: false},
 
 			// The entity identifier
-			{Name: "tenant_id", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "key", Type: migrator.DB_Text, Nullable: false},
+			// k8s namespace names must be RFC1123 label names, 63 characters or less
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 63, Nullable: false},
 			{Name: "group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "group_version", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
-			{Name: "kind", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "resource", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "uid", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 
 			{Name: "folder", Type: migrator.DB_NVarchar, Length: 190, Nullable: false}, // uid of folder
@@ -115,7 +117,7 @@ func initEntityTables(mg *migrator.Migrator) string {
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"guid", "version"}, Type: migrator.UniqueIndex},
-			{Cols: []string{"tenant_id", "kind", "uid", "version"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"namespace", "group", "resource", "uid", "version"}, Type: migrator.UniqueIndex},
 		},
 	})
 
