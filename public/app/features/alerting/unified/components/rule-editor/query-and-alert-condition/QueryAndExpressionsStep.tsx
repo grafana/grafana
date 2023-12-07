@@ -92,18 +92,15 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
   const rulesSourcesWithRuler = useRulesSourcesWithRuler();
 
-  const runQueriesPreview = useCallback(
-    (condition?: string) => {
-      if (isCloudAlertRuleType) {
-        // we will skip preview for cloud rules, these do not have any time series preview
-        // Grafana Managed rules and recording rules do
-        return;
-      }
+  const runQueriesPreview = useCallback(() => {
+    if (isCloudAlertRuleType) {
+      // we will skip preview for cloud rules, these do not have any time series preview
+      // Grafana Managed rules and recording rules do
+      return;
+    }
 
-      runQueries(getValues('queries'), condition || (getValues('condition') ?? ''));
-    },
-    [isCloudAlertRuleType, runQueries, getValues]
-  );
+    runQueries(getValues('queries'));
+  }, [isCloudAlertRuleType, runQueries, getValues]);
 
   // whenever we update the queries we have to update the form too
   useEffect(() => {
@@ -152,7 +149,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         return;
       }
 
-      runQueriesPreview(refId); //we need to run the queries to know if the condition is valid
+      runQueriesPreview(); //we need to run the queries to know if the condition is valid
 
       setValue('condition', refId);
     },
@@ -507,7 +504,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
               </Button>
             )}
             {!isPreviewLoading && (
-              <Button icon="sync" type="button" onClick={() => runQueriesPreview()} disabled={emptyQueries}>
+              <Button icon="sync" type="button" onClick={runQueriesPreview} disabled={emptyQueries}>
                 Preview
               </Button>
             )}

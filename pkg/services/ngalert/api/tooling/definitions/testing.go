@@ -128,9 +128,8 @@ type EvalQueriesRequest struct {
 
 // swagger:model
 type EvalQueriesPayload struct {
-	Condition string       `json:"condition"`
-	Data      []AlertQuery `json:"data"`
-	Now       time.Time    `json:"now"`
+	Data []AlertQuery `json:"data"`
+	Now  time.Time    `json:"now"`
 }
 
 func (p *TestRulePayload) UnmarshalJSON(b []byte) error {

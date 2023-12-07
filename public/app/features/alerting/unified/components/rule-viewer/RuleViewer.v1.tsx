@@ -78,13 +78,10 @@ export function RuleViewer({ match }: RuleViewerProps) {
         ...q,
         relativeTimeRange: evaluationTimeRanges[q.refId] ?? q.relativeTimeRange,
       }));
-      let condition;
-      if (rule && isGrafanaRulerRule(rule.rulerRule)) {
-        condition = rule.rulerRule.grafana_alert.condition;
-      }
-      runner.run(evalCustomizedQueries, condition ?? 'A');
+
+      runner.run(evalCustomizedQueries);
     }
-  }, [queries, evaluationTimeRanges, runner, allDataSourcesAvailable, rule]);
+  }, [queries, evaluationTimeRanges, runner, allDataSourcesAvailable]);
 
   useEffect(() => {
     const alertQueries = alertRuleToQueries(rule);
