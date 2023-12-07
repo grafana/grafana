@@ -3,13 +3,13 @@ import { Global } from '@emotion/react';
 import Slider from 'rc-slider';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { FieldConfigEditorProps, GrafanaTheme2, SliderFieldConfigSettings } from '@grafana/data';
+import { StandardEditorProps, GrafanaTheme2, SliderFieldConfigSettings } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 import { getStyles } from '@grafana/ui/src/components/Slider/styles';
 
 import { NumberInput } from './NumberInput';
 
-type Props = FieldConfigEditorProps<number, SliderFieldConfigSettings>;
+type Props = StandardEditorProps<number, SliderFieldConfigSettings>;
 
 export const SliderValueEditor = ({ value, onChange, item }: Props) => {
   // Input reference
