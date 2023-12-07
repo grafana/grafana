@@ -500,7 +500,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		_ = insertTestDashboard(t, dashboardStore, "delete me 1", 1, folder.ID, folder.UID, false, "delete this 1")
 		_ = insertTestDashboard(t, dashboardStore, "delete me 2", 1, folder.ID, folder.UID, false, "delete this 2")
 
-		err := dashboardStore.SoftDeleteDashboardsInFolder(context.Background(), folder.UID)
+		err := dashboardStore.SoftDeleteDashboardsInFolder(context.Background(), folder.OrgID, folder.UID)
 		require.NoError(t, err)
 
 		// nolint:staticcheck
