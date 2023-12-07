@@ -5,12 +5,13 @@ import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import CircularProgress from '@mui/material/CircularProgress';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Card, Icon, LinkButton, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { registerAchievementCompleted } from './AchievementsService';
+import { achievementsByName } from './AchievementsList';
+import { getUserLevel, registerAchievementCompleted } from './AchievementsService';
 import { GrotIcon } from './GrotIcon';
 import { AchievementId, AchievementLevel } from './types';
 import { useAchievements } from './useAchievements';
@@ -24,6 +25,18 @@ interface AchievementCardProps {
 export const AchievementCard = ({ title, level }: AchievementCardProps) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
+
+  const [expanded, setExpanded] = useState<boolean>(false);
+
+  const handleChange = () => {
+    setExpanded(!expanded);
+  };
+
+  useEffect(() => {
+    getUserLevel().then((level) => {
+      setExpanded(title === achievementsByName[level]);
+    });
+  }, [title]);
 
   const { achievementsList } = useAchievements();
   const achievementsListByLevel =
@@ -42,11 +55,11 @@ export const AchievementCard = ({ title, level }: AchievementCardProps) => {
 
   return (
     <div className={styles.wrapper}>
-      <Accordion>
+      <Accordion expanded={expanded} onChange={handleChange}>
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           aria-controls="panel1a-content"
-          id="panel1a-header"
+          id={title}
           sx={{ backgroundColor: theme.colors.background.secondary }}
         >
           <div className={styles.summaryContent}>
