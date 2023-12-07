@@ -28,6 +28,9 @@ replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.
 // This will not be required in the next k8s release @v28-with-hook
 replace k8s.io/kube-openapi v0.0.0-20230717233707-2695361300d9 => github.com/ryantxu/kube-openapi v0.0.0-20231113051506-80b8e1dfdde6 // @grafana/grafana-app-platform-squad
 
+// The v0.120.0 is needed for now to be compatible with grafana/thema.
+replace github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.120.0
+
 require (
 	cloud.google.com/go/storage v1.30.1 // @grafana/backend-platform
 	cuelang.org/go v0.6.0-0.dev // @grafana/grafana-as-code
@@ -61,10 +64,10 @@ require (
 	github.com/google/wire v0.5.0 // @grafana/backend-platform
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20231101090315-bf12694896a8 // @grafana/alerting-squad-backend
-	github.com/grafana/cuetsy v0.1.10 // @grafana/grafana-as-code
+	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.19.1 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go v1.9.0 // @grafana/backend-platform
-	github.com/grafana/grafana-plugin-sdk-go v0.194.0 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana-plugin-sdk-go v0.196.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform
 	github.com/hashicorp/go-hclog v1.5.0 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-plugin v1.6.0 // @grafana/plugins-platform-backend
@@ -106,10 +109,10 @@ require (
 	go.opentelemetry.io/otel/exporters/jaeger v1.10.0 // @grafana/backend-platform
 	go.opentelemetry.io/otel/sdk v1.21.0 // @grafana/backend-platform
 	go.opentelemetry.io/otel/trace v1.21.0 // @grafana/backend-platform
-	golang.org/x/crypto v0.15.0 // @grafana/backend-platform
+	golang.org/x/crypto v0.16.0 // @grafana/backend-platform
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29 // @grafana/alerting-squad-backend
-	golang.org/x/net v0.18.0 // @grafana/oss-big-tent @grafana/partner-datasources
-	golang.org/x/oauth2 v0.14.0 // @grafana/grafana-authnz-team
+	golang.org/x/net v0.19.0 // @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/oauth2 v0.15.0 // @grafana/grafana-authnz-team
 	golang.org/x/sync v0.4.0 // @grafana/alerting-squad-backend
 	golang.org/x/time v0.3.0 // @grafana/backend-platform
 	golang.org/x/tools v0.13.0 // @grafana/grafana-as-code
@@ -215,7 +218,7 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.11.0 // @grafana/alerting-squad-backend
 	go.uber.org/goleak v1.3.0 // indirect
-	golang.org/x/sys v0.14.0 // indirect
+	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // @grafana/backend-platform
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
@@ -404,7 +407,7 @@ require (
 	go.starlark.net v0.0.0-20221020143700-22309ac47eac // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/term v0.14.0 // indirect
+	golang.org/x/term v0.15.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20231002182017-d307bd883b97 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231012201019-e917dd12ba7a // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
