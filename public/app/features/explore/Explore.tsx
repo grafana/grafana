@@ -33,7 +33,6 @@ import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPane
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { WizarDS } from 'app/plugins/datasource/prometheus/querybuilder/components/wizarDS/WizarDS';
-import { componentTemplates } from 'app/plugins/datasource/prometheus/querybuilder/components/wizarDS/state/templates';
 import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
 import { StoreState } from 'app/types';
 
@@ -73,6 +72,7 @@ import {
 } from './state/query';
 import { isSplit } from './state/selectors';
 import { updateTimeRange } from './state/time';
+import { Suggestion } from 'app/plugins/datasource/prometheus/querybuilder/components/wizarDS/types';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -125,6 +125,7 @@ interface ExploreState {
   openDrawer?: ExploreDrawer;
   openTutorial: boolean;
   contentOutlineVisible: boolean;
+  templates?: Suggestion[];
 }
 
 export type Props = ExploreProps & ConnectedProps<typeof connector>;
@@ -166,6 +167,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       openDrawer: undefined,
       openTutorial: false,
       contentOutlineVisible: false,
+      templates: undefined,
     };
     this.graphEventBus = props.eventBus.newScopedBus('graph', { onlyLocal: false });
     this.logsEventBus = props.eventBus.newScopedBus('logs', { onlyLocal: false });
@@ -597,7 +599,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           onChangeTime={this.onChangeTime}
           onContentOutlineToogle={this.onContentOutlineToogle}
           isContentOutlineOpen={contentOutlineVisible}
-          setOpenTutorial={() => this.setState({ openTutorial: !openTutorial })}
+          setOpenTutorial={(templates: Suggestion[]) => this.setState({ openTutorial: !openTutorial, templates })}
         />
         <div
           style={{
@@ -716,12 +718,12 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           splitVisible={openTutorial}
         >
           <>{exploreContent}</>
-          {config.featureToggles.wizarDSToggle && openTutorial && (
+          {config.featureToggles.wizarDSToggle && openTutorial && this.state.templates && (
             <WizarDS
               closeDrawer={() => this.setState({ openTutorial: false })}
               // add component templates so any DS can use this
               // add components based on some logic for the DS in the picker??
-              templates={componentTemplates}
+              templates={this.state.templates}
             />
           )}
         </SplitPaneWrapper>

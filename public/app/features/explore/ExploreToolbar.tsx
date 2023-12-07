@@ -19,6 +19,9 @@ import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { t, Trans } from 'app/core/internationalization';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
+import { componentTemplates as promTemplates } from 'app/plugins/datasource/prometheus/querybuilder/components/wizarDS/state/templates';
+import { componentTemplates as lokiTemplates } from 'app/plugins/datasource/prometheus/querybuilder/components/wizarDS/state/templatesLoki';
+import { Suggestion } from 'app/plugins/datasource/prometheus/querybuilder/components/wizarDS/types';
 import { CORRELATION_EDITOR_POST_CONFIRM_ACTION } from 'app/types/explore';
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
 
@@ -63,8 +66,17 @@ interface Props {
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
   onContentOutlineToogle: () => void;
   isContentOutlineOpen: boolean;
-  setOpenTutorial: () => void;
+  setOpenTutorial: (suggestions: Suggestion[]) => void;
 }
+
+type DSTemplates = {
+  [key: string]: Suggestion[] | undefined;
+}
+
+const wizarDSTemplates: DSTemplates = {
+  loki: lokiTemplates,
+  prometheus: promTemplates
+};
 
 export function ExploreToolbar({
   exploreId,
@@ -225,6 +237,8 @@ export function ExploreToolbar({
     <div style={{ flex: 1 }} key="spacer0" />,
   ];
 
+  const suggestions = datasourceInstance ? wizarDSTemplates[datasourceInstance.type] : undefined;
+
   return (
     <div>
       {refreshInterval && <SetInterval func={onRunQuery} interval={refreshInterval} loading={loading} />}
@@ -258,13 +272,13 @@ export function ExploreToolbar({
               hideTextValue={showSmallDataSourcePicker}
               width={showSmallDataSourcePicker ? 8 : undefined}
             />
-            {config.featureToggles.wizarDSToggle && (
+            {config.featureToggles.wizarDSToggle && suggestions && (
               <div
                 className={css({
                   padding: '0 0 0 8px',
                 })}
               >
-                <Button variant={'secondary'} onClick={() => setOpenTutorial()} title={'Get query suggestions.'}>
+                <Button variant={'secondary'} onClick={() => setOpenTutorial(suggestions)} title={'Get query suggestions.'}>
                   <img height={16} src={`public/img/ai-icons/AI_Logo_color.svg`} alt="AI logo color" />
                   {'\u00A0'}Query wizard
                 </Button>
