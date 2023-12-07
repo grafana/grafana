@@ -179,7 +179,8 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
                       <span>
                         Specify the time zone used in the database session, e.g. <code>Europe/Berlin</code> or
                         <code>+02:00</code>. This is necessary, if the timezone of the database (or the host of the
-                        database) is set to something other than UTC. The value is set in the session with
+                        database) is set to something other than UTC. Set this to `+00:00` so grafana can handle times
+                        properly. The value is set in the session with
                         <code>SET time_zone=&apos;...&apos;</code>. If you leave this field empty, the timezone is not
                         updated. You can find more information in the MySQL documentation.
                       </span>
