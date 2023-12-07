@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import { PluginExtensionPoints, dateTime, findCommonLabels } from '@grafana/data';
+import { PluginExtensionPoints, dateTime, findCommonAndUniqueLabels } from '@grafana/data';
 import { Alert, CombinedRule, PaginationProps } from 'app/types/unified-alerting';
 
 import { alertInstanceKey } from '../../utils/rules';
@@ -34,7 +34,7 @@ export const AlertInstancesTable = ({ rule, instances, pagination, footerRow }: 
   const commonLabels = useMemo(() => {
     // only compute the common labels if we have more than 1 instance, if we don't then that single instance
     // will have the complete set of common labels and no unique ones
-    return instances.length > 1 ? findCommonLabels(instances.map((instance) => instance.labels)) : {};
+    return instances.length > 1 ? findCommonAndUniqueLabels(instances.map((instance) => instance.labels)).common : {};
   }, [instances]);
 
   const items = useMemo(

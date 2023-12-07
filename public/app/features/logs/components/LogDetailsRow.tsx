@@ -348,6 +348,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                   value={parsedValues[0]}
                   rowCount={fieldCount}
                   isLabel={isLabel}
+                  shouldFilter={true}
                 />
               </div>
             </td>

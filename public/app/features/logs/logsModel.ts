@@ -389,7 +389,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
 
   const flatAllLabels = allLabels.flat();
   let commonLabels = {} as Labels;
-  let uniqueLabels = {} as Record<string, string[]>;
+  let uniqueLabels = {} as Labels;
   if (flatAllLabels.length > 0) {
     const { common, unique } = findCommonAndUniqueLabels(flatAllLabels);
     commonLabels = common;

@@ -8,6 +8,7 @@ import {
   FieldType,
   LoadingState,
   getDefaultTimeRange,
+  DataFrame,
 } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
 import { stylesFactory, withTheme2, Themeable2 } from '@grafana/ui';
@@ -65,11 +66,13 @@ interface Props extends Themeable2 {
   rowCount: number;
   isLabel?: boolean;
   shouldFilter: boolean;
+  onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
 }
 
 class UnThemedLogLabelStats extends PureComponent<Props> {
   render() {
-    const { label, stats, value, theme, shouldFilter } = this.props;
+    const { label, stats, value, theme, shouldFilter, onClickFilterLabel, onClickFilterOutLabel } = this.props;
     const style = getStyles(theme);
     const topRows = stats.slice(0, STATS_ROW_LIMIT);
     let activeRow = undefined;
@@ -93,13 +96,26 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
       }),
     });
 
+    if (otherProportion >= 0.99) {
+      // guard check for when there are too many unique values
+      return <></>;
+    }
     return (
       <div className={style.logsStats} data-testid="logLabelStats">
         <div className={style.logsStatsTitle}>{label}</div>
         <div className={style.logsStatsBody}>
           <div style={{ width: '70%' }}>
             {topRows.map((stat) => (
-              <LogLabelStatsRow key={stat.value} {...stat} active={false} total={total} shouldFilter={shouldFilter} />
+              <LogLabelStatsRow
+                key={stat.value}
+                {...stat}
+                active={false}
+                total={total}
+                shouldFilter={shouldFilter}
+                onClickFilterLabel={onClickFilterLabel}
+                onClickFilterOutLabel={onClickFilterOutLabel}
+                keyField={label}
+              />
             ))}
             {otherCount > 0 && (
               <LogLabelStatsRow
@@ -108,7 +124,10 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
                 value="Other"
                 proportion={otherProportion}
                 total={total}
-                shouldFilter={shouldFilter}
+                shouldFilter={false}
+                keyField={label}
+                onClickFilterLabel={onClickFilterLabel}
+                onClickFilterOutLabel={onClickFilterOutLabel}
               />
             )}
           </div>
@@ -140,7 +159,7 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
                   placement: 'right',
                   values: ['percent'],
                 },
-                displayLabels: ['percent', 'value'],
+                displayLabels: ['percent'],
               }}
             />
           </div>

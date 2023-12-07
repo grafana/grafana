@@ -909,7 +909,13 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     prettifyLogMessage={prettifyLogMessage}
                   />
                 ) : (
-                  <LogStats styles={logRowStyles} rows={logRows} logsMeta={logsMeta} />
+                  <LogStats
+                    styles={logRowStyles}
+                    rows={logRows}
+                    logsMeta={logsMeta}
+                    onClickFilterLabel={onClickFilterLabel}
+                    onClickFilterOutLabel={onClickFilterOutLabel}
+                  />
                 )}
               </div>
             </SplitPaneWrapper>
@@ -925,8 +931,8 @@ export const Logs = withTheme2(UnthemedLogs);
 const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: number) => {
   return {
     sidebarToggle: css({
-      backgroundColor: 'transparent',
-      border: 'none',
+      // backgroundColor: 'transparent',
+      // border: 'none',
       padding: `0 ${theme.spacing(1)}`,
     }),
     optionToggles: css({
