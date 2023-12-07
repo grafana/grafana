@@ -76,8 +76,8 @@ export const LogLabelStatsRow = ({
   const percent = `${Math.round(proportion * 100)}%`;
 
   return (
-    <div style={{ display: 'flex' }}>
-      <div style={{ width: '60px', marginTop: '3px' }}>
+    <tr>
+      <td style={{ marginRight: '1.5em', width: '45px' }}>
         <IconButton
           disabled={!shouldFilter}
           size="xs"
@@ -92,23 +92,22 @@ export const LogLabelStatsRow = ({
           aria-label="search-minus"
           onClick={() => onClickFilterOutLabel?.(keyField, value ?? '')}
         />
-      </div>
-      <div
+      </td>
+      <td
         style={{
-          width: '180px',
           textOverflow: 'ellipsis',
           overflow: 'hidden',
           whiteSpace: 'nowrap',
-          marginRight: '20px',
+          marginRight: '1.5em',
         }}
       >
         {value}
-      </div>
-      <div style={{ width: '80px' }}>
+      </td>
+      <td style={{ width: '80px' }}>
         {count}/{total}
-      </div>
-      <div style={{ width: '44px' }}>{percent}</div>
-    </div>
+      </td>
+      <td style={{ width: '40px' }}>{percent}</td>
+    </tr>
   );
 };
 
