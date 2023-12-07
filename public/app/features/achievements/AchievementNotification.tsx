@@ -52,7 +52,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 const slideLeft = keyframes`
   from {width: 0px;}
-  to {width: 250px;}
+  to {width: 300px;}
 `;
 
 const bounce = keyframes`
