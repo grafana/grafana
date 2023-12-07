@@ -6,17 +6,20 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	secretsFakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/require"
 )
 
 func TestSSOSettingsService_GetForProvider(t *testing.T) {
@@ -308,6 +311,66 @@ func TestSSOSettingsService_List(t *testing.T) {
 	}
 }
 
+func TestSSOSettingsService_Upsert(t *testing.T) {
+	t.Run("successfully upsert SSO settings", func(t *testing.T) {
+		env := setupTestEnv(t)
+
+		settings := models.SSOSettings{
+			Provider: "azuread",
+			OAuthSettings: &social.OAuthInfo{
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
+				Enabled:      true,
+			},
+			IsDeleted: false,
+		}
+
+		env.secrets.On("Encrypt", mock.Anything, []byte(settings.OAuthSettings.ClientSecret), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
+
+		err := env.service.Upsert(context.Background(), settings)
+		require.NoError(t, err)
+	})
+
+	t.Run("returns error if secrets encryption failed", func(t *testing.T) {
+		env := setupTestEnv(t)
+
+		settings := models.SSOSettings{
+			Provider: "azuread",
+			OAuthSettings: &social.OAuthInfo{
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
+				Enabled:      true,
+			},
+			IsDeleted: false,
+		}
+
+		env.secrets.On("Encrypt", mock.Anything, []byte(settings.OAuthSettings.ClientSecret), mock.Anything).Return(nil, errors.New("encryption failed")).Once()
+
+		err := env.service.Upsert(context.Background(), settings)
+		require.Error(t, err)
+	})
+
+	t.Run("returns error if store failed to upsert settings", func(t *testing.T) {
+		env := setupTestEnv(t)
+
+		settings := models.SSOSettings{
+			Provider: "azuread",
+			OAuthSettings: &social.OAuthInfo{
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
+				Enabled:      true,
+			},
+			IsDeleted: false,
+		}
+
+		env.secrets.On("Encrypt", mock.Anything, []byte(settings.OAuthSettings.ClientSecret), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
+		env.store.ExpectedError = errors.New("upsert failed")
+
+		err := env.service.Upsert(context.Background(), settings)
+		require.Error(t, err)
+	})
+}
+
 func TestSSOSettingsService_Delete(t *testing.T) {
 	t.Run("successfully delete SSO settings", func(t *testing.T) {
 		env := setupTestEnv(t)
@@ -345,19 +408,23 @@ func TestSSOSettingsService_Delete(t *testing.T) {
 func setupTestEnv(t *testing.T) testEnv {
 	store := ssosettingstests.NewFakeStore()
 	fallbackStrategy := ssosettingstests.NewFakeFallbackStrategy()
-
+	secrets := secretsFakes.NewMockService(t)
 	accessControl := acimpl.ProvideAccessControl(setting.NewCfg())
+
 	svc := &SSOSettingsService{
 		log:          log.NewNopLogger(),
 		store:        store,
 		ac:           accessControl,
 		fbStrategies: []ssosettings.FallbackStrategy{fallbackStrategy},
+		secrets:      secrets,
 	}
+
 	return testEnv{
 		service:          svc,
 		store:            store,
 		ac:               accessControl,
 		fallbackStrategy: fallbackStrategy,
+		secrets:          secrets,
 	}
 }
 
@@ -366,4 +433,5 @@ type testEnv struct {
 	store            *ssosettingstests.FakeStore
 	ac               accesscontrol.AccessControl
 	fallbackStrategy *ssosettingstests.FakeFallbackStrategy
+	secrets          *secretsFakes.MockService
 }

@@ -43,7 +43,7 @@ export interface FeatureToggles {
   topnav?: boolean;
   dockedMegaMenu?: boolean;
   grpcServer?: boolean;
-  entityStore?: boolean;
+  unifiedStorage?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
@@ -105,6 +105,7 @@ export interface FeatureToggles {
   metricsSummary?: boolean;
   grafanaAPIServer?: boolean;
   grafanaAPIServerWithExperimentalAPIs?: boolean;
+  grafanaAPIServerEnsureKubectlAccess?: boolean;
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
