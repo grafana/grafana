@@ -7,6 +7,7 @@ import { ShareEmbed } from 'app/features/dashboard/components/ShareModal/ShareEm
 import { buildParams, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { getDashboardUrl } from '../utils/urlBuilders';
 import { getPanelIdForVizPanel } from '../utils/utils';
 
@@ -39,12 +40,13 @@ function SharePanelEmbedTabRenderer({ model }: SceneComponentProps<SharePanelEmb
   const id = getPanelIdForVizPanel(p);
   const timeRangeState = sceneGraph.getTimeRange(p);
 
+  const timeFrom = timeRangeState instanceof PanelTimeRange ? timeRangeState.state.timeFrom : undefined;
+
   return (
     <ShareEmbed
       panel={{
         id,
-        timeFrom:
-          typeof timeRangeState.state.value.raw.from === 'string' ? timeRangeState.state.value.raw.from : undefined,
+        timeFrom,
       }}
       range={timeRangeState.state.value}
       dashboard={{ uid: dashUid ?? '', time: timeRangeState.state.value }}
