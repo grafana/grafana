@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -251,7 +252,8 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 				}, &setting.Cfg{
 					AutoAssignOrgRole:     tt.autoAssignOrgRole,
 					GitHubSkipOrgRoleSync: tt.settingSkipOrgRoleSync,
-				}, featuremgmt.WithFeatures())
+				}, &ssosettingstests.MockService{},
+				featuremgmt.WithFeatures())
 
 			token := &oauth2.Token{
 				AccessToken: "fake_token",
@@ -332,7 +334,7 @@ func TestSocialGitHub_InitializeExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGitHubProvider(tc.settings, &setting.Cfg{}, featuremgmt.WithFeatures())
+			s := NewGitHubProvider(tc.settings, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			require.Equal(t, tc.want.teamIds, s.teamIds)
 			require.Equal(t, tc.want.allowedOrganizations, s.allowedOrganizations)

@@ -58,13 +58,12 @@ func ProvideService(cfg *setting.Cfg,
 		}
 
 		for _, ssoSetting := range allSettings {
-			conn, err := createOAuthConnector(ssoSetting.Provider, ssoSetting.OAuthSettings, cfg, features, cache)
+			conn, err := createOAuthConnector(ssoSetting.Provider, ssoSetting.OAuthSettings, cfg, ssoSettings, features, cache)
 			if err != nil {
 				ss.log.Error("Failed to create OAuth provider", "error", err, "provider", ssoSetting.Provider)
 				continue
 			}
 
-			ssoSettings.RegisterReloadable(ssoSetting.Provider, conn.(ssosettings.Reloadable))
 			ss.socialMap[ssoSetting.Provider] = conn
 		}
 	} else {
@@ -86,7 +85,7 @@ func ProvideService(cfg *setting.Cfg,
 				name = social.GrafanaComProviderName
 			}
 
-			conn, _ := createOAuthConnector(name, info, cfg, features, cache)
+			conn, _ := createOAuthConnector(name, info, cfg, ssoSettings, features, cache)
 
 			ss.socialMap[name] = conn
 		}
@@ -215,22 +214,22 @@ func (ss *SocialService) getUsageStats(ctx context.Context) (map[string]any, err
 	return m, nil
 }
 
-func createOAuthConnector(name string, info *social.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) (social.SocialConnector, error) {
+func createOAuthConnector(name string, info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) (social.SocialConnector, error) {
 	switch name {
 	case social.AzureADProviderName:
-		return connectors.NewAzureADProvider(info, cfg, features, cache), nil
+		return connectors.NewAzureADProvider(info, cfg, ssoSettings, features, cache), nil
 	case social.GenericOAuthProviderName:
-		return connectors.NewGenericOAuthProvider(info, cfg, features), nil
+		return connectors.NewGenericOAuthProvider(info, cfg, ssoSettings, features), nil
 	case social.GitHubProviderName:
-		return connectors.NewGitHubProvider(info, cfg, features), nil
+		return connectors.NewGitHubProvider(info, cfg, ssoSettings, features), nil
 	case social.GitlabProviderName:
-		return connectors.NewGitLabProvider(info, cfg, features), nil
+		return connectors.NewGitLabProvider(info, cfg, ssoSettings, features), nil
 	case social.GoogleProviderName:
-		return connectors.NewGoogleProvider(info, cfg, features), nil
+		return connectors.NewGoogleProvider(info, cfg, ssoSettings, features), nil
 	case social.GrafanaComProviderName:
-		return connectors.NewGrafanaComProvider(info, cfg, features), nil
+		return connectors.NewGrafanaComProvider(info, cfg, ssoSettings, features), nil
 	case social.OktaProviderName:
-		return connectors.NewOktaProvider(info, cfg, features), nil
+		return connectors.NewOktaProvider(info, cfg, ssoSettings, features), nil
 	default:
 		return nil, fmt.Errorf("unknown oauth provider: %s", name)
 	}

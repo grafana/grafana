@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -197,6 +198,7 @@ func TestSocialGoogle_retrieveGroups(t *testing.T) {
 					AutoAssignOrgRole:     "",
 					GoogleSkipOrgRoleSync: false,
 				},
+				&ssosettingstests.MockService{},
 				featuremgmt.WithFeatures())
 
 			got, err := s.retrieveGroups(context.Background(), tt.args.client, tt.args.userData)
@@ -651,6 +653,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 				&setting.Cfg{
 					GoogleSkipOrgRoleSync: tt.fields.skipOrgRoleSync,
 				},
+				&ssosettingstests.MockService{},
 				featuremgmt.WithFeatures())
 
 			gotData, err := s.UserInfo(context.Background(), tt.args.client, tt.args.token)

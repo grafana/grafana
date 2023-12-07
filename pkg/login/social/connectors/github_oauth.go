@@ -55,7 +55,7 @@ var (
 			"User is not a member of one of the required organizations. Please contact identity provider administrator."))
 )
 
-func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) *SocialGithub {
+func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager) *SocialGithub {
 	teamIds := mustInts(util.SplitString(info.Extra[teamIdsKey]))
 
 	config := createOAuthConfig(info, cfg, social.GitHubProviderName)
@@ -67,6 +67,10 @@ func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, features *featu
 		skipOrgRoleSync:      cfg.GitHubSkipOrgRoleSync,
 		// FIXME: Move skipOrgRoleSync to OAuthInfo
 		// skipOrgRoleSync: info.SkipOrgRoleSync
+	}
+
+	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
+		ssoSettings.RegisterReloadable(social.GitHubProviderName, provider)
 	}
 
 	return provider
