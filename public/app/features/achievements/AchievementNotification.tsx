@@ -36,7 +36,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       justifyContent: 'center',
       gap: '4px',
       h3: { margin: 0 },
-      h5: { margin: 0 },
+      h5: {
+        margin: 0,
+        textOverflow: 'ellipsis',
+        overflow: 'hidden',
+      },
       whiteSpace: 'nowrap',
       overflow: 'hidden',
       width: '0px',
@@ -48,7 +52,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 const slideLeft = keyframes`
   from {width: 0px;}
-  to {width: 300px;}
+  to {width: 250px;}
 `;
 
 const bounce = keyframes`
