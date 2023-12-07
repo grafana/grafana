@@ -67,7 +67,18 @@ export class Echo implements EchoSrv {
     });
   };
 
+  /**
+   * When used, this will set additinal props to add to every event's metadata.
+   * Keep in mind setting this is destructive and will overwrite any previous extensions.
+   * Use only to set shared metadata that are i.e. page specific.
+   * For one-off metadata setup, provide meta object to addEvent method.
+   **/
+
   setMetaExtensions = (extensions: Record<string, unknown>) => {
+    if (Object.keys(this._metaExtensions).length > 0) {
+      console.warn('Overriding meta extensions! Make sure you call setMetaExtensions only once.');
+    }
+
     this._metaExtensions = extensions;
     return () => {
       this._metaExtensions = {};
