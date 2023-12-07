@@ -31,7 +31,7 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
       }
       return 'Are you sure you want to delete this content? It will be moved to trash and permanently deleted after 30 days.';
     }
-    return 'This action will delete the following content:';
+    return t('browse-dashboards.action.delete-modal-text', 'This action will delete the following content:');
   }, [containsDashboards, containsFolders]);
 
   const onDelete = async () => {
