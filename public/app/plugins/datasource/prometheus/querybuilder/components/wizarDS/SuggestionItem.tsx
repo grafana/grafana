@@ -1,11 +1,9 @@
-import { cx } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { FormEvent, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
-// import { reportInteraction } from '@grafana/runtime';
-import { Button, RadioButtonList, Spinner, TextArea, Toggletip, useTheme2 } from '@grafana/ui';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Button, RadioButtonList, Spinner, TextArea, Toggletip, useStyles2 } from '@grafana/ui';
 
-import { getStyles } from './WizarDS';
 import { Suggestion } from './types';
 
 export type Props = {
@@ -48,8 +46,7 @@ export function SuggestionItem(props: Props) {
     text: '',
   });
 
-  const theme = useTheme2();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   const { component, explanation /* testid, order, link */ } = suggestion;
 
@@ -203,17 +200,12 @@ export function SuggestionItem(props: Props) {
         {showExp && suggestion.explanation && (
           <>
             <div className={cx(styles.bodySmall, styles.explainPadding)}>
-              <div className={styles.textPadding}>{explanation}</div>
-              <div className={styles.textPadding}>
-                <a
-                  className={styles.doc}
-                  href={suggestion.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+              <p>{explanation}</p>
+              <p>
+                <a className={styles.doc} href={suggestion.link} target="_blank" rel="noopener noreferrer">
                   Learn more
                 </a>
-              </div>
+              </p>
 
               <div className={cx(styles.rightButtons, styles.secondaryText)}>
                 Was this explanation helpful?
@@ -224,7 +216,6 @@ export function SuggestionItem(props: Props) {
                         fill="outline"
                         variant="secondary"
                         size="sm"
-                        className={styles.leftButton}
                         onClick={() => {
                           explanationFeedbackEvent('Yes', '', suggestion, historical, prompt);
                           updateGaveExplanationFeedback(true);
@@ -278,6 +269,86 @@ export function SuggestionItem(props: Props) {
     </>
   );
 }
+const getStyles = (theme: GrafanaTheme2) => ({
+  explationTextInput: css({
+    paddingLeft: '24px',
+  }),
+  useButton: css({
+    marginLeft: 'auto',
+  }),
+  suggestionFeedback: css({
+    textAlign: 'left',
+  }),
+
+  submitFeedback: css({
+    padding: '16px 0',
+  }),
+  suggestion: css({
+    display: 'flex',
+    flexWrap: 'nowrap',
+  }),
+  feedbackQuestion: css({
+    display: 'flex',
+    padding: '8px 0px',
+    h6: { marginBottom: 0 },
+    i: {
+      marginTop: '1px',
+    },
+  }),
+
+  longCode: css({
+    width: '90%',
+    textWrap: 'nowrap',
+    overflow: 'scroll',
+    maskImage: `linear-gradient(to right, rgba(0, 0, 0, 1) 90%, rgba(0, 0, 0, 0))`,
+
+    div: {
+      display: 'inline-block',
+    },
+  }),
+  floatRight: css({
+    float: 'right',
+  }),
+  secondaryText: css({
+    color: theme.colors.text.secondary,
+  }),
+  bodySmall: css({
+    fontSize: `${theme.typography.bodySmall.fontSize}`,
+  }),
+
+  codeText: css({
+    fontFamily: `${theme.typography.fontFamilyMonospace}`,
+    fontSize: `${theme.typography.bodySmall.fontSize}`,
+  }),
+  feedbackStyle: css({
+    margin: 0,
+    textAlign: 'right',
+    paddingTop: '22px',
+    paddingBottom: '22px',
+  }),
+
+  explainPadding: css({
+    paddingLeft: '26px',
+  }),
+  doc: css({
+    textDecoration: 'underline',
+  }),
+
+  rightButtons: css({
+    display: 'flex',
+    flexWrap: `nowrap`,
+    marginLeft: 'auto',
+  }),
+  textPadding: css({
+    paddingBottom: '12px',
+  }),
+
+  center: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  }),
+});
 
 function explanationFeedbackEvent(
   radioInputFeedback: string,

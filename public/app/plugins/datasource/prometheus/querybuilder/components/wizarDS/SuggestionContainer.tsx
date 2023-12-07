@@ -1,11 +1,12 @@
-import { cx } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { useState } from 'react';
 
-import { Button, useTheme2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, Stack, useTheme2 } from '@grafana/ui';
 import { RemoteTutorial } from 'app/features/tutorial/remotetutorial/RemoteTutorial';
 
 import { SuggestionItem } from './SuggestionItem';
-import { getStyles, testIds } from './WizarDS';
+import { testIds } from './WizarDS';
 import { Tutorial } from './state/state';
 import { Suggestion, SuggestionType } from './types';
 
@@ -41,7 +42,7 @@ export function SuggestionContainer(props: Props) {
 
   return (
     <>
-      <div className={styles.textPadding}>{text}</div>
+      <p>{text}</p>
       <div className={cx(styles.secondaryText, styles.bottomMargin)}>
         {secondaryText}
         <div>
@@ -90,13 +91,45 @@ export function SuggestionContainer(props: Props) {
               {refineText}
             </Button>
           </div>
-          <div className={cx(styles.textPadding, styles.floatRight)}>
-            <Button fill="outline" variant="secondary" size="md" onClick={closeDrawer}>
-              Cancel
-            </Button>
+          <div className={styles.textPadding}>
+            <Stack justifyContent="space-between">
+              <div />
+              <Button fill="outline" variant="secondary" size="md" onClick={closeDrawer}>
+                Cancel
+              </Button>
+            </Stack>
           </div>
         </div>
       )}
     </>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  infoContainerWrapper: css({
+    paddingBottom: '24px',
+  }),
+  secondaryText: css({
+    color: `${theme.colors.text.secondary}`,
+  }),
+  afterButtons: css({
+    display: 'flex',
+    justifyContent: 'flex-end',
+  }),
+  infoContainer: css({
+    border: `${theme.colors.border.strong}`,
+    padding: '16px',
+    backgroundColor: `${theme.colors.background.secondary}`,
+    borderRadius: `8px`,
+    borderBottomLeftRadius: 0,
+  }),
+  bottomMargin: css({
+    marginBottom: '20px',
+  }),
+  nextInteractionHeight: css({
+    height: '88px',
+  }),
+  textPadding: css({
+    paddingBottom: '12px',
+  }),
+});
