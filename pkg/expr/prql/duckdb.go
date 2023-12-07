@@ -6,6 +6,7 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
@@ -137,6 +138,8 @@ func (d *DuckDB) AppendAll(ctx context.Context, frames data.Frames) error {
 				case *uint64:
 					val = *v
 				case *bool:
+					val = *v
+				case *time.Time:
 					val = *v
 				}
 				row = append(row, val)
