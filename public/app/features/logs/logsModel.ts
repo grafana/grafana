@@ -17,7 +17,7 @@ import {
   FieldCache,
   FieldColorModeId,
   FieldType,
-  findCommonLabels,
+  findCommonAndUniqueLabels,
   findUniqueLabels,
   getTimeField,
   Labels,
@@ -49,6 +49,7 @@ import { getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from './utils';
 
 export const LIMIT_LABEL = 'Line limit';
 export const COMMON_LABELS = 'Common labels';
+export const UNIQUE_LABELS = 'Unique labels';
 
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],
@@ -387,7 +388,13 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
   }
 
   const flatAllLabels = allLabels.flat();
-  const commonLabels = flatAllLabels.length > 0 ? findCommonLabels(flatAllLabels) : {};
+  let commonLabels = {} as Labels;
+  let uniqueLabels = {} as Labels;
+  if (flatAllLabels.length > 0) {
+    const { common, unique } = findCommonAndUniqueLabels(flatAllLabels);
+    commonLabels = common;
+    uniqueLabels = unique;
+  }
 
   const rows: LogRowModel[] = [];
   let hasUniqueLabels = false;
@@ -471,6 +478,13 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
     meta.push({
       label: COMMON_LABELS,
       value: commonLabels,
+      kind: LogsMetaKind.LabelsMap,
+    });
+  }
+  if (size(uniqueLabels) > 0) {
+    meta.push({
+      label: UNIQUE_LABELS,
+      value: uniqueLabels,
       kind: LogsMetaKind.LabelsMap,
     });
   }

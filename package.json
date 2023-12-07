@@ -407,6 +407,7 @@
     "slate-plain-serializer": "0.7.13",
     "slate-react": "0.22.10",
     "sql-formatter-plus": "^1.3.6",
+    "string-similarity-js": "^2.1.4",
     "symbol-observable": "4.0.0",
     "test": "link:./public/test",
     "tether-drop": "https://github.com/torkelo/drop",

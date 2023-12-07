@@ -1,6 +1,7 @@
 import { cx } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 import React, { PureComponent, MouseEvent, createRef } from 'react';
+import stringSimilarity from 'string-similarity-js';
 
 import {
   TimeZone,
@@ -67,6 +68,7 @@ export interface Props extends Themeable2 {
   logDetailsRow?: LogRowModel;
   highlightSearchwords: boolean;
   noMenu?: boolean;
+  similaritySetting?: { row: LogRowModel; type: 'show' | 'hide' };
   resolution?: number;
 }
 
@@ -181,10 +183,25 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     sortLogRows(logRows, logsSortOrder)
   );
 
+  filterSimilarity = memoizeOne(
+    (logRows: LogRowModel[], similaritySetting: { row: LogRowModel; type: 'show' | 'hide' }) => {
+      const similarLines = logRows.map((l) => ({
+        logRow: l,
+        similarity: stringSimilarity(similaritySetting.row.entry, l.entry),
+      }));
+      return similarLines
+        .filter((l) => (similaritySetting.type === 'hide' ? l.similarity <= 0.5 : l.similarity > 0.5))
+        .map((l) => l.logRow);
+    }
+  );
+
   render() {
-    const { deduplicatedRows, logRows, dedupStrategy, theme, logsSortOrder, ...rest } = this.props;
+    const { deduplicatedRows, logRows, dedupStrategy, theme, logsSortOrder, similaritySetting, ...rest } = this.props;
     const styles = getLogRowStyles(theme);
-    const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
+    let dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
+    if (dedupedRows && similaritySetting) {
+      dedupedRows = this.filterSimilarity(dedupedRows, similaritySetting);
+    }
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
       ? dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
@@ -217,7 +234,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
         <table className={cx(styles.logsRowsTable, this.props.overflowingContent ? '' : styles.logsRowsTableContain)}>
           <tbody>
             {hasData &&
-              logRows.map((row, index) =>
+              orderedRows.map((row, index) =>
                 index % resolutionIndex === 0 ? (
                   <LogRow
                     key={keyMaker.getKey(row.uid)}

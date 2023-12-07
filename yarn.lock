@@ -17596,6 +17596,7 @@ __metadata:
     slate-plain-serializer: "npm:0.7.13"
     slate-react: "npm:0.22.10"
     sql-formatter-plus: "npm:^1.3.6"
+    string-similarity-js: "npm:^2.1.4"
     style-loader: "npm:3.3.3"
     stylelint: "npm:15.11.0"
     stylelint-config-prettier: "npm:9.0.5"
@@ -28252,6 +28253,13 @@ __metadata:
     char-regex: "npm:^1.0.2"
     strip-ansi: "npm:^6.0.0"
   checksum: ce85533ef5113fcb7e522bcf9e62cb33871aa99b3729cec5595f4447f660b0cefd542ca6df4150c97a677d58b0cb727a3fe09ac1de94071d05526c73579bf505
+  languageName: node
+  linkType: hard
+
+"string-similarity-js@npm:^2.1.4":
+  version: 2.1.4
+  resolution: "string-similarity-js@npm:2.1.4"
+  checksum: 55063198f233aca8833d8429626d9fafdeb164e0fc6a66364a4d8f509df17d49f8a8a42e4096da60c53fe4586b1bace7098c0265da590fe4ec96c3a8ecb90f69
   languageName: node
   linkType: hard
 
