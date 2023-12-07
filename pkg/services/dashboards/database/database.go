@@ -660,24 +660,23 @@ func (d *dashboardStore) GetSoftDeletedDashboard(ctx context.Context, orgID int6
 	return queryResult, err
 }
 
-func (d *dashboardStore) RestoreDashboard(ctx context.Context, dashboardUID string) error {
+func (d *dashboardStore) RestoreDashboard(ctx context.Context, orgID int64, dashboardUID string) error {
 	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		sql := "UPDATE dashboard SET deleted=NULL WHERE uid=?"
-		_, err := sess.Exec(sql, dashboardUID)
+		_, err := sess.Exec("UPDATE dashboard SET deleted=NULL WHERE org_id=? AND uid=?", orgID, dashboardUID)
 		return err
 	})
 }
 
-func (d *dashboardStore) SoftDeleteDashboard(ctx context.Context, dashboardUID string) error {
+func (d *dashboardStore) SoftDeleteDashboard(ctx context.Context, orgID int64, dashboardUID string) error {
 	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Exec("UPDATE dashboard SET deleted=?, folder_id=0, folder_uid=NULL WHERE uid=?", time.Now(), dashboardUID)
+		_, err := sess.Exec("UPDATE dashboard SET deleted=?, folder_id=0, folder_uid=NULL WHERE org_id=? AND uid=?", time.Now(), orgID, dashboardUID)
 		return err
 	})
 }
 
-func (d *dashboardStore) SoftDeleteDashboardsInFolder(ctx context.Context, folderUid string) error {
+func (d *dashboardStore) SoftDeleteDashboardsInFolder(ctx context.Context, orgID int64, folderUid string) error {
 	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Exec("UPDATE dashboard SET deleted=?, folder_id=0, folder_uid=NULL WHERE folder_uid=? and is_folder=?", time.Now(), folderUid, d.store.GetDialect().BooleanStr(false))
+		_, err := sess.Exec("UPDATE dashboard SET deleted=?, folder_id=0, folder_uid=NULL WHERE org_id=? AND folder_uid=? AND is_folder=?", time.Now(), orgID, folderUid, d.store.GetDialect().BooleanStr(false))
 		return err
 	})
 }
