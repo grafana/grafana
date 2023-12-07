@@ -949,6 +949,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     logsMeta={logsMeta}
                     onClickFilterLabel={onClickFilterLabel}
                     onClickFilterOutLabel={onClickFilterOutLabel}
+                    resolution={this.state.resolution}
                   />
                 )}
               </div>
@@ -967,7 +968,7 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
     resolutionContainer: css({
       paddingTop: theme.spacing(1),
       width: '400px',
-      opacity: .5,
+      opacity: 0.5,
     }),
     sidebarToggle: css({
       // backgroundColor: 'transparent',
