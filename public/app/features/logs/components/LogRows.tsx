@@ -67,6 +67,7 @@ export interface Props extends Themeable2 {
   logDetailsRow?: LogRowModel;
   highlightSearchwords: boolean;
   noMenu?: boolean;
+  resolution?: number;
 }
 
 interface State {
@@ -181,8 +182,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   );
 
   render() {
-    const { deduplicatedRows, logRows, dedupStrategy, theme, logsSortOrder, previewLimit, ...rest } = this.props;
-    const { renderAll } = this.state;
+    const { deduplicatedRows, logRows, dedupStrategy, theme, logsSortOrder, ...rest } = this.props;
     const styles = getLogRowStyles(theme);
     const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
     const hasData = logRows && logRows.length > 0;
@@ -193,13 +193,14 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     // Staged rendering
     const processedRows = dedupedRows ? dedupedRows : [];
     const orderedRows = logsSortOrder ? this.sortLogs(processedRows, logsSortOrder) : processedRows;
-    const firstRows = orderedRows.slice(0, previewLimit!);
-    const lastRows = orderedRows.slice(previewLimit!, orderedRows.length);
 
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = this.makeGetRows(orderedRows);
 
     const keyMaker = new UniqueKeyMaker();
+    const { resolution } = this.props;
+    const resolutionIndex =
+      resolution !== undefined && resolution > 0 && logRows ? Math.ceil(logRows.length / resolution) : 1;
 
     return (
       <div className={styles.logRows} ref={this.logRowsRef}>
@@ -216,57 +217,30 @@ class UnThemedLogRows extends PureComponent<Props, State> {
         <table className={cx(styles.logsRowsTable, this.props.overflowingContent ? '' : styles.logsRowsTableContain)}>
           <tbody>
             {hasData &&
-              firstRows.map((row) => (
-                <LogRow
-                  key={keyMaker.getKey(row.uid)}
-                  getRows={getRows}
-                  row={row}
-                  showDuplicates={showDuplicates}
-                  logsSortOrder={logsSortOrder}
-                  onOpenContext={this.openContext}
-                  styles={styles}
-                  onPermalinkClick={this.props.onPermalinkClick}
-                  scrollIntoView={this.props.scrollIntoView}
-                  permalinkedRowId={this.props.permalinkedRowId}
-                  onPinLine={this.props.onPinLine}
-                  onUnpinLine={this.props.onUnpinLine}
-                  pinned={this.props.pinnedRowId === row.uid}
-                  isFilterLabelActive={this.props.isFilterLabelActive}
-                  handleTextSelection={this.popoverMenuSupported() ? this.handleSelection : undefined}
-                  logDetailsRow={this.props.logDetailsRow}
-                  noMenu={this.props.noMenu}
-                  {...rest}
-                />
-              ))}
-            {hasData &&
-              renderAll &&
-              lastRows.map((row) => (
-                <LogRow
-                  key={keyMaker.getKey(row.uid)}
-                  getRows={getRows}
-                  row={row}
-                  showDuplicates={showDuplicates}
-                  logsSortOrder={logsSortOrder}
-                  onOpenContext={this.openContext}
-                  styles={styles}
-                  onPermalinkClick={this.props.onPermalinkClick}
-                  scrollIntoView={this.props.scrollIntoView}
-                  permalinkedRowId={this.props.permalinkedRowId}
-                  onPinLine={this.props.onPinLine}
-                  onUnpinLine={this.props.onUnpinLine}
-                  pinned={this.props.pinnedRowId === row.uid}
-                  isFilterLabelActive={this.props.isFilterLabelActive}
-                  handleTextSelection={this.popoverMenuSupported() ? this.handleSelection : undefined}
-                  logDetailsRow={this.props.logDetailsRow}
-                  noMenu={this.props.noMenu}
-                  {...rest}
-                />
-              ))}
-            {hasData && !renderAll && (
-              <tr>
-                <td colSpan={5}>Rendering {orderedRows.length - previewLimit!} rows...</td>
-              </tr>
-            )}
+              logRows.map((row, index) =>
+                index % resolutionIndex === 0 ? (
+                  <LogRow
+                    key={keyMaker.getKey(row.uid)}
+                    getRows={getRows}
+                    row={row}
+                    showDuplicates={showDuplicates}
+                    logsSortOrder={logsSortOrder}
+                    onOpenContext={this.openContext}
+                    styles={styles}
+                    onPermalinkClick={this.props.onPermalinkClick}
+                    scrollIntoView={this.props.scrollIntoView}
+                    permalinkedRowId={this.props.permalinkedRowId}
+                    onPinLine={this.props.onPinLine}
+                    onUnpinLine={this.props.onUnpinLine}
+                    pinned={this.props.pinnedRowId === row.uid}
+                    isFilterLabelActive={this.props.isFilterLabelActive}
+                    handleTextSelection={this.popoverMenuSupported() ? this.handleSelection : undefined}
+                    logDetailsRow={this.props.logDetailsRow}
+                    noMenu={this.props.noMenu}
+                    {...rest}
+                  />
+                ) : null
+              )}
           </tbody>
         </table>
       </div>

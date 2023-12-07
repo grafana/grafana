@@ -49,6 +49,7 @@ import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 import { changePanelState } from '../state/explorePane';
 
 import { LogDetails } from './LogDetails';
+import { LogResolutionPicker } from './LogResolutionPicker';
 import { LogStats } from './LogStats';
 import { LogsOptions } from './LogsOptions';
 import { LogsOrder } from './LogsOrder';
@@ -128,6 +129,7 @@ interface State {
   paneSize: number;
   sidebarVisible: boolean;
   highlightSearchwords: boolean;
+  resolution: number;
 }
 
 const DETAILS_SIZE = 410;
@@ -169,6 +171,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     paneSize: localStorage.getItem('logs.sidebar') === 'true' ? getLastSize() : window.innerWidth - WINDOW_MARGINS,
     sidebarVisible: localStorage.getItem('logs.sidebar') === 'true' ? true : false,
     highlightSearchwords: true,
+    resolution: 0,
   };
 
   constructor(props: Props) {
@@ -609,6 +612,12 @@ class UnthemedLogs extends PureComponent<Props, State> {
     });
   };
 
+  handleResolutionChange = (resolution: number) => {
+    this.setState({
+      resolution,
+    });
+  }
+
   render() {
     const {
       width,
@@ -859,6 +868,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                         logDetailsRow={this.state.logDetailsRow}
                         highlightSearchwords={highlightSearchwords}
                         noMenu
+                        resolution={this.state.resolution}
                       />
                     </InfiniteScroll>
                   </div>
@@ -908,7 +918,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     prettifyLogMessage={prettifyLogMessage}
                   />
                 ) : (
-                  <LogStats styles={logRowStyles} rows={logRows} />
+                  <>
+                    <LogResolutionPicker rows={logRows?.length || 0} onResolutionChange={this.handleResolutionChange} />
+                    <LogStats styles={logRowStyles} rows={logRows} />
+                  </>
                 )}
               </div>
             </SplitPaneWrapper>
