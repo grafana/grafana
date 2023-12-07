@@ -15,14 +15,14 @@ import (
 	"golang.org/x/text/language"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/login/social/models"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
 type SocialBase struct {
 	*oauth2.Config
-	info                    *models.OAuthInfo
+	info                    *social.OAuthInfo
 	log                     log.Logger
 	allowSignup             bool
 	allowAssignGrafanaAdmin bool
@@ -39,7 +39,7 @@ type SocialBase struct {
 
 func newSocialBase(name string,
 	config *oauth2.Config,
-	info *models.OAuthInfo,
+	info *social.OAuthInfo,
 	autoAssignOrgRole string,
 	skipOrgRoleSync bool,
 	features featuremgmt.FeatureManager,
@@ -221,7 +221,7 @@ func (s *SocialBase) retrieveRawIDToken(idToken any) ([]byte, error) {
 // match grafana admin role and translate to org role and bool.
 // treat the JSON search result to ensure correct casing.
 func getRoleFromSearch(role string) (org.RoleType, bool) {
-	if strings.EqualFold(role, models.RoleGrafanaAdmin) {
+	if strings.EqualFold(role, social.RoleGrafanaAdmin) {
 		return org.RoleAdmin, true
 	}
 

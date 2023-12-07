@@ -16,7 +16,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"golang.org/x/oauth2"
 
-	"github.com/grafana/grafana/pkg/login/social/models"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -149,7 +149,7 @@ func (s *SocialBase) searchJSONForStringArrayAttr(attributePath string, data []b
 	return result, nil
 }
 
-func createOAuthConfig(info *models.OAuthInfo, cfg *setting.Cfg, defaultName string) *oauth2.Config {
+func createOAuthConfig(info *social.OAuthInfo, cfg *setting.Cfg, defaultName string) *oauth2.Config {
 	var authStyle oauth2.AuthStyle
 	switch strings.ToLower(info.AuthStyle) {
 	case "inparams":
@@ -168,7 +168,7 @@ func createOAuthConfig(info *models.OAuthInfo, cfg *setting.Cfg, defaultName str
 			TokenURL:  info.TokenUrl,
 			AuthStyle: authStyle,
 		},
-		RedirectURL: strings.TrimSuffix(cfg.AppURL, "/") + models.SocialBaseUrl + defaultName,
+		RedirectURL: strings.TrimSuffix(cfg.AppURL, "/") + social.SocialBaseUrl + defaultName,
 		Scopes:      info.Scopes,
 	}
 
@@ -199,7 +199,7 @@ func MustBool(value any, defaultValue bool) bool {
 
 // CreateOAuthInfoFromKeyValues creates an OAuthInfo struct from a map[string]any using mapstructure
 // it puts all extra key values into OAuthInfo's Extra map
-func CreateOAuthInfoFromKeyValues(settingsKV map[string]any) (*models.OAuthInfo, error) {
+func CreateOAuthInfoFromKeyValues(settingsKV map[string]any) (*social.OAuthInfo, error) {
 	emptyStrToSliceDecodeHook := func(from reflect.Type, to reflect.Type, data any) (any, error) {
 		if from.Kind() == reflect.String && to.Kind() == reflect.Slice {
 			strData, ok := data.(string)
@@ -215,7 +215,7 @@ func CreateOAuthInfoFromKeyValues(settingsKV map[string]any) (*models.OAuthInfo,
 		return data, nil
 	}
 
-	var oauthInfo models.OAuthInfo
+	var oauthInfo social.OAuthInfo
 	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
 		DecodeHook:       emptyStrToSliceDecodeHook,
 		Result:           &oauthInfo,
@@ -239,7 +239,7 @@ func CreateOAuthInfoFromKeyValues(settingsKV map[string]any) (*models.OAuthInfo,
 }
 
 func appendUniqueScope(config *oauth2.Config, scope string) {
-	if !slices.Contains(config.Scopes, models.OfflineAccessScope) {
-		config.Scopes = append(config.Scopes, models.OfflineAccessScope)
+	if !slices.Contains(config.Scopes, social.OfflineAccessScope) {
+		config.Scopes = append(config.Scopes, social.OfflineAccessScope)
 	}
 }

@@ -17,7 +17,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/login/social/models"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -34,7 +34,7 @@ func falseBoolPtr() *bool {
 
 func TestSocialAzureAD_UserInfo(t *testing.T) {
 	type fields struct {
-		providerCfg *models.OAuthInfo
+		providerCfg *social.OAuthInfo
 		cfg         *setting.Cfg
 		usGovURL    bool
 	}
@@ -48,7 +48,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		claims                   *azureClaims
 		args                     args
 		settingAutoAssignOrgRole string
-		want                     *models.BasicUserInfo
+		want                     *social.BasicUserInfo
 		wantErr                  bool
 	}{
 		{
@@ -61,7 +61,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			fields: fields{
-				providerCfg: &models.OAuthInfo{
+				providerCfg: &social.OAuthInfo{
 					Name:     "azuread",
 					ClientId: "client-id-example",
 				},
@@ -69,7 +69,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 					AutoAssignOrgRole: "Viewer",
 				},
 			},
-			want: &models.BasicUserInfo{
+			want: &social.BasicUserInfo{
 				Id:     "1234",
 				Name:   "My Name",
 				Email:  "me@example.com",
@@ -81,7 +81,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "No email",
 			fields: fields{
-				providerCfg: &models.OAuthInfo{
+				providerCfg: &social.OAuthInfo{
 					Name:     "azuread",
 					ClientId: "client-id-example",
 				},
@@ -103,7 +103,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			name:   "No id token",
 			claims: nil,
 			fields: fields{
-				providerCfg: &models.OAuthInfo{
+				providerCfg: &social.OAuthInfo{
 					Name:     "azuread",
 					ClientId: "client-id-example",
 				},
@@ -124,7 +124,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			fields: fields{
-				providerCfg: &models.OAuthInfo{
+				providerCfg: &social.OAuthInfo{
 					Name:     "azuread",
 					ClientId: "client-id-example",
 				},
@@ -133,7 +133,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				},
 				usGovURL: true,
 			},
-			want: &models.BasicUserInfo{
+			want: &social.BasicUserInfo{
 				Id:     "1234",
 				Name:   "My Name",
 				Email:  "me@example.com",
@@ -152,7 +152,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			fields: fields{
-				providerCfg: &models.OAuthInfo{
+				providerCfg: &social.OAuthInfo{
 					Name:     "azuread",
 					ClientId: "client-id-example",
 				},
@@ -160,7 +160,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 					AutoAssignOrgRole: "Viewer",
 				},
 			},
-			want: &models.BasicUserInfo{
+			want: &social.BasicUserInfo{
 				Id:     "1234",
 				Name:   "My Name",
 				Email:  "me@example.com",
@@ -172,7 +172,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Admin role",
 			fields: fields{
-				providerCfg: &models.OAuthInfo{
+				providerCfg: &social.OAuthInfo{
 					Name:     "azuread",
 					ClientId: "client-id-example",
 				},
@@ -187,7 +187,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:              "My Name",
 				ID:                "1234",
 			},
-			want: &models.BasicUserInfo{
+			want: &social.BasicUserInfo{
 				Id:     "1234",
 				Name:   "My Name",
 				Email:  "me@example.com",
@@ -199,7 +199,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Lowercase Admin role",
 			fields: fields{
-				providerCfg: &models.OAuthInfo{
+				providerCfg: &social.OAuthInfo{
 					Name:     "azuread",
 					ClientId: "client-id-example",
 				},
@@ -214,7 +214,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:              "My Name",
 				ID:                "1234",
 			},
-			want: &models.BasicUserInfo{
+			want: &social.BasicUserInfo{
 				Id:     "1234",
 				Name:   "My Name",
 				Email:  "me@example.com",
@@ -226,7 +226,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Only other roles",
 			fields: fields{
-				providerCfg: &models.OAuthInfo{
+				providerCfg: &social.OAuthInfo{
 					Name:     "azuread",
 					ClientId: "client-id-example",
 				},
@@ -241,7 +241,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:              "My Name",
 				ID:                "1234",
 			},
-			want: &models.BasicUserInfo{
+			want: &social.BasicUserInfo{
 				Id:     "1234",
 				Name:   "My Name",
 				Email:  "me@example.com",
@@ -261,7 +261,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			fields: fields{
-				providerCfg: &models.OAuthInfo{
+				providerCfg: &social.OAuthInfo{
 					Name:     "azuread",
 					ClientId: "client-id-example",
 				},
@@ -269,7 +269,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 					AutoAssignOrgRole: "Editor",
 				},
 			},
-			want: &models.BasicUserInfo{
+			want: &social.BasicUserInfo{
 				Id:     "1234",
 				Name:   "My Name",
 				Email:  "me@example.com",
@@ -288,7 +288,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			fields: fields{
-				providerCfg: &models.OAuthInfo{
+				providerCfg: &social.OAuthInfo{
 					Name:     "azuread",
 					ClientId: "client-id-example",
 				},
@@ -296,7 +296,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 					AutoAssignOrgRole: "Editor",
 				},
 			},
-			want: &models.BasicUserInfo{
+			want: &social.BasicUserInfo{
 				Id:     "1234",
 				Name:   "My Name",
 				Email:  "me@example.com",
@@ -308,7 +308,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Admin and Editor roles in claim",
 			fields: fields{
-				providerCfg: &models.OAuthInfo{
+				providerCfg: &social.OAuthInfo{
 					Name:     "azuread",
 					ClientId: "client-id-example",
 				},
@@ -323,7 +323,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:              "My Name",
 				ID:                "1234",
 			},
-			want: &models.BasicUserInfo{
+			want: &social.BasicUserInfo{
 				Id:     "1234",
 				Name:   "My Name",
 				Email:  "me@example.com",
@@ -335,7 +335,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Grafana Admin but setting is disabled",
 			fields: fields{
-				providerCfg: &models.OAuthInfo{
+				providerCfg: &social.OAuthInfo{
 					Name:                    "azuread",
 					ClientId:                "client-id-example",
 					AllowAssignGrafanaAdmin: false,
@@ -352,7 +352,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:              "My Name",
 				ID:                "1234",
 			},
-			want: &models.BasicUserInfo{
+			want: &social.BasicUserInfo{
 				Id:             "1234",
 				Name:           "My Name",
 				Email:          "me@example.com",
@@ -365,7 +365,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Editor roles in claim and GrafanaAdminAssignment enabled",
 			fields: fields{
-				providerCfg: &models.OAuthInfo{
+				providerCfg: &social.OAuthInfo{
 					Name:                    "azuread",
 					ClientId:                "client-id-example",
 					AllowAssignGrafanaAdmin: true,
@@ -381,7 +381,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:              "My Name",
 				ID:                "1234",
 			},
-			want: &models.BasicUserInfo{
+			want: &social.BasicUserInfo{
 				Id:             "1234",
 				Name:           "My Name",
 				Email:          "me@example.com",
@@ -394,7 +394,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Grafana Admin and Editor roles in claim",
 			fields: fields{
-				providerCfg: &models.OAuthInfo{
+				providerCfg: &social.OAuthInfo{
 					Name:                    "azuread",
 					ClientId:                "client-id-example",
 					AllowAssignGrafanaAdmin: true,
@@ -410,7 +410,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:              "My Name",
 				ID:                "1234",
 			},
-			want: &models.BasicUserInfo{
+			want: &social.BasicUserInfo{
 				Id:             "1234",
 				Name:           "My Name",
 				Email:          "me@example.com",
@@ -423,7 +423,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Error if user is not a member of allowed_groups",
 			fields: fields{
-				providerCfg: &models.OAuthInfo{
+				providerCfg: &social.OAuthInfo{
 					Name:                    "azuread",
 					ClientId:                "client-id-example",
 					AllowAssignGrafanaAdmin: false,
@@ -447,7 +447,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Error if user is not a member of allowed_organizations",
 			fields: fields{
-				providerCfg: &models.OAuthInfo{
+				providerCfg: &social.OAuthInfo{
 					Name:                    "azuread",
 					ClientId:                "client-id-example",
 					AllowAssignGrafanaAdmin: false,
@@ -474,7 +474,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "No error if user is a member of allowed_organizations",
 			fields: fields{
-				providerCfg: &models.OAuthInfo{
+				providerCfg: &social.OAuthInfo{
 					Name:     "azuread",
 					ClientId: "client-id-example",
 					Extra: map[string]string{
@@ -494,7 +494,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:              "My Name",
 				ID:                "1234",
 			},
-			want: &models.BasicUserInfo{
+			want: &social.BasicUserInfo{
 				Id:     "1234",
 				Name:   "My Name",
 				Email:  "me@example.com",
@@ -507,7 +507,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "No Error if user is a member of allowed_groups",
 			fields: fields{
-				providerCfg: &models.OAuthInfo{
+				providerCfg: &social.OAuthInfo{
 					Name:                    "azuread",
 					ClientId:                "client-id-example",
 					AllowAssignGrafanaAdmin: false,
@@ -525,7 +525,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:              "My Name",
 				ID:                "1234",
 			},
-			want: &models.BasicUserInfo{
+			want: &social.BasicUserInfo{
 				Id:     "1234",
 				Name:   "My Name",
 				Email:  "me@example.com",
@@ -537,7 +537,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Error if user does not have groups but allowed groups",
 			fields: fields{
-				providerCfg: &models.OAuthInfo{
+				providerCfg: &social.OAuthInfo{
 					Name:                    "azuread",
 					ClientId:                "client-id-example",
 					AllowAssignGrafanaAdmin: false,
@@ -561,7 +561,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Fetch groups when ClaimsNames and ClaimsSources is set",
 			fields: fields{
-				providerCfg: &models.OAuthInfo{
+				providerCfg: &social.OAuthInfo{
 					Name:     "azuread",
 					ClientId: "client-id-example",
 				},
@@ -579,7 +579,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ClaimSources:      nil, // set by the test
 			},
 			settingAutoAssignOrgRole: "",
-			want: &models.BasicUserInfo{
+			want: &social.BasicUserInfo{
 				Id:     "1",
 				Name:   "test",
 				Email:  "test@test.com",
@@ -592,7 +592,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Fetch groups when forceUseGraphAPI is set",
 			fields: fields{
-				providerCfg: &models.OAuthInfo{
+				providerCfg: &social.OAuthInfo{
 					Name:     "azuread",
 					ClientId: "client-id-example",
 					Extra: map[string]string{
@@ -614,7 +614,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Groups:            []string{"foo", "bar"}, // must be ignored
 			},
 			settingAutoAssignOrgRole: "",
-			want: &models.BasicUserInfo{
+			want: &social.BasicUserInfo{
 				Id:     "1",
 				Name:   "test",
 				Email:  "test@test.com",
@@ -627,7 +627,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Fetch empty role when strict attribute role is true and no match",
 			fields: fields{
-				providerCfg: &models.OAuthInfo{
+				providerCfg: &social.OAuthInfo{
 					Name:                "azuread",
 					ClientId:            "client-id-example",
 					RoleAttributeStrict: true,
@@ -650,7 +650,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Fetch empty role when strict attribute role is true and no role claims returned",
 			fields: fields{
-				providerCfg: &models.OAuthInfo{
+				providerCfg: &social.OAuthInfo{
 					Name:                "azuread",
 					ClientId:            "client-id-example",
 					RoleAttributeStrict: true,
@@ -773,7 +773,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 	type fields struct {
 		SocialBase  *SocialBase
-		providerCfg *models.OAuthInfo
+		providerCfg *social.OAuthInfo
 		cfg         *setting.Cfg
 	}
 
@@ -782,13 +782,13 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 		fields                   fields
 		claims                   *azureClaims
 		settingAutoAssignOrgRole string
-		want                     *models.BasicUserInfo
+		want                     *social.BasicUserInfo
 		wantErr                  bool
 	}{
 		{
 			name: "Grafana Admin and Editor roles in claim, skipOrgRoleSync disabled should get roles, skipOrgRoleSyncBase disabled",
 			fields: fields{
-				providerCfg: &models.OAuthInfo{
+				providerCfg: &social.OAuthInfo{
 					Name:                    "azuread",
 					ClientId:                "client-id-example",
 					AllowAssignGrafanaAdmin: true,
@@ -808,7 +808,7 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 				Name:              "My Name",
 				ID:                "1234",
 			},
-			want: &models.BasicUserInfo{
+			want: &social.BasicUserInfo{
 				Id:             "1234",
 				Name:           "My Name",
 				Email:          "me@example.com",
@@ -821,7 +821,7 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 		{
 			name: "Grafana Admin and Editor roles in claim, skipOrgRoleSync disabled should not get roles",
 			fields: fields{
-				providerCfg: &models.OAuthInfo{
+				providerCfg: &social.OAuthInfo{
 					Name:                    "azuread",
 					ClientId:                "client-id-example",
 					AllowAssignGrafanaAdmin: true,
@@ -841,7 +841,7 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 				Name:              "My Name",
 				ID:                "1234",
 			},
-			want: &models.BasicUserInfo{
+			want: &social.BasicUserInfo{
 				Id:             "1234",
 				Name:           "My Name",
 				Email:          "me@example.com",
@@ -952,12 +952,12 @@ func TestSocialAzureAD_InitializeExtraFields(t *testing.T) {
 	}
 	testCases := []struct {
 		name     string
-		settings *models.OAuthInfo
+		settings *social.OAuthInfo
 		want     settingFields
 	}{
 		{
 			name: "forceUseGraphAPI is set to true",
-			settings: &models.OAuthInfo{
+			settings: &social.OAuthInfo{
 				Extra: map[string]string{
 					"force_use_graph_api": "true",
 				},
@@ -969,7 +969,7 @@ func TestSocialAzureAD_InitializeExtraFields(t *testing.T) {
 		},
 		{
 			name: "allowedOrganizations is set",
-			settings: &models.OAuthInfo{
+			settings: &social.OAuthInfo{
 				Extra: map[string]string{
 					"allowed_organizations": "uuid-1234,uuid-5678",
 				},

@@ -12,8 +12,8 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/constants"
-	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -45,7 +45,7 @@ type SocialGenericOAuth struct {
 	skipOrgRoleSync      bool
 }
 
-func NewGenericOAuthProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) *SocialGenericOAuth {
+func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) *SocialGenericOAuth {
 	config := createOAuthConfig(info, cfg, constants.GenericOAuthProviderName)
 	provider := &SocialGenericOAuth{
 		SocialBase:           newSocialBase(constants.GenericOAuthProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
@@ -155,7 +155,7 @@ func (info *UserInfoJson) String() string {
 		info.Name, info.DisplayName, info.Login, info.Username, info.Email, info.Upn, info.Attributes)
 }
 
-func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*models.BasicUserInfo, error) {
+func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
 	s.log.Debug("Getting user info")
 	toCheck := make([]*UserInfoJson, 0, 2)
 
@@ -166,7 +166,7 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 		toCheck = append(toCheck, apiData)
 	}
 
-	userInfo := &models.BasicUserInfo{}
+	userInfo := &social.BasicUserInfo{}
 	for _, data := range toCheck {
 		s.log.Debug("Processing external user info", "source", data.source, "data", data)
 
@@ -253,7 +253,7 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 	return userInfo, nil
 }
 
-func (s *SocialGenericOAuth) GetOAuthInfo() *models.OAuthInfo {
+func (s *SocialGenericOAuth) GetOAuthInfo() *social.OAuthInfo {
 	return s.info
 }
 

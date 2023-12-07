@@ -12,8 +12,8 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/constants"
-	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
@@ -52,7 +52,7 @@ var (
 			"User is not a member of one of the required organizations. Please contact identity provider administrator."))
 )
 
-func NewGitHubProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) *SocialGithub {
+func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) *SocialGithub {
 	teamIds := mustInts(util.SplitString(info.Extra[teamIdsKey]))
 
 	config := createOAuthConfig(info, cfg, constants.GitHubProviderName)
@@ -224,7 +224,7 @@ func (s *SocialGithub) FetchOrganizations(ctx context.Context, client *http.Clie
 	return logins, nil
 }
 
-func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*models.BasicUserInfo, error) {
+func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
 	var data struct {
 		Id    int    `json:"id"`
 		Login string `json:"login"`
@@ -268,7 +268,7 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
-	userInfo := &models.BasicUserInfo{
+	userInfo := &social.BasicUserInfo{
 		Name:           data.Login,
 		Login:          data.Login,
 		Id:             fmt.Sprintf("%d", data.Id),
@@ -310,7 +310,7 @@ func (t *GithubTeam) GetShorthand() (string, error) {
 	return fmt.Sprintf("@%s/%s", t.Organization.Login, t.Slug), nil
 }
 
-func (s *SocialGithub) GetOAuthInfo() *models.OAuthInfo {
+func (s *SocialGithub) GetOAuthInfo() *social.OAuthInfo {
 	return s.info
 }
 

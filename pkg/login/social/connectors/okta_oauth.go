@@ -10,8 +10,8 @@ import (
 	"github.com/go-jose/go-jose/v3/jwt"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/constants"
-	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
@@ -44,7 +44,7 @@ type OktaClaims struct {
 	Name              string `json:"name"`
 }
 
-func NewOktaProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) *SocialOkta {
+func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) *SocialOkta {
 	config := createOAuthConfig(info, cfg, constants.OktaProviderName)
 	provider := &SocialOkta{
 		SocialBase:    newSocialBase(constants.OktaProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
@@ -56,7 +56,7 @@ func NewOktaProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *feature
 	}
 
 	if info.UseRefreshToken && features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) {
-		appendUniqueScope(config, models.OfflineAccessScope)
+		appendUniqueScope(config, social.OfflineAccessScope)
 	}
 
 	return provider
@@ -78,7 +78,7 @@ func (claims *OktaClaims) extractEmail() string {
 	return claims.Email
 }
 
-func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*models.BasicUserInfo, error) {
+func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
 	idToken := token.Extra("id_token")
 	if idToken == nil {
 		return nil, fmt.Errorf("no id_token found")
@@ -127,7 +127,7 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
-	return &models.BasicUserInfo{
+	return &social.BasicUserInfo{
 		Id:             claims.ID,
 		Name:           claims.Name,
 		Email:          email,
@@ -138,7 +138,7 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 	}, nil
 }
 
-func (s *SocialOkta) GetOAuthInfo() *models.OAuthInfo {
+func (s *SocialOkta) GetOAuthInfo() *social.OAuthInfo {
 	return s.info
 }
 

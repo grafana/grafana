@@ -10,8 +10,8 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/constants"
-	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -38,7 +38,7 @@ type googleUserData struct {
 	rawJSON       []byte `json:"-"`
 }
 
-func NewGoogleProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) *SocialGoogle {
+func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) *SocialGoogle {
 	config := createOAuthConfig(info, cfg, constants.GoogleProviderName)
 	provider := &SocialGoogle{
 		SocialBase:      newSocialBase(constants.GoogleProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
@@ -64,7 +64,7 @@ func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSetting
 	return nil
 }
 
-func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*models.BasicUserInfo, error) {
+func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
 	data, errToken := s.extractFromToken(ctx, client, token)
 	if errToken != nil {
 		return nil, errToken
@@ -95,7 +95,7 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 		return nil, errMissingGroupMembership
 	}
 
-	userInfo := &models.BasicUserInfo{
+	userInfo := &social.BasicUserInfo{
 		Id:             data.ID,
 		Name:           data.Name,
 		Email:          data.Email,
@@ -123,7 +123,7 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 	return userInfo, nil
 }
 
-func (s *SocialGoogle) GetOAuthInfo() *models.OAuthInfo {
+func (s *SocialGoogle) GetOAuthInfo() *social.OAuthInfo {
 	return s.info
 }
 

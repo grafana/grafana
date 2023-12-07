@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/login/social/models"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -27,7 +27,7 @@ const (
 )
 
 func TestSocialGrafanaCom_UserInfo(t *testing.T) {
-	provider := NewGrafanaComProvider(models.NewOAuthInfo(), &setting.Cfg{}, featuremgmt.WithFeatures())
+	provider := NewGrafanaComProvider(social.NewOAuthInfo(), &setting.Cfg{}, featuremgmt.WithFeatures())
 
 	type conf struct {
 		skipOrgRoleSync bool
@@ -37,14 +37,14 @@ func TestSocialGrafanaCom_UserInfo(t *testing.T) {
 		Name          string
 		Cfg           conf
 		userInfoResp  string
-		want          *models.BasicUserInfo
+		want          *social.BasicUserInfo
 		ExpectedError error
 	}{
 		{
 			Name:         "should return empty role as userInfo when Skip Org Role Sync Enabled",
 			userInfoResp: userResponse,
 			Cfg:          conf{skipOrgRoleSync: true},
-			want: &models.BasicUserInfo{
+			want: &social.BasicUserInfo{
 				Id:    "1",
 				Name:  "Eric Leijonmarck",
 				Email: "octocat@github.com",
@@ -56,7 +56,7 @@ func TestSocialGrafanaCom_UserInfo(t *testing.T) {
 			Name:         "should return role as userInfo when Skip Org Role Sync Enabled",
 			userInfoResp: userResponse,
 			Cfg:          conf{skipOrgRoleSync: false},
-			want: &models.BasicUserInfo{
+			want: &social.BasicUserInfo{
 				Id:    "1",
 				Name:  "Eric Leijonmarck",
 				Email: "octocat@github.com",
@@ -100,19 +100,19 @@ func TestSocialGrafanaCom_InitializeExtraFields(t *testing.T) {
 	}
 	testCases := []struct {
 		name     string
-		settings *models.OAuthInfo
+		settings *social.OAuthInfo
 		want     settingFields
 	}{
 		{
 			name:     "allowedOrganizations is not set",
-			settings: models.NewOAuthInfo(),
+			settings: social.NewOAuthInfo(),
 			want: settingFields{
 				allowedOrganizations: []string{},
 			},
 		},
 		{
 			name: "allowedOrganizations is set",
-			settings: &models.OAuthInfo{
+			settings: &social.OAuthInfo{
 				Extra: map[string]string{
 					"allowed_organizations": "uuid-1234,uuid-5678",
 				},

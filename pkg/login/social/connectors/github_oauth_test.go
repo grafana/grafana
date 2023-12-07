@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
-	"github.com/grafana/grafana/pkg/login/social/models"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -125,7 +125,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 		settingSkipOrgRoleSync   bool
 		roleAttributePath        string
 		autoAssignOrgRole        string
-		want                     *models.BasicUserInfo
+		want                     *social.BasicUserInfo
 		wantErr                  bool
 	}{
 		{
@@ -134,7 +134,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			userTeamsRawJSON:  testGHUserTeamsJSON,
 			autoAssignOrgRole: "",
 			roleAttributePath: "",
-			want: &models.BasicUserInfo{
+			want: &social.BasicUserInfo{
 				Id:     "1",
 				Name:   "monalisa octocat",
 				Email:  "octocat@github.com",
@@ -149,7 +149,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			userRawJSON:       testGHUserJSON,
 			autoAssignOrgRole: "Editor",
 			userTeamsRawJSON:  testGHUserTeamsJSON,
-			want: &models.BasicUserInfo{
+			want: &social.BasicUserInfo{
 				Id:     "1",
 				Name:   "monalisa octocat",
 				Email:  "octocat@github.com",
@@ -164,7 +164,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			userRawJSON:       testGHUserJSON,
 			autoAssignOrgRole: "Editor",
 			userTeamsRawJSON:  testGHUserTeamsJSON,
-			want: &models.BasicUserInfo{
+			want: &social.BasicUserInfo{
 				Id:     "1",
 				Name:   "monalisa octocat",
 				Email:  "octocat@github.com",
@@ -179,7 +179,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			settingSkipOrgRoleSync: true,
 			userRawJSON:            testGHUserJSON,
 			userTeamsRawJSON:       testGHUserTeamsJSON,
-			want: &models.BasicUserInfo{
+			want: &social.BasicUserInfo{
 				Id:     "1",
 				Name:   "monalisa octocat",
 				Email:  "octocat@github.com",
@@ -195,7 +195,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			settingAllowGrafanaAdmin: true,
 			userRawJSON:              testGHUserJSON,
 			userTeamsRawJSON:         testGHUserTeamsJSON,
-			want: &models.BasicUserInfo{
+			want: &social.BasicUserInfo{
 				Id:             "1",
 				Name:           "monalisa octocat",
 				Email:          "octocat@github.com",
@@ -211,7 +211,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			userRawJSON:       testGHUserJSON,
 			autoAssignOrgRole: "Editor",
 			userTeamsRawJSON:  testGHUserTeamsJSON,
-			want: &models.BasicUserInfo{
+			want: &social.BasicUserInfo{
 				Id:     "1",
 				Name:   "monalisa octocat",
 				Email:  "octocat@github.com",
@@ -241,7 +241,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			defer server.Close()
 
 			s := NewGitHubProvider(
-				&models.OAuthInfo{
+				&social.OAuthInfo{
 					ApiUrl:            server.URL + "/user",
 					RoleAttributePath: tt.roleAttributePath,
 					Extra: map[string]string{
@@ -276,12 +276,12 @@ func TestSocialGitHub_InitializeExtraFields(t *testing.T) {
 	}
 	testCases := []struct {
 		name     string
-		settings *models.OAuthInfo
+		settings *social.OAuthInfo
 		want     settingFields
 	}{
 		{
 			name: "teamIds is set",
-			settings: &models.OAuthInfo{
+			settings: &social.OAuthInfo{
 				Extra: map[string]string{
 					"team_ids": "1234,5678",
 				},
@@ -293,7 +293,7 @@ func TestSocialGitHub_InitializeExtraFields(t *testing.T) {
 		},
 		{
 			name: "allowedOrganizations is set",
-			settings: &models.OAuthInfo{
+			settings: &social.OAuthInfo{
 				Extra: map[string]string{
 					"allowed_organizations": "uuid-1234,uuid-5678",
 				},
@@ -305,7 +305,7 @@ func TestSocialGitHub_InitializeExtraFields(t *testing.T) {
 		},
 		{
 			name: "teamIds and allowedOrganizations are empty",
-			settings: &models.OAuthInfo{
+			settings: &social.OAuthInfo{
 				Extra: map[string]string{
 					"team_ids":              "",
 					"allowed_organizations": "",
@@ -318,7 +318,7 @@ func TestSocialGitHub_InitializeExtraFields(t *testing.T) {
 		},
 		{
 			name: "should not error when teamIds are not integers",
-			settings: &models.OAuthInfo{
+			settings: &social.OAuthInfo{
 				Extra: map[string]string{
 					"team_ids": "abc1234,5678",
 				},

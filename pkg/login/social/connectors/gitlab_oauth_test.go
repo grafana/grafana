@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
-	"github.com/grafana/grafana/pkg/login/social/models"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -40,7 +40,7 @@ const (
 func TestSocialGitlab_UserInfo(t *testing.T) {
 	var nilPointer *bool
 
-	provider := NewGitLabProvider(&models.OAuthInfo{SkipOrgRoleSync: false}, &setting.Cfg{}, featuremgmt.WithFeatures())
+	provider := NewGitLabProvider(&social.OAuthInfo{SkipOrgRoleSync: false}, &setting.Cfg{}, featuremgmt.WithFeatures())
 
 	type conf struct {
 		AllowAssignGrafanaAdmin bool
@@ -347,7 +347,7 @@ func TestSocialGitlab_extractFromToken(t *testing.T) {
 			client := oauth2.NewClient(context.Background(), &tokenSource{accessToken: "dummy_access_token"})
 
 			s := NewGitLabProvider(
-				&models.OAuthInfo{
+				&social.OAuthInfo{
 					AllowedDomains:      []string{},
 					AllowSignup:         false,
 					RoleAttributePath:   "",
@@ -451,7 +451,7 @@ func TestSocialGitlab_GetGroupsNextPage(t *testing.T) {
 	defer mockServer.Close()
 
 	// Create a SocialGitlab instance with the mock server URL
-	s := NewGitLabProvider(&models.OAuthInfo{ApiUrl: mockServer.URL}, &setting.Cfg{}, featuremgmt.WithFeatures())
+	s := NewGitLabProvider(&social.OAuthInfo{ApiUrl: mockServer.URL}, &setting.Cfg{}, featuremgmt.WithFeatures())
 
 	// Call getGroups and verify that it returns all groups
 	expectedGroups := []string{"admins", "editors", "viewers", "serveradmins"}

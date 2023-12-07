@@ -11,18 +11,18 @@ import (
 	"strings"
 	"time"
 
+	"gopkg.in/ini.v1"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/connectors"
 	"github.com/grafana/grafana/pkg/login/social/constants"
-	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/setting"
-	"gopkg.in/ini.v1"
 )
 
 var (
@@ -64,8 +64,11 @@ func ProvideService(cfg *setting.Cfg,
 				ss.log.Error("Failed to create OAuth provider", "error", err, "provider", ssoSetting.Provider)
 				continue
 			}
-
-			ssoSettings.RegisterReloadable(ssoSetting.Provider, conn)
+			reloadable, ok := conn.(ssosettings.Reloadable)
+			if ok {
+				ssoSettings.RegisterReloadable(ssoSetting.Provider, reloadable)
+			}
+			// ssoSettings.RegisterReloadable(ssoSetting.Provider, conn)
 			ss.socialMap[ssoSetting.Provider] = conn
 		}
 	} else {
@@ -176,7 +179,7 @@ func (ss *SocialService) GetConnector(name string) (social.SocialConnector, erro
 	return connector, nil
 }
 
-func (ss *SocialService) GetOAuthInfoProvider(name string) *models.OAuthInfo {
+func (ss *SocialService) GetOAuthInfoProvider(name string) *social.OAuthInfo {
 	connector, ok := ss.socialMap[name]
 	if !ok {
 		return nil
@@ -185,8 +188,8 @@ func (ss *SocialService) GetOAuthInfoProvider(name string) *models.OAuthInfo {
 }
 
 // GetOAuthInfoProviders returns enabled OAuth providers
-func (ss *SocialService) GetOAuthInfoProviders() map[string]*models.OAuthInfo {
-	result := map[string]*models.OAuthInfo{}
+func (ss *SocialService) GetOAuthInfoProviders() map[string]*social.OAuthInfo {
+	result := map[string]*social.OAuthInfo{}
 	for name, connector := range ss.socialMap {
 		info := connector.GetOAuthInfo()
 		if info.Enabled {
@@ -216,7 +219,7 @@ func (ss *SocialService) getUsageStats(ctx context.Context) (map[string]any, err
 	return m, nil
 }
 
-func createOAuthConnector(name string, info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) (social.SocialConnector, error) {
+func createOAuthConnector(name string, info *social.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) (social.SocialConnector, error) {
 	switch name {
 	case constants.AzureADProviderName:
 		return connectors.NewAzureADProvider(info, cfg, features, cache), nil

@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
-	"github.com/grafana/grafana/pkg/login/social/models"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -183,7 +183,7 @@ func TestSocialGoogle_retrieveGroups(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := NewGoogleProvider(
-				&models.OAuthInfo{
+				&social.OAuthInfo{
 					ApiUrl:                  "",
 					Scopes:                  tt.fields.Scopes,
 					HostedDomain:            "",
@@ -260,7 +260,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 		name       string
 		fields     fields
 		args       args
-		wantData   *models.BasicUserInfo
+		wantData   *social.BasicUserInfo
 		wantErr    bool
 		wantErrMsg string
 	}{
@@ -273,7 +273,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 			args: args{
 				token: tokenWithID,
 			},
-			wantData: &models.BasicUserInfo{
+			wantData: &social.BasicUserInfo{
 				Id:    "88888888888888",
 				Login: "test@example.com",
 				Email: "test@example.com",
@@ -310,7 +310,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 					},
 				},
 			},
-			wantData: &models.BasicUserInfo{
+			wantData: &social.BasicUserInfo{
 				Id:     "88888888888888",
 				Login:  "test@example.com",
 				Email:  "test@example.com",
@@ -342,7 +342,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 					},
 				},
 			},
-			wantData: &models.BasicUserInfo{
+			wantData: &social.BasicUserInfo{
 				Id:    "99999999999999",
 				Login: "test@example.com",
 				Email: "test@example.com",
@@ -460,7 +460,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 					},
 				},
 			},
-			wantData: &models.BasicUserInfo{
+			wantData: &social.BasicUserInfo{
 				Id:    "92222222222222222",
 				Name:  "Test User",
 				Email: "test@example.com",
@@ -522,7 +522,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 					},
 				},
 			},
-			wantData: &models.BasicUserInfo{
+			wantData: &social.BasicUserInfo{
 				Id:     "88888888888888",
 				Login:  "test@example.com",
 				Email:  "test@example.com",
@@ -543,7 +543,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 			args: args{
 				token: tokenWithID,
 			},
-			wantData: &models.BasicUserInfo{
+			wantData: &social.BasicUserInfo{
 				Id:     "88888888888888",
 				Login:  "test@example.com",
 				Email:  "test@example.com",
@@ -563,7 +563,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 			args: args{
 				token: tokenWithID,
 			},
-			wantData: &models.BasicUserInfo{
+			wantData: &social.BasicUserInfo{
 				Id:             "88888888888888",
 				Login:          "test@example.com",
 				Email:          "test@example.com",
@@ -583,7 +583,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 			args: args{
 				token: tokenWithID,
 			},
-			wantData: &models.BasicUserInfo{
+			wantData: &social.BasicUserInfo{
 				Id:             "88888888888888",
 				Login:          "test@example.com",
 				Email:          "test@example.com",
@@ -622,7 +622,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 					},
 				},
 			},
-			wantData: &models.BasicUserInfo{
+			wantData: &social.BasicUserInfo{
 				Id:     "88888888888888",
 				Login:  "test@example.com",
 				Email:  "test@example.com",
@@ -637,7 +637,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := NewGoogleProvider(
-				&models.OAuthInfo{
+				&social.OAuthInfo{
 					ApiUrl:                  tt.fields.apiURL,
 					Scopes:                  tt.fields.Scopes,
 					AllowedGroups:           tt.fields.allowedGroups,

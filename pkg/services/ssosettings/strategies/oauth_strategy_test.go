@@ -6,7 +6,7 @@ import (
 
 	"gopkg.in/ini.v1"
 
-	"github.com/grafana/grafana/pkg/login/social/models"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
@@ -54,7 +54,7 @@ var (
 	signout_redirect_url = test_signout_redirect_url
 	`
 
-	expectedOAuthInfo = &models.OAuthInfo{
+	expectedOAuthInfo = &social.OAuthInfo{
 		Name:                    "OAuth",
 		Icon:                    "signin",
 		Enabled:                 true,
@@ -106,7 +106,7 @@ func TestGetProviderConfig_EnvVarsOnly(t *testing.T) {
 	result, err := strategy.GetProviderConfig(context.Background(), "generic_oauth")
 	require.NoError(t, err)
 
-	oauthInfo, ok := result.(*models.OAuthInfo)
+	oauthInfo, ok := result.(*social.OAuthInfo)
 	require.True(t, ok)
 
 	require.Equal(t, expectedOAuthInfo, oauthInfo)
@@ -124,7 +124,7 @@ func TestGetProviderConfig_IniFileOnly(t *testing.T) {
 	result, err := strategy.GetProviderConfig(context.Background(), "generic_oauth")
 	require.NoError(t, err)
 
-	oauthInfo, ok := result.(*models.OAuthInfo)
+	oauthInfo, ok := result.(*social.OAuthInfo)
 	require.True(t, ok)
 
 	require.Equal(t, expectedOAuthInfo, oauthInfo)
@@ -145,7 +145,7 @@ func TestGetProviderConfig_EnvVarsOverrideIniFileSettings(t *testing.T) {
 	result, err := strategy.GetProviderConfig(context.Background(), "generic_oauth")
 	require.NoError(t, err)
 
-	oauthInfo, ok := result.(*models.OAuthInfo)
+	oauthInfo, ok := result.(*social.OAuthInfo)
 	require.True(t, ok)
 
 	expectedOAuthInfoWithOverrides := *expectedOAuthInfo

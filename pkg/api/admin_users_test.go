@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
-	"github.com/grafana/grafana/pkg/login/social/models"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
@@ -318,7 +318,7 @@ func Test_AdminUpdateUserPermissions(t *testing.T) {
 
 			switch tc.authModule {
 			case login.GenericOAuthModule:
-				socialService.ExpectedAuthInfoProvider = &models.OAuthInfo{AllowAssignGrafanaAdmin: tc.allowAssignGrafanaAdmin, Enabled: tc.authEnabled}
+				socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{AllowAssignGrafanaAdmin: tc.allowAssignGrafanaAdmin, Enabled: tc.authEnabled}
 				cfg.GenericOAuthAuthEnabled = tc.authEnabled
 				cfg.GenericOAuthSkipOrgRoleSync = tc.skipOrgRoleSync
 			case login.JWTModule:

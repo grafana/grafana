@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/constants"
-	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -73,7 +72,7 @@ type keySetJWKS struct {
 	jose.JSONWebKeySet
 }
 
-func NewAzureADProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) *SocialAzureAD {
+func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) *SocialAzureAD {
 	config := createOAuthConfig(info, cfg, constants.AzureADProviderName)
 	provider := &SocialAzureAD{
 		SocialBase:           newSocialBase(constants.AzureADProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
@@ -86,13 +85,13 @@ func NewAzureADProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *feat
 	}
 
 	if info.UseRefreshToken && features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) {
-		appendUniqueScope(config, models.OfflineAccessScope)
+		appendUniqueScope(config, social.OfflineAccessScope)
 	}
 
 	return provider
 }
 
-func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*models.BasicUserInfo, error) {
+func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
 	idToken := token.Extra("id_token")
 	if idToken == nil {
 		return nil, ErrIDTokenNotFound
@@ -151,7 +150,7 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
-	return &models.BasicUserInfo{
+	return &social.BasicUserInfo{
 		Id:             claims.ID,
 		Name:           claims.Name,
 		Email:          email,
@@ -170,7 +169,7 @@ func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettin
 	return nil
 }
 
-func (s *SocialAzureAD) GetOAuthInfo() *models.OAuthInfo {
+func (s *SocialAzureAD) GetOAuthInfo() *social.OAuthInfo {
 	return s.info
 }
 
@@ -252,11 +251,11 @@ func (s *SocialAzureAD) extractRoleAndAdmin(claims *azureClaims) (org.RoleType, 
 		return s.defaultRole(), false, nil
 	}
 
-	roleOrder := []org.RoleType{models.RoleGrafanaAdmin, org.RoleAdmin, org.RoleEditor,
+	roleOrder := []org.RoleType{social.RoleGrafanaAdmin, org.RoleAdmin, org.RoleEditor,
 		org.RoleViewer, org.RoleNone}
 	for _, role := range roleOrder {
 		if found := hasRole(claims.Roles, role); found {
-			if role == models.RoleGrafanaAdmin {
+			if role == social.RoleGrafanaAdmin {
 				return org.RoleAdmin, true, nil
 			}
 

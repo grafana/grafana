@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
-	"github.com/grafana/grafana/pkg/login/social/models"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -68,7 +68,7 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 		},
 		{
 			name:                    "Should give grafanaAdmin role for specific GrafanaAdmin in the role assignement",
-			userRawJSON:             fmt.Sprintf(`{ "email": "okta-octopus@grafana.com", "role": "%s" }`, models.RoleGrafanaAdmin),
+			userRawJSON:             fmt.Sprintf(`{ "email": "okta-octopus@grafana.com", "role": "%s" }`, social.RoleGrafanaAdmin),
 			RoleAttributePath:       "role",
 			allowAssignGrafanaAdmin: true,
 			OAuth2Extra: map[string]any{
@@ -99,7 +99,7 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 			defer server.Close()
 
 			provider := NewOktaProvider(
-				&models.OAuthInfo{
+				&social.OAuthInfo{
 					ApiUrl:                  server.URL + "/user",
 					RoleAttributePath:       tt.RoleAttributePath,
 					AllowAssignGrafanaAdmin: tt.allowAssignGrafanaAdmin,

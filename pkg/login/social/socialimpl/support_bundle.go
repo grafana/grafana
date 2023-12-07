@@ -10,7 +10,6 @@ import (
 	"github.com/BurntSushi/toml"
 
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 )
 
@@ -63,7 +62,7 @@ func (ss *SocialService) supportBundleCollectorFn(name string, sc social.SocialC
 	}
 }
 
-func (ss *SocialService) healthCheckSocialConnector(ctx context.Context, name string, oinfo *models.OAuthInfo, bWriter *bytes.Buffer) {
+func (ss *SocialService) healthCheckSocialConnector(ctx context.Context, name string, oinfo *social.OAuthInfo, bWriter *bytes.Buffer) {
 	bWriter.WriteString("## Health checks\n\n")
 	client, err := ss.GetOAuthHttpClient(name)
 	if err != nil {

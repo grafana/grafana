@@ -11,8 +11,8 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/constants"
-	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
@@ -51,7 +51,7 @@ type userData struct {
 	IsGrafanaAdmin *bool             `json:"-"`
 }
 
-func NewGitLabProvider(info *models.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) *SocialGitlab {
+func NewGitLabProvider(info *social.OAuthInfo, cfg *setting.Cfg, features *featuremgmt.FeatureManager) *SocialGitlab {
 	config := createOAuthConfig(info, cfg, constants.GitlabProviderName)
 	provider := &SocialGitlab{
 		SocialBase:      newSocialBase(constants.GitlabProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
@@ -151,7 +151,7 @@ func (s *SocialGitlab) getGroupsPage(ctx context.Context, client *http.Client, n
 	return fullPaths, next
 }
 
-func (s *SocialGitlab) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*models.BasicUserInfo, error) {
+func (s *SocialGitlab) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
 	data, err := s.extractFromToken(ctx, client, token)
 	if err != nil {
 		return nil, err
@@ -166,7 +166,7 @@ func (s *SocialGitlab) UserInfo(ctx context.Context, client *http.Client, token 
 		}
 	}
 
-	userInfo := &models.BasicUserInfo{
+	userInfo := &social.BasicUserInfo{
 		Id:             data.ID,
 		Name:           data.Name,
 		Login:          data.Login,
@@ -187,7 +187,7 @@ func (s *SocialGitlab) UserInfo(ctx context.Context, client *http.Client, token 
 	return userInfo, nil
 }
 
-func (s *SocialGitlab) GetOAuthInfo() *models.OAuthInfo {
+func (s *SocialGitlab) GetOAuthInfo() *social.OAuthInfo {
 	return s.info
 }
 

@@ -3,9 +3,9 @@ package strategies
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/connectors"
 	"github.com/grafana/grafana/pkg/login/social/constants"
-	"github.com/grafana/grafana/pkg/login/social/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -13,7 +13,7 @@ import (
 
 type OAuthStrategy struct {
 	cfg                *setting.Cfg
-	settingsByProvider map[string]*models.OAuthInfo
+	settingsByProvider map[string]*social.OAuthInfo
 }
 
 var extraKeysByProvider = map[string][]string{
@@ -29,7 +29,7 @@ var _ ssosettings.FallbackStrategy = (*OAuthStrategy)(nil)
 func NewOAuthStrategy(cfg *setting.Cfg) *OAuthStrategy {
 	oauthStrategy := &OAuthStrategy{
 		cfg:                cfg,
-		settingsByProvider: make(map[string]*models.OAuthInfo),
+		settingsByProvider: make(map[string]*social.OAuthInfo),
 	}
 
 	oauthStrategy.loadAllSettings()
@@ -56,10 +56,10 @@ func (s *OAuthStrategy) loadAllSettings() {
 	}
 }
 
-func (s *OAuthStrategy) loadSettingsForProvider(provider string) *models.OAuthInfo {
+func (s *OAuthStrategy) loadSettingsForProvider(provider string) *social.OAuthInfo {
 	section := s.cfg.SectionWithEnvOverrides("auth." + provider)
 
-	result := &models.OAuthInfo{
+	result := &social.OAuthInfo{
 		AllowAssignGrafanaAdmin: section.Key("allow_assign_grafana_admin").MustBool(false),
 		AllowSignup:             section.Key("allow_sign_up").MustBool(false),
 		AllowedDomains:          util.SplitString(section.Key("allowed_domains").Value()),

@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
-	"github.com/grafana/grafana/pkg/login/social/models"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -20,7 +20,7 @@ import (
 
 func TestSearchJSONForEmail(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := NewGenericOAuthProvider(models.NewOAuthInfo(), &setting.Cfg{}, featuremgmt.WithFeatures())
+		provider := NewGenericOAuthProvider(social.NewOAuthInfo(), &setting.Cfg{}, featuremgmt.WithFeatures())
 
 		tests := []struct {
 			Name                 string
@@ -104,7 +104,7 @@ func TestSearchJSONForEmail(t *testing.T) {
 
 func TestSearchJSONForGroups(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := NewGenericOAuthProvider(models.NewOAuthInfo(), &setting.Cfg{}, featuremgmt.WithFeatures())
+		provider := NewGenericOAuthProvider(social.NewOAuthInfo(), &setting.Cfg{}, featuremgmt.WithFeatures())
 
 		tests := []struct {
 			Name                 string
@@ -163,7 +163,7 @@ func TestSearchJSONForGroups(t *testing.T) {
 
 func TestSearchJSONForRole(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := NewGenericOAuthProvider(models.NewOAuthInfo(), &setting.Cfg{}, featuremgmt.WithFeatures())
+		provider := NewGenericOAuthProvider(social.NewOAuthInfo(), &setting.Cfg{}, featuremgmt.WithFeatures())
 
 		tests := []struct {
 			Name                 string
@@ -221,7 +221,7 @@ func TestSearchJSONForRole(t *testing.T) {
 }
 
 func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
-	provider := NewGenericOAuthProvider(&models.OAuthInfo{
+	provider := NewGenericOAuthProvider(&social.OAuthInfo{
 		EmailAttributePath: "email",
 	}, &setting.Cfg{}, featuremgmt.WithFeatures())
 
@@ -488,7 +488,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 
 func TestUserInfoSearchesForLogin(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := NewGenericOAuthProvider(&models.OAuthInfo{
+		provider := NewGenericOAuthProvider(&social.OAuthInfo{
 			Extra: map[string]string{
 				"login_attribute_path": "login",
 			},
@@ -582,7 +582,7 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 
 func TestUserInfoSearchesForName(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := NewGenericOAuthProvider(&models.OAuthInfo{
+		provider := NewGenericOAuthProvider(&social.OAuthInfo{
 			Extra: map[string]string{
 				"name_attribute_path": "name",
 			},
@@ -724,7 +724,7 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 					require.NoError(t, err)
 				}))
 
-				provider := NewGenericOAuthProvider(&models.OAuthInfo{
+				provider := NewGenericOAuthProvider(&social.OAuthInfo{
 					GroupsAttributePath: test.groupsAttributePath,
 					ApiUrl:              ts.URL,
 				}, &setting.Cfg{}, featuremgmt.WithFeatures())
@@ -745,7 +745,7 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 }
 
 func TestPayloadCompression(t *testing.T) {
-	provider := NewGenericOAuthProvider(&models.OAuthInfo{
+	provider := NewGenericOAuthProvider(&social.OAuthInfo{
 		EmailAttributePath: "email",
 	}, &setting.Cfg{}, featuremgmt.WithFeatures())
 
@@ -820,12 +820,12 @@ func TestSocialGenericOAuth_InitializeExtraFields(t *testing.T) {
 	}
 	testCases := []struct {
 		name     string
-		settings *models.OAuthInfo
+		settings *social.OAuthInfo
 		want     settingFields
 	}{
 		{
 			name: "nameAttributePath is set",
-			settings: &models.OAuthInfo{
+			settings: &social.OAuthInfo{
 				Extra: map[string]string{
 					"name_attribute_path": "name",
 				},
@@ -840,7 +840,7 @@ func TestSocialGenericOAuth_InitializeExtraFields(t *testing.T) {
 		},
 		{
 			name: "loginAttributePath is set",
-			settings: &models.OAuthInfo{
+			settings: &social.OAuthInfo{
 				Extra: map[string]string{
 					"login_attribute_path": "login",
 				},
@@ -855,7 +855,7 @@ func TestSocialGenericOAuth_InitializeExtraFields(t *testing.T) {
 		},
 		{
 			name: "idTokenAttributeName is set",
-			settings: &models.OAuthInfo{
+			settings: &social.OAuthInfo{
 				Extra: map[string]string{
 					"id_token_attribute_name": "id_token",
 				},
@@ -870,7 +870,7 @@ func TestSocialGenericOAuth_InitializeExtraFields(t *testing.T) {
 		},
 		{
 			name: "teamIds is set",
-			settings: &models.OAuthInfo{
+			settings: &social.OAuthInfo{
 				Extra: map[string]string{
 					"team_ids": "[\"team1\", \"team2\"]",
 				},
@@ -885,7 +885,7 @@ func TestSocialGenericOAuth_InitializeExtraFields(t *testing.T) {
 		},
 		{
 			name: "allowedOrganizations is set",
-			settings: &models.OAuthInfo{
+			settings: &social.OAuthInfo{
 				Extra: map[string]string{
 					"allowed_organizations": "org1, org2",
 				},
