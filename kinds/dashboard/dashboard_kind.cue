@@ -199,11 +199,14 @@ lineage: schemas: [{
 			multi?: bool | *false
 			// Options that can be selected for a variable.
 			options?: [...#VariableOption]
+			// Options to config when to refresh a variable
 			refresh?: #VariableRefresh
 			// Options sort order
 			sort?: #VariableSort
-			// Option to include all variables
+			// Whether all value option is available or not
 			includeAll?: bool | *false
+			// Custom all value
+			allValue?: string
 			// Optional field, if you want to extract part of a series name or metric node segment.
 			// Named capture groups can be used to separate the display text and value.
 			regex?: string

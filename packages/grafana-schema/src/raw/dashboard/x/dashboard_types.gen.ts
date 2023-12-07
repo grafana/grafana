@@ -127,6 +127,10 @@ export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
  */
 export interface VariableModel {
   /**
+   * Custom all value
+   */
+  allValue?: string;
+  /**
    * Shows current selected variable text/value on the dashboard
    */
   current?: VariableOption;
@@ -143,7 +147,7 @@ export interface VariableModel {
    */
   hide?: VariableHide;
   /**
-   * Option to include all variables
+   * Whether all value option is available or not
    */
   includeAll?: boolean;
   /**
@@ -166,6 +170,9 @@ export interface VariableModel {
    * Query used to fetch values for a variable
    */
   query?: (string | Record<string, unknown>);
+  /**
+   * Options to config when to refresh a variable
+   */
   refresh?: VariableRefresh;
   /**
    * Optional field, if you want to extract part of a series name or metric node segment.

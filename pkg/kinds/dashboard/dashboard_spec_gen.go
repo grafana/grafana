@@ -884,6 +884,9 @@ type VariableHide int
 
 // A variable is a placeholder for a value. You can use variables in metric queries and in panel titles.
 type VariableModel struct {
+	// Custom all value
+	AllValue *string `json:"allValue,omitempty"`
+
 	// Option to be selected in a variable.
 	Current *VariableOption `json:"current,omitempty"`
 
@@ -897,7 +900,7 @@ type VariableModel struct {
 	// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing).
 	Hide *VariableHide `json:"hide,omitempty"`
 
-	// Option to include all variables
+	// Whether all value option is available or not
 	IncludeAll *bool `json:"includeAll,omitempty"`
 
 	// Optional display name
