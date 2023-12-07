@@ -205,7 +205,9 @@ export const generateColumns = (
       },
       id: `column-location`,
       field: access.location ?? access.url,
-      Header: t('search.results-table.location-header', 'Location'),
+      Header: access.remaining_trash_at_age?.values
+        ? 'Restore Location'
+        : t('search.results-table.location-header', 'Location'),
       width,
     });
   }
