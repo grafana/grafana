@@ -2,11 +2,13 @@ package anonimpl
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/anonymous"
+	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -40,6 +42,10 @@ func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 	}
 
 	if err := a.anonDeviceService.TagDevice(ctx, httpReqCopy, anonymous.AnonDeviceUI); err != nil {
+		if errors.Is(err, anonstore.ErrDeviceLimitReached) {
+			return nil, err
+		}
+
 		a.log.Warn("Failed to tag anonymous session", "error", err)
 	}
 
