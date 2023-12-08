@@ -1,13 +1,15 @@
 import React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
+import { useSkeleton, withSkeleton } from '@grafana/ui';
+
 import { Settings } from './AdminSettings';
 
 interface Props {
   settings: Settings;
 }
 
-export const AdminSettingsTable = ({ settings }: Props) => {
+const AdminSettingsTableComponent = ({ settings }: Props) => {
   return (
     <table className="filter-table">
       <tbody>
@@ -34,8 +36,9 @@ export const AdminSettingsTable = ({ settings }: Props) => {
 const randomValues = new Array(50).fill(null).map(() => Math.random());
 
 const AdminSettingsTableSkeleton = () => {
+  const { skeletonProps } = useSkeleton();
   return (
-    <table className="filter-table">
+    <table className="filter-table" {...skeletonProps}>
       <tbody>
         {randomValues.map((randomValue, index) => {
           const isSection = index === 0 || randomValue > 0.9;
@@ -70,4 +73,4 @@ function getRandomInRange(min: number, max: number, randomSeed: number) {
   return randomSeed * (max - min) + min;
 }
 
-AdminSettingsTable.Skeleton = AdminSettingsTableSkeleton;
+export const AdminSettingsTable = withSkeleton(AdminSettingsTableComponent, AdminSettingsTableSkeleton);

@@ -7,6 +7,7 @@ export * from './slate';
 export * from './dataLinks';
 export * from './tags';
 export * from './scrollbar';
+export * from './skeleton';
 export * from './table';
 export * from './measureText';
 export * from './useForceUpdate';
