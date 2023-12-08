@@ -189,6 +189,16 @@ describe('DashboardModel', () => {
       expect(dashboard.panels[1].repeat).toBe(undefined);
       expect(dashboard.panels[1].scopedVars).toBe(undefined);
     });
+
+    it('remove panel should call destroy', () => {
+      dashboard.addPanel({ type: 'test', title: 'test' });
+      const panel = dashboard.panels[0];
+      panel.destroy = jest.fn();
+
+      dashboard.removePanel(panel);
+
+      expect(panel.destroy).toHaveBeenCalled();
+    });
   });
 
   describe('Given editable false dashboard', () => {

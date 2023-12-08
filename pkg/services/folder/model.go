@@ -16,11 +16,13 @@ var ErrDatabaseError = errutil.Internal("folder.database-error")
 var ErrInternal = errutil.Internal("folder.internal")
 var ErrCircularReference = errutil.BadRequest("folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
 var ErrTargetRegistrySrvConflict = errutil.Internal("folder.target-registry-srv-conflict")
+var ErrFolderNotEmpty = errutil.BadRequest("folder.not-empty", errutil.WithPublicMessage("Folder cannot be deleted: folder is not empty"))
 
 const (
-	GeneralFolderUID     = "general"
-	RootFolderUID        = ""
-	MaxNestedFolderDepth = 4
+	GeneralFolderUID      = "general"
+	RootFolderUID         = ""
+	MaxNestedFolderDepth  = 4
+	SharedWithMeFolderUID = "sharedwithme"
 )
 
 var ErrFolderNotFound = errutil.NotFound("folder.notFound")
@@ -47,6 +49,14 @@ type Folder struct {
 }
 
 var GeneralFolder = Folder{ID: 0, Title: "General"}
+
+var SharedWithMeFolder = Folder{
+	Title:       "Shared with me",
+	Description: "Dashboards and folders shared with me",
+	UID:         SharedWithMeFolderUID,
+	ParentUID:   "",
+	ID:          -1,
+}
 
 func (f *Folder) IsGeneral() bool {
 	// nolint:staticcheck

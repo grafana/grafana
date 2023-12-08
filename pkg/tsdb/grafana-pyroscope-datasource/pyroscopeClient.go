@@ -238,10 +238,14 @@ func getUnits(profileTypeID string) string {
 	return unit
 }
 
-func (c *PyroscopeClient) LabelNames(ctx context.Context) ([]string, error) {
+func (c *PyroscopeClient) LabelNames(ctx context.Context, labelSelector string, start int64, end int64) ([]string, error) {
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.LabelNames")
 	defer span.End()
-	resp, err := c.connectClient.LabelNames(ctx, connect.NewRequest(&typesv1.LabelNamesRequest{}))
+	resp, err := c.connectClient.LabelNames(ctx, connect.NewRequest(&typesv1.LabelNamesRequest{
+		Matchers: []string{labelSelector},
+		Start:    start,
+		End:      end,
+	}))
 	if err != nil {
 		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
@@ -259,10 +263,15 @@ func (c *PyroscopeClient) LabelNames(ctx context.Context) ([]string, error) {
 	return filtered, nil
 }
 
-func (c *PyroscopeClient) LabelValues(ctx context.Context, label string) ([]string, error) {
+func (c *PyroscopeClient) LabelValues(ctx context.Context, label string, labelSelector string, start int64, end int64) ([]string, error) {
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.LabelValues")
 	defer span.End()
-	resp, err := c.connectClient.LabelValues(ctx, connect.NewRequest(&typesv1.LabelValuesRequest{Name: label}))
+	resp, err := c.connectClient.LabelValues(ctx, connect.NewRequest(&typesv1.LabelValuesRequest{
+		Name:     label,
+		Matchers: []string{labelSelector},
+		Start:    start,
+		End:      end,
+	}))
 	if err != nil {
 		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)

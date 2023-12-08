@@ -33,11 +33,11 @@ import (
 // TestServiceStart tests the wrapper method that decides when to run the migration based on migration status and settings.
 func TestServiceStart(t *testing.T) {
 	tc := []struct {
-		name           string
-		config         *setting.Cfg
-		isMigrationRun bool
-		expectedErr    bool
-		expected       bool
+		name        string
+		config      *setting.Cfg
+		starting    migrationStore.AlertingType
+		expectedErr bool
+		expected    migrationStore.AlertingType
 	}{
 		{
 			name: "when unified alerting enabled and migration not already run, then run migration",
@@ -46,8 +46,54 @@ func TestServiceStart(t *testing.T) {
 					Enabled: pointer(true),
 				},
 			},
-			isMigrationRun: false,
-			expected:       true,
+			starting: migrationStore.Legacy,
+			expected: migrationStore.UnifiedAlerting,
+		},
+		{
+			name: "when unified alerting disabled, migration is already run and CleanUpgrade is enabled, then revert migration",
+			config: &setting.Cfg{
+				UnifiedAlerting: setting.UnifiedAlertingSettings{
+					Enabled: pointer(false),
+					Upgrade: setting.UnifiedAlertingUpgradeSettings{
+						CleanUpgrade: true,
+					},
+				},
+			},
+			starting: migrationStore.UnifiedAlerting,
+			expected: migrationStore.Legacy,
+		},
+		{
+			name: "when unified alerting disabled, migration is already run and CleanUpgrade is disabled, then the migration status should set to false",
+			config: &setting.Cfg{
+				UnifiedAlerting: setting.UnifiedAlertingSettings{
+					Enabled: pointer(false),
+					Upgrade: setting.UnifiedAlertingUpgradeSettings{
+						CleanUpgrade: false,
+					},
+				},
+			},
+			starting: migrationStore.UnifiedAlerting,
+			expected: migrationStore.Legacy,
+		},
+		{
+			name: "when unified alerting enabled and migration is already run, then do nothing",
+			config: &setting.Cfg{
+				UnifiedAlerting: setting.UnifiedAlertingSettings{
+					Enabled: pointer(true),
+				},
+			},
+			starting: migrationStore.UnifiedAlerting,
+			expected: migrationStore.UnifiedAlerting,
+		},
+		{
+			name: "when unified alerting disabled and migration is not already run, then do nothing",
+			config: &setting.Cfg{
+				UnifiedAlerting: setting.UnifiedAlertingSettings{
+					Enabled: pointer(false),
+				},
+			},
+			starting: migrationStore.Legacy,
+			expected: migrationStore.Legacy,
 		},
 		{
 			name: "when unified alerting disabled, migration is already run and force migration is enabled, then revert migration",
@@ -57,40 +103,19 @@ func TestServiceStart(t *testing.T) {
 				},
 				ForceMigration: true,
 			},
-			isMigrationRun: true,
-			expected:       false,
+			starting: migrationStore.UnifiedAlerting,
+			expected: migrationStore.Legacy,
 		},
 		{
-			name: "when unified alerting disabled, migration is already run and force migration is disabled, then the migration should panic",
+			name: "when unified alerting disabled, migration is already run and force migration is disabled, then the migration status should set to false",
 			config: &setting.Cfg{
 				UnifiedAlerting: setting.UnifiedAlertingSettings{
 					Enabled: pointer(false),
 				},
 				ForceMigration: false,
 			},
-			isMigrationRun: true,
-			expected:       true,
-			expectedErr:    true,
-		},
-		{
-			name: "when unified alerting enabled and migration is already run, then do nothing",
-			config: &setting.Cfg{
-				UnifiedAlerting: setting.UnifiedAlertingSettings{
-					Enabled: pointer(true),
-				},
-			},
-			isMigrationRun: true,
-			expected:       true,
-		},
-		{
-			name: "when unified alerting disabled and migration is not already run, then do nothing",
-			config: &setting.Cfg{
-				UnifiedAlerting: setting.UnifiedAlertingSettings{
-					Enabled: pointer(false),
-				},
-			},
-			isMigrationRun: false,
-			expected:       false,
+			starting: migrationStore.UnifiedAlerting,
+			expected: migrationStore.Legacy,
 		},
 	}
 
@@ -100,19 +125,18 @@ func TestServiceStart(t *testing.T) {
 			ctx := context.Background()
 			service := NewTestMigrationService(t, sqlStore, tt.config)
 
-			err := service.migrationStore.SetMigrated(ctx, tt.isMigrationRun)
-			require.NoError(t, err)
+			require.NoError(t, service.migrationStore.SetCurrentAlertingType(ctx, tt.starting))
 
-			err = service.Run(ctx)
+			err := service.Run(ctx)
 			if tt.expectedErr {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
 			}
 
-			migrated, err := service.migrationStore.IsMigrated(ctx)
+			aType, err := service.migrationStore.GetCurrentAlertingType(ctx)
 			require.NoError(t, err)
-			require.Equal(t, tt.expected, migrated)
+			require.Equal(t, tt.expected, aType)
 		})
 	}
 }
@@ -718,7 +742,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 			mutator(rule)
 		}
 
-		rule.RuleGroup = fmt.Sprintf("%s - %d", *rule.DashboardUID, *rule.PanelID)
+		rule.RuleGroup = fmt.Sprintf("%s - 1m", *rule.DashboardUID)
 
 		rule.Annotations["__dashboardUid__"] = *rule.DashboardUID
 		rule.Annotations["__panelId__"] = strconv.FormatInt(*rule.PanelID, 10)

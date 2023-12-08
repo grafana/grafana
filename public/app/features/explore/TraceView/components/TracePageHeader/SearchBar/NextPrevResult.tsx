@@ -244,6 +244,7 @@ export const getStyles = (theme: GrafanaTheme2, showSpanFilters: boolean) => {
     `,
     matches: css`
       margin-right: ${theme.spacing(2)};
+      text-wrap: nowrap;
     `,
     tooltip: css`
       color: #aaa;
