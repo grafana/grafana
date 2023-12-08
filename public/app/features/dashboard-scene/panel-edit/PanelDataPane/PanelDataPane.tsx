@@ -1,4 +1,5 @@
 import React from 'react';
+import { Unsubscribable } from 'rxjs';
 
 import {
   SceneComponentProps,
@@ -15,13 +16,15 @@ import {
 import { Tab, TabContent, TabsBar } from '@grafana/ui';
 import { shouldShowAlertingTab } from 'app/features/dashboard/components/PanelEditor/state/selectors';
 
+import { VizPanelManager } from '../VizPanelManager';
+
 import { PanelDataAlertingTab } from './PanelDataAlertingTab';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { PanelDataTransformationsTab } from './PanelDataTransformationsTab';
 import { PanelDataPaneTab } from './types';
 
 export interface PanelDataPaneState extends SceneObjectState {
-  panelRef: SceneObjectRef<VizPanel>;
+  panelRef: SceneObjectRef<VizPanelManager>;
   tabs?: PanelDataPaneTab[];
   tab?: string;
 }
@@ -29,6 +32,8 @@ export interface PanelDataPaneState extends SceneObjectState {
 export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
   static Component = PanelDataPaneRendered;
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['tab'] });
+  private _initialTabsBuilt = false;
+  private panelSubscription: Unsubscribable | undefined;
 
   getUrlState() {
     return {
@@ -52,26 +57,51 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
     });
 
     const { panelRef } = this.state;
-    const panel = panelRef.resolve();
+    const panelManager = panelRef.resolve();
+    const panel = panelManager.state.panel;
 
     if (panel) {
       // The subscription below is needed because the plugin may not be loaded when this pane is mounted.
       // This can happen i.e. when the user opens the panel editor directly via an URL.
       this._subs.add(
-        panel.subscribeToState((n, p) => {
-          if (n.pluginVersion || p.pluginId !== n.pluginId) {
+        panelManager.subscribeToState((n, p) => {
+          if (n.panel !== p.panel) {
             this.buildTabs();
+            this.setupPanelSubscription(n.panel);
           }
         })
       );
+
+      this.setupPanelSubscription(panel);
     }
 
-    this.addActivationHandler(() => this.buildTabs());
+    this.addActivationHandler(() => () => {
+      this.buildTabs();
+      return () => {
+        if (this.panelSubscription) {
+          this.panelSubscription.unsubscribe();
+          this.panelSubscription = undefined;
+        }
+      };
+    });
   }
 
+  private setupPanelSubscription(panel: VizPanel) {
+    if (this.panelSubscription) {
+      this._initialTabsBuilt = false;
+      this.panelSubscription.unsubscribe();
+    }
+
+    this.panelSubscription = panel.subscribeToState((n, p) => {
+      if (panel.getPlugin() && !this._initialTabsBuilt) {
+        this.buildTabs();
+        this._initialTabsBuilt = true;
+      }
+    });
+  }
   private getDataObjects(): [SceneQueryRunner | undefined, SceneDataTransformer | undefined] {
     const { panelRef } = this.state;
-    const dataObj = sceneGraph.getData(panelRef.resolve());
+    const dataObj = sceneGraph.getData(panelRef.resolve().state.panel);
 
     let runner: SceneQueryRunner | undefined;
     let transformer: SceneDataTransformer | undefined;
@@ -94,11 +124,14 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
 
   private buildTabs() {
     const { panelRef } = this.state;
+    const panelManager = panelRef.resolve();
+    const panel = panelManager.state.panel;
     const [runner, transformer] = this.getDataObjects();
     const tabs: PanelDataPaneTab[] = [];
 
-    if (panelRef) {
-      const plugin = panelRef.resolve().getPlugin();
+    if (panel) {
+      const plugin = panel.getPlugin();
+
       if (!plugin) {
         this.setState({ tabs });
         return;
@@ -108,15 +141,17 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
         return;
       } else {
         if (runner) {
-          tabs.push(new PanelDataQueriesTab({ panelRef, dataRef: new SceneObjectRef(runner) }));
+          tabs.push(new PanelDataQueriesTab({ panelRef: panel.getRef(), dataRef: new SceneObjectRef(runner) }));
         }
 
         if (transformer) {
-          tabs.push(new PanelDataTransformationsTab({ panelRef, dataRef: new SceneObjectRef(transformer) }));
+          tabs.push(
+            new PanelDataTransformationsTab({ panelRef: panel.getRef(), dataRef: new SceneObjectRef(transformer) })
+          );
         }
 
         if (shouldShowAlertingTab(plugin)) {
-          tabs.push(new PanelDataAlertingTab({ panelRef }));
+          tabs.push(new PanelDataAlertingTab({ panelRef: panel.getRef() }));
         }
       }
     }

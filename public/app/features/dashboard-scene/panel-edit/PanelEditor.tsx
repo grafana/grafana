@@ -136,7 +136,7 @@ export function buildPanelEditScene(dashboard: DashboardScene, panel: VizPanel):
           children: [vizPanelMgr],
         }),
         secondary: new SceneFlexItem({
-          body: new PanelDataPane({ panelRef: panelClone.getRef() }),
+          body: new PanelDataPane({ panelRef: vizPanelMgr.getRef() }),
         }),
       }),
       secondary: new SceneFlexLayout({

@@ -10,7 +10,7 @@ import { updateQueries } from 'app/features/query/state/updateQueries';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
-import { PanelTimeRange } from '../../scene/PanelTimeRange';
+import { PanelTimeRange, PanelTimeRangeState } from '../../scene/PanelTimeRange';
 import { getPanelIdForVizPanel } from '../../utils/utils';
 
 import { PanelDataPaneTabState, PanelDataPaneTab } from './types';
@@ -78,11 +78,15 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     const panelObj = panelRef.resolve();
     const timeRangeObj = sceneGraph.getTimeRange(panelObj);
 
-    let timeRangeOpts = {};
+    let timeRangeOpts: QueryGroupOptions['timeRange'] = {
+      from: undefined,
+      shift: undefined,
+      hide: undefined,
+    };
 
     if (timeRangeObj instanceof PanelTimeRange) {
       timeRangeOpts = {
-        from: timeRangeObj.state.from,
+        from: timeRangeObj.state.timeFrom,
         shift: timeRangeObj.state.timeShift,
         hide: timeRangeObj.state.hideTimeOverride,
       };
@@ -145,16 +149,39 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   };
 
   onQueryOptionsChange = (options: QueryGroupOptions) => {
-    const { dataRef } = this.state;
+    const { dataRef, panelRef } = this.state;
     const dataObj = dataRef.resolve();
+    const panelObj = panelRef.resolve();
+    let timeRangeObj = sceneGraph.getTimeRange(panelObj);
 
     const dataObjStateUpdate: Partial<SceneQueryRunner['state']> = {};
+    const timeRangeObjStateUpdate: Partial<PanelTimeRangeState> = {};
+
     if (options.maxDataPoints !== dataObj.state.maxDataPoints) {
       dataObjStateUpdate.maxDataPoints = options.maxDataPoints ?? undefined;
     }
 
     if (options.minInterval !== dataObj.state.minInterval && options.minInterval !== null) {
       dataObjStateUpdate.minInterval = options.minInterval;
+    }
+
+    if (options.timeRange) {
+      timeRangeObjStateUpdate.timeFrom = options.timeRange.from ?? undefined;
+      timeRangeObjStateUpdate.timeShift = options.timeRange.shift ?? undefined;
+      timeRangeObjStateUpdate.hideTimeOverride = options.timeRange.hide;
+    }
+
+    if (timeRangeObj instanceof PanelTimeRange) {
+      if (timeRangeObjStateUpdate.timeFrom !== undefined || timeRangeObjStateUpdate.timeShift !== undefined) {
+        // update time override
+        timeRangeObj.setState(timeRangeObjStateUpdate);
+      } else {
+        // remove time override
+        panelObj.setState({ $timeRange: undefined });
+      }
+    } else {
+      // no time override present on the panel, let's create one first
+      panelObj.setState({ $timeRange: new PanelTimeRange(timeRangeObjStateUpdate) });
     }
 
     dataObj.setState(dataObjStateUpdate);
