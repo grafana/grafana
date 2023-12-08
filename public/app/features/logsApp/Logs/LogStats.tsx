@@ -21,7 +21,7 @@ export interface Props {
 
 export const LogStats = ({ styles, rows, logsMeta, onClickFilterLabel, onClickFilterOutLabel, resolution }: Props) => {
   const [uniqueExpanded, setUniqueExpanded] = useState(true);
-  const [commonExpanded, setCommonExpanded] = useState(true);
+  const [commonExpanded, setCommonExpanded] = useState(false);
   //@ts-ignore
   const commonLabels: Labels = logsMeta?.find((meta) => meta.label === COMMON_LABELS)?.value ?? ({} as Labels);
   //@ts-ignore

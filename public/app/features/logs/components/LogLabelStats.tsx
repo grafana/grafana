@@ -125,36 +125,38 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
             </tbody>
           </table>
           <div style={{ width: '25%', display: 'flex', justifyContent: 'center', alignItems: 'cent' }}>
-            <PanelRenderer
-              pluginId="piechart"
-              height={95}
-              width={95}
-              title="Pie Chart"
-              data={{
-                series: [frame],
-                timeRange: getDefaultTimeRange(),
-                state: LoadingState.Done,
-              }}
-              options={{
-                reduceOptions: {
-                  values: false,
-                  calcs: ['lastNotNull'],
-                  fields: '',
-                },
-                pieType: 'pie',
-                tooltip: {
-                  mode: 'single',
-                  sort: 'none',
-                },
-                legend: {
-                  showLegend: false,
-                  displayMode: 'table',
-                  placement: 'right',
-                  values: ['percent'],
-                },
-                displayLabels: ['percent'],
-              }}
-            />
+            {stats.length > 1 && (
+              <PanelRenderer
+                pluginId="piechart"
+                height={95}
+                width={95}
+                title="Pie Chart"
+                data={{
+                  series: [frame],
+                  timeRange: getDefaultTimeRange(),
+                  state: LoadingState.Done,
+                }}
+                options={{
+                  reduceOptions: {
+                    values: false,
+                    calcs: ['lastNotNull'],
+                    fields: '',
+                  },
+                  pieType: 'pie',
+                  tooltip: {
+                    mode: 'single',
+                    sort: 'none',
+                  },
+                  legend: {
+                    showLegend: false,
+                    displayMode: 'table',
+                    placement: 'right',
+                    values: ['percent'],
+                  },
+                  displayLabels: ['percent'],
+                }}
+              />
+            )}
           </div>
         </div>
       </div>
