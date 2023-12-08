@@ -3,8 +3,9 @@ import { Form } from 'react-final-form';
 import { useHistory, useParams } from 'react-router-dom';
 
 import { AppEvents } from '@grafana/data';
-import { Alert, Button, Modal, useStyles2 } from '@grafana/ui';
+import { Alert, Button, HorizontalGroup, Modal, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
 import { InventoryService } from 'app/percona/inventory/Inventory.service';
 import { useAppDispatch } from 'app/store/store';
@@ -21,7 +22,6 @@ import { Messages } from './EditInstance.messages';
 import { getStyles } from './EditInstance.styles';
 import { EditInstanceFormValues, EditInstanceRouteParams } from './EditInstance.types';
 import { getInitialValues, getService, toPayload } from './EditInstance.utils';
-import EditInstanceActions from './components/EditInstanceActions';
 
 const EditInstancePage: React.FC<React.PropsWithChildren<unknown>> = () => {
   const history = useHistory();
@@ -97,7 +97,31 @@ const EditInstancePage: React.FC<React.PropsWithChildren<unknown>> = () => {
       onSubmit={handleSubmit}
       render={({ handleSubmit, submitting, values }) => (
         <>
-          <EditInstanceActions onCancel={handleCancel} onSubmit={handleSubmit} submitting={submitting} />
+          <AppChromeUpdate
+            actions={
+              <HorizontalGroup height="auto" justify="flex-end">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  data-testid="edit-instance-cancel"
+                  type="button"
+                  onClick={handleCancel}
+                >
+                  {Messages.cancel}
+                </Button>
+                <Button
+                  data-testid="edit-instance-submit"
+                  size="sm"
+                  type="submit"
+                  variant="primary"
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                >
+                  {Messages.saveChanges}
+                </Button>
+              </HorizontalGroup>
+            }
+          />
           <Modal
             isOpen={isModalOpen}
             title={Messages.formTitle(service?.service_name || '')}

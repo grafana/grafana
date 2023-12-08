@@ -1,9 +1,9 @@
-import React, { FC, useCallback, useEffect, useLayoutEffect } from 'react';
+import React, { FC, useCallback, useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { Field, Input, useStyles2, HorizontalGroup, Button } from '@grafana/ui';
+import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
-import { useGrafana } from 'app/core/context/GrafanaContext';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 
@@ -16,7 +16,6 @@ import { AddEditRoleFormProps } from './AddEditRoleForm.types';
 const AddEditRoleForm: FC<React.PropsWithChildren<AddEditRoleFormProps>> = ({
   initialValues,
   isLoading,
-  title,
   cancelLabel,
   onCancel,
   submitLabel,
@@ -29,38 +28,40 @@ const AddEditRoleForm: FC<React.PropsWithChildren<AddEditRoleFormProps>> = ({
   const styles = useStyles2(getStyles);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const featureSelector = useCallback(getPerconaSettingFlag('enableAccessControl'), []);
-  const { chrome } = useGrafana();
 
   useEffect(() => {
     methods.reset(initialValues);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialValues]);
 
-  useLayoutEffect(() => {
-    chrome.update({
-      actions: (
-        <HorizontalGroup height="auto" justify="flex-end">
-          <Button size="sm" variant="secondary" data-testid="add-edit-role-cancel" type="button" onClick={onCancel}>
-            {cancelLabel}
-          </Button>
-          <Button
-            data-testid="add-edit-role-submit"
-            size="sm"
-            type="submit"
-            variant="primary"
-            onClick={methods.handleSubmit(onSubmit)}
-          >
-            {submitLabel}
-          </Button>
-        </HorizontalGroup>
-      ),
-    });
-  });
-
   return (
     <FormProvider {...methods}>
       <Page.Contents isLoading={isLoading}>
         <FeatureLoader featureSelector={featureSelector}>
+          <AppChromeUpdate
+            actions={
+              <HorizontalGroup height="auto" justify="flex-end">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  data-testid="add-edit-role-cancel"
+                  type="button"
+                  onClick={onCancel}
+                >
+                  {cancelLabel}
+                </Button>
+                <Button
+                  data-testid="add-edit-role-submit"
+                  size="sm"
+                  type="submit"
+                  variant="primary"
+                  onClick={methods.handleSubmit(onSubmit)}
+                >
+                  {submitLabel}
+                </Button>
+              </HorizontalGroup>
+            }
+          />
           <form onSubmit={methods.handleSubmit(onSubmit)}>
             <div className={styles.page}>
               <Field label={Messages.name.label} invalid={!!errors.title} error={errors.title?.message}>

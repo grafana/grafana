@@ -1,10 +1,10 @@
 /* eslint-disable react/display-name,@typescript-eslint/consistent-type-assertions,@typescript-eslint/no-explicit-any */
-import React, { MouseEventHandler, useLayoutEffect, useMemo, useState } from 'react';
+import React, { MouseEventHandler, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 
 import { HorizontalGroup, Button } from '@grafana/ui';
+import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
-import { useGrafana } from 'app/core/context/GrafanaContext';
 import { getPerconaSettings } from 'app/percona/shared/core/selectors';
 import { useSelector } from 'app/types';
 
@@ -48,7 +48,6 @@ const AddInstancePanel = () => {
   const [showSelection, setShowSelection] = useState(!instanceType);
   const [submitting, setSubmitting] = useState(false);
   const history = useHistory();
-  const { chrome } = useGrafana();
 
   const handleSubmit = async (submitPromise: Promise<void>) => {
     setSubmitting(true);
@@ -109,31 +108,6 @@ const AddInstancePanel = () => {
     return `Configuring ${INSTANCE_TYPES_LABELS[databaseType]} service`;
   };
 
-  useLayoutEffect(() => {
-    chrome.update({
-      actions: (
-        <HorizontalGroup height="auto" justify="flex-end">
-          <Button size="sm" variant="secondary" data-testid="add-edit-role-cancel" type="button" onClick={handleCancel}>
-            {showSelection ? Messages.selectionStep.cancel : Messages.configurationStep.cancel}
-          </Button>
-          {!showSelection && (
-            <Button
-              disabled={submitting}
-              data-testid="add-edit-role-submit"
-              form={ADD_INSTANCE_FORM_NAME}
-              size="sm"
-              type="submit"
-              variant="primary"
-            >
-              {submitLabel}
-            </Button>
-          )}
-        </HorizontalGroup>
-      ),
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showSelection]);
-
   return (
     <Page
       navId={PMM_SERVICES_PAGE.id}
@@ -145,6 +119,33 @@ const AddInstancePanel = () => {
     >
       <Page.Contents>
         <FeatureLoader>
+          <AppChromeUpdate
+            actions={
+              <HorizontalGroup height="auto" justify="flex-end">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  data-testid="add-edit-role-cancel"
+                  type="button"
+                  onClick={handleCancel}
+                >
+                  {showSelection ? Messages.selectionStep.cancel : Messages.configurationStep.cancel}
+                </Button>
+                {!showSelection && (
+                  <Button
+                    disabled={submitting}
+                    data-testid="add-edit-role-submit"
+                    form={ADD_INSTANCE_FORM_NAME}
+                    size="sm"
+                    type="submit"
+                    variant="primary"
+                  >
+                    {submitLabel}
+                  </Button>
+                )}
+              </HorizontalGroup>
+            }
+          />
           {showSelection ? (
             <AddInstance
               showAzure={!!azureDiscoverEnabled}
