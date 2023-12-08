@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { CSSProperties } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -17,9 +17,10 @@ interface GrotLevelProps {
   height?: number;
   width?: number;
   animation?: string;
+  customStyle?: CSSProperties;
 }
 
-export const GrotIcon = ({ level, height, width, animation }: GrotLevelProps) => {
+export const GrotIcon = ({ level, height, width, animation, customStyle }: GrotLevelProps) => {
   const styles = useStyles2(getStyles, animation);
   const grotIcon = () => {
     switch (level) {
@@ -40,7 +41,16 @@ export const GrotIcon = ({ level, height, width, animation }: GrotLevelProps) =>
     }
   };
 
-  return <img className={styles.image} src={grotIcon()} alt={'grot icon'} height={height} width={width} />;
+  return (
+    <img
+      className={styles.image}
+      src={grotIcon()}
+      alt={'grot icon'}
+      height={height}
+      width={width}
+      style={customStyle}
+    />
+  );
 };
 
 const getStyles = (theme: GrafanaTheme2, animation?: string) => {
