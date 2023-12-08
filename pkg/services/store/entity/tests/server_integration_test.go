@@ -407,9 +407,8 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.NoError(t, err)
 
 		resp, err := testCtx.client.List(ctx, &entity.EntityListRequest{
-			Key:        []string{kind},
-			WithBody:   false,
-			WithLabels: true,
+			Key:      []string{kind},
+			WithBody: false,
 			Labels: map[string]string{
 				"red": "",
 			},
@@ -420,9 +419,8 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.Equal(t, resp.Results[0].Uid, "red-green")
 
 		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
-			Key:        []string{kind},
-			WithBody:   false,
-			WithLabels: true,
+			Key:      []string{kind},
+			WithBody: false,
 			Labels: map[string]string{
 				"red":   "",
 				"green": "",
@@ -434,9 +432,8 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.Equal(t, resp.Results[0].Uid, "red-green")
 
 		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
-			Key:        []string{kind},
-			WithBody:   false,
-			WithLabels: true,
+			Key:      []string{kind},
+			WithBody: false,
 			Labels: map[string]string{
 				"red": "invalid",
 			},
@@ -446,9 +443,8 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.Len(t, resp.Results, 0)
 
 		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
-			Key:        []string{kind},
-			WithBody:   false,
-			WithLabels: true,
+			Key:      []string{kind},
+			WithBody: false,
 			Labels: map[string]string{
 				"green": "",
 			},
@@ -458,9 +454,8 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.Len(t, resp.Results, 2)
 
 		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
-			Key:        []string{kind},
-			WithBody:   false,
-			WithLabels: true,
+			Key:      []string{kind},
+			WithBody: false,
 			Labels: map[string]string{
 				"yellow": "",
 			},

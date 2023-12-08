@@ -120,17 +120,11 @@ message ReadEntityRequest {
   // Fetch an explicit version (default is latest)
   string version = 2;
 
-  // Include the full meta bytes
-  bool with_meta = 3;
-
-  // Include the full body bytes
+  // Include the full body
   bool with_body = 4;
 
-  // Include the status bytes (ignored for now)
+  // Include the status
   bool with_status = 5;
-
-  // Include derived summary metadata
-  bool with_summary = 6;
 }
 
 //------------------------------------------------------
@@ -291,10 +285,7 @@ message EntityListRequest {
   bool with_body = 8;
 
   // Return the full body in each payload
-  bool with_labels = 9;
-
-  // Return the full body in each payload
-  bool with_fields = 10;
+  bool with_status = 10;
 }
 
 message ReferenceRequest {
@@ -341,11 +332,8 @@ message EntityWatchRequest {
   // Return the full body in each payload
   bool with_body = 6;
 
-  // Return the full body in each payload
-  bool with_labels = 7;
-
-  // Return the full body in each payload
-  bool with_fields = 8;
+  // Return the full status in each payload
+  bool with_status = 7;
 }
 
 message EntityWatchResponse {

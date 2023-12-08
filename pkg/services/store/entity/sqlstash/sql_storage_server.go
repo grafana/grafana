@@ -93,20 +93,18 @@ func (s *sqlEntityServer) getReadFields(r *entity.ReadEntityRequest) []string {
 		"version", "size", "etag", "errors", // errors are always returned
 		"created_at", "created_by",
 		"updated_at", "updated_by",
-		"origin", "origin_key", "origin_ts"}
+		"origin", "origin_key", "origin_ts",
+		"meta",
+		"name", "slug", "description", "labels", "fields",
+	}
 
 	if r.WithBody {
 		fields = append(fields, `body`)
 	}
-	if r.WithMeta {
-		fields = append(fields, `meta`)
-	}
-	if r.WithSummary {
-		fields = append(fields, "name", "slug", "description", "labels", "fields")
-	}
 	if r.WithStatus {
 		fields = append(fields, "status")
 	}
+
 	return fields
 }
 
@@ -124,7 +122,7 @@ func (s *sqlEntityServer) getReadSelect(r *entity.ReadEntityRequest) (string, er
 	return "SELECT " + strings.Join(quotedFields, ","), nil
 }
 
-func (s *sqlEntityServer) rowToReadEntityResponse(ctx context.Context, rows *sql.Rows, r *entity.ReadEntityRequest) (*entity.Entity, error) {
+func (s *sqlEntityServer) rowToEntity(ctx context.Context, rows *sql.Rows, r *entity.ReadEntityRequest) (*entity.Entity, error) {
 	raw := &entity.Entity{
 		Origin: &entity.EntityOriginInfo{},
 	}
@@ -141,15 +139,11 @@ func (s *sqlEntityServer) rowToReadEntityResponse(ctx context.Context, rows *sql
 		&raw.CreatedAt, &raw.CreatedBy,
 		&raw.UpdatedAt, &raw.UpdatedBy,
 		&raw.Origin.Source, &raw.Origin.Key, &raw.Origin.Time,
+		&raw.Meta,
+		&raw.Name, &raw.Slug, &raw.Description, &labels, &fields,
 	}
 	if r.WithBody {
 		args = append(args, &raw.Body)
-	}
-	if r.WithMeta {
-		args = append(args, &raw.Meta)
-	}
-	if r.WithSummary {
-		args = append(args, &raw.Name, &raw.Slug, &raw.Description, &labels, &fields)
 	}
 	if r.WithStatus {
 		args = append(args, &raw.Status)
@@ -229,7 +223,7 @@ func (s *sqlEntityServer) read(ctx context.Context, tx session.SessionQuerier, r
 		return &entity.Entity{}, nil
 	}
 
-	return s.rowToReadEntityResponse(ctx, rows, r)
+	return s.rowToEntity(ctx, rows, r)
 }
 
 func (s *sqlEntityServer) BatchRead(ctx context.Context, b *entity.BatchReadEntityRequest) (*entity.BatchReadEntityResponse, error) {
@@ -242,7 +236,7 @@ func (s *sqlEntityServer) BatchRead(ctx context.Context, b *entity.BatchReadEnti
 	constraints := []string{}
 
 	for _, r := range b.Batch {
-		if r.WithBody != first.WithBody || r.WithSummary != first.WithSummary {
+		if r.WithBody != first.WithBody || r.WithStatus != first.WithStatus {
 			return nil, fmt.Errorf("requests must want the same things")
 		}
 
@@ -275,7 +269,7 @@ func (s *sqlEntityServer) BatchRead(ctx context.Context, b *entity.BatchReadEnti
 	// TODO? make sure the results are in order?
 	rsp := &entity.BatchReadEntityResponse{}
 	for rows.Next() {
-		r, err := s.rowToReadEntityResponse(ctx, rows, req)
+		r, err := s.rowToEntity(ctx, rows, req)
 		if err != nil {
 			return nil, err
 		}
@@ -284,6 +278,7 @@ func (s *sqlEntityServer) BatchRead(ctx context.Context, b *entity.BatchReadEnti
 	return rsp, nil
 }
 
+//nolint:gocyclo
 func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequest) (*entity.CreateEntityResponse, error) {
 	if err := s.Init(); err != nil {
 		return nil, err
@@ -311,11 +306,9 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 
 	err := s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
 		current, err := s.read(ctx, tx, &entity.ReadEntityRequest{
-			Key:         r.Entity.Key,
-			WithMeta:    true,
-			WithBody:    true,
-			WithStatus:  true,
-			WithSummary: true,
+			Key:        r.Entity.Key,
+			WithBody:   true,
+			WithStatus: true,
 		})
 		if err != nil {
 			return err
@@ -531,11 +524,9 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 
 	err := s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
 		current, err := s.read(ctx, tx, &entity.ReadEntityRequest{
-			Key:         r.Entity.Key,
-			WithMeta:    true,
-			WithBody:    true,
-			WithStatus:  true,
-			WithSummary: true,
+			Key:        r.Entity.Key,
+			WithBody:   true,
+			WithStatus: true,
 		})
 		if err != nil {
 			return err
@@ -782,11 +773,9 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 	err := s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
 		var err error
 		rsp.Entity, err = s.Read(ctx, &entity.ReadEntityRequest{
-			Key:         r.Key,
-			WithBody:    true,
-			WithMeta:    true,
-			WithStatus:  true,
-			WithSummary: true,
+			Key:        r.Key,
+			WithBody:   true,
+			WithStatus: true,
 		})
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
@@ -861,11 +850,9 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 	}
 
 	rr := &entity.ReadEntityRequest{
-		Key:         r.Key,
-		WithMeta:    true,
-		WithBody:    false,
-		WithStatus:  true,
-		WithSummary: true,
+		Key:        r.Key,
+		WithBody:   true,
+		WithStatus: false,
 	}
 
 	query, err := s.getReadSelect(rr)
@@ -873,18 +860,29 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 		return nil, err
 	}
 
-	query += " FROM entity_history" +
-		" WHERE " + s.dialect.Quote("key") + "=?"
-	args := []any{
-		r.Key,
+	if r.Key == "" {
+		return nil, fmt.Errorf("missing key")
 	}
 
+	key, err := entity.ParseKey(r.Key)
+	if err != nil {
+		return nil, err
+	}
+
+	where := []string{}
+	args := []any{}
+
+	where = append(where, s.dialect.Quote("namespace")+"=?", s.dialect.Quote("group")+"=?", s.dialect.Quote("resource")+"=?", s.dialect.Quote("uid")+"=?")
+	args = append(args, key.Namespace, key.Group, key.Resource, key.Name)
+
 	if r.NextPageToken != "" {
-		query += " AND version <= ?"
+		where = append(where, "version <= ?")
 		args = append(args, r.NextPageToken)
 	}
 
-	query += " ORDER BY version DESC" +
+	query += " FROM entity_history" +
+		" WHERE " + strings.Join(where, " AND ") +
+		" ORDER BY version DESC" +
 		// select 1 more than we need to see if there is a next page
 		" LIMIT " + fmt.Sprint(limit+1)
 
@@ -898,7 +896,7 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 		Key: r.Key,
 	}
 	for rows.Next() {
-		v, err := s.rowToReadEntityResponse(ctx, rows, rr)
+		v, err := s.rowToEntity(ctx, rows, rr)
 		if err != nil {
 			return nil, err
 		}
@@ -931,25 +929,12 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		return nil, fmt.Errorf("not yet supported")
 	}
 
-	fields := []string{
-		"guid", "guid", "key",
-		"namespace", "group", "group_version", "resource", "uid",
-		"version", "folder", "slug", "errors", // errors are always returned
-		"size", "updated_at", "updated_by",
-		"name", "description", // basic summary
+	rr := &entity.ReadEntityRequest{
+		WithBody:   r.WithBody,
+		WithStatus: r.WithStatus,
 	}
 
-	if r.WithBody {
-		fields = append(fields, "body", "meta", "status")
-	}
-
-	if r.WithLabels {
-		fields = append(fields, "labels")
-	}
-
-	if r.WithFields {
-		fields = append(fields, "fields")
-	}
+	fields := s.getReadFields(rr)
 
 	entityQuery := selectQuery{
 		dialect:  s.dialect,
@@ -1012,33 +997,9 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		return nil, err
 	}
 	defer func() { _ = rows.Close() }()
-	token := ""
 	rsp := &entity.EntityListResponse{}
 	for rows.Next() {
-		result := &entity.Entity{}
-
-		var labels []byte
-		var errors []byte
-		var fields []byte
-
-		args := []any{
-			&token, &result.Guid, &result.Key,
-			&result.Namespace, &result.Group, &result.GroupVersion, &result.Resource, &result.Uid,
-			&result.Version, &result.Folder, &result.Slug, &errors,
-			&result.Size, &result.UpdatedAt, &result.UpdatedBy,
-			&result.Name, &result.Description,
-		}
-		if r.WithBody {
-			args = append(args, &result.Body, &result.Meta, &result.Status)
-		}
-		if r.WithLabels {
-			args = append(args, &labels)
-		}
-		if r.WithFields {
-			args = append(args, &fields)
-		}
-
-		err = rows.Scan(args...)
+		result, err := s.rowToEntity(ctx, rows, rr)
 		if err != nil {
 			return rsp, err
 		}
@@ -1046,22 +1007,8 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		// found more than requested
 		if int64(len(rsp.Results)) >= entityQuery.limit {
 			// TODO? this only works if we sort by guid
-			rsp.NextPageToken = token
+			rsp.NextPageToken = result.Guid
 			break
-		}
-
-		if labels != nil {
-			err = json.Unmarshal(labels, &result.Labels)
-			if err != nil {
-				return rsp, err
-			}
-		}
-
-		if fields != nil {
-			err = json.Unmarshal(fields, &result.Fields)
-			if err != nil {
-				return rsp, err
-			}
 		}
 
 		rsp.Results = append(rsp.Results, result)

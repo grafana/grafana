@@ -177,11 +177,9 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, objPtr runtime.Object) error {
 	rsp, err := s.store.Read(ctx, &entityStore.ReadEntityRequest{
-		Key:         key,
-		WithMeta:    true,
-		WithBody:    true,
-		WithStatus:  true,
-		WithSummary: true,
+		Key:        key,
+		WithBody:   true,
+		WithStatus: true,
 	})
 	if err != nil {
 		return err
@@ -222,8 +220,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	rsp, err := s.store.List(ctx, &entityStore.EntityListRequest{
 		Key:           []string{key},
 		WithBody:      true,
-		WithLabels:    true,
-		WithFields:    true,
+		WithStatus:    true,
 		NextPageToken: opts.Predicate.Continue,
 		Limit:         opts.Predicate.Limit,
 		// TODO push label/field matching down to storage
