@@ -1,5 +1,5 @@
 import { css, keyframes } from '@emotion/css';
-import React from 'react';
+import React, { CSSProperties } from 'react';
 import Confetti from 'react-confetti';
 import toast, { Toast } from 'react-hot-toast';
 import { useWindowSize } from 'react-use';
@@ -21,6 +21,10 @@ export const LevelUpNotification = ({ title, level, toaster }: LevelUpNotificati
   const styles = useStyles2(getStyles);
   const { width, height } = useWindowSize();
 
+  const previousLevelStyle: CSSProperties = {
+    opacity: '80%',
+  };
+
   return (
     <div className={styles.wrapper} onClick={() => toast.dismiss(toaster.id)}>
       {/* todo: move this element to the app level to avoid center calculation based on parent element;
@@ -41,7 +45,7 @@ export const LevelUpNotification = ({ title, level, toaster }: LevelUpNotificati
         <h2>LEVEL UP!</h2>
       </div>
       <div className={styles.levelIcons}>
-        <GrotIcon level={level - 1} width={100} height={100} />
+        <GrotIcon level={level - 1} width={100} height={100} customStyle={previousLevelStyle} />
         <div style={{ marginTop: '45px', fontSize: '20px' }}>{'>>>'}</div>
         <GrotIcon level={level} width={100} height={100} />
       </div>
