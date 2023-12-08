@@ -262,6 +262,8 @@ func (d *DuckDB) connect(ctx context.Context) (driver.Conn, error) {
 func (d *DuckDB) connector(ctx context.Context) (driver.Connector, error) {
 	if d.conn == nil {
 		connector, err := duckdb.NewConnector(d.name, func(execer driver.ExecerContext) error {
+			// If `INSTALL 'json'` here fails, try running duckdb from the command line, and running
+			// `INSTALL 'json'` from there instead.
 			bootQueries := []string{
 				"INSTALL 'json'",
 				"LOAD 'json'",
