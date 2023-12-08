@@ -51,13 +51,13 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
       }
 
       const originalVariable = variables[variableIndex];
-      let copyNumber = 1;
-      let newName = `${originalVariable.state.name}_copy`;
+      let copyNumber = 0;
+      let newName = `copy_of_${originalVariable.state.name}`;
 
       // Check if the name is unique, if not, increment the copy number
       while (variables.some((v) => v.state.name === newName)) {
         copyNumber++;
-        newName = `${originalVariable.state.name}_copy_${copyNumber}`;
+        newName = `copy_of_${originalVariable.state.name}_${copyNumber}`;
       }
 
       //clone the original variable
