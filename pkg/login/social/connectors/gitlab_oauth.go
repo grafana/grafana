@@ -1,4 +1,4 @@
-package social
+package connectors
 
 import (
 	"context"
@@ -11,16 +11,21 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
+	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
-	groupPerPage       = 50
-	accessLevelGuest   = "10"
-	GitlabProviderName = "gitlab"
+	groupPerPage     = 50
+	accessLevelGuest = "10"
 )
+
+var _ social.SocialConnector = (*SocialGitlab)(nil)
+var _ ssosettings.Reloadable = (*SocialGitlab)(nil)
 
 type SocialGitlab struct {
 	*SocialBase
@@ -49,22 +54,29 @@ type userData struct {
 	IsGrafanaAdmin *bool             `json:"-"`
 }
 
-func NewGitLabProvider(settings map[string]any, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGitlab, error) {
-	info, err := CreateOAuthInfoFromKeyValues(settings)
-	if err != nil {
-		return nil, err
-	}
-
-	config := createOAuthConfig(info, cfg, GitlabProviderName)
+func NewGitLabProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager) *SocialGitlab {
+	config := createOAuthConfig(info, cfg, social.GitlabProviderName)
 	provider := &SocialGitlab{
-		SocialBase:      newSocialBase(GitlabProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:      newSocialBase(social.GitlabProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		apiUrl:          info.ApiUrl,
 		skipOrgRoleSync: cfg.GitLabSkipOrgRoleSync,
 		// FIXME: Move skipOrgRoleSync to OAuthInfo
 		// skipOrgRoleSync: info.SkipOrgRoleSync
 	}
 
-	return provider, nil
+	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
+		ssoSettings.RegisterReloadable(social.GitlabProviderName, provider)
+	}
+
+	return provider
+}
+
+func (s *SocialGitlab) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
+	return nil
+}
+
+func (s *SocialGitlab) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	return nil
 }
 
 func (s *SocialGitlab) getGroups(ctx context.Context, client *http.Client) []string {
@@ -146,7 +158,7 @@ func (s *SocialGitlab) getGroupsPage(ctx context.Context, client *http.Client, n
 	return fullPaths, next
 }
 
-func (s *SocialGitlab) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
+func (s *SocialGitlab) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
 	data, err := s.extractFromToken(ctx, client, token)
 	if err != nil {
 		return nil, err
@@ -161,7 +173,7 @@ func (s *SocialGitlab) UserInfo(ctx context.Context, client *http.Client, token 
 		}
 	}
 
-	userInfo := &BasicUserInfo{
+	userInfo := &social.BasicUserInfo{
 		Id:             data.ID,
 		Name:           data.Name,
 		Login:          data.Login,
@@ -182,7 +194,7 @@ func (s *SocialGitlab) UserInfo(ctx context.Context, client *http.Client, token 
 	return userInfo, nil
 }
 
-func (s *SocialGitlab) GetOAuthInfo() *OAuthInfo {
+func (s *SocialGitlab) GetOAuthInfo() *social.OAuthInfo {
 	return s.info
 }
 

@@ -1,4 +1,4 @@
-package social
+package connectors
 
 import (
 	"context"
@@ -10,7 +10,10 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
+	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -18,8 +21,10 @@ const (
 	legacyAPIURL            = "https://www.googleapis.com/oauth2/v1/userinfo"
 	googleIAMGroupsEndpoint = "https://content-cloudidentity.googleapis.com/v1/groups/-/memberships:searchDirectGroups"
 	googleIAMScope          = "https://www.googleapis.com/auth/cloud-identity.groups.readonly"
-	GoogleProviderName      = "google"
 )
+
+var _ social.SocialConnector = (*SocialGoogle)(nil)
+var _ ssosettings.Reloadable = (*SocialGoogle)(nil)
 
 type SocialGoogle struct {
 	*SocialBase
@@ -36,15 +41,10 @@ type googleUserData struct {
 	rawJSON       []byte `json:"-"`
 }
 
-func NewGoogleProvider(settings map[string]any, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGoogle, error) {
-	info, err := CreateOAuthInfoFromKeyValues(settings)
-	if err != nil {
-		return nil, err
-	}
-
-	config := createOAuthConfig(info, cfg, GoogleProviderName)
+func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager) *SocialGoogle {
+	config := createOAuthConfig(info, cfg, social.GoogleProviderName)
 	provider := &SocialGoogle{
-		SocialBase:      newSocialBase(GoogleProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:      newSocialBase(social.GoogleProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		hostedDomain:    info.HostedDomain,
 		apiUrl:          info.ApiUrl,
 		skipOrgRoleSync: cfg.GoogleSkipOrgRoleSync,
@@ -56,10 +56,22 @@ func NewGoogleProvider(settings map[string]any, cfg *setting.Cfg, features *feat
 		provider.log.Warn("Using legacy Google API URL, please update your configuration")
 	}
 
-	return provider, nil
+	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
+		ssoSettings.RegisterReloadable(social.GoogleProviderName, provider)
+	}
+
+	return provider
 }
 
-func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
+func (s *SocialGoogle) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
+	return nil
+}
+
+func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	return nil
+}
+
+func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
 	data, errToken := s.extractFromToken(ctx, client, token)
 	if errToken != nil {
 		return nil, errToken
@@ -90,7 +102,7 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 		return nil, errMissingGroupMembership
 	}
 
-	userInfo := &BasicUserInfo{
+	userInfo := &social.BasicUserInfo{
 		Id:             data.ID,
 		Name:           data.Name,
 		Email:          data.Email,
@@ -118,7 +130,7 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 	return userInfo, nil
 }
 
-func (s *SocialGoogle) GetOAuthInfo() *OAuthInfo {
+func (s *SocialGoogle) GetOAuthInfo() *social.OAuthInfo {
 	return s.info
 }
 
