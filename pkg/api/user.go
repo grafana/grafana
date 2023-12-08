@@ -212,14 +212,14 @@ func (hs *HTTPServer) UpdateUserActiveOrg(c *contextmodel.ReqContext) response.R
 
 func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserCommand) response.Response {
 	// external user -> user data cannot be updated
-	isExternal, err := hs.isExternalUser(ctx, cmd.UserID)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to validate User", err)
-	}
+	// isExternal, err := hs.isExternalUser(ctx, cmd.UserID)
+	// if err != nil {
+	// 	return response.Error(http.StatusInternalServerError, "Failed to validate User", err)
+	// }
 
-	if isExternal {
-		return response.Error(http.StatusForbidden, "User info cannot be updated for external Users", nil)
-	}
+	// if isExternal {
+	// 	return response.Error(http.StatusForbidden, "User info cannot be updated for external Users", nil)
+	// }
 
 	if len(cmd.Login) == 0 {
 		cmd.Login = cmd.Email
