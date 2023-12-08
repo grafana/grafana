@@ -35,7 +35,7 @@ export const AchievementCard = ({ title, level }: AchievementCardProps) => {
   useEffect(() => {
     getUserLevel().then((level) => {
       if (level !== -1) {
-        setExpanded(title === achievementsByName[level]);
+        setExpanded(title === achievementsByName[level + 1]);
       }
     });
   }, [title]);
