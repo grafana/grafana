@@ -3,6 +3,7 @@ import React from 'react';
 import { DataQuery, DataSourceApi, DataSourceInstanceSettings, IconName } from '@grafana/data';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { SceneObjectBase, SceneComponentProps, SceneObjectRef, SceneQueryRunner, sceneGraph } from '@grafana/scenes';
+import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
 import { QueryEditorRows } from 'app/features/query/components/QueryEditorRows';
 import { QueryGroupTopSection } from 'app/features/query/components/QueryGroup';
 import { updateQueries } from 'app/features/query/state/updateQueries';
@@ -52,10 +53,20 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
       // TODO: should return default for new panel
       const datasource = await getDataSourceSrv().get(dataObj.state.datasource);
       const dsSettings = getDataSourceSrv().getInstanceSettings(dataObj.state.datasource);
-      this.setState({
-        datasource,
-        dsSettings,
-      });
+
+      if (datasource && dsSettings) {
+        this.setState({
+          datasource,
+          dsSettings,
+        });
+
+        storeLastUsedDataSourceInLocalStorage(
+          {
+            type: dsSettings.type,
+            uid: dsSettings.uid,
+          } || { default: true }
+        );
+      }
     } catch (err) {
       console.error(err);
     }
@@ -77,24 +88,19 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
       };
     }
 
-    // TODO
-    // store last datasource used in local storage
-    // this.updateLastUsedDatasource(dataSource);
-
     return {
       // TODO
       // cacheTimeout: dsSettings?.meta.queryOptions?.cacheTimeout ? panel.cacheTimeout : undefined,
+      // queryCachingTTL: dsSettings?.cachingConfig?.enabled ? panel.queryCachingTTL : undefined,
       dataSource: {
         default: dsSettings?.isDefault,
         type: dsSettings?.type,
         uid: dsSettings?.uid,
       },
-      // TODO
-      // queryCachingTTL: dsSettings?.cachingConfig?.enabled ? panel.queryCachingTTL : undefined,
       queries: dataObj.state.queries,
       maxDataPoints: dataObj.state.maxDataPoints,
       // TODO
-      // minInterval: panel.interval,
+      minInterval: dataObj.state.minInterval,
       timeRange: timeRangeOpts,
     };
   }
@@ -137,6 +143,23 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
       dataObj.runQueries();
     }
   };
+
+  onQueryOptionsChange = (options: QueryGroupOptions) => {
+    const { dataRef } = this.state;
+    const dataObj = dataRef.resolve();
+
+    const dataObjStateUpdate: Partial<SceneQueryRunner['state']> = {};
+    if (options.maxDataPoints !== dataObj.state.maxDataPoints) {
+      dataObjStateUpdate.maxDataPoints = options.maxDataPoints ?? undefined;
+    }
+
+    if (options.minInterval !== dataObj.state.minInterval && options.minInterval !== null) {
+      dataObjStateUpdate.minInterval = options.minInterval;
+    }
+
+    dataObj.setState(dataObjStateUpdate);
+    dataObj.runQueries();
+  };
 }
 
 function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQueriesTab>) {
@@ -156,7 +179,7 @@ function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQue
         dataSource={datasource}
         options={model.buildQueryOptions()}
         onDataSourceChange={model.onChangeDataSource}
-        onOptionsChange={() => {}}
+        onOptionsChange={model.onQueryOptionsChange}
         onOpenQueryInspector={model.onOpenInspector}
       />
       <QueryEditorRows
