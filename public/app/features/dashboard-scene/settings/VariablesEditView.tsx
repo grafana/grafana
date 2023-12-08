@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { PageLayoutType } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, sceneGraph, sceneUtils } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 
 import { NavToolbarActions } from '../scene/NavToolbarActions';
@@ -28,25 +28,67 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     };
 
     const onDelete = (identifier: string) => {
-      // find the variable in the array of variables and remove it
-      const fromVariableIndex = getVariableIndex(identifier);
-      if (fromVariableIndex === -1) {
+      // Find the index of the variable to be deleted
+      const variableIndex = getVariableIndex(identifier);
+      if (variableIndex === -1) {
+        // Handle the case where the variable is not found
+        console.error('Variable not found');
         return;
       }
-      variables.splice(fromVariableIndex, 1);
-      variablesObject.setState({ variables });
+
+      // Create a new array excluding the variable to be deleted
+      const updatedVariables = [...variables.slice(0, variableIndex), ...variables.slice(variableIndex + 1)];
+
+      // Update the state or the variables array
+      variablesObject.setState({ variables: updatedVariables });
     };
 
     const onDuplicated = (identifier: string) => {
-      return 'not implemented';
+      const variableIndex = getVariableIndex(identifier);
+      if (variableIndex === -1) {
+        console.error('Variable not found');
+        return;
+      }
+
+      const originalVariable = variables[variableIndex];
+      let copyNumber = 1;
+      let newName = `${originalVariable.state.name}_copy`;
+
+      // Check if the name is unique, if not, increment the copy number
+      while (variables.some((v) => v.state.name === newName)) {
+        copyNumber++;
+        newName = `${originalVariable.state.name}_copy_${copyNumber}`;
+      }
+
+      //clone the original variable
+
+      const newVariable = originalVariable.clone(originalVariable.state);
+      // update state name of the new variable
+      newVariable.setState({ name: newName });
+
+      const updatedVariables = [
+        ...variables.slice(0, variableIndex + 1),
+        newVariable,
+        ...variables.slice(variableIndex + 1),
+      ];
+
+      variablesObject.setState({ variables: updatedVariables });
     };
 
     const onOrderChanged = (fromIndex: number, toIndex: number) => {
       if (!variables) {
         return;
       }
-      const varEntries = variables.splice(fromIndex, 1);
-      variables.splice(toIndex, 0, varEntries[0]);
+      // check the index are within the variables array
+      if (fromIndex < 0 || fromIndex >= variables.length || toIndex < 0 || toIndex >= variables.length) {
+        console.error('Invalid index');
+        return;
+      }
+      const updatedVariables = [...variables];
+      // Remove the variable from the array
+      const movedItem = updatedVariables.splice(fromIndex, 1);
+      updatedVariables.splice(toIndex, 0, movedItem[0]);
+      variablesObject.setState({ variables: updatedVariables });
     };
 
     const onEdit = (identifier: string) => {
