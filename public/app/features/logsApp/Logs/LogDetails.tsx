@@ -288,83 +288,89 @@ export const LogDetails = (props: Props) => {
             })}
 
             {row.possibleTraceId && tempoDs.value && traceDf.value && transformedTraceData && (
-              <tr style={{ margin: '4px 0', marginTop: '1em' }}>
-                <th colSpan={6}>
-                  <Collapse
-                    label="Trace View"
-                    collapsible={true}
-                    isOpen={traceViewOpen}
-                    onToggle={(isOpen) => setTraceViewOpen(isOpen)}
-                  >
-                    <>
-                      <LinkButton
-                        size="sm"
-                        className={styles.collapsibleButton}
-                        variant="secondary"
-                        icon="external-link-alt"
-                        target="_blank"
-                        href={createUrl(`/explore`, {
-                          left: JSON.stringify({
-                            datasource: tempoDs.value.uid,
-                            queries: [{ refId: 'A', query: row.possibleTraceId }],
-                            range: getDefaultTimeRange(),
-                          }),
-                        })}
-                      >
-                        Open in Explore
-                      </LinkButton>
-                      <TraceView
-                        dataFrames={traceDf.value}
-                        traceProp={transformedTraceData}
-                        datasource={tempoDs.value}
-                      />
-                    </>
-                  </Collapse>
-                </th>
-              </tr>
-            )}
-            {correlatedLogs.length > 0 && (
-              <tr style={{ margin: '4px 0' }}>
-                <th colSpan={6}>
-                  <Collapse
-                    label={`${row.possibleTraceId ? 'Trace' : 'Correlated'} Logs`}
-                    collapsible={true}
-                    isOpen={traceLogsViewOpen}
-                    onToggle={(isOpen) => setTraceLogsViewOpen(isOpen)}
-                  >
-                    <>
-                      {onClickFilterValue && (
-                        <Button
+              <>
+                <tr><th colSpan={6} style={{ height: '1em' }}></th></tr>
+                <tr>
+                  <th colSpan={6}>
+                    <Collapse
+                      label="Trace View"
+                      collapsible={true}
+                      isOpen={traceViewOpen}
+                      onToggle={(isOpen) => setTraceViewOpen(isOpen)}
+                    >
+                      <>
+                        <LinkButton
                           size="sm"
                           className={styles.collapsibleButton}
                           variant="secondary"
-                          onClick={() => {
-                            // TODO: this is hacky for now as it would just work if the ID is part of the logline, not if it is only a label
-                            onClickFilterValue(
-                              row.possibleTraceId ?? row.possibleCorrelationId ?? '',
-                              row.dataFrame.refId
-                            );
-                          }}
+                          icon="external-link-alt"
+                          target="_blank"
+                          href={createUrl(`/explore`, {
+                            left: JSON.stringify({
+                              datasource: tempoDs.value.uid,
+                              queries: [{ refId: 'A', query: row.possibleTraceId }],
+                              range: getDefaultTimeRange(),
+                            }),
+                          })}
                         >
-                          Show in Logs app
-                        </Button>
-                      )}
-                      <LogRows
-                        logRows={correlatedLogs}
-                        dedupStrategy={LogsDedupStrategy.none}
-                        showLabels={false}
-                        showTime={false}
-                        wrapLogMessage={true}
-                        prettifyLogMessage={false}
-                        enableLogDetails={false}
-                        timeZone={'utc'}
-                        displayedFields={displayedFields}
-                        highlightSearchwords={false}
-                      />
-                    </>
-                  </Collapse>
-                </th>
-              </tr>
+                          Open in Explore
+                        </LinkButton>
+                        <TraceView
+                          dataFrames={traceDf.value}
+                          traceProp={transformedTraceData}
+                          datasource={tempoDs.value}
+                        />
+                      </>
+                    </Collapse>
+                  </th>
+                </tr>
+              </>
+            )}
+            {correlatedLogs.length > 0 && (
+              <>
+                <tr><th colSpan={6} style={{ height: '1em' }}></th></tr>
+                <tr style={{ padding: '1em 0' }}>
+                  <th colSpan={6}>
+                    <Collapse
+                      label={`${row.possibleTraceId ? 'Trace' : 'Correlated'} Logs`}
+                      collapsible={true}
+                      isOpen={traceLogsViewOpen}
+                      onToggle={(isOpen) => setTraceLogsViewOpen(isOpen)}
+                    >
+                      <>
+                        {onClickFilterValue && (
+                          <Button
+                            size="sm"
+                            className={styles.collapsibleButton}
+                            variant="secondary"
+                            onClick={() => {
+                              // TODO: this is hacky for now as it would just work if the ID is part of the logline, not if it is only a label
+                              onClickFilterValue(
+                                row.possibleTraceId ?? row.possibleCorrelationId ?? '',
+                                row.dataFrame.refId
+                              );
+                            }}
+                          >
+                            Show in Logs app
+                          </Button>
+                        )}
+                        <LogRows
+                          logRows={correlatedLogs}
+                          dedupStrategy={LogsDedupStrategy.none}
+                          showLabels={false}
+                          showTime={false}
+                          wrapLogMessage={true}
+                          prettifyLogMessage={false}
+                          enableLogDetails={false}
+                          timeZone={'utc'}
+                          displayedFields={displayedFields}
+                          highlightSearchwords={false}
+                        />
+                      </>
+                    </Collapse>
+                  </th>
+                </tr>
+              </>
             )}
 
             {!fieldsAvailable && !labelsAvailable && !fieldsWithLinksAvailable && (
