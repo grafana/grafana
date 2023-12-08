@@ -7,12 +7,11 @@ import { AppEvents } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Alert, LinkButton, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { OldPage } from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { DeleteModal } from 'app/percona/shared/components/Elements/DeleteModal';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { Table } from 'app/percona/shared/components/Elements/Table';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
-import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { ApiVerboseError, Databases, DATABASE_LABELS } from 'app/percona/shared/core';
 import { fetchStorageLocations } from 'app/percona/shared/core/reducers/backups/backupLocations';
 import { getBackupLocations, getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
@@ -49,7 +48,6 @@ export const BackupInventory: FC<React.PropsWithChildren<unknown>> = () => {
   const dispatch = useAppDispatch();
   const [restoreErrors, setRestoreErrors] = useState<ApiVerboseError[]>([]);
   const backupLocationMap = useRef<Record<string, StorageLocation | undefined>>({});
-  const navModel = usePerconaNavModel('backup-inventory');
   const [triggerTimeout] = useRecurringCall();
   const [generateToken] = useCancelToken();
   const { result: locations = [] } = useSelector(getBackupLocations);
@@ -248,8 +246,8 @@ export const BackupInventory: FC<React.PropsWithChildren<unknown>> = () => {
   }, [getData]);
 
   return (
-    <OldPage navModel={navModel}>
-      <OldPage.Contents>
+    <Page navId='backup-inventory'>
+      <Page.Contents>
         <FeatureLoader featureName={Messages.backupManagement} featureSelector={featureSelector}>
           <div className={styles.addWrapper}>
             <LinkButton href={NEW_BACKUP_URL} size="md" variant="primary" data-testid="backup-add-button">
@@ -303,8 +301,8 @@ export const BackupInventory: FC<React.PropsWithChildren<unknown>> = () => {
             />
           )}
         </FeatureLoader>
-      </OldPage.Contents>
-    </OldPage>
+      </Page.Contents>
+    </Page>
   );
 };
 

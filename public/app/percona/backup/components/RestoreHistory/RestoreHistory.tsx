@@ -3,11 +3,10 @@ import { CancelToken } from 'axios';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { Column, Row } from 'react-table';
 
-import { OldPage } from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { Table } from 'app/percona/shared/components/Elements/Table';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
-import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { Databases, DATABASE_LABELS } from 'app/percona/shared/core';
 import { fetchStorageLocations } from 'app/percona/shared/core/reducers/backups/backupLocations';
 import { getBackupLocations, getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
@@ -34,7 +33,6 @@ export const RestoreHistory: FC<React.PropsWithChildren<unknown>> = () => {
   const [logsModalVisible, setLogsModalVisible] = useState(false);
   const [data, setData] = useState<Restore[]>([]);
   const [selectedRestore, setSelectedRestore] = useState<Restore | null>(null);
-  const navModel = usePerconaNavModel('restore-history');
   const [generateToken] = useCancelToken();
   const [triggerTimeout] = useRecurringCall();
   const dispatch = useAppDispatch();
@@ -154,8 +152,8 @@ export const RestoreHistory: FC<React.PropsWithChildren<unknown>> = () => {
   }, []);
 
   return (
-    <OldPage navModel={navModel}>
-      <OldPage.Contents>
+    <Page navId='restore-history'>
+      <Page.Contents>
         <FeatureLoader featureName={Messages.backupManagement} featureSelector={featureSelector}>
           <Table
             columns={columns}
@@ -176,8 +174,8 @@ export const RestoreHistory: FC<React.PropsWithChildren<unknown>> = () => {
             />
           )}
         </FeatureLoader>
-      </OldPage.Contents>
-    </OldPage>
+      </Page.Contents>
+    </Page>
   );
 };
 

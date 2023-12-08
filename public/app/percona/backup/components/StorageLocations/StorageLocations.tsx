@@ -5,10 +5,9 @@ import { Column, Row } from 'react-table';
 import { AppEvents } from '@grafana/data';
 import { Button, useStyles } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
-import { OldPage } from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { Table } from 'app/percona/shared/components/Elements/Table';
-import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { logger } from 'app/percona/shared/helpers/logger';
 
@@ -31,7 +30,6 @@ export const StorageLocations: FC<React.PropsWithChildren<unknown>> = () => {
   const [selectedLocation, setSelectedLocation] = useState<StorageLocation | null>(null);
   const [data, setData] = useState<StorageLocation[]>([]);
   const [addModalVisible, setAddModalVisible] = useState(false);
-  const navModel = usePerconaNavModel('storage-locations');
   const styles = useStyles(getStyles);
   const columns = React.useMemo(
     (): Array<Column<StorageLocation>> => [
@@ -144,8 +142,8 @@ export const StorageLocations: FC<React.PropsWithChildren<unknown>> = () => {
   }, []);
 
   return (
-    <OldPage navModel={navModel}>
-      <OldPage.Contents>
+    <Page navId='storage-locations'>
+      <Page.Contents>
         <FeatureLoader featureName={Messages.backupManagement} featureSelector={featureSelector}>
           <div className={styles.addWrapper}>
             <Button
@@ -185,8 +183,8 @@ export const StorageLocations: FC<React.PropsWithChildren<unknown>> = () => {
             onDelete={handleDelete}
           />
         </FeatureLoader>
-      </OldPage.Contents>
-    </OldPage>
+      </Page.Contents>
+    </Page>
   );
 };
 
