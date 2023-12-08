@@ -1,5 +1,3 @@
-import React, { useState } from 'react';
-
 import { PageLayoutType } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
