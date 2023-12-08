@@ -57,7 +57,8 @@ func NewGitHubProvider(settings map[string]any, cfg *setting.Cfg, features *feat
 		return nil, err
 	}
 
-	teamIds := mustInts(util.SplitString(info.Extra[teamIdsKey]))
+	teamIdsSplitted := util.SplitString(info.Extra[teamIdsKey])
+	teamIds := mustInts(teamIdsSplitted)
 
 	config := createOAuthConfig(info, cfg, GitHubProviderName)
 	provider := &SocialGithub{
@@ -68,6 +69,10 @@ func NewGitHubProvider(settings map[string]any, cfg *setting.Cfg, features *feat
 		skipOrgRoleSync:      cfg.GitHubSkipOrgRoleSync,
 		// FIXME: Move skipOrgRoleSync to OAuthInfo
 		// skipOrgRoleSync: info.SkipOrgRoleSync
+	}
+
+	if len(teamIdsSplitted) != len(teamIds) {
+		provider.log.Warn("Failed to parse team ids. Team ids must be a list of numbers.", "teamIds", teamIdsSplitted)
 	}
 
 	return provider, nil
