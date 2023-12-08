@@ -19,6 +19,9 @@ export const skeletonAnimation = {
 };
 
 interface SkeletonProps {
+  /**
+   * Spread these props at the root of your skeleton to handle animation logic
+   */
   skeletonProps: {
     style: React.CSSProperties;
   };
