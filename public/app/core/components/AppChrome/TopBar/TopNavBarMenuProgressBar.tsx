@@ -26,7 +26,7 @@ export function TopNavBarMenuProgressBar({ iconStyles }: TopNavBarMenuProgressBa
   const levels = achievementsByName;
 
   const progressWidth = `${
-    (levels.indexOf(currentLevel) / levels.length) * 100 + ((100 / levels.length) * levelProgress) / 100
+    (levels.indexOf(currentLevel) / (levels.length - 1)) * 100 + ((100 / (levels.length - 1)) * levelProgress) / 100
   }%`;
 
   useEffect(() => {
@@ -58,9 +58,13 @@ export function TopNavBarMenuProgressBar({ iconStyles }: TopNavBarMenuProgressBa
           <div className={styles.progressBar}>
             <span className={styles.progressBarLine} style={{ width: progressWidth }}></span>
             <div className={styles.progressBarTiers}>
-              {levels.map((level, i) => (
-                <span key={i} className={styles.progressBarTier}></span>
-              ))}
+              {levels.map((level, i) => {
+                if (i === 0) {
+                  // skip zero ('egg') level
+                  return null;
+                }
+                return <span key={i} className={styles.progressBarTier}></span>;
+              })}
             </div>
           </div>
         </div>
