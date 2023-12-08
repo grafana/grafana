@@ -14,24 +14,27 @@ type Key struct {
 }
 
 func ParseKey(key string) (*Key, error) {
-	// /<group>/<resource>/<namespace>/<name>(/<subresource>)
+	// /<group>/<resource>/<namespace>(/<name>(/<subresource>))
 	parts := strings.SplitN(key, "/", 6)
-	if len(parts) != 5 && len(parts) != 6 {
-		return nil, fmt.Errorf("invalid key (expecting 4 or 5 parts) " + key)
+	if len(parts) < 4 {
+		return nil, fmt.Errorf("invalid key (expecting at least 3 parts): %s", key)
 	}
 
 	if parts[0] != "" {
-		return nil, fmt.Errorf("invalid key (expecting leading slash) " + key)
+		return nil, fmt.Errorf("invalid key (expecting leading slash): %s", key)
 	}
 
 	k := &Key{
 		Group:     parts[1],
 		Resource:  parts[2],
 		Namespace: parts[3],
-		Name:      parts[4],
 	}
 
-	if len(parts) == 6 {
+	if len(parts) > 4 {
+		k.Name = parts[4]
+	}
+
+	if len(parts) > 5 {
 		k.Subresource = parts[5]
 	}
 
@@ -39,10 +42,14 @@ func ParseKey(key string) (*Key, error) {
 }
 
 func (k *Key) String() string {
-	if len(k.Subresource) > 0 {
-		return fmt.Sprintf("/%s/%s/%s/%s/%s", k.Group, k.Resource, k.Namespace, k.Name, k.Subresource)
+	s := k.Group + "/" + k.Resource + "/" + k.Namespace
+	if len(k.Name) > 0 {
+		s += "/" + k.Name
+		if len(k.Subresource) > 0 {
+			s += "/" + k.Subresource
+		}
 	}
-	return fmt.Sprintf("/%s/%s/%s/%s", k.Group, k.Resource, k.Namespace, k.Name)
+	return s
 }
 
 func (k *Key) IsEqual(other *Key) bool {

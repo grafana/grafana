@@ -944,8 +944,13 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		limit:    r.Limit,
 		oneExtra: true, // request one more than the limit (and show next token if it exists)
 	}
+
 	// TODO fix this
 	// entityQuery.addWhere("namespace", user.OrgID)
+
+	if len(r.Group) > 0 {
+		entityQuery.addWhereIn("group", r.Group)
+	}
 
 	if len(r.Resource) > 0 {
 		entityQuery.addWhereIn("resource", r.Resource)
@@ -955,8 +960,20 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		where := []string{}
 		args := []any{}
 		for _, k := range r.Key {
-			args = append(args, k+"/%")
-			where = append(where, s.dialect.Quote("key")+" LIKE ?")
+			key, err := entity.ParseKey(k)
+			if err != nil {
+				return nil, err
+			}
+
+			args = append(args, key.Namespace, key.Group, key.Resource)
+			whereclause := "(" + s.dialect.Quote("namespace") + "=? AND " + s.dialect.Quote("group") + "=? AND " + s.dialect.Quote("resource") + "=?"
+			if key.Name != "" {
+				args = append(args, key.Name)
+				whereclause += " AND " + s.dialect.Quote("uid") + "=?"
+			}
+			whereclause += ")"
+
+			where = append(where, whereclause)
 		}
 
 		entityQuery.addWhere("("+strings.Join(where, " OR ")+")", args...)

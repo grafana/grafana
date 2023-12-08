@@ -15,13 +15,13 @@ message Entity {
   // group
   string group = 24;
   // kind resource
-	string resource = 25;
+  string resource = 25;
   // namespace
-	string namespace = 26;
+  string namespace = 26;
   // k8s name
-	string uid = 27;
+  string uid = 27;
   // subresource
-	string subresource = 28;
+  string subresource = 28;
 
   // group version
   string group_version = 23;
@@ -265,6 +265,9 @@ message EntityListRequest {
 
   // Free text query string -- mileage may vary :)
   string query = 3;
+
+  // limit to a specific group (empty is all)
+  repeated string group = 9;
 
   // limit to a specific resource (empty is all)
   repeated string resource = 4;
