@@ -1,10 +1,13 @@
-package social
+package socialimpl
 
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
+
+	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/connectors"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMapping_IniSectionOAuthInfo(t *testing.T) {
@@ -53,7 +56,7 @@ signout_redirect_url = https://oauth.com/signout?post_logout_redirect_uri=https:
 	iniFile, err := ini.Load([]byte(iniContent))
 	require.NoError(t, err)
 
-	expectedOAuthInfo := &OAuthInfo{
+	expectedOAuthInfo := &social.OAuthInfo{
 		Name:                    "OAuth",
 		Icon:                    "signin",
 		Enabled:                 true,
@@ -96,7 +99,7 @@ signout_redirect_url = https://oauth.com/signout?post_logout_redirect_uri=https:
 	}
 
 	settingsKVs := convertIniSectionToMap(iniFile.Section("test"))
-	oauthInfo, err := CreateOAuthInfoFromKeyValues(settingsKVs)
+	oauthInfo, err := connectors.CreateOAuthInfoFromKeyValues(settingsKVs)
 	require.NoError(t, err)
 
 	require.Equal(t, expectedOAuthInfo, oauthInfo)

@@ -446,7 +446,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           <QueryEditor
             queries={dataQueries}
             expressions={expressionQueries}
-            onRunQueries={runQueriesPreview}
+            onRunQueries={() => runQueriesPreview()}
             onChangeQueries={onChangeQueries}
             onDuplicateQuery={onDuplicateQuery}
             panelData={queryPreviewData}
