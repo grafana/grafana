@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { debounce } from 'lodash';
 import React, { useCallback, useState } from 'react';
 
 import { Slider, Tooltip } from '@grafana/ui';
@@ -10,14 +11,16 @@ interface Props {
 
 export const LogResolutionPicker = ({ rows, onResolutionChange }: Props) => {
   const [currentValue, setCurrentValue] = useState(9);
+  const debouncedOnChange = debounce(onResolutionChange);
   const onChange = useCallback(
     (value: number) => {
       setCurrentValue(value);
       value = 10 - value;
       const resolution = Math.ceil((rows * (10 - value)) / 10);
-      onResolutionChange(resolution);
+      debouncedOnChange(resolution);
+      
     },
-    [onResolutionChange, rows]
+    [debouncedOnChange, rows]
   );
   if (!rows) {
     return null;
