@@ -15,7 +15,8 @@ import {
   getDefaultTimeRange,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Collapse } from '@grafana/ui';
+import { Button, Collapse, LinkButton } from '@grafana/ui';
+import { createUrl } from 'app/features/alerting/unified/utils/url';
 import { TraceView } from 'app/features/explore/TraceView/TraceView';
 import { transformDataFrames } from 'app/features/explore/TraceView/utils/transform';
 import { LogRows } from 'app/features/logs/components/LogRows';
@@ -38,6 +39,7 @@ export interface Props {
   app?: CoreApp;
   styles: LogRowStyles;
   prettifyLogMessage: boolean;
+  onClickFilterValue?: (value: string, refId?: string) => void;
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
@@ -66,6 +68,7 @@ export const LogDetails = (props: Props) => {
     wrapLogMessage,
     styles,
     onSimilarityChange,
+    onClickFilterValue,
   } = props;
   const labels = useMemo(() => (row.labels ? row.labels : {}), [row.labels]);
   const labelsAvailable = useMemo(() => Object.keys(labels).length > 0, [labels]);
@@ -293,7 +296,29 @@ export const LogDetails = (props: Props) => {
                     isOpen={traceViewOpen}
                     onToggle={(isOpen) => setTraceViewOpen(isOpen)}
                   >
-                    <TraceView dataFrames={traceDf.value} traceProp={transformedTraceData} datasource={tempoDs.value} />
+                    <>
+                      <LinkButton
+                        size="sm"
+                        className={styles.collapsibleButton}
+                        variant="secondary"
+                        icon="external-link-alt"
+                        target="_blank"
+                        href={createUrl(`/explore`, {
+                          left: JSON.stringify({
+                            datasource: tempoDs.value.uid,
+                            queries: [{ refId: 'A', query: row.possibleTraceId }],
+                            range: getDefaultTimeRange(),
+                          }),
+                        })}
+                      >
+                        Open in Explore
+                      </LinkButton>
+                      <TraceView
+                        dataFrames={traceDf.value}
+                        traceProp={transformedTraceData}
+                        datasource={tempoDs.value}
+                      />
+                    </>
                   </Collapse>
                 </th>
               </tr>
@@ -307,18 +332,35 @@ export const LogDetails = (props: Props) => {
                     isOpen={traceLogsViewOpen}
                     onToggle={(isOpen) => setTraceLogsViewOpen(isOpen)}
                   >
-                    <LogRows
-                      logRows={correlatedLogs}
-                      dedupStrategy={LogsDedupStrategy.none}
-                      showLabels={false}
-                      showTime={false}
-                      wrapLogMessage={true}
-                      prettifyLogMessage={false}
-                      enableLogDetails={false}
-                      timeZone={'utc'}
-                      displayedFields={displayedFields}
-                      highlightSearchwords={false}
-                    />
+                    <>
+                      {onClickFilterValue && (
+                        <Button
+                          size="sm"
+                          className={styles.collapsibleButton}
+                          variant="secondary"
+                          onClick={() => {
+                            onClickFilterValue(
+                              row.possibleTraceId ?? row.possibleCorrelationId ?? '',
+                              row.dataFrame.refId
+                            );
+                          }}
+                        >
+                          Show in Logs App
+                        </Button>
+                      )}
+                      <LogRows
+                        logRows={correlatedLogs}
+                        dedupStrategy={LogsDedupStrategy.none}
+                        showLabels={false}
+                        showTime={false}
+                        wrapLogMessage={true}
+                        prettifyLogMessage={false}
+                        enableLogDetails={false}
+                        timeZone={'utc'}
+                        displayedFields={displayedFields}
+                        highlightSearchwords={false}
+                      />
+                    </>
                   </Collapse>
                 </th>
               </tr>

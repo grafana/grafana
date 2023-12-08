@@ -331,6 +331,11 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       height: ${theme.spacing(3)};
       line-height: ${theme.spacing(2.5)};
     `,
+    collapsibleButton: css({
+      position: 'absolute',
+      top: theme.spacing(1),
+      right: theme.spacing(1),
+    }),
   };
 });
 

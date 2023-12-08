@@ -941,6 +941,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     showContextToggle={showContextToggle}
                     prettifyLogMessage={prettifyLogMessage}
                     onSimilarityChange={this.onLogsSimilarityChange}
+                    onClickFilterValue={this.props.onClickFilterValue}
                   />
                 ) : (
                   <LogStats
