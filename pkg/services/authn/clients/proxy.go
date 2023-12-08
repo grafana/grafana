@@ -135,11 +135,16 @@ func (c *Proxy) Hook(ctx context.Context, identity *authn.Identity, r *authn.Req
 		return nil
 	}
 
-	namespace, id := identity.NamespacedID()
+	namespace, identifier := identity.GetNamespacedID()
 	if namespace != authn.NamespaceUser {
 		return nil
 	}
 
+	id, err := strconv.ParseInt(identifier, 10, 64)
+	if err != nil {
+		c.log.Warn("Failed to cache proxy user", "error", err, "userId", identifier)
+		return nil
+	}
 	c.log.FromContext(ctx).Debug("Cache proxy user", "userId", id)
 	bytes := []byte(strconv.FormatInt(id, 10))
 	if err := c.cache.Set(ctx, identity.ClientParams.CacheAuthProxyKey, bytes, time.Duration(c.cfg.AuthProxySyncTTL)*time.Minute); err != nil {

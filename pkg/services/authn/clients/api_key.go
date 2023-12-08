@@ -3,6 +3,7 @@ package clients
 import (
 	"context"
 	"errors"
+	"strconv"
 	"strings"
 	"time"
 
@@ -175,8 +176,13 @@ func (s *APIKey) Hook(ctx context.Context, identity *authn.Identity, r *authn.Re
 }
 
 func (s *APIKey) getAPIKeyID(ctx context.Context, identity *authn.Identity, r *authn.Request) (apiKeyID int64, exists bool) {
-	namespace, id := identity.NamespacedID()
+	namespace, identifier := identity.GetNamespacedID()
 
+	id, err := strconv.ParseInt(identifier, 10, 64)
+	if err != nil {
+		s.log.Warn("Failed to parse ID from identifier")
+		return -1, false
+	}
 	if namespace == authn.NamespaceAPIKey {
 		return id, true
 	}

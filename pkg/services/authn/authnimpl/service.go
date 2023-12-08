@@ -290,10 +290,14 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 		return nil, err
 	}
 
-	namespace, id := identity.NamespacedID()
+	namespace, id := identity.GetNamespacedID()
+	intId, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return nil, authn.ErrInvalidIdentityID.Errorf("expected correct identity ID but got: %s", id)
+	}
 
 	// Login is only supported for users
-	if namespace != authn.NamespaceUser || id <= 0 {
+	if namespace != authn.NamespaceUser {
 		s.metrics.failedLogin.WithLabelValues(client).Inc()
 		return nil, authn.ErrUnsupportedIdentity.Errorf("expected identity of type user but got: %s", namespace)
 	}
@@ -304,7 +308,7 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 		s.log.FromContext(ctx).Debug("Failed to parse ip from address", "client", c.Name(), "id", identity.ID, "addr", addr, "error", err)
 	}
 
-	sessionToken, err := s.sessionService.CreateToken(ctx, &user.User{ID: id}, ip, r.HTTPRequest.UserAgent())
+	sessionToken, err := s.sessionService.CreateToken(ctx, &user.User{ID: intId}, ip, r.HTTPRequest.UserAgent())
 	if err != nil {
 		s.metrics.failedLogin.WithLabelValues(client).Inc()
 		s.log.FromContext(ctx).Error("Failed to create session", "client", client, "id", identity.ID, "err", err)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -109,13 +110,18 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Iden
 	if !identity.ClientParams.FetchSyncedUser {
 		return nil
 	}
-	namespace, id := identity.NamespacedID()
+	namespace, id := identity.GetNamespacedID()
+	userID, err := intIdentifier(id)
+	if err != nil {
+		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id)
+		return nil
+	}
 	if namespace != authn.NamespaceUser {
 		return nil
 	}
 
 	usr, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
-		UserID: id,
+		UserID: userID,
 		OrgID:  r.OrgID,
 	})
 	if err != nil {
@@ -135,11 +141,12 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 		return nil
 	}
 
-	namespace, id := identity.NamespacedID()
-
+	namespace, id := identity.GetNamespacedID()
+	userID, err := intIdentifier(id)
 	// do not sync invalid users
-	if id <= 0 {
-		return nil // skip sync
+	if err != nil {
+		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id)
+		return nil
 	}
 
 	if namespace != authn.NamespaceUser && namespace != authn.NamespaceServiceAccount {
@@ -158,7 +165,7 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 			!errors.Is(err, user.ErrLastSeenUpToDate) {
 			s.log.Error("Failed to update last_seen_at", "err", err, "userId", userID)
 		}
-	}(id)
+	}(userID)
 
 	return nil
 }
@@ -168,12 +175,17 @@ func (s *UserSync) EnableUserHook(ctx context.Context, identity *authn.Identity,
 		return nil
 	}
 
-	namespace, id := identity.NamespacedID()
+	namespace, id := identity.GetNamespacedID()
+	userID, err := intIdentifier(id)
+	if err != nil {
+		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id)
+		return nil
+	}
 	if namespace != authn.NamespaceUser {
 		return nil
 	}
 
-	return s.userService.Disable(ctx, &user.DisableUserCommand{UserID: id, IsDisabled: false})
+	return s.userService.Disable(ctx, &user.DisableUserCommand{UserID: userID, IsDisabled: false})
 }
 
 func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, identity *authn.Identity, createConnection bool) error {
@@ -369,6 +381,14 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 	}
 
 	return usr, nil
+}
+
+func intIdentifier(identifier string) (int64, error) {
+	id, err := strconv.ParseInt(identifier, 10, 64)
+	if err != nil {
+		return -1, err
+	}
+	return id, nil
 }
 
 // syncUserToIdentity syncs a user to an identity.
