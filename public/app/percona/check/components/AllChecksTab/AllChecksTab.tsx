@@ -4,7 +4,7 @@ import { AppEvents, UrlQueryMap } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { OldPage } from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { CheckService } from 'app/percona/check/Check.service';
@@ -184,8 +184,8 @@ export const AllChecksTab: FC<React.PropsWithChildren<GrafanaRouteComponentProps
   };
 
   return (
-    <OldPage navModel={navModel} tabsDataTestId="db-check-tabs-bar" data-testid="db-check-panel">
-      <OldPage.Contents dataTestId="db-check-tab-content">
+    <Page navId={navModel.node.id} data-testid="db-check-panel">
+      <Page.Contents dataTestId="db-check-tab-content">
         <FeatureLoader
           messagedataTestId="db-check-panel-settings-link"
           featureName={mainChecksMessages.advisors}
@@ -251,8 +251,8 @@ export const AllChecksTab: FC<React.PropsWithChildren<GrafanaRouteComponentProps
             </UpgradePlanWrapper> */}
           </div>
         </FeatureLoader>
-      </OldPage.Contents>
-    </OldPage>
+      </Page.Contents>
+    </Page>
   );
 };
 
