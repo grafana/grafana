@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -139,6 +140,11 @@ func (d *DuckDB) AppendAll(ctx context.Context, frames data.Frames) error {
 					val = *v
 				case *time.Time:
 					val = *v
+				case *json.RawMessage:
+					vv := *v
+					val = string(vv)
+				case json.RawMessage:
+					val = string(v)
 				}
 				row = append(row, val)
 			}
