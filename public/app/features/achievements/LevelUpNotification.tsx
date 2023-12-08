@@ -9,6 +9,7 @@ import { LinkButton, useStyles2 } from '@grafana/ui';
 
 import { achievementsByName } from './AchievementsList';
 import { GrotIcon } from './GrotIcon';
+import logo from './assets/logo.svg';
 
 type LevelUpNotificationProps = {
   title: string;
@@ -22,8 +23,19 @@ export const LevelUpNotification = ({ title, level, toaster }: LevelUpNotificati
 
   return (
     <div className={styles.wrapper} onClick={() => toast.dismiss(toaster.id)}>
-      <div style={{ position: 'absolute', left: `-${width / 2}px` }}>
-        <Confetti width={width} height={height} numberOfPieces={100} />
+      {/* todo: move this element to the app level to avoid center calculation based on parent element;
+       /* 323px - width of the parent element; need to achieve center position */}
+      <div style={{ position: 'absolute', left: `-${width / 2 - 323 / 2}px`, top: '-18px' }}>
+        <Confetti
+          width={width}
+          height={height}
+          numberOfPieces={100}
+          drawShape={(ctx) => {
+            const img = new Image();
+            img.src = logo;
+            ctx.drawImage(img, 0, 0, 24, 24);
+          }}
+        />
       </div>
       <div className={styles.text}>
         <h2>LEVEL UP!</h2>
