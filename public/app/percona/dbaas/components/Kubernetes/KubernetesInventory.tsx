@@ -44,7 +44,7 @@ interface KubernetesInventoryProps {
   setMode: React.Dispatch<React.SetStateAction<K8sPageMode>>;
 }
 
-export const KubernetesInventory: FC<React.PropsWithChildren<KubernetesInventoryProps>> = ({ setMode }) => {
+export const KubernetesInventory: FC<KubernetesInventoryProps> = ({ setMode }) => {
   const styles = useStyles(getStyles);
   const appDispatch = useAppDispatch();
   const navModel = usePerconaNavModel('kubernetes');

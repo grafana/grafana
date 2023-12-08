@@ -23,7 +23,7 @@ interface OperatorStatusRowProps {
   setUpdateOperatorModalVisible: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export const OperatorStatusRow: FC<React.PropsWithChildren<OperatorStatusRowProps>> = ({
+export const OperatorStatusRow: FC<OperatorStatusRowProps> = ({
   element,
   setSelectedCluster,
   setOperatorToUpdate,

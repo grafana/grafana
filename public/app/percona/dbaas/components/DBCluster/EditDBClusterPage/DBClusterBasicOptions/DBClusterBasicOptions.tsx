@@ -42,7 +42,7 @@ const getAvailableDatabaseOptions = (kubernetesCluster: Kubernetes): DatabaseOpt
   return availableDatabaseOptions;
 };
 
-export const DBClusterBasicOptions: FC<React.PropsWithChildren<DBClusterBasicOptionsProps>> = ({ kubernetes, form }) => {
+export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernetes, form }) => {
   const styles = useStyles(getStyles);
   const { required, maxLength } = validators;
   const { change } = form;

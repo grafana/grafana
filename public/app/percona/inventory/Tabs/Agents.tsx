@@ -37,7 +37,7 @@ import { beautifyAgentType, getAgentStatusColor, toAgentModel } from './Agents.u
 import { formatNodeId } from './Nodes.utils';
 import { getStyles } from './Tabs.styles';
 
-export const Agents: FC<React.PropsWithChildren<GrafanaRouteComponentProps<{ serviceId: string; nodeId: string }>>> = ({ match }) => {
+export const Agents: FC<GrafanaRouteComponentProps<{ serviceId: string; nodeId: string }>> = ({ match }) => {
   const [agentsLoading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [data, setData] = useState<Agent[]>([]);

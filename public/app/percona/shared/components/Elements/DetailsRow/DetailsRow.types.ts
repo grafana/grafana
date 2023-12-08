@@ -2,7 +2,7 @@ import { FC, PropsWithChildren } from 'react';
 
 import { DetailsRowContent } from './DetailsRowContent';
 
-export interface DetailsRowContentProps {
+export interface DetailsRowContentProps extends PropsWithChildren {
   title: string;
   fullRow?: boolean;
 }

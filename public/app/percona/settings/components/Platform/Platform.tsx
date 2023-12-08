@@ -19,7 +19,7 @@ import { Messages } from './Platform.messages';
 import { PlatformService } from './Platform.service';
 import { ConnectRenderProps } from './types';
 
-export const Platform: FC<React.PropsWithChildren<unknown>> = () => {
+export const Platform: FC = () => {
   const settingsStyles = useStyles2(getSettingsStyles);
   const { result } = useSelector(getPerconaSettings);
   const [connecting, setConnecting] = useState(false);

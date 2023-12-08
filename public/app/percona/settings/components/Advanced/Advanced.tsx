@@ -44,7 +44,7 @@ const {
   advanced: { sttCheckIntervalsLabel, sttCheckIntervalTooltip, sttCheckIntervalUnit },
 } = Messages;
 
-export const Advanced: FC<React.PropsWithChildren<unknown>> = () => {
+export const Advanced: FC = () => {
   const styles = useStyles2(getStyles);
   const [generateToken] = useCancelToken();
   const { result: settings } = useSelector(getPerconaSettings);
@@ -404,7 +404,7 @@ interface TelemetryTooltipProps {
   telemetrySummaries: string[];
 }
 
-const TelemetryTooltip: FC<React.PropsWithChildren<TelemetryTooltipProps>> = ({
+const TelemetryTooltip: FC<TelemetryTooltipProps> = ({
   telemetryTooltip,
   telemetrySummaryTitle,
   telemetrySummaries,

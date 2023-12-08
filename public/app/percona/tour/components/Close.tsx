@@ -7,7 +7,7 @@ import { IconButton, useStyles2 } from '@grafana/ui';
 
 import { getStyles } from './Close.styles';
 
-const Close: FC<React.PropsWithChildren<CloseProps>> = ({ onClick }) => {
+const Close: FC<CloseProps> = ({ onClick }) => {
   const styles = useStyles2(getStyles);
 
   return <IconButton aria-label='Close tour' className={styles.button} onClick={onClick} name="times" size="lg" />;

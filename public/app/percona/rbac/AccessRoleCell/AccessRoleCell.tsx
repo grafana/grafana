@@ -16,7 +16,7 @@ interface AccessRoleCellProps {
   user: OrgUser | UserDTO;
 }
 
-const AccessRoleCell: FC<React.PropsWithChildren<AccessRoleCellProps>> = ({ user }) => {
+const AccessRoleCell: FC<AccessRoleCellProps> = ({ user }) => {
   const userId = useMemo(() => ('userId' in user ? user.userId : user.id), [user]);
   const dispatch = useAppDispatch();
   const { roles, isLoading: rolesLoading } = useSelector(getAccessRoles);

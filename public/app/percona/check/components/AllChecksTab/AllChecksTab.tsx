@@ -29,7 +29,7 @@ import { getStyles } from './AllChecksTab.styles';
 import { ChangeCheckIntervalModal } from './ChangeCheckIntervalModal';
 import { CheckActions } from './CheckActions/CheckActions';
 
-export const AllChecksTab: FC<React.PropsWithChildren<GrafanaRouteComponentProps<{ category: string }>>> = ({
+export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> = ({
   match,
 }) => {
   const category = match.params.category;

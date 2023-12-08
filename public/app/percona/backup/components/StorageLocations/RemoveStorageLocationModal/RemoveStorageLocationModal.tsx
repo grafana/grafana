@@ -7,7 +7,7 @@ import { WarningBlock } from '../../../../shared/components/Elements/WarningBloc
 import { Messages } from './RemoveStorageLocationModal.messages';
 import { RemoveStorageLocationModalProps } from './RemoveStorageLocationModal.types';
 
-export const RemoveStorageLocationModal: FC<React.PropsWithChildren<RemoveStorageLocationModalProps>> = ({
+export const RemoveStorageLocationModal: FC<RemoveStorageLocationModalProps> = ({
   location,
   isVisible,
   loading,

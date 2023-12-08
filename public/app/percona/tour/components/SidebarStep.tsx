@@ -4,7 +4,7 @@ interface Props extends PropsWithChildren {
   title: string;
 }
 
-const SidebarStep: FC<React.PropsWithChildren<Props>> = ({ title, children }) => (
+const SidebarStep: FC<Props> = ({ title, children }) => (
   <>
     <h4>
       <strong>{title}</strong>

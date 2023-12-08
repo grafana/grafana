@@ -13,7 +13,7 @@ import {
   getResourcesWidth,
 } from './ResourcesBar.utils';
 
-export const ResourcesBar: FC<React.PropsWithChildren<ResourcesBarProps>> = ({
+export const ResourcesBar: FC<ResourcesBarProps> = ({
   total,
   allocated,
   expected,

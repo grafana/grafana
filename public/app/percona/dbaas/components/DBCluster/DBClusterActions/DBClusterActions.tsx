@@ -14,7 +14,7 @@ import { DB_CLUSTER_EDIT_URL } from '../EditDBClusterPage/EditDBClusterPage.cons
 import { styles } from './DBClusterActions.styles';
 import { DBClusterActionsProps } from './DBClusterActions.types';
 
-export const DBClusterActions: FC<React.PropsWithChildren<DBClusterActionsProps>> = ({
+export const DBClusterActions: FC<DBClusterActionsProps> = ({
   dbCluster,
   setDeleteModalVisible,
   setLogsModalVisible,

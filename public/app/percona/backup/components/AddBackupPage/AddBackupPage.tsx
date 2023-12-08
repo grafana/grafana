@@ -56,7 +56,7 @@ import {
 import { RetryModeSelector } from './RetryModeSelector';
 import { ScheduleSection } from './ScheduleSection/ScheduleSection';
 
-const AddBackupPage: FC<React.PropsWithChildren<GrafanaRouteComponentProps<{ type: string; id: string }>>> = ({ match }) => {
+const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>> = ({ match }) => {
   const [queryParams, setQueryParams] = useQueryParams();
   const scheduleMode: boolean = (queryParams['scheduled'] as boolean) || match.params.type === SCHEDULED_TYPE;
   const [backup, setBackup] = useState<Backup | ScheduledBackup | null>(null);

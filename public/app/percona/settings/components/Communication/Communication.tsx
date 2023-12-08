@@ -20,7 +20,7 @@ import { CommunicationService } from './Communication.service';
 import { Email } from './Email/Email';
 import { Slack } from './Slack/Slack';
 
-export const Communication: FC<React.PropsWithChildren<unknown>> = () => {
+export const Communication: FC = () => {
   const settingsStyles = useStyles2(getSettingsStyles);
   const [activeTab, setActiveTab] = useState(Messages.tabs.email.key);
   const dispatch = useAppDispatch();

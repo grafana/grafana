@@ -11,7 +11,7 @@ import { Messages } from './BackupInventoryActions.messages';
 import { getStyles } from './BackupInventoryActions.styles';
 import { BackupInventoryActionsProps } from './BackupInventoryActions.types';
 
-export const BackupInventoryActions: FC<React.PropsWithChildren<BackupInventoryActionsProps>> = ({
+export const BackupInventoryActions: FC<BackupInventoryActionsProps> = ({
   row,
   backup,
   onRestore,

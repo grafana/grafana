@@ -37,7 +37,7 @@ import {
   ManageComponentVersionsFields,
 } from './ManageComponentsVersionsModal.types';
 
-export const ManageComponentsVersionsModal: FC<React.PropsWithChildren<ManageComponentsVersionsModalProps>> = ({
+export const ManageComponentsVersionsModal: FC<ManageComponentsVersionsModalProps> = ({
   selectedKubernetes,
   isVisible,
   setVisible,

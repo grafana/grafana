@@ -6,7 +6,7 @@ import { Messages } from './BackupErrorSection.messages';
 import { getStyles } from './BackupErrorSection.styles';
 import { BackupErrorSectionProps } from './BackupErrorSection.types';
 
-export const BackupErrorSection: FC<React.PropsWithChildren<BackupErrorSectionProps>> = ({ backupErrors = [] }) => {
+export const BackupErrorSection: FC<BackupErrorSectionProps> = ({ backupErrors = [] }) => {
   const styles = useStyles(getStyles);
 
   return (

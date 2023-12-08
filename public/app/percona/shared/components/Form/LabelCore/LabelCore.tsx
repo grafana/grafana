@@ -8,7 +8,7 @@ import { LinkTooltipCore } from '../../Elements/LinkTooltipCore';
 
 import { getStyles } from './LabelCore.styles';
 
-export const LabelCore: FC<React.PropsWithChildren<LabeledFieldProps>> = ({
+export const LabelCore: FC<LabeledFieldProps> = ({
   name,
   label,
   labelWrapperClassName,

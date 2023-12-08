@@ -1,16 +1,16 @@
-import React, { FC, ReactNode } from 'react';
+import React, { FC, PropsWithChildren, ReactNode } from 'react';
 
 import { useTheme } from '@grafana/ui';
 
 import { getStyles } from './TabsVertical.styles';
 
-export interface TabsVerticalProps {
+export interface TabsVerticalProps extends PropsWithChildren {
   children: ReactNode;
   className?: string;
   dataTestId?: string;
 }
 
-export const TabsVertical: FC<React.PropsWithChildren<TabsVerticalProps>> = ({ children, className, dataTestId }) => {
+export const TabsVertical: FC<TabsVerticalProps> = ({ children, className, dataTestId }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 

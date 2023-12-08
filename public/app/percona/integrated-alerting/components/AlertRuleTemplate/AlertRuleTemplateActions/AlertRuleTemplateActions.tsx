@@ -13,7 +13,7 @@ import { AlertRuleTemplateActionsProps } from './AlertRuleTemplateActions.types'
 
 const nonActionableSources = [SourceDescription.BUILT_IN, SourceDescription.USER_FILE, SourceDescription.SAAS];
 
-export const AlertRuleTemplateActions: FC<React.PropsWithChildren<AlertRuleTemplateActionsProps>> = ({
+export const AlertRuleTemplateActions: FC<AlertRuleTemplateActionsProps> = ({
   template,
   getAlertRuleTemplates,
 }) => {

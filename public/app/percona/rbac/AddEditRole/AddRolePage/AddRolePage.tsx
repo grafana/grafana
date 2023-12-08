@@ -16,7 +16,7 @@ import AddEditRoleForm, { AddEditFormValues } from '../components/AddEditRoleFor
 
 import { Messages } from './AddRolePage.messages';
 
-const AddRolePage: FC<React.PropsWithChildren<unknown>> = () => {
+const AddRolePage: FC = () => {
   const dispatch = useAppDispatch();
 
   const handleSubmit = async (values: AddEditFormValues) => {

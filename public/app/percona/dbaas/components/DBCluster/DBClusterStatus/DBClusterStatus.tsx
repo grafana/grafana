@@ -17,7 +17,7 @@ import { getStyles } from './DBClusterStatus.styles';
 import { DBClusterStatusProps } from './DBClusterStatus.types';
 import { getProgressMessage, getShowProgressBarValue } from './DBClusterStatus.utils';
 
-export const DBClusterStatus: FC<React.PropsWithChildren<DBClusterStatusProps>> = ({ dbCluster, setLogsModalVisible }) => {
+export const DBClusterStatus: FC<DBClusterStatusProps> = ({ dbCluster, setLogsModalVisible }) => {
   const dispatch = useDispatch();
   const { message, finishedSteps, totalSteps } = dbCluster;
   const status = dbCluster.status || Status.unknown;

@@ -7,7 +7,7 @@ import { useSelector } from 'app/types';
 
 export interface UiEventsProps {}
 
-const _Telemetry: FC<React.PropsWithChildren<UiEventsProps>> = ({}) => {
+const _Telemetry: FC<UiEventsProps> = ({}) => {
   const { result } = useSelector(getPerconaSettings);
 
   const telemetryEnabled = !!result?.telemetryEnabled;

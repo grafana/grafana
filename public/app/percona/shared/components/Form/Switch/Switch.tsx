@@ -12,7 +12,7 @@ import { LabelCore } from '../LabelCore';
 import { getStyles } from './Switch.styles';
 import { SwitchFieldProps, SwitchFieldRenderProps } from './Switch.types';
 
-export const SwitchField: FC<React.PropsWithChildren<SwitchFieldProps>> = ({
+export const SwitchField: FC<SwitchFieldProps> = ({
   disabled,
   fieldClassName,
   inputProps,

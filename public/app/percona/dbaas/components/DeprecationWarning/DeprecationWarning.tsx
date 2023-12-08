@@ -5,7 +5,7 @@ import { Alert } from '@grafana/ui';
 import { EVEREST_LINK, MIGRATION_GUIDE_LINK } from './DeprecationWarning.constants';
 import { Messages } from './DeprecationWarning.messages';
 
-const DbaasDeprecationWarning: FC<React.PropsWithChildren<unknown>> = () => (
+const DbaasDeprecationWarning: FC = () => (
   <div>
     <Alert title={Messages.title} severity="warning">
       {Messages.warning}

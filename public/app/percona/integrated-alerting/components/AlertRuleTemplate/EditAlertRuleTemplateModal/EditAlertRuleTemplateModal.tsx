@@ -18,7 +18,7 @@ import { Messages } from './EditAlertRuleTemplateModal.messages';
 import { getStyles } from './EditAlertRuleTemplateModal.styles';
 import { EditAlertRuleTemplateModalProps, EditAlertRuleTemplateRenderProps } from './EditAlertRuleTemplateModal.types';
 
-export const EditAlertRuleTemplateModal: FC<React.PropsWithChildren<EditAlertRuleTemplateModalProps>> = ({
+export const EditAlertRuleTemplateModal: FC<EditAlertRuleTemplateModalProps> = ({
   yaml,
   name,
   summary,

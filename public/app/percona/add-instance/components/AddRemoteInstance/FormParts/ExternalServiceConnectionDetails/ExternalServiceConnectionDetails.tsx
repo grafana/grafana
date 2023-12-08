@@ -12,7 +12,7 @@ import { Messages } from '../FormParts.messages';
 import { getStyles } from '../FormParts.styles';
 import { FormPartProps, MetricsParameters, Schema } from '../FormParts.types';
 
-export const ExternalServiceConnectionDetails: FC<React.PropsWithChildren<FormPartProps>> = ({ form }) => {
+export const ExternalServiceConnectionDetails: FC<FormPartProps> = ({ form }) => {
   const styles = useStyles2(getStyles);
   const formValues = form.getState().values;
   const selectedOption = formValues?.metricsParameters;

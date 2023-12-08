@@ -7,7 +7,7 @@ import { Dropdown } from 'app/percona/shared/components/Elements/Dropdown';
 import { getStyles } from './MultipleActions.styles';
 import { MultipleActionsProps } from './MultipleActions.types';
 
-export const MultipleActions: FC<React.PropsWithChildren<MultipleActionsProps>> = ({
+export const MultipleActions: FC<MultipleActionsProps> = ({
   actions,
   disabled,
   dataTestId,

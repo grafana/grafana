@@ -19,7 +19,7 @@ export interface LoaderButtonProps extends ButtonProps {
   loading?: boolean;
 }
 
-export const LoaderButton: FC<React.PropsWithChildren<LoaderButtonProps>> = ({
+export const LoaderButton: FC<LoaderButtonProps> = ({
   children,
   className,
   disabled,

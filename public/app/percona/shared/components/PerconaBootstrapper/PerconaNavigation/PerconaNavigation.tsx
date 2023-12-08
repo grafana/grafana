@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash';
-import React, { useEffect, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 
 import { contextSrv } from 'app/core/core';
 import { initialState } from 'app/core/reducers/navBarTree';
@@ -40,7 +40,7 @@ import {
   sortNavigation,
 } from './PerconaNavigation.utils';
 
-const PerconaNavigation: React.FC<React.PropsWithChildren<unknown>> = () => {
+const PerconaNavigation: FC = () => {
   const [folders, setFolders] = useState<FolderDTO[]>([]);
   const { result } = useSelector(getPerconaSettings);
   const { alertingEnabled, sttEnabled, dbaasEnabled, backupEnabled } = result || {};

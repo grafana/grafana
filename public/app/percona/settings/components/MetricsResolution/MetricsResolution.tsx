@@ -26,7 +26,7 @@ import { getStyles } from './MetricsResolution.styles';
 import { MetricsResolutionIntervals, MetricsResolutionPresets } from './MetricsResolution.types';
 import { addUnits, getResolutionValue, removeUnits } from './MetricsResolution.utils';
 
-export const MetricsResolution: FC<React.PropsWithChildren<unknown>> = () => {
+export const MetricsResolution: FC = () => {
   const styles = useStyles2(getStyles);
   const settingsStyles = useStyles2(getSettingsStyles);
   const [initialValues, setInitialValues] = useState({});

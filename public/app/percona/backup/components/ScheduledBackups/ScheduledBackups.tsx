@@ -32,7 +32,7 @@ import { ScheduledBackup } from './ScheduledBackups.types';
 import { ScheduledBackupsActions } from './ScheduledBackupsActions';
 import { ScheduledBackupDetails } from './ScheduledBackupsDetails';
 
-export const ScheduledBackups: FC<React.PropsWithChildren<unknown>> = () => {
+export const ScheduledBackups: FC = () => {
   const [data, setData] = useState<ScheduledBackup[]>([]);
   const [pending, setPending] = useState(true);
   const [actionPending, setActionPending] = useState(false);

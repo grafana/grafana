@@ -8,7 +8,7 @@ import { Messages } from '../AllChecksTab.messages';
 import { getStyles } from './CheckActions.styles';
 import { CheckActionsProps } from './CheckActions.types';
 
-export const CheckActions: FC<React.PropsWithChildren<CheckActionsProps>> = ({
+export const CheckActions: FC<CheckActionsProps> = ({
   check,
   onChangeCheck,
   onIntervalChangeClick,

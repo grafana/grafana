@@ -44,7 +44,7 @@ const serviceTypeOptions: Array<SelectableValue<ServiceTypeSelect>> = [
   },
 ];
 
-export const RestoreBackupModal: FC<React.PropsWithChildren<RestoreBackupModalProps>> = ({
+export const RestoreBackupModal: FC<RestoreBackupModalProps> = ({
   backup,
   isVisible,
   noService = false,

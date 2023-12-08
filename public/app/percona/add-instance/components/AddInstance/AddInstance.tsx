@@ -15,7 +15,7 @@ import { Messages } from './AddInstance.messages';
 import { getStyles } from './AddInstance.styles';
 import { AddInstanceProps, InstanceListItem, SelectInstanceProps } from './AddInstance.types';
 
-export const SelectInstance: FC<React.PropsWithChildren<SelectInstanceProps>> = ({
+export const SelectInstance: FC<SelectInstanceProps> = ({
   type,
   icon,
   selectInstanceType,
@@ -34,7 +34,7 @@ export const SelectInstance: FC<React.PropsWithChildren<SelectInstanceProps>> = 
   );
 };
 
-export const AddInstance: FC<React.PropsWithChildren<AddInstanceProps>> = ({
+export const AddInstance: FC<AddInstanceProps> = ({
   selectedInstanceType,
   onSelectInstanceType,
   showAzure,

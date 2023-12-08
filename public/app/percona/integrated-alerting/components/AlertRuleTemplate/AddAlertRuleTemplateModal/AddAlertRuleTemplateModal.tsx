@@ -17,7 +17,7 @@ import { AlertRuleTemplateService } from '../AlertRuleTemplate.service';
 import { getStyles } from './AddAlertRuleTemplateModal.styles';
 import { AddAlertRuleTemplateModalProps, AlertRuleTemplateRenderProps } from './AddAlertRuleTemplateModal.types';
 
-export const AddAlertRuleTemplateModal: FC<React.PropsWithChildren<AddAlertRuleTemplateModalProps>> = ({
+export const AddAlertRuleTemplateModal: FC<AddAlertRuleTemplateModalProps> = ({
   isVisible,
   setVisible,
   getAlertRuleTemplates,

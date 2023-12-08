@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, PropsWithChildren } from 'react';
 
 import { getPerconaSettings, getPerconaUser } from 'app/percona/shared/core/selectors';
 import { useSelector } from 'app/types';
@@ -7,7 +7,7 @@ import { EmptyBlock } from '../EmptyBlock';
 
 import { Messages } from './PlatformConnectedLoader.messages';
 
-export const PlatformConnectedLoader: FC<React.PropsWithChildren<unknown>> = ({ children }) => {
+export const PlatformConnectedLoader: FC<PropsWithChildren> = ({ children }) => {
   const { isPlatformUser, isAuthorized } = useSelector(getPerconaUser);
   const { result } = useSelector(getPerconaSettings);
   const { isConnectedToPortal } = result!;

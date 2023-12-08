@@ -20,7 +20,7 @@ import { AlertManagerChangePayload } from '../../Settings.types';
 
 import { getStyles } from './AlertManager.styles';
 
-export const AlertManager: FC<React.PropsWithChildren<unknown>> = () => {
+export const AlertManager: FC = () => {
   const styles = useStyles2(getStyles);
   const settingsStyles = useStyles2(getSettingsStyles);
   const {

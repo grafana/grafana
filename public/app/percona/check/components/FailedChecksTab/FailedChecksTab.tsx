@@ -23,7 +23,7 @@ import { getStyles } from './FailedChecksTab.styles';
 import { stripServiceId } from './FailedChecksTab.utils';
 import { Failures } from './Failures/Failures';
 
-export const FailedChecksTab: FC<React.PropsWithChildren<unknown>> = () => {
+export const FailedChecksTab: FC = () => {
   const [fetchAlertsPending, setFetchAlertsPending] = useState(true);
   const [data, setData] = useState<FailedCheckSummary[]>([]);
   const styles = useStyles2(getStyles);

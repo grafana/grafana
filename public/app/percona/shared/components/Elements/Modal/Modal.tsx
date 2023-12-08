@@ -1,10 +1,10 @@
-import React, { FC, useEffect, ReactNode } from 'react';
+import React, { FC, useEffect, ReactNode, PropsWithChildren } from 'react';
 
 import { IconButton, useStyles2 } from '@grafana/ui';
 
 import { getStyles } from './Modal.styles';
 
-export interface ModalWindow {
+export interface ModalWindow extends PropsWithChildren {
   onClose: () => void;
   closeOnClickaway?: boolean;
   closeOnEscape?: boolean;
@@ -12,7 +12,7 @@ export interface ModalWindow {
   title: ReactNode | string;
 }
 
-export const Modal: FC<React.PropsWithChildren<ModalWindow>> = (props) => {
+export const Modal: FC<ModalWindow> = (props) => {
   const { isVisible, children, title, onClose, closeOnClickaway = true, closeOnEscape = true } = props;
   const styles = useStyles2(getStyles);
 

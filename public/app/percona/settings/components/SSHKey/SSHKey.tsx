@@ -18,7 +18,7 @@ import { SET_SETTINGS_CANCEL_TOKEN } from '../../Settings.constants';
 
 import { getStyles } from './SSHKey.styles';
 
-export const SSHKey: FC<React.PropsWithChildren<unknown>> = () => {
+export const SSHKey: FC = () => {
   const styles = useStyles2(getStyles);
   const settingsStyles = useStyles2(getSettingsStyles);
   const {

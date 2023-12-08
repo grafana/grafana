@@ -44,7 +44,7 @@ import { RECHECK_INTERVAL } from './EditDBClusterPage/DBClusterAdvancedOptions/D
 import { DB_CLUSTER_CREATION_URL } from './EditDBClusterPage/EditDBClusterPage.constants';
 import { UpdateDBClusterModal } from './UpdateDBClusterModal/UpdateDBClusterModal';
 
-export const DBCluster: FC<React.PropsWithChildren<unknown>> = () => {
+export const DBCluster: FC = () => {
   const styles = useStyles(getStyles);
   const history = useHistory();
   const dispatch = useAppDispatch();

@@ -15,7 +15,7 @@ import { getStyles } from './AccessRole.styles';
 import { toAccessRoleRow, orderRole } from './AccessRole.utils';
 import AccessRolesTable from './components/AccessRolesTable/AccessRolesTable';
 
-const AccessRolesPage: FC<React.PropsWithChildren<unknown>> = () => {
+const AccessRolesPage: FC = () => {
   const dispatch = useAppDispatch();
   const { result: settings } = useSelector(getPerconaSettings);
   const { isLoading, roles } = useSelector(getAccessRoles);

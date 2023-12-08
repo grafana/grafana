@@ -9,7 +9,7 @@ import { EmptyBlock } from '../EmptyBlock';
 import { getStyles } from './PermissionLoader.styles';
 import { PermissionLoaderProps } from './PermissionLoader.types';
 
-export const PermissionLoader: FC<React.PropsWithChildren<PermissionLoaderProps>> = ({ featureSelector, renderSuccess, renderError }) => {
+export const PermissionLoader: FC<PermissionLoaderProps> = ({ featureSelector, renderSuccess, renderError }) => {
   const styles = useStyles(getStyles);
   const featureEnabled = useSelector(featureSelector);
   const { loading } = useSelector(getPerconaSettings);

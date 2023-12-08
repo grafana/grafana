@@ -6,7 +6,7 @@ import { LabelTooltipProps } from '../../../helpers/types';
 
 import { getStyles } from './LinkTooltipCore.styles';
 
-export const LinkTooltipCore: FC<React.PropsWithChildren<LabelTooltipProps>> = ({
+export const LinkTooltipCore: FC<LabelTooltipProps> = ({
   tooltipText,
   tooltipLink,
   tooltipLinkText = 'Read more',

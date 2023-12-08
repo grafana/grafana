@@ -37,7 +37,7 @@ import { BackupInventoryDetails } from './BackupInventoryDetails';
 import { BackupLogsModal } from './BackupLogsModal/BackupLogsModal';
 import { RestoreBackupModal } from './RestoreBackupModal';
 
-export const BackupInventory: FC<React.PropsWithChildren<unknown>> = () => {
+export const BackupInventory: FC = () => {
   const [pending, setPending] = useState(true);
   const [deletePending, setDeletePending] = useState(false);
   const [restoreModalVisible, setRestoreModalVisible] = useState(false);

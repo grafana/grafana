@@ -19,7 +19,7 @@ import { TicketsService } from './Tickets.service';
 import { getStyles } from './Tickets.styles';
 import { Ticket } from './Tickets.types';
 
-export const TicketsPage: FC<React.PropsWithChildren<unknown>> = () => {
+export const TicketsPage: FC = () => {
   const [pending, setPending] = useState(true);
   const [data, setData] = useState<Ticket[]>([]);
   const { isPlatformUser } = useSelector(getPerconaUser);

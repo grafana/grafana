@@ -40,7 +40,7 @@ const {
   triggered,
 } = columns;
 
-export const Alerts: FC<React.PropsWithChildren<unknown>> = () => {
+export const Alerts: FC = () => {
   const dispatch = useAppDispatch();
   const style = useStyles2(getStyles);
   const navModel = useNavModel('integrated-alerting-alerts');

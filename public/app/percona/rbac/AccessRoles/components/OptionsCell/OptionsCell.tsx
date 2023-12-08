@@ -13,7 +13,7 @@ import DeleteRoleModal from '../DeleteRoleModal';
 import { styles } from './OptionsCell.styles';
 import { OptionsCellProps } from './OptionsCell.types';
 
-const OptionsCell: FC<React.PropsWithChildren<OptionsCellProps>> = ({ role }) => {
+const OptionsCell: FC<OptionsCellProps> = ({ role }) => {
   const dispatch = useAppDispatch();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 

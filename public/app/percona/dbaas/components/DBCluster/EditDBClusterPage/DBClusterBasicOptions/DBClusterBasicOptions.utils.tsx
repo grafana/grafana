@@ -17,7 +17,7 @@ export const kubernetesClusterNameValidator = (value: string) => {
   return clusterNameRegexp.test(value) ? undefined : Messages.validationMessages.clusterName;
 };
 
-const KubernetesOption: FC<React.PropsWithChildren<KubernetesOptionProps>> = ({
+const KubernetesOption: FC<KubernetesOptionProps> = ({
   disabledOperators,
   availableOperators,
   kubernetesClusterName,

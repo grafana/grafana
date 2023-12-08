@@ -6,7 +6,7 @@ import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
 
 import { getStyles } from './Diagnostics.styles';
 
-export const Diagnostics: FC<React.PropsWithChildren<unknown>> = () => {
+export const Diagnostics: FC = () => {
   const styles = useStyles2(getStyles);
   const settingsStyles = useStyles2(getSettingsStyles);
   const {

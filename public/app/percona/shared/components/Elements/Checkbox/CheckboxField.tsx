@@ -15,7 +15,7 @@ export interface CheckboxProps extends UseFieldConfig<boolean>, LabeledFieldProp
   noError?: boolean;
 }
 
-export const CheckboxField: FC<React.PropsWithChildren<CheckboxProps>> = React.memo(
+export const CheckboxField: FC<CheckboxProps> = React.memo(
   ({
     disabled,
     fieldClassName,

@@ -11,7 +11,7 @@ import { Messages } from './FeatureLoader.messages';
 import { getStyles } from './FeatureLoader.styles';
 import { FeatureLoaderProps } from './FeatureLoader.types';
 
-export const FeatureLoader: FC<React.PropsWithChildren<FeatureLoaderProps>> = ({
+export const FeatureLoader: FC<FeatureLoaderProps> = ({
   featureName = '',
   featureSelector = () => true,
   messagedataTestId = 'settings-link',

@@ -8,7 +8,7 @@ import { HIDDEN_PASSWORD_LENGTH } from './DBClusterConnectionPassword.constants'
 import { getStyles } from './DBClusterConnectionPassword.styles';
 import { DBClusterConnectionPasswordProps } from './DBClusterConnectionPassword.types';
 
-export const DBClusterConnectionPassword: FC<React.PropsWithChildren<DBClusterConnectionPasswordProps>> = ({ label, password, dataTestId }) => {
+export const DBClusterConnectionPassword: FC<DBClusterConnectionPasswordProps> = ({ label, password, dataTestId }) => {
   const styles = useStyles(getStyles);
   const [showPassword, setShowPassword] = useState(false);
   const getHiddenPassword = useMemo(() => '*'.repeat(HIDDEN_PASSWORD_LENGTH), []);

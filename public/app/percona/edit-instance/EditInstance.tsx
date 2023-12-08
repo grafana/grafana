@@ -1,4 +1,4 @@
-import React, { FormEvent, useEffect, useState } from 'react';
+import React, { FC, FormEvent, useEffect, useState } from 'react';
 import { Form } from 'react-final-form';
 import { useHistory, useParams } from 'react-router-dom';
 
@@ -23,7 +23,7 @@ import { getStyles } from './EditInstance.styles';
 import { EditInstanceFormValues, EditInstanceRouteParams } from './EditInstance.types';
 import { getInitialValues, getService, toPayload } from './EditInstance.utils';
 
-const EditInstancePage: React.FC<React.PropsWithChildren<unknown>> = () => {
+const EditInstancePage: FC = () => {
   const history = useHistory();
   const dispatch = useAppDispatch();
   const { serviceId } = useParams<EditInstanceRouteParams>();

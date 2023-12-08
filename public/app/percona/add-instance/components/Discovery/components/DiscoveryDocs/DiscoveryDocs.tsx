@@ -6,7 +6,7 @@ import { IAM_ROLE_DOC_LINK, SECURITY_CREDENTIALS_DOC_LINK } from './DiscoveryDoc
 import { Messages } from './DiscoveryDocs.messages';
 import { getStyles } from './DiscoveryDocs.styles';
 
-export const DiscoveryDocs: FC<React.PropsWithChildren<unknown>> = () => {
+export const DiscoveryDocs: FC = () => {
   const styles = useStyles(getStyles);
 
   return (

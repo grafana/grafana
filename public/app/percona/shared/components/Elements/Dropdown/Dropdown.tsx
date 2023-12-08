@@ -35,7 +35,7 @@ export interface DropdownProps {
   className?: string;
 }
 
-export const Dropdown: FC<React.PropsWithChildren<DropdownProps>> = memo(function Dropdown({ className, children, toggle: Toggle }) {
+export const Dropdown: FC<DropdownProps> = memo(function Dropdown({ className, children, toggle: Toggle }) {
   const styles = useStyles2(getStyles);
 
   const [visible, setVisible] = useState(false);

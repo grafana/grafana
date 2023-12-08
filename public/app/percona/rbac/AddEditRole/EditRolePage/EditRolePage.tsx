@@ -19,7 +19,7 @@ import AddEditRoleForm, { AddEditFormValues } from '../components/AddEditRoleFor
 import { Messages } from './EditRolePage.messages';
 import { EditRolePageParams } from './EditRolePage.types';
 
-const EditRolePage: FC<React.PropsWithChildren<unknown>> = () => {
+const EditRolePage: FC = () => {
   const dispatch = useAppDispatch();
   const { id } = useParams<EditRolePageParams>();
   const [role, setRole] = useState<AddEditFormValues>();
