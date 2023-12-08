@@ -336,7 +336,6 @@ func mustInts(s []string) []int {
 	for _, v := range s {
 		num, err := strconv.Atoi(v)
 		if err != nil {
-			// TODO: add log here
 			return []int{}
 		}
 		result = append(result, num)
