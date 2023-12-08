@@ -133,7 +133,7 @@ interface State {
   resolution: number;
 }
 
-const DETAILS_SIZE = 410;
+const DETAILS_SIZE = 450;
 const WINDOW_MARGINS = 60;
 const INITIAL_PANE_SIZE = (window.innerWidth / 4) * 3;
 function getMaxPaneSize() {
