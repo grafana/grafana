@@ -3,7 +3,7 @@
 import React from 'react';
 import toast from 'react-hot-toast';
 
-import { AppEvents } from '@grafana/data';
+import { AppEvents, IconName } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { UserDTO } from 'app/types/user';
@@ -124,6 +124,7 @@ export const getAchievements = async (): Promise<Achievement[]> => {
   return achievements.map((achievement) => {
     return {
       ...achievement,
+      icon: achievement.icon as IconName,
       completed: userHasCompletedAchievement(achievement.id, user),
     };
   });
