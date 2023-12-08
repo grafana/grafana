@@ -46,7 +46,7 @@ export function VariableEditorList({
             <div className={styles.tableContainer}>
               <table
                 className="filter-table filter-table--hover"
-                aria-label={selectors.pages.Dashboard.Settings.Variables.List.table}
+                data-testid={selectors.pages.Dashboard.Settings.Variables.List.table}
                 role="grid"
               >
                 <thead>
@@ -117,8 +117,8 @@ function EmptyVariablesList({ onAdd }: { onAdd: () => void }): ReactElement {
 }
 
 const getStyles = () => ({
-  tableContainer: css`
-    overflow: scroll;
-    width: 100%;
-  `,
+  tableContainer: css({
+    overflow: 'scroll',
+    width: '100%',
+  }),
 });

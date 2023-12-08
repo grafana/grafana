@@ -50,7 +50,7 @@ export function VariableEditorListRow({
                 propsOnEdit(identifier);
               }}
               className={styles.nameLink}
-              aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowNameFields(variable.name)}
+              data-testid={selectors.pages.Dashboard.Settings.Variables.List.tableRowNameFields(variable.name)}
             >
               {variable.name}
             </Button>
@@ -62,7 +62,7 @@ export function VariableEditorListRow({
               event.preventDefault();
               propsOnEdit(identifier);
             }}
-            aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowDefinitionFields(variable.name)}
+            data-testid={selectors.pages.Dashboard.Settings.Variables.List.tableRowDefinitionFields(variable.name)}
           >
             {definition}
           </td>
@@ -77,7 +77,7 @@ export function VariableEditorListRow({
                 }}
                 name="copy"
                 tooltip="Duplicate variable"
-                aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowDuplicateButtons(variable.name)}
+                data-testid={selectors.pages.Dashboard.Settings.Variables.List.tableRowDuplicateButtons(variable.name)}
               />
               <IconButton
                 onClick={(event) => {
@@ -87,7 +87,7 @@ export function VariableEditorListRow({
                 }}
                 name="trash-alt"
                 tooltip="Remove variable"
-                aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowRemoveButtons(variable.name)}
+                data-testid={selectors.pages.Dashboard.Settings.Variables.List.tableRowRemoveButtons(variable.name)}
               />
               <div {...provided.dragHandleProps} className={styles.dragHandle}>
                 <Icon name="draggabledots" size="lg" />
@@ -116,38 +116,37 @@ function getDefinition(model: SceneVariableState): string {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    dragHandle: css`
-      cursor: grab;
-      margin-left: ${theme.spacing(1)};
-    `,
-    column: css`
-      width: 1%;
-    `,
-    nameLink: css`
-      cursor: pointer;
-      color: ${theme.colors.primary.text};
-    `,
-    definitionColumn: css`
-      width: 100%;
-      max-width: 200px;
-      cursor: pointer;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      -o-text-overflow: ellipsis;
-      white-space: nowrap;
-    `,
-    iconPassed: css`
-      color: ${theme.v1.palette.greenBase};
-      margin-right: ${theme.spacing(2)};
-    `,
-    iconFailed: css`
-      color: ${theme.v1.palette.orange};
-      margin-right: ${theme.spacing(2)};
-    `,
-    icons: css`
-      display: flex;
-      gap: ${theme.spacing(2)};
-      align-items: center;
-    `,
+    dragHandle: css({
+      cursor: 'grab',
+      marginLeft: theme.spacing(1),
+    }),
+    column: css({
+      width: '1%',
+    }),
+    nameLink: css({
+      cursor: 'pointer',
+      color: theme.colors.primary.text,
+    }),
+    definitionColumn: css({
+      width: '100%',
+      maxWidth: '200px',
+      cursor: 'pointer',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    }),
+    iconPassed: css({
+      color: theme.v1.palette.greenBase,
+      marginRight: theme.spacing(2),
+    }),
+    iconFailed: css({
+      color: theme.v1.palette.orange,
+      marginRight: theme.spacing(2),
+    }),
+    icons: css({
+      display: 'flex',
+      gap: theme.spacing(2),
+      alignItems: 'center',
+    }),
   };
 }
