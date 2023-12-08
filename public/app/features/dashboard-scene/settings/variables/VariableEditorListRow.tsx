@@ -5,7 +5,7 @@ import { Draggable } from 'react-beautiful-dnd';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { SceneVariableState } from '@grafana/scenes';
+import { QueryVariable, SceneVariableState } from '@grafana/scenes';
 import { Button, ConfirmModal, Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { hasOptions } from 'app/features/variables/guard';
 
@@ -118,7 +118,7 @@ export function VariableEditorListRow({
 
 function getDefinition(model: SceneVariableState): string {
   let definition = '';
-  if (model.type === 'query') {
+  if (model instanceof QueryVariable) {
     if (model.definition) {
       definition = model.definition;
     } else if (typeof model.query === 'string') {
