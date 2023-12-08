@@ -93,8 +93,9 @@ export const LogLabelStatsRow = ({
       </td>
       <td
         style={{
-          textOverflow: 'ellipsis',
+          maxWidth: 0,
           overflow: 'hidden',
+          textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
           marginRight: '1.5em',
         }}

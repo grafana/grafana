@@ -90,7 +90,7 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
     return (
       <div className={style.logsStats} data-testid="logLabelStats">
         <div className={style.logsStatsBody}>
-          <table style={{ width: '75%' }}>
+          <table style={{ width: '85%' }}>
             <tbody>
               <tr>
                 <td colSpan={4}>
@@ -124,7 +124,7 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
               )}
             </tbody>
           </table>
-          <div style={{ width: '25%', display: 'flex', justifyContent: 'center', alignItems: 'cent' }}>
+          <div style={{ width: '15%', minWidth: 65, display: 'flex', justifyContent: 'center', alignItems: 'cent' }}>
             {stats.length > 1 && (
               <PanelRenderer
                 pluginId="piechart"

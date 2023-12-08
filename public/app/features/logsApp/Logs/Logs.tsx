@@ -595,7 +595,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       return;
     }
     const minSize = getMaxPaneSize();
-    if (this.state.logDetailsRow && size > minSize) {
+    if (this.state.sidebarVisible && size > minSize) {
       size = minSize;
     }
     this.setState({ paneSize: size });
@@ -607,7 +607,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     this.setState({ sidebarVisible }, () => {
       localStorage.setItem('logs.sidebar', sidebarVisible.toString());
       if (sidebarVisible) {
-        this.handlePaneResize(getMaxPaneSize());
+        this.handlePaneResize(parseInt(`${localStorage.getItem('logs.paneSize')}`, 10) || getMaxPaneSize());
       } else {
         this.handlePaneResize(window.innerWidth - WINDOW_MARGINS);
       }
@@ -690,7 +690,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       this.state.hiddenLogLevels.length > 0 ? ` (filtered based on selected ${this.state.groupByLabel})` : ''
     }`;
 
-    const maxPaneSize = getMaxPaneSize();
+    const maxPaneSize = this.state.sidebarVisible ? getMaxPaneSize() : INITIAL_PANE_SIZE;
 
     return (
       <>
