@@ -216,7 +216,7 @@ func (d *DuckDB) createTables(ctx context.Context, frames data.Frames) error {
 				found = true
 			}
 			if fld.Type() == data.FieldTypeUnknown {
-				createTable += " " + "BLOB"
+				createTable += " " + "VARCHAR"
 				found = true
 			}
 			if fld.Type() == data.FieldTypeNullableJSON || fld.Type() == data.FieldTypeJSON {
