@@ -319,6 +319,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
           zIndex: 1,
           display: this.props.editPanel ? 'none' : undefined,
         }}
+        id="dashboard-screenshot"
       >
         <AutoSizer disableHeight>
           {({ width }) => {

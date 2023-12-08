@@ -28,6 +28,8 @@ export interface SaveDashboardOptions {
   /** Set the dashboard refresh interval.
    *  If this is lower than the minimum refresh interval, Grafana will ignore it and will enforce the minimum refresh interval. */
   refresh?: string;
+
+  screenshot: string;
 }
 
 interface SaveDashboardResponse {

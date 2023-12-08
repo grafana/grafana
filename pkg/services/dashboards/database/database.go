@@ -475,6 +475,8 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 
 	// insert new tags
 	tags := dash.GetTags()
+	dsTags := dash.GetDataSourceTags()
+	tags = append(tags, dsTags...)
 	if len(tags) > 0 {
 		for _, tag := range tags {
 			if _, err := sess.Insert(dashboardTag{DashboardId: dash.ID, Term: tag}); err != nil {

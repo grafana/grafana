@@ -234,4 +234,8 @@ func addDashboardMigration(mg *Migrator) {
 	mg.AddMigration("Add isPublic for dashboard", NewAddColumnMigration(dashboardV2, &Column{
 		Name: "is_public", Type: DB_Bool, Nullable: false, Default: "0",
 	}))
+
+	mg.AddMigration("Add screenshot", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "screenshot", Type: DB_Text, Nullable: true,
+	}))
 }

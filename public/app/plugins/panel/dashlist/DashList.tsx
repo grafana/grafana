@@ -25,7 +25,7 @@ import { useDispatch } from 'app/types';
 import { Options } from './panelcfg.gen';
 import { getStyles } from './styles';
 
-type Dashboard = DashboardSearchItem & { id?: number; isSearchResult?: boolean; isRecent?: boolean };
+type Dashboard = DashboardSearchItem & { id?: number; isSearchResult?: boolean; isRecent?: boolean, snapshoturl?: string };
 
 interface DashboardGroup {
   show: boolean;
@@ -104,7 +104,16 @@ export function DashList(props: PanelProps<Options>) {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    fetchDashboards(props.options, props.replaceVariables).then((dashes) => {
+    fetchDashboards(props.options, props.replaceVariables).then(async (dashes) => {
+      for await (let [_, dash] of dashes) {
+        let snapshoturl = ""
+        if (dash.screenshot) {
+          const base64 = await fetch(dash.screenshot)
+          const b = await base64.blob()
+          snapshoturl = window.URL.createObjectURL(b)
+        }
+        dash.snapshoturl = snapshoturl
+      }
       setDashboards(dashes);
     });
   }, [props.options, props.replaceVariables, props.renderCounter]);
@@ -160,6 +169,7 @@ export function DashList(props: PanelProps<Options>) {
 
         url = urlUtil.appendQueryToUrl(url, urlParams);
         url = getConfig().disableSanitizeHtml ? url : textUtil.sanitizeUrl(url);
+        
 
         return (
           <li className={css.dashlistItem} key={`dash-${dash.uid}`}>
@@ -176,6 +186,7 @@ export function DashList(props: PanelProps<Options>) {
                 iconType={dash.isStarred ? 'mono' : 'default'}
                 onClick={(e) => toggleDashboardStar(e, dash)}
               />
+              {dash.screenshot && <img alt="screenshot of dashboard" src={dash.snapshoturl} />}
             </div>
           </li>
         );

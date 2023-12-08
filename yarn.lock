@@ -17493,6 +17493,7 @@ __metadata:
     hoist-non-react-statics: "npm:3.3.2"
     html-loader: "npm:4.2.0"
     html-webpack-plugin: "npm:5.5.3"
+    html2canvas: "npm:^1.4.1"
     http-server: "npm:14.1.1"
     i18next: "npm:^22.0.0"
     i18next-browser-languagedetector: "npm:^7.0.2"
@@ -18097,7 +18098,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"html2canvas@npm:^1.0.0-rc.5":
+"html2canvas@npm:^1.0.0-rc.5, html2canvas@npm:^1.4.1":
   version: 1.4.1
   resolution: "html2canvas@npm:1.4.1"
   dependencies:

@@ -48,6 +48,7 @@ export interface DashboardSearchItem {
   folderUid?: string;
   folderTitle?: string;
   folderUrl?: string;
+  screenshot?: string;
 }
 
 export type DashboardViewItemKind = 'folder' | 'dashboard' | 'panel';

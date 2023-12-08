@@ -261,6 +261,7 @@ export type RichHistoryQuery<T extends DataQuery = DataQuery> = {
   starred: boolean;
   comment: string;
   queries: T[];
+  screenshot?: string;
 };
 
 export interface ExplorePanelData extends PanelData {

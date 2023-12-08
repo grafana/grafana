@@ -22,6 +22,7 @@ type QueryHistory struct {
 	CreatedAt     int64
 	Comment       string
 	Queries       *simplejson.Json
+	Screenshot    string `xorm:"screenshot"`
 }
 
 // QueryHistory is the model for query history star definitions
@@ -50,6 +51,7 @@ type QueryHistoryDTO struct {
 	Comment       string           `json:"comment"`
 	Queries       *simplejson.Json `json:"queries"`
 	Starred       bool             `json:"starred"`
+	Screenshot    string           `json:"screenshot" xorm:"screenshot"`
 }
 
 // QueryHistoryResponse is a response struct for QueryHistoryDTO
@@ -83,6 +85,8 @@ type CreateQueryInQueryHistoryCommand struct {
 	// The JSON model of queries.
 	// required: true
 	Queries *simplejson.Json `json:"queries"`
+
+	Screenshot string `json:"screenshot,omitempty"`
 }
 
 // PatchQueryCommentInQueryHistoryCommand is the command for updating comment for query in query history

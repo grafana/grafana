@@ -1,3 +1,4 @@
+import html2canvas from 'html2canvas';
 import React, { Component } from 'react';
 import { Unsubscribable } from 'rxjs';
 
@@ -11,6 +12,7 @@ import { AutoRefreshInterval } from 'app/core/services/context_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { ShiftTimeEvent, ShiftTimeEventDirection, ZoomOutEvent } from '../../../../types/events';
+import { getDashboardSrv } from '../../services/DashboardSrv';
 import { DashboardModel } from '../../state';
 
 export interface Props {
@@ -85,6 +87,31 @@ export class DashNavTimeControls extends Component<Props> {
   };
 
   onRefreshClick = () => {
+    const dashboardSrv = getDashboardSrv();
+    const { dashboard } = this.props;
+    /*
+      TODO: this is probably not a good time to actually take a screenshot, it just seemed easy.
+      Ideally we'd take it whenever the dashboard finishes loading. 
+      Also I don't think it really makes sense to store this screenshot on the dashboard object, it was just easy.
+      Right now fires off "dashboard saved" notification which is odd feeling.
+      But all of this seemed "good enough" for a proof of concept 
+    */
+    const dash = document.getElementById("dashboard-screenshot");
+    if (dash) {
+      html2canvas(dash, {backgroundColor:null}).then(function(canvas: HTMLCanvasElement) {
+        canvas.toBlob((b) => {
+          if (b) {
+            blobToBase64(b).then(s =>{
+              if (s) {
+                dashboardSrv.saveDashboard({ dashboard, screenshot: s as string })
+              }
+            })
+          }
+        })
+    })
+    }
+
+  
     if (this.props.onToolbarRefreshClick) {
       this.props.onToolbarRefreshClick();
     }
@@ -135,4 +162,12 @@ export class DashNavTimeControls extends Component<Props> {
       </>
     );
   }
+}
+
+function blobToBase64(blob: Blob): Promise<string | ArrayBuffer | null> {
+  return new Promise((resolve, _) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.readAsDataURL(blob);
+  });
 }

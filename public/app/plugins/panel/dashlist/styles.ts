@@ -18,13 +18,25 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     margin-right: ${theme.spacing(1)};
     padding: ${theme.spacing(1)};
     align-items: center;
-
+    img {
+      position: absolute;
+      display: none;
+    }
     &:hover {
       a {
         color: ${theme.colors.text.link};
         text-decoration: underline;
       }
+      img {
+        display: block;
+        position: fixed;
+        max-width: 300px;
+        z-index: 1;
+        left: 300px;
+        border: 1px solid;
+      }
     }
+
   `,
   dashlistFolder: css`
     color: ${theme.colors.text.secondary};

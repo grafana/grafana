@@ -19,6 +19,7 @@ func (s QueryHistoryService) createQuery(ctx context.Context, user *user.SignedI
 		CreatedBy:     user.UserID,
 		CreatedAt:     s.now().Unix(),
 		Comment:       "",
+		Screenshot:    cmd.Screenshot,
 	}
 
 	err := s.store.WithDbSession(ctx, func(session *db.Session) error {
@@ -72,6 +73,7 @@ func (s QueryHistoryService) searchQueries(ctx context.Context, user *user.Signe
 			query_history.created_at AS created_at,
 			query_history.comment,
 			query_history.queries,
+			query_history.screenshot,
 		`)
 		writeStarredSQL(query, s.store, &dtosBuilder)
 		writeFiltersSQL(query, user, s.store, &dtosBuilder)

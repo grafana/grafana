@@ -50,6 +50,8 @@ type Dashboard struct {
 
 	Title string
 	Data  *simplejson.Json
+
+	Screenshot string
 }
 
 func (d *Dashboard) SetID(id int64) {
@@ -143,6 +145,38 @@ func (d *Dashboard) GetTags() []string {
 	return d.Data.Get("tags").MustStringArray()
 }
 
+func (d *Dashboard) GetDataSourceTags() []string {
+	var dsTags []string
+	panels := d.Data.Get("panels")
+	for _, panel := range panels.MustArray() {
+		ds, ok := panel.(map[string]interface{})["datasource"]
+		if ok {
+			dsType, ok := ds.(map[string]interface{})["type"]
+			if ok {
+				dsTags = append(dsTags, dsType.(string))
+			}
+			// it would probably be cooler to get the datasource name rather than uid...
+			// or maybe we keep the uid in the tag but we always convert it to a name to show users? idk.
+			dsUid, ok := ds.(map[string]interface{})["uid"]
+			if ok {
+				dsTags = append(dsTags, dsUid.(string))
+			}
+		}
+	}
+
+	uniqDsTagsSet := make(map[string]struct{})
+	for _, tag := range dsTags {
+		uniqDsTagsSet[tag] = struct{}{}
+	}
+
+	var uniqDsTags []string
+	for tag := range uniqDsTagsSet {
+		uniqDsTags = append(uniqDsTags, tag)
+	}
+
+	return uniqDsTags
+}
+
 func NewDashboardFromJson(data *simplejson.Json) *Dashboard {
 	dash := &Dashboard{}
 	dash.Data = data
@@ -192,6 +226,9 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	// nolint:staticcheck
 	dash.FolderID = cmd.FolderID
 	dash.FolderUID = cmd.FolderUID
+	if len(cmd.Screenshot) > 0 {
+		dash.Screenshot = cmd.Screenshot
+	}
 	dash.UpdateSlug()
 	return dash
 }
@@ -258,6 +295,8 @@ type SaveDashboardCommand struct {
 	IsFolder  bool   `json:"isFolder"`
 
 	UpdatedAt time.Time
+
+	Screenshot string `json:"screenshot" xorm:"screenshot"`
 }
 
 type DashboardProvisioning struct {
@@ -335,12 +374,13 @@ type GetDashboardRefByIDQuery struct {
 }
 
 type SaveDashboardDTO struct {
-	OrgID     int64
-	UpdatedAt time.Time
-	User      identity.Requester
-	Message   string
-	Overwrite bool
-	Dashboard *Dashboard
+	OrgID      int64
+	UpdatedAt  time.Time
+	User       identity.Requester
+	Message    string
+	Overwrite  bool
+	Dashboard  *Dashboard
+	Screenshot string
 }
 
 type DashboardSearchProjection struct {
@@ -356,6 +396,7 @@ type DashboardSearchProjection struct {
 	FolderSlug  string
 	FolderTitle string
 	SortMeta    int64
+	Screenshot  string `xorm:"screenshot"`
 }
 
 const (

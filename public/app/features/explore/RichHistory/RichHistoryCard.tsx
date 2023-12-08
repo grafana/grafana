@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useAsync } from 'react-use';
 
@@ -77,11 +77,21 @@ const getStyles = (theme: GrafanaTheme2) => {
         border-bottom: 1px solid ${theme.colors.border.weak};
         padding: ${theme.spacing(0.5, 1)};
       }
-      img {
-        height: ${theme.typography.fontSize}px;
-        max-width: ${theme.typography.fontSize}px;
-        margin-right: ${theme.spacing(1)};
+
+      &:hover {
+        img {
+          display: block;
+        }
       }
+    `,
+    screenshot: css`
+      display: none;
+      position: absolute;
+      max-width: 500px;
+      height: auto;
+      z-index: 1;
+      top: 25px;
+      left: 25px;
     `,
     queryActionButtons: css`
       max-width: ${rightColumnContentWidth};
@@ -182,6 +192,16 @@ export function RichHistoryCard(props: Props) {
     };
   }, [queryHistoryItem.datasourceUid, queryHistoryItem.queries]);
 
+  const [screenshot, setScreenshot] = useState("");
+  useEffect(() => {
+    if (queryHistoryItem.screenshot) {
+      fetch(queryHistoryItem.screenshot).then((base64) => {
+        return base64.blob()
+      }).then(b => {
+        setScreenshot(window.URL.createObjectURL(b))
+      })
+    }
+  }, [queryHistoryItem])
   const styles = useStyles2(getStyles);
 
   const onRunQuery = async () => {
@@ -390,6 +410,7 @@ export function RichHistoryCard(props: Props) {
           )}
           {activeUpdateComment && updateComment}
         </div>
+        {screenshot && <img className={styles.screenshot} src={screenshot} alt="screenshot of query" />}
         {!activeUpdateComment && (
           <div className={styles.runButton}>
             <Button
@@ -473,6 +494,11 @@ const getDsInfoStyles = (size: 'sm' | 'md') => (theme: GrafanaTheme2) => css`
   font-size: ${theme.typography[size === 'sm' ? 'bodySmall' : 'body'].fontSize};
   font-weight: ${theme.typography.fontWeightMedium};
   white-space: nowrap;
+  img {
+    height: ${theme.typography.fontSize}px;
+    max-width: ${theme.typography.fontSize}px;
+    margin-right: ${theme.spacing(1)};
+  }
 `;
 
 function DatasourceInfo({ dsApi, size }: { dsApi?: DataSourceApi; size: 'sm' | 'md' }) {

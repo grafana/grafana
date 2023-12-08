@@ -424,11 +424,12 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 	}
 
 	dashItem := &dashboards.SaveDashboardDTO{
-		Dashboard: dash,
-		Message:   cmd.Message,
-		OrgID:     c.SignedInUser.GetOrgID(),
-		User:      c.SignedInUser,
-		Overwrite: cmd.Overwrite,
+		Dashboard:  dash,
+		Message:    cmd.Message,
+		OrgID:      c.SignedInUser.GetOrgID(),
+		User:       c.SignedInUser,
+		Overwrite:  cmd.Overwrite,
+		Screenshot: cmd.Screenshot,
 	}
 
 	dashboard, err := hs.DashboardService.SaveDashboard(alerting.WithUAEnabled(ctx, hs.Cfg.UnifiedAlerting.IsEnabled()), dashItem, allowUiUpdate)

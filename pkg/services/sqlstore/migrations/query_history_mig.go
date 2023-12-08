@@ -29,4 +29,10 @@ func addQueryHistoryMigrations(mg *Migrator) {
 	mg.AddMigration("alter table query_history alter column created_by type to bigint", NewRawSQLMigration("").
 		Mysql("ALTER TABLE query_history MODIFY created_by BIGINT;").
 		Postgres("ALTER TABLE query_history ALTER COLUMN created_by TYPE BIGINT;"))
+
+	mg.AddMigration("add screenshot", NewAddColumnMigration(queryHistoryV1, &Column{
+		Name:     "screenshot",
+		Type:     DB_Text,
+		Nullable: true,
+	}))
 }

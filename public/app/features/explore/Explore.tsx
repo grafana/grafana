@@ -643,7 +643,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                         }
 
                         return (
-                          <main className={cx(styles.exploreMain)} style={{ width }}>
+                          <main className={cx(styles.exploreMain)} style={{ width }} id="explore-screenshot">
                             <ErrorBoundaryAlert>
                               {showPanels && (
                                 <>

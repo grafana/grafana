@@ -1,3 +1,4 @@
+import html2canvas from 'html2canvas';
 import { lastValueFrom } from 'rxjs';
 
 import { DataQuery } from '@grafana/data';
@@ -10,6 +11,7 @@ import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from '../uti
 import RichHistoryStorage, { RichHistoryStorageWarningDetails } from './RichHistoryStorage';
 import { fromDTO } from './remoteStorageConverter';
 
+
 export type RichHistoryRemoteStorageDTO = {
   uid: string;
   createdAt: number;
@@ -17,7 +19,13 @@ export type RichHistoryRemoteStorageDTO = {
   starred: boolean;
   comment: string;
   queries: DataQuery[];
+  screenshot?: string;
 };
+
+export interface RichHistoryQueryWithScreenshot extends RichHistoryQuery {
+  screenshot?: string
+}
+
 
 type RichHistoryRemoteStorageResultsPayloadDTO = {
   result: {
@@ -38,11 +46,26 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
   }
 
   async addToRichHistory(
-    newRichHistoryQuery: Omit<RichHistoryQuery, 'id' | 'createdAt'>
+    newRichHistoryQuery: Omit<RichHistoryQueryWithScreenshot, 'id' | 'createdAt'>
   ): Promise<{ warning?: RichHistoryStorageWarningDetails; richHistoryQuery: RichHistoryQuery }> {
+    /*
+      TODO: explore taking screenshot when query has finished
+      right now the query is often still loading resulting in a screenshot that is just a loading spinner
+    */
+    let screenshotImg;
+    const dash = document.getElementById("explore-screenshot");
+    if (dash) {
+      const canvas = await html2canvas(dash, {backgroundColor:null});
+      screenshotImg = await canvasToBase64String(canvas)
+      if (screenshotImg && typeof screenshotImg === "string") {
+        newRichHistoryQuery.screenshot = screenshotImg
+      }
+    }
+
     const { result } = await getBackendSrv().post(`/api/query-history`, {
       dataSourceUid: newRichHistoryQuery.datasourceUid,
       queries: newRichHistoryQuery.queries,
+      screenshot: screenshotImg
     });
     return {
       richHistoryQuery: fromDTO(result),
@@ -144,4 +167,19 @@ function buildQueryParams(filters: RichHistorySearchFilters): string {
     params = params + `&onlyStarred=${filters.starred}`;
   }
   return params;
+}
+
+
+async function canvasToBase64String(canvas: HTMLCanvasElement): Promise<string | ArrayBuffer | null> {
+  const blob = await new Promise(resolve => canvas.toBlob(resolve));
+  const b64str = await blobToBase64(blob as Blob);
+  return b64str
+}
+
+function blobToBase64(blob: Blob): Promise<string | ArrayBuffer | null> {
+  return new Promise((resolve, _) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.readAsDataURL(blob);
+  });
 }

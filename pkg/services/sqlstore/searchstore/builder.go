@@ -66,6 +66,7 @@ func (b *Builder) buildSelect() {
 			dashboard.is_folder,
 			dashboard.folder_id,
 			folder.uid AS folder_uid,
+			dashboard.screenshot as screenshot,
 		`)
 	if b.Features.IsEnabledGlobally(featuremgmt.FlagNestedFolders) {
 		b.sql.WriteString(`

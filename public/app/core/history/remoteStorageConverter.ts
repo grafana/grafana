@@ -15,6 +15,7 @@ export const fromDTO = (dto: RichHistoryRemoteStorageDTO): RichHistoryQuery => {
     starred: dto.starred,
     comment: dto.comment,
     queries: dto.queries,
+    screenshot: dto.screenshot,
   };
 };
 
