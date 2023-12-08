@@ -29,7 +29,14 @@ interface SkeletonProps {
 
 export type SkeletonComponent<P = {}> = React.ComponentType<P & SkeletonProps>;
 
-export const withSkeleton = <C extends object, P>(component: C, Skeleton: SkeletonComponent<P>) => {
+/**
+ * Use this to attach a skeleton as a static property on the component.
+ * e.g. if you render a component with `<Component />`, you can render the skeleton with `<Component.Skeleton />`.
+ * @param Component   A functional or class component
+ * @param Skeleton    A functional or class skeleton component
+ * @returns           A wrapped component with a static skeleton property
+ */
+export const withSkeleton = <C extends object, P>(Component: C, Skeleton: SkeletonComponent<P>) => {
   const skeletonWrapper = (props: P) => {
     return (
       <Skeleton
@@ -40,5 +47,5 @@ export const withSkeleton = <C extends object, P>(component: C, Skeleton: Skelet
       />
     );
   };
-  return Object.assign(component, { Skeleton: skeletonWrapper });
+  return Object.assign(Component, { Skeleton: skeletonWrapper });
 };
