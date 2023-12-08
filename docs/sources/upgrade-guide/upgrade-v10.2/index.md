@@ -22,7 +22,7 @@ weight: 1500
 
 The deprecated `/playlists/{uid}/dashboards` API endpoint has been removed. Dashboard information can be retrieved from the `/dashboard/...` APIs. See GitHub PR [#75503](https://github.com/grafana/grafana/pull/75503) for details.
 
-The `PUT /api/folders/:uid` endpoint no more supports modifying the folder's UID; UIDs are expected to be immutable. See GitHub PR [#74684](https://github.com/grafana/grafana/pull/74684) for details.
+The `PUT /api/folders/:uid` endpoint no longer supports modifying the folder's UID; UIDs are expected to be immutable. See GitHub PR [#74684](https://github.com/grafana/grafana/pull/74684) for details.
 
 In the Azure Monitor data source, the Intersection option has been replaced with a Dashboard option to reduce confusion around how time-ranges work. This is a breaking change as we're removing support for Intersection, but it is replaced with an option that is nearly the same. The Intersection option will be migrated to Dashbaord automatically. See GitHub PR [#74675](https://github.com/grafana/grafana/pull/74675) for more details.
 
