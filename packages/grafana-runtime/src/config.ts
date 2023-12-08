@@ -94,6 +94,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   theme2: GrafanaTheme2;
   featureToggles: FeatureToggles = {};
   anonymousEnabled = false;
+  anonymousUserLimit = undefined;
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
   rendererVersion = '';
