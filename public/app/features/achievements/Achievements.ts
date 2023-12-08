@@ -2,11 +2,11 @@ import { AchievementId, AchievementLevel } from './types';
 
 // These are just hard coded for now loosely based on current available achievements
 export const achievementLevelThresholds = {
-  [AchievementLevel.Novice]: 3,
-  [AchievementLevel.Beginner]: 9,
-  [AchievementLevel.Experienced]: 16,
-  [AchievementLevel.Expert]: 30,
-  [AchievementLevel.Wizard]: 40,
+  [AchievementLevel.Novice]: 1,
+  [AchievementLevel.Beginner]: 2,
+  [AchievementLevel.Experienced]: 3,
+  [AchievementLevel.Expert]: 7,
+  [AchievementLevel.Wizard]: 11,
 };
 
 export const achievements = [
@@ -232,7 +232,7 @@ export const achievements = [
     title: 'Use a join by field transformation',
     description: '',
     level: AchievementLevel.Expert,
-    link: '',
+    link: 'https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/#join-by-field',
     video: '',
     icon: 'apps',
   },
