@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import React, { ReactElement } from 'react';
+import React, { ReactElement, useState } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { SceneVariableState } from '@grafana/scenes';
-import { Button, Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, ConfirmModal, Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { hasOptions } from 'app/features/variables/guard';
 
 export interface VariableEditorListRowProps {
@@ -28,6 +28,14 @@ export function VariableEditorListRow({
   const styles = useStyles2(getStyles);
   const definition = getDefinition(variable);
   const identifier = variable.name;
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const handleDeleteVariableModal = (show: boolean) => () => {
+    setShowDeleteModal(show);
+  };
+  const onDeleteVariable = () => {
+    reportInteraction('Delete variable');
+    propsOnDelete(identifier);
+  };
 
   return (
     <Draggable draggableId={JSON.stringify(identifier)} index={index}>
@@ -82,13 +90,21 @@ export function VariableEditorListRow({
               <IconButton
                 onClick={(event) => {
                   event.preventDefault();
-                  reportInteraction('Delete variable');
-                  propsOnDelete(identifier);
+                  handleDeleteVariableModal(true);
                 }}
                 name="trash-alt"
                 tooltip="Remove variable"
                 data-testid={selectors.pages.Dashboard.Settings.Variables.List.tableRowRemoveButtons(variable.name)}
               />
+              <ConfirmModal
+                isOpen={showDeleteModal}
+                title="Delete variable"
+                body={`Are you sure you want to delete: ${variable.name}?`}
+                confirmText="Delete variable"
+                onConfirm={onDeleteVariable}
+                onDismiss={handleDeleteVariableModal(false)}
+              />
+
               <div {...provided.dragHandleProps} className={styles.dragHandle}>
                 <Icon name="draggabledots" size="lg" />
               </div>

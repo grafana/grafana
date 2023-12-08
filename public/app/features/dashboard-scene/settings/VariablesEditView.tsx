@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
+import { ConfirmModal } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { NavToolbarActions } from '../scene/NavToolbarActions';
@@ -22,6 +23,7 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     // get variables from dashboard state
     const variablesObject = sceneGraph.getVariables(dashboard);
     const variables = variablesObject.useState().variables;
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     const getVariableIndex = (identifier: string) => {
       return variables.findIndex((variable) => variable.state.name === identifier);
