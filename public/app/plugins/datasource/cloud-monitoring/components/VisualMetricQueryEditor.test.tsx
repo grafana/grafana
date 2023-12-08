@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { openMenu, select } from 'react-select-event';
 
-import { getDefaultTimeRange } from '@grafana/data';
+import { CustomVariableModel, getDefaultTimeRange } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
@@ -22,7 +22,27 @@ const defaultProps = {
   onChangeAliasBy: jest.fn(),
 };
 
+let getTempVars = () => [] as CustomVariableModel[];
+let replace = () => '';
+
+jest.mock('@grafana/runtime', () => {
+  return {
+    __esModule: true,
+    ...jest.requireActual('@grafana/runtime'),
+    getTemplateSrv: () => ({
+      replace: replace,
+      getVariables: getTempVars,
+      updateTimeRange: jest.fn(),
+      containsTemplate: jest.fn(),
+    }),
+  };
+});
+
 describe('VisualMetricQueryEditor', () => {
+  beforeEach(() => {
+    getTempVars = () => [] as CustomVariableModel[];
+    replace = () => '';
+  });
   it('renders metrics fields', async () => {
     const onChange = jest.fn();
     const query = createMockTimeSeriesList();
@@ -44,6 +64,7 @@ describe('VisualMetricQueryEditor', () => {
   });
 
   it('can select a service', async () => {
+    replace = (target?: string) => target || '';
     const onChange = jest.fn();
     const query = createMockTimeSeriesList();
     const mockMetricDescriptor = createMockMetricDescriptor();
@@ -74,6 +95,7 @@ describe('VisualMetricQueryEditor', () => {
   });
 
   it('can select a metric name', async () => {
+    replace = (target?: string) => target || '';
     const onChange = jest.fn();
     const query = createMockTimeSeriesList();
     const mockMetricDescriptor = createMockMetricDescriptor({ displayName: 'metricName_test', type: 'test_type' });
@@ -156,6 +178,7 @@ describe('VisualMetricQueryEditor', () => {
   });
 
   it('resets query to default when service changes', async () => {
+    replace = (target?: string) => target || '';
     const query = createMockTimeSeriesList({ filters: ['metric.test_label', '=', 'test', 'AND'] });
     const onChange = jest.fn();
     const datasource = createMockDatasource({
@@ -192,6 +215,7 @@ describe('VisualMetricQueryEditor', () => {
   });
 
   it('resets query to defaults (except filters) when metric changes', async () => {
+    replace = (target?: string) => target || '';
     const groupBys = ['metric.test_groupby'];
     const query = createMockTimeSeriesList({
       filters: ['metric.test_label', '=', 'test', 'AND', 'metric.type', '=', 'type'],
@@ -247,6 +271,7 @@ describe('VisualMetricQueryEditor', () => {
   });
 
   it('updates labels on time range change', async () => {
+    replace = (target?: string) => target || '';
     const range = getDefaultTimeRange();
     const query = createMockTimeSeriesList();
     const onChange = jest.fn();
