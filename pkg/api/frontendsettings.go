@@ -2,13 +2,13 @@ package api
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"net/http"
 	"slices"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -32,6 +32,39 @@ func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
 	}
 
 	c.JSON(http.StatusOK, settings)
+}
+
+// Returns a file that is easy to check for changes
+// Any changes to the file means we should refresh the frontend
+func (hs *HTTPServer) GetFrontendAssetInfo(c *contextmodel.ReqContext) {
+	core := sha256.New()
+	core.Write([]byte(setting.BuildVersion))
+	core.Write([]byte(setting.BuildCommit))
+	core.Write([]byte(fmt.Sprintf("%d", setting.BuildStamp)))
+
+	plugins := sha256.New()
+	for _, p := range hs.pluginStore.Plugins(c.Req.Context()) {
+		plugins.Write([]byte(p.Name))
+		plugins.Write([]byte(p.Info.Version))
+	}
+
+	assets := sha256.New()
+	dto, err := webassets.GetWebAssets(hs.Cfg, hs.License)
+	if err == nil && dto != nil {
+		core.Write([]byte(dto.Dark))
+		core.Write([]byte(dto.Light))
+		for _, f := range dto.JSFiles {
+			core.Write([]byte(f.FilePath))
+			core.Write([]byte(f.Integrity))
+		}
+	}
+
+	info := map[string]any{
+		"assets":  fmt.Sprintf("%x", assets.Sum(nil)),
+		"core":    fmt.Sprintf("%x", core.Sum(nil)),
+		"plugins": fmt.Sprintf("%x", plugins.Sum(nil)),
+	}
+	c.JSON(http.StatusOK, info)
 }
 
 // getFrontendSettings returns a json object with all the settings needed for front end initialisation.
@@ -158,6 +191,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		SecureSocksDSProxyEnabled:           hs.Cfg.SecureSocksDSProxy.Enabled && hs.Cfg.SecureSocksDSProxy.ShowUI,
 		DisableFrontendSandboxForPlugins:    hs.Cfg.DisableFrontendSandboxForPlugins,
 		PublicDashboardAccessToken:          c.PublicDashboardAccessToken,
+		//SharedWithMeFolderUID:               folder.SharedWithMeFolderUID,
 
 		Auth: dtos.FrontendSettingsAuthDTO{
 			OAuthSkipOrgRoleUpdateSync:  hs.Cfg.OAuthSkipOrgRoleUpdateSync,
@@ -632,13 +666,4 @@ func (hs *HTTPServer) getEnabledOAuthProviders() map[string]any {
 		}
 	}
 	return providers
-}
-
-func (hs *HTTPServer) GetFrontendAssets(c *contextmodel.ReqContext) response.Response {
-	assets, err := webassets.GetWebAssets(hs.Cfg)
-	if err != nil {
-		return response.Error(500, "Failed to load web assets manifest", err)
-	}
-
-	return response.JSON(http.StatusOK, assets)
 }

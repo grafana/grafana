@@ -20,9 +20,9 @@
 
     <!-- If theme is "system", we inject the stylesheets with javascript further down the page -->
     [[ if eq .ThemeType "light" ]]
-    <link rel="stylesheet" href="[[.ContentDeliveryURL]][[.Assets.Light]]" />
+    <link rel="stylesheet" href="[[.Assets.Light]]" />
     [[ else if eq .ThemeType "dark" ]]
-    <link rel="stylesheet" href="[[.ContentDeliveryURL]][[.Assets.Dark]]" />
+    <link rel="stylesheet" href="[[.Assets.Dark]]" />
     [[ end ]]
 
     <script nonce="[[.Nonce]]">
@@ -330,7 +330,7 @@
     [[range $asset := .Assets.JSFiles]]
       <script
       nonce="[[$.Nonce]]"
-      src="[[$.ContentDeliveryURL]][[$asset.FilePath]]"
+      src="[[$asset.FilePath]]"
       type="text/javascript"
     ></script>
     [[end]]

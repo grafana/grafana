@@ -47,3 +47,14 @@ type EntryPointAsset struct {
 	FilePath  string `json:"filePath"`
 	Integrity string `json:"integrity"`
 }
+
+func (a *EntryPointAssets) AddPrefix(prefix string) {
+	if prefix == "" {
+		return
+	}
+	a.Dark = prefix + a.Dark
+	a.Light = prefix + a.Light
+	for i, p := range a.JSFiles {
+		a.JSFiles[i].FilePath = prefix + p.FilePath
+	}
+}

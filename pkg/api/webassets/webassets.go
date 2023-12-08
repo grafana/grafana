@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -29,14 +30,19 @@ type EntryPointInfo struct {
 
 var entryPointAssetsCache *dtos.EntryPointAssets = nil
 
-func GetWebAssets(cfg *setting.Cfg) (*dtos.EntryPointAssets, error) {
+func GetWebAssets(cfg *setting.Cfg, license licensing.Licensing) (*dtos.EntryPointAssets, error) {
 	if cfg.Env != setting.Dev && entryPointAssetsCache != nil {
 		return entryPointAssetsCache, nil
 	}
 
 	result, err := readWebAssets(filepath.Join(cfg.StaticRootPath, "build", "assets-manifest.json"))
-	entryPointAssetsCache = result
 
+	// Optionally add the CDN url
+	cdn := cfg.GetContentDeliveryURL(license.ContentDeliveryPrefix())
+	if cdn != "" {
+		result.AddPrefix(cdn)
+	}
+	entryPointAssetsCache = result
 	return entryPointAssetsCache, err
 }
 
