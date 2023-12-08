@@ -4,11 +4,11 @@ import { ModalsContext } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { t } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { ShareModal } from '../ShareModal';
 
 import { DashNavButton } from './DashNavButton';
-import { trackToolbarShareClick } from './analytics';
 
 export const ShareButton = ({ dashboard }: { dashboard: DashboardModel }) => {
   const [queryParams] = useQueryParams();
@@ -33,7 +33,7 @@ export const ShareButton = ({ dashboard }: { dashboard: DashboardModel }) => {
       icon="share-alt"
       iconSize="lg"
       onClick={() => {
-        trackToolbarShareClick();
+        DashboardInteractions.toolbarShareClick();
         showModal(ShareModal, {
           dashboard,
           onDismiss: hideModal,
