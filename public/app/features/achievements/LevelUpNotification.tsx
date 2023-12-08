@@ -42,6 +42,7 @@ export const LevelUpNotification = ({ title, level, toaster }: LevelUpNotificati
       </div>
       <div className={styles.levelIcons}>
         <GrotIcon level={level - 1} width={100} height={100} />
+        <div style={{ marginTop: '45px', fontSize: '20px' }}>{'>>>'}</div>
         <GrotIcon level={level} width={100} height={100} />
       </div>
       <h3 className={styles.text}>{achievementsByName[level]}</h3>
