@@ -115,7 +115,7 @@ export class PanelQueryRunner {
         let transformations = this.dataConfigSource.getTransformations();
 
         if (
-          compareArrayValues(data.series, lastRawFrames, (a, b) => a === b) &&
+          data.series === lastRawFrames &&
           lastFieldConfig?.fieldConfig === fieldConfig?.fieldConfig &&
           lastTransformations === transformations
         ) {
@@ -336,9 +336,33 @@ export class PanelQueryRunner {
 
     this.subscription = panelData.subscribe({
       next: (data) => {
-        this.lastResult = skipPreProcess ? data : preProcessPanelData(data, this.lastResult);
+        const last = this.lastResult;
+        const next = skipPreProcess ? data : preProcessPanelData(data, last);
+
+        if (last != null) {
+          let sameSeries = compareArrayValues(last.series ?? [], next.series ?? [], (a, b) => a === b);
+          let sameAnnotations = compareArrayValues(last.annotations ?? [], next.annotations ?? [], (a, b) => a === b);
+
+          if (sameSeries) {
+            next.series = last.series;
+            console.log('sameSeries!');
+          }
+
+          if (sameAnnotations) {
+            next.annotations = last.annotations;
+            console.log('sameAnnotations!');
+          }
+
+          if (sameSeries && sameAnnotations) {
+            console.log('no next for you!');
+            return;
+          }
+        }
+
+        this.lastResult = next;
+
         // Store preprocessed query results for applying overrides later on in the pipeline
-        this.subject.next(this.lastResult);
+        this.subject.next(next);
       },
     });
   }
