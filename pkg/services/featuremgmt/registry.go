@@ -222,10 +222,11 @@ var (
 			Created:           time.Date(2022, time.September, 27, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:            "entityStore",
-			Description:     "SQL-based entity store (requires storage flag also)",
+			Name:            "unifiedStorage",
+			Description:     "SQL-based k8s storage",
 			Stage:           FeatureStageExperimental,
 			RequiresDevMode: true,
+			RequiresRestart: true, // new SQL tables created
 			Owner:           grafanaAppPlatformSquad,
 			Created:         time.Date(2022, time.December, 1, 12, 0, 0, 0, time.UTC),
 		},
@@ -739,6 +740,15 @@ var (
 			Created:      time.Date(2023, time.October, 6, 12, 0, 0, 0, time.UTC),
 		},
 		{
+			Name:            "grafanaAPIServerEnsureKubectlAccess",
+			Description:     "Start an additional https handler and write kubectl options",
+			Stage:           FeatureStageExperimental,
+			RequiresDevMode: true,
+			RequiresRestart: true,
+			Owner:           grafanaAppPlatformSquad,
+			Created:         time.Date(2023, time.December, 6, 12, 0, 0, 0, time.UTC),
+		},
+		{
 			Name:            "featureToggleAdminPage",
 			Description:     "Enable admin page for managing feature toggles from the Grafana front-end",
 			Stage:           FeatureStageExperimental,
@@ -989,6 +999,14 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
 			Created:         time.Date(2023, time.November, 8, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:            "kubernetesSnapshots",
+			Description:     "Use the kubernetes API in the frontend to support playlists",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+			Created:         time.Date(2023, time.December, 4, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "cloudWatchBatchQueries",

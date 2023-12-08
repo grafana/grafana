@@ -37,10 +37,13 @@ func GetWebAssets(cfg *setting.Cfg, license licensing.Licensing) (*dtos.EntryPoi
 
 	result, err := readWebAssets(filepath.Join(cfg.StaticRootPath, "build", "assets-manifest.json"))
 
-	// Optionally add the CDN url
-	cdn := cfg.GetContentDeliveryURL(license.ContentDeliveryPrefix())
-	if cdn != "" {
-		result.AddPrefix(cdn)
+	// Optionally add a CDN prefix
+	if err == nil {
+		cdn := ""
+		cdn, err = cfg.GetContentDeliveryURL(license.ContentDeliveryPrefix())
+		if cdn != "" {
+			result.AddPrefix(cdn)
+		}
 	}
 	entryPointAssetsCache = result
 	return entryPointAssetsCache, err

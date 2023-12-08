@@ -99,6 +99,10 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	hasEditPerm := hasAccess(ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionFoldersCreate)))
+	cdnURL, err := hs.Cfg.GetContentDeliveryURL(hs.License.ContentDeliveryPrefix())
+	if err != nil {
+		return nil, err
+	}
 
 	data := dtos.IndexViewData{
 		User: &dtos.CurrentUser{
@@ -144,7 +148,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		AppTitle:                            "Grafana",
 		NavTree:                             navTree,
 		Nonce:                               c.RequestNonce,
-		ContentDeliveryURL:                  hs.Cfg.GetContentDeliveryURL(hs.License.ContentDeliveryPrefix()),
+		ContentDeliveryURL:                  cdnURL,
 		LoadingLogo:                         "public/img/grafana_icon.svg",
 		IsDevelopmentEnv:                    hs.Cfg.Env == setting.Dev,
 		Assets:                              assets,

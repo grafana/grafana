@@ -15,6 +15,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -24,19 +25,9 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
-	settings, err := hs.getFrontendSettings(c)
-	if err != nil {
-		c.JsonApiErr(400, "Failed to get frontend settings", err)
-		return
-	}
-
-	c.JSON(http.StatusOK, settings)
-}
-
 // Returns a file that is easy to check for changes
 // Any changes to the file means we should refresh the frontend
-func (hs *HTTPServer) GetFrontendAssetInfo(c *contextmodel.ReqContext) {
+func (hs *HTTPServer) GetFrontendAssets(c *contextmodel.ReqContext) {
 	core := sha256.New()
 	core.Write([]byte(setting.BuildVersion))
 	core.Write([]byte(setting.BuildCommit))
@@ -65,6 +56,16 @@ func (hs *HTTPServer) GetFrontendAssetInfo(c *contextmodel.ReqContext) {
 		"plugins": fmt.Sprintf("%x", plugins.Sum(nil)),
 	}
 	c.JSON(http.StatusOK, info)
+}
+
+func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
+	settings, err := hs.getFrontendSettings(c)
+	if err != nil {
+		c.JsonApiErr(400, "Failed to get frontend settings", err)
+		return
+	}
+
+	c.JSON(http.StatusOK, settings)
 }
 
 // getFrontendSettings returns a json object with all the settings needed for front end initialisation.
@@ -191,7 +192,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		SecureSocksDSProxyEnabled:           hs.Cfg.SecureSocksDSProxy.Enabled && hs.Cfg.SecureSocksDSProxy.ShowUI,
 		DisableFrontendSandboxForPlugins:    hs.Cfg.DisableFrontendSandboxForPlugins,
 		PublicDashboardAccessToken:          c.PublicDashboardAccessToken,
-		//SharedWithMeFolderUID:               folder.SharedWithMeFolderUID,
+		SharedWithMeFolderUID:               folder.SharedWithMeFolderUID,
 
 		Auth: dtos.FrontendSettingsAuthDTO{
 			OAuthSkipOrgRoleUpdateSync:  hs.Cfg.OAuthSkipOrgRoleUpdateSync,
