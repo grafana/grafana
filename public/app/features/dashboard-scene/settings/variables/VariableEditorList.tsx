@@ -61,12 +61,12 @@ export function VariableEditorList({
                     {(provided) => (
                       <tbody ref={provided.innerRef} {...provided.droppableProps}>
                         {variables.map((variableScene, index) => {
-                          const variable = variableScene.state;
+                          const variableState = variableScene.state;
                           return (
                             <VariableEditorListRow
                               index={index}
-                              key={`${variable.name}-${index}`}
-                              variable={variable}
+                              key={`${variableState.name}-${index}`}
+                              variable={variableScene}
                               onDelete={onDelete}
                               onDuplicate={onDuplicate}
                               onEdit={onEdit}

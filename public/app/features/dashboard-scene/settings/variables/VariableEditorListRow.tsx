@@ -5,13 +5,13 @@ import { Draggable } from 'react-beautiful-dnd';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { QueryVariable, SceneVariableState } from '@grafana/scenes';
+import { QueryVariable, SceneVariable } from '@grafana/scenes';
 import { Button, ConfirmModal, Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { hasOptions } from 'app/features/variables/guard';
 
 export interface VariableEditorListRowProps {
   index: number;
-  variable: SceneVariableState;
+  variable: SceneVariable;
   onEdit: (identifier: string) => void;
   onDuplicate: (identifier: string) => void;
   onDelete: (identifier: string) => void;
@@ -27,7 +27,8 @@ export function VariableEditorListRow({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const definition = getDefinition(variable);
-  const identifier = variable.name;
+  const variableState = variable.state;
+  const identifier = variableState.name;
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const handleDeleteVariableModal = (show: boolean) => () => {
     setShowDeleteModal(show);
@@ -58,9 +59,9 @@ export function VariableEditorListRow({
                 propsOnEdit(identifier);
               }}
               className={styles.nameLink}
-              data-testid={selectors.pages.Dashboard.Settings.Variables.List.tableRowNameFields(variable.name)}
+              data-testid={selectors.pages.Dashboard.Settings.Variables.List.tableRowNameFields(variableState.name)}
             >
-              {variable.name}
+              {variableState.name}
             </Button>
           </td>
           <td
@@ -70,7 +71,7 @@ export function VariableEditorListRow({
               event.preventDefault();
               propsOnEdit(identifier);
             }}
-            data-testid={selectors.pages.Dashboard.Settings.Variables.List.tableRowDefinitionFields(variable.name)}
+            data-testid={selectors.pages.Dashboard.Settings.Variables.List.tableRowDefinitionFields(variableState.name)}
           >
             {definition}
           </td>
@@ -85,7 +86,9 @@ export function VariableEditorListRow({
                 }}
                 name="copy"
                 tooltip="Duplicate variable"
-                data-testid={selectors.pages.Dashboard.Settings.Variables.List.tableRowDuplicateButtons(variable.name)}
+                data-testid={selectors.pages.Dashboard.Settings.Variables.List.tableRowDuplicateButtons(
+                  variableState.name
+                )}
               />
               <IconButton
                 onClick={(event) => {
@@ -94,12 +97,14 @@ export function VariableEditorListRow({
                 }}
                 name="trash-alt"
                 tooltip="Remove variable"
-                data-testid={selectors.pages.Dashboard.Settings.Variables.List.tableRowRemoveButtons(variable.name)}
+                data-testid={selectors.pages.Dashboard.Settings.Variables.List.tableRowRemoveButtons(
+                  variableState.name
+                )}
               />
               <ConfirmModal
                 isOpen={showDeleteModal}
                 title="Delete variable"
-                body={`Are you sure you want to delete: ${variable.name}?`}
+                body={`Are you sure you want to delete: ${variableState.name}?`}
                 confirmText="Delete variable"
                 onConfirm={onDeleteVariable}
                 onDismiss={handleDeleteVariableModal(false)}
@@ -116,16 +121,16 @@ export function VariableEditorListRow({
   );
 }
 
-function getDefinition(model: SceneVariableState): string {
+function getDefinition(model: SceneVariable): string {
   let definition = '';
   if (model instanceof QueryVariable) {
-    if (model.definition) {
-      definition = model.definition;
-    } else if (typeof model.query === 'string') {
-      definition = model.query;
+    if (model.state.definition) {
+      definition = model.state.definition;
+    } else if (typeof model.state.query === 'string') {
+      definition = model.state.query;
     }
-  } else if (hasOptions(model)) {
-    definition = model.query;
+  } else if (hasOptions(model.state)) {
+    definition = model.state.query;
   }
   return definition;
 }
