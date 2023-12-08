@@ -191,6 +191,15 @@ export const achievements = [
     icon: 'apps',
   },
   {
+    id: AchievementId.AddAlertRule,
+    title: 'Add an alert rule',
+    description: 'Create a new alert rule',
+    level: AchievementLevel.Experienced,
+    link: 'https://grafana.com/docs/grafana/latest/alerting/set-up/migrating-alerts/legacy-alerting/grafana-cloud-alerting/create-edit-rules/',
+    video: '',
+    icon: 'bell',
+  },
+  {
     id: AchievementId.AddCustomThresholds,
     title: 'Add custom thresholds',
     description: '',

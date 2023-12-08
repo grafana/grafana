@@ -11,6 +11,8 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { registerAchievementCompleted } from 'app/features/achievements/AchievementsService';
+import { AchievementId } from 'app/features/achievements/types';
 import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
@@ -129,6 +131,8 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
         evaluateEvery: evaluateEvery,
       })
     );
+
+    registerAchievementCompleted(AchievementId.AddAlertRule);
   };
 
   const deleteRule = () => {

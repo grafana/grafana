@@ -36,6 +36,7 @@ export enum AchievementId {
   UseJoinByFieldTransformation = 'UseJoinByFieldTransformation', // DONE
   MakePublicDashboard = 'MakePublicDashboard', // DONE
   StreamDataToGrafana = 'StreamDataToGrafana', // SKIPPED: THIS ONE IS MORE COMPLEX (code is in grafana data package)
+  AddAlertRule = 'AddAlertRule', // DONE
 }
 
 export type Achievement = {
