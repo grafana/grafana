@@ -34,7 +34,9 @@ export const AchievementCard = ({ title, level }: AchievementCardProps) => {
 
   useEffect(() => {
     getUserLevel().then((level) => {
-      setExpanded(title === achievementsByName[level]);
+      if (level !== -1) {
+        setExpanded(title === achievementsByName[level]);
+      }
     });
   }, [title]);
 
@@ -50,6 +52,7 @@ export const AchievementCard = ({ title, level }: AchievementCardProps) => {
   const markVideoAsComplete = (id: AchievementId) => {
     registerAchievementCompleted(id);
   };
+  console.log('expanded', expanded);
 
   return (
     <div className={styles.wrapper}>
