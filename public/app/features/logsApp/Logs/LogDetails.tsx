@@ -339,13 +339,14 @@ export const LogDetails = (props: Props) => {
                           className={styles.collapsibleButton}
                           variant="secondary"
                           onClick={() => {
+                            // TODO: this is hacky for now as it would just work if the ID is part of the logline, not if it is only a label
                             onClickFilterValue(
                               row.possibleTraceId ?? row.possibleCorrelationId ?? '',
                               row.dataFrame.refId
                             );
                           }}
                         >
-                          Show in Logs App
+                          Show in Logs app
                         </Button>
                       )}
                       <LogRows
