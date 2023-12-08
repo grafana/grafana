@@ -45,9 +45,7 @@ func NewGrafanaComProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings
 		SocialBase:           newSocialBase(social.GrafanaComProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		url:                  cfg.GrafanaComURL,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
-		skipOrgRoleSync:      cfg.GrafanaComSkipOrgRoleSync,
-		// FIXME: Move skipOrgRoleSync to OAuthInfo
-		// skipOrgRoleSync: info.SkipOrgRoleSync
+		skipOrgRoleSync:      info.SkipOrgRoleSync,
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {

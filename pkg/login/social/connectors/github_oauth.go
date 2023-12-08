@@ -64,9 +64,7 @@ func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings sso
 		apiUrl:               info.ApiUrl,
 		teamIds:              teamIds,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
-		skipOrgRoleSync:      cfg.GitHubSkipOrgRoleSync,
-		// FIXME: Move skipOrgRoleSync to OAuthInfo
-		// skipOrgRoleSync: info.SkipOrgRoleSync
+		skipOrgRoleSync:      info.SkipOrgRoleSync,
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {

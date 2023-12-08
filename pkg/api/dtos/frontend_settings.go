@@ -6,18 +6,7 @@ import (
 )
 
 type FrontendSettingsAuthDTO struct {
-	OAuthSkipOrgRoleUpdateSync  bool `json:"OAuthSkipOrgRoleUpdateSync"`
-	SAMLSkipOrgRoleSync         bool `json:"SAMLSkipOrgRoleSync"`
-	LDAPSkipOrgRoleSync         bool `json:"LDAPSkipOrgRoleSync"`
-	GoogleSkipOrgRoleSync       bool `json:"GoogleSkipOrgRoleSync"`
-	GenericOAuthSkipOrgRoleSync bool `json:"GenericOAuthSkipOrgRoleSync"`
-	JWTAuthSkipOrgRoleSync      bool `json:"JWTAuthSkipOrgRoleSync"`
-	GrafanaComSkipOrgRoleSync   bool `json:"GrafanaComSkipOrgRoleSync"`
-	AzureADSkipOrgRoleSync      bool `json:"AzureADSkipOrgRoleSync"`
-	GithubSkipOrgRoleSync       bool `json:"GithubSkipOrgRoleSync"`
-	GitLabSkipOrgRoleSync       bool `json:"GitLabSkipOrgRoleSync"`
-	OktaSkipOrgRoleSync         bool `json:"OktaSkipOrgRoleSync"`
-	AuthProxyEnableLoginToken   bool `json:"AuthProxyEnableLoginToken"`
+	AuthProxyEnableLoginToken bool `json:"AuthProxyEnableLoginToken"`
 }
 
 type FrontendSettingsBuildInfoDTO struct {

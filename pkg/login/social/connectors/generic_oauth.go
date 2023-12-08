@@ -64,9 +64,7 @@ func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettin
 		teamIds:              util.SplitString(info.Extra[teamIdsKey]),
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 		allowedGroups:        info.AllowedGroups,
-		skipOrgRoleSync:      cfg.GenericOAuthSkipOrgRoleSync,
-		// FIXME: Move skipOrgRoleSync to OAuthInfo
-		// skipOrgRoleSync: info.SkipOrgRoleSync
+		skipOrgRoleSync:      info.SkipOrgRoleSync,
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {

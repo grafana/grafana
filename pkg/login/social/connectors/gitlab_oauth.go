@@ -59,9 +59,7 @@ func NewGitLabProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings sso
 	provider := &SocialGitlab{
 		SocialBase:      newSocialBase(social.GitlabProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		apiUrl:          info.ApiUrl,
-		skipOrgRoleSync: cfg.GitLabSkipOrgRoleSync,
-		// FIXME: Move skipOrgRoleSync to OAuthInfo
-		// skipOrgRoleSync: info.SkipOrgRoleSync
+		skipOrgRoleSync: info.SkipOrgRoleSync,
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {

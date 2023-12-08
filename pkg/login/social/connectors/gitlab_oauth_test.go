@@ -353,15 +353,13 @@ func TestSocialGitlab_extractFromToken(t *testing.T) {
 					AllowSignup:         false,
 					RoleAttributePath:   "",
 					RoleAttributeStrict: false,
-					// TODO: use this setting when SkipOrgRoleSync has moved to OAuthInfo
-					//SkipOrgRoleSync:     false,
-					AuthUrl:  tc.config.Endpoint.AuthURL,
-					TokenUrl: tc.config.Endpoint.TokenURL,
+					SkipOrgRoleSync:     false,
+					AuthUrl:             tc.config.Endpoint.AuthURL,
+					TokenUrl:            tc.config.Endpoint.TokenURL,
 				},
 				&setting.Cfg{
 					AutoAssignOrgRole:          "",
 					OAuthSkipOrgRoleUpdateSync: false,
-					GitLabSkipOrgRoleSync:      false,
 				}, &ssosettingstests.MockService{},
 				featuremgmt.WithFeatures())
 

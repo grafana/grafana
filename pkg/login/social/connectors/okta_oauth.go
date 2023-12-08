@@ -50,12 +50,10 @@ type OktaClaims struct {
 func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager) *SocialOkta {
 	config := createOAuthConfig(info, cfg, social.OktaProviderName)
 	provider := &SocialOkta{
-		SocialBase:    newSocialBase(social.OktaProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-		apiUrl:        info.ApiUrl,
-		allowedGroups: info.AllowedGroups,
-		// FIXME: Move skipOrgRoleSync to OAuthInfo
-		// skipOrgRoleSync: info.SkipOrgRoleSync
-		skipOrgRoleSync: cfg.OktaSkipOrgRoleSync,
+		SocialBase:      newSocialBase(social.OktaProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		apiUrl:          info.ApiUrl,
+		allowedGroups:   info.AllowedGroups,
+		skipOrgRoleSync: info.SkipOrgRoleSync,
 	}
 
 	if info.UseRefreshToken && features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) {

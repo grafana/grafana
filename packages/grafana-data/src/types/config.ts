@@ -234,16 +234,5 @@ export interface SqlConnectionLimits {
 }
 
 export interface AuthSettings {
-  OAuthSkipOrgRoleUpdateSync?: boolean;
-  SAMLSkipOrgRoleSync?: boolean;
-  LDAPSkipOrgRoleSync?: boolean;
-  JWTAuthSkipOrgRoleSync?: boolean;
-  GrafanaComSkipOrgRoleSync?: boolean;
-  GithubSkipOrgRoleSync?: boolean;
-  GitLabSkipOrgRoleSync?: boolean;
-  OktaSkipOrgRoleSync?: boolean;
-  AzureADSkipOrgRoleSync?: boolean;
-  GoogleSkipOrgRoleSync?: boolean;
-  GenericOAuthSkipOrgRoleSync?: boolean;
   AuthProxyEnableLoginToken?: boolean;
 }

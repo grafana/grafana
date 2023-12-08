@@ -160,18 +160,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		SharedWithMeFolderUID:               folder.SharedWithMeFolderUID,
 
 		Auth: dtos.FrontendSettingsAuthDTO{
-			OAuthSkipOrgRoleUpdateSync:  hs.Cfg.OAuthSkipOrgRoleUpdateSync,
-			SAMLSkipOrgRoleSync:         hs.Cfg.SAMLSkipOrgRoleSync,
-			LDAPSkipOrgRoleSync:         hs.Cfg.LDAPSkipOrgRoleSync,
-			GoogleSkipOrgRoleSync:       hs.Cfg.GoogleSkipOrgRoleSync,
-			JWTAuthSkipOrgRoleSync:      hs.Cfg.JWTAuthSkipOrgRoleSync,
-			GrafanaComSkipOrgRoleSync:   hs.Cfg.GrafanaComSkipOrgRoleSync,
-			GenericOAuthSkipOrgRoleSync: hs.Cfg.GenericOAuthSkipOrgRoleSync,
-			AzureADSkipOrgRoleSync:      hs.Cfg.AzureADSkipOrgRoleSync,
-			GithubSkipOrgRoleSync:       hs.Cfg.GitHubSkipOrgRoleSync,
-			GitLabSkipOrgRoleSync:       hs.Cfg.GitLabSkipOrgRoleSync,
-			OktaSkipOrgRoleSync:         hs.Cfg.OktaSkipOrgRoleSync,
-			AuthProxyEnableLoginToken:   hs.Cfg.AuthProxyEnableLoginToken,
+			AuthProxyEnableLoginToken: hs.Cfg.AuthProxyEnableLoginToken,
 		},
 
 		BuildInfo: dtos.FrontendSettingsBuildInfoDTO{

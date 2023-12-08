@@ -47,9 +47,7 @@ func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings sso
 		SocialBase:      newSocialBase(social.GoogleProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		hostedDomain:    info.HostedDomain,
 		apiUrl:          info.ApiUrl,
-		skipOrgRoleSync: cfg.GoogleSkipOrgRoleSync,
-		// FIXME: Move skipOrgRoleSync to OAuthInfo
-		// skipOrgRoleSync: info.SkipOrgRoleSync
+		skipOrgRoleSync: info.SkipOrgRoleSync,
 	}
 
 	if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {
