@@ -39,7 +39,7 @@ export function resolutionRounding(num: number) {
   }
 }
 
-export function calculateResolutionIndex(resolution: number, length: number) {
+export function calculateResolutionIndex(resolution: number | undefined, length: number) {
   return resolution !== undefined && resolution > 0 ? resolutionRounding(length / resolution) : 1;
 }
 
