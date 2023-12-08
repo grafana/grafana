@@ -3,7 +3,7 @@ import React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, Icon, Stack, useSkeleton, useStyles2, withSkeleton } from '@grafana/ui';
+import { Badge, Icon, SkeletonComponent, Stack, useStyles2, withSkeleton } from '@grafana/ui';
 
 import { CatalogPlugin, PluginIconName, PluginListDisplayMode } from '../types';
 
@@ -37,8 +37,10 @@ function PluginListItemComponent({ plugin, pathName, displayMode = PluginListDis
   );
 }
 
-const PluginListItemSkeleton = ({ displayMode = PluginListDisplayMode.Grid }: Pick<Props, 'displayMode'>) => {
-  const { skeletonProps } = useSkeleton();
+const PluginListItemSkeleton: SkeletonComponent<Pick<Props, 'displayMode'>> = ({
+  displayMode = PluginListDisplayMode.Grid,
+  skeletonProps,
+}) => {
   const styles = useStyles2(getStyles);
   const isList = displayMode === PluginListDisplayMode.List;
 

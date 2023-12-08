@@ -3,7 +3,16 @@ import React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Card, LinkButton, ModalsController, Stack, useSkeleton, useStyles2, withSkeleton } from '@grafana/ui';
+import {
+  Button,
+  Card,
+  LinkButton,
+  ModalsController,
+  SkeletonComponent,
+  Stack,
+  useStyles2,
+  withSkeleton,
+} from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
@@ -62,8 +71,7 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
   );
 };
 
-const PlaylistCardSkeleton = () => {
-  const { skeletonProps } = useSkeleton();
+const PlaylistCardSkeleton: SkeletonComponent = ({ skeletonProps }) => {
   const skeletonStyles = useStyles2(getSkeletonStyles);
   return (
     <Card {...skeletonProps}>

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useSkeleton, useStyles2, withSkeleton } from '@grafana/ui';
+import { SkeletonComponent, useStyles2, withSkeleton } from '@grafana/ui';
 
 import { PlaylistCard } from './PlaylistCard';
 import { Playlist } from './types';
@@ -30,8 +30,7 @@ const PlaylistPageListComponent = ({ playlists, setStartPlaylist, setPlaylistToD
   );
 };
 
-const PlaylistPageListSkeleton = () => {
-  const { skeletonProps } = useSkeleton();
+const PlaylistPageListSkeleton: SkeletonComponent = ({ skeletonProps }) => {
   const styles = useStyles2(getStyles);
   return (
     <div data-testid="playlist-page-list-skeleton" className={styles.list} {...skeletonProps}>

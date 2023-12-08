@@ -1,7 +1,7 @@
 import React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { useSkeleton, withSkeleton } from '@grafana/ui';
+import { SkeletonComponent, withSkeleton } from '@grafana/ui';
 
 import { Settings } from './AdminSettings';
 
@@ -35,8 +35,7 @@ const AdminSettingsTableComponent = ({ settings }: Props) => {
 // note: don't want to put this in render function else it will get regenerated
 const randomValues = new Array(50).fill(null).map(() => Math.random());
 
-const AdminSettingsTableSkeleton = () => {
-  const { skeletonProps } = useSkeleton();
+const AdminSettingsTableSkeleton: SkeletonComponent = ({ skeletonProps }) => {
   return (
     <table className="filter-table" {...skeletonProps}>
       <tbody>

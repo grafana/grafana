@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { Button, LinkButton, useSkeleton, useStyles2, withSkeleton } from '@grafana/ui';
+import { Button, LinkButton, SkeletonComponent, useStyles2, withSkeleton } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { Snapshot } from 'app/features/dashboard/services/SnapshotSrv';
 
@@ -40,8 +40,7 @@ const SnapshotListTableRowComponent = ({ snapshot, onRemove }: Props) => {
   );
 };
 
-const SnapshotListTableRowSkeleton = () => {
-  const { skeletonProps } = useSkeleton();
+const SnapshotListTableRowSkeleton: SkeletonComponent = ({ skeletonProps }) => {
   const styles = useStyles2(getSkeletonStyles);
   return (
     <tr {...skeletonProps}>

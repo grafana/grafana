@@ -4,7 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Icon, Link, useSkeleton, useStyles2, withSkeleton } from '@grafana/ui';
+import { Icon, Link, SkeletonComponent, useStyles2, withSkeleton } from '@grafana/ui';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { PanelTypeCard } from 'app/features/panel/components/VizTypePicker/PanelTypeCard';
 
@@ -53,8 +53,10 @@ const LibraryPanelCardComponent = ({ libraryPanel, onClick, onDelete, showSecond
   );
 };
 
-const LibraryPanelCardSkeleton = ({ showSecondaryActions }: Pick<Props, 'showSecondaryActions'>) => {
-  const { skeletonProps } = useSkeleton();
+const LibraryPanelCardSkeleton: SkeletonComponent<Pick<Props, 'showSecondaryActions'>> = ({
+  showSecondaryActions,
+  skeletonProps,
+}) => {
   const styles = useStyles2(getStyles);
 
   return (

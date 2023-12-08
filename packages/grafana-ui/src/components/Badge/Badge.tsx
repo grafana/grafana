@@ -7,7 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { IconName } from '../../types';
-import { useSkeleton, withSkeleton } from '../../utils';
+import { SkeletonComponent, withSkeleton } from '../../utils';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 
@@ -39,8 +39,7 @@ const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, cla
 });
 BadgeComponent.displayName = 'Badge';
 
-const BadgeSkeleton = () => {
-  const { skeletonProps } = useSkeleton();
+const BadgeSkeleton: SkeletonComponent = ({ skeletonProps }) => {
   const styles = useStyles2(getSkeletonStyles);
 
   return <Skeleton width={60} height={22} containerClassName={styles.container} {...skeletonProps} />;
