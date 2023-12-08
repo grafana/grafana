@@ -106,7 +106,7 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
   return (
     <>
       <div className={styles.container}>
-        <div>
+        <div aria-label="traceql-search-query">
           {datasource.search?.filters?.map(
             (f) =>
               f.tag && (
@@ -197,7 +197,9 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
           )}
         </div>
         <EditorRow>
-          <RawQuery query={templateSrv.replace(traceQlQuery)} lang={{ grammar: traceqlGrammar, name: 'traceql' }} />
+          <div aria-label="traceql-search-raw-query">
+            <RawQuery query={templateSrv.replace(traceQlQuery)} lang={{ grammar: traceqlGrammar, name: 'traceql' }} />
+          </div>
         </EditorRow>
         <TempoQueryBuilderOptions onChange={onChange} query={query} />
       </div>

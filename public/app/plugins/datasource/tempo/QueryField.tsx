@@ -86,18 +86,18 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
     const graphDatasourceUid = datasource.serviceMap?.datasourceUid;
 
     let queryTypeOptions: Array<SelectableValue<TempoQueryType>> = [
-      { value: 'traceqlSearch', label: 'Search' },
-      { value: 'traceql', label: 'TraceQL' },
-      { value: 'serviceMap', label: 'Service Graph' },
+      { value: 'traceqlSearch', label: 'Search', ariaLabel: 'Search' },
+      { value: 'traceql', label: 'TraceQL', ariaLabel: 'TraceQL' },
+      { value: 'serviceMap', label: 'Service Graph', ariaLabel: 'Service Graph' },
     ];
 
     if (logsDatasourceUid) {
       if (datasource?.search?.hide) {
         // Place at beginning as Search if no native search
-        queryTypeOptions.unshift({ value: 'search', label: 'Search' });
+        queryTypeOptions.unshift({ value: 'search', label: 'Search', ariaLabel: 'Search' });
       } else {
         // Place at end as Loki Search if native search is enabled
-        queryTypeOptions.push({ value: 'search', label: 'Loki Search' });
+        queryTypeOptions.push({ value: 'search', label: 'Loki Search', ariaLabel: 'Loki Search' });
       }
     }
 
