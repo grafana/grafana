@@ -114,6 +114,15 @@ export const PMM_ADD_INSTANCE_PAGE: NavModelItem = {
   text: 'Add Service',
   hideFromTabs: true,
   showIconInNavbar: true,
+};
+
+/**
+ * Add separate page with isCreateAction to show the item both in
+ * navigation and "New" shortcut
+ */
+export const PMM_ADD_INSTANCE_CREATE_PAGE: NavModelItem = {
+  ...PMM_ADD_INSTANCE_PAGE,
+  text: 'Add service',
   isCreateAction: true,
 };
 
@@ -140,7 +149,6 @@ export const PMM_ACCESS_ROLE_EDIT_PAGE: NavModelItem = {
   icon: 'plus',
   text: 'Edit role',
   hideFromTabs: true,
-  isCreateAction: true,
 };
 
 export const PMM_ACCESS_ROLES_PAGE: NavModelItem = {

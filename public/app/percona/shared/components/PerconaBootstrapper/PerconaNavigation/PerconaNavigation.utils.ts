@@ -20,6 +20,7 @@ import {
   WEIGHTS,
   PMM_ACCESS_ROLE_CREATE_PAGE,
   PMM_ACCESS_ROLE_EDIT_PAGE,
+  PMM_ADD_INSTANCE_CREATE_PAGE,
 } from './PerconaNavigation.constants';
 
 const DIVIDER: NavModelItem = {
@@ -109,6 +110,7 @@ export const buildInventoryAndSettings = (mainLinks: NavModelItem[], settings?: 
     configNode.url = `${config.appSubUrl}/inventory`;
     configNode.children = [
       PMM_ADD_INSTANCE_PAGE,
+      PMM_ADD_INSTANCE_CREATE_PAGE,
       inventoryLink,
       settingsLink,
       pmmLink,
