@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { IconName } from '../../types/icon';
-import { getTagColor, getTagColorsFromName } from '../../utils';
+import { getTagColor, getTagColorsFromName, useSkeleton, withSkeleton } from '../../utils';
 import { Icon } from '../Icon/Icon';
 
 /**
@@ -51,17 +51,12 @@ const TagComponent = forwardRef<HTMLElement, Props>(({ name, onClick, icon, clas
 TagComponent.displayName = 'Tag';
 
 const TagSkeleton = () => {
+  const { skeletonProps } = useSkeleton();
   const styles = useStyles2(getSkeletonStyles);
-  return <Skeleton width={60} height={22} containerClassName={styles.container} />;
+  return <Skeleton width={60} height={22} containerClassName={styles.container} {...skeletonProps} />;
 };
 
-interface TagWithSkeleton extends React.ForwardRefExoticComponent<Props & React.RefAttributes<HTMLElement>> {
-  Skeleton: typeof TagSkeleton;
-}
-
-export const Tag: TagWithSkeleton = Object.assign(TagComponent, {
-  Skeleton: TagSkeleton,
-});
+export const Tag = withSkeleton(TagComponent, TagSkeleton);
 
 const getSkeletonStyles = () => ({
   container: css({

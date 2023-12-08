@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { useSkeleton, useStyles2, withSkeleton } from '@grafana/ui';
 
 import { PlaylistCard } from './PlaylistCard';
 import { Playlist } from './types';
@@ -13,7 +13,7 @@ interface Props {
   playlists: Playlist[];
 }
 
-export const PlaylistPageList = ({ playlists, setStartPlaylist, setPlaylistToDelete }: Props) => {
+const PlaylistPageListComponent = ({ playlists, setStartPlaylist, setPlaylistToDelete }: Props) => {
   const styles = useStyles2(getStyles);
   return (
     <ul className={styles.list}>
@@ -31,9 +31,10 @@ export const PlaylistPageList = ({ playlists, setStartPlaylist, setPlaylistToDel
 };
 
 const PlaylistPageListSkeleton = () => {
+  const { skeletonProps } = useSkeleton();
   const styles = useStyles2(getStyles);
   return (
-    <div data-testid="playlist-page-list-skeleton" className={styles.list}>
+    <div data-testid="playlist-page-list-skeleton" className={styles.list} {...skeletonProps}>
       <PlaylistCard.Skeleton />
       <PlaylistCard.Skeleton />
       <PlaylistCard.Skeleton />
@@ -41,7 +42,7 @@ const PlaylistPageListSkeleton = () => {
   );
 };
 
-PlaylistPageList.Skeleton = PlaylistPageListSkeleton;
+export const PlaylistPageList = withSkeleton(PlaylistPageListComponent, PlaylistPageListSkeleton);
 
 function getStyles(theme: GrafanaTheme2) {
   return {

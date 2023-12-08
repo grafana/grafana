@@ -3,7 +3,7 @@ import React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, Icon, Stack, useStyles2 } from '@grafana/ui';
+import { Badge, Icon, Stack, useSkeleton, useStyles2, withSkeleton } from '@grafana/ui';
 
 import { CatalogPlugin, PluginIconName, PluginListDisplayMode } from '../types';
 
@@ -18,7 +18,7 @@ type Props = {
   displayMode?: PluginListDisplayMode;
 };
 
-export function PluginListItem({ plugin, pathName, displayMode = PluginListDisplayMode.Grid }: Props) {
+function PluginListItemComponent({ plugin, pathName, displayMode = PluginListDisplayMode.Grid }: Props) {
   const styles = useStyles2(getStyles);
   const isList = displayMode === PluginListDisplayMode.List;
 
@@ -38,11 +38,12 @@ export function PluginListItem({ plugin, pathName, displayMode = PluginListDispl
 }
 
 const PluginListItemSkeleton = ({ displayMode = PluginListDisplayMode.Grid }: Pick<Props, 'displayMode'>) => {
+  const { skeletonProps } = useSkeleton();
   const styles = useStyles2(getStyles);
   const isList = displayMode === PluginListDisplayMode.List;
 
   return (
-    <div className={cx(styles.container, { [styles.list]: isList })}>
+    <div className={cx(styles.container, { [styles.list]: isList })} {...skeletonProps}>
       <Skeleton
         containerClassName={cx(
           styles.pluginLogo,
@@ -72,7 +73,7 @@ const PluginListItemSkeleton = ({ displayMode = PluginListDisplayMode.Grid }: Pi
   );
 };
 
-PluginListItem.Skeleton = PluginListItemSkeleton;
+export const PluginListItem = withSkeleton(PluginListItemComponent, PluginListItemSkeleton);
 
 // Styles shared between the different type of list items
 export const getStyles = (theme: GrafanaTheme2) => {
