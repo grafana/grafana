@@ -7,12 +7,11 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
-
-	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
 )
 
 type genericHandler struct {
 	namespaced bool
+	newfunc    func() runtime.Object
 }
 
 var _ rest.Connecter = (*genericHandler)(nil)
@@ -20,7 +19,7 @@ var _ rest.Scoper = (*genericHandler)(nil)
 var _ rest.SingularNameProvider = (*genericHandler)(nil)
 
 func (r *genericHandler) New() runtime.Object {
-	return &example.GenericHandlerOptions{}
+	return r.newfunc()
 }
 
 func (r *genericHandler) Destroy() {}
@@ -38,7 +37,7 @@ func (r *genericHandler) ConnectMethods() []string {
 }
 
 func (r *genericHandler) NewConnectOptions() (runtime.Object, bool, string) {
-	return &example.GenericHandlerOptions{}, true, "path"
+	return r.newfunc(), false, ""
 }
 
 func (r *genericHandler) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {

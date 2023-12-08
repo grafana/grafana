@@ -47,7 +47,23 @@ type DummySubresource struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type GenericHandlerOptions struct {
+type AAAOptions struct {
+	metav1.TypeMeta
+
+	// Path is the URL path to use for the current proxy request
+	Path string
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type BBBOptions struct {
+	metav1.TypeMeta
+
+	// Path is the URL path to use for the current proxy request
+	Path string
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type CCCOptions struct {
 	metav1.TypeMeta
 
 	// Path is the URL path to use for the current proxy request

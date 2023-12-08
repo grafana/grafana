@@ -53,7 +53,9 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&example.DummyResource{},
 		&example.DummyResourceList{},
 		&example.DummySubresource{},
-		&example.GenericHandlerOptions{},
+		&example.AAAOptions{},
+		&example.BBBOptions{},
+		&example.CCCOptions{},
 	)
 }
 
@@ -88,9 +90,9 @@ func (b *TestingAPIBuilder) GetAPIGroupInfo(
 	storage["runtime"] = newDeploymentInfoStorage(b.gv, scheme)
 	storage["dummy"] = newDummyStorage(b.gv, scheme, "test1", "test2", "test3")
 	storage["dummy/sub"] = &dummySubresourceREST{}
-	storage["aaa"] = &genericHandler{namespaced: false}
-	storage["bbb"] = &genericHandler{namespaced: false}
-	storage["ccc"] = &genericHandler{namespaced: true}
+	storage["aaa"] = &genericHandler{namespaced: false, newfunc: func() runtime.Object { return &example.AAAOptions{} }}
+	storage["bbb"] = &genericHandler{namespaced: false, newfunc: func() runtime.Object { return &example.BBBOptions{} }}
+	storage["ccc"] = &genericHandler{namespaced: true, newfunc: func() runtime.Object { return &example.CCCOptions{} }}
 
 	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage
 	return &apiGroupInfo, nil
