@@ -265,7 +265,7 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 	}
 
 	children = append(children, &navtree.NavLink{
-		Text: "Achievements", Id: "profile/achievements", Url: s.cfg.AppSubURL + "/profile/achievements", Icon: "bell",
+		Text: "Achievements", Id: "profile/achievements", Url: s.cfg.AppSubURL + "/profile/achievements", Icon: "star",
 	})
 
 	if !setting.DisableSignoutMenu {
