@@ -26,4 +26,4 @@ The `PUT /api/folders/:uid` endpoint no longer supports modifying the folder's U
 
 In the Azure Monitor data source, the **Intersection** option has been replaced with a **Dashboard** option to reduce confusion around how time ranges work. This is a breaking change because we're removing support for **Intersection**, but it is replaced with an option that is nearly the same. The **Intersection** option will be migrated to **Dashboard** automatically. See GitHub PR [#74675](https://github.com/grafana/grafana/pull/74675) for more details.
 
-This version removes all components for the old panel header design. See more details in GitHub PR [#74196](https://github.com/grafana/grafana/pull/74196).
+This version removes all components for the old panel header design. See GitHub PR [#74196](https://github.com/grafana/grafana/pull/74196) for more details.
