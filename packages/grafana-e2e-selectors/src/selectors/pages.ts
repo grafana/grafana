@@ -21,7 +21,7 @@ export const Pages = {
     delete: 'Data source settings page Delete button',
     readOnly: 'data-testid Data source settings page read only message',
     saveAndTest: 'data-testid Data source settings page Save and Test button',
-    alert: 'Data source settings page Alert',
+    alert: 'data-testid Data source settings page Alert',
   },
   DataSources: {
     url: '/datasources',
@@ -35,7 +35,7 @@ export const Pages = {
     url: '/datasources/new',
     /** @deprecated Use dataSourcePluginsV2 */
     dataSourcePlugins: (pluginName: string) => `Data source plugin item ${pluginName}`,
-    dataSourcePluginsV2: (pluginName: string) => `Add new data source ${pluginName}`,
+    dataSourcePluginsV2: (pluginName: string) => `data-testid Add new data source ${pluginName}`,
   },
   ConfirmModal: {
     delete: 'data-testid Confirm Modal Danger Button',
@@ -268,12 +268,12 @@ export const Pages = {
     page: 'Plugins list page',
     list: 'Plugins list',
     listItem: 'Plugins list item',
-    signatureErrorNotice: 'Unsigned plugins notice',
+    signatureErrorNotice: 'data-testid Unsigned plugins notice',
   },
   PluginPage: {
     page: 'Plugin page',
-    signatureInfo: 'Plugin signature info',
-    disabledInfo: 'Plugin disabled info',
+    signatureInfo: 'data-testid Plugin signature info',
+    disabledInfo: 'data-testid Plugin disabled info',
   },
   PlaylistForm: {
     name: 'Playlist name',
