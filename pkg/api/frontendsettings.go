@@ -28,34 +28,48 @@ import (
 // Returns a file that is easy to check for changes
 // Any changes to the file means we should refresh the frontend
 func (hs *HTTPServer) GetFrontendAssets(c *contextmodel.ReqContext) {
-	core := sha256.New()
-	core.Write([]byte(setting.BuildVersion))
-	core.Write([]byte(setting.BuildCommit))
-	core.Write([]byte(fmt.Sprintf("%d", setting.BuildStamp)))
+	hash := sha256.New()
+	keys := map[string]any{}
 
-	plugins := sha256.New()
+	// BuildVersion
+	hash.Reset()
+	_, _ = hash.Write([]byte(setting.BuildVersion))
+	_, _ = hash.Write([]byte(setting.BuildCommit))
+	_, _ = hash.Write([]byte(fmt.Sprintf("%d", setting.BuildStamp)))
+	keys["version"] = fmt.Sprintf("%x", hash.Sum(nil))
+
+	// Plugin configs
+	hash.Reset()
 	for _, p := range hs.pluginStore.Plugins(c.Req.Context()) {
-		plugins.Write([]byte(p.Name))
-		plugins.Write([]byte(p.Info.Version))
+		_, _ = hash.Write([]byte(p.Name))
+		_, _ = hash.Write([]byte(p.Info.Version))
 	}
+	keys["plugins"] = fmt.Sprintf("%x", hash.Sum(nil))
 
-	assets := sha256.New()
-	dto, err := webassets.GetWebAssets(hs.Cfg, hs.License)
-	if err == nil && dto != nil {
-		core.Write([]byte(dto.Dark))
-		core.Write([]byte(dto.Light))
-		for _, f := range dto.JSFiles {
-			core.Write([]byte(f.FilePath))
-			core.Write([]byte(f.Integrity))
+	// Feature flags
+	hash.Reset()
+	for flag, set := range hs.Features.GetEnabled(c.Req.Context()) {
+		if set {
+			_, _ = hash.Write([]byte(flag))
 		}
 	}
+	keys["flags"] = fmt.Sprintf("%x", hash.Sum(nil))
 
-	info := map[string]any{
-		"assets":  fmt.Sprintf("%x", assets.Sum(nil)),
-		"core":    fmt.Sprintf("%x", core.Sum(nil)),
-		"plugins": fmt.Sprintf("%x", plugins.Sum(nil)),
+	// Assets
+	hash.Reset()
+	dto, err := webassets.GetWebAssets(hs.Cfg, hs.License)
+	if err == nil && dto != nil {
+		_, _ = hash.Write([]byte(dto.ContentDeliveryURL))
+		_, _ = hash.Write([]byte(dto.Dark))
+		_, _ = hash.Write([]byte(dto.Light))
+		for _, f := range dto.JSFiles {
+			_, _ = hash.Write([]byte(f.FilePath))
+			_, _ = hash.Write([]byte(f.Integrity))
+		}
 	}
-	c.JSON(http.StatusOK, info)
+	keys["assets"] = fmt.Sprintf("%x", hash.Sum(nil))
+
+	c.JSON(http.StatusOK, keys)
 }
 
 func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
