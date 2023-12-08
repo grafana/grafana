@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs';
 
-import { DataSourceInstanceSettings, DataSourceRef, getDataSourceRef, ScopedVars } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceRef, getDataSourceRef, getVariableName, ScopedVars } from '@grafana/data';
 import { BackendDataSourceResponse, FetchResponse, getBackendSrv, TemplateSrv } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -9,7 +9,7 @@ import { AppNotificationTimeout } from 'app/types';
 
 import memoizedDebounce from '../memoizedDebounce';
 import { CloudWatchJsonData, Dimensions, MetricRequest, MultiFilters } from '../types';
-import { getVariableName } from '../utils/templateVariableUtils';
+
 export abstract class CloudWatchRequest {
   templateSrv: TemplateSrv;
   ref: DataSourceRef;
