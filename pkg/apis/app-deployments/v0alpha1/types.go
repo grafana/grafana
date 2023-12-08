@@ -14,20 +14,26 @@ type AppDeploymentInfo struct {
 }
 
 type Info struct {
-	Group    string     `json:"group,omitempty"`
-	Versions []string   `json:"versions,omitempty"`
-	CDN      ChannelCDN `json:"cdn,omitempty"`
-}
+	// Plugin display name
+	Title string `json:"title,omitempty"`
 
-type ChannelCDN struct {
-	// Grafana Updated every hour (M-F only!)
-	Instant string `json:"instant,omitempty"`
-	// Grafana Updated every week day
-	Fast string `json:"fast,omitempty"`
-	// Updated every week (Tues)
-	Steady string `json:"steady,omitempty"`
-	// Updated every month (4th monday of the month)
-	Slow string `json:"slow,omitempty"`
+	// Plugin description
+	Description string `json:"description,omitempty"`
+
+	// Version
+	Version string `json:"version,omitempty"`
+
+	// URL to base assets
+	Assets string `json:"assets,omitempty"`
+
+	// Path to the plugin icon
+	Icon string `json:"icon,omitempty"`
+
+	// The javascript entrypoint
+	Module string `json:"module,omitempty"`
+
+	// List of required APIs
+	APIs []string `json:"apis,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
