@@ -1,7 +1,9 @@
 import { IconName } from '@grafana/data';
-import { SceneObject, SceneObjectState } from '@grafana/scenes';
+import { SceneObject, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
 
-export interface PanelDataPaneTabState extends SceneObjectState {}
+export interface PanelDataPaneTabState extends SceneObjectState {
+  panelRef: SceneObjectRef<VizPanel>;
+}
 
 export interface PanelDataPaneTab extends SceneObject {
   getTabLabel(): string;

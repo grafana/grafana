@@ -85,13 +85,15 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private _commitChanges() {
     const dashboard = this.state.dashboardRef.resolve();
     const sourcePanel = this.state.sourcePanelRef.resolve();
-    const panel = this.state.panelRef.resolve();
+
+    const panelMngr = this.state.panelRef.resolve();
 
     if (!dashboard.state.isEditing) {
       dashboard.onEnterEditMode();
     }
 
-    const newState = sceneUtils.cloneSceneObjectState(panel.state);
+    const newState = sceneUtils.cloneSceneObjectState(panelMngr.state.panel.state);
+
     sourcePanel.setState(newState);
 
     // preserve time range and variables state
@@ -107,6 +109,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       getDashboardUrl({
         uid: this.state.dashboardRef.resolve().state.uid,
         currentQueryParams: locationService.getLocation().search,
+        useExperimentalURL: true,
       })
     );
   }
@@ -130,7 +133,7 @@ export function buildPanelEditScene(dashboard: DashboardScene, panel: VizPanel):
         direction: 'column',
         primary: new SceneFlexLayout({
           direction: 'column',
-          children: [panelClone],
+          children: [vizPanelMgr],
         }),
         secondary: new SceneFlexItem({
           body: new PanelDataPane({ panelRef: panelClone.getRef() }),

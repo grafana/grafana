@@ -2,12 +2,15 @@ import React from 'react';
 
 import {
   SceneComponentProps,
+  SceneDataTransformer,
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
+  SceneQueryRunner,
   VizPanel,
+  sceneGraph,
 } from '@grafana/scenes';
 import { Tab, TabContent, TabsBar } from '@grafana/ui';
 import { shouldShowAlertingTab } from 'app/features/dashboard/components/PanelEditor/state/selectors';
@@ -66,8 +69,32 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
     this.addActivationHandler(() => this.buildTabs());
   }
 
+  private getDataObjects(): [SceneQueryRunner | undefined, SceneDataTransformer | undefined] {
+    const { panelRef } = this.state;
+    const dataObj = sceneGraph.getData(panelRef.resolve());
+
+    let runner: SceneQueryRunner | undefined;
+    let transformer: SceneDataTransformer | undefined;
+
+    if (dataObj instanceof SceneQueryRunner) {
+      runner = dataObj;
+    }
+
+    if (dataObj instanceof SceneDataTransformer) {
+      transformer = dataObj;
+      if (transformer.state.$data instanceof SceneQueryRunner) {
+        runner = transformer.state.$data;
+      }
+    }
+
+    //TODO: handle ShareQueryDataProvider
+
+    return [runner, transformer];
+  }
+
   private buildTabs() {
     const { panelRef } = this.state;
+    const [runner, transformer] = this.getDataObjects();
     const tabs: PanelDataPaneTab[] = [];
 
     if (panelRef) {
@@ -80,11 +107,16 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
         this.setState({ tabs });
         return;
       } else {
-        tabs.push(new PanelDataQueriesTab({}));
-        tabs.push(new PanelDataTransformationsTab({}));
+        if (runner) {
+          tabs.push(new PanelDataQueriesTab({ panelRef, dataRef: new SceneObjectRef(runner) }));
+        }
+
+        if (transformer) {
+          tabs.push(new PanelDataTransformationsTab({ panelRef, dataRef: new SceneObjectRef(transformer) }));
+        }
 
         if (shouldShowAlertingTab(plugin)) {
-          tabs.push(new PanelDataAlertingTab({}));
+          tabs.push(new PanelDataAlertingTab({ panelRef }));
         }
       }
     }
