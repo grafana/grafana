@@ -147,7 +147,7 @@ func Recovery(cfg *setting.Cfg, license licensing.Licensing) web.Middleware {
 						Title     string
 						AppTitle  string
 						AppSubUrl string
-						Theme     string
+						ThemeType string
 						ErrorMsg  string
 						Assets    *dtos.EntryPointAssets
 					}{"Server Error", "Grafana", cfg.AppSubURL, cfg.DefaultTheme, "", assets}
