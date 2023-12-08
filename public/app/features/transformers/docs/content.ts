@@ -460,7 +460,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
     '/static/img/docs/transformations/filter-name-table-before-7-0.png',
     imageRenderType,
     // Distinguish alt text for multiple images by appending a number.
-    'Filter fields by name' + 1
+    'Filter fields by name 1'
   )}
 
   Here's the table after we applied the transformation to remove the Min field.
@@ -468,7 +468,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/filter-name-table-after-7-0.png',
     imageRenderType,
-    'Filter fields by name' + 2
+    'Filter fields by name 2'
   )}
 
   Here is the same query using a Stat visualization.
@@ -476,7 +476,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/filter-name-stat-after-7-0.png',
     imageRenderType,
-    'Filter fields by name' + 3
+    'Filter fields by name 3'
   )}
 
   This transformation provides flexibility in tailoring your query results to focus on the specific fields you need for effective analysis and visualization.
@@ -790,16 +790,12 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/join-fields-before-7-0.png',
     imageRenderType,
-    'Join by field' + 1
+    'Join by field 1'
   )}
 
   I applied a transformation to join the query results using the time field. Now I can run calculations, combine, and organize the results in this new table.
 
-  ${buildImageContent(
-    '/static/img/docs/transformations/join-fields-after-7-0.png',
-    imageRenderType,
-    'Join by field' + 2
-  )}
+  ${buildImageContent('/static/img/docs/transformations/join-fields-after-7-0.png', imageRenderType, 'Join by field 2')}
 
   Combine and analyze data from various queries with table joining for a comprehensive view of your information.
   `;
@@ -1191,7 +1187,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/rename-by-regex-before-7-3.png',
     imageRenderType,
-    'Rename by regex' + 1
+    'Rename by regex 1'
   )}
 
   With the transformation applied, you can see we are left with just the remainder of the string.
@@ -1199,7 +1195,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/rename-by-regex-after-7-3.png',
     imageRenderType,
-    'Rename by regex' + 2
+    'Rename by regex 2'
   )}
 
   This transformation lets you to tailor your data to meet your visualization needs, making your dashboards more informative and user-friendly.
@@ -1411,7 +1407,7 @@ export function getLinkToDocs(): string {
 function buildImageContent(source: string, imageRenderType: ImageRenderType, imageName?: string) {
   return imageRenderType === 'shortcodeFigure'
     ? // This will build a Hugo Shortcode "figure" image template, which shares the same default class and max-width.
-      `{{< figure src="${source}" class="docs-image--no-shadow" max-width= "1100px" >}}`
+      `{{< figure src="${source}" class="docs-image--no-shadow" max-width= "1100px" alt="${imageName} docs image" >}}`
     : // This will build generic Markdown image syntax for UI rendering.
       `![${imageName} helper image](https://grafana.com${source})`;
 }
