@@ -16,7 +16,7 @@
 
     <link rel="icon" type="image/png" href="[[.FavIcon]]" />
     <link rel="apple-touch-icon" sizes="180x180" href="[[.AppleTouchIcon]]" />
-    <link rel="mask-icon" href="[[.ContentDeliveryURL]]public/img/grafana_mask_icon.svg" color="#F05A28" />
+    <link rel="mask-icon" href="[[.Assets.ContentDeliveryURL]]public/img/grafana_mask_icon.svg" color="#F05A28" />
 
     <!-- If theme is "system", we inject the stylesheets with javascript further down the page -->
     [[ if eq .ThemeType "light" ]]
@@ -282,8 +282,8 @@
         window.__grafana_load_failed();
       };
 
-      [[if .ContentDeliveryURL]]
-        window.public_cdn_path = '[[.ContentDeliveryURL]]public/build/';
+      [[if .Assets.ContentDeliveryURL]]
+        window.public_cdn_path = '[[.Assets.ContentDeliveryURL]]public/build/';
       [[end]]
       [[if .Nonce]]
         window.nonce = '[[.Nonce]]';
