@@ -30,13 +30,22 @@ func NewDuckDB(name string) (*DuckDB, error) {
 }
 
 func (d *DuckDB) QueryPRQL(ctx context.Context, prql string) (*data.Frame, error) {
+	prql = strings.ToLower(prql)
+	prql = strings.TrimSpace(prql)
+	if strings.HasPrefix(prql, "select") || strings.HasPrefix(prql, "with") {
+		// assume sql
+		return d.Query(ctx, prql)
+	}
 	sql, err := Convert(prql, "duckdb")
 	if err != nil {
 		// TODO... should check for first non-comment token?
 		// if !strings.Contains(strings.ToLower(prql), "select") {
 		// 	return nil, err
 		// }
-		sql = prql // just try it as regular query (will also have a syntax error)
+		fmt.Println("failed to compile prql")
+		fmt.Println(err.Error())
+		// sql = prql // just try it as regular query (will also have a syntax error)
+		return nil, err
 	}
 	return d.Query(ctx, sql)
 }
@@ -167,31 +176,49 @@ func (d *DuckDB) createTables(ctx context.Context, frames data.Frames) error {
 				n = fmt.Sprintf(`"%s"`, n) // escape the string
 			}
 			createTable += n
+			found := false
 			if fld.Type() == data.FieldTypeBool || fld.Type() == data.FieldTypeNullableBool {
 				createTable += " " + "BOOLEAN"
+				found = true
 			}
 			if fld.Type() == data.FieldTypeFloat32 || fld.Type() == data.FieldTypeFloat64 || fld.Type() == data.FieldTypeNullableFloat32 || fld.Type() == data.FieldTypeNullableFloat64 {
 				createTable += " " + "DOUBLE"
+				found = true
 			}
 			if fld.Type() == data.FieldTypeInt8 || fld.Type() == data.FieldTypeInt16 || fld.Type() == data.FieldTypeInt32 || fld.Type() == data.FieldTypeNullableInt8 || fld.Type() == data.FieldTypeNullableInt16 || fld.Type() == data.FieldTypeNullableInt32 {
 				createTable += " " + "INTEGER"
+				found = true
 			}
 			if fld.Type() == data.FieldTypeInt64 || fld.Type() == data.FieldTypeNullableInt64 {
 				createTable += " " + "BIGINT"
+				found = true
 			}
 			if fld.Type() == data.FieldTypeUint8 || fld.Type() == data.FieldTypeUint16 || fld.Type() == data.FieldTypeUint32 || fld.Type() == data.FieldTypeNullableUint8 || fld.Type() == data.FieldTypeNullableUint16 || fld.Type() == data.FieldTypeNullableUint32 {
 				createTable += " " + "UINTEGER"
+				found = true
 			}
 			if fld.Type() == data.FieldTypeUint64 || fld.Type() == data.FieldTypeNullableUint64 {
 				createTable += " " + "UBIGINT"
+				found = true
 			}
 			if fld.Type() == data.FieldTypeString || fld.Type() == data.FieldTypeNullableString {
 				createTable += " " + "VARCHAR"
+				found = true
 			}
 			if fld.Type() == data.FieldTypeTime || fld.Type() == data.FieldTypeNullableTime {
 				createTable += " " + "TIMESTAMP"
+				found = true
 			}
 			if fld.Type() == data.FieldTypeUnknown {
+				createTable += " " + "BLOB"
+				found = true
+			}
+			if fld.Type() == data.FieldTypeNullableJSON || fld.Type() == data.FieldTypeJSON {
+				createTable += " " + "BLOB"
+				found = true
+			}
+			if !found {
+				// TODO
 				createTable += " " + "BLOB"
 			}
 			sep = " ,"

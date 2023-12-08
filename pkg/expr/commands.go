@@ -395,7 +395,10 @@ func (gr *PRQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.
 			mathexp.Scalar{Frame: frame}, // TODO?? can we detect the type??
 		}
 	}
-	return rsp, err
+	if err != nil {
+		rsp.Error = err
+	}
+	return rsp, nil
 }
 
 // CommandType is the type of the expression command.
