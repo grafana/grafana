@@ -115,7 +115,7 @@ export class PanelQueryRunner {
         let transformations = this.dataConfigSource.getTransformations();
 
         if (
-          data.series === lastRawFrames &&
+          compareArrayValues(data.series, lastRawFrames, (a, b) => a === b) &&
           lastFieldConfig?.fieldConfig === fieldConfig?.fieldConfig &&
           lastTransformations === transformations
         ) {
