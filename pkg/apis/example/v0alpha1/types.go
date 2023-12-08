@@ -45,3 +45,11 @@ type DummySubresource struct {
 	// add subresource info here
 	Info string `json:"info,omitempty"`
 }
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type GenericHandlerOptions struct {
+	metav1.TypeMeta
+
+	// Path is the URL path to use for the current proxy request
+	Path string
+}
