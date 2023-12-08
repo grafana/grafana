@@ -17,55 +17,55 @@ import (
 )
 
 var (
-	_ rest.Scoper               = (*instanceStorage)(nil)
-	_ rest.SingularNameProvider = (*instanceStorage)(nil)
-	_ rest.Getter               = (*instanceStorage)(nil)
-	_ rest.Lister               = (*instanceStorage)(nil)
-	_ rest.Storage              = (*instanceStorage)(nil)
+	_ rest.Scoper               = (*connectionStorage)(nil)
+	_ rest.SingularNameProvider = (*connectionStorage)(nil)
+	_ rest.Getter               = (*connectionStorage)(nil)
+	_ rest.Lister               = (*connectionStorage)(nil)
+	_ rest.Storage              = (*connectionStorage)(nil)
 )
 
-type instanceStorage struct {
+type connectionStorage struct {
 	apiVersion    string
 	groupResource schema.GroupResource
 	builder       *DSAPIBuilder
 }
 
-func (s *instanceStorage) New() runtime.Object {
-	return &v0alpha1.DataSourceInstance{}
+func (s *connectionStorage) New() runtime.Object {
+	return &v0alpha1.DataSourceConnection{}
 }
 
-func (s *instanceStorage) Destroy() {}
+func (s *connectionStorage) Destroy() {}
 
-func (s *instanceStorage) NamespaceScoped() bool {
+func (s *connectionStorage) NamespaceScoped() bool {
 	return true
 }
 
-func (s *instanceStorage) GetSingularName() string {
+func (s *connectionStorage) GetSingularName() string {
 	return s.groupResource.Resource
 }
 
-func (s *instanceStorage) NewList() runtime.Object {
-	return &v0alpha1.DataSourceInstanceList{}
+func (s *connectionStorage) NewList() runtime.Object {
+	return &v0alpha1.DataSourceConnectionList{}
 }
 
-func (s *instanceStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+func (s *connectionStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 	return rest.NewDefaultTableConvertor(s.groupResource).ConvertToTable(ctx, object, tableOptions)
 }
 
-func (s *instanceStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func (s *connectionStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	ds, err := s.builder.getDataSource(ctx, name)
 	if err != nil {
 		return nil, err
 	}
-	return s.asInstance(ds), nil
+	return s.asConnection(ds), nil
 }
 
-func (s *instanceStorage) asInstance(ds *datasources.DataSource) *v0alpha1.DataSourceInstance {
+func (s *connectionStorage) asConnection(ds *datasources.DataSource) *v0alpha1.DataSourceConnection {
 	h := sha256.New()
 	h.Write([]byte(fmt.Sprintf("%d/%s", ds.Created.UnixMilli(), ds.UID)))
 	uid := fmt.Sprintf("%x", h.Sum(nil))
 
-	return &v0alpha1.DataSourceInstance{
+	return &v0alpha1.DataSourceConnection{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "InstanceInfo",
 			APIVersion: s.apiVersion,
@@ -81,18 +81,14 @@ func (s *instanceStorage) asInstance(ds *datasources.DataSource) *v0alpha1.DataS
 	}
 }
 
-func (s *instanceStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	result := &v0alpha1.DataSourceInstanceList{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "DataSourceConfigList",
-			APIVersion: s.apiVersion,
-		},
-		Items: []v0alpha1.DataSourceInstance{},
+func (s *connectionStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	result := &v0alpha1.DataSourceConnectionList{
+		Items: []v0alpha1.DataSourceConnection{},
 	}
 	vals, err := s.builder.getDataSources(ctx)
 	if err == nil {
 		for _, ds := range vals {
-			result.Items = append(result.Items, *s.asInstance(ds))
+			result.Items = append(result.Items, *s.asConnection(ds))
 		}
 	}
 	return result, err

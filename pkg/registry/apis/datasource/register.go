@@ -2,7 +2,6 @@ package datasource
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -60,6 +59,7 @@ func RegisterAPIService(
 	ids := []string{
 		"grafana-testdata-datasource",
 		"grafana-postgresql-datasource",
+		"prometheus", // has proxy routes!
 	}
 
 	for _, ds := range all {
@@ -68,7 +68,7 @@ func RegisterAPIService(
 		}
 
 		groupVersion := schema.GroupVersion{
-			Group:   fmt.Sprintf("%s.ds.grafana.app", ds.ID),
+			Group:   getDatasourceGroupNameFromPluginID(ds.ID),
 			Version: VersionID,
 		}
 		builder = &DSAPIBuilder{
@@ -91,10 +91,9 @@ func (b *DSAPIBuilder) GetGroupVersion() schema.GroupVersion {
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
-		&v0alpha1.DataSourceConfig{},
-		&v0alpha1.DataSourceConfigList{},
-		&v0alpha1.DataSourceInstance{},
-		&v0alpha1.DataSourceInstanceList{},
+		&v0alpha1.DataSourceConnection{},
+		&v0alpha1.DataSourceConnectionList{},
+		&v0alpha1.HealthCheckResult{},
 		// Added for subresource hack
 		&metav1.Status{},
 	)
@@ -129,7 +128,7 @@ func (b *DSAPIBuilder) GetAPIGroupInfo(
 		metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
 	// instance is usage access
-	storage["instance"] = &instanceStorage{
+	storage["connection"] = &connectionStorage{
 		builder:    b,
 		apiVersion: b.apiVersion,
 		groupResource: schema.GroupResource{
@@ -137,20 +136,17 @@ func (b *DSAPIBuilder) GetAPIGroupInfo(
 			Resource: "instance",
 		},
 	}
-	storage["instance/query"] = &subQueryREST{builder: b}
-	storage["instance/health"] = &subHealthREST{builder: b}
-	storage["instance/resource"] = &subResourceREST{builder: b}
-	storage["instance/proxy"] = &subProxyREST{builder: b}
+	storage["connection/query"] = &subQueryREST{builder: b}
+	storage["connection/health"] = &subHealthREST{builder: b}
 
-	// config is for execution access
-	storage["config"] = &configStorage{
-		builder:    b,
-		apiVersion: b.apiVersion,
-		groupResource: schema.GroupResource{
-			Group:    b.groupVersion.Group,
-			Resource: "config",
-		},
+	// TODO! only setup this endpoint if it is implemented
+	storage["connection/resource"] = &subResourceREST{builder: b}
+
+	// Frontend proxy
+	if len(b.plugin.Routes) > 0 {
+		storage["connection/proxy"] = &subProxyREST{builder: b}
 	}
+
 	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage
 	return &apiGroupInfo, nil
 }

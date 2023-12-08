@@ -6,11 +6,10 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
+	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 )
 
 type subHealthREST struct {
@@ -20,7 +19,7 @@ type subHealthREST struct {
 var _ = rest.Connecter(&subHealthREST{})
 
 func (r *subHealthREST) New() runtime.Object {
-	return &metav1.Status{}
+	return &v0alpha1.HealthCheckResult{}
 }
 
 func (r *subHealthREST) Destroy() {
@@ -35,25 +34,34 @@ func (r *subHealthREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	pluginCtx, err := r.builder.getDataSourcePluginContext(ctx, name)
-	if err != nil {
-		return nil, err
-	}
-	healthResponse, err := r.builder.client.CheckHealth(ctx, &backend.CheckHealthRequest{
-		PluginContext: *pluginCtx,
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		// TODO: respond with a k8s type
-		jsonRsp, err := json.Marshal(healthResponse)
+		pluginCtx, err := r.builder.getDataSourcePluginContext(ctx, name)
 		if err != nil {
-			errhttp.Write(ctx, err, w)
+			responder.Error(err)
 			return
 		}
-		w.WriteHeader(200)
-		_, _ = w.Write(jsonRsp)
+
+		healthResponse, err := r.builder.client.CheckHealth(ctx, &backend.CheckHealthRequest{
+			PluginContext: *pluginCtx,
+		})
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+
+		rsp := &v0alpha1.HealthCheckResult{}
+		rsp.Code = int(healthResponse.Status)
+		rsp.Status = healthResponse.Status.String()
+		rsp.Message = healthResponse.Message
+
+		if len(healthResponse.JSONDetails) > 0 {
+			err = json.Unmarshal(healthResponse.JSONDetails, &rsp.Details)
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+		}
+
+		responder.Object(200, rsp) // TODO... 200 vs ????
 	}), nil
 }

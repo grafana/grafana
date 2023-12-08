@@ -24,7 +24,16 @@ func (r *subProxyREST) Destroy() {
 }
 
 func (r *subProxyREST) ConnectMethods() []string {
-	return []string{"GET"}
+	unique := map[string]bool{}
+	methods := []string{}
+	for _, r := range r.builder.plugin.Routes {
+		if unique[r.Method] {
+			continue
+		}
+		unique[r.Method] = true
+		methods = append(methods, r.Method)
+	}
+	return methods
 }
 
 func (r *subProxyREST) NewConnectOptions() (runtime.Object, bool, string) {
