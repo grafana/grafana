@@ -3,7 +3,7 @@ import React, { FC, useState } from 'react';
 import { Field, withTypes } from 'react-final-form';
 
 import { Button, Icon, Spinner, useStyles2 } from '@grafana/ui';
-import { OldPage } from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import DbaasDeprecationWarning from 'app/percona/dbaas/components/DeprecationWarning';
 import { Messages } from 'app/percona/settings/Settings.messages';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
@@ -12,7 +12,6 @@ import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/
 import { NumberInputField } from 'app/percona/shared/components/Form/NumberInput';
 import { TextInputField } from 'app/percona/shared/components/Form/TextInput';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
-import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { updateSettingsAction } from 'app/percona/shared/core/reducers';
 import { getPerconaSettings } from 'app/percona/shared/core/selectors';
 import validators from 'app/percona/shared/helpers/validators';
@@ -50,7 +49,6 @@ export const Advanced: FC<React.PropsWithChildren<unknown>> = () => {
   const [generateToken] = useCancelToken();
   const { result: settings } = useSelector(getPerconaSettings);
   const dispatch = useAppDispatch();
-  const navModel = usePerconaNavModel('settings-advanced');
   const {
     sttCheckIntervals,
     dataRetention,
@@ -185,8 +183,8 @@ export const Advanced: FC<React.PropsWithChildren<unknown>> = () => {
   const { Form } = withTypes<AdvancedFormProps>();
 
   return (
-    <OldPage navModel={navModel} vertical tabsDataTestId="settings-tabs">
-      <OldPage.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
+    <Page navId='settings-advanced'>
+      <Page.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
         <FeatureLoader>
           <div className={styles.advancedWrapper}>
             <Form
@@ -395,8 +393,8 @@ export const Advanced: FC<React.PropsWithChildren<unknown>> = () => {
             />
           </div>
         </FeatureLoader>
-      </OldPage.Contents>
-    </OldPage>
+      </Page.Contents>
+    </Page>
   );
 };
 
