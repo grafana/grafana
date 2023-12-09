@@ -17,7 +17,7 @@ type rulePauseREST struct{}
 var _ = rest.Connecter(&rulePauseREST{})
 
 func (r *rulePauseREST) New() runtime.Object {
-	return &v0alpha1.AlertStatus{}
+	return &v0alpha1.AlertState{}
 }
 
 func (r *rulePauseREST) Destroy() {
@@ -44,7 +44,7 @@ func (r *rulePauseREST) Connect(ctx context.Context, name string, opts runtime.O
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		// TODO... actually get the status
-		s := &v0alpha1.AlertStatus{}
+		s := &v0alpha1.AlertState{}
 		s.Dummy = "Actually pause! " + info.Value + " // " + user.Email
 
 		responder.Object(http.StatusOK, s)

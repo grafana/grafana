@@ -19,7 +19,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/pkg/apis/alertrules/v0alpha1.AlertRule":     schema_pkg_apis_alertrules_v0alpha1_AlertRule(ref),
 		"github.com/grafana/grafana/pkg/apis/alertrules/v0alpha1.AlertRuleList": schema_pkg_apis_alertrules_v0alpha1_AlertRuleList(ref),
-		"github.com/grafana/grafana/pkg/apis/alertrules/v0alpha1.AlertStatus":   schema_pkg_apis_alertrules_v0alpha1_AlertStatus(ref),
+		"github.com/grafana/grafana/pkg/apis/alertrules/v0alpha1.AlertState":    schema_pkg_apis_alertrules_v0alpha1_AlertState(ref),
 		"github.com/grafana/grafana/pkg/apis/alertrules/v0alpha1.Spec":          schema_pkg_apis_alertrules_v0alpha1_Spec(ref),
 		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroup":                         schema_pkg_apis_meta_v1_APIGroup(ref),
 		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroupList":                     schema_pkg_apis_meta_v1_APIGroupList(ref),
@@ -163,11 +163,12 @@ func schema_pkg_apis_alertrules_v0alpha1_AlertRuleList(ref common.ReferenceCallb
 	}
 }
 
-func schema_pkg_apis_alertrules_v0alpha1_AlertStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alertrules_v0alpha1_AlertState(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
+				Description: "This is called state so we don't confuse it with standard \"status\"",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
@@ -252,9 +253,7 @@ func schema_pkg_apis_alertrules_v0alpha1_Spec(ref common.ReferenceCallback) comm
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"string"}, // TODO!!!!!!
-									},
+									SchemaProps: spec.SchemaProps{},
 								},
 							},
 						},

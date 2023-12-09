@@ -14,8 +14,9 @@ const (
 	OK       AlertingState = "OK"
 )
 
+// This is called state so we don't confuse it with standard "status"
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type AlertStatus struct {
+type AlertState struct {
 	metav1.TypeMeta `json:",inline"`
 
 	// TODO... real fields here

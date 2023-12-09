@@ -13,6 +13,8 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/apis/alertrules/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -81,7 +83,7 @@ func (b *AlertRulesAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(b.gv,
 		&v0alpha1.AlertRule{},
 		&v0alpha1.AlertRuleList{},
-		&v0alpha1.AlertStatus{},
+		&v0alpha1.AlertState{},
 	)
 
 	// Link this version to the internal representation.
@@ -93,7 +95,7 @@ func (b *AlertRulesAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	},
 		&v0alpha1.AlertRule{},
 		&v0alpha1.AlertRuleList{},
-		&v0alpha1.AlertStatus{},
+		&v0alpha1.AlertState{},
 	)
 
 	// If multiple versions exist, then register conversions from zz_generated.conversion.go
@@ -126,16 +128,16 @@ func (b *AlertRulesAPIBuilder) GetAPIGroupInfo(
 		store.DefaultQualifiedResource,
 		[]metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
-			// {Name: "Stage", Type: "string", Format: "string", Description: "Where is the flag in the dev cycle"},
-			// {Name: "Owner", Type: "string", Format: "string", Description: "Which team owns the feature"},
+			{Name: "Title", Type: "string", Format: "string", Description: "Title"},
+			{Name: "Lables", Type: "string", Format: "string", Description: "stringified labels"},
 		},
 		func(obj any) ([]interface{}, error) {
 			r, ok := obj.(*v0alpha1.AlertRule)
 			if ok {
 				return []interface{}{
 					r.Name,
-					// r.Spec.Stage,
-					// r.Spec.Owner,
+					r.Spec.Title,
+					data.Labels(r.Labels).String(),
 				}, nil
 			}
 			return nil, fmt.Errorf("expected resource or info")
@@ -146,7 +148,7 @@ func (b *AlertRulesAPIBuilder) GetAPIGroupInfo(
 		store: store,
 		b:     b,
 	}
-	storage["alertrules/status"] = &ruleStatusREST{}
+	storage["alertrules/state"] = &ruleStateREST{}
 	storage["alertrules/pause"] = &rulePauseREST{}
 
 	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage

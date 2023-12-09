@@ -89,7 +89,8 @@ func (s *alertRuleStorage) Get(ctx context.Context, name string, options *metav1
 	return toRuleResource(s.b.namespacer(rule.OrgID), &rule, prov)
 }
 
-// Convert rule model to the resource equivolent
+// Convert rule model to the resource equivalent
+// TODO!!! defining this is the real work :)  and a query model that feels OK
 func toRuleResource(namespace string, rule *alerting_models.AlertRule, prov alerting_models.Provenance) (*v0alpha1.AlertRule, error) {
 	obj := &v0alpha1.AlertRule{
 		ObjectMeta: metav1.ObjectMeta{
