@@ -190,8 +190,15 @@ func schema_pkg_apis_alertrules_v0alpha1_AlertStatus(ref common.ReferenceCallbac
 							Format:  "",
 						},
 					},
+					"state": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 				},
-				Required: []string{"dummy"},
+				Required: []string{"dummy", "state"},
 			},
 		},
 	}
@@ -203,19 +210,93 @@ func schema_pkg_apis_alertrules_v0alpha1_Spec(ref common.ReferenceCallback) comm
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"description": {
+					"title": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Describe the feature toggle",
+							Description: "Alert rule title",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
-					"targets": {
+					"description": {
 						SchemaProps: spec.SchemaProps{
-							Description: "dummy.... but generats something!",
+							Description: "The alert rule description",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The rule group",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"interval": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Interval (in seconds) that the alert should run",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"for": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Time (in seconds) that the state must be active before changing",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"query": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Queries to execute",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"}, // TODO!!!!!!
+									},
+								},
+							},
+						},
+					},
+					"condition": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The RefID for the query that defines alert status",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"paused": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The alert exists, but should not be run",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"noDataState": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The state to use when queries do not return values",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"execErrState": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The state to use when query execution fails",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"annotations": {
+						SchemaProps: spec.SchemaProps{
+							Description: "{\n  \"__dashboardUid__\": \"vmie2cmWz\",\n  \"__panelId__\": \"6\",\n  \"description\": \"add anno description (optional)\",\n  \"runbook_url\": \"https://asgasdga\",\n  \"summary\": \"add anno summary\"\n}",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: "",
@@ -227,9 +308,10 @@ func schema_pkg_apis_alertrules_v0alpha1_Spec(ref common.ReferenceCallback) comm
 						},
 					},
 				},
-				Required: []string{"description", "targets"},
+				Required: []string{"title", "query", "condition", "paused", "noDataState", "execErrState", "annotations"},
 			},
 		},
+		Dependencies: []string{},
 	}
 }
 

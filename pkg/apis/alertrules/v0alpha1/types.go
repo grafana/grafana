@@ -2,6 +2,16 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+)
+
+type AlertingState string
+
+const (
+	Alerting AlertingState = "Alerting"
+	NoData   AlertingState = "NoData"
+	OK       AlertingState = "OK"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -9,7 +19,9 @@ type AlertStatus struct {
 	metav1.TypeMeta `json:",inline"`
 
 	// TODO... real fields here
-	Dummy string `json:"dummy"`
+	Dummy string        `json:"dummy"`
+	State AlertingState `json:"state"`
+	// last ran?? etc
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -22,11 +34,46 @@ type AlertRule struct {
 }
 
 type Spec struct {
-	// Describe the feature toggle
-	Description string `json:"description"`
+	// Alert rule title
+	Title string `json:"title"`
 
-	// dummy.... but generats something!
-	Targets []string `json:"targets"`
+	// The alert rule description
+	Description string `json:"description,omitempty"`
+
+	// The rule group
+	RuleGroup string `json:"group,omitempty"`
+
+	// Interval (in seconds) that the alert should run
+	Interval int64 `json:"interval,omitempty"`
+
+	// Time (in seconds) that the state must be active before changing
+	For int64 `json:"for,omitempty"`
+
+	// Queries to execute
+	// TODO: this needs a better generic model/definition! (not defined in this package)
+	Query []simplejson.Json `json:"query"`
+
+	// The RefID for the query that defines alert status
+	Condition string `json:"condition"`
+
+	// The alert exists, but should not be run
+	Paused bool `json:"paused"`
+
+	// The state to use when queries do not return values
+	NoDataState AlertingState `json:"noDataState"`
+
+	// The state to use when query execution fails
+	ExecErrState AlertingState `json:"execErrState"`
+
+	// TODO... we can do better than this, right?
+	// {
+	//   "__dashboardUid__": "vmie2cmWz",
+	//   "__panelId__": "6",
+	//   "description": "add anno description (optional)",
+	//   "runbook_url": "https://asgasdga",
+	//   "summary": "add anno summary"
+	// }
+	Annotations map[string]string `json:"annotations"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

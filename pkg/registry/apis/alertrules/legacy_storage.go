@@ -57,7 +57,6 @@ func (s *alertRuleStorage) List(ctx context.Context, options *internalversion.Li
 			},
 			Spec: v0alpha1.Spec{
 				Description: "TODO",
-				Targets:     []string{"A", "B", "..."},
 			},
 		}
 		rules.Items = append(rules.Items, rule)
@@ -74,7 +73,6 @@ func (s *alertRuleStorage) Get(ctx context.Context, name string, options *metav1
 		},
 		Spec: v0alpha1.Spec{
 			Description: "TODO",
-			Targets:     []string{"A", "B", "..."},
 		},
 	}
 
