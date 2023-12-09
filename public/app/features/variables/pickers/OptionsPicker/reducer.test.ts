@@ -761,12 +761,19 @@ describe('optionsPickerReducer', () => {
         queryValue: searchQuery,
       });
 
+      const expectedFuzzy = [
+        11256, 10256, 11056, 11156, 11206, 11216, 11226, 11236, 11246, 1125, 11250, 11251, 11252, 11253, 11254, 11255,
+        11257, 11258, 11259, 1126, 11260, 11261, 11262, 11263, 11264, 11265, 11266, 11267, 11268, 11269, 11276, 11286,
+        11296, 11356, 11456, 11526, 11556, 1156, 11560, 11561, 11562, 11563, 11564, 11565, 11566, 11567, 11568, 11569,
+        11656, 11756, 11856, 11956, 12156, 12256, 1256, 11125, 11126,
+      ].map((index) => ({ text: `option:${index}`, value: `option:${index}`, selected: false }));
+
       reducerTester<OptionsPickerState>()
         .givenReducer(optionsPickerReducer, cloneDeep(initialState))
         .whenActionIsDispatched(updateOptionsAndFilter(options))
         .thenStateShouldEqual({
           ...cloneDeep(initialState),
-          options: [{ text: 'option:11256', value: 'option:11256', selected: false }],
+          options: expectedFuzzy,
           selectedValues: [],
           queryValue: 'option:11256',
           highlightIndex: 0,
