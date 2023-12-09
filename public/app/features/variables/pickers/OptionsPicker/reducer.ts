@@ -252,7 +252,7 @@ const optionsPickerSlice = createSlice({
       // since it's recreated and includes selected state on each item :(
       const haystack = action.payload.map(({ text }) => (Array.isArray(text) ? text.toString() : text));
 
-      const [idxs, info, order] = ufuzzy.search(haystack, needle, true);
+      const [idxs, info, order] = ufuzzy.search(haystack, needle, 5);
 
       let opts: VariableOption[];
 
