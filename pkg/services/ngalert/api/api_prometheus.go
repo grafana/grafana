@@ -205,6 +205,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		DashboardUID:  dashboardUID,
 		PanelID:       panelID,
 	}
+	// XXXX
 	ruleList, err := srv.store.ListAlertRules(c.Req.Context(), &alertRuleQuery)
 	if err != nil {
 		ruleResponse.DiscoveryBase.Status = "error"

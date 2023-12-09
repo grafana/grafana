@@ -14,11 +14,18 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana/pkg/apis/alertrules/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	grafanaregistry "github.com/grafana/grafana/pkg/services/grafana-apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
+	"github.com/grafana/grafana/pkg/services/ngalert/api"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -30,21 +37,37 @@ var _ grafanaapiserver.APIGroupBuilder = (*AlertRulesAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type AlertRulesAPIBuilder struct {
-	gv         schema.GroupVersion
-	namespacer request.NamespaceMapper
+	gv          schema.GroupVersion
+	namespacer  request.NamespaceMapper
+	ruleService api.AlertRuleService
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
 	features *featuremgmt.FeatureManager,
 	apiregistration grafanaapiserver.APIRegistrar,
+	ruleStore *store.DBstore, // the ngalert storage engine
+	sqlStore db.DB,
+	dashboardService dashboards.DashboardService,
+	quotaService quota.Service,
 ) *AlertRulesAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
 
+	ruleService := provisioning.NewAlertRuleService(
+		ruleStore,
+		ruleStore,
+		dashboardService,
+		quotaService,
+		sqlStore,
+		int64(cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
+		int64(cfg.UnifiedAlerting.BaseInterval.Seconds()),
+		log.New("alerting provisioner"))
+
 	builder := &AlertRulesAPIBuilder{
-		gv:         schema.GroupVersion{Group: GroupName, Version: VersionID},
-		namespacer: request.GetNamespaceMapper(cfg),
+		gv:          schema.GroupVersion{Group: GroupName, Version: VersionID},
+		namespacer:  request.GetNamespaceMapper(cfg),
+		ruleService: ruleService,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -121,6 +144,7 @@ func (b *AlertRulesAPIBuilder) GetAPIGroupInfo(
 	storage := map[string]rest.Storage{}
 	storage["alertrules"] = &alertRuleStorage{
 		store: store,
+		b:     b,
 	}
 	storage["alertrules/status"] = &ruleStatusREST{}
 	storage["alertrules/pause"] = &rulePauseREST{}

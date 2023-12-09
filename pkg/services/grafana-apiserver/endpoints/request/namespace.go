@@ -8,6 +8,7 @@ import (
 
 	"k8s.io/apiserver/pkg/endpoints/request"
 
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -36,6 +37,19 @@ func GetNamespaceMapper(cfg *setting.Cfg) NamespaceMapper {
 		}
 		return fmt.Sprintf("org-%d", orgId)
 	}
+}
+
+func OrgIDForList(ctx context.Context) (int64, error) {
+	ns := request.NamespaceValue(ctx)
+	if ns == "" {
+		user, err := appcontext.User(ctx)
+		if user != nil {
+			return user.OrgID, err
+		}
+		return -1, err
+	}
+	info, err := ParseNamespace(ns)
+	return info.OrgID, err
 }
 
 func NamespaceInfoFrom(ctx context.Context, requireOrgID bool) (NamespaceInfo, error) {
