@@ -246,26 +246,30 @@ const optionsPickerSlice = createSlice({
       return state;
     },
     updateOptionsAndFilter: (state, action: PayloadAction<VariableOption[]>): OptionsPickerState => {
-      const needle = state.queryValue;
+      const needle = state.queryValue.trim();
 
-      // with current API, not seeing a way to cache this on state using action.payload's uniqueness
-      // since it's recreated and includes selected state on each item :(
-      const haystack = action.payload.map(({ text }) => (Array.isArray(text) ? text.toString() : text));
+      let opts: VariableOption[] = [];
 
-      const [idxs, info, order] = ufuzzy.search(haystack, needle, 5);
-
-      let opts: VariableOption[];
-
-      if (info && order) {
-        opts = order.map((idx) => action.payload[info.idx[idx]]);
-      } else if (idxs) {
-        opts = idxs.map((idx) => action.payload[idx]);
-      } else {
+      if (needle === '') {
         opts = action.payload;
-      }
+      } else {
+        // with current API, not seeing a way to cache this on state using action.payload's uniqueness
+        // since it's recreated and includes selected state on each item :(
+        const haystack = action.payload.map(({ text }) => (Array.isArray(text) ? text.toString() : text));
 
-      // always sort $__all to the top, even if exact match exists?
-      opts.sort((a, b) => (a.value === '$__all' ? -1 : 0) - (b.value === '$__all' ? -1 : 0));
+        const [idxs, info, order] = ufuzzy.search(haystack, needle, 5);
+
+        if (idxs?.length) {
+          if (info && order) {
+            opts = order.map((idx) => action.payload[info.idx[idx]]);
+          } else {
+            opts = idxs!.map((idx) => action.payload[idx]);
+          }
+
+          // always sort $__all to the top, even if exact match exists?
+          opts.sort((a, b) => (a.value === '$__all' ? -1 : 0) - (b.value === '$__all' ? -1 : 0));
+        }
+      }
 
       state.options = opts;
       state.highlightIndex = 0;
