@@ -82,7 +82,7 @@ export const PopoverMenu = ({
         <Menu.Item
           label="Search on Github"
           onClick={() => {
-            const urlSelection = decodeURIComponent(`"${selection}"`);
+            const urlSelection = encodeURIComponent(`"${selection}"`);
             window.open(`https://github.com/search?q=${urlSelection}&type=code`, '_blank');
           }}
         />
