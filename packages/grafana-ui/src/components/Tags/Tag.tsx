@@ -6,7 +6,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { IconName } from '../../types/icon';
-import { SkeletonComponent, getTagColor, getTagColorsFromName, attachSkeleton } from '../../utils';
+import { getTagColor, getTagColorsFromName } from '../../utils';
+import { SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
 import { Icon } from '../Icon/Icon';
 
 /**
