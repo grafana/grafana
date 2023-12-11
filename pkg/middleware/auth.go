@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -124,7 +125,13 @@ func RoleAppPluginAuthAndSignedIn(accessControl ac.AccessControl, ps pluginstore
 				continue
 			}
 
-			if normalizeIncludePath(i.Path) == path {
+			u, err := url.Parse(i.Path)
+			if err != nil {
+				logger.Error("failed to parse include path", "pluginId", pluginID, "include", i.Name, "err", err)
+				continue
+			}
+
+			if normalizeIncludePath(u.Path) == path {
 				found = true
 
 				useRBAC := features.IsEnabledGlobally(featuremgmt.FlagAccessControlOnCall) && i.RequiresRBACAction()
@@ -156,7 +163,7 @@ func RoleAppPluginAuthAndSignedIn(accessControl ac.AccessControl, ps pluginstore
 }
 
 func normalizeIncludePath(p string) string {
-	return strings.TrimPrefix(p, "/")
+	return strings.TrimPrefix(filepath.Clean(p), "/")
 }
 
 func RoleAuth(roles ...org.RoleType) web.Handler {

@@ -141,8 +141,8 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// App Root Page
 	appPluginIDScope := pluginaccesscontrol.ScopeProvider.GetResourceScope(ac.Parameter(":id"))
-	r.Get("/a/:id/*", reqRoleForAppRoute, authorize(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, appPluginIDScope)), hs.Index)
-	r.Get("/a/:id", reqRoleForAppRoute, authorize(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, appPluginIDScope)), hs.Index)
+	r.Get("/a/:id/*", authorize(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, appPluginIDScope)), reqRoleForAppRoute, hs.Index)
+	r.Get("/a/:id", authorize(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, appPluginIDScope)), reqRoleForAppRoute, hs.Index)
 
 	r.Get("/d/:uid/:slug", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
 	r.Get("/d/:uid", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
