@@ -1,6 +1,8 @@
 package v0alpha1
 
 import (
+	"time"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -48,7 +50,7 @@ type Spec struct {
 	Interval int64 `json:"interval,omitempty"`
 
 	// Time (in seconds) that the state must be active before changing
-	For int64 `json:"for,omitempty"`
+	For time.Duration `json:"for,omitempty"`
 
 	// Queries to execute
 	// TODO: this needs a better generic model/definition! (not defined in this package)
