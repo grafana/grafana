@@ -14,6 +14,7 @@ import {
 
 import { DashboardScene } from '../scene/DashboardScene';
 
+import { dashboardSceneGraph } from './dashboardSceneGraph';
 import { findVizPanelByKey, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from './utils';
 
 /**
@@ -45,6 +46,37 @@ export class DashboardModelCompatibilityWrapper {
 
   public get title() {
     return this._scene.state.title;
+  }
+
+  public get description() {
+    return this._scene.state.description;
+  }
+
+  public get editable() {
+    return this._scene.state.editable;
+  }
+
+  public get graphTooltip() {
+    return this._getSyncMode();
+  }
+
+  public get timepicker() {
+    return {
+      refresh_intervals: dashboardSceneGraph.getRefreshPicker(this._scene)?.state.intervals,
+      hidden: !Boolean(dashboardSceneGraph.getTimePicker(this._scene)),
+    };
+  }
+
+  public get timezone() {
+    return this.getTimezone();
+  }
+
+  public get weekStart() {
+    return sceneGraph.getTimeRange(this._scene).state.weekStart;
+  }
+
+  public get tags() {
+    return this._scene.state.tags;
   }
 
   public get meta() {

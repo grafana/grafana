@@ -3,6 +3,7 @@ import React from 'react';
 import { SceneComponentProps, SceneGridItem, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import { ShareLibraryPanel } from 'app/features/dashboard/components/ShareModal/ShareLibraryPanel';
+import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -17,7 +18,7 @@ export interface ShareLibraryPanelTabState extends SceneShareTabState {
 }
 
 export class ShareLibraryPanelTab extends SceneObjectBase<ShareLibraryPanelTabState> {
-  public tabId = 'Library panel';
+  public tabId = shareDashboardType.libraryPanel;
   static Component = ShareLibraryPanelTabRenderer;
 
   public getTabLabel() {

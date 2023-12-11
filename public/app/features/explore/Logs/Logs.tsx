@@ -174,15 +174,22 @@ class UnthemedLogs extends PureComponent<Props, State> {
     if (this.cancelFlippingTimer) {
       window.clearTimeout(this.cancelFlippingTimer);
     }
-    // Delete url state on unmount
-    if (this.props?.panelState?.logs?.columns) {
-      delete this.props.panelState.logs.columns;
-    }
-    if (this.props?.panelState?.logs?.refId) {
-      delete this.props.panelState.logs.refId;
-    }
-    if (this.props?.panelState?.logs?.labelFieldName) {
-      delete this.props.panelState.logs.labelFieldName;
+
+    // If we're unmounting logs (e.g. switching to another datasource), we need to remove the table specific panel state, otherwise it will persist in the explore url
+    if (
+      this.props?.panelState?.logs?.columns ||
+      this.props?.panelState?.logs?.refId ||
+      this.props?.panelState?.logs?.labelFieldName
+    ) {
+      dispatch(
+        changePanelState(this.props.exploreId, 'logs', {
+          ...this.props.panelState?.logs,
+          columns: undefined,
+          visualisationType: this.state.visualisationType,
+          labelFieldName: undefined,
+          refId: undefined,
+        })
+      );
     }
   }
   updatePanelState = (logsPanelState: Partial<ExploreLogsPanelState>) => {

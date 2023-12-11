@@ -134,7 +134,7 @@ const formatDefaultKeys = (keys: string[]) => {
   }));
 };
 const defaultKeys = formatDefaultKeys(['cluster', 'hostname', 'namespace', 'pod', 'service.name', 'service.namespace']);
-const defaultProfilingKeys = formatDefaultKeys(['service.name', 'service.namespace']);
+export const defaultProfilingKeys = formatDefaultKeys(['service.name', 'service.namespace']);
 export const pyroscopeProfileIdTagKey = 'pyroscope.profile.id';
 
 function legacyCreateSpanLinkFactory(
@@ -499,7 +499,7 @@ function getQueryForFalconLogScale(span: TraceSpan, options: TraceToLogsOptionsV
  * Creates a string representing all the tags already formatted for use in the query. The tags are filtered so that
  * only intersection of tags that exist in a span and tags that you want are serialized into the string.
  */
-function getFormattedTags(
+export function getFormattedTags(
   span: TraceSpan,
   tags: TraceToLogsTag[],
   { labelValueSign = '=', joinBy = ', ' }: { labelValueSign?: string; joinBy?: string } = {}

@@ -14,7 +14,6 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import { CloudWatchAnnotationSupport } from './annotationSupport';
@@ -61,8 +60,7 @@ export class CloudWatchDatasource
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
-    readonly templateSrv: TemplateSrv = getTemplateSrv(),
-    timeSrv: TimeSrv = getTimeSrv()
+    readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
@@ -72,12 +70,7 @@ export class CloudWatchDatasource
     this.metricMathCompletionItemProvider = new MetricMathCompletionItemProvider(this.resources, this.templateSrv);
     this.metricsQueryRunner = new CloudWatchMetricsQueryRunner(instanceSettings, templateSrv, super.query.bind(this));
     this.logsCompletionItemProviderFunc = LogsCompletionItemProviderFunc(this.resources, this.templateSrv);
-    this.logsQueryRunner = new CloudWatchLogsQueryRunner(
-      instanceSettings,
-      templateSrv,
-      timeSrv,
-      super.query.bind(this)
-    );
+    this.logsQueryRunner = new CloudWatchLogsQueryRunner(instanceSettings, templateSrv, super.query.bind(this));
     this.annotationQueryRunner = new CloudWatchAnnotationQueryRunner(
       instanceSettings,
       templateSrv,

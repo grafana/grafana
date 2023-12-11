@@ -118,6 +118,10 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.upgrading.title', 'Stats and license');
     case 'monitoring':
       return t('nav.monitoring.title', 'Observability');
+    case 'infrastructure':
+      return t('nav.infrastructure.title', 'Infrastructure');
+    case 'frontend':
+      return t('nav.frontend.title', 'Frontend');
     case 'apps':
       return t('nav.apps.title', 'Apps');
     case 'alerts-and-incidents':
@@ -139,7 +143,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'plugin-page-grafana-pyroscope-app':
       return t('nav.profiles.title', 'Profiles');
     case 'plugin-page-grafana-kowalski-app':
-      return t('nav.frontend.title', 'Frontend');
+      return t('nav.frontend-app.title', 'Frontend');
     case 'plugin-page-grafana-synthetic-monitoring-app':
       return t('nav.synthetics.title', 'Synthetics');
     case 'help':
@@ -161,7 +165,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'connections-datasources':
       return t('nav.data-sources.title', 'Data sources');
     case 'standalone-plugin-page-/connections/infrastructure':
-      return t('nav.infrastructure.title', 'Integrations');
+      return t('nav.integrations.title', 'Integrations');
     case 'standalone-plugin-page-/connections/connect-data':
       return t('nav.connect-data.title', 'Connect data');
     case 'plugin-page-grafana-detect-app':
@@ -246,6 +250,10 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.apps.subtitle', 'App plugins that extend the Grafana experience');
     case 'monitoring':
       return t('nav.monitoring.subtitle', 'Out-of-the-box observability solutions');
+    case 'infrastructure':
+      return t('nav.infrastructure.subtitle', "Understand your infrastructure's health");
+    case 'frontend':
+      return t('nav.frontend.subtitle', 'Gain real user monitoring insights');
     case 'alerts-and-incidents':
       return t('nav.alerts-and-incidents.subtitle', 'Alerting and incident management apps');
     case 'connections-add-new-connection':
