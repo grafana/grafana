@@ -7,7 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { IconName } from '../../types';
-import { SkeletonComponent, withSkeleton } from '../../utils';
+import { SkeletonComponent, attachSkeleton } from '../../utils';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 
@@ -45,7 +45,7 @@ const BadgeSkeleton: SkeletonComponent = ({ skeletonProps }) => {
   return <Skeleton width={60} height={22} containerClassName={styles.container} {...skeletonProps} />;
 };
 
-export const Badge = withSkeleton(BadgeComponent, BadgeSkeleton);
+export const Badge = attachSkeleton(BadgeComponent, BadgeSkeleton);
 
 const getSkeletonStyles = () => ({
   container: css({

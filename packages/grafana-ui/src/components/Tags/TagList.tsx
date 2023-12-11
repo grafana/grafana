@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { IconName } from '../../types/icon';
-import { SkeletonComponent, withSkeleton } from '../../utils';
+import { SkeletonComponent, attachSkeleton } from '../../utils';
 
 import { OnTagClick, Tag } from './Tag';
 
@@ -67,7 +67,7 @@ const TagListSkeleton: SkeletonComponent = ({ skeletonProps }) => {
   );
 };
 
-export const TagList = withSkeleton(TagListComponent, TagListSkeleton);
+export const TagList = attachSkeleton(TagListComponent, TagListSkeleton);
 
 const getSkeletonStyles = (theme: GrafanaTheme2) => ({
   container: css({

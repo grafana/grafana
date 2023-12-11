@@ -36,7 +36,7 @@ export type SkeletonComponent<P = {}> = React.ComponentType<P & SkeletonProps>;
  * @param Skeleton    A functional or class skeleton component
  * @returns           A wrapped component with a static skeleton property
  */
-export const withSkeleton = <C extends object, P>(Component: C, Skeleton: SkeletonComponent<P>) => {
+export const attachSkeleton = <C extends object, P>(Component: C, Skeleton: SkeletonComponent<P>) => {
   const skeletonWrapper = (props: P) => {
     return (
       <Skeleton

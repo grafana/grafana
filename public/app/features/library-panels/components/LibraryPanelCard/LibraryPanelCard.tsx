@@ -4,7 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Icon, Link, SkeletonComponent, useStyles2, withSkeleton } from '@grafana/ui';
+import { Icon, Link, SkeletonComponent, useStyles2, attachSkeleton } from '@grafana/ui';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { PanelTypeCard } from 'app/features/panel/components/VizTypePicker/PanelTypeCard';
 
@@ -66,7 +66,7 @@ const LibraryPanelCardSkeleton: SkeletonComponent<Pick<Props, 'showSecondaryActi
   );
 };
 
-export const LibraryPanelCard = withSkeleton(LibraryPanelCardComponent, LibraryPanelCardSkeleton);
+export const LibraryPanelCard = attachSkeleton(LibraryPanelCardComponent, LibraryPanelCardSkeleton);
 
 interface FolderLinkProps {
   libraryPanel: LibraryElementDTO;

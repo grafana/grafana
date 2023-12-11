@@ -11,7 +11,7 @@ import {
   SkeletonComponent,
   Stack,
   useStyles2,
-  withSkeleton,
+  attachSkeleton,
 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -93,7 +93,7 @@ const PlaylistCardSkeleton: SkeletonComponent = ({ skeletonProps }) => {
   );
 };
 
-export const PlaylistCard = withSkeleton(PlaylistCardComponent, PlaylistCardSkeleton);
+export const PlaylistCard = attachSkeleton(PlaylistCardComponent, PlaylistCardSkeleton);
 
 function getSkeletonStyles(theme: GrafanaTheme2) {
   return {

@@ -3,7 +3,7 @@ import React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { DataFrameView, GrafanaTheme2, textUtil, dateTimeFormat } from '@grafana/data';
-import { SkeletonComponent, useStyles2, withSkeleton } from '@grafana/ui';
+import { SkeletonComponent, useStyles2, attachSkeleton } from '@grafana/ui';
 
 import { NewsItem } from '../types';
 
@@ -72,7 +72,7 @@ const NewsSkeleton: SkeletonComponent<Pick<NewsItemProps, 'width' | 'showImage'>
   );
 };
 
-export const News = withSkeleton(NewsComponent, NewsSkeleton);
+export const News = attachSkeleton(NewsComponent, NewsSkeleton);
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({

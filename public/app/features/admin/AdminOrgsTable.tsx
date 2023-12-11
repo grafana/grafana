@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, ConfirmModal, SkeletonComponent, useStyles2, withSkeleton } from '@grafana/ui';
+import { Button, ConfirmModal, SkeletonComponent, useStyles2, attachSkeleton } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, Organization } from 'app/types';
 
@@ -98,7 +98,7 @@ const AdminOrgsTableSkeleton: SkeletonComponent = ({ skeletonProps }) => {
   );
 };
 
-export const AdminOrgsTable = withSkeleton(AdminOrgsTableComponent, AdminOrgsTableSkeleton);
+export const AdminOrgsTable = attachSkeleton(AdminOrgsTableComponent, AdminOrgsTableSkeleton);
 
 const getSkeletonStyles = (theme: GrafanaTheme2) => ({
   deleteButton: css({

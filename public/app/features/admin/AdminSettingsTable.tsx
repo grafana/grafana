@@ -1,7 +1,7 @@
 import React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { SkeletonComponent, withSkeleton } from '@grafana/ui';
+import { SkeletonComponent, attachSkeleton } from '@grafana/ui';
 
 import { Settings } from './AdminSettings';
 
@@ -72,4 +72,4 @@ function getRandomInRange(min: number, max: number, randomSeed: number) {
   return randomSeed * (max - min) + min;
 }
 
-export const AdminSettingsTable = withSkeleton(AdminSettingsTableComponent, AdminSettingsTableSkeleton);
+export const AdminSettingsTable = attachSkeleton(AdminSettingsTableComponent, AdminSettingsTableSkeleton);

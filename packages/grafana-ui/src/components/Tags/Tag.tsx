@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { IconName } from '../../types/icon';
-import { SkeletonComponent, getTagColor, getTagColorsFromName, withSkeleton } from '../../utils';
+import { SkeletonComponent, getTagColor, getTagColorsFromName, attachSkeleton } from '../../utils';
 import { Icon } from '../Icon/Icon';
 
 /**
@@ -55,7 +55,7 @@ const TagSkeleton: SkeletonComponent = ({ skeletonProps }) => {
   return <Skeleton width={60} height={22} containerClassName={styles.container} {...skeletonProps} />;
 };
 
-export const Tag = withSkeleton(TagComponent, TagSkeleton);
+export const Tag = attachSkeleton(TagComponent, TagSkeleton);
 
 const getSkeletonStyles = () => ({
   container: css({

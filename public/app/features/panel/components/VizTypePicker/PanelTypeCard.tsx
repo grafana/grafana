@@ -4,7 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2, isUnsignedPluginSignature, PanelPluginMeta, PluginState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { IconButton, PluginSignatureBadge, SkeletonComponent, useStyles2, withSkeleton } from '@grafana/ui';
+import { IconButton, PluginSignatureBadge, SkeletonComponent, useStyles2, attachSkeleton } from '@grafana/ui';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
 interface Props {
@@ -109,7 +109,7 @@ const PanelTypeCardSkeleton: SkeletonComponent<React.PropsWithChildren<SkeletonP
   );
 };
 
-export const PanelTypeCard = withSkeleton(PanelTypeCardComponent, PanelTypeCardSkeleton);
+export const PanelTypeCard = attachSkeleton(PanelTypeCardComponent, PanelTypeCardSkeleton);
 
 const getSkeletonStyles = () => {
   return {

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SkeletonComponent, useStyles2, withSkeleton } from '@grafana/ui';
+import { SkeletonComponent, useStyles2, attachSkeleton } from '@grafana/ui';
 
 import { PlaylistCard } from './PlaylistCard';
 import { Playlist } from './types';
@@ -41,7 +41,7 @@ const PlaylistPageListSkeleton: SkeletonComponent = ({ skeletonProps }) => {
   );
 };
 
-export const PlaylistPageList = withSkeleton(PlaylistPageListComponent, PlaylistPageListSkeleton);
+export const PlaylistPageList = attachSkeleton(PlaylistPageListComponent, PlaylistPageListSkeleton);
 
 function getStyles(theme: GrafanaTheme2) {
   return {

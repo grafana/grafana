@@ -3,7 +3,7 @@ import React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, Icon, SkeletonComponent, Stack, useStyles2, withSkeleton } from '@grafana/ui';
+import { Badge, Icon, SkeletonComponent, Stack, useStyles2, attachSkeleton } from '@grafana/ui';
 
 import { CatalogPlugin, PluginIconName, PluginListDisplayMode } from '../types';
 
@@ -75,7 +75,7 @@ const PluginListItemSkeleton: SkeletonComponent<Pick<Props, 'displayMode'>> = ({
   );
 };
 
-export const PluginListItem = withSkeleton(PluginListItemComponent, PluginListItemSkeleton);
+export const PluginListItem = attachSkeleton(PluginListItemComponent, PluginListItemSkeleton);
 
 // Styles shared between the different type of list items
 export const getStyles = (theme: GrafanaTheme2) => {

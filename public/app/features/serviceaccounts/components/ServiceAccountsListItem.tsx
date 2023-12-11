@@ -3,7 +3,7 @@ import React, { memo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
-import { Button, Icon, IconButton, type SkeletonComponent, Stack, useStyles2, withSkeleton } from '@grafana/ui';
+import { Button, Icon, IconButton, type SkeletonComponent, Stack, useStyles2, attachSkeleton } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/core';
 import { OrgRolePicker } from 'app/features/admin/OrgRolePicker';
@@ -193,7 +193,7 @@ const ServiceAccountsListItemSkeleton: SkeletonComponent = ({ skeletonProps }) =
   );
 };
 
-const ServiceAccountListItem = withSkeleton(ServiceAccountListItemComponent, ServiceAccountsListItemSkeleton);
+const ServiceAccountListItem = attachSkeleton(ServiceAccountListItemComponent, ServiceAccountsListItemSkeleton);
 
 const getSkeletonStyles = (theme: GrafanaTheme2) => ({
   blockSkeleton: css({
