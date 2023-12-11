@@ -13,7 +13,6 @@ import (
 
 	prometheus "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
-	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -229,7 +228,7 @@ func TestProvisioningApi(t *testing.T) {
 		t.Run("are missing, PUT returns 404", func(t *testing.T) {
 			sut := createProvisioningSrvSut(t)
 			rc := createTestRequestCtx()
-			mti := definitions.MuteTimeInterval{}
+			mti := definitions.MuteTiming{}
 
 			response := sut.RoutePutMuteTiming(&rc, mti, "does not exist")
 
@@ -1747,21 +1746,12 @@ func createInvalidContactPoint() definitions.EmbeddedContactPoint {
 	}
 }
 
-func createInvalidMuteTiming() definitions.MuteTimeInterval {
-	return definitions.MuteTimeInterval{
-		MuteTimeInterval: prometheus.MuteTimeInterval{
-			Name: "interval",
-			TimeIntervals: []timeinterval.TimeInterval{
-				{
-					Weekdays: []timeinterval.WeekdayRange{
-						{
-							InclusiveRange: timeinterval.InclusiveRange{
-								Begin: -1,
-								End:   7,
-							},
-						},
-					},
-				},
+func createInvalidMuteTiming() definitions.MuteTiming {
+	return definitions.MuteTiming{
+		Name: "interval",
+		TimeIntervals: []definitions.MuteTimingInterval{
+			{
+				Weekdays: []string{"bad:tuesday"},
 			},
 		},
 	}
