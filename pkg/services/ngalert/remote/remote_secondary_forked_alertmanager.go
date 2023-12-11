@@ -39,15 +39,16 @@ func NewRemoteSecondaryForkedAlertmanager(l log.Logger, syncInterval time.Durati
 // ApplyConfig will only log errors for the remote Alertmanager and ensure we delegate the call to the internal Alertmanager.
 // We don't care about errors in the remote Alertmanager in remote secondary mode.
 func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
-	syncErr := false
+	var syncErr bool
 	if !fam.remote.Ready() {
+		// If the Alertmanager has not been marked as "ready" yet, delegate the call to the remote Alertmanager.
+		// This will sync the Alertmanagers.
 		if err := fam.remote.ApplyConfig(ctx, config); err != nil {
 			fam.log.Error("Error applying config to the remote Alertmanager", "err", err)
 			syncErr = true
 		}
-	}
-
-	if time.Since(fam.lastSync) >= fam.syncInterval {
+	} else if time.Since(fam.lastSync) >= fam.syncInterval {
+		// If the Alertmanager was marked as ready but the sync interval has elapsed, sync the Alertmanagers.
 		fam.log.Debug("Syncing configuration and state with the remote Alertmanager", "lastSync", fam.lastSync)
 		if err := fam.remote.CompareAndSendConfiguration(ctx, config); err != nil {
 			fam.log.Error("Unable to upload the configuration to the remote Alertmanager", "err", err)

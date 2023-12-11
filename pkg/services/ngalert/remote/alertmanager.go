@@ -189,16 +189,26 @@ func (am *Alertmanager) checkReadiness(ctx context.Context) error {
 	}
 }
 
+// CompareAndSendConfiguration checks whether a given configuration is being used by the remote Alertmanager.
+// If not, it sends the configuration to the remote Alertmanager.
 func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
 	if am.shouldSendConfig(ctx, config) {
-		err := am.mimirClient.CreateGrafanaAlertmanagerConfig(ctx, config.AlertmanagerConfiguration, config.ConfigurationHash, config.ID, config.CreatedAt, config.Default)
-		if err != nil {
+		if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
+			ctx,
+			config.AlertmanagerConfiguration,
+			config.ConfigurationHash,
+			config.ID,
+			config.CreatedAt,
+			config.Default,
+		); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
+// CompareAndSendState gets the Alertmanager's internal state and compares it with the remote Alertmanager's one.
+// If the states are different, it updates the remote Alertmanager's state with that of the internal Alertmanager.
 func (am *Alertmanager) CompareAndSendState(ctx context.Context) error {
 	state, err := am.state.GetFullState(ctx, notifier.SilencesFilename, notifier.NotificationLogFilename)
 	if err != nil {
