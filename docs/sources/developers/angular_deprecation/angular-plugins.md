@@ -80,12 +80,6 @@ Latest Version: 1.6.2 | Signature: Grafana | Last Updated: 2023
 Plugin should continue to work even if Angular is disabled, and a full removal of Angular related code is planned.
 {{% /admonition %}}
 
-### [OpenNMS Helm](https://grafana.com/grafana/plugins/opennms-helm-app)
-
-Latest Version: 8.0.5 | Signature: Community | Last Updated: 2023
-
-> **Migration available - plugin superseded:** The plugin has effectively been replaced with a [new plugin](https://grafana.com/grafana/plugins/opennms-opennms-app/) based on React.
-
 ### [Percona](https://grafana.com/grafana/plugins/percona-percona-app/)
 
 Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
