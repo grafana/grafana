@@ -95,7 +95,7 @@ export function AppChrome({ children }: Props) {
           </div>
         </div>
       </main>
-      {!state.chromeless && !state.megaMenuDocked && (
+      {!state.chromeless && (
         <>
           {config.featureToggles.dockedMegaMenu ? (
             <AppChromeMenu />
