@@ -1303,31 +1303,12 @@ func TestLoader_HideAngularDeprecation(t *testing.T) {
 		cfg                       *config.Cfg
 		expHideAngularDeprecation bool
 	}{
-		{name: `without "hide_angular_deprecation" setting`, cfg: &config.Cfg{
-			AngularSupportEnabled: true,
-			PluginSettings:        setting.PluginSettings{},
-			Features:              featuremgmt.WithFeatures(),
-		}},
-		{name: `with "hide_angular_deprecation" = true`, cfg: &config.Cfg{
-			AngularSupportEnabled: true,
-			PluginSettings: setting.PluginSettings{
-				"plugin-id": map[string]string{"hide_angular_deprecation": "true"},
-			},
-			Features: featuremgmt.WithFeatures(),
-		}},
-		{name: `with "hide_angular_deprecation" = false`, cfg: &config.Cfg{
-			AngularSupportEnabled: true,
-			PluginSettings: setting.PluginSettings{
-				"plugin-id": map[string]string{"hide_angular_deprecation": "false"},
-			},
-			Features: featuremgmt.WithFeatures(),
-		}},
-		{name: "with HideAngularDeprecation present", cfg: &config.Cfg{
+		{name: "with plugin id in HideAngularDeprecation list", cfg: &config.Cfg{
 			AngularSupportEnabled:  true,
 			HideAngularDeprecation: []string{"one-app", "two-panel", "test-datasource", "three-datasource"},
 			Features:               featuremgmt.WithFeatures(),
 		}, expHideAngularDeprecation: true},
-		{name: "with HideAngularDeprecation not present", cfg: &config.Cfg{
+		{name: "without plugin id in HideAngularDeprecation list", cfg: &config.Cfg{
 			AngularSupportEnabled:  true,
 			HideAngularDeprecation: []string{"one-app", "two-panel", "three-datasource"},
 			Features:               featuremgmt.WithFeatures(),
