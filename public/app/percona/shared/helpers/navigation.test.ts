@@ -23,7 +23,6 @@ describe('NavigationUtils', () => {
         },
         {
           text: '',
-          divider: true,
         },
         {
           text: 'Item #2',
@@ -39,15 +38,12 @@ describe('NavigationUtils', () => {
         },
         {
           text: 'Header #1',
-          isSubheader: true,
         },
         {
           text: '',
-          divider: true,
         },
         {
           text: 'Header #2',
-          isSubheader: true,
         },
         {
           text: 'Item #2',
@@ -56,18 +52,15 @@ describe('NavigationUtils', () => {
       const expected: NavModelItem[] = [
         {
           text: 'Header #1',
-          isSubheader: true,
         },
         {
           text: 'Item #1',
         },
         {
           text: '',
-          divider: true,
         },
         {
           text: 'Header #2',
-          isSubheader: true,
         },
         {
           text: 'Item #2',
@@ -83,51 +76,41 @@ describe('NavigationUtils', () => {
         },
         {
           text: 'Header #1',
-          isSubheader: true,
         },
         {
           text: '',
-          divider: true,
         },
         {
           text: 'Header #2',
-          isSubheader: true,
         },
         {
           text: '',
-          divider: true,
         },
         {
           text: 'Item #3',
         },
         {
           text: 'Header #3',
-          isSubheader: true,
         },
       ];
       const expected: NavModelItem[] = [
         {
           text: 'Header #1',
-          isSubheader: true,
         },
         {
           text: 'Item #1',
         },
         {
           text: '',
-          divider: true,
         },
         {
           text: 'Header #2',
-          isSubheader: true,
         },
         {
           text: '',
-          divider: true,
         },
         {
           text: 'Header #3',
-          isSubheader: true,
         },
         {
           text: 'Item #3',

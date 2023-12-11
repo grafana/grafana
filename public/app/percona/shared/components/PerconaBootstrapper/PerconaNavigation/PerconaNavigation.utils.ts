@@ -1,4 +1,4 @@
-import { NavModelItem, NavSection } from '@grafana/data';
+import { NavModelItem } from '@grafana/data';
 import { config } from 'app/core/config';
 import { Settings } from 'app/percona/settings/Settings.types';
 import { CategorizedAdvisor } from 'app/percona/shared/services/advisors/Advisors.types';
@@ -25,8 +25,6 @@ import {
 const DIVIDER: NavModelItem = {
   id: 'divider',
   text: 'Divider',
-  divider: true,
-  showDividerInExpanded: true,
   hideFromTabs: true,
 };
 
@@ -70,12 +68,10 @@ export const buildInventoryAndSettings = (mainLinks: NavModelItem[], settings?: 
   const orgLink: NavModelItem = {
     id: 'main-organization',
     text: 'Organization',
-    isSubheader: true,
   };
   const pmmLink: NavModelItem = {
     id: 'settings-pmm',
     text: 'PMM',
-    isSubheader: true,
   };
   const settingsLink: NavModelItem = {
     id: 'settings',
@@ -149,7 +145,6 @@ export const addFolderLinks = (navTree: NavModelItem[], folders: FolderDTO[]) =>
         id,
         icon: 'search',
         text: 'Other dashboards',
-        showIconInNavbar: true,
         url: `/graph/dashboards/f/${folder.uid}/${rootNode.id}`,
       });
     }
@@ -177,7 +172,6 @@ export const buildAdvisorsNavItem = (categorizedAdvisors: CategorizedAdvisor) =>
     sortWeight: WEIGHTS.alerting,
     subTitle: 'Run and analyze all checks',
     url: `${config.appSubUrl}/advisors`,
-    section: NavSection.Core,
     children: [],
   };
   const categories = Object.keys(categorizedAdvisors);

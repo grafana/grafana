@@ -26,8 +26,6 @@ export interface NavLinkDTO {
   pluginId?: string;
   // Whether the page is used to create a new resource. We may place these in a different position in the UI.
   isCreateAction?: boolean;
-  // @PERCONA
-  showDividerInExpanded?: boolean;
 }
 
 export interface NavModelItem extends NavLinkDTO {
@@ -38,13 +36,6 @@ export interface NavModelItem extends NavLinkDTO {
   tabSuffix?: ComponentType<{ className?: string }>;
   hideFromBreadcrumbs?: boolean;
   emptyMessage?: string;
-  // @Percona
-  expanded?: boolean;
-  isSubheader?: boolean;
-  showIconInNavbar?: boolean;
-  hideFromMenu?: boolean;
-  divider?: boolean;
-  section?: NavSection;
 }
 
 /**
@@ -67,16 +58,4 @@ export enum PageLayoutType {
   Standard,
   Canvas,
   Custom,
-}
-
-// @PERCONA
-export enum NavSection {
-  Core = 'core',
-  Plugin = 'plugin',
-  Config = 'config',
-}
-
-export enum NavMenuItemType {
-  Section = 'section',
-  Item = 'item',
 }
