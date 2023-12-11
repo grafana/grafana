@@ -22,8 +22,9 @@ export const getStyles = ({ spacing }: GrafanaTheme) => ({
     }
 
     button {
-      width: 35px;
+      min-width: 35px;
       justify-content: center;
+
       &:not(:last-child) {
         margin-right: ${spacing.sm};
       }
