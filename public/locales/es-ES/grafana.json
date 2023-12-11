@@ -816,6 +816,9 @@
     "integrations": {
       "title": "Integraciones"
     },
+    "k6": {
+      "title": ""
+    },
     "kubernetes": {
       "title": "Kubernetes"
     },
@@ -934,6 +937,10 @@
     "teams": {
       "subtitle": "Grupos de usuarios que tienen necesidades comunes de permisos y de panel de control",
       "title": "Equipos"
+    },
+    "testing-and-synthetics": {
+      "subtitle": "",
+      "title": ""
     },
     "upgrading": {
       "title": "Estadísticas y licencia"

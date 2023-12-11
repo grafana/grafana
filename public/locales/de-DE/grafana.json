@@ -810,6 +810,9 @@
     "integrations": {
       "title": "Integrationen"
     },
+    "k6": {
+      "title": ""
+    },
     "kubernetes": {
       "title": "Kubernetes"
     },
@@ -928,6 +931,10 @@
     "teams": {
       "subtitle": "Gruppen von Benutzern mit gemeinsamen Dashboards und Benachrichtigungen",
       "title": "Teams"
+    },
+    "testing-and-synthetics": {
+      "subtitle": "",
+      "title": ""
     },
     "upgrading": {
       "title": "Statistiken und Lizenz"
