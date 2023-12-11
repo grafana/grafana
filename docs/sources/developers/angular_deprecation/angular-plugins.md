@@ -20,7 +20,9 @@ The use of AngularJS in Grafana has been [deprecated]({{< relref "../angular_dep
 
 This page is to help users of Grafana understand how they might be impacted by the removal of Angular support, and whether a migration option exists.
 
-It lists the latest versions of plugins currently available in the [Plugins Catalog](https://grafana.com/plugins) which depend on Angular, and will stop working when Angular support is removed from Grafana. The list will be updated as more plugins migrate to React or offer migration advice.
+It lists the latest versions of plugins _currently available_ in the [Plugins Catalog](https://grafana.com/plugins) which depend on Angular, and will stop working when Angular support is removed from Grafana. The list will be updated as more plugins migrate to React or offer migration advice. 
+
+Plugins which have been [deprecated](https://grafana.com/legal/plugin-deprecation/) will **not** be listed. Generally, we advise users to migrate away from deprecated plugins as they will not be updated and may not function in current or future versions of Grafana.
 
 {{% admonition type="note" %}}
 We advise you to ensure you are running the latest version of plugins, as previous releases of plugins not listed here may still require AngularJS.
@@ -47,16 +49,6 @@ Guidance on migrating a plugin to React can be found in our [migration guide](/d
 # Current AngularJS based plugins
 
 ## Apps
-
-### [BelugaCDN](https://grafana.com/grafana/plugins/belugacdn-app)
-
-Latest Version: 1.2.1 | Signature: Commercial | Last Updated: 2023
-
-> [Migration issue](https://github.com/belugacdn/grafana-belugacdn-app/issues/7) has been raised.
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/belugacdn/grafana-belugacdn-app) in the past 7 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
 
 ### [Bosun](https://grafana.com/grafana/plugins/bosun-app)
 
