@@ -5,11 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
@@ -28,17 +26,16 @@ var (
 	_ rest.GracefulDeleter      = (*legacyStorage)(nil)
 )
 
+var resourceInfo = playlist.PlaylistResourceInfo
+
 type legacyStorage struct {
 	service        playlistsvc.Service
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
-
-	DefaultQualifiedResource  schema.GroupResource
-	SingularQualifiedResource schema.GroupResource
 }
 
 func (s *legacyStorage) New() runtime.Object {
-	return &playlist.Playlist{}
+	return resourceInfo.NewFunc()
 }
 
 func (s *legacyStorage) Destroy() {}
@@ -48,11 +45,11 @@ func (s *legacyStorage) NamespaceScoped() bool {
 }
 
 func (s *legacyStorage) GetSingularName() string {
-	return "playlist"
+	return resourceInfo.GetSingularName()
 }
 
 func (s *legacyStorage) NewList() runtime.Object {
-	return &playlist.PlaylistList{}
+	return resourceInfo.NewListFunc()
 }
 
 func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
@@ -106,7 +103,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 	})
 	if err != nil || dto == nil {
 		if errors.Is(err, playlistsvc.ErrPlaylistNotFound) || err == nil {
-			err = k8serrors.NewNotFound(s.SingularQualifiedResource, name)
+			err = resourceInfo.NewNotFound(name)
 		}
 		return nil, err
 	}

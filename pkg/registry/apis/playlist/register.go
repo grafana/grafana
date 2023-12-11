@@ -84,13 +84,11 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 
 	resource := playlist.PlaylistResourceInfo
 	legacyStore := &legacyStorage{
-		service:                   b.service,
-		namespacer:                b.namespacer,
-		DefaultQualifiedResource:  resource.GroupResource(),
-		SingularQualifiedResource: resource.SingularGroupResource(),
+		service:    b.service,
+		namespacer: b.namespacer,
 	}
 	legacyStore.tableConverter = utils.NewTableConverter(
-		legacyStore.DefaultQualifiedResource,
+		resource.GroupResource(),
 		[]metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
 			{Name: "Title", Type: "string", Format: "string", Description: "The playlist name"},

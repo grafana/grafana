@@ -1,7 +1,9 @@
 package apis
 
 import (
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -12,10 +14,13 @@ type ResourceInfo struct {
 	resourceName string
 	singularName string
 	kind         string
+	newObj       func() runtime.Object
+	newList      func() runtime.Object
 }
 
-func NewResourceInfo(group, version, resourceName, singularName, kind string) ResourceInfo {
-	return ResourceInfo{group, version, resourceName, singularName, kind}
+func NewResourceInfo(group, version, resourceName, singularName, kind string,
+	newObj func() runtime.Object, newList func() runtime.Object) ResourceInfo {
+	return ResourceInfo{group, version, resourceName, singularName, kind, newObj, newList}
 }
 
 func (info *ResourceInfo) GetSingularName() string {
@@ -67,4 +72,16 @@ func (info *ResourceInfo) StoragePath(sub ...string) string {
 		return info.resourceName + "/" + sub[0]
 	}
 	panic("invalid subresource path")
+}
+
+func (info *ResourceInfo) NewFunc() runtime.Object {
+	return info.newObj()
+}
+
+func (info *ResourceInfo) NewListFunc() runtime.Object {
+	return info.newList()
+}
+
+func (info *ResourceInfo) NewNotFound(name string) *errors.StatusError {
+	return errors.NewNotFound(info.SingularGroupResource(), name)
 }
