@@ -34,7 +34,7 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 
 	namespace, identifier := id.GetNamespacedID()
 	userID, err := strconv.ParseInt(identifier, 10, 64)
-	if err != nil {
+	if err != nil || userID <= 0 {
 		ctxLogger.Warn("Failed to sync org role, invalid ID for identity", "id", id.ID, "namespace", namespace)
 		return nil
 	}

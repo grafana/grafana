@@ -292,7 +292,7 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 
 	namespace, id := identity.GetNamespacedID()
 	intId, err := strconv.ParseInt(id, 10, 64)
-	if err != nil {
+	if err != nil || intId <= 0 {
 		return nil, authn.ErrInvalidIdentityID.Errorf("expected correct identity ID but got: %s", id)
 	}
 

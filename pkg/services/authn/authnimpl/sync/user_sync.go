@@ -144,7 +144,7 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 	namespace, id := identity.GetNamespacedID()
 	userID, err := intIdentifier(id)
 	// do not sync invalid users
-	if err != nil {
+	if err != nil || userID <= 0 {
 		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id)
 		return nil
 	}
