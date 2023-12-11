@@ -111,7 +111,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
 
   const variant = isSynced ? 'active' : isOnCanvas ? 'canvas' : 'default';
 
-  const isFromAfterTo = value.to.isBefore(value.from);
+  const isFromAfterTo = value?.to?.isBefore(value.from);
   const timePickerIcon = isFromAfterTo ? 'exclamation-triangle' : 'clock-nine';
 
   const currentTimeRange = formattedRange(value, timeZone);
