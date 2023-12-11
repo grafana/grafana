@@ -50,7 +50,8 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     const dataObj = this.state.dataRef.resolve();
 
     try {
-      // TODO: should return default for new panel
+      // TODO: Handle default/last used datasource selection for new panel
+      // Ref: PanelEditorQueries / componentDidMount
       const datasource = await getDataSourceSrv().get(dataObj.state.datasource);
       const dsSettings = getDataSourceSrv().getInstanceSettings(dataObj.state.datasource);
 
