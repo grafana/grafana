@@ -180,6 +180,7 @@ func TestRoleAppPluginAuth(t *testing.T) {
 			{signedIn: true, roleRequired: org.RoleEditor, role: "", expStatus: http.StatusFound, expBody: "<a href=\"/grafana/\">Found</a>.\n\n", expLocation: "/grafana/"},
 		}
 
+		path := "/a/test-app/test"
 		for i, tc := range tcs {
 			t.Run(fmt.Sprintf("testcase %d", i), func(t *testing.T) {
 				ps := pluginstore.NewFakePluginStore(pluginstore.Plugin{
@@ -189,7 +190,7 @@ func TestRoleAppPluginAuth(t *testing.T) {
 							{
 								Type: "page",
 								Role: tc.roleRequired,
-								Path: "/a/test-app/test",
+								Path: path,
 							},
 						},
 					},
@@ -210,7 +211,7 @@ func TestRoleAppPluginAuth(t *testing.T) {
 					sc.m.Get("/a/:id/*", RoleAppPluginAuthAndSignedIn(ac, ps, features, logger), func(c *contextmodel.ReqContext) {
 						c.JSON(http.StatusOK, map[string]interface{}{})
 					})
-					sc.fakeReq("GET", "/a/test-app/test").exec()
+					sc.fakeReq("GET", path).exec()
 					assert.Equal(t, tc.expStatus, sc.resp.Code)
 					assert.Equal(t, tc.expBody, sc.resp.Body.String())
 					assert.Equal(t, tc.expLocation, sc.resp.Header().Get("Location"))
@@ -262,6 +263,77 @@ func TestRoleAppPluginAuth(t *testing.T) {
 		sc.fakeReq("GET", "/a/test-app/notExistingPath").exec()
 		assert.Equal(t, 404, sc.resp.Code)
 		assert.Equal(t, "", sc.resp.Body.String())
+	})
+
+	t.Run("Plugin include with RBAC", func(t *testing.T) {
+		tcs := []struct {
+			name        string
+			evalResult  bool
+			evalErr     error
+			expStatus   int
+			expBody     string
+			expLocation string
+		}{
+			{
+				name:        "Unsuccessful RBAC eval will result in a redirect",
+				evalResult:  false,
+				expStatus:   302,
+				expBody:     "<a href=\"/\">Found</a>.\n\n",
+				expLocation: "/",
+			},
+			{
+				name:        "An RBAC eval error will result in a redirect",
+				evalErr:     errors.New("eval error"),
+				expStatus:   302,
+				expBody:     "<a href=\"/\">Found</a>.\n\n",
+				expLocation: "/",
+			},
+			{
+				name:        "Successful RBAC eval will result in a successful request",
+				evalResult:  true,
+				expStatus:   200,
+				expBody:     "",
+				expLocation: "",
+			},
+		}
+
+		for _, tc := range tcs {
+			middlewareScenario(t, "Plugin include with RBAC", func(t *testing.T, sc *scenarioContext) {
+				sc.withIdentity(&authn.Identity{
+					OrgRoles: map[int64]org.RoleType{
+						0: org.RoleViewer,
+					},
+				})
+				logger := &logtest.Fake{}
+				features := featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
+				ac := &actest.FakeAccessControl{
+					ExpectedEvaluate: tc.evalResult,
+					ExpectedErr:      tc.evalErr,
+				}
+				path := "/a/test-app/test"
+				ps := pluginstore.NewFakePluginStore(pluginstore.Plugin{
+					JSONData: plugins.JSONData{
+						ID: "test-app",
+						Includes: []*plugins.Includes{
+							{
+								Type:   "page",
+								Role:   org.RoleViewer,
+								Path:   path,
+								Action: "test-app.test:read",
+							},
+						},
+					},
+				})
+
+				sc.m.Get("/a/:id/*", RoleAppPluginAuthAndSignedIn(ac, ps, features, logger), func(c *contextmodel.ReqContext) {
+					c.JSON(http.StatusOK, map[string]interface{}{})
+				})
+				sc.fakeReq("GET", path).exec()
+				assert.Equal(t, tc.expStatus, sc.resp.Code)
+				assert.Equal(t, tc.expBody, sc.resp.Body.String())
+				assert.Equal(t, tc.expLocation, sc.resp.Header().Get("Location"))
+			})
+		}
 	})
 }
 

@@ -136,7 +136,7 @@ func RoleAppPluginAuthAndSignedIn(accessControl ac.AccessControl, ps pluginstore
 
 				useRBAC := features.IsEnabledGlobally(featuremgmt.FlagAccessControlOnCall) && i.RequiresRBACAction()
 				if useRBAC && !hasAccess(ac.EvalPermission(i.Action)) {
-					logger.Debug("plugin include is covered by RBAC, user doesn't have access",
+					logger.Debug("Plugin include is covered by RBAC, user doesn't have access",
 						"plugin", pluginID,
 						"include", i.Name)
 					allowed = false
