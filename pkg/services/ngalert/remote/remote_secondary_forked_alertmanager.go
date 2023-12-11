@@ -23,7 +23,7 @@ type RemoteSecondaryForkedAlertmanager struct {
 	internal notifier.Alertmanager
 	remote   remoteAlertmanager
 
-	lastSynced   time.Time
+	lastSync     time.Time
 	syncInterval time.Duration
 }
 
@@ -47,8 +47,8 @@ func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, c
 		}
 	}
 
-	if time.Since(fam.lastSynced) >= fam.syncInterval {
-		fam.log.Debug("Syncing configuration and state with the remote Alertmanager", "lastSynced", fam.lastSynced)
+	if time.Since(fam.lastSync) >= fam.syncInterval {
+		fam.log.Debug("Syncing configuration and state with the remote Alertmanager", "lastSync", fam.lastSync)
 		if err := fam.remote.CompareAndSendConfiguration(ctx, config); err != nil {
 			fam.log.Error("Unable to upload the configuration to the remote Alertmanager", "err", err)
 			syncErr = true
@@ -60,9 +60,9 @@ func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, c
 		fam.log.Debug("Finished syncing configuration and state with the remote Alertmanager")
 	}
 
-	// If there were no errors syncing the configuration/state, update lastSynced
+	// If there were no errors syncing the configuration/state, update lastSync
 	if !syncErr {
-		fam.lastSynced = time.Now()
+		fam.lastSync = time.Now()
 	}
 
 	return fam.internal.ApplyConfig(ctx, config)
