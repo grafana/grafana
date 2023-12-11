@@ -33,13 +33,6 @@ func (c *entityStoreClientWrapper) BatchRead(ctx context.Context, in *BatchReadE
 	}
 	return c.EntityStoreClient.BatchRead(ctx, in)
 }
-func (c *entityStoreClientWrapper) Write(ctx context.Context, in *WriteEntityRequest) (*WriteEntityResponse, error) {
-	ctx, err := c.wrapContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return c.EntityStoreClient.Write(ctx, in)
-}
 func (c *entityStoreClientWrapper) Create(ctx context.Context, in *CreateEntityRequest) (*CreateEntityResponse, error) {
 	ctx, err := c.wrapContext(ctx)
 	if err != nil {
@@ -94,15 +87,6 @@ func (c *entityStoreClientWrapper) wrapContext(ctx context.Context) (context.Con
 	))
 
 	return ctx, nil
-}
-
-// TEMPORARY... while we split this into a new service (see below)
-func (c *entityStoreClientWrapper) AdminWrite(ctx context.Context, in *AdminWriteEntityRequest) (*WriteEntityResponse, error) {
-	ctx, err := c.wrapContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return c.EntityStoreClient.AdminWrite(ctx, in)
 }
 
 func NewEntityStoreClientWrapper(cc grpc.ClientConnInterface) EntityStoreServer {
