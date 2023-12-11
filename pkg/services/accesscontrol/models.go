@@ -50,18 +50,20 @@ func (r *Role) IsBasic() bool {
 	return strings.HasPrefix(r.Name, BasicRolePrefix) || strings.HasPrefix(r.UID, BasicRoleUIDPrefix)
 }
 
-func (r Role) MarshalJSON() ([]byte, error) {
-	type Alias Role
-
-	return json.Marshal(&struct {
-		Alias
-		Global bool `json:"global" xorm:"-"`
-	}{
-		Alias:  (Alias)(r),
-		Global: r.Global(),
-	})
+type RoleStatic struct {
+	Role
+	Global bool `json:"global" xorm:"-"`
 }
 
+func (r Role) MarshalJSON() ([]byte, error) {
+	static := RoleStatic{
+		Role:   r,
+		Global: r.Global(),
+	}
+	return json.Marshal(&static)
+}
+
+// swagger:ignore
 type RoleDTO struct {
 	Version     int64        `json:"version"`
 	UID         string       `xorm:"uid" json:"uid"`
@@ -135,16 +137,18 @@ func (r *RoleDTO) IsExternalService() bool {
 	return strings.HasPrefix(r.Name, ExternalServiceRolePrefix) || strings.HasPrefix(r.UID, ExternalServiceRoleUIDPrefix)
 }
 
-func (r RoleDTO) MarshalJSON() ([]byte, error) {
-	type Alias RoleDTO
+// swagger:model RoleDTO
+type RoleDTOStatic struct {
+	RoleDTO
+	Global bool `json:"global" xorm:"-"`
+}
 
-	return json.Marshal(&struct {
-		Alias
-		Global bool `json:"global" xorm:"-"`
-	}{
-		Alias:  (Alias)(r),
-		Global: r.Global(),
-	})
+func (r RoleDTO) MarshalJSON() ([]byte, error) {
+	static := RoleDTOStatic{
+		RoleDTO: r,
+		Global:  r.Global(),
+	}
+	return json.Marshal(&static)
 }
 
 type TeamRole struct {
