@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Alert } from '@grafana/ui';
 
 export const readOnlyMessage =
@@ -7,7 +8,7 @@ export const readOnlyMessage =
 
 export function DataSourceReadOnlyMessage() {
   return (
-    <Alert severity="info" title="Provisioned data source">
+    <Alert data-testid={e2eSelectors.pages.DataSource.readOnly} severity="info" title="Provisioned data source">
       {readOnlyMessage}
     </Alert>
   );

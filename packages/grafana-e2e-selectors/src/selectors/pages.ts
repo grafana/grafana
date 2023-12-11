@@ -21,7 +21,7 @@ export const Pages = {
     delete: 'Data source settings page Delete button',
     readOnly: 'data-testid Data source settings page read only message',
     saveAndTest: 'data-testid Data source settings page Save and Test button',
-    alert: 'Data source settings page Alert',
+    alert: 'data-testid Data source settings page Alert',
   },
   DataSources: {
     url: '/datasources',
