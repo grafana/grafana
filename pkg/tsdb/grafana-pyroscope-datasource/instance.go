@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -14,6 +16,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/prometheus/prometheus/model/labels"
+	"github.com/prometheus/prometheus/promql/parser"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -27,8 +31,8 @@ var (
 
 type ProfilingClient interface {
 	ProfileTypes(context.Context) ([]*ProfileType, error)
-	LabelNames(ctx context.Context) ([]string, error)
-	LabelValues(ctx context.Context, label string) ([]string, error)
+	LabelNames(ctx context.Context, labelSelector string, start int64, end int64) ([]string, error)
+	LabelValues(ctx context.Context, label string, labelSelector string, start int64, end int64) ([]string, error)
 	GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64) (*SeriesResponse, error)
 	GetProfile(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, maxNodes *int64) (*ProfileResponse, error)
 	GetSpanProfile(ctx context.Context, profileTypeID string, labelSelector string, spanSelector []string, start int64, end int64, maxNodes *int64) (*ProfileResponse, error)
@@ -105,17 +109,45 @@ func (d *PyroscopeDatasource) profileTypes(ctx context.Context, req *backend.Cal
 
 func (d *PyroscopeDatasource) labelNames(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	ctxLogger := logger.FromContext(ctx)
-	res, err := d.client.LabelNames(ctx)
+
+	u, err := url.Parse(req.URL)
+	if err != nil {
+		ctxLogger.Error("Failed to parse URL", "error", err, "function", logEntrypoint())
+		return err
+	}
+	query := u.Query()
+
+	start, _ := strconv.ParseInt(query.Get("start"), 10, 64)
+	end, _ := strconv.ParseInt(query.Get("end"), 10, 64)
+	labelSelector := query.Get("query")
+	matchers, err := parser.ParseMetricSelector(labelSelector)
+	if err != nil {
+		ctxLogger.Error("Could not parse label selector", "error", err, "function", logEntrypoint())
+		return fmt.Errorf("failed parsing label selector: %v", err)
+	}
+
+	labelNames, err := d.client.LabelNames(ctx, labelSelector, start, end)
 	if err != nil {
 		ctxLogger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		return fmt.Errorf("error calling LabelNames: %v", err)
 	}
-	data, err := json.Marshal(res)
+
+	finalLabels := make([]string, 0)
+	for _, label := range labelNames {
+		if slices.ContainsFunc(matchers, func(m *labels.Matcher) bool {
+			return m.Name == label
+		}) {
+			continue
+		}
+		finalLabels = append(finalLabels, label)
+	}
+
+	jsonResponse, err := json.Marshal(finalLabels)
 	if err != nil {
 		ctxLogger.Error("Failed to marshal response", "error", err, "function", logEntrypoint())
 		return err
 	}
-	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
+	err = sender.Send(&backend.CallResourceResponse{Body: jsonResponse, Headers: req.Headers, Status: 200})
 	if err != nil {
 		ctxLogger.Error("Failed to send response", "error", err, "function", logEntrypoint())
 		return err
@@ -139,7 +171,11 @@ func (d *PyroscopeDatasource) labelValues(ctx context.Context, req *backend.Call
 	}
 	query := u.Query()
 
-	res, err := d.client.LabelValues(ctx, query["label"][0])
+	start, _ := strconv.ParseInt(query.Get("start"), 10, 64)
+	end, _ := strconv.ParseInt(query.Get("end"), 10, 64)
+	label := query.Get("label")
+
+	res, err := d.client.LabelValues(ctx, label, query.Get("query"), start, end)
 	if err != nil {
 		ctxLogger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		return fmt.Errorf("error calling LabelValues: %v", err)

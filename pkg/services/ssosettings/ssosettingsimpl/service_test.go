@@ -13,12 +13,10 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	secretsFakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -106,34 +104,11 @@ func TestSSOSettingsService_GetForProvider(t *testing.T) {
 }
 
 func TestSSOSettingsService_List(t *testing.T) {
-	defaultIdentity := &user.SignedInUser{
-		UserID: 1,
-		OrgID:  1,
-		Permissions: map[int64]map[string][]string{
-			1: {
-				accesscontrol.ActionSettingsRead: {accesscontrol.ScopeSettingsAll},
-			},
-		},
-	}
-
-	scopedIdentity := &user.SignedInUser{
-		UserID: 1,
-		OrgID:  1,
-		Permissions: map[int64]map[string][]string{
-			1: {
-				accesscontrol.ActionSettingsRead: []string{
-					accesscontrol.Scope("settings", "auth.azuread", "*"),
-					accesscontrol.Scope("settings", "auth.github", "*"),
-				},
-			},
-		},
-	}
 	testCases := []struct {
-		name     string
-		setup    func(env testEnv)
-		identity identity.Requester
-		want     []*models.SSOSettings
-		wantErr  bool
+		name    string
+		setup   func(env testEnv)
+		want    []*models.SSOSettings
+		wantErr bool
 	}{
 		{
 			name: "should return successfully",
@@ -153,7 +128,6 @@ func TestSSOSettingsService_List(t *testing.T) {
 				env.fallbackStrategy.ExpectedIsMatch = true
 				env.fallbackStrategy.ExpectedConfig = &social.OAuthInfo{Enabled: false}
 			},
-			identity: defaultIdentity,
 			want: []*models.SSOSettings{
 				{
 					Provider:      "github",
@@ -194,44 +168,10 @@ func TestSSOSettingsService_List(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "should return the settings that the user has access to",
-			setup: func(env testEnv) {
-				env.store.ExpectedSSOSettings = []*models.SSOSettings{
-					{
-						Provider:      "github",
-						OAuthSettings: &social.OAuthInfo{Enabled: true},
-						Source:        models.DB,
-					},
-					{
-						Provider:      "okta",
-						OAuthSettings: &social.OAuthInfo{Enabled: true},
-						Source:        models.DB,
-					},
-				}
-				env.fallbackStrategy.ExpectedIsMatch = true
-				env.fallbackStrategy.ExpectedConfig = &social.OAuthInfo{Enabled: false}
-			},
-			identity: scopedIdentity,
-			want: []*models.SSOSettings{
-				{
-					Provider:      "github",
-					OAuthSettings: &social.OAuthInfo{Enabled: true},
-					Source:        models.DB,
-				},
-				{
-					Provider:      "azuread",
-					OAuthSettings: &social.OAuthInfo{Enabled: false},
-					Source:        models.System,
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name:     "should return error if store returns an error",
-			setup:    func(env testEnv) { env.store.ExpectedError = fmt.Errorf("error") },
-			identity: defaultIdentity,
-			want:     nil,
-			wantErr:  true,
+			name:    "should return error if store returns an error",
+			setup:   func(env testEnv) { env.store.ExpectedError = fmt.Errorf("error") },
+			want:    nil,
+			wantErr: true,
 		},
 		{
 			name: "should use the fallback strategy if store returns empty list",
@@ -240,7 +180,6 @@ func TestSSOSettingsService_List(t *testing.T) {
 				env.fallbackStrategy.ExpectedIsMatch = true
 				env.fallbackStrategy.ExpectedConfig = &social.OAuthInfo{Enabled: false}
 			},
-			identity: defaultIdentity,
 			want: []*models.SSOSettings{
 				{
 					Provider:      "github",
@@ -286,9 +225,8 @@ func TestSSOSettingsService_List(t *testing.T) {
 				env.store.ExpectedSSOSettings = []*models.SSOSettings{}
 				env.fallbackStrategy.ExpectedIsMatch = false
 			},
-			identity: defaultIdentity,
-			want:     nil,
-			wantErr:  true,
+			want:    nil,
+			wantErr: true,
 		},
 	}
 	for _, tc := range testCases {
@@ -298,7 +236,7 @@ func TestSSOSettingsService_List(t *testing.T) {
 				tc.setup(env)
 			}
 
-			actual, err := env.service.List(context.Background(), tc.identity)
+			actual, err := env.service.List(context.Background())
 
 			if tc.wantErr {
 				require.Error(t, err)
@@ -416,6 +354,7 @@ func setupTestEnv(t *testing.T) testEnv {
 		store:        store,
 		ac:           accessControl,
 		fbStrategies: []ssosettings.FallbackStrategy{fallbackStrategy},
+		reloadables:  make(map[string]ssosettings.Reloadable),
 		secrets:      secrets,
 	}
 

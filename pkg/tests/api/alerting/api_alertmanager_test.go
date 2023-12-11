@@ -1049,7 +1049,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 				},
 				expectedCode: func() int {
 					if setting.IsEnterprise {
-						return http.StatusUnauthorized
+						return http.StatusForbidden
 					}
 					return http.StatusBadRequest
 				}(),
@@ -2285,7 +2285,7 @@ func TestIntegrationEval(t *testing.T) {
 			expectedResponse: func() string { return "" },
 			expectedStatusCode: func() int {
 				if setting.IsEnterprise {
-					return http.StatusUnauthorized
+					return http.StatusForbidden
 				}
 				return http.StatusBadRequest
 			},

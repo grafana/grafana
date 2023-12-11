@@ -169,7 +169,6 @@ function getInheritedProperties(
     'group_wait',
     'group_interval',
     'repeat_interval',
-    'mute_time_intervals',
   ]);
 
   // TODO how to solve this TypeScript mystery?
