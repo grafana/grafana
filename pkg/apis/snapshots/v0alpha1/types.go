@@ -2,8 +2,22 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/grafana/grafana/pkg/apis"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+)
+
+const (
+	GROUP      = "snapshots.grafana.app"
+	VERSION    = "v0alpha1"
+	APIVERSION = GROUP + "/" + VERSION
+)
+
+var DashboardSnapshotResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
+	"dashsnaps", "dashsnap", "DashboardSnapshot",
+	func() runtime.Object { return &DashboardSnapshot{} },
+	func() runtime.Object { return &DashboardSnapshotList{} },
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -13,15 +27,7 @@ type DashboardSnapshot struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// Snapshot summary info
-	Info SnapshotInfo `json:"info"`
-
-	// The raw dashboard (??? openapi ???)
-	// TODO: openapi annotations for codegen?
-	// This will not be included in list commands
-	Dashboard *simplejson.Json `json:"dashboard,omitempty"`
-
-	// The delete key is only returned when the item is created.  It is not returned from a get request
-	DeleteKey string `json:"deleteKey,omitempty"`
+	Spec SnapshotInfo `json:"spec"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -45,6 +51,29 @@ type SnapshotInfo struct {
 	OriginalUrl string `json:"originalUrl,omitempty"`
 	// Snapshot creation timestamp
 	Timestamp string `json:"timestamp,omitempty"`
+}
+
+// This is returned from the POST command
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type DashboardSnapshotWithDeleteKey struct {
+	DashboardSnapshot `json:",inline"`
+
+	// The delete key is only returned when the item is created.  It is not returned from a get request
+	DeleteKey string `json:"deleteKey,omitempty"`
+}
+
+// This is the snapshot returned from the subresource
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type FullDashboardSnapshot struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	// Snapshot summary info
+	Info SnapshotInfo `json:"info"`
+
+	// The raw dashboard (??? openapi ???)
+	Dashboard *simplejson.Json `json:"dashboard"`
 }
 
 // Each tenant, may have different sharing options

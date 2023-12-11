@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"os"
 
-	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/spf13/cobra"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/component-base/cli"
+
+	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}) *cobra.Command {
@@ -68,24 +69,24 @@ func ParseAPIGroupArgs(cfg *setting.Cfg, args []string) ([]grafanaAPIServer.APIG
 	builders := make([]grafanaAPIServer.APIGroupBuilder, 0)
 	for _, g := range args {
 		switch g {
-		case "example.grafana.app":
-			eb, err := initializeExampleAPIBuilder(cfg)
-			if err != nil {
-				return nil, err
-			}
-			builders = append(builders, eb)
-		case "playlist.grafana.app":
-			pb, err := initializePlaylistsAPIBuilder(cfg)
-			if err != nil {
-				return nil, err
-			}
-			builders = append(builders, pb)
-		case "snapshots.grafana.app":
-			sb, err := initializeSnapshotsAPIBuilder(cfg)
-			if err != nil {
-				return nil, err
-			}
-			builders = append(builders, sb)
+		// case "example.grafana.app":
+		// 	eb, err := initializeExampleAPIBuilder(cfg)
+		// 	if err != nil {
+		// 		return nil, err
+		// 	}
+		// 	builders = append(builders, eb)
+		// case "playlist.grafana.app":
+		// 	pb, err := initializePlaylistsAPIBuilder(cfg)
+		// 	if err != nil {
+		// 		return nil, err
+		// 	}
+		// 	builders = append(builders, pb)
+		// case "snapshots.grafana.app":
+		// 	sb, err := initializeSnapshotsAPIBuilder(cfg)
+		// 	if err != nil {
+		// 		return nil, err
+		// 	}
+		// 	builders = append(builders, sb)
 		default:
 			return nil, fmt.Errorf("unknown group: %s", g)
 		}

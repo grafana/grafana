@@ -13,7 +13,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 
-	snapshots "github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
@@ -22,11 +22,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// GroupName is the group name for this API.
-const GroupName = "snapshots.grafana.app"
-const VersionID = "v0alpha1"
-
 var _ grafanaapiserver.APIGroupBuilder = (*SnapshotsAPIBuilder)(nil)
+
+var resourceInfo = v0alpha1.DashboardSnapshotResourceInfo
 
 // This is used just so wire has something unique to return
 type SnapshotsAPIBuilder struct {
@@ -44,7 +42,7 @@ func NewSnapshotsAPIBuilder(
 		service:    p,
 		options:    newSharingOptionsGetter(cfg),
 		namespacer: request.GetNamespaceMapper(cfg),
-		gv:         schema.GroupVersion{Group: GroupName, Version: VersionID},
+		gv:         resourceInfo.GroupVersion(),
 	}
 }
 
@@ -68,10 +66,12 @@ func (b *SnapshotsAPIBuilder) GetGroupVersion() schema.GroupVersion {
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
-		&snapshots.DashboardSnapshot{},
-		&snapshots.DashboardSnapshotList{},
-		&snapshots.SharingOptions{},
-		&snapshots.SharingOptionsList{},
+		&v0alpha1.DashboardSnapshot{},
+		&v0alpha1.DashboardSnapshotList{},
+		&v0alpha1.SharingOptions{},
+		&v0alpha1.SharingOptionsList{},
+		&v0alpha1.FullDashboardSnapshot{},
+		&v0alpha1.DashboardSnapshotWithDeleteKey{},
 		&metav1.Status{},
 	)
 }
@@ -100,14 +100,14 @@ func (b *SnapshotsAPIBuilder) GetAPIGroupInfo(
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
 ) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(GroupName, scheme, metav1.ParameterCodec, codecs)
+	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
 
 	legacyStore := &legacyStorage{
 		service:                   b.service,
 		namespacer:                b.namespacer,
-		DefaultQualifiedResource:  b.gv.WithResource("dashboards").GroupResource(),
-		SingularQualifiedResource: b.gv.WithResource("dashboard").GroupResource(),
+		DefaultQualifiedResource:  resourceInfo.GroupResource(),
+		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
 	}
 	legacyStore.tableConverter = utils.NewTableConverter(
 		legacyStore.DefaultQualifiedResource,
@@ -117,19 +117,22 @@ func (b *SnapshotsAPIBuilder) GetAPIGroupInfo(
 			{Name: "Created At", Type: "date"},
 		},
 		func(obj any) ([]interface{}, error) {
-			m, ok := obj.(*snapshots.DashboardSnapshot)
+			m, ok := obj.(*v0alpha1.DashboardSnapshot)
 			if ok {
 				return []interface{}{
 					m.Name,
-					m.Info.Title,
+					m.Spec.Title,
 					m.CreationTimestamp.UTC().Format(time.RFC3339),
 				}, nil
 			}
 			return nil, fmt.Errorf("expected snapshot")
 		},
 	)
-	storage["dashboards"] = legacyStore
-	storage["dashboards/delete"] = &DeleteKeyREST{
+	storage[resourceInfo.StoragePath()] = legacyStore
+	storage[resourceInfo.StoragePath("delete")] = &subDeleteREST{
+		service: b.service,
+	}
+	storage[resourceInfo.StoragePath("body")] = &subBodyREST{
 		service: b.service,
 	}
 
@@ -138,12 +141,12 @@ func (b *SnapshotsAPIBuilder) GetAPIGroupInfo(
 		tableConverter: legacyStore.tableConverter,
 	}
 
-	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
 	return &apiGroupInfo, nil
 }
 
 func (b *SnapshotsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return snapshots.GetOpenAPIDefinitions
+	return v0alpha1.GetOpenAPIDefinitions
 }
 
 func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {

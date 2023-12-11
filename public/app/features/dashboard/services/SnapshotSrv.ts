@@ -43,15 +43,19 @@ interface K8sMetadata {
   creationTimestamp: string;
 }
 
-interface K8sSnapshotSummary {
-  metadata: K8sMetadata;
+interface K8sSnapshotInfo {
   title: string;
   externalUrl?: string;
   expires?: number;
 }
 
+interface K8sSnapshotResource {
+  metadata: K8sMetadata;
+  spec: K8sSnapshotInfo;
+}
+
 interface DashboardSnapshotList {
-  items: K8sSnapshotSummary[];
+  items: K8sSnapshotResource[];
 }
 
 interface K8sDashboardSnapshot {
@@ -67,17 +71,17 @@ class K8sAPI implements DashboardSnapshotSrv {
 
   constructor() {
     const ns = contextSrv.user.orgId === 1 ? 'default' : `org-${contextSrv.user.orgId}`;
-    this.url = `/apis/${this.apiVersion}/namespaces/${ns}/dashboards`;
+    this.url = `/apis/${this.apiVersion}/namespaces/${ns}/dashsnaps`;
   }
 
   async getSnapshots(): Promise<Snapshot[]> {
     const result = await getBackendSrv().get<DashboardSnapshotList>(this.url);
-    return result.items.map((v) => {
+    return result.items.map((r) => {
       return {
-        external: v.externalUrl != null,
-        externalUrl: v.externalUrl,
-        key: v.metadata.name,
-        name: v.title,
+        key: r.metadata.name,
+        name: r.spec.title,
+        external: r.spec.externalUrl != null,
+        externalUrl: r.spec.externalUrl,
       };
     });
   }
@@ -92,7 +96,7 @@ class K8sAPI implements DashboardSnapshotSrv {
   }
 
   async getSnapshot(uid: string): Promise<DashboardDTO> {
-    const v = await getBackendSrv().get<K8sDashboardSnapshot>(this.url + '/' + uid);
+    const v = await getBackendSrv().get<K8sDashboardSnapshot>(this.url + '/' + uid + '/body');
     return {
       dashboard: v.dashboard,
       meta: {
