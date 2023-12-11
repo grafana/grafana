@@ -56,14 +56,6 @@ Latest Version: 0.0.29 | Signature: Community | Last Updated: 2023
 
 > [Migration issue](https://github.com/bosun-monitor/bosun-grafana-app/issues/63) has been raised.
 
-### [Cloudflare Grafana App](https://grafana.com/grafana/plugins/cloudflare-app/)
-
-Latest Version: 0.2.4 | Signature: Commercial | Last Updated: 2022
-
-{{% admonition type="warning" %}}
-Guidance from the developer: This app is deprecated and will no longer be updated after December 31, 2023. Please consider using the [Cloudflare] Dashboard(https://dash.cloudflare.com/?to=/:account/:zone/analytics/dns) or [DNS Analytics API](https://developers.cloudflare.com/api/operations/dns-analytics-table) instead.
-{{% /admonition %}}
-
 ### [GLPI](https://grafana.com/grafana/plugins/ddurieux-glpi-app)
 
 Latest Version: 1.3.1 | Signature: Community | Last Updated: 2021
