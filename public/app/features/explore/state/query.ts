@@ -67,7 +67,7 @@ import { saveCorrelationsAction } from './explorePane';
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
 import { changeCorrelationEditorDetails } from './main';
 import { updateTime } from './time';
-import { createCacheKey, filterLogRowsByIndex, getDatasourceUIDs, getResultsFromCache } from './utils';
+import { createCacheKey, filterLogRowsByIndex, getCorrelationsData, getDatasourceUIDs, getResultsFromCache } from './utils';
 
 /**
  * Derives from explore state if a given Explore pane is waiting for more data to be received
@@ -489,27 +489,6 @@ async function handleHistory(
   for (const exploreId in state.panes) {
     await dispatch(loadRichHistory(exploreId));
   }
-}
-
-async function getCorrelationsData(state: StoreState, exploreId: string, ) {
-  const correlations$ = getCorrelations(exploreId);
-  const correlationEditorHelperData = state.explore.panes[exploreId]!.correlationEditorHelperData;
-
-  const isCorrelationEditorMode = state.explore.correlationEditorDetails?.editorMode || false;
-  const isLeftPane = Object.keys(state.explore.panes)[0] === exploreId;
-  const showCorrelationEditorLinks = isCorrelationEditorMode && isLeftPane;
-  const defaultCorrelationEditorDatasource = showCorrelationEditorLinks ? await getDataSourceSrv().get() : undefined;
-  const interpolateCorrelationHelperVars =
-    isCorrelationEditorMode && !isLeftPane && correlationEditorHelperData !== undefined;
-
-  let scopedVars: ScopedVars = {};
-  if (interpolateCorrelationHelperVars && correlationEditorHelperData !== undefined) {
-    Object.entries(correlationEditorHelperData?.vars).forEach((variable) => {
-      scopedVars[variable[0]] = { value: variable[1] };
-    });
-  }
-
-  return { correlations$, defaultCorrelationEditorDatasource, scopedVars, showCorrelationEditorLinks };
 }
 
 interface RunQueriesOptions {
