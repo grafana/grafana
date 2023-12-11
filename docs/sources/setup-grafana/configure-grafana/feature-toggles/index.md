@@ -53,6 +53,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `newBrowseDashboards`                            | New browse/manage dashboards UI                                                                                                                                                                                              | Yes                |
 | `alertingInsights`                               | Show the new alerting insights landing page                                                                                                                                                                                  | Yes                |
 | `cloudWatchWildCardDimensionValues`              | Fetches dimension values from CloudWatch to correctly label wildcard dimensions                                                                                                                                              | Yes                |
+| `displayAnonymousStats`                          | Enables anonymous stats to be shown in the UI for Grafana                                                                                                                                                                    | Yes                |
 
 ## Preview feature toggles
 
@@ -151,7 +152,6 @@ Experimental features might be changed or removed without prior notice.
 | `awsDatasourcesNewFormStyling`              | Applies new form styling for configuration and query editors in AWS plugins                                                                                                                                                                                                       |
 | `cachingOptimizeSerializationMemoryUsage`   | If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses. |
 | `pluginsInstrumentationStatusSource`        | Include a status source label for plugin request metrics and logs                                                                                                                                                                                                                 |
-| `displayAnonymousStats`                     | Enables anonymous stats to be shown in the UI for Grafana                                                                                                                                                                                                                         |
 
 ## Development feature toggles
 
