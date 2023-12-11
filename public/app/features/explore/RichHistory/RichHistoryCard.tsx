@@ -90,8 +90,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       max-width: 500px;
       height: auto;
       z-index: 1;
-      top: 25px;
-      left: 25px;
+      top: -150px;
+      left: 100px;
+      border: 1px solid white;
     `,
     queryActionButtons: css`
       max-width: ${rightColumnContentWidth};
