@@ -5,6 +5,7 @@ import { t } from 'app/core/internationalization';
 import { useGetPublicDashboardQuery } from 'app/features/dashboard/api/publicDashboardApi';
 import { Loader } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboard';
 import { publicDashboardPersisted } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
+import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { SceneShareTabState } from '../types';
@@ -17,7 +18,7 @@ export interface SharePublicDashboardTabState extends SceneShareTabState {
 }
 
 export class SharePublicDashboardTab extends SceneObjectBase<SharePublicDashboardTabState> {
-  public tabId = 'Public dashboard';
+  public tabId = shareDashboardType.publicDashboard;
   static Component = SharePublicDashboardTabRenderer;
 
   public getTabLabel() {

@@ -139,7 +139,7 @@ func (h *methodNotAllowedHandler) ServeHTTP(w http.ResponseWriter, req *http.Req
 // Modify the the OpenAPI spec to include the additional routes.
 // Currently this requires: https://github.com/kubernetes/kube-openapi/pull/420
 // In future k8s release, the hook will use Config3 rather than the same hook for both v2 and v3
-func getOpenAPIPostProcessor(builders []APIGroupBuilder) func(*spec3.OpenAPI) (*spec3.OpenAPI, error) {
+func GetOpenAPIPostProcessor(builders []APIGroupBuilder) func(*spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	return func(s *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 		if s.Paths == nil {
 			return s, nil
