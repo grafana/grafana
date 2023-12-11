@@ -10,12 +10,8 @@ import {
   TimeRange,
   toUtc,
   IntervalValues,
-  // AppEvents,
 } from '@grafana/data';
-import {
-  locationService,
-  // getAppEvents
-} from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 import { config } from 'app/core/config';
