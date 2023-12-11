@@ -152,9 +152,13 @@ const reduceGroups = (filterState: RulesFilter) => {
       }
 
       if ('dataSourceName' in matchesFilterFor) {
-        const doesNotQueryDs = isGrafanaRulerRule(rule.rulerRule) && isQueryingDataSource(rule.rulerRule, filterState);
+        if (isGrafanaRulerRule(rule.rulerRule)) {
+          const doesNotQueryDs = isQueryingDataSource(rule.rulerRule, filterState);
 
-        if (doesNotQueryDs) {
+          if (doesNotQueryDs) {
+            matchesFilterFor.dataSourceName = true;
+          }
+        } else {
           matchesFilterFor.dataSourceName = true;
         }
       }
