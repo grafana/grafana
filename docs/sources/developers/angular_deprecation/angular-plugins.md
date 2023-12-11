@@ -782,14 +782,6 @@ Lack of recent activity in the [project repository](https://github.com/savantly-
 
 > **Migration available - potential alternative:** other Heatmap panels exist including natively in Grafana - [learn more]({{< relref "../../panels-visualizations/visualizations/heatmap/" >}}).
 
-### [SCADAvis Synoptic Panel](https://grafana.com/grafana/plugins/scadavis-synoptic-panel/)
-
-Latest Version: 1.0.5 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/riclolsen/scadavis-synoptic-panel) in the past 3 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
 ### [TrafficLight](https://grafana.com/grafana/plugins/smartmakers-trafficlight-panel/)
 
 Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
