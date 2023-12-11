@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React, { useCallback, useMemo, useRef, useLayoutEffect, useState, useEffect } from 'react';
+import { isObservable, lastValueFrom } from 'rxjs';
 
 import {
   PanelProps,
@@ -12,12 +13,16 @@ import {
   DataHoverEvent,
   CoreApp,
   AbsoluteTimeRange,
+  dateTimeForTimeZone,
+  TimeRange,
 } from '@grafana/data';
+import { convertRawToRange } from '@grafana/data/src/datetime/rangeutil';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { CustomScrollbar, useStyles2, usePanelContext } from '@grafana/ui';
-import { mergeDataSeries } from 'app/features/explore/utils/decorators';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
+import { combineResponses } from 'app/plugins/datasource/loki/responseUtils';
 
 import { LogLabels } from '../../../features/logs/components/LogLabels';
 import { LogRows } from '../../../features/logs/components/LogRows';
@@ -42,7 +47,6 @@ export const LogsPanel = ({
     dedupStrategy,
     enableLogDetails,
   },
-  onChangeTimeRange,
   id,
 }: LogsPanelProps) => {
   const isAscending = sortOrder === LogsSortOrder.Ascending;
@@ -83,16 +87,8 @@ export const LogsPanel = ({
   }, [data.request?.intervalMs, data.request?.targets, dedupStrategy, panelData]);
 
   useEffect(() => {
-    if (data === panelData && data.series === panelData.series) {
-      return;
-    }
-    if (!infiniteScrolling) {
-      setPanelData(data);
-      return;
-    }
-    setPanelData(mergeDataSeries(panelData, data));
-    setInfiniteScrolling(false);
-  }, [data, infiniteScrolling, panelData]);
+    setPanelData(data);
+  }, [data]);
 
   useLayoutEffect(() => {
     if (isAscending && logsContainerRef.current) {
@@ -109,10 +105,55 @@ export const LogsPanel = ({
     [data]
   );
 
-  const loadMore = useCallback((scrollRange: AbsoluteTimeRange) => {
-    setInfiniteScrolling(true);
-    onChangeTimeRange(scrollRange);
-  }, [onChangeTimeRange]);
+  const loadMoreLogs = useCallback(
+    async (scrollRange: AbsoluteTimeRange) => {
+      if (!data.request) {
+        return;
+      }
+      const range: TimeRange = convertRawToRange({
+        from: dateTimeForTimeZone(timeZone, scrollRange.from),
+        to: dateTimeForTimeZone(timeZone, scrollRange.to),
+      });
+      const dataRequests = [];
+      for (const query of data.request.targets) {
+        const dataSource = await getDataSourceSrv().get(query.datasource?.uid);
+        if (!dataSource) {
+          continue;
+        }
+        dataRequests.push(
+          dataSource.query({
+            ...data.request,
+            range,
+            targets: [query],
+          })
+        );
+      }
+      setInfiniteScrolling(true);
+
+      const responses = await Promise.all(dataRequests);
+      let newSeries = panelData.series;
+      for (const response of responses) {
+        if (!isObservable(response)) {
+          continue;
+        }
+        const newData = await lastValueFrom(response);
+        newSeries = combineResponses(
+          {
+            data: newSeries,
+          },
+          { data: newData.data }
+        ).data;
+      }
+
+      setPanelData({
+        ...panelData,
+        series: newSeries,
+      });
+
+      setInfiniteScrolling(false);
+    },
+    [data.request, panelData, timeZone]
+  );
 
   if (!panelData || logRows.length === 0) {
     return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={panelData} needsStringField />;
@@ -126,12 +167,18 @@ export const LogsPanel = ({
   );
 
   return (
-    <CustomScrollbar autoHide scrollTop={scrollTop} scrollRefCallback={(element) => { setScrollElement(element || undefined); }}>
+    <CustomScrollbar
+      autoHide
+      scrollTop={scrollTop}
+      scrollRefCallback={(element) => {
+        setScrollElement(element || undefined);
+      }}
+    >
       <div className={style.container} ref={logsContainerRef} id="caca">
         {showCommonLabels && !isAscending && renderCommonLabels()}
         <InfiniteScroll
           loading={infiniteScrolling}
-          loadMoreLogs={loadMore}
+          loadMoreLogs={loadMoreLogs}
           range={timeRange}
           timeZone={timeZone}
           rows={logRows}
