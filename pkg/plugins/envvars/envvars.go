@@ -144,40 +144,56 @@ func (s *Service) GetConfigMap(ctx context.Context, _ string, _ *auth.ExternalSe
 		m[proxy.PluginSecureSocksProxyServerName] = s.cfg.ProxySettings.ServerName
 	}
 
-	// TODO add support via plugin SDK
-	//azureSettings := s.cfg.Azure
-	//if azureSettings != nil {
-	//	if azureSettings.Cloud != "" {
-	//		m[azsettings.AzureCloud] = azureSettings.Cloud
-	//	}
-	//
-	//	if azureSettings.ManagedIdentityEnabled {
-	//		m[azsettings.ManagedIdentityEnabled] = "true"
-	//
-	//		if azureSettings.ManagedIdentityClientId != "" {
-	//			m[azsettings.ManagedIdentityClientID] = azureSettings.ManagedIdentityClientId
-	//		}
-	//	}
-	//
-	//	if azureSettings.UserIdentityEnabled {
-	//		m[azsettings.UserIdentityEnabled] = "true"
-	//
-	//		if azureSettings.UserIdentityTokenEndpoint != nil {
-	//			if azureSettings.UserIdentityTokenEndpoint.TokenUrl != "" {
-	//				m[azsettings.UserIdentityTokenURL] = azureSettings.UserIdentityTokenEndpoint.TokenUrl
-	//			}
-	//			if azureSettings.UserIdentityTokenEndpoint.ClientId != "" {
-	//				m[azsettings.UserIdentityClientID] = azureSettings.UserIdentityTokenEndpoint.ClientId
-	//			}
-	//			if azureSettings.UserIdentityTokenEndpoint.ClientSecret != "" {
-	//				m[azsettings.UserIdentityClientSecret] = azureSettings.UserIdentityTokenEndpoint.ClientSecret
-	//			}
-	//			if azureSettings.UserIdentityTokenEndpoint.UsernameAssertion {
-	//				m[azsettings.UserIdentityAssertion] = "username"
-	//			}
-	//		}
-	//	}
-	//}
+	// Changes here need to be reflected in https://github.com/grafana/grafana-plugin-sdk-go/tree/main/backend/config.go#L152
+	azureSettings := s.cfg.Azure
+	if azureSettings != nil {
+		if azureSettings.Cloud != "" {
+			m[azsettings.AzureCloud] = azureSettings.Cloud
+		}
+
+		if azureSettings.ManagedIdentityEnabled {
+			m[azsettings.ManagedIdentityEnabled] = "true"
+
+			if azureSettings.ManagedIdentityClientId != "" {
+				m[azsettings.ManagedIdentityClientID] = azureSettings.ManagedIdentityClientId
+			}
+		}
+
+		if azureSettings.UserIdentityEnabled {
+			m[azsettings.UserIdentityEnabled] = "true"
+
+			if azureSettings.UserIdentityTokenEndpoint != nil {
+				if azureSettings.UserIdentityTokenEndpoint.TokenUrl != "" {
+					m[azsettings.UserIdentityTokenURL] = azureSettings.UserIdentityTokenEndpoint.TokenUrl
+				}
+				if azureSettings.UserIdentityTokenEndpoint.ClientId != "" {
+					m[azsettings.UserIdentityClientID] = azureSettings.UserIdentityTokenEndpoint.ClientId
+				}
+				if azureSettings.UserIdentityTokenEndpoint.ClientSecret != "" {
+					m[azsettings.UserIdentityClientSecret] = azureSettings.UserIdentityTokenEndpoint.ClientSecret
+				}
+				if azureSettings.UserIdentityTokenEndpoint.UsernameAssertion {
+					m[azsettings.UserIdentityAssertion] = "username"
+				}
+			}
+		}
+
+		if azureSettings.WorkloadIdentityEnabled {
+			m[azsettings.WorkloadIdentityEnabled] = "true"
+
+			if azureSettings.WorkloadIdentitySettings != nil {
+				if azureSettings.WorkloadIdentitySettings.ClientId != "" {
+					m[azsettings.WorkloadIdentityClientID] = azureSettings.WorkloadIdentitySettings.ClientId
+				}
+				if azureSettings.WorkloadIdentitySettings.TenantId != "" {
+					m[azsettings.WorkloadIdentityTenantID] = azureSettings.WorkloadIdentitySettings.TenantId
+				}
+				if azureSettings.WorkloadIdentitySettings.TokenFile != "" {
+					m[azsettings.WorkloadIdentityTokenFile] = azureSettings.WorkloadIdentitySettings.TokenFile
+				}
+			}
+		}
+	}
 
 	// TODO add support via plugin SDK
 	//ps := getPluginSettings(pluginID, s.cfg)
