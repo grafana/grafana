@@ -182,7 +182,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
               key={`${t.getTabLabel()}-${index}`}
               label={t.getTabLabel()}
               icon={t.icon}
-              //   suffix={}
+              counter={t.getItemsCount?.()}
               active={t.tabId === tab}
               onChangeTab={() => model.onChangeTab(t)}
             />

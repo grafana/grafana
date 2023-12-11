@@ -27,6 +27,12 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     return 'Queries';
   }
 
+  getItemsCount() {
+    const { dataRef } = this.state;
+    const dataObj = dataRef.resolve();
+    return dataObj.state.queries.length;
+  }
+
   constructor(state: PanelDataQueriesTabState) {
     super(state);
     this.addActivationHandler(() => this._onActivate());

@@ -20,6 +20,11 @@ export class PanelDataTransformationsTab
   getTabLabel() {
     return 'Transformations';
   }
+
+  getItemsCount() {
+    console.log('TODO PanelDataTransformationsTab getItemsCount');
+    return 0;
+  }
 }
 
 function PanelDataTransformationsTabRendered({ model }: SceneComponentProps<PanelDataTransformationsTab>) {

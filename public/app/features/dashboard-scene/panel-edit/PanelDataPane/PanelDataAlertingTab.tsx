@@ -13,6 +13,11 @@ export class PanelDataAlertingTab extends SceneObjectBase<PanelDataPaneTabState>
   getTabLabel() {
     return 'Alert';
   }
+
+  getItemsCount() {
+    console.log('TODO PanelDataAlertingTab getItemsCount');
+    return 0;
+  }
 }
 
 function PanelDataAlertingTabRendered(props: SceneComponentProps<PanelDataAlertingTab>) {
