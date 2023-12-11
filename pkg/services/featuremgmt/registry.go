@@ -262,6 +262,7 @@ var (
 			Name:           "cloudwatchNewRegionsHandler",
 			Description:    "Refactor of /regions endpoint, no user-facing changes",
 			Stage:          FeatureStageGeneralAvailability,
+			Expression:     "true", // enabled by default
 			Owner:          awsDatasourcesSquad,
 			AllowSelfServe: truePtr,
 			Created:        time.Date(2023, time.September, 25, 12, 0, 0, 0, time.UTC),
