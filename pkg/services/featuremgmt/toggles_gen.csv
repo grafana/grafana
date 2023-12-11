@@ -148,4 +148,4 @@ alertingSimplifiedRouting,experimental,@grafana/alerting-squad,2023-11-10,false,
 logRowsPopoverMenu,experimental,@grafana/observability-logs,2023-11-16,false,false,false,true
 pluginsSkipHostEnvVars,experimental,@grafana/plugins-platform-backend,2023-11-15,false,false,false,false
 regressionTransformation,experimental,@grafana/grafana-bi-squad,2023-11-24,false,false,false,true
-displayAnonymousStats,experimental,@grafana/identity-access-team,2023-11-29,false,false,false,true
+displayAnonymousStats,GA,@grafana/identity-access-team,2023-11-29,false,false,false,true
