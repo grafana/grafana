@@ -13,6 +13,7 @@ import {
   LogRowModel,
   PanelData,
   RawTimeRange,
+  ScopedVars,
   TimeFragment,
   TimeRange,
   toUtc,
@@ -21,13 +22,15 @@ import {
 } from '@grafana/data';
 import { DataQuery, DataSourceRef, TimeZone } from '@grafana/schema';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { ExplorePanelData } from 'app/types';
+import { ExplorePanelData, StoreState } from 'app/types';
 import { ExploreItemState } from 'app/types/explore';
 
 import store from '../../../core/store';
 import { setLastUsedDatasourceUID } from '../../../core/utils/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { getCorrelations } from './correlations';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -235,3 +238,24 @@ export const getDatasourceUIDs = (datasourceUID: string, queries: DataQuery[]): 
     return [datasourceUID];
   }
 };
+
+export async function getCorrelationsData(state: StoreState, exploreId: string) {
+  const correlations$ = getCorrelations(exploreId);
+  const correlationEditorHelperData = state.explore.panes[exploreId]!.correlationEditorHelperData;
+
+  const isCorrelationEditorMode = state.explore.correlationEditorDetails?.editorMode || false;
+  const isLeftPane = Object.keys(state.explore.panes)[0] === exploreId;
+  const showCorrelationEditorLinks = isCorrelationEditorMode && isLeftPane;
+  const defaultCorrelationEditorDatasource = showCorrelationEditorLinks ? await getDataSourceSrv().get() : undefined;
+  const interpolateCorrelationHelperVars =
+    isCorrelationEditorMode && !isLeftPane && correlationEditorHelperData !== undefined;
+
+  let scopedVars: ScopedVars = {};
+  if (interpolateCorrelationHelperVars && correlationEditorHelperData !== undefined) {
+    Object.entries(correlationEditorHelperData?.vars).forEach((variable) => {
+      scopedVars[variable[0]] = { value: variable[1] };
+    });
+  }
+
+  return { correlations$, defaultCorrelationEditorDatasource, scopedVars, showCorrelationEditorLinks };
+}
