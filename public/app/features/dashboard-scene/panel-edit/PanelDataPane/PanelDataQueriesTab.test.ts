@@ -1,9 +1,11 @@
 import { map, of } from 'rxjs';
 
-import { DataQueryRequest, DataSourceApi, DataSourceInstanceSettings, LoadingState, PanelData } from '@grafana/data';
+import { DataQueryRequest, DataSourceApi, LoadingState, PanelData } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { SceneObjectRef, SceneQueryRunner } from '@grafana/scenes';
 import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { InspectTab } from 'app/features/inspector/types';
 
 import { PanelTimeRange, PanelTimeRangeState } from '../../scene/PanelTimeRange';
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
@@ -106,6 +108,9 @@ jest.mock('@grafana/runtime', () => ({
       return null;
     },
   }),
+  locationService: {
+    partial: jest.fn(),
+  },
 }));
 
 describe('PanelDataQueriesTab', () => {
@@ -292,6 +297,15 @@ describe('PanelDataQueriesTab', () => {
 
         expect(dataObj.state.minInterval).toBe('1s');
       });
+    });
+  });
+
+  describe('query inspection', () => {
+    it('allows query inspection from the tab', async () => {
+      const { tab } = await setupTest();
+      tab.onOpenInspector();
+
+      expect(locationService.partial).toHaveBeenCalledWith({ inspect: 1, inspectTab: InspectTab.Query });
     });
   });
 });

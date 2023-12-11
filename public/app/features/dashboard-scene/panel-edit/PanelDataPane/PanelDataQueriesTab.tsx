@@ -114,7 +114,6 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     const panel = this.state.panelRef.resolve();
     const panelId = getPanelIdForVizPanel(panel);
 
-    alert('TODO: open inspector');
     locationService.partial({
       inspect: panelId,
       inspectTab: 'query',

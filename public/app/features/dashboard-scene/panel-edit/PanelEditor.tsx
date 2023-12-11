@@ -20,6 +20,7 @@ import { getDashboardUrl } from '../utils/urlBuilders';
 
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
+import { PanelEditorUrlSync } from './PanelEditorUrlSync';
 import { PanelOptionsPane } from './PanelOptionsPane';
 import { PanelVizTypePicker } from './PanelVizTypePicker';
 import { VizPanelManager } from './VizPanelManager';
@@ -29,9 +30,9 @@ export interface PanelEditorState extends SceneObjectState {
   controls?: SceneObject[];
   isDirty?: boolean;
   /** Panel to inspect */
-  inspectPanelId?: string;
+  inspectPanelKey?: string;
   /** Scene object that handles the current drawer */
-  drawer?: SceneObject;
+  overlay?: SceneObject;
 
   dashboardRef: SceneObjectRef<DashboardScene>;
   sourcePanelRef: SceneObjectRef<VizPanel>;
@@ -40,6 +41,11 @@ export interface PanelEditorState extends SceneObjectState {
 
 export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   static Component = PanelEditorRenderer;
+
+  /**
+   * Handles url sync
+   */
+  protected _urlSync = new PanelEditorUrlSync(this);
 
   public constructor(state: PanelEditorState) {
     super(state);
