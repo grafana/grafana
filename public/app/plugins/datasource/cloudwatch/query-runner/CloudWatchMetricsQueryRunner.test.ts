@@ -3,7 +3,6 @@ import { of } from 'rxjs';
 import { CustomVariableModel, getFrameDisplayName, VariableHide } from '@grafana/data';
 import { dateTime } from '@grafana/data/src/datetime/moment_wrapper';
 import { BackendDataSourceResponse } from '@grafana/runtime';
-import { initialVariableModelState } from 'app/features/variables/types';
 import * as redux from 'app/store/store';
 
 import {
@@ -17,6 +16,7 @@ import {
 } from '../__mocks__/CloudWatchDataSource';
 import { setupMockedMetricsQueryRunner } from '../__mocks__/MetricsQueryRunner';
 import { validMetricSearchBuilderQuery, validMetricSearchCodeQuery } from '../__mocks__/queries';
+import { initialVariableModelState } from '../__mocks__/variables';
 import { MetricQueryType, MetricEditorMode, CloudWatchMetricsQuery, DataQueryError } from '../types';
 
 describe('CloudWatchMetricsQueryRunner', () => {
