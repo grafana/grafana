@@ -3,7 +3,12 @@ import React from 'react';
 
 import { PluginSignatureType, PluginType } from '@grafana/data';
 import { LogContext } from '@grafana/faro-web-sdk';
-import { logWarning as logWarningRuntime, logError as logErrorRuntime, config } from '@grafana/runtime';
+import {
+  logWarning as logWarningRuntime,
+  logError as logErrorRuntime,
+  logInfo as logInfoRuntime,
+  config,
+} from '@grafana/runtime';
 
 import { getPluginSettings } from '../pluginSettings';
 
@@ -47,7 +52,7 @@ export function logInfo(message: string, context?: LogContext) {
     source: 'sandbox',
     monitorOnly: String(monitorOnly),
   };
-  logInfo(message, context);
+  logInfoRuntime(message, context);
 }
 
 export async function isFrontendSandboxSupported({
