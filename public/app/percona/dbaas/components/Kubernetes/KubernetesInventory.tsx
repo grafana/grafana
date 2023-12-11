@@ -4,7 +4,7 @@ import { Form } from 'react-final-form';
 import { Column } from 'react-table';
 
 import { Button, HorizontalGroup, useStyles } from '@grafana/ui';
-import { OldPage } from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import { Table } from 'app/percona/shared/components/Elements/AnotherTableInstance';
 import { CheckboxField } from 'app/percona/shared/components/Elements/Checkbox';
@@ -155,8 +155,8 @@ export const KubernetesInventory: FC<KubernetesInventoryProps> = ({ setMode }) =
   }, [kubernetesLoading]);
 
   return (
-    <OldPage navModel={navModel}>
-      <OldPage.Contents>
+    <Page navModel={navModel}>
+      <Page.Contents>
         <TechnicalPreview />
         <FeatureLoader featureName={Messages.dbaas} featureSelector={featureSelector}>
           <DbaasDeprecationWarning />
@@ -232,8 +232,8 @@ export const KubernetesInventory: FC<KubernetesInventoryProps> = ({ setMode }) =
             />
           </div>
         </FeatureLoader>
-      </OldPage.Contents>
-    </OldPage>
+      </Page.Contents>
+    </Page>
   );
 };
 

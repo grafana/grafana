@@ -5,7 +5,7 @@ import { Column } from 'react-table';
 
 import { Button, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { OldPage } from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
@@ -122,8 +122,8 @@ export const AlertRuleTemplate: FC = () => {
   }, [pageSize, pageIndex]);
 
   return (
-    <OldPage navModel={navModel}>
-      <OldPage.Contents>
+    <Page navModel={navModel}>
+      <Page.Contents>
         <FeatureLoader featureName={Messages.alerting} featureSelector={featureSelector}>
           <div className={styles.actionsWrapper}>
             <Button
@@ -161,8 +161,8 @@ export const AlertRuleTemplate: FC = () => {
             }
           />
         </FeatureLoader>
-      </OldPage.Contents>
-    </OldPage>
+      </Page.Contents>
+    </Page>
   );
 };
 

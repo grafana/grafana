@@ -80,12 +80,7 @@ export const Page: PageType = ({
   );
 };
 
-// @PERCONA
-// @PERCONA_TODO alias for now but replace
-export const OldPage = Page;
-
 Page.Contents = PageContents;
-OldPage.Contents = PageContents;
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

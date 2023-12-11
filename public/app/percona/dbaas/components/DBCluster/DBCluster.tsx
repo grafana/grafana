@@ -6,7 +6,7 @@ import { useHistory } from 'react-router-dom';
 
 import { AppEvents } from '@grafana/data';
 import { useStyles } from '@grafana/ui';
-import { OldPage } from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { Messages as DBaaSMessages } from 'app/percona/dbaas/DBaaS.messages';
 import { Table } from 'app/percona/shared/components/Elements/AnotherTableInstance';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
@@ -212,8 +212,8 @@ export const DBCluster: FC = () => {
   );
 
   return (
-    <OldPage navModel={navModel}>
-      <OldPage.Contents>
+    <Page navModel={navModel}>
+      <Page.Contents>
         <TechnicalPreview />
         <FeatureLoader featureName={DBaaSMessages.dbaas} featureSelector={featureSelector}>
           <DbaasDeprecationWarning />
@@ -253,8 +253,8 @@ export const DBCluster: FC = () => {
             />
           </div>
         </FeatureLoader>
-      </OldPage.Contents>
-    </OldPage>
+      </Page.Contents>
+    </Page>
   );
 };
 
