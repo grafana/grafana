@@ -2,13 +2,13 @@ import React, { FC, useCallback, useEffect, useState } from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 import { CollapsableSection } from '@grafana/ui/src/components';
-import { OldPage } from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { Overlay } from 'app/percona/shared/components/Elements/Overlay';
-import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { logger } from 'app/percona/shared/helpers/logger';
 import { StoreState, useSelector } from 'app/types';
 
 import { PlatformConnectedLoader } from '../shared/components/Elements/PlatformConnectedLoader';
+import { PMM_ENTITLEMENTS_PAGE } from '../shared/components/PerconaBootstrapper/PerconaNavigation';
 import { useCancelToken } from '../shared/components/hooks/cancelToken.hook';
 import { isApiCancelError } from '../shared/helpers/api';
 
@@ -27,7 +27,6 @@ const EntitlementsPage: FC = () => {
   const isConnectedToPortal = useSelector((state: StoreState) => !!state.percona.user.isPlatformUser);
   const [generateToken] = useCancelToken();
   const styles = useStyles2(getStyles);
-  const navModel = usePerconaNavModel('entitlements');
 
   const getData = useCallback(async (showLoading = false) => {
     showLoading && setPendingRequest(true);
@@ -53,8 +52,13 @@ const EntitlementsPage: FC = () => {
   }, [isConnectedToPortal]);
 
   return (
-    <OldPage navModel={navModel}>
-      <OldPage.Contents dataTestId="page-wrapper-entitlements">
+    <Page
+      navModel={{
+        main: PMM_ENTITLEMENTS_PAGE,
+        node: PMM_ENTITLEMENTS_PAGE,
+      }}
+    >
+      <Page.Contents dataTestId="page-wrapper-entitlements">
         <PlatformConnectedLoader>
           <Overlay dataTestId="entitlements-loading" isPending={pendingRequest}>
             <PageContent hasData={data.length > 0} emptyMessage={Messages.noData} loading={pendingRequest}>
@@ -71,8 +75,8 @@ const EntitlementsPage: FC = () => {
             </PageContent>
           </Overlay>
         </PlatformConnectedLoader>
-      </OldPage.Contents>
-    </OldPage>
+      </Page.Contents>
+    </Page>
   );
 };
 

@@ -2,13 +2,13 @@ import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { Cell, Column, Row } from 'react-table';
 
 import { useStyles2 } from '@grafana/ui';
-import { OldPage } from 'app/core/components/Page/Page';
-import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
+import { Page } from 'app/core/components/Page/Page';
 import { logger } from 'app/percona/shared/helpers/logger';
 import { useSelector } from 'app/types';
 
 import { PlatformConnectedLoader } from '../shared/components/Elements/PlatformConnectedLoader';
 import { Table } from '../shared/components/Elements/Table';
+import { PMM_TICKETS_PAGE } from '../shared/components/PerconaBootstrapper/PerconaNavigation';
 import { useCancelToken } from '../shared/components/hooks/cancelToken.hook';
 import { getPerconaUser } from '../shared/core/selectors';
 import { isApiCancelError } from '../shared/helpers/api';
@@ -25,7 +25,6 @@ export const TicketsPage: FC = () => {
   const { isPlatformUser } = useSelector(getPerconaUser);
   const [generateToken] = useCancelToken();
   const styles = useStyles2(getStyles);
-  const navModel = usePerconaNavModel('tickets');
 
   const columns = useMemo(
     (): Array<Column<Ticket>> => [
@@ -95,8 +94,13 @@ export const TicketsPage: FC = () => {
   });
 
   return (
-    <OldPage navModel={navModel}>
-      <OldPage.Contents dataTestId="page-wrapper-tickets">
+    <Page
+      navModel={{
+        main: PMM_TICKETS_PAGE,
+        node: PMM_TICKETS_PAGE,
+      }}
+    >
+      <Page.Contents dataTestId="page-wrapper-tickets">
         <PlatformConnectedLoader>
           <Table
             data={data}
@@ -108,8 +112,8 @@ export const TicketsPage: FC = () => {
             getCellProps={getCellProps}
           ></Table>
         </PlatformConnectedLoader>
-      </OldPage.Contents>
-    </OldPage>
+      </Page.Contents>
+    </Page>
   );
 };
 
