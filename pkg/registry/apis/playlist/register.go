@@ -13,7 +13,6 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 
-	"github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
@@ -81,10 +80,10 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 	optsGetter generic.RESTOptionsGetter,
 ) (*genericapiserver.APIGroupInfo, error) {
 
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP, scheme, metav1.ParameterCodec, codecs)
+	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(playlist.GROUP, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
 
-	resource := v0alpha1.PlaylistResourceInfo
+	resource := playlist.PlaylistResourceInfo
 	legacyStore := &legacyStorage{
 		service:                   b.service,
 		namespacer:                b.namespacer,
@@ -123,7 +122,7 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 		storage[resource.StoragePath()] = grafanarest.NewDualWriter(legacyStore, store)
 	}
 
-	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[playlist.VERSION] = storage
 	return &apiGroupInfo, nil
 }
 
