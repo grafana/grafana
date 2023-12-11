@@ -862,6 +862,16 @@
         },
         "description": "(empty)"
       },
+      "getLibraryElementArrayResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/LibraryElementArrayResponse"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "getLibraryElementConnectionsResponse": {
         "content": {
           "application/json": {
@@ -4862,6 +4872,9 @@
       },
       "EvalQueriesPayload": {
         "properties": {
+          "condition": {
+            "type": "string"
+          },
           "data": {
             "items": {
               "$ref": "#/components/schemas/AlertQuery"
@@ -5146,7 +5159,11 @@
             "type": "boolean"
           },
           "id": {
-            "description": "Deprecated: use Uid instead",
+            "description": "Deprecated: use UID instead",
+            "format": "int64",
+            "type": "integer"
+          },
+          "orgId": {
             "format": "int64",
             "type": "integer"
           },
@@ -5198,6 +5215,14 @@
           },
           "uid": {
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ForbiddenError": {
+        "properties": {
+          "body": {
+            "$ref": "#/components/schemas/PublicError"
           }
         },
         "type": "object"
@@ -6321,6 +6346,18 @@
         },
         "type": "object"
       },
+      "LibraryElementArrayResponse": {
+        "properties": {
+          "result": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryElementDTO"
+            },
+            "type": "array"
+          }
+        },
+        "title": "LibraryElementArrayResponse is a response struct for an array of LibraryElementDTO.",
+        "type": "object"
+      },
       "LibraryElementConnectionDTO": {
         "properties": {
           "connectionId": {
@@ -6776,12 +6813,58 @@
       },
       "NotificationPolicyExport": {
         "properties": {
-          "Policy": {
-            "$ref": "#/components/schemas/RouteExport"
+          "continue": {
+            "type": "boolean"
+          },
+          "group_by": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "group_interval": {
+            "type": "string"
+          },
+          "group_wait": {
+            "type": "string"
+          },
+          "match": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Deprecated. Remove before v1.0 release.",
+            "type": "object"
+          },
+          "match_re": {
+            "$ref": "#/components/schemas/MatchRegexps"
+          },
+          "matchers": {
+            "$ref": "#/components/schemas/Matchers"
+          },
+          "mute_time_intervals": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "object_matchers": {
+            "$ref": "#/components/schemas/ObjectMatchers"
           },
           "orgId": {
             "format": "int64",
             "type": "integer"
+          },
+          "receiver": {
+            "type": "string"
+          },
+          "repeat_interval": {
+            "type": "string"
+          },
+          "routes": {
+            "items": {
+              "$ref": "#/components/schemas/RouteExport"
+            },
+            "type": "array"
           }
         },
         "title": "NotificationPolicyExport is the provisioned file export of alerting.NotificiationPolicyV1.",
@@ -8174,6 +8257,26 @@
             "type": "array"
           },
           "totalCount": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PublicError": {
+        "description": "PublicError is derived from Error and only contains information\navailable to the end user.",
+        "properties": {
+          "extra": {
+            "additionalProperties": false,
+            "type": "object"
+          },
+          "message": {
+            "type": "string"
+          },
+          "messageId": {
+            "type": "string"
+          },
+          "statusCode": {
             "format": "int64",
             "type": "integer"
           }
@@ -11449,7 +11552,6 @@
         "type": "object"
       },
       "alertGroup": {
-        "description": "AlertGroup alert group",
         "properties": {
           "alerts": {
             "description": "alerts",
@@ -11606,7 +11708,6 @@
         "type": "object"
       },
       "gettableAlert": {
-        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -11669,6 +11770,7 @@
         "type": "array"
       },
       "gettableSilence": {
+        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -11717,6 +11819,7 @@
         "type": "object"
       },
       "gettableSilences": {
+        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
@@ -11867,7 +11970,6 @@
         "type": "array"
       },
       "postableSilence": {
-        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -11933,6 +12035,7 @@
         "type": "object"
       },
       "receiver": {
+        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",
@@ -18659,7 +18762,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/components/responses/getLibraryElementResponse"
+            "$ref": "#/components/responses/getLibraryElementArrayResponse"
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"

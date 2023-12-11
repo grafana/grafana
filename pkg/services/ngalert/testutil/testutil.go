@@ -30,7 +30,7 @@ func SetupFolderService(tb testing.TB, cfg *setting.Cfg, db db.DB, dashboardStor
 	ac := acmock.New()
 	features := featuremgmt.WithFeatures()
 
-	return folderimpl.ProvideService(ac, bus, cfg, dashboardStore, folderStore, db, features)
+	return folderimpl.ProvideService(ac, bus, cfg, dashboardStore, folderStore, db, features, nil)
 }
 
 func SetupDashboardService(tb testing.TB, sqlStore *sqlstore.SQLStore, fs *folderimpl.DashboardFolderStoreImpl, cfg *setting.Cfg) (*dashboardservice.DashboardServiceImpl, dashboards.Store) {
@@ -61,6 +61,7 @@ func SetupDashboardService(tb testing.TB, sqlStore *sqlstore.SQLStore, fs *folde
 		cfg, dashboardStore, fs, nil,
 		features, folderPermissions, dashboardPermissions, ac,
 		foldertest.NewFakeService(),
+		nil,
 	)
 	require.NoError(tb, err)
 

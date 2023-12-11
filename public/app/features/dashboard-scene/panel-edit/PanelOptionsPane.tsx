@@ -2,22 +2,25 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { Field, Input, useStyles2 } from '@grafana/ui';
+
+import { VizPanelManager } from './VizPanelManager';
 
 export interface PanelOptionsPaneState extends SceneObjectState {}
 
 export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
-  public panel: VizPanel;
+  public panelManager: VizPanelManager;
 
-  public constructor(panel: VizPanel) {
+  public constructor(panelMgr: VizPanelManager) {
     super({});
 
-    this.panel = panel;
+    this.panelManager = panelMgr;
   }
 
   static Component = ({ model }: SceneComponentProps<PanelOptionsPane>) => {
-    const { panel } = model;
+    const { panelManager } = model;
+    const { panel } = panelManager.state;
     const { title } = panel.useState();
     const styles = useStyles2(getStyles);
 
@@ -37,9 +40,6 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       padding: theme.spacing(2),
-      flexBasis: '100%',
-      flexGrow: 1,
-      minHeight: 0,
     }),
   };
 }
