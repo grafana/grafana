@@ -80,14 +80,6 @@ Latest Version: 1.6.2 | Signature: Grafana | Last Updated: 2023
 Plugin should continue to work even if Angular is disabled, and a full removal of Angular related code is planned.
 {{% /admonition %}}
 
-### [Percona](https://grafana.com/grafana/plugins/percona-percona-app/)
-
-Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-[Project repository](https://github.com/percona/grafana-app) was archived on June 12, 2020.
-{{% /admonition %}}
-
 ### [Stagemonitor Elasticsearch](https://grafana.com/grafana/plugins/stagemonitor-elasticsearch-app)
 
 Latest Version: 0.83.3 | Signature: Community | Last Updated: 2021
@@ -108,12 +100,6 @@ Lack of recent activity in the [project repository](https://github.com/raintank/
 
 ## Datasources
 
-### [Druid](https://grafana.com/grafana/plugins/abhisant-druid-datasource/)
-
-Latest Version: v0.0.6 | Signature: Community | Last Updated: 2021
-
-> **Migration available - plugin superseded:** The original plugin only claims support for Grafana v4.x.x, it was replaced with a [new plugin](https://grafana.com/grafana/plugins/grafadruid-druid-datasource/) based on React.
-
 ### [Akumuli](https://grafana.com/grafana/plugins/akumuli-datasource/)
 
 Latest Version: 1.3.12 | Signature: Community | Last Updated: 2021
@@ -124,18 +110,6 @@ Latest Version: 1.3.12 | Signature: Community | Last Updated: 2021
 
 {{% admonition type="warning" %}}
 Lack of recent activity in the [project repository](https://github.com/akumuli/Akumuli/) in the past 3 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [DarkSky](https://grafana.com/grafana/plugins/andig-darksky-datasource/)
-
-Latest Version: 1.0.2 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-[Project repository](https://github.com/andig/grafana-darksky) was archived on September 27, 2022.
-{{% /admonition %}}
-
-{{% admonition type="warning" %}}
-Apple removed support for the DarkSky API on March 31, 2023 - [source](https://support.apple.com/en-us/HT213526).
 {{% /admonition %}}
 
 ### [Finance](https://grafana.com/grafana/plugins/ayoungprogrammer-finance-datasource/)
@@ -278,14 +252,6 @@ Latest Version: 1.1.2 | Signature: Community | Last Updated: 2021
 Lack of recent activity in the [project repository](https://github.com/hawkular/hawkular-grafana-datasource) in the past 5 years suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
-### [IBM APM](https://grafana.com/grafana/plugins/ibm-apm-datasource/)
-
-Latest Version: 0.9.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/rafal-szypulka/grafana-ibm-apm) in the past 3 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
 ### [PRTG](https://grafana.com/grafana/plugins/jasonlashua-prtg-datasource/)
 
 Latest Version: 4.0.4 | Signature: Community | Last Updated: 2021
@@ -296,22 +262,6 @@ Lack of recent activity in the [project repository](https://github.com/neuralfra
 
 {{% admonition type="warning" %}}
 Unmaintained since 2017 - [source](https://github.com/neuralfraud/grafana-prtg/wiki).
-{{% /admonition %}}
-
-### [LinkSmart HDS Datasource](https://grafana.com/grafana/plugins/linksmart-hds-datasource/)
-
-Latest Version: 1.0.2 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-[Project repository](https://github.com/linksmart/grafana-hds-datasource) was archived on April 4th, 2022, and is no longer maintained.
-{{% /admonition %}}
-
-### [LinkSmart SensorThings](https://grafana.com/grafana/plugins/linksmart-sensorthings-datasource/)
-
-Latest Version: 1.3.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-[Project repository](https://github.com/linksmart/grafana-sensorthings-datasource) was archived on April 4th, 2022, and is no longer maintained.
 {{% /admonition %}}
 
 ### [Monasca](https://grafana.com/grafana/plugins/monasca-datasource/)
@@ -348,20 +298,6 @@ Latest Version: 0.0.3 | Signature: Community | Last Updated: 2021
 
 {{% admonition type="warning" %}}
 Lack of recent activity in the [project repository](https://github.com/NatelEnergy/natel-usgs-datasource) in the past 3 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [ntopng](https://grafana.com/grafana/plugins/ntop-ntopng-datasource/)
-
-Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
-
-> **Migration available - plugin superseded:** this plugin was [discontinued in favour of the InfluxDB data source](https://github.com/ntop/ntopng-grafana-datasource) - a Core plugin included in Grafana, additional guidance is available [here](https://www.ntop.org/guides/ntopng/basic_concepts/timeseries.html#influxdb-driver).
-
-### [Warp 10](https://grafana.com/grafana/plugins/ovh-warp10-datasource/)
-
-Latest Version: 2.2.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-[Project repository](https://github.com/ovh/ovh-warp10-datasource) was archived on March 22nd, 2023 and is no longer maintained.
 {{% /admonition %}}
 
 ### [KapacitorSimpleJson](https://grafana.com/grafana/plugins/paytm-kapacitor-datasource/)
@@ -430,21 +366,7 @@ Lack of recent activity in the [project repository](https://github.com/skydive-p
 Issues suggest the entire project, not just the plugin, may be abandoned - [source](https://github.com/skydive-project/skydive/issues/2417).
 {{% /admonition %}}
 
-### [Heroic](https://grafana.com/grafana/plugins/spotify-heroic-datasource/)
 
-Latest Version: 0.0.2 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-[Plugin](https://github.com/spotify/spotify-heroic-datasource) and [Heroic](https://github.com/spotify/heroic) were both archived on April 17th, 2021 and March 27th, 2021 respectively.
-{{% /admonition %}}
-
-### [Heroic](https://grafana.com/grafana/plugins/udoprog-heroic-datasource/)
-
-Latest Version: 0.1.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-[Plugin](https://github.com/udoprog/udoprog-heroic-datasource) and [Heroic](https://github.com/spotify/heroic) were both archived on October 16th, 2022 and March 27th, 2021 respectively.
-{{% /admonition %}}
 
 ### [Altinity plugin for ClickHouse](https://grafana.com/grafana/plugins/vertamedia-clickhouse-datasource/)
 
@@ -735,12 +657,6 @@ Latest Version: 0.1.0 | Signature: Community | Last Updated: 2021
 {{% admonition type="warning" %}}
 Lack of recent activity in the [project repository](https://github.com/ryantxu/ajax-panel) in the past 2 years suggests project _may_ not be actively maintained.
 {{% /admonition %}}
-
-### [Annotation List](https://grafana.com/grafana/plugins/ryantxu-annolist-panel/)
-
-Latest Version: 0.0.2 | Signature: Community | Last Updated: 2021
-
-> **Migration available - plugin superseded:** [Project repository](https://github.com/ryantxu/annotations-panel) for the plugin was archived on July 13th, 2019 in favour of native [annotations]({{< relref "../../panels-visualizations/visualizations/annotations/" >}}).
 
 ### [3D Globe Panel](https://grafana.com/grafana/plugins/satellogic-3d-globe-panel/)
 
