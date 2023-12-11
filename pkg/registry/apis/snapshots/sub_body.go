@@ -32,7 +32,7 @@ func (r *subBodyREST) ConnectMethods() []string {
 }
 
 func (r *subBodyREST) NewConnectOptions() (runtime.Object, bool, string) {
-	return nil, true, ""
+	return nil, false, ""
 }
 
 func (r *subBodyREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
