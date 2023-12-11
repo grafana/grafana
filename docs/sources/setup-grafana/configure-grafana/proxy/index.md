@@ -40,7 +40,7 @@ To complete this task, you must first deploy a socks proxy server that supports 
    | `client_cert`    | The file path of the client public key     | /etc/client.crt                 |
    | `server_name`    | The domain name of the proxy, used for SNI | proxy.grafana.svc.cluster.local |
    | `proxy_address`  | The address of the proxy                   | localhost:9090                  |
-   | `allow_insecure` | Disable TLS in the socks proxy             | localhost:9090                  |
+   | `allow_insecure` | Disable TLS in the socks proxy             | false                           |
 
 1. Set up a data source and configure it to send data source connections through the proxy.
 
