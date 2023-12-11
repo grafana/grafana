@@ -21,6 +21,7 @@ import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { componentTemplates as promTemplates } from 'app/plugins/datasource/prometheus/querybuilder/components/wizarDS/state/templates';
 import { componentTemplates as lokiTemplates } from 'app/plugins/datasource/prometheus/querybuilder/components/wizarDS/state/templatesLoki';
+import { componentTemplates as tempoTemplates } from 'app/plugins/datasource/prometheus/querybuilder/components/wizarDS/state/templatesTempo';
 import { Suggestion } from 'app/plugins/datasource/prometheus/querybuilder/components/wizarDS/types';
 import { CORRELATION_EDITOR_POST_CONFIRM_ACTION } from 'app/types/explore';
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
@@ -71,11 +72,12 @@ interface Props {
 
 type DSTemplates = {
   [key: string]: Suggestion[] | undefined;
-}
+};
 
 const wizarDSTemplates: DSTemplates = {
   loki: lokiTemplates,
-  prometheus: promTemplates
+  tempo: tempoTemplates,
+  prometheus: promTemplates,
 };
 
 export function ExploreToolbar({
@@ -278,7 +280,11 @@ export function ExploreToolbar({
                   padding: '0 0 0 8px',
                 })}
               >
-                <Button variant={'secondary'} onClick={() => setOpenTutorial(suggestions)} title={'Get query suggestions.'}>
+                <Button
+                  variant={'secondary'}
+                  onClick={() => setOpenTutorial(suggestions)}
+                  title={'Get query suggestions.'}
+                >
                   <img height={16} src={`public/img/ai-icons/AI_Logo_color.svg`} alt="AI logo color" />
                   {'\u00A0'}Query wizard
                 </Button>

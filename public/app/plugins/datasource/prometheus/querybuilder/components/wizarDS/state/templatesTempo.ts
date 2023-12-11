@@ -1,0 +1,61 @@
+import { Suggestion } from '../types';
+
+export const componentTemplates: Suggestion[] = [
+  {
+    route: `/explore`,
+    target: `[aria-label="TraceQL"]`,
+    title: 'TraceQL editor',
+    content: 'TraceQL editor',
+    component: 'TraceQL editor',
+    explanation: `The TraceQL query editor, located on the Explore > TraceQL tab in Grafana, lets you search by trace ID and write TraceQL queries using autocomplete.`,
+    testid: 'wizard-tempo-traceql-editor',
+    order: 1,
+    link: 'https://grafana.com/docs/grafana/latest/datasources/tempo/query-editor/traceql-editor',
+  },
+  {
+    route: `/explore`,
+    target: `[aria-label="Service Graph"]`,
+    title: 'Service Graph',
+    content: 'Service Graph',
+    component: 'Service Graph',
+    explanation: `The Service Graph is a visual representation of the relationships between services. Each node on the graph represents a service such as an API or database.
+      \n
+      You use the Service Graph to detect performance issues; track increases in error, fault, or throttle rates in services; and investigate root causes by viewing corresponding traces.`,
+    testid: 'wizard-tempo-service-graph',
+    order: 2,
+    link: 'https://grafana.com/docs/grafana/latest/datasources/tempo/service-graph',
+  },
+  {
+    route: `/explore`,
+    target: `[aria-label="Search"]`,
+    title: 'TraceQL builder',
+    content: 'TraceQL builder',
+    component: 'TraceQL builder',
+    explanation: `The TraceQL query builder, located on the Explore > Query type > Search in Grafana, provides drop-downs and text fields to help you write a query.`,
+    testid: 'wizard-tempo-traceql-builder',
+    order: 3,
+    link: 'https://grafana.com/docs/grafana/latest/datasources/tempo/query-editor/#traceql-query-builder',
+  },
+  {
+    route: `/explore`,
+    target: `[aria-label="traceql-search-query"]`,
+    title: 'TraceQL builder query',
+    content: 'TraceQL builder query',
+    component: 'TraceQL builder query',
+    explanation: `This allows you to select options and build your query from e.g. tags, service name, duration etc.`,
+    testid: 'wizard-tempo-traceql-query',
+    order: 4,
+    link: 'https://grafana.com/docs/grafana/latest/datasources/tempo/query-editor/traceql-search',
+  },
+  {
+    route: `/explore`,
+    target: `[aria-label="traceql-search-raw-query"]`,
+    title: 'TraceQL builder raw query',
+    content: 'TraceQL builder raw query',
+    component: 'TraceQL builder raw query',
+    explanation: `This allows you to visualize the query you have built in the TraceQL editor builder.`,
+    testid: 'wizard-tempo-traceql-query',
+    order: 5,
+    link: 'https://grafana.com/docs/grafana/latest/datasources/tempo/query-editor/#traceql-query-builder',
+  },
+];
