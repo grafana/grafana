@@ -703,7 +703,6 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
 
     let newQuerySource: Observable<ExplorePanelData>;
 
-    // Filter queries by those explicitly requested by refId
     const logQueries = queryResponse.logsResult?.queries || [];
     const queries = logQueries.map((query: DataQuery) => ({
       ...query,
