@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -23,12 +22,14 @@ import (
 var _ ssosettings.Service = (*SSOSettingsService)(nil)
 
 type SSOSettingsService struct {
-	log          log.Logger
-	cfg          *setting.Cfg
-	store        ssosettings.Store
-	ac           ac.AccessControl
+	log     log.Logger
+	cfg     *setting.Cfg
+	store   ssosettings.Store
+	ac      ac.AccessControl
+	secrets secrets.Service
+
 	fbStrategies []ssosettings.FallbackStrategy
-	secrets      secrets.Service
+	reloadables  map[string]ssosettings.Reloadable
 }
 
 func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
@@ -48,6 +49,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 		ac:           ac,
 		fbStrategies: strategies,
 		secrets:      secrets,
+		reloadables:  make(map[string]ssosettings.Reloadable),
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
@@ -81,7 +83,7 @@ func (s *SSOSettingsService) GetForProvider(ctx context.Context, provider string
 	return storeSettings, nil
 }
 
-func (s *SSOSettingsService) List(ctx context.Context, requester identity.Requester) ([]*models.SSOSettings, error) {
+func (s *SSOSettingsService) List(ctx context.Context) ([]*models.SSOSettings, error) {
 	result := make([]*models.SSOSettings, 0, len(ssosettings.AllOAuthProviders))
 	storedSettings, err := s.store.List(ctx)
 
@@ -90,25 +92,15 @@ func (s *SSOSettingsService) List(ctx context.Context, requester identity.Reques
 	}
 
 	for _, provider := range ssosettings.AllOAuthProviders {
-		ev := ac.EvalPermission(ac.ActionSettingsRead, ac.Scope("settings", "auth."+provider, "*"))
-		hasAccess, err := s.ac.Evaluate(ctx, requester, ev)
-		if err != nil {
-			return nil, err
-		}
-
-		if !hasAccess {
-			continue
-		}
-
 		settings := getSettingsByProvider(provider, storedSettings)
 		if len(settings) == 0 {
 			// If there is no data in the DB then we need to load the settings using the fallback strategy
-			fallbackSettings, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
+			setting, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
 			if err != nil {
 				return nil, err
 			}
 
-			settings = append(settings, fallbackSettings)
+			settings = append(settings, setting)
 		}
 		result = append(result, settings...)
 	}
@@ -117,7 +109,8 @@ func (s *SSOSettingsService) List(ctx context.Context, requester identity.Reques
 }
 
 func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSettings) error {
-	// TODO: validation (configurable provider? Contains the required fields? etc)
+	// TODO: also check whether the provider is configurable
+	// Get the connector for the provider (from the reloadables) and call Validate
 
 	if isOAuthProvider(settings.Provider) {
 		encryptedClientSecret, err := s.secrets.Encrypt(ctx, []byte(settings.OAuthSettings.ClientSecret), secrets.WithoutScope())
@@ -131,6 +124,7 @@ func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSett
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -146,8 +140,11 @@ func (s *SSOSettingsService) Reload(ctx context.Context, provider string) {
 	panic("not implemented") // TODO: Implement
 }
 
-func (s *SSOSettingsService) RegisterReloadable(ctx context.Context, provider string, reloadable ssosettings.Reloadable) {
-	panic("not implemented") // TODO: Implement
+func (s *SSOSettingsService) RegisterReloadable(provider string, reloadable ssosettings.Reloadable) {
+	if s.reloadables == nil {
+		s.reloadables = make(map[string]ssosettings.Reloadable)
+	}
+	s.reloadables[provider] = reloadable
 }
 
 func (s *SSOSettingsService) RegisterFallbackStrategy(providerRegex string, strategy ssosettings.FallbackStrategy) {
