@@ -251,7 +251,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 			})
 		case navtree.NavIDTestingAndSynthetics:
 			treeRoot.AddSection(&navtree.NavLink{
-				Text:       "Testing & Synthetics",
+				Text:       "Testing & synthetics",
 				Id:         navtree.NavIDTestingAndSynthetics,
 				SubTitle:   "Optimize performance with k6 and Synthetic Monitoring insights",
 				Icon:       "k6",

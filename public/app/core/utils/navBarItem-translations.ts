@@ -128,7 +128,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'alerts-and-incidents':
       return t('nav.alerts-and-incidents.title', 'Alerts & IRM');
     case 'testing-and-synthetics':
-      return t('nav.testing-and-synthetics.title', 'Testing & Synthetics');
+      return t('nav.testing-and-synthetics.title', 'Testing & synthetics');
     case 'plugin-page-grafana-incident-app':
       return t('nav.incidents.title', 'Incidents');
     case 'plugin-page-grafana-ml-app':
