@@ -2,7 +2,7 @@ import createVirtualEnvironment from '@locker/near-membrane-dom';
 import { ProxyTarget } from '@locker/near-membrane-shared';
 
 import { BootData, PluginMeta } from '@grafana/data';
-import { config, logInfo } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { defaultTrustedTypesPolicy } from 'app/core/trustedTypePolicies';
 
 import { getPluginSettings } from '../pluginSettings';
@@ -20,7 +20,7 @@ import {
 import { sandboxPluginDependencies } from './plugin_dependencies';
 import { sandboxPluginComponents } from './sandbox_components';
 import { CompartmentDependencyModule, PluginFactoryFunction, SandboxEnvironment } from './types';
-import { logError } from './utils';
+import { logError, logInfo } from './utils';
 
 // Loads near membrane custom formatter for near membrane proxy objects.
 if (process.env.NODE_ENV !== 'production') {
@@ -49,6 +49,9 @@ export async function importPluginModuleInSandbox({ pluginId }: { pluginId: stri
 }
 
 async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.Module> {
+  logInfo('Loading with sandbox', {
+    pluginId: meta.id,
+  });
   return new Promise(async (resolve, reject) => {
     const generalDistortionMap = getGeneralSandboxDistortionMap();
     let sandboxEnvironment: SandboxEnvironment;

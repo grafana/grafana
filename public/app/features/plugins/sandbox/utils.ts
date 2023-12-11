@@ -41,6 +41,15 @@ export function logError(error: Error, context?: LogContext) {
   logErrorRuntime(error, context);
 }
 
+export function logInfo(message: string, context?: LogContext) {
+  context = {
+    ...context,
+    source: 'sandbox',
+    monitorOnly: String(monitorOnly),
+  };
+  logInfo(message, context);
+}
+
 export async function isFrontendSandboxSupported({
   isAngular,
   pluginId,
