@@ -24,11 +24,6 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   scrollRef?: RefCallback<HTMLDivElement>;
   /** Can be used to update the current scroll position */
   scrollTop?: number;
-
-  // @PERCONA
-  // @PERCONA_TODO - use them
-  vertical?: boolean;
-  tabsDataTestId?: string;
 }
 
 export interface PageInfoItem {

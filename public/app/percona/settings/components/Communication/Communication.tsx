@@ -70,7 +70,7 @@ export const Communication: FC = () => {
   );
 
   return (
-    <Page navModel={navModel} vertical tabsDataTestId="settings-tabs">
+    <Page navModel={navModel}>
       <Page.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
         <FeatureLoader>
           <div className={cx(settingsStyles.wrapper)}>

@@ -59,10 +59,6 @@ export interface NavModel {
    *   This is the current active tab/navigation.
    */
   node: NavModelItem;
-
-  // @PERCONA
-  // @PERCONA_TODO
-  pageTitle?: string;
 }
 
 export type NavIndex = { [s: string]: NavModelItem };
