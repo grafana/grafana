@@ -30,6 +30,7 @@ export interface QueryHeaderProps {
 const editorModes = [
   { label: 'Builder', value: EditorMode.Builder },
   { label: 'Code', value: EditorMode.Code },
+  { label: 'AI', value: EditorMode.AI },
 ];
 
 export function QueryHeader({
@@ -57,7 +58,7 @@ export function QueryHeader({
         });
       }
 
-      if (editorMode === EditorMode.Code) {
+      if (editorMode === EditorMode.Code && newEditorMode === EditorMode.Builder) {
         setShowConfirm(true);
         return;
       }

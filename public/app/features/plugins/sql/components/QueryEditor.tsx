@@ -10,6 +10,7 @@ import { SQLQuery, QueryRowFilter, SQLOptions } from '../types';
 import { haveColumns } from '../utils/sql.utils';
 
 import { QueryHeader, QueryHeaderProps } from './QueryHeader';
+import { AIEditor } from './ai-query-builder/AIEditor';
 import { RawEditor } from './query-editor-raw/RawEditor';
 import { VisualEditor } from './visual-query-builder/VisualEditor';
 
@@ -102,7 +103,7 @@ export function SqlQueryEditor({
 
       <Space v={0.5} />
 
-      {queryWithDefaults.editorMode !== EditorMode.Code && (
+      {queryWithDefaults.editorMode === EditorMode.Builder && (
         <VisualEditor
           db={db}
           query={queryWithDefaults}
@@ -123,6 +124,10 @@ export function SqlQueryEditor({
           onValidate={setIsQueryRunnable}
           range={range}
         />
+      )}
+
+      {queryWithDefaults.editorMode === EditorMode.AI && (
+        <AIEditor datasource={datasource} db={db} query={queryWithDefaults} onChange={onQueryChange} />
       )}
     </>
   );
