@@ -1,9 +1,17 @@
 import React from 'react';
 
 import { SelectableValue, UrlQueryMap } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, SceneObjectRef, VizPanel, sceneGraph } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  SceneGridItem,
+  SceneObjectBase,
+  SceneObjectRef,
+  VizPanel,
+  sceneGraph,
+} from '@grafana/scenes';
 import { Alert, Button, Field, FieldSet, Input, RadioButtonGroup, Spinner, Switch } from '@grafana/ui';
 import config from 'app/core/config';
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { t, Trans } from 'app/core/internationalization';
 import { ThemePicker } from 'app/features/dashboard/components/ShareModal/ThemePicker';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
@@ -73,17 +81,28 @@ export class ShareImageTab extends SceneObjectBase<ShareImageTabState> {
   }
 
   buildUrl = () => {
-    const { panelRef, dashboardRef, useAbsoluteTimeRange, selectedTheme, width, height } = this.state;
+    const { panelRef, dashboardRef, useAbsoluteTimeRange, selectedTheme, width, height, usePanelSize } = this.state;
     const dashboard = dashboardRef.resolve();
     const panel = panelRef?.resolve();
     const timeRange = sceneGraph.getTimeRange(panel ?? dashboard);
     const urlParamsUpdate: UrlQueryMap = {};
 
-    // const usedWidth = this.state.usePanelSize ? panelSize?.width ?? width : width;
-    // const usedHeight = this.state.usePanelSize ? panelSize?.height ?? height : height;
-
     if (panel) {
       urlParamsUpdate.panelId = getPanelIdForVizPanel(panel);
+    }
+
+    urlParamsUpdate.width = width;
+    urlParamsUpdate.height = height;
+
+    if (usePanelSize && panel && panel.parent instanceof SceneGridItem) {
+      const width = panel?.parent?.state.width;
+      const height = panel?.parent?.state.height;
+      const colWidth = (window.innerWidth - GRID_CELL_VMARGIN * 4) / GRID_COLUMN_COUNT;
+
+      if (width && height) {
+        urlParamsUpdate.width = Math.floor(colWidth * width);
+        urlParamsUpdate.height = Math.floor(GRID_CELL_HEIGHT * height);
+      }
     }
 
     if (useAbsoluteTimeRange) {
@@ -94,9 +113,6 @@ export class ShareImageTab extends SceneObjectBase<ShareImageTabState> {
     if (selectedTheme !== THEME_CURRENT) {
       urlParamsUpdate.theme = selectedTheme!;
     }
-
-    urlParamsUpdate.width = width;
-    urlParamsUpdate.height = height;
 
     const imageUrl = getDashboardUrl({
       uid: dashboard.state.uid,
