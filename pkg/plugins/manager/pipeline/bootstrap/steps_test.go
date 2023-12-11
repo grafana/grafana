@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestSetDefaultNavURL(t *testing.T) {
@@ -171,35 +170,35 @@ func TestSkipEnvVarsDecorateFunc(t *testing.T) {
 
 		t.Run("plugin setting", func(t *testing.T) {
 			for _, tc := range []struct {
-				name               string
-				pluginSettings     setting.PluginSettings
-				expSkipHostEnvVars bool
+				name                      string
+				forwardHostEnvVarsPlugins []string
+				expSkipHostEnvVars        bool
 			}{
 				{
-					name:               "forward_host_env_vars = false should set SkipHostEnvVars to true",
-					pluginSettings:     setting.PluginSettings{pluginID: map[string]string{"forward_host_env_vars": "false"}},
-					expSkipHostEnvVars: true,
+					name:                      "plugin id not present in forwardHostEnvVarsPlugins should set SkipHostEnvVars to true (empty)",
+					forwardHostEnvVarsPlugins: []string{},
+					expSkipHostEnvVars:        true,
 				},
 				{
-					name:               "forward_host_env_vars = true should set SkipHostEnvVars to false",
-					pluginSettings:     setting.PluginSettings{pluginID: map[string]string{"forward_host_env_vars": "true"}},
-					expSkipHostEnvVars: false,
+					name:                      "plugin id not present in forwardHostEnvVarsPlugins should set SkipHostEnvVars to true (other id)",
+					forwardHostEnvVarsPlugins: []string{"other-id", "yet-another-id"},
+					expSkipHostEnvVars:        true,
 				},
 				{
-					name:               "invalid forward_host_env_vars should set SkipHostEnvVars to true",
-					pluginSettings:     setting.PluginSettings{pluginID: map[string]string{"forward_host_env_vars": "grilled cheese sandwich with bacon"}},
-					expSkipHostEnvVars: true,
+					name:                      "plugin id in forwardHostEnvVarsPlugins should set SkipHostEnvVars to false (only)",
+					forwardHostEnvVarsPlugins: []string{pluginID},
+					expSkipHostEnvVars:        false,
 				},
 				{
-					name:               "forward_host_env_vars absent should set SkipHostEnvVars to true",
-					pluginSettings:     setting.PluginSettings{pluginID: nil},
-					expSkipHostEnvVars: true,
+					name:                      "plugin id in forwardHostEnvVarsPlugins should set SkipHostEnvVars to false (with other)",
+					forwardHostEnvVarsPlugins: []string{"a-plugin", pluginID, "other-id"},
+					expSkipHostEnvVars:        false,
 				},
 			} {
 				t.Run(tc.name, func(t *testing.T) {
 					f := SkipHostEnvVarsDecorateFunc(&config.Cfg{
-						Features:       featuremgmt.WithFeatures(featuremgmt.FlagPluginsSkipHostEnvVars),
-						PluginSettings: tc.pluginSettings,
+						Features:                  featuremgmt.WithFeatures(featuremgmt.FlagPluginsSkipHostEnvVars),
+						ForwardHostEnvVarsPlugins: tc.forwardHostEnvVarsPlugins,
 					})
 					p, err := f(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginID}})
 					require.NoError(t, err)
