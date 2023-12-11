@@ -26,6 +26,7 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 	t.Run("resolver should convert to uid scope", func(t *testing.T) {
 		orgId := rand.Int63()
 		title := "Very complex :title with: and /" + util.GenerateShortUID()
+		// nolint:staticcheck
 		db := &folder.Folder{Title: title, ID: rand.Int63(), UID: util.GenerateShortUID()}
 		folderStore := foldertest.NewFakeFolderStore(t)
 		folderStore.On("GetFolderByTitle", mock.Anything, mock.Anything, mock.Anything).Return(db, nil).Once()
@@ -43,6 +44,7 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 		orgId := rand.Int63()
 		title := "Very complex :title with: and /" + util.GenerateShortUID()
 
+		// nolint:staticcheck
 		db := &folder.Folder{Title: title, ID: rand.Int63(), UID: util.GenerateShortUID()}
 
 		folderStore := foldertest.NewFakeFolderStore(t)
@@ -114,15 +116,18 @@ func TestNewFolderIDScopeResolver(t *testing.T) {
 
 		orgId := rand.Int63()
 		uid := util.GenerateShortUID()
+		// nolint:staticcheck
 		db := &folder.Folder{ID: rand.Int63(), UID: uid}
 		folderStore.On("GetFolderByID", mock.Anything, mock.Anything, mock.Anything).Return(db, nil).Once()
 
+		// nolint:staticcheck
 		scope := "folders:id:" + strconv.FormatInt(db.ID, 10)
 		resolvedScopes, err := resolver.Resolve(context.Background(), orgId, scope)
 		require.NoError(t, err)
 		require.Len(t, resolvedScopes, 1)
 		require.Equal(t, fmt.Sprintf("folders:uid:%v", db.UID), resolvedScopes[0])
 
+		// nolint:staticcheck
 		folderStore.AssertCalled(t, "GetFolderByID", mock.Anything, orgId, db.ID)
 	})
 	t.Run("resolver should should include inherited scopes if any", func(t *testing.T) {
@@ -140,9 +145,11 @@ func TestNewFolderIDScopeResolver(t *testing.T) {
 
 		orgId := rand.Int63()
 		uid := util.GenerateShortUID()
+		// nolint:staticcheck
 		db := &folder.Folder{ID: rand.Int63(), UID: uid}
 		folderStore.On("GetFolderByID", mock.Anything, mock.Anything, mock.Anything).Return(db, nil).Once()
 
+		// nolint:staticcheck
 		scope := "folders:id:" + strconv.FormatInt(db.ID, 10)
 
 		resolvedScopes, err := resolver.Resolve(context.Background(), orgId, scope)
@@ -157,6 +164,7 @@ func TestNewFolderIDScopeResolver(t *testing.T) {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
 
+		// nolint:staticcheck
 		folderStore.AssertCalled(t, "GetFolderByID", mock.Anything, orgId, db.ID)
 	})
 	t.Run("resolver should fail if input scope is not expected", func(t *testing.T) {
@@ -211,10 +219,12 @@ func TestNewDashboardIDScopeResolver(t *testing.T) {
 		_, resolver := NewDashboardIDScopeResolver(folderStore, dashSvc, foldertest.NewFakeService())
 
 		orgID := rand.Int63()
+		// nolint:staticcheck
 		folder := &folder.Folder{ID: 2, UID: "2"}
 		// nolint:staticcheck
 		dashboard := &Dashboard{ID: 1, FolderID: folder.ID, UID: "1"}
 		dashSvc.On("G")
+		// nolint:staticcheck
 		folderStore.On("GetFolderByID", mock.Anything, orgID, folder.ID).Return(folder, nil).Once()
 		dashSvc.On("GetDashboard", mock.Anything, mock.Anything).Return(dashboard, nil).Once()
 		scope := ac.Scope("dashboards", "id", strconv.FormatInt(dashboard.ID, 10))
@@ -240,11 +250,13 @@ func TestNewDashboardIDScopeResolver(t *testing.T) {
 		_, resolver := NewDashboardIDScopeResolver(folderStore, dashSvc, folderSvc)
 
 		orgID := rand.Int63()
+		// nolint:staticcheck
 		folder := &folder.Folder{ID: 2, UID: "2"}
 		// nolint:staticcheck
 		dashboard := &Dashboard{ID: 1, FolderID: folder.ID, UID: "1"}
 
 		dashSvc.On("GetDashboard", mock.Anything, mock.Anything).Return(dashboard, nil).Once()
+		// nolint:staticcheck
 		folderStore.On("GetFolderByID", mock.Anything, orgID, folder.ID).Return(folder, nil).Once()
 
 		scope := ac.Scope("dashboards", "id", strconv.FormatInt(dashboard.ID, 10))
@@ -296,11 +308,13 @@ func TestNewDashboardUIDScopeResolver(t *testing.T) {
 		_, resolver := NewDashboardUIDScopeResolver(folderStore, dashSvc, foldertest.NewFakeService())
 
 		orgID := rand.Int63()
+		// nolint:staticcheck
 		folder := &folder.Folder{ID: 2, UID: "2"}
 		// nolint:staticcheck
 		dashboard := &Dashboard{ID: 1, FolderID: folder.ID, UID: "1"}
 
 		dashSvc.On("GetDashboard", mock.Anything, mock.Anything).Return(dashboard, nil).Once()
+		// nolint:staticcheck
 		folderStore.On("GetFolderByID", mock.Anything, orgID, folder.ID).Return(folder, nil).Once()
 		scope := ac.Scope("dashboards", "uid", dashboard.UID)
 		resolvedScopes, err := resolver.Resolve(context.Background(), orgID, scope)
@@ -325,6 +339,7 @@ func TestNewDashboardUIDScopeResolver(t *testing.T) {
 		_, resolver := NewDashboardUIDScopeResolver(folderStore, dashSvc, folderSvc)
 
 		orgID := rand.Int63()
+		// nolint:staticcheck
 		folder := &folder.Folder{ID: 2, UID: "2"}
 		// nolint:staticcheck
 		dashboard := &Dashboard{ID: 1, FolderID: folder.ID, UID: "1"}

@@ -58,7 +58,7 @@ func TestImportDashboardService(t *testing.T) {
 		}
 		folderService := &foldertest.FakeService{
 			ExpectedFolder: &folder.Folder{
-				ID:  5,
+				ID:  5, // nolint:staticcheck
 				UID: "123",
 			},
 		}
@@ -122,7 +122,7 @@ func TestImportDashboardService(t *testing.T) {
 		libraryPanelService := &libraryPanelServiceMock{}
 		folderService := &foldertest.FakeService{
 			ExpectedFolder: &folder.Folder{
-				ID:  5,
+				ID:  5, // nolint:staticcheck
 				UID: "123",
 			},
 		}

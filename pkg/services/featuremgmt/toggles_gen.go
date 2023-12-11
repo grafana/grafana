@@ -107,9 +107,9 @@ const (
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
 
-	// FlagEntityStore
-	// SQL-based entity store (requires storage flag also)
-	FlagEntityStore = "entityStore"
+	// FlagUnifiedStorage
+	// SQL-based k8s storage
+	FlagUnifiedStorage = "unifiedStorage"
 
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
@@ -194,6 +194,10 @@ const (
 	// FlagInfluxdbBackendMigration
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
+
+	// FlagInfluxqlStreamingParser
+	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
+	FlagInfluxqlStreamingParser = "influxqlStreamingParser"
 
 	// FlagClientTokenRotation
 	// Replaces the current in-request token rotation so that the client initiates the rotation
@@ -351,6 +355,10 @@ const (
 	// Register experimental APIs with the k8s API server
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
 
+	// FlagGrafanaAPIServerEnsureKubectlAccess
+	// Start an additional https handler and write kubectl options
+	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
+
 	// FlagFeatureToggleAdminPage
 	// Enable admin page for managing feature toggles from the Grafana front-end
 	FlagFeatureToggleAdminPage = "featureToggleAdminPage"
@@ -366,6 +374,10 @@ const (
 	// FlagTraceToProfiles
 	// Enables linking between traces and profiles
 	FlagTraceToProfiles = "traceToProfiles"
+
+	// FlagTracesEmbeddedFlameGraph
+	// Enables embedding a flame graph in traces
+	FlagTracesEmbeddedFlameGraph = "tracesEmbeddedFlameGraph"
 
 	// FlagPermissionsFilterRemoveSubquery
 	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
@@ -399,10 +411,6 @@ const (
 	// Enables rendering retries for the reporting feature
 	FlagReportingRetries = "reportingRetries"
 
-	// FlagNewBrowseDashboards
-	// New browse/manage dashboards UI
-	FlagNewBrowseDashboards = "newBrowseDashboards"
-
 	// FlagSseGroupByDatasource
 	// Send query to the same datasource in a single request when using server side expressions
 	FlagSseGroupByDatasource = "sseGroupByDatasource"
@@ -426,10 +434,6 @@ const (
 	// FlagAlertingInsights
 	// Show the new alerting insights landing page
 	FlagAlertingInsights = "alertingInsights"
-
-	// FlagAlertingContactPointsV2
-	// Show the new contacpoints list view
-	FlagAlertingContactPointsV2 = "alertingContactPointsV2"
 
 	// FlagExternalCorePlugins
 	// Allow core plugins to be loaded as external
@@ -474,6 +478,10 @@ const (
 	// FlagKubernetesPlaylists
 	// Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
+
+	// FlagKubernetesSnapshots
+	// Use the kubernetes API in the frontend to support playlists
+	FlagKubernetesSnapshots = "kubernetesSnapshots"
 
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
@@ -590,4 +598,12 @@ const (
 	// FlagPluginsSkipHostEnvVars
 	// Disables passing host environment variable to plugin processes
 	FlagPluginsSkipHostEnvVars = "pluginsSkipHostEnvVars"
+
+	// FlagRegressionTransformation
+	// Enables regression analysis transformation
+	FlagRegressionTransformation = "regressionTransformation"
+
+	// FlagDisplayAnonymousStats
+	// Enables anonymous stats to be shown in the UI for Grafana
+	FlagDisplayAnonymousStats = "displayAnonymousStats"
 )
