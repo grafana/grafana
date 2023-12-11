@@ -22,10 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// GroupName is the group name for this API.
-const GroupName = "playlist.grafana.app"
-const VersionID = "v0alpha1"
-
 var _ grafanaapiserver.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
@@ -41,7 +37,7 @@ func NewPlaylistAPIBuilder(p playlistsvc.Service,
 	return &PlaylistAPIBuilder{
 		service:    p,
 		namespacer: request.GetNamespaceMapper(cfg),
-		gv:         schema.GroupVersion{Group: GroupName, Version: VersionID},
+		gv:         playlist.PlaylistResourceInfo.GroupVersion(),
 	}
 }
 
@@ -58,22 +54,23 @@ func (b *PlaylistAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return b.gv
 }
 
-func (b *PlaylistAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	scheme.AddKnownTypes(b.gv,
+func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
+	scheme.AddKnownTypes(gv,
 		&playlist.Playlist{},
 		&playlist.PlaylistList{},
 	)
+}
+
+func (b *PlaylistAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+	addKnownTypes(scheme, b.gv)
 
 	// Link this version to the internal representation.
 	// This is used for server-side-apply (PATCH), and avoids the error:
 	//   "no kind is registered for the type"
-	scheme.AddKnownTypes(schema.GroupVersion{
+	addKnownTypes(scheme, schema.GroupVersion{
 		Group:   b.gv.Group,
 		Version: runtime.APIVersionInternal,
-	},
-		&playlist.Playlist{},
-		&playlist.PlaylistList{},
-	)
+	})
 
 	// If multiple versions exist, then register conversions from zz_generated.conversion.go
 	// if err := playlist.RegisterConversions(scheme); err != nil {
@@ -88,17 +85,16 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
 ) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(GroupName, scheme, metav1.ParameterCodec, codecs)
+	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(playlist.GROUP, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
 
+	resource := playlist.PlaylistResourceInfo
 	legacyStore := &legacyStorage{
-		service:                   b.service,
-		namespacer:                b.namespacer,
-		DefaultQualifiedResource:  b.gv.WithResource("playlists").GroupResource(),
-		SingularQualifiedResource: b.gv.WithResource("playlist").GroupResource(),
+		service:    b.service,
+		namespacer: b.namespacer,
 	}
 	legacyStore.tableConverter = utils.NewTableConverter(
-		legacyStore.DefaultQualifiedResource,
+		resource.GroupResource(),
 		[]metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
 			{Name: "Title", Type: "string", Format: "string", Description: "The playlist name"},
@@ -118,7 +114,7 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 			}, nil
 		},
 	)
-	storage["playlists"] = legacyStore
+	storage[resource.StoragePath()] = legacyStore
 
 	// enable dual writes if a RESTOptionsGetter is provided
 	if optsGetter != nil {
@@ -126,10 +122,10 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 		if err != nil {
 			return nil, err
 		}
-		storage["playlists"] = grafanarest.NewDualWriter(legacyStore, store)
+		storage[resource.StoragePath()] = grafanarest.NewDualWriter(legacyStore, store)
 	}
 
-	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[playlist.VERSION] = storage
 	return &apiGroupInfo, nil
 }
 

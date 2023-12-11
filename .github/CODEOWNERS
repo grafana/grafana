@@ -84,7 +84,6 @@
 /pkg/ifaces/ @grafana/backend-platform
 /pkg/infra/appcontext/ @grafana/backend-platform
 /pkg/infra/db/ @grafana/backend-platform
-/pkg/infra/grn/ @grafana/backend-platform
 /pkg/infra/localcache/ @grafana/backend-platform
 /pkg/infra/log/ @grafana/backend-platform
 /pkg/infra/metrics/ @grafana/backend-platform
