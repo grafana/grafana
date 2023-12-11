@@ -72,11 +72,11 @@ func (f *ProvisioningApiHandler) handleRouteGetMuteTimings(ctx *contextmodel.Req
 	return f.svc.RouteGetMuteTimings(ctx)
 }
 
-func (f *ProvisioningApiHandler) handleRoutePostMuteTiming(ctx *contextmodel.ReqContext, mt apimodels.MuteTimeInterval) response.Response {
+func (f *ProvisioningApiHandler) handleRoutePostMuteTiming(ctx *contextmodel.ReqContext, mt apimodels.MuteTiming) response.Response {
 	return f.svc.RoutePostMuteTiming(ctx, mt)
 }
 
-func (f *ProvisioningApiHandler) handleRoutePutMuteTiming(ctx *contextmodel.ReqContext, mt apimodels.MuteTimeInterval, name string) response.Response {
+func (f *ProvisioningApiHandler) handleRoutePutMuteTiming(ctx *contextmodel.ReqContext, mt apimodels.MuteTiming, name string) response.Response {
 	return f.svc.RoutePutMuteTiming(ctx, mt, name)
 }
 

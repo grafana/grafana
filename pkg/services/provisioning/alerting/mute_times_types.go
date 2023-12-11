@@ -9,8 +9,8 @@ import (
 )
 
 type MuteTimeV1 struct {
-	OrgID    values.Int64Value            `json:"orgId" yaml:"orgId"`
-	MuteTime definitions.MuteTimeInterval `json:",inline" yaml:",inline"`
+	OrgID    values.Int64Value      `json:"orgId" yaml:"orgId"`
+	MuteTime definitions.MuteTiming `json:",inline" yaml:",inline"`
 }
 
 func (v1 *MuteTimeV1) mapToModel() MuteTime {
@@ -26,7 +26,7 @@ func (v1 *MuteTimeV1) mapToModel() MuteTime {
 
 type MuteTime struct {
 	OrgID    int64
-	MuteTime definitions.MuteTimeInterval
+	MuteTime definitions.MuteTiming
 }
 
 type DeleteMuteTimeV1 struct {

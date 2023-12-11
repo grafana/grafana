@@ -28,26 +28,31 @@ func NewMuteTimingService(config AMConfigStore, prov ProvisioningStore, xact Tra
 }
 
 // GetMuteTimings returns a slice of all mute timings within the specified org.
-func (svc *MuteTimingService) GetMuteTimings(ctx context.Context, orgID int64) ([]definitions.MuteTimeInterval, error) {
+func (svc *MuteTimingService) GetMuteTimings(ctx context.Context, orgID int64) ([]definitions.MuteTiming, error) {
 	rev, err := getLastConfiguration(ctx, orgID, svc.config)
 	if err != nil {
 		return nil, err
 	}
 
 	if rev.cfg.AlertmanagerConfig.MuteTimeIntervals == nil {
-		return []definitions.MuteTimeInterval{}, nil
+		return []definitions.MuteTiming{}, nil
 	}
 
-	result := make([]definitions.MuteTimeInterval, 0, len(rev.cfg.AlertmanagerConfig.MuteTimeIntervals))
+	result := make([]definitions.MuteTiming, 0, len(rev.cfg.AlertmanagerConfig.MuteTimeIntervals))
 	for _, interval := range rev.cfg.AlertmanagerConfig.MuteTimeIntervals {
-		result = append(result, definitions.MuteTimeInterval{MuteTimeInterval: interval})
+		var muteTiming definitions.MuteTiming
+		if err := muteTiming.FromConfigMuteTimeInterval(interval); err != nil {
+			return nil, err
+		}
+		result = append(result, muteTiming)
 	}
 	return result, nil
 }
 
 // CreateMuteTiming adds a new mute timing within the specified org. The created mute timing is returned.
-func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (*definitions.MuteTimeInterval, error) {
-	if err := mt.Validate(); err != nil {
+func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitions.MuteTiming, orgID int64) (*definitions.MuteTiming, error) {
+	mtInterval, err := mt.ToConfigMuteTimeInterval()
+	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
@@ -64,7 +69,7 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 			return nil, fmt.Errorf("%w: %s", ErrValidation, "a mute timing with this name already exists")
 		}
 	}
-	revision.cfg.AlertmanagerConfig.MuteTimeIntervals = append(revision.cfg.AlertmanagerConfig.MuteTimeIntervals, mt.MuteTimeInterval)
+	revision.cfg.AlertmanagerConfig.MuteTimeIntervals = append(revision.cfg.AlertmanagerConfig.MuteTimeIntervals, mtInterval)
 
 	serialized, err := serializeAlertmanagerConfig(*revision.cfg)
 	if err != nil {
@@ -96,8 +101,9 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 }
 
 // UpdateMuteTiming replaces an existing mute timing within the specified org. The replaced mute timing is returned. If the mute timing does not exist, nil is returned and no action is taken.
-func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (*definitions.MuteTimeInterval, error) {
-	if err := mt.Validate(); err != nil {
+func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitions.MuteTiming, orgID int64) (*definitions.MuteTiming, error) {
+	mtInterval, err := mt.ToConfigMuteTimeInterval()
+	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
@@ -112,7 +118,7 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 	updated := false
 	for i, existing := range revision.cfg.AlertmanagerConfig.MuteTimeIntervals {
 		if mt.Name == existing.Name {
-			revision.cfg.AlertmanagerConfig.MuteTimeIntervals[i] = mt.MuteTimeInterval
+			revision.cfg.AlertmanagerConfig.MuteTimeIntervals[i] = mtInterval
 			updated = true
 			break
 		}
@@ -186,7 +192,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string,
 		if err != nil {
 			return err
 		}
-		target := definitions.MuteTimeInterval{MuteTimeInterval: config.MuteTimeInterval{Name: name}}
+		target := definitions.MuteTiming{Name: name}
 		err := svc.prov.DeleteProvenance(ctx, &target, orgID)
 		if err != nil {
 			return err

@@ -8,10 +8,8 @@ import (
 	tmpltext "text/template"
 	"time"
 
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/common/model"
-	"gopkg.in/yaml.v3"
 )
 
 // Validate normalizes a possibly nested Route r, and returns errors if r is invalid.
@@ -143,15 +141,8 @@ func (r *Route) ValidateMuteTimes(muteTimes map[string]struct{}) error {
 }
 
 func (mt *MuteTiming) Validate() error {
-	s, err := yaml.Marshal(mt)
-	if err != nil {
-		return err
-	}
 	// The MuteTiming is a simplified version of the Alertmanager config, so we can reuse the Alertmanager config
 	// validation by unmarshaling into an Alertmanager config.
-	var configMuteTiming config.MuteTimeInterval
-	if err = yaml.Unmarshal(s, &configMuteTiming); err != nil {
-		return err
-	}
-	return nil
+	_, err := mt.ToConfigMuteTimeInterval()
+	return err
 }

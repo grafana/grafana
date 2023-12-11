@@ -50,9 +50,9 @@ type NotificationPolicyService interface {
 }
 
 type MuteTimingService interface {
-	GetMuteTimings(ctx context.Context, orgID int64) ([]definitions.MuteTimeInterval, error)
-	CreateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (*definitions.MuteTimeInterval, error)
-	UpdateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (*definitions.MuteTimeInterval, error)
+	GetMuteTimings(ctx context.Context, orgID int64) ([]definitions.MuteTiming, error)
+	CreateMuteTiming(ctx context.Context, mt definitions.MuteTiming, orgID int64) (*definitions.MuteTiming, error)
+	UpdateMuteTiming(ctx context.Context, mt definitions.MuteTiming, orgID int64) (*definitions.MuteTiming, error)
 	DeleteMuteTiming(ctx context.Context, name string, orgID int64) error
 }
 
@@ -263,7 +263,7 @@ func (srv *ProvisioningSrv) RouteGetMuteTimings(c *contextmodel.ReqContext) resp
 	return response.JSON(http.StatusOK, timings)
 }
 
-func (srv *ProvisioningSrv) RoutePostMuteTiming(c *contextmodel.ReqContext, mt definitions.MuteTimeInterval) response.Response {
+func (srv *ProvisioningSrv) RoutePostMuteTiming(c *contextmodel.ReqContext, mt definitions.MuteTiming) response.Response {
 	mt.Provenance = determineProvenance(c)
 	created, err := srv.muteTimings.CreateMuteTiming(c.Req.Context(), mt, c.SignedInUser.GetOrgID())
 	if err != nil {
@@ -275,7 +275,7 @@ func (srv *ProvisioningSrv) RoutePostMuteTiming(c *contextmodel.ReqContext, mt d
 	return response.JSON(http.StatusCreated, created)
 }
 
-func (srv *ProvisioningSrv) RoutePutMuteTiming(c *contextmodel.ReqContext, mt definitions.MuteTimeInterval, name string) response.Response {
+func (srv *ProvisioningSrv) RoutePutMuteTiming(c *contextmodel.ReqContext, mt definitions.MuteTiming, name string) response.Response {
 	mt.Name = name
 	mt.Provenance = determineProvenance(c)
 	updated, err := srv.muteTimings.UpdateMuteTiming(c.Req.Context(), mt, c.SignedInUser.GetOrgID())

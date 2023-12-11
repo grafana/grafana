@@ -1,5 +1,10 @@
 package definitions
 
+import (
+	"github.com/prometheus/alertmanager/config"
+	"gopkg.in/yaml.v3"
+)
+
 // swagger:route GET /api/v1/provisioning/mute-timings provisioning stable RouteGetMuteTimings
 //
 // Get all the mute timings.
@@ -75,6 +80,33 @@ func (mt *MuteTiming) ResourceType() string {
 
 func (mt *MuteTiming) ResourceID() string {
 	return mt.Name
+}
+
+func (mt *MuteTiming) ToConfigMuteTimeInterval() (config.MuteTimeInterval, error) {
+	s, err := yaml.Marshal(mt)
+	if err != nil {
+		return config.MuteTimeInterval{}, err
+	}
+
+	var configMuteTiming config.MuteTimeInterval
+	if err = yaml.Unmarshal(s, &configMuteTiming); err != nil {
+		return config.MuteTimeInterval{}, err
+	}
+
+	return configMuteTiming, nil
+}
+
+func (mt *MuteTiming) FromConfigMuteTimeInterval(configMuteTiming config.MuteTimeInterval) error {
+	s, err := yaml.Marshal(configMuteTiming)
+	if err != nil {
+		return err
+	}
+
+	if err = yaml.Unmarshal(s, mt); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // swagger:model

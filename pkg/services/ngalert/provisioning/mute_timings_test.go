@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/prometheus/alertmanager/config"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -81,10 +80,8 @@ func TestMuteTimingService(t *testing.T) {
 	t.Run("creating mute timings", func(t *testing.T) {
 		t.Run("rejects mute timings that fail validation", func(t *testing.T) {
 			sut := createMuteTimingSvcSut()
-			timing := definitions.MuteTimeInterval{
-				MuteTimeInterval: config.MuteTimeInterval{
-					Name: "",
-				},
+			timing := definitions.MuteTiming{
+				Name: "",
 			}
 
 			_, err := sut.CreateMuteTiming(context.Background(), timing, 1)
@@ -169,10 +166,8 @@ func TestMuteTimingService(t *testing.T) {
 	t.Run("updating mute timings", func(t *testing.T) {
 		t.Run("rejects mute timings that fail validation", func(t *testing.T) {
 			sut := createMuteTimingSvcSut()
-			timing := definitions.MuteTimeInterval{
-				MuteTimeInterval: config.MuteTimeInterval{
-					Name: "",
-				},
+			timing := definitions.MuteTiming{
+				Name: "",
 			}
 
 			_, err := sut.UpdateMuteTiming(context.Background(), timing, 1)
@@ -382,11 +377,9 @@ func createMuteTimingSvcSut() *MuteTimingService {
 	}
 }
 
-func createMuteTiming() definitions.MuteTimeInterval {
-	return definitions.MuteTimeInterval{
-		MuteTimeInterval: config.MuteTimeInterval{
-			Name: "interval",
-		},
+func createMuteTiming() definitions.MuteTiming {
+	return definitions.MuteTiming{
+		Name: "interval",
 	}
 }
 
