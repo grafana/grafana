@@ -2,6 +2,7 @@ import { render, screen, waitForElementToBeRemoved } from '@testing-library/reac
 import React from 'react';
 import { Provider } from 'react-redux';
 
+import { wrapWithGrafanaContextMock } from 'app/percona/shared/helpers/testUtils';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types';
 
@@ -46,7 +47,7 @@ describe('KubernetesInventory::', () => {
           },
         } as StoreState)}
       >
-        <KubernetesInventory setMode={jest.fn} />
+        {wrapWithGrafanaContextMock(<KubernetesInventory setMode={jest.fn} />)}
       </Provider>
     );
 
