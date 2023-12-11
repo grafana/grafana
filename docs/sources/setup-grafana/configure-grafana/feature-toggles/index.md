@@ -51,6 +51,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `prometheusConfigOverhaulAuth`       | Update the Prometheus configuration page with the new auth component                                                                                                                                                         | Yes                |
 | `alertingInsights`                   | Show the new alerting insights landing page                                                                                                                                                                                  | Yes                |
 | `cloudWatchWildCardDimensionValues`  | Fetches dimension values from CloudWatch to correctly label wildcard dimensions                                                                                                                                              | Yes                |
+| `displayAnonymousStats`              | Enables anonymous stats to be shown in the UI for Grafana                                                                                                                                                                    | Yes                |
 
 ## Preview feature toggles
 
@@ -143,6 +144,7 @@ Experimental features might be changed or removed without prior notice.
 | `enableNativeHTTPHistogram`                 | Enables native HTTP Histograms                                                                                                                                                                                                                                                    |
 | `formatString`                              | Enable format string transformer                                                                                                                                                                                                                                                  |
 | `kubernetesPlaylists`                       | Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s                                                                                                                                                                                     |
+| `kubernetesSnapshots`                       | Use the kubernetes API in the frontend to support playlists                                                                                                                                                                                                                       |
 | `recoveryThreshold`                         | Enables feature recovery threshold (aka hysteresis) for threshold server-side expression                                                                                                                                                                                          |
 | `lokiStructuredMetadata`                    | Enables the loki data source to request structured metadata from the Loki server                                                                                                                                                                                                  |
 | `teamHttpHeaders`                           | Enables datasources to apply team headers to the client requests                                                                                                                                                                                                                  |
@@ -165,17 +167,17 @@ Experimental features might be changed or removed without prior notice.
 | `logRowsPopoverMenu`                        | Enable filtering menu displayed when text of a log line is selected                                                                                                                                                                                                               |
 | `pluginsSkipHostEnvVars`                    | Disables passing host environment variable to plugin processes                                                                                                                                                                                                                    |
 | `regressionTransformation`                  | Enables regression analysis transformation                                                                                                                                                                                                                                        |
-| `displayAnonymousStats`                     | Enables anonymous stats to be shown in the UI for Grafana                                                                                                                                                                                                                         |
 
 ## Development feature toggles
 
 The following toggles require explicitly setting Grafana's [app mode]({{< relref "../_index.md#app_mode" >}}) to 'development' before you can enable this feature toggle. These features tend to be experimental.
 
-| Feature toggle name       | Description                                                                                  |
-| ------------------------- | -------------------------------------------------------------------------------------------- |
-| `entityStore`             | SQL-based entity store (requires storage flag also)                                          |
-| `externalServiceAuth`     | Starts an OAuth2 authentication provider for external services                               |
-| `idForwarding`            | Generate signed id token for identity that can be forwarded to plugins and external services |
-| `externalServiceAccounts` | Automatic service account and token setup for plugins                                        |
-| `panelTitleSearchInV1`    | Enable searching for dashboards using panel title in search v1                               |
-| `ssoSettingsApi`          | Enables the SSO settings API                                                                 |
+| Feature toggle name                   | Description                                                                                  |
+| ------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `unifiedStorage`                      | SQL-based k8s storage                                                                        |
+| `externalServiceAuth`                 | Starts an OAuth2 authentication provider for external services                               |
+| `grafanaAPIServerEnsureKubectlAccess` | Start an additional https handler and write kubectl options                                  |
+| `idForwarding`                        | Generate signed id token for identity that can be forwarded to plugins and external services |
+| `externalServiceAccounts`             | Automatic service account and token setup for plugins                                        |
+| `panelTitleSearchInV1`                | Enable searching for dashboards using panel title in search v1                               |
+| `ssoSettingsApi`                      | Enables the SSO settings API                                                                 |

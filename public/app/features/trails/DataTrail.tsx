@@ -9,6 +9,7 @@ import {
   getUrlSyncManager,
   SceneComponentProps,
   SceneControlsSpacer,
+  sceneGraph,
   SceneObject,
   SceneObjectBase,
   SceneObjectState,
@@ -27,7 +28,7 @@ import { DataTrailHistory, DataTrailHistoryStep } from './DataTrailsHistory';
 import { MetricScene } from './MetricScene';
 import { MetricSelectScene } from './MetricSelectScene';
 import { getTrailStore } from './TrailStore/TrailStore';
-import { MetricSelectedEvent, trailDS, LOGS_METRIC, VAR_DATASOURCE } from './shared';
+import { MetricSelectedEvent, trailDS, LOGS_METRIC, VAR_DATASOURCE, VAR_FILTERS } from './shared';
 import { getUrlForTrail } from './utils';
 
 export interface DataTrailState extends SceneObjectState {
@@ -43,10 +44,6 @@ export interface DataTrailState extends SceneObjectState {
 
   // Synced with url
   metric?: string;
-
-  // Indicates which step in the data trail this is
-  stepIndex: number;
-  parentIndex: number; // If there is no parent, this will be -1
 }
 
 export class DataTrail extends SceneObjectBase<DataTrailState> {
@@ -64,8 +61,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       ],
       history: state.history ?? new DataTrailHistory({}),
       settings: state.settings ?? new DataTrailSettings({}),
-      stepIndex: state.stepIndex ?? 0,
-      parentIndex: state.parentIndex ?? -1,
       ...state,
     });
 
@@ -80,6 +75,29 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     // Some scene elements publish this
     this.subscribeToEvent(MetricSelectedEvent, this._handleMetricSelectedEvent.bind(this));
 
+    // Pay attention to changes in history (i.e., changing the step)
+    this.state.history.subscribeToState((newState, oldState) => {
+      const oldNumberOfSteps = oldState.steps.length;
+      const newNumberOfSteps = newState.steps.length;
+
+      const newStepWasAppended = newNumberOfSteps > oldNumberOfSteps;
+
+      if (newStepWasAppended) {
+        // Do nothing because the state is already up to date -- it created a new step!
+        return;
+      }
+
+      if (oldState.currentStep === newState.currentStep) {
+        // The same step was clicked on -- no need to change anything.
+        return;
+      }
+
+      // History changed because a different node was selected
+      const step = newState.steps[newState.currentStep];
+
+      this.goBackToStep(step);
+    });
+
     return () => {
       if (!this.state.embedded) {
         getUrlSyncManager().cleanUp(this);
@@ -88,7 +106,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     };
   }
 
-  public goBackToStep(step: DataTrailHistoryStep) {
+  private goBackToStep(step: DataTrailHistoryStep) {
     if (!this.state.embedded) {
       getUrlSyncManager().cleanUp(this);
     }
@@ -111,6 +129,14 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       this.setState(this.getSceneUpdatesForNewMetricValue(evt.payload));
     } else {
       locationService.partial({ metric: evt.payload, actionView: null });
+    }
+
+    // Add metric to adhoc filters baseFilter
+    const filterVar = sceneGraph.lookupVariable(VAR_FILTERS, this);
+    if (filterVar instanceof AdHocFiltersVariable) {
+      filterVar.state.set.setState({
+        baseFilters: getBaseFiltersForMetric(evt.payload),
+      });
     }
   }
 
@@ -183,6 +209,7 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
         datasource: trailDS,
         layout: 'vertical',
         filters: initialFilters ?? [],
+        baseFilters: getBaseFiltersForMetric(metric),
       }),
     ],
   });
@@ -210,4 +237,11 @@ function getStyles(theme: GrafanaTheme2) {
       flexWrap: 'wrap',
     }),
   };
+}
+
+function getBaseFiltersForMetric(metric?: string): AdHocVariableFilter[] {
+  if (metric) {
+    return [{ key: '__name__', operator: '=', value: metric }];
+  }
+  return [];
 }

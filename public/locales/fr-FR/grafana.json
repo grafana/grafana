@@ -1290,6 +1290,12 @@
       "select-search-input": "Tapez pour rechercher (pays, ville, abréviation)"
     }
   },
+  "transformations": {
+    "empty": {
+      "add-transformation-body": "",
+      "add-transformation-header": ""
+    }
+  },
   "user-orgs": {
     "current-org-button": "Actuel",
     "name-column": "Nom",
@@ -1304,6 +1310,9 @@
       "name-error": "Un nom est obligatoire",
       "name-label": "Nom",
       "username-label": "Nom d’utilisateur"
+    },
+    "tabs": {
+      "general": ""
     }
   },
   "user-session": {
