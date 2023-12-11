@@ -144,7 +144,7 @@ func (f *ProvisioningApiHandler) RoutePostContactpoints(ctx *contextmodel.ReqCon
 }
 func (f *ProvisioningApiHandler) RoutePostMuteTiming(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Request Body
-	conf := apimodels.MuteTimeInterval{}
+	conf := apimodels.MuteTiming{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -185,7 +185,7 @@ func (f *ProvisioningApiHandler) RoutePutMuteTiming(ctx *contextmodel.ReqContext
 	// Parse Path Parameters
 	nameParam := web.Params(ctx.Req)[":name"]
 	// Parse Request Body
-	conf := apimodels.MuteTimeInterval{}
+	conf := apimodels.MuteTiming{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}

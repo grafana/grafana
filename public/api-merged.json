@@ -3059,7 +3059,7 @@
             "name": "Body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/MuteTimeInterval"
+              "$ref": "#/definitions/MuteTiming"
             }
           }
         ],
@@ -3128,7 +3128,7 @@
             "name": "Body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/MuteTimeInterval"
+              "$ref": "#/definitions/MuteTiming"
             }
           }
         ],
@@ -15691,10 +15691,84 @@
         }
       }
     },
+    "MuteTiming": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
+        "time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MuteTimingInterval"
+          }
+        }
+      }
+    },
+    "MuteTimingInterval": {
+      "type": "object",
+      "properties": {
+        "days_of_month": {
+          "description": "an inclusive range of days of month, e.g. \"1\" or \"5:15\".",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "location": {
+          "description": "a location time zone for the time interval in the IANA Time Zone Database format, e.g. \"America/New_York\".",
+          "type": "string"
+        },
+        "months": {
+          "description": "an inclusive range of months, e.g. \"january\" or \"february:april\".",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "times": {
+          "description": "an inclusive range of times",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MuteTimingTimeRange"
+          }
+        },
+        "weekdays": {
+          "description": "an inclusive range of weekdays, e.g. \"monday\" or \"tuesday:thursday\".",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "years": {
+          "description": "an inclusive range of years, e.g. \"2019\" or \"2020:2022\".",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "MuteTimingTimeRange": {
+      "type": "object",
+      "properties": {
+        "end_time": {
+          "description": "the end time of the range in the format HH:MM, e.g. \"17:00\".",
+          "type": "string"
+        },
+        "start_time": {
+          "description": "the start time of the range in the format HH:MM, e.g. \"08:00\".",
+          "type": "string"
+        }
+      }
+    },
     "MuteTimings": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/MuteTimeInterval"
+        "$ref": "#/definitions/MuteTiming"
       }
     },
     "Name": {
@@ -20559,7 +20633,6 @@
       }
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -20692,6 +20765,7 @@
       }
     },
     "gettableAlert": {
+      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -20803,14 +20877,12 @@
       }
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
       }
     },
     "integration": {
-      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",
@@ -21019,7 +21091,6 @@
       }
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",

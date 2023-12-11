@@ -1920,9 +1920,83 @@
    "title": "MuteTimeInterval represents a named set of time intervals for which a route should be muted.",
    "type": "object"
   },
+  "MuteTiming": {
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "provenance": {
+     "$ref": "#/definitions/Provenance"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/MuteTimingInterval"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "MuteTimingInterval": {
+   "properties": {
+    "days_of_month": {
+     "description": "an inclusive range of days of month, e.g. \"1\" or \"5:15\".",
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "location": {
+     "description": "a location time zone for the time interval in the IANA Time Zone Database format, e.g. \"America/New_York\".",
+     "type": "string"
+    },
+    "months": {
+     "description": "an inclusive range of months, e.g. \"january\" or \"february:april\".",
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "times": {
+     "description": "an inclusive range of times",
+     "items": {
+      "$ref": "#/definitions/MuteTimingTimeRange"
+     },
+     "type": "array"
+    },
+    "weekdays": {
+     "description": "an inclusive range of weekdays, e.g. \"monday\" or \"tuesday:thursday\".",
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "years": {
+     "description": "an inclusive range of years, e.g. \"2019\" or \"2020:2022\".",
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "MuteTimingTimeRange": {
+   "properties": {
+    "end_time": {
+     "description": "the end time of the range in the format HH:MM, e.g. \"17:00\".",
+     "type": "string"
+    },
+    "start_time": {
+     "description": "the start time of the range in the format HH:MM, e.g. \"08:00\".",
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "MuteTimings": {
    "items": {
-    "$ref": "#/definitions/MuteTimeInterval"
+    "$ref": "#/definitions/MuteTiming"
    },
    "type": "array"
   },
@@ -3950,17 +4024,18 @@
    "type": "object"
   },
   "TimeRange": {
-   "description": "Redefining this to avoid an import cycle",
+   "description": "For example, 4:00PM to End of the day would Begin at 1020 and End at 1440.",
    "properties": {
-    "from": {
-     "format": "date-time",
-     "type": "string"
+    "EndMinute": {
+     "format": "int64",
+     "type": "integer"
     },
-    "to": {
-     "format": "date-time",
-     "type": "string"
+    "StartMinute": {
+     "format": "int64",
+     "type": "integer"
     }
    },
+   "title": "TimeRange represents a range of minutes within a 1440 minute day, exclusive of the End minute. A day consists of 1440 minutes.",
    "type": "object"
   },
   "URL": {
@@ -4228,7 +4303,6 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -4333,7 +4407,6 @@
    "type": "object"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -4396,6 +4469,7 @@
    "type": "array"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4444,14 +4518,12 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
    "type": "array"
   },
   "integration": {
-   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -7320,7 +7392,7 @@
       "in": "body",
       "name": "Body",
       "schema": {
-       "$ref": "#/definitions/MuteTimeInterval"
+       "$ref": "#/definitions/MuteTiming"
       }
      }
     ],
@@ -7410,7 +7482,7 @@
       "in": "body",
       "name": "Body",
       "schema": {
-       "$ref": "#/definitions/MuteTimeInterval"
+       "$ref": "#/definitions/MuteTiming"
       }
      }
     ],

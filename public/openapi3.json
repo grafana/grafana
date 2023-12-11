@@ -6709,9 +6709,83 @@
         "title": "MuteTimeInterval represents a named set of time intervals for which a route should be muted.",
         "type": "object"
       },
+      "MuteTiming": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "time_intervals": {
+            "items": {
+              "$ref": "#/components/schemas/MuteTimingInterval"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "MuteTimingInterval": {
+        "properties": {
+          "days_of_month": {
+            "description": "an inclusive range of days of month, e.g. \"1\" or \"5:15\".",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "location": {
+            "description": "a location time zone for the time interval in the IANA Time Zone Database format, e.g. \"America/New_York\".",
+            "type": "string"
+          },
+          "months": {
+            "description": "an inclusive range of months, e.g. \"january\" or \"february:april\".",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "times": {
+            "description": "an inclusive range of times",
+            "items": {
+              "$ref": "#/components/schemas/MuteTimingTimeRange"
+            },
+            "type": "array"
+          },
+          "weekdays": {
+            "description": "an inclusive range of weekdays, e.g. \"monday\" or \"tuesday:thursday\".",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "years": {
+            "description": "an inclusive range of years, e.g. \"2019\" or \"2020:2022\".",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "MuteTimingTimeRange": {
+        "properties": {
+          "end_time": {
+            "description": "the end time of the range in the format HH:MM, e.g. \"17:00\".",
+            "type": "string"
+          },
+          "start_time": {
+            "description": "the start time of the range in the format HH:MM, e.g. \"08:00\".",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "MuteTimings": {
         "items": {
-          "$ref": "#/components/schemas/MuteTimeInterval"
+          "$ref": "#/components/schemas/MuteTiming"
         },
         "type": "array"
       },
@@ -11575,7 +11649,6 @@
         "type": "object"
       },
       "alertGroups": {
-        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -11708,6 +11781,7 @@
         "type": "object"
       },
       "gettableAlert": {
+        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -11819,14 +11893,12 @@
         "type": "object"
       },
       "gettableSilences": {
-        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
         "type": "array"
       },
       "integration": {
-        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -12035,7 +12107,6 @@
         "type": "object"
       },
       "receiver": {
-        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",
@@ -15523,7 +15594,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MuteTimeInterval"
+                "$ref": "#/components/schemas/MuteTiming"
               }
             }
           },
@@ -15631,7 +15702,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MuteTimeInterval"
+                "$ref": "#/components/schemas/MuteTiming"
               }
             }
           },
