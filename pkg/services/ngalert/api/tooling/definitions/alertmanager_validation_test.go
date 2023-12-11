@@ -4,8 +4,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )
@@ -259,10 +257,10 @@ func TestValidateRoutes(t *testing.T) {
 	})
 }
 
-func TestValidateMuteTimeInterval(t *testing.T) {
+func TestValidateMuteTiming(t *testing.T) {
 	type testCase struct {
 		desc   string
-		mti    MuteTimeInterval
+		mti    MuteTiming
 		expMsg string
 	}
 
@@ -270,48 +268,43 @@ func TestValidateMuteTimeInterval(t *testing.T) {
 		cases := []testCase{
 			{
 				desc: "nil intervals",
-				mti: MuteTimeInterval{
-					MuteTimeInterval: config.MuteTimeInterval{
-						Name: "interval",
-					},
+				mti: MuteTiming{
+					Name: "interval",
 				},
 			},
 			{
 				desc: "empty intervals",
-				mti: MuteTimeInterval{
-					MuteTimeInterval: config.MuteTimeInterval{
-						Name:          "interval",
-						TimeIntervals: []timeinterval.TimeInterval{},
-					},
+				mti: MuteTiming{
+					Name:          "interval",
+					TimeIntervals: []MuteTimingInterval{},
 				},
 			},
 			{
 				desc: "blank interval",
-				mti: MuteTimeInterval{
-					MuteTimeInterval: config.MuteTimeInterval{
-						Name: "interval",
-						TimeIntervals: []timeinterval.TimeInterval{
-							{},
-						},
+				mti: MuteTiming{
+					Name: "interval",
+					TimeIntervals: []MuteTimingInterval{
+						{},
 					},
 				},
 			},
 			{
-				desc: "simple",
-				mti: MuteTimeInterval{
-					MuteTimeInterval: config.MuteTimeInterval{
-						Name: "interval",
-						TimeIntervals: []timeinterval.TimeInterval{
-							{
-								Weekdays: []timeinterval.WeekdayRange{
-									{
-										InclusiveRange: timeinterval.InclusiveRange{
-											Begin: 1,
-											End:   2,
-										},
-									},
+				desc: "full",
+				mti: MuteTiming{
+					Name: "interval",
+					TimeIntervals: []MuteTimingInterval{
+						{
+							Times: []MuteTimingTimeRange{
+								{
+									StartTime: "00:10",
+									EndTime:   "01:00",
 								},
 							},
+							Weekdays:    []string{"monday:tuesday"},
+							DaysOfMonth: []string{"1:2"},
+							Months:      []string{"january:february"},
+							Years:       []string{"2020:2021"},
+							Location:    "America/New_York",
 						},
 					},
 				},
@@ -331,29 +324,20 @@ func TestValidateMuteTimeInterval(t *testing.T) {
 		cases := []testCase{
 			{
 				desc:   "empty",
-				mti:    MuteTimeInterval{},
+				mti:    MuteTiming{},
 				expMsg: "missing name",
 			},
 			{
-				desc: "empty",
-				mti: MuteTimeInterval{
-					MuteTimeInterval: config.MuteTimeInterval{
-						Name: "interval",
-						TimeIntervals: []timeinterval.TimeInterval{
-							{
-								Weekdays: []timeinterval.WeekdayRange{
-									{
-										InclusiveRange: timeinterval.InclusiveRange{
-											Begin: -1,
-											End:   7,
-										},
-									},
-								},
-							},
+				desc: "bad weekday",
+				mti: MuteTiming{
+					Name: "interval",
+					TimeIntervals: []MuteTimingInterval{
+						{
+							Weekdays: []string{"bad:tuesday"},
 						},
 					},
 				},
-				expMsg: "unable to convert -1 into weekday",
+				expMsg: "bad is not a valid weekday",
 			},
 		}
 

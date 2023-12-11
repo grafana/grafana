@@ -3059,7 +3059,7 @@
             "name": "Body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/MuteTimeInterval"
+              "$ref": "#/definitions/MuteTiming"
             }
           }
         ],
@@ -3167,7 +3167,7 @@
             "name": "Body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/MuteTimeInterval"
+              "$ref": "#/definitions/MuteTiming"
             }
           }
         ],
@@ -15785,25 +15785,90 @@
     "MuteTimeIntervalExport": {
       "type": "object",
       "properties": {
-        "OrgID": {
+        "orgId": {
           "type": "integer",
           "format": "int64"
-        },
+        }
+      }
+    },
+    "MuteTiming": {
+      "type": "object",
+      "properties": {
         "name": {
           "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
         },
         "time_intervals": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/TimeInterval"
+            "$ref": "#/definitions/MuteTimingInterval"
           }
+        }
+      }
+    },
+    "MuteTimingInterval": {
+      "type": "object",
+      "properties": {
+        "days_of_month": {
+          "description": "an inclusive range of days of month, e.g. \"1\" or \"5:15\".",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "location": {
+          "description": "a location time zone for the time interval in the IANA Time Zone Database format, e.g. \"America/New_York\".",
+          "type": "string"
+        },
+        "months": {
+          "description": "an inclusive range of months, e.g. \"january\" or \"february:april\".",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "times": {
+          "description": "an inclusive range of times",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MuteTimingTimeRange"
+          }
+        },
+        "weekdays": {
+          "description": "an inclusive range of weekdays, e.g. \"monday\" or \"tuesday:thursday\".",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "years": {
+          "description": "an inclusive range of years, e.g. \"2019\" or \"2020:2022\".",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "MuteTimingTimeRange": {
+      "type": "object",
+      "properties": {
+        "end_time": {
+          "description": "the end time of the range in the format HH:MM, e.g. \"17:00\".",
+          "type": "string"
+        },
+        "start_time": {
+          "description": "the start time of the range in the format HH:MM, e.g. \"08:00\".",
+          "type": "string"
         }
       }
     },
     "MuteTimings": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/MuteTimeInterval"
+        "$ref": "#/definitions/MuteTiming"
       }
     },
     "Name": {
@@ -20648,6 +20713,7 @@
       }
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -20671,6 +20737,7 @@
       }
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -20858,7 +20925,6 @@
       }
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -20914,7 +20980,6 @@
       }
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
@@ -21065,6 +21130,7 @@
       }
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",

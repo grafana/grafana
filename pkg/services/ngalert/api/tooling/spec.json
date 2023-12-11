@@ -2606,7 +2606,7 @@
             "name": "Body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/MuteTimeInterval"
+              "$ref": "#/definitions/MuteTiming"
             }
           }
         ],
@@ -2717,7 +2717,7 @@
             "name": "Body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/MuteTimeInterval"
+              "$ref": "#/definitions/MuteTiming"
             }
           }
         ],
@@ -5082,25 +5082,90 @@
     "MuteTimeIntervalExport": {
       "type": "object",
       "properties": {
-        "OrgID": {
+        "orgId": {
           "type": "integer",
           "format": "int64"
-        },
+        }
+      }
+    },
+    "MuteTiming": {
+      "type": "object",
+      "properties": {
         "name": {
           "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
         },
         "time_intervals": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/TimeInterval"
+            "$ref": "#/definitions/MuteTimingInterval"
           }
+        }
+      }
+    },
+    "MuteTimingInterval": {
+      "type": "object",
+      "properties": {
+        "days_of_month": {
+          "description": "an inclusive range of days of month, e.g. \"1\" or \"5:15\".",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "location": {
+          "description": "a location time zone for the time interval in the IANA Time Zone Database format, e.g. \"America/New_York\".",
+          "type": "string"
+        },
+        "months": {
+          "description": "an inclusive range of months, e.g. \"january\" or \"february:april\".",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "times": {
+          "description": "an inclusive range of times",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MuteTimingTimeRange"
+          }
+        },
+        "weekdays": {
+          "description": "an inclusive range of weekdays, e.g. \"monday\" or \"tuesday:thursday\".",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "years": {
+          "description": "an inclusive range of years, e.g. \"2019\" or \"2020:2022\".",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "MuteTimingTimeRange": {
+      "type": "object",
+      "properties": {
+        "end_time": {
+          "description": "the end time of the range in the format HH:MM, e.g. \"17:00\".",
+          "type": "string"
+        },
+        "start_time": {
+          "description": "the start time of the range in the format HH:MM, e.g. \"08:00\".",
+          "type": "string"
         }
       }
     },
     "MuteTimings": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/MuteTimeInterval"
+        "$ref": "#/definitions/MuteTiming"
       }
     },
     "NamespaceConfigResponse": {
@@ -7127,22 +7192,24 @@
       }
     },
     "TimeRange": {
-      "description": "Redefining this to avoid an import cycle",
+      "description": "For example, 4:00PM to End of the day would Begin at 1020 and End at 1440.",
       "type": "object",
+      "title": "TimeRange represents a range of minutes within a 1440 minute day, exclusive of the End minute. A day consists of 1440 minutes.",
       "properties": {
-        "from": {
-          "type": "string",
-          "format": "date-time"
+        "EndMinute": {
+          "type": "integer",
+          "format": "int64"
         },
-        "to": {
-          "type": "string",
-          "format": "date-time"
+        "StartMinute": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
     "URL": {
+      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
       "type": "object",
-      "title": "URL is a custom URL type that allows validation at configuration load time.",
+      "title": "A URL represents a parsed URL (technically, a URI reference).",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -7576,7 +7643,6 @@
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
-      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -7778,7 +7844,6 @@
       }
     },
     "postableSilence": {
-      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -7817,7 +7882,6 @@
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",

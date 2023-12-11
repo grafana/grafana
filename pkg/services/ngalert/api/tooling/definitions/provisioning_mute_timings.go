@@ -1,9 +1,5 @@
 package definitions
 
-import (
-	"github.com/prometheus/alertmanager/config"
-)
-
 // swagger:route GET /api/v1/provisioning/mute-timings provisioning stable RouteGetMuteTimings
 //
 // Get all the mute timings.
@@ -67,7 +63,7 @@ import (
 // swagger:route
 
 // swagger:model
-type MuteTimings []MuteTimeInterval
+type MuteTimings []MuteTiming
 
 // swagger:parameters RouteGetTemplate RouteGetMuteTiming RoutePutMuteTiming stable RouteDeleteMuteTiming RouteExportMuteTiming
 type RouteGetMuteTimingParam struct {
@@ -79,21 +75,48 @@ type RouteGetMuteTimingParam struct {
 // swagger:parameters RoutePostMuteTiming RoutePutMuteTiming
 type MuteTimingPayload struct {
 	// in:body
-	Body MuteTimeInterval
+	Body MuteTiming
 }
 
 // swagger:model
-type MuteTimeInterval struct {
-	config.MuteTimeInterval `json:",inline" yaml:",inline"`
-	Provenance              Provenance `json:"provenance,omitempty"`
+type MuteTiming struct {
+	Name          string               `yaml:"name" json:"name"`
+	Provenance    Provenance           `yaml:"provenance,omitempty" json:"provenance,omitempty"`
+	TimeIntervals []MuteTimingInterval `yaml:"time_intervals" json:"time_intervals"`
 }
 
-func (mt *MuteTimeInterval) ResourceType() string {
-	return "muteTimeInterval"
+func (mt *MuteTiming) ResourceType() string {
+	return "muteTiming"
 }
 
-func (mt *MuteTimeInterval) ResourceID() string {
-	return mt.MuteTimeInterval.Name
+func (mt *MuteTiming) ResourceID() string {
+	return mt.Name
+}
+
+// swagger:model
+// MuteTimeInterval represents a time interval during which alerts should be muted.
+type MuteTimingInterval struct {
+	// an inclusive range of times
+	Times []MuteTimingTimeRange `yaml:"times,omitempty" json:"times,omitempty"`
+	// an inclusive range of weekdays, e.g. "monday" or "tuesday:thursday".
+	Weekdays []string `yaml:"weekdays,omitempty" json:"weekdays,omitempty"`
+	// an inclusive range of days of month, e.g. "1" or "5:15".
+	DaysOfMonth []string `yaml:"days_of_month,omitempty" json:"days_of_month,omitempty"`
+	// an inclusive range of months, e.g. "january" or "february:april".
+	Months []string `yaml:"months,omitempty" json:"months,omitempty"`
+	// an inclusive range of years, e.g. "2019" or "2020:2022".
+	Years []string `yaml:"years,omitempty" json:"years,omitempty"`
+	// a location time zone for the time interval in the IANA Time Zone Database format, e.g. "America/New_York".
+	Location string `yaml:"location,omitempty" json:"location,omitempty"`
+}
+
+// swagger:model
+// MuteTimingInterval represents a time range during which alerts should be muted.
+type MuteTimingTimeRange struct {
+	// the start time of the range in the format HH:MM, e.g. "08:00".
+	StartTime string `yaml:"start_time,omitempty" json:"start_time,omitempty"`
+	// the end time of the range in the format HH:MM, e.g. "17:00".
+	EndTime string `yaml:"end_time,omitempty" json:"end_time,omitempty"`
 }
 
 type MuteTimeIntervalExport struct {
