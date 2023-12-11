@@ -295,10 +295,23 @@ export function addNestedQueryHandler(def: QueryBuilderOperationDef, query: Loki
 
 export function getLineFilterRenderer(operation: string, caseInsensitive?: boolean) {
   return function lineFilterRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
+    console.log('model', model);
+    console.log('operation', operation);
+    console.log('final string', `${innerExpr} ${operation} \`${model.params.join('` or `')}\``);
+
+    // Strip out backticks
+    const params =
+      model.params?.map((param) => {
+        if (typeof param === 'string' && param.includes('`')) {
+          return `${param.replaceAll('`', '')}`;
+        }
+        return param;
+      }) ?? [];
+
     if (caseInsensitive) {
-      return `${innerExpr} ${operation} \`(?i)${model.params.join('` or `(?i)')}\``;
+      return `${innerExpr} ${operation} \`(?i)${params.join('` or `(?i)')}\``;
     }
-    return `${innerExpr} ${operation} \`${model.params.join('` or `')}\``;
+    return `${innerExpr} ${operation} \`${params.join('` or `')}\``;
   };
 }
 
