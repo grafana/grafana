@@ -491,6 +491,27 @@ async function handleHistory(
   }
 }
 
+async function getCorrelationsData(state: StoreState, exploreId: string, ) {
+  const correlations$ = getCorrelations(exploreId);
+  const correlationEditorHelperData = state.explore.panes[exploreId]!.correlationEditorHelperData;
+
+  const isCorrelationEditorMode = state.explore.correlationEditorDetails?.editorMode || false;
+  const isLeftPane = Object.keys(state.explore.panes)[0] === exploreId;
+  const showCorrelationEditorLinks = isCorrelationEditorMode && isLeftPane;
+  const defaultCorrelationEditorDatasource = showCorrelationEditorLinks ? await getDataSourceSrv().get() : undefined;
+  const interpolateCorrelationHelperVars =
+    isCorrelationEditorMode && !isLeftPane && correlationEditorHelperData !== undefined;
+
+  let scopedVars: ScopedVars = {};
+  if (interpolateCorrelationHelperVars && correlationEditorHelperData !== undefined) {
+    Object.entries(correlationEditorHelperData?.vars).forEach((variable) => {
+      scopedVars[variable[0]] = { value: variable[1] };
+    });
+  }
+
+  return { correlations$, defaultCorrelationEditorDatasource, scopedVars, showCorrelationEditorLinks };
+}
+
 interface RunQueriesOptions {
   exploreId: string;
   preserveCache?: boolean;
@@ -502,18 +523,15 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
   'explore/runQueries',
   async ({ exploreId, preserveCache }, { dispatch, getState }) => {
     dispatch(cancelQueries(exploreId));
-
     dispatch(updateTime({ exploreId }));
-
-    const correlations$ = getCorrelations(exploreId);
 
     // We always want to clear cache unless we explicitly pass preserveCache parameter
     if (preserveCache !== true) {
       dispatch(clearCache(exploreId));
     }
 
-    const exploreItemState = getState().explore.panes[exploreId]!;
-
+    const exploreState = getState();
+    const exploreItemState = exploreState.explore.panes[exploreId]!;
     const {
       datasourceInstance,
       containerWidth,
@@ -526,14 +544,10 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
       absoluteRange,
       cache,
       supplementaryQueries,
-      correlationEditorHelperData,
     } = exploreItemState;
-    const isCorrelationEditorMode = getState().explore.correlationEditorDetails?.editorMode || false;
-    const isLeftPane = Object.keys(getState().explore.panes)[0] === exploreId;
-    const showCorrelationEditorLinks = isCorrelationEditorMode && isLeftPane;
-    const defaultCorrelationEditorDatasource = showCorrelationEditorLinks ? await getDataSourceSrv().get() : undefined;
-    const interpolateCorrelationHelperVars =
-      isCorrelationEditorMode && !isLeftPane && correlationEditorHelperData !== undefined;
+
+    const { correlations$, defaultCorrelationEditorDatasource, scopedVars, showCorrelationEditorLinks } = await getCorrelationsData(exploreState, exploreId);
+    
     let newQuerySource: Observable<ExplorePanelData>;
     let newQuerySubscription: SubscriptionLike;
 
@@ -592,13 +606,6 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
         maxDataPoints: containerWidth,
         liveStreaming: live,
       };
-
-      let scopedVars: ScopedVars = {};
-      if (interpolateCorrelationHelperVars && correlationEditorHelperData !== undefined) {
-        Object.entries(correlationEditorHelperData?.vars).forEach((variable) => {
-          scopedVars[variable[0]] = { value: variable[1] };
-        });
-      }
 
       const timeZone = getTimeZone(getState().user);
       const transaction = buildQueryTransaction(
@@ -717,21 +724,15 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
   async ({ exploreId, absoluteRange }, { dispatch, getState }) => {
     dispatch(cancelQueries(exploreId));
 
-    const correlations$ = getCorrelations(exploreId);
-    const { datasourceInstance, containerWidth, queryResponse, correlationEditorHelperData } =
+    const { datasourceInstance, containerWidth, queryResponse } =
       getState().explore.panes[exploreId]!;
+    const { correlations$, defaultCorrelationEditorDatasource, scopedVars, showCorrelationEditorLinks } = await getCorrelationsData(getState(), exploreId);
 
-    const isCorrelationEditorMode = getState().explore.correlationEditorDetails?.editorMode || false;
-    const isLeftPane = Object.keys(getState().explore.panes)[0] === exploreId;
-    const showCorrelationEditorLinks = isCorrelationEditorMode && isLeftPane;
-    const defaultCorrelationEditorDatasource = showCorrelationEditorLinks ? await getDataSourceSrv().get() : undefined;
-    const interpolateCorrelationHelperVars =
-      isCorrelationEditorMode && !isLeftPane && correlationEditorHelperData !== undefined;
     let newQuerySource: Observable<ExplorePanelData>;
 
     // Filter queries by those explicitly requested by refId
     const logQueries = queryResponse.logsResult?.queries || [];
-    const queries = logQueries.map((query) => ({
+    const queries = logQueries.map((query: DataQuery) => ({
       ...query,
       datasource: query.datasource || datasourceInstance?.getRef(),
     }));
@@ -754,13 +755,6 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
       // maxDataPoints: mode === ExploreMode.Logs && datasourceId === 'loki' ? undefined : containerWidth,
       maxDataPoints: containerWidth,
     };
-
-    let scopedVars: ScopedVars = {};
-    if (interpolateCorrelationHelperVars && correlationEditorHelperData !== undefined) {
-      Object.entries(correlationEditorHelperData?.vars).forEach((variable) => {
-        scopedVars[variable[0]] = { value: variable[1] };
-      });
-    }
 
     const timeZone = getTimeZone(getState().user);
     const range = getTimeRange(
