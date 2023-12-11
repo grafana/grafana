@@ -299,7 +299,7 @@ export function getLineFilterRenderer(operation: string, caseInsensitive?: boole
     const params =
       model.params?.map((param) => {
         if (typeof param === 'string' && param.includes('`')) {
-          return `${param.replaceAll('`', '')}`;
+          return param.replaceAll('`', '');
         }
         return param;
       }) ?? [];
