@@ -50,17 +50,16 @@ func (r *Role) IsBasic() bool {
 	return strings.HasPrefix(r.Name, BasicRolePrefix) || strings.HasPrefix(r.UID, BasicRoleUIDPrefix)
 }
 
-type RoleStatic struct {
-	Role
-	Global bool `json:"global" xorm:"-"`
-}
-
 func (r Role) MarshalJSON() ([]byte, error) {
-	static := RoleStatic{
-		Role:   r,
+	type Alias Role
+
+	return json.Marshal(&struct {
+		Alias
+		Global bool `json:"global" xorm:"-"`
+	}{
+		Alias:  (Alias)(r),
 		Global: r.Global(),
-	}
-	return json.Marshal(&static)
+	})
 }
 
 // swagger:ignore
@@ -144,11 +143,15 @@ type RoleDTOStatic struct {
 }
 
 func (r RoleDTO) MarshalJSON() ([]byte, error) {
-	static := RoleDTOStatic{
-		RoleDTO: r,
-		Global:  r.Global(),
-	}
-	return json.Marshal(&static)
+	type Alias RoleDTO
+
+	return json.Marshal(&struct {
+		Alias
+		Global bool `json:"global" xorm:"-"`
+	}{
+		Alias:  (Alias)(r),
+		Global: r.Global(),
+	})
 }
 
 type TeamRole struct {
