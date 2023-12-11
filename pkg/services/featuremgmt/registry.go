@@ -903,7 +903,7 @@ var (
 			Description:  "Enables anonymous stats to be shown in the UI for Grafana",
 			FrontendOnly: true,
 			Owner:        grafanaAuthnzSquad,
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			Expression:   "true", // enabled by default
 		},
 	}

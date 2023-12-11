@@ -127,4 +127,4 @@ cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-e
 panelTitleSearchInV1,experimental,@grafana/backend-platform,true,false,false,false
 pluginsInstrumentationStatusSource,experimental,@grafana/plugins-platform-backend,false,false,false,false
 panelFilterVariable,experimental,@grafana/dashboards-squad,false,false,false,true
-displayAnonymousStats,preview,@grafana/grafana-authnz-team,false,false,false,true
+displayAnonymousStats,GA,@grafana/grafana-authnz-team,false,false,false,true

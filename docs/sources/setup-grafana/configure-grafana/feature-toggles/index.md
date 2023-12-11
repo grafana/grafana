@@ -53,6 +53,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `newBrowseDashboards`                            | New browse/manage dashboards UI                                                                                                                                                                                              | Yes                |
 | `alertingInsights`                               | Show the new alerting insights landing page                                                                                                                                                                                  | Yes                |
 | `cloudWatchWildCardDimensionValues`              | Fetches dimension values from CloudWatch to correctly label wildcard dimensions                                                                                                                                              | Yes                |
+| `displayAnonymousStats`                          | Enables anonymous stats to be shown in the UI for Grafana                                                                                                                                                                    | Yes                |
 
 ## Preview feature toggles
 
@@ -80,7 +81,6 @@ Some features are enabled by default. You can disable these feature by setting t
 | `splitScopes`                    | Support faster dashboard and folder search by splitting permission scopes into parts                                                                                                         |
 | `dashgpt`                        | Enable AI powered features in dashboards                                                                                                                                                     |
 | `reportingRetries`               | Enables rendering retries for the reporting feature                                                                                                                                          |
-| `displayAnonymousStats`          | Enables anonymous stats to be shown in the UI for Grafana                                                                                                                                    |
 
 ## Experimental feature toggles
 
