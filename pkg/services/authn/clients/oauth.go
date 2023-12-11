@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/connectors"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -49,7 +50,7 @@ var (
 	errOAuthEmailNotAllowed      = errutil.Unauthorized("auth.oauth.email.not-allowed", errutil.WithPublicMessage("Required email domain not fulfilled"))
 )
 
-func fromSocialErr(err *social.Error) error {
+func fromSocialErr(err *connectors.SocialError) error {
 	return errutil.Unauthorized("auth.oauth.userinfo.failed", errutil.WithPublicMessage(err.Error())).Errorf("%w", err)
 }
 
@@ -118,7 +119,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 
 	userInfo, err := c.connector.UserInfo(ctx, c.connector.Client(clientCtx, token), token)
 	if err != nil {
-		var sErr *social.Error
+		var sErr *connectors.SocialError
 		if errors.As(err, &sErr) {
 			return nil, fromSocialErr(sErr)
 		}

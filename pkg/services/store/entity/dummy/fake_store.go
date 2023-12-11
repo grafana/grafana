@@ -25,6 +25,14 @@ func (i fakeEntityStore) Write(ctx context.Context, r *entity.WriteEntityRequest
 	return nil, fmt.Errorf("unimplemented")
 }
 
+func (i fakeEntityStore) Create(ctx context.Context, r *entity.CreateEntityRequest) (*entity.CreateEntityResponse, error) {
+	return nil, fmt.Errorf("unimplemented")
+}
+
+func (i fakeEntityStore) Update(ctx context.Context, r *entity.UpdateEntityRequest) (*entity.UpdateEntityResponse, error) {
+	return nil, fmt.Errorf("unimplemented")
+}
+
 func (i fakeEntityStore) Read(ctx context.Context, r *entity.ReadEntityRequest) (*entity.Entity, error) {
 	return nil, fmt.Errorf("unimplemented")
 }
@@ -41,10 +49,14 @@ func (i fakeEntityStore) History(ctx context.Context, r *entity.EntityHistoryReq
 	return nil, fmt.Errorf("unimplemented")
 }
 
-func (i fakeEntityStore) Search(ctx context.Context, r *entity.EntitySearchRequest) (*entity.EntitySearchResponse, error) {
+func (i fakeEntityStore) List(ctx context.Context, r *entity.EntityListRequest) (*entity.EntityListResponse, error) {
 	return nil, fmt.Errorf("unimplemented")
 }
 
 func (i fakeEntityStore) Watch(*entity.EntityWatchRequest, entity.EntityStore_WatchServer) error {
 	return fmt.Errorf("unimplemented")
+}
+
+func (i fakeEntityStore) FindReferences(ctx context.Context, r *entity.ReferenceRequest) (*entity.EntityListResponse, error) {
+	return nil, fmt.Errorf("unimplemented")
 }

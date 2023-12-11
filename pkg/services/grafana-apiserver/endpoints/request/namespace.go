@@ -41,7 +41,7 @@ func GetNamespaceMapper(cfg *setting.Cfg) NamespaceMapper {
 func NamespaceInfoFrom(ctx context.Context, requireOrgID bool) (NamespaceInfo, error) {
 	info, err := ParseNamespace(request.NamespaceValue(ctx))
 	if err == nil && requireOrgID && info.OrgID < 1 {
-		return info, fmt.Errorf("expected valid orgId")
+		return info, fmt.Errorf("expected valid orgId in namespace")
 	}
 	return info, err
 }

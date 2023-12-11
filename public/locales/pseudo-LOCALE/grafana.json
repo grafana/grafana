@@ -773,6 +773,10 @@
       "title": "Ēχpľőřę"
     },
     "frontend": {
+      "subtitle": "Ğäįŉ řęäľ ūşęř mőŉįŧőřįŉģ įŉşįģĥŧş",
+      "title": "Fřőŉŧęŉđ"
+    },
+    "frontend-app": {
       "title": "Fřőŉŧęŉđ"
     },
     "global-orgs": {
@@ -800,6 +804,10 @@
       "title": "Ĩŉčįđęŉŧş"
     },
     "infrastructure": {
+      "subtitle": "Ůŉđęřşŧäŉđ yőūř įŉƒřäşŧřūčŧūřę'ş ĥęäľŧĥ",
+      "title": "Ĩŉƒřäşŧřūčŧūřę"
+    },
+    "integrations": {
       "title": "Ĩŉŧęģřäŧįőŉş"
     },
     "kubernetes": {
@@ -1276,6 +1284,12 @@
       "select-search-input": "Ŧypę ŧő şęäřčĥ (čőūŉŧřy, čįŧy, äþþřęvįäŧįőŉ)"
     }
   },
+  "transformations": {
+    "empty": {
+      "add-transformation-body": "Ŧřäŉşƒőřmäŧįőŉş äľľőŵ đäŧä ŧő þę čĥäŉģęđ įŉ väřįőūş ŵäyş þęƒőřę yőūř vįşūäľįžäŧįőŉ įş şĥőŵŉ.<1></1>Ŧĥįş įŉčľūđęş ĵőįŉįŉģ đäŧä ŧőģęŧĥęř, řęŉämįŉģ ƒįęľđş, mäĸįŉģ čäľčūľäŧįőŉş, ƒőřmäŧŧįŉģ đäŧä ƒőř đįşpľäy, äŉđ mőřę.",
+      "add-transformation-header": "Ŝŧäřŧ ŧřäŉşƒőřmįŉģ đäŧä"
+    }
+  },
   "user-orgs": {
     "current-org-button": "Cūřřęŉŧ",
     "name-column": "Ńämę",
@@ -1290,6 +1304,9 @@
       "name-error": "Ńämę įş řęqūįřęđ",
       "name-label": "Ńämę",
       "username-label": "Ůşęřŉämę"
+    },
+    "tabs": {
+      "general": "Ğęŉęřäľ"
     }
   },
   "user-session": {
