@@ -97,7 +97,7 @@ const getTooltipStyles = (theme: GrafanaTheme2) => ({
     font-style: italic;
     margin-right: ${theme.spacing(0.6)};
   `,
-  container: css`
-    margin-bottom: ${theme.spacing(5)};
-  `,
+  container: css({
+    marginBottom: theme.spacing(5)
+  }),
 });
