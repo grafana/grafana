@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -65,6 +66,12 @@ func (sc *SmtpClient) buildEmail(msg *Message) *gomail.Message {
 	m.SetHeader("From", msg.From)
 	m.SetHeader("To", msg.To...)
 	m.SetHeader("Subject", msg.Subject)
+	// add any allowed custom headers to the email message
+	for h, val := range msg.CustomHeaders {
+		if slices.Contains(sc.cfg.AllowedCustomHeaders, h) {
+			m.SetHeader(h, val)
+		}
+	}
 	sc.setFiles(m, msg)
 	for _, replyTo := range msg.ReplyTo {
 		m.SetAddressHeader("Reply-To", replyTo, "")

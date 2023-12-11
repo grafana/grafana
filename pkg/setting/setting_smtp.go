@@ -1,19 +1,24 @@
 package setting
 
-import "github.com/grafana/grafana/pkg/util"
+import (
+	"strings"
+
+	"github.com/grafana/grafana/pkg/util"
+)
 
 type SmtpSettings struct {
-	Enabled        bool
-	Host           string
-	User           string
-	Password       string
-	CertFile       string
-	KeyFile        string
-	FromAddress    string
-	FromName       string
-	EhloIdentity   string
-	StartTLSPolicy string
-	SkipVerify     bool
+	Enabled              bool
+	Host                 string
+	User                 string
+	Password             string
+	CertFile             string
+	KeyFile              string
+	FromAddress          string
+	FromName             string
+	EhloIdentity         string
+	StartTLSPolicy       string
+	SkipVerify           bool
+	AllowedCustomHeaders []string
 
 	SendWelcomeEmailOnSignUp bool
 	TemplatesPatterns        []string
@@ -33,6 +38,9 @@ func (cfg *Cfg) readSmtpSettings() {
 	cfg.Smtp.EhloIdentity = sec.Key("ehlo_identity").String()
 	cfg.Smtp.StartTLSPolicy = sec.Key("startTLS_policy").String()
 	cfg.Smtp.SkipVerify = sec.Key("skip_verify").MustBool(false)
+
+	customHeaders := sec.Key("custom_headers").MustString("")
+	cfg.Smtp.AllowedCustomHeaders = strings.Split(customHeaders, ",")
 
 	emails := cfg.Raw.Section("emails")
 	cfg.Smtp.SendWelcomeEmailOnSignUp = emails.Key("welcome_email_on_sign_up").MustBool(false)

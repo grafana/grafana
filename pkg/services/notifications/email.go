@@ -22,6 +22,7 @@ type Message struct {
 	ReplyTo       []string
 	EmbeddedFiles []string
 	AttachedFiles []*AttachedFile
+	CustomHeaders map[string]string
 }
 
 func setDefaultTemplateData(cfg *setting.Cfg, data map[string]any, u *user.User) {
