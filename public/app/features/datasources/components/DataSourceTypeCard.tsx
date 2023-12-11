@@ -23,7 +23,7 @@ export function DataSourceTypeCard({ onClick, dataSourcePlugin }: Props) {
       {/* Name */}
       <Card.Heading
         className={styles.heading}
-        data-testid={e2eSelectors.pages.AddDataSource.dataSourcePluginsV2(dataSourcePlugin.name)}
+        aria-label={e2eSelectors.pages.AddDataSource.dataSourcePluginsV2(dataSourcePlugin.name)}
       >
         {dataSourcePlugin.name}
       </Card.Heading>

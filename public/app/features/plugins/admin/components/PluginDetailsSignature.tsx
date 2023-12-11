@@ -26,7 +26,7 @@ export function PluginDetailsSignature({ className, plugin }: Props): React.Reac
     <Alert
       severity="warning"
       title="Invalid plugin signature"
-      data-testid={selectors.pages.PluginPage.signatureInfo}
+      aria-label={selectors.pages.PluginPage.signatureInfo}
       className={className}
     >
       <p>
