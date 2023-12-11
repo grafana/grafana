@@ -161,7 +161,7 @@ describe('filterRules', function () {
       {
         groups: [mockCombinedRuleGroup('Resources usage group', rules)],
       },
-      'loki-ds'
+      'loki'
     );
 
     const filtered = filterRules([ns, cloudNs], getFilter({ dataSourceName: 'loki' }));
