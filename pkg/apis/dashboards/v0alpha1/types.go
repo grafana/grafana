@@ -2,12 +2,26 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/grafana/grafana/pkg/apis"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
+const (
+	GROUP      = "dashboards.grafana.app"
+	VERSION    = "v0alpha1"
+	APIVERSION = GROUP + "/" + VERSION
+)
+
+var DashboardResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
+	"dashboards", "dashboard", "Dashboard",
+	func() runtime.Object { return &Dashboard{} },
+	func() runtime.Object { return &DashboardList{} },
+)
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type DashboardResource struct {
+type Dashboard struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object's metadata
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
@@ -22,28 +36,12 @@ type DashboardResource struct {
 type DashboardBody = *simplejson.Json
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type DashboardInfoList struct {
+type DashboardList struct {
 	metav1.TypeMeta `json:",inline"`
 	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []DashboardInfo `json:"items,omitempty"`
-}
-
-// Limited to what exists from the main SQL table
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type DashboardInfo struct {
-	metav1.TypeMeta `json:",inline"`
-	// Standard object's metadata
-	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-	// +optional
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	// Inline spec values
-	Title string `json:"title"`
-
-	// Tags
-	Tags []string `json:"tags,omitempty"`
+	Items []Dashboard `json:"items,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -65,7 +63,6 @@ type DashboardVersionInfo struct {
 
 // +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
 type VersionsQueryOptions struct {
 	metav1.TypeMeta `json:",inline"`
 

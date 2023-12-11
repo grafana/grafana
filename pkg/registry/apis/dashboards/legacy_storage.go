@@ -35,7 +35,7 @@ type legacyStorage struct {
 }
 
 func (s *legacyStorage) New() runtime.Object {
-	return &dashboards.DashboardResource{}
+	return resourceInfo.NewFunc()
 }
 
 func (s *legacyStorage) Destroy() {}
@@ -45,11 +45,11 @@ func (s *legacyStorage) NamespaceScoped() bool {
 }
 
 func (s *legacyStorage) GetSingularName() string {
-	return "dashboard"
+	return resourceInfo.GetSingularName()
 }
 
 func (s *legacyStorage) NewList() runtime.Object {
-	return &dashboards.DashboardInfoList{}
+	return resourceInfo.NewListFunc()
 }
 
 func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
@@ -79,14 +79,14 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
-	list := &dashboards.DashboardInfoList{}
+	list := &dashboards.DashboardList{}
 	for _, v := range res {
-		info := dashboards.DashboardInfo{
+		info := dashboards.Dashboard{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: v.UID,
 			},
-			Title: v.Title,
-			Tags:  v.Tags,
+			// Title: v.Title,
+			// Tags:  v.Tags,
 		}
 		list.Items = append(list.Items, info)
 	}

@@ -14,7 +14,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 
-	dashboards "github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	dashboardssvc "github.com/grafana/grafana/pkg/services/dashboards"
@@ -27,11 +27,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// GroupName is the group name for this API.
-const GroupName = "dashboards.grafana.app"
-const VersionID = "v0alpha1"
-
 var _ grafanaapiserver.APIGroupBuilder = (*DashboardsAPIBuilder)(nil)
+
+var resourceInfo = v0alpha1.DashboardResourceInfo
 
 // This is used just so wire has something unique to return
 type DashboardsAPIBuilder struct {
@@ -62,7 +60,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		dashboardVersionService: dashboardVersionService,
 		accessControl:           accessControl,
 		namespacer:              request.GetNamespaceMapper(cfg),
-		gv:                      schema.GroupVersion{Group: GroupName, Version: VersionID},
+		gv:                      resourceInfo.GroupVersion(),
 		log:                     log.New("grafana-apiserver.dashbaords"),
 	}
 	apiregistration.RegisterAPI(builder)
@@ -73,30 +71,26 @@ func (b *DashboardsAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return b.gv
 }
 
-func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	scheme.AddKnownTypes(b.gv,
-		&dashboards.DashboardResource{},
-		&dashboards.DashboardInfo{},
-		&dashboards.DashboardInfoList{},
-		&dashboards.DashboardAccessInfo{},
-		&dashboards.DashboardVersionsInfo{},
-		&dashboards.VersionsQueryOptions{},
+func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
+	scheme.AddKnownTypes(gv,
+		&v0alpha1.Dashboard{},
+		&v0alpha1.DashboardList{},
+		&v0alpha1.DashboardAccessInfo{},
+		&v0alpha1.DashboardVersionsInfo{},
+		&v0alpha1.VersionsQueryOptions{},
 	)
+}
+
+func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+	addKnownTypes(scheme, b.gv)
 
 	// Link this version to the internal representation.
 	// This is used for server-side-apply (PATCH), and avoids the error:
 	//   "no kind is registered for the type"
-	scheme.AddKnownTypes(schema.GroupVersion{
+	addKnownTypes(scheme, schema.GroupVersion{
 		Group:   b.gv.Group,
 		Version: runtime.APIVersionInternal,
-	},
-		&dashboards.DashboardResource{},
-		&dashboards.DashboardInfo{},
-		&dashboards.DashboardInfoList{},
-		&dashboards.DashboardAccessInfo{},
-		&dashboards.DashboardVersionsInfo{},
-		&dashboards.VersionsQueryOptions{},
-	)
+	})
 
 	// If multiple versions exist, then register conversions from zz_generated.conversion.go
 	// if err := playlist.RegisterConversions(scheme); err != nil {
@@ -111,15 +105,15 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
 ) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(GroupName, scheme, metav1.ParameterCodec, codecs)
+	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP, scheme, metav1.ParameterCodec, codecs)
 
 	strategy := grafanaregistry.NewStrategy(scheme)
 	store := &genericregistry.Store{
-		NewFunc:                   func() runtime.Object { return &dashboards.DashboardResource{} },
-		NewListFunc:               func() runtime.Object { return &dashboards.DashboardInfoList{} },
+		NewFunc:                   resourceInfo.NewFunc,
+		NewListFunc:               resourceInfo.NewListFunc,
 		PredicateFunc:             grafanaregistry.Matcher,
-		DefaultQualifiedResource:  b.gv.WithResource("dashboards").GroupResource(),
-		SingularQualifiedResource: b.gv.WithResource("dashboard").GroupResource(),
+		DefaultQualifiedResource:  resourceInfo.GroupResource(),
+		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
 		CreateStrategy:            strategy,
 		UpdateStrategy:            strategy,
 		DeleteStrategy:            strategy,
@@ -132,19 +126,11 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 			{Name: "Created At", Type: "date"},
 		},
 		func(obj any) ([]interface{}, error) {
-			r, ok := obj.(*dashboards.DashboardResource)
+			r, ok := obj.(*v0alpha1.Dashboard)
 			if ok {
 				return []interface{}{
 					r.Name,
 					r.Spec.Get("title").MustString(),
-					r.CreationTimestamp.UTC().Format(time.RFC3339),
-				}, nil
-			}
-			i, ok := obj.(*dashboards.DashboardInfo)
-			if ok {
-				return []interface{}{
-					i.Name,
-					i.Title,
 					r.CreationTimestamp.UTC().Format(time.RFC3339),
 				}, nil
 			}
@@ -163,20 +149,20 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	}
 
 	storage := map[string]rest.Storage{}
-	storage["dashboards"] = legacyStore
-	storage["dashboards/access"] = &AccessREST{
+	storage[resourceInfo.StoragePath()] = legacyStore
+	storage[resourceInfo.StoragePath("access")] = &AccessREST{
 		builder: b,
 	}
-	storage["dashboards/versions"] = &VersionsREST{
+	storage[resourceInfo.StoragePath("versions")] = &VersionsREST{
 		builder: b,
 	}
 
-	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
 	return &apiGroupInfo, nil
 }
 
 func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return dashboards.GetOpenAPIDefinitions
+	return v0alpha1.GetOpenAPIDefinitions
 }
 
 func (b *DashboardsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {

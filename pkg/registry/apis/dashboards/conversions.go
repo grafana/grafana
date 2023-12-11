@@ -6,7 +6,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	dashboards "github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
 	"github.com/grafana/grafana/pkg/kinds"
 	dashboardssvc "github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
@@ -15,8 +15,8 @@ import (
 
 func convertToK8sResource(v *dashboardssvc.Dashboard,
 	provisioningData *dashboardssvc.DashboardProvisioning,
-	namespacer request.NamespaceMapper) *dashboards.DashboardResource {
-	dash := &dashboards.DashboardResource{
+	namespacer request.NamespaceMapper) *v0alpha1.Dashboard {
+	dash := &v0alpha1.Dashboard{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              v.UID,
 			ResourceVersion:   fmt.Sprintf("%d", v.Updated.UnixMilli()),
