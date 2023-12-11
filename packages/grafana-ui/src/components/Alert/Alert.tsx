@@ -89,6 +89,14 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
             <Text weight="medium">{title}</Text>
             {children && <div className={styles.content}>{children}</div>}
           </Box>
+          {/* @Percona */}
+          {customButtonContent && (
+            <Box display="flex" alignItems="center">
+              <Button aria-label="Custom button" variant="primary" onClick={onCustomButtonClick} type="button">
+                {customButtonContent}
+              </Button>
+            </Box>
+          )}
           {/* If onRemove is specified, giving preference to onRemove */}
           {onRemove && !buttonContent && (
             <div className={styles.close}>
@@ -101,15 +109,6 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
                 variant="secondary"
               />
             </div>
-          )}
-          {/* @Percona */}
-          {/* @PERCONA TODO check if it's correct */}
-          {customButtonContent && (
-            <Box marginLeft={1} display="flex" alignItems="center">
-              <Button aria-label="Custom button" variant="primary" onClick={onCustomButtonClick} type="button">
-                {customButtonContent}
-              </Button>
-            </Box>
           )}
           {onRemove && buttonContent && (
             <Box marginLeft={1} display="flex" alignItems="center">
@@ -180,7 +179,6 @@ const getStyles = (
       color: theme.colors.text.secondary,
       background: 'none',
       display: 'flex',
-      top: '-6px',
       right: '-14px',
       // @PERCONA
       alignItems: 'center',
