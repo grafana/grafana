@@ -181,10 +181,14 @@ describe('LokiDatasource', () => {
 
     it('should ignore log lines for metric query', async () => {
       const query = getQueryOptions<LokiQuery>({
-        targets: [{ expr: 'rate({bar="baz", job="foo"} |= "bar" [5m])', refId: 'A', maxLines: 0 }],
+        targets: [{ expr: 'rate({bar="baz", job="foo"} |= "bar" [5m])', refId: 'A', maxLines: 0, step: '1m' }],
         app: CoreApp.Dashboard,
       });
-      await runTest(undefined, '40', undefined, undefined, query);
+      const { response, spy } = await runTest(100, '40', undefined, undefined, query);
+      await expect(response).toEmitValuesWith(() => {
+        expect(spy.mock.calls[0][0].maxLines).toBe(undefined);
+        expect(spy.mock.calls[0][0].step).toBe('1m');
+      });
     });
 
     it('should ignore step for logs query', async () => {
