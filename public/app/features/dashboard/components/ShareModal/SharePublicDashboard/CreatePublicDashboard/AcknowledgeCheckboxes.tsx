@@ -40,7 +40,8 @@ const ACKNOWLEDGES: Acknowledge[] = [
   },
   {
     type: 'usageAcknowledgment',
-    description: 'Making a dashboard public will cause queries to run each time is viewed, which may increase costs*',
+    description:
+      'Making a dashboard public will cause queries to run each time it is viewed, which may increase costs*',
     testId: selectors.CostIncreaseCheckbox,
     info: {
       href: 'https://grafana.com/docs/grafana/latest/enterprise/query-caching/',

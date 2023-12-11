@@ -1113,7 +1113,7 @@ func TestProvisioningApi(t *testing.T) {
 				rc := createTestRequestCtx()
 
 				rc.Context.Req.Header.Add("Accept", "application/json")
-				expectedResponse := `{"apiVersion":1,"policies":[{"orgId":1,"Policy":{"receiver":"default-receiver","group_by":["g1","g2"],"routes":[{"receiver":"nested-receiver","group_by":["g3","g4"],"matchers":["a=\"b\""],"object_matchers":[["foo","=","bar"]],"mute_time_intervals":["interval"],"continue":true,"group_wait":"5m","group_interval":"5m","repeat_interval":"5m"}],"group_wait":"30s","group_interval":"5m","repeat_interval":"1h"}}]}`
+				expectedResponse := `{"apiVersion":1,"policies":[{"orgId":1,"receiver":"default-receiver","group_by":["g1","g2"],"routes":[{"receiver":"nested-receiver","group_by":["g3","g4"],"matchers":["a=\"b\""],"object_matchers":[["foo","=","bar"]],"mute_time_intervals":["interval"],"continue":true,"group_wait":"5m","group_interval":"5m","repeat_interval":"5m"}],"group_wait":"30s","group_interval":"5m","repeat_interval":"1h"}]}`
 
 				response := sut.RouteGetPolicyTreeExport(&rc)
 

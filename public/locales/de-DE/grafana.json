@@ -81,9 +81,7 @@
     "manage-folder-nav": {
       "alert-rules": "Warnregeln",
       "dashboards": "Dashboards",
-      "panels": "Fenster",
-      "permissions": "Berechtigungen",
-      "settings": "Einstellungen"
+      "panels": "Fenster"
     },
     "new-folder-form": {
       "cancel-label": "Abbrechen",
@@ -775,6 +773,10 @@
       "title": "Entdecken"
     },
     "frontend": {
+      "subtitle": "",
+      "title": ""
+    },
+    "frontend-app": {
       "title": "Frontend"
     },
     "global-orgs": {
@@ -802,6 +804,10 @@
       "title": "Störungen"
     },
     "infrastructure": {
+      "subtitle": "",
+      "title": ""
+    },
+    "integrations": {
       "title": "Integrationen"
     },
     "kubernetes": {
@@ -937,7 +943,8 @@
     },
     "megamenu": {
       "close": "Menü schließen",
-      "dock": "Menü andocken"
+      "dock": "Menü andocken",
+      "undock": ""
     },
     "toolbar": {
       "close-menu": "Menü schließen",
@@ -1085,15 +1092,6 @@
       "new-dashboard": "Neues Dashboard",
       "new-folder": "Neuer Ordner"
     },
-    "folder-view": {
-      "go-to-folder": "Zum Ordner",
-      "select-folder": "Ordner auswählen"
-    },
-    "result-kind": {
-      "dashboard": "Dashboard",
-      "folder": "Ordner",
-      "panel": "Panel"
-    },
     "results-table": {
       "datasource-header": "Datenquelle",
       "location-header": "Standort",
@@ -1106,12 +1104,6 @@
     "search-input": {
       "include-panels-placeholder": "Nach Dashboards und Panels suchen",
       "placeholder": "Nach Dashboards suchen"
-    }
-  },
-  "search-view": {
-    "no-results": {
-      "clear": "Suche und Filter löschen",
-      "text": "Keine Ergebnisse für Ihre Abfrage gefunden."
     }
   },
   "share-modal": {
@@ -1249,6 +1241,7 @@
     "calendar": {
       "apply-button": "Zeitbereich anwenden",
       "cancel-button": "Abbrechen",
+      "close": "",
       "select-time": "Einen Zeitbereich auswählen"
     },
     "content": {
@@ -1268,6 +1261,7 @@
       "default-error": "Ein vergangenes Datum oder \"heutiges\" eingeben",
       "fiscal-year": "Geschäftsjahr",
       "from-input": "Von",
+      "open-input-calendar": "",
       "range-error": "„Von“ darf nicht nach „Bis“ sein",
       "to-input": "Bis"
     },
@@ -1290,6 +1284,12 @@
       "select-search-input": "Suchbegriff eingeben (Land, Stadt, Abkürzung)"
     }
   },
+  "transformations": {
+    "empty": {
+      "add-transformation-body": "",
+      "add-transformation-header": ""
+    }
+  },
   "user-orgs": {
     "current-org-button": "Aktuell",
     "name-column": "Name",
@@ -1304,6 +1304,9 @@
       "name-error": "Name ist erforderlich",
       "name-label": "Name",
       "username-label": "Benutzername"
+    },
+    "tabs": {
+      "general": ""
     }
   },
   "user-session": {

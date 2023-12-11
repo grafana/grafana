@@ -13,12 +13,12 @@ import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, viewPanelKey, overlay, editview } = model.useState();
+  const { controls, overlay, editview } = model.useState();
   const styles = useStyles2(getStyles);
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
   const pageNav = model.getPageNav(location, navIndex);
-  const bodyToRender = model.getBodyToRender(viewPanelKey);
+  const bodyToRender = model.getBodyToRender();
   const navModel = getNavModel(navIndex, 'dashboards/browse');
 
   if (editview) {
@@ -75,7 +75,7 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'sticky',
       top: 0,
       background: theme.colors.background.canvas,
-      zIndex: 1,
+      zIndex: theme.zIndex.navbarFixed,
       padding: theme.spacing(2, 0),
     }),
   };

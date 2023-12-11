@@ -3,33 +3,44 @@ package remote
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 )
 
 type RemoteSecondaryForkedAlertmanager struct {
+	log log.Logger
+
 	internal notifier.Alertmanager
 	remote   notifier.Alertmanager
 }
 
-func NewRemoteSecondaryForkedAlertmanager(internal, remote notifier.Alertmanager) *RemoteSecondaryForkedAlertmanager {
+func NewRemoteSecondaryForkedAlertmanager(l log.Logger, internal, remote notifier.Alertmanager) *RemoteSecondaryForkedAlertmanager {
 	return &RemoteSecondaryForkedAlertmanager{
+		log:      l,
 		internal: internal,
 		remote:   remote,
 	}
 }
 
+// ApplyConfig will only log errors for the remote Alertmanager and ensure we delegate the call to the internal Alertmanager.
+// We don't care about errors in the remote Alertmanager in remote secondary mode.
 func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
-	return nil
+	if err := fam.remote.ApplyConfig(ctx, config); err != nil {
+		fam.log.Error("Error applying config to the remote Alertmanager", "err", err)
+	}
+	return fam.internal.ApplyConfig(ctx, config)
 }
 
+// SaveAndApplyConfig is only called on the internal Alertmanager when running in remote secondary mode.
 func (fam *RemoteSecondaryForkedAlertmanager) SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
-	return nil
+	return fam.internal.SaveAndApplyConfig(ctx, config)
 }
 
+// SaveAndApplyDefaultConfig is only called on the internal Alertmanager when running in remote secondary mode.
 func (fam *RemoteSecondaryForkedAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
-	return nil
+	return fam.internal.SaveAndApplyDefaultConfig(ctx)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) GetStatus() apimodels.GettableStatus {

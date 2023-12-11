@@ -535,7 +535,7 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 					GrafanaVersion: "*",
 					Plugins:        []plugins.Dependency{},
 				},
-				ExternalServiceRegistration: &plugindef.ExternalServiceRegistration{
+				IAM: &plugindef.IAM{
 					Impersonation: &plugindef.Impersonation{
 						Groups: boolPtr(true),
 						Permissions: []plugindef.Permission{
@@ -636,7 +636,7 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 					GrafanaVersion: "*",
 					Plugins:        []plugins.Dependency{},
 				},
-				ExternalServiceRegistration: &plugindef.ExternalServiceRegistration{
+				IAM: &plugindef.IAM{
 					Permissions: []plugindef.Permission{
 						{
 							Action: "read",

@@ -362,10 +362,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   }
 
   runAllPanelQueries({ dashboardUID, dashboardTimezone, timeData, width }: RunPanelQueryOptions) {
-    if (this.type === 'row') {
-      return;
-    }
-
     this.getQueryRunner().run({
       datasource: this.datasource,
       queries: this.targets,
@@ -698,7 +694,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   }
 }
 
-function getPluginVersion(plugin: PanelPlugin): string {
+export function getPluginVersion(plugin: PanelPlugin): string {
   return plugin && plugin.meta.info.version ? plugin.meta.info.version : config.buildInfo.version;
 }
 
