@@ -772,27 +772,28 @@ func TestService_GetConfigMap_appURL(t *testing.T) {
 }
 
 func TestService_GetConfigMap_azure(t *testing.T) {
-	t.Run("Uses the azure settings", func(t *testing.T) {
+	azSettings := &azsettings.AzureSettings{
+		Cloud:                   azsettings.AzurePublic,
+		ManagedIdentityEnabled:  true,
+		ManagedIdentityClientId: "mock_managed_identity_client_id",
+		WorkloadIdentityEnabled: true,
+		WorkloadIdentitySettings: &azsettings.WorkloadIdentitySettings{
+			TenantId:  "mock_workload_identity_tenant_id",
+			ClientId:  "mock_workload_identity_client_id",
+			TokenFile: "mock_workload_identity_token_file",
+		},
+		UserIdentityEnabled: true,
+		UserIdentityTokenEndpoint: &azsettings.TokenEndpointSettings{
+			TokenUrl:          "mock_user_identity_token_url",
+			ClientId:          "mock_user_identity_client_id",
+			ClientSecret:      "mock_user_identity_client_secret",
+			UsernameAssertion: true,
+		},
+	}
+	t.Run("Uses the azure settings for an Azure plugin", func(t *testing.T) {
 		s := &Service{
 			cfg: &config.Cfg{
-				Azure: &azsettings.AzureSettings{
-					Cloud:                   azsettings.AzurePublic,
-					ManagedIdentityEnabled:  true,
-					ManagedIdentityClientId: "mock_managed_identity_client_id",
-					WorkloadIdentityEnabled: true,
-					WorkloadIdentitySettings: &azsettings.WorkloadIdentitySettings{
-						TenantId:  "mock_workload_identity_tenant_id",
-						ClientId:  "mock_workload_identity_client_id",
-						TokenFile: "mock_workload_identity_token_file",
-					},
-					UserIdentityEnabled: true,
-					UserIdentityTokenEndpoint: &azsettings.TokenEndpointSettings{
-						TokenUrl:          "mock_user_identity_token_url",
-						ClientId:          "mock_user_identity_client_id",
-						ClientSecret:      "mock_user_identity_client_secret",
-						UsernameAssertion: true,
-					},
-				},
+				Azure: azSettings,
 			},
 		}
 		require.Equal(t, map[string]string{
@@ -807,6 +808,15 @@ func TestService_GetConfigMap_azure(t *testing.T) {
 			"GFAZPL_USER_IDENTITY_CLIENT_ID":      "mock_user_identity_client_id",
 			"GFAZPL_USER_IDENTITY_CLIENT_SECRET":  "mock_user_identity_client_secret",
 			"GFAZPL_USER_IDENTITY_ASSERTION":      "username",
-		}, s.GetConfigMap(context.Background(), "", nil))
+		}, s.GetConfigMap(context.Background(), "grafana-azure-monitor-datasource", nil))
+	})
+
+	t.Run("Does not use the azure settings for a non-Azure plugin", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{
+				Azure: azSettings,
+			},
+		}
+		require.Equal(t, map[string]string{}, s.GetConfigMap(context.Background(), "", nil))
 	})
 }

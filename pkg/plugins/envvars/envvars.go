@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -98,7 +99,7 @@ func (s *Service) Get(ctx context.Context, p *plugins.Plugin) []string {
 }
 
 // GetConfigMap returns a map of configuration that should be passed in a plugin request.
-func (s *Service) GetConfigMap(ctx context.Context, _ string, _ *auth.ExternalService) map[string]string {
+func (s *Service) GetConfigMap(ctx context.Context, pluginID string, _ *auth.ExternalService) map[string]string {
 	m := make(map[string]string)
 
 	if s.cfg.GrafanaAppURL != "" {
@@ -146,7 +147,8 @@ func (s *Service) GetConfigMap(ctx context.Context, _ string, _ *auth.ExternalSe
 
 	// Changes here need to be reflected in https://github.com/grafana/grafana-plugin-sdk-go/tree/main/backend/config.go#L152
 	azureSettings := s.cfg.Azure
-	if azureSettings != nil {
+	azureDatasources := []string{"grafana-azure-monitor-datasource", "prometheus", "grafana-azure-data-explorer-datasource"}
+	if azureSettings != nil && slices.Contains[[]string, string](azureDatasources, pluginID) {
 		if azureSettings.Cloud != "" {
 			m[azsettings.AzureCloud] = azureSettings.Cloud
 		}
