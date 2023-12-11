@@ -1,14 +1,15 @@
 package grafanaapiserver
 
 import (
-	"golang.org/x/exp/maps"
+	"maps"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	common "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 )
 
 // This should eventually live in grafana-app-sdk
-func getOpenAPIDefinitions(builders []APIGroupBuilder) common.GetOpenAPIDefinitions {
+func GetOpenAPIDefinitions(builders []APIGroupBuilder) common.GetOpenAPIDefinitions {
 	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 		defs := getStandardOpenAPIDefinitions(ref)
 		for _, builder := range builders {

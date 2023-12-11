@@ -43,7 +43,7 @@ Before Grafana v8.2, the configuration of the embedded Alertmanager was shared a
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Notification policies**.
 1. From the **Choose Alertmanager** dropdown, select an external Alertmanager. By default, the **Grafana Alertmanager** is selected.
-1. In the Root policy section, click **Edit**.
+1. In the Default policy section, click **...** -> **Edit**.
 1. In **Default contact point**, update the contact point to whom notifications should be sent for rules when alert rules do not match any specific policy.
 1. In **Group by**, choose labels to group alerts by. If multiple alerts are matched for this policy, then they are grouped by these labels. A notification is sent per group. If the field is empty (default), then all notifications are sent in a single group. Use a special label `...` to group alerts by all labels (which effectively disables grouping).
 1. In **Timing options**, select from the following options:
@@ -75,13 +75,13 @@ To create a new notification policy, you need to follow its tree structure. New 
 1. Click **+ Add nested policy**, then add the details using information in [Add new specific policy](#add-new-nested-policy).
 1. Click **Save policy** to save your changes.
 
-## Edit specific policy
+## Edit notification policies
 
 1. In the left-side menu, click **Alerts & IRM**, and then **Alerting**.
 1. Click **Notification policies**.
-1. Find the policy you want to edit, then click **Edit**.
+1. Find the policy you want to edit, then click **...** -> **Edit**.
 1. Make any changes using instructions in [Add new specific policy](#add-new-nested-policy).
-1. Click **Save policy**.
+1. Save your changes.
 
 ## Searching for policies
 

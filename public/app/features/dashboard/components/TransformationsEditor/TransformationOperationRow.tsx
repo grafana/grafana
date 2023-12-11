@@ -4,7 +4,6 @@ import { useToggle } from 'react-use';
 import { DataFrame, DataTransformerConfig, TransformerRegistryItem, FrameMatcherID } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
-import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
   QueryOperationAction,
   QueryOperationToggleAction,
@@ -14,6 +13,7 @@ import config from 'app/core/config';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
 import { TransformationEditor } from './TransformationEditor';
+import { TransformationEditorHelperModal } from './TransformationEditorHelperModal';
 import { TransformationFilter } from './TransformationFilter';
 import { TransformationsEditorTransformation } from './types';
 
@@ -53,16 +53,6 @@ export const TransformationOperationRow = ({
     },
     [onChange, configs]
   );
-
-  const toggleExpand = useCallback(() => {
-    if (showHelp) {
-      return true;
-    }
-
-    // We return `undefined` here since the QueryOperationRow component ignores an `undefined` value for the `isOpen` prop.
-    // If we returned `false` here, the row would be collapsed when the user toggles off `showHelp`, which is not what we want.
-    return undefined;
-  }, [showHelp]);
 
   // Adds or removes the frame filter
   const toggleFilter = useCallback(() => {
@@ -106,8 +96,8 @@ export const TransformationOperationRow = ({
           title="Show transform help"
           icon="info-circle"
           // `instrumentToggleCallback` expects a function that takes a MouseEvent, is unused in the state setter. Instead, we simply toggle the state.
-          onClick={instrumentToggleCallback((_e) => toggleShowHelp(!showHelp), 'help', showHelp)}
-          active={!!showHelp}
+          onClick={instrumentToggleCallback(toggleShowHelp, 'help', showHelp)}
+          active={showHelp}
         />
         {showFilter && (
           <QueryOperationToggleAction
@@ -153,46 +143,33 @@ export const TransformationOperationRow = ({
   };
 
   return (
-    <QueryOperationRow
-      id={id}
-      index={index}
-      title={`${index + 1} - ${uiConfig.name}`}
-      draggable
-      actions={renderActions}
-      disabled={disabled}
-      isOpen={toggleExpand()}
-      // Assure that showHelp is untoggled when the row becomes collapsed.
-      onClose={() => toggleShowHelp(false)}
-      expanderMessages={{
-        close: 'Collapse transformation row',
-        open: 'Expand transformation row',
-      }}
-    >
-      {showHelp && <OperationRowHelp markdown={prepMarkdown(uiConfig)} />}
-      {filter && (
-        <TransformationFilter index={index} config={configs[index].transformation} data={data} onChange={onChange} />
-      )}
-      <TransformationEditor
-        debugMode={showDebug}
+    <>
+      <QueryOperationRow
+        id={id}
         index={index}
-        data={data}
-        configs={configs}
-        uiConfig={uiConfig}
-        onChange={onChange}
-        toggleShowDebug={toggleShowDebug}
-      />
-    </QueryOperationRow>
+        title={`${index + 1} - ${uiConfig.name}`}
+        draggable
+        actions={renderActions}
+        disabled={disabled}
+        expanderMessages={{
+          close: 'Collapse transformation row',
+          open: 'Expand transformation row',
+        }}
+      >
+        {filter && (
+          <TransformationFilter index={index} config={configs[index].transformation} data={data} onChange={onChange} />
+        )}
+        <TransformationEditor
+          debugMode={showDebug}
+          index={index}
+          data={data}
+          configs={configs}
+          uiConfig={uiConfig}
+          onChange={onChange}
+          toggleShowDebug={toggleShowDebug}
+        />
+      </QueryOperationRow>
+      <TransformationEditorHelperModal transformer={uiConfig} isOpen={showHelp} onCloseClick={toggleShowHelp} />
+    </>
   );
 };
-
-function prepMarkdown(uiConfig: TransformerRegistryItem<null>) {
-  let helpMarkdown = uiConfig.help ?? uiConfig.description;
-
-  return `
-${helpMarkdown}
-
-Go the <a href="https://grafana.com/docs/grafana/latest/panels/transformations/?utm_source=grafana" target="_blank" rel="noreferrer">
-transformation documentation
-</a> for more.
-`;
-}

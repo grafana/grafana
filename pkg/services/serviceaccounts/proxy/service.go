@@ -4,12 +4,16 @@ import (
 	"context"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts/api"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/extsvcaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // ServiceAccountsProxy is a proxy for the serviceaccounts.Service interface
@@ -23,14 +27,23 @@ type ServiceAccountsProxy struct {
 }
 
 func ProvideServiceAccountsProxy(
+	cfg *setting.Cfg,
+	ac accesscontrol.AccessControl,
+	accesscontrolService accesscontrol.Service,
 	features *featuremgmt.FeatureManager,
+	permissionService accesscontrol.ServiceAccountPermissionsService,
 	proxiedService *manager.ServiceAccountsService,
+	routeRegister routing.RouteRegister,
 ) (*ServiceAccountsProxy, error) {
 	s := &ServiceAccountsProxy{
 		log:            log.New("serviceaccounts.proxy"),
 		proxiedService: proxiedService,
-		isProxyEnabled: features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) || features.IsEnabled(featuremgmt.FlagExternalServiceAuth),
+		isProxyEnabled: features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts) || features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAuth),
 	}
+
+	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, accesscontrolService, routeRegister, permissionService, features)
+	serviceaccountsAPI.RegisterAPIEndpoints()
+
 	return s, nil
 }
 
@@ -126,6 +139,7 @@ func (s *ServiceAccountsProxy) RetrieveServiceAccount(ctx context.Context, orgID
 
 	if s.isProxyEnabled {
 		sa.IsExternal = isExternalServiceAccount(sa.Login)
+		sa.RequiredBy = strings.ReplaceAll(sa.Name, serviceaccounts.ExtSvcPrefix, "")
 	}
 
 	return sa, nil

@@ -1,15 +1,8 @@
-import { FolderDTO, FolderState, OrgRole, PermissionLevel } from 'app/types';
+import { FolderDTO, FolderState } from 'app/types';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 
-import {
-  folderReducer,
-  initialState,
-  loadFolder,
-  loadFolderPermissions,
-  setCanViewFolderPermissions,
-  setFolderTitle,
-} from './reducers';
+import { folderReducer, initialState, loadFolder, setFolderTitle } from './reducers';
 
 function getTestFolder(): FolderDTO {
   return {
@@ -69,104 +62,6 @@ describe('folder reducer', () => {
             title: '',
           });
       });
-    });
-  });
-
-  describe('when loadFolderPermissions is dispatched', () => {
-    it('then state should be correct', () => {
-      reducerTester<FolderState>()
-        .givenReducer(folderReducer, { ...initialState })
-        .whenActionIsDispatched(
-          loadFolderPermissions([
-            { id: 2, dashboardId: 1, role: OrgRole.Viewer, permission: PermissionLevel.View },
-            { id: 3, dashboardId: 1, role: OrgRole.Editor, permission: PermissionLevel.Edit },
-            {
-              id: 4,
-              dashboardId: 10,
-              permission: PermissionLevel.View,
-              teamId: 1,
-              team: 'MyTestTeam',
-              inherited: true,
-            },
-            {
-              id: 5,
-              dashboardId: 1,
-              permission: PermissionLevel.View,
-              userId: 1,
-              userLogin: 'MyTestUser',
-            },
-            {
-              id: 6,
-              dashboardId: 1,
-              permission: PermissionLevel.Edit,
-              teamId: 2,
-              team: 'MyTestTeam2',
-            },
-          ])
-        )
-        .thenStateShouldEqual({
-          ...initialState,
-          permissions: [
-            {
-              dashboardId: 10,
-              id: 4,
-              inherited: true,
-              name: 'MyTestTeam',
-              permission: 1,
-              sortRank: 120,
-              team: 'MyTestTeam',
-              teamId: 1,
-            },
-            {
-              dashboardId: 1,
-              icon: 'fa fa-fw fa-street-view',
-              id: 3,
-              name: 'Editor',
-              permission: 2,
-              role: OrgRole.Editor,
-              sortRank: 31,
-            },
-            {
-              dashboardId: 1,
-              icon: 'fa fa-fw fa-street-view',
-              id: 2,
-              name: 'Viewer',
-              permission: 1,
-              role: OrgRole.Viewer,
-              sortRank: 30,
-            },
-            {
-              dashboardId: 1,
-              id: 6,
-              name: 'MyTestTeam2',
-              permission: 2,
-              sortRank: 20,
-              team: 'MyTestTeam2',
-              teamId: 2,
-            },
-            {
-              dashboardId: 1,
-              id: 5,
-              name: 'MyTestUser',
-              permission: 1,
-              sortRank: 10,
-              userId: 1,
-              userLogin: 'MyTestUser',
-            },
-          ],
-        });
-    });
-  });
-
-  describe('setCanViewFolderPermissions', () => {
-    it('should set the canViewFolderPermissions value', () => {
-      reducerTester<FolderState>()
-        .givenReducer(folderReducer, { ...initialState })
-        .whenActionIsDispatched(setCanViewFolderPermissions(true))
-        .thenStateShouldEqual({
-          ...initialState,
-          canViewFolderPermissions: true,
-        });
     });
   });
 });

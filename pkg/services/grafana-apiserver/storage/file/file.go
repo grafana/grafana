@@ -31,6 +31,10 @@ const MaxUpdateAttempts = 30
 
 var _ storage.Interface = (*Storage)(nil)
 
+// Replace with: https://github.com/kubernetes/kubernetes/blob/v1.29.0-alpha.3/staging/src/k8s.io/apiserver/pkg/storage/errors.go#L28
+// When we upgrade to 1.29
+var errResourceVersionSetOnCreate = errors.New("resourceVersion should not be set on objects to be created")
+
 // Storage implements storage.Interface and storage resources as JSON files on disk.
 type Storage struct {
 	root         string
@@ -124,6 +128,9 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return err
 	}
 	metaObj.SetSelfLink("")
+	if metaObj.GetResourceVersion() != "" {
+		return errResourceVersionSetOnCreate
+	}
 
 	if err := s.Versioner().UpdateObject(obj, *generatedRV); err != nil {
 		return err
@@ -287,7 +294,10 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, objPtr runtime.Object) error {
 	filename := s.filePath(key)
-	if !exists(filename) {
+	obj, err := readFile(s.codec, filename, func() runtime.Object {
+		return objPtr
+	})
+	if err != nil {
 		if opts.IgnoreNotFound {
 			return runtime.SetZeroValue(objPtr)
 		}
@@ -296,13 +306,6 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 			return err
 		}
 		return storage.NewKeyNotFoundError(key, int64(rv))
-	}
-
-	obj, err := readFile(s.codec, filename, func() runtime.Object {
-		return objPtr
-	})
-	if err != nil {
-		return err
 	}
 
 	currentVersion, err := s.Versioner().ObjectResourceVersion(obj)

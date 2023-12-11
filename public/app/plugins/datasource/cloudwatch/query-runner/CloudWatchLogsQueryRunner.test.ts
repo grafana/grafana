@@ -10,7 +10,6 @@ import {
   DataQueryRequest,
   LogRowContextQueryDirection,
 } from '@grafana/data';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import {
   CloudWatchSettings,
@@ -26,6 +25,15 @@ import * as rxjsUtils from '../utils/rxjs/increasingInterval';
 
 import { LOG_IDENTIFIER_INTERNAL, LOGSTREAM_IDENTIFIER_INTERNAL } from './CloudWatchLogsQueryRunner';
 
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  getDefaultTimeRange: jest.fn().mockImplementation(() => {
+    const from = dateTime(1111);
+    const to = dateTime(2222);
+    return { from, to, raw: { from, to } };
+  }),
+}));
+
 describe('CloudWatchLogsQueryRunner', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -33,7 +41,7 @@ describe('CloudWatchLogsQueryRunner', () => {
 
   describe('getLogRowContext', () => {
     it('replaces parameters correctly in the query', async () => {
-      const { runner, fetchMock } = setupMockedLogsQueryRunner();
+      const { runner, queryMock } = setupMockedLogsQueryRunner();
       const row: LogRowModel = {
         entryFieldIndex: 0,
         rowIndex: 0,
@@ -59,16 +67,16 @@ describe('CloudWatchLogsQueryRunner', () => {
         uid: '1',
       };
       await runner.getLogRowContext(row);
-      expect(fetchMock.mock.calls[0][0].data.queries[0].endTime).toBe(4);
-      expect(fetchMock.mock.calls[0][0].data.queries[0].region).toBe(undefined);
+      expect(queryMock.mock.calls[0][0].targets[0].endTime).toBe(4);
+      expect(queryMock.mock.calls[0][0].targets[0].region).toBe('');
 
       await runner.getLogRowContext(
         row,
         { direction: LogRowContextQueryDirection.Forward },
         { ...validLogsQuery, region: 'eu-east' }
       );
-      expect(fetchMock.mock.calls[1][0].data.queries[0].startTime).toBe(4);
-      expect(fetchMock.mock.calls[1][0].data.queries[0].region).toBe('eu-east');
+      expect(queryMock.mock.calls[1][0].targets[0].startTime).toBe(4);
+      expect(queryMock.mock.calls[1][0].targets[0].region).toBe('eu-east');
     });
   });
 
@@ -292,8 +300,7 @@ describe('CloudWatchLogsQueryRunner', () => {
 
   describe('makeLogActionRequest', () => {
     it('should use the time range from the options if it is available', async () => {
-      const { runner } = setupMockedLogsQueryRunner();
-      const spy = jest.spyOn(runner, 'awsRequest');
+      const { runner, queryMock } = setupMockedLogsQueryRunner();
       const from = dateTime(0);
       const to = dateTime(1000);
       const options: DataQueryRequest<CloudWatchLogsQuery> = {
@@ -301,24 +308,18 @@ describe('CloudWatchLogsQueryRunner', () => {
         range: { from, to, raw: { from, to } },
       };
       await lastValueFrom(runner.makeLogActionRequest('StartQuery', [genMockCloudWatchLogsRequest()], options));
-      expect(spy).toHaveBeenNthCalledWith(1, '/api/ds/query', expect.objectContaining({ from: '0', to: '1000' }), {
-        'X-Cache-Skip': 'true',
-      });
+      expect(queryMock.mock.calls[0][0].skipQueryCache).toBe(true);
+      expect(queryMock.mock.calls[0][0]).toEqual(expect.objectContaining({ range: { from, to, raw: { from, to } } }));
     });
 
-    it('should use the time range from the timeSrv if the time range in the options is not available', async () => {
-      const timeSrv = getTimeSrv();
-      timeSrv.timeRange = jest.fn().mockReturnValue({
-        from: dateTime(1111),
-        to: dateTime(2222),
-        raw: { from: dateTime(1111), to: dateTime(2222) },
-      });
-      const { runner } = setupMockedLogsQueryRunner({ timeSrv });
-      const spy = jest.spyOn(runner, 'awsRequest');
+    it('should use the default time range if the time range in the options is not available', async () => {
+      const from = dateTime(1111);
+      const to = dateTime(2222);
+      const { runner, queryMock } = setupMockedLogsQueryRunner();
       await lastValueFrom(runner.makeLogActionRequest('StartQuery', [genMockCloudWatchLogsRequest()]));
-      expect(spy).toHaveBeenNthCalledWith(1, '/api/ds/query', expect.objectContaining({ from: '1111', to: '2222' }), {
-        'X-Cache-Skip': 'true',
-      });
+
+      expect(queryMock.mock.calls[0][0].skipQueryCache).toBe(true);
+      expect(queryMock.mock.calls[0][0]).toEqual(expect.objectContaining({ range: { from, to, raw: { from, to } } }));
     });
   });
 });

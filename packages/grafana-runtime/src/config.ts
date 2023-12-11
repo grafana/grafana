@@ -16,6 +16,7 @@ import {
   systemDateFormats,
   SystemDateFormatSettings,
   getThemeById,
+  AngularMeta,
 } from '@grafana/data';
 
 export interface AzureSettings {
@@ -30,7 +31,7 @@ export type AppPluginConfig = {
   path: string;
   version: string;
   preload: boolean;
-  angularDetected?: boolean;
+  angular: AngularMeta;
 };
 
 export class GrafanaBootConfig implements GrafanaConfig {
@@ -43,6 +44,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   minRefreshInterval = '';
   appUrl = '';
   appSubUrl = '';
+  namespace = 'default';
   windowTitlePrefix = '';
   buildInfo: BuildInfo;
   newPanelTitle = '';
@@ -141,6 +143,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
     enabled: false,
   };
   reporting = {
+    enabled: true,
+  };
+  analytics = {
     enabled: true,
   };
   googleAnalyticsId: undefined;

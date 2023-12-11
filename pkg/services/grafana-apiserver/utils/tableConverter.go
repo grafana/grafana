@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"reflect"
+	"time"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,10 +19,10 @@ import (
 type customTableConvertor struct {
 	gr      schema.GroupResource
 	columns []metav1.TableColumnDefinition
-	reader  func(obj runtime.Object) ([]interface{}, error)
+	reader  func(obj any) ([]interface{}, error)
 }
 
-func NewTableConverter(gr schema.GroupResource, columns []metav1.TableColumnDefinition, reader func(obj runtime.Object) ([]interface{}, error)) rest.TableConvertor {
+func NewTableConverter(gr schema.GroupResource, columns []metav1.TableColumnDefinition, reader func(obj any) ([]interface{}, error)) rest.TableConvertor {
 	converter := customTableConvertor{
 		gr:      gr,
 		columns: columns,
@@ -38,6 +40,38 @@ func NewTableConverter(gr schema.GroupResource, columns []metav1.TableColumnDefi
 		}
 	}
 	return converter
+}
+
+func NewDefaultTableConverter(gr schema.GroupResource) rest.TableConvertor {
+	return NewTableConverter(gr,
+		[]metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Created At", Type: "date"},
+		},
+		func(obj any) ([]interface{}, error) {
+			v, err := meta.Accessor(obj)
+			if err == nil && v != nil {
+				return []interface{}{
+					v.GetName(),
+					v.GetCreationTimestamp().UTC().Format(time.RFC3339),
+				}, nil
+			}
+
+			r := reflect.ValueOf(obj).Elem()
+			n := r.FieldByName("Name").String()
+			if n != "" {
+				return []interface{}{
+					n,
+					"",
+				}, nil
+			}
+
+			return []interface{}{
+				fmt.Sprintf("%v", obj),
+				"",
+			}, nil
+		},
+	)
 }
 
 var _ rest.TableConvertor = &customTableConvertor{}

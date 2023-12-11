@@ -98,7 +98,7 @@ func isFeatureHidden(flag featuremgmt.FeatureFlag, hideCfg map[string]struct{}) 
 	if _, ok := hideCfg[flag.Name]; ok {
 		return true
 	}
-	return flag.Stage == featuremgmt.FeatureStageUnknown || flag.Stage == featuremgmt.FeatureStageExperimental || flag.Stage == featuremgmt.FeatureStagePrivatePreview
+	return flag.Stage == featuremgmt.FeatureStageUnknown || flag.Stage == featuremgmt.FeatureStageExperimental || flag.Stage == featuremgmt.FeatureStagePrivatePreview || flag.HideFromAdminPage
 }
 
 // isFeatureWriteable returns whether a toggle on the admin page can be updated by the user.
@@ -110,7 +110,8 @@ func isFeatureWriteable(flag featuremgmt.FeatureFlag, readOnlyCfg map[string]str
 	if flag.Name == featuremgmt.FlagFeatureToggleAdminPage {
 		return false
 	}
-	return flag.Stage == featuremgmt.FeatureStageGeneralAvailability || flag.Stage == featuremgmt.FeatureStageDeprecated
+	allowSelfServe := flag.AllowSelfServe != nil && *flag.AllowSelfServe
+	return flag.Stage == featuremgmt.FeatureStageGeneralAvailability && allowSelfServe || flag.Stage == featuremgmt.FeatureStageDeprecated
 }
 
 // isFeatureEditingAllowed checks if the backend is properly configured to allow feature toggle changes from the UI

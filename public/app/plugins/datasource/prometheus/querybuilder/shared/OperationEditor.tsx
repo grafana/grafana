@@ -2,9 +2,8 @@ import { css, cx } from '@emotion/css';
 import React, { useEffect, useId, useState } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 
-import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Button, Icon, InlineField, Tooltip, useTheme2 } from '@grafana/ui';
+import { DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { Button, Icon, InlineField, Tooltip, useTheme2, Stack } from '@grafana/ui';
 import { isConflictingFilter } from 'app/plugins/datasource/loki/querybuilder/operationUtils';
 import { LokiOperationId } from 'app/plugins/datasource/loki/querybuilder/types';
 
@@ -30,6 +29,7 @@ export interface Props {
   onRunQuery: () => void;
   flash?: boolean;
   highlight?: boolean;
+  timeRange?: TimeRange;
 }
 
 export function OperationEditor({
@@ -43,6 +43,7 @@ export function OperationEditor({
   datasource,
   flash,
   highlight,
+  timeRange,
 }: Props) {
   const def = queryModeller.getOperationDef(operation.id);
   const shouldFlash = useFlash(flash);
@@ -96,7 +97,7 @@ export function OperationEditor({
           </div>
         )}
         <div className={styles.paramValue}>
-          <Stack gap={0.5} direction="row" alignItems="center" wrap={false}>
+          <Stack gap={0.5} direction="row" alignItems="center">
             <Editor
               index={paramIndex}
               paramDef={paramDef}
@@ -107,6 +108,7 @@ export function OperationEditor({
               onRunQuery={onRunQuery}
               query={query}
               datasource={datasource}
+              timeRange={timeRange}
             />
             {paramDef.restParam && (operation.params.length > def.params.length || paramDef.optional) && (
               <Button
@@ -219,7 +221,7 @@ function renderAddRestParamButton(
       <Button
         size="sm"
         icon="plus"
-        title={`Add ${paramDef.name}`}
+        title={`Add ${paramDef.name}`.trimEnd()}
         variant="secondary"
         onClick={onAddRestParam}
         data-testid={`operations.${operationIndex}.add-rest-param`}

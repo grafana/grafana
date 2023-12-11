@@ -5,6 +5,7 @@ import { QueryEditorHelpProps } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
 import LokiLanguageProvider from '../LanguageProvider';
+import { escapeLabelValueInExactSelector } from '../languageUtils';
 import { LokiQuery } from '../types';
 
 const DEFAULT_EXAMPLES = ['{job="default/prometheus"}'];
@@ -62,10 +63,10 @@ export default class LokiCheatSheet extends PureComponent<QueryEditorHelpProps<L
       const labels = provider.getLabelKeys() || [];
       const preferredLabel = PREFERRED_LABELS.find((l) => labels.includes(l));
       if (preferredLabel) {
-        const values = await provider.getLabelValues(preferredLabel);
+        const values = await provider.fetchLabelValues(preferredLabel);
         const userExamples = shuffle(values)
           .slice(0, EXAMPLES_LIMIT)
-          .map((value) => `{${preferredLabel}="${value}"}`);
+          .map((value) => `{${preferredLabel}="${escapeLabelValueInExactSelector(value)}"}`);
         this.setState({ userExamples });
       }
     } else {
@@ -85,7 +86,7 @@ export default class LokiCheatSheet extends PureComponent<QueryEditorHelpProps<L
         type="button"
         className="cheat-sheet-item__example"
         key={expr}
-        onClick={(e) => onClick({ refId: 'A', expr })}
+        onClick={() => onClick({ refId: 'A', expr })}
       >
         <code>{expr}</code>
       </button>

@@ -15,7 +15,6 @@ type datasourceInfo struct {
 	TimeField                  any    `json:"timeField"`
 	MaxConcurrentShardRequests int64  `json:"maxConcurrentShardRequests"`
 	Interval                   string `json:"interval"`
-	TimeInterval               string `json:"timeInterval"`
 }
 
 func TestNewInstanceSettings(t *testing.T) {
@@ -40,7 +39,6 @@ func TestNewInstanceSettings(t *testing.T) {
 			dsInfo := datasourceInfo{
 				MaxConcurrentShardRequests: 5,
 				Interval:                   "Daily",
-				TimeInterval:               "TimeInterval",
 			}
 
 			settingsJSON, err := json.Marshal(dsInfo)
@@ -59,7 +57,6 @@ func TestNewInstanceSettings(t *testing.T) {
 				MaxConcurrentShardRequests: 5,
 				Interval:                   "Daily",
 				TimeField:                  "",
-				TimeInterval:               "TimeInterval",
 			}
 
 			settingsJSON, err := json.Marshal(dsInfo)

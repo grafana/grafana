@@ -15,6 +15,7 @@ import {
   isLiveTarget,
   markDomElementStyleAsALiveTarget,
   patchObjectAsLiveTarget,
+  patchWebAPIs,
 } from './document_sandbox';
 import { sandboxPluginDependencies } from './plugin_dependencies';
 import { sandboxPluginComponents } from './sandbox_components';
@@ -30,6 +31,7 @@ const pluginImportCache = new Map<string, Promise<System.Module>>();
 const pluginLogCache: Record<string, boolean> = {};
 
 export async function importPluginModuleInSandbox({ pluginId }: { pluginId: string }): Promise<System.Module> {
+  patchWebAPIs();
   try {
     const pluginMeta = await getPluginSettings(pluginId);
     if (!pluginImportCache.has(pluginId)) {
@@ -92,6 +94,9 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.M
         // window.locationSandbox. In the future `window.location` could be a proxy if we
         // want to intercept calls to it.
         locationSandbox: window.location,
+        setImmediate: function (fn: Function, ...args: unknown[]) {
+          return setTimeout(fn, 0, ...args);
+        },
         get monaco() {
           // `window.monaco` may be undefined when invoked. However, plugins have long
           // accessed it directly, aware of this possibility.

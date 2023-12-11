@@ -10,6 +10,12 @@ export enum LokiResultType {
   Matrix = 'matrix',
 }
 
+export enum LabelType {
+  Indexed = 'I',
+  StructuredMetadata = 'S',
+  Parsed = 'P',
+}
+
 export interface LokiQuery extends LokiQueryFromSchema {
   direction?: LokiQueryDirection;
   /** Used only to identify supporting queries, e.g. logs volume, logs sample and data sample */
@@ -54,6 +60,7 @@ export type DerivedFieldConfig = {
   url?: string;
   urlDisplayLabel?: string;
   datasourceUid?: string;
+  matcherType?: 'label' | 'regex';
 };
 
 export enum LokiVariableQueryType {
@@ -86,6 +93,7 @@ export interface ContextFilter {
 
 export interface ParserAndLabelKeysResult {
   extractedLabelKeys: string[];
+  structuredMetadataKeys: string[];
   hasJSON: boolean;
   hasLogfmt: boolean;
   hasPack: boolean;

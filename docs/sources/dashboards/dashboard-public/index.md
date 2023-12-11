@@ -236,15 +236,13 @@ guaranteed because plugin developers can override this functionality. The follow
 ## Limitations
 
 - Panels that use frontend data sources will fail to fetch data.
-- Template variables are not currently supported, but support is planned in the future.
+- Template variables are not supported.
 - Exemplars will be omitted from the panel.
 - Only annotations that query the `-- Grafana --` data source are supported.
 - Organization annotations are not supported.
 - Grafana Live and real-time event streams are not supported.
-- Library panels are currently not supported, but support is planned in the future.
+- Library panels are not supported.
 - Data sources using Reverse Proxy functionality are not supported.
-
-We're excited to share this enhancement with you and we’d love your feedback! Please check out the [Github](https://github.com/grafana/grafana/discussions/49253) discussion and join the conversation.
 
 ## Custom branding
 

@@ -1,5 +1,6 @@
 import { isEmptyObject, ScopedVars, TimeRange } from '@grafana/data';
 import {
+  behaviors,
   SceneDataLayers,
   SceneGridItem,
   SceneGridItemLike,
@@ -11,12 +12,14 @@ import {
   SceneVariableSet,
   AdHocFilterSet,
   LocalValueVariable,
+  SceneRefreshPicker,
 } from '@grafana/scenes';
 import {
   AnnotationQuery,
   Dashboard,
   DataTransformerConfig,
   defaultDashboard,
+  defaultTimePickerConfig,
   FieldConfigSource,
   Panel,
   RowPanel,
@@ -28,6 +31,7 @@ import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
+import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
@@ -46,8 +50,9 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   const data = state.$data;
   const variablesSet = state.$variables;
   const body = state.body;
+  let refresh_intervals = defaultTimePickerConfig.refresh_intervals;
   let panels: Panel[] = [];
-
+  let graphTooltip = defaultDashboard.graphTooltip;
   let variables: VariableModel[] = [];
 
   if (body instanceof SceneGridLayout) {
@@ -81,8 +86,15 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     variables = sceneVariablesSetToVariables(variablesSet);
   }
 
-  if (state.controls) {
-    for (const control of state.controls) {
+  if (state.controls && state.controls[0] instanceof DashboardControls) {
+    const timeControls = state.controls[0].state.timeControls;
+    for (const control of timeControls) {
+      if (control instanceof SceneRefreshPicker && control.state.intervals) {
+        refresh_intervals = control.state.intervals;
+      }
+    }
+    const variableControls = state.controls[0].state.variableControls;
+    for (const control of variableControls) {
       if (control instanceof AdHocFilterSet) {
         variables.push({
           name: control.state.name!,
@@ -93,14 +105,24 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     }
   }
 
+  if (state.$behaviors && state.$behaviors[0] instanceof behaviors.CursorSync) {
+    graphTooltip = state.$behaviors[0].state.sync;
+  }
+
   const dashboard: Dashboard = {
     ...defaultDashboard,
     title: state.title,
+    description: state.description || undefined,
     uid: state.uid,
     id: state.id,
+    editable: state.editable,
     time: {
       from: timeRange.from,
       to: timeRange.to,
+    },
+    timepicker: {
+      ...defaultTimePickerConfig,
+      refresh_intervals,
     },
     panels,
     annotations: {
@@ -112,6 +134,8 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     timezone: timeRange.timeZone,
     fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
     weekStart: timeRange.weekStart,
+    tags: state.tags,
+    graphTooltip,
   };
 
   return sortedDeepCloneWithoutNulls(dashboard);
@@ -407,10 +431,8 @@ export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: D
   // When VizPanel is present, we are snapshoting a single panel. The rest of the panels is removed from the dashboard,
   // and the panel is resized to 24x20 grid and placed at the top of the dashboard.
   if (panel) {
-    // @ts-expect-error Due to legacy panels types. Id is present on such panels too.
     const singlePanel = dash.panels?.find((p) => p.id === getPanelIdForVizPanel(panel));
     if (singlePanel) {
-      // @ts-expect-error Due to legacy panels types. Id is present on such panels too.
       singlePanel.gridPos = { w: 24, x: 0, y: 0, h: 20 };
       result = {
         ...result,

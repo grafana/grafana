@@ -15,6 +15,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -33,11 +34,10 @@ const (
 	dateTimeFormat2 = "2006-01-02T15:04:05Z"
 )
 
-var logger = log.New("tsdb.mysql")
-
 type Service struct {
-	Cfg *setting.Cfg
-	im  instancemgmt.InstanceManager
+	Cfg    *setting.Cfg
+	im     instancemgmt.InstanceManager
+	logger log.Logger
 }
 
 func characterEscape(s string, escapeChar string) string {
@@ -45,12 +45,14 @@ func characterEscape(s string, escapeChar string) string {
 }
 
 func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider) *Service {
+	logger := log.New("tsdb.mysql")
 	return &Service{
-		im: datasource.NewInstanceManager(newInstanceSettings(cfg, httpClientProvider)),
+		im:     datasource.NewInstanceManager(newInstanceSettings(cfg, logger)),
+		logger: logger,
 	}
 }
 
-func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
+func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := sqleng.JsonData{
 			MaxOpenConns:            cfg.SqlDatasourceMaxOpenConnsDefault,
@@ -114,7 +116,7 @@ func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provide
 			return nil, err
 		}
 
-		tlsConfig, err := httpClientProvider.GetTLSConfig(opts)
+		tlsConfig, err := sdkhttpclient.GetTLSConfig(opts)
 		if err != nil {
 			return nil, err
 		}
@@ -173,9 +175,9 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	if err != nil {
 		var driverErr *mysql.MySQLError
 		if errors.As(err, &driverErr) {
-			return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: dsHandler.TransformQueryError(logger, driverErr).Error()}, nil
+			return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: dsHandler.TransformQueryError(s.logger, driverErr).Error()}, nil
 		}
-		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: dsHandler.TransformQueryError(logger, err).Error()}, nil
+		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: dsHandler.TransformQueryError(s.logger, err).Error()}, nil
 	}
 	return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "Database Connection OK"}, nil
 }

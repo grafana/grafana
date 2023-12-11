@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -14,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts/api"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/secretscan"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -39,15 +37,12 @@ type ServiceAccountsService struct {
 
 func ProvideServiceAccountsService(
 	cfg *setting.Cfg,
-	ac accesscontrol.AccessControl,
-	routeRegister routing.RouteRegister,
 	usageStats usagestats.Service,
 	store *sqlstore.SQLStore,
 	apiKeyService apikey.Service,
 	kvStore kvstore.KVStore,
 	userService user.Service,
 	orgService org.Service,
-	permissionService accesscontrol.ServiceAccountPermissionsService,
 	accesscontrolService accesscontrol.Service,
 ) (*ServiceAccountsService, error) {
 	serviceAccountsStore := database.ProvideServiceAccountsStore(
@@ -69,9 +64,6 @@ func ProvideServiceAccountsService(
 	}
 
 	usageStats.RegisterMetricsFunc(s.getUsageMetrics)
-
-	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, accesscontrolService, routeRegister, permissionService)
-	serviceaccountsAPI.RegisterAPIEndpoints()
 
 	s.secretScanEnabled = cfg.SectionWithEnvOverrides("secretscan").Key("enabled").MustBool(false)
 	s.secretScanInterval = cfg.SectionWithEnvOverrides("secretscan").
@@ -145,6 +137,8 @@ func (sa *ServiceAccountsService) Run(ctx context.Context) error {
 		}
 	}
 }
+
+var _ serviceaccounts.Service = (*ServiceAccountsService)(nil)
 
 func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
 	if err := validOrgID(orgID); err != nil {

@@ -4,8 +4,7 @@ import React, { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Button, Card, Modal, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, Card, Modal, RadioButtonGroup, useStyles2, Stack } from '@grafana/ui';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { KeyValueField } from '../../../api/templateApi';

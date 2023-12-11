@@ -1,11 +1,9 @@
 import { css, cx } from '@emotion/css';
-import classNames from 'classnames';
 import React, { useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
-import { Icon } from '../Icon/Icon';
 
 export const ScrollIndicators = ({ children }: React.PropsWithChildren<{}>) => {
   const [showScrollTopIndicator, setShowTopScrollIndicator] = useState(false);
@@ -39,9 +37,7 @@ export const ScrollIndicators = ({ children }: React.PropsWithChildren<{}>) => {
         className={cx(styles.scrollIndicator, styles.scrollTopIndicator, {
           [styles.scrollIndicatorVisible]: showScrollTopIndicator,
         })}
-      >
-        <Icon className={classNames(styles.scrollIcon, styles.scrollTopIcon)} name="angle-up" />
-      </div>
+      />
       <div className={styles.scrollContent}>
         <div ref={scrollTopMarker} />
         {children}
@@ -51,9 +47,7 @@ export const ScrollIndicators = ({ children }: React.PropsWithChildren<{}>) => {
         className={cx(styles.scrollIndicator, styles.scrollBottomIndicator, {
           [styles.scrollIndicatorVisible]: showScrollBottomIndicator,
         })}
-      >
-        <Icon className={classNames(styles.scrollIcon, styles.scrollBottomIcon)} name="angle-down" />
-      </div>
+      />
     </>
   );
 };
@@ -84,17 +78,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     scrollIndicatorVisible: css({
       opacity: 1,
-    }),
-    scrollIcon: css({
-      left: '50%',
-      position: 'absolute',
-      transform: 'translateX(-50%)',
-    }),
-    scrollTopIcon: css({
-      top: 0,
-    }),
-    scrollBottomIcon: css({
-      bottom: 0,
     }),
   };
 };

@@ -149,6 +149,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('dashlist', import '../dev-dashboards/panel-dashlist/dashlist.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('datadata-macros', import '../dev-dashboards/feature-templating/datadata-macros.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -534,6 +541,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('regression-analysis', import '../dev-dashboards/transforms/regression-analysis.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('relative_time_zone_support', import '../dev-dashboards/scenarios/relative_time_zone_support.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -822,6 +836,13 @@ local dashboard = grafana.dashboard;
       }
     },
     dashboard.new('trend_example', import '../dev-dashboards/panel-trend/trend_example.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('xychart-example', import '../dev-dashboards/panel-xychart/xychart-example.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {

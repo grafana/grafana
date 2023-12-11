@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"xorm.io/core"
+	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -29,8 +30,13 @@ type DB interface {
 	GetDialect() migrator.Dialect
 	// GetDBType returns the name of the database type available to the runtime.
 	GetDBType() core.DbType
+	// GetEngine returns the underlying xorm engine.
+	GetEngine() *xorm.Engine
 	// GetSqlxSession is an experimental extension to use sqlx instead of xorm to
 	// communicate with the database.
+	// NOTE: when using this session with mysql, the connection will *not* have:
+	// the expected parameters: "&sql_mode='ANSI_QUOTES" and "&parseTime=true"
+	// The sqlx session is useful, but be careful not to expect automagic date parsing
 	GetSqlxSession() *session.SessionDB
 	// InTransaction creates a new SQL transaction that is placed on the context.
 	// Use together with [DB.WithDbSession] to run database operations.

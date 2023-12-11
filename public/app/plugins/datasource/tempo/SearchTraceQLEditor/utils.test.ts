@@ -106,27 +106,79 @@ describe('generateQueryFromFilters generates the correct query for', () => {
 describe('gets correct tags', () => {
   it('for filtered tags when no tags supplied', () => {
     const tags = getFilteredTags(emptyTags, []);
-    expect(tags).toEqual(['duration', 'kind', 'name', 'status']);
+    expect(tags).toEqual([
+      'duration',
+      'kind',
+      'name',
+      'rootName',
+      'rootServiceName',
+      'status',
+      'statusMessage',
+      'traceDuration',
+    ]);
   });
 
   it('for filtered tags when API v1 tags supplied', () => {
     const tags = getFilteredTags(v1Tags, []);
-    expect(tags).toEqual(['duration', 'kind', 'name', 'status', 'bar', 'foo']);
+    expect(tags).toEqual([
+      'duration',
+      'kind',
+      'name',
+      'rootName',
+      'rootServiceName',
+      'status',
+      'statusMessage',
+      'traceDuration',
+      'bar',
+      'foo',
+    ]);
   });
 
   it('for filtered tags when API v1 tags supplied with tags to filter out', () => {
     const tags = getFilteredTags(v1Tags, ['duration']);
-    expect(tags).toEqual(['kind', 'name', 'status', 'bar', 'foo']);
+    expect(tags).toEqual([
+      'kind',
+      'name',
+      'rootName',
+      'rootServiceName',
+      'status',
+      'statusMessage',
+      'traceDuration',
+      'bar',
+      'foo',
+    ]);
   });
 
   it('for filtered tags when API v2 tags supplied', () => {
     const tags = getFilteredTags(uniq(getUnscopedTags(v2Tags)), []);
-    expect(tags).toEqual(['duration', 'kind', 'name', 'status', 'cluster', 'container', 'db']);
+    expect(tags).toEqual([
+      'duration',
+      'kind',
+      'name',
+      'rootName',
+      'rootServiceName',
+      'status',
+      'statusMessage',
+      'traceDuration',
+      'cluster',
+      'container',
+      'db',
+    ]);
   });
 
   it('for filtered tags when API v2 tags supplied with tags to filter out', () => {
     const tags = getFilteredTags(getUnscopedTags(v2Tags), ['duration', 'cluster']);
-    expect(tags).toEqual(['kind', 'name', 'status', 'container', 'db']);
+    expect(tags).toEqual([
+      'kind',
+      'name',
+      'rootName',
+      'rootServiceName',
+      'status',
+      'statusMessage',
+      'traceDuration',
+      'container',
+      'db',
+    ]);
   });
 
   it('for unscoped tags', () => {

@@ -5,9 +5,20 @@ import { useFormContext } from 'react-hook-form';
 
 import { getDefaultRelativeTimeRange, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Stack } from '@grafana/experimental';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { Alert, Button, Dropdown, Field, Icon, InputControl, Menu, MenuItem, Tooltip, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  Dropdown,
+  Field,
+  Icon,
+  InputControl,
+  Menu,
+  MenuItem,
+  Stack,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionDatasourceUID, ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
@@ -81,15 +92,18 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
   const rulesSourcesWithRuler = useRulesSourcesWithRuler();
 
-  const runQueriesPreview = useCallback(() => {
-    if (isCloudAlertRuleType) {
-      // we will skip preview for cloud rules, these do not have any time series preview
-      // Grafana Managed rules and recording rules do
-      return;
-    }
+  const runQueriesPreview = useCallback(
+    (condition?: string) => {
+      if (isCloudAlertRuleType) {
+        // we will skip preview for cloud rules, these do not have any time series preview
+        // Grafana Managed rules and recording rules do
+        return;
+      }
 
-    runQueries(getValues('queries'));
-  }, [isCloudAlertRuleType, runQueries, getValues]);
+      runQueries(getValues('queries'), condition || (getValues('condition') ?? ''));
+    },
+    [isCloudAlertRuleType, runQueries, getValues]
+  );
 
   // whenever we update the queries we have to update the form too
   useEffect(() => {
@@ -138,7 +152,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         return;
       }
 
-      runQueriesPreview(); //we need to run the queries to know if the condition is valid
+      runQueriesPreview(refId); //we need to run the queries to know if the condition is valid
 
       setValue('condition', refId);
     },
@@ -432,7 +446,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           <QueryEditor
             queries={dataQueries}
             expressions={expressionQueries}
-            onRunQueries={runQueriesPreview}
+            onRunQueries={() => runQueriesPreview()}
             onChangeQueries={onChangeQueries}
             onDuplicateQuery={onDuplicateQuery}
             panelData={queryPreviewData}
@@ -446,7 +460,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
                 dispatch(addNewDataQuery());
               }}
               variant="secondary"
-              aria-label={selectors.components.QueryTab.addQuery}
+              data-testid={selectors.components.QueryTab.addQuery}
               disabled={noCompatibleDataSources}
               className={styles.addQueryButton}
             >
@@ -493,7 +507,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
               </Button>
             )}
             {!isPreviewLoading && (
-              <Button icon="sync" type="button" onClick={runQueriesPreview} disabled={emptyQueries}>
+              <Button icon="sync" type="button" onClick={() => runQueriesPreview()} disabled={emptyQueries}>
                 Preview
               </Button>
             )}

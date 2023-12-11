@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
@@ -23,26 +22,27 @@ class EllipseDisplay extends PureComponent<CanvasElementProps<EllipseConfig, Ell
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme2, data) => ({
-  container: css`
-    display: table;
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 100%;
-    height: 100%;
-    background-color: ${data?.backgroundColor};
-    border: ${data?.width}px solid ${data?.borderColor};
-    border-radius: 50%;
-  `,
-  span: css`
-    display: table-cell;
-    vertical-align: ${data?.valign};
-    text-align: ${data?.align};
-    font-size: ${data?.size}px;
-    color: ${data?.color};
-  `,
-}));
+const getStyles = (theme: GrafanaTheme2, data: any) => ({
+  container: css({
+    display: 'table',
+    position: 'absolute',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    width: '100%',
+    height: '100%',
+    backgroundColor: data?.backgroundColor,
+    border: `${data?.width}px solid ${data?.borderColor}`,
+    // eslint-disable-next-line @grafana/no-border-radius-literal
+    borderRadius: '50%',
+  }),
+  span: css({
+    display: 'table-cell',
+    verticalAlign: data?.valign,
+    textAlign: data?.align,
+    fontSize: `${data?.size}px`,
+    color: data?.color,
+  }),
+});
 
 export const ellipseItem: CanvasElementItem<EllipseConfig, EllipseData> = {
   id: 'ellipse',

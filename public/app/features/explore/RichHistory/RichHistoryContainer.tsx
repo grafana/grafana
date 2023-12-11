@@ -4,6 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { config, reportInteraction } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 // Types
 import { ExploreItemState, StoreState } from 'app/types';
 
@@ -91,7 +92,11 @@ export function RichHistoryContainer(props: Props) {
   }, [initRichHistory]);
 
   if (!richHistorySettings) {
-    return <span>Loading...</span>;
+    return (
+      <span>
+        <Trans i18nKey="explore.rich-history-container.loading">Loading...</Trans>
+      </span>
+    );
   }
 
   return (

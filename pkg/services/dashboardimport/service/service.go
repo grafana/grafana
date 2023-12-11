@@ -93,10 +93,11 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		if err != nil {
 			return nil, err
 		}
+		// nolint:staticcheck
 		req.FolderId = folder.ID
 	} else {
 		folder, err := s.folderService.Get(ctx, &folder.GetFolderQuery{
-			ID:           &req.FolderId,
+			ID:           &req.FolderId, // nolint:staticcheck
 			OrgID:        req.User.GetOrgID(),
 			SignedInUser: req.User,
 		})
@@ -120,7 +121,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		UserID:    userID,
 		Overwrite: req.Overwrite,
 		PluginID:  req.PluginId,
-		FolderID:  req.FolderId,
+		FolderID:  req.FolderId, // nolint:staticcheck
 		FolderUID: req.FolderUid,
 	}
 
@@ -136,6 +137,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		return nil, err
 	}
 
+	// nolint:staticcheck
 	err = s.libraryPanelService.ImportLibraryPanelsForDashboard(ctx, req.User, libraryElements, generatedDash.Get("panels").MustArray(), req.FolderId)
 	if err != nil {
 		return nil, err
@@ -152,8 +154,8 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		PluginId:         req.PluginId,
 		Title:            savedDashboard.Title,
 		Path:             req.Path,
-		Revision:         revision, // only used for plugin version tracking
-		FolderId:         savedDashboard.FolderID,
+		Revision:         revision,                // only used for plugin version tracking
+		FolderId:         savedDashboard.FolderID, // nolint:staticcheck
 		FolderUID:        req.FolderUid,
 		ImportedUri:      "db/" + savedDashboard.Slug,
 		ImportedUrl:      savedDashboard.GetURL(),

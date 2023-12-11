@@ -52,6 +52,11 @@ export interface PluginError {
   pluginType?: PluginType;
 }
 
+export interface AngularMeta {
+  detected: boolean;
+  hideDeprecation: boolean;
+}
+
 export interface PluginMeta<T extends KeyValue = {}> {
   id: string;
   name: string;
@@ -82,7 +87,7 @@ export interface PluginMeta<T extends KeyValue = {}> {
   signatureType?: PluginSignatureType;
   signatureOrg?: string;
   live?: boolean;
-  angularDetected?: boolean;
+  angular?: AngularMeta;
 }
 
 interface PluginDependencyInfo {
@@ -198,7 +203,7 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
   /**
    * @deprecated -- this is no longer necessary and will be removed
    */
-  setChannelSupport(support: any) {
+  setChannelSupport() {
     console.warn('[deprecation] plugin is using ignored option: setChannelSupport', this.meta);
     return this;
   }

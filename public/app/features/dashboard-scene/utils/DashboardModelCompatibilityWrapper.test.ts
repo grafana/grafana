@@ -1,19 +1,44 @@
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
-import { behaviors, SceneGridItem, SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import {
+  behaviors,
+  SceneGridItem,
+  SceneGridLayout,
+  SceneRefreshPicker,
+  SceneQueryRunner,
+  SceneTimeRange,
+  VizPanel,
+  SceneTimePicker,
+} from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 
+import { DashboardControls } from '../scene/DashboardControls';
+import { DashboardLinksControls } from '../scene/DashboardLinksControls';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { DashboardModelCompatibilityWrapper } from './DashboardModelCompatibilityWrapper';
 
 describe('DashboardModelCompatibilityWrapper', () => {
   it('Provide basic prop and function of compatability', () => {
-    const { wrapper } = setup();
+    const { wrapper, scene } = setup();
 
     expect(wrapper.uid).toBe('dash-1');
     expect(wrapper.title).toBe('hello');
-
+    expect(wrapper.description).toBe('hello description');
+    expect(wrapper.editable).toBe(false);
+    expect(wrapper.graphTooltip).toBe(DashboardCursorSync.Off);
+    expect(wrapper.tags).toEqual(['hello-tag']);
     expect(wrapper.time.from).toBe('now-6h');
+    expect(wrapper.timezone).toBe('America/New_York');
+    expect(wrapper.weekStart).toBe('friday');
+    expect(wrapper.timepicker.refresh_intervals).toEqual(['1s']);
+    expect(wrapper.timepicker.hidden).toEqual(true);
+
+    (scene.state.controls![0] as DashboardControls).setState({
+      timeControls: [new SceneTimePicker({})],
+    });
+
+    const wrapper2 = new DashboardModelCompatibilityWrapper(scene);
+    expect(wrapper2.timepicker.hidden).toEqual(false);
   });
 
   it('Shared tooltip functions', () => {
@@ -25,6 +50,7 @@ describe('DashboardModelCompatibilityWrapper', () => {
 
     expect(wrapper.sharedTooltipModeEnabled()).toBe(true);
     expect(wrapper.sharedCrosshairModeOnly()).toBe(true);
+    expect(wrapper.graphTooltip).toBe(DashboardCursorSync.Crosshair);
   });
 
   it('Get timezone from time range', () => {
@@ -47,15 +73,38 @@ describe('DashboardModelCompatibilityWrapper', () => {
     expect(wrapper.getPanelById(1)!.title).toBe('Panel A');
     expect(wrapper.getPanelById(2)!.title).toBe('Panel B');
   });
+
+  it('Can remove panel', () => {
+    const { wrapper, scene } = setup();
+
+    wrapper.removePanel(wrapper.getPanelById(1)!);
+
+    expect((scene.state.body as SceneGridLayout).state.children.length).toBe(1);
+  });
 });
 
 function setup() {
   const scene = new DashboardScene({
     title: 'hello',
+    description: 'hello description',
+    tags: ['hello-tag'],
     uid: 'dash-1',
+    editable: false,
     $timeRange: new SceneTimeRange({
+      weekStart: 'friday',
       timeZone: 'America/New_York',
     }),
+    controls: [
+      new DashboardControls({
+        variableControls: [],
+        linkControls: new DashboardLinksControls({}),
+        timeControls: [
+          new SceneRefreshPicker({
+            intervals: ['1s'],
+          }),
+        ],
+      }),
+    ],
     body: new SceneGridLayout({
       children: [
         new SceneGridItem({

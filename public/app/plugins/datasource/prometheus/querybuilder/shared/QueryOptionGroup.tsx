@@ -3,9 +3,8 @@ import React from 'react';
 import { useToggle } from 'react-use';
 
 import { getValueFormat, GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Collapse, Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { Collapse, Icon, Tooltip, useStyles2, Stack } from '@grafana/ui';
 import { QueryStats } from 'app/plugins/datasource/loki/types';
 
 export interface Props {
@@ -27,7 +26,7 @@ export function QueryOptionGroup({ title, children, collapsedInfo, queryStats }:
         isOpen={isOpen}
         onToggle={toggleOpen}
         label={
-          <Stack gap={0} wrap={false}>
+          <Stack gap={0}>
             <h6 className={styles.title}>{title}</h6>
             {!isOpen && (
               <div className={styles.description}>

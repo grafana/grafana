@@ -39,21 +39,20 @@ type DBstore struct {
 	SQLStore         db.DB
 	Logger           log.Logger
 	FolderService    folder.Service
-	AccessControl    accesscontrol.AccessControl
 	DashboardService dashboards.DashboardService
+	AccessControl    accesscontrol.AccessControl
 }
 
 func ProvideDBStore(
-	cfg *setting.Cfg, featureToggles featuremgmt.FeatureToggles, sqlstore db.DB, folderService folder.Service,
-	access accesscontrol.AccessControl, dashboards dashboards.DashboardService) (*DBstore, error) {
+	cfg *setting.Cfg, featureToggles featuremgmt.FeatureToggles, sqlstore db.DB, folderService folder.Service, dashboards dashboards.DashboardService, ac accesscontrol.AccessControl) (*DBstore, error) {
 	store := DBstore{
 		Cfg:              cfg.UnifiedAlerting,
 		FeatureToggles:   featureToggles,
 		SQLStore:         sqlstore,
 		Logger:           log.New("ngalert.dbstore"),
 		FolderService:    folderService,
-		AccessControl:    access,
 		DashboardService: dashboards,
+		AccessControl:    ac,
 	}
 	if err := folderService.RegisterService(store); err != nil {
 		return nil, err

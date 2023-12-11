@@ -16,9 +16,9 @@ import {
   GroupByOperationID,
   GroupByTransformerOptions,
 } from '@grafana/data/src/transformations/transformers/groupBy';
-import { Stack } from '@grafana/experimental';
-import { useTheme2, Select, StatsPicker, InlineField } from '@grafana/ui';
+import { useTheme2, Select, StatsPicker, InlineField, Stack } from '@grafana/ui';
 
+import { getTransformationContent } from '../docs/getTransformationContent';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 interface FieldProps {
@@ -84,7 +84,7 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
 
   return (
     <InlineField className={styles.label} label={fieldName} grow shrink>
-      <Stack gap={0.5} direction="row" wrap={false}>
+      <Stack gap={0.5} direction="row">
         <div className={styles.operation}>
           <Select options={options} value={config?.operation} placeholder="Ignored" onChange={onChange} isClearable />
         </div>
@@ -134,4 +134,5 @@ export const groupByTransformRegistryItem: TransformerRegistryItem<GroupByTransf
     TransformerCategory.CalculateNewFields,
     TransformerCategory.Reformat,
   ]),
+  help: getTransformationContent(DataTransformerID.groupBy).helperDocs,
 };

@@ -277,6 +277,8 @@ describe('sortVariableValues', () => {
       ${[{ text: '1' }, { text: null }, { text: '2' }]} | ${VariableSort.numericalDesc}                   | ${[{ text: '2' }, { text: '1' }, { text: null }]}
       ${[{ text: 'a' }, { text: null }, { text: 'b' }]} | ${VariableSort.alphabeticalCaseInsensitiveAsc}  | ${[{ text: null }, { text: 'a' }, { text: 'b' }]}
       ${[{ text: 'a' }, { text: null }, { text: 'b' }]} | ${VariableSort.alphabeticalCaseInsensitiveDesc} | ${[{ text: 'b' }, { text: 'a' }, { text: null }]}
+      ${[{ text: '1' }, { text: null }, { text: '2' }]} | ${VariableSort.naturalAsc}                      | ${[{ text: null }, { text: '1' }, { text: '2' }]}
+      ${[{ text: '1' }, { text: null }, { text: '2' }]} | ${VariableSort.naturalDesc}                     | ${[{ text: '2' }, { text: '1' }, { text: null }]}
     `(
       'then it should sort the options correctly without throwing (sortOrder:$sortOrder)',
       ({ options, sortOrder, expected }) => {
@@ -285,6 +287,19 @@ describe('sortVariableValues', () => {
         expect(result).toEqual(expected);
       }
     );
+  });
+
+  describe('when using natural sort', () => {
+    it.each`
+      options                                                                         | sortOrder                  | expected
+      ${[{ text: '12-lax01' }, { text: '4-sjc01' }, { text: '21-lhr01' }]}            | ${VariableSort.naturalAsc} | ${[{ text: '4-sjc01' }, { text: '12-lax01' }, { text: '21-lhr01' }]}
+      ${[{ text: 'lax01' }, { text: 'sjc01' }, { text: 'sjc02' }, { text: 'lhr01' }]} | ${VariableSort.naturalAsc} | ${[{ text: 'lax01' }, { text: 'lhr01' }, { text: 'sjc01' }, { text: 'sjc02' }]}
+      ${[{ text: '4m10' }, { text: '4m2' }, { text: '4m1' }, { text: '4m4' }]}        | ${VariableSort.naturalAsc} | ${[{ text: '4m1' }, { text: '4m2' }, { text: '4m4' }, { text: '4m10' }]}
+    `('then it should sort like humans would naturally sort', ({ options, sortOrder, expected }) => {
+      const result = sortVariableValues(options, sortOrder);
+
+      expect(result).toEqual(expected);
+    });
   });
 });
 

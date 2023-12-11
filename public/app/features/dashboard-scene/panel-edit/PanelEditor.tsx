@@ -1,5 +1,6 @@
 import * as H from 'history';
 
+import { NavIndex } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
@@ -17,8 +18,11 @@ import {
 import { DashboardScene } from '../scene/DashboardScene';
 import { getDashboardUrl } from '../utils/urlBuilders';
 
+import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
 import { PanelOptionsPane } from './PanelOptionsPane';
+import { PanelVizTypePicker } from './PanelVizTypePicker';
+import { VizPanelManager } from './VizPanelManager';
 
 export interface PanelEditorState extends SceneObjectState {
   body: SceneObject;
@@ -31,7 +35,7 @@ export interface PanelEditorState extends SceneObjectState {
 
   dashboardRef: SceneObjectRef<DashboardScene>;
   sourcePanelRef: SceneObjectRef<VizPanel>;
-  panelRef: SceneObjectRef<VizPanel>;
+  panelRef: SceneObjectRef<VizPanelManager>;
 }
 
 export class PanelEditor extends SceneObjectBase<PanelEditorState> {
@@ -54,10 +58,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     getUrlSyncManager().initSync(this);
   }
 
-  public getPageNav(location: H.Location) {
+  public getPageNav(location: H.Location, navIndex: NavIndex) {
     return {
       text: 'Edit panel',
-      parentItem: this.state.dashboardRef.resolve().getPageNav(location),
+      parentItem: this.state.dashboardRef.resolve().getPageNav(location, navIndex),
     };
   }
 
@@ -110,24 +114,31 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
 export function buildPanelEditScene(dashboard: DashboardScene, panel: VizPanel): PanelEditor {
   const panelClone = panel.clone();
+  const vizPanelMgr = new VizPanelManager(panelClone);
   const dashboardStateCloned = sceneUtils.cloneSceneObjectState(dashboard.state);
 
   return new PanelEditor({
     dashboardRef: dashboard.getRef(),
     sourcePanelRef: panel.getRef(),
-    panelRef: panelClone.getRef(),
+    panelRef: vizPanelMgr.getRef(),
     controls: dashboardStateCloned.controls,
     $variables: dashboardStateCloned.$variables,
     $timeRange: dashboardStateCloned.$timeRange,
     body: new SplitLayout({
       direction: 'row',
-      primary: new SceneFlexLayout({
+      primary: new SplitLayout({
         direction: 'column',
-        children: [panelClone],
+        primary: new SceneFlexLayout({
+          direction: 'column',
+          children: [panelClone],
+        }),
+        secondary: new SceneFlexItem({
+          body: new PanelDataPane({ panelRef: panelClone.getRef() }),
+        }),
       }),
-      secondary: new SceneFlexItem({
-        width: '300px',
-        body: new PanelOptionsPane(panelClone),
+      secondary: new SceneFlexLayout({
+        direction: 'column',
+        children: [new PanelOptionsPane(vizPanelMgr), new PanelVizTypePicker(vizPanelMgr)],
       }),
     }),
   });

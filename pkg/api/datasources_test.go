@@ -233,47 +233,52 @@ func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
 	}{
 		{
 			desc: "We should only allow for headers being X-Prom-Label-Policy",
-			data: datasources.TeamHTTPHeaders{tenantID: []datasources.TeamHTTPHeader{
-				{
-					Header: "Authorization",
-					Value:  "foo!=bar",
-				},
-			},
-			},
+			data: datasources.TeamHTTPHeaders{
+				Headers: datasources.TeamHeaders{
+					tenantID: []datasources.TeamHTTPHeader{
+						{
+							Header: "Authorization",
+							Value:  "foo!=bar",
+						},
+					},
+				}},
 			want: 400,
 		},
 		{
 			desc: "Allowed header but no team id",
-			data: datasources.TeamHTTPHeaders{"": []datasources.TeamHTTPHeader{
-				{
-					Header: "X-Prom-Label-Policy",
-					Value:  "foo=bar",
+			data: datasources.TeamHTTPHeaders{
+				Headers: datasources.TeamHeaders{"": []datasources.TeamHTTPHeader{
+					{
+						Header: "X-Prom-Label-Policy",
+						Value:  "foo=bar",
+					},
 				},
-			},
-			},
+				}},
 			want: 400,
 		},
 		{
 			desc: "Allowed team id and header name with invalid header values ",
-			data: datasources.TeamHTTPHeaders{tenantID: []datasources.TeamHTTPHeader{
-				{
-					Header: "X-Prom-Label-Policy",
-					Value:  "Bad value",
+			data: datasources.TeamHTTPHeaders{
+				Headers: datasources.TeamHeaders{tenantID: []datasources.TeamHTTPHeader{
+					{
+						Header: "X-Prom-Label-Policy",
+						Value:  "Bad value",
+					},
 				},
-			},
-			},
+				}},
 			want: 400,
 		},
 		// Complete valid case, with team id, header name and header value
 		{
 			desc: "Allowed header and header values ",
-			data: datasources.TeamHTTPHeaders{tenantID: []datasources.TeamHTTPHeader{
-				{
-					Header: "X-Prom-Label-Policy",
-					Value:  `1234:{ name!="value",foo!~"bar" }`,
+			data: datasources.TeamHTTPHeaders{
+				Headers: datasources.TeamHeaders{tenantID: []datasources.TeamHTTPHeader{
+					{
+						Header: "X-Prom-Label-Policy",
+						Value:  `1234:{ name!="value",foo!~"bar" }`,
+					},
 				},
-			},
-			},
+				}},
 			want: 200,
 		},
 	}
@@ -286,6 +291,10 @@ func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
 				Cfg:                  setting.NewCfg(),
 				Features:             featuremgmt.WithFeatures(featuremgmt.FlagTeamHttpHeaders),
 				accesscontrolService: actest.FakeService{},
+				AccessControl: actest.FakeAccessControl{
+					ExpectedEvaluate: true,
+					ExpectedErr:      nil,
+				},
 			}
 			sc := setupScenarioContext(t, fmt.Sprintf("/api/datasources/%s", tenantID))
 			hs.Cfg.AuthProxyEnabled = true
@@ -300,7 +309,9 @@ func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
 					Type:     "test",
 					JsonData: jsonData,
 				})
-				c.SignedInUser = authedUserWithPermissions(1, 1, []ac.Permission{})
+				c.SignedInUser = authedUserWithPermissions(1, 1, []ac.Permission{
+					{Action: datasources.ActionPermissionsWrite, Scope: datasources.ScopeAll},
+				})
 				return hs.AddDataSource(c)
 			}))
 
@@ -481,16 +492,20 @@ func TestAPI_datasources_AccessControl(t *testing.T) {
 	}
 }
 
-// TeamHTTPHeaderValueRegexMatch returns a regex that can be used to check
-func TestTeamHTTPHeaderValueRegexMatch(t *testing.T) {
+func TestValidateLBACHeader(t *testing.T) {
 	testcases := []struct {
 		desc            string
 		teamHeaderValue string
 		want            bool
 	}{
 		{
-			desc:            "Should be valid regex match for team headervalue",
+			desc:            "Should allow valid header",
 			teamHeaderValue: `1234:{ name!="value",foo!~"bar" }`,
+			want:            true,
+		},
+		{
+			desc:            "Should allow valid selector",
+			teamHeaderValue: `1234:{ name!="value",foo!~"bar/baz.foo" }`,
 			want:            true,
 		},
 		{
@@ -501,7 +516,7 @@ func TestTeamHTTPHeaderValueRegexMatch(t *testing.T) {
 	}
 	for _, tc := range testcases {
 		t.Run(tc.desc, func(t *testing.T) {
-			assert.Equal(t, tc.want, teamHTTPHeaderValueRegexMatch(tc.teamHeaderValue))
+			assert.Equal(t, tc.want, validateLBACHeader(tc.teamHeaderValue))
 		})
 	}
 }

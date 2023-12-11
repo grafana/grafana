@@ -1,10 +1,17 @@
 package api
 
 import (
+	"bytes"
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
 	"errors"
 	"fmt"
+	"math/big"
 	"net"
 	"net/http"
 	"os"
@@ -12,9 +19,14 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	"github.com/grafana/grafana/pkg/services/anonymous"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -34,7 +46,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
-	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -91,7 +102,6 @@ import (
 	starApi "github.com/grafana/grafana/pkg/services/star/api"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/store"
-	"github.com/grafana/grafana/pkg/services/store/entity/httpentitystore"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/team"
 	tempUser "github.com/grafana/grafana/pkg/services/temp_user"
@@ -144,7 +154,6 @@ type HTTPServer struct {
 	Live                         *live.GrafanaLive
 	LivePushGateway              *pushhttp.Gateway
 	StorageService               store.StorageService
-	httpEntityStore              httpentitystore.HTTPEntityStore
 	SearchV2HTTPService          searchV2.SearchHTTPService
 	ContextHandler               *contexthandler.ContextHandler
 	LoggerMiddleware             loggermw.Logger
@@ -186,7 +195,6 @@ type HTTPServer struct {
 	dashboardVersionService      dashver.Service
 	PublicDashboardsApi          *publicdashboardsApi.Api
 	starService                  star.Service
-	Kinds                        *corekind.Base
 	playlistService              playlist.Service
 	apiKeyService                apikey.Service
 	kvStore                      kvstore.KVStore
@@ -205,6 +213,10 @@ type HTTPServer struct {
 	authnService         authn.Service
 	starApi              *starApi.API
 	promRegister         prometheus.Registerer
+	promGatherer         prometheus.Gatherer
+	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
+	namespacer           request.NamespaceMapper
+	anonService          anonymous.Service
 }
 
 type ServerOptions struct {
@@ -229,7 +241,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService datasources.DataSourceService, queryDataService query.Service, pluginFileStore plugins.FileStore,
 	serviceaccountsService serviceaccounts.Service,
-	authInfoService login.AuthInfoService, storageService store.StorageService, httpEntityStore httpentitystore.HTTPEntityStore,
+	authInfoService login.AuthInfoService, storageService store.StorageService,
 	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService folder.Service,
 	dsGuardian guardian.DatasourceGuardianProvider, alertNotificationService *alerting.AlertNotificationService,
@@ -237,7 +249,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
-	starService star.Service, csrfService csrf.Service, basekinds *corekind.Base,
+	starService star.Service, csrfService csrf.Service,
 	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore,
 	secretsMigrator secrets.Migrator, secretsPluginManager plugins.SecretsPluginManager, secretsService secrets.Service,
 	secretsPluginMigrator spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
@@ -245,9 +257,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	loginAttemptService loginAttempt.Service, orgService org.Service, teamService team.Service,
 	accesscontrolService accesscontrol.Service, navTreeService navtree.Service,
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService, oauthTokenService oauthtoken.OAuthTokenService,
-	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service,
-	starApi *starApi.API, promRegister prometheus.Registerer,
-
+	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service, promGatherer prometheus.Gatherer,
+	starApi *starApi.API, promRegister prometheus.Registerer, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, anonService anonymous.Service,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -307,7 +318,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		secretsMigrator:              secretsMigrator,
 		secretsPluginMigrator:        secretsPluginMigrator,
 		secretsStore:                 secretsStore,
-		httpEntityStore:              httpEntityStore,
 		DataSourcesService:           dataSourcesService,
 		searchUsersService:           searchUsersService,
 		queryDataService:             queryDataService,
@@ -328,7 +338,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		dashboardPermissionsService:  dashboardPermissionsService,
 		dashboardVersionService:      dashboardVersionService,
 		starService:                  starService,
-		Kinds:                        basekinds,
 		playlistService:              playlistService,
 		apiKeyService:                apiKeyService,
 		kvStore:                      kvStore,
@@ -348,6 +357,10 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		pluginsCDNService:            pluginsCDNService,
 		starApi:                      starApi,
 		promRegister:                 promRegister,
+		promGatherer:                 promGatherer,
+		clientConfigProvider:         clientConfigProvider,
+		namespacer:                   request.GetNamespaceMapper(cfg),
+		anonService:                  anonService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -355,7 +368,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	hs.registerRoutes()
 
 	// Register access control scope resolver for annotations
-	hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo))
+	hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo, features, dashboardService, folderService))
 
 	if err := hs.declareFixedRoles(); err != nil {
 		return nil, err
@@ -426,7 +439,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 			return err
 		}
 	case setting.HTTP2Scheme, setting.HTTPSScheme:
-		if err := hs.httpSrv.ServeTLS(listener, hs.Cfg.CertFile, hs.Cfg.KeyFile); err != nil {
+		if err := hs.httpSrv.ServeTLS(listener, "", ""); err != nil {
 			if errors.Is(err, http.ErrServerClosed) {
 				hs.log.Debug("server was shutdown gracefully")
 				return nil
@@ -479,21 +492,93 @@ func (hs *HTTPServer) getListener() (net.Listener, error) {
 	}
 }
 
-func (hs *HTTPServer) configureHttps() error {
+func (hs *HTTPServer) selfSignedCert() ([]tls.Certificate, error) {
+	template := &x509.Certificate{
+		IsCA:                  true,
+		BasicConstraintsValid: true,
+		SubjectKeyId:          []byte{1},
+		SerialNumber:          big.NewInt(1),
+		Subject: pkix.Name{
+			CommonName: hs.Cfg.Domain,
+		},
+		NotBefore: time.Now(),
+		NotAfter:  time.Now().AddDate(1, 0, 0),
+		// see http://golang.org/pkg/crypto/x509/#KeyUsage
+		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+		KeyUsage:    x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+	}
+
+	// generate private key
+	privatekey, err := rsa.GenerateKey(rand.Reader, 4096)
+	if err != nil {
+		return nil, fmt.Errorf("error generating tls private key: %w", err)
+	}
+
+	publickey := &privatekey.PublicKey
+
+	// create a self-signed certificate
+	var parent = template
+	certBytes, err := x509.CreateCertificate(rand.Reader, template, parent, publickey, privatekey)
+	if err != nil {
+		return nil, fmt.Errorf("error generating tls self-signed certificate: %w", err)
+	}
+
+	// encode certificate and private key to PEM
+	certPEM := new(bytes.Buffer)
+	_ = pem.Encode(certPEM, &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: certBytes,
+	})
+
+	certPrivKeyPEM := new(bytes.Buffer)
+	_ = pem.Encode(certPrivKeyPEM, &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(privatekey),
+	})
+
+	// create tlsCertificate from generated certificate and private key
+	tlsCert, err := tls.X509KeyPair(certPEM.Bytes(), certPrivKeyPEM.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("error creating tls self-signed certificate: %w", err)
+	}
+
+	return []tls.Certificate{tlsCert}, nil
+}
+
+func (hs *HTTPServer) tlsCertificates() ([]tls.Certificate, error) {
+	// if we don't have either a cert or key specified, generate a self-signed certificate
+	if hs.Cfg.CertFile == "" && hs.Cfg.KeyFile == "" {
+		return hs.selfSignedCert()
+	}
+
 	if hs.Cfg.CertFile == "" {
-		return errors.New("cert_file cannot be empty when using HTTPS")
+		return nil, errors.New("cert_file cannot be empty when using HTTPS")
 	}
 
 	if hs.Cfg.KeyFile == "" {
-		return errors.New("cert_key cannot be empty when using HTTPS")
+		return nil, errors.New("cert_key cannot be empty when using HTTPS")
 	}
 
 	if _, err := os.Stat(hs.Cfg.CertFile); os.IsNotExist(err) {
-		return fmt.Errorf(`cannot find SSL cert_file at %q`, hs.Cfg.CertFile)
+		return nil, fmt.Errorf(`cannot find SSL cert_file at %q`, hs.Cfg.CertFile)
 	}
 
 	if _, err := os.Stat(hs.Cfg.KeyFile); os.IsNotExist(err) {
-		return fmt.Errorf(`cannot find SSL key_file at %q`, hs.Cfg.KeyFile)
+		return nil, fmt.Errorf(`cannot find SSL key_file at %q`, hs.Cfg.KeyFile)
+	}
+
+	tlsCert, err := tls.LoadX509KeyPair(hs.Cfg.CertFile, hs.Cfg.KeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("could not load SSL certificate: %w", err)
+	}
+
+	return []tls.Certificate{tlsCert}, nil
+}
+
+func (hs *HTTPServer) configureHttps() error {
+	tlsCerts, err := hs.tlsCertificates()
+	if err != nil {
+		return err
 	}
 
 	minTlsVersion, err := util.TlsNameToVersion(hs.Cfg.MinTLSVersion)
@@ -510,6 +595,7 @@ func (hs *HTTPServer) configureHttps() error {
 		"configured ciphers", util.TlsCipherIdsToString(tlsCiphers))
 
 	tlsCfg := &tls.Config{
+		Certificates: tlsCerts,
 		MinVersion:   minTlsVersion,
 		CipherSuites: tlsCiphers,
 	}
@@ -521,20 +607,9 @@ func (hs *HTTPServer) configureHttps() error {
 }
 
 func (hs *HTTPServer) configureHttp2() error {
-	if hs.Cfg.CertFile == "" {
-		return errors.New("cert_file cannot be empty when using HTTP2")
-	}
-
-	if hs.Cfg.KeyFile == "" {
-		return errors.New("cert_key cannot be empty when using HTTP2")
-	}
-
-	if _, err := os.Stat(hs.Cfg.CertFile); os.IsNotExist(err) {
-		return fmt.Errorf("cannot find SSL cert_file at %q", hs.Cfg.CertFile)
-	}
-
-	if _, err := os.Stat(hs.Cfg.KeyFile); os.IsNotExist(err) {
-		return fmt.Errorf("cannot find SSL key_file at %q", hs.Cfg.KeyFile)
+	tlsCerts, err := hs.tlsCertificates()
+	if err != nil {
+		return err
 	}
 
 	minTlsVersion, err := util.TlsNameToVersion(hs.Cfg.MinTLSVersion)
@@ -548,6 +623,7 @@ func (hs *HTTPServer) configureHttp2() error {
 		"configured ciphers", util.TlsCipherIdsToString(tlsCiphers))
 
 	tlsCfg := &tls.Config{
+		Certificates: tlsCerts,
 		MinVersion:   minTlsVersion,
 		CipherSuites: tlsCiphers,
 		NextProtos:   []string{"h2", "http/1.1"},
@@ -646,7 +722,7 @@ func (hs *HTTPServer) metricsEndpoint(ctx *web.Context) {
 	}
 
 	promhttp.
-		HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{EnableOpenMetrics: true}).
+		HandlerFor(hs.promGatherer, promhttp.HandlerOpts{EnableOpenMetrics: true}).
 		ServeHTTP(ctx.Resp, ctx.Req)
 }
 

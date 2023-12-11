@@ -22,6 +22,7 @@ export const TransformationOperationRows = ({
     <>
       {configs.map((t, i) => {
         const uiConfig = standardTransformersRegistry.getIfExists(t.transformation.id);
+
         if (!uiConfig) {
           return null;
         }

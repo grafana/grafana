@@ -1,8 +1,9 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SegmentInput, useStyles2, InlineLabel, Icon } from '@grafana/ui';
+import { InlineLabel, SegmentInput, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { ToolbarButtonVariant } from '@grafana/ui/src/components/ToolbarButton';
 
 import { TraceToLogsTag } from './TraceToLogsSettings';
 
@@ -11,6 +12,8 @@ interface Props {
   onChange: (values: TraceToLogsTag[]) => void;
   id?: string;
 }
+
+const VARIANT = 'none' as ToolbarButtonVariant;
 
 export const TagMappingInput = ({ values, onChange, id }: Props) => {
   const styles = useStyles2(getStyles);
@@ -53,53 +56,57 @@ export const TagMappingInput = ({ values, onChange, id }: Props) => {
                 );
               }}
             />
-            <button
+            <ToolbarButton
               onClick={() => onChange([...values.slice(0, idx), ...values.slice(idx + 1)])}
-              className="gf-form-label query-part"
+              className={cx(styles.removeTag, 'query-part')}
               aria-label="Remove tag"
+              variant={VARIANT}
               type="button"
-            >
-              <Icon name="times" />
-            </button>
+              icon="times"
+            />
+
             {idx === values.length - 1 ? (
-              <button
+              <ToolbarButton
                 onClick={() => onChange([...values, { key: '', value: '' }])}
-                className="gf-form-label query-part"
+                className="query-part"
                 aria-label="Add tag"
                 type="button"
-              >
-                <Icon name="plus" />
-              </button>
+                variant={VARIANT}
+                icon="plus"
+              />
             ) : null}
           </div>
         ))
       ) : (
-        <button
+        <ToolbarButton
+          icon="plus"
           onClick={() => onChange([...values, { key: '', value: '' }])}
-          className="gf-form-label query-part"
+          className="query-part"
           aria-label="Add tag"
           type="button"
-        >
-          <Icon name="plus" />
-        </button>
+          variant={VARIANT}
+        />
       )}
     </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    display: flex;
-    flex-direction: column;
-    gap: ${theme.spacing(0.5)} 0;
-  `,
-  pair: css`
-    display: flex;
-    justify-content: start;
-    align-items: center;
-  `,
-  operator: css`
-    color: ${theme.v1.palette.orange};
-    width: auto;
-  `,
+  wrapper: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: `${theme.spacing(0.5)} 0`,
+  }),
+  pair: css({
+    display: 'flex',
+    justifyContent: 'start',
+    alignItems: 'center',
+  }),
+  operator: css({
+    color: theme.v1.palette.orange,
+    width: 'auto',
+  }),
+  removeTag: css({
+    marginRight: theme.spacing(0.5),
+  }),
 });

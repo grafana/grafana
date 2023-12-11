@@ -10,8 +10,25 @@ import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 import { CloseButton } from './CloseButton';
 
+// todo: barchart? histogram?
+export const enum TooltipHoverMode {
+  // Single mode in TimeSeries, Candlestick, Trend, StateTimeline, Heatmap?
+  xOne,
+  // All mode in TimeSeries, Candlestick, Trend, StateTimeline, Heatmap?
+  xAll,
+  // Single mode in XYChart, Heatmap?
+  xyOne,
+}
+
 interface TooltipPlugin2Props {
   config: UPlotConfigBuilder;
+  hoverMode: TooltipHoverMode;
+
+  // x only
+  queryZoom?: (range: { from: number; to: number }) => void;
+  // y-only, via shiftKey
+  clientZoom?: boolean;
+
   render: (
     u: uPlot,
     dataIdxs: Array<number | null>,
@@ -56,10 +73,15 @@ const INITIAL_STATE: TooltipContainerState = {
   dismiss: () => {},
 };
 
+// min px width that triggers zoom
+const MIN_ZOOM_DIST = 5;
+
+const maybeZoomAction = (e?: MouseEvent | null) => e != null && !e.ctrlKey && !e.metaKey;
+
 /**
  * @alpha
  */
-export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
+export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, queryZoom }: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
 
   const [{ plot, isHovering, isPinned, contents, style, dismiss }, setState] = useReducer(mergeState, INITIAL_STATE);
@@ -67,6 +89,9 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
   const sizeRef = useRef<TooltipContainerSize>();
 
   const styles = useStyles2(getStyles);
+
+  const renderRef = useRef(render);
+  renderRef.current = render;
 
   useLayoutEffect(() => {
     sizeRef.current = {
@@ -86,6 +111,9 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
         }
       }),
     };
+
+    let yZoomed = false;
+    let yDrag = false;
 
     let _plot = plot;
     let _isHovering = isHovering;
@@ -162,7 +190,9 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
         style: _style,
         isPinned: _isPinned,
         isHovering: _isHovering,
-        contents: _isHovering ? render(_plot!, _plot!.cursor.idxs!, closestSeriesIdx, _isPinned, dismiss) : null,
+        contents: _isHovering
+          ? renderRef.current(_plot!, _plot!.cursor.idxs!, closestSeriesIdx, _isPinned, dismiss)
+          : null,
         dismiss,
       };
 
@@ -179,18 +209,128 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
     config.addHook('init', (u) => {
       setState({ plot: (_plot = u) });
 
+      // detect shiftKey and mutate drag mode from x-only to y-only
+      if (clientZoom) {
+        u.over.addEventListener(
+          'mousedown',
+          (e) => {
+            if (!maybeZoomAction(e)) {
+              return;
+            }
+
+            if (e.button === 0 && e.shiftKey) {
+              yDrag = true;
+
+              u.cursor.drag!.x = false;
+              u.cursor.drag!.y = true;
+
+              let onUp = (e: MouseEvent) => {
+                u.cursor.drag!.x = true;
+                u.cursor.drag!.y = false;
+                document.removeEventListener('mouseup', onUp, true);
+              };
+
+              document.addEventListener('mouseup', onUp, true);
+            }
+          },
+          true
+        );
+      }
+
       // this handles pinning
       u.over.addEventListener('click', (e) => {
-        if (_isHovering && !_isPinned && e.target === u.over) {
+        // only pinnable tooltip is visible *and* is within proximity to series/point
+        if (_isHovering && closestSeriesIdx != null && !_isPinned && e.target === u.over) {
           _isPinned = true;
           scheduleRender(true);
         }
       });
     });
 
+    config.addHook('setSelect', (u) => {
+      if (clientZoom || queryZoom != null) {
+        if (maybeZoomAction(u.cursor!.event)) {
+          if (clientZoom && yDrag) {
+            if (u.select.height >= MIN_ZOOM_DIST) {
+              for (let key in u.scales!) {
+                if (key !== 'x') {
+                  const maxY = u.posToVal(u.select.top, key);
+                  const minY = u.posToVal(u.select.top + u.select.height, key);
+
+                  u.setScale(key, { min: minY, max: maxY });
+                }
+              }
+
+              yZoomed = true;
+            }
+
+            yDrag = false;
+          } else if (queryZoom != null) {
+            if (u.select.width >= MIN_ZOOM_DIST) {
+              const minX = u.posToVal(u.select.left, 'x');
+              const maxX = u.posToVal(u.select.left + u.select.width, 'x');
+
+              queryZoom({ from: minX, to: maxX });
+
+              yZoomed = false;
+            }
+          }
+        }
+      }
+
+      // manually hide selected region (since cursor.drag.setScale = false)
+      u.setSelect({ left: 0, width: 0, top: 0, height: 0 }, false);
+    });
+
+    if (clientZoom || queryZoom != null) {
+      config.setCursor({
+        bind: {
+          dblclick: (u) => () => {
+            if (!maybeZoomAction(u.cursor!.event)) {
+              return null;
+            }
+
+            if (clientZoom && yZoomed) {
+              for (let key in u.scales!) {
+                if (key !== 'x') {
+                  // @ts-ignore (this is not typed correctly in uPlot, assigning nulls means auto-scale / reset)
+                  u.setScale(key, { min: null, max: null });
+                }
+              }
+
+              yZoomed = false;
+            } else if (queryZoom != null) {
+              let xScale = u.scales.x;
+
+              const frTs = xScale.min!;
+              const toTs = xScale.max!;
+              const pad = (toTs - frTs) / 2;
+
+              queryZoom({ from: frTs - pad, to: toTs + pad });
+            }
+
+            return null;
+          },
+        },
+      });
+    }
+
+    config.addHook('setData', (u) => {
+      yZoomed = false;
+      yDrag = false;
+    });
+
     // fires on data value hovers/unhovers (before setSeries)
     config.addHook('setLegend', (u) => {
-      let _isHoveringNow = _plot!.cursor.idxs!.some((v) => v != null);
+      let hoveredSeriesIdx = _plot!.cursor.idxs!.findIndex((v, i) => i > 0 && v != null);
+      let _isHoveringNow = hoveredSeriesIdx !== -1;
+
+      // in mode: 2 uPlot won't fire the proximity-based setSeries (below)
+      // so we set closestSeriesIdx here instead
+      // TODO: setSeries only fires for TimeSeries & Trend...not state timeline or statsus history
+      if (hoverMode === TooltipHoverMode.xyOne) {
+        closestSeriesIdx = hoveredSeriesIdx;
+      }
 
       if (_isHoveringNow) {
         // create
@@ -212,12 +352,12 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
     // TODO: we only need this for multi/all mode?
     config.addHook('setSeries', (u, seriesIdx) => {
       // don't jiggle focused series styling when there's only one series
-      const isMultiSeries = u.series.length > 2;
+      // const isMultiSeries = u.series.length > 2;
 
-      if (isMultiSeries && closestSeriesIdx !== seriesIdx) {
-        closestSeriesIdx = seriesIdx;
-        scheduleRender();
-      }
+      // if (hoverModeRef.current === TooltipHoverMode.xAll && closestSeriesIdx !== seriesIdx) {
+      closestSeriesIdx = seriesIdx;
+      scheduleRender();
+      // }
     });
 
     // fires on mousemoves
@@ -303,7 +443,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     whiteSpace: 'pre',
     borderRadius: theme.shape.radius.default,
     position: 'absolute',
-    background: theme.colors.background.secondary,
+    background: theme.colors.background.primary,
+    border: `1px solid ${theme.colors.border.weak}`,
     boxShadow: `0 4px 8px ${theme.colors.background.primary}`,
     userSelect: 'text',
   }),
