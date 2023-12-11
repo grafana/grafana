@@ -10,7 +10,6 @@ import {
   DataQueryRequest,
   LogRowContextQueryDirection,
 } from '@grafana/data';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import {
   CloudWatchSettings,
@@ -25,6 +24,15 @@ import { CloudWatchLogsQuery, LogAction, StartQueryRequest } from '../types';
 import * as rxjsUtils from '../utils/rxjs/increasingInterval';
 
 import { LOG_IDENTIFIER_INTERNAL, LOGSTREAM_IDENTIFIER_INTERNAL } from './CloudWatchLogsQueryRunner';
+
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  getDefaultTimeRange: jest.fn().mockImplementation(() => {
+    const from = dateTime(1111);
+    const to = dateTime(2222);
+    return { from, to, raw: { from, to } };
+  }),
+}));
 
 describe('CloudWatchLogsQueryRunner', () => {
   beforeEach(() => {
@@ -304,16 +312,10 @@ describe('CloudWatchLogsQueryRunner', () => {
       expect(queryMock.mock.calls[0][0]).toEqual(expect.objectContaining({ range: { from, to, raw: { from, to } } }));
     });
 
-    it('should use the time range from the timeSrv if the time range in the options is not available', async () => {
-      const timeSrv = getTimeSrv();
+    it('should use the default time range if the time range in the options is not available', async () => {
       const from = dateTime(1111);
       const to = dateTime(2222);
-      timeSrv.timeRange = jest.fn().mockReturnValue({
-        from,
-        to,
-        raw: { from, to },
-      });
-      const { runner, queryMock } = setupMockedLogsQueryRunner({ timeSrv });
+      const { runner, queryMock } = setupMockedLogsQueryRunner();
       await lastValueFrom(runner.makeLogActionRequest('StartQuery', [genMockCloudWatchLogsRequest()]));
 
       expect(queryMock.mock.calls[0][0].skipQueryCache).toBe(true);

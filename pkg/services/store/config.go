@@ -130,8 +130,6 @@ func newStorage(cfg RootStorageConfig, localWorkCache string) (storageRuntime, e
 	switch cfg.Type {
 	case rootStorageTypeDisk:
 		return newDiskStorage(RootStorageMeta{}, cfg), nil
-	case rootStorageTypeGit:
-		return newGitStorage(RootStorageMeta{}, cfg, localWorkCache), nil
 	}
 
 	return nil, fmt.Errorf("unsupported store: " + cfg.Type)

@@ -416,6 +416,7 @@ type Cfg struct {
 	StackID string
 	Slug    string
 
+	// Deprecated
 	ForceMigration bool
 
 	// Analytics
@@ -1061,6 +1062,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.Env = Env
 	cfg.StackID = valueAsString(iniFile.Section("environment"), "stack_id", "")
 	cfg.Slug = valueAsString(iniFile.Section("environment"), "stack_slug", "")
+	//nolint:staticcheck
 	cfg.ForceMigration = iniFile.Section("").Key("force_migration").MustBool(false)
 	InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
 	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
@@ -1986,16 +1988,17 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 }
 
 // GetContentDeliveryURL returns full content delivery URL with /<edition>/<version> added to URL
-func (cfg *Cfg) GetContentDeliveryURL(prefix string) string {
-	if cfg.CDNRootURL != nil {
-		url := *cfg.CDNRootURL
-		preReleaseFolder := ""
-
-		url.Path = path.Join(url.Path, prefix, preReleaseFolder, cfg.BuildVersion)
-		return url.String() + "/"
+func (cfg *Cfg) GetContentDeliveryURL(prefix string) (string, error) {
+	if cfg.CDNRootURL == nil {
+		return "", nil
 	}
+	if cfg.BuildVersion == "" {
+		return "", errors.New("BuildVersion is not set")
+	}
+	url := *cfg.CDNRootURL
 
-	return ""
+	url.Path = path.Join(url.Path, prefix, cfg.BuildVersion)
+	return url.String() + "/", nil
 }
 
 func (cfg *Cfg) readDataSourcesSettings() {
