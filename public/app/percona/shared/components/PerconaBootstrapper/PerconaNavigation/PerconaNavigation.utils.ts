@@ -19,7 +19,6 @@ import {
   PMM_ALERTING_PERCONA_ALERTS,
   WEIGHTS,
   PMM_ACCESS_ROLE_CREATE_PAGE,
-  PMM_ACCESS_ROLE_EDIT_PAGE,
   PMM_ADD_INSTANCE_CREATE_PAGE,
 } from './PerconaNavigation.constants';
 
@@ -132,8 +131,8 @@ export const addAccessRolesLink = (configNode: NavModelItem) => {
     configNode.children = [
       ...configNode.children.slice(0, usersIdx + 1),
       PMM_ACCESS_ROLES_PAGE,
+      // Add to have a create action for adding a role
       PMM_ACCESS_ROLE_CREATE_PAGE,
-      PMM_ACCESS_ROLE_EDIT_PAGE,
       ...configNode.children.slice(usersIdx + 1),
     ];
   }
