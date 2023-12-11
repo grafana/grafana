@@ -28,7 +28,7 @@ type flagsStorage struct {
 }
 
 func (s *flagsStorage) New() runtime.Object {
-	return &v0alpha1.FeatureFlag{}
+	return resourceInfo.NewFunc()
 }
 
 func (s *flagsStorage) Destroy() {}
@@ -38,11 +38,11 @@ func (s *flagsStorage) NamespaceScoped() bool {
 }
 
 func (s *flagsStorage) GetSingularName() string {
-	return "featureflag"
+	return resourceInfo.GetSingularName()
 }
 
 func (s *flagsStorage) NewList() runtime.Object {
-	return &v0alpha1.FeatureFlagList{}
+	return resourceInfo.NewListFunc()
 }
 
 func (s *flagsStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
@@ -69,6 +69,7 @@ func (s *flagsStorage) Get(ctx context.Context, name string, options *metav1.Get
 
 func toK8sForm(flag featuremgmt.FeatureFlag) v0alpha1.FeatureFlag {
 	return v0alpha1.FeatureFlag{
+		TypeMeta: resourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              flag.Name,
 			CreationTimestamp: metav1.NewTime(flag.Created),

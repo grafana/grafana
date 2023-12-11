@@ -22,11 +22,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// GroupName is the group name for this API.
-const GroupName = "featureflags.grafana.app"
-const VersionID = "v0alpha1"
-
 var _ grafanaapiserver.APIGroupBuilder = (*FeatureFlagAPIBuilder)(nil)
+
+var resourceInfo = v0alpha1.FeatureFlagResourceInfo
 
 // This is used just so wire has something unique to return
 type FeatureFlagAPIBuilder struct {
@@ -44,7 +42,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 	}
 
 	builder := &FeatureFlagAPIBuilder{
-		gv:         schema.GroupVersion{Group: GroupName, Version: VersionID},
+		gv:         resourceInfo.GroupVersion(),
 		features:   features,
 		namespacer: request.GetNamespaceMapper(cfg),
 	}
@@ -56,28 +54,26 @@ func (b *FeatureFlagAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return b.gv
 }
 
-func (b *FeatureFlagAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	scheme.AddKnownTypes(b.gv,
+func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
+	scheme.AddKnownTypes(gv,
 		&v0alpha1.FeatureFlag{},
 		&v0alpha1.FeatureFlagList{},
 		&v0alpha1.FlagConfig{},
 		&v0alpha1.FlagConfigList{},
 		&v0alpha1.ConfiguredFlags{},
 	)
+}
+
+func (b *FeatureFlagAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+	addKnownTypes(scheme, b.gv)
 
 	// Link this version to the internal representation.
 	// This is used for server-side-apply (PATCH), and avoids the error:
 	//   "no kind is registered for the type"
-	scheme.AddKnownTypes(schema.GroupVersion{
+	addKnownTypes(scheme, schema.GroupVersion{
 		Group:   b.gv.Group,
 		Version: runtime.APIVersionInternal,
-	},
-		&v0alpha1.FeatureFlag{},
-		&v0alpha1.FeatureFlagList{},
-		&v0alpha1.FlagConfig{},
-		&v0alpha1.FlagConfigList{},
-		&v0alpha1.ConfiguredFlags{},
-	)
+	})
 
 	// If multiple versions exist, then register conversions from zz_generated.conversion.go
 	// if err := playlist.RegisterConversions(scheme); err != nil {
@@ -92,15 +88,15 @@ func (b *FeatureFlagAPIBuilder) GetAPIGroupInfo(
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
 ) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(GroupName, scheme, metav1.ParameterCodec, codecs)
+	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP, scheme, metav1.ParameterCodec, codecs)
 
 	strategy := grafanaregistry.NewStrategy(scheme)
 	store := &genericregistry.Store{
-		NewFunc:                   func() runtime.Object { return &v0alpha1.FeatureFlag{} },
-		NewListFunc:               func() runtime.Object { return &v0alpha1.FeatureFlagList{} },
+		NewFunc:                   resourceInfo.NewFunc,
+		NewListFunc:               resourceInfo.NewListFunc,
 		PredicateFunc:             grafanaregistry.Matcher,
-		DefaultQualifiedResource:  b.gv.WithResource("featureflags").GroupResource(),
-		SingularQualifiedResource: b.gv.WithResource("featureflag").GroupResource(),
+		DefaultQualifiedResource:  resourceInfo.GroupResource(),
+		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
 		CreateStrategy:            strategy,
 		UpdateStrategy:            strategy,
 		DeleteStrategy:            strategy,
@@ -125,7 +121,7 @@ func (b *FeatureFlagAPIBuilder) GetAPIGroupInfo(
 		})
 
 	storage := map[string]rest.Storage{}
-	storage["featureflags"] = &flagsStorage{
+	storage[resourceInfo.StoragePath()] = &flagsStorage{
 		store:    store,
 		features: b.features,
 	}
@@ -135,7 +131,7 @@ func (b *FeatureFlagAPIBuilder) GetAPIGroupInfo(
 		DefaultQualifiedResource: b.gv.WithResource("config").GroupResource(),
 	}
 
-	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
 	return &apiGroupInfo, nil
 }
 

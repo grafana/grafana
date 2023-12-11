@@ -2,8 +2,22 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/grafana/grafana/pkg/apis"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+)
+
+const (
+	GROUP      = "featureflags.grafana.app"
+	VERSION    = "v0alpha1"
+	APIVERSION = GROUP + "/" + VERSION
+)
+
+var FeatureFlagResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
+	"playlists", "playlist", "Playlist",
+	func() runtime.Object { return &FeatureFlag{} },
+	func() runtime.Object { return &FeatureFlagList{} },
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
