@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { usePopperTooltip } from 'react-popper-tooltip';
 import { connect, ConnectedProps } from 'react-redux';
 
@@ -8,11 +8,13 @@ import { useStyles2 } from '@grafana/ui';
 import { StoreState, useDispatch } from 'app/types';
 
 import { TutorialTooltip } from './TutorialTooltip';
-import { nextStep } from './slice';
+import { addCompletedAction, nextStep } from './slice';
 import { resolveRequiredActions, waitForElement } from './tutorialProvider.utils';
+import { RequiredAction } from './types';
 
 const spotlightOffset = 0;
-const STARTING_ZINDEX = 1061;
+// const STARTING_ZINDEX = 1061;
+const STARTING_ZINDEX = 10610;
 const MODAL_OPEN_ZINDEX = 1000;
 
 type TutorialOverlayProps = ConnectedProps<typeof connector> & {
@@ -36,6 +38,13 @@ const TutorialOverlayComponent = ({
   const currentTutorial = availableTutorials.find((t) => t.id === currentTutorialId);
   const step = currentStepIndex !== null && currentTutorial ? currentTutorial.steps[currentStepIndex] : null;
   const isTransitioning = stepTransition === `transitioning`;
+
+  const onActionComplete = useCallback(
+    (requiredAction: RequiredAction) => {
+      dispatch(addCompletedAction(requiredAction));
+    },
+    [dispatch]
+  );
 
   const popper = usePopperTooltip({
     visible: showTooltip,
@@ -104,8 +113,9 @@ const TutorialOverlayComponent = ({
         scrollParent = element.closest('.scrollbar-view');
         setStyles().then(() => {
           if (step.requiredActions) {
-            resolveRequiredActions(step.requiredActions).then(() => {
+            resolveRequiredActions(step.requiredActions, onActionComplete).then(() => {
               dispatch(nextStep());
+              setShowTooltip(false);
             });
           }
 
@@ -123,7 +133,7 @@ const TutorialOverlayComponent = ({
       document.removeEventListener('mousemove', mouseMoveCallback);
       triggerRef?.removeEventListener(`transitionend`, transitionend);
     };
-  }, [dispatch, step, triggerRef]);
+  }, [dispatch, onActionComplete, step, triggerRef]);
 
   return (
     <>

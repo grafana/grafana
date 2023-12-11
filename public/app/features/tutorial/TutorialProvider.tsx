@@ -1,17 +1,38 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 
+import { locationService } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
+import { changingPasswordTutorial } from 'app/features/tutorial/tutorials/changing-password';
 import { StoreState, useDispatch } from 'app/types';
 
 import { TutorialOverlay } from './TutorialOverlay';
 import { TUTORIAL_EXIT_EVENT } from './constants';
-import { exitCurrentTutorial } from './slice';
+import { addTutorial, exitCurrentTutorial, startTutorial } from './slice';
 
-const TutorialProviderComponent = ({ currentTutorialId, ...props }: ConnectedProps<typeof connector>) => {
+const TutorialProviderComponent = ({ currentTutorialId }: ConnectedProps<typeof connector>) => {
   const dispatch = useDispatch();
   const keyupUseDismissedIssue = useRef(false);
   const [showExitTutorialModal, setShowExitTutorialModal] = useState(false);
+  const { search } = useLocation();
+
+  useEffect(() => {
+    if (!currentTutorialId) {
+      setShowExitTutorialModal(false);
+    }
+  }, [currentTutorialId]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(search);
+    const tutorialId = params.get('startTutorial');
+
+    if (tutorialId) {
+      locationService.replace({ search: `` });
+      dispatch(addTutorial(changingPasswordTutorial));
+      dispatch(startTutorial(changingPasswordTutorial.id));
+    }
+  }, [dispatch, search]);
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {

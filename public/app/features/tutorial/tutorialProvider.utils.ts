@@ -1,4 +1,6 @@
 // import { locationService } from '@grafana/runtime';
+import { debounce } from 'lodash';
+
 import { TUTORIAL_EXIT_EVENT } from './constants';
 import type {
   Attribute,
@@ -14,13 +16,17 @@ export function waitForElement<T extends Element = Element>(selector: string, ti
   return new Promise((resolve, reject) => {
     let stopWaiting: NodeJS.Timeout;
 
-    const resolver = (element: T) =>
-      hasElementStoppedAnimating(element).then(() => {
+    const resolver = (element: T) => {
+      if (!isElementInView(element)) {
+        element.scrollIntoView({ behavior: 'auto' });
+      }
+      return hasElementStoppedAnimating(element).then(() => {
         requestAnimationFrame(() => {
           console.log(`${selector}: Found element `);
           resolve(element);
         });
       });
+    };
 
     const rejecter = () => {
       clearInterval(interval);
@@ -87,28 +93,52 @@ function hasElementStoppedAnimating(element: Element) {
   });
 }
 
-export async function resolveRequiredActions(requiredActions: RequiredAction[]) {
+function isElementInView(element: Element) {
+  const { top, bottom } = element.getBoundingClientRect();
+  const windowHeight = window.innerHeight;
+
+  return top > 0 && bottom < windowHeight;
+}
+
+export async function resolveRequiredActions(
+  requiredActions: RequiredAction[],
+  onComplete: (action: RequiredAction) => void
+) {
   for (const action of requiredActions) {
-    await setUpRequiredAction(action);
+    await setUpRequiredAction(action, onComplete);
   }
 
   return true;
 }
 
-function setUpRequiredAction(action: RequiredAction) {
+function setUpRequiredAction(action: RequiredAction, onComplete: (value: RequiredAction) => void) {
   return new Promise((resolve) => {
     const { target } = action;
-    waitForElement(target).then((targetElement) => {
+
+    const handleComplete = () => {
+      onComplete(action);
+      resolve(true);
+    };
+
+    waitForElement<HTMLElement>(target).then((targetElement) => {
       if (isClickAction(action)) {
-        setupClickAction(targetElement, resolve);
+        setupClickAction(targetElement, handleComplete);
       }
 
       if (isChangeAction(action)) {
-        setupChangeAction(targetElement, action, resolve);
+        setupChangeAction(targetElement, action, handleComplete);
+
+        requestAnimationFrame(() => {
+          targetElement.focus();
+        });
       }
 
       if (isInputAction(action)) {
-        setupInputAction(targetElement, action, resolve);
+        setupInputAction(targetElement, action, handleComplete);
+
+        requestAnimationFrame(() => {
+          targetElement.focus();
+        });
       }
     });
   });
@@ -128,7 +158,7 @@ function setupClickAction(targetElement: Element, onComplete: (value: unknown) =
   targetElement.addEventListener('click', handleOnComplete, { once: true });
 }
 
-function setupChangeAction(targetElement: Element, action: ChangeAction, onComplete: (value: unknown) => void) {
+function setupChangeAction(targetElement: HTMLElement, action: ChangeAction, onComplete: (value: unknown) => void) {
   const observer = new MutationObserver((mutationsList, observer) => {
     for (let mutation of mutationsList) {
       const newValue = targetElement.getAttribute(action.attribute.name);
@@ -148,17 +178,21 @@ function setupChangeAction(targetElement: Element, action: ChangeAction, onCompl
   document.addEventListener(TUTORIAL_EXIT_EVENT, observer.disconnect.bind(observer));
 }
 
-function setupInputAction(targetElement: Element, action: InputAction, onComplete: (value: unknown) => void) {
+function setupInputAction(targetElement: HTMLElement, action: InputAction, onComplete: (value: unknown) => void) {
   const removeOnComplete = () => {
     targetElement.removeEventListener('input', listener);
   };
   document.addEventListener(TUTORIAL_EXIT_EVENT, removeOnComplete);
-
-  const listener = (e: any) => {
-    if (checkRegEx(e.target.value, action.regEx)) {
+  const debouncedInput = debounce((e) => {
+    if (checkRegEx(e.target?.value, action.regEx)) {
       onComplete(true);
       document.removeEventListener(TUTORIAL_EXIT_EVENT, removeOnComplete);
     }
+  }, 500); // 300ms delay
+
+  // @ts-expect-error
+  const listener = (e) => {
+    debouncedInput(e);
   };
 
   targetElement.addEventListener('input', listener);

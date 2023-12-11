@@ -3,12 +3,13 @@ import { Dispatch, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { RootState } from 'app/store/configureStore';
 
 import { checkSkipConditions, getFurthestStep, getTutorial } from './slice.utils';
-import type { Tutorial } from './types';
+import type { RequiredAction, Tutorial } from './types';
 
 type TutorialsState = {
   availableTutorials: Tutorial[];
   currentTutorialId: Tutorial['id'] | null;
   currentStepIndex: number | null;
+  currentCompletedActions: RequiredAction[];
   stepTransition: StepTransition;
 };
 
@@ -18,6 +19,7 @@ const initialState: TutorialsState = {
   availableTutorials: [],
   currentTutorialId: null,
   currentStepIndex: null,
+  currentCompletedActions: [],
   stepTransition: `none`,
 };
 
@@ -36,12 +38,16 @@ const tutorialsSlice = createSlice({
     addTutorials(state, action: { payload: Tutorial[] }) {
       state.availableTutorials = [...state.availableTutorials, ...action.payload];
     },
+    addCompletedAction(state, action: { payload: RequiredAction }) {
+      state.currentCompletedActions = [...state.currentCompletedActions, action.payload];
+    },
     setCurrentTutorialId(state, action: { payload: Tutorial['id'] }) {
       state.currentTutorialId = action.payload;
     },
     exitCurrentTutorial(state) {
       state.currentTutorialId = null;
       state.currentStepIndex = null;
+      state.currentCompletedActions = [];
     },
     resetTutorials(state) {
       state.availableTutorials = [];
@@ -68,11 +74,13 @@ const tutorialsSlice = createSlice({
 
       if (action.payload < currentTutorial.steps.length) {
         state.currentStepIndex = action.payload;
+        state.currentCompletedActions = [];
       }
 
       if (action.payload >= currentTutorial.steps.length) {
         state.currentTutorialId = null;
         state.currentStepIndex = null;
+        state.currentCompletedActions = [];
       }
 
       state.stepTransition = `none`;
@@ -93,7 +101,7 @@ export const nextStep = createAsyncThunk<number, void, { state: RootState }>(
 );
 
 const { setCurrentTutorialId } = tutorialsSlice.actions;
-export const { addTutorial, addTutorials, removeTutorial, exitCurrentTutorial, resetTutorials } =
+export const { addCompletedAction, addTutorial, addTutorials, removeTutorial, exitCurrentTutorial, resetTutorials } =
   tutorialsSlice.actions;
 
 export const startTutorial = (tutorialId: Tutorial['id']) => (dispatch: Dispatch, getState: () => RootState) => {

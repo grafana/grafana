@@ -1,19 +1,20 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, Icon, type IconName, IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { TutorialProgress } from 'app/features/tutorial/TutorialProgress';
 import { StoreState, useDispatch } from 'app/types';
 
 import { exitCurrentTutorial, nextStep } from './slice';
-import { type Step } from './types';
+import { RequiredAction, type Step } from './types';
 
 const TutorialTooltipComponent = ({
   availableTutorials,
   currentTutorialId,
   currentStepIndex,
+  currentCompletedActions,
 }: ConnectedProps<typeof connector>) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
@@ -27,7 +28,7 @@ const TutorialTooltipComponent = ({
         <StepTitle title={step.title} />
         <StepContent content={step.content} />
         <Stack alignItems={`center`} justifyContent={`space-between`}>
-          <StepActions isLastStep={isLastStep} step={step} />
+          <StepActions currentCompletedActions={currentCompletedActions} isLastStep={isLastStep} step={step} />
           <TutorialProgress currentStep={currentStepIndex} totalSteps={currentTutorial.steps.length} />
         </Stack>
         <IconButton
@@ -73,18 +74,67 @@ const StepContent = ({ content }: { content: Step['content'] }) => {
   return <div>{content}</div>;
 };
 
-const StepActions = ({ isLastStep, step }: { isLastStep: boolean; step: Step }) => {
+type StepActionsProps = {
+  currentCompletedActions: RequiredAction[];
+  isLastStep: boolean;
+  step: Step;
+};
+
+const StepActions = ({ currentCompletedActions, isLastStep, step }: StepActionsProps) => {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!step.requiredActions && buttonRef.current) {
+      buttonRef.current.focus();
+    }
+  }, [step.requiredActions]);
 
   if (step.requiredActions) {
-    return <div className={styles.required}>{`Required action${isLastStep ? ' to finish' : ``}`}</div>;
+    const greaterThan1 = step.requiredActions.length > 1;
+    const plural = greaterThan1 ? 's' : '';
+    return (
+      <Stack direction={`column`}>
+        <div className={styles.required}>{`${step.requiredActions.length} Required action${plural}${
+          isLastStep ? ' to finish' : ``
+        }`}</div>
+        <RequiredActionsProgess
+          currentCompletedActions={currentCompletedActions}
+          requiredActions={step.requiredActions}
+        />
+      </Stack>
+    );
   }
 
   return (
     <div>
-      <Button onClick={() => dispatch(nextStep())}>{isLastStep ? 'Finish' : 'Next'}</Button>
+      <Button onClick={() => dispatch(nextStep())} ref={buttonRef}>
+        {isLastStep ? 'Finish' : 'Next'}
+      </Button>
     </div>
+  );
+};
+
+type RequiredActionsProgressProps = {
+  currentCompletedActions: RequiredAction[];
+  requiredActions: RequiredAction[];
+};
+
+const iconMap: Record<string, IconName> = {
+  click: 'check',
+  input: `keyboard`,
+  change: `arrow-down`,
+};
+
+const RequiredActionsProgess = ({ currentCompletedActions, requiredActions }: RequiredActionsProgressProps) => {
+  return (
+    <Stack>
+      {requiredActions.map((action) => {
+        const isCompleted = currentCompletedActions.includes(action);
+        return <Icon key={action.target} name={iconMap[action.action]} color={isCompleted ? `green` : `initial`} />;
+      })}
+    </Stack>
   );
 };
 

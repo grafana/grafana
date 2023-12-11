@@ -7,6 +7,11 @@ export type Tutorial = {
   description: string;
   author: string;
   steps: Step[];
+  tags?: {
+    area?: string;
+    highlight?: string;
+    type?: string;
+  };
   furthestStepCompleted?: number;
 };
 
