@@ -165,7 +165,6 @@ guaranteed because plugin developers can override this functionality. The follow
   <tr>
     <td>
       <ul>
-        <li>CloudWatch</li>
         <li>Graphite</li>
       </ul>
     </td>

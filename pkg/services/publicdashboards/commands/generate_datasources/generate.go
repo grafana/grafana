@@ -12,11 +12,6 @@ import (
 
 var grafanaDatasources = []string{expr.DatasourceType, "datasource"}
 
-// there are some datasources that have backend flag as true but don't call /ds/query endpoint
-var unsupportedDataSourcesMap = map[string]bool{
-	"cloudwatch": true,
-}
-
 type listPluginResponse struct {
 	Items []struct {
 		Slug string `json:"slug"`
@@ -45,7 +40,7 @@ func GetCompatibleDatasources(baseUrl string) ([]string, error) {
 	// we only consider a datasource to be supported when alerting and backend are both true
 	var supported []string
 	for _, datasource := range datasources {
-		if datasource.Alerting && datasource.Backend && !unsupportedDataSourcesMap[datasource.Slug] {
+		if datasource.Alerting && datasource.Backend {
 			supported = append(supported, datasource.Slug)
 		}
 	}
