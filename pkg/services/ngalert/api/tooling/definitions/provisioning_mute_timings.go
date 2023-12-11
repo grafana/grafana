@@ -97,7 +97,7 @@ func (mt *MuteTimeInterval) ResourceID() string {
 }
 
 type MuteTimeIntervalExport struct {
-	OrgID                   int64
+	OrgID                   int64 `json:"orgId" yaml:"orgId"`
 	config.MuteTimeInterval `json:",inline" yaml:",inline"`
 }
 
