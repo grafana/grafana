@@ -270,7 +270,7 @@ func (l *LibraryElementService) getConnectionsHandler(c *contextmodel.ReqContext
 // Returns a library element with the given name.
 //
 // Responses:
-// 200: getLibraryElementResponse
+// 200: getLibraryElementArrayResponse
 // 401: unauthorisedError
 // 404: notFoundError
 // 500: internalServerError
@@ -446,6 +446,12 @@ type GetLibraryElementsResponse struct {
 type GetLibraryElementResponse struct {
 	// in: body
 	Body model.LibraryElementResponse `json:"body"`
+}
+
+// swagger:response getLibraryElementArrayResponse
+type GetLibraryElementArrayResponse struct {
+	// in: body
+	Body model.LibraryElementArrayResponse `json:"body"`
 }
 
 // swagger:response getLibraryElementConnectionsResponse
