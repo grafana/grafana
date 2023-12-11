@@ -2,7 +2,18 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana/pkg/apis"
 )
+
+const (
+	GROUP      = "example.grafana.app"
+	VERSION    = "v0alpha1"
+	APIVERSION = GROUP + "/" + VERSION
+)
+
+var RuntimeResourceInfo = apis.NewResourceInfo(GROUP, VERSION, "runtime", "runtime", "RuntimeInfo")
+var DummyResourceInfo = apis.NewResourceInfo(GROUP, VERSION, "dummy", "dummy", "DummyResource")
 
 // Mirrors the info exposed in "github.com/grafana/grafana/pkg/setting"
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

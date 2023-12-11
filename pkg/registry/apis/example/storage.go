@@ -45,10 +45,7 @@ func newDeploymentInfoStorage(gv schema.GroupVersion, scheme *runtime.Scheme) *s
 	return &staticStorage{
 		Store: store,
 		info: example.RuntimeInfo{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: APIVersion,
-				Kind:       "DeploymentInfo",
-			},
+			TypeMeta:              example.RuntimeResourceInfo.TypeMeta(),
 			BuildVersion:          setting.BuildVersion,
 			BuildCommit:           setting.BuildCommit,
 			BuildBranch:           setting.BuildBranch,
@@ -72,7 +69,7 @@ func (s *staticStorage) NamespaceScoped() bool {
 }
 
 func (s *staticStorage) GetSingularName() string {
-	return "runtime"
+	return example.RuntimeResourceInfo.GetSingularName()
 }
 
 func (s *staticStorage) NewList() runtime.Object {
