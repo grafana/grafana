@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name */
 import { CancelToken } from 'axios';
-import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { Column, Row } from 'react-table';
 
 import { AppEvents } from '@grafana/data';
@@ -26,12 +26,12 @@ import { formatBackupMode } from '../../Backup.utils';
 import { useRecurringCall } from '../../hooks/recurringCall.hook';
 import { DetailedDate } from '../DetailedDate';
 import { Status } from '../Status';
-import { LocationType, StorageLocation } from '../StorageLocations/StorageLocations.types';
+import { LocationType } from '../StorageLocations/StorageLocations.types';
 
 import { DATA_INTERVAL, LIST_ARTIFACTS_CANCEL_TOKEN, RESTORE_CANCEL_TOKEN } from './BackupInventory.constants';
 import { BackupInventoryService } from './BackupInventory.service';
 import { getStyles } from './BackupInventory.styles';
-import { Backup } from './BackupInventory.types';
+import { BackupRow } from './BackupInventory.types';
 import { BackupInventoryActions } from './BackupInventoryActions';
 import { BackupInventoryDetails } from './BackupInventoryDetails';
 import { BackupLogsModal } from './BackupLogsModal/BackupLogsModal';
@@ -41,19 +41,18 @@ export const BackupInventory: FC = () => {
   const [pending, setPending] = useState(true);
   const [deletePending, setDeletePending] = useState(false);
   const [restoreModalVisible, setRestoreModalVisible] = useState(false);
-  const [selectedBackup, setSelectedBackup] = useState<Backup | null>(null);
+  const [selectedBackup, setSelectedBackup] = useState<BackupRow | null>(null);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [logsModalVisible, setLogsModalVisible] = useState(false);
-  const [data, setData] = useState<Backup[]>([]);
+  const [data, setData] = useState<BackupRow[]>([]);
   const dispatch = useAppDispatch();
   const [restoreErrors, setRestoreErrors] = useState<ApiVerboseError[]>([]);
-  const backupLocationMap = useRef<Record<string, StorageLocation | undefined>>({});
   const [triggerTimeout] = useRecurringCall();
   const [generateToken] = useCancelToken();
   const { result: locations = [] } = useSelector(getBackupLocations);
 
   const columns = useMemo(
-    (): Array<Column<Backup>> => [
+    (): Array<Column<BackupRow>> => [
       {
         Header: Messages.backupInventory.table.columns.status,
         accessor: 'status',
@@ -77,7 +76,7 @@ export const BackupInventory: FC = () => {
       },
       {
         Header: Messages.backupInventory.table.columns.vendor,
-        accessor: ({ vendor }: Backup) => DATABASE_LABELS[vendor],
+        accessor: ({ vendor }: BackupRow) => DATABASE_LABELS[vendor],
         width: '150px',
       },
       {
@@ -97,7 +96,7 @@ export const BackupInventory: FC = () => {
         width: '250px',
         Cell: ({ row, value }) => (
           <span>
-            {value} ({backupLocationMap.current[row.values.id]?.type})
+            {value} ({row.original.location?.type})
           </span>
         ),
       },
@@ -117,21 +116,21 @@ export const BackupInventory: FC = () => {
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [backupLocationMap]
+    []
   );
   const styles = useStyles2(getStyles);
 
-  const onRestoreClick = (backup: Backup) => {
+  const onRestoreClick = (backup: BackupRow) => {
     setSelectedBackup(backup);
     setRestoreModalVisible(true);
   };
 
-  const onDeleteClick = (backup: Backup) => {
+  const onDeleteClick = (backup: BackupRow) => {
     setSelectedBackup(backup);
     setDeleteModalVisible(true);
   };
 
-  const onLogClick = (backup: Backup) => {
+  const onLogClick = (backup: BackupRow) => {
     setSelectedBackup(backup);
     setLogsModalVisible(true);
   };
@@ -166,15 +165,12 @@ export const BackupInventory: FC = () => {
 
       try {
         const backups = await BackupInventoryService.list(generateToken(LIST_ARTIFACTS_CANCEL_TOKEN));
+        const backupsWithLocation = backups.map<BackupRow>((backup) => ({
+          ...backup,
+          location: locations.find((location) => location.locationID === backup.locationId),
+        }));
 
-        backups.forEach((backup) => {
-          if (!backupLocationMap.current[backup.id]) {
-            backupLocationMap.current[backup.id] = locations.find(
-              (location) => location.locationID === backup.locationId
-            );
-          }
-        });
-        setData(backups);
+        setData(backupsWithLocation);
       } catch (e) {
         if (isApiCancelError(e)) {
           return;
@@ -213,7 +209,7 @@ export const BackupInventory: FC = () => {
   );
 
   const renderSelectedSubRow = React.useCallback(
-    (row: Row<Backup>) => (
+    (row: Row<BackupRow>) => (
       <BackupInventoryDetails
         name={row.original.name}
         status={row.original.status}
@@ -224,7 +220,7 @@ export const BackupInventory: FC = () => {
     []
   );
 
-  const onBackupClick = (backup: Backup | null) => {
+  const onBackupClick = (backup: BackupRow | null) => {
     if (backup) {
       locationService.push(`/backup${backup.id}/edit`);
     } else {
@@ -246,7 +242,7 @@ export const BackupInventory: FC = () => {
   }, [getData]);
 
   return (
-    <Page navId='backup-inventory'>
+    <Page navId="backup-inventory">
       <Page.Contents>
         <FeatureLoader featureName={Messages.backupManagement} featureSelector={featureSelector}>
           <div className={styles.addWrapper}>
@@ -262,12 +258,12 @@ export const BackupInventory: FC = () => {
             pendingRequest={pending}
             autoResetExpanded={false}
             renderExpandedRow={renderSelectedSubRow}
-            getRowId={useCallback((row: Backup) => row.id, [])}
+            getRowId={useCallback((row: BackupRow) => row.id, [])}
           ></Table>
           {restoreModalVisible && (
             <RestoreBackupModal
               backup={selectedBackup}
-              location={selectedBackup ? backupLocationMap.current[selectedBackup.id] : undefined}
+              location={selectedBackup?.location}
               isVisible
               restoreErrors={restoreErrors}
               onClose={handleClose}
@@ -285,9 +281,9 @@ export const BackupInventory: FC = () => {
               onDelete={handleDelete}
               initialForceValue={true}
               loading={deletePending}
-              showForce={!!selectedBackup && backupLocationMap.current[selectedBackup.id]?.type !== LocationType.CLIENT}
+              showForce={!!selectedBackup && selectedBackup.location?.type !== LocationType.CLIENT}
             >
-              {!!selectedBackup && backupLocationMap.current[selectedBackup.id]?.type === LocationType.CLIENT && (
+              {!!selectedBackup && selectedBackup.location?.type === LocationType.CLIENT && (
                 <Alert title="">{Messages.backupInventory.deleteWarning}</Alert>
               )}
             </DeleteModal>

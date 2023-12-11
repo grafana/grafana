@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 
+import { wrapWithGrafanaContextMock } from 'app/percona/shared/helpers/testUtils';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types';
 
@@ -23,7 +24,7 @@ describe('StorageLocations', () => {
           },
         } as StoreState)}
       >
-        <StorageLocations />
+        {wrapWithGrafanaContextMock(<StorageLocations />)}
       </Provider>
     );
 
@@ -47,7 +48,7 @@ describe('StorageLocations', () => {
           },
         } as StoreState)}
       >
-        <StorageLocations />
+        {wrapWithGrafanaContextMock(<StorageLocations />)}
       </Provider>
     );
 
@@ -78,7 +79,7 @@ describe('StorageLocations', () => {
             },
           } as StoreState)}
         >
-          <StorageLocations />
+          {wrapWithGrafanaContextMock(<StorageLocations />)}
         </Provider>
       )
     );
