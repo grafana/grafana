@@ -1425,10 +1425,6 @@
     "is_paused": {
      "type": "boolean"
     },
-    "namespace_id": {
-     "format": "int64",
-     "type": "integer"
-    },
     "namespace_uid": {
      "type": "string"
     },
@@ -4333,6 +4329,7 @@
    "type": "object"
   },
   "gettableAlert": {
+   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -4388,14 +4385,12 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
    "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4444,14 +4439,12 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
    "type": "array"
   },
   "integration": {
-   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
