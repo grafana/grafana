@@ -1,4 +1,4 @@
-package social
+package connectors
 
 import (
 	"bytes"
@@ -12,20 +12,24 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
+	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
-	GenericOAuthProviderName = "generic_oauth"
-
 	nameAttributePathKey    = "name_attribute_path"
 	loginAttributePathKey   = "login_attribute_path"
 	idTokenAttributeNameKey = "id_token_attribute_name" // #nosec G101 not a hardcoded credential
 )
 
 var ExtraGenericOAuthSettingKeys = []string{nameAttributePathKey, loginAttributePathKey, idTokenAttributeNameKey, teamIdsKey, allowedOrganizationsKey}
+
+var _ social.SocialConnector = (*SocialGenericOAuth)(nil)
+var _ ssosettings.Reloadable = (*SocialGenericOAuth)(nil)
 
 type SocialGenericOAuth struct {
 	*SocialBase
@@ -44,15 +48,10 @@ type SocialGenericOAuth struct {
 	skipOrgRoleSync      bool
 }
 
-func NewGenericOAuthProvider(settings map[string]any, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGenericOAuth, error) {
-	info, err := CreateOAuthInfoFromKeyValues(settings)
-	if err != nil {
-		return nil, err
-	}
-
-	config := createOAuthConfig(info, cfg, GenericOAuthProviderName)
+func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager) *SocialGenericOAuth {
+	config := createOAuthConfig(info, cfg, social.GenericOAuthProviderName)
 	provider := &SocialGenericOAuth{
-		SocialBase:           newSocialBase(GenericOAuthProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:           newSocialBase(social.GenericOAuthProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		apiUrl:               info.ApiUrl,
 		teamsUrl:             info.TeamsUrl,
 		emailAttributeName:   info.EmailAttributeName,
@@ -70,7 +69,19 @@ func NewGenericOAuthProvider(settings map[string]any, cfg *setting.Cfg, features
 		// skipOrgRoleSync: info.SkipOrgRoleSync
 	}
 
-	return provider, nil
+	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
+		ssoSettings.RegisterReloadable(social.GenericOAuthProviderName, provider)
+	}
+
+	return provider
+}
+
+func (s *SocialGenericOAuth) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
+	return nil
+}
+
+func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	return nil
 }
 
 // TODOD: remove this in the next PR and use the isGroupMember from social.go
@@ -151,7 +162,7 @@ func (info *UserInfoJson) String() string {
 		info.Name, info.DisplayName, info.Login, info.Username, info.Email, info.Upn, info.Attributes)
 }
 
-func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
+func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
 	s.log.Debug("Getting user info")
 	toCheck := make([]*UserInfoJson, 0, 2)
 
@@ -162,7 +173,7 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 		toCheck = append(toCheck, apiData)
 	}
 
-	userInfo := &BasicUserInfo{}
+	userInfo := &social.BasicUserInfo{}
 	for _, data := range toCheck {
 		s.log.Debug("Processing external user info", "source", data.source, "data", data)
 
@@ -249,7 +260,7 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 	return userInfo, nil
 }
 
-func (s *SocialGenericOAuth) GetOAuthInfo() *OAuthInfo {
+func (s *SocialGenericOAuth) GetOAuthInfo() *social.OAuthInfo {
 	return s.info
 }
 

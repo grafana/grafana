@@ -132,7 +132,7 @@ A new layout option is available when rendering reports: the grid layout. With t
 
 The grid layout is also available for the [Export dashboard as PDF]({{< relref "../dashboards/share-dashboards-panels#export-dashboard-as-pdf" >}}) feature.
 
-{{< figure src="/static/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" alt="Report in grid layout" >}}
 
 ### Report time range
 
