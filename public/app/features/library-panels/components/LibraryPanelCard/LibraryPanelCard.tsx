@@ -56,12 +56,12 @@ const LibraryPanelCardComponent = ({ libraryPanel, onClick, onDelete, showSecond
 
 const LibraryPanelCardSkeleton: SkeletonComponent<Pick<Props, 'showSecondaryActions'>> = ({
   showSecondaryActions,
-  skeletonProps,
+  rootProps,
 }) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <PanelTypeCard.Skeleton hasDelete={showSecondaryActions} {...skeletonProps}>
+    <PanelTypeCard.Skeleton hasDelete={showSecondaryActions} {...rootProps}>
       <Skeleton containerClassName={styles.metaContainer} width={80} />
     </PanelTypeCard.Skeleton>
   );

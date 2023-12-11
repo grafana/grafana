@@ -88,12 +88,12 @@ const PanelTypeCardSkeleton: SkeletonComponent<React.PropsWithChildren<SkeletonP
   children,
   hasDescription,
   hasDelete,
-  skeletonProps,
+  rootProps,
 }) => {
   const styles = useStyles2(getStyles);
   const skeletonStyles = useStyles2(getSkeletonStyles);
   return (
-    <div className={styles.item} {...skeletonProps}>
+    <div className={styles.item} {...rootProps}>
       <Skeleton className={cx(styles.img, skeletonStyles.image)} width={IMAGE_SIZE} height={IMAGE_SIZE} />
 
       <div className={styles.itemContent}>

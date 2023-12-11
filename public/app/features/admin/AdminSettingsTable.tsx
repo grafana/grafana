@@ -35,9 +35,9 @@ const AdminSettingsTableComponent = ({ settings }: Props) => {
 // note: don't want to put this in render function else it will get regenerated
 const randomValues = new Array(50).fill(null).map(() => Math.random());
 
-const AdminSettingsTableSkeleton: SkeletonComponent = ({ skeletonProps }) => {
+const AdminSettingsTableSkeleton: SkeletonComponent = ({ rootProps }) => {
   return (
-    <table className="filter-table" {...skeletonProps}>
+    <table className="filter-table" {...rootProps}>
       <tbody>
         {randomValues.map((randomValue, index) => {
           const isSection = index === 0 || randomValue > 0.9;

@@ -75,10 +75,10 @@ function AdminOrgsTableComponent({ orgs, onDelete }: Props) {
   );
 }
 
-const AdminOrgsTableSkeleton: SkeletonComponent = ({ skeletonProps }) => {
+const AdminOrgsTableSkeleton: SkeletonComponent = ({ rootProps }) => {
   const styles = useStyles2(getSkeletonStyles);
   return (
-    <table className="filter-table" {...skeletonProps}>
+    <table className="filter-table" {...rootProps}>
       {getTableHeader()}
       <tbody>
         {new Array(3).fill(null).map((_, index) => (

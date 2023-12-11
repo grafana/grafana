@@ -22,7 +22,7 @@ interface SkeletonProps {
   /**
    * Spread these props at the root of your skeleton to handle animation logic
    */
-  skeletonProps: {
+  rootProps: {
     style: React.CSSProperties;
   };
 }
@@ -41,7 +41,7 @@ export const attachSkeleton = <C extends object, P>(Component: C, Skeleton: Skel
     return (
       <Skeleton
         {...props}
-        skeletonProps={{
+        rootProps={{
           style: skeletonAnimation,
         }}
       />

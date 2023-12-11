@@ -39,10 +39,10 @@ const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, cla
 });
 BadgeComponent.displayName = 'Badge';
 
-const BadgeSkeleton: SkeletonComponent = ({ skeletonProps }) => {
+const BadgeSkeleton: SkeletonComponent = ({ rootProps }) => {
   const styles = useStyles2(getSkeletonStyles);
 
-  return <Skeleton width={60} height={22} containerClassName={styles.container} {...skeletonProps} />;
+  return <Skeleton width={60} height={22} containerClassName={styles.container} {...rootProps} />;
 };
 
 export const Badge = attachSkeleton(BadgeComponent, BadgeSkeleton);

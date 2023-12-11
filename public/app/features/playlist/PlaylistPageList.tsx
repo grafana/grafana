@@ -31,10 +31,10 @@ const PlaylistPageListComponent = ({ playlists, setStartPlaylist, setPlaylistToD
   );
 };
 
-const PlaylistPageListSkeleton: SkeletonComponent = ({ skeletonProps }) => {
+const PlaylistPageListSkeleton: SkeletonComponent = ({ rootProps }) => {
   const styles = useStyles2(getStyles);
   return (
-    <div data-testid="playlist-page-list-skeleton" className={styles.list} {...skeletonProps}>
+    <div data-testid="playlist-page-list-skeleton" className={styles.list} {...rootProps}>
       <PlaylistCard.Skeleton />
       <PlaylistCard.Skeleton />
       <PlaylistCard.Skeleton />

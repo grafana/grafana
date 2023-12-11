@@ -57,10 +57,10 @@ const TagListComponent = memo(
 );
 TagListComponent.displayName = 'TagList';
 
-const TagListSkeleton: SkeletonComponent = ({ skeletonProps }) => {
+const TagListSkeleton: SkeletonComponent = ({ rootProps }) => {
   const styles = useStyles2(getSkeletonStyles);
   return (
-    <div className={styles.container} {...skeletonProps}>
+    <div className={styles.container} {...rootProps}>
       <Tag.Skeleton />
       <Tag.Skeleton />
     </div>

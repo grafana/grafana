@@ -163,11 +163,11 @@ const ServiceAccountListItemComponent = memo(
 );
 ServiceAccountListItemComponent.displayName = 'ServiceAccountListItem';
 
-const ServiceAccountsListItemSkeleton: SkeletonComponent = ({ skeletonProps }) => {
+const ServiceAccountsListItemSkeleton: SkeletonComponent = ({ rootProps }) => {
   const styles = useStyles2(getSkeletonStyles);
 
   return (
-    <tr {...skeletonProps}>
+    <tr {...rootProps}>
       <td className="width-4 text-center">
         <Skeleton containerClassName={styles.blockSkeleton} circle width={25} height={25} />
       </td>

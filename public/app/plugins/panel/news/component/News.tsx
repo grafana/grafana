@@ -50,13 +50,13 @@ function NewsComponent({ width, showImage, data, index }: NewsItemProps) {
 const NewsSkeleton: SkeletonComponent<Pick<NewsItemProps, 'width' | 'showImage'>> = ({
   width,
   showImage,
-  skeletonProps,
+  rootProps,
 }) => {
   const styles = useStyles2(getStyles);
   const useWideLayout = width > 600;
 
   return (
-    <div className={cx(styles.item, useWideLayout && styles.itemWide)} {...skeletonProps}>
+    <div className={cx(styles.item, useWideLayout && styles.itemWide)} {...rootProps}>
       {showImage && (
         <Skeleton
           containerClassName={cx(styles.socialImage, useWideLayout && styles.socialImageWide)}

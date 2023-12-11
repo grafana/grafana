@@ -40,13 +40,13 @@ function PluginListItemComponent({ plugin, pathName, displayMode = PluginListDis
 
 const PluginListItemSkeleton: SkeletonComponent<Pick<Props, 'displayMode'>> = ({
   displayMode = PluginListDisplayMode.Grid,
-  skeletonProps,
+  rootProps,
 }) => {
   const styles = useStyles2(getStyles);
   const isList = displayMode === PluginListDisplayMode.List;
 
   return (
-    <div className={cx(styles.container, { [styles.list]: isList })} {...skeletonProps}>
+    <div className={cx(styles.container, { [styles.list]: isList })} {...rootProps}>
       <Skeleton
         containerClassName={cx(
           styles.pluginLogo,

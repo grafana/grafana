@@ -63,10 +63,10 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
   );
 };
 
-const PlaylistCardSkeleton: SkeletonComponent = ({ skeletonProps }) => {
+const PlaylistCardSkeleton: SkeletonComponent = ({ rootProps }) => {
   const skeletonStyles = useStyles2(getSkeletonStyles);
   return (
-    <Card {...skeletonProps}>
+    <Card {...rootProps}>
       <Card.Heading>
         <Skeleton width={140} />
       </Card.Heading>

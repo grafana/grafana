@@ -41,10 +41,10 @@ const SnapshotListTableRowComponent = ({ snapshot, onRemove }: Props) => {
   );
 };
 
-const SnapshotListTableRowSkeleton: SkeletonComponent = ({ skeletonProps }) => {
+const SnapshotListTableRowSkeleton: SkeletonComponent = ({ rootProps }) => {
   const styles = useStyles2(getSkeletonStyles);
   return (
-    <tr {...skeletonProps}>
+    <tr {...rootProps}>
       <td>
         <Skeleton width={80} />
       </td>

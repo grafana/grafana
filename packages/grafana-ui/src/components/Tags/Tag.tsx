@@ -51,9 +51,9 @@ const TagComponent = forwardRef<HTMLElement, Props>(({ name, onClick, icon, clas
 });
 TagComponent.displayName = 'Tag';
 
-const TagSkeleton: SkeletonComponent = ({ skeletonProps }) => {
+const TagSkeleton: SkeletonComponent = ({ rootProps }) => {
   const styles = useStyles2(getSkeletonStyles);
-  return <Skeleton width={60} height={22} containerClassName={styles.container} {...skeletonProps} />;
+  return <Skeleton width={60} height={22} containerClassName={styles.container} {...rootProps} />;
 };
 
 export const Tag = attachSkeleton(TagComponent, TagSkeleton);
