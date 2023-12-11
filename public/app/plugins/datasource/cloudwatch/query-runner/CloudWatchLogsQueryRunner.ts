@@ -28,10 +28,10 @@ import {
   LogRowContextOptions,
   LogRowContextQueryDirection,
   LogRowModel,
+  getDefaultTimeRange,
   rangeUtil,
 } from '@grafana/data';
 import { config, FetchError } from '@grafana/runtime';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import {
@@ -64,7 +64,6 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
   constructor(
     instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
     templateSrv: TemplateSrv,
-    private readonly timeSrv: TimeSrv,
     queryFn: (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>
   ) {
     super(instanceSettings, templateSrv, queryFn);
@@ -186,7 +185,6 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
             await addDataLinksToLogsResponse(
               dataQueryResponse,
               options,
-              this.timeSrv.timeRange(),
               this.replaceVariableAndDisplayWarningIfMulti.bind(this),
               this.expandVariableToArray.bind(this),
               this.getActualRegion.bind(this),
@@ -312,7 +310,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     queryParams: CloudWatchLogsRequest[],
     options?: DataQueryRequest<CloudWatchQuery>
   ): Observable<DataFrame[]> {
-    const range = options?.range || this.timeSrv.timeRange();
+    const range = options?.range || getDefaultTimeRange();
 
     const requestParams: DataQueryRequest<CloudWatchLogsQuery> = {
       ...options,

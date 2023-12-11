@@ -25,10 +25,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardStore "github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	datasourcesService "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardsStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
@@ -320,12 +323,21 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	cfg.PublicDashboardsEnabled = true
 	ac := acmock.New()
 	ws := publicdashboardsService.ProvideServiceWrapper(store)
-	service := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac, ws)
-	pubdash, err := service.Create(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
+	folderStore := folderimpl.ProvideDashboardFolderStore(db)
+	dashPermissionService := acmock.NewMockedPermissionsService()
+	dashService, err := service.ProvideDashboardServiceImpl(
+		cfg, dashboardStoreService, folderStore, nil,
+		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), dashPermissionService, ac,
+		foldertest.NewFakeService(), nil,
+	)
+	require.NoError(t, err)
+
+	pds := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac, ws, dashService)
+	pubdash, err := pds.Create(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
 	require.NoError(t, err)
 
 	// setup test server
-	server := setupTestServer(t, cfg, service, anonymousUser, true)
+	server := setupTestServer(t, cfg, pds, anonymousUser, true)
 
 	resp := callAPI(server, http.MethodPost,
 		fmt.Sprintf("/api/public/dashboards/%s/panels/1/query", pubdash.AccessToken),

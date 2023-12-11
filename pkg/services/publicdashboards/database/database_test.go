@@ -162,36 +162,6 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 	})
 }
 
-func TestIntegrationFindDashboard(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	var sqlStore db.DB
-	var cfg *setting.Cfg
-	var dashboardStore dashboards.Store
-	var publicdashboardStore *PublicDashboardStoreImpl
-	var savedDashboard *dashboards.Dashboard
-
-	setup := func() {
-		sqlStore, cfg = db.InitTestDBwithCfg(t)
-		quotaService := quotatest.New(false, nil)
-		store, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
-		require.NoError(t, err)
-		dashboardStore = store
-		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
-		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true)
-	}
-
-	t.Run("FindDashboard can get original dashboard by uid", func(t *testing.T) {
-		setup()
-
-		dashboard, err := publicdashboardStore.FindDashboard(context.Background(), savedDashboard.OrgID, savedDashboard.UID)
-
-		require.NoError(t, err)
-		require.Equal(t, savedDashboard.UID, dashboard.UID)
-	})
-}
-
 func TestIntegrationExistsEnabledByAccessToken(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
