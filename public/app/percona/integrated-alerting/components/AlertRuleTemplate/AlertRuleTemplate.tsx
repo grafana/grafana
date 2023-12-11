@@ -122,20 +122,22 @@ export const AlertRuleTemplate: FC = () => {
   }, [pageSize, pageIndex]);
 
   return (
-    <Page navModel={navModel}>
+    <Page
+      navModel={navModel}
+      actions={
+        <Button
+          size="md"
+          icon="plus-square"
+          fill="text"
+          onClick={handleAddButton}
+          data-testid="alert-rule-template-add-modal-button"
+        >
+          {Messages.alertRuleTemplate.addAction}
+        </Button>
+      }
+    >
       <Page.Contents>
         <FeatureLoader featureName={Messages.alerting} featureSelector={featureSelector}>
-          <div className={styles.actionsWrapper}>
-            <Button
-              size="md"
-              icon="plus-square"
-              fill="text"
-              onClick={handleAddButton}
-              data-testid="alert-rule-template-add-modal-button"
-            >
-              {Messages.alertRuleTemplate.addAction}
-            </Button>
-          </div>
           <AddAlertRuleTemplateModal
             isVisible={addModalVisible}
             setVisible={setAddModalVisible}
