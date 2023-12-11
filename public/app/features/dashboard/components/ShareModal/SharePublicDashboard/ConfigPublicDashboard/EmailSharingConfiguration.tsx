@@ -56,9 +56,9 @@ const EmailList = ({
 
   const isLoading = isDeleteLoading || isReshareLoading;
 
-  const onDeleteEmail = (recipientUid: string) => {
+  const onDeleteEmail = (recipientUid: string, recipientEmail: string) => {
     DashboardInteractions.revokePublicDashboardEmailClicked();
-    deleteEmail({ recipientUid, dashboardUid: dashboardUid, uid: publicDashboardUid });
+    deleteEmail({ recipientUid, recipientEmail, dashboardUid: dashboardUid, uid: publicDashboardUid });
   };
 
   const onReshare = (recipientUid: string) => {
@@ -82,7 +82,7 @@ const EmailList = ({
                   title="Revoke"
                   size="sm"
                   disabled={isLoading}
-                  onClick={() => onDeleteEmail(recipient.uid)}
+                  onClick={() => onDeleteEmail(recipient.uid, recipient.recipient)}
                   data-testid={`${selectors.DeleteEmail}-${idx}`}
                 >
                   Revoke

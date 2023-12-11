@@ -89,7 +89,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 
 	// Replace the default name generation strategy
 	if metaAccessor.GetGenerateName() != "" {
-		k, err := ParseKey(key)
+		k, err := entityStore.ParseKey(key)
 		if err != nil {
 			return err
 		}
@@ -138,18 +138,13 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 // current version of the object to avoid read operation from storage to get it.
 // However, the implementations have to retry in case suggestion is stale.
 func (s *Storage) Delete(ctx context.Context, key string, out runtime.Object, preconditions *storage.Preconditions, validateDeletion storage.ValidateObjectFunc, cachedExistingObject runtime.Object) error {
-	grn, err := keyToGRN(key)
-	if err != nil {
-		return apierrors.NewInternalError(err)
-	}
-
 	previousVersion := ""
 	if preconditions != nil && preconditions.ResourceVersion != nil {
 		previousVersion = *preconditions.ResourceVersion
 	}
 
 	rsp, err := s.store.Delete(ctx, &entityStore.DeleteEntityRequest{
-		GRN:             grn,
+		Key:             key,
 		PreviousVersion: previousVersion,
 	})
 	if err != nil {
@@ -182,17 +177,15 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, objPtr runtime.Object) error {
 	rsp, err := s.store.Read(ctx, &entityStore.ReadEntityRequest{
-		Key:         key,
-		WithMeta:    true,
-		WithBody:    true,
-		WithStatus:  true,
-		WithSummary: true,
+		Key:        key,
+		WithBody:   true,
+		WithStatus: true,
 	})
 	if err != nil {
 		return err
 	}
 
-	if rsp.GRN == nil {
+	if rsp.Key == "" {
 		if opts.IgnoreNotFound {
 			return nil
 		}
@@ -227,8 +220,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	rsp, err := s.store.List(ctx, &entityStore.EntityListRequest{
 		Key:           []string{key},
 		WithBody:      true,
-		WithLabels:    true,
-		WithFields:    true,
+		WithStatus:    true,
 		NextPageToken: opts.Predicate.Continue,
 		Limit:         opts.Predicate.Limit,
 		// TODO push label/field matching down to storage
@@ -339,8 +331,6 @@ func (s *Storage) guaranteedUpdate(
 	if err != nil {
 		return err
 	}
-
-	// e.GRN.ResourceKind = destination.GetObjectKind().GroupVersionKind().Kind
 
 	previousVersion := ""
 	if preconditions != nil && preconditions.ResourceVersion != nil {

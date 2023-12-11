@@ -89,3 +89,16 @@ func ParseNamespace(ns string) (NamespaceInfo, error) {
 	}
 	return info, nil
 }
+
+func OrgIDForList(ctx context.Context) (int64, error) {
+	ns := request.NamespaceValue(ctx)
+	if ns == "" {
+		user, err := appcontext.User(ctx)
+		if user != nil {
+			return user.OrgID, err
+		}
+		return -1, err
+	}
+	info, err := ParseNamespace(ns)
+	return info.OrgID, err
+}
