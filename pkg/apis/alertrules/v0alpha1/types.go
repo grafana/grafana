@@ -4,8 +4,22 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/grafana/grafana/pkg/apis"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+)
+
+const (
+	GROUP      = "alertrules.grafana.app"
+	VERSION    = "v0alpha1"
+	APIVERSION = GROUP + "/" + VERSION
+)
+
+var AlertResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
+	"alertrules", "alertrule", "AlertRule",
+	func() runtime.Object { return &AlertRule{} },
+	func() runtime.Object { return &AlertRuleList{} },
 )
 
 type AlertingState string

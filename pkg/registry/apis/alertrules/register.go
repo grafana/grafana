@@ -31,11 +31,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// GroupName is the group name for this API.
-const GroupName = "alertrules.grafana.app"
-const VersionID = "v0alpha1"
-
 var _ grafanaapiserver.APIGroupBuilder = (*AlertRulesAPIBuilder)(nil)
+
+var resourceInfo = v0alpha1.AlertResourceInfo
 
 // This is used just so wire has something unique to return
 type AlertRulesAPIBuilder struct {
@@ -67,7 +65,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 		log.New("alerting provisioner"))
 
 	builder := &AlertRulesAPIBuilder{
-		gv:          schema.GroupVersion{Group: GroupName, Version: VersionID},
+		gv:          resourceInfo.GroupVersion(),
 		namespacer:  request.GetNamespaceMapper(cfg),
 		ruleService: ruleService,
 	}
@@ -79,24 +77,24 @@ func (b *AlertRulesAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return b.gv
 }
 
-func (b *AlertRulesAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	scheme.AddKnownTypes(b.gv,
+func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
+	scheme.AddKnownTypes(gv,
 		&v0alpha1.AlertRule{},
 		&v0alpha1.AlertRuleList{},
 		&v0alpha1.AlertState{},
 	)
+}
+
+func (b *AlertRulesAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+	addKnownTypes(scheme, b.gv)
 
 	// Link this version to the internal representation.
 	// This is used for server-side-apply (PATCH), and avoids the error:
 	//   "no kind is registered for the type"
-	scheme.AddKnownTypes(schema.GroupVersion{
+	addKnownTypes(scheme, schema.GroupVersion{
 		Group:   b.gv.Group,
 		Version: runtime.APIVersionInternal,
-	},
-		&v0alpha1.AlertRule{},
-		&v0alpha1.AlertRuleList{},
-		&v0alpha1.AlertState{},
-	)
+	})
 
 	// If multiple versions exist, then register conversions from zz_generated.conversion.go
 	// if err := playlist.RegisterConversions(scheme); err != nil {
@@ -111,15 +109,16 @@ func (b *AlertRulesAPIBuilder) GetAPIGroupInfo(
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
 ) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(GroupName, scheme, metav1.ParameterCodec, codecs)
+	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP,
+		scheme, metav1.ParameterCodec, codecs)
 
 	strategy := grafanaregistry.NewStrategy(scheme)
 	store := &genericregistry.Store{
-		NewFunc:                   func() runtime.Object { return &v0alpha1.AlertRule{} },
-		NewListFunc:               func() runtime.Object { return &v0alpha1.AlertRuleList{} },
+		NewFunc:                   resourceInfo.NewFunc,
+		NewListFunc:               resourceInfo.NewListFunc,
 		PredicateFunc:             grafanaregistry.Matcher,
-		DefaultQualifiedResource:  b.gv.WithResource("alertrules").GroupResource(),
-		SingularQualifiedResource: b.gv.WithResource("alertrule").GroupResource(),
+		DefaultQualifiedResource:  resourceInfo.GroupResource(),
+		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
 		CreateStrategy:            strategy,
 		UpdateStrategy:            strategy,
 		DeleteStrategy:            strategy,
@@ -144,14 +143,14 @@ func (b *AlertRulesAPIBuilder) GetAPIGroupInfo(
 		})
 
 	storage := map[string]rest.Storage{}
-	storage["alertrules"] = &alertRuleStorage{
+	storage[resourceInfo.StoragePath()] = &alertRuleStorage{
 		store: store,
 		b:     b,
 	}
-	storage["alertrules/state"] = &ruleStateREST{}
-	storage["alertrules/pause"] = &rulePauseREST{}
+	storage[resourceInfo.StoragePath("state")] = &ruleStateREST{}
+	storage[resourceInfo.StoragePath("pause")] = &rulePauseREST{}
 
-	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
 	return &apiGroupInfo, nil
 }
 

@@ -31,7 +31,7 @@ type alertRuleStorage struct {
 }
 
 func (s *alertRuleStorage) New() runtime.Object {
-	return &v0alpha1.AlertRule{}
+	return resourceInfo.NewFunc()
 }
 
 func (s *alertRuleStorage) Destroy() {}
@@ -41,11 +41,11 @@ func (s *alertRuleStorage) NamespaceScoped() bool {
 }
 
 func (s *alertRuleStorage) GetSingularName() string {
-	return "alertrule"
+	return resourceInfo.GetSingularName()
 }
 
 func (s *alertRuleStorage) NewList() runtime.Object {
-	return &v0alpha1.AlertRuleList{}
+	return resourceInfo.NewListFunc()
 }
 
 func (s *alertRuleStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
@@ -93,6 +93,7 @@ func (s *alertRuleStorage) Get(ctx context.Context, name string, options *metav1
 // TODO!!! defining this is the real work :)  and a query model that feels OK
 func toRuleResource(namespace string, rule *alerting_models.AlertRule, prov alerting_models.Provenance) (*v0alpha1.AlertRule, error) {
 	obj := &v0alpha1.AlertRule{
+		TypeMeta: resourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            rule.UID,
 			Namespace:       namespace,
