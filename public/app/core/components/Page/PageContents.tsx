@@ -12,8 +12,14 @@ interface Props {
   dataTestId?: string;
 }
 
-export const PageContents = ({ isLoading, children, className }: Props) => {
-  let content = className ? <div className={className}>{children}</div> : children;
+export const PageContents = ({ isLoading, children, className, dataTestId }: Props) => {
+  let content = className || dataTestId ? (
+    <div className={className} data-testid={dataTestId}>
+      {children}
+    </div>
+  ) : (
+    children
+  );
 
   return <>{isLoading ? <PageLoader /> : content}</>;
 };
