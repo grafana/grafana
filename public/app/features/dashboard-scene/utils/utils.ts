@@ -1,4 +1,4 @@
-import { IntervalVariableModel } from '@grafana/data';
+import { IntervalVariableModel, TimeZone, dateTime } from '@grafana/data';
 import {
   MultiValueVariable,
   SceneDataTransformer,
@@ -191,4 +191,28 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
 
 export function isPanelClone(key: string) {
   return key.includes('clone');
+}
+
+export function getRenderTimeZone(timeZone: TimeZone): string {
+  const utcOffset = 'UTC' + encodeURIComponent(dateTime().format('Z'));
+
+  if (timeZone === 'utc') {
+    return 'UTC';
+  }
+
+  if (timeZone === 'browser') {
+    if (!window.Intl) {
+      return utcOffset;
+    }
+
+    const dateFormat = window.Intl.DateTimeFormat();
+    const options = dateFormat.resolvedOptions();
+    if (!options.timeZone) {
+      return utcOffset;
+    }
+
+    return options.timeZone;
+  }
+
+  return timeZone;
 }

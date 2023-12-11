@@ -7,6 +7,9 @@ import { InspectTab } from 'app/features/inspector/types';
 
 import { getQueryRunnerFor } from './utils';
 
+export const DEFAULT_WIDTH = 1000;
+export const DEFAULT_HEIGHT = 500;
+
 export interface DashboardUrlOptions {
   uid?: string;
   subPath?: string;
@@ -40,8 +43,8 @@ export function getDashboardUrl(options: DashboardUrlOptions) {
 
     options.updateQuery = {
       ...options.updateQuery,
-      width: 1000,
-      height: 500,
+      width: options.updateQuery?.width ?? DEFAULT_WIDTH,
+      height: options.updateQuery?.height ?? DEFAULT_HEIGHT,
       tz: options.timeZone,
     };
   }

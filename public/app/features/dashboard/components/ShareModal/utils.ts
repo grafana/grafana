@@ -164,4 +164,5 @@ export const shareDashboardType: {
   pdf: 'pdf',
   report: 'report',
   publicDashboard: 'public_dashboard',
+  image: 'image',
 };

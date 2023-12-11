@@ -15,7 +15,7 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
       border: `1px solid ${theme.colors.border.weak}`,
       backgroundClip: 'padding-box',
       outline: 'none',
-      width: '750px',
+      width: '800px',
       maxWidth: '100%',
       left: 0,
       right: 0,

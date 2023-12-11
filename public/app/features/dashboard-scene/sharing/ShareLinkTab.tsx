@@ -1,10 +1,9 @@
 import React from 'react';
 
-import { dateTime, UrlQueryMap } from '@grafana/data';
+import { UrlQueryMap } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, VizPanel, sceneGraph } from '@grafana/scenes';
-import { TimeZone } from '@grafana/schema';
 import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, Switch } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { createShortLink } from 'app/core/utils/shortLinks';
@@ -14,8 +13,10 @@ import { shareDashboardType } from 'app/features/dashboard/components/ShareModal
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardUrl } from '../utils/urlBuilders';
+import { getPanelIdForVizPanel, getRenderTimeZone } from '../utils/utils';
 
 import { SceneShareTabState } from './types';
+
 export interface ShareLinkTabState extends SceneShareTabState, ShareOptions {
   panelRef?: SceneObjectRef<VizPanel>;
   dashboardRef: SceneObjectRef<DashboardScene>;
@@ -60,6 +61,7 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
 
     if (panel) {
       urlParamsUpdate.viewPanel = panel.state.key;
+      urlParamsUpdate.panelId = getPanelIdForVizPanel(panel);
     }
 
     if (useAbsoluteTimeRange) {
@@ -229,28 +231,4 @@ function ShareLinkTabRenderer({ model }: SceneComponentProps<ShareLinkTab>) {
       )}
     </>
   );
-}
-
-function getRenderTimeZone(timeZone: TimeZone): string {
-  const utcOffset = 'UTC' + encodeURIComponent(dateTime().format('Z'));
-
-  if (timeZone === 'utc') {
-    return 'UTC';
-  }
-
-  if (timeZone === 'browser') {
-    if (!window.Intl) {
-      return utcOffset;
-    }
-
-    const dateFormat = window.Intl.DateTimeFormat();
-    const options = dateFormat.resolvedOptions();
-    if (!options.timeZone) {
-      return utcOffset;
-    }
-
-    return options.timeZone;
-  }
-
-  return timeZone;
 }

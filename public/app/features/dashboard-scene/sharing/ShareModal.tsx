@@ -11,6 +11,7 @@ import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { ShareExportTab } from './ShareExportTab';
+import { ShareImageTab } from './ShareImageTab';
 import { ShareLibraryPanelTab } from './ShareLibraryPanelTab';
 import { ShareLinkTab } from './ShareLinkTab';
 import { SharePanelEmbedTab } from './SharePanelEmbedTab';
@@ -60,6 +61,9 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
         tabs.push(new ShareLibraryPanelTab({ panelRef, dashboardRef, modalRef: this.getRef() }));
       }
     }
+
+    // //Add feature toggle enabled check
+    tabs.push(new ShareImageTab({ dashboardRef, panelRef, modalRef: this.getRef() }));
 
     if (Boolean(config.featureToggles['publicDashboards'])) {
       tabs.push(new SharePublicDashboardTab({ dashboardRef, modalRef: this.getRef() }));
