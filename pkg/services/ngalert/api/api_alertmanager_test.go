@@ -571,7 +571,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			permissions: map[int64]map[string][]string{
 				1: {},
 			},
-			expectedStatus: http.StatusUnauthorized,
+			expectedStatus: http.StatusForbidden,
 		},
 		{
 			name:    "new silence, role-based access control is enabled, authorized",
@@ -587,7 +587,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			permissions: map[int64]map[string][]string{
 				1: {accesscontrol.ActionAlertingInstanceCreate: {}},
 			},
-			expectedStatus: http.StatusUnauthorized,
+			expectedStatus: http.StatusForbidden,
 		},
 		{
 			name:    "update silence, role-based access control is enabled, authorized",

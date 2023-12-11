@@ -256,7 +256,8 @@ export const Components = {
         },
       },
     },
-    searchInput: 'search transformations',
+    searchInput: 'data-testid search transformations',
+    noTransformationsMessage: 'data-testid no transformations message',
     addTransformationButton: 'data-testid add transformation button',
   },
   NavBar: {

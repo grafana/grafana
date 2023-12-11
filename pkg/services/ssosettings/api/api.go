@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"crypto/sha1"
 	"encoding/json"
 	"errors"
@@ -12,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -60,7 +62,7 @@ func (api *Api) RegisterAPIEndpoints() {
 }
 
 func (api *Api) listAllProvidersSettings(c *contextmodel.ReqContext) response.Response {
-	providers, err := api.SSOSettingsService.List(c.Req.Context(), c.SignedInUser)
+	providers, err := api.getAuthorizedList(c.Req.Context(), c.SignedInUser)
 	if err != nil {
 		return response.Error(500, "Failed to get providers", err)
 	}
@@ -77,6 +79,31 @@ func (api *Api) listAllProvidersSettings(c *contextmodel.ReqContext) response.Re
 	}
 
 	return response.JSON(http.StatusOK, dtos)
+}
+
+func (api *Api) getAuthorizedList(ctx context.Context, identity identity.Requester) ([]*models.SSOSettings, error) {
+	allProviders, err := api.SSOSettingsService.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var authorizedProviders []*models.SSOSettings
+	for _, provider := range allProviders {
+		ev := ac.EvalPermission(ac.ActionSettingsRead, ac.Scope("settings", "auth."+provider.Provider, "*"))
+		hasAccess, err := api.AccessControl.Evaluate(ctx, identity, ev)
+		if err != nil {
+			api.Log.FromContext(ctx).Error("Failed to evaluate permissions", "error", err)
+			return nil, err
+		}
+
+		if !hasAccess {
+			continue
+		}
+
+		authorizedProviders = append(authorizedProviders, provider)
+	}
+
+	return authorizedProviders, nil
 }
 
 func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Response {
