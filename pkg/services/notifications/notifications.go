@@ -197,6 +197,7 @@ func (ns *NotificationService) SendEmailCommandHandlerSync(ctx context.Context, 
 		AttachedFiles: cmd.AttachedFiles,
 		Subject:       cmd.Subject,
 		ReplyTo:       cmd.ReplyTo,
+		CustomHeaders: map[string]string{"slug": ns.Cfg.Slug},
 	})
 
 	if err != nil {
@@ -208,6 +209,7 @@ func (ns *NotificationService) SendEmailCommandHandlerSync(ctx context.Context, 
 }
 
 func (ns *NotificationService) SendEmailCommandHandler(ctx context.Context, cmd *SendEmailCommand) error {
+	cmd.CustomHeaders = map[string]string{"slug": ns.Cfg.Slug}
 	message, err := ns.buildEmailMessage(cmd)
 
 	if err != nil {
