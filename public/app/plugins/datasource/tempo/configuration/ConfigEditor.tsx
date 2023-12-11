@@ -15,10 +15,6 @@ import { config } from '@grafana/runtime';
 import { TraceToLogsSettings, TraceToMetricsSettings, TraceToProfilesSettings } from '@grafana/traces';
 import { SecureSocksProxySettings, useStyles2 } from '@grafana/ui';
 
-import { TraceToLogsSection } from '/Users/fabriziocasatigrafana/Documents/github_repos/grafana/public/app/core/components/TraceToLogs/TraceToLogsSettings';
-import { TraceToMetricsSection } from '/Users/fabriziocasatigrafana/Documents/github_repos/grafana/public/app/core/components/TraceToMetrics/TraceToMetricsSettings';
-import { TraceToProfilesSection } from '/Users/fabriziocasatigrafana/Documents/github_repos/grafana/public/app/core/components/TraceToProfiles/TraceToProfilesSettings';
-
 import { ConfigDescriptionLink } from '../_importedDependencies/components/ConfigDescriptionLink';
 import { Divider } from '../_importedDependencies/components/Divider';
 import { NodeGraphSection } from '../_importedDependencies/components/NodeGraphSettings';
