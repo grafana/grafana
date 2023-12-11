@@ -60,9 +60,7 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 }
 
 func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	// TODO: handle fetching all available orgs when no namespace is specified
-	// To test: kubectl get playlists --all-namespaces
-	info, err := request.NamespaceInfoFrom(ctx, true)
+	orgId, err := request.OrgIDForList(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +70,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		limit = int(options.Limit)
 	}
 	res, err := s.service.Search(ctx, &playlistsvc.GetPlaylistsQuery{
-		OrgId: info.OrgID,
+		OrgId: orgId,
 		Limit: limit,
 	})
 	if err != nil {
@@ -83,7 +81,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	for _, v := range res {
 		p, err := s.service.Get(ctx, &playlistsvc.GetPlaylistByUidQuery{
 			UID:   v.UID,
-			OrgId: info.OrgID,
+			OrgId: orgId,
 		})
 		if err != nil {
 			return nil, err
