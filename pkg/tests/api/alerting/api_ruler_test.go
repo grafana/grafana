@@ -664,7 +664,6 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"version": 1,
 				"uid": "uid",
 				"namespace_uid": "nsuid",
-				"namespace_id": 1,
 				"rule_group": "anotherrulegroup",
 				"no_data_state": "NoData",
 				"exec_err_state": "Alerting"
@@ -698,7 +697,6 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"version": 1,
 				"uid": "uid",
 				"namespace_uid": "nsuid",
-				"namespace_id": 1,
 				"rule_group": "anotherrulegroup",
 				"no_data_state": "Alerting",
 				"exec_err_state": "Alerting"
@@ -744,7 +742,6 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"version": 1,
 				"uid": "uid",
 				"namespace_uid": "nsuid",
-				"namespace_id": 1,
 				"rule_group": "anotherrulegroup",
 				"no_data_state": "NoData",
 				"exec_err_state": "Alerting"
