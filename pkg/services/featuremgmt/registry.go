@@ -1253,7 +1253,7 @@ var (
 		{
 			Name:           "displayAnonymousStats",
 			Description:    "Enables anonymous stats to be shown in the UI for Grafana",
-			Stage:          FeatureStagePublicPreview,
+			Stage:          FeatureStageGeneralAvailability,
 			FrontendOnly:   true,
 			Owner:          identityAccessTeam,
 			Created:        time.Date(2023, time.November, 29, 12, 0, 0, 0, time.UTC),
