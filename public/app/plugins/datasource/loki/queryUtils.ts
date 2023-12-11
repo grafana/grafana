@@ -208,6 +208,24 @@ export function isLogsQuery(query: string): boolean {
   return !isQueryWithNode(query, MetricExpr);
 }
 
+/**
+ * Some logs options are not applicable to metric queries and vice versa.
+ * We need to remove them from the query before the request is sent.
+ * @param query LokiQuery
+ */
+export function removeInvalidOptions(query: LokiQuery): LokiQuery {
+  const isLogQuery = isLogsQuery(query.expr);
+  const { maxLines, step, ...rest } = query;
+
+  // If metric query, add step, remove maxLines
+  if (!isLogQuery) {
+    return { step, ...rest };
+  }
+
+  // If logs query, add maxLines, remove step
+  return { maxLines, ...rest };
+}
+
 export function isQueryWithParser(query: string): { queryWithParser: boolean; parserCount: number } {
   const nodes = getNodesFromQuery(query, [LabelParser, JsonExpressionParser, Logfmt]);
   const parserCount = nodes.length;

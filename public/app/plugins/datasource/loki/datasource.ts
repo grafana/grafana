@@ -84,6 +84,7 @@ import {
   getStreamSelectorsFromQuery,
   isLogsQuery,
   isQueryWithError,
+  removeInvalidOptions,
   requestSupportsSplitting,
 } from './queryUtils';
 import { convertToWebSocketUrl, doLokiChannelStream } from './streaming';
@@ -294,7 +295,8 @@ export class LokiDatasource
   query(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
     const queries = request.targets
       .map(getNormalizedLokiQuery) // used to "fix" the deprecated `.queryType` prop
-      .map((q) => ({ ...q, maxLines: q.maxLines ?? this.maxLines }));
+      .map((q) => ({ ...q, maxLines: q.maxLines ?? this.maxLines }))
+      .map(removeInvalidOptions);
 
     const fixedRequest: DataQueryRequest<LokiQuery> = {
       ...request,

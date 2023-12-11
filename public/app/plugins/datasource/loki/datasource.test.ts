@@ -18,6 +18,7 @@ import {
   toDataFrame,
   TimeRange,
   ToggleFilterAction,
+  DataQueryRequest,
 } from '@grafana/data';
 import {
   BackendSrv,
@@ -144,8 +145,9 @@ describe('LokiDatasource', () => {
     const runTest = async (
       queryMaxLines: number | undefined,
       dsMaxLines: string | undefined,
-      expectedMaxLines: number,
-      app: CoreApp | undefined
+      expectedMaxLines: number | undefined,
+      app: CoreApp | undefined,
+      query?: DataQueryRequest<LokiQuery>
     ) => {
       const settings = {
         jsonData: {
@@ -159,7 +161,7 @@ describe('LokiDatasource', () => {
       // and applyTemplateVariables is a convenient place to do that.
       const spy = jest.spyOn(ds, 'applyTemplateVariables');
 
-      const options = getQueryOptions<LokiQuery>({
+      const defaultOptions = getQueryOptions<LokiQuery>({
         targets: [{ expr: '{a="b"}', refId: 'B', maxLines: queryMaxLines }],
         app: app ?? CoreApp.Dashboard,
       });
@@ -167,11 +169,35 @@ describe('LokiDatasource', () => {
       const fetchMock = jest.fn().mockReturnValue(of({ data: testLogsResponse }));
       setBackendSrv({ ...origBackendSrv, fetch: fetchMock });
 
-      await expect(ds.query(options).pipe(take(1))).toEmitValuesWith(() => {
+      const response = ds.query(query ?? defaultOptions).pipe(take(1));
+
+      await expect(response).toEmitValuesWith(() => {
         expect(fetchMock.mock.calls.length).toBe(1);
         expect(spy.mock.calls[0][0].maxLines).toBe(expectedMaxLines);
       });
+
+      return { response, spy };
     };
+
+    it('should ignore log lines for metric query', async () => {
+      const query = getQueryOptions<LokiQuery>({
+        targets: [{ expr: 'rate({bar="baz", job="foo"} |= "bar" [5m])', refId: 'A', maxLines: 0 }],
+        app: CoreApp.Dashboard,
+      });
+      await runTest(undefined, '40', undefined, undefined, query);
+    });
+
+    it('should ignore step for logs query', async () => {
+      const query = getQueryOptions<LokiQuery>({
+        targets: [{ expr: '{bar="baz", job="foo"}', refId: 'A', maxLines: 999, step: '1m' }],
+        app: CoreApp.Dashboard,
+      });
+      const { response, spy } = await runTest(undefined, '40', 999, undefined, query);
+      await expect(response).toEmitValuesWith(() => {
+        expect(spy.mock.calls[0][0].maxLines).toBe(999);
+        expect(spy.mock.calls[0][0].step).toBe(undefined);
+      });
+    });
 
     it('should use datasource max lines when no query max lines', async () => {
       await runTest(undefined, '40', 40, undefined);
