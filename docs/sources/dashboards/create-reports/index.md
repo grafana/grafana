@@ -16,6 +16,7 @@ labels:
     - enterprise
 menuTitle: Reporting
 title: Create and manage reports
+description: Generate and share PDF reports from your Grafana dashboards
 weight: 85
 ---
 
