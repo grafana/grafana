@@ -80,6 +80,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `splitScopes`                    | Support faster dashboard and folder search by splitting permission scopes into parts                                                                                                         |
 | `dashgpt`                        | Enable AI powered features in dashboards                                                                                                                                                     |
 | `reportingRetries`               | Enables rendering retries for the reporting feature                                                                                                                                          |
+| `displayAnonymousStats`          | Enables anonymous stats to be shown in the UI for Grafana                                                                                                                                    |
 
 ## Experimental feature toggles
 
@@ -151,7 +152,6 @@ Experimental features might be changed or removed without prior notice.
 | `awsDatasourcesNewFormStyling`              | Applies new form styling for configuration and query editors in AWS plugins                                                                                                                                                                                                       |
 | `cachingOptimizeSerializationMemoryUsage`   | If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses. |
 | `pluginsInstrumentationStatusSource`        | Include a status source label for plugin request metrics and logs                                                                                                                                                                                                                 |
-| `displayAnonymousStats`                     | Enables anonymous stats to be shown in the UI for Grafana                                                                                                                                                                                                                         |
 
 ## Development feature toggles
 
