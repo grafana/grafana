@@ -17,32 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
-func runMockServer() (flight.Server, error) {
-	db, err := example.CreateDB()
-	if err != nil {
-		return nil, err
-	}
-	defer func(db *sql.DB) {
-		/*err := */ db.Close()
-		// require.NoError(t, err)
-	}(db)
-
-	sqliteServer, err := example.NewSQLiteFlightSQLServer(db)
-	// require.NoError(t, err)
-	if err != nil {
-		return nil, err
-	}
-	sqliteServer.Alloc = memory.NewCheckedAllocator(memory.DefaultAllocator)
-	server := flight.NewServerWithMiddleware(nil)
-	server.RegisterFlightService(flightsql.NewFlightServer(sqliteServer))
-	err = server.Init("localhost:12345")
-	// require.NoError(t, err)
-	if err != nil {
-		return nil, err
-	}
-	return server, nil
-}
-
 type FSQLTestSuite struct {
 	suite.Suite
 	db     *sql.DB
