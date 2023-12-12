@@ -1,18 +1,18 @@
 ---
 aliases:
   - ../../../auth/okta/
-description: Grafana Okta OAuth Guide
+description: Grafana Okta OIDC Guide
 labels:
   products:
     - cloud
     - enterprise
     - oss
-menuTitle: Okta OAuth2
-title: Configure Okta OAuth2 authentication
+menuTitle: Okta OIDC
+title: Configure Okta OIDC authentication
 weight: 1400
 ---
 
-# Configure Okta OAuth2 authentication
+# Configure Okta OIDC authentication
 
 {{< docs/shared lookup="auth/intro.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
@@ -21,38 +21,44 @@ weight: 1400
 To follow this guide:
 
 - Ensure that you have access to the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}).
-- Ensure you know how to create an OAuth2 application with your OAuth2 provider. Consult the [documentation of Okta OAuth2](https://help.okta.com/en-us/Content/Topics/Apps/Apps_App_Integration_Wizard.htm) for more information.
-- If you are using refresh tokens, ensure you know how to set them up with your OAuth2 provider. Consult the documentation of your OAuth2 provider for more information.
+- Ensure you have permissions in your Okta workspace to create an OIDC app.
 
 ## Steps
 
-To integrate your Okta OAuth2 provider with Grafana using our Okta OAuth2 integration, follow these steps:
+To integrate your Okta OIDC provider with Grafana using our Okta OIDC integration, follow these steps:
 
-1. [Create an SWA app](https://help.okta.com/en-us/Content/Topics/Apps/Apps_App_Integration_Wizard_SWA.htm) or [OIDC app](https://help.okta.com/en-us/Content/Topics/Apps/Apps_App_Integration_Wizard_OIDC.htm) in the Okta applications section.
+1. Follow the [OIDC app integration guide](https://help.okta.com/en-us/content/topics/apps/apps_app_integration_wizard_oidc.htm)
+   to reach the OIDC new application configuration wizard.
 
-1. Set the callback URL for your OAuth2 app to `http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/okta`.
+1. Select `OIDC - OpenID Connect` as the sign-in method and `Single-Page Application`.
 
-   Ensure that the callback URL is the complete HTTP address that you use to access Grafana via your browser, but with the appended path of `/login/okta`.
+1. Select `Authorization Code` and `Refresh Token` as the grant types.
 
-   For the callback URL to be correct, it might be necessary to set the root_url option to [server], for example, if you are serving Grafana behind a proxy.
+1. Set the `Sign-in redirect URI` to `http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/okta`.
+
+   Ensure that the sign-in redirect URI is the complete HTTP address that you use to access Grafana via your browser, but with the appended path of `/login/okta`.
+
+   For the sign-in redirect URI to be correct, it might be necessary to set the root_url option to [server], for example, if you are serving Grafana behind a proxy.
+
+1. Set the `Sign-out redirect URI` to `http://<my_grafana_server_name_or_ip>:<grafana_server_port>/logout`.
 
 1. Refer to the following table to update field values located in the `[auth.okta]` section of the Grafana configuration file:
 
-   | Field                        | Description                                                                                                   |
-   | ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
-   | `client_id`, `client_secret` | These values must match the client ID and client secret from your Okta OAuth2 app.                            |
-   | `auth_url`                   | The authorization endpoint of your OAuth2 provider. `https://<okta-tenant-id>.okta.com/oauth2/v1/authorize`   |
-   | `token_url`                  | The token endpoint of your Okta OAuth2 provider. `https://<okta-tenant-id>.okta.com/oauth2/v1/token`          |
-   | `api_url`                    | The user information endpoint of your Okta OAuth2 provider. `https://<tenant-id>.okta.com/oauth2/v1/userinfo` |
-   | `enabled`                    | Enables Okta OAuth2 authentication. Set this value to `true`.                                                 |
+   | Field       | Description                                                                                                 |
+   | ----------- | ----------------------------------------------------------------------------------------------------------- |
+   | `client_id` | These values must match the client ID and client secret from your Okta OIDC app.                            |
+   | `auth_url`  | The authorization endpoint of your OIDC provider. `https://<okta-tenant-id>.okta.com/oauth2/v1/authorize`   |
+   | `token_url` | The token endpoint of your Okta OIDC provider. `https://<okta-tenant-id>.okta.com/oauth2/v1/token`          |
+   | `api_url`   | The user information endpoint of your Okta OIDC provider. `https://<tenant-id>.okta.com/oauth2/v1/userinfo` |
+   | `enabled`   | Enables Okta OIDC authentication. Set this value to `true`.                                                 |
 
-1. Review the list of other Okta OAuth2 [configuration options]({{< relref "#configuration-options" >}}) and complete them as necessary.
+1. Review the list of other Okta OIDC [configuration options]({{< relref "#configuration-options" >}}) and complete them as necessary.
 
 1. Optional: [Configure a refresh token]({{< relref "#configure-a-refresh-token" >}}):
 
    a. Enable the `accessTokenExpirationCheck` feature toggle.
 
-   b. Extend the `scopes` field of `[auth.okta]` section in Grafana configuration file with the refresh token scope used by your OAuth2 provider.
+   b. Extend the `scopes` field of `[auth.okta]` section in Grafana configuration file with the refresh token scope used by your OIDC provider.
 
    c. Enable the [refresh token]({{< relref "#configure-a-refresh-token" >}}) at the Okta application settings.
 
@@ -60,11 +66,30 @@ To integrate your Okta OAuth2 provider with Grafana using our Okta OAuth2 integr
 1. Optional: [Configure team synchronization]({{< relref "#configure-team-synchronization-enterprise-only" >}}).
 1. Restart Grafana.
 
-   You should now see a Okta OAuth2 login button on the login page and be able to log in or sign up with your OAuth2 provider.
+   You should now see a Okta OIDC login button on the login page and be able to log in or sign up with your OIDC provider.
+
+The following is an example of a minimally functioning integration when
+configured with the instructions above:
+
+```ini
+[auth.okta]
+name = Okta
+icon = okta
+enabled = true
+allow_sign_up = true
+client_id = 0oads6ziaaiiz4zz45d7
+scopes = openid profile email offline_access
+auth_url = https://<okta tenant id>.okta.com/oauth2/v1/authorize
+token_url = https://<okta tenant id>.okta.com/oauth2/v1/token
+api_url = https://<okta tenant id>.okta.com/oauth2/v1/userinfo
+role_attribute_path = contains(groups[*], 'Example::DevOps') && 'Admin' || 'None'
+role_attribute_strict = true
+allowed_groups = "Example::DevOps" "Example::Dev" "Example::QA"
+```
 
 ## Configuration options
 
-The following table outlines the various Okta OAuth2 configuration options. You can apply these options as environment variables, similar to any other configuration within Grafana.
+The following table outlines the various Okta OIDC configuration options. You can apply these options as environment variables, similar to any other configuration within Grafana.
 
 | Setting                 | Required | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Default                       |
 | ----------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------- |
