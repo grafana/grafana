@@ -45,7 +45,6 @@ import {
 import { Duration } from '@grafana/lezer-logql';
 import { BackendSrvRequest, config, DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
 import { getLogLevelFromKey } from '../../../features/logs/utils';
@@ -58,7 +57,7 @@ import { LokiVariableSupport } from './LokiVariableSupport';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
 import { placeHolderScopedVars } from './components/monaco-query-field/monaco-completion-provider/validation';
-import { escapeLabelValueInSelector, isRegexSelector } from './languageUtils';
+import { escapeLabelValueInSelector, isRegexSelector, getLabelTypeFromFrame } from './languageUtils';
 import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
 import {
   addLabelFormatToQuery,
@@ -108,6 +107,8 @@ export const REF_ID_STARTER_ANNOTATION = 'annotation-';
 export const REF_ID_STARTER_LOG_ROW_CONTEXT = 'log-row-context-query-';
 export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
 export const REF_ID_STARTER_LOG_SAMPLE = 'log-sample-';
+export const REF_ID_STARTER_STATS = 'log-stats-';
+
 const NS_IN_MS = 1000000;
 
 export function makeRequest(
@@ -150,8 +151,7 @@ export class LokiDatasource
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<LokiOptions>,
-    private readonly templateSrv: TemplateSrv = getTemplateSrv(),
-    private readonly timeSrv: TimeSrv = getTimeSrv()
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
 
@@ -454,20 +454,11 @@ export class LokiDatasource
   }
 
   /**
-   * Retrieve the current time range.
-   * @returns The current time range as provided by the timeSrv.
-   */
-  getTimeRange() {
-    return this.timeSrv.timeRange();
-  }
-
-  /**
    * Given a time range, returns it as Loki parameters.
    * @returns An object containing the start and end times in nanoseconds since the Unix epoch.
    */
-  getTimeRangeParams(timeRange?: TimeRange) {
-    const range = timeRange ?? this.getTimeRange();
-    return { start: range.from.valueOf() * NS_IN_MS, end: range.to.valueOf() * NS_IN_MS };
+  getTimeRangeParams(timeRange: TimeRange) {
+    return { start: timeRange.from.valueOf() * NS_IN_MS, end: timeRange.to.valueOf() * NS_IN_MS };
   }
 
   /**
@@ -560,7 +551,7 @@ export class LokiDatasource
             start: start,
             end: end,
           },
-          { showErrorAlert: false }
+          { showErrorAlert: false, requestId: `${REF_ID_STARTER_STATS}${query.refId}` }
         );
 
         statsForAll = {
@@ -694,6 +685,9 @@ export class LokiDatasource
     // If we have stream selector, use /series endpoint
     if (query.stream) {
       const result = await this.languageProvider.fetchSeriesLabels(query.stream, { timeRange });
+      if (!result[query.label]) {
+        return [];
+      }
       return result[query.label].map((value: string) => ({ text: value }));
     }
 
@@ -732,7 +726,7 @@ export class LokiDatasource
    * Currently, it works for logs data only.
    * @returns A Promise that resolves to an array of DataFrames containing data samples.
    */
-  async getDataSamples(query: LokiQuery, timeRange?: TimeRange): Promise<DataFrame[]> {
+  async getDataSamples(query: LokiQuery, timeRange: TimeRange): Promise<DataFrame[]> {
     // Currently works only for logs sample
     if (!isLogsQuery(query.expr) || isQueryWithError(this.interpolateString(query.expr, placeHolderScopedVars))) {
       return [];
@@ -746,8 +740,7 @@ export class LokiDatasource
       supportingQueryType: SupportingQueryType.DataSample,
     };
 
-    const range = timeRange ?? this.getTimeRange();
-    const request = makeRequest(lokiLogsQuery, range, CoreApp.Unknown, REF_ID_DATA_SAMPLES, true);
+    const request = makeRequest(lokiLogsQuery, timeRange, CoreApp.Unknown, REF_ID_DATA_SAMPLES, true);
     return await lastValueFrom(this.query(request).pipe(switchMap((res) => of(res.data))));
   }
 
@@ -795,6 +788,7 @@ export class LokiDatasource
    */
   toggleQueryFilter(query: LokiQuery, filter: ToggleFilterAction): LokiQuery {
     let expression = query.expr ?? '';
+    const labelType = getLabelTypeFromFrame(filter.options.key, filter.frame, 0);
     switch (filter.type) {
       case 'FILTER_FOR': {
         if (filter.options?.key && filter.options?.value) {
@@ -803,7 +797,7 @@ export class LokiDatasource
           // This gives the user the ability to toggle a filter on and off.
           expression = queryHasFilter(expression, filter.options.key, '=', value)
             ? removeLabelFromQuery(expression, filter.options.key, '=', value)
-            : addLabelToQuery(expression, filter.options.key, '=', value);
+            : addLabelToQuery(expression, filter.options.key, '=', value, labelType);
         }
         break;
       }
@@ -820,7 +814,7 @@ export class LokiDatasource
             expression = removeLabelFromQuery(expression, filter.options.key, '=', value);
           }
 
-          expression = addLabelToQuery(expression, filter.options.key, '!=', value);
+          expression = addLabelToQuery(expression, filter.options.key, '!=', value, labelType);
         }
         break;
       }
@@ -849,31 +843,20 @@ export class LokiDatasource
     // NB: Usually the labelKeys should be fetched and cached in the datasource,
     // but there might be some edge cases where this wouldn't be the case.
     // However the changed would make this method `async`.
-    const allLabels = this.languageProvider.getLabelKeys();
     switch (action.type) {
       case 'ADD_FILTER': {
         if (action.options?.key && action.options?.value) {
+          const labelType = getLabelTypeFromFrame(action.options.key, action.frame, 0);
           const value = escapeLabelValueInSelector(action.options.value);
-          expression = addLabelToQuery(
-            expression,
-            action.options.key,
-            '=',
-            value,
-            allLabels.includes(action.options.key) === false
-          );
+          expression = addLabelToQuery(expression, action.options.key, '=', value, labelType);
         }
         break;
       }
       case 'ADD_FILTER_OUT': {
         if (action.options?.key && action.options?.value) {
+          const labelType = getLabelTypeFromFrame(action.options.key, action.frame, 0);
           const value = escapeLabelValueInSelector(action.options.value);
-          expression = addLabelToQuery(
-            expression,
-            action.options.key,
-            '!=',
-            value,
-            allLabels.includes(action.options.key) === false
-          );
+          expression = addLabelToQuery(expression, action.options.key, '!=', value, labelType);
         }
         break;
       }

@@ -63,8 +63,8 @@ func (hs *HTTPServer) GetFolders(c *contextmodel.ReqContext) response.Response {
 	result := make([]dtos.FolderSearchHit, 0)
 	for _, f := range folders {
 		result = append(result, dtos.FolderSearchHit{
-			Id:        f.ID, // nolint:staticcheck
-			Uid:       f.UID,
+			ID:        f.ID, // nolint:staticcheck
+			UID:       f.UID,
 			Title:     f.Title,
 			ParentUID: f.ParentUID,
 		})
@@ -360,17 +360,17 @@ func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, f *folder.Folde
 			canView, _ := g.CanView()
 			if !canView {
 				return dtos.Folder{
-					Uid:   REDACTED,
+					UID:   REDACTED,
 					Title: REDACTED,
 				}, nil
 			}
 		}
 
 		return dtos.Folder{
-			Id:            f.ID, // nolint:staticcheck
-			Uid:           f.UID,
+			ID:            f.ID, // nolint:staticcheck
+			UID:           f.UID,
 			Title:         f.Title,
-			Url:           f.URL,
+			URL:           f.URL,
 			HasACL:        f.HasACL,
 			CanSave:       canSave,
 			CanEdit:       canEdit,
@@ -431,8 +431,7 @@ func (hs *HTTPServer) getFolderACMetadata(c *contextmodel.ReqContext, f *folder.
 	}
 
 	allMetadata := hs.getMultiAccessControlMetadata(c, dashboards.ScopeFoldersPrefix, folderIDs)
-	metadata := allMetadata[f.UID]
-
+	metadata := map[string]bool{}
 	// Flatten metadata - if any parent has a permission, the child folder inherits it
 	for _, md := range allMetadata {
 		for action := range md {
