@@ -13,7 +13,7 @@ import (
 )
 
 const cacheKeyPrefix = "anon-device"
-const thirtyDays = 30 * 24 * time.Hour
+const anonymousDeviceExpiration = 30 * 24 * time.Hour
 
 var ErrDeviceLimitReached = fmt.Errorf("device limit reached")
 
@@ -78,7 +78,7 @@ updated_at = ?
 WHERE device_id = ? AND updated_at BETWEEN ? AND ?`
 
 	args := []interface{}{device.ClientIP, device.UserAgent, device.UpdatedAt.UTC(), device.DeviceID,
-		device.UpdatedAt.UTC().Add(-thirtyDays), device.UpdatedAt.UTC().Add(time.Minute),
+		device.UpdatedAt.UTC().Add(-anonymousDeviceExpiration), device.UpdatedAt.UTC().Add(time.Minute),
 	}
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		args = append([]interface{}{query}, args...)
@@ -107,7 +107,7 @@ func (s *AnonDBStore) CreateOrUpdateDevice(ctx context.Context, device *Device) 
 
 	// if device limit is reached, only update devices
 	if s.deviceLimit > 0 {
-		count, err := s.CountDevices(ctx, time.Now().UTC().Add(-thirtyDays), time.Now().UTC().Add(time.Minute))
+		count, err := s.CountDevices(ctx, time.Now().UTC().Add(-anonymousDeviceExpiration), time.Now().UTC().Add(time.Minute))
 		if err != nil {
 			return err
 		}
