@@ -804,6 +804,9 @@
     "integrations": {
       "title": "集成"
     },
+    "k6": {
+      "title": ""
+    },
     "kubernetes": {
       "title": "Kubernetes"
     },
@@ -922,6 +925,10 @@
     "teams": {
       "subtitle": "具有共同仪表板和权限需求的用户组",
       "title": "团队"
+    },
+    "testing-and-synthetics": {
+      "subtitle": "",
+      "title": ""
     },
     "upgrading": {
       "title": "统计信息和许可证"
