@@ -16,12 +16,15 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 var _ grafanaapiserver.APIGroupBuilder = (*SnapshotsAPIBuilder)(nil)
@@ -106,13 +109,11 @@ func (b *SnapshotsAPIBuilder) GetAPIGroupInfo(
 	storage := map[string]rest.Storage{}
 
 	legacyStore := &legacyStorage{
-		service:                   b.service,
-		namespacer:                b.namespacer,
-		DefaultQualifiedResource:  resourceInfo.GroupResource(),
-		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
+		service:    b.service,
+		namespacer: b.namespacer,
 	}
 	legacyStore.tableConverter = utils.NewTableConverter(
-		legacyStore.DefaultQualifiedResource,
+		resourceInfo.GroupResource(),
 		[]metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
 			{Name: "Title", Type: "string", Format: "string", Description: "The snapshot name"},
@@ -171,17 +172,30 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 					},
 				},
 				Handler: func(w http.ResponseWriter, r *http.Request) {
+					user, err := appcontext.User(r.Context())
+					if err != nil {
+						w.WriteHeader(500)
+						return
+					}
+					wrap := &contextmodel.ReqContext{
+						SignedInUser: user,
+					}
+					wrap.Req = r
+					wrap.Resp = web.NewResponseWriter(r.Method, w)
 					info, err := request.NamespaceInfoFrom(r.Context(), true)
 					if err != nil {
-						fmt.Printf("ERROR ")
-						// responsewriters.ErrorNegotiated(
-						// 	apierrors.NewInternalError(fmt.Errorf("no RequestInfo found in the context")),
-						// 	b.codecs, schema.GroupVersion{}, w, r,
-						// )
-						// return
+						wrap.JsonApiErr(http.StatusBadRequest, "expect org from namespace", err)
+						return
 					}
-
-					_, _ = w.Write([]byte("Custom namespace route ccc: " + info.Value))
+					opts, err := b.options(info.Value)
+					if err == nil {
+						wrap.JsonApiErr(http.StatusBadRequest, "error getting options", err)
+						return
+					}
+					rrr := dashboardsnapshots.CreateDashboardSnapshot(wrap, opts.Spec, b.service)
+					if rrr != nil {
+						rrr.WriteTo(wrap)
+					}
 				},
 			},
 		},

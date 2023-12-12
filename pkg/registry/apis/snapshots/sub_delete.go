@@ -55,10 +55,10 @@ func (r *subDeleteREST) Connect(ctx context.Context, name string, opts runtime.O
 		}
 
 		if snap.External {
-			s := &metav1.Status{}
-			s.Message = fmt.Sprintf("TODO, external delete: %s", snap.Name)
-			s.Code = 501
-			return
+			err := dashboardsnapshots.DeleteExternalDashboardSnapshot(snap.ExternalDeleteURL)
+			if err != nil {
+				responder.Error(err)
+			}
 		}
 
 		err = r.service.DeleteDashboardSnapshot(ctx, &dashboardsnapshots.DeleteDashboardSnapshotCommand{

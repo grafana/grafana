@@ -1,22 +1,18 @@
 package api
 
 import (
-	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -49,94 +45,12 @@ func (hs *HTTPServer) GetSharingOptions(c *contextmodel.ReqContext) {
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) CreateDashboardSnapshot(c *contextmodel.ReqContext) response.Response {
-	if !hs.Cfg.SnapshotEnabled {
-		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
-		return nil
-	}
-
-	cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-	if cmd.Name == "" {
-		cmd.Name = "Unnamed snapshot"
-	}
-
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
-	if err != nil {
-		return response.Error(http.StatusInternalServerError,
-			"Failed to create external snapshot", err)
-	}
-
-	var snapshotUrl string
-	cmd.ExternalURL = ""
-	cmd.OrgID = c.SignedInUser.GetOrgID()
-	cmd.UserID = userID
-	originalDashboardURL, err := dashboardsnapshots.CreateOriginalDashboardURL(&cmd)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Invalid app URL", err)
-	}
-
-	if cmd.External {
-		if !hs.Cfg.ExternalEnabled {
-			c.JsonApiErr(http.StatusForbidden, "External dashboard creation is disabled", nil)
-			return nil
-		}
-
-		resp, err := dashboardsnapshots.CreateExternalDashboardSnapshot(cmd, hs.Cfg.ExternalSnapshotUrl)
-		if err != nil {
-			c.JsonApiErr(http.StatusInternalServerError, "Failed to create external snapshot", err)
-			return nil
-		}
-
-		snapshotUrl = resp.Url
-		cmd.Key = resp.Key
-		cmd.DeleteKey = resp.DeleteKey
-		cmd.ExternalURL = resp.Url
-		cmd.ExternalDeleteURL = resp.DeleteUrl
-		cmd.Dashboard = simplejson.New()
-
-		metrics.MApiDashboardSnapshotExternal.Inc()
-	} else {
-		cmd.Dashboard.SetPath([]string{"snapshot", "originalUrl"}, originalDashboardURL)
-
-		if cmd.Key == "" {
-			var err error
-			cmd.Key, err = util.GetRandomString(32)
-			if err != nil {
-				c.JsonApiErr(http.StatusInternalServerError, "Could not generate random string", err)
-				return nil
-			}
-		}
-
-		if cmd.DeleteKey == "" {
-			var err error
-			cmd.DeleteKey, err = util.GetRandomString(32)
-			if err != nil {
-				c.JsonApiErr(http.StatusInternalServerError, "Could not generate random string", err)
-				return nil
-			}
-		}
-
-		snapshotUrl = setting.ToAbsUrl("dashboard/snapshot/" + cmd.Key)
-
-		metrics.MApiDashboardSnapshotCreate.Inc()
-	}
-
-	result, err := hs.dashboardsnapshotsService.CreateDashboardSnapshot(c.Req.Context(), &cmd)
-	if err != nil {
-		c.JsonApiErr(http.StatusInternalServerError, "Failed to create snapshot", err)
-		return nil
-	}
-
-	c.JSON(http.StatusOK, util.DynMap{
-		"key":       cmd.Key,
-		"deleteKey": cmd.DeleteKey,
-		"url":       snapshotUrl,
-		"deleteUrl": setting.ToAbsUrl("api/snapshots-delete/" + cmd.DeleteKey),
-		"id":        result.ID,
-	})
-	return nil
+	return dashboardsnapshots.CreateDashboardSnapshot(c, v0alpha1.SnapshotSharingOptions{
+		SnapshotsEnabled:     hs.Cfg.SnapshotEnabled,
+		ExternalEnabled:      hs.Cfg.ExternalEnabled,
+		ExternalSnapshotName: hs.Cfg.ExternalSnapshotName,
+		ExternalSnapshotURL:  hs.Cfg.ExternalSnapshotUrl,
+	}, hs.dashboardsnapshotsService)
 }
 
 // GET /api/snapshots/:key
@@ -189,38 +103,6 @@ func (hs *HTTPServer) GetDashboardSnapshot(c *contextmodel.ReqContext) response.
 	return response.JSON(http.StatusOK, dto).SetHeader("Cache-Control", "public, max-age=3600")
 }
 
-func deleteExternalDashboardSnapshot(externalUrl string) error {
-	resp, err := client.Get(externalUrl)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			plog.Warn("Failed to close response body", "err", err)
-		}
-	}()
-
-	if resp.StatusCode == 200 {
-		return nil
-	}
-
-	// Gracefully ignore "snapshot not found" errors as they could have already
-	// been removed either via the cleanup script or by request.
-	if resp.StatusCode == 500 {
-		var respJson map[string]any
-		if err := json.NewDecoder(resp.Body).Decode(&respJson); err != nil {
-			return err
-		}
-
-		if respJson["message"] == "Failed to get dashboard snapshot" {
-			return nil
-		}
-	}
-
-	return fmt.Errorf("unexpected response when deleting external snapshot, status code: %d", resp.StatusCode)
-}
-
 // swagger:route GET /snapshots-delete/{deleteKey} snapshots deleteDashboardSnapshotByDeleteKey
 //
 // Delete Snapshot by deleteKey.
@@ -251,7 +133,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *contextmodel.ReqCont
 	}
 
 	if queryResult.External {
-		err := deleteExternalDashboardSnapshot(queryResult.ExternalDeleteURL)
+		err := dashboardsnapshots.DeleteExternalDashboardSnapshot(queryResult.ExternalDeleteURL)
 		if err != nil {
 			return response.Error(500, "Failed to delete external dashboard", err)
 		}
@@ -300,7 +182,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *contextmodel.ReqContext) respon
 	}
 
 	if queryResult.External {
-		err := deleteExternalDashboardSnapshot(queryResult.ExternalDeleteURL)
+		err := dashboardsnapshots.DeleteExternalDashboardSnapshot(queryResult.ExternalDeleteURL)
 		if err != nil {
 			return response.Error(http.StatusInternalServerError, "Failed to delete external dashboard", err)
 		}
