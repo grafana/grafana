@@ -40,31 +40,9 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		cfg.PluginsAllowUnsigned = append(cfg.PluginsAllowUnsigned, plug)
 	}
 
-	disablePlugins := pluginsSection.Key("disable_plugins").MustString("")
-	for _, plug := range strings.Split(disablePlugins, ",") {
-		plug = strings.TrimSpace(plug)
-		if plug != "" {
-			cfg.DisablePlugins = append(cfg.DisablePlugins, plug)
-		}
-	}
-
-	hideAngularDeprecation := pluginsSection.Key("hide_angular_deprecation").MustString("")
-	for _, id := range strings.Split(hideAngularDeprecation, ",") {
-		id = strings.TrimSpace(id)
-		if id == "" {
-			continue
-		}
-		cfg.HideAngularDeprecation = append(cfg.HideAngularDeprecation, id)
-	}
-
-	forwardHostEnvVars := pluginsSection.Key("forward_host_env_vars").MustString("")
-	for _, id := range strings.Split(forwardHostEnvVars, ",") {
-		id = strings.TrimSpace(id)
-		if id == "" {
-			continue
-		}
-		cfg.ForwardHostEnvVars = append(cfg.ForwardHostEnvVars, id)
-	}
+	cfg.DisablePlugins = readPluginIDsList(pluginsSection.Key("disable_plugins").MustString(""))
+	cfg.HideAngularDeprecation = readPluginIDsList(pluginsSection.Key("hide_angular_deprecation").MustString(""))
+	cfg.ForwardHostEnvVars = readPluginIDsList(pluginsSection.Key("forward_host_env_vars").MustString(""))
 
 	cfg.PluginCatalogURL = pluginsSection.Key("plugin_catalog_url").MustString("https://grafana.com/grafana/plugins/")
 	cfg.PluginAdminEnabled = pluginsSection.Key("plugin_admin_enabled").MustBool(true)
@@ -86,4 +64,19 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	cfg.PluginInstallToken = pluginsSection.Key("install_token").MustString("")
 
 	return nil
+}
+
+// readPluginIDsList takes a config value containing a list of plugin ids separated by commas and returns the
+// corresponding slice of strings. Each value has its leading and trailing whitespace removed. Empty values are
+// discarded.
+func readPluginIDsList(configValue string) []string {
+	var r []string
+	for _, id := range strings.Split(configValue, ",") {
+		id = strings.TrimSpace(id)
+		if id == "" {
+			continue
+		}
+		r = append(r, id)
+	}
+	return r
 }
