@@ -16,7 +16,7 @@ import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { buildTooltipTheme, getPlacement } from '../../utils/tooltipUtils';
 import { Portal } from '../Portal/Portal';
 
@@ -37,7 +37,6 @@ export interface TooltipProps {
 export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
   ({ children, theme, interactive, show, placement, content }, forwardedRef) => {
     const arrowRef = useRef(null);
-    const grafanaTheme = useTheme2();
     const [controlledVisible, setControlledVisible] = useState(show);
 
     // the order of middleware is important!
@@ -126,12 +125,7 @@ export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
         {controlledVisible && (
           <Portal>
             <div ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()}>
-              <FloatingArrow
-                className={style.arrow}
-                ref={arrowRef}
-                context={context}
-                fill={grafanaTheme.colors.background.secondary}
-              />
+              <FloatingArrow className={style.arrow} ref={arrowRef} context={context} />
               <div
                 data-testid={selectors.components.Tooltip.container}
                 id={tooltipId}
