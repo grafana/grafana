@@ -11,6 +11,14 @@ import (
 //     Responses:
 //       200: MuteTimings
 
+// swagger:route GET /api/v1/provisioning/mute-timings/export provisioning stable RouteExportMuteTimings
+//
+// Export all mute timings in provisioning format.
+//
+//     Responses:
+//       200: AlertingFileExport
+//       403: PermissionDenied
+
 // swagger:route GET /api/v1/provisioning/mute-timings/{name} provisioning stable RouteGetMuteTiming
 //
 // Get a mute timing.
@@ -18,6 +26,14 @@ import (
 //     Responses:
 //       200: MuteTimeInterval
 //       404: description: Not found.
+
+// swagger:route GET /api/v1/provisioning/mute-timings/{name}/export provisioning stable RouteExportMuteTiming
+//
+// Export a mute timing in provisioning format.
+//
+//     Responses:
+//       200: AlertingFileExport
+//       403: PermissionDenied
 
 // swagger:route POST /api/v1/provisioning/mute-timings provisioning stable RoutePostMuteTiming
 //
@@ -53,7 +69,7 @@ import (
 // swagger:model
 type MuteTimings []MuteTimeInterval
 
-// swagger:parameters RouteGetTemplate RouteGetMuteTiming RoutePutMuteTiming stable RouteDeleteMuteTiming
+// swagger:parameters RouteGetTemplate RouteGetMuteTiming RoutePutMuteTiming stable RouteDeleteMuteTiming RouteExportMuteTiming
 type RouteGetMuteTimingParam struct {
 	// Mute timing name
 	// in:path
@@ -78,4 +94,31 @@ func (mt *MuteTimeInterval) ResourceType() string {
 
 func (mt *MuteTimeInterval) ResourceID() string {
 	return mt.MuteTimeInterval.Name
+}
+
+type MuteTimeIntervalExport struct {
+	OrgID                   int64 `json:"orgId" yaml:"orgId"`
+	config.MuteTimeInterval `json:",inline" yaml:",inline"`
+}
+
+// MuteTimeIntervalExportHcl is a representation of the MuteTimeInterval in HCL
+type MuteTimeIntervalExportHcl struct {
+	Name          string                  `json:"name" hcl:"name"`
+	TimeIntervals []TimeIntervalExportHcl `json:"time_intervals" hcl:"intervals,block"`
+}
+
+// TimeIntervalExportHcl is a representation of the timeinterval.TimeInterval in HCL
+type TimeIntervalExportHcl struct {
+	Times       []TimeRangeExportHcl `json:"times,omitempty" hcl:"times,block"`
+	Weekdays    *[]string            `json:"weekdays,omitempty" hcl:"weekdays"`
+	DaysOfMonth *[]string            `json:"days_of_month,omitempty" hcl:"days_of_month"`
+	Months      *[]string            `json:"months,omitempty" hcl:"months"`
+	Years       *[]string            `json:"years,omitempty" hcl:"years"`
+	Location    *string              `json:"location,omitempty" hcl:"location"`
+}
+
+// TimeRangeExportHcl is a representation of the timeinterval.TimeRange in HCL
+type TimeRangeExportHcl struct {
+	StartMinute string `json:"start_time" hcl:"start"`
+	EndMinute   string `json:"end_time" hcl:"end"`
 }
