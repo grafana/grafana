@@ -1126,6 +1126,16 @@
       "share-externally-label": "Ēχpőřŧ ƒőř şĥäřįŉģ ęχŧęřŉäľľy",
       "view-button": "Vįęŵ ĴŜØŃ"
     },
+    "image": {
+      "download-button-label": "Đőŵŉľőäđ įmäģę",
+      "error": "Ēřřőř",
+      "format": "Ĩmäģę ƒőřmäŧ",
+      "height": "Ĩmäģę ĥęįģĥŧ",
+      "info-text": "Đőŵŉľőäđ ä şŉäpşĥőŧ őƒ ŧĥę päŉęľ äş äŉ įmäģę.",
+      "use-panel-size": "Ůşę päŉęľ şįžę",
+      "use-panel-size-description": "Ůşę ŧĥę şämę ŵįđŧĥ äŉđ ĥęįģĥŧ äş ŧĥę päŉęľ",
+      "width": "Ĩmäģę ŵįđŧĥ"
+    },
     "library": {
       "info": "Cřęäŧę ľįþřäřy päŉęľ."
     },
@@ -1167,6 +1177,7 @@
     "tab-title": {
       "embed": "Ēmþęđ",
       "export": "Ēχpőřŧ",
+      "image": "Ĩmäģę",
       "library-panel": "Ŀįþřäřy päŉęľ",
       "link": "Ŀįŉĸ",
       "panel-embed": "Ēmþęđ",

@@ -1120,6 +1120,16 @@
       "share-externally-label": "导出以供外部分享",
       "view-button": "查看 JSON"
     },
+    "image": {
+      "download-button-label": "",
+      "error": "",
+      "format": "",
+      "height": "",
+      "info-text": "",
+      "use-panel-size": "",
+      "use-panel-size-description": "",
+      "width": ""
+    },
     "library": {
       "info": "创建库面板。"
     },
@@ -1161,6 +1171,7 @@
     "tab-title": {
       "embed": "嵌入",
       "export": "导出",
+      "image": "",
       "library-panel": "库面板",
       "link": "链接",
       "panel-embed": "嵌入",

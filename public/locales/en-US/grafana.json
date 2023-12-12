@@ -1126,6 +1126,16 @@
       "share-externally-label": "Export for sharing externally",
       "view-button": "View JSON"
     },
+    "image": {
+      "download-button-label": "Download image",
+      "error": "Error",
+      "format": "Image format",
+      "height": "Image height",
+      "info-text": "Download a snapshot of the panel as an image.",
+      "use-panel-size": "Use panel size",
+      "use-panel-size-description": "Use the same width and height as the panel",
+      "width": "Image width"
+    },
     "library": {
       "info": "Create library panel."
     },
@@ -1167,6 +1177,7 @@
     "tab-title": {
       "embed": "Embed",
       "export": "Export",
+      "image": "Image",
       "library-panel": "Library panel",
       "link": "Link",
       "panel-embed": "Embed",

@@ -1126,6 +1126,16 @@
       "share-externally-label": "Export für externe Freigabe",
       "view-button": "JSON anzeigen"
     },
+    "image": {
+      "download-button-label": "",
+      "error": "",
+      "format": "",
+      "height": "",
+      "info-text": "",
+      "use-panel-size": "",
+      "use-panel-size-description": "",
+      "width": ""
+    },
     "library": {
       "info": "Bibliotheks-Panel erstellen."
     },
@@ -1167,6 +1177,7 @@
     "tab-title": {
       "embed": "Einbetten",
       "export": "Exportieren",
+      "image": "",
       "library-panel": "Bibliotheks-Panel",
       "link": "Link",
       "panel-embed": "Einbetten",

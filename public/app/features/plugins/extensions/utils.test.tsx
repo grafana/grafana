@@ -378,7 +378,7 @@ describe('Plugin Extensions / Utils', () => {
         const modal = await screen.findByRole('dialog');
         const style = window.getComputedStyle(modal);
 
-        expect(style.width).toBe('750px');
+        expect(style.width).toBe('800px');
         expect(style.height).toBe('');
       });
 

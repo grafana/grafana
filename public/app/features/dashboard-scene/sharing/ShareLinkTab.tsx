@@ -61,7 +61,6 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
 
     if (panel) {
       urlParamsUpdate.viewPanel = panel.state.key;
-      urlParamsUpdate.panelId = getPanelIdForVizPanel(panel);
     }
 
     if (useAbsoluteTimeRange) {
@@ -83,6 +82,11 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
 
     if (useShortUrl) {
       shareUrl = await createShortLink(shareUrl);
+    }
+
+    if (panel) {
+      delete urlParamsUpdate.viewPanel;
+      urlParamsUpdate.panelId = getPanelIdForVizPanel(panel);
     }
 
     const imageUrl = getDashboardUrl({
