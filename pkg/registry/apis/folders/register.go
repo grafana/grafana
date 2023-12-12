@@ -20,6 +20,7 @@ import (
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	grafanaregistry "github.com/grafana/grafana/pkg/services/grafana-apiserver/registry/generic"
+	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/setting"
@@ -127,16 +128,26 @@ func (b *FolderAPIBuilder) GetAPIGroupInfo(
 			}
 			return nil, fmt.Errorf("expected resource or info")
 		})
-
-	storage := map[string]rest.Storage{}
-	storage[resourceInfo.StoragePath()] = &legacyStorage{
+	legacyStore := &legacyStorage{
 		service:        b.folderSvc,
 		namespacer:     b.namespacer,
 		tableConverter: store.TableConvertor,
 		searcher:       b.searcher,
 	}
+
+	storage := map[string]rest.Storage{}
+	storage[resourceInfo.StoragePath()] = legacyStore
 	storage[resourceInfo.StoragePath("parents")] = &subParentsREST{b.folderSvc}
 	storage[resourceInfo.StoragePath("children")] = &subChildrenREST{b.folderSvc}
+
+	// enable dual writes if a RESTOptionsGetter is provided
+	if optsGetter != nil {
+		store, err := newStorage(scheme, optsGetter, legacyStore)
+		if err != nil {
+			return nil, err
+		}
+		storage[resourceInfo.StoragePath()] = grafanarest.NewDualWriter(legacyStore, store)
+	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
 	return &apiGroupInfo, nil

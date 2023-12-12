@@ -155,9 +155,9 @@ func (s *legacyStorage) Create(ctx context.Context,
 
 	accessor := kinds.MetaAccessor(p)
 	parent := accessor.GetFolder()
-	if parent == "" {
-		parent = info.Value // the raw namespace, eg (stack-1234)
-	}
+	// if parent == "" {
+	// 	// parent = info.Value // the raw namespace, eg (stack-1234)
+	// }
 
 	out, err := s.service.Create(ctx, &folder.CreateFolderCommand{
 		SignedInUser: user,
