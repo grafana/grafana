@@ -20,6 +20,7 @@ labels:
     - oss
 menuTitle: Configure data links
 title: Configure data links
+description: Create data links and data link variables to create links between panels
 weight: 80
 ---
 

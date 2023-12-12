@@ -39,6 +39,7 @@ labels:
     - enterprise
     - oss
 title: Transform data
+description: Use transformations to manipulate your data before visualizations are applied
 weight: 100
 ---
 
