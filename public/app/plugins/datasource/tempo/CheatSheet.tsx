@@ -23,12 +23,12 @@ export default function CheatSheet() {
         <TextLink href={'https://grafana.com/docs/tempo/latest/traceql'} external={true}>
           TraceQL
         </TextLink>
-        , a traces-first query language inspired by LogQL and PromQL. This query language allows users to very precisely
-        and easily select spans and jump directly to the spans fulfilling the specified conditions.
+        , a traces-first query language inspired by LogQL and PromQL. This query language allows users to precisely and
+        easily select spans and jump directly to the spans fulfilling the specified conditions.
       </p>
       <p>
-        You can compose TraceQL queries using either the Query type: Search (the TraceQL query builder) or the TraceQL
-        tab (the TraceQL query editor). Both of these methods let you build queries and drill-down into result sets. (
+        You can compose TraceQL queries using either the Search tab (the TraceQL query builder) or the TraceQL tab (the
+        TraceQL query editor). Both of these methods let you build queries and drill-down into result sets. (
         <TextLink href={'https://grafana.com/docs/grafana/latest/datasources/tempo/query-editor/'} external={true}>
           Learn more
         </TextLink>
