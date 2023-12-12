@@ -138,6 +138,7 @@ guaranteed because plugin developers can override this functionality. The follow
     <td>
       <ul>
         <li>ClickHouse</li>
+        <li>CloudWatch</li>
         <li>Elasticsearch</li>
         <li>Infinity</li>
         <li>InfluxDB</li>
