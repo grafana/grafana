@@ -26,6 +26,12 @@ all: deps build
 deps-go: ## Install backend dependencies.
 	$(GO) run build.go setup
 
+go-reset:
+	rm -rf ./vendor/
+	+$(MAKE) gen-go
+	$(GO) mod tidy
+	$(GO) mod vendor
+
 deps-js: node_modules ## Install frontend dependencies.
 
 deps: deps-js ## Install all dependencies.
