@@ -52,7 +52,7 @@ export const LogsPanel = ({
   },
   id,
 }: LogsPanelProps) => {
-  const isAscending = sortOrder === LogsSortOrder.Ascending;
+  const isAscending = useMemo(() => sortOrder === LogsSortOrder.Ascending, [sortOrder]);
   const style = useStyles2(getStyles);
   const [scrollTop, setScrollTop] = useState(0);
   const logsContainerRef = useRef<HTMLDivElement>(null);
