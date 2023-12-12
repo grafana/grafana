@@ -62,7 +62,6 @@ import {
   supplementaryQueryTypes,
 } from '../utils/supplementaryQueries';
 
-import { getCorrelations } from './correlations';
 import { saveCorrelationsAction } from './explorePane';
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
 import { changeCorrelationEditorDetails } from './main';
