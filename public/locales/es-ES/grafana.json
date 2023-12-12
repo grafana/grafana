@@ -779,6 +779,10 @@
       "title": "Explorar"
     },
     "frontend": {
+      "subtitle": "",
+      "title": ""
+    },
+    "frontend-app": {
       "title": "Interfaz"
     },
     "global-orgs": {
@@ -806,7 +810,14 @@
       "title": "Incidentes"
     },
     "infrastructure": {
+      "subtitle": "",
+      "title": ""
+    },
+    "integrations": {
       "title": "Integraciones"
+    },
+    "k6": {
+      "title": ""
     },
     "kubernetes": {
       "title": "Kubernetes"
@@ -926,6 +937,10 @@
     "teams": {
       "subtitle": "Grupos de usuarios que tienen necesidades comunes de permisos y de panel de control",
       "title": "Equipos"
+    },
+    "testing-and-synthetics": {
+      "subtitle": "",
+      "title": ""
     },
     "upgrading": {
       "title": "Estadísticas y licencia"
@@ -1282,6 +1297,12 @@
       "select-search-input": "Escribir para buscar (país, ciudad, abreviatura)"
     }
   },
+  "transformations": {
+    "empty": {
+      "add-transformation-body": "",
+      "add-transformation-header": ""
+    }
+  },
   "user-orgs": {
     "current-org-button": "Actual",
     "name-column": "Nombre",
@@ -1296,6 +1317,9 @@
       "name-error": "El nombre es obligatorio",
       "name-label": "Nombre",
       "username-label": "Nombre de usuario"
+    },
+    "tabs": {
+      "general": ""
     }
   },
   "user-session": {

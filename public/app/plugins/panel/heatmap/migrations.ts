@@ -14,7 +14,7 @@ import { Options, defaultOptions, HeatmapColorMode } from './types';
 /** Called when the version number changes */
 export const heatmapMigrationHandler = (panel: PanelModel): Partial<Options> => {
   // Migrating from angular
-  if (Object.keys(panel.options).length === 0) {
+  if (Object.keys(panel.options ?? {}).length === 0) {
     return heatmapChangedHandler(panel, 'heatmap', { angular: panel }, panel.fieldConfig);
   }
   return panel.options;

@@ -2,20 +2,19 @@ package anonimpl
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/anonymous"
+	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ authn.ContextAwareClient = new(Anonymous)
-
-const timeoutTag = 2 * time.Minute
 
 type Anonymous struct {
 	cfg               *setting.Cfg
@@ -42,19 +41,13 @@ func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 		httpReqCopy.RemoteAddr = r.HTTPRequest.RemoteAddr
 	}
 
-	go func() {
-		defer func() {
-			if err := recover(); err != nil {
-				a.log.Warn("Tag anon session panic", "err", err)
-			}
-		}()
-
-		newCtx, cancel := context.WithTimeout(context.Background(), timeoutTag)
-		defer cancel()
-		if err := a.anonDeviceService.TagDevice(newCtx, httpReqCopy, anonymous.AnonDeviceUI); err != nil {
-			a.log.Warn("Failed to tag anonymous session", "error", err)
+	if err := a.anonDeviceService.TagDevice(ctx, httpReqCopy, anonymous.AnonDeviceUI); err != nil {
+		if errors.Is(err, anonstore.ErrDeviceLimitReached) {
+			return nil, err
 		}
-	}()
+
+		a.log.Warn("Failed to tag anonymous session", "error", err)
+	}
 
 	return &authn.Identity{
 		ID:           authn.AnonymousNamespaceID,

@@ -77,8 +77,7 @@ func BuildFrameNameFromQuery(rowName, column string, tags map[string]string, fra
 	first := true
 	for k, v := range tags {
 		if !first {
-			frameName = append(frameName, ',')
-			frameName = append(frameName, ' ')
+			frameName = append(frameName, ',', ' ')
 		} else {
 			first = false
 		}
@@ -149,4 +148,8 @@ func GetVisType(resFormat string) data.VisType {
 	default:
 		return GraphVisType
 	}
+}
+
+func ToPtr[T any](v T) *T {
+	return &v
 }

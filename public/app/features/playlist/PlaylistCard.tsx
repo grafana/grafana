@@ -70,7 +70,7 @@ const PlaylistCardSkeleton = () => {
         <Skeleton width={140} />
       </Card.Heading>
       <Card.Actions>
-        <Stack direction="row">
+        <Stack direction="row" wrap="wrap">
           <Skeleton containerClassName={skeletonStyles.button} width={142} height={32} />
           {contextSrv.isEditor && (
             <>

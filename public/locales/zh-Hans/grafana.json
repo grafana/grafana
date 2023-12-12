@@ -767,6 +767,10 @@
       "title": "探索"
     },
     "frontend": {
+      "subtitle": "",
+      "title": ""
+    },
+    "frontend-app": {
       "title": "前端"
     },
     "global-orgs": {
@@ -794,7 +798,14 @@
       "title": "事件"
     },
     "infrastructure": {
+      "subtitle": "",
+      "title": ""
+    },
+    "integrations": {
       "title": "集成"
+    },
+    "k6": {
+      "title": ""
     },
     "kubernetes": {
       "title": "Kubernetes"
@@ -914,6 +925,10 @@
     "teams": {
       "subtitle": "具有共同仪表板和权限需求的用户组",
       "title": "团队"
+    },
+    "testing-and-synthetics": {
+      "subtitle": "",
+      "title": ""
     },
     "upgrading": {
       "title": "统计信息和许可证"
@@ -1270,6 +1285,12 @@
       "select-search-input": "输入以搜索(国家、城市、缩写)"
     }
   },
+  "transformations": {
+    "empty": {
+      "add-transformation-body": "",
+      "add-transformation-header": ""
+    }
+  },
   "user-orgs": {
     "current-org-button": "当前",
     "name-column": "姓名",
@@ -1284,6 +1305,9 @@
       "name-error": "姓名是必填项",
       "name-label": "姓名",
       "username-label": "用户名"
+    },
+    "tabs": {
+      "general": ""
     }
   },
   "user-session": {

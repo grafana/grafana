@@ -171,8 +171,20 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: () => <NavLandingPage navId="alerts-and-incidents" />,
     },
     {
+      path: '/testing-and-synthetics',
+      component: () => <NavLandingPage navId="testing-and-synthetics" />,
+    },
+    {
       path: '/monitoring',
       component: () => <NavLandingPage navId="monitoring" />,
+    },
+    {
+      path: '/infrastructure',
+      component: () => <NavLandingPage navId="infrastructure" />,
+    },
+    {
+      path: '/frontend',
+      component: () => <NavLandingPage navId="frontend" />,
     },
     {
       path: '/admin/general',

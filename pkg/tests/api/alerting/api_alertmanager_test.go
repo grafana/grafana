@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/util/errutil"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -799,7 +800,10 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-		require.JSONEq(t, `{"message":"folder cannot be deleted: folder contains alert rules"}`, string(b))
+		var errutilErr errutil.PublicError
+		err = json.Unmarshal(b, &errutilErr)
+		require.NoError(t, err)
+		assert.Equal(t, "Folder cannot be deleted: folder is not empty", errutilErr.Message)
 	}
 
 	// Next, the editor can delete the folder if forceDeleteRules is true.
@@ -1045,13 +1049,13 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 				},
 				expectedCode: func() int {
 					if setting.IsEnterprise {
-						return http.StatusUnauthorized
+						return http.StatusForbidden
 					}
 					return http.StatusBadRequest
 				}(),
 				expectedMessage: func() string {
 					if setting.IsEnterprise {
-						return "user is not authorized to create a new alert rule 'AlwaysFiring' because the user does not have read permissions for one or many datasources the rule uses"
+						return "user is not authorized to create a new alert rule 'AlwaysFiring'"
 					}
 					return "failed to update rule group: invalid alert rule 'AlwaysFiring': failed to build query 'A': data source not found"
 				}(),
@@ -2160,6 +2164,7 @@ func TestIntegrationEval(t *testing.T) {
 							}
 						}
 					],
+				"condition": "A",
 				"now": "2021-04-11T14:38:14Z"
 			}
 			`,
@@ -2217,6 +2222,7 @@ func TestIntegrationEval(t *testing.T) {
 							}
 						}
 					],
+				"condition": "A",
 				"now": "2021-04-11T14:38:14Z"
 			}
 			`,
@@ -2272,21 +2278,79 @@ func TestIntegrationEval(t *testing.T) {
 							}
 						}
 					],
+				"condition": "A",
 				"now": "2021-04-11T14:38:14Z"
 			}
 			`,
 			expectedResponse: func() string { return "" },
 			expectedStatusCode: func() int {
 				if setting.IsEnterprise {
-					return http.StatusUnauthorized
+					return http.StatusForbidden
 				}
 				return http.StatusBadRequest
 			},
 			expectedMessage: func() string {
 				if setting.IsEnterprise {
-					return "user is not authorized to query one or many data sources used by the rule"
+					return "user is not authorized to access one or many data sources"
 				}
 				return "Failed to build evaluator for queries and expressions: failed to build query 'A': data source not found"
+			},
+		},
+		{
+			desc: "condition is empty",
+			payload: `
+			{
+				"data": [
+						{
+							"refId": "A",
+							"relativeTimeRange": {
+								"from": 18000,
+								"to": 10800
+							},
+							"datasourceUid": "__expr__",
+							"model": {
+								"type":"math",
+								"expression":"1 > 2"
+							}
+						}
+					],
+				"now": "2021-04-11T14:38:14Z"
+			}
+			`,
+			expectedStatusCode: func() int { return http.StatusOK },
+			expectedMessage:    func() string { return "" },
+			expectedResponse: func() string {
+				return `{
+				"results": {
+				  "A": {
+					"status": 200,
+					"frames": [
+					  {
+						"schema": {
+						  "refId": "A",
+						  "fields": [
+							{
+							  "name": "A",
+							  "type": "number",
+							  "typeInfo": {
+								"frame": "float64",
+								"nullable": true
+							  }
+							}
+						  ]
+						},
+						"data": {
+						  "values": [
+							[
+							  0
+							]
+						  ]
+						}
+					  }
+					]
+				  }
+				}
+			}`
 			},
 		},
 	}
