@@ -1025,6 +1025,7 @@ func (cfg *Cfg) validateStaticRootPath() error {
 	return nil
 }
 
+// nolint:gocyclo
 func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.setHomePath(args)
 
