@@ -150,7 +150,7 @@ export const RowsList = (props: RowsListProps) => {
     subs.add(
       panelContext.eventBus
         .getStream(DataHoverEvent)
-        .pipe(debounceTime(100))
+        .pipe(debounceTime(250))
         .subscribe({
           next: (evt) => {
             if (panelContext.eventBus === evt.origin) {
@@ -165,7 +165,7 @@ export const RowsList = (props: RowsListProps) => {
     subs.add(
       panelContext.eventBus
         .getStream(DataHoverClearEvent)
-        .pipe(debounceTime(100))
+        .pipe(debounceTime(250))
         .subscribe({
           next: (evt) => {
             if (panelContext.eventBus === evt.origin) {
