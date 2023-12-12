@@ -25,7 +25,7 @@ const MAX_DEPTH = 2;
 export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
   const { chrome } = useGrafana();
   const state = chrome.useState();
-  const menuIsDocked = state.megaMenu === 'docked';
+  const menuIsDocked = state.megaMenuDocked;
   const location = useLocation();
   const FeatureHighlightWrapper = link.highlightText ? FeatureHighlight : React.Fragment;
   const hasActiveChild = hasChildMatch(link, activeItem);

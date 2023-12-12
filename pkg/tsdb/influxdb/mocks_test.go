@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
@@ -117,5 +118,22 @@ func GetMockService(version string, rt RoundTripper) *Service {
 			version:          version,
 			fakeRoundTripper: rt,
 		},
+		features: &fakeFeatureToggles{
+			flags: map[string]bool{
+				featuremgmt.FlagInfluxqlStreamingParser: false,
+			},
+		},
 	}
+}
+
+type fakeFeatureToggles struct {
+	flags map[string]bool
+}
+
+func (f *fakeFeatureToggles) IsEnabledGlobally(flag string) bool {
+	return f.flags[flag]
+}
+
+func (f *fakeFeatureToggles) IsEnabled(ctx context.Context, flag string) bool {
+	return f.flags[flag]
 }

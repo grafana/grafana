@@ -99,13 +99,14 @@ export const LokiQueryBuilder = React.memo<Props>(
     useEffect(() => {
       const onGetSampleData = async () => {
         const lokiQuery = { expr: lokiQueryModeller.renderQuery(query), refId: 'data-samples' };
-        const series = await datasource.getDataSamples(lokiQuery);
-        const sampleData = { series, state: LoadingState.Done, timeRange: getDefaultTimeRange() };
+        const range = timeRange ?? getDefaultTimeRange();
+        const series = await datasource.getDataSamples(lokiQuery, range);
+        const sampleData = { series, state: LoadingState.Done, timeRange: range };
         setSampleData(sampleData);
       };
 
       onGetSampleData().catch(console.error);
-    }, [datasource, query]);
+    }, [datasource, query, timeRange]);
 
     const lang = { grammar: logqlGrammar, name: 'logql' };
     return (
