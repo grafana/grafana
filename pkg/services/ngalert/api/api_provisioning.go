@@ -606,14 +606,10 @@ func exportHcl(download bool, body definitions.AlertingFileExport) response.Resp
 		}
 
 		for idx, mt := range body.MuteTimings {
-			mthcl, err := MuteTimingIntervalToMuteTimeIntervalHclExport(mt)
-			if err != nil {
-				return fmt.Errorf("failed to convert mute timing [%s] to HCL:%w", mt.Name, err)
-			}
 			resources = append(resources, hcl.Resource{
 				Type: "grafana_mute_timing",
 				Name: fmt.Sprintf("mute_timing_%d", idx+1),
-				Body: mthcl,
+				Body: mt,
 			})
 		}
 		return nil

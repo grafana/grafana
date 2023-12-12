@@ -7,7 +7,7 @@ type AlertingFileExport struct {
 	Groups        []AlertRuleGroupExport     `json:"groups,omitempty" yaml:"groups,omitempty"`
 	ContactPoints []ContactPointExport       `json:"contactPoints,omitempty" yaml:"contactPoints,omitempty"`
 	Policies      []NotificationPolicyExport `json:"policies,omitempty" yaml:"policies,omitempty"`
-	MuteTimings   []MuteTimeIntervalExport   `json:"muteTimes,omitempty" yaml:"muteTimes,omitempty"`
+	MuteTimings   []MuteTiming               `json:"muteTimes,omitempty" yaml:"muteTimes,omitempty"`
 }
 
 // swagger:parameters RouteGetAlertRuleGroupExport RouteGetAlertRuleExport RouteGetContactpointsExport RouteGetContactpointExport RoutePostRulesGroupForExport RouteExportMuteTimings RouteExportMuteTiming

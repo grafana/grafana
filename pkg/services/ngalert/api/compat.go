@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"time"
 
-	jsoniter "github.com/json-iterator/go"
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -344,32 +343,10 @@ func NilIfEmpty[T any](v *[]T) *[]T {
 	return v
 }
 
-func AlertingFileExportFromMuteTimings(orgID int64, m []definitions.MuteTimeInterval) definitions.AlertingFileExport {
+func AlertingFileExportFromMuteTimings(orgID int64, m []definitions.MuteTiming) definitions.AlertingFileExport {
 	f := definitions.AlertingFileExport{
 		APIVersion:  1,
-		MuteTimings: make([]definitions.MuteTimeIntervalExport, 0, len(m)),
-	}
-	for _, mi := range m {
-		f.MuteTimings = append(f.MuteTimings, MuteTimeIntervalExportFromMuteTiming(orgID, mi))
+		MuteTimings: m,
 	}
 	return f
-}
-
-func MuteTimeIntervalExportFromMuteTiming(orgID int64, m definitions.MuteTimeInterval) definitions.MuteTimeIntervalExport {
-	return definitions.MuteTimeIntervalExport{
-		OrgID:            orgID,
-		MuteTimeInterval: m.MuteTimeInterval,
-	}
-}
-
-// Converts definitions.MuteTimeIntervalExport to definitions.MuteTimeIntervalExportHcl using JSON marshalling. Returns error if structure could not be marshalled\unmarshalled
-func MuteTimingIntervalToMuteTimeIntervalHclExport(m definitions.MuteTimeIntervalExport) (definitions.MuteTimeIntervalExportHcl, error) {
-	result := definitions.MuteTimeIntervalExportHcl{}
-	j := jsoniter.ConfigCompatibleWithStandardLibrary
-	mdata, err := j.Marshal(m)
-	if err != nil {
-		return result, err
-	}
-	err = j.Unmarshal(mdata, &result)
-	return result, err
 }

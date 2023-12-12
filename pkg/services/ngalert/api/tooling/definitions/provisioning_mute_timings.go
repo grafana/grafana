@@ -85,9 +85,9 @@ type MuteTimingPayload struct {
 
 // swagger:model
 type MuteTiming struct {
-	Name          string               `yaml:"name" json:"name"`
-	Provenance    Provenance           `yaml:"provenance,omitempty" json:"provenance,omitempty"`
-	TimeIntervals []MuteTimingInterval `yaml:"time_intervals" json:"time_intervals"`
+	Name          string               `yaml:"name" json:"name" hcl:"name"`
+	Provenance    Provenance           `yaml:"provenance,omitempty" json:"provenance,omitempty" hcl:"-"`
+	TimeIntervals []MuteTimingInterval `yaml:"time_intervals" json:"time_intervals" hcl:"intervals,block"`
 }
 
 func (mt *MuteTiming) ResourceType() string {
@@ -129,51 +129,24 @@ func (mt *MuteTiming) FromConfigMuteTimeInterval(configMuteTiming config.MuteTim
 // MuteTimeInterval represents a time interval during which alerts should be muted.
 type MuteTimingInterval struct {
 	// an inclusive range of times
-	Times []MuteTimingTimeRange `yaml:"times,omitempty" json:"times,omitempty"`
+	Times []MuteTimingTimeRange `yaml:"times,omitempty" json:"times,omitempty" hcl:"times,block"`
 	// an inclusive range of weekdays, e.g. "monday" or "tuesday:thursday".
-	Weekdays []string `yaml:"weekdays,omitempty" json:"weekdays,omitempty"`
+	Weekdays []string `yaml:"weekdays,omitempty" json:"weekdays,omitempty" hcl:"weekdays"`
 	// an inclusive range of days of month, e.g. "1" or "5:15".
-	DaysOfMonth []string `yaml:"days_of_month,omitempty" json:"days_of_month,omitempty"`
+	DaysOfMonth []string `yaml:"days_of_month,omitempty" json:"days_of_month,omitempty" hcl:"days_of_month"`
 	// an inclusive range of months, e.g. "january" or "february:april".
-	Months []string `yaml:"months,omitempty" json:"months,omitempty"`
+	Months []string `yaml:"months,omitempty" json:"months,omitempty" hcl:"months"`
 	// an inclusive range of years, e.g. "2019" or "2020:2022".
-	Years []string `yaml:"years,omitempty" json:"years,omitempty"`
+	Years []string `yaml:"years,omitempty" json:"years,omitempty" hcl:"years"`
 	// a location time zone for the time interval in the IANA Time Zone Database format, e.g. "America/New_York".
-	Location string `yaml:"location,omitempty" json:"location,omitempty"`
+	Location string `yaml:"location,omitempty" json:"location,omitempty" hcl:"location"`
 }
 
 // swagger:model
 // MuteTimingInterval represents a time range during which alerts should be muted.
 type MuteTimingTimeRange struct {
 	// the start time of the range in the format HH:MM, e.g. "08:00".
-	StartTime string `yaml:"start_time,omitempty" json:"start_time,omitempty"`
+	StartTime string `yaml:"start_time,omitempty" json:"start_time,omitempty" hcl:"start"`
 	// the end time of the range in the format HH:MM, e.g. "17:00".
-	EndTime string `yaml:"end_time,omitempty" json:"end_time,omitempty"`
-}
-
-type MuteTimeIntervalExport struct {
-	OrgID                   int64 `json:"orgId" yaml:"orgId"`
-	config.MuteTimeInterval `json:",inline" yaml:",inline"`
-}
-
-// MuteTimeIntervalExportHcl is a representation of the MuteTimeInterval in HCL
-type MuteTimeIntervalExportHcl struct {
-	Name          string                  `json:"name" hcl:"name"`
-	TimeIntervals []TimeIntervalExportHcl `json:"time_intervals" hcl:"intervals,block"`
-}
-
-// TimeIntervalExportHcl is a representation of the timeinterval.TimeInterval in HCL
-type TimeIntervalExportHcl struct {
-	Times       []TimeRangeExportHcl `json:"times,omitempty" hcl:"times,block"`
-	Weekdays    *[]string            `json:"weekdays,omitempty" hcl:"weekdays"`
-	DaysOfMonth *[]string            `json:"days_of_month,omitempty" hcl:"days_of_month"`
-	Months      *[]string            `json:"months,omitempty" hcl:"months"`
-	Years       *[]string            `json:"years,omitempty" hcl:"years"`
-	Location    *string              `json:"location,omitempty" hcl:"location"`
-}
-
-// TimeRangeExportHcl is a representation of the timeinterval.TimeRange in HCL
-type TimeRangeExportHcl struct {
-	StartMinute string `json:"start_time" hcl:"start"`
-	EndMinute   string `json:"end_time" hcl:"end"`
+	EndTime string `yaml:"end_time,omitempty" json:"end_time,omitempty" hcl:"end"`
 }
