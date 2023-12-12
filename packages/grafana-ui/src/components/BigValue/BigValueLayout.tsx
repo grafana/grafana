@@ -63,10 +63,6 @@ export abstract class BigValueLayout {
       lineHeight: LINE_HEIGHT,
     };
 
-    if (this.props.parentOrientation === VizOrientation.Horizontal && this.justifyCenter) {
-      styles.paddingRight = '0.75ch';
-    }
-
     if (
       this.props.colorMode === BigValueColorMode.Background ||
       this.props.colorMode === BigValueColorMode.BackgroundSolid
@@ -115,6 +111,7 @@ export abstract class BigValueLayout {
       styles.alignItems = 'center';
       styles.justifyContent = 'center';
       styles.flexGrow = 1;
+      styles.gap = '0.75ch';
     }
 
     return styles;
