@@ -11,7 +11,7 @@ import {
   useHover,
   useInteractions,
 } from '@floating-ui/react';
-import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
+import React, { useCallback, useId, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
