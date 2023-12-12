@@ -44,7 +44,6 @@ export interface ValueFormatterIndex {
 let categories: ValueFormatCategory[] = [];
 const index: ValueFormatterIndex = {};
 let hasBuiltIndex = false;
-let unitScalable = true;
 
 export function toFixed(value: number, decimals?: DecimalCount): string {
   if (value === null) {
@@ -216,7 +215,6 @@ function buildFormats(scalable?: boolean) {
   });
 
   hasBuiltIndex = true;
-  unitScalable = scalable || true;
 }
 
 export function getValueFormat(id?: string | null, scalable?: boolean): ValueFormatter {
@@ -224,15 +222,9 @@ export function getValueFormat(id?: string | null, scalable?: boolean): ValueFor
     return toFixedUnit('');
   }
 
-  // if (!hasBuiltIndex) {
-  //   buildFormats();
-  // }
-  if (unitScalable !== scalable || !hasBuiltIndex) {
-    buildFormats(scalable);
-  }
+  buildFormats(scalable);
 
   const fmt = index[id];
-  // console.log(id);
 
   if (!fmt && id) {
     let idx = id.indexOf(':');

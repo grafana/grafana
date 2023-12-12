@@ -47,8 +47,6 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   const { palette } = options.theme.visualization;
 
   let unit = config.unit;
-  const unitScale = config.unitScale;
-  console.log(unitScale);
   let hasDateUnit = unit && (timeFormats[unit] || unit.startsWith('time:'));
   let showMs = false;
 
@@ -82,7 +80,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   const canTrimTrailingDecimalZeros =
     !hasDateUnit && !hasCurrencyUnit && !hasBoolUnit && !isLocaleFormat && isNumType && config.decimals == null;
 
-  const formatFunc = getValueFormat(unit || 'none', unitScale);
+  const formatFunc = getValueFormat(unit || 'none', config.unitScale);
   const scaleFunc = getScaleCalculator(field, options.theme);
 
   return (value: unknown, adjacentDecimals?: DecimalCount) => {

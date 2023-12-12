@@ -257,6 +257,7 @@ export const getAllStandardFieldConfigs = () => {
     override: standardEditorsRegistry.get('boolean').editor,
     process: booleanOverrideProcessor,
 
+    defaultValue: true,
     shouldApply: () => true,
     category,
   };
