@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/grn"
 	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,27 +27,24 @@ func TestResourceToEntity(t *testing.T) {
 	}
 
 	testCases := []struct {
-		key                        string
-		resource                   runtime.Object
-		expectedKey                string
-		expectedTenantID           int64
-		expectedResourceKind       string
-		expectedResourceIdentifier string
-		expectedResourceGroup      string
-		expectedGroupVersion       string
-		expectedName               string
-		expectedGuid               string
-		expectedVersion            string
-		expectedFolder             string
-		expectedCreatedAt          int64
-		expectedUpdatedAt          int64
-		expectedCreatedBy          string
-		expectedUpdatedBy          string
-		expectedSlug               string
-		expectedOrigin             *entityStore.EntityOriginInfo
-		expectedLabels             map[string]string
-		expectedMeta               []byte
-		expectedBody               []byte
+		key                  string
+		resource             runtime.Object
+		expectedKey          string
+		expectedGroupVersion string
+		expectedName         string
+		expectedUID          string
+		expectedGuid         string
+		expectedVersion      string
+		expectedFolder       string
+		expectedCreatedAt    int64
+		expectedUpdatedAt    int64
+		expectedCreatedBy    string
+		expectedUpdatedBy    string
+		expectedSlug         string
+		expectedOrigin       *entityStore.EntityOriginInfo
+		expectedLabels       map[string]string
+		expectedMeta         []byte
+		expectedBody         []byte
 	}{
 		{
 			key: "/playlist.grafana.app/playlists/default/test-uid",
@@ -79,24 +75,20 @@ func TestResourceToEntity(t *testing.T) {
 					},
 				},
 			},
-			expectedKey:                "/playlist.grafana.app/playlists/default/test-uid",
-			expectedTenantID:           1,
-			expectedResourceKind:       "playlists",
-			expectedResourceIdentifier: "test-uid",
-			expectedResourceGroup:      "playlist.grafana.app",
-			expectedGroupVersion:       apiVersion,
-			expectedName:               "test-name",
-			expectedGuid:               "test-uid",
-			expectedVersion:            "1",
-			expectedFolder:             "test-folder",
-			expectedCreatedAt:          createdAt.UnixNano() / 1000000,
-			expectedCreatedBy:          "test-created-by",
-			expectedUpdatedBy:          "test-updated-by",
-			expectedSlug:               "test-slug",
-			expectedOrigin:             &entityStore.EntityOriginInfo{Source: "", Key: ""},
-			expectedLabels:             map[string]string{"label1": "value1", "label2": "value2"},
-			expectedMeta:               []byte(fmt.Sprintf(`{"metadata":{"name":"test-name","uid":"test-uid","resourceVersion":"1","creationTimestamp":%q,"labels":{"label1":"value1","label2":"value2"},"annotations":{"grafana.app/createdBy":"test-created-by","grafana.app/folder":"test-folder","grafana.app/slug":"test-slug","grafana.app/updatedBy":"test-updated-by","grafana.app/updatedTimestamp":%q}}}`, createdAtStr, updatedAtStr)),
-			expectedBody:               []byte(`{"title":"A playlist","interval":"5m","items":[{"type":"dashboard_by_tag","value":"panel-tests"},{"type":"dashboard_by_uid","value":"vmie2cmWz"}]}`),
+			expectedKey:          "/playlist.grafana.app/playlists/default/test-uid",
+			expectedGroupVersion: apiVersion,
+			expectedName:         "test-name",
+			expectedGuid:         "test-uid",
+			expectedVersion:      "1",
+			expectedFolder:       "test-folder",
+			expectedCreatedAt:    createdAt.UnixNano() / 1000000,
+			expectedCreatedBy:    "test-created-by",
+			expectedUpdatedBy:    "test-updated-by",
+			expectedSlug:         "test-slug",
+			expectedOrigin:       &entityStore.EntityOriginInfo{Source: "", Key: ""},
+			expectedLabels:       map[string]string{"label1": "value1", "label2": "value2"},
+			expectedMeta:         []byte(fmt.Sprintf(`{"metadata":{"name":"test-name","uid":"test-uid","resourceVersion":"1","creationTimestamp":%q,"labels":{"label1":"value1","label2":"value2"},"annotations":{"grafana.app/createdBy":"test-created-by","grafana.app/folder":"test-folder","grafana.app/slug":"test-slug","grafana.app/updatedBy":"test-updated-by","grafana.app/updatedTimestamp":%q}}}`, createdAtStr, updatedAtStr)),
+			expectedBody:         []byte(`{"title":"A playlist","interval":"5m","items":[{"type":"dashboard_by_tag","value":"panel-tests"},{"type":"dashboard_by_uid","value":"vmie2cmWz"}]}`),
 		},
 	}
 
@@ -105,10 +97,7 @@ func TestResourceToEntity(t *testing.T) {
 			entity, err := resourceToEntity(tc.key, tc.resource, requestInfo)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedKey, entity.Key)
-			assert.Equal(t, tc.expectedTenantID, entity.GRN.TenantID)
-			assert.Equal(t, tc.expectedResourceKind, entity.GRN.ResourceKind)
-			assert.Equal(t, tc.expectedResourceIdentifier, entity.GRN.ResourceIdentifier)
-			assert.Equal(t, tc.expectedResourceGroup, entity.GRN.ResourceGroup)
+			assert.Equal(t, tc.expectedUID, entity.Uid)
 			assert.Equal(t, tc.expectedGroupVersion, entity.GroupVersion)
 			assert.Equal(t, tc.expectedName, entity.Name)
 			assert.Equal(t, tc.expectedGuid, entity.Guid)
@@ -147,13 +136,7 @@ func TestEntityToResource(t *testing.T) {
 	}{
 		{
 			entity: &entityStore.Entity{
-				Key: "/playlist.grafana.app/playlists/default/test-uid",
-				GRN: &grn.GRN{
-					ResourceKind:       "playlists",
-					ResourceIdentifier: "test-uid",
-					TenantID:           1,
-					ResourceGroup:      "playlist.grafana.app",
-				},
+				Key:          "/playlist.grafana.app/playlists/default/test-uid",
 				GroupVersion: "v0alpha1",
 				Name:         "test-name",
 				Guid:         "test-guid",
