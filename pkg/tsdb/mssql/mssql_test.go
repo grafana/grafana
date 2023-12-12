@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
@@ -58,6 +59,9 @@ func TestMSSQL(t *testing.T) {
 		MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
 		RowLimit:          1000000,
 	}
+
+	logger := log.New("mssql.test")
+
 	endpoint, err := sqleng.NewQueryDataHandler(setting.NewCfg(), config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 	require.NoError(t, err)
 
@@ -1336,6 +1340,8 @@ func TestTransformQueryError(t *testing.T) {
 		{err: randomErr, expectedErr: randomErr},
 	}
 
+	logger := log.New("mssql.test")
+
 	for _, tc := range tests {
 		resultErr := transformer.TransformQueryError(logger, tc.err)
 		assert.ErrorIs(t, resultErr, tc.expectedErr)
@@ -1470,9 +1476,12 @@ func TestGenerateConnectionString(t *testing.T) {
 			expConnStr: "server=localhost;database=database;user id=user;password=;",
 		},
 	}
+
+	logger := log.New("mssql.test")
+
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			connStr, err := generateConnectionString(tc.dataSource, nil, nil)
+			connStr, err := generateConnectionString(tc.dataSource, nil, nil, logger)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expConnStr, connStr)
 		})
