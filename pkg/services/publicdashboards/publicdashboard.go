@@ -53,7 +53,6 @@ type Store interface {
 	Find(ctx context.Context, uid string) (*PublicDashboard, error)
 	FindByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, error)
 	FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
-	FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (*dashboards.Dashboard, error)
 	FindAllWithPagination(ctx context.Context, query *PublicDashboardListQuery) (*PublicDashboardListResponseWithPagination, error)
 	Create(ctx context.Context, cmd SavePublicDashboardCommand) (int64, error)
 	Update(ctx context.Context, cmd SavePublicDashboardCommand) (int64, error)

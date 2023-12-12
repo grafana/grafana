@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import uFuzzy from '@leeoniya/ufuzzy';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
@@ -11,6 +12,8 @@ import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
 import { ClickedItemData, ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from './types';
+
+const ufuzzy = new uFuzzy();
 
 export type Props = {
   /**
@@ -99,6 +102,7 @@ const FlameGraphContainer = ({
   }, [data, theme, disableCollapsing]);
   const [colorScheme, setColorScheme] = useColorScheme(dataContainer);
   const styles = getStyles(theme);
+  const matchedLabels = useLabelSearch(search, dataContainer);
 
   // If user resizes window with both as the selected view
   useEffect(() => {
@@ -149,7 +153,7 @@ const FlameGraphContainer = ({
       data={dataContainer}
       rangeMin={rangeMin}
       rangeMax={rangeMax}
-      search={search}
+      matchedLabels={matchedLabels}
       setRangeMin={setRangeMin}
       setRangeMax={setRangeMax}
       onItemFocused={(data) => setFocusedItemData(data)}
@@ -173,6 +177,7 @@ const FlameGraphContainer = ({
       data={dataContainer}
       onSymbolClick={onSymbolClick}
       search={search}
+      matchedLabels={matchedLabels}
       sandwichItem={sandwichItem}
       onSandwich={setSandwichItem}
       onSearch={setSearch}
@@ -253,6 +258,31 @@ function useColorScheme(dataContainer: FlameGraphDataContainer | undefined) {
   }, [defaultColorScheme]);
 
   return [colorScheme, setColorScheme] as const;
+}
+
+/**
+ * Based on the search string it does a fuzzy search over all the unique labels, so we can highlight them later.
+ */
+function useLabelSearch(
+  search: string | undefined,
+  data: FlameGraphDataContainer | undefined
+): Set<string> | undefined {
+  return useMemo(() => {
+    if (search && data) {
+      const foundLabels = new Set<string>();
+      let idxs = ufuzzy.filter(data.getUniqueLabels(), search);
+
+      if (idxs) {
+        for (let idx of idxs) {
+          foundLabels.add(data.getUniqueLabels()[idx]);
+        }
+      }
+
+      return foundLabels;
+    }
+    // In this case undefined means there was no search so no attempt to highlighting anything should be made.
+    return undefined;
+  }, [search, data]);
 }
 
 function getStyles(theme: GrafanaTheme2) {

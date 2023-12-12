@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/connectors"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -15,11 +16,11 @@ type OAuthStrategy struct {
 }
 
 var extraKeysByProvider = map[string][]string{
-	social.AzureADProviderName:      social.ExtraAzureADSettingKeys,
-	social.GenericOAuthProviderName: social.ExtraGenericOAuthSettingKeys,
-	social.GitHubProviderName:       social.ExtraGithubSettingKeys,
-	social.GrafanaComProviderName:   social.ExtraGrafanaComSettingKeys,
-	social.GrafanaNetProviderName:   social.ExtraGrafanaComSettingKeys,
+	social.AzureADProviderName:      connectors.ExtraAzureADSettingKeys,
+	social.GenericOAuthProviderName: connectors.ExtraGenericOAuthSettingKeys,
+	social.GitHubProviderName:       connectors.ExtraGithubSettingKeys,
+	social.GrafanaComProviderName:   connectors.ExtraGrafanaComSettingKeys,
+	social.GrafanaNetProviderName:   connectors.ExtraGrafanaComSettingKeys,
 }
 
 var _ ssosettings.FallbackStrategy = (*OAuthStrategy)(nil)

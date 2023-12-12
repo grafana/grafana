@@ -80,6 +80,9 @@ public/css/*.min.css
 apiserver.local.config/
 default.etcd/
 
+# kubeconfig path used by example apiserver
+example-apiserver/
+
 # devenv
 /devenv/docker-compose.yaml
 /devenv/docker-compose.override.yaml

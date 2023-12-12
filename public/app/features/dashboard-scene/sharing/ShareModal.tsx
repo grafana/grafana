@@ -7,6 +7,7 @@ import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { ShareExportTab } from './ShareExportTab';
@@ -32,7 +33,7 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
 
   constructor(state: Omit<ShareModalState, 'activeTab'> & { activeTab?: string }) {
     super({
-      activeTab: 'Link',
+      activeTab: 'link',
       ...state,
     });
 
@@ -73,6 +74,7 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
   };
 
   onChangeTab: ComponentProps<typeof ModalTabsHeader>['onChangeTab'] = (tab) => {
+    DashboardInteractions.sharingTabChanged({ item: tab.value });
     this.setState({ activeTab: tab.value });
   };
 }
