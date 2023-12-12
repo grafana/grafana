@@ -126,11 +126,19 @@ func resourceToEntity(key string, res runtime.Object, requestInfo *request.Reque
 		Labels: metaAccessor.GetLabels(),
 	}
 
-	if t := grafanaAccessor.GetUpdatedTimestamp(); t != nil {
+	t, err := grafanaAccessor.GetUpdatedTimestamp()
+	if err != nil {
+		return nil, err
+	}
+	if t != nil {
 		rsp.UpdatedAt = t.UnixMilli()
 	}
 
-	if t := grafanaAccessor.GetOriginTimestamp(); t != nil {
+	t, err = grafanaAccessor.GetOriginTimestamp()
+	if err != nil {
+		return nil, err
+	}
+	if t != nil {
 		rsp.Origin.Time = t.UnixMilli()
 	}
 

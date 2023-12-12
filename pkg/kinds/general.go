@@ -1,6 +1,7 @@
 package kinds
 
 import (
+	"fmt"
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -79,15 +80,16 @@ func (m *GrafanaResourceMetadata) get(key string) string {
 	return m.Annotations[key]
 }
 
-func (m *GrafanaResourceMetadata) GetUpdatedTimestamp() *time.Time {
+func (m *GrafanaResourceMetadata) GetUpdatedTimestamp() (*time.Time, error) {
 	v, ok := m.Annotations[annoKeyUpdatedTimestamp]
-	if ok {
-		t, err := time.Parse(time.RFC3339, v)
-		if err != nil {
-			return &t
-		}
+	if !ok || v == "" {
+		return nil, nil
 	}
-	return nil
+	t, err := time.Parse(time.RFC3339, v)
+	if err != nil {
+		return nil, fmt.Errorf("invalid updated timestamp: %s", err.Error())
+	}
+	return &t, nil
 }
 
 func (m *GrafanaResourceMetadata) SetUpdatedTimestampMillis(v int64) {
@@ -163,17 +165,21 @@ func (m *GrafanaResourceMetadata) SetOriginInfo(info *ResourceOriginInfo) {
 }
 
 // GetOriginInfo returns the origin info stored in k8s metadata annotations
-func (m *GrafanaResourceMetadata) GetOriginInfo() *ResourceOriginInfo {
+func (m *GrafanaResourceMetadata) GetOriginInfo() (*ResourceOriginInfo, error) {
 	v, ok := m.Annotations[annoKeyOriginName]
 	if !ok {
-		return nil
+		return nil, nil
+	}
+	t, err := m.GetOriginTimestamp()
+	if err != nil {
+		return nil, err
 	}
 	return &ResourceOriginInfo{
 		Name:      v,
 		Path:      m.GetOriginPath(),
 		Key:       m.GetOriginKey(),
-		Timestamp: m.GetOriginTimestamp(),
-	}
+		Timestamp: t,
+	}, nil
 }
 
 func (m *GrafanaResourceMetadata) GetOriginName() string {
@@ -188,21 +194,21 @@ func (m *GrafanaResourceMetadata) GetOriginKey() string {
 	return m.Annotations[annoKeyOriginKey]
 }
 
-func (m *GrafanaResourceMetadata) GetOriginTimestamp() *time.Time {
+func (m *GrafanaResourceMetadata) GetOriginTimestamp() (*time.Time, error) {
 	v, ok := m.Annotations[annoKeyOriginTimestamp]
-	if !ok {
-		return nil
+	if !ok || v == "" {
+		return nil, nil
 	}
 	t, err := time.Parse(time.RFC3339, v)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("invalid origin timestamp: %s", err.Error())
 	}
-	return &t
+	return &t, nil
 }
 
 // Accessor functions for k8s objects
 type GrafanaResourceMetaAccessor interface {
-	GetUpdatedTimestamp() *time.Time
+	GetUpdatedTimestamp() (*time.Time, error)
 	SetUpdatedTimestamp(v *time.Time)
 	GetCreatedBy() string
 	SetCreatedBy(user string)
@@ -214,12 +220,12 @@ type GrafanaResourceMetaAccessor interface {
 	SetSlug(v string)
 	GetTitle() string
 	SetTitle(v string)
-	GetOriginInfo() *ResourceOriginInfo
+	GetOriginInfo() (*ResourceOriginInfo, error)
 	SetOriginInfo(info *ResourceOriginInfo)
 	GetOriginName() string
 	GetOriginPath() string
 	GetOriginKey() string
-	GetOriginTimestamp() *time.Time
+	GetOriginTimestamp() (*time.Time, error)
 }
 
 var _ GrafanaResourceMetaAccessor = (*grafanaResourceMetaAccessor)(nil)
@@ -252,16 +258,16 @@ func (m *grafanaResourceMetaAccessor) get(key string) string {
 	return m.obj.GetAnnotations()[key]
 }
 
-func (m *grafanaResourceMetaAccessor) GetUpdatedTimestamp() *time.Time {
+func (m *grafanaResourceMetaAccessor) GetUpdatedTimestamp() (*time.Time, error) {
 	v, ok := m.obj.GetAnnotations()[annoKeyUpdatedTimestamp]
-	if !ok {
-		return nil
+	if !ok || v == "" {
+		return nil, nil
 	}
 	t, err := time.Parse(time.RFC3339, v)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("invalid updated timestamp: %s", err.Error())
 	}
-	return &t
+	return &t, nil
 }
 
 func (m *grafanaResourceMetaAccessor) SetUpdatedTimestampMillis(v int64) {
@@ -348,17 +354,21 @@ func (m *grafanaResourceMetaAccessor) SetOriginInfo(info *ResourceOriginInfo) {
 	m.obj.SetAnnotations(anno)
 }
 
-func (m *grafanaResourceMetaAccessor) GetOriginInfo() *ResourceOriginInfo {
+func (m *grafanaResourceMetaAccessor) GetOriginInfo() (*ResourceOriginInfo, error) {
 	v, ok := m.obj.GetAnnotations()[annoKeyOriginName]
 	if !ok {
-		return nil
+		return nil, nil
+	}
+	t, err := m.GetOriginTimestamp()
+	if err != nil {
+		return nil, err
 	}
 	return &ResourceOriginInfo{
 		Name:      v,
 		Path:      m.GetOriginPath(),
 		Key:       m.GetOriginKey(),
-		Timestamp: m.GetOriginTimestamp(),
-	}
+		Timestamp: t,
+	}, nil
 }
 
 func (m *grafanaResourceMetaAccessor) GetOriginName() string {
@@ -373,14 +383,14 @@ func (m *grafanaResourceMetaAccessor) GetOriginKey() string {
 	return m.get(annoKeyOriginKey)
 }
 
-func (m *grafanaResourceMetaAccessor) GetOriginTimestamp() *time.Time {
+func (m *grafanaResourceMetaAccessor) GetOriginTimestamp() (*time.Time, error) {
 	v, ok := m.obj.GetAnnotations()[annoKeyOriginTimestamp]
-	if !ok {
-		return nil
+	if !ok || v == "" {
+		return nil, nil
 	}
 	t, err := time.Parse(time.RFC3339, v)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("invalid origin timestamp: %s", err.Error())
 	}
-	return &t
+	return &t, nil
 }
