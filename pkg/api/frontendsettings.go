@@ -4,8 +4,10 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"hash"
 	"net/http"
 	"slices"
+	"sort"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -39,21 +41,20 @@ func (hs *HTTPServer) GetFrontendAssets(c *contextmodel.ReqContext) {
 	keys["version"] = fmt.Sprintf("%x", hash.Sum(nil))
 
 	// Plugin configs
-	hash.Reset()
+	plugins := []string{}
 	for _, p := range hs.pluginStore.Plugins(c.Req.Context()) {
-		_, _ = hash.Write([]byte(p.Name))
-		_, _ = hash.Write([]byte(p.Info.Version))
+		plugins = append(plugins, fmt.Sprintf("%s@%s", p.Name, p.Info.Version))
 	}
-	keys["plugins"] = fmt.Sprintf("%x", hash.Sum(nil))
+	keys["plugins"] = sortedHash(plugins, hash)
 
 	// Feature flags
-	hash.Reset()
+	enabled := []string{}
 	for flag, set := range hs.Features.GetEnabled(c.Req.Context()) {
 		if set {
-			_, _ = hash.Write([]byte(flag))
+			enabled = append(enabled, flag)
 		}
 	}
-	keys["flags"] = fmt.Sprintf("%x", hash.Sum(nil))
+	keys["flags"] = sortedHash(enabled, hash)
 
 	// Assets
 	hash.Reset()
@@ -70,6 +71,15 @@ func (hs *HTTPServer) GetFrontendAssets(c *contextmodel.ReqContext) {
 	keys["assets"] = fmt.Sprintf("%x", hash.Sum(nil))
 
 	c.JSON(http.StatusOK, keys)
+}
+
+func sortedHash(vals []string, hash hash.Hash) string {
+	hash.Reset()
+	sort.Strings(vals)
+	for _, v := range vals {
+		_, _ = hash.Write([]byte(v))
+	}
+	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 
 func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {

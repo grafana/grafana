@@ -2,20 +2,23 @@ import { getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
 
 export class NewFrontendAssetsChecker {
   private hasUpdates = false;
-  private previous = '?';
-  private checked = 0;
-  private interval = 1000; // check interval
+  private previous = '';
+  private interval = 1000 * 60 * 4; // force check after 5 mins
+  private checked = Date.now() - this.interval / 5;
 
   public start() {
-    let prevState: boolean | undefined;
+    const startup = Date.now();
+    let prevState = false;
 
     // Subscribe to live connection state changes and check for new assets when re-connected
     const live = getGrafanaLiveSrv();
     if (live) {
       live.getConnectionState().subscribe((connected) => {
-        if (connected && connected !== prevState) {
+        const elapsed = Date.now() - startup;
+        if (elapsed > 1000 && connected && connected !== prevState) {
           this._checkForUpdates();
         }
+        prevState = connected;
       });
     }
   }
@@ -27,14 +30,14 @@ export class NewFrontendAssetsChecker {
 
     const resultRaw = await getBackendSrv().get('/api/frontend/assets');
     const result = JSON.stringify(resultRaw);
-    if (this.checked && this.previous !== result) {
+    if (this.previous?.length && this.previous !== result) {
       this.hasUpdates = true;
-      console.log('updates detected', true);
     }
     this.previous = result;
     this.checked = Date.now();
   }
 
+  /** This is called on page navigation events */
   public reloadIfUpdateDetected() {
     if (this.hasUpdates) {
       window.location.reload();
