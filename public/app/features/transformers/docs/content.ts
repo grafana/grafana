@@ -1411,7 +1411,7 @@ export function getLinkToDocs(): string {
   `;
 }
 
-function buildImageContent(source: string, imageRenderType: ImageRenderType, imageAltText?: string) {
+function buildImageContent(source: string, imageRenderType: ImageRenderType, imageAltText: string) {
   return imageRenderType === 'shortcodeFigure'
     ? // This will build a Hugo Shortcode "figure" image template, which shares the same default class and max-width.
       `{{< figure src="${source}" class="docs-image--no-shadow" max-width= "1100px" alt="${imageAltText}" >}}`
