@@ -17,7 +17,7 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { convertRawToRange } from '@grafana/data/src/datetime/rangeutil';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { CustomScrollbar, useStyles2, usePanelContext } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
@@ -107,7 +107,7 @@ export const LogsPanel = ({
 
   const loadMoreLogs = useCallback(
     async (scrollRange: AbsoluteTimeRange) => {
-      if (!data.request) {
+      if (!data.request || !config.featureToggles.logsInfiniteScrolling) {
         return;
       }
       const range: TimeRange = convertRawToRange({
