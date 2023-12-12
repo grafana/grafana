@@ -780,7 +780,7 @@
     },
     "frontend": {
       "subtitle": "",
-      "title": ""
+      "title": "Frontend"
     },
     "frontend-app": {
       "title": "Frontend"
@@ -815,6 +815,9 @@
     },
     "integrations": {
       "title": "Integrationen"
+    },
+    "k6": {
+      "title": ""
     },
     "kubernetes": {
       "title": "Kubernetes"
@@ -934,6 +937,10 @@
     "teams": {
       "subtitle": "Gruppen von Benutzern mit gemeinsamen Dashboards und Benachrichtigungen",
       "title": "Teams"
+    },
+    "testing-and-synthetics": {
+      "subtitle": "",
+      "title": ""
     },
     "upgrading": {
       "title": "Statistiken und Lizenz"
@@ -1290,6 +1297,12 @@
       "select-search-input": "Suchbegriff eingeben (Land, Stadt, Abkürzung)"
     }
   },
+  "transformations": {
+    "empty": {
+      "add-transformation-body": "",
+      "add-transformation-header": ""
+    }
+  },
   "user-orgs": {
     "current-org-button": "Aktuell",
     "name-column": "Name",
@@ -1304,6 +1317,9 @@
       "name-error": "Name ist erforderlich",
       "name-label": "Name",
       "username-label": "Benutzername"
+    },
+    "tabs": {
+      "general": "Allgemein"
     }
   },
   "user-session": {

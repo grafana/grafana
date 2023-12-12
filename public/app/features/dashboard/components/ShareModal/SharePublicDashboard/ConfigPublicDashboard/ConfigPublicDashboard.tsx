@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { reportInteraction } from '@grafana/runtime';
 import { config, featureEnabled } from '@grafana/runtime/src';
 import {
   Button,
@@ -25,6 +24,7 @@ import {
 import { DashboardModel } from 'app/features/dashboard/state';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { DeletePublicDashboardModal } from 'app/features/manage-dashboards/components/PublicDashboardListTable/DeletePublicDashboardModal';
 
 import { contextSrv } from '../../../../../../core/services/context_srv';
@@ -111,7 +111,7 @@ export function ConfigPublicDashboardBase({
   };
 
   function onCopyURL() {
-    reportInteraction('dashboards_sharing_public_copy_url_clicked');
+    DashboardInteractions.publicDashboardUrlCopied();
   }
 
   return (
@@ -151,7 +151,7 @@ export function ConfigPublicDashboardBase({
             {...register('isPaused')}
             disabled={disableInputs}
             onChange={(e) => {
-              reportInteraction('dashboards_sharing_public_pause_clicked', {
+              DashboardInteractions.publicDashboardPauseSharingClicked({
                 paused: e.currentTarget.checked,
               });
               onChange('isPaused', e.currentTarget.checked);
@@ -242,7 +242,7 @@ export function ConfigPublicDashboard({ publicDashboard, unsupportedDatasources 
           showSaveChangesAlert={hasWritePermissions && dashboard.hasUnsavedChanges()}
           hasTemplateVariables={hasTemplateVariables}
           onRevoke={() => {
-            reportInteraction('dashboards_sharing_public_revoke_clicked');
+            DashboardInteractions.revokePublicDashboardClicked();
             showModal(DeletePublicDashboardModal, {
               dashboardTitle: dashboard.title,
               onConfirm: () => onDeletePublicDashboardClick(hideModal),

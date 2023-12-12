@@ -816,6 +816,9 @@
     "integrations": {
       "title": "Ĩŉŧęģřäŧįőŉş"
     },
+    "k6": {
+      "title": "Pęřƒőřmäŉčę"
+    },
     "kubernetes": {
       "title": "Ķūþęřŉęŧęş"
     },
@@ -934,6 +937,10 @@
     "teams": {
       "subtitle": "Ğřőūpş őƒ ūşęřş ŧĥäŧ ĥävę čőmmőŉ đäşĥþőäřđ äŉđ pęřmįşşįőŉ ŉęęđş",
       "title": "Ŧęämş"
+    },
+    "testing-and-synthetics": {
+      "subtitle": "Øpŧįmįžę pęřƒőřmäŉčę ŵįŧĥ ĸ6 äŉđ Ŝyŉŧĥęŧįč Mőŉįŧőřįŉģ įŉşįģĥŧş",
+      "title": "Ŧęşŧįŉģ & şyŉŧĥęŧįčş"
     },
     "upgrading": {
       "title": "Ŝŧäŧş äŉđ ľįčęŉşę"
@@ -1290,6 +1297,12 @@
       "select-search-input": "Ŧypę ŧő şęäřčĥ (čőūŉŧřy, čįŧy, äþþřęvįäŧįőŉ)"
     }
   },
+  "transformations": {
+    "empty": {
+      "add-transformation-body": "Ŧřäŉşƒőřmäŧįőŉş äľľőŵ đäŧä ŧő þę čĥäŉģęđ įŉ väřįőūş ŵäyş þęƒőřę yőūř vįşūäľįžäŧįőŉ įş şĥőŵŉ.<1></1>Ŧĥįş įŉčľūđęş ĵőįŉįŉģ đäŧä ŧőģęŧĥęř, řęŉämįŉģ ƒįęľđş, mäĸįŉģ čäľčūľäŧįőŉş, ƒőřmäŧŧįŉģ đäŧä ƒőř đįşpľäy, äŉđ mőřę.",
+      "add-transformation-header": "Ŝŧäřŧ ŧřäŉşƒőřmįŉģ đäŧä"
+    }
+  },
   "user-orgs": {
     "current-org-button": "Cūřřęŉŧ",
     "name-column": "Ńämę",
@@ -1304,6 +1317,9 @@
       "name-error": "Ńämę įş řęqūįřęđ",
       "name-label": "Ńämę",
       "username-label": "Ůşęřŉämę"
+    },
+    "tabs": {
+      "general": "Ğęŉęřäľ"
     }
   },
   "user-session": {

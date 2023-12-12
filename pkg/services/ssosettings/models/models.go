@@ -37,13 +37,13 @@ type SSOSettings struct {
 }
 
 type SSOSettingsDTO struct {
-	ID        string                 `xorm:"id pk" json:"id"`
-	Provider  string                 `xorm:"provider" json:"provider"`
-	Settings  map[string]interface{} `xorm:"settings" json:"settings"`
-	Created   time.Time              `xorm:"created" json:"-"`
-	Updated   time.Time              `xorm:"updated" json:"-"`
-	IsDeleted bool                   `xorm:"is_deleted" json:"-"`
-	Source    SettingsSource         `xorm:"-" json:"source"`
+	ID        string         `xorm:"id pk" json:"id"`
+	Provider  string         `xorm:"provider" json:"provider"`
+	Settings  map[string]any `xorm:"settings" json:"settings"`
+	Created   time.Time      `xorm:"created" json:"-"`
+	Updated   time.Time      `xorm:"updated" json:"-"`
+	IsDeleted bool           `xorm:"is_deleted" json:"-"`
+	Source    SettingsSource `xorm:"-" json:"source"`
 }
 
 // TableName returns the table name (needed for Xorm)
@@ -79,7 +79,7 @@ func (s SSOSettings) ToSSOSettingsDTO() (*SSOSettingsDTO, error) {
 		return nil, err
 	}
 
-	var settings map[string]interface{}
+	var settings map[string]any
 	err = json.Unmarshal(settingsEncoded, &settings)
 	if err != nil {
 		return nil, err

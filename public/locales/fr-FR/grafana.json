@@ -786,7 +786,7 @@
     },
     "frontend": {
       "subtitle": "",
-      "title": ""
+      "title": "Frontend"
     },
     "frontend-app": {
       "title": "Frontend"
@@ -821,6 +821,9 @@
     },
     "integrations": {
       "title": "Intégrations"
+    },
+    "k6": {
+      "title": ""
     },
     "kubernetes": {
       "title": "Kubernetes"
@@ -940,6 +943,10 @@
     "teams": {
       "subtitle": "Groupes d'utilisateurs ayant des besoins communs en matière de tableau de bord et d'autorisations",
       "title": "Équipes"
+    },
+    "testing-and-synthetics": {
+      "subtitle": "",
+      "title": ""
     },
     "upgrading": {
       "title": "Statistiques et licence"
@@ -1296,6 +1303,12 @@
       "select-search-input": "Tapez pour rechercher (pays, ville, abréviation)"
     }
   },
+  "transformations": {
+    "empty": {
+      "add-transformation-body": "",
+      "add-transformation-header": ""
+    }
+  },
   "user-orgs": {
     "current-org-button": "Actuel",
     "name-column": "Nom",
@@ -1310,6 +1323,9 @@
       "name-error": "Un nom est obligatoire",
       "name-label": "Nom",
       "username-label": "Nom d’utilisateur"
+    },
+    "tabs": {
+      "general": "Général"
     }
   },
   "user-session": {
