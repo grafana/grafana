@@ -1,11 +1,11 @@
 import { MatcherOperator, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import {
-  findMatchingRoutes,
-  normalizeRoute,
-  getInheritedProperties,
   computeInheritedTree,
+  findMatchingRoutes,
+  getInheritedProperties,
   matchLabels,
+  normalizeRoute,
 } from './notification-policies';
 
 import 'core-js/stable/structured-clone';
@@ -293,6 +293,21 @@ describe('getInheritedProperties()', () => {
       expect(childInherited).toHaveProperty('group_wait', '1m');
       expect(childInherited).toHaveProperty('group_interval', '2m');
     });
+  });
+  it('should not inherit mute timings from parent route', () => {
+    const parent: Route = {
+      receiver: 'PARENT',
+      group_by: ['parentLabel'],
+      mute_time_intervals: ['Mon-Fri 09:00-17:00'],
+    };
+
+    const child: Route = {
+      receiver: 'CHILD',
+      group_by: ['childLabel'],
+    };
+
+    const childInherited = getInheritedProperties(parent, child);
+    expect(childInherited).not.toHaveProperty('mute_time_intervals');
   });
 });
 

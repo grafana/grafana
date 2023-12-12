@@ -1,4 +1,4 @@
-package social
+package connectors
 
 import (
 	"errors"
@@ -19,3 +19,12 @@ var (
 	errInvalidRole = errutil.BadRequest("oauth.invalid_role",
 		errutil.WithPublicMessage("IdP did not return a valid role attribute, please contact your administrator"))
 )
+
+// SocialError is a custom error type for social connectors to provide a public message when the connector expectaions are not met.
+type SocialError struct {
+	s string
+}
+
+func (e SocialError) Error() string {
+	return e.s
+}
