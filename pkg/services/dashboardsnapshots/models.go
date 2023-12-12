@@ -100,3 +100,10 @@ type GetDashboardSnapshotsQuery struct {
 	OrgID        int64
 	SignedInUser identity.Requester
 }
+
+type CreateExternalSnapshotResponse struct {
+	Key       string `json:"key"`
+	DeleteKey string `json:"deleteKey"`
+	Url       string `json:"url"`
+	DeleteUrl string `json:"deleteUrl"`
+}

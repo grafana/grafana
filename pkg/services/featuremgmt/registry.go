@@ -1006,13 +1006,7 @@ var (
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
-			Created:         time.Date(2023, time.December, 4, 12, 0, 0, 0, time.UTC),
-		},
-		{
-			Name:        "kubernetesSnapshots",
-			Description: "Use the kubernetes API in the frontend for snapshots",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAppPlatformSquad,
+			Created:         time.Date(2023, time.December, 11, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "cloudWatchBatchQueries",

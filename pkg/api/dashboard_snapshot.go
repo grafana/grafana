@@ -1,7 +1,6 @@
 package api
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -22,11 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-var client = &http.Client{
-	Timeout:   time.Second * 5,
-	Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
-}
-
 // swagger:route GET /snapshot/shared-options snapshots getSharingOptions
 //
 // Get snapshot sharing settings.
@@ -41,58 +35,6 @@ func (hs *HTTPServer) GetSharingOptions(c *contextmodel.ReqContext) {
 		"externalSnapshotName": hs.Cfg.ExternalSnapshotName,
 		"externalEnabled":      hs.Cfg.ExternalEnabled,
 	})
-}
-
-type CreateExternalSnapshotResponse struct {
-	Key       string `json:"key"`
-	DeleteKey string `json:"deleteKey"`
-	Url       string `json:"url"`
-	DeleteUrl string `json:"deleteUrl"`
-}
-
-func createExternalDashboardSnapshot(cmd dashboardsnapshots.CreateDashboardSnapshotCommand, externalSnapshotUrl string) (*CreateExternalSnapshotResponse, error) {
-	var createSnapshotResponse CreateExternalSnapshotResponse
-	message := map[string]any{
-		"name":      cmd.Name,
-		"expires":   cmd.Expires,
-		"dashboard": cmd.Dashboard,
-		"key":       cmd.Key,
-		"deleteKey": cmd.DeleteKey,
-	}
-
-	messageBytes, err := simplejson.NewFromAny(message).Encode()
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := client.Post(externalSnapshotUrl+"/api/snapshots", "application/json", bytes.NewBuffer(messageBytes))
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			plog.Warn("Failed to close response body", "err", err)
-		}
-	}()
-
-	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("create external snapshot response status code %d", resp.StatusCode)
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&createSnapshotResponse); err != nil {
-		return nil, err
-	}
-
-	return &createSnapshotResponse, nil
-}
-
-func createOriginalDashboardURL(cmd *dashboardsnapshots.CreateDashboardSnapshotCommand) (string, error) {
-	dashUID := cmd.Dashboard.Get("uid").MustString("")
-	if ok := util.IsValidShortUID(dashUID); !ok {
-		return "", fmt.Errorf("invalid dashboard UID")
-	}
-
-	return fmt.Sprintf("/d/%v", dashUID), nil
 }
 
 // swagger:route POST /snapshots snapshots createDashboardSnapshot
@@ -130,7 +72,7 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *contextmodel.ReqContext) respon
 	cmd.ExternalURL = ""
 	cmd.OrgID = c.SignedInUser.GetOrgID()
 	cmd.UserID = userID
-	originalDashboardURL, err := createOriginalDashboardURL(&cmd)
+	originalDashboardURL, err := dashboardsnapshots.CreateOriginalDashboardURL(&cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Invalid app URL", err)
 	}
@@ -141,7 +83,7 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *contextmodel.ReqContext) respon
 			return nil
 		}
 
-		resp, err := createExternalDashboardSnapshot(cmd, hs.Cfg.ExternalSnapshotUrl)
+		resp, err := dashboardsnapshots.CreateExternalDashboardSnapshot(cmd, hs.Cfg.ExternalSnapshotUrl)
 		if err != nil {
 			c.JsonApiErr(http.StatusInternalServerError, "Failed to create external snapshot", err)
 			return nil
