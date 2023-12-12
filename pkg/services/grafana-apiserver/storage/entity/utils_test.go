@@ -26,7 +26,6 @@ func TestResourceToEntity(t *testing.T) {
 	requestInfo := &request.RequestInfo{
 		APIVersion: apiVersion,
 	}
-	fmt.Println("requestInfo", string(updatedAtStr))
 
 	testCases := []struct {
 		key                        string
