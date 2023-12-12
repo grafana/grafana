@@ -43,9 +43,6 @@ func runMockServer() (flight.Server, error) {
 	return server, nil
 }
 
-// Define the suite, and absorb the built-in basic suite
-// functionality from testify - including a T() method which
-// returns the current testing context
 type FSQLTestSuite struct {
 	suite.Suite
 	db     *sql.DB
