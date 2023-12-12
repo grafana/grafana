@@ -10,7 +10,7 @@ import { LabelValue } from './types';
 
 interface Props {
   contentLabelValue: LabelValue[];
-  customContent?: ReactElement | null;
+  customContent?: ReactElement[];
 }
 
 export const VizTooltipContent = ({ contentLabelValue, customContent }: Props) => {
@@ -36,7 +36,13 @@ export const VizTooltipContent = ({ contentLabelValue, customContent }: Props) =
           );
         })}
       </div>
-      {customContent && <div className={styles.customContentPadding}>{customContent}</div>}
+      {customContent?.map((content, i) => {
+        return (
+          <div key={i} className={styles.customContentPadding}>
+            {content}
+          </div>
+        );
+      })}
     </div>
   );
 };
