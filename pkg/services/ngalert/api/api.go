@@ -36,7 +36,7 @@ type ExternalAlertmanagerProvider interface {
 }
 
 type AlertingStore interface {
-	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) (*models.AlertConfiguration, error)
+	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error)
 }
 
 type RuleAccessControlService interface {

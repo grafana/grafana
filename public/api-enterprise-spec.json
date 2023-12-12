@@ -4214,7 +4214,11 @@
           "type": "boolean"
         },
         "id": {
-          "description": "Deprecated: use Uid instead",
+          "description": "Deprecated: use UID instead",
+          "type": "integer",
+          "format": "int64"
+        },
+        "orgId": {
           "type": "integer",
           "format": "int64"
         },
@@ -6332,6 +6336,9 @@
         },
         "displayName": {
           "type": "string"
+        },
+        "global": {
+          "type": "boolean"
         },
         "group": {
           "type": "string"

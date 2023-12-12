@@ -4,6 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { DataFrameView, GrafanaTheme2, textUtil, dateTimeFormat } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
+import { attachSkeleton, SkeletonComponent } from '@grafana/ui/src/unstable';
 
 import { NewsItem } from '../types';
 
@@ -14,7 +15,7 @@ interface NewsItemProps {
   data: DataFrameView<NewsItem>;
 }
 
-export function News({ width, showImage, data, index }: NewsItemProps) {
+function NewsComponent({ width, showImage, data, index }: NewsItemProps) {
   const styles = useStyles2(getStyles);
   const useWideLayout = width > 600;
   const newsItem = data.get(index);
@@ -46,12 +47,16 @@ export function News({ width, showImage, data, index }: NewsItemProps) {
   );
 }
 
-const NewsSkeleton = ({ width, showImage }: Pick<NewsItemProps, 'width' | 'showImage'>) => {
+const NewsSkeleton: SkeletonComponent<Pick<NewsItemProps, 'width' | 'showImage'>> = ({
+  width,
+  showImage,
+  rootProps,
+}) => {
   const styles = useStyles2(getStyles);
   const useWideLayout = width > 600;
 
   return (
-    <div className={cx(styles.item, useWideLayout && styles.itemWide)}>
+    <div className={cx(styles.item, useWideLayout && styles.itemWide)} {...rootProps}>
       {showImage && (
         <Skeleton
           containerClassName={cx(styles.socialImage, useWideLayout && styles.socialImageWide)}
@@ -68,7 +73,7 @@ const NewsSkeleton = ({ width, showImage }: Pick<NewsItemProps, 'width' | 'showI
   );
 };
 
-News.Skeleton = NewsSkeleton;
+export const News = attachSkeleton(NewsComponent, NewsSkeleton);
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({

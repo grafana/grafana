@@ -12,8 +12,8 @@ import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes, MonacoEditor } from 
 
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
-import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
 import { CompletionDataProvider } from './monaco-completion-provider/CompletionDataProvider';
+import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider/completionUtils';
 import { placeHolderScopedVars, validateQuery } from './monaco-completion-provider/validation';
 
 const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
