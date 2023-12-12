@@ -339,6 +339,9 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	// Wait until the Alertmanager is ready to send alerts.
 	require.NoError(t, am.checkReadiness(context.Background()))
 	require.True(t, am.Ready())
+	require.Eventually(t, func() bool {
+		return len(am.sender.Alertmanagers()) > 0
+	}, 10*time.Second, 500*time.Millisecond)
 
 	// We should have no alerts and no groups at first.
 	alerts, err := am.GetAlerts(context.Background(), true, true, true, []string{}, "")
