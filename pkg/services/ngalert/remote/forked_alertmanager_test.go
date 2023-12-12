@@ -282,21 +282,12 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 	})
 
 	t.Run("Ready", func(tt *testing.T) {
-		// Ready should be called on both Alertmanagers
-		internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
+		// Ready should be called only on the internal Alertmanager.
+		internal, _, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
 		internal.EXPECT().Ready().Return(true).Once()
-		remote.EXPECT().Ready().Return(true).Once()
 		require.True(tt, forked.Ready())
 
-		// If one of the two Alertmanagers is not ready, it returns false.
-		internal, remote, forked = genTestAlertmanagers(tt, modeRemoteSecondary)
 		internal.EXPECT().Ready().Return(false).Maybe()
-		remote.EXPECT().Ready().Return(true).Maybe()
-		require.False(tt, forked.Ready())
-
-		internal, remote, forked = genTestAlertmanagers(tt, modeRemoteSecondary)
-		internal.EXPECT().Ready().Return(true).Maybe()
-		remote.EXPECT().Ready().Return(false).Maybe()
 		require.False(tt, forked.Ready())
 	})
 }

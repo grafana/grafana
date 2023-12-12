@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/
-description: How to customize your notifications using templating
+description: Customize your notifications using notification templates
 keywords:
   - grafana
   - alerting
