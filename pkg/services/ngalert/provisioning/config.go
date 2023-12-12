@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 func deserializeAlertmanagerConfig(config []byte) (*definitions.PostableUserConfig, error) {
@@ -28,10 +27,7 @@ type cfgRevision struct {
 }
 
 func getLastConfiguration(ctx context.Context, orgID int64, store AMConfigStore) (*cfgRevision, error) {
-	q := models.GetLatestAlertmanagerConfigurationQuery{
-		OrgID: orgID,
-	}
-	alertManagerConfig, err := store.GetLatestAlertmanagerConfiguration(ctx, &q)
+	alertManagerConfig, err := store.GetLatestAlertmanagerConfiguration(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}

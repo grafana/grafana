@@ -246,6 +246,7 @@ type Cfg struct {
 	PluginForcePublicKeyDownload     bool
 	PluginSkipPublicKeyDownload      bool
 	DisablePlugins                   []string
+	HideAngularDeprecation           []string
 	PluginInstallToken               string
 
 	PluginsCDNURLTemplate    string
@@ -285,6 +286,9 @@ type Cfg struct {
 	AdminEmail                   string
 	DisableLoginForm             bool
 	SignoutRedirectUrl           string
+	IDResponseHeaderEnabled      bool
+	IDResponseHeaderPrefix       string
+	IDResponseHeaderNamespaces   map[string]struct{}
 	// Not documented & not supported
 	// stand in until a more complete solution is implemented
 	AuthConfigUIAdminAccess bool
@@ -368,6 +372,7 @@ type Cfg struct {
 	AnonymousOrgName     string
 	AnonymousOrgRole     string
 	AnonymousHideVersion bool
+	AnonymousDeviceLimit int64
 
 	DateFormats DateFormats
 
@@ -413,6 +418,7 @@ type Cfg struct {
 	StackID string
 	Slug    string
 
+	// Deprecated
 	ForceMigration bool
 
 	// Analytics
@@ -1058,6 +1064,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.Env = Env
 	cfg.StackID = valueAsString(iniFile.Section("environment"), "stack_id", "")
 	cfg.Slug = valueAsString(iniFile.Section("environment"), "stack_slug", "")
+	//nolint:staticcheck
 	cfg.ForceMigration = iniFile.Section("").Key("force_migration").MustBool(false)
 	InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
 	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
@@ -1607,6 +1614,17 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	// Azure Auth
 	AzureAuthEnabled = auth.Key("azure_auth_enabled").MustBool(false)
 	cfg.AzureAuthEnabled = AzureAuthEnabled
+
+	// ID response header
+	cfg.IDResponseHeaderEnabled = auth.Key("id_response_header_enabled").MustBool(false)
+	cfg.IDResponseHeaderPrefix = auth.Key("id_response_header_prefix").MustString("X-Grafana-")
+
+	idHeaderNamespaces := util.SplitString(auth.Key("id_response_header_namespaces").MustString(""))
+	cfg.IDResponseHeaderNamespaces = make(map[string]struct{}, len(idHeaderNamespaces))
+	for _, namespace := range idHeaderNamespaces {
+		cfg.IDResponseHeaderNamespaces[namespace] = struct{}{}
+	}
+
 	readAuthAzureADSettings(cfg)
 
 	// Google Auth
@@ -1629,10 +1647,12 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	readAuthGithubSettings(cfg)
 
 	// anonymous access
-	cfg.AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
-	cfg.AnonymousOrgName = valueAsString(iniFile.Section("auth.anonymous"), "org_name", "")
-	cfg.AnonymousOrgRole = valueAsString(iniFile.Section("auth.anonymous"), "org_role", "")
-	cfg.AnonymousHideVersion = iniFile.Section("auth.anonymous").Key("hide_version").MustBool(false)
+	anonSection := iniFile.Section("auth.anonymous")
+	cfg.AnonymousEnabled = anonSection.Key("enabled").MustBool(false)
+	cfg.AnonymousOrgName = valueAsString(anonSection, "org_name", "")
+	cfg.AnonymousOrgRole = valueAsString(anonSection, "org_role", "")
+	cfg.AnonymousHideVersion = anonSection.Key("hide_version").MustBool(false)
+	cfg.AnonymousDeviceLimit = anonSection.Key("device_limit").MustInt64(0)
 
 	// basic auth
 	authBasic := iniFile.Section("auth.basic")
@@ -1972,16 +1992,17 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 }
 
 // GetContentDeliveryURL returns full content delivery URL with /<edition>/<version> added to URL
-func (cfg *Cfg) GetContentDeliveryURL(prefix string) string {
-	if cfg.CDNRootURL != nil {
-		url := *cfg.CDNRootURL
-		preReleaseFolder := ""
-
-		url.Path = path.Join(url.Path, prefix, preReleaseFolder, cfg.BuildVersion)
-		return url.String() + "/"
+func (cfg *Cfg) GetContentDeliveryURL(prefix string) (string, error) {
+	if cfg.CDNRootURL == nil {
+		return "", nil
 	}
+	if cfg.BuildVersion == "" {
+		return "", errors.New("BuildVersion is not set")
+	}
+	url := *cfg.CDNRootURL
 
-	return ""
+	url.Path = path.Join(url.Path, prefix, cfg.BuildVersion)
+	return url.String() + "/", nil
 }
 
 func (cfg *Cfg) readDataSourcesSettings() {

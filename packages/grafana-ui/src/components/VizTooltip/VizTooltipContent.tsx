@@ -20,7 +20,7 @@ export const VizTooltipContent = ({ contentLabelValue, customContent }: Props) =
     <div className={styles.wrapper}>
       <div>
         {contentLabelValue?.map((labelValue, i) => {
-          const { label, value, color, colorIndicator } = labelValue;
+          const { label, value, color, colorIndicator, colorPlacement, isActive } = labelValue;
           return (
             <VizTooltipRow
               key={i}
@@ -28,7 +28,9 @@ export const VizTooltipContent = ({ contentLabelValue, customContent }: Props) =
               value={value}
               color={color}
               colorIndicator={colorIndicator}
+              colorPlacement={colorPlacement}
               colorFirst={false}
+              isActive={isActive}
               justify={'space-between'}
             />
           );
