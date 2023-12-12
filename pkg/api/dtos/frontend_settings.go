@@ -192,7 +192,7 @@ type FrontendSettingsDTO struct {
 
 	FeatureToggles                   map[string]bool                `json:"featureToggles"`
 	AnonymousEnabled                 bool                           `json:"anonymousEnabled"`
-	AnonymousUserLimit               int64                          `json:"anonymousUserLimit"`
+	AnonymousDeviceLimit             int64                          `json:"anonymousDeviceLimit"`
 	RendererAvailable                bool                           `json:"rendererAvailable"`
 	RendererVersion                  string                         `json:"rendererVersion"`
 	SecretsManagerPluginEnabled      bool                           `json:"secretsManagerPluginEnabled"`
