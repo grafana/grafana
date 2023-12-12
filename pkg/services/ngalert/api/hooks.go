@@ -1,6 +1,8 @@
 package api
 
 import (
+	"net/url"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -29,12 +31,19 @@ func (h *Hooks) Set(path string, hook RequestHandlerFunc) {
 	h.hooks[path] = hook
 }
 
+// Get returns a hook if one is defined for the matching URL.
+// Get also returns a bool indicating whether or not a matching hook exists.
+func (h *Hooks) Get(url *url.URL) (RequestHandlerFunc, bool) {
+	hook, ok := h.hooks[url.Path]
+	return hook, ok
+}
+
 // Wrap returns a new handler which will intercept paths with hooks configured,
 // and invoke the hooked in handler instead. If no hook is configured for a path,
 // then the given handler is invoked.
 func (h *Hooks) Wrap(next RequestHandlerFunc) RequestHandlerFunc {
 	return func(req *contextmodel.ReqContext) response.Response {
-		if hook, ok := h.hooks[req.Context.Req.URL.Path]; ok {
+		if hook, ok := h.Get(req.Context.Req.URL); ok {
 			h.logger.Debug("Hook defined - invoking new handler", "path", req.Context.Req.URL.Path)
 			return hook(req)
 		}

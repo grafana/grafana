@@ -780,7 +780,7 @@
     },
     "frontend": {
       "subtitle": "",
-      "title": ""
+      "title": "Frontend"
     },
     "frontend-app": {
       "title": "Frontend"
@@ -815,6 +815,9 @@
     },
     "integrations": {
       "title": "Intégrations"
+    },
+    "k6": {
+      "title": ""
     },
     "kubernetes": {
       "title": "Kubernetes"
@@ -934,6 +937,10 @@
     "teams": {
       "subtitle": "Groupes d'utilisateurs ayant des besoins communs en matière de tableau de bord et d'autorisations",
       "title": "Équipes"
+    },
+    "testing-and-synthetics": {
+      "subtitle": "",
+      "title": ""
     },
     "upgrading": {
       "title": "Statistiques et licence"
@@ -1312,7 +1319,7 @@
       "username-label": "Nom d’utilisateur"
     },
     "tabs": {
-      "general": ""
+      "general": "Général"
     }
   },
   "user-session": {
