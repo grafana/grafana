@@ -133,10 +133,7 @@ export const LogsPanel = ({
       const responses = await Promise.all(dataRequests);
       let newSeries = panelData.series;
       for (const response of responses) {
-        if (!isObservable(response)) {
-          continue;
-        }
-        const newData = await lastValueFrom(response);
+        const newData = isObservable(response) ? await lastValueFrom(response) : response;
         newSeries = combineResponses(
           {
             data: newSeries,
