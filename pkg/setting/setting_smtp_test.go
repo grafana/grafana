@@ -16,12 +16,14 @@ func TestLoadSmtpStaticHeaders(t *testing.T) {
 		require.NoError(t, err)
 		cfg.Raw = f
 		_, err = s.NewKey("foo", "foo_val")
+		_, err = s.NewKey("bar", "bar_val")
 		require.NoError(t, err)
 
 		err = cfg.readGrafanaSmtpStaticHeaders()
 		require.NoError(t, err)
 
 		assert.Equal(t, "foo_val", cfg.Smtp.StaticHeaders["foo"])
+		assert.Equal(t, "bar_val", cfg.Smtp.StaticHeaders["bar"])
 	})
 
 	t.Run("will load no headers when section is defined with no keys", func(t *testing.T) {
