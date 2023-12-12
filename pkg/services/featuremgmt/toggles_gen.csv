@@ -109,7 +109,7 @@ alertingInsights,GA,@grafana/alerting-squad,2023-09-14,false,false,false,true
 externalCorePlugins,experimental,@grafana/plugins-platform-backend,2023-09-22,false,false,false,false
 pluginsAPIMetrics,experimental,@grafana/plugins-platform-backend,2023-09-21,false,false,false,true
 httpSLOLevels,experimental,@grafana/hosted-grafana-team,2023-09-22,false,false,true,false
-idForwarding,experimental,@grafana/identity-access-team,2023-09-25,true,false,false,false
+idForwarding,experimental,@grafana/identity-access-team,2023-09-25,false,false,false,false
 cloudWatchWildCardDimensionValues,GA,@grafana/aws-datasources,2023-09-27,false,false,false,false
 externalServiceAccounts,experimental,@grafana/identity-access-team,2023-09-28,true,false,false,false
 panelMonitoring,experimental,@grafana/dataviz-squad,2023-10-08,false,false,false,true
