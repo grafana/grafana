@@ -48,6 +48,15 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		}
 	}
 
+	hideAngularDeprecation := pluginsSection.Key("hide_angular_deprecation").MustString("")
+	for _, id := range strings.Split(hideAngularDeprecation, ",") {
+		id = strings.TrimSpace(id)
+		if id == "" {
+			continue
+		}
+		cfg.HideAngularDeprecation = append(cfg.HideAngularDeprecation, id)
+	}
+
 	forwardHostEnvVars := pluginsSection.Key("forward_host_env_vars").MustString("")
 	for _, id := range strings.Split(forwardHostEnvVars, ",") {
 		id = strings.TrimSpace(id)

@@ -18142,6 +18142,9 @@
         "displayName": {
           "type": "string"
         },
+        "global": {
+          "type": "boolean"
+        },
         "group": {
           "type": "string"
         },
