@@ -168,11 +168,6 @@ export const getPmmSettingsPage = (alertingEnabled = false): NavModelItem => {
       url: `${config.appSubUrl}/settings/ssh-key`,
     },
     {
-      id: 'settings-alert-manager',
-      text: 'Alertmanager Integration',
-      url: `${config.appSubUrl}/settings/am-integration`,
-    },
-    {
       id: 'settings-percona-platform',
       text: 'Percona Platform',
       url: `${config.appSubUrl}/settings/percona-platform`,

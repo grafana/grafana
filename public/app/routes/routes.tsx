@@ -694,15 +694,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/settings/am-integration',
-      component: SafeDynamicImport(
-        () =>
-          import(
-            /* webpackChunkName: "AMIntegrationSettingsPage" */ 'app/percona/settings/components/AlertManager/AlertManager'
-          )
-      ),
-    },
-    {
       path: '/settings/percona-platform',
       component: SafeDynamicImport(
         () =>
