@@ -247,6 +247,20 @@ export const getAllStandardFieldConfigs = () => {
     category,
   };
 
+  const unitScale: FieldConfigPropertyItem<any, boolean, BooleanFieldSettings> = {
+    id: 'unitScale',
+    path: 'unitScale',
+    name: 'Scale units',
+    description: '',
+
+    editor: standardEditorsRegistry.get('boolean').editor,
+    override: standardEditorsRegistry.get('boolean').editor,
+    process: booleanOverrideProcessor,
+
+    shouldApply: () => true,
+    category,
+  };
+
   const fieldMinMax: FieldConfigPropertyItem<any, boolean, BooleanFieldSettings> = {
     id: 'fieldMinMax',
     path: 'fieldMinMax',
@@ -416,5 +430,19 @@ export const getAllStandardFieldConfigs = () => {
     category,
   };
 
-  return [unit, min, max, fieldMinMax, decimals, displayName, color, noValue, links, mappings, thresholds, filterable];
+  return [
+    unit,
+    unitScale,
+    min,
+    max,
+    fieldMinMax,
+    decimals,
+    displayName,
+    color,
+    noValue,
+    links,
+    mappings,
+    thresholds,
+    filterable,
+  ];
 };

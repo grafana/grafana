@@ -34,7 +34,7 @@ import {
   booleanValueFormatter,
 } from './valueFormats';
 
-export const getCategories = (): ValueFormatCategory[] => [
+export const getCategories = (scalable?: boolean): ValueFormatCategory[] => [
   {
     name: 'Misc',
     formats: [
@@ -305,11 +305,11 @@ export const getCategories = (): ValueFormatCategory[] => [
   {
     name: 'Length',
     formats: [
-      { name: 'millimeter (mm)', id: 'lengthmm', fn: SIPrefix('m', -1) },
+      { name: 'millimeter (mm)', id: 'lengthmm', fn: scalable ? SIPrefix('m', -1) : toFixedUnit('mm') },
       { name: 'inch (in)', id: 'lengthin', fn: toFixedUnit('in') },
       { name: 'feet (ft)', id: 'lengthft', fn: toFixedUnit('ft') },
-      { name: 'meter (m)', id: 'lengthm', fn: SIPrefix('m') },
-      { name: 'kilometer (km)', id: 'lengthkm', fn: SIPrefix('m', 1) },
+      { name: 'meter (m)', id: 'lengthm', fn: scalable ? SIPrefix('m') : toFixedUnit('m') },
+      { name: 'kilometer (km)', id: 'lengthkm', fn: scalable ? SIPrefix('m', 1) : toFixedUnit('km') },
       { name: 'mile (mi)', id: 'lengthmi', fn: toFixedUnit('mi') },
     ],
   },
