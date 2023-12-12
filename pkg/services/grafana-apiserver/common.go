@@ -50,4 +50,7 @@ type APIRoutes struct {
 
 	// Namespace handlers are mounted under the namespace
 	Namespace []APIRouteHandler
+
+	// Modify the OpenAPI spec
+	PostProcessSpec3 func(*spec3.OpenAPI) (*spec3.OpenAPI, error)
 }

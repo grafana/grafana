@@ -2,6 +2,7 @@ package snapshots
 
 import (
 	"fmt"
+	"net/http"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,6 +13,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -149,6 +151,63 @@ func (b *SnapshotsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitio
 	return v0alpha1.GetOpenAPIDefinitions
 }
 
+// Register additional routes with the server
 func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
-	return nil // no custom API routes
+	return &grafanaapiserver.APIRoutes{
+		Namespace: []grafanaapiserver.APIRouteHandler{
+			{
+				Path: "/dashsnaps",
+				Spec: &spec3.PathProps{
+					Summary:     "an example at the root level",
+					Description: "longer description here?",
+					Post: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							Parameters: []*spec3.Parameter{
+								{ParameterProps: spec3.ParameterProps{
+									Name: "a",
+								}},
+							},
+						},
+					},
+				},
+				Handler: func(w http.ResponseWriter, r *http.Request) {
+					info, err := request.NamespaceInfoFrom(r.Context(), true)
+					if err != nil {
+						fmt.Printf("ERROR ")
+						// responsewriters.ErrorNegotiated(
+						// 	apierrors.NewInternalError(fmt.Errorf("no RequestInfo found in the context")),
+						// 	b.codecs, schema.GroupVersion{}, w, r,
+						// )
+						// return
+					}
+
+					_, _ = w.Write([]byte("Custom namespace route ccc: " + info.Value))
+				},
+			},
+		},
+
+		PostProcessSpec3: func(s *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+			deletePath := "/apis/" + resourceInfo.GroupVersion().String() + "/namespaces/{namespace}/" +
+				resourceInfo.GroupResource().Resource + "/{name}/delete"
+
+			// The path without a delete key should not be advertised
+			delete(s.Paths.Paths, deletePath)
+
+			// now change the path handler to something nicer
+			old := s.Paths.Paths[deletePath+"/{path}"]
+			for _, param := range old.Parameters {
+				if param.Name == "path" {
+					param.Name = "key"
+					param.Description = "the delete key"
+
+					// replace the path with one that says "key"
+					delete(s.Paths.Paths, deletePath+"/{path}")
+					s.Paths.Paths[deletePath+"/{key}"] = old
+					break
+				}
+			}
+
+			return s, nil
+		},
+	}
 }

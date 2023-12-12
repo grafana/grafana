@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 )
 
 type requestHandler struct {
@@ -146,31 +147,97 @@ func GetOpenAPIPostProcessor(builders []APIGroupBuilder) func(*spec3.OpenAPI) (*
 		}
 		for _, builder := range builders {
 			routes := builder.GetAPIRoutes()
-			if routes == nil {
-				continue
-			}
 
 			gv := builder.GetGroupVersion()
 			prefix := "/apis/" + gv.String()
 			if s.Paths.Paths[prefix] != nil {
-				copy := *s // will copy the rest of the properties
-				copy.Info.Title = "Grafana API server: " + gv.Group
+				copy := spec3.OpenAPI{
+					Version: s.Version,
+					Info: &spec.Info{
+						InfoProps: spec.InfoProps{
+							Title:   gv.Group,
+							Version: gv.Version,
+						},
+					},
+					Components:   s.Components,
+					ExternalDocs: s.ExternalDocs,
+					Servers:      s.Servers,
+					Paths:        s.Paths,
+				}
+
+				if routes == nil {
+					routes = &APIRoutes{}
+				}
+
+				tags := []string{}
+				for _, v := range s.Paths.Paths {
+					if v.Get != nil && len(v.Get.Tags) > 0 {
+						tags = v.Get.Tags
+						break
+					}
+				}
+				// tags = append(tags, "not-k8s")
 
 				for _, route := range routes.Root {
+					// Use the same tags as the other operations
+					operationVisitor(route.Spec, func(op *spec3.Operation) {
+						if op.Tags == nil {
+							op.Tags = tags
+						}
+					})
+
 					copy.Paths.Paths[prefix+route.Path] = &spec3.Path{
 						PathProps: *route.Spec,
 					}
 				}
 
 				for _, route := range routes.Namespace {
+					// Use the same tags as the other operations
+					operationVisitor(route.Spec, func(op *spec3.Operation) {
+						if op.Tags == nil {
+							op.Tags = tags
+						}
+					})
+
 					copy.Paths.Paths[prefix+"/namespaces/{namespace}"+route.Path] = &spec3.Path{
 						PathProps: *route.Spec,
 					}
+				}
+
+				if routes.PostProcessSpec3 != nil {
+					return routes.PostProcessSpec3(&copy)
 				}
 
 				return &copy, nil
 			}
 		}
 		return s, nil
+	}
+}
+
+func operationVisitor(p *spec3.PathProps, visitor func(v *spec3.Operation)) {
+	if p.Get != nil {
+		visitor(p.Get)
+	}
+	if p.Delete != nil {
+		visitor(p.Delete)
+	}
+	if p.Put != nil {
+		visitor(p.Put)
+	}
+	if p.Head != nil {
+		visitor(p.Head)
+	}
+	if p.Options != nil {
+		visitor(p.Options)
+	}
+	if p.Post != nil {
+		visitor(p.Post)
+	}
+	if p.Patch != nil {
+		visitor(p.Patch)
+	}
+	if p.Trace != nil {
+		visitor(p.Trace)
 	}
 }
