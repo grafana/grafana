@@ -257,7 +257,12 @@ export const HeatmapPanel = ({
               />
             )}
             {data.annotations && (
-              <AnnotationsPlugin annotations={data.annotations} config={builder} timeZone={timeZone} />
+              <AnnotationsPlugin
+                annotations={data.annotations}
+                config={builder}
+                timeZone={timeZone}
+                disableCanvasRendering={true}
+              />
             )}
           </UPlotChart>
         )}
