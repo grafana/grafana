@@ -115,10 +115,11 @@ export const RowsList = (props: RowsListProps) => {
       if (evt.payload.point?.time && evt.payload.rowIndex !== undefined) {
         const timeField = data.fields.find((f) => f.type === FieldType.time);
         const time = timeField!.values[evt.payload.rowIndex];
+        const pointTime = evt.payload.point.time;
 
         // If the time value of the hovered point is around the time value of the
         // row with same index, highlight the row
-        if (isPointTimeValAroundTableTimeVal(evt.payload.point.time, time, threshold)) {
+        if (isPointTimeValAroundTableTimeVal(pointTime, time, threshold)) {
           setRowHighlightIndex(evt.payload.rowIndex);
           return;
         }
@@ -126,7 +127,7 @@ export const RowsList = (props: RowsListProps) => {
         // If the time value of the hovered point is not around the time value of the
         // row with same index, try to find a row with same time value
         const matchedRowIndex = timeField!.values.findIndex((t) =>
-          isPointTimeValAroundTableTimeVal(evt.payload.point.time, t, threshold)
+          isPointTimeValAroundTableTimeVal(pointTime, t, threshold)
         );
 
         if (matchedRowIndex !== -1) {
