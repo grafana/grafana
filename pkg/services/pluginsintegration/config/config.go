@@ -47,7 +47,7 @@ func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg, fe
 		grafanaCfg.AngularSupportEnabled,
 		grafanaCfg.GrafanaComURL,
 		grafanaCfg.DisablePlugins,
-		grafanaCfg.ForwardHostEnvVarsPlugins,
+		grafanaCfg.ForwardHostEnvVars,
 	), nil
 }
 

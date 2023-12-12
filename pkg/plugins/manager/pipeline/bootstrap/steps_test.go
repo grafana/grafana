@@ -170,35 +170,35 @@ func TestSkipEnvVarsDecorateFunc(t *testing.T) {
 
 		t.Run("plugin setting", func(t *testing.T) {
 			for _, tc := range []struct {
-				name                      string
-				forwardHostEnvVarsPlugins []string
-				expSkipHostEnvVars        bool
+				name               string
+				forwardHostEnvVars []string
+				expSkipHostEnvVars bool
 			}{
 				{
-					name:                      "plugin id not present in forwardHostEnvVarsPlugins should set SkipHostEnvVars to true (empty)",
-					forwardHostEnvVarsPlugins: []string{},
-					expSkipHostEnvVars:        true,
+					name:               "plugin id not present in forwardHostEnvVars should set SkipHostEnvVars to true (empty)",
+					forwardHostEnvVars: []string{},
+					expSkipHostEnvVars: true,
 				},
 				{
-					name:                      "plugin id not present in forwardHostEnvVarsPlugins should set SkipHostEnvVars to true (other id)",
-					forwardHostEnvVarsPlugins: []string{"other-id", "yet-another-id"},
-					expSkipHostEnvVars:        true,
+					name:               "plugin id not present in forwardHostEnvVars should set SkipHostEnvVars to true (other id)",
+					forwardHostEnvVars: []string{"other-id", "yet-another-id"},
+					expSkipHostEnvVars: true,
 				},
 				{
-					name:                      "plugin id in forwardHostEnvVarsPlugins should set SkipHostEnvVars to false (only)",
-					forwardHostEnvVarsPlugins: []string{pluginID},
-					expSkipHostEnvVars:        false,
+					name:               "plugin id in forwardHostEnvVars should set SkipHostEnvVars to false (only)",
+					forwardHostEnvVars: []string{pluginID},
+					expSkipHostEnvVars: false,
 				},
 				{
-					name:                      "plugin id in forwardHostEnvVarsPlugins should set SkipHostEnvVars to false (with other)",
-					forwardHostEnvVarsPlugins: []string{"a-plugin", pluginID, "other-id"},
-					expSkipHostEnvVars:        false,
+					name:               "plugin id in forwardHostEnvVars should set SkipHostEnvVars to false (with other)",
+					forwardHostEnvVars: []string{"a-plugin", pluginID, "other-id"},
+					expSkipHostEnvVars: false,
 				},
 			} {
 				t.Run(tc.name, func(t *testing.T) {
 					f := SkipHostEnvVarsDecorateFunc(&config.Cfg{
-						Features:                  featuremgmt.WithFeatures(featuremgmt.FlagPluginsSkipHostEnvVars),
-						ForwardHostEnvVarsPlugins: tc.forwardHostEnvVarsPlugins,
+						Features:           featuremgmt.WithFeatures(featuremgmt.FlagPluginsSkipHostEnvVars),
+						ForwardHostEnvVars: tc.forwardHostEnvVars,
 					})
 					p, err := f(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginID}})
 					require.NoError(t, err)

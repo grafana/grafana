@@ -247,7 +247,7 @@ type Cfg struct {
 	PluginSkipPublicKeyDownload      bool
 	DisablePlugins                   []string
 	PluginInstallToken               string
-	ForwardHostEnvVarsPlugins        []string
+	ForwardHostEnvVars               []string
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool

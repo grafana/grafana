@@ -48,13 +48,13 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		}
 	}
 
-	forwardHostEnvVarsPlugins := pluginsSection.Key("forward_host_env_vars_plugins").MustString("")
-	for _, id := range strings.Split(forwardHostEnvVarsPlugins, ",") {
+	forwardHostEnvVars := pluginsSection.Key("forward_host_env_vars").MustString("")
+	for _, id := range strings.Split(forwardHostEnvVars, ",") {
 		id = strings.TrimSpace(id)
 		if id == "" {
 			continue
 		}
-		cfg.ForwardHostEnvVarsPlugins = append(cfg.ForwardHostEnvVarsPlugins, id)
+		cfg.ForwardHostEnvVars = append(cfg.ForwardHostEnvVars, id)
 	}
 
 	cfg.PluginCatalogURL = pluginsSection.Key("plugin_catalog_url").MustString("https://grafana.com/grafana/plugins/")
