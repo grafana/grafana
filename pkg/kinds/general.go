@@ -171,15 +171,12 @@ func (m *GrafanaResourceMetadata) GetOriginInfo() (*ResourceOriginInfo, error) {
 		return nil, nil
 	}
 	t, err := m.GetOriginTimestamp()
-	if err != nil {
-		return nil, err
-	}
 	return &ResourceOriginInfo{
 		Name:      v,
 		Path:      m.GetOriginPath(),
 		Key:       m.GetOriginKey(),
 		Timestamp: t,
-	}, nil
+	}, err
 }
 
 func (m *GrafanaResourceMetadata) GetOriginName() string {
@@ -360,15 +357,12 @@ func (m *grafanaResourceMetaAccessor) GetOriginInfo() (*ResourceOriginInfo, erro
 		return nil, nil
 	}
 	t, err := m.GetOriginTimestamp()
-	if err != nil {
-		return nil, err
-	}
 	return &ResourceOriginInfo{
 		Name:      v,
 		Path:      m.GetOriginPath(),
 		Key:       m.GetOriginKey(),
 		Timestamp: t,
-	}, nil
+	}, err
 }
 
 func (m *grafanaResourceMetaAccessor) GetOriginName() string {
