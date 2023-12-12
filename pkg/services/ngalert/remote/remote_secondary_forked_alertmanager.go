@@ -11,7 +11,7 @@ import (
 )
 
 type configStore interface {
-	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) (*models.AlertConfiguration, error)
+	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error)
 }
 
 //go:generate mockery --name remoteAlertmanager --structname RemoteAlertmanagerMock --with-expecter --output mock --outpkg alertmanager_mock
@@ -69,7 +69,7 @@ func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, c
 		fam.log.Debug("Finished syncing configuration and state with the remote Alertmanager")
 	}
 
-	// If there were no errors syncing the configuration/state, update lastSync
+	// If there were no errors syncing the configuration/state, update lastSync.
 	if !syncErr {
 		fam.lastSync = time.Now()
 	}
@@ -149,9 +149,7 @@ func (fam *RemoteSecondaryForkedAlertmanager) StopAndWait() {
 		fam.log.Error("Error sending state to the remote Alertmanager", "err", err)
 	}
 
-	config, err := fam.store.GetLatestAlertmanagerConfiguration(ctx, &models.GetLatestAlertmanagerConfigurationQuery{
-		OrgID: fam.orgID,
-	})
+	config, err := fam.store.GetLatestAlertmanagerConfiguration(ctx, fam.orgID)
 	if err != nil {
 		fam.log.Error("Error getting latest Alertmanager configuration", "err", err)
 		return
