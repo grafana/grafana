@@ -14,13 +14,11 @@ export function setupMockedMetricsQueryRunner({
     results: {},
   },
   variables,
-  mockGetVariableName = true,
   errorResponse,
   instanceSettings = CloudWatchSettings,
 }: {
   data?: BackendDataSourceResponse;
   variables?: CustomVariableModel[];
-  mockGetVariableName?: boolean;
   errorResponse?: DataQueryError;
   instanceSettings?: DataSourceInstanceSettings<CloudWatchJsonData>;
 } = {}) {

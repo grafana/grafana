@@ -3,6 +3,7 @@ import { Value } from 'slate';
 
 import { TypeaheadOutput } from '@grafana/ui';
 
+import { setupMockedTemplateService } from '../../__mocks__/CloudWatchDataSource';
 import { CloudWatchDatasource } from '../../datasource';
 import { ResourceResponse } from '../../resources/types';
 import { LogGroupField } from '../../types';
@@ -124,7 +125,7 @@ function makeDatasource(): CloudWatchDatasource {
  * Get suggestion items based on query. Use `^` to mark position of the cursor.
  */
 function getProvideCompletionItems(query: string): Promise<TypeaheadOutput> {
-  const provider = new CloudWatchLogsLanguageProvider(makeDatasource());
+  const provider = new CloudWatchLogsLanguageProvider(makeDatasource(), setupMockedTemplateService());
   const cursorOffset = query.indexOf('^');
   const queryWithoutCursor = query.replace('^', '');
   let tokens: Token[] = Prism.tokenize(queryWithoutCursor, provider.getSyntax()) as any;

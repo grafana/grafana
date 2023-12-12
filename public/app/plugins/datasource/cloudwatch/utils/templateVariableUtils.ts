@@ -1,14 +1,5 @@
-import { VariableOption, UserProps, OrgProps, DashboardProps, ScopedVars } from '@grafana/data';
+import { VariableOption, UserProps, OrgProps, DashboardProps, ScopedVars, getVariableName } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
-
-/*
- * This regex matches 3 types of variable reference with an optional format specifier
- * There are 6 capture groups that replace will return
- * \$(\w+)                                    $var1
- * \[\[(\w+?)(?::(\w+))?\]\]                  [[var2]] or [[var2:fmt2]]
- * \${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}   ${var3} or ${var3.fieldPath} or ${var3:fmt3} (or ${var3.fieldPath:fmt3} but that is not a separate capture group)
- */
-const variableRegex = /\$(\w+)|\[\[(\w+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}/g;
 
 /**
  * @remarks
@@ -49,16 +40,6 @@ export const interpolateStringArrayUsingSingleOrMultiValuedVariable = (
   }
 
   return result;
-};
-
-export const getVariableName = (expression: string) => {
-  variableRegex.lastIndex = 0;
-  const match = variableRegex.exec(expression);
-  if (!match) {
-    return null;
-  }
-  const variableName = match.slice(1).find((match) => match !== undefined);
-  return variableName;
 };
 
 export const isTemplateVariable = (templateSrv: TemplateSrv, string: string) => {

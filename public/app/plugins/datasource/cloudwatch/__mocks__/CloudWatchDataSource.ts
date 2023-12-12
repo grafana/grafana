@@ -8,6 +8,7 @@ import {
   PluginType,
   ScopedVars,
   VariableHide,
+  getVariableName,
 } from '@grafana/data';
 import { getBackendSrv, setBackendSrv, DataSourceWithBackend, TemplateSrv } from '@grafana/runtime';
 
@@ -18,29 +19,56 @@ import { CloudWatchJsonData } from '../types';
 
 const queryMock = jest.fn().mockReturnValue(of({ data: [] }));
 jest.spyOn(DataSourceWithBackend.prototype, 'query').mockImplementation((args) => queryMock(args));
+const separatorMap = new Map<string, string>([
+  ['pipe', '|'],
+  ['raw', ','],
+  ['text', ' + '],
+]);
 
 export function setupMockedTemplateService(variables?: CustomVariableModel[]): TemplateSrv {
   const templateService = {
-    replace: jest.fn().mockImplementation((input: string, scopedVars?: ScopedVars, format?: string | Function) => {
-      if (!variables) {
-        return input;
+    replace: jest.fn().mockImplementation((input: string, scopedVars?: ScopedVars, format?: string) => {
+      if (!input) {
+        return '';
       }
-
       let output = input;
-      variables.forEach((variable) => {
-        let repVal = '';
-        let value = format === 'text' ? variable.current.text : variable.current.value;
-        if (Array.isArray(value)) {
-          repVal = value.join(' + ');
-        } else {
-          repVal = value;
+      ['datasource', 'dimension'].forEach((name) => {
+        const variable = scopedVars ? scopedVars[name] : undefined;
+        if (variable) {
+          output = output.replace('$' + name, variable.value);
         }
-        output = output.replace('$' + variable.name, repVal);
       });
+
+      if (variables) {
+        variables.forEach((variable) => {
+          let repVal = '';
+          let value = format === 'text' ? variable.current.text : variable.current.value;
+          let separator = separatorMap.get(format ?? 'raw');
+          if (Array.isArray(value)) {
+            repVal = value.join(separator);
+          } else {
+            repVal = value;
+          }
+          output = output.replace('$' + variable.name, repVal);
+          output = output.replace('[[' + variable.name + ']]', repVal);
+        });
+      }
       return output;
     }),
     getVariables: jest.fn().mockReturnValue(variables ?? []),
-    containsTemplate: jest.fn(),
+    containsTemplate: jest.fn().mockImplementation((name) => {
+      const varName = getVariableName(name);
+      if (!varName || !variables) {
+        return false;
+      }
+      let found = false;
+      variables.forEach((variable) => {
+        if (varName === variable.name) {
+          found = true;
+        }
+      });
+      return found;
+    }),
     updateTimeRange: jest.fn(),
   };
   return templateService;
@@ -212,8 +240,8 @@ export const logGroupNamesVariable: CustomVariableModel = {
     selected: true,
   },
   options: [
-    { value: 'templatedGroup-arn-1', text: 'templatedGroup-1', selected: true },
-    { value: 'templatedGroup-arn-2', text: 'templatedGroup-2', selected: true },
+    { value: 'templatedGroup-1', text: 'templatedGroup-1', selected: true },
+    { value: 'templatedGroup-2', text: 'templatedGroup-2', selected: true },
   ],
   multi: true,
 };
