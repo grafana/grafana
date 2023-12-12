@@ -192,6 +192,7 @@ type FrontendSettingsDTO struct {
 
 	FeatureToggles                   map[string]bool                `json:"featureToggles"`
 	AnonymousEnabled                 bool                           `json:"anonymousEnabled"`
+	AnonymousDeviceLimit             int64                          `json:"anonymousDeviceLimit"`
 	RendererAvailable                bool                           `json:"rendererAvailable"`
 	RendererVersion                  string                         `json:"rendererVersion"`
 	SecretsManagerPluginEnabled      bool                           `json:"secretsManagerPluginEnabled"`
@@ -220,6 +221,7 @@ type FrontendSettingsDTO struct {
 	SamlEnabled             bool                               `json:"samlEnabled"`
 	SamlName                string                             `json:"samlName"`
 	TokenExpirationDayLimit int                                `json:"tokenExpirationDayLimit"`
+	SharedWithMeFolderUID   string                             `json:"sharedWithMeFolderUID"`
 
 	GeomapDefaultBaseLayerConfig *map[string]any `json:"geomapDefaultBaseLayerConfig,omitempty"`
 	GeomapDisableCustomBaseLayer bool            `json:"geomapDisableCustomBaseLayer"`

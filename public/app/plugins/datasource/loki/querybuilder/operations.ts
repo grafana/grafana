@@ -1,7 +1,3 @@
-import {
-  createAggregationOperation,
-  createAggregationOperationWithParam,
-} from '../../prometheus/querybuilder/shared/operationUtils';
 import { QueryBuilderOperationDef, QueryBuilderOperationParamValue } from '../../prometheus/querybuilder/shared/types';
 
 import { binaryScalarOperations } from './binaryScalarOperations';
@@ -9,6 +5,8 @@ import { UnwrapParamEditor } from './components/UnwrapParamEditor';
 import {
   addLokiOperation,
   addNestedQueryHandler,
+  createAggregationOperation,
+  createAggregationOperationWithParam,
   createRangeOperation,
   createRangeOperationWithGrouping,
   getLineFilterRenderer,

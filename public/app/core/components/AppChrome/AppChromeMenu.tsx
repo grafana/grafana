@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import CSSTransition from 'react-transition-group/CSSTransition';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -20,22 +20,15 @@ export function AppChromeMenu({}: Props) {
   const theme = useTheme2();
   const { chrome } = useGrafana();
   const state = chrome.useState();
-  const prevMegaMenuState = useRef(state.megaMenu);
   const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV;
-
-  useEffect(() => {
-    prevMegaMenuState.current = state.megaMenu;
-  }, [state.megaMenu]);
 
   const ref = useRef(null);
   const backdropRef = useRef(null);
-  // we don't want to show the opening animation when transitioning between docked + open
-  const animationSpeed =
-    prevMegaMenuState.current === 'docked' && state.megaMenu === 'open' ? 0 : theme.transitions.duration.shortest;
+  const animationSpeed = theme.transitions.duration.shortest;
   const animationStyles = useStyles2(getAnimStyles, animationSpeed);
 
-  const isOpen = state.megaMenu === 'open';
-  const onClose = () => chrome.setMegaMenu('closed');
+  const isOpen = state.megaMenuOpen && !state.megaMenuDocked;
+  const onClose = () => chrome.setMegaMenuOpen(false);
 
   const { overlayProps, underlayProps } = useOverlay(
     {
@@ -64,7 +57,7 @@ export function AppChromeMenu({}: Props) {
           classNames={animationStyles.overlay}
           timeout={{ enter: animationSpeed, exit: 0 }}
         >
-          <FocusScope contain autoFocus restoreFocus>
+          <FocusScope contain autoFocus>
             <MegaMenu className={styles.menu} onClose={onClose} ref={ref} {...overlayProps} {...dialogProps} />
           </FocusScope>
         </CSSTransition>

@@ -527,7 +527,13 @@
     },
     "toolbar": {
       "aria-label": "Explore toolbar",
-      "copy-shortened-link": "Copy shortened link",
+      "copy-link": "Copy URL",
+      "copy-link-abs-time": "Copy absolute URL",
+      "copy-links-absolute-category": "Time-sync URL links (share with time range intact)",
+      "copy-links-normal-category": "Normal URL links",
+      "copy-shortened-link": "Copy shortened URL",
+      "copy-shortened-link-abs-time": "Copy absolute shortened URL",
+      "copy-shortened-link-menu": "Open shortened link menu",
       "refresh-picker-cancel": "Cancel",
       "refresh-picker-run": "Run query",
       "split-close": "Close",
@@ -773,6 +779,10 @@
       "title": "Explore"
     },
     "frontend": {
+      "subtitle": "Gain real user monitoring insights",
+      "title": "Frontend"
+    },
+    "frontend-app": {
       "title": "Frontend"
     },
     "global-orgs": {
@@ -800,7 +810,14 @@
       "title": "Incidents"
     },
     "infrastructure": {
+      "subtitle": "Understand your infrastructure's health",
+      "title": "Infrastructure"
+    },
+    "integrations": {
       "title": "Integrations"
+    },
+    "k6": {
+      "title": "Performance"
     },
     "kubernetes": {
       "title": "Kubernetes"
@@ -920,6 +937,10 @@
     "teams": {
       "subtitle": "Groups of users that have common dashboard and permission needs",
       "title": "Teams"
+    },
+    "testing-and-synthetics": {
+      "subtitle": "Optimize performance with k6 and Synthetic Monitoring insights",
+      "title": "Testing & synthetics"
     },
     "upgrading": {
       "title": "Stats and license"
@@ -1276,6 +1297,12 @@
       "select-search-input": "Type to search (country, city, abbreviation)"
     }
   },
+  "transformations": {
+    "empty": {
+      "add-transformation-body": "Transformations allow data to be changed in various ways before your visualization is shown.<1></1>This includes joining data together, renaming fields, making calculations, formatting data for display, and more.",
+      "add-transformation-header": "Start transforming data"
+    }
+  },
   "user-orgs": {
     "current-org-button": "Current",
     "name-column": "Name",
@@ -1290,6 +1317,9 @@
       "name-error": "Name is required",
       "name-label": "Name",
       "username-label": "Username"
+    },
+    "tabs": {
+      "general": "General"
     }
   },
   "user-session": {

@@ -484,6 +484,21 @@ describe('LokiDatasource', () => {
       return { ds };
     };
 
+    it('should return empty array if /series returns empty', async () => {
+      const ds = createLokiDatasource(templateSrvStub);
+      const spy = jest.spyOn(ds.languageProvider, 'fetchSeriesLabels').mockResolvedValue({});
+
+      const result = await ds.metricFindQuery({
+        refId: 'test',
+        type: LokiVariableQueryType.LabelValues,
+        stream: '{label1="value1"}',
+        label: 'label2',
+      });
+
+      expect(result).toEqual([]);
+      spy.mockClear();
+    });
+
     it('should return label names for Loki', async () => {
       const { ds } = getTestContext();
 
@@ -1474,26 +1489,26 @@ describe('LokiDatasource', () => {
     });
     it('ignores invalid queries', () => {
       const spy = jest.spyOn(ds, 'query');
-      ds.getDataSamples({ expr: 'not a query', refId: 'A' });
+      ds.getDataSamples({ expr: 'not a query', refId: 'A' }, mockTimeRange);
       expect(spy).not.toHaveBeenCalled();
     });
     it('ignores metric queries', () => {
       const spy = jest.spyOn(ds, 'query');
-      ds.getDataSamples({ expr: 'count_over_time({a="b"}[1m])', refId: 'A' });
+      ds.getDataSamples({ expr: 'count_over_time({a="b"}[1m])', refId: 'A' }, mockTimeRange);
       expect(spy).not.toHaveBeenCalled();
     });
     it('uses the current interval in the request', () => {
       const spy = jest.spyOn(ds, 'query').mockImplementation(() => of({} as DataQueryResponse));
-      ds.getDataSamples({ expr: '{job="bar"}', refId: 'A' });
+      ds.getDataSamples({ expr: '{job="bar"}', refId: 'A' }, mockTimeRange);
       expect(spy).toHaveBeenCalledWith(
         expect.objectContaining({
-          range: ds.getTimeRange(),
+          range: mockTimeRange,
         })
       );
     });
     it('hides the request from the inspector', () => {
       const spy = jest.spyOn(ds, 'query').mockImplementation(() => of({} as DataQueryResponse));
-      ds.getDataSamples({ expr: '{job="bar"}', refId: 'A' });
+      ds.getDataSamples({ expr: '{job="bar"}', refId: 'A' }, mockTimeRange);
       expect(spy).toHaveBeenCalledWith(
         expect.objectContaining({
           hideFromInspector: true,
@@ -1503,7 +1518,7 @@ describe('LokiDatasource', () => {
     });
     it('sets the supporting query type in the request', () => {
       const spy = jest.spyOn(ds, 'query').mockImplementation(() => of({} as DataQueryResponse));
-      ds.getDataSamples({ expr: '{job="bar"}', refId: 'A' });
+      ds.getDataSamples({ expr: '{job="bar"}', refId: 'A' }, mockTimeRange);
       expect(spy).toHaveBeenCalledWith(
         expect.objectContaining({
           targets: [expect.objectContaining({ supportingQueryType: SupportingQueryType.DataSample })],
@@ -1828,18 +1843,18 @@ describe('makeStatsRequest', () => {
   });
 });
 
-describe('getTimeRange*()', () => {
-  it('exposes the current time range', () => {
+describe('getTimeRangeParams()', () => {
+  it('turns time range into a Loki range parameters', () => {
     const ds = createLokiDatasource();
-    const timeRange = ds.getTimeRange();
-
-    expect(timeRange.from).toBeDefined();
-    expect(timeRange.to).toBeDefined();
-  });
-
-  it('exposes time range as params', () => {
-    const ds = createLokiDatasource();
-    const params = ds.getTimeRangeParams();
+    const range = {
+      from: dateTime(1524650400000),
+      to: dateTime(1524654000000),
+      raw: {
+        from: 'now-1h',
+        to: 'now',
+      },
+    };
+    const params = ds.getTimeRangeParams(range);
 
     // Returns a very big integer, so we stringify it for the assertion
     expect(JSON.stringify(params)).toEqual('{"start":1524650400000000000,"end":1524654000000000000}');

@@ -148,7 +148,7 @@ func (srv RulerSrv) getRulesWithFolderTitleInFolders(c *contextmodel.ReqContext,
 			}
 		}
 		if len(query.NamespaceUIDs) == 0 {
-			return nil, fmt.Errorf("%w access rules in the specified folders", accesscontrol.ErrAuthorization)
+			return nil, accesscontrol.NewAuthorizationErrorGeneric("access rules in the specified folders")
 		}
 	} else {
 		for _, folder := range folders {

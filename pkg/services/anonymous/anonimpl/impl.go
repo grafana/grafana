@@ -5,13 +5,17 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
+	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/api"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -30,13 +34,13 @@ type AnonDeviceService struct {
 }
 
 func ProvideAnonymousDeviceService(usageStats usagestats.Service, authBroker authn.Service,
-	anonStore anonstore.AnonStore, cfg *setting.Cfg, orgService org.Service,
-	serverLockService *serverlock.ServerLockService,
+	sqlStore db.DB, cfg *setting.Cfg, orgService org.Service,
+	serverLockService *serverlock.ServerLockService, accesscontrol accesscontrol.AccessControl, routeRegister routing.RouteRegister,
 ) *AnonDeviceService {
 	a := &AnonDeviceService{
 		log:        log.New("anonymous-session-service"),
 		localCache: localcache.New(29*time.Minute, 15*time.Minute),
-		anonStore:  anonStore,
+		anonStore:  anonstore.ProvideAnonDBStore(sqlStore, cfg.AnonymousDeviceLimit),
 		serverLock: serverLockService,
 	}
 
@@ -53,6 +57,9 @@ func ProvideAnonymousDeviceService(usageStats usagestats.Service, authBroker aut
 		authBroker.RegisterClient(anonClient)
 		authBroker.RegisterPostLoginHook(a.untagDevice, 100)
 	}
+
+	anonAPI := api.NewAnonDeviceServiceAPI(cfg, a.anonStore, accesscontrol, routeRegister)
+	anonAPI.RegisterAPIEndpoints()
 
 	return a
 }
@@ -137,9 +144,20 @@ func (a *AnonDeviceService) TagDevice(ctx context.Context, httpReq *http.Request
 	err = a.tagDeviceUI(ctx, httpReq, taggedDevice)
 	if err != nil {
 		a.log.Debug("Failed to tag device for UI", "error", err)
+		return err
 	}
 
 	return nil
+}
+
+// ListDevices returns all devices that have been updated between the given times.
+func (a *AnonDeviceService) ListDevices(ctx context.Context, from *time.Time, to *time.Time) ([]*anonstore.Device, error) {
+	return a.anonStore.ListDevices(ctx, from, to)
+}
+
+// CountDevices returns the number of devices that have been updated between the given times.
+func (a *AnonDeviceService) CountDevices(ctx context.Context, from time.Time, to time.Time) (int64, error) {
+	return a.anonStore.CountDevices(ctx, from, to)
 }
 
 func (a *AnonDeviceService) Run(ctx context.Context) error {
