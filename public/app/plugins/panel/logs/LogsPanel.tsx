@@ -15,9 +15,12 @@ import {
   AbsoluteTimeRange,
   dateTimeForTimeZone,
   TimeRange,
+  DataFrame,
+  PanelData,
 } from '@grafana/data';
 import { convertRawToRange } from '@grafana/data/src/datetime/rangeutil';
 import { config, getDataSourceSrv } from '@grafana/runtime';
+import { TimeZone } from '@grafana/schema';
 import { CustomScrollbar, useStyles2, usePanelContext } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
@@ -110,44 +113,22 @@ export const LogsPanel = ({
       if (!data.request || !config.featureToggles.logsInfiniteScrolling) {
         return;
       }
-      const range: TimeRange = convertRawToRange({
-        from: dateTimeForTimeZone(timeZone, scrollRange.from),
-        to: dateTimeForTimeZone(timeZone, scrollRange.to),
-      });
-      const dataRequests = [];
-      for (const query of data.request.targets) {
-        const dataSource = await getDataSourceSrv().get(query.datasource?.uid);
-        if (!dataSource) {
-          continue;
-        }
-        dataRequests.push(
-          dataSource.query({
-            ...data.request,
-            range,
-            targets: [query],
-          })
-        );
-      }
+
       setInfiniteScrolling(true);
 
-      const responses = await Promise.all(dataRequests);
-      let newSeries = panelData.series;
-      for (const response of responses) {
-        const newData = isObservable(response) ? await lastValueFrom(response) : response;
-        newSeries = combineResponses(
-          {
-            data: newSeries,
-          },
-          { data: newData.data }
-        ).data;
+      let newSeries: DataFrame[] = [];
+      try {
+        newSeries = await requestMoreLogs(panelData, scrollRange, timeZone);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setInfiniteScrolling(false);
       }
 
       setPanelData({
         ...panelData,
         series: newSeries,
       });
-
-      setInfiniteScrolling(false);
     },
     [data.request, panelData, timeZone]
   );
@@ -223,3 +204,43 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontWeight: theme.typography.fontWeightMedium,
   }),
 });
+
+async function requestMoreLogs(panelData: PanelData, timeRange: AbsoluteTimeRange, timeZone: TimeZone) {
+  if (!panelData.request) {
+    return [];
+  }
+
+  const range: TimeRange = convertRawToRange({
+    from: dateTimeForTimeZone(timeZone, timeRange.from),
+    to: dateTimeForTimeZone(timeZone, timeRange.to),
+  });
+
+  const dataRequests = [];
+  for (const query of panelData.request.targets) {
+    const dataSource = await getDataSourceSrv().get(query.datasource?.uid);
+    if (!dataSource) {
+      continue;
+    }
+    dataRequests.push(
+      dataSource.query({
+        ...panelData.request,
+        range,
+        targets: [query],
+      })
+    );
+  }
+
+  const responses = await Promise.all(dataRequests);
+  let newSeries = panelData.series;
+  for (const response of responses) {
+    const newData = isObservable(response) ? await lastValueFrom(response) : response;
+    newSeries = combineResponses(
+      {
+        data: newSeries,
+      },
+      { data: newData.data }
+    ).data;
+  }
+
+  return newSeries;
+}
