@@ -98,9 +98,6 @@ func (fam *RemoteSecondaryForkedAlertmanager) StopAndWait() {
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) Ready() bool {
-	// Both Alertmanagers must be ready.
-	if ready := fam.remote.Ready(); !ready {
-		return false
-	}
+	// We only care about the internal Alertmanager being ready.
 	return fam.internal.Ready()
 }

@@ -128,8 +128,8 @@ func TestIntegrationEntityServer(t *testing.T) {
 	resource := "jsonobjs"
 	resource2 := "playlists"
 	namespace := "default"
-	uid := "my-test-entity"
-	testKey := "/" + group + "/" + resource + "/" + namespace + "/" + uid
+	name := "my-test-entity"
+	testKey := "/" + group + "/" + resource + "/" + namespace + "/" + name
 	body := []byte("{\"name\":\"John\"}")
 
 	t.Run("should not retrieve non-existent objects", func(t *testing.T) {
@@ -150,7 +150,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 				Group:     group,
 				Resource:  resource,
 				Namespace: namespace,
-				Uid:       uid,
+				Name:      name,
 				Body:      body,
 				Message:   "first entity!",
 			},
@@ -177,7 +177,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.Equal(t, testKey, readResp.Key)
 		require.Equal(t, namespace, readResp.Namespace) // orgId becomes the tenant id when not set
 		require.Equal(t, resource, readResp.Resource)
-		require.Equal(t, uid, readResp.Uid)
+		require.Equal(t, name, readResp.Name)
 
 		objectMatcher := rawEntityMatcher{
 			key:          testKey,
@@ -215,7 +215,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 				Group:     group,
 				Resource:  resource,
 				Namespace: namespace,
-				Uid:       uid,
+				Name:      name,
 				Body:      body,
 				Message:   "first entity!",
 			},
@@ -350,15 +350,15 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.NoError(t, err)
 
 		require.NotNil(t, resp)
-		uids := make([]string, 0, len(resp.Results))
+		names := make([]string, 0, len(resp.Results))
 		kinds := make([]string, 0, len(resp.Results))
 		version := make([]string, 0, len(resp.Results))
 		for _, res := range resp.Results {
-			uids = append(uids, res.Uid)
+			names = append(names, res.Name)
 			kinds = append(kinds, res.Resource)
 			version = append(version, res.Version)
 		}
-		require.Equal(t, []string{"my-test-entity", "uid2", "uid3", "uid4"}, uids)
+		require.Equal(t, []string{"my-test-entity", "name2", "name3", "name4"}, names)
 		require.Equal(t, []string{"jsonobj", "jsonobj", "playlist", "playlist"}, kinds)
 		require.Equal(t, []string{
 			w1.Entity.Version,
@@ -372,15 +372,15 @@ func TestIntegrationEntityServer(t *testing.T) {
 			Resource: []string{resource},
 		})
 		require.NoError(t, err)
-		uids = make([]string, 0, len(respKind1.Results))
+		names = make([]string, 0, len(respKind1.Results))
 		kinds = make([]string, 0, len(respKind1.Results))
 		version = make([]string, 0, len(respKind1.Results))
 		for _, res := range respKind1.Results {
-			uids = append(uids, res.Uid)
+			names = append(names, res.Name)
 			kinds = append(kinds, res.Resource)
 			version = append(version, res.Version)
 		}
-		require.Equal(t, []string{"my-test-entity", "uid2"}, uids)
+		require.Equal(t, []string{"my-test-entity", "name2"}, names)
 		require.Equal(t, []string{"jsonobj", "jsonobj"}, kinds)
 		require.Equal(t, []string{
 			w1.Entity.Version,
@@ -416,7 +416,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Len(t, resp.Results, 1)
-		require.Equal(t, resp.Results[0].Uid, "red-green")
+		require.Equal(t, resp.Results[0].Name, "red-green")
 
 		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
 			Key:      []string{kind},
@@ -429,7 +429,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Len(t, resp.Results, 1)
-		require.Equal(t, resp.Results[0].Uid, "red-green")
+		require.Equal(t, resp.Results[0].Name, "red-green")
 
 		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
 			Key:      []string{kind},
