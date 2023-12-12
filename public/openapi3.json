@@ -506,6 +506,19 @@
         },
         "description": "(empty)"
       },
+      "devicesResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/deviceDTO"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "folderResponse": {
         "content": {
           "application/json": {
@@ -849,6 +862,16 @@
         },
         "description": "(empty)"
       },
+      "getLibraryElementArrayResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/LibraryElementArrayResponse"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "getLibraryElementConnectionsResponse": {
         "content": {
           "application/json": {
@@ -998,7 +1021,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/Spec"
+              "$ref": "#/components/schemas/Preferences"
             }
           }
         },
@@ -1074,7 +1097,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/ConfigDTO"
+              "$ref": "#/components/schemas/Report"
             }
           }
         },
@@ -1084,7 +1107,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/SettingsDTO"
+              "$ref": "#/components/schemas/ReportSettings"
             }
           }
         },
@@ -1095,7 +1118,7 @@
           "application/json": {
             "schema": {
               "items": {
-                "$ref": "#/components/schemas/ConfigDTO"
+                "$ref": "#/components/schemas/Report"
               },
               "type": "array"
             }
@@ -1911,21 +1934,6 @@
         },
         "description": "(empty)"
       },
-      "validateDashboardResponse": {
-        "description": "(empty)",
-        "headers": {
-          "isValid": {
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          "message": {
-            "schema": {
-              "type": "string"
-            }
-          }
-        }
-      },
       "viewPublicDashboardResponse": {
         "content": {
           "application/json": {
@@ -2185,6 +2193,10 @@
       "AdminStats": {
         "properties": {
           "activeAdmins": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "activeDevices": {
             "format": "int64",
             "type": "integer"
           },
@@ -2780,6 +2792,12 @@
             },
             "type": "array"
           },
+          "muteTimes": {
+            "items": {
+              "$ref": "#/components/schemas/MuteTimeIntervalExport"
+            },
+            "type": "array"
+          },
           "policies": {
             "items": {
               "$ref": "#/components/schemas/NotificationPolicyExport"
@@ -3262,29 +3280,12 @@
           },
           "username": {
             "type": "string"
+          },
+          "username_file": {
+            "type": "string"
           }
         },
         "title": "BasicAuth contains basic HTTP authentication credentials.",
-        "type": "object"
-      },
-      "BrandingOptionsDTO": {
-        "properties": {
-          "emailFooterLink": {
-            "type": "string"
-          },
-          "emailFooterMode": {
-            "type": "string"
-          },
-          "emailFooterText": {
-            "type": "string"
-          },
-          "emailLogoUrl": {
-            "type": "string"
-          },
-          "reportLogoUrl": {
-            "type": "string"
-          }
-        },
         "type": "object"
       },
       "CalculateDiffTarget": {
@@ -3588,88 +3589,6 @@
           }
         },
         "title": "Config is the top-level configuration for Alertmanager's config files.",
-        "type": "object"
-      },
-      "ConfigDTO": {
-        "description": "ConfigDTO is model representation in transfer",
-        "properties": {
-          "created": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "dashboardId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "dashboardName": {
-            "type": "string"
-          },
-          "dashboardUid": {
-            "type": "string"
-          },
-          "dashboards": {
-            "items": {
-              "$ref": "#/components/schemas/DashboardDTO"
-            },
-            "type": "array"
-          },
-          "enableCsv": {
-            "type": "boolean"
-          },
-          "enableDashboardUrl": {
-            "type": "boolean"
-          },
-          "formats": {
-            "items": {
-              "$ref": "#/components/schemas/Type"
-            },
-            "type": "array"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "message": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "options": {
-            "$ref": "#/components/schemas/ReportOptionsDTO"
-          },
-          "orgId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "recipients": {
-            "type": "string"
-          },
-          "replyTo": {
-            "type": "string"
-          },
-          "scaleFactor": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "schedule": {
-            "$ref": "#/components/schemas/ScheduleDTO"
-          },
-          "state": {
-            "$ref": "#/components/schemas/State"
-          },
-          "templateVars": {
-            "type": "object"
-          },
-          "updated": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "userId": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
         "type": "object"
       },
       "ContactPointExport": {
@@ -4003,7 +3922,7 @@
         },
         "type": "object"
       },
-      "CreateOrUpdateConfigCmd": {
+      "CreateOrUpdateReportConfig": {
         "properties": {
           "dashboardId": {
             "format": "int64",
@@ -4014,7 +3933,7 @@
           },
           "dashboards": {
             "items": {
-              "$ref": "#/components/schemas/DashboardDTO"
+              "$ref": "#/components/schemas/ReportDashboard"
             },
             "type": "array"
           },
@@ -4037,7 +3956,7 @@
             "type": "string"
           },
           "options": {
-            "$ref": "#/components/schemas/ReportOptionsDTO"
+            "$ref": "#/components/schemas/ReportOptions"
           },
           "recipients": {
             "type": "string"
@@ -4050,7 +3969,7 @@
             "type": "integer"
           },
           "schedule": {
-            "$ref": "#/components/schemas/ScheduleDTO"
+            "$ref": "#/components/schemas/ReportSchedule"
           },
           "state": {
             "$ref": "#/components/schemas/State"
@@ -4282,20 +4201,6 @@
         },
         "type": "object"
       },
-      "DashboardDTO": {
-        "properties": {
-          "dashboard": {
-            "$ref": "#/components/schemas/DashboardReportDTO"
-          },
-          "reportVariables": {
-            "type": "object"
-          },
-          "timeRange": {
-            "$ref": "#/components/schemas/TimeRangeDTO"
-          }
-        },
-        "type": "object"
-      },
       "DashboardFullWithMeta": {
         "properties": {
           "dashboard": {
@@ -4402,21 +4307,6 @@
       "DashboardRedirect": {
         "properties": {
           "redirectUri": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "DashboardReportDTO": {
-        "properties": {
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "name": {
-            "type": "string"
-          },
-          "uid": {
             "type": "string"
           }
         },
@@ -4988,6 +4878,9 @@
       },
       "EvalQueriesPayload": {
         "properties": {
+          "condition": {
+            "type": "string"
+          },
           "data": {
             "items": {
               "$ref": "#/components/schemas/AlertQuery"
@@ -5272,7 +5165,11 @@
             "type": "boolean"
           },
           "id": {
-            "description": "Deprecated: use Uid instead",
+            "description": "Deprecated: use UID instead",
+            "format": "int64",
+            "type": "integer"
+          },
+          "orgId": {
             "format": "int64",
             "type": "integer"
           },
@@ -5324,6 +5221,14 @@
           },
           "uid": {
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ForbiddenError": {
+        "properties": {
+          "body": {
+            "$ref": "#/components/schemas/PublicError"
           }
         },
         "type": "object"
@@ -6447,6 +6352,18 @@
         },
         "type": "object"
       },
+      "LibraryElementArrayResponse": {
+        "properties": {
+          "result": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryElementDTO"
+            },
+            "type": "array"
+          }
+        },
+        "title": "LibraryElementArrayResponse is a response struct for an array of LibraryElementDTO.",
+        "type": "object"
+      },
       "LibraryElementConnectionDTO": {
         "properties": {
           "connectionId": {
@@ -6690,7 +6607,7 @@
       },
       "MatchRegexps": {
         "additionalProperties": {
-          "$ref": "#/components/schemas/Regexp"
+          "type": "string"
         },
         "title": "MatchRegexps represents a map of Regexp.",
         "type": "object"
@@ -6798,6 +6715,24 @@
         "title": "MuteTimeInterval represents a named set of time intervals for which a route should be muted.",
         "type": "object"
       },
+      "MuteTimeIntervalExport": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "time_intervals": {
+            "items": {
+              "$ref": "#/components/schemas/TimeInterval"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "MuteTimings": {
         "items": {
           "$ref": "#/components/schemas/MuteTimeInterval"
@@ -6902,12 +6837,58 @@
       },
       "NotificationPolicyExport": {
         "properties": {
-          "Policy": {
-            "$ref": "#/components/schemas/RouteExport"
+          "continue": {
+            "type": "boolean"
+          },
+          "group_by": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "group_interval": {
+            "type": "string"
+          },
+          "group_wait": {
+            "type": "string"
+          },
+          "match": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Deprecated. Remove before v1.0 release.",
+            "type": "object"
+          },
+          "match_re": {
+            "$ref": "#/components/schemas/MatchRegexps"
+          },
+          "matchers": {
+            "$ref": "#/components/schemas/Matchers"
+          },
+          "mute_time_intervals": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "object_matchers": {
+            "$ref": "#/components/schemas/ObjectMatchers"
           },
           "orgId": {
             "format": "int64",
             "type": "integer"
+          },
+          "receiver": {
+            "type": "string"
+          },
+          "repeat_interval": {
+            "type": "string"
+          },
+          "routes": {
+            "items": {
+              "$ref": "#/components/schemas/RouteExport"
+            },
+            "type": "array"
           }
         },
         "title": "NotificationPolicyExport is the provisioned file export of alerting.NotificiationPolicyV1.",
@@ -7968,6 +7949,38 @@
         },
         "type": "object"
       },
+      "Preferences": {
+        "description": "Spec defines user, team or org Grafana preferences",
+        "properties": {
+          "cookiePreferences": {
+            "$ref": "#/components/schemas/CookiePreferences"
+          },
+          "homeDashboardUID": {
+            "description": "UID for the home dashboard",
+            "type": "string"
+          },
+          "language": {
+            "description": "Selected language (beta)",
+            "type": "string"
+          },
+          "queryHistory": {
+            "$ref": "#/components/schemas/QueryHistoryPreference"
+          },
+          "theme": {
+            "description": "Theme light, dark, empty is default",
+            "type": "string"
+          },
+          "timezone": {
+            "description": "The timezone selection\nTODO: this should use the timezone defined in common",
+            "type": "string"
+          },
+          "weekStart": {
+            "description": "WeekStart day of the week (sunday, monday, etc)",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "PrometheusRemoteWriteTargetJSON": {
         "properties": {
           "data_source_uid": {
@@ -8274,6 +8287,26 @@
         },
         "type": "object"
       },
+      "PublicError": {
+        "description": "PublicError is derived from Error and only contains information\navailable to the end user.",
+        "properties": {
+          "extra": {
+            "additionalProperties": false,
+            "type": "object"
+          },
+          "message": {
+            "type": "string"
+          },
+          "messageId": {
+            "type": "string"
+          },
+          "statusCode": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "PublicKeyAlgorithm": {
         "format": "int64",
         "type": "integer"
@@ -8388,9 +8421,11 @@
       "QueryHistoryPreference": {
         "properties": {
           "homeTab": {
+            "description": "HomeTab one of: '' | 'query' | 'starred';",
             "type": "string"
           }
         },
+        "title": "QueryHistoryPreference defines model for QueryHistoryPreference.",
         "type": "object"
       },
       "QueryHistoryResponse": {
@@ -8695,11 +8730,6 @@
         },
         "type": "object"
       },
-      "Regexp": {
-        "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
-        "title": "Regexp is the representation of a compiled regular expression.",
-        "type": "object"
-      },
       "RelativeTimeRange": {
         "description": "RelativeTimeRange is the per query start and end time\nfor requests.",
         "properties": {
@@ -8725,7 +8755,138 @@
         },
         "type": "object"
       },
-      "ReportEmailDTO": {
+      "Report": {
+        "description": "ConfigDTO is model representation in transfer",
+        "properties": {
+          "created": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "dashboardId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "dashboardName": {
+            "type": "string"
+          },
+          "dashboardUid": {
+            "type": "string"
+          },
+          "dashboards": {
+            "items": {
+              "$ref": "#/components/schemas/ReportDashboard"
+            },
+            "type": "array"
+          },
+          "enableCsv": {
+            "type": "boolean"
+          },
+          "enableDashboardUrl": {
+            "type": "boolean"
+          },
+          "formats": {
+            "items": {
+              "$ref": "#/components/schemas/Type"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "options": {
+            "$ref": "#/components/schemas/ReportOptions"
+          },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "recipients": {
+            "type": "string"
+          },
+          "replyTo": {
+            "type": "string"
+          },
+          "scaleFactor": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/ReportSchedule"
+          },
+          "state": {
+            "$ref": "#/components/schemas/State"
+          },
+          "templateVars": {
+            "type": "object"
+          },
+          "updated": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "userId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "ReportBrandingOptions": {
+        "properties": {
+          "emailFooterLink": {
+            "type": "string"
+          },
+          "emailFooterMode": {
+            "type": "string"
+          },
+          "emailFooterText": {
+            "type": "string"
+          },
+          "emailLogoUrl": {
+            "type": "string"
+          },
+          "reportLogoUrl": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ReportDashboard": {
+        "properties": {
+          "dashboard": {
+            "$ref": "#/components/schemas/ReportDashboardID"
+          },
+          "reportVariables": {
+            "type": "object"
+          },
+          "timeRange": {
+            "$ref": "#/components/schemas/ReportTimeRange"
+          }
+        },
+        "type": "object"
+      },
+      "ReportDashboardID": {
+        "properties": {
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ReportEmail": {
         "properties": {
           "email": {
             "type": "string"
@@ -8746,7 +8907,7 @@
         },
         "type": "object"
       },
-      "ReportOptionsDTO": {
+      "ReportOptions": {
         "properties": {
           "layout": {
             "type": "string"
@@ -8755,7 +8916,81 @@
             "type": "string"
           },
           "timeRange": {
-            "$ref": "#/components/schemas/TimeRangeDTO"
+            "$ref": "#/components/schemas/ReportTimeRange"
+          }
+        },
+        "type": "object"
+      },
+      "ReportSchedule": {
+        "properties": {
+          "day": {
+            "type": "string"
+          },
+          "dayOfMonth": {
+            "type": "string"
+          },
+          "endDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "frequency": {
+            "type": "string"
+          },
+          "hour": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "intervalAmount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "intervalFrequency": {
+            "type": "string"
+          },
+          "minute": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "startDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "workdaysOnly": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "ReportSettings": {
+        "properties": {
+          "branding": {
+            "$ref": "#/components/schemas/ReportBrandingOptions"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "userId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "ReportTimeRange": {
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -8837,6 +9072,9 @@
           },
           "displayName": {
             "type": "string"
+          },
+          "global": {
+            "type": "boolean"
           },
           "group": {
             "type": "string"
@@ -9220,49 +9458,6 @@
         },
         "type": "object"
       },
-      "ScheduleDTO": {
-        "properties": {
-          "day": {
-            "type": "string"
-          },
-          "dayOfMonth": {
-            "type": "string"
-          },
-          "endDate": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "frequency": {
-            "type": "string"
-          },
-          "hour": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "intervalAmount": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "intervalFrequency": {
-            "type": "string"
-          },
-          "minute": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "startDate": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "timeZone": {
-            "type": "string"
-          },
-          "workdaysOnly": {
-            "type": "boolean"
-          }
-        },
-        "type": "object"
-      },
       "SearchOrgServiceAccountsResult": {
         "description": "swagger: model",
         "properties": {
@@ -9585,26 +9780,6 @@
         },
         "type": "object"
       },
-      "SettingsDTO": {
-        "properties": {
-          "branding": {
-            "$ref": "#/components/schemas/BrandingOptionsDTO"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "orgId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "userId": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      },
       "ShareType": {
         "type": "string"
       },
@@ -9797,38 +9972,6 @@
           }
         },
         "title": "A Span defines a continuous sequence of buckets.",
-        "type": "object"
-      },
-      "Spec": {
-        "properties": {
-          "cookiePreferences": {
-            "$ref": "#/components/schemas/CookiePreferences"
-          },
-          "homeDashboardUID": {
-            "description": "UID for the home dashboard",
-            "type": "string"
-          },
-          "language": {
-            "description": "Selected language (beta)",
-            "type": "string"
-          },
-          "queryHistory": {
-            "$ref": "#/components/schemas/QueryHistoryPreference"
-          },
-          "theme": {
-            "description": "Theme light, dark, empty is default",
-            "type": "string"
-          },
-          "timezone": {
-            "description": "The timezone selection\nTODO: this should use the timezone defined in common",
-            "type": "string"
-          },
-          "weekStart": {
-            "description": "WeekStart day of the week (sunday, monday, etc)",
-            "type": "string"
-          }
-        },
-        "title": "Spec defines model for Spec.",
         "type": "object"
       },
       "State": {
@@ -10396,17 +10539,6 @@
           },
           "to": {
             "format": "date-time",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "TimeRangeDTO": {
-        "properties": {
-          "from": {
-            "type": "string"
-          },
-          "to": {
             "type": "string"
           }
         },
@@ -11574,6 +11706,34 @@
         ],
         "type": "object"
       },
+      "deviceDTO": {
+        "properties": {
+          "avatarUrl": {
+            "type": "string"
+          },
+          "clientIp": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "deviceId": {
+            "type": "string"
+          },
+          "lastSeenAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "userAgent": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "gettableAlert": {
         "description": "GettableAlert gettable alert",
         "properties": {
@@ -11631,6 +11791,7 @@
         "type": "object"
       },
       "gettableAlerts": {
+        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
@@ -11691,6 +11852,7 @@
         "type": "array"
       },
       "integration": {
+        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -15133,7 +15295,7 @@
           }
         ],
         "responses": {
-          "204": {
+          "202": {
             "description": " The contact point was deleted successfully."
           }
         },
@@ -15422,6 +15584,57 @@
         ]
       }
     },
+    "/api/v1/provisioning/mute-timings/export": {
+      "get": {
+        "operationId": "RouteExportMuteTimings",
+        "parameters": [
+          {
+            "description": "Whether to initiate a download of the file or not.",
+            "in": "query",
+            "name": "download",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "default": "yaml",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              }
+            },
+            "description": "AlertingFileExport"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              }
+            },
+            "description": "PermissionDenied"
+          }
+        },
+        "summary": "Export all mute timings in provisioning format.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
     "/api/v1/provisioning/mute-timings/{name}": {
       "delete": {
         "operationId": "RouteDeleteMuteTiming",
@@ -15525,6 +15738,66 @@
           }
         },
         "summary": "Replace an existing mute timing.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/api/v1/provisioning/mute-timings/{name}/export": {
+      "get": {
+        "operationId": "RouteExportMuteTiming",
+        "parameters": [
+          {
+            "description": "Whether to initiate a download of the file or not.",
+            "in": "query",
+            "name": "download",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "default": "yaml",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Mute timing name",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              }
+            },
+            "description": "AlertingFileExport"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              }
+            },
+            "description": "PermissionDenied"
+          }
+        },
+        "summary": "Export a mute timing in provisioning format.",
         "tags": [
           "provisioning"
         ]
@@ -18627,7 +18900,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/components/responses/getLibraryElementResponse"
+            "$ref": "#/components/responses/getLibraryElementArrayResponse"
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
@@ -21073,7 +21346,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateOrUpdateConfigCmd"
+                "$ref": "#/components/schemas/CreateOrUpdateReportConfig"
               }
             }
           },
@@ -21115,7 +21388,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ReportEmailDTO"
+                "$ref": "#/components/schemas/ReportEmail"
               }
             }
           },
@@ -21337,7 +21610,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SettingsDTO"
+                "$ref": "#/components/schemas/ReportSettings"
               }
             }
           },
@@ -21376,7 +21649,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateOrUpdateConfigCmd"
+                "$ref": "#/components/schemas/CreateOrUpdateReportConfig"
               }
             }
           },
@@ -21509,7 +21782,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateOrUpdateConfigCmd"
+                "$ref": "#/components/schemas/CreateOrUpdateReportConfig"
               }
             }
           },
@@ -22359,6 +22632,32 @@
         "summary": "Get Snapshot by Key.",
         "tags": [
           "snapshots"
+        ]
+      }
+    },
+    "/stats": {
+      "get": {
+        "operationId": "listDevices",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/devicesResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Lists all devices within the last 30 days",
+        "tags": [
+          "devices"
         ]
       }
     },

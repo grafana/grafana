@@ -15,16 +15,16 @@ import {
   ScopedVars,
   TestDataSourceResponse,
 } from '@grafana/data';
-import { config, DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
+import { DataSourceSrv, GetDataSourceListFilters, config } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import {
-  AlertmanagerAlert,
   AlertManagerCortexConfig,
+  AlertState,
+  AlertmanagerAlert,
   AlertmanagerGroup,
   AlertmanagerStatus,
-  AlertState,
   GrafanaManagedReceiverConfig,
   MatcherOperator,
   Silence,
@@ -211,7 +211,7 @@ export const mockGrafanaRulerRule = (partial: Partial<GrafanaRuleDefinition> = {
     grafana_alert: {
       uid: '',
       title: 'my rule',
-      namespace_uid: '',
+      namespace_uid: 'NAMESPACE_UID',
       namespace_id: 0,
       condition: '',
       no_data_state: GrafanaAlertStateDecision.NoData,
@@ -654,6 +654,17 @@ export function mockCombinedRuleNamespace(namespace: Partial<CombinedRuleNamespa
     name: 'Grafana',
     groups: [],
     rulesSource: 'grafana',
+    ...namespace,
+  };
+}
+export function mockCombinedCloudRuleNamespace(
+  namespace: Partial<CombinedRuleNamespace>,
+  dataSourceName: string
+): CombinedRuleNamespace {
+  return {
+    name: 'Grafana',
+    groups: [],
+    rulesSource: mockDataSource({ name: dataSourceName, uid: 'Prometheus-1' }),
     ...namespace,
   };
 }
