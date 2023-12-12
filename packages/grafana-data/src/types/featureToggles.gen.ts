@@ -33,6 +33,7 @@ export interface FeatureToggles {
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
   autoMigrateOldPanels?: boolean;
+  autoMigrateGraphPanel?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
   newVizTooltips?: boolean;
