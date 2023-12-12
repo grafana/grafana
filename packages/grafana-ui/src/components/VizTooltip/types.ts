@@ -25,3 +25,5 @@ export interface LabelValue {
   colorPlacement?: ColorPlacement;
   isActive?: boolean;
 }
+
+export const DEFAULT_COLOR_INDICATOR = ColorIndicator.series;

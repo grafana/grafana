@@ -11,7 +11,6 @@ import { ColorPlacement, LabelValue } from './types';
 
 interface Props extends LabelValue {
   justify?: string;
-  colorFirst?: boolean;
   isActive?: boolean; // for series list
   marginRight?: string;
 }
@@ -52,7 +51,7 @@ export const VizTooltipRow = ({
       {(color || label) && (
         <div className={styles.valueWrapper}>
           {color && colorPlacement === ColorPlacement.first && (
-            <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator!} />
+            <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator} />
           )}
           <Tooltip content={label} interactive={false} show={showLabelTooltip}>
             <div
@@ -68,7 +67,7 @@ export const VizTooltipRow = ({
 
       <div className={styles.valueWrapper}>
         {color && colorPlacement === ColorPlacement.leading && (
-          <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator!} />
+          <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator} />
         )}
         <Tooltip content={value ? value.toString() : ''} interactive={false} show={showValueTooltip}>
           <div className={cx(styles.value, isActive)} onMouseEnter={onMouseEnterValue} onMouseLeave={onMouseLeaveValue}>
@@ -78,7 +77,7 @@ export const VizTooltipRow = ({
         {color && colorPlacement === ColorPlacement.trailing && (
           <>
             &nbsp;
-            <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator!} />
+            <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator} />
           </>
         )}
       </div>
