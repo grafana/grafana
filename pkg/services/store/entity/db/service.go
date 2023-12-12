@@ -9,6 +9,7 @@ import (
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
 	// "github.com/grafana/grafana/pkg/services/sqlstore"
@@ -26,6 +27,7 @@ func ProvideEntityDB(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureTog
 		db:       db,
 		cfg:      cfg,
 		features: features,
+		log:      log.New("entity-db"),
 	}, nil
 }
 
@@ -34,6 +36,7 @@ type EntityDB struct {
 	features featuremgmt.FeatureToggles
 	engine   *xorm.Engine
 	cfg      *setting.Cfg
+	log      log.Logger
 }
 
 func (db *EntityDB) Init() error {
@@ -78,9 +81,11 @@ func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
 				return nil, err
 			}
 
+			// FIXME: this config option is cockroachdb-specific, it's not supported by postgres
 			_, err = engine.Exec("SET SESSION enable_experimental_alter_column_type_general=true")
 			if err != nil {
-				return nil, err
+				db.log.Error("error connecting to postgres", "msg", err.Error())
+				// FIXME: return nil, err
 			}
 		} else if dbType == "mysql" {
 			// TODO: support all mysql connection options

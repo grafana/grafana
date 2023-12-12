@@ -66,6 +66,11 @@ jest.mock('app/core/core', () => ({
   },
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getPluginLinkExtensions: jest.fn().mockReturnValue({ extensions: [] }),
+}));
+
 jest.mock('react-virtualized-auto-sizer', () => {
   // The size of the children need to be small enough to be outside the view.
   // So it does not trigger the query to be run by the PanelQueryRunner.

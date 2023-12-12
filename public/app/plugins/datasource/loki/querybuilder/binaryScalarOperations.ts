@@ -1,10 +1,10 @@
-import { defaultAddOperationHandler } from '../../prometheus/querybuilder/shared/operationUtils';
 import {
   QueryBuilderOperation,
   QueryBuilderOperationDef,
   QueryBuilderOperationParamDef,
 } from '../../prometheus/querybuilder/shared/types';
 
+import { defaultAddOperationHandler } from './operationUtils';
 import { LokiOperationId, LokiVisualQueryOperationCategory } from './types';
 
 export const binaryScalarDefs = [

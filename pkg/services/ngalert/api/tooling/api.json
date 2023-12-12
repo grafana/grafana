@@ -298,6 +298,12 @@
      },
      "type": "array"
     },
+    "muteTimes": {
+     "items": {
+      "$ref": "#/definitions/MuteTimeIntervalExport"
+     },
+     "type": "array"
+    },
     "policies": {
      "items": {
       "$ref": "#/definitions/NotificationPolicyExport"
@@ -1918,6 +1924,24 @@
     }
    },
    "title": "MuteTimeInterval represents a named set of time intervals for which a route should be muted.",
+   "type": "object"
+  },
+  "MuteTimeIntervalExport": {
+   "properties": {
+    "OrgID": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "name": {
+     "type": "string"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeInterval"
+     },
+     "type": "array"
+    }
+   },
    "type": "object"
   },
   "MuteTimings": {
@@ -4228,7 +4252,6 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -5365,6 +5388,45 @@
     ]
    }
   },
+  "/api/v1/provisioning/mute-timings/export": {
+   "get": {
+    "operationId": "RouteExportMuteTimings",
+    "parameters": [
+     {
+      "default": false,
+      "description": "Whether to initiate a download of the file or not.",
+      "in": "query",
+      "name": "download",
+      "type": "boolean"
+     },
+     {
+      "default": "yaml",
+      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "in": "query",
+      "name": "format",
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertingFileExport",
+      "schema": {
+       "$ref": "#/definitions/AlertingFileExport"
+      }
+     },
+     "403": {
+      "description": "PermissionDenied",
+      "schema": {
+       "$ref": "#/definitions/PermissionDenied"
+      }
+     }
+    },
+    "summary": "Export all mute timings in provisioning format.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
   "/api/v1/provisioning/mute-timings/{name}": {
    "delete": {
     "operationId": "RouteDeleteMuteTiming",
@@ -5450,6 +5512,52 @@
      }
     },
     "summary": "Replace an existing mute timing.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/v1/provisioning/mute-timings/{name}/export": {
+   "get": {
+    "operationId": "RouteExportMuteTiming",
+    "parameters": [
+     {
+      "default": false,
+      "description": "Whether to initiate a download of the file or not.",
+      "in": "query",
+      "name": "download",
+      "type": "boolean"
+     },
+     {
+      "default": "yaml",
+      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "in": "query",
+      "name": "format",
+      "type": "string"
+     },
+     {
+      "description": "Mute timing name",
+      "in": "path",
+      "name": "name",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertingFileExport",
+      "schema": {
+       "$ref": "#/definitions/AlertingFileExport"
+      }
+     },
+     "403": {
+      "description": "PermissionDenied",
+      "schema": {
+       "$ref": "#/definitions/PermissionDenied"
+      }
+     }
+    },
+    "summary": "Export a mute timing in provisioning format.",
     "tags": [
      "provisioning"
     ]
