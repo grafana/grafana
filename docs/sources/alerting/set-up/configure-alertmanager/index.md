@@ -2,7 +2,7 @@
 aliases:
   - ../configure-alertmanager/
 canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/configure-alertmanager/
-description: Configure Alertmanager
+description: Configure an Alertmanager to receive all of your alerts
 keywords:
   - grafana
   - alerting
