@@ -95,11 +95,11 @@ export function getStringsFromLineFilter(filter: SyntaxNode): SyntaxNode[] {
   return nodes;
 }
 
-export function getNormalizedLokiQuery(query: LokiQuery): LokiQuery {
+export function getNormalizedLokiQuery(query: LokiQuery, maxLinesOverride?: number): LokiQuery {
   const queryType = getLokiQueryType(query);
   // instant and range are deprecated, we want to remove them
-  const { instant, range, ...rest } = query;
-  return { ...rest, queryType };
+  const { instant, range, maxLines, ...rest } = query;
+  return removeInvalidOptions({ ...rest, queryType, maxLines: maxLinesOverride ?? query.maxLines });
 }
 
 export function getLokiQueryType(query: LokiQuery): LokiQueryType {

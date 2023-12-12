@@ -134,20 +134,20 @@ describe('getHighlighterExpressionsFromQuery', () => {
 describe('getNormalizedLokiQuery', () => {
   it('removes deprecated instant property', () => {
     const input: LokiQuery = { refId: 'A', expr: 'test1', instant: true };
-    const output = getNormalizedLokiQuery(input);
-    expect(output).toStrictEqual({ refId: 'A', expr: 'test1', queryType: LokiQueryType.Instant });
+    const output = getNormalizedLokiQuery(input, 100);
+    expect(output).toStrictEqual({ refId: 'A', expr: 'test1', queryType: LokiQueryType.Instant, maxLines: 100 });
   });
 
   it('removes deprecated range property', () => {
     const input: LokiQuery = { refId: 'A', expr: 'test1', range: true };
     const output = getNormalizedLokiQuery(input);
-    expect(output).toStrictEqual({ refId: 'A', expr: 'test1', queryType: LokiQueryType.Range });
+    expect(output).toStrictEqual({ refId: 'A', expr: 'test1', queryType: LokiQueryType.Range, maxLines: undefined });
   });
 
   it('removes deprecated range and instant properties if query with queryType', () => {
     const input: LokiQuery = { refId: 'A', expr: 'test1', range: true, instant: false, queryType: LokiQueryType.Range };
     const output = getNormalizedLokiQuery(input);
-    expect(output).toStrictEqual({ refId: 'A', expr: 'test1', queryType: LokiQueryType.Range });
+    expect(output).toStrictEqual({ refId: 'A', expr: 'test1', queryType: LokiQueryType.Range, maxLines: undefined });
   });
 });
 describe('getLokiQueryType', () => {

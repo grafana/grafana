@@ -208,7 +208,7 @@ export class LokiDatasource
       return undefined;
     }
 
-    const normalizedQuery = getNormalizedLokiQuery(query);
+    const normalizedQuery = getNormalizedLokiQuery(query, query.maxLines ?? this.maxLines);
     const expr = removeCommentsFromQuery(normalizedQuery.expr);
     let isQuerySuitable = false;
 
@@ -293,10 +293,7 @@ export class LokiDatasource
    * @returns An Observable of DataQueryResponse containing the query results.
    */
   query(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
-    const queries = request.targets
-      .map(getNormalizedLokiQuery) // used to "fix" the deprecated `.queryType` prop
-      .map((q) => ({ ...q, maxLines: q.maxLines ?? this.maxLines }))
-      .map(removeInvalidOptions);
+    const queries = request.targets.map((q) => getNormalizedLokiQuery(q, q.maxLines ?? this.maxLines)); // used to "fix" the deprecated `.queryType` prop
 
     const fixedRequest: DataQueryRequest<LokiQuery> = {
       ...request,
