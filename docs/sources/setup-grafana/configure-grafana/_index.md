@@ -2532,4 +2532,4 @@ This section configures the [public dashboards]({{< relref "../../dashboards/das
 
 ### enabled
 
-Set this to `false` to disable the public dashboards feature. This will prevent users to create new public dashboards and disable all existing ones.
+Set this to `false` to disable the public dashboards feature. This will prevent users from creating new public dashboards and disable all existing ones.
