@@ -78,10 +78,11 @@ func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
 				return nil, err
 			}
 
-			_, err = engine.Exec("SET SESSION enable_experimental_alter_column_type_general=true")
-			if err != nil {
-				return nil, err
-			}
+			// FIXME: this config option is cockroachdb-specific, it's not supported by postgres
+			//_, err = engine.Exec("SET SESSION enable_experimental_alter_column_type_general=true")
+			//if err != nil {
+			//	return nil, err
+			//}
 		} else if dbType == "mysql" {
 			// TODO: support all mysql connection options
 			protocol := "tcp"
