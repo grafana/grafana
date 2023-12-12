@@ -72,29 +72,7 @@ export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
     const focus = useFocus(context);
     const dismiss = useDismiss(context);
 
-    const interactions = [hover, focus];
-
-    if (interactive) {
-      interactions.push(dismiss);
-    }
-
-    const { getReferenceProps, getFloatingProps } = useInteractions(interactions);
-
-    useEffect(() => {
-      if (controlledVisible !== false) {
-        const handleKeyDown = (enterKey: KeyboardEvent) => {
-          if (enterKey.key === 'Escape') {
-            setControlledVisible(false);
-          }
-        };
-        document.addEventListener('keydown', handleKeyDown);
-        return () => {
-          document.removeEventListener('keydown', handleKeyDown);
-        };
-      } else {
-        return;
-      }
-    }, [controlledVisible]);
+    const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, hover, focus]);
 
     const contentIsFunction = typeof content === 'function';
 
