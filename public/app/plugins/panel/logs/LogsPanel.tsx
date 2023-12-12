@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { groupBy } from 'lodash';
 import React, { useCallback, useMemo, useRef, useLayoutEffect, useState, useEffect } from 'react';
 import { isObservable, lastValueFrom } from 'rxjs';
 
@@ -215,9 +216,11 @@ async function requestMoreLogs(panelData: PanelData, timeRange: AbsoluteTimeRang
     to: dateTimeForTimeZone(timeZone, timeRange.to),
   });
 
+  const targetGroups = groupBy(panelData.request.targets, 'datasource.uid');
   const dataRequests = [];
-  for (const query of panelData.request.targets) {
-    const dataSource = await getDataSourceSrv().get(query.datasource?.uid);
+
+  for (const uid in targetGroups) {
+    const dataSource = await getDataSourceSrv().get(uid);
     if (!dataSource) {
       continue;
     }
@@ -225,7 +228,7 @@ async function requestMoreLogs(panelData: PanelData, timeRange: AbsoluteTimeRang
       dataSource.query({
         ...panelData.request,
         range,
-        targets: [query],
+        targets: targetGroups[uid],
       })
     );
   }
