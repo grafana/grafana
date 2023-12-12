@@ -69,24 +69,24 @@ func ParseAPIGroupArgs(cfg *setting.Cfg, args []string) ([]grafanaAPIServer.APIG
 	builders := make([]grafanaAPIServer.APIGroupBuilder, 0)
 	for _, g := range args {
 		switch g {
-		// case "example.grafana.app":
-		// 	eb, err := initializeExampleAPIBuilder(cfg)
-		// 	if err != nil {
-		// 		return nil, err
-		// 	}
-		// 	builders = append(builders, eb)
-		// case "playlist.grafana.app":
-		// 	pb, err := initializePlaylistsAPIBuilder(cfg)
-		// 	if err != nil {
-		// 		return nil, err
-		// 	}
-		// 	builders = append(builders, pb)
-		// case "snapshots.grafana.app":
-		// 	sb, err := initializeSnapshotsAPIBuilder(cfg)
-		// 	if err != nil {
-		// 		return nil, err
-		// 	}
-		// 	builders = append(builders, sb)
+		case "example.grafana.app":
+			eb, err := initializeExampleAPIBuilder(cfg)
+			if err != nil {
+				return nil, err
+			}
+			builders = append(builders, eb)
+		case "playlist.grafana.app":
+			pb, err := initializePlaylistsAPIBuilder(cfg)
+			if err != nil {
+				return nil, err
+			}
+			builders = append(builders, pb)
+		case "snapshots.grafana.app":
+			sb, err := initializeSnapshotsAPIBuilder(cfg)
+			if err != nil {
+				return nil, err
+			}
+			builders = append(builders, sb)
 		default:
 			return nil, fmt.Errorf("unknown group: %s", g)
 		}
