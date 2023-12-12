@@ -152,7 +152,7 @@ export const RestoreHistory: FC = () => {
   }, []);
 
   return (
-    <Page navId='restore-history'>
+    <Page navId="restore-history">
       <Page.Contents>
         <FeatureLoader featureName={Messages.backupManagement} featureSelector={featureSelector}>
           <Table

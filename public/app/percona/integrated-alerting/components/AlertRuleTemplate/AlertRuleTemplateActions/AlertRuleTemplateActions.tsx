@@ -13,10 +13,7 @@ import { AlertRuleTemplateActionsProps } from './AlertRuleTemplateActions.types'
 
 const nonActionableSources = [SourceDescription.BUILT_IN, SourceDescription.USER_FILE, SourceDescription.SAAS];
 
-export const AlertRuleTemplateActions: FC<AlertRuleTemplateActionsProps> = ({
-  template,
-  getAlertRuleTemplates,
-}) => {
+export const AlertRuleTemplateActions: FC<AlertRuleTemplateActionsProps> = ({ template, getAlertRuleTemplates }) => {
   const styles = useStyles2(getStyles);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);

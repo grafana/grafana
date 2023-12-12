@@ -24,7 +24,7 @@ export const nodeFromDbMapper = (nodeFromDb: NodeDB[]) => {
           agentType: agent.agent_type,
           status: agent.status,
           isConnected: agent.is_connected,
-        } as DbAgent)
+        }) as DbAgent
     );
 
     return {

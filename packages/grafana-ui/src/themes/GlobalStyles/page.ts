@@ -34,7 +34,6 @@ export function getPageStyles(theme: GrafanaTheme2) {
       width: '100%',
       height: '100%',
 
-
       // @PERCONA
       // @PERCONA TODO check if it's still needed
       // This adjusts our settings page

@@ -15,12 +15,7 @@ import { Messages } from './AddInstance.messages';
 import { getStyles } from './AddInstance.styles';
 import { AddInstanceProps, InstanceListItem, SelectInstanceProps } from './AddInstance.types';
 
-export const SelectInstance: FC<SelectInstanceProps> = ({
-  type,
-  icon,
-  selectInstanceType,
-  title,
-}) => {
+export const SelectInstance: FC<SelectInstanceProps> = ({ type, icon, selectInstanceType, title }) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -34,11 +29,7 @@ export const SelectInstance: FC<SelectInstanceProps> = ({
   );
 };
 
-export const AddInstance: FC<AddInstanceProps> = ({
-  selectedInstanceType,
-  onSelectInstanceType,
-  showAzure,
-}) => {
+export const AddInstance: FC<AddInstanceProps> = ({ selectedInstanceType, onSelectInstanceType, showAzure }) => {
   const styles2 = useStyles2(getStyles);
   const { chrome } = useGrafana();
   const instanceList = useMemo<InstanceListItem[]>(

@@ -12,23 +12,33 @@ export const getStyles = ({ v1 }: GrafanaTheme2) => {
 
   const autofillFocusBoxShadow = isDark
     ? css`
-        box-shadow: rgb(20, 22, 25) 0px 0px 0px 2px, rgb(31, 96, 196) 0px 0px 0px 4px,
-          rgba(255, 255, 255, 0) 0px 0px 0px 1px inset, rgb(11, 12, 14) 0px 0px 0px 100px inset !important;
+        box-shadow:
+          rgb(20, 22, 25) 0px 0px 0px 2px,
+          rgb(31, 96, 196) 0px 0px 0px 4px,
+          rgba(255, 255, 255, 0) 0px 0px 0px 1px inset,
+          rgb(11, 12, 14) 0px 0px 0px 100px inset !important;
         -webkit-text-fill-color: rgb(199, 208, 217) !important;
       `
     : css`
-        box-shadow: rgb(255, 255, 255) 0px 0px 0px 2px, rgb(87, 148, 242) 0px 0px 0px 4px,
-          rgba(255, 255, 255, 0) 0px 0px 0px 1px inset, rgb(255, 255, 255) 0px 0px 0px 100px inset !important;
+        box-shadow:
+          rgb(255, 255, 255) 0px 0px 0px 2px,
+          rgb(87, 148, 242) 0px 0px 0px 4px,
+          rgba(255, 255, 255, 0) 0px 0px 0px 1px inset,
+          rgb(255, 255, 255) 0px 0px 0px 100px inset !important;
         -webkit-text-fill-color: rgb(70, 76, 84) !important;
       `;
 
   const autofillBoxShadow = isDark
     ? css`
-        box-shadow: rgba(255, 255, 255, 0) 0px 0px 0px 1px inset, rgb(11, 12, 14) 0px 0px 0px 100px inset !important;
+        box-shadow:
+          rgba(255, 255, 255, 0) 0px 0px 0px 1px inset,
+          rgb(11, 12, 14) 0px 0px 0px 100px inset !important;
         -webkit-text-fill-color: rgb(199, 208, 217) !important;
       `
     : css`
-        box-shadow: rgba(255, 255, 255, 0) 0px 0px 0px 1px inset, rgb(255, 255, 255) 0px 0px 0px 100px inset !important;
+        box-shadow:
+          rgba(255, 255, 255, 0) 0px 0px 0px 1px inset,
+          rgb(255, 255, 255) 0px 0px 0px 100px inset !important;
         -webkit-text-fill-color: rgb(70, 76, 84) !important;
       `;
 

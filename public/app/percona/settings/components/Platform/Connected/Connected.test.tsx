@@ -130,4 +130,3 @@ describe('Connected:', () => {
 });
 
 const getDisconnectButton = () => within(screen.getByRole('dialog')).getByText('Disconnect');
-

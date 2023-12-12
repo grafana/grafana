@@ -183,7 +183,7 @@ export const Advanced: FC = () => {
   const { Form } = withTypes<AdvancedFormProps>();
 
   return (
-    <Page navId='settings-advanced'>
+    <Page navId="settings-advanced">
       <Page.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
         <FeatureLoader>
           <div className={styles.advancedWrapper}>

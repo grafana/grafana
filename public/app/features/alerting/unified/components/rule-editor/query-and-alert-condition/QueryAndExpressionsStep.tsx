@@ -321,7 +321,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
   const onClickSwitch = useCallback(() => {
     const typeInForm = getValues('type');
-    
+
     console.log({ typeInForm });
 
     if (typeInForm === RuleFormType.cloudAlerting) {

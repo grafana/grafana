@@ -9,7 +9,9 @@ import usePerconaTour from 'app/percona/shared/core/hooks/tour';
 const PrevButton: FC<BtnFnProps> = () => {
   const { previousStep, isFirstStep } = usePerconaTour();
 
-  return <IconButton onClick={previousStep} aria-label='Previous step' name="arrow-left" size="lg" disabled={isFirstStep} />;
+  return (
+    <IconButton onClick={previousStep} aria-label="Previous step" name="arrow-left" size="lg" disabled={isFirstStep} />
+  );
 };
 
 export default PrevButton;

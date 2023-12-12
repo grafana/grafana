@@ -31,7 +31,6 @@ import {
 } from '../percona/dbaas/components/DBCluster/EditDBClusterPage/EditDBClusterPage.constants';
 import { K8S_INVENTORY_URL } from '../percona/dbaas/components/Kubernetes/EditK8sClusterPage/EditK8sClusterPage.constants';
 
-
 export const extraRoutes: RouteDescriptor[] = [];
 
 export function getAppRoutes(): RouteDescriptor[] {

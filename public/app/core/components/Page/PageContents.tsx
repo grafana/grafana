@@ -13,13 +13,14 @@ interface Props {
 }
 
 export const PageContents = ({ isLoading, children, className, dataTestId }: Props) => {
-  let content = className || dataTestId ? (
-    <div className={className} data-testid={dataTestId}>
-      {children}
-    </div>
-  ) : (
-    children
-  );
+  let content =
+    className || dataTestId ? (
+      <div className={className} data-testid={dataTestId}>
+        {children}
+      </div>
+    ) : (
+      children
+    );
 
   return <>{isLoading ? <PageLoader /> : content}</>;
 };

@@ -5,7 +5,7 @@ import { AddStorageLocationFormProps } from './AddStorageLocationModal.types';
 
 export const toStorageLocation = (values: AddStorageLocationFormProps): StorageLocation => {
   const { name, description, type, endpoint, client, accessKey, secretKey, bucketName, locationID = '' } = values;
-  const locationMap: Record<typeof LocationType[keyof typeof LocationType], StorageLocation | S3Location> = {
+  const locationMap: Record<(typeof LocationType)[keyof typeof LocationType], StorageLocation | S3Location> = {
     [LocationType.S3]: {
       locationID,
       name,
@@ -44,7 +44,7 @@ export const toFormStorageLocation = (values: StorageLocation | S3Location | nul
   }
 
   const { name, description, type, path, locationID } = values;
-  const locationMap: Record<typeof LocationType[keyof typeof LocationType], AddStorageLocationFormProps> = {
+  const locationMap: Record<(typeof LocationType)[keyof typeof LocationType], AddStorageLocationFormProps> = {
     [LocationType.S3]: {
       locationID,
       name,

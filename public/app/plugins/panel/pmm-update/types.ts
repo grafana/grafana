@@ -70,7 +70,7 @@ export type CurrentOrNextVersionDetails = [
   string,
   boolean,
   boolean,
-  (body?: GetUpdatesBody) => void
+  (body?: GetUpdatesBody) => void,
 ];
 
 export interface ProgressModalProps {

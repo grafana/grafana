@@ -22,7 +22,7 @@ export const DBClusterConnectionPassword: FC<DBClusterConnectionPasswordProps> =
       />
       <IconButton
         data-testid="show-password-button"
-        aria-label='Show password'
+        aria-label="Show password"
         name={showPassword ? 'eye-slash' : 'eye'}
         onClick={() => setShowPassword(!showPassword)}
         className={styles.showPasswordButton}

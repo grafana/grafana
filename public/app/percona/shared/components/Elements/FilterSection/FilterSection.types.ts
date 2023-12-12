@@ -1,4 +1,4 @@
-import { PropsWithChildren } from "react";
+import { PropsWithChildren } from 'react';
 
 export interface FilterSectionProps<T> extends PropsWithChildren {
   onApply: (values: T) => void;

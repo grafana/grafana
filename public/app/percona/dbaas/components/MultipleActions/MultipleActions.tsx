@@ -7,11 +7,7 @@ import { Dropdown } from 'app/percona/shared/components/Elements/Dropdown';
 import { getStyles } from './MultipleActions.styles';
 import { MultipleActionsProps } from './MultipleActions.types';
 
-export const MultipleActions: FC<MultipleActionsProps> = ({
-  actions,
-  disabled,
-  dataTestId,
-}) => {
+export const MultipleActions: FC<MultipleActionsProps> = ({ actions, disabled, dataTestId }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 

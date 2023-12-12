@@ -18,7 +18,6 @@ jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
 }));
 
-
 jest.mock('@grafana/runtime', () => {
   const runtime = jest.requireActual('@grafana/runtime');
   return {

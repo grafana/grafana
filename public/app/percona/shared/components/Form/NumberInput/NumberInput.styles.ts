@@ -121,7 +121,9 @@ export const getStyles = ({ v1 }: GrafanaTheme2) => {
       outline: transparent dotted 2px;
       &:focus {
         outline-offset: 2px;
-        box-shadow: rgb(255, 255, 255) 0px 0px 0px 2px, rgb(87, 148, 242) 0px 0px 0px 4px;
+        box-shadow:
+          rgb(255, 255, 255) 0px 0px 0px 2px,
+          rgb(87, 148, 242) 0px 0px 0px 4px;
         outline: none;
         transition: all 0.2s cubic-bezier(0.19, 1, 0.22, 1) 0s;
       }

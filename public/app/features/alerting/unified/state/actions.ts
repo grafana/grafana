@@ -458,7 +458,7 @@ export const saveRuleFormAction = createAsyncThunk(
           } else if (type === RuleFormType.templated) {
             await AlertRulesService.create(formatCreateAPIPayload(values), undefined, true);
             identifier = { uid: '', ruleSourceName: 'grafana' };
-          } else  {
+          } else {
             throw new Error('Unexpected rule form type');
           }
 

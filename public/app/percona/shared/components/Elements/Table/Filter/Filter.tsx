@@ -131,7 +131,7 @@ export const Filter = ({ columns, rawData, setFilteredData, hasBackendFiltering 
                 size="xl"
                 onClick={() => setOpenSearchFields((value) => !value)}
                 data-testid="open-search-fields"
-                aria-label='Open search fields'
+                aria-label="Open search fields"
               />
               {openSearchFields && (
                 <div className={styles.searchFields}>

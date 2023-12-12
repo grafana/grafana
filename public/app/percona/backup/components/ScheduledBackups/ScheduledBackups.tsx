@@ -246,7 +246,7 @@ export const ScheduledBackups: FC = () => {
   }, []);
 
   return (
-    <Page navId='scheduled-backups'>
+    <Page navId="scheduled-backups">
       <Page.Contents>
         <FeatureLoader featureName={Messages.backupManagement} featureSelector={featureSelector}>
           <div className={styles.addWrapper}>

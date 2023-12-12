@@ -14,6 +14,6 @@ export const navigationReducer: Reducer<NavBarTreeState> = (state, action) => {
   if (action.type === updateNavTree.type) {
     return (action as PayloadAction<NavBarTreeState>).payload;
   }
-  
+
   return navTreeReducer(state, action);
 };

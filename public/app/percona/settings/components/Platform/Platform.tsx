@@ -82,7 +82,7 @@ export const Platform: FC = () => {
   };
 
   return (
-    <Page navId='settings-percona-platform'>
+    <Page navId="settings-percona-platform">
       <Page.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
         <FeatureLoader>
           {result?.isConnectedToPortal ? (

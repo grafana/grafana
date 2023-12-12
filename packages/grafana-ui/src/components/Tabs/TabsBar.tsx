@@ -16,24 +16,29 @@ export interface Props {
   dataTestId?: string;
 }
 
-export const TabsBar = React.forwardRef<HTMLDivElement, Props>(({
-  children,
-  className,
-  hideBorder = false,
-  // @PERCONA
-  vertical = false,
-  dataTestId = ''
-}, ref) => {
-  const styles = useStyles2(theme => getStyles(theme, vertical));
+export const TabsBar = React.forwardRef<HTMLDivElement, Props>(
+  (
+    {
+      children,
+      className,
+      hideBorder = false,
+      // @PERCONA
+      vertical = false,
+      dataTestId = '',
+    },
+    ref
+  ) => {
+    const styles = useStyles2((theme) => getStyles(theme, vertical));
 
-  return (
-    <div className={cx(styles.tabsWrapper, hideBorder && styles.noBorder, className)} ref={ref}>
-      <div data-testid={dataTestId} className={styles.tabs} role="tablist">
-        {children}
+    return (
+      <div className={cx(styles.tabsWrapper, hideBorder && styles.noBorder, className)} ref={ref}>
+        <div data-testid={dataTestId} className={styles.tabs} role="tablist">
+          {children}
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  }
+);
 
 const getStyles = (theme: GrafanaTheme2, vertical: boolean) => ({
   tabsWrapper: css({

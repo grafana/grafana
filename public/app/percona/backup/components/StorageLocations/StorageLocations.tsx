@@ -142,7 +142,7 @@ export const StorageLocations: FC = () => {
   }, []);
 
   return (
-    <Page navId='storage-locations'>
+    <Page navId="storage-locations">
       <Page.Contents>
         <FeatureLoader featureName={Messages.backupManagement} featureSelector={featureSelector}>
           <div className={styles.addWrapper}>

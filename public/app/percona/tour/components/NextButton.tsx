@@ -12,7 +12,7 @@ const NextButton: FC<BtnFnProps> = () => {
   return isLastStep ? (
     <Button onClick={() => tour && endTour(tour)}>Done</Button>
   ) : (
-    <IconButton aria-label='Next step' onClick={nextStep} name="arrow-right" size="lg" />
+    <IconButton aria-label="Next step" onClick={nextStep} name="arrow-right" size="lg" />
   );
 };
 

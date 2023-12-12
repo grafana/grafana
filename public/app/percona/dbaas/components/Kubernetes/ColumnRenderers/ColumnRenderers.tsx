@@ -12,14 +12,13 @@ export const clusterActionsRender =
     setManageComponentsModalVisible,
     getDBClusters,
   }: Omit<any, 'dbCluster'>) =>
-  (kubernetesCluster: Kubernetes) =>
-    (
-      <KubernetesClusterActions
-        kubernetesCluster={kubernetesCluster}
-        setSelectedCluster={setSelectedCluster}
-        setDeleteModalVisible={setDeleteModalVisible}
-        setViewConfigModalVisible={setViewConfigModalVisible}
-        setManageComponentsModalVisible={setManageComponentsModalVisible}
-        getDBClusters={getDBClusters}
-      />
-    );
+  (kubernetesCluster: Kubernetes) => (
+    <KubernetesClusterActions
+      kubernetesCluster={kubernetesCluster}
+      setSelectedCluster={setSelectedCluster}
+      setDeleteModalVisible={setDeleteModalVisible}
+      setViewConfigModalVisible={setViewConfigModalVisible}
+      setManageComponentsModalVisible={setManageComponentsModalVisible}
+      getDBClusters={getDBClusters}
+    />
+  );
