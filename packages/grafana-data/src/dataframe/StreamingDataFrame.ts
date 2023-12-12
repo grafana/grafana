@@ -123,7 +123,7 @@ export class StreamingDataFrame implements DataFrame {
 
     dataFrameDTO.fields = dataFrameDTO.fields.map((f) => ({
       ...f,
-      values: (f.values as unknown[]).slice(numberOfItemsToRemove),
+      values: f.values?.slice(numberOfItemsToRemove),
     }));
 
     const length = dataFrameDTO.fields[0]?.values?.length ?? 0;

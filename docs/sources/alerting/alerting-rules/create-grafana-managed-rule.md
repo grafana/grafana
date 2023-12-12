@@ -2,7 +2,7 @@
 aliases:
   - ../unified-alerting/alerting-rules/create-grafana-managed-rule/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/
-description: Configure Grafana-managed alert rules
+description: Configure Grafana-managed alert rules to create alerts that can act on data from any of our supported data sources
 keywords:
   - grafana
   - alerting
@@ -92,7 +92,7 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
    If you are creating a new evaluation group, specify the interval for the group.
 
-   All rules within the same group are evaluated sequentially over the same time interval.
+   All rules within the same group are evaluated concurrently over the same time interval.
 
 1. Enter a pending period.
 

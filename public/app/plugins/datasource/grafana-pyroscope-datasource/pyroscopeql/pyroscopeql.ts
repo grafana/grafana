@@ -2,7 +2,7 @@ import type { languages } from 'monaco-editor';
 
 export const languageConfiguration: languages.LanguageConfiguration = {
   // the default separators except `@$`
-  wordPattern: /(-?\d*\.\d\w*)|([^`~!#%^&*()\-=+\[{\]}\\|;:'",.<>\/?\s]+)/g,
+  wordPattern: /(-?\d*\.\d\w*)|([^`~!#%^&*()=+\[{\]}\\|;:'",<>\/?\s]+)/g,
   brackets: [['{', '}']],
   autoClosingPairs: [
     { open: '{', close: '}' },

@@ -27,6 +27,8 @@ class UnthemedCodeEditor extends PureComponent<Props> {
     if (this.completionCancel) {
       this.completionCancel.dispose();
     }
+
+    this.props.onEditorWillUnmount?.();
   }
 
   componentDidUpdate(oldProps: Props) {
@@ -74,6 +76,13 @@ class UnthemedCodeEditor extends PureComponent<Props> {
     const { onBlur } = this.props;
     if (onBlur) {
       onBlur(this.getEditorValue());
+    }
+  };
+
+  onFocus = () => {
+    const { onFocus } = this.props;
+    if (onFocus) {
+      onFocus(this.getEditorValue());
     }
   };
 
@@ -164,7 +173,12 @@ class UnthemedCodeEditor extends PureComponent<Props> {
     }
 
     return (
-      <div className={containerStyles} onBlur={this.onBlur} data-testid={selectors.components.CodeEditor.container}>
+      <div
+        className={containerStyles}
+        onFocus={this.onFocus}
+        onBlur={this.onBlur}
+        data-testid={selectors.components.CodeEditor.container}
+      >
         <ReactMonacoEditorLazy
           width={width}
           height={height}

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -56,12 +58,48 @@ func (api *Api) RegisterAPIEndpoints() {
 }
 
 func (api *Api) listAllProvidersSettings(c *contextmodel.ReqContext) response.Response {
-	providers, err := api.SSOSettingsService.List(c.Req.Context(), c.SignedInUser)
+	providers, err := api.getAuthorizedList(c.Req.Context(), c.SignedInUser)
 	if err != nil {
 		return response.Error(500, "Failed to get providers", err)
 	}
 
-	return response.JSON(http.StatusOK, providers)
+	dtos := make([]*models.SSOSettingsDTO, 0)
+	for _, provider := range providers {
+		dto, err := provider.ToSSOSettingsDTO()
+		if err != nil {
+			api.Log.Warn("Failed to convert SSO Settings for provider " + provider.Provider)
+			continue
+		}
+
+		dtos = append(dtos, dto)
+	}
+
+	return response.JSON(http.StatusOK, dtos)
+}
+
+func (api *Api) getAuthorizedList(ctx context.Context, identity identity.Requester) ([]*models.SSOSettings, error) {
+	allProviders, err := api.SSOSettingsService.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var authorizedProviders []*models.SSOSettings
+	for _, provider := range allProviders {
+		ev := ac.EvalPermission(ac.ActionSettingsRead, ac.Scope("settings", "auth."+provider.Provider, "*"))
+		hasAccess, err := api.AccessControl.Evaluate(ctx, identity, ev)
+		if err != nil {
+			api.Log.FromContext(ctx).Error("Failed to evaluate permissions", "error", err)
+			return nil, err
+		}
+
+		if !hasAccess {
+			continue
+		}
+
+		authorizedProviders = append(authorizedProviders, provider)
+	}
+
+	return authorizedProviders, nil
 }
 
 func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Response {
@@ -75,7 +113,12 @@ func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Respons
 		return response.Error(http.StatusNotFound, "The provider was not found", err)
 	}
 
-	return response.JSON(http.StatusOK, settings)
+	dto, err := settings.ToSSOSettingsDTO()
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "The provider is invalid", err)
+	}
+
+	return response.JSON(http.StatusOK, dto)
 }
 
 func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Response {
@@ -84,12 +127,19 @@ func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "Missing key", nil)
 	}
 
-	var newSettings models.SSOSetting
-	if err := web.Bind(c.Req, &newSettings); err != nil {
+	var settingsDTO models.SSOSettingsDTO
+	if err := web.Bind(c.Req, &settingsDTO); err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to parse request body", err)
 	}
 
-	err := api.SSOSettingsService.Upsert(c.Req.Context(), key, newSettings.Settings)
+	settings, err := settingsDTO.ToSSOSettings()
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Invalid request body", err)
+	}
+
+	settings.Provider = key
+
+	err = api.SSOSettingsService.Upsert(c.Req.Context(), *settings)
 	// TODO: first check whether the error is referring to validation errors
 
 	// other error
