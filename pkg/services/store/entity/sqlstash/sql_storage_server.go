@@ -89,13 +89,13 @@ func (s *sqlEntityServer) getReadFields(r *entity.ReadEntityRequest) []string {
 	fields := []string{
 		"guid",
 		"key",
-		"namespace", "group", "group_version", "resource", "uid", "folder",
+		"namespace", "group", "group_version", "resource", "name", "folder",
 		"version", "size", "etag", "errors", // errors are always returned
 		"created_at", "created_by",
 		"updated_at", "updated_by",
 		"origin", "origin_key", "origin_ts",
 		"meta",
-		"name", "slug", "description", "labels", "fields",
+		"title", "slug", "description", "labels", "fields",
 	}
 
 	if r.WithBody {
@@ -134,13 +134,13 @@ func (s *sqlEntityServer) rowToEntity(ctx context.Context, rows *sql.Rows, r *en
 	args := []any{
 		&raw.Guid,
 		&raw.Key,
-		&raw.Namespace, &raw.Group, &raw.GroupVersion, &raw.Resource, &raw.Uid, &raw.Folder,
+		&raw.Namespace, &raw.Group, &raw.GroupVersion, &raw.Resource, &raw.Name, &raw.Folder,
 		&raw.Version, &raw.Size, &raw.ETag, &errors,
 		&raw.CreatedAt, &raw.CreatedBy,
 		&raw.UpdatedAt, &raw.UpdatedBy,
 		&raw.Origin.Source, &raw.Origin.Key, &raw.Origin.Time,
 		&raw.Meta,
-		&raw.Name, &raw.Slug, &raw.Description, &labels, &fields,
+		&raw.Title, &raw.Slug, &raw.Description, &labels, &fields,
 	}
 	if r.WithBody {
 		args = append(args, &raw.Body)
@@ -190,7 +190,7 @@ func (s *sqlEntityServer) read(ctx context.Context, tx session.SessionQuerier, r
 		return nil, err
 	}
 
-	where = append(where, s.dialect.Quote("namespace")+"=?", s.dialect.Quote("group")+"=?", s.dialect.Quote("resource")+"=?", s.dialect.Quote("uid")+"=?")
+	where = append(where, s.dialect.Quote("namespace")+"=?", s.dialect.Quote("group")+"=?", s.dialect.Quote("resource")+"=?", s.dialect.Quote("name")+"=?")
 	args = append(args, key.Namespace, key.Group, key.Resource, key.Name)
 
 	if r.Version != "" {
@@ -333,7 +333,7 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 		current.Group = key.Group
 		current.GroupVersion = r.Entity.GroupVersion
 		current.Resource = key.Resource
-		current.Uid = key.Name
+		current.Name = key.Name
 
 		if r.Entity.Folder != "" {
 			current.Folder = r.Entity.Folder
@@ -360,8 +360,8 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 		current.UpdatedAt = updatedAt
 		current.UpdatedBy = updatedBy
 
-		if r.Entity.Name != "" {
-			current.Name = r.Entity.Name
+		if r.Entity.Title != "" {
+			current.Title = r.Entity.Title
 		}
 		if r.Entity.Description != "" {
 			current.Description = r.Entity.Description
@@ -415,7 +415,7 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 			"namespace":     current.Namespace,
 			"group":         current.Group,
 			"resource":      current.Resource,
-			"uid":           current.Uid,
+			"name":          current.Name,
 			"created_at":    createdAt,
 			"created_by":    createdBy,
 			"group_version": current.GroupVersion,
@@ -429,7 +429,7 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 			"size":          current.Size,
 			"etag":          current.ETag,
 			"version":       current.Version,
-			"name":          current.Name,
+			"title":         current.Title,
 			"description":   current.Description,
 			"labels":        labels,
 			"fields":        fields,
@@ -581,8 +581,8 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		current.UpdatedAt = updatedAt
 		current.UpdatedBy = updatedBy
 
-		if r.Entity.Name != "" {
-			current.Name = r.Entity.Name
+		if r.Entity.Title != "" {
+			current.Title = r.Entity.Title
 		}
 		if r.Entity.Description != "" {
 			current.Description = r.Entity.Description
@@ -637,7 +637,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 			"namespace":  current.Namespace,
 			"group":      current.Group,
 			"resource":   current.Resource,
-			"uid":        current.Uid,
+			"name":       current.Name,
 			"created_at": current.CreatedAt,
 			"created_by": current.CreatedBy,
 			// below are updated
@@ -652,7 +652,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 			"size":          current.Size,
 			"etag":          current.ETag,
 			"version":       current.Version,
-			"name":          current.Name,
+			"title":         current.Title,
 			"description":   current.Description,
 			"labels":        labels,
 			"fields":        fields,
@@ -684,7 +684,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		delete(values, "namespace")
 		delete(values, "group")
 		delete(values, "resource")
-		delete(values, "uid")
+		delete(values, "name")
 		delete(values, "created_at")
 		delete(values, "created_by")
 
@@ -872,7 +872,7 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 	where := []string{}
 	args := []any{}
 
-	where = append(where, s.dialect.Quote("namespace")+"=?", s.dialect.Quote("group")+"=?", s.dialect.Quote("resource")+"=?", s.dialect.Quote("uid")+"=?")
+	where = append(where, s.dialect.Quote("namespace")+"=?", s.dialect.Quote("group")+"=?", s.dialect.Quote("resource")+"=?", s.dialect.Quote("name")+"=?")
 	args = append(args, key.Namespace, key.Group, key.Resource, key.Name)
 
 	if r.NextPageToken != "" {
@@ -969,7 +969,7 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 			whereclause := "(" + s.dialect.Quote("namespace") + "=? AND " + s.dialect.Quote("group") + "=? AND " + s.dialect.Quote("resource") + "=?"
 			if key.Name != "" {
 				args = append(args, key.Name)
-				whereclause += " AND " + s.dialect.Quote("uid") + "=?"
+				whereclause += " AND " + s.dialect.Quote("name") + "=?"
 			}
 			whereclause += ")"
 
@@ -1060,29 +1060,18 @@ func (s *sqlEntityServer) FindReferences(ctx context.Context, r *entity.Referenc
 	}
 
 	fields := []string{
-		"guid", "guid",
-		"namespace", "group", "group_version", "resource", "uid",
-		"version", "folder", "slug", "errors", // errors are always returned
-		"size", "updated_at", "updated_by",
-		"name", "description", "meta",
+		"e.guid", "e.guid",
+		"e.namespace", "e.group", "e.group_version", "e.resource", "e.name",
+		"e.version", "e.folder", "e.slug", "e.errors", // errors are always returned
+		"e.size", "e.updated_at", "e.updated_by",
+		"e.title", "e.description", "e.meta",
 	}
 
-	// SELECT entity_ref.* FROM entity_ref
-	// 	JOIN entity ON entity_ref.key = entity.key
-	// 	WHERE family='librarypanel' AND resolved_to='a7975b7a-fb53-4ab7-951d-15810953b54f';
+	sql := "SELECT " + strings.Join(fields, ",") +
+		" FROM entity_ref AS er JOIN entity AS e ON er.guid = e.guid" +
+		" WHERE er.namespace=? AND er.group=? AND er.resource=? AND er.resolved_to=?"
 
-	sql := strings.Builder{}
-	_, _ = sql.WriteString("SELECT ")
-	for i, f := range fields {
-		if i > 0 {
-			_, _ = sql.WriteString(",")
-		}
-		_, _ = sql.WriteString(fmt.Sprintf("entity.%s", f))
-	}
-	_, _ = sql.WriteString(" FROM entity_ref JOIN entity ON entity_ref.key = entity.key")
-	_, _ = sql.WriteString(" WHERE family=? AND resolved_to=?") // TODO tenant ID!!!!
-
-	rows, err := s.sess.Query(ctx, sql.String(), r.Resource, r.Uid)
+	rows, err := s.sess.Query(ctx, sql, r.Namespace, r.Group, r.Resource, r.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -1094,10 +1083,10 @@ func (s *sqlEntityServer) FindReferences(ctx context.Context, r *entity.Referenc
 
 		args := []any{
 			&token, &result.Guid,
-			&result.Namespace, &result.Group, &result.GroupVersion, &result.Resource, &result.Uid,
+			&result.Namespace, &result.Group, &result.GroupVersion, &result.Resource, &result.Name,
 			&result.Version, &result.Folder, &result.Slug, &result.Errors,
 			&result.Size, &result.UpdatedAt, &result.UpdatedBy,
-			&result.Name, &result.Description, &result.Meta,
+			&result.Title, &result.Description, &result.Meta,
 		}
 
 		err = rows.Scan(args...)

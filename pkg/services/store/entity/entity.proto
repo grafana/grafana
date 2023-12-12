@@ -19,7 +19,7 @@ message Entity {
   // namespace
   string namespace = 26;
   // k8s name
-  string uid = 27;
+  string name = 27;
   // subresource
   string subresource = 28;
 
@@ -29,7 +29,7 @@ message Entity {
   // k8s key value
   string key = 22;
 
-  // The folder UID
+  // The folder k8s name
   string folder = 4;
 
   // Raw meta from k8s
@@ -42,7 +42,7 @@ message Entity {
   bytes status = 7;
 
   // the friendly name of the entity
-  string name = 8;
+  string title = 8;
 
   // Content Length
   int64 size = 9;
@@ -299,10 +299,14 @@ message ReferenceRequest {
   int64 limit = 2;
 
   // Free text query string -- mileage may vary :)
+  string namespace = 5;
+
+  string group = 6;
+
   string resource = 3;
 
   // Free text query string -- mileage may vary :)
-  string uid = 4;
+  string name = 4;
 }
 
 message EntityListResponse {
