@@ -59,7 +59,7 @@ describe('runSplitQuery()', () => {
       range,
     });
     await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
-      // 3 days, 3 chunks, 3 requests.
+      // Will not request a log query with maxLines of 0
       expect(datasource.runQuery).toHaveBeenCalledTimes(0);
     });
   });
