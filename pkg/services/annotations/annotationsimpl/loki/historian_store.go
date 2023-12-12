@@ -70,39 +70,6 @@ func useStore(cfg setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.Fe
 		return false
 	}
 
-	switch backend {
-	case historian.BackendTypeLoki:
-		return true
-	case historian.BackendTypeMultiple:
-		pCfg := cfg
-		pCfg.Backend = cfg.MultiPrimary
-		p, err := historian.ParseBackendType(pCfg.Backend)
-		if err != nil {
-			return false
-		}
-		if p == historian.BackendTypeLoki {
-			return true
-		}
-
-		secondaries := make([]historian.BackendType, 0)
-		for _, b := range cfg.MultiSecondaries {
-			sCfg := cfg
-			sCfg.Backend = b
-			s, err := historian.ParseBackendType(sCfg.Backend)
-			if err != nil {
-				return false
-			}
-			secondaries = append(secondaries, s)
-		}
-
-		for _, b := range secondaries {
-			if b == historian.BackendTypeLoki {
-				return true
-			}
-		}
-	default:
-		return false
-	}
-
-	return false
+	// We should only query Loki if annotations do no exist in the database.
+	return backend == historian.BackendTypeLoki
 }

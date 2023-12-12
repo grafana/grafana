@@ -58,34 +58,15 @@ func TestUseStore(t *testing.T) {
 		require.False(t, use)
 	})
 
-	t.Run("true if any backend is Loki", func(t *testing.T) {
-		t.Run("single", func(t *testing.T) {
-			cfg := setting.UnifiedAlertingStateHistorySettings{
-				Enabled: true,
-				Backend: "loki",
-			}
-			features := featuremgmt.WithFeatures(
-				featuremgmt.FlagAlertStateHistoryLokiOnly,
-				featuremgmt.FlagAlertStateHistoryLokiPrimary,
-				featuremgmt.FlagAlertStateHistoryLokiSecondary,
-			)
-			use := useStore(cfg, features)
-			require.True(t, use)
-		})
-
+	t.Run("false if Loki is part of multi backend", func(t *testing.T) {
 		t.Run("primary", func(t *testing.T) {
 			cfg := setting.UnifiedAlertingStateHistorySettings{
-				Enabled:          true,
-				Backend:          "multiple",
-				MultiPrimary:     "loki",
-				MultiSecondaries: []string{"annotations"},
+				Enabled:      true,
+				Backend:      "multiple",
+				MultiPrimary: "loki",
 			}
-			features := featuremgmt.WithFeatures(
-				featuremgmt.FlagAlertStateHistoryLokiPrimary,
-				featuremgmt.FlagAlertStateHistoryLokiSecondary,
-			)
-			use := useStore(cfg, features)
-			require.True(t, use)
+			use := useStore(cfg, featuremgmt.WithFeatures())
+			require.False(t, use)
 		})
 
 		t.Run("secondary", func(t *testing.T) {
@@ -95,7 +76,20 @@ func TestUseStore(t *testing.T) {
 				MultiPrimary:     "annotations",
 				MultiSecondaries: []string{"loki"},
 			}
+			use := useStore(cfg, featuremgmt.WithFeatures())
+			require.False(t, use)
+		})
+	})
+
+	t.Run("true if only backend is Loki", func(t *testing.T) {
+		t.Run("only", func(t *testing.T) {
+			cfg := setting.UnifiedAlertingStateHistorySettings{
+				Enabled: true,
+				Backend: "loki",
+			}
 			features := featuremgmt.WithFeatures(
+				featuremgmt.FlagAlertStateHistoryLokiOnly,
+				featuremgmt.FlagAlertStateHistoryLokiPrimary,
 				featuremgmt.FlagAlertStateHistoryLokiSecondary,
 			)
 			use := useStore(cfg, features)
