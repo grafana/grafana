@@ -7,7 +7,7 @@ aliases:
   - ../unified-alerting/silences/
   - ../silences/
 canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/create-silence/
-description: Add silence alert notification
+description: Create silences to stop notifications from getting created for a specified window of time
 keywords:
   - grafana
   - alerting

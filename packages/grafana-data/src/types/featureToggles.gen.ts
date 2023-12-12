@@ -168,4 +168,5 @@ export interface FeatureToggles {
   pluginsSkipHostEnvVars?: boolean;
   regressionTransformation?: boolean;
   displayAnonymousStats?: boolean;
+  alertStateHistoryAnnotationsFromLoki?: boolean;
 }

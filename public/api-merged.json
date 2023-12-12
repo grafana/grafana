@@ -3079,6 +3079,45 @@
         }
       }
     },
+    "/api/v1/provisioning/mute-timings/export": {
+      "get": {
+        "tags": [
+          "provisioning"
+        ],
+        "summary": "Export all mute timings in provisioning format.",
+        "operationId": "RouteExportMuteTimings",
+        "parameters": [
+          {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to initiate a download of the file or not.",
+            "name": "download",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "yaml",
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "name": "format",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlertingFileExport",
+            "schema": {
+              "$ref": "#/definitions/AlertingFileExport"
+            }
+          },
+          "403": {
+            "description": "PermissionDenied",
+            "schema": {
+              "$ref": "#/definitions/PermissionDenied"
+            }
+          }
+        }
+      }
+    },
     "/api/v1/provisioning/mute-timings/{name}": {
       "get": {
         "tags": [
@@ -3165,6 +3204,52 @@
         "responses": {
           "204": {
             "description": " The mute timing was deleted successfully."
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/mute-timings/{name}/export": {
+      "get": {
+        "tags": [
+          "provisioning"
+        ],
+        "summary": "Export a mute timing in provisioning format.",
+        "operationId": "RouteExportMuteTiming",
+        "parameters": [
+          {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to initiate a download of the file or not.",
+            "name": "download",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "yaml",
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "name": "format",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Mute timing name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlertingFileExport",
+            "schema": {
+              "$ref": "#/definitions/AlertingFileExport"
+            }
+          },
+          "403": {
+            "description": "PermissionDenied",
+            "schema": {
+              "$ref": "#/definitions/PermissionDenied"
+            }
           }
         }
       }
@@ -11776,6 +11861,12 @@
             "$ref": "#/definitions/AlertRuleGroupExport"
           }
         },
+        "muteTimes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MuteTimeIntervalExport"
+          }
+        },
         "policies": {
           "type": "array",
           "items": {
@@ -15691,6 +15782,24 @@
         }
       }
     },
+    "MuteTimeIntervalExport": {
+      "type": "object",
+      "properties": {
+        "OrgID": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TimeInterval"
+          }
+        }
+      }
+    },
     "MuteTimings": {
       "type": "array",
       "items": {
@@ -18032,6 +18141,9 @@
         },
         "displayName": {
           "type": "string"
+        },
+        "global": {
+          "type": "boolean"
         },
         "group": {
           "type": "string"
@@ -20559,7 +20671,6 @@
       }
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"

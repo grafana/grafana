@@ -8,8 +8,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
@@ -64,14 +64,14 @@ func (s *Service) getInstance(ctx context.Context, pluginCtx backend.PluginConte
 	return in, nil
 }
 
-func ProvideService(httpClientProvider httpclient.Provider, ac accesscontrol.AccessControl) *Service {
+func ProvideService(httpClientProvider *httpclient.Provider, ac accesscontrol.AccessControl) *Service {
 	return &Service{
 		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider, ac)),
 		logger: logger,
 	}
 }
 
-func newInstanceSettings(httpClientProvider httpclient.Provider, ac accesscontrol.AccessControl) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider *httpclient.Provider, ac accesscontrol.AccessControl) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		return NewPyroscopeDatasource(ctx, httpClientProvider, settings, ac)
 	}
