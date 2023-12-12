@@ -20,7 +20,7 @@ labels:
     - oss
 menuTitle: Configure data links
 title: Configure data links
-description: Create data links and data link variables to create links between panels
+description: Configure data links to create links between dashboards and link to external resources
 weight: 80
 ---
 
