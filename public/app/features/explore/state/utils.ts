@@ -20,6 +20,7 @@ import {
   URLRange,
   URLRangeValue,
 } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery, DataSourceRef, TimeZone } from '@grafana/schema';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { ExplorePanelData, StoreState } from 'app/types';
@@ -29,7 +30,7 @@ import store from '../../../core/store';
 import { setLastUsedDatasourceUID } from '../../../core/utils/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
-import { getDataSourceSrv } from '@grafana/runtime';
+
 import { getCorrelations } from './correlations';
 
 export const DEFAULT_RANGE = {
