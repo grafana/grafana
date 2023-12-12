@@ -22,6 +22,7 @@ import {
   TimelineMode,
 } from 'app/core/components/TimelineChart/utils';
 
+import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getTimezones } from '../timeseries/utils';
 
@@ -217,41 +218,45 @@ export const StatusHistoryPanel = ({
           });
         }
 
-        if (config.featureToggles.newVizTooltips) {
-          return (
-            <>
-              {options.tooltip.mode !== TooltipDisplayMode.None && (
-                <TooltipPlugin2
-                  config={builder}
-                  hoverMode={TooltipHoverMode.xyOne}
-                  queryZoom={onChangeTimeRange}
-                  render={(u, dataIdxs, seriesIdx, isPinned, dismiss) => {
-                    return (
-                      <StatusHistoryTooltip2
-                        data={frames ?? []}
-                        dataIdxs={dataIdxs}
-                        alignedData={alignedFrame}
-                        seriesIdx={seriesIdx}
-                        timeZone={timeZone}
-                        mode={options.tooltip.mode}
-                        sortOrder={options.tooltip.sort}
-                        isPinned={isPinned}
-                      />
-                    );
-                  }}
-                />
-              )}
-            </>
-          );
-        } else {
-          return (
-            <>
-              <ZoomPlugin config={builder} onZoom={onChangeTimeRange} />
-              {renderTooltip(alignedFrame)}
-              <OutsideRangePlugin config={builder} onChangeTimeRange={onChangeTimeRange} />
-            </>
-          );
-        }
+        return (
+          <>
+            {data.annotations && (
+              <AnnotationsPlugin annotations={data.annotations} config={builder} timeZone={timeZone} />
+            )}
+            {config.featureToggles.newVizTooltips && (
+              <>
+                {options.tooltip.mode !== TooltipDisplayMode.None && (
+                  <TooltipPlugin2
+                    config={builder}
+                    hoverMode={TooltipHoverMode.xyOne}
+                    queryZoom={onChangeTimeRange}
+                    render={(u, dataIdxs, seriesIdx, isPinned, dismiss) => {
+                      return (
+                        <StatusHistoryTooltip2
+                          data={frames ?? []}
+                          dataIdxs={dataIdxs}
+                          alignedData={alignedFrame}
+                          seriesIdx={seriesIdx}
+                          timeZone={timeZone}
+                          mode={options.tooltip.mode}
+                          sortOrder={options.tooltip.sort}
+                          isPinned={isPinned}
+                        />
+                      );
+                    }}
+                  />
+                )}
+              </>
+            )}
+            {!config.featureToggles.newVizTooltips && (
+              <>
+                <ZoomPlugin config={builder} onZoom={onChangeTimeRange} />
+                {renderTooltip(alignedFrame)}
+                <OutsideRangePlugin config={builder} onChangeTimeRange={onChangeTimeRange} />
+              </>
+            )}
+          </>
+        );
       }}
     </TimelineChart>
   );
