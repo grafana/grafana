@@ -51,6 +51,7 @@ const annoKeyUpdatedBy = "grafana.app/updatedBy"
 // The folder identifier
 const annoKeyFolder = "grafana.app/folder"
 const annoKeySlug = "grafana.app/slug"
+const annoKeyTitle = "grafana.app/title"
 
 // Identify where values came from
 const annoKeyOriginName = "grafana.app/originName"
@@ -69,6 +70,13 @@ func (m *GrafanaResourceMetadata) set(key string, val string) {
 		m.Annotations = make(map[string]string)
 	}
 	m.Annotations[key] = val
+}
+
+func (m *GrafanaResourceMetadata) get(key string) string {
+	if m.Annotations == nil {
+		return ""
+	}
+	return m.Annotations[key]
 }
 
 func (m *GrafanaResourceMetadata) GetUpdatedTimestamp() *time.Time {
@@ -124,11 +132,19 @@ func (m *GrafanaResourceMetadata) SetFolder(uid string) {
 }
 
 func (m *GrafanaResourceMetadata) GetSlug() string {
-	return m.Annotations[annoKeySlug]
+	return m.get(annoKeySlug)
 }
 
 func (m *GrafanaResourceMetadata) SetSlug(v string) {
 	m.set(annoKeySlug, v)
+}
+
+func (m *GrafanaResourceMetadata) GetTitle() string {
+	return m.get(annoKeyTitle)
+}
+
+func (m *GrafanaResourceMetadata) SetTitle(v string) {
+	m.set(annoKeyTitle, v)
 }
 
 func (m *GrafanaResourceMetadata) SetOriginInfo(info *ResourceOriginInfo) {
@@ -196,6 +212,8 @@ type GrafanaResourceMetaAccessor interface {
 	SetFolder(uid string)
 	GetSlug() string
 	SetSlug(v string)
+	GetTitle() string
+	SetTitle(v string)
 	GetOriginInfo() *ResourceOriginInfo
 	SetOriginInfo(info *ResourceOriginInfo)
 	GetOriginName() string
@@ -294,7 +312,13 @@ func (m *grafanaResourceMetaAccessor) GetSlug() string {
 func (m *grafanaResourceMetaAccessor) SetSlug(v string) {
 	m.set(annoKeySlug, v)
 }
+func (m *grafanaResourceMetaAccessor) GetTitle() string {
+	return m.get(annoKeyTitle)
+}
 
+func (m *grafanaResourceMetaAccessor) SetTitle(v string) {
+	m.set(annoKeyTitle, v)
+}
 func (m *grafanaResourceMetaAccessor) SetOriginInfo(info *ResourceOriginInfo) {
 	anno := m.obj.GetAnnotations()
 	if anno == nil {
