@@ -1,5 +1,9 @@
+import { SelectableValue } from '@grafana/data';
+
+import { SSOProvider } from './types';
+
 /** Map providers to their settings */
-export const fields = {
+export const fields: Record<SSOProvider['provider'], string[]> = {
   github: ['clientId', 'clientSecret', 'teamIds', 'allowedOrganizations'],
   google: ['clientId', 'clientSecret', 'allowedDomains'],
   gitlab: ['clientId', 'clientSecret', 'allowedOrganizations', 'teamIds'],
@@ -16,7 +20,20 @@ export const fields = {
   ],
 };
 
-export const fieldMap = {
+export type FieldData = {
+  label: string;
+  type: string;
+  validation?: {
+    required?: boolean;
+    message?: string;
+  };
+  multi?: boolean;
+  allowCustomValue?: boolean;
+  options?: Array<SelectableValue<string>>;
+  placeholder?: string;
+};
+
+export const fieldMap: Record<string, FieldData> = {
   clientId: {
     label: 'Client Id',
     type: 'text',
@@ -39,6 +56,7 @@ export const fieldMap = {
     multi: true,
     allowCustomValue: true,
     options: [],
+    placeholder: 'Enter team IDs and press Enter to add',
   },
   allowedOrganizations: {
     label: 'Allowed Organizations',
@@ -46,6 +64,7 @@ export const fieldMap = {
     multi: true,
     allowCustomValue: true,
     options: [],
+    placeholder: 'Enter organizations (my-team, myteam...) and press Enter to add',
   },
   allowedDomains: {
     label: 'Allowed Domains',
