@@ -93,7 +93,7 @@ export function VariableEditorListRow({
               <IconButton
                 onClick={(event) => {
                   event.preventDefault();
-                  handleDeleteVariableModal(true);
+                  setShowDeleteModal(true);
                 }}
                 name="trash-alt"
                 tooltip="Remove variable"
