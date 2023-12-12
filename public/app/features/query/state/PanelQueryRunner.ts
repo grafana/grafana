@@ -345,16 +345,13 @@ export class PanelQueryRunner {
 
           if (sameSeries) {
             next.series = last.series;
-            console.log('sameSeries!');
           }
 
           if (sameAnnotations) {
             next.annotations = last.annotations;
-            console.log('sameAnnotations!');
           }
 
           if (sameSeries && sameAnnotations) {
-            console.log('no next for you!');
             return;
           }
         }
