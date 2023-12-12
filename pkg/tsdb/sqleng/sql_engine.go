@@ -44,13 +44,6 @@ type SqlQueryResultTransformer interface {
 
 var sqlIntervalCalculator = intervalv2.NewCalculator()
 
-// NewDB is a sql.DB factory, that can be stubbed by tests.
-//
-//nolint:gocritic
-var NewDB = func(driverName string, connectionString string) (*sql.DB, error) {
-	return sql.Open(driverName, connectionString)
-}
-
 type JsonData struct {
 	MaxOpenConns            int    `json:"maxOpenConns"`
 	MaxIdleConns            int    `json:"maxIdleConns"`
@@ -86,9 +79,7 @@ type DataSourceInfo struct {
 }
 
 type DataPluginConfiguration struct {
-	DriverName        string
 	DSInfo            DataSourceInfo
-	ConnectionString  string
 	TimeColumnNames   []string
 	MetricColumnTypes []string
 	RowLimit          int64
@@ -129,13 +120,8 @@ func (e *DataSourceHandler) TransformQueryError(logger log.Logger, err error) er
 	return e.queryResultTransformer.TransformQueryError(logger, err)
 }
 
-func NewQueryDataHandler(cfg *setting.Cfg, config DataPluginConfiguration, queryResultTransformer SqlQueryResultTransformer,
+func NewQueryDataHandler(cfg *setting.Cfg, db *sql.DB, config DataPluginConfiguration, queryResultTransformer SqlQueryResultTransformer,
 	macroEngine SQLMacroEngine, log log.Logger) (*DataSourceHandler, error) {
-	log.Debug("Creating engine...")
-	defer func() {
-		log.Debug("Engine created")
-	}()
-
 	queryDataHandler := DataSourceHandler{
 		queryResultTransformer: queryResultTransformer,
 		macroEngine:            macroEngine,
@@ -153,15 +139,6 @@ func NewQueryDataHandler(cfg *setting.Cfg, config DataPluginConfiguration, query
 	if len(config.MetricColumnTypes) > 0 {
 		queryDataHandler.metricColumnTypes = config.MetricColumnTypes
 	}
-
-	db, err := NewDB(config.DriverName, config.ConnectionString)
-	if err != nil {
-		return nil, err
-	}
-
-	db.SetMaxOpenConns(config.DSInfo.JsonData.MaxOpenConns)
-	db.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
-	db.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
 
 	queryDataHandler.db = db
 	return &queryDataHandler, nil
