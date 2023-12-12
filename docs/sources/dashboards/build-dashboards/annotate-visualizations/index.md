@@ -21,7 +21,7 @@ weight: 600
 
 Annotations provide a way to mark points on a visualization with rich events. They are visualized as vertical lines and icons on all graph panels. When you hover over an annotation, you can get event description and event tags. The text field can include links to other systems with more detail.
 
-{{< figure src="/static/img/docs/v46/annotations.png" max-width="800px" >}}
+{{< figure src="/static/img/docs/v46/annotations.png" max-width="800px" alt="Annotated visualization with annotation context menu open" >}}
 
 You can annotate visualizations in three ways:
 
@@ -148,21 +148,21 @@ Grafana v8.1 and later versions also support typeahead of existing tags, provide
 
 For example, create an annotation query name `outages` and specify a tag `outage`. This query will show all annotations (from any dashboard or via API) with the `outage` tag. If multiple tags are defined in an annotation query, then Grafana will only show annotations matching all the tags. To modify the behavior, enable `Match any`, and Grafana will show annotations that contain any one of the tags you provided.
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-annotations-typeahead-support-10.0.png" max-width="600px" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-annotations-typeahead-support-10.0.png" max-width="600px" alt="Annotation query options" >}}
 
 You can also use template variables in the tag query. This means if you have a dashboard showing stats for different services and a template variable that dictates which services to show, you can use the same template variable in your annotation query to only show annotations for those services.
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-annotation-tag-filter-variable-10.0.png" max-width="600px" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-annotation-tag-filter-variable-10.0.png" max-width="600px" alt="Annotation query options with a template variable query tag" >}}
 
 ### Add time regions
 
 When adding or editing an annotation, you can define a repeating time region by setting **Query type** to **Time regions**. Then, define the **From** and **To** sections with the preferred days of the week and time. You also have the option to change the timezone, which is set to the dashboard's timezone, by default.
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-annotation-timeregions-10-v2.png" max-width="600px" caption="Time regions business hours" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-annotation-timeregions-10-v2.png" max-width="600px" alt="Time regions options set to business hours" >}}
 
 The above configuration will produce the following result in the Time series panel:
 
-{{< figure src="/media/docs/grafana/screenshot-grafana-10-0-timeseries-time-regions.png" max-width="600px" caption="Time series time regions business hours" >}}
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-0-timeseries-time-regions.png" max-width="600px" alt="Time series visualization with time regions business hours" >}}
 
 {{% docs/reference %}}
 [Annotations API]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api/annotations"
