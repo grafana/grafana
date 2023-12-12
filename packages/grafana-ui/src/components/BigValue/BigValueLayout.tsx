@@ -1,7 +1,7 @@
 import React, { CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
 
-import { formattedValueToString, DisplayValue, FieldConfig, FieldType, VizOrientation } from '@grafana/data';
+import { formattedValueToString, DisplayValue, FieldConfig, FieldType } from '@grafana/data';
 import { GraphDrawStyle, GraphFieldConfig } from '@grafana/schema';
 
 import { getTextColorForAlphaBackground } from '../../utils';
