@@ -1,7 +1,7 @@
 package postgres
 
 import (
-	"context"
+	"database/sql"
 	"fmt"
 	"testing"
 
@@ -25,44 +25,18 @@ func TestPostgresProxyDriver(t *testing.T) {
 	opts := proxyutil.GetSQLProxyOptions(proxySettings, sqleng.DataSourceInfo{UID: "1", JsonData: sqleng.JsonData{SecureDSProxy: true}})
 	dbURL := "localhost:5432"
 	cnnstr := fmt.Sprintf("postgres://auser:password@%s/db?sslmode=disable", dbURL)
-	driverName, err := createPostgresProxyDriver(cnnstr, opts)
-	require.NoError(t, err)
-
-	t.Run("Driver should not be registered more than once", func(t *testing.T) {
-		testDriver, err := createPostgresProxyDriver(cnnstr, opts)
-		require.NoError(t, err)
-		require.Equal(t, driverName, testDriver)
-	})
-
-	t.Run("A new driver should be created for a new connection string", func(t *testing.T) {
-		testDriver, err := createPostgresProxyDriver("server=localhost;user id=sa;password=yourStrong(!)Password;database=db2", opts)
-		require.NoError(t, err)
-		require.NotEqual(t, driverName, testDriver)
-	})
 
 	t.Run("Connector should use dialer context that routes through the socks proxy to db", func(t *testing.T) {
 		connector, err := pq.NewConnector(cnnstr)
 		require.NoError(t, err)
-		driver, err := newPostgresProxyDriver(connector, opts)
+		dialer, err := newPostgresProxyDialer(opts)
 		require.NoError(t, err)
 
-		conn, err := driver.OpenConnector(cnnstr)
-		require.NoError(t, err)
+		connector.Dialer(dialer)
 
-		_, err = conn.Connect(context.Background())
-		require.Contains(t, err.Error(), fmt.Sprintf("socks connect %s %s->%s", "tcp", settings.ProxyAddress, dbURL))
-	})
+		db := sql.OpenDB(connector)
+		err = db.Ping()
 
-	t.Run("Connector should use dialer context that routes through the socks proxy to db", func(t *testing.T) {
-		connector, err := pq.NewConnector(cnnstr)
-		require.NoError(t, err)
-		driver, err := newPostgresProxyDriver(connector, opts)
-		require.NoError(t, err)
-
-		conn, err := driver.OpenConnector(cnnstr)
-		require.NoError(t, err)
-
-		_, err = conn.Connect(context.Background())
 		require.Contains(t, err.Error(), fmt.Sprintf("socks connect %s %s->%s", "tcp", settings.ProxyAddress, dbURL))
 	})
 }

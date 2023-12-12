@@ -16,6 +16,7 @@ import (
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
+	"github.com/lib/pq"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -99,14 +100,20 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 			logger.Debug("GetEngine", "connection", cnnstr)
 		}
 
-		driverName := "postgres"
-		// register a proxy driver if the secure socks proxy is enabled
+		connector, err := pq.NewConnector(cnnstr)
+		if err != nil {
+			return nil, err
+		}
+
+		// use the proxy-dialer if the secure socks proxy is enabled
 		proxyOpts := proxyutil.GetSQLProxyOptions(cfg.SecureSocksDSProxy, dsInfo)
 		if sdkproxy.New(proxyOpts).SecureSocksProxyEnabled() {
-			driverName, err = createPostgresProxyDriver(cnnstr, proxyOpts)
+			dialer, err := newPostgresProxyDialer(proxyOpts)
 			if err != nil {
-				return "", nil
+				return nil, err
 			}
+			// update the postgres dialer with the proxy dialer
+			connector.Dialer(dialer)
 		}
 
 		config := sqleng.DataPluginConfiguration{
@@ -117,10 +124,7 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 
 		queryResultTransformer := postgresQueryResultTransformer{}
 
-		db, err := sql.Open(driverName, cnnstr)
-		if err != nil {
-			return nil, err
-		}
+		db := sql.OpenDB(connector)
 
 		db.SetMaxOpenConns(config.DSInfo.JsonData.MaxOpenConns)
 		db.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
