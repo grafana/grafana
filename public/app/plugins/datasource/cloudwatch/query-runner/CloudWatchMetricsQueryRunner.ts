@@ -11,7 +11,6 @@ import {
   FieldType,
   rangeUtil,
   ScopedVars,
-  TimeRange,
 } from '@grafana/data';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
