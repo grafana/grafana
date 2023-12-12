@@ -16,6 +16,7 @@ func TestLoadSmtpStaticHeaders(t *testing.T) {
 		require.NoError(t, err)
 		cfg.Raw = f
 		_, err = s.NewKey("foo", "foo_val")
+		require.NoError(t, err)
 		_, err = s.NewKey("bar", "bar_val")
 		require.NoError(t, err)
 
