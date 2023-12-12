@@ -53,6 +53,18 @@ func TestHooks(t *testing.T) {
 			require.Nil(t, handler)
 		})
 
+		t.Run("hooks do not match requests with the wrong HTTP method", func(t *testing.T) {
+			hooks := NewHooks(log.NewNopLogger())
+			hook := func(*contextmodel.ReqContext) response.Response { return nil }
+
+			hooks.Set("POST", "/some/path", hook)
+			reqURL, _ := url.Parse("http://domain.test/some/path")
+			handler, ok := hooks.Get("GET", reqURL)
+
+			require.False(t, ok, "hooks returned a hook when we expected it not to")
+			require.Nil(t, handler)
+		})
+
 		t.Run("hooks match routes with query parameters", func(t *testing.T) {
 			hooks := NewHooks(log.NewNopLogger())
 			invoked := false
