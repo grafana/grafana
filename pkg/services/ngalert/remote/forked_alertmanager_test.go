@@ -325,20 +325,20 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 	t.Run("StopAndWait", func(tt *testing.T) {
 		// StopAndWait should be called in both Alertmanagers.
 		internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
-		internal.EXPECT().StopAndWait(ctx).Once()
-		remote.EXPECT().StopAndWait(ctx).Once()
+		internal.EXPECT().StopAndWait().Once()
+		remote.EXPECT().StopAndWait().Once()
 
 		// ApplyConfig should be called in the remote Alertmanager.
 		remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once()
-		forked.StopAndWait(ctx)
+		forked.StopAndWait()
 
 		// Returning an error from ApplyConfig shouldn't change behavior.
 		// The error is logged, not returned.
 		internal, remote, forked = genTestAlertmanagers(tt, modeRemoteSecondary)
-		internal.EXPECT().StopAndWait(ctx).Once()
-		remote.EXPECT().StopAndWait(ctx).Once()
+		internal.EXPECT().StopAndWait().Once()
+		remote.EXPECT().StopAndWait().Once()
 		remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(expErr).Once()
-		forked.StopAndWait(ctx)
+		forked.StopAndWait()
 	})
 
 	t.Run("Ready", func(tt *testing.T) {
@@ -568,9 +568,9 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 	t.Run("StopAndWait", func(tt *testing.T) {
 		// StopAndWait should be called on both Alertmanagers.
 		internal, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
-		internal.EXPECT().StopAndWait(ctx).Once()
-		remote.EXPECT().StopAndWait(ctx).Once()
-		forked.StopAndWait(ctx)
+		internal.EXPECT().StopAndWait().Once()
+		remote.EXPECT().StopAndWait().Once()
+		forked.StopAndWait()
 	})
 
 	t.Run("Ready", func(tt *testing.T) {

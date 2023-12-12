@@ -372,7 +372,7 @@ func (am *Alertmanager) TestTemplate(ctx context.Context, c apimodels.TestTempla
 
 // StopAndWait is called when the grafana server is instructed to shut down or an org is deleted.
 // In the context of a "remote Alertmanager" it is a good heuristic for Grafana is about to shut down or we no longer need you.
-func (am *Alertmanager) StopAndWait(_ context.Context) {
+func (am *Alertmanager) StopAndWait() {
 	am.sender.Stop()
 }
 

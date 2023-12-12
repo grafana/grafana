@@ -136,21 +136,23 @@ func (fam *RemoteSecondaryForkedAlertmanager) CleanUp() {
 	fam.internal.CleanUp()
 }
 
-func (fam *RemoteSecondaryForkedAlertmanager) StopAndWait(ctx context.Context) {
+func (fam *RemoteSecondaryForkedAlertmanager) StopAndWait() {
 	// Stop the internal Alertmanager.
-	fam.internal.StopAndWait(ctx)
+	fam.internal.StopAndWait()
 	// Stop our alert senders.
-	fam.remote.StopAndWait(ctx)
+	fam.remote.StopAndWait()
 
 	// Send config and state to the remote Alertmanager.
-	config, err := fam.store.GetLatestAlertmanagerConfiguration(ctx, &models.GetLatestAlertmanagerConfigurationQuery{
+	// TODO(santiago): add proper context
+	config, err := fam.store.GetLatestAlertmanagerConfiguration(context.TODO(), &models.GetLatestAlertmanagerConfigurationQuery{
 		OrgID: fam.orgID,
 	})
 	if err != nil {
 		fam.log.Error("Error getting latest Alertmanager configuration", "err", err)
 		return
 	}
-	if err := fam.remote.ApplyConfig(ctx, config); err != nil {
+	// TODO(santiago): add proper context
+	if err := fam.remote.ApplyConfig(context.TODO(), config); err != nil {
 		fam.log.Error("Error sending config and state to the remote Alertmanager", "err", err)
 	}
 }

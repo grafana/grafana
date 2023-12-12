@@ -155,7 +155,7 @@ func (am *alertmanager) Ready() bool {
 	return am.Base.Ready()
 }
 
-func (am *alertmanager) StopAndWait(_ context.Context) {
+func (am *alertmanager) StopAndWait() {
 	am.Base.StopAndWait()
 }
 
