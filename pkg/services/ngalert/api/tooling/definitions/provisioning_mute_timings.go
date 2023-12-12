@@ -25,7 +25,7 @@ import (
 // Get a mute timing.
 //
 //     Responses:
-//       200: MuteTimeInterval
+//       200: MuteTiming
 //       404: description: Not found.
 
 // swagger:route GET /api/v1/provisioning/mute-timings/{name}/export provisioning stable RouteExportMuteTiming
@@ -44,7 +44,7 @@ import (
 //     - application/json
 //
 //     Responses:
-//       201: MuteTimeInterval
+//       201: MuteTiming
 //       400: ValidationError
 
 // swagger:route PUT /api/v1/provisioning/mute-timings/{name} provisioning stable RoutePutMuteTiming
@@ -55,7 +55,7 @@ import (
 //     - application/json
 //
 //     Responses:
-//       200: MuteTimeInterval
+//       200: MuteTiming
 //       400: ValidationError
 
 // swagger:route DELETE /api/v1/provisioning/mute-timings/{name} provisioning stable RouteDeleteMuteTiming

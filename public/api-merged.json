@@ -3065,9 +3065,9 @@
         ],
         "responses": {
           "201": {
-            "description": "MuteTimeInterval",
+            "description": "MuteTiming",
             "schema": {
-              "$ref": "#/definitions/MuteTimeInterval"
+              "$ref": "#/definitions/MuteTiming"
             }
           },
           "400": {
@@ -3136,9 +3136,9 @@
         ],
         "responses": {
           "200": {
-            "description": "MuteTimeInterval",
+            "description": "MuteTiming",
             "schema": {
-              "$ref": "#/definitions/MuteTimeInterval"
+              "$ref": "#/definitions/MuteTiming"
             }
           },
           "404": {
@@ -3173,9 +3173,9 @@
         ],
         "responses": {
           "200": {
-            "description": "MuteTimeInterval",
+            "description": "MuteTiming",
             "schema": {
-              "$ref": "#/definitions/MuteTimeInterval"
+              "$ref": "#/definitions/MuteTiming"
             }
           },
           "400": {
@@ -15785,9 +15785,18 @@
     "MuteTimeIntervalExport": {
       "type": "object",
       "properties": {
+        "name": {
+          "type": "string"
+        },
         "orgId": {
           "type": "integer",
           "format": "int64"
+        },
+        "time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TimeInterval"
+          }
         }
       }
     },
@@ -20713,7 +20722,6 @@
       }
     },
     "alertGroup": {
-      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -20737,7 +20745,6 @@
       }
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -20980,6 +20987,7 @@
       }
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
@@ -21196,7 +21204,6 @@
       }
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",

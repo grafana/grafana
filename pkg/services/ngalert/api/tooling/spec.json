@@ -2612,9 +2612,9 @@
         ],
         "responses": {
           "201": {
-            "description": "MuteTimeInterval",
+            "description": "MuteTiming",
             "schema": {
-              "$ref": "#/definitions/MuteTimeInterval"
+              "$ref": "#/definitions/MuteTiming"
             }
           },
           "400": {
@@ -2685,9 +2685,9 @@
         ],
         "responses": {
           "200": {
-            "description": "MuteTimeInterval",
+            "description": "MuteTiming",
             "schema": {
-              "$ref": "#/definitions/MuteTimeInterval"
+              "$ref": "#/definitions/MuteTiming"
             }
           },
           "404": {
@@ -2723,9 +2723,9 @@
         ],
         "responses": {
           "200": {
-            "description": "MuteTimeInterval",
+            "description": "MuteTiming",
             "schema": {
-              "$ref": "#/definitions/MuteTimeInterval"
+              "$ref": "#/definitions/MuteTiming"
             }
           },
           "400": {
@@ -5082,9 +5082,18 @@
     "MuteTimeIntervalExport": {
       "type": "object",
       "properties": {
+        "name": {
+          "type": "string"
+        },
         "orgId": {
           "type": "integer",
           "format": "int64"
+        },
+        "time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TimeInterval"
+          }
         }
       }
     },
@@ -7192,17 +7201,16 @@
       }
     },
     "TimeRange": {
-      "description": "For example, 4:00PM to End of the day would Begin at 1020 and End at 1440.",
+      "description": "Redefining this to avoid an import cycle",
       "type": "object",
-      "title": "TimeRange represents a range of minutes within a 1440 minute day, exclusive of the End minute. A day consists of 1440 minutes.",
       "properties": {
-        "EndMinute": {
-          "type": "integer",
-          "format": "int64"
+        "from": {
+          "type": "string",
+          "format": "date-time"
         },
-        "StartMinute": {
-          "type": "integer",
-          "format": "int64"
+        "to": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     },
@@ -7449,7 +7457,6 @@
       }
     },
     "alertGroup": {
-      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -7474,6 +7481,7 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -7579,6 +7587,7 @@
       }
     },
     "gettableAlert": {
+      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -7643,6 +7652,7 @@
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -7699,7 +7709,6 @@
       "$ref": "#/definitions/gettableSilences"
     },
     "integration": {
-      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",
@@ -7844,6 +7853,7 @@
       }
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -7882,6 +7892,7 @@
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",

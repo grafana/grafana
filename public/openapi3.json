@@ -6717,9 +6717,18 @@
       },
       "MuteTimeIntervalExport": {
         "properties": {
+          "name": {
+            "type": "string"
+          },
           "orgId": {
             "format": "int64",
             "type": "integer"
+          },
+          "time_intervals": {
+            "items": {
+              "$ref": "#/components/schemas/TimeInterval"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -11644,7 +11653,6 @@
         "type": "object"
       },
       "alertGroup": {
-        "description": "AlertGroup alert group",
         "properties": {
           "alerts": {
             "description": "alerts",
@@ -11668,7 +11676,6 @@
         "type": "object"
       },
       "alertGroups": {
-        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -11911,6 +11918,7 @@
         "type": "object"
       },
       "gettableSilences": {
+        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
@@ -12127,7 +12135,6 @@
         "type": "object"
       },
       "receiver": {
-        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",
@@ -15626,11 +15633,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MuteTimeInterval"
+                  "$ref": "#/components/schemas/MuteTiming"
                 }
               }
             },
-            "description": "MuteTimeInterval"
+            "description": "MuteTiming"
           },
           "400": {
             "content": {
@@ -15742,11 +15749,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MuteTimeInterval"
+                  "$ref": "#/components/schemas/MuteTiming"
                 }
               }
             },
-            "description": "MuteTimeInterval"
+            "description": "MuteTiming"
           },
           "404": {
             "description": " Not found."
@@ -15785,11 +15792,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MuteTimeInterval"
+                  "$ref": "#/components/schemas/MuteTiming"
                 }
               }
             },
-            "description": "MuteTimeInterval"
+            "description": "MuteTiming"
           },
           "400": {
             "content": {
