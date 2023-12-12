@@ -12,7 +12,6 @@ export async function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
     result = await importAppPlugin(info);
   }
   if (info.type === PluginType.datasource) {
-    console.log('loadPlugin', info);
     result = await importDataSourcePlugin(info);
   }
   if (info.type === PluginType.panel) {

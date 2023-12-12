@@ -189,7 +189,6 @@ export class GrafanaApp {
       const dataSourceSrv = new DatasourceSrv();
       dataSourceSrv.init(config.datasources, config.defaultDatasource);
       setDataSourceSrv(dataSourceSrv);
-      console.log('called setDataSourceSrv in app.ts');
       initWindowRuntime();
 
       // init modal manager

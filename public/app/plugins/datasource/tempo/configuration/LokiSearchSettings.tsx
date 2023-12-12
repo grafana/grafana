@@ -5,15 +5,12 @@ import {
   DataSourcePluginOptionsEditorProps,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
-import { config, getDataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { DataSourcePicker } from '@grafana/runtime/src/components/DataSourcePicker';
 import { Button, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
 
 import { TempoJsonData } from '../types';
 
 import { getStyles } from './QuerySettings';
-
-import { DatasourceSrv } from '/Users/fabriziocasatigrafana/Documents/github_repos/grafana/public/app/features/plugins/datasource_srv';
 
 interface Props extends DataSourcePluginOptionsEditorProps<TempoJsonData> {}
 
@@ -30,10 +27,11 @@ export function LokiSearchSettings({ options, onOptionsChange }: Props) {
     });
   }
 
-  const dataSourceSrv = new DatasourceSrv();
-  dataSourceSrv.init(config.datasources, config.defaultDatasource);
-  setDataSourceSrv(dataSourceSrv);
-  console.log('LokiSearchSettings', getDataSourceSrv());
+  // console.log('LokiSearchSettings', getDataSourceSrv());
+  // const dataSourceSrv = new DatasourceSrv();
+  // dataSourceSrv.init(config.datasources, config.defaultDatasource);
+  // setDataSourceSrv(dataSourceSrv);
+  // console.log('LokiSearchSettings', getDataSourceSrv());
 
   return (
     <div className={styles.container}>
