@@ -16,9 +16,9 @@ export class CloudWatchAnnotationQueryRunner extends CloudWatchRequest {
   handleAnnotationQuery(
     queries: CloudWatchAnnotationQuery[],
     options: DataQueryRequest<CloudWatchQuery>,
-    query: (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>
+    queryFn: (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>
   ): Observable<DataQueryResponse> {
-    return query({
+    return queryFn({
       ...options,
       targets: queries.map((query) => ({
         ...query,

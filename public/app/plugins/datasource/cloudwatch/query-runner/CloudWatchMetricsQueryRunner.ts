@@ -51,7 +51,7 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
   handleMetricQueries = (
     metricQueries: CloudWatchMetricsQuery[],
     options: DataQueryRequest<CloudWatchQuery>,
-    query: (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>
+    queryFn: (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>
   ): Observable<DataQueryResponse> => {
     const timezoneUTCOffset = dateTimeFormat(Date.now(), {
       timeZone: options.timezone,
@@ -82,7 +82,7 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
       targets: validMetricsQueries,
     };
 
-    return this.performTimeSeriesQuery(request, query);
+    return this.performTimeSeriesQuery(request, queryFn);
   };
 
   interpolateMetricsQueryVariables(
@@ -105,9 +105,9 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
 
   performTimeSeriesQuery(
     request: DataQueryRequest<CloudWatchQuery>,
-    query: (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>
+    queryFn: (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>
   ): Observable<DataQueryResponse> {
-    return query(request).pipe(
+    return queryFn(request).pipe(
       map((res) => {
         const dataframes: DataFrame[] = res.data;
         if (!dataframes || dataframes.length <= 0) {
