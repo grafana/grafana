@@ -76,8 +76,3 @@ let service = new LegacyFolderService();
 export function getFolderService(): FolderService {
   return service;
 }
-
-/** useful for testing */
-export function setFolderService(s: FolderService) {
-  service = s;
-}
