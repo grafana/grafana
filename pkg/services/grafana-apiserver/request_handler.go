@@ -15,7 +15,7 @@ type requestHandler struct {
 	router *mux.Router
 }
 
-func getAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, builders []APIGroupBuilder) (http.Handler, error) {
+func GetAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, builders []APIGroupBuilder) (http.Handler, error) {
 	useful := false // only true if any routes exist anywhere
 	router := mux.NewRouter()
 	var err error
@@ -91,9 +91,6 @@ func getAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, 
 func validPath(p string) error {
 	if !strings.HasPrefix(p, "/") {
 		return fmt.Errorf("path must start with slash")
-	}
-	if strings.Count(p, "/") > 1 {
-		return fmt.Errorf("path can only have one slash (for now)")
 	}
 	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/http"
 	"path"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -148,6 +149,20 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 		if err := o.RecommendedOptions.ApplyTo(serverConfig); err != nil {
 			return nil, err
 		}
+	}
+
+	serverConfig.BuildHandlerChainFunc = func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
+		// Call DefaultBuildHandlerChain on the main entrypoint http.Handler
+		// See https://github.com/kubernetes/apiserver/blob/v0.28.0/pkg/server/config.go#L906
+		// DefaultBuildHandlerChain provides many things, notably CORS, HSTS, cache-control, authz and latency tracking
+		requestHandler, err := grafanaAPIServer.GetAPIHandler(
+			delegateHandler,
+			c.LoopbackClientConfig,
+			o.builders)
+		if err != nil {
+			panic(fmt.Sprintf("could not build handler chain func: %s", err.Error()))
+		}
+		return genericapiserver.DefaultBuildHandlerChain(requestHandler, c)
 	}
 
 	// Add OpenAPI specs for each group+version

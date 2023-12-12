@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gorilla/mux"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -37,6 +39,7 @@ type SnapshotsAPIBuilder struct {
 	namespacer request.NamespaceMapper
 	options    sharingOptionsGetter
 	gv         schema.GroupVersion
+	logger     log.Logger
 }
 
 func NewSnapshotsAPIBuilder(
@@ -48,6 +51,7 @@ func NewSnapshotsAPIBuilder(
 		options:    newSharingOptionsGetter(cfg),
 		namespacer: request.GetNamespaceMapper(cfg),
 		gv:         resourceInfo.GroupVersion(),
+		logger:     log.New("snapshots::RawHandlers"),
 	}
 }
 
@@ -136,7 +140,8 @@ func (b *SnapshotsAPIBuilder) GetAPIGroupInfo(
 		service: b.service,
 	}
 	storage[resourceInfo.StoragePath("body")] = &subBodyREST{
-		service: b.service,
+		service:    b.service,
+		namespacer: b.namespacer,
 	}
 
 	storage["options"] = &optionsStorage{
@@ -157,7 +162,7 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	return &grafanaapiserver.APIRoutes{
 		Namespace: []grafanaapiserver.APIRouteHandler{
 			{
-				Path: "/dashsnaps",
+				Path: "/dashsnaps/create",
 				Spec: &spec3.PathProps{
 					Summary:     "an example at the root level",
 					Description: "longer description here?",
@@ -178,17 +183,16 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 						return
 					}
 					wrap := &contextmodel.ReqContext{
+						Logger:       b.logger,
+						Context:      &web.Context{},
 						SignedInUser: user,
 					}
 					wrap.Req = r
 					wrap.Resp = web.NewResponseWriter(r.Method, w)
-					info, err := request.NamespaceInfoFrom(r.Context(), true)
+
+					vars := mux.Vars(r)
+					opts, err := b.options(vars["namespace"])
 					if err != nil {
-						wrap.JsonApiErr(http.StatusBadRequest, "expect org from namespace", err)
-						return
-					}
-					opts, err := b.options(info.Value)
-					if err == nil {
 						wrap.JsonApiErr(http.StatusBadRequest, "error getting options", err)
 						return
 					}
