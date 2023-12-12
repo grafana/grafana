@@ -774,7 +774,7 @@
     },
     "frontend": {
       "subtitle": "",
-      "title": ""
+      "title": "Frontend"
     },
     "frontend-app": {
       "title": "Frontend"
@@ -1313,7 +1313,7 @@
       "username-label": "Benutzername"
     },
     "tabs": {
-      "general": ""
+      "general": "Allgemein"
     }
   },
   "user-session": {
