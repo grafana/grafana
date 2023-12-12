@@ -1,5 +1,6 @@
 import { isEmptyObject, ScopedVars, TimeRange } from '@grafana/data';
 import {
+  behaviors,
   SceneDataLayers,
   SceneGridItem,
   SceneGridItemLike,
@@ -11,12 +12,14 @@ import {
   SceneVariableSet,
   AdHocFilterSet,
   LocalValueVariable,
+  SceneRefreshPicker,
 } from '@grafana/scenes';
 import {
   AnnotationQuery,
   Dashboard,
   DataTransformerConfig,
   defaultDashboard,
+  defaultTimePickerConfig,
   FieldConfigSource,
   Panel,
   RowPanel,
@@ -47,8 +50,9 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   const data = state.$data;
   const variablesSet = state.$variables;
   const body = state.body;
+  let refresh_intervals = defaultTimePickerConfig.refresh_intervals;
   let panels: Panel[] = [];
-
+  let graphTooltip = defaultDashboard.graphTooltip;
   let variables: VariableModel[] = [];
 
   if (body instanceof SceneGridLayout) {
@@ -83,6 +87,12 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   }
 
   if (state.controls && state.controls[0] instanceof DashboardControls) {
+    const timeControls = state.controls[0].state.timeControls;
+    for (const control of timeControls) {
+      if (control instanceof SceneRefreshPicker && control.state.intervals) {
+        refresh_intervals = control.state.intervals;
+      }
+    }
     const variableControls = state.controls[0].state.variableControls;
     for (const control of variableControls) {
       if (control instanceof AdHocFilterSet) {
@@ -95,14 +105,24 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     }
   }
 
+  if (state.$behaviors && state.$behaviors[0] instanceof behaviors.CursorSync) {
+    graphTooltip = state.$behaviors[0].state.sync;
+  }
+
   const dashboard: Dashboard = {
     ...defaultDashboard,
     title: state.title,
+    description: state.description || undefined,
     uid: state.uid,
     id: state.id,
+    editable: state.editable,
     time: {
       from: timeRange.from,
       to: timeRange.to,
+    },
+    timepicker: {
+      ...defaultTimePickerConfig,
+      refresh_intervals,
     },
     panels,
     annotations: {
@@ -114,6 +134,8 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     timezone: timeRange.timeZone,
     fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
     weekStart: timeRange.weekStart,
+    tags: state.tags,
+    graphTooltip,
   };
 
   return sortedDeepCloneWithoutNulls(dashboard);

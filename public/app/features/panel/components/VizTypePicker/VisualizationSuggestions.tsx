@@ -3,7 +3,7 @@ import React from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2, PanelData, PanelPluginMeta, PanelModel, VisualizationSuggestion } from '@grafana/data';
+import { GrafanaTheme2, PanelData, PanelModel, VisualizationSuggestion } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { getAllSuggestions } from '../../state/getAllSuggestions';
@@ -12,15 +12,13 @@ import { VisualizationSuggestionCard } from './VisualizationSuggestionCard';
 import { VizTypeChangeDetails } from './types';
 
 export interface Props {
-  current: PanelPluginMeta;
+  searchQuery: string;
+  onChange: (options: VizTypeChangeDetails) => void;
   data?: PanelData;
   panel?: PanelModel;
-  onChange: (options: VizTypeChangeDetails) => void;
-  searchQuery: string;
-  onClose: () => void;
 }
 
-export function VisualizationSuggestions({ onChange, data, panel, searchQuery }: Props) {
+export function VisualizationSuggestions({ searchQuery, onChange, data, panel }: Props) {
   const styles = useStyles2(getStyles);
   const { value: suggestions } = useAsync(() => getAllSuggestions(data, panel), [data, panel]);
   const filteredSuggestions = filterSuggestionsBySearch(searchQuery, suggestions);

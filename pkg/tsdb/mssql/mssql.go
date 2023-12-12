@@ -28,10 +28,9 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var logger = log.New("tsdb.mssql")
-
 type Service struct {
-	im instancemgmt.InstanceManager
+	im     instancemgmt.InstanceManager
+	logger log.Logger
 }
 
 const (
@@ -41,8 +40,10 @@ const (
 )
 
 func ProvideService(cfg *setting.Cfg) *Service {
+	logger := log.New("tsdb.mssql")
 	return &Service{
-		im: datasource.NewInstanceManager(newInstanceSettings(cfg)),
+		im:     datasource.NewInstanceManager(newInstanceSettings(cfg, logger)),
+		logger: logger,
 	}
 }
 
@@ -63,7 +64,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return dsHandler.QueryData(ctx, req)
 }
 
-func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
+func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.InstanceFactoryFunc {
 	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := sqleng.JsonData{
 			MaxOpenConns:      cfg.SqlDatasourceMaxOpenConnsDefault,
@@ -97,7 +98,7 @@ func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 			UID:                     settings.UID,
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
 		}
-		cnnstr, err := generateConnectionString(dsInfo, cfg, azureCredentials)
+		cnnstr, err := generateConnectionString(dsInfo, cfg, azureCredentials, logger)
 		if err != nil {
 			return nil, err
 		}
@@ -113,7 +114,7 @@ func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 		// register a new proxy driver if the secure socks proxy is enabled
 		proxyOpts := proxyutil.GetSQLProxyOptions(cfg.SecureSocksDSProxy, dsInfo)
 		if sdkproxy.New(proxyOpts).SecureSocksProxyEnabled() {
-			URL, err := ParseURL(dsInfo.URL)
+			URL, err := ParseURL(dsInfo.URL, logger)
 			if err != nil {
 				return nil, err
 			}
@@ -140,7 +141,7 @@ func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 }
 
 // ParseURL tries to parse an MSSQL URL string into a URL object.
-func ParseURL(u string) (*url.URL, error) {
+func ParseURL(u string, logger log.Logger) (*url.URL, error) {
 	logger.Debug("Parsing MSSQL URL", "url", u)
 
 	// Recognize ODBC connection strings like host\instance:1234
@@ -160,11 +161,11 @@ func ParseURL(u string) (*url.URL, error) {
 	}, nil
 }
 
-func generateConnectionString(dsInfo sqleng.DataSourceInfo, cfg *setting.Cfg, azureCredentials azcredentials.AzureCredentials) (string, error) {
+func generateConnectionString(dsInfo sqleng.DataSourceInfo, cfg *setting.Cfg, azureCredentials azcredentials.AzureCredentials, logger log.Logger) (string, error) {
 	const dfltPort = "0"
 	var addr util.NetworkAddress
 	if dsInfo.URL != "" {
-		u, err := ParseURL(dsInfo.URL)
+		u, err := ParseURL(dsInfo.URL, logger)
 		if err != nil {
 			return "", err
 		}
@@ -280,7 +281,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	err = dsHandler.Ping()
 
 	if err != nil {
-		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: dsHandler.TransformQueryError(logger, err).Error()}, nil
+		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: dsHandler.TransformQueryError(s.logger, err).Error()}, nil
 	}
 
 	return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "Database Connection OK"}, nil
