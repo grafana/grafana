@@ -26,7 +26,6 @@ type SendEmailCommand struct {
 	ReplyTo       []string
 	EmbeddedFiles []string
 	AttachedFiles []*SendEmailAttachFile
-	CustomHeaders map[string]string
 }
 
 // SendEmailCommandSync is the command for sending emails synchronously
