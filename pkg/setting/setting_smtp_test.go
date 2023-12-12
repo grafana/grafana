@@ -26,7 +26,7 @@ func TestLoadSmtpStaticHeaders(t *testing.T) {
 		assert.Equal(t, "bar_val", cfg.Smtp.StaticHeaders["bar"])
 	})
 
-	t.Run("will load no headers when section is defined with no keys", func(t *testing.T) {
+	t.Run("will load no static headers into smtp config when section is defined but has no keys", func(t *testing.T) {
 		f := ini.Empty()
 		cfg := NewCfg()
 		_, err := f.NewSection("smtp.static_headers")
@@ -39,7 +39,7 @@ func TestLoadSmtpStaticHeaders(t *testing.T) {
 		assert.Empty(t, cfg.Smtp.StaticHeaders)
 	})
 
-	t.Run("will load no headers when section is not defined", func(t *testing.T) {
+	t.Run("will load no static headers into smtp config when section is not defined", func(t *testing.T) {
 		f := ini.Empty()
 		cfg := NewCfg()
 		cfg.Raw = f
@@ -50,7 +50,7 @@ func TestLoadSmtpStaticHeaders(t *testing.T) {
 		assert.Empty(t, cfg.Smtp.StaticHeaders)
 	})
 
-	t.Run("will return error when headers is not valid label", func(t *testing.T) {
+	t.Run("will return error when header label is not in valid format", func(t *testing.T) {
 		f := ini.Empty()
 		cfg := NewCfg()
 		s, err := f.NewSection("smtp.static_headers")
