@@ -2783,7 +2783,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/react@npm:^0.26.4":
+"@floating-ui/react@npm:0.26.4":
   version: 0.26.4
   resolution: "@floating-ui/react@npm:0.26.4"
   dependencies:
@@ -3394,7 +3394,7 @@ __metadata:
     "@babel/core": "npm:7.23.2"
     "@emotion/css": "npm:11.11.2"
     "@emotion/react": "npm:11.11.1"
-    "@floating-ui/react": "npm:^0.26.4"
+    "@floating-ui/react": "npm:0.26.4"
     "@grafana/data": "npm:10.3.0-pre"
     "@grafana/e2e-selectors": "npm:10.3.0-pre"
     "@grafana/faro-web-sdk": "npm:1.2.1"
@@ -17350,7 +17350,7 @@ __metadata:
     "@emotion/eslint-plugin": "npm:11.11.0"
     "@emotion/react": "npm:11.11.1"
     "@fingerprintjs/fingerprintjs": "npm:^3.4.2"
-    "@floating-ui/react": "npm:^0.26.4"
+    "@floating-ui/react": "npm:0.26.4"
     "@glideapps/glide-data-grid": "npm:^5.2.1"
     "@grafana-plugins/grafana-testdata-datasource": "workspace:*"
     "@grafana/aws-sdk": "npm:0.3.1"
