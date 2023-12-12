@@ -68,14 +68,10 @@ export class CloudWatchDatasource
     this.languageProvider = new CloudWatchLogsLanguageProvider(this);
     this.sqlCompletionItemProvider = new SQLCompletionItemProvider(this.resources, this.templateSrv);
     this.metricMathCompletionItemProvider = new MetricMathCompletionItemProvider(this.resources, this.templateSrv);
-    this.metricsQueryRunner = new CloudWatchMetricsQueryRunner(instanceSettings, templateSrv, super.query.bind(this));
+    this.metricsQueryRunner = new CloudWatchMetricsQueryRunner(instanceSettings, templateSrv);
     this.logsCompletionItemProviderFunc = LogsCompletionItemProviderFunc(this.resources, this.templateSrv);
-    this.logsQueryRunner = new CloudWatchLogsQueryRunner(instanceSettings, templateSrv, super.query.bind(this));
-    this.annotationQueryRunner = new CloudWatchAnnotationQueryRunner(
-      instanceSettings,
-      templateSrv,
-      super.query.bind(this)
-    );
+    this.logsQueryRunner = new CloudWatchLogsQueryRunner(instanceSettings, templateSrv);
+    this.annotationQueryRunner = new CloudWatchAnnotationQueryRunner(instanceSettings, templateSrv);
     this.variables = new CloudWatchVariableSupport(this.resources);
     this.annotations = CloudWatchAnnotationSupport;
     this.defaultLogGroups = instanceSettings.jsonData.defaultLogGroups;
@@ -106,15 +102,19 @@ export class CloudWatchDatasource
 
     const dataQueryResponses: Array<Observable<DataQueryResponse>> = [];
     if (logQueries.length) {
-      dataQueryResponses.push(this.logsQueryRunner.handleLogQueries(logQueries, options));
+      dataQueryResponses.push(this.logsQueryRunner.handleLogQueries(logQueries, options, super.query.bind(this)));
     }
 
     if (metricsQueries.length) {
-      dataQueryResponses.push(this.metricsQueryRunner.handleMetricQueries(metricsQueries, options));
+      dataQueryResponses.push(
+        this.metricsQueryRunner.handleMetricQueries(metricsQueries, options, super.query.bind(this))
+      );
     }
 
     if (annotationQueries.length) {
-      dataQueryResponses.push(this.annotationQueryRunner.handleAnnotationQuery(annotationQueries, options));
+      dataQueryResponses.push(
+        this.annotationQueryRunner.handleAnnotationQuery(annotationQueries, options, super.query.bind(this))
+      );
     }
     // No valid targets, return the empty result to save a round trip.
     if (isEmpty(dataQueryResponses)) {
@@ -148,7 +148,7 @@ export class CloudWatchDatasource
     context?: LogRowContextOptions,
     query?: CloudWatchLogsQuery
   ): Promise<{ data: DataFrame[] }> => {
-    return this.logsQueryRunner.getLogRowContext(row, context, query);
+    return this.logsQueryRunner.getLogRowContext(row, context, super.query, query);
   };
 
   targetContainsTemplate(target: any) {

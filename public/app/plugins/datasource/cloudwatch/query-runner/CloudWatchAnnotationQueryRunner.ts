@@ -9,19 +9,16 @@ import { CloudWatchRequest } from './CloudWatchRequest';
 
 // This class handles execution of CloudWatch annotation queries
 export class CloudWatchAnnotationQueryRunner extends CloudWatchRequest {
-  constructor(
-    instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
-    templateSrv: TemplateSrv,
-    queryFn: (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>
-  ) {
-    super(instanceSettings, templateSrv, queryFn);
+  constructor(instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>, templateSrv: TemplateSrv) {
+    super(instanceSettings, templateSrv);
   }
 
   handleAnnotationQuery(
     queries: CloudWatchAnnotationQuery[],
-    options: DataQueryRequest<CloudWatchQuery>
+    options: DataQueryRequest<CloudWatchQuery>,
+    query: (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>
   ): Observable<DataQueryResponse> {
-    return this.query({
+    return query({
       ...options,
       targets: queries.map((query) => ({
         ...query,
