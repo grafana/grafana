@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { FieldConfigEditorProps, SelectFieldConfigSettings, SelectableValue } from '@grafana/data';
+import { StandardEditorProps, SelectFieldConfigSettings, SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
 interface State<T> {
@@ -8,7 +8,7 @@ interface State<T> {
   options: Array<SelectableValue<T>>;
 }
 
-type Props<T> = FieldConfigEditorProps<T, SelectFieldConfigSettings<T>>;
+type Props<T> = StandardEditorProps<T, SelectFieldConfigSettings<T>>;
 
 export class SelectValueEditor<T> extends React.PureComponent<Props<T>, State<T>> {
   state: State<T> = {

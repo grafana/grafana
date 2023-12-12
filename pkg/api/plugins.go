@@ -449,14 +449,6 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 		if errors.As(err, &dupeErr) {
 			return response.Error(http.StatusConflict, "Plugin already installed", err)
 		}
-		var versionUnsupportedErr repo.ErrVersionUnsupported
-		if errors.As(err, &versionUnsupportedErr) {
-			return response.Error(http.StatusConflict, "Plugin version not supported", err)
-		}
-		var versionNotFoundErr repo.ErrVersionNotFound
-		if errors.As(err, &versionNotFoundErr) {
-			return response.Error(http.StatusNotFound, "Plugin version not found", err)
-		}
 		var clientError repo.ErrResponse4xx
 		if errors.As(err, &clientError) {
 			return response.Error(clientError.StatusCode(), clientError.Message(), err)
@@ -464,12 +456,8 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 		if errors.Is(err, plugins.ErrInstallCorePlugin) {
 			return response.Error(http.StatusForbidden, "Cannot install or change a Core plugin", err)
 		}
-		var archError repo.ErrArcNotFound
-		if errors.As(err, &archError) {
-			return response.Error(http.StatusNotFound, archError.Error(), nil)
-		}
 
-		return response.Error(http.StatusInternalServerError, "Failed to install plugin", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to install plugin", err)
 	}
 
 	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagExternalServiceAccounts) {
@@ -531,13 +519,13 @@ func (hs *HTTPServer) hasPluginRequestedPermissions(c *contextmodel.ReqContext, 
 	}
 
 	// No registration => Early return
-	if plugin.JSONData.ExternalServiceRegistration == nil || len(plugin.JSONData.ExternalServiceRegistration.Permissions) == 0 {
+	if plugin.JSONData.IAM == nil || len(plugin.JSONData.IAM.Permissions) == 0 {
 		hs.log.Debug("plugin did not request permissions on Grafana", "pluginID", pluginID)
 		return
 	}
 
 	hs.log.Debug("check installer's permissions, plugin wants to register an external service")
-	evaluator := evalAllPermissions(plugin.JSONData.ExternalServiceRegistration.Permissions)
+	evaluator := evalAllPermissions(plugin.JSONData.IAM.Permissions)
 	hasAccess := ac.HasGlobalAccess(hs.AccessControl, hs.accesscontrolService, c)
 	if hs.Cfg.RBACSingleOrganization {
 		// In a single organization setup, no need for a global check
