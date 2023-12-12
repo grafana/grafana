@@ -41,6 +41,7 @@ var NamespaceMetricsMap = map[string][]string{
 	"AWS/ECS":                     {"CPUReservation", "CPUUtilization", "GPUReservation", "MemoryReservation", "MemoryUtilization"},
 	"AWS/EFS":                     {"BurstCreditBalance", "ClientConnections", "DataReadIOBytes", "DataWriteIOBytes", "MetadataIOBytes", "PercentIOLimit", "PermittedThroughput", "TotalIOBytes", "StorageBytes", "MeteredIOBytes"},
 	"AWS/ELB":                     {"BackendConnectionErrors", "EstimatedALBActiveConnectionCount", "EstimatedALBConsumedLCUs", "EstimatedALBNewConnectionCount", "EstimatedProcessedBytes", "HTTPCode_Backend_2XX", "HTTPCode_Backend_3XX", "HTTPCode_Backend_4XX", "HTTPCode_Backend_5XX", "HTTPCode_ELB_4XX", "HTTPCode_ELB_5XX", "HealthyHostCount", "Latency", "RequestCount", "SpilloverCount", "SurgeQueueLength", "UnHealthyHostCount"},
+        "AWS/EMRServerless":        {"CPUAllocated", "CancelledJobs", "CancellingJobs", "FailedJobs", "IdleWorkerCount", "MaxCPUAllowed", "MaxMemoryAllowed", "MaxStorageAllowed", "MemoryAllocated", "PendingCreationWorkerCount", "PendingJobs", "RunningJobs", "RunningWorkerCount", "ScheduledJobs", "StorageAllocated", "SubmittedJobs", "SuccessJobs", "TotalWorkerCount"},
 	"AWS/ES": {
 		"2xx",
 		"3xx",
