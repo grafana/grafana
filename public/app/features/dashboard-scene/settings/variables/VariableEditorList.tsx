@@ -41,7 +41,7 @@ export function VariableEditorList({
       <div>
         {variables.length === 0 && <EmptyVariablesList onAdd={onAdd} />}
 
-        {variables && (
+        {variables.length > 0 && (
           <Stack direction="column" gap={4}>
             <div className={styles.tableContainer}>
               <table
@@ -94,6 +94,7 @@ function EmptyVariablesList({ onAdd }: { onAdd: () => void }): ReactElement {
         title="There are no variables yet"
         buttonIcon="calculator-alt"
         buttonTitle="Add variable"
+        buttonDisabled
         infoBox={{
           __html: ` <p>
                     Variables enable more interactive and dynamic dashboards. Instead of hard-coding things like server
