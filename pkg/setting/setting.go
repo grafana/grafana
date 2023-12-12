@@ -372,6 +372,7 @@ type Cfg struct {
 	AnonymousOrgName     string
 	AnonymousOrgRole     string
 	AnonymousHideVersion bool
+	AnonymousDeviceLimit int64
 
 	DateFormats DateFormats
 
@@ -1646,10 +1647,12 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	readAuthGithubSettings(cfg)
 
 	// anonymous access
-	cfg.AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
-	cfg.AnonymousOrgName = valueAsString(iniFile.Section("auth.anonymous"), "org_name", "")
-	cfg.AnonymousOrgRole = valueAsString(iniFile.Section("auth.anonymous"), "org_role", "")
-	cfg.AnonymousHideVersion = iniFile.Section("auth.anonymous").Key("hide_version").MustBool(false)
+	anonSection := iniFile.Section("auth.anonymous")
+	cfg.AnonymousEnabled = anonSection.Key("enabled").MustBool(false)
+	cfg.AnonymousOrgName = valueAsString(anonSection, "org_name", "")
+	cfg.AnonymousOrgRole = valueAsString(anonSection, "org_role", "")
+	cfg.AnonymousHideVersion = anonSection.Key("hide_version").MustBool(false)
+	cfg.AnonymousDeviceLimit = anonSection.Key("device_limit").MustInt64(0)
 
 	// basic auth
 	authBasic := iniFile.Section("auth.basic")
