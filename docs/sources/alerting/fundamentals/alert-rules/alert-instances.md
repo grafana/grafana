@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/alert-instances/
-description: Learn about Grafana alert instances
+description: Learn about alert instances
 keywords:
   - grafana
   - alerting

@@ -65,8 +65,8 @@ func (f *fakeConfigStore) GetAllLatestAlertmanagerConfiguration(context.Context)
 	return result, nil
 }
 
-func (f *fakeConfigStore) GetLatestAlertmanagerConfiguration(_ context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) (*models.AlertConfiguration, error) {
-	config, ok := f.configs[query.OrgID]
+func (f *fakeConfigStore) GetLatestAlertmanagerConfiguration(_ context.Context, orgID int64) (*models.AlertConfiguration, error) {
+	config, ok := f.configs[orgID]
 	if !ok {
 		return nil, store.ErrNoAlertmanagerConfiguration
 	}
