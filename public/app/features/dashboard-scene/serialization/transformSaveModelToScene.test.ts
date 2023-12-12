@@ -118,7 +118,7 @@ describe('transformSaveModelToScene', () => {
 
       const scene = createDashboardSceneFromDashboardModel(oldModel);
 
-      expect(scene.state.$behaviors).toHaveLength(2);
+      expect(scene.state.$behaviors).toHaveLength(3);
       expect(scene.state.$behaviors![1]).toBeInstanceOf(behaviors.CursorSync);
       expect((scene.state.$behaviors![1] as behaviors.CursorSync).state.sync).toEqual(DashboardCursorSync.Crosshair);
     });
@@ -455,7 +455,7 @@ describe('transformSaveModelToScene', () => {
       });
     });
 
-    it('should migrate query variable', () => {
+    it('should migrate query variable with definition', () => {
       const variable: QueryVariableModel = {
         allValue: null,
         current: {
@@ -467,7 +467,7 @@ describe('transformSaveModelToScene', () => {
           uid: 'P15396BDD62B2BE29',
           type: 'influxdb',
         },
-        definition: '',
+        definition: 'SHOW TAG VALUES  WITH KEY = "datacenter"',
         hide: 0,
         includeAll: false,
         label: 'Datacenter',
@@ -536,6 +536,7 @@ describe('transformSaveModelToScene', () => {
         type: 'query',
         value: 'America',
         hide: 0,
+        definition: 'SHOW TAG VALUES  WITH KEY = "datacenter"',
       });
     });
 

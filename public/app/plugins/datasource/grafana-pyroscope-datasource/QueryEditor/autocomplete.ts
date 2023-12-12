@@ -86,13 +86,15 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         });
       case 'IN_LABEL_VALUE':
         let values = await this.getLabelValues(situation.labelName);
-        return values.map((key) => {
-          return {
-            label: key,
-            insertText: situation.betweenQuotes ? key : `"${key}"`,
-            type: 'LABEL_VALUE',
-          };
-        });
+        return values
+          ? values.map((key) => {
+              return {
+                label: key,
+                insertText: situation.betweenQuotes ? key : `"${key}"`,
+                type: 'LABEL_VALUE',
+              };
+            })
+          : [];
       default:
         throw new Error(`Unexpected situation ${situation}`);
     }

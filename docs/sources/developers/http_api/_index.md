@@ -47,7 +47,7 @@ curl http://admin:admin@localhost:3000/api/org
 
 ### Service Account Token
 
-To create a service account token, click on **Administration** in the left-side menu, and then **Service Accounts**.
+To create a service account token, click on **Administration** in the left-side menu, click **Users and access**, then **Service Accounts**.
 For more information on how to use service account tokens, refer to the [Service Accounts]({{< relref "../../administration/service-accounts/" >}}) documentation.
 
 You use the token in all requests in the `Authorization` header, like this:
