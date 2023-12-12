@@ -73,11 +73,7 @@ function adjustTargetsFromResponseState(targets: LokiQuery[], response: DataQuer
         maxLines: updatedMaxLines < 0 ? 0 : updatedMaxLines,
       };
     })
-    .filter(
-      (target) =>
-        (isLogsQuery(target.expr) && (target.maxLines === undefined || target.maxLines > 0)) ||
-        !isLogsQuery(target.expr)
-    );
+    .filter((target) => target.maxLines === undefined || target.maxLines > 0);
 }
 export function runSplitGroupedQueries(datasource: LokiDatasource, requests: LokiGroupedRequest[]) {
   const responseKey = requests.length ? requests[0].request.queryGroupId : uuidv4();
@@ -250,8 +246,12 @@ export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequ
     );
 
     for (const stepMs in stepMsPartition) {
+      const targets = stepMsPartition[stepMs].map((q) => {
+        const { maxLines, ...query } = q;
+        return query;
+      });
       requests.push({
-        request: { ...request, targets: stepMsPartition[stepMs] },
+        request: { ...request, targets },
         partition: partitionTimeRange(false, request.range, Number(stepMs), Number(chunkRangeMs)),
       });
     }
