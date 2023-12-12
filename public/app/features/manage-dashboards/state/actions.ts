@@ -3,7 +3,9 @@ import { getBackendSrv, getDataSourceSrv, isFetchError, locationService } from '
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
+import { getFolderService } from 'app/features/folders/api';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { DashboardSearchHit } from 'app/features/search/types';
 import { FolderInfo, PermissionLevelString, SearchQueryType, ThunkResult } from 'app/types';
 
 import {
@@ -14,7 +16,6 @@ import {
 } from '../../dashboard/components/DashExportModal/DashboardExporter';
 import { getLibraryPanel } from '../../library-panels/state/api';
 import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
-import { DashboardSearchHit } from '../../search/types';
 import { DashboardJson, DeleteDashboardResponse } from '../types';
 
 import {
@@ -301,7 +302,7 @@ export function deleteFoldersAndDashboards(folderUids: string[], dashboardUids: 
   const tasks = [];
 
   for (const folderUid of folderUids) {
-    tasks.push(createTask(deleteFolder, true, folderUid, true));
+    tasks.push(createTask(getFolderService().deleteFolder, true, folderUid, true));
   }
 
   for (const dashboardUid of dashboardUids) {
@@ -322,12 +323,9 @@ export function saveDashboard(options: SaveDashboardCommand) {
   });
 }
 
-function deleteFolder(uid: string, showSuccessAlert: boolean) {
-  return getBackendSrv().delete(`/api/folders/${uid}?forceDeleteRules=false`, undefined, { showSuccessAlert });
-}
-
+/** @deprecated */
 export function createFolder(payload: any) {
-  return getBackendSrv().post('/api/folders', payload);
+  return getFolderService().createFolder(payload);
 }
 
 export function moveFolder(uid: string, toFolder: FolderInfo) {
@@ -352,9 +350,12 @@ export function searchFolders(
   });
 }
 
-export function getFolderByUid(uid: string): Promise<{ uid: string; title: string }> {
-  return getBackendSrv().get(`/api/folders/${uid}`);
+/** @deprecated */
+export function getFolderByUid(uid: string) {
+  return getFolderService().getFolderByUid(uid);
 }
+
+/** @deprecated use uids */
 export function getFolderById(id: number): Promise<{ id: number; title: string }> {
   return getBackendSrv().get(`/api/folders/id/${id}`);
 }

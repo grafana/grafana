@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
+import { Folder } from 'app/features/folders/api';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import 'core-js/stable/structured-clone';
@@ -18,7 +19,6 @@ import {
   GRAFANA_RULES_SOURCE_NAME,
   useGetAlertManagerDataSourcesByPermissionAndConfig,
 } from '../../../utils/datasource';
-import { Folder } from '../RuleFolderPicker';
 
 import { NotificationPreview } from './NotificationPreview';
 import NotificationPreviewByAlertManager from './NotificationPreviewByAlertManager';

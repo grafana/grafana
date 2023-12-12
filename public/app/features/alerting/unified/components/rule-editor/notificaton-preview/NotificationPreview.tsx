@@ -5,11 +5,11 @@ import React, { lazy, Suspense } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, LoadingPlaceholder, Text, useStyles2 } from '@grafana/ui';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
+import { Folder } from 'app/features/folders/api';
 import { Stack } from 'app/plugins/datasource/parca/QueryEditor/Stack';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { useGetAlertManagerDataSourcesByPermissionAndConfig } from '../../../utils/datasource';
-import { Folder } from '../RuleFolderPicker';
 
 const NotificationPreviewByAlertManager = lazy(() => import('./NotificationPreviewByAlertManager'));
 

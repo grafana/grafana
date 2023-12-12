@@ -7,10 +7,10 @@ import { ui } from 'test/helpers/alertingRuleEditor';
 
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { searchFolders } from 'app/features/manage-dashboards/state/actions';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
-import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';
 import { backendSrv } from '../../../core/services/backend_srv';
 import { AccessControlAction } from '../../../types';
 

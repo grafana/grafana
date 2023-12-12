@@ -7,11 +7,10 @@ import { byRole } from 'testing-library-selector';
 
 import { setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { searchFolders } from 'app/features/manage-dashboards/state/actions';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types';
 import { GrafanaAlertStateDecision, PromApplication } from 'app/types/unified-alerting-dto';
-
-import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';
 
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
