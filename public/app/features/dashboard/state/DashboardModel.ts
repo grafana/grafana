@@ -180,6 +180,16 @@ export class DashboardModel implements TimeModel {
       }
     }
 
+    // Explicit handling of graph -> time series migration
+    if (options?.autoMigrateOldPanels || !config.angularSupportEnabled || config.featureToggles.autoMigrateGraphPanel) {
+      for (const p of this.panelIterator()) {
+        if (p.type === 'graph') {
+          p.autoMigrateFrom = p.type;
+          p.type = 'timeseries';
+        }
+      }
+    }
+
     this.addBuiltInAnnotationQuery();
     this.sortPanelsByGridPos();
     this.panelsAffectedByVariableChange = null;
