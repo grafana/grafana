@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -87,6 +86,7 @@ func (am *Alertmanager) IsReadyWithBackoff(ctx context.Context) (bool, error) {
 
 	var attempts int
 	ticker := time.NewTicker(100 * time.Millisecond)
+	deadlineCh := time.After(10 * time.Second)
 	defer ticker.Stop()
 
 	for {
@@ -95,19 +95,19 @@ func (am *Alertmanager) IsReadyWithBackoff(ctx context.Context) (bool, error) {
 			attempts++
 			status, err := attempt()
 			if err != nil {
-				am.logger.Error("Ready check attempt failed", "attempt", attempts, "err", err)
+				am.logger.Debug("Ready check attempt failed", "attempt", attempts, "err", err)
 				continue
 			}
 
 			if status != http.StatusOK {
-				am.logger.Error("Ready check failed, status code is not 200", "attempt", attempts, "status", status, "err", err)
+				am.logger.Debug("Ready check failed, status code is not 200", "attempt", attempts, "status", status, "err", err)
 				continue
 			}
 
 			return true, nil
-		case <-time.After(10 * time.Second):
+		case <-deadlineCh:
 			cancel()
-			return false, errors.New("ready check timed out")
+			return false, fmt.Errorf("ready check timed out after %d attempts", attempts)
 		}
 	}
 }
