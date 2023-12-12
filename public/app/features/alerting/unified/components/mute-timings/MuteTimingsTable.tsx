@@ -44,10 +44,10 @@ const useExportMuteTiming = (): ExportProps => {
     }
 
     if (muteTimingName === ALL_MUTE_TIMINGS) {
-      // use this drawer when we want to export all contact points
+      // use this drawer when we want to export all mute timings
       return <GrafanaMuteTimingsExporter onClose={handleClose} />;
     } else {
-      // use this one for exporting a single contact point
+      // use this one for exporting a single mute timing
       return <GrafanaMuteTimingsExporter muteTimingName={muteTimingName} onClose={handleClose} />;
     }
   }, [isExportDrawerOpen, handleClose, muteTimingName]);
