@@ -20,7 +20,7 @@ The use of AngularJS in Grafana has been [deprecated]({{< relref "../angular_dep
 
 This page is to help users of Grafana understand how they might be impacted by the removal of Angular support, and whether a migration option exists.
 
-It lists the latest versions of plugins _currently available_ in the [Plugins Catalog](https://grafana.com/plugins) which depend on Angular, and will stop working when Angular support is removed from Grafana. The list will be updated as more plugins migrate to React or offer migration advice. 
+It lists the latest versions of plugins _currently available_ in the [Plugins Catalog](https://grafana.com/plugins) which depend on Angular, and will stop working when Angular support is removed from Grafana. The list will be updated as more plugins migrate to React or offer migration advice.
 
 Plugins which have been [deprecated](/legal/plugin-deprecation/) will **not** be listed. Generally, we advise users to migrate away from deprecated plugins as they will not be updated and may not function in current or future versions of Grafana.
 
@@ -365,8 +365,6 @@ Lack of recent activity in the [project repository](https://github.com/skydive-p
 {{% admonition type="warning" %}}
 Issues suggest the entire project, not just the plugin, may be abandoned - [source](https://github.com/skydive-project/skydive/issues/2417).
 {{% /admonition %}}
-
-
 
 ### [Altinity plugin for ClickHouse](https://grafana.com/grafana/plugins/vertamedia-clickhouse-datasource/)
 
