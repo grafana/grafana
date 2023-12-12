@@ -7,6 +7,7 @@ import {
   LogRowModel,
   MutableDataFrame,
   dateTime,
+  DataQueryRequest,
   LogRowContextQueryDirection,
 } from '@grafana/data';
 
@@ -296,7 +297,7 @@ describe('CloudWatchLogsQueryRunner', () => {
           region: regionVariable.current.value as string,
         },
       ];
-      expect(spy).toHaveBeenNthCalledWith(1, 'StartQuery', startQueryRequests, LogsRequestMock);
+      expect(spy).toHaveBeenNthCalledWith(1, 'StartQuery', startQueryRequests, queryMock, LogsRequestMock);
     });
   });
 
@@ -305,7 +306,13 @@ describe('CloudWatchLogsQueryRunner', () => {
       const { runner, queryMock } = setupMockedLogsQueryRunner();
       const from = dateTime(0);
       const to = dateTime(1000);
-      await lastValueFrom(runner.makeLogActionRequest('StartQuery', [genMockCloudWatchLogsRequest()], queryMock));
+      const options: DataQueryRequest<CloudWatchLogsQuery> = {
+        ...LogsRequestMock,
+        range: { from, to, raw: { from, to } },
+      };
+      await lastValueFrom(
+        runner.makeLogActionRequest('StartQuery', [genMockCloudWatchLogsRequest()], queryMock, options)
+      );
       expect(queryMock.mock.calls[0][0].skipQueryCache).toBe(true);
       expect(queryMock.mock.calls[0][0]).toEqual(expect.objectContaining({ range: { from, to, raw: { from, to } } }));
     });

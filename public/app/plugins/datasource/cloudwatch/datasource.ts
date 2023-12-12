@@ -143,13 +143,13 @@ export class CloudWatchDatasource
     }));
   }
 
-  getLogRowContext = async (
+  getLogRowContext(
     row: LogRowModel,
     context?: LogRowContextOptions,
     query?: CloudWatchLogsQuery
-  ): Promise<{ data: DataFrame[] }> => {
-    return this.logsQueryRunner.getLogRowContext(row, context, super.query, query);
-  };
+  ): Promise<{ data: DataFrame[] }> {
+    return this.logsQueryRunner.getLogRowContext(row, context, super.query.bind(this), query);
+  }
 
   targetContainsTemplate(target: any) {
     return (
