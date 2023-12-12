@@ -14,10 +14,10 @@ import (
 func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) *v0alpha1.Folder {
 	meta := kinds.GrafanaResourceMetadata{}
 	meta.SetUpdatedTimestampMillis(v.Updated.UnixMilli())
-	if v.ID > 0 {
+	if v.ID > 0 { // nolint:staticcheck
 		meta.SetOriginInfo(&kinds.ResourceOriginInfo{
 			Name: "SQL",
-			Key:  fmt.Sprintf("%d", v.ID),
+			Key:  fmt.Sprintf("%d", v.ID), // nolint:staticcheck
 		})
 	}
 	if v.CreatedBy > 0 {
