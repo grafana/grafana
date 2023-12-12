@@ -4,9 +4,9 @@ import (
 	"context"
 	"sort"
 
+	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
-	"golang.org/x/sync/errgroup"
 )
 
 // CompositeStore is a read store that combines two or more read stores, and queries all stores in parallel.
@@ -24,16 +24,12 @@ func NewCompositeStore(readers ...readStore) *CompositeStore {
 func (c *CompositeStore) Get(ctx context.Context, query *annotations.ItemQuery, accessResources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
 	itemCh := make(chan []*annotations.ItemDTO, len(c.readers))
 
-	eg, ctx := errgroup.WithContext(ctx)
-	for _, r := range c.readers {
-		r := r
-		eg.Go(func() error {
-			items, err := r.Get(ctx, query, accessResources)
-			itemCh <- items
-			return err
-		})
-	}
-	if err := eg.Wait(); err != nil {
+	err := concurrency.ForEachJob(ctx, len(c.readers), len(c.readers), func(ctx context.Context, i int) error {
+		items, err := c.readers[i].Get(ctx, query, accessResources)
+		itemCh <- items
+		return err
+	})
+	if err != nil {
 		return make([]*annotations.ItemDTO, 0), err
 	}
 
@@ -51,16 +47,12 @@ func (c *CompositeStore) Get(ctx context.Context, query *annotations.ItemQuery, 
 func (c *CompositeStore) GetTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
 	resCh := make(chan annotations.FindTagsResult, len(c.readers))
 
-	eg, ctx := errgroup.WithContext(ctx)
-	for _, r := range c.readers {
-		r := r
-		eg.Go(func() error {
-			res, err := r.GetTags(ctx, query)
-			resCh <- res
-			return err
-		})
-	}
-	if err := eg.Wait(); err != nil {
+	err := concurrency.ForEachJob(ctx, len(c.readers), len(c.readers), func(ctx context.Context, i int) error {
+		res, err := c.readers[i].GetTags(ctx, query)
+		resCh <- res
+		return err
+	})
+	if err != nil {
 		return annotations.FindTagsResult{}, err
 	}
 
