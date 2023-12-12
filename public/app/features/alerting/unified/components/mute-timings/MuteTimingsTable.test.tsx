@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
@@ -43,8 +43,10 @@ describe('MuteTimingsTable', () => {
   it('It does not show export button when not allowed ', async () => {
     // when not allowed
     grantUserPermissions([]);
-    const { findByRole } = renderWithProvider();
-    expect(await findByRole('button', { name: /export all/i })).not.toBeInTheDocument();
+    const { queryByRole } = renderWithProvider();
+    await waitFor(() => {
+      expect(queryByRole('button', { name: /export all/i })).not.toBeInTheDocument();
+    });
   });
   it('It does not show export button when not supported ', async () => {
     // when not supported
@@ -52,7 +54,9 @@ describe('MuteTimingsTable', () => {
       AccessControlAction.AlertingNotificationsRead,
       AccessControlAction.AlertingNotificationsWrite,
     ]);
-    const { findByRole } = renderWithProvider('potato');
-    expect(await findByRole('button', { name: /export all/i })).not.toBeInTheDocument();
+    const { queryByRole } = renderWithProvider('potato');
+    await waitFor(() => {
+      expect(queryByRole('button', { name: /export all/i })).not.toBeInTheDocument();
+    });
   });
 });
