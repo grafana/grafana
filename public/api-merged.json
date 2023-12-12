@@ -3079,6 +3079,45 @@
         }
       }
     },
+    "/api/v1/provisioning/mute-timings/export": {
+      "get": {
+        "tags": [
+          "provisioning"
+        ],
+        "summary": "Export all mute timings in provisioning format.",
+        "operationId": "RouteExportMuteTimings",
+        "parameters": [
+          {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to initiate a download of the file or not.",
+            "name": "download",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "yaml",
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "name": "format",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlertingFileExport",
+            "schema": {
+              "$ref": "#/definitions/AlertingFileExport"
+            }
+          },
+          "403": {
+            "description": "PermissionDenied",
+            "schema": {
+              "$ref": "#/definitions/PermissionDenied"
+            }
+          }
+        }
+      }
+    },
     "/api/v1/provisioning/mute-timings/{name}": {
       "get": {
         "tags": [
@@ -3165,6 +3204,52 @@
         "responses": {
           "204": {
             "description": " The mute timing was deleted successfully."
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/mute-timings/{name}/export": {
+      "get": {
+        "tags": [
+          "provisioning"
+        ],
+        "summary": "Export a mute timing in provisioning format.",
+        "operationId": "RouteExportMuteTiming",
+        "parameters": [
+          {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to initiate a download of the file or not.",
+            "name": "download",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "yaml",
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "name": "format",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Mute timing name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlertingFileExport",
+            "schema": {
+              "$ref": "#/definitions/AlertingFileExport"
+            }
+          },
+          "403": {
+            "description": "PermissionDenied",
+            "schema": {
+              "$ref": "#/definitions/PermissionDenied"
+            }
           }
         }
       }
@@ -11776,6 +11861,12 @@
             "$ref": "#/definitions/AlertRuleGroupExport"
           }
         },
+        "muteTimes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MuteTimeIntervalExport"
+          }
+        },
         "policies": {
           "type": "array",
           "items": {
@@ -13855,6 +13946,9 @@
     "EvalQueriesPayload": {
       "type": "object",
       "properties": {
+        "condition": {
+          "type": "string"
+        },
         "data": {
           "type": "array",
           "items": {
@@ -14139,7 +14233,11 @@
           "type": "boolean"
         },
         "id": {
-          "description": "Deprecated: use Uid instead",
+          "description": "Deprecated: use UID instead",
+          "type": "integer",
+          "format": "int64"
+        },
+        "orgId": {
           "type": "integer",
           "format": "int64"
         },
@@ -14191,6 +14289,14 @@
         },
         "uid": {
           "type": "string"
+        }
+      }
+    },
+    "ForbiddenError": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "$ref": "#/definitions/PublicError"
         }
       }
     },
@@ -15676,6 +15782,24 @@
         }
       }
     },
+    "MuteTimeIntervalExport": {
+      "type": "object",
+      "properties": {
+        "OrgID": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TimeInterval"
+          }
+        }
+      }
+    },
     "MuteTimings": {
       "type": "array",
       "items": {
@@ -15782,12 +15906,58 @@
       "type": "object",
       "title": "NotificationPolicyExport is the provisioned file export of alerting.NotificiationPolicyV1.",
       "properties": {
-        "Policy": {
-          "$ref": "#/definitions/RouteExport"
+        "continue": {
+          "type": "boolean"
+        },
+        "group_by": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "group_interval": {
+          "type": "string"
+        },
+        "group_wait": {
+          "type": "string"
+        },
+        "match": {
+          "description": "Deprecated. Remove before v1.0 release.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "match_re": {
+          "$ref": "#/definitions/MatchRegexps"
+        },
+        "matchers": {
+          "$ref": "#/definitions/Matchers"
+        },
+        "mute_time_intervals": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "object_matchers": {
+          "$ref": "#/definitions/ObjectMatchers"
         },
         "orgId": {
           "type": "integer",
           "format": "int64"
+        },
+        "receiver": {
+          "type": "string"
+        },
+        "repeat_interval": {
+          "type": "string"
+        },
+        "routes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RouteExport"
+          }
         }
       }
     },
@@ -17180,6 +17350,26 @@
           }
         },
         "totalCount": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "PublicError": {
+      "description": "PublicError is derived from Error and only contains information\navailable to the end user.",
+      "type": "object",
+      "properties": {
+        "extra": {
+          "type": "object",
+          "additionalProperties": false
+        },
+        "message": {
+          "type": "string"
+        },
+        "messageId": {
+          "type": "string"
+        },
+        "statusCode": {
           "type": "integer",
           "format": "int64"
         }
@@ -20455,7 +20645,6 @@
       }
     },
     "alertGroup": {
-      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -20479,7 +20668,6 @@
       }
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -20612,7 +20800,6 @@
       }
     },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -20675,6 +20862,7 @@
       }
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -20723,6 +20911,7 @@
       }
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
@@ -20873,7 +21062,6 @@
       }
     },
     "postableSilence": {
-      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -20939,6 +21127,7 @@
       }
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",

@@ -1252,6 +1252,12 @@
               "$ref": "#/definitions/AlertingFileExport"
             }
           },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
           "404": {
             "description": " Not found."
           }
@@ -1287,6 +1293,12 @@
             "schema": {
               "$ref": "#/definitions/NamespaceConfigResponse"
             }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
           }
         }
       }
@@ -1314,6 +1326,12 @@
             "description": "NamespaceConfigResponse",
             "schema": {
               "$ref": "#/definitions/NamespaceConfigResponse"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
             }
           }
         }
@@ -1349,6 +1367,12 @@
             "schema": {
               "$ref": "#/definitions/UpdateRuleGroupResponse"
             }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
           }
         }
       },
@@ -1371,6 +1395,12 @@
             "description": "Ack",
             "schema": {
               "$ref": "#/definitions/Ack"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
             }
           }
         }
@@ -1423,6 +1453,12 @@
               "$ref": "#/definitions/AlertingFileExport"
             }
           },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
           "404": {
             "description": " Not found."
           }
@@ -1459,6 +1495,12 @@
             "schema": {
               "$ref": "#/definitions/RuleGroupConfigResponse"
             }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
           }
         }
       },
@@ -1487,6 +1529,12 @@
             "description": "Ack",
             "schema": {
               "$ref": "#/definitions/Ack"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
             }
           }
         }
@@ -1529,6 +1577,12 @@
               "$ref": "#/definitions/NamespaceConfigResponse"
             }
           },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
           "404": {
             "description": "NotFound",
             "schema": {
@@ -1568,6 +1622,12 @@
             "description": "NamespaceConfigResponse",
             "schema": {
               "$ref": "#/definitions/NamespaceConfigResponse"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
             }
           },
           "404": {
@@ -1617,6 +1677,12 @@
               "$ref": "#/definitions/Ack"
             }
           },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
           "404": {
             "description": "NotFound",
             "schema": {
@@ -1651,6 +1717,12 @@
             "description": "Ack",
             "schema": {
               "$ref": "#/definitions/Ack"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
             }
           },
           "404": {
@@ -1700,6 +1772,12 @@
               "$ref": "#/definitions/RuleGroupConfigResponse"
             }
           },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
           "404": {
             "description": "NotFound",
             "schema": {
@@ -1740,6 +1818,12 @@
             "description": "Ack",
             "schema": {
               "$ref": "#/definitions/Ack"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
             }
           },
           "404": {
@@ -2542,6 +2626,46 @@
         }
       }
     },
+    "/api/v1/provisioning/mute-timings/export": {
+      "get": {
+        "tags": [
+          "provisioning",
+          "stable"
+        ],
+        "summary": "Export all mute timings in provisioning format.",
+        "operationId": "RouteExportMuteTimings",
+        "parameters": [
+          {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to initiate a download of the file or not.",
+            "name": "download",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "yaml",
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "name": "format",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlertingFileExport",
+            "schema": {
+              "$ref": "#/definitions/AlertingFileExport"
+            }
+          },
+          "403": {
+            "description": "PermissionDenied",
+            "schema": {
+              "$ref": "#/definitions/PermissionDenied"
+            }
+          }
+        }
+      }
+    },
     "/api/v1/provisioning/mute-timings/{name}": {
       "get": {
         "tags": [
@@ -2631,6 +2755,53 @@
         "responses": {
           "204": {
             "description": " The mute timing was deleted successfully."
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/mute-timings/{name}/export": {
+      "get": {
+        "tags": [
+          "provisioning",
+          "stable"
+        ],
+        "summary": "Export a mute timing in provisioning format.",
+        "operationId": "RouteExportMuteTiming",
+        "parameters": [
+          {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to initiate a download of the file or not.",
+            "name": "download",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "yaml",
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "name": "format",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Mute timing name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlertingFileExport",
+            "schema": {
+              "$ref": "#/definitions/AlertingFileExport"
+            }
+          },
+          "403": {
+            "description": "PermissionDenied",
+            "schema": {
+              "$ref": "#/definitions/PermissionDenied"
+            }
           }
         }
       }
@@ -3278,6 +3449,12 @@
             "$ref": "#/definitions/AlertRuleGroupExport"
           }
         },
+        "muteTimes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MuteTimeIntervalExport"
+          }
+        },
         "policies": {
           "type": "array",
           "items": {
@@ -3828,6 +4005,9 @@
     "EvalQueriesPayload": {
       "type": "object",
       "properties": {
+        "condition": {
+          "type": "string"
+        },
         "data": {
           "type": "array",
           "items": {
@@ -4033,6 +4213,14 @@
           "description": "Width of the zero bucket.",
           "type": "number",
           "format": "double"
+        }
+      }
+    },
+    "ForbiddenError": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "$ref": "#/definitions/PublicError"
         }
       }
     },
@@ -4891,6 +5079,24 @@
         }
       }
     },
+    "MuteTimeIntervalExport": {
+      "type": "object",
+      "properties": {
+        "OrgID": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TimeInterval"
+          }
+        }
+      }
+    },
     "MuteTimings": {
       "type": "array",
       "items": {
@@ -4938,12 +5144,58 @@
       "type": "object",
       "title": "NotificationPolicyExport is the provisioned file export of alerting.NotificiationPolicyV1.",
       "properties": {
-        "Policy": {
-          "$ref": "#/definitions/RouteExport"
+        "continue": {
+          "type": "boolean"
+        },
+        "group_by": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "group_interval": {
+          "type": "string"
+        },
+        "group_wait": {
+          "type": "string"
+        },
+        "match": {
+          "description": "Deprecated. Remove before v1.0 release.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "match_re": {
+          "$ref": "#/definitions/MatchRegexps"
+        },
+        "matchers": {
+          "$ref": "#/definitions/Matchers"
+        },
+        "mute_time_intervals": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "object_matchers": {
+          "$ref": "#/definitions/ObjectMatchers"
         },
         "orgId": {
           "type": "integer",
           "format": "int64"
+        },
+        "receiver": {
+          "type": "string"
+        },
+        "repeat_interval": {
+          "type": "string"
+        },
+        "routes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RouteExport"
+          }
         }
       }
     },
@@ -5713,6 +5965,26 @@
         },
         "proxy_url": {
           "$ref": "#/definitions/URL"
+        }
+      }
+    },
+    "PublicError": {
+      "description": "PublicError is derived from Error and only contains information\navailable to the end user.",
+      "type": "object",
+      "properties": {
+        "extra": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "message": {
+          "type": "string"
+        },
+        "messageId": {
+          "type": "string"
+        },
+        "statusCode": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -6869,9 +7141,8 @@
       }
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
       "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "title": "URL is a custom URL type that allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -7136,7 +7407,6 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -7242,7 +7512,6 @@
       }
     },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -7299,6 +7568,7 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -7356,7 +7626,6 @@
       "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"

@@ -4,7 +4,7 @@ aliases:
   - ../unified-alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
   - ../unified-alerting/alerting-rules/create-mimir-loki-managed-rule/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-mimir-loki-managed-rule/
-description: Configure data source-managed alert rules
+description: Configure data source-managed alert rules alert for an external Grafana Mimir or Loki instance
 keywords:
   - grafana
   - alerting

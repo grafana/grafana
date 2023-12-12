@@ -22,10 +22,7 @@ import (
 
 func TestFeatureToggleFiles(t *testing.T) {
 	legacyNames := map[string]bool{
-		"httpclientprovider_azure_auth": true,
-		"service-accounts":              true,
-		"database_metrics":              true,
-		"live-service-web-worker":       true,
+		"live-service-web-worker": true,
 	}
 
 	t.Run("check registry constraints", func(t *testing.T) {
