@@ -23,6 +23,7 @@ interface ShortLinkMenuItemData {
   icon: IconName;
   getUrl: Function;
   shorten: boolean;
+  absTime: boolean;
 }
 
 const defaultMode: ShortLinkMenuItemData = {
@@ -31,23 +32,24 @@ const defaultMode: ShortLinkMenuItemData = {
   icon: 'share-alt',
   getUrl: () => undefined,
   shorten: true,
+  absTime: false,
 };
 
 export function ShortLinkButtonMenu() {
   const panes = useSelector(selectPanes);
   const [isOpen, setIsOpen] = useState(false);
   const [lastSelected, setLastSelected] = useState(defaultMode);
-  const onCopyLink = (shorten: boolean, url?: string) => {
+  const onCopyLink = (shorten: boolean, absTime: boolean, url?: string) => {
     if (shorten) {
       createAndCopyShortLink(url || global.location.href);
-      reportInteraction('grafana_explore_shortened_link_clicked');
+      reportInteraction('grafana_explore_shortened_link_clicked', { isAbsoluteTime: absTime });
     } else {
       copyStringToClipboard(
         url !== undefined
           ? `${window.location.protocol}//${window.location.host}${config.appSubUrl}${url}`
           : global.location.href
       );
-      reportInteraction('grafana_explore_copy_link_clicked');
+      reportInteraction('grafana_explore_copy_link_clicked', { isAbsoluteTime: absTime });
     }
   };
 
@@ -62,6 +64,7 @@ export function ShortLinkButtonMenu() {
           label: t('explore.toolbar.copy-shortened-link', 'Copy shortened URL'),
           getUrl: () => undefined,
           shorten: true,
+          absTime: false,
         },
         {
           key: 'copy-link',
@@ -69,6 +72,7 @@ export function ShortLinkButtonMenu() {
           label: t('explore.toolbar.copy-link', 'Copy URL'),
           getUrl: () => undefined,
           shorten: false,
+          absTime: false,
         },
       ],
     },
@@ -84,6 +88,7 @@ export function ShortLinkButtonMenu() {
           getUrl: () => {
             return constructAbsoluteUrl(panes);
           },
+          absTime: true,
         },
         {
           key: 'copy-link-abs-time',
@@ -93,6 +98,7 @@ export function ShortLinkButtonMenu() {
           getUrl: () => {
             return constructAbsoluteUrl(panes);
           },
+          absTime: true,
         },
       ],
     },
@@ -111,7 +117,7 @@ export function ShortLinkButtonMenu() {
                   icon={option.icon}
                   onClick={() => {
                     const url = option.getUrl();
-                    onCopyLink(option.shorten, url);
+                    onCopyLink(option.shorten, option.absTime, url);
                     setLastSelected(option);
                   }}
                 />
@@ -134,7 +140,7 @@ export function ShortLinkButtonMenu() {
           narrow={true}
           onClick={() => {
             const url = lastSelected.getUrl();
-            onCopyLink(lastSelected.shorten, url);
+            onCopyLink(lastSelected.shorten, lastSelected.absTime, url);
           }}
           aria-label={t('explore.toolbar.copy-shortened-link', 'Copy shortened URL')}
         />
