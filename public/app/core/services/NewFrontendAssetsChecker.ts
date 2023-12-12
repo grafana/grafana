@@ -1,41 +1,48 @@
-import { isEqual } from 'lodash';
-
 import { getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
 
-import { config } from '../config';
-
 export class NewFrontendAssetsChecker {
-  private _hasUpdates = false;
+  private hasUpdates = false;
+  private previous = '?';
+  private checked = 0;
+  private interval = 1000; // check interval
 
   public start() {
     let prevState: boolean | undefined;
 
-    // Subscribe to live connecttion state changes and check for new assets when re-connected
-    getGrafanaLiveSrv()
-      .getConnectionState()
-      .subscribe((connected) => {
+    // Subscribe to live connection state changes and check for new assets when re-connected
+    const live = getGrafanaLiveSrv();
+    if (live) {
+      live.getConnectionState().subscribe((connected) => {
         if (connected && connected !== prevState) {
           this._checkForUpdates();
         }
       });
+    }
   }
 
   private async _checkForUpdates() {
-    if (this._hasUpdates) {
+    if (this.hasUpdates) {
       return;
     }
 
-    const result = await getBackendSrv().get('/api/frontend/assets');
-
-    if (!isEqual(result, config.bootData.assets)) {
-      this._hasUpdates = true;
+    const resultRaw = await getBackendSrv().get('/api/frontend/assets');
+    const result = JSON.stringify(resultRaw);
+    if (this.checked && this.previous !== result) {
+      this.hasUpdates = true;
       console.log('updates detected', true);
     }
+    this.previous = result;
+    this.checked = Date.now();
   }
 
   public reloadIfUpdateDetected() {
-    if (this._hasUpdates) {
+    if (this.hasUpdates) {
       window.location.reload();
+    }
+
+    // Async check if the assets have changed
+    if (Date.now() - this.checked > this.interval) {
+      this._checkForUpdates();
     }
   }
 }
