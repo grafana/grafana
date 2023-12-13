@@ -217,21 +217,15 @@ func TestAzureSettings(t *testing.T) {
 	})
 
 	t.Run("forward settings to plugins", func(t *testing.T) {
-		defaultPlugins := []string{"grafana-azure-monitor-datasource", "prometheus", "grafana-azure-data-explorer-datasource", "mssql"}
 		testCases := []struct {
 			name            string
 			configuredValue string
 			resolvedValue   []string
 		}{
 			{
-				name:            "should be Grafana Labs data sources if not set",
-				configuredValue: "",
-				resolvedValue:   defaultPlugins,
-			},
-			{
-				name:            "should append a user specified plugin if set",
+				name:            "should be set to user plugins if set",
 				configuredValue: "test-datasource",
-				resolvedValue:   append(defaultPlugins, "test-datasource"),
+				resolvedValue:   []string{"test-datasource"},
 			},
 		}
 
