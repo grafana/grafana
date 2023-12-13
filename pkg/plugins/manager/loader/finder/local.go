@@ -46,8 +46,6 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 		return []*plugins.FoundBundle{}, nil
 	}
 
-	l.log.Info("LOADING PLUGINS", "class",  src.PluginClass(ctx))
-
 	pluginURIs := src.PluginURIs(ctx)
 	pluginJSONPaths := make([]string, 0, len(pluginURIs))
 	for _, path := range pluginURIs {
@@ -112,33 +110,36 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 		}
 	}
 
-	result := make([]*plugins.FoundBundle, 0, len(res))
+	// Track child plugins and add them to their parent.
+	childPlugins := make(map[string]struct{})
 	for dir, p := range res {
-		skip := true
+		// Check if this plugin is the parent of another plugin.
 		for dir2, p2 := range res {
 			if dir == dir2 {
 				continue
 			}
 
-			r, err := filepath.Rel(dir, dir2)
+			relPath, err := filepath.Rel(dir, dir2)
 			if err != nil {
-				l.log.Error("Cannot calc rel path", "err", err)
+				l.log.Error("Cannot calculate relative path. Skipping", "pluginId", p2.Primary.JSONData.ID, "err", err)
+				continue
 			}
-			if !strings.Contains(r, "..") {
-				l.log.Info("Adding child", "parent", p.Primary.JSONData.ID, "child", p2.Primary.JSONData.ID, "rel", r)
-				p.Children = append(p.Children, &p2.Primary)
-				skip = false
+			if !strings.Contains(relPath, "..") {
+				child := p2.Primary
+				l.log.Debug("Adding child", "parent", p.Primary.JSONData.ID, "child", child.JSONData.ID, "relPath", relPath)
+				p.Children = append(p.Children, &child)
+				childPlugins[dir2] = struct{}{}
 			}
-		}
-		if !skip {
-			l.log.Info("Adding plugin to list", "pluginId", p.Primary.JSONData.ID, "children", len(p.Children))
-			result = append(result, p)
-		} else {
-			l.log.Info("Not adding plugin to list", "pluginId", p.Primary.JSONData.ID)
 		}
 	}
 
-	l.log.Info("DONE WITH FINDER", "len", len(result))
+	// Remove child plugins from the result (they are already tracked via their parent).
+	result := make([]*plugins.FoundBundle, 0, len(res))
+	for k := range res {
+		if _, ok := childPlugins[k]; !ok {
+			result = append(result, res[k])
+		}
+	}
 
 	return result, nil
 }
