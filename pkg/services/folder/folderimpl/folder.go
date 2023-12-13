@@ -206,7 +206,6 @@ func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) (
 		// always expose the dashboard store sequential ID
 		// nolint:staticcheck
 		f.ID = dashFolder.ID
-
 	}
 
 	return children, nil
@@ -246,7 +245,7 @@ func (s *Service) getRootFolders(ctx context.Context, q *folder.GetChildrenQuery
 		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders from dashboard store: %w", err)
 	}
 
-	concurrency.ForEachJob(ctx, len(children), runtime.NumCPU(), func(ctx context.Context, i int) error {
+	if err := concurrency.ForEachJob(ctx, len(children), runtime.NumCPU(), func(ctx context.Context, i int) error {
 		f := children[i]
 		// fetch folder from dashboard store
 		dashFolder, ok := dashFolders[f.UID]
@@ -258,7 +257,9 @@ func (s *Service) getRootFolders(ctx context.Context, q *folder.GetChildrenQuery
 		f.ID = dashFolder.ID
 
 		return nil
-	})
+	}); err != nil {
+		return nil, folder.ErrInternal.Errorf("failed to assign folder sequential ID: %w", err)
+	}
 
 	// add "shared with me" folder on the 1st page
 	if q.Page == 0 || q.Page == 1 && q.FolderUIDs != nil {
