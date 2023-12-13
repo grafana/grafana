@@ -789,8 +789,10 @@ func TestService_GetConfigMap_azure(t *testing.T) {
 			ClientSecret:      "mock_user_identity_client_secret",
 			UsernameAssertion: true,
 		},
+		ForwardSettingsPlugins: []string{"grafana-azure-monitor-datasource", "prometheus", "grafana-azure-data-explorer-datasource", "mssql"},
 	}
-	t.Run("Uses the azure settings for an Azure plugin", func(t *testing.T) {
+
+	t.Run("uses the azure settings for an Azure plugin", func(t *testing.T) {
 		s := &Service{
 			cfg: &config.Cfg{
 				Azure: azSettings,
@@ -811,12 +813,34 @@ func TestService_GetConfigMap_azure(t *testing.T) {
 		}, s.GetConfigMap(context.Background(), "grafana-azure-monitor-datasource", nil))
 	})
 
-	t.Run("Does not use the azure settings for a non-Azure plugin", func(t *testing.T) {
+	t.Run("does not use the azure settings for a non-Azure plugin", func(t *testing.T) {
 		s := &Service{
 			cfg: &config.Cfg{
 				Azure: azSettings,
 			},
 		}
 		require.Equal(t, map[string]string{}, s.GetConfigMap(context.Background(), "", nil))
+	})
+
+	t.Run("uses the azure settings for a non-Azure user-specified plugin", func(t *testing.T) {
+		azSettings.ForwardSettingsPlugins = append(azSettings.ForwardSettingsPlugins, "test-datasource")
+		s := &Service{
+			cfg: &config.Cfg{
+				Azure: azSettings,
+			},
+		}
+		require.Equal(t, map[string]string{
+			"GFAZPL_AZURE_CLOUD": "AzureCloud", "GFAZPL_MANAGED_IDENTITY_ENABLED": "true",
+			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID":   "mock_managed_identity_client_id",
+			"GFAZPL_WORKLOAD_IDENTITY_ENABLED":    "true",
+			"GFAZPL_WORKLOAD_IDENTITY_TENANT_ID":  "mock_workload_identity_tenant_id",
+			"GFAZPL_WORKLOAD_IDENTITY_CLIENT_ID":  "mock_workload_identity_client_id",
+			"GFAZPL_WORKLOAD_IDENTITY_TOKEN_FILE": "mock_workload_identity_token_file",
+			"GFAZPL_USER_IDENTITY_ENABLED":        "true",
+			"GFAZPL_USER_IDENTITY_TOKEN_URL":      "mock_user_identity_token_url",
+			"GFAZPL_USER_IDENTITY_CLIENT_ID":      "mock_user_identity_client_id",
+			"GFAZPL_USER_IDENTITY_CLIENT_SECRET":  "mock_user_identity_client_secret",
+			"GFAZPL_USER_IDENTITY_ASSERTION":      "username",
+		}, s.GetConfigMap(context.Background(), "test-datasource", nil))
 	})
 }
