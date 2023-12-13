@@ -13,6 +13,8 @@ import {
   isDateTime,
   dateTime,
   PluginContextProvider,
+  PluginExtensionLink,
+  PanelMenuItem,
 } from '@grafana/data';
 import { Modal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
@@ -248,4 +250,54 @@ export function truncateTitle(title: string, length: number): string {
   }
   const part = title.slice(0, length - 3);
   return `${part.trimEnd()}...`;
+}
+
+export function createExtensionSubMenu(extensions: PluginExtensionLink[]): PanelMenuItem[] {
+  const categorized: Record<string, PanelMenuItem[]> = {};
+  const uncategorized: PanelMenuItem[] = [];
+
+  for (const extension of extensions) {
+    const category = extension.category;
+
+    if (!category) {
+      uncategorized.push({
+        text: truncateTitle(extension.title, 25),
+        href: extension.path,
+        onClick: extension.onClick,
+      });
+      continue;
+    }
+
+    if (!Array.isArray(categorized[category])) {
+      categorized[category] = [];
+    }
+
+    categorized[category].push({
+      text: truncateTitle(extension.title, 25),
+      href: extension.path,
+      onClick: extension.onClick,
+    });
+  }
+
+  const subMenu = Object.keys(categorized).reduce((subMenu: PanelMenuItem[], category) => {
+    subMenu.push({
+      text: truncateTitle(category, 25),
+      type: 'group',
+      subMenu: categorized[category],
+    });
+    return subMenu;
+  }, []);
+
+  if (uncategorized.length > 0) {
+    if (subMenu.length > 0) {
+      subMenu.push({
+        text: 'divider',
+        type: 'divider',
+      });
+    }
+
+    Array.prototype.push.apply(subMenu, uncategorized);
+  }
+
+  return subMenu;
 }

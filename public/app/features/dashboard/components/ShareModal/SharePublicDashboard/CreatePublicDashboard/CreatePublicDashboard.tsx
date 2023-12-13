@@ -8,11 +8,10 @@ import { Button, Form, Spinner, useStyles2 } from '@grafana/ui/src';
 import { useCreatePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { contextSrv } from '../../../../../../core/services/context_srv';
 import { AccessControlAction, useSelector } from '../../../../../../types';
-import { trackDashboardSharingActionPerType } from '../../analytics';
-import { shareDashboardType } from '../../utils';
 import { NoUpsertPermissionsAlert } from '../ModalAlerts/NoUpsertPermissionsAlert';
 import { UnsupportedDataSourcesAlert } from '../ModalAlerts/UnsupportedDataSourcesAlert';
 import { UnsupportedTemplateVariablesAlert } from '../ModalAlerts/UnsupportedTemplateVariablesAlert';
@@ -47,7 +46,7 @@ export const CreatePublicDashboardBase = ({
   const [createPublicDashboard, { isLoading, isError }] = useCreatePublicDashboardMutation();
   const onCreate = () => {
     createPublicDashboard({ dashboard, payload: { isEnabled: true } });
-    trackDashboardSharingActionPerType('generate_public_url', shareDashboardType.publicDashboard);
+    DashboardInteractions.generatePublicDashboardUrlClicked({});
   };
 
   const disableInputs = !hasWritePermissions || isLoading || isError || hasError;

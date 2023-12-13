@@ -1,4 +1,4 @@
-import { reportInteraction } from '@grafana/runtime';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { DashboardModel } from '../state';
 
@@ -11,7 +11,7 @@ export function trackDashboardLoaded(dashboard: DashboardModel, versionBeforeMig
       return r;
     }, {});
 
-  reportInteraction('dashboards_init_dashboard_completed', {
+  DashboardInteractions.dashboardInitialized({
     uid: dashboard.uid,
     title: dashboard.title,
     theme: dashboard.style,

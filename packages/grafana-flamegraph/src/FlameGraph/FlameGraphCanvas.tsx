@@ -14,7 +14,7 @@ type Props = {
   data: FlameGraphDataContainer;
   rangeMin: number;
   rangeMax: number;
-  search: string;
+  matchedLabels: Set<string> | undefined;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
   style?: React.CSSProperties;
@@ -43,7 +43,7 @@ const FlameGraphCanvas = ({
   data,
   rangeMin,
   rangeMax,
-  search,
+  matchedLabels,
   setRangeMin,
   setRangeMax,
   onItemFocused,
@@ -80,7 +80,7 @@ const FlameGraphCanvas = ({
     depth,
     rangeMax,
     rangeMin,
-    search,
+    matchedLabels,
     textAlign,
     totalViewTicks,
     // We need this so that if we have a diff profile and are in sandwich view we still show the same diff colors.
@@ -245,7 +245,6 @@ const getStyles = () => ({
   graph: css({
     label: 'graph',
     overflow: 'auto',
-    height: '100%',
     flexGrow: 1,
     flexBasis: '50%',
   }),
