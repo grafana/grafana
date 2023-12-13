@@ -1,8 +1,9 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
-import { AnnotationQuery } from '@grafana/data';
+import { AnnotationQuery, GrafanaTheme2 } from '@grafana/data';
 import { EditorField, EditorRow } from '@grafana/experimental';
-import { Input } from '@grafana/ui';
+import { Input, useStyles2 } from '@grafana/ui';
 
 import { ElasticsearchQuery } from '../../types';
 
@@ -17,9 +18,10 @@ export function ElasticsearchAnnotationsQueryEditor(props: Props) {
   const annotation = props.annotation!;
   const onAnnotationChange = props.onAnnotationChange!;
 
+  const styles = useStyles2(getStyles);
   return (
     <>
-      <div className="gf-form-group">
+      <div className={styles.container}>
         <ElasticSearchQueryField
           value={annotation.target?.query}
           onChange={(query) => {
@@ -37,7 +39,7 @@ export function ElasticsearchAnnotationsQueryEditor(props: Props) {
         />
       </div>
 
-      <div className="gf-form-group">
+      <div className={styles.container}>
         <h6>Field mappings</h6>
         <EditorRow>
           <EditorField label="Time">
@@ -95,3 +97,9 @@ export function ElasticsearchAnnotationsQueryEditor(props: Props) {
     </>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    marginBottom: theme.spacing(5),
+  }),
+});
