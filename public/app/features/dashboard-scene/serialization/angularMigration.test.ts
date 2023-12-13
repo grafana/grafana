@@ -11,17 +11,17 @@ describe('getAngularPanelMigrationHandler', () => {
         return { name: prevOptions.angular.oldOptionProp };
       };
 
-      const reactPlugin = getPanelPlugin({ id: 'timeseries' }).setPanelChangeHandler(onPanelTypeChanged as any);
+      const reactPlugin = getPanelPlugin({ id: 'geomap' }).setPanelChangeHandler(onPanelTypeChanged as any);
 
       const oldModel = new PanelModel({
-        autoMigrateFrom: 'graph',
+        autoMigrateFrom: 'grafana-worldmap-panel',
         oldOptionProp: 'old name',
-        type: 'timeseries',
+        type: 'geomap',
       });
 
       const mutatedModel = {
         id: 1,
-        type: 'timeseries',
+        type: 'geomap',
         options: {},
         fieldConfig: { defaults: {}, overrides: [] },
       };
