@@ -485,14 +485,12 @@ type FindPersistedDashboardsQuery struct {
 	DashboardIds  []int64
 	DashboardUIDs []string
 	Type          string
-	// Deprecated: use FolderUIDs instead
-	FolderIds  []int64
-	FolderUIDs []string
-	Tags       []string
-	Limit      int64
-	Page       int64
-	Permission dashboardaccess.PermissionType
-	Sort       model.SortOption
+	FolderUIDs    []string
+	Tags          []string
+	Limit         int64
+	Page          int64
+	Permission    dashboardaccess.PermissionType
+	Sort          model.SortOption
 
 	Filters []any
 }

@@ -964,11 +964,6 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 		filters = append(filters, searchstore.TypeFilter{Dialect: d.store.GetDialect(), Type: query.Type})
 	}
 
-	// nolint:staticcheck
-	if len(query.FolderIds) > 0 {
-		filters = append(filters, searchstore.FolderFilter{IDs: query.FolderIds})
-	}
-
 	if len(query.FolderUIDs) > 0 {
 		filters = append(filters, searchstore.FolderUIDFilter{
 			Dialect:              d.store.GetDialect(),

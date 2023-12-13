@@ -169,7 +169,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 				t.Run("should return dashboards in root and expanded folder", func(t *testing.T) {
 					query := &dashboards.FindPersistedDashboardsQuery{
-						FolderIds: []int64{
+						FolderUIDs: []int64{
 							rootFolderId,
 							folder1.ID,
 						}, // nolint:staticcheck

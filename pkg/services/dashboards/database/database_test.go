@@ -280,7 +280,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 		query := dashboards.FindPersistedDashboardsQuery{
 			OrgId:        1,
-			FolderIds:    []int64{savedFolder.ID}, // nolint:staticcheck
+			FolderUIDs:   []int64{savedFolder.ID}, // nolint:staticcheck
 			SignedInUser: &user.SignedInUser{},
 		}
 
@@ -438,8 +438,8 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	t.Run("Should be able to find a dashboard folder's children", func(t *testing.T) {
 		setup()
 		query := dashboards.FindPersistedDashboardsQuery{
-			OrgId:     1,
-			FolderIds: []int64{savedFolder.ID}, // nolint:staticcheck
+			OrgId:      1,
+			FolderUIDs: []int64{savedFolder.ID}, // nolint:staticcheck
 			SignedInUser: &user.SignedInUser{
 				OrgID:   1,
 				OrgRole: org.RoleEditor,
@@ -456,8 +456,6 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		hit := hits[0]
 		require.Equal(t, hit.ID, savedDash.ID)
 		require.Equal(t, hit.URL, fmt.Sprintf("/d/%s/%s", savedDash.UID, savedDash.Slug))
-		// nolint:staticcheck
-		require.Equal(t, hit.FolderID, savedFolder.ID)
 		require.Equal(t, hit.FolderUID, savedFolder.UID)
 		require.Equal(t, hit.FolderTitle, savedFolder.Title)
 		require.Equal(t, hit.FolderURL, fmt.Sprintf("/dashboards/f/%s/%s", savedFolder.UID, savedFolder.Slug))
@@ -484,8 +482,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		hit := hits[0]
 		require.Equal(t, hit.ID, savedDash.ID)
 		require.Equal(t, hit.URL, fmt.Sprintf("/d/%s/%s", savedDash.UID, savedDash.Slug))
-		// nolint:staticcheck
-		require.Equal(t, hit.FolderID, savedFolder.ID)
+
 		require.Equal(t, hit.FolderUID, savedFolder.UID)
 		require.Equal(t, hit.FolderTitle, savedFolder.Title)
 		require.Equal(t, hit.FolderURL, fmt.Sprintf("/dashboards/f/%s/%s", savedFolder.UID, savedFolder.Slug))
@@ -1053,7 +1050,6 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 				res, err := dashboardStore.FindDashboards(context.Background(), &dashboards.FindPersistedDashboardsQuery{
 					SignedInUser: user,
 					Type:         tc.typ,
-					FolderIds:    tc.folderIDs, // nolint:staticcheck
 					FolderUIDs:   tc.folderUIDs,
 				})
 				require.NoError(t, err)
