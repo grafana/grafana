@@ -39,7 +39,7 @@ labels:
     - enterprise
     - oss
 title: Transform data
-description: Use transformations to manipulate your data before visualizations are applied
+description: Use transformations to rename fields, join series data, apply mathematical operations, and more
 weight: 100
 ---
 
