@@ -15,7 +15,6 @@ import {
 } from '@grafana/data';
 import { DataSourceWithBackend, TemplateSrv, getTemplateSrv } from '@grafana/runtime';
 
-
 import { CloudWatchAnnotationSupport } from './annotationSupport';
 import { DEFAULT_METRICS_QUERY, getDefaultLogsQuery } from './defaultQueries';
 import { isCloudWatchAnnotationQuery, isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from './guards';

@@ -1,10 +1,5 @@
 import { CustomVariableModel } from '@grafana/data';
 import { getBackendSrv, setBackendSrv } from '@grafana/runtime';
-<<<<<<< HEAD
-import { TemplateSrv } from 'app/features/templating/template_srv';
-=======
-import { CustomVariableModel } from 'app/features/variables/types';
->>>>>>> 50c578ff7d (CloudWatch: Remove dependency on templateSrv)
 
 import { ResourcesAPI } from '../resources/ResourcesAPI';
 
