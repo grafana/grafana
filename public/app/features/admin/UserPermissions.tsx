@@ -98,6 +98,6 @@ const getTooltipStyles = (theme: GrafanaTheme2) => ({
     margin-right: ${theme.spacing(0.6)};
   `,
   container: css({
-    marginBottom: theme.spacing(5)
+    marginBottom: theme.spacing(5),
   }),
 });
