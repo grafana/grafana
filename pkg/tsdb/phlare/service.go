@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 )
@@ -32,8 +33,8 @@ type Service struct {
 	im instancemgmt.InstanceManager
 }
 
-func (s *Service) getInstance(pluginCtx backend.PluginContext) (*PhlareDatasource, error) {
-	i, err := s.im.Get(pluginCtx)
+func (s *Service) getInstance(ctx context.Context, pluginCtx backend.PluginContext) (*PhlareDatasource, error) {
+	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +55,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	i, err := s.getInstance(req.PluginContext)
+	i, err := s.getInstance(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +63,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	i, err := s.getInstance(req.PluginContext)
+	i, err := s.getInstance(ctx, req.PluginContext)
 	if err != nil {
 		return err
 	}
@@ -70,7 +71,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 }
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	i, err := s.getInstance(req.PluginContext)
+	i, err := s.getInstance(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +79,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 }
 
 func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	i, err := s.getInstance(req.PluginContext)
+	i, err := s.getInstance(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +87,7 @@ func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStr
 }
 
 func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	i, err := s.getInstance(req.PluginContext)
+	i, err := s.getInstance(ctx, req.PluginContext)
 	if err != nil {
 		return err
 	}
@@ -95,7 +96,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 
 // PublishStream is called when a client sends a message to the stream.
 func (s *Service) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	i, err := s.getInstance(req.PluginContext)
+	i, err := s.getInstance(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
 	}

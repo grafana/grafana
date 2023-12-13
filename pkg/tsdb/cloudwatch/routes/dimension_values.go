@@ -1,22 +1,24 @@
 package routes
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/url"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 )
 
-func DimensionValuesHandler(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
+func DimensionValuesHandler(ctx context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
 	dimensionValuesRequest, err := resources.GetDimensionValuesRequest(parameters)
 	if err != nil {
 		return nil, models.NewHttpError("error in DimensionValuesHandler", http.StatusBadRequest, err)
 	}
 
-	service, err := newListMetricsService(pluginCtx, reqCtxFactory, dimensionValuesRequest.Region)
+	service, err := newListMetricsService(ctx, pluginCtx, reqCtxFactory, dimensionValuesRequest.Region)
 	if err != nil {
 		return nil, models.NewHttpError("error in DimensionValuesHandler", http.StatusInternalServerError, err)
 	}

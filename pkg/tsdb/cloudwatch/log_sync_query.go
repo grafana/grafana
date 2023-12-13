@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
@@ -33,14 +34,14 @@ var executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *
 
 		region := logsQuery.Region
 		if logsQuery.Region == "" || region == defaultRegion {
-			instance, err := e.getInstance(req.PluginContext)
+			instance, err := e.getInstance(ctx, req.PluginContext)
 			if err != nil {
 				return nil, err
 			}
 			logsQuery.Region = instance.Settings.Region
 		}
 
-		logsClient, err := e.getCWLogsClient(req.PluginContext, region)
+		logsClient, err := e.getCWLogsClient(ctx, req.PluginContext, region)
 		if err != nil {
 			return nil, err
 		}
