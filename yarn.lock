@@ -3500,7 +3500,6 @@ __metadata:
     react-inlinesvg: "npm:3.0.2"
     react-loading-skeleton: "npm:3.3.1"
     react-popper: "npm:2.3.0"
-    react-popper-tooltip: "npm:4.4.2"
     react-router-dom: "npm:5.3.3"
     react-select: "npm:5.7.4"
     react-select-event: "npm:^5.1.0"
@@ -5224,7 +5223,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@popperjs/core@npm:2.11.8, @popperjs/core@npm:^2.11.5":
+"@popperjs/core@npm:2.11.8":
   version: 2.11.8
   resolution: "@popperjs/core@npm:2.11.8"
   checksum: ddd16090cde777aaf102940f05d0274602079a95ad9805bd20bc55dcc7c3a2ba1b99dd5c73e5cc2753c3d31250ca52a67d58059459d7d27debb983a9f552936c
@@ -17615,7 +17614,6 @@ __metadata:
     react-loading-skeleton: "npm:3.3.1"
     react-moveable: "npm:0.46.1"
     react-popper: "npm:2.3.0"
-    react-popper-tooltip: "npm:4.4.2"
     react-redux: "npm:8.1.3"
     react-refresh: "npm:0.14.0"
     react-resizable: "npm:3.0.5"
@@ -25756,21 +25754,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-popper-tooltip@npm:4.4.2":
-  version: 4.4.2
-  resolution: "react-popper-tooltip@npm:4.4.2"
-  dependencies:
-    "@babel/runtime": "npm:^7.18.3"
-    "@popperjs/core": "npm:^2.11.5"
-    react-popper: "npm:^2.3.0"
-  peerDependencies:
-    react: ">=16.6.0"
-    react-dom: ">=16.6.0"
-  checksum: 87192cd6a42f2d04826da82b4a55130a0bc50ef5fbf83328e0560b47a27e363dbe5538a66b835fb0309e2f2c011e20b09029c36c8a241fb790605638f212e6aa
-  languageName: node
-  linkType: hard
-
-"react-popper@npm:2.3.0, react-popper@npm:^2.3.0":
+"react-popper@npm:2.3.0":
   version: 2.3.0
   resolution: "react-popper@npm:2.3.0"
   dependencies:
