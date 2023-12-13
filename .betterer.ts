@@ -45,7 +45,7 @@ function countUndocumentedStories() {
 
 /**
  *  Generic regexp pattern matcher, similar to @betterer/regexp.
- *  The only difference is that the positions of the errors are not reported.
+ *  The only difference is that the positions of the errors are not reported, as this may cause a lot of merge conflicts.
  */
 function regexp(pattern: RegExp, issueMessage: string) {
   return new BettererFileTest(async (filePaths, fileTestResult) => {
@@ -54,7 +54,7 @@ function regexp(pattern: RegExp, issueMessage: string) {
         const fileText = await fs.readFile(filePath, 'utf8');
         const matches = fileText.match(pattern);
         if (matches) {
-          // File contents doesn't matter, since we're nto reporting the position
+          // File contents doesn't matter, since we're not reporting the position
           const file = fileTestResult.addFile(filePath, '');
           matches.forEach(() => {
             file.addIssue(0, 0, issueMessage);
