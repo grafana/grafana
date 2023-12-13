@@ -7,7 +7,6 @@ import { getProviderUrl } from '../utils';
 
 type Props = {
   providerId: string;
-  displayName: string;
   enabled: boolean;
   configPath?: string;
   authType?: string;

@@ -74,18 +74,20 @@ export const AuthConfigPageUnconnected = ({
           <ConfigureAuthCTA />
         ) : (
           <Grid gap={3} minColumnWidth={34}>
-            {providerList.map(({ provider, settings }) => (
-              <ProviderCard
-                key={provider}
-                authType={settings.type || 'OAuth'}
-                providerId={provider}
-                displayName={provider}
-                enabled={settings.enabled}
-                onClick={() => onProviderCardClick(provider)}
-                //@ts-expect-error Remove legacy types
-                configPath={settings.configPath}
-              />
-            ))}
+            {providerList
+              // Temporarily filter providers that don't have the UI implemented
+              .filter(({ provider }) => !['grafana_com', 'generic_oauth'].includes(provider))
+              .map(({ provider, settings }) => (
+                <ProviderCard
+                  key={provider}
+                  authType={settings.type || 'OAuth'}
+                  providerId={provider}
+                  enabled={settings.enabled}
+                  onClick={() => onProviderCardClick(provider)}
+                  //@ts-expect-error Remove legacy types
+                  configPath={settings.configPath}
+                />
+              ))}
           </Grid>
         )}
       </Page.Contents>
