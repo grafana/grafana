@@ -85,7 +85,7 @@ func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ss
 		// skipOrgRoleSync: info.SkipOrgRoleSync
 	}
 
-	if info.UseRefreshToken && features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) {
+	if info.UseRefreshToken {
 		appendUniqueScope(config, social.OfflineAccessScope)
 	}
 

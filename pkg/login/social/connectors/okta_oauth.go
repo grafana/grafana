@@ -58,7 +58,7 @@ func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssose
 		skipOrgRoleSync: cfg.OktaSkipOrgRoleSync,
 	}
 
-	if info.UseRefreshToken && features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) {
+	if info.UseRefreshToken {
 		appendUniqueScope(config, social.OfflineAccessScope)
 	}
 
