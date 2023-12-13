@@ -80,6 +80,9 @@ func (p *Provider) Get(ctx context.Context, pluginID string, user identity.Reque
 		pCtx.AppInstanceSettings = appSettings
 	}
 
+	settings := p.pluginEnvVars.GetConfigMap(ctx, pluginID, plugin.ExternalService)
+	pCtx.GrafanaConfig = backend.NewGrafanaCfg(settings)
+
 	ua, err := useragent.New(p.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
 	if err != nil {
 		p.logger.Warn("Could not create user agent", "error", err)
