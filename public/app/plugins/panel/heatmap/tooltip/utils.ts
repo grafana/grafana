@@ -33,6 +33,8 @@ const conversions: Record<string, number> = {
   ms: 1,
 };
 
+const noPluralize = new Set(['ms', 's', 'm', 'h']);
+
 // @TODO: display "~ 1 year/month"?
 export const formatMilliseconds = (milliseconds: number) => {
   let value = 1;
@@ -45,7 +47,7 @@ export const formatMilliseconds = (milliseconds: number) => {
     }
   }
 
-  const plural = value !== 1 && !['ms', 's', 'm', 'h'].includes(unit);
+  const plural = value !== 1 && !noPluralize.has(unit);
   const unitString = plural ? unit + 's' : unit;
 
   return `${value} ${unitString}`;
