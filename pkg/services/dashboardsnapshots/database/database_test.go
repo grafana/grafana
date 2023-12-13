@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -115,9 +116,11 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 			cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{
 				Key:       "strangesnapshotwithuserid0",
 				DeleteKey: "adeletekey",
-				Dashboard: simplejson.NewFromAny(map[string]any{
-					"hello": "mupp",
-				}),
+				DashboardCreateCommand: v0alpha1.DashboardCreateCommand{
+					Dashboard: simplejson.NewFromAny(map[string]any{
+						"hello": "mupp",
+					}),
+				},
 				UserID: 0,
 				OrgID:  1,
 			}
@@ -193,12 +196,14 @@ func createTestSnapshot(t *testing.T, dashStore *DashboardSnapshotStore, key str
 	cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{
 		Key:       key,
 		DeleteKey: "delete" + key,
-		Dashboard: simplejson.NewFromAny(map[string]any{
-			"hello": "mupp",
-		}),
-		UserID:  1000,
-		OrgID:   1,
-		Expires: expires,
+		DashboardCreateCommand: v0alpha1.DashboardCreateCommand{
+			Expires: expires,
+			Dashboard: simplejson.NewFromAny(map[string]any{
+				"hello": "mupp",
+			}),
+		},
+		UserID: 1000,
+		OrgID:  1,
 	}
 	result, err := dashStore.CreateDashboardSnapshot(context.Background(), &cmd)
 	require.NoError(t, err)

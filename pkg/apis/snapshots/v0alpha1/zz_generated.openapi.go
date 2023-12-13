@@ -17,6 +17,8 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
+		"github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1.DashboardCreateCommand":         schema_pkg_apis_snapshots_v0alpha1_DashboardCreateCommand(ref),
+		"github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1.DashboardCreateResponse":        schema_pkg_apis_snapshots_v0alpha1_DashboardCreateResponse(ref),
 		"github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1.DashboardSnapshot":              schema_pkg_apis_snapshots_v0alpha1_DashboardSnapshot(ref),
 		"github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1.DashboardSnapshotList":          schema_pkg_apis_snapshots_v0alpha1_DashboardSnapshotList(ref),
 		"github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1.DashboardSnapshotWithDeleteKey": schema_pkg_apis_snapshots_v0alpha1_DashboardSnapshotWithDeleteKey(ref),
@@ -80,6 +82,124 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 	}
 }
 
+func schema_pkg_apis_snapshots_v0alpha1_DashboardCreateCommand(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "These are the values expected to be sent from an end user",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Snapshot name required:false",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"dashboard": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The complete dashboard model. required:true",
+						},
+					},
+					"expires": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When the snapshot should expire in seconds in seconds. Default is never to expire. required:false default:0",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"external": {
+						SchemaProps: spec.SchemaProps{
+							Description: "these are passed when storing an external snapshot ref Save the snapshot on an external server rather than locally. required:false default: false",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"name", "dashboard", "expires", "external"},
+			},
+		},
+		Dependencies: []string{},
+	}
+}
+
+func schema_pkg_apis_snapshots_v0alpha1_DashboardCreateResponse(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "The create response",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"key": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The unique key",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"deleteKey": {
+						SchemaProps: spec.SchemaProps{
+							Description: "A unique key that will allow delete",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Absolute URL to show the dashboard",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"deleteUrl": {
+						SchemaProps: spec.SchemaProps{
+							Description: "URL that will delete the response",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"key", "deleteKey", "url", "deleteUrl"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_snapshots_v0alpha1_DashboardSnapshot(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -106,7 +226,7 @@ func schema_pkg_apis_snapshots_v0alpha1_DashboardSnapshot(ref common.ReferenceCa
 							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
-					"info": {
+					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Snapshot summary info",
 							Default:     map[string]interface{}{},
@@ -114,7 +234,7 @@ func schema_pkg_apis_snapshots_v0alpha1_DashboardSnapshot(ref common.ReferenceCa
 						},
 					},
 				},
-				Required: []string{"info"},
+				Required: []string{"spec"},
 			},
 		},
 		Dependencies: []string{
@@ -196,7 +316,7 @@ func schema_pkg_apis_snapshots_v0alpha1_DashboardSnapshotWithDeleteKey(ref commo
 							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
-					"info": {
+					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Snapshot summary info",
 							Default:     map[string]interface{}{},
@@ -211,7 +331,7 @@ func schema_pkg_apis_snapshots_v0alpha1_DashboardSnapshotWithDeleteKey(ref commo
 						},
 					},
 				},
-				Required: []string{"info"},
+				Required: []string{"spec"},
 			},
 		},
 		Dependencies: []string{
@@ -256,6 +376,7 @@ func schema_pkg_apis_snapshots_v0alpha1_FullDashboardSnapshot(ref common.Referen
 					"dashboard": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The raw dashboard (??? openapi ???)",
+							Ref:         ref("github.com/grafana/grafana/pkg/components/simplejson.Json"),
 						},
 					},
 				},
@@ -263,7 +384,7 @@ func schema_pkg_apis_snapshots_v0alpha1_FullDashboardSnapshot(ref common.Referen
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1.SnapshotInfo", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1.SnapshotInfo", "github.com/grafana/grafana/pkg/components/simplejson.Json", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 

@@ -168,10 +168,11 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 					Description: "longer description here?",
 					Post: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
-							Parameters: []*spec3.Parameter{
-								{ParameterProps: spec3.ParameterProps{
-									Name: "a",
-								}},
+							Tags: []string{"Create"},
+							RequestBody: &spec3.RequestBody{
+								RequestBodyProps: spec3.RequestBodyProps{
+									Description: "dashboard payload",
+								},
 							},
 						},
 					},
@@ -182,24 +183,34 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 						w.WriteHeader(500)
 						return
 					}
+					vars := mux.Vars(r)
+					info, err := request.ParseNamespace(vars["namespace"])
+					if err != nil {
+						_, _ = w.Write([]byte("expected namespace"))
+						w.WriteHeader(400)
+						return
+					}
+					if info.OrgID != user.OrgID {
+						_, _ = w.Write([]byte("org id mismatch"))
+						w.WriteHeader(401)
+						return
+					}
 					wrap := &contextmodel.ReqContext{
-						Logger:       b.logger,
-						Context:      &web.Context{},
+						Logger: b.logger,
+						Context: &web.Context{
+							Req:  r,
+							Resp: web.NewResponseWriter(r.Method, w),
+						},
 						SignedInUser: user,
 					}
-					wrap.Req = r
-					wrap.Resp = web.NewResponseWriter(r.Method, w)
-
-					vars := mux.Vars(r)
-					opts, err := b.options(vars["namespace"])
+					opts, err := b.options(info.Value)
 					if err != nil {
 						wrap.JsonApiErr(http.StatusBadRequest, "error getting options", err)
 						return
 					}
-					rrr := dashboardsnapshots.CreateDashboardSnapshot(wrap, opts.Spec, b.service)
-					if rrr != nil {
-						rrr.WriteTo(wrap)
-					}
+
+					// This also writes the response
+					dashboardsnapshots.CreateDashboardSnapshot(wrap, opts.Spec, b.service)
 				},
 			},
 		},

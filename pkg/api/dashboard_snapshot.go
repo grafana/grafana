@@ -44,8 +44,8 @@ func (hs *HTTPServer) GetSharingOptions(c *contextmodel.ReqContext) {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) CreateDashboardSnapshot(c *contextmodel.ReqContext) response.Response {
-	return dashboardsnapshots.CreateDashboardSnapshot(c, v0alpha1.SnapshotSharingOptions{
+func (hs *HTTPServer) CreateDashboardSnapshot(c *contextmodel.ReqContext) {
+	dashboardsnapshots.CreateDashboardSnapshot(c, v0alpha1.SnapshotSharingOptions{
 		SnapshotsEnabled:     hs.Cfg.SnapshotEnabled,
 		ExternalEnabled:      hs.Cfg.ExternalEnabled,
 		ExternalSnapshotName: hs.Cfg.ExternalSnapshotName,

@@ -86,6 +86,49 @@ type SnapshotSharingOptions struct {
 	ExternalEnabled      bool   `json:"externalEnabled,omitempty"`
 }
 
+// These are the values expected to be sent from an end user
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type DashboardCreateCommand struct {
+	metav1.TypeMeta `json:",inline"`
+
+	// Snapshot name
+	// required:false
+	Name string `json:"name"`
+
+	// The complete dashboard model.
+	// required:true
+	Dashboard *simplejson.Json `json:"dashboard" binding:"Required"`
+
+	// When the snapshot should expire in seconds in seconds. Default is never to expire.
+	// required:false
+	// default:0
+	Expires int64 `json:"expires"`
+
+	// these are passed when storing an external snapshot ref
+	// Save the snapshot on an external server rather than locally.
+	// required:false
+	// default: false
+	External bool `json:"external"`
+}
+
+// The create response
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type DashboardCreateResponse struct {
+	metav1.TypeMeta `json:",inline"`
+
+	// The unique key
+	Key string `json:"key"`
+
+	// A unique key that will allow delete
+	DeleteKey string `json:"deleteKey"`
+
+	// Absolute URL to show the dashboard
+	URL string `json:"url"`
+
+	// URL that will delete the response
+	DeleteURL string `json:"deleteUrl"`
+}
+
 // Represents an options object that must be named for each namespace/team/user
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type SharingOptions struct {

@@ -18,7 +18,21 @@ export interface SnapshotSharingOptions {
   snapshotEnabled: boolean;
 }
 
+export interface SnapshotCreateCommand {
+  dashboard: object;
+  name: string;
+  expires?: number;
+  external?: boolean;
+}
+
+export interface SnapshotCreateResponse {
+  key: string;
+  url: string;
+  deleteUrl: string;
+}
+
 export interface DashboardSnapshotSrv {
+  create: (cmd: SnapshotCreateCommand) => Promise<SnapshotCreateResponse>;
   getSnapshots: () => Promise<Snapshot[]>;
   getSharingOptions: () => Promise<SnapshotSharingOptions>;
   deleteSnapshot: (key: string) => Promise<void>;
@@ -26,6 +40,7 @@ export interface DashboardSnapshotSrv {
 }
 
 const legacyDashboardSnapshotSrv: DashboardSnapshotSrv = {
+  create: (cmd: SnapshotCreateCommand) => getBackendSrv().post<SnapshotCreateResponse>('/api/snapshots', cmd),
   getSnapshots: () => getBackendSrv().get<Snapshot[]>('/api/dashboard/snapshots'),
   getSharingOptions: () => getBackendSrv().get<SnapshotSharingOptions>('/api/snapshot/shared-options'),
   deleteSnapshot: (key: string) => getBackendSrv().delete('/api/snapshots/' + key),
@@ -72,6 +87,10 @@ class K8sAPI implements DashboardSnapshotSrv {
   constructor() {
     const ns = contextSrv.user.orgId === 1 ? 'default' : `org-${contextSrv.user.orgId}`;
     this.url = `/apis/${this.apiVersion}/namespaces/${ns}/dashsnaps`;
+  }
+
+  async create(cmd: SnapshotCreateCommand) {
+    return getBackendSrv().post<SnapshotCreateResponse>(this.url + '/create', cmd);
   }
 
   async getSnapshots(): Promise<Snapshot[]> {
