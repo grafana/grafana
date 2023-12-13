@@ -1,4 +1,4 @@
-import { SelectableValue } from '@grafana/data';
+import { IconName, SelectableValue } from '@grafana/data';
 import { Settings } from 'app/types';
 
 export interface AuthProviderInfo {
@@ -26,11 +26,11 @@ export type SSOProviderSettingsBase = {
   emailAttributeName?: string;
   emailAttributePath?: string;
   emptyScopes?: boolean;
-  enabled?: boolean;
+  enabled: boolean;
   extra?: Record<string, any>;
   groupsAttributePath?: string;
   hostedDomain?: string;
-  icon?: string;
+  icon?: IconName;
   name?: string;
   roleAttributePath?: string;
   roleAttributeStrict?: boolean;
@@ -57,7 +57,7 @@ export type SSOProvider = {
     allowedOrganizations: string;
 
     // Legacy fields
-    configPath?: string;
+    //configPath?: string;
   };
 };
 

@@ -3,7 +3,7 @@ import { SelectableValue } from '@grafana/data';
 import { SSOProvider } from './types';
 
 /** Map providers to their settings */
-export const fields: Record<SSOProvider['provider'], string[]> = {
+export const fields: Record<SSOProvider['provider'], Array<keyof SSOProvider['settings']>> = {
   github: ['clientId', 'clientSecret', 'teamIds', 'allowedOrganizations'],
   google: ['clientId', 'clientSecret', 'allowedDomains'],
   gitlab: ['clientId', 'clientSecret', 'allowedOrganizations', 'teamIds'],

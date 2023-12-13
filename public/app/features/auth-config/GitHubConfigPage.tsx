@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { AppEvents, NavModelItem } from '@grafana/data';
+import { AppEvents, NavModelItem, SelectableValue } from '@grafana/data';
 import { getAppEvents, getBackendSrv, isFetchError } from '@grafana/runtime';
 import { Button, Field, Input, InputControl, LinkButton, Select, Stack, Switch } from '@grafana/ui';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
@@ -17,12 +17,22 @@ import { SSOProvider, SSOProviderDTO } from './types';
 import { dataToDTO, dtoToData } from './utils';
 
 const appEvents = getAppEvents();
-const pageNav: NavModelItem = {
-  text: 'GitHub',
-  subTitle:
-    'To configure GitHub OAuth2 you must register your application with GitHub. GitHub will generate a Client ID and Client Secret for you to use.',
-  icon: 'github',
-  id: 'GitHub',
+const getPageNav = (provider?: SSOProvider): NavModelItem => {
+  if (!provider) {
+    return {
+      text: 'Authentication',
+      subTitle: 'Configure authentication providers',
+      icon: 'shield',
+      id: 'authentication',
+    };
+  }
+
+  return {
+    text: provider.settings.name || '',
+    subTitle: `To configure ${provider.settings.name} OAuth2 you must register your application with ${provider.settings.name}. ${provider.settings.name} will generate a Client ID and Client Secret for you to use.`,
+    icon: provider.settings.icon || 'shield',
+    id: provider.provider,
+  };
 };
 
 type ProviderData = Pick<SSOProviderDTO, 'clientId' | 'clientSecret' | 'enabled' | 'teamIds' | 'allowedOrganizations'>;
@@ -31,10 +41,10 @@ interface RouteProps extends GrafanaRouteComponentProps<{ provider: string }> {}
 
 function mapStateToProps(state: StoreState, props: RouteProps) {
   const { isLoading, providers } = state.authConfig;
-  const settings = providers.find(({ provider }) => provider === 'github');
   const { provider } = props.match.params;
+  const config = providers.find((config) => config.provider === provider);
   return {
-    settings,
+    config,
     isLoading,
     provider,
   };
@@ -50,15 +60,14 @@ export type Props = ConnectedProps<typeof connector>;
 /**
  * Separate the Page logic from the Content logic for easier testing.
  */
-export const GitHubConfigPage = ({ settings, loadSettings, isLoading, provider }: Props) => {
+export const GitHubConfigPage = ({ config, loadSettings, isLoading, provider }: Props) => {
+  const pageNav = getPageNav(config);
   useEffect(() => {
-    if (!settings) {
-      loadSettings();
-    }
-  }, [settings, loadSettings]);
+    loadSettings();
+  }, [loadSettings]);
   return (
     <Page navId="authentication" pageNav={pageNav}>
-      <GitHubConfig settings={settings} isLoading={isLoading} provider={provider} />
+      <GitHubConfig config={config} isLoading={isLoading} provider={provider} />
     </Page>
   );
 };
@@ -66,22 +75,23 @@ export const GitHubConfigPage = ({ settings, loadSettings, isLoading, provider }
 export default connector(GitHubConfigPage);
 
 interface GitHubConfigProps {
-  settings?: SSOProvider;
+  config?: SSOProvider;
   isLoading?: boolean;
   provider: string;
 }
 
-export const GitHubConfig = ({ settings, provider, isLoading }: GitHubConfigProps) => {
+export const GitHubConfig = ({ config, provider, isLoading }: GitHubConfigProps) => {
   const {
     register,
     handleSubmit,
     control,
+    reset,
+    watch,
     formState: { errors, isDirty },
-  } = useForm({ defaultValues: dataToDTO(settings) });
+  } = useForm({ defaultValues: dataToDTO(config) });
   const [isSaving, setIsSaving] = useState(false);
-  const providerFields: Array<keyof SSOProviderDTO> = fields[provider];
-
-  const onSubmit = async (data: ProviderData) => {
+  const providerFields = fields[provider];
+  const onSubmit = async (data: SSOProviderDTO) => {
     setIsSaving(true);
     const requestData = dtoToData<ProviderData>(data);
     try {
@@ -106,7 +116,7 @@ export const GitHubConfig = ({ settings, provider, isLoading }: GitHubConfigProp
     }
   };
 
-  const renderField = (name: keyof SSOProviderDTO, fieldData: FieldData) => {
+  const renderField = (name: keyof SSOProvider['settings'], fieldData: FieldData) => {
     switch (fieldData.type) {
       case 'text':
         return (
@@ -121,7 +131,7 @@ export const GitHubConfig = ({ settings, provider, isLoading }: GitHubConfigProp
           </Field>
         );
       case 'select':
-        const options = (settings?.[name] || '').split(',').map((v) => ({ value: v, label: v }));
+        const options = watch(name) as SelectableValue[];
         return (
           <Field label={fieldData.label} htmlFor={name} key={name}>
             <InputControl
@@ -157,7 +167,12 @@ export const GitHubConfig = ({ settings, provider, isLoading }: GitHubConfigProp
       <Stack grow={1} direction={'column'}>
         <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: '600px' }}>
           <>
-            <FormPrompt confirmRedirect={isDirty} onDiscard={() => {}} />
+            <FormPrompt
+              confirmRedirect={isDirty}
+              onDiscard={() => {
+                reset();
+              }}
+            />
             <Field label="Enabled">
               <Switch {...register('enabled')} id="enabled" label={'Enabled'} />
             </Field>
