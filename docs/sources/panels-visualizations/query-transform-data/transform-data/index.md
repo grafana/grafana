@@ -60,7 +60,7 @@ The following steps guide you in adding a transformation to data. This documenta
    For information about available calculations, refer to [Calculation types][].
 1. To apply another transformation, click **Add transformation**.
    This transformation acts on the result set returned by the previous transformation.
-   {{< figure src="/static/img/docs/transformations/transformations-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+   {{< figure src="/static/img/docs/transformations/transformations-7-0.png" class="docs-image--no-shadow" max-width= "1100px" alt="The Transform tab in the panel editor" >}}
 
 ## Debug a transformation
 
@@ -68,13 +68,13 @@ To see the input and the output result sets of the transformation, click the bug
 
 The input and output results sets can help you debug a transformation.
 
-{{< figure src="/static/img/docs/transformations/debug-transformations-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/debug-transformations-7-0.png" class="docs-image--no-shadow" max-width= "1100px" alt="The debug transformation screen with the debug icon highlighted" >}}
 
 ## Disable a transformation
 
 You can disable or hide one or more transformations by clicking on the eye icon on the top right side of the transformation row. This disables the applied actions of that specific transformation and can help to identify issues when you change several transformations one after another.
 
-{{< figure src="/static/img/docs/transformations/screenshot-example-disable-transformation.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/screenshot-example-disable-transformation.png" class="docs-image--no-shadow" max-width= "1100px" alt="A transformation row with the disable transformation icon highlighted" >}}
 
 ## Filter a transformation
 
@@ -96,7 +96,7 @@ We recommend that you remove transformations that you don't need. When you delet
 1. Click the **Transform** tab.
 1. Click the trash icon next to the transformation you want to delete.
 
-{{< figure src="/static/img/docs/transformations/screenshot-example-remove-transformation.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/screenshot-example-remove-transformation.png" class="docs-image--no-shadow" max-width= "1100px" alt="A transformation row with the Remove icon highlighted" >}}
 
 ## Transformation functions
 
@@ -125,7 +125,7 @@ Use this transformation to add a new field calculated from two other fields. Eac
 
 In the example below, I added two fields together and named them Sum.
 
-{{< figure src="/static/img/docs/transformations/add-field-from-calc-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/add-field-from-calc-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" alt="A stat visualization including one field called Sum" >}}
 
 ### Concatenate fields
 
@@ -331,7 +331,7 @@ Grafana displays the query identification letters in dark gray text. Click a que
 
 In the example below, the panel has three queries (A, B, C). I removed the B query from the visualization.
 
-{{< figure src="/static/img/docs/transformations/filter-by-query-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/filter-by-query-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" alt="A stat visualization with results from two queries, A and C" >}}
 
 {{% admonition type="note" %}}
 This transformation is not available for Graphite because this data source does not support correlating returned data with queries.
@@ -592,11 +592,11 @@ The result after applying the outer join transformation looks like the following
 
 In the following example, a template query displays time series data from multiple servers in a table visualization. The results of only one query can be viewed at a time.
 
-{{< figure src="/static/img/docs/transformations/join-fields-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/join-fields-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px"alt="A table visualization showing results for one server" >}}
 
 I applied a transformation to join the query results using the time field. Now I can run calculations, combine, and organize the results in this new table.
 
-{{< figure src="/static/img/docs/transformations/join-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/join-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" alt="A table visualization showing results for multiple servers"  >}}
 
 ### Join by labels
 
@@ -749,7 +749,7 @@ Grafana displays a list of fields returned by the query. You can:
 
 In the example below, I hid the value field and renamed Max and Min.
 
-{{< figure src="/static/img/docs/transformations/organize-fields-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/organize-fields-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" alt="A stat visualization with two fields called Minimum and Maximum" >}}
 
 ### Partition by values
 
@@ -846,11 +846,11 @@ You can specify a regular expression, which is only applied to matches, along wi
 
 In the following example, we are stripping the prefix from event types. In the before image, you can see everything is prefixed with `system.`
 
-{{< figure src="/static/img/docs/transformations/rename-by-regex-before-7-3.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/rename-by-regex-before-7-3.png" class="docs-image--no-shadow" max-width= "1100px" alt="A bar chart with long series names" >}}
 
 With the transformation applied, you can see we are left with just the remainder of the string.
 
-{{< figure src="/static/img/docs/transformations/rename-by-regex-after-7-3.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/rename-by-regex-after-7-3.png" class="docs-image--no-shadow" max-width= "1100px" alt="A bar chart with shortened series names" >}}
 
 ### Rows to fields
 
