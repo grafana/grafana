@@ -75,11 +75,7 @@ export abstract class BigValueLayout {
 
   getValueStyles(percentChange?: boolean): CSSProperties {
     const valueFontSize = this.valueFontSize;
-    const fontSize = percentChange
-      ? this.props.parentOrientation === VizOrientation.Horizontal
-        ? valueFontSize / 2
-        : valueFontSize / 3
-      : valueFontSize;
+    const fontSize = percentChange ? valueFontSize / 2 : valueFontSize;
 
     const styles: CSSProperties = {
       fontSize: fontSize,
