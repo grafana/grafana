@@ -76,7 +76,21 @@ func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, c
 
 		// If the Alertmanager was marked as ready but the sync interval has elapsed, sync the Alertmanagers.
 		if time.Since(fam.lastSync) >= fam.syncInterval {
-			fam.syncStateAndConfig(ctx, config)
+			var syncErr bool
+			fam.log.Debug("Syncing configuration and state with the remote Alertmanager", "lastSync", fam.lastSync)
+			if err := fam.remote.CompareAndSendConfiguration(ctx, config); err != nil {
+				fam.log.Error("Unable to upload the configuration to the remote Alertmanager", "err", err)
+				syncErr = true
+			}
+			if err := fam.remote.CompareAndSendState(ctx); err != nil {
+				fam.log.Error("Unable to upload the state to the remote Alertmanager", "err", err)
+				syncErr = true
+			}
+			fam.log.Debug("Finished syncing configuration and state with the remote Alertmanager")
+
+			if !syncErr {
+				fam.lastSync = time.Now()
+			}
 		}
 	}()
 
@@ -84,24 +98,6 @@ func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, c
 	err := fam.internal.ApplyConfig(ctx, config)
 	wg.Wait()
 	return err
-}
-
-func (fam *RemoteSecondaryForkedAlertmanager) syncStateAndConfig(ctx context.Context, config *models.AlertConfiguration) {
-	var syncErr bool
-	fam.log.Debug("Syncing configuration and state with the remote Alertmanager", "lastSync", fam.lastSync)
-	if err := fam.remote.CompareAndSendConfiguration(ctx, config); err != nil {
-		fam.log.Error("Unable to upload the configuration to the remote Alertmanager", "err", err)
-		syncErr = true
-	}
-	if err := fam.remote.CompareAndSendState(ctx); err != nil {
-		fam.log.Error("Unable to upload the state to the remote Alertmanager", "err", err)
-		syncErr = true
-	}
-	fam.log.Debug("Finished syncing configuration and state with the remote Alertmanager")
-
-	if !syncErr {
-		fam.lastSync = time.Now()
-	}
 }
 
 // SaveAndApplyConfig is only called on the internal Alertmanager when running in remote secondary mode.
