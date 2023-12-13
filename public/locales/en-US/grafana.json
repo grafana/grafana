@@ -25,6 +25,9 @@
       "user": "User"
     }
   },
+  "bouncing-loader": {
+    "label": "Loading"
+  },
   "browse-dashboards": {
     "action": {
       "cancel-button": "Cancel",
@@ -1089,9 +1092,6 @@
       "interval-selected": "Set auto refresh interval",
       "turned-off": "Auto refresh off"
     }
-  },
-  "route-fallback": {
-    "loading-text": "Loading"
   },
   "search": {
     "actions": {

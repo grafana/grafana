@@ -25,6 +25,9 @@
       "user": "用户"
     }
   },
+  "bouncing-loader": {
+    "label": ""
+  },
   "browse-dashboards": {
     "action": {
       "cancel-button": "取消",
@@ -1083,9 +1086,6 @@
       "interval-selected": "设置自动刷新间隔",
       "turned-off": "自动刷新关闭"
     }
-  },
-  "route-fallback": {
-    "loading-text": ""
   },
   "search": {
     "actions": {

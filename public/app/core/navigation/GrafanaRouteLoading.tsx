@@ -5,25 +5,18 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 
-import { t } from '../internationalization';
+import { BouncingLoader } from '../components/BouncingLoader/BouncingLoader';
 
 export function GrafanaRouteLoading() {
   const styles = useStyles2(getStyles);
 
   return (
     <div
-      className={cx('preloader', styles.loadingPage, {
+      className={cx(styles.loadingPage, {
         [styles.loadingPageDockedNav]: config.featureToggles.dockedMegaMenu,
       })}
-      aria-live="polite"
-      role="status"
-      aria-label={t('route-fallback.loading-text', 'Loading')}
     >
-      <div className="preloader__enter">
-        <div className="preloader__bounce">
-          <div className="preloader__logo"></div>
-        </div>
-      </div>
+      <BouncingLoader />
     </div>
   );
 }

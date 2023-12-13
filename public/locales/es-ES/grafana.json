@@ -25,6 +25,9 @@
       "user": "Usuario"
     }
   },
+  "bouncing-loader": {
+    "label": ""
+  },
   "browse-dashboards": {
     "action": {
       "cancel-button": "Cancelar",
@@ -1095,9 +1098,6 @@
       "interval-selected": "Establecer intervalo de actualización automática",
       "turned-off": "Actualización automática desactivada"
     }
-  },
-  "route-fallback": {
-    "loading-text": ""
   },
   "search": {
     "actions": {

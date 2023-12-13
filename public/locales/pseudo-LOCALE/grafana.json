@@ -25,6 +25,9 @@
       "user": "Ůşęř"
     }
   },
+  "bouncing-loader": {
+    "label": "Ŀőäđįŉģ"
+  },
   "browse-dashboards": {
     "action": {
       "cancel-button": "Cäŉčęľ",
@@ -1089,9 +1092,6 @@
       "interval-selected": "Ŝęŧ äūŧő řęƒřęşĥ įŉŧęřväľ",
       "turned-off": "Åūŧő řęƒřęşĥ őƒƒ"
     }
-  },
-  "route-fallback": {
-    "loading-text": "Ŀőäđįŉģ"
   },
   "search": {
     "actions": {
