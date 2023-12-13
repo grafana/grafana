@@ -14,7 +14,7 @@ import {
   VariableSupportType,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { setPluginImportUtils } from '@grafana/runtime';
+import { getPluginLinkExtensions, setPluginImportUtils } from '@grafana/runtime';
 import {
   MultiValueVariable,
   SceneDataLayers,
@@ -148,7 +148,11 @@ jest.mock('@grafana/runtime', () => ({
       },
     },
   },
+  setPluginExtensionGetter: jest.fn(),
+  getPluginLinkExtensions: jest.fn(),
 }));
+
+const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
 
 jest.mock('@grafana/scenes', () => ({
   ...jest.requireActual('@grafana/scenes'),
@@ -159,6 +163,36 @@ jest.mock('@grafana/scenes', () => ({
 }));
 
 describe('transformSceneToSaveModel', () => {
+  beforeEach(() => {
+    getPluginLinkExtensionsMock.mockRestore();
+    getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
+  });
+
+  describe('Given a simple scene with custom settings', () => {
+    it('Should transform back to persisted model', () => {
+      const dashboardWithCustomSettings = {
+        ...dashboard_to_load1,
+        title: 'My custom title',
+        description: 'My custom description',
+        tags: ['tag1', 'tag2'],
+        timezone: 'America/New_York',
+        weekStart: 'monday',
+        graphTooltip: 1,
+        editable: false,
+        timepicker: {
+          ...dashboard_to_load1.timepicker,
+          refresh_intervals: ['5m', '15m', '30m', '1h'],
+          time_options: ['5m', '15m', '30m'],
+          hidden: true,
+        },
+      };
+      const scene = transformSaveModelToScene({ dashboard: dashboardWithCustomSettings as any, meta: {} });
+      const saveModel = transformSceneToSaveModel(scene);
+
+      expect(saveModel).toMatchSnapshot();
+    });
+  });
+
   describe('Given a simple scene with variables', () => {
     it('Should transform back to persisted model', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });

@@ -103,7 +103,7 @@ type AlertRulePayload struct {
 	Body ProvisionedAlertRule
 }
 
-// swagger:parameters RoutePostAlertRule RoutePutAlertRule
+// swagger:parameters RoutePostAlertRule RoutePutAlertRule RouteDeleteAlertRule RoutePutAlertRuleGroup
 type AlertRuleHeaders struct {
 	// in:header
 	XDisableProvenance string `json:"X-Disable-Provenance"`

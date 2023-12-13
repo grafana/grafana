@@ -11,6 +11,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ngalert"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -43,23 +45,25 @@ type lokiQueryClient interface {
 	RangeQuery(ctx context.Context, query string, from, to, limit int64) (historian.QueryRes, error)
 }
 
+// LokiHistorianStore is a read store that queries Loki for alert state history.
 type LokiHistorianStore struct {
 	client lokiQueryClient
 	db     db.DB
 	log    log.Logger
 }
 
-func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, db db.DB, log log.Logger) *LokiHistorianStore {
+func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.FeatureToggles, db db.DB, log log.Logger) *LokiHistorianStore {
+	if !useStore(cfg, ft) {
+		return nil
+	}
 	lokiCfg, err := historian.NewLokiConfig(cfg)
 	if err != nil {
 		// this config error is already handled elsewhere
 		return nil
 	}
-	req := historian.NewRequester()
-	met := ngmetrics.NewHistorianMetrics(prometheus.DefaultRegisterer, subsystem)
 
 	return &LokiHistorianStore{
-		client: historian.NewLokiClient(lokiCfg, req, met, log),
+		client: historian.NewLokiClient(lokiCfg, historian.NewRequester(), ngmetrics.NewHistorianMetrics(prometheus.DefaultRegisterer, subsystem), log),
 		db:     db,
 		log:    log,
 	}
@@ -340,4 +344,21 @@ func (r *ruleCache) get(ctx context.Context, query ruleQuery) (*ngmodels.AlertRu
 	r.cache[query.UID] = rule
 
 	return rule, nil
+func useStore(cfg setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.FeatureToggles) bool {
+	if !cfg.Enabled {
+		return false
+	}
+
+	// Override config based on feature toggles.
+	// We pass in a no-op logger here since this function is also called during ngalert init,
+	// and we don't want to log the same problem twice.
+	ngalert.ApplyStateHistoryFeatureToggles(&cfg, ft, log.NewNopLogger())
+
+	backend, err := historian.ParseBackendType(cfg.Backend)
+	if err != nil {
+		return false
+	}
+
+	// We should only query Loki if annotations do no exist in the database.
+	return backend == historian.BackendTypeLoki
 }

@@ -3169,7 +3169,7 @@ __metadata:
     "@grafana/data": "npm:10.3.0-pre"
     "@grafana/tsconfig": "npm:^1.2.0-rc1"
     "@grafana/ui": "npm:10.3.0-pre"
-    "@leeoniya/ufuzzy": "npm:1.0.8"
+    "@leeoniya/ufuzzy": "npm:1.0.13"
     "@rollup/plugin-node-resolve": "npm:15.2.3"
     "@testing-library/jest-dom": "npm:^6.1.2"
     "@testing-library/react": "npm:14.0.0"
@@ -3215,12 +3215,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-logql@npm:0.2.1":
-  version: 0.2.1
-  resolution: "@grafana/lezer-logql@npm:0.2.1"
+"@grafana/lezer-logql@npm:0.2.2":
+  version: 0.2.2
+  resolution: "@grafana/lezer-logql@npm:0.2.2"
   peerDependencies:
     "@lezer/lr": ^1.0.0
-  checksum: e3669e8e1b41eb87547756fb592681aec9d728397b7bb0ccd4cdb875632fabd3469321b6565da814f5700dece28918a1770313da2364a5bc6e3745ef96d10461
+  checksum: 4a2aa48c67a75a246a13e62854470aa36f15087e212b81cdba5fa1ac913a1bdd47da374fa47576c7db670a7333af460aff95465c61ed3cd48a77df6b918d812c
   languageName: node
   linkType: hard
 
@@ -3302,9 +3302,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:1.24.6":
-  version: 1.24.6
-  resolution: "@grafana/scenes@npm:1.24.6"
+"@grafana/scenes@npm:1.27.0":
+  version: 1.27.0
+  resolution: "@grafana/scenes@npm:1.27.0"
   dependencies:
     "@grafana/e2e-selectors": "npm:10.0.2"
     react-grid-layout: "npm:1.3.4"
@@ -3316,7 +3316,7 @@ __metadata:
     "@grafana/runtime": 10.0.3
     "@grafana/schema": 10.0.3
     "@grafana/ui": 10.0.3
-  checksum: 71df3f23f2a9083643ff2344960c01bcd87e7ff8c0802c8074e11d2b1acc9b99c0a6a3239c75db47b2507493beb83374dca4e02787b486d45f4dcbd5400a4055
+  checksum: e19aa28d6297316676cb4805dde9bc3a52d2d28a3231e2fcdedf610356fc5c1b24eecfec36e8089cf4defc388705d47fce32736f8a86c9176e5bd4e4b7da9acb
   languageName: node
   linkType: hard
 
@@ -3366,7 +3366,7 @@ __metadata:
     "@grafana/faro-web-sdk": "npm:1.2.1"
     "@grafana/schema": "npm:10.3.0-pre"
     "@grafana/tsconfig": "npm:^1.2.0-rc1"
-    "@leeoniya/ufuzzy": "npm:1.0.8"
+    "@leeoniya/ufuzzy": "npm:1.0.13"
     "@monaco-editor/react": "npm:4.6.0"
     "@popperjs/core": "npm:2.11.8"
     "@react-aria/button": "npm:3.8.0"
@@ -4177,10 +4177,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@leeoniya/ufuzzy@npm:1.0.8":
-  version: 1.0.8
-  resolution: "@leeoniya/ufuzzy@npm:1.0.8"
-  checksum: b5068593022e322e395e7cb2c134b4b040375165d0953d3f40f8dcd4bb84fe56c39c08ee0dede056b4b8ed1060d39f5bf6c821dab4ae271e8e5befc81c33d7c6
+"@leeoniya/ufuzzy@npm:1.0.13":
+  version: 1.0.13
+  resolution: "@leeoniya/ufuzzy@npm:1.0.13"
+  checksum: 2222357f136764674e84d1b85ae2b4436840a270f75598c902e528ccfbc3d91b638f9e3b6d16e115e98eaffa4bcd9c71db909b126cf4ac3102fa14339d16cf4b
   languageName: node
   linkType: hard
 
@@ -9439,6 +9439,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/webpack-assets-manifest@npm:^5":
+  version: 5.1.4
+  resolution: "@types/webpack-assets-manifest@npm:5.1.4"
+  dependencies:
+    "@types/node": "npm:*"
+    tapable: "npm:^2.2.0"
+    webpack: "npm:^5"
+  checksum: 02aa3a400227693d5cb5db4364caf91df66e9529139999c0686f139138b76d27d200de5ad8d77d4199538d92f31d37df5dcdc6bdd8ccddcabf95bfc96b964c3a
+  languageName: node
+  linkType: hard
+
 "@types/webpack-env@npm:1.18.1":
   version: 1.18.1
   resolution: "@types/webpack-env@npm:1.18.1"
@@ -12050,7 +12061,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chalk@npm:^4.0.0, chalk@npm:^4.0.2, chalk@npm:^4.1.0, chalk@npm:^4.1.1, chalk@npm:^4.1.2":
+"chalk@npm:^4.0, chalk@npm:^4.0.0, chalk@npm:^4.0.2, chalk@npm:^4.1.0, chalk@npm:^4.1.1, chalk@npm:^4.1.2":
   version: 4.1.2
   resolution: "chalk@npm:4.1.2"
   dependencies:
@@ -14047,6 +14058,13 @@ __metadata:
   version: 0.1.4
   resolution: "deep-is@npm:0.1.4"
   checksum: ec12d074aef5ae5e81fa470b9317c313142c9e8e2afe3f8efa124db309720db96d1d222b82b84c834e5f87e7a614b44a4684b6683583118b87c833b3be40d4d8
+  languageName: node
+  linkType: hard
+
+"deepmerge@npm:^4.0":
+  version: 4.3.1
+  resolution: "deepmerge@npm:4.3.1"
+  checksum: 058d9e1b0ff1a154468bf3837aea436abcfea1ba1d165ddaaf48ca93765fdd01a30d33c36173da8fbbed951dd0a267602bc782fe288b0fc4b7e1e7091afc4529
   languageName: node
   linkType: hard
 
@@ -17310,16 +17328,16 @@ __metadata:
     "@grafana/faro-web-sdk": "npm:1.2.1"
     "@grafana/flamegraph": "workspace:*"
     "@grafana/google-sdk": "npm:0.1.1"
-    "@grafana/lezer-logql": "npm:0.2.1"
+    "@grafana/lezer-logql": "npm:0.2.2"
     "@grafana/lezer-traceql": "npm:0.0.11"
     "@grafana/monaco-logql": "npm:^0.0.7"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:1.24.6"
+    "@grafana/scenes": "npm:1.27.0"
     "@grafana/schema": "workspace:*"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
     "@grafana/ui": "workspace:*"
     "@kusto/monaco-kusto": "npm:^7.4.0"
-    "@leeoniya/ufuzzy": "npm:1.0.8"
+    "@leeoniya/ufuzzy": "npm:1.0.13"
     "@lezer/common": "npm:1.0.2"
     "@lezer/highlight": "npm:1.1.3"
     "@lezer/lr": "npm:1.3.3"
@@ -17412,6 +17430,7 @@ __metadata:
     "@types/tinycolor2": "npm:1.4.3"
     "@types/trusted-types": "npm:2.0.3"
     "@types/uuid": "npm:9.0.2"
+    "@types/webpack-assets-manifest": "npm:^5"
     "@types/webpack-env": "npm:1.18.1"
     "@types/yargs": "npm:17.0.24"
     "@typescript-eslint/eslint-plugin": "npm:5.42.0"
@@ -17617,6 +17636,7 @@ __metadata:
     vendor: "link:./public/vendor"
     visjs-network: "npm:4.25.0"
     webpack: "npm:5.89.0"
+    webpack-assets-manifest: "npm:^5.1.0"
     webpack-bundle-analyzer: "npm:4.9.0"
     webpack-cli: "npm:5.1.4"
     webpack-dev-server: "npm:4.15.1"
@@ -21306,6 +21326,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lockfile@npm:^1.0":
+  version: 1.0.4
+  resolution: "lockfile@npm:1.0.4"
+  dependencies:
+    signal-exit: "npm:^3.0.2"
+  checksum: 2fe86f932c106fabd15f56ffde2a87c99b02e4ca173b5fb64886349d3d0d82417e22a2be2b413006a55f4efbeac7beb679e8a7ac7f767d91981059c25be4dc15
+  languageName: node
+  linkType: hard
+
 "lodash-es@npm:^4.17.21":
   version: 4.17.21
   resolution: "lodash-es@npm:4.17.21"
@@ -21317,6 +21346,20 @@ __metadata:
   version: 4.0.8
   resolution: "lodash.debounce@npm:4.0.8"
   checksum: cd0b2819786e6e80cb9f5cda26b1a8fc073daaf04e48d4cb462fa4663ec9adb3a5387aa22d7129e48eed1afa05b482e2a6b79bfc99b86886364449500cbb00fd
+  languageName: node
+  linkType: hard
+
+"lodash.get@npm:^4.0":
+  version: 4.4.2
+  resolution: "lodash.get@npm:4.4.2"
+  checksum: 2a4925f6e89bc2c010a77a802d1ba357e17ed1ea03c2ddf6a146429f2856a216663e694a6aa3549a318cbbba3fd8b7decb392db457e6ac0b83dc745ed0a17380
+  languageName: node
+  linkType: hard
+
+"lodash.has@npm:^4.0":
+  version: 4.5.2
+  resolution: "lodash.has@npm:4.5.2"
+  checksum: 35c0862e715bc22528dd3cd34f1e66d25d58f0ecef9a43aa409fb7ddebaf6495cb357ae242f141e4b2325258f4a6bafdd8928255d51f1c0a741ae9b93951c743
   languageName: node
   linkType: hard
 
@@ -27170,7 +27213,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"schema-utils@npm:^3.0.0, schema-utils@npm:^3.1.0, schema-utils@npm:^3.1.1, schema-utils@npm:^3.2.0":
+"schema-utils@npm:^3.0, schema-utils@npm:^3.0.0, schema-utils@npm:^3.1.0, schema-utils@npm:^3.1.1, schema-utils@npm:^3.2.0":
   version: 3.3.0
   resolution: "schema-utils@npm:3.3.0"
   dependencies:
@@ -28718,7 +28761,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tapable@npm:^2.0.0, tapable@npm:^2.1.1, tapable@npm:^2.2.0, tapable@npm:^2.2.1":
+"tapable@npm:^2.0, tapable@npm:^2.0.0, tapable@npm:^2.1.1, tapable@npm:^2.2.0, tapable@npm:^2.2.1":
   version: 2.2.1
   resolution: "tapable@npm:2.2.1"
   checksum: 1769336dd21481ae6347611ca5fca47add0962fd8e80466515032125eca0084a4f0ede11e65341b9c0018ef4e1cf1ad820adbb0fba7cc99865c6005734000b0a
@@ -30380,6 +30423,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"webpack-assets-manifest@npm:^5.1.0":
+  version: 5.1.0
+  resolution: "webpack-assets-manifest@npm:5.1.0"
+  dependencies:
+    chalk: "npm:^4.0"
+    deepmerge: "npm:^4.0"
+    lockfile: "npm:^1.0"
+    lodash.get: "npm:^4.0"
+    lodash.has: "npm:^4.0"
+    schema-utils: "npm:^3.0"
+    tapable: "npm:^2.0"
+  peerDependencies:
+    webpack: ^5.2.0
+  checksum: 150e6e1f1dbeb04519b08d61c4251fa40a7b51fa711a3122eb655674303b46493e108025e94fdd050c4d3e8c377501e4b60d5df5632b1670f8d295f0d49e35f8
+  languageName: node
+  linkType: hard
+
 "webpack-bundle-analyzer@npm:4.9.0":
   version: 4.9.0
   resolution: "webpack-bundle-analyzer@npm:4.9.0"
@@ -30590,7 +30650,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack@npm:5, webpack@npm:5.89.0":
+"webpack@npm:5, webpack@npm:5.89.0, webpack@npm:^5":
   version: 5.89.0
   resolution: "webpack@npm:5.89.0"
   dependencies:

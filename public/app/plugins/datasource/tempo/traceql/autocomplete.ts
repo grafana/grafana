@@ -282,12 +282,13 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
 
   private async getTagValues(tagName: string, query: string): Promise<Array<SelectableValue<string>>> {
     let tagValues: Array<SelectableValue<string>>;
+    const cacheKey = `${tagName}:${query}`;
 
-    if (this.cachedValues.hasOwnProperty(tagName)) {
-      tagValues = this.cachedValues[tagName];
+    if (this.cachedValues.hasOwnProperty(cacheKey)) {
+      tagValues = this.cachedValues[cacheKey];
     } else {
       tagValues = await this.languageProvider.getOptionsV2(tagName, query);
-      this.cachedValues[tagName] = tagValues;
+      this.cachedValues[cacheKey] = tagValues;
     }
     return tagValues;
   }
