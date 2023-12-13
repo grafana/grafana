@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/fs"
@@ -46,6 +45,8 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 	if len(src.PluginURIs(ctx)) == 0 {
 		return []*plugins.FoundBundle{}, nil
 	}
+
+	l.log.Info("LOADING PLUGINS", "class",  src.PluginClass(ctx))
 
 	pluginURIs := src.PluginURIs(ctx)
 	pluginJSONPaths := make([]string, 0, len(pluginURIs))
@@ -111,30 +112,33 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 		}
 	}
 
-	result := make([]*plugins.FoundBundle, 0, len(foundPlugins))
-	for dir := range foundPlugins {
-		ancestors := strings.Split(dir, string(filepath.Separator))
-		ancestors = ancestors[0 : len(ancestors)-1]
+	result := make([]*plugins.FoundBundle, 0, len(res))
+	for dir, p := range res {
+		skip := true
+		for dir2, p2 := range res {
+			if dir == dir2 {
+				continue
+			}
 
-		pluginPath := ""
-		if runtime.GOOS != "windows" && filepath.IsAbs(dir) {
-			pluginPath = "/"
-		}
-		add := true
-		for _, ancestor := range ancestors {
-			pluginPath = filepath.Join(pluginPath, ancestor)
-			if _, ok := foundPlugins[pluginPath]; ok {
-				if fp, exists := res[pluginPath]; exists {
-					fp.Children = append(fp.Children, &res[dir].Primary)
-					add = false
-					break
-				}
+			r, err := filepath.Rel(dir, dir2)
+			if err != nil {
+				l.log.Error("Cannot calc rel path", "err", err)
+			}
+			if !strings.Contains(r, "..") {
+				l.log.Info("Adding child", "parent", p.Primary.JSONData.ID, "child", p2.Primary.JSONData.ID, "rel", r)
+				p.Children = append(p.Children, &p2.Primary)
+				skip = false
 			}
 		}
-		if add {
-			result = append(result, res[dir])
+		if !skip {
+			l.log.Info("Adding plugin to list", "pluginId", p.Primary.JSONData.ID, "children", len(p.Children))
+			result = append(result, p)
+		} else {
+			l.log.Info("Not adding plugin to list", "pluginId", p.Primary.JSONData.ID)
 		}
 	}
+
+	l.log.Info("DONE WITH FINDER", "len", len(result))
 
 	return result, nil
 }
