@@ -32,6 +32,7 @@ export interface SessionDashboard {
   dashboardTitle: string;
   dashboardUid: string;
   publicDashboardAccessToken: string;
+  slug: string;
 }
 
 export interface SessionUser {
