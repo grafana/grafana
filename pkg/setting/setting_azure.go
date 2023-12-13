@@ -64,9 +64,7 @@ func (cfg *Cfg) readAzureSettings() {
 		azureSettings.UserIdentityTokenEndpoint = tokenEndpointSettings
 	}
 
-	if plugins := util.SplitString(azureSection.Key("forward_settings_to_plugins").String()); len(plugins) > 0 {
-		azureSettings.ForwardSettingsPlugins = plugins
-	}
+	azureSettings.ForwardSettingsPlugins = util.SplitString(azureSection.Key("forward_settings_to_plugins").String())
 
 	cfg.Azure = azureSettings
 }
