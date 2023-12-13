@@ -4065,59 +4065,6 @@ volumes:
 ---
 clone:
   retries: 3
-depends_on: []
-image_pull_secrets:
-- dockerconfigjson
-kind: pipeline
-name: publish-ci-build-container-image
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services: []
-steps:
-- commands:
-  - if [ -z "${BUILD_CONTAINER_VERSION}" ]; then echo Missing BUILD_CONTAINER_VERSION;
-    false; fi
-  image: alpine:3.18.4
-  name: validate-version
-- commands:
-  - printenv GCP_KEY > /tmp/key.json
-  - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - gsutil cp gs://grafana-private-downloads/MacOSX10.15.sdk.tar.xz ./scripts/build/ci-build/MacOSX10.15.sdk.tar.xz
-  environment:
-    GCP_KEY:
-      from_secret: gcp_download_build_container_assets_key
-  image: google/cloud-sdk:431.0.0
-  name: download-macos-sdk
-- commands:
-  - printenv DOCKER_PASSWORD | docker login -u "$DOCKER_USERNAME" --password-stdin
-  - docker build -t "grafana/build-container:${BUILD_CONTAINER_VERSION}" ./scripts/build/ci-build
-  - docker push "grafana/build-container:${BUILD_CONTAINER_VERSION}"
-  environment:
-    DOCKER_PASSWORD:
-      from_secret: docker_password
-    DOCKER_USERNAME:
-      from_secret: docker_username
-  image: google/cloud-sdk:431.0.0
-  name: build-and-publish
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-trigger:
-  event:
-  - promote
-  target:
-  - ci-build-container-image
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
----
-clone:
-  retries: 3
 kind: pipeline
 name: scan-grafana/grafana:latest-image
 platform:
@@ -4682,6 +4629,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: da6a01e9bd5ac30b3f5443aac7bedf3f51b29733af7a87dd00c65db0507f1798
+hmac: 4d592631ddeb6242eb74d0143eb9fe209d323a0292c4108881355b0d0d0c284f
 
 ...
