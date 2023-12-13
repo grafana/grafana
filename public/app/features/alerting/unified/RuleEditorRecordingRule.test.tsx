@@ -160,8 +160,8 @@ describe('RuleEditor recording rules', () => {
     // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
     await userEvent.click(ui.buttons.addLabel.get(), { pointerEventsCheck: PointerEventsCheckLevel.Never });
 
-    await userEvent.type(getLabelInput(ui.inputs.labelKey(0).get()), 'team{enter}');
-    await userEvent.type(getLabelInput(ui.inputs.labelValue(0).get()), 'the a-team{enter}');
+    await userEvent.type(getLabelInput(ui.inputs.labelKey(1).get()), 'team{enter}');
+    await userEvent.type(getLabelInput(ui.inputs.labelValue(1).get()), 'the a-team{enter}');
 
     // try to save, find out that recording rule name is invalid
     await userEvent.click(ui.buttons.saveAndExit.get());
