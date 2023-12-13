@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	storageServer "github.com/grafana/grafana/pkg/services/store/entity/server"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -128,6 +129,10 @@ func (s *ModuleServer) Run() error {
 	//} else {
 	//	s.log.Debug("apiserver feature is disabled")
 	//}
+
+	m.RegisterModule(modules.StorageServer, func() (services.Service, error) {
+		return storageServer.ProvideService(s.cfg, s.features)
+	})
 
 	m.RegisterModule(modules.All, nil)
 
