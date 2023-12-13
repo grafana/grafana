@@ -95,7 +95,7 @@ export class BigValue extends PureComponent<Props> {
     const titleStyles = layout.getTitleStyles();
     const textValues = layout.textValues;
     const percentChange = this.props.value.percentChange;
-    const percentChangeNaN = Number.isNaN(percentChange) || !percentChange;
+    const percentChangeNaN = Number.isNaN(percentChange) || percentChange === undefined;
     const percentChangeString =
       percentChange?.toLocaleString(undefined, { style: 'percent', maximumSignificantDigits: 3 }) ?? '';
     const percentChangeIcon =
@@ -107,6 +107,11 @@ export class BigValue extends PureComponent<Props> {
     const metricHeight = layout.valueFontSize;
     const metricAlignment = panelStyles.flexDirection === 'row' ? 'center' : 'flex-start';
     const iconDim = metricHeight / 2;
+    const showPercentChange = !percentChangeNaN && textMode !== BigValueTextMode.None;
+    if (showPercentChange && valueAndTitleContainerStyles.flexDirection === 'column') {
+      valueAndTitleContainerStyles.gap = '0.25ch';
+      percentChangeStyles.marginTop = -iconDim / 4;
+    }
 
     if (!onClick) {
       return (
@@ -114,7 +119,7 @@ export class BigValue extends PureComponent<Props> {
           <div style={valueAndTitleContainerStyles}>
             {textValues.title && <div style={titleStyles}>{textValues.title}</div>}
             <FormattedValueDisplay value={textValues} style={valueStyles} />
-            {!percentChangeNaN && textMode !== BigValueTextMode.None && (
+            {showPercentChange && (
               <div style={percentChangeStyles}>
                 <HorizontalGroup height={metricHeight} align={metricAlignment}>
                   {percentChangeIcon && (
