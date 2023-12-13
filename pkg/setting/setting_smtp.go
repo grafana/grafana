@@ -2,9 +2,9 @@ package setting
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/prometheus/common/model"
 )
 
 type SmtpSettings struct {
@@ -25,6 +25,9 @@ type SmtpSettings struct {
 	TemplatesPatterns        []string
 	ContentTypes             []string
 }
+
+// validates smtp headers
+var smtpHeaderRegex = regexp.MustCompile(`^[A-Z][A-Za-z0-9]*(-[A-Z][A-Za-z0-9]*)*$`)
 
 func (cfg *Cfg) readSmtpSettings() error {
 	sec := cfg.Raw.Section("smtp")
@@ -53,24 +56,21 @@ func (cfg *Cfg) readSmtpSettings() error {
 	return nil
 }
 
+func validHeader(header string) bool {
+	return smtpHeaderRegex.MatchString(header)
+}
+
 func (cfg *Cfg) readGrafanaSmtpStaticHeaders() error {
 	staticHeadersSection := cfg.Raw.Section("smtp.static_headers")
 	keys := staticHeadersSection.Keys()
 	cfg.Smtp.StaticHeaders = make(map[string]string, len(keys))
 
 	for _, key := range keys {
-		labelName := model.LabelName(key.Name())
-		labelValue := model.LabelValue(key.Value())
-
-		if !labelName.IsValid() {
-			return fmt.Errorf("invalid label name in [smtp.static_headers] configuration. name %q", labelName)
+		if !validHeader(key.Name()) {
+			return fmt.Errorf("invalid label name %q in [smtp.static_headers] configuration", key.Name())
 		}
 
-		if !labelValue.IsValid() {
-			return fmt.Errorf("invalid label value in [smtp.static_headers] configuration. name %q value %q", labelName, labelValue)
-		}
-
-		cfg.Smtp.StaticHeaders[string(labelName)] = string(labelValue)
+		cfg.Smtp.StaticHeaders[key.Name()] = key.Value()
 	}
 
 	return nil

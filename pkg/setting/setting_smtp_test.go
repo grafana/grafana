@@ -15,7 +15,7 @@ func TestLoadSmtpStaticHeaders(t *testing.T) {
 		s, err := f.NewSection("smtp.static_headers")
 		require.NoError(t, err)
 		cfg.Raw = f
-		_, err = s.NewKey("Foo", "foo_val")
+		_, err = s.NewKey("Foo-Header", "foo_val")
 		require.NoError(t, err)
 		_, err = s.NewKey("Bar", "bar_val")
 		require.NoError(t, err)
@@ -23,7 +23,7 @@ func TestLoadSmtpStaticHeaders(t *testing.T) {
 		err = cfg.readGrafanaSmtpStaticHeaders()
 		require.NoError(t, err)
 
-		assert.Equal(t, "foo_val", cfg.Smtp.StaticHeaders["Foo"])
+		assert.Equal(t, "foo_val", cfg.Smtp.StaticHeaders["Foo-Header"])
 		assert.Equal(t, "bar_val", cfg.Smtp.StaticHeaders["Bar"])
 	})
 
@@ -56,11 +56,38 @@ func TestLoadSmtpStaticHeaders(t *testing.T) {
 		cfg := NewCfg()
 		s, err := f.NewSection("smtp.static_headers")
 		require.NoError(t, err)
-		_, err = s.NewKey("bad label", "value")
+		_, err = s.NewKey("header with spaces", "value")
 		require.NoError(t, err)
 		cfg.Raw = f
 
 		err = cfg.readGrafanaSmtpStaticHeaders()
 		require.Error(t, err)
 	})
+}
+
+func TestSmtpHeaderValidation(t *testing.T) {
+	testCases := []struct {
+		input    string
+		expected bool
+	}{
+		//valid
+		{"Foo", true},
+		{"Foo-Bar", true},
+		{"Foo123-Bar123", true},
+
+		//invalid
+		{"foo", false},
+		{"Foo Bar", false},
+		{"123Foo", false},
+		{"Foo.Bar", false},
+		{"foo-bar", false},
+		{"foo-Bar", false},
+		{"Foo-bar", false},
+		{"-Bar", false},
+		{"Foo--", false},
+	}
+
+	for _, tc := range testCases {
+		assert.Equal(t, validHeader(tc.input), tc.expected)
+	}
 }
