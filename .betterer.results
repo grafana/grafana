@@ -5157,9 +5157,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/graphite/components/AddGraphiteFunction.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
-    "public/app/plugins/datasource/graphite/components/FunctionEditor.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
     "public/app/plugins/datasource/graphite/components/FunctionParamEditor.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
@@ -7414,9 +7411,6 @@ exports[`no gf-form usage`] = {
       [36, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
       [37, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
       [49, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
-    ],
-    "public/app/plugins/datasource/graphite/components/FunctionEditor.tsx:563090867": [
-      [21, 66, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
     ],
     "public/app/plugins/datasource/graphite/configuration/MappingsConfiguration.tsx:596038531": [
       [29, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
