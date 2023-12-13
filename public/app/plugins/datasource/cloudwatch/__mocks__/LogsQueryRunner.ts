@@ -31,7 +31,7 @@ export function setupMockedLogsQueryRunner({
   }
 
   const queryMock = jest.fn().mockReturnValue(of(toDataQueryResponse({ data })));
-  const runner = new CloudWatchLogsQueryRunner(settings, templateService, queryMock);
+  const runner = new CloudWatchLogsQueryRunner(settings, templateService);
 
   return { runner, queryMock, templateService };
 }
