@@ -23,9 +23,8 @@ var _ ssosettings.Reloadable = (*SocialOkta)(nil)
 
 type SocialOkta struct {
 	*SocialBase
-	apiUrl          string
-	allowedGroups   []string
-	skipOrgRoleSync bool
+	apiUrl        string
+	allowedGroups []string
 }
 
 type OktaUserInfoJson struct {
@@ -50,10 +49,9 @@ type OktaClaims struct {
 func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager) *SocialOkta {
 	config := createOAuthConfig(info, cfg, social.OktaProviderName)
 	provider := &SocialOkta{
-		SocialBase:      newSocialBase(social.OktaProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-		apiUrl:          info.ApiUrl,
-		allowedGroups:   info.AllowedGroups,
-		skipOrgRoleSync: info.SkipOrgRoleSync,
+		SocialBase:    newSocialBase(social.OktaProviderName, config, info, cfg.AutoAssignOrgRole, *features),
+		apiUrl:        info.ApiUrl,
+		allowedGroups: info.AllowedGroups,
 	}
 
 	if info.UseRefreshToken && features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) {
@@ -117,7 +115,7 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 
 	var role roletype.RoleType
 	var isGrafanaAdmin *bool
-	if !s.skipOrgRoleSync {
+	if !s.info.SkipOrgRoleSync {
 		var grafanaAdmin bool
 		role, grafanaAdmin, err = s.extractRoleAndAdmin(data.rawJSON, groups)
 		if err != nil {
@@ -128,7 +126,7 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 			isGrafanaAdmin = &grafanaAdmin
 		}
 	}
-	if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
+	if s.allowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 

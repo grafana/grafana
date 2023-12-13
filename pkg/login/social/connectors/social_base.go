@@ -32,7 +32,6 @@ type SocialBase struct {
 	roleAttributePath   string
 	roleAttributeStrict bool
 	autoAssignOrgRole   string
-	skipOrgRoleSync     bool
 	features            featuremgmt.FeatureManager
 	useRefreshToken     bool
 }
@@ -41,7 +40,6 @@ func newSocialBase(name string,
 	config *oauth2.Config,
 	info *social.OAuthInfo,
 	autoAssignOrgRole string,
-	skipOrgRoleSync bool,
 	features featuremgmt.FeatureManager,
 ) *SocialBase {
 	logger := log.New("oauth." + name)
@@ -57,7 +55,6 @@ func newSocialBase(name string,
 		roleAttributePath:       info.RoleAttributePath,
 		roleAttributeStrict:     info.RoleAttributeStrict,
 		autoAssignOrgRole:       autoAssignOrgRole,
-		skipOrgRoleSync:         skipOrgRoleSync,
 		features:                features,
 		useRefreshToken:         info.UseRefreshToken,
 	}
@@ -76,7 +73,7 @@ func (s *SocialBase) SupportBundleContent(bf *bytes.Buffer) error {
 	bf.WriteString(fmt.Sprintf("auto_assign_org_role = %v\n", s.autoAssignOrgRole))
 	bf.WriteString(fmt.Sprintf("role_attribute_path = %v\n", s.roleAttributePath))
 	bf.WriteString(fmt.Sprintf("role_attribute_strict = %v\n", s.roleAttributeStrict))
-	bf.WriteString(fmt.Sprintf("skip_org_role_sync = %v\n", s.skipOrgRoleSync))
+	bf.WriteString(fmt.Sprintf("skip_org_role_sync = %v\n", s.info.SkipOrgRoleSync))
 	bf.WriteString(fmt.Sprintf("client_id = %v\n", s.Config.ClientID))
 	bf.WriteString(fmt.Sprintf("client_secret = %v ; issue if empty\n", strings.Repeat("*", len(s.Config.ClientSecret))))
 	bf.WriteString(fmt.Sprintf("auth_url = %v\n", s.Config.Endpoint.AuthURL))

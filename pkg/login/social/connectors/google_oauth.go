@@ -28,9 +28,8 @@ var _ ssosettings.Reloadable = (*SocialGoogle)(nil)
 
 type SocialGoogle struct {
 	*SocialBase
-	hostedDomain    string
-	apiUrl          string
-	skipOrgRoleSync bool
+	hostedDomain string
+	apiUrl       string
 }
 
 type googleUserData struct {
@@ -44,10 +43,9 @@ type googleUserData struct {
 func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager) *SocialGoogle {
 	config := createOAuthConfig(info, cfg, social.GoogleProviderName)
 	provider := &SocialGoogle{
-		SocialBase:      newSocialBase(social.GoogleProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-		hostedDomain:    info.HostedDomain,
-		apiUrl:          info.ApiUrl,
-		skipOrgRoleSync: info.SkipOrgRoleSync,
+		SocialBase:   newSocialBase(social.GoogleProviderName, config, info, cfg.AutoAssignOrgRole, *features),
+		hostedDomain: info.HostedDomain,
+		apiUrl:       info.ApiUrl,
 	}
 
 	if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {
@@ -110,7 +108,7 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 		Groups:         groups,
 	}
 
-	if !s.skipOrgRoleSync {
+	if !s.info.SkipOrgRoleSync {
 		role, grafanaAdmin, errRole := s.extractRoleAndAdmin(data.rawJSON, groups)
 		if errRole != nil {
 			return nil, errRole

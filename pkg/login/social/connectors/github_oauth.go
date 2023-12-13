@@ -32,7 +32,6 @@ type SocialGithub struct {
 	allowedOrganizations []string
 	apiUrl               string
 	teamIds              []int
-	skipOrgRoleSync      bool
 }
 
 type GithubTeam struct {
@@ -61,11 +60,10 @@ func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings sso
 
 	config := createOAuthConfig(info, cfg, social.GitHubProviderName)
 	provider := &SocialGithub{
-		SocialBase:           newSocialBase(social.GitHubProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:           newSocialBase(social.GitHubProviderName, config, info, cfg.AutoAssignOrgRole, *features),
 		apiUrl:               info.ApiUrl,
 		teamIds:              teamIds,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
-		skipOrgRoleSync:      info.SkipOrgRoleSync,
 	}
 
 	if len(teamIdsSplitted) != len(teamIds) {
@@ -261,7 +259,7 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 	var role roletype.RoleType
 	var isGrafanaAdmin *bool = nil
 
-	if !s.skipOrgRoleSync {
+	if !s.info.SkipOrgRoleSync {
 		var grafanaAdmin bool
 		role, grafanaAdmin, err = s.extractRoleAndAdmin(response.Body, teams)
 		if err != nil {
@@ -274,7 +272,7 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 	}
 
 	// we skip allowing assignment of GrafanaAdmin if skipOrgRoleSync is present
-	if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
+	if s.allowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 

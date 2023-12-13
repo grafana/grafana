@@ -165,7 +165,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 		provider.allowAssignGrafanaAdmin = test.Cfg.AllowAssignGrafanaAdmin
 		provider.autoAssignOrgRole = string(test.Cfg.AutoAssignOrgRole)
 		provider.roleAttributeStrict = test.Cfg.RoleAttributeStrict
-		provider.skipOrgRoleSync = test.Cfg.SkipOrgRoleSync
+		provider.info.SkipOrgRoleSync = test.Cfg.SkipOrgRoleSync
 
 		t.Run(test.Name, func(t *testing.T) {
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
