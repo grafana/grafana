@@ -1,5 +1,5 @@
 import { screen, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
@@ -148,6 +148,9 @@ describe('RuleEditor grafana managed rules', () => {
     await userEvent.click(byRole('combobox').get(groupInput));
     await clickSelectOption(groupInput, 'group1');
     await userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
+
+    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+    await userEvent.click(ui.buttons.addLabel.get(), { pointerEventsCheck: PointerEventsCheckLevel.Never });
 
     await userEvent.type(getLabelInput(ui.inputs.labelKey(0).get()), 'severity{enter}');
     await userEvent.type(getLabelInput(ui.inputs.labelValue(0).get()), 'warn{enter}');

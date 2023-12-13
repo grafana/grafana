@@ -159,7 +159,7 @@ const LabelsWithSuggestions: FC<{ dataSourceName: string }> = ({ dataSourceName 
                     <InputControl
                       name={`labels.${index}.key`}
                       control={control}
-                      rules={{ required: 'Required.' }}
+                      rules={{ required: index > 0 ? false : 'Required.' }}
                       render={({ field: { onChange, ref, ...rest } }) => {
                         return (
                           <AlertLabelDropdown
@@ -186,7 +186,7 @@ const LabelsWithSuggestions: FC<{ dataSourceName: string }> = ({ dataSourceName 
                     <InputControl
                       control={control}
                       name={`labels.${index}.value`}
-                      rules={{ required: 'Required.' }}
+                      rules={{ required: index > 0 ? false : 'Required.' }}
                       render={({ field: { onChange, ref, ...rest } }) => {
                         return (
                           <AlertLabelDropdown
