@@ -95,7 +95,7 @@ export class BigValue extends PureComponent<Props> {
     const titleStyles = layout.getTitleStyles();
     const textValues = layout.textValues;
     const percentChange = this.props.value.percentChange;
-    const percentChangeNaN = Number.isNaN(percentChange);
+    const percentChangeNaN = Number.isNaN(percentChange) || !percentChange;
     const percentChangeString =
       percentChange?.toLocaleString(undefined, { style: 'percent', maximumSignificantDigits: 3 }) ?? '';
     const percentChangeIcon =
