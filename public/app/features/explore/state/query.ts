@@ -73,6 +73,7 @@ import {
   getDatasourceUIDs,
   getResultsFromCache,
 } from './utils';
+import { getCorrelations } from './correlations';
 
 /**
  * Derives from explore state if a given Explore pane is waiting for more data to be received
@@ -530,8 +531,11 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
       supplementaryQueries,
     } = exploreItemState;
 
-    const { correlations$, defaultCorrelationEditorDatasource, scopedVars, showCorrelationEditorLinks } =
-      await getCorrelationsData(exploreState, exploreId);
+    const { defaultCorrelationEditorDatasource, scopedVars, showCorrelationEditorLinks } = await getCorrelationsData(
+      exploreState,
+      exploreId
+    );
+    const correlations$ = getCorrelations(exploreId);
 
     let newQuerySource: Observable<ExplorePanelData>;
     let newQuerySubscription: SubscriptionLike;
@@ -710,8 +714,11 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
     dispatch(cancelQueries(exploreId));
 
     const { datasourceInstance, containerWidth, queryResponse } = getState().explore.panes[exploreId]!;
-    const { correlations$, defaultCorrelationEditorDatasource, scopedVars, showCorrelationEditorLinks } =
-      await getCorrelationsData(getState(), exploreId);
+    const { defaultCorrelationEditorDatasource, scopedVars, showCorrelationEditorLinks } = await getCorrelationsData(
+      getState(),
+      exploreId
+    );
+    const correlations$ = getCorrelations(exploreId);
 
     let newQuerySource: Observable<ExplorePanelData>;
 

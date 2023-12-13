@@ -31,8 +31,6 @@ import { setLastUsedDatasourceUID } from '../../../core/utils/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
 
-import { getCorrelations } from './correlations';
-
 export const DEFAULT_RANGE = {
   from: 'now-6h',
   to: 'now',
@@ -241,7 +239,6 @@ export const getDatasourceUIDs = (datasourceUID: string, queries: DataQuery[]): 
 };
 
 export async function getCorrelationsData(state: StoreState, exploreId: string) {
-  const correlations$ = getCorrelations(exploreId);
   const correlationEditorHelperData = state.explore.panes[exploreId]!.correlationEditorHelperData;
 
   const isCorrelationEditorMode = state.explore.correlationEditorDetails?.editorMode || false;
@@ -258,5 +255,5 @@ export async function getCorrelationsData(state: StoreState, exploreId: string) 
     });
   }
 
-  return { correlations$, defaultCorrelationEditorDatasource, scopedVars, showCorrelationEditorLinks };
+  return { defaultCorrelationEditorDatasource, scopedVars, showCorrelationEditorLinks };
 }
