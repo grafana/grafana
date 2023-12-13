@@ -13,12 +13,40 @@ export type GetStatusHook = () => Promise<AuthProviderStatus>;
 
 // Settings types common to the provider settings data when working with the API and forms
 export type SSOProviderSettingsBase = {
-  enabled: boolean;
-  name: string;
-  type: string;
+  allowAssignGrafanaAdmin?: boolean;
+  allowSignup?: boolean;
+  allowedDomains?: string[];
+  allowedGroups?: string[];
+  apiUrl?: string;
+  authStyle?: string;
+  authUrl?: string;
+  autoLogin?: boolean;
   clientId: string;
   clientSecret: string;
-  allowedDomains?: string;
+  emailAttributeName?: string;
+  emailAttributePath?: string;
+  emptyScopes?: boolean;
+  enabled?: boolean;
+  extra?: Record<string, any>;
+  groupsAttributePath?: string;
+  hostedDomain?: string;
+  icon?: string;
+  name?: string;
+  roleAttributePath?: string;
+  roleAttributeStrict?: boolean;
+  scopes?: string[];
+  signoutRedirectUrl?: string;
+  skipOrgRoleSync?: boolean;
+  teamIdsAttributePath?: string;
+  teamsUrl?: string;
+  tlsClientCa?: string;
+  tlsClientCert?: string;
+  tlsClientKey?: string;
+  tlsSkipVerify?: boolean;
+  tokenUrl?: string;
+  type: string;
+  usePKCE?: boolean;
+  useRefreshToken?: boolean;
 };
 
 // SSO data received from the API and sent to it
