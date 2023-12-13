@@ -2,16 +2,15 @@ package api
 
 import (
 	"context"
-	"crypto/sha1"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/login/social"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -42,6 +41,13 @@ func ProvideApi(
 	}
 
 	return api
+}
+
+func generateFNVETag(SSOSettingsDTO *models.SSOSettingsDTO) string {
+	hasher := fnv.New64()
+	data, _ := json.Marshal(SSOSettingsDTO)
+	hasher.Write(data)
+	return fmt.Sprintf("%x", hasher.Sum(nil))
 }
 
 // RegisterAPIEndpoints Registers Endpoints on Grafana Router
@@ -106,32 +112,39 @@ func (api *Api) getAuthorizedList(ctx context.Context, identity identity.Request
 	return authorizedProviders, nil
 }
 
+// swagger:route GET /v1/sso-settings/{key} sso_settings getProviderSettings
+//
+// # Get SSO Settings
+//
+// # Get an SSO Settings entry by Key
+//
+// You need to have a permission with action `settings:read` with scope `settings:auth.<provider>:*`.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Response {
 	key, ok := web.Params(c.Req)[":key"]
 	if !ok {
 		return response.Error(http.StatusBadRequest, "Missing key", nil)
 	}
 
-	settings, err := api.SSOSettingsService.GetForProvider(c.Req.Context(), key)
+	provider, err := api.SSOSettingsService.GetForProvider(c.Req.Context(), key)
 	if err != nil {
 		return response.Error(http.StatusNotFound, "The provider was not found", err)
 	}
 
-	etag := generateSHA1ETag(settings.OAuthSettings)
-
-	dto, err := settings.ToSSOSettingsDTO(c.QueryBool("includeDefaults"))
+	dto, err := provider.ToSSOSettingsDTO()
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "The provider is invalid", err)
 	}
 
-	return response.JSON(http.StatusOK, dto).SetHeader("ETag", etag)
-}
+	etag := generateFNVETag(dto)
 
-func generateSHA1ETag(OAuthSettings *social.OAuthInfo) string {
-	hasher := sha1.New()
-	data, _ := json.Marshal(OAuthSettings)
-	hasher.Write(data)
-	return fmt.Sprintf("%x", hasher.Sum(nil))
+	return response.JSON(http.StatusOK, dto).SetHeader("ETag", etag)
 }
 
 func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Response {

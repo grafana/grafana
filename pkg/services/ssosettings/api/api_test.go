@@ -11,10 +11,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
+	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -108,6 +110,62 @@ func TestSSOSettingsAPI_Delete(t *testing.T) {
 
 			path := fmt.Sprintf("/api/v1/sso-settings/%s", tt.key)
 			req := server.NewRequest(http.MethodDelete, path, nil)
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{
+				OrgRole:     org.RoleEditor,
+				OrgID:       1,
+				Permissions: getPermissionsForActionAndScope(tt.action, tt.scope),
+			})
+			res, err := server.SendJSON(req)
+			require.NoError(t, err)
+
+			require.Equal(t, tt.expectedStatusCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
+		})
+	}
+}
+
+func TestSSOSettingsAPI_Get(t *testing.T) {
+	// TODO-Colin: add the annotations/comments for the openapi/swagger specification + unit test + the http api spec
+	type TestCase struct {
+		desc                string
+		key                 string
+		action              string
+		scope               string
+		expectedResult      *models.SSOSettings
+		expectedError       error
+		expectedServiceCall bool
+		expectedStatusCode  int
+	}
+
+	tests := []TestCase{
+		{
+			desc:   "successfully gets SSO settings",
+			key:    "azuread",
+			action: "settings:read",
+			scope:  "settings:auth.azuread:*",
+			expectedResult: &models.SSOSettings{
+				ID:            "1",
+				Source:        models.DB,
+				Provider:      "azuread",
+				OAuthSettings: &social.OAuthInfo{},
+				IsDeleted:     false,
+			},
+			expectedError:       nil,
+			expectedServiceCall: true,
+			expectedStatusCode:  http.StatusOK,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			service := ssosettingstests.NewMockService(t)
+			if tt.expectedServiceCall {
+				service.On("GetForProvider", mock.AnythingOfType("*context.valueCtx"), tt.key).Return(tt.expectedResult, tt.expectedError).Once()
+			}
+			server := setupTests(t, service)
+
+			path := fmt.Sprintf("/api/v1/sso-settings/%s", tt.key)
+			req := server.NewRequest(http.MethodGet, path, nil)
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{
 				OrgRole:     org.RoleEditor,
 				OrgID:       1,

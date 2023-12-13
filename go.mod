@@ -46,7 +46,7 @@ require (
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b // @grafana/backend-platform
 	github.com/centrifugal/centrifuge v0.30.2 // @grafana/grafana-app-platform-squad
 	github.com/crewjam/saml v0.4.13 // @grafana/grafana-authnz-team
-	github.com/fatih/color v1.15.0 // @grafana/backend-platform
+	github.com/fatih/color v1.16.0 // @grafana/backend-platform
 	github.com/gchaincl/sqlhooks v1.3.0 // @grafana/backend-platform
 	github.com/go-ldap/ldap/v3 v3.4.4 // @grafana/grafana-authnz-team
 	github.com/go-openapi/strfmt v0.21.7 // @grafana/alerting-squad-backend
@@ -81,7 +81,7 @@ require (
 	github.com/linkedin/goavro/v2 v2.10.0 // @grafana/backend-platform
 	github.com/m3db/prometheus_remote_client_golang v0.4.4 // @grafana/backend-platform
 	github.com/magefile/mage v1.15.0 // @grafana/grafana-delivery
-	github.com/mattn/go-isatty v0.0.18 // @grafana/backend-platform
+	github.com/mattn/go-isatty v0.0.20 // @grafana/backend-platform
 	github.com/mattn/go-sqlite3 v1.14.16 // @grafana/backend-platform
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // @grafana/alerting-squad-backend
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // @grafana/grafana-operator-experience-squad
@@ -478,6 +478,7 @@ require (
 require (
 	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0 // indirect
+	github.com/rakyll/gotest v0.0.6 // indirect
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
