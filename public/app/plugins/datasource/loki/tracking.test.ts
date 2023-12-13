@@ -10,7 +10,6 @@ import { partitionTimeRange } from './querySplitting';
 import { onDashboardLoadedHandler, trackGroupedQueries, trackQuery } from './tracking';
 import { LokiGroupedRequest, LokiQuery } from './types';
 
-
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
