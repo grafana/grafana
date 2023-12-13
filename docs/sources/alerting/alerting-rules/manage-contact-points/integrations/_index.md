@@ -2,7 +2,7 @@
 aliases:
   - alerting/manage-notifications/manage-contact-points/configure-integrations/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/manage-contact-points/integrations/
-description: Configure integrations
+description: Configure contact point integrations to select your preferred communication channels for receiving notifications of firing alerts.
 keywords:
   - Grafana
   - alerting

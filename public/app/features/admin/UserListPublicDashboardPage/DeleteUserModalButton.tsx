@@ -5,18 +5,29 @@ import { GrafanaTheme2 } from '@grafana/data/src';
 import { Button, Modal, ModalsController, useStyles2 } from '@grafana/ui/src';
 import { SessionUser } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 
-const DeleteUserModal = ({ user, onDismiss }: { user: SessionUser; onDismiss: () => void }) => {
+import { useRevokeAllAccessMutation } from '../../dashboard/api/publicDashboardApi';
+
+const DeleteUserModal = ({ user, hideModal }: { user: SessionUser; hideModal: () => void }) => {
+  const [revokeAllAccess] = useRevokeAllAccessMutation();
   const styles = useStyles2(getStyles);
 
+  const onRevokeAccessClick = () => {
+    revokeAllAccess({ email: user.email });
+    hideModal();
+  };
+
   return (
-    <Modal className={styles.modal} isOpen title="Delete" onDismiss={onDismiss}>
+    <Modal className={styles.modal} isOpen title="Revoke access" onDismiss={hideModal}>
+      <p className={styles.description}>Are you sure you want to revoke access for {user.email}?</p>
       <p className={styles.description}>
-        The user {user.email} is currently present in {user.totalDashboards} public dashboard(s). If you wish to remove
-        this user, please navigate to the settings of the corresponding public dashboard.
+        This action will immediately revoke {user.email}&apos;s access to all public dashboards.
       </p>
       <Modal.ButtonRow>
-        <Button type="button" variant="secondary" onClick={onDismiss} fill="outline">
-          Close
+        <Button type="button" variant="secondary" onClick={hideModal} fill="outline">
+          Cancel
+        </Button>
+        <Button type="button" variant="destructive" onClick={onRevokeAccessClick}>
+          Revoke access
         </Button>
       </Modal.ButtonRow>
     </Modal>
@@ -29,7 +40,7 @@ export const DeleteUserModalButton = ({ user }: { user: SessionUser }) => (
       <Button
         size="sm"
         variant="destructive"
-        onClick={() => showModal(DeleteUserModal, { user, onDismiss: hideModal })}
+        onClick={() => showModal(DeleteUserModal, { user, hideModal })}
         icon="times"
         aria-label="Delete user"
         title="Delete user"

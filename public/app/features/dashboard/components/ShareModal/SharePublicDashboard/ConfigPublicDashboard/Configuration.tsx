@@ -3,9 +3,9 @@ import { UseFormRegister } from 'react-hook-form';
 
 import { TimeRange } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { reportInteraction } from '@grafana/runtime';
 import { FieldSet, Label, Switch, TimeRangeInput, VerticalGroup } from '@grafana/ui/src';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { ConfigPublicDashboardForm } from './ConfigPublicDashboard';
 
@@ -38,7 +38,7 @@ export const Configuration = ({
               data-testid={selectors.EnableTimeRangeSwitch}
               onChange={(e) => {
                 onChange('isTimeSelectionEnabled', e.currentTarget.checked);
-                reportInteraction('dashboards_sharing_public_time_picker_clicked', {
+                DashboardInteractions.publicDashboardTimeSelectionChanged({
                   enabled: e.currentTarget.checked,
                 });
               }}
@@ -50,7 +50,7 @@ export const Configuration = ({
               {...register('isAnnotationsEnabled')}
               onChange={(e) => {
                 onChange('isAnnotationsEnabled', e.currentTarget.checked);
-                reportInteraction('dashboards_sharing_public_annotations_clicked', {
+                DashboardInteractions.publicDashboardAnnotationsSelectionChanged({
                   enabled: e.currentTarget.checked,
                 });
               }}

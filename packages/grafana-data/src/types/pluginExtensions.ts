@@ -118,9 +118,11 @@ export type PluginExtensionEventHelpers<Context extends object = object> = {
 // Extension Points available in core Grafana
 export enum PluginExtensionPoints {
   AlertInstanceAction = 'grafana/alerting/instance/action',
+  CommandPalette = 'grafana/commandpalette/action',
   DashboardPanelMenu = 'grafana/dashboard/panel/menu',
   DataSourceConfig = 'grafana/datasources/config',
   ExploreToolbarAction = 'grafana/explore/toolbar/action',
+  UserProfileTab = 'grafana/user/profile/tab',
 }
 
 export type PluginExtensionPanelContext = {
@@ -152,6 +154,8 @@ export type PluginExtensionDataSourceConfigContext<JsonData extends DataSourceJs
   // (Only updates the form, it still needs to be saved by the user)
   setJsonData: (jsonData: JsonData) => void;
 };
+
+export type PluginExtensionCommandPaletteContext = {};
 
 type Dashboard = {
   uid: string;

@@ -5,7 +5,7 @@ import {
   urlUtil,
   type PluginExtensionPanelContext,
 } from '@grafana/data';
-import { AngularComponent, getPluginLinkExtensions, locationService, reportInteraction } from '@grafana/runtime';
+import { AngularComponent, getPluginLinkExtensions, locationService } from '@grafana/runtime';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
 import { t } from 'app/core/internationalization';
@@ -23,6 +23,7 @@ import {
   toggleLegend,
   unlinkLibraryPanel,
 } from 'app/features/dashboard/utils/panel';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { InspectTab } from 'app/features/inspector/types';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
 import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
@@ -43,7 +44,7 @@ export function getPanelMenu(
     locationService.partial({
       viewPanel: panel.id,
     });
-    reportInteraction('dashboards_panelheader_menu', { item: 'view' });
+    DashboardInteractions.panelMenuItemClicked('view');
   };
 
   const onEditPanel = (event: React.MouseEvent) => {
@@ -52,25 +53,25 @@ export function getPanelMenu(
       editPanel: panel.id,
     });
 
-    reportInteraction('dashboards_panelheader_menu', { item: 'edit' });
+    DashboardInteractions.panelMenuItemClicked('edit');
   };
 
   const onSharePanel = (event: React.MouseEvent) => {
     event.preventDefault();
     sharePanel(dashboard, panel);
-    reportInteraction('dashboards_panelheader_menu', { item: 'share' });
+    DashboardInteractions.panelMenuItemClicked('share');
   };
 
   const onAddLibraryPanel = (event: React.MouseEvent) => {
     event.preventDefault();
     addLibraryPanel(dashboard, panel);
-    reportInteraction('dashboards_panelheader_menu', { item: 'createLibraryPanel' });
+    DashboardInteractions.panelMenuItemClicked('createLibraryPanel');
   };
 
   const onUnlinkLibraryPanel = (event: React.MouseEvent) => {
     event.preventDefault();
     unlinkLibraryPanel(panel);
-    reportInteraction('dashboards_panelheader_menu', { item: 'unlinkLibraryPanel' });
+    DashboardInteractions.panelMenuItemClicked('unlinkLibraryPanel');
   };
 
   const onInspectPanel = (tab?: InspectTab) => {
@@ -78,7 +79,7 @@ export function getPanelMenu(
       inspect: panel.id,
       inspectTab: tab,
     });
-    reportInteraction('dashboards_panelheader_menu', { item: 'inspect', tab: tab ?? InspectTab.Data });
+    DashboardInteractions.panelMenuInspectClicked(tab ?? InspectTab.Data);
   };
 
   const onMore = (event: React.MouseEvent) => {
@@ -88,19 +89,19 @@ export function getPanelMenu(
   const onDuplicatePanel = (event: React.MouseEvent) => {
     event.preventDefault();
     duplicatePanel(dashboard, panel);
-    reportInteraction('dashboards_panelheader_menu', { item: 'duplicate' });
+    DashboardInteractions.panelMenuItemClicked('duplicate');
   };
 
   const onCopyPanel = (event: React.MouseEvent) => {
     event.preventDefault();
     copyPanel(panel);
-    reportInteraction('dashboards_panelheader_menu', { item: 'copy' });
+    DashboardInteractions.panelMenuItemClicked('copy');
   };
 
   const onRemovePanel = (event: React.MouseEvent) => {
     event.preventDefault();
     removePanel(dashboard, panel, true);
-    reportInteraction('dashboards_panelheader_menu', { item: 'remove' });
+    DashboardInteractions.panelMenuItemClicked('remove');
   };
 
   const onNavigateToExplore = (event: React.MouseEvent) => {
@@ -114,13 +115,13 @@ export function getPanelMenu(
         openInNewWindow,
       }) as any
     );
-    reportInteraction('dashboards_panelheader_menu', { item: 'explore' });
+    DashboardInteractions.panelMenuItemClicked('explore');
   };
 
   const onToggleLegend = (event: React.MouseEvent) => {
     event.preventDefault();
     toggleLegend(panel);
-    reportInteraction('dashboards_panelheader_menu', { item: 'toggleLegend' });
+    DashboardInteractions.panelMenuItemClicked('toggleLegend');
   };
 
   const menu: PanelMenuItem[] = [];
@@ -218,7 +219,7 @@ export function getPanelMenu(
   const onCreateAlert = (event: React.MouseEvent) => {
     event.preventDefault();
     createAlert();
-    reportInteraction('dashboards_panelheader_menu', { item: 'create-alert' });
+    DashboardInteractions.panelMenuItemClicked('create-alert');
   };
 
   const subMenu: PanelMenuItem[] = [];

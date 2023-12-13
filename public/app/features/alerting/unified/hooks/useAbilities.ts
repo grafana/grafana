@@ -56,6 +56,7 @@ export enum AlertmanagerAction {
   CreateMuteTiming = 'create-mute-timing',
   UpdateMuteTiming = 'update-mute-timing',
   DeleteMuteTiming = 'delete-mute-timing',
+  ExportMuteTimings = 'export-mute-timings',
 }
 
 // this enum lists all of the available actions we can take on a single alert rule
@@ -226,14 +227,16 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
       notificationsPermissions.provisioning.readSecrets
     ),
     // -- silences --
-    [AlertmanagerAction.CreateSilence]: toAbility(hasConfigurationAPI, instancePermissions.create),
+    // for now, all supported Alertmanager flavors have API endpoints for managing silences
+    [AlertmanagerAction.CreateSilence]: toAbility(AlwaysSupported, instancePermissions.create),
     [AlertmanagerAction.ViewSilence]: toAbility(AlwaysSupported, instancePermissions.read),
-    [AlertmanagerAction.UpdateSilence]: toAbility(hasConfigurationAPI, instancePermissions.update),
+    [AlertmanagerAction.UpdateSilence]: toAbility(AlwaysSupported, instancePermissions.update),
     // -- mute timtings --
     [AlertmanagerAction.CreateMuteTiming]: toAbility(hasConfigurationAPI, notificationsPermissions.create),
     [AlertmanagerAction.ViewMuteTiming]: toAbility(AlwaysSupported, notificationsPermissions.read),
     [AlertmanagerAction.UpdateMuteTiming]: toAbility(hasConfigurationAPI, notificationsPermissions.update),
     [AlertmanagerAction.DeleteMuteTiming]: toAbility(hasConfigurationAPI, notificationsPermissions.delete),
+    [AlertmanagerAction.ExportMuteTimings]: toAbility(isGrafanaFlavoredAlertmanager, notificationsPermissions.read),
   };
 
   return abilities;
