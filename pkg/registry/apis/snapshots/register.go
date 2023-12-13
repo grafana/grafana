@@ -1,6 +1,7 @@
 package snapshots
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -26,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -136,9 +138,6 @@ func (b *SnapshotsAPIBuilder) GetAPIGroupInfo(
 		},
 	)
 	storage[resourceInfo.StoragePath()] = legacyStore
-	storage[resourceInfo.StoragePath("delete")] = &subDeleteREST{
-		service: b.service,
-	}
 	storage[resourceInfo.StoragePath("body")] = &subBodyREST{
 		service:    b.service,
 		namespacer: b.namespacer,
@@ -159,6 +158,7 @@ func (b *SnapshotsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitio
 
 // Register additional routes with the server
 func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+	tags := []string{"Non-kubernetes APIs"}
 	return &grafanaapiserver.APIRoutes{
 		Namespace: []grafanaapiserver.APIRouteHandler{
 			{
@@ -168,7 +168,7 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 					Description: "longer description here?",
 					Post: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
-							Tags: []string{"Create"},
+							Tags: tags,
 							RequestBody: &spec3.RequestBody{
 								RequestBodyProps: spec3.RequestBodyProps{
 									Description: "TODO???? can we get the request+response shapes here",
@@ -213,30 +213,36 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 					dashboardsnapshots.CreateDashboardSnapshot(wrap, opts.Spec, b.service)
 				},
 			},
-		},
+			{
+				Path: "/dashsnaps/delete/{deleteKey}",
+				Spec: &spec3.PathProps{
+					Summary:     "an example at the root level",
+					Description: "longer description here?",
+					Delete: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							Tags: tags,
+						},
+					},
+				},
+				Handler: func(w http.ResponseWriter, r *http.Request) {
+					ctx := r.Context()
+					vars := mux.Vars(r)
+					key := vars["deleteKey"]
 
-		PostProcessSpec3: func(s *spec3.OpenAPI) (*spec3.OpenAPI, error) {
-			deletePath := "/apis/" + resourceInfo.GroupVersion().String() + "/namespaces/{namespace}/" +
-				resourceInfo.GroupResource().Resource + "/{name}/delete"
+					err := dashboardsnapshots.DeleteWithKey(ctx, key, b.service)
+					if err != nil {
+						_, _ = w.Write([]byte("Failed to delete external dashboard"))
+						w.WriteHeader(500)
+						return
+					}
 
-			// The path without a delete key should not be advertised
-			delete(s.Paths.Paths, deletePath)
-
-			// now change the path handler to something nicer
-			old := s.Paths.Paths[deletePath+"/{path}"]
-			for _, param := range old.Parameters {
-				if param.Name == "path" {
-					param.Name = "key"
-					param.Description = "the delete key"
-
-					// replace the path with one that says "key"
-					delete(s.Paths.Paths, deletePath+"/{path}")
-					s.Paths.Paths[deletePath+"/{key}"] = old
-					break
-				}
-			}
-
-			return s, nil
+					js, _ := json.Marshal(&util.DynMap{
+						"message": "Snapshot deleted. It might take an hour before it's cleared from any CDN caches.",
+					})
+					_, _ = w.Write(js)
+					w.WriteHeader(200)
+				},
+			},
 		},
 	}
 }

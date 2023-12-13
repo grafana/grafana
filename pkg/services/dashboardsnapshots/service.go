@@ -203,3 +203,22 @@ func createOriginalDashboardURL(cmd *CreateDashboardSnapshotCommand) (string, er
 
 	return fmt.Sprintf("/d/%v", dashUID), nil
 }
+
+func DeleteWithKey(ctx context.Context, key string, svc Service) error {
+	query := &GetDashboardSnapshotQuery{DeleteKey: key}
+	queryResult, err := svc.GetDashboardSnapshot(ctx, query)
+	if err != nil {
+		return err
+	}
+
+	if queryResult.External {
+		err := DeleteExternalDashboardSnapshot(queryResult.ExternalDeleteURL)
+		if err != nil {
+			return err
+		}
+	}
+
+	cmd := &DeleteDashboardSnapshotCommand{DeleteKey: queryResult.DeleteKey}
+
+	return svc.DeleteDashboardSnapshot(ctx, cmd)
+}

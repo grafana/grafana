@@ -115,40 +115,26 @@ func (hs *HTTPServer) GetDashboardSnapshot(c *contextmodel.ReqContext) response.
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *contextmodel.ReqContext) response.Response {
+func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *contextmodel.ReqContext) {
 	if !hs.Cfg.SnapshotEnabled {
 		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
-		return nil
+		return
 	}
 
 	key := web.Params(c.Req)[":deleteKey"]
 	if len(key) == 0 {
-		return response.Error(404, "Snapshot not found", nil)
+		c.JsonApiErr(404, "Snapshot not found", nil)
+		return
 	}
 
-	query := &dashboardsnapshots.GetDashboardSnapshotQuery{DeleteKey: key}
-	queryResult, err := hs.dashboardsnapshotsService.GetDashboardSnapshot(c.Req.Context(), query)
+	err := dashboardsnapshots.DeleteWithKey(c.Req.Context(), key, hs.dashboardsnapshotsService)
 	if err != nil {
-		return response.Err(err)
+		c.JsonApiErr(500, "Failed to delete external dashboard", err)
+	} else {
+		c.JSON(http.StatusOK, util.DynMap{
+			"message": "Snapshot deleted. It might take an hour before it's cleared from any CDN caches.",
+		})
 	}
-
-	if queryResult.External {
-		err := dashboardsnapshots.DeleteExternalDashboardSnapshot(queryResult.ExternalDeleteURL)
-		if err != nil {
-			return response.Error(500, "Failed to delete external dashboard", err)
-		}
-	}
-
-	cmd := &dashboardsnapshots.DeleteDashboardSnapshotCommand{DeleteKey: queryResult.DeleteKey}
-
-	if err := hs.dashboardsnapshotsService.DeleteDashboardSnapshot(c.Req.Context(), cmd); err != nil {
-		return response.Error(500, "Failed to delete dashboard snapshot", err)
-	}
-
-	return response.JSON(http.StatusOK, util.DynMap{
-		"message": "Snapshot deleted. It might take an hour before it's cleared from any CDN caches.",
-		"id":      queryResult.ID,
-	})
 }
 
 // swagger:route DELETE /snapshots/{key} snapshots deleteDashboardSnapshot
