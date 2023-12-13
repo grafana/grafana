@@ -166,7 +166,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
                     size="sm"
                     style={{ marginRight: '10px' }}
                     onClick={() => {
-                      reportInteraction('grafana_traces_copy_to_traceql_button_clicked', {
+                      reportInteraction('grafana_traces_copy_to_traceql_clicked', {
                         datasourceType: 'tempo',
                         app: app ?? '',
                         grafana_version: config.buildInfo.version,
