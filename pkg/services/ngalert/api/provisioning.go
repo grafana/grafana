@@ -127,3 +127,11 @@ func (f *ProvisioningApiHandler) handleRouteGetAlertRuleGroupExport(ctx *context
 func (f *ProvisioningApiHandler) handleRoutePutAlertRuleGroup(ctx *contextmodel.ReqContext, ag apimodels.AlertRuleGroup, folder, group string) response.Response {
 	return f.svc.RoutePutAlertRuleGroup(ctx, ag, folder, group)
 }
+
+func (f *ProvisioningApiHandler) handleRouteExportMuteTiming(ctx *contextmodel.ReqContext, name string) response.Response {
+	return f.svc.RouteGetMuteTimingExport(ctx, name)
+}
+
+func (f *ProvisioningApiHandler) handleRouteExportMuteTimings(ctx *contextmodel.ReqContext) response.Response {
+	return f.svc.RouteGetMuteTimingsExport(ctx)
+}

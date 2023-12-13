@@ -685,6 +685,9 @@ export class LokiDatasource
     // If we have stream selector, use /series endpoint
     if (query.stream) {
       const result = await this.languageProvider.fetchSeriesLabels(query.stream, { timeRange });
+      if (!result[query.label]) {
+        return [];
+      }
       return result[query.label].map((value: string) => ({ text: value }));
     }
 
