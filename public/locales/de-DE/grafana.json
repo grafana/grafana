@@ -527,7 +527,13 @@
     },
     "toolbar": {
       "aria-label": "Werkzeugleiste durchsuchen",
+      "copy-link": "",
+      "copy-link-abs-time": "",
+      "copy-links-absolute-category": "",
+      "copy-links-normal-category": "",
       "copy-shortened-link": "Verkürzten Link kopieren",
+      "copy-shortened-link-abs-time": "",
+      "copy-shortened-link-menu": "",
       "refresh-picker-cancel": "Abbrechen",
       "refresh-picker-run": "Abfrage ausführen",
       "split-close": "Schließen",
@@ -774,7 +780,7 @@
     },
     "frontend": {
       "subtitle": "",
-      "title": ""
+      "title": "Frontend"
     },
     "frontend-app": {
       "title": "Frontend"
@@ -809,6 +815,9 @@
     },
     "integrations": {
       "title": "Integrationen"
+    },
+    "k6": {
+      "title": ""
     },
     "kubernetes": {
       "title": "Kubernetes"
@@ -928,6 +937,10 @@
     "teams": {
       "subtitle": "Gruppen von Benutzern mit gemeinsamen Dashboards und Benachrichtigungen",
       "title": "Teams"
+    },
+    "testing-and-synthetics": {
+      "subtitle": "",
+      "title": ""
     },
     "upgrading": {
       "title": "Statistiken und Lizenz"
@@ -1306,7 +1319,7 @@
       "username-label": "Benutzername"
     },
     "tabs": {
-      "general": ""
+      "general": "Allgemein"
     }
   },
   "user-session": {
