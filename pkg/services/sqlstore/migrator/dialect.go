@@ -368,7 +368,7 @@ func (b *BaseDialect) InsertQuery(tableName string, row map[string]any) (string,
 	for col := range row {
 		keys = append(keys, col)
 	}
-	slices.Sort[string](keys)
+	slices.Sort(keys)
 
 	// build query and values
 	for _, col := range keys {
@@ -398,7 +398,7 @@ func (b *BaseDialect) UpdateQuery(tableName string, row map[string]any, where ma
 	for col := range row {
 		keys = append(keys, col)
 	}
-	slices.Sort[string](keys)
+	slices.Sort(keys)
 
 	// build update query and values
 	for _, col := range keys {
@@ -411,7 +411,7 @@ func (b *BaseDialect) UpdateQuery(tableName string, row map[string]any, where ma
 	for col := range where {
 		keys = append(keys, col)
 	}
-	slices.Sort[string](keys)
+	slices.Sort(keys)
 
 	// build where clause and values
 	for _, col := range keys {
