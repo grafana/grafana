@@ -43,6 +43,7 @@ export interface ValueFormatterIndex {
 // Globals & formats cache
 let categories: ValueFormatCategory[] = [];
 const index: ValueFormatterIndex = {};
+const indexScalable: ValueFormatterIndex = {};
 let hasBuiltIndex = false;
 
 export function toFixed(value: number, decimals?: DecimalCount): string {
@@ -197,8 +198,9 @@ export function stringFormater(value: number): FormattedValue {
   return { text: `${value}` };
 }
 
-function buildFormats(scalable?: boolean) {
-  categories = getCategories(scalable);
+function buildFormats() {
+  categories = getCategories();
+  const nonScalableCategories = getCategories(false);
 
   for (const cat of categories) {
     for (const format of cat.formats) {
@@ -206,25 +208,37 @@ function buildFormats(scalable?: boolean) {
     }
   }
 
+  for (const cat of nonScalableCategories) {
+    for (const format of cat.formats) {
+      indexScalable[format.id] = format.fn;
+    }
+  }
+
   // Resolve units pointing to old IDs
   [{ from: 'farenheit', to: 'fahrenheit' }].forEach((alias) => {
-    const f = index[alias.to];
-    if (f) {
-      index[alias.from] = f;
+    const f0 = index[alias.to];
+    if (f0) {
+      index[alias.from] = f0;
+    }
+    const f1 = indexScalable[alias.to];
+    if (f1) {
+      indexScalable[alias.from] = f1;
     }
   });
 
   hasBuiltIndex = true;
 }
 
-export function getValueFormat(id?: string | null, scalable?: boolean): ValueFormatter {
+export function getValueFormat(id?: string | null, scalable = true): ValueFormatter {
   if (!id) {
     return toFixedUnit('');
   }
 
-  buildFormats(scalable);
+  if (!hasBuiltIndex) {
+    buildFormats();
+  }
 
-  const fmt = index[id];
+  const fmt = scalable ? index[id] : indexScalable[id];
 
   if (!fmt && id) {
     let idx = id.indexOf(':');
@@ -276,11 +290,14 @@ export function getValueFormat(id?: string | null, scalable?: boolean): ValueFor
   return fmt;
 }
 
-export function getValueFormatterIndex(): ValueFormatterIndex {
+export function getValueFormatterIndex(scalable = true): ValueFormatterIndex {
   if (!hasBuiltIndex) {
     buildFormats();
   }
 
+  if (scalable) {
+    return indexScalable;
+  }
   return index;
 }
 

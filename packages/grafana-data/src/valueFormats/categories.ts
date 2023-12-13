@@ -34,7 +34,7 @@ import {
   booleanValueFormatter,
 } from './valueFormats';
 
-export const getCategories = (scalable?: boolean): ValueFormatCategory[] => [
+export const getCategories = (scalable = true): ValueFormatCategory[] => [
   {
     name: 'Misc',
     formats: [
