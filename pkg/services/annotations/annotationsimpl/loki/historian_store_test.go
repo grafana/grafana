@@ -91,13 +91,11 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			res, err := store.Get(
 				context.Background(),
 				&query,
-				annotation_ac.AccessResources{
+				&annotation_ac.AccessResources{
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
 					},
-					ScopeTypes: map[any]struct{}{
-						testutil.DashScopeType: {},
-					},
+					CanAccessDashAnnotations: true,
 				},
 			)
 			require.NoError(t, err)
@@ -119,13 +117,11 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			res, err := store.Get(
 				context.Background(),
 				&query,
-				annotation_ac.AccessResources{
+				&annotation_ac.AccessResources{
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
 					},
-					ScopeTypes: map[any]struct{}{
-						testutil.DashScopeType: {},
-					},
+					CanAccessDashAnnotations: true,
 				},
 			)
 			require.NoError(t, err)
@@ -142,13 +138,11 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			res, err := store.Get(
 				context.Background(),
 				&query,
-				annotation_ac.AccessResources{
+				&annotation_ac.AccessResources{
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
 					},
-					ScopeTypes: map[any]struct{}{
-						testutil.DashScopeType: {},
-					},
+					CanAccessDashAnnotations: true,
 				},
 			)
 			require.NoError(t, err)
@@ -170,13 +164,11 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			res, err := store.Get(
 				context.Background(),
 				&query,
-				annotation_ac.AccessResources{
+				&annotation_ac.AccessResources{
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
 					},
-					ScopeTypes: map[any]struct{}{
-						testutil.DashScopeType: {},
-					},
+					CanAccessDashAnnotations: true,
 				},
 			)
 			require.NoError(t, err)
@@ -197,14 +189,14 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		store := createTestLokiStore(t, sql, fakeLokiClient)
 
 		t.Run("should return empty list when no streams", func(t *testing.T) {
-			items := store.annotationsFromStream(context.Background(), historian.Stream{}, annotation_ac.AccessResources{}, newRuleCache(store.db))
+			items := store.annotationsFromStream(context.Background(), historian.Stream{}, 0, annotation_ac.AccessResources{})
 			require.Empty(t, items)
 		})
 
 		t.Run("should return empty list when no entries", func(t *testing.T) {
 			items := store.annotationsFromStream(context.Background(), historian.Stream{
 				Values: []historian.Sample{},
-			}, annotation_ac.AccessResources{}, newRuleCache(store.db))
+			}, 0, annotation_ac.AccessResources{})
 			require.Empty(t, items)
 		})
 
@@ -215,9 +207,8 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			transitions := genStateTransitions(t, numTransitions, start)
 
 			stream := historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger())
-			rc := newRuleCache(store.db)
 
-			items := store.annotationsFromStream(context.Background(), stream, annotation_ac.AccessResources{}, rc)
+			items := store.annotationsFromStream(context.Background(), stream, rule.OrgID, annotation_ac.AccessResources{})
 			require.Len(t, items, numTransitions)
 
 			for i := 0; i < numTransitions; i++ {
@@ -226,7 +217,6 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 
 				expected := &annotations.ItemDTO{
 					AlertID:      rule.ID,
-					AlertName:    rule.Title,
 					DashboardID:  dashboard1.ID,
 					DashboardUID: &dashboard1.UID,
 					PanelID:      *rule.PanelID,
@@ -258,16 +248,12 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 				Stream: stream1.Stream,
 			}
 
-			rc := newRuleCache(store.db)
-
-			items := store.annotationsFromStream(context.Background(), stream, annotation_ac.AccessResources{
+			items := store.annotationsFromStream(context.Background(), stream, rule.OrgID, annotation_ac.AccessResources{
 				Dashboards: map[string]int64{
 					dashboard1.UID: dashboard1.ID,
 				},
-				ScopeTypes: map[any]struct{}{
-					testutil.DashScopeType: {},
-				},
-			}, rc)
+				CanAccessDashAnnotations: true,
+			})
 			require.Len(t, items, numTransitions)
 
 			for _, item := range items {
@@ -292,16 +278,12 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 				Stream: stream1.Stream,
 			}
 
-			rc := newRuleCache(store.db)
-
-			items := store.annotationsFromStream(context.Background(), stream, annotation_ac.AccessResources{
+			items := store.annotationsFromStream(context.Background(), stream, rule.OrgID, annotation_ac.AccessResources{
 				Dashboards: map[string]int64{
 					dashboard1.UID: dashboard1.ID,
 				},
-				ScopeTypes: map[any]struct{}{
-					testutil.OrgScopeType: {},
-				},
-			}, rc)
+				CanAccessOrgAnnotations: true,
+			})
 			require.Len(t, items, numTransitions)
 
 			for _, item := range items {
@@ -319,17 +301,13 @@ func TestHasAccess(t *testing.T) {
 
 	t.Run("should return false when scope is organization and entry has dashboard UID", func(t *testing.T) {
 		require.False(t, hasAccess(entry, annotation_ac.AccessResources{
-			ScopeTypes: map[interface{}]struct{}{
-				testutil.OrgScopeType: {},
-			},
+			CanAccessOrgAnnotations: true,
 		}))
 	})
 
 	t.Run("should return false when scope is dashboard and dashboard UID is not in resources", func(t *testing.T) {
 		require.False(t, hasAccess(entry, annotation_ac.AccessResources{
-			ScopeTypes: map[interface{}]struct{}{
-				testutil.DashScopeType: {},
-			},
+			CanAccessDashAnnotations: true,
 			Dashboards: map[string]int64{
 				"other-dashboard-uid": 1,
 			},
@@ -338,9 +316,7 @@ func TestHasAccess(t *testing.T) {
 
 	t.Run("should return true when scope is dashboard and dashboard UID is in resources", func(t *testing.T) {
 		require.True(t, hasAccess(entry, annotation_ac.AccessResources{
-			ScopeTypes: map[interface{}]struct{}{
-				testutil.DashScopeType: {},
-			},
+			CanAccessDashAnnotations: true,
 			Dashboards: map[string]int64{
 				"dashboard-uid": 1,
 			},
@@ -355,7 +331,7 @@ func TestFloat64Map(t *testing.T) {
 			"key2": json.Number("2.0"),
 		})
 
-		golangMap, err := float64Map(jsonMap)
+		golangMap, err := numericMap[float64](jsonMap)
 		require.NoError(t, err)
 
 		require.Equal(t, map[string]float64{
@@ -370,7 +346,7 @@ func TestFloat64Map(t *testing.T) {
 			"key2": "not a float",
 		})
 
-		_, err := float64Map(jsonMap)
+		_, err := numericMap[float64](jsonMap)
 		require.Error(t, err)
 	})
 }
@@ -401,8 +377,8 @@ func TestBuildTransitionStub(t *testing.T) {
 			jsonValues.Set(k, json.Number(strconv.FormatFloat(v, 'f', -1, 64)))
 		}
 
-		stub, err := buildTransitionStub(
-			&historian.LokiEntry{
+		stub, err := buildState(
+			historian.LokiEntry{
 				Current:        "Normal",
 				Previous:       "Error (NoData)",
 				Values:         jsonValues,
@@ -415,8 +391,8 @@ func TestBuildTransitionStub(t *testing.T) {
 	})
 
 	t.Run("fails when passed map with non-float values", func(t *testing.T) {
-		_, err := buildTransitionStub(
-			&historian.LokiEntry{
+		_, err := buildState(
+			historian.LokiEntry{
 				Current:  "Normal",
 				Previous: "Error (NoData)",
 				Values:   simplejson.NewFromAny(map[string]any{"key1": "not a float"}),

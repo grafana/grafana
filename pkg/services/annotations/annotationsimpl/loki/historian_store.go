@@ -6,13 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"sort"
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert"
+	"golang.org/x/exp/constraints"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -69,18 +69,20 @@ func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, ft f
 	}
 }
 
-func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQuery, accessResources accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
-	ruleCache := newRuleCache(r.db)
-
-	historyQuery, err := buildHistoryQuery(ctx, query, accessResources.Dashboards, ruleCache)
-	if err != nil {
-		if errors.Is(err, ErrMissingRule) {
-			return []*annotations.ItemDTO{}, ErrLokiStoreInvalidQuery.Errorf("rule with ID %d does not exist", query.AlertID)
+func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQuery, accessResources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
+	rule := &ngmodels.AlertRule{}
+	if query.AlertID != 0 {
+		var err error
+		rule, err = getRule(ctx, r.db, query.OrgID, query.AlertID)
+		if err != nil {
+			if errors.Is(err, ErrMissingRule) {
+				return make([]*annotations.ItemDTO, 0), ErrLokiStoreInvalidQuery.Errorf("rule with ID %d does not exist", query.AlertID)
+			}
+			return make([]*annotations.ItemDTO, 0), ErrLokiStoreInternal.Errorf("failed to query rule: %w", err)
 		}
-		return []*annotations.ItemDTO{}, ErrLokiStoreInternal.Errorf("failed to build historian query: %w", err)
 	}
 
-	logQL, err := historian.BuildLogQuery(historyQuery)
+	logQL, err := historian.BuildLogQuery(buildHistoryQuery(ctx, query, accessResources.Dashboards, rule.UID))
 	if err != nil {
 		return make([]*annotations.ItemDTO, 0), ErrLokiStoreInternal.Errorf("failed to build loki query: %w", err)
 	}
@@ -94,14 +96,17 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQue
 	}
 
 	// query.From and query.To are always in milliseconds, convert them to nanoseconds for loki
-	res, err := r.client.RangeQuery(ctx, logQL, query.From*1e6, query.To*1e6, query.Limit)
+	from := query.From * 1e6
+	to := query.To * 1e6
+
+	res, err := r.client.RangeQuery(ctx, logQL, from, to, query.Limit)
 	if err != nil {
 		return make([]*annotations.ItemDTO, 0), ErrLokiStoreInternal.Errorf("failed to query loki: %w", err)
 	}
 
 	items := make([]*annotations.ItemDTO, 0)
 	for _, stream := range res.Data.Result {
-		items = append(items, r.annotationsFromStream(ctx, stream, accessResources, ruleCache)...)
+		items = append(items, r.annotationsFromStream(ctx, stream, query.OrgID, *accessResources)...)
 	}
 
 	// order by time desc
@@ -112,52 +117,37 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQue
 	return items, err
 }
 
-func (r *LokiHistorianStore) annotationsFromStream(ctx context.Context, stream historian.Stream, ac accesscontrol.AccessResources, rc *ruleCache) []*annotations.ItemDTO {
-	orgID, err := getOrgID(stream.Stream)
-	if err != nil {
-		r.log.Debug(fmt.Sprintf("could not get orgID for stream `%s`", stream), "err", err)
-		return []*annotations.ItemDTO{}
-	}
-
+func (r *LokiHistorianStore) annotationsFromStream(ctx context.Context, stream historian.Stream, orgID int64, ac accesscontrol.AccessResources) []*annotations.ItemDTO {
 	items := make([]*annotations.ItemDTO, 0, len(stream.Values))
 	for _, sample := range stream.Values {
 		entry := historian.LokiEntry{}
 		err := json.Unmarshal([]byte(sample.V), &entry)
 		if err != nil {
-			r.log.Debug(fmt.Sprintf("could not unmarshal entry `%s`", sample.V), "err", err)
+			// bad data, skip
 			continue
 		}
 
 		if !hasAccess(entry, ac) {
+			// no access to this annotation, skip
 			continue
 		}
 
-		transition, err := buildTransitionStub(&entry)
+		currentState, err := buildState(entry)
 		if err != nil {
-			r.log.Debug(fmt.Sprintf("could not build transition stub for entry `%v`", entry), "err", err)
-			continue
-		}
-		if !historian.ShouldRecord(*transition) {
-			continue
-		}
-
-		rule, err := rc.get(ctx, ruleQuery{OrgID: orgID, UID: entry.RuleUID})
-		if err != nil {
-			r.log.Debug(fmt.Sprintf("could not find rule with UID `%s`", entry.RuleUID), "entry", entry, "err", err)
+			// bad data, skip
 			continue
 		}
 
 		annotationText, annotationData := historian.BuildAnnotationTextAndData(
 			historymodel.RuleMeta{
-				Title: rule.Title,
+				Title: entry.RuleTitle,
 			},
-			transition.State,
+			currentState,
 		)
 
 		items = append(items, &annotations.ItemDTO{
-			AlertID:      rule.ID,
-			AlertName:    rule.Title,
-			DashboardID:  0,
+			AlertID:      entry.RuleID,
+			DashboardID:  ac.Dashboards[entry.DashboardUID],
 			DashboardUID: &entry.DashboardUID,
 			PanelID:      entry.PanelID,
 			NewState:     entry.Current,
@@ -177,14 +167,28 @@ func (r *LokiHistorianStore) GetTags(ctx context.Context, query *annotations.Tag
 
 // util
 
-func hasAccess(entry historian.LokiEntry, resources accesscontrol.AccessResources) bool {
-	if _, ok := resources.ScopeTypes[annotations.Organization.String()]; ok {
-		if entry.DashboardUID != "" {
-			return false
+func getRule(ctx context.Context, sql db.DB, orgID int64, ruleID int64) (*ngmodels.AlertRule, error) {
+	rule := &ngmodels.AlertRule{OrgID: orgID, ID: ruleID}
+	err := sql.WithDbSession(ctx, func(sess *db.Session) error {
+		exists, err := sess.Get(rule)
+		if err != nil {
+			return err
 		}
+		if !exists {
+			return ErrMissingRule
+		}
+		return nil
+	})
+
+	return rule, err
+}
+
+func hasAccess(entry historian.LokiEntry, resources accesscontrol.AccessResources) bool {
+	if resources.CanAccessOrgAnnotations && entry.DashboardUID == "" {
+		return false
 	}
 
-	if _, ok := resources.ScopeTypes[annotations.Dashboard.String()]; ok {
+	if resources.CanAccessDashAnnotations {
 		_, canAccess := resources.Dashboards[entry.DashboardUID]
 		if !canAccess {
 			return false
@@ -194,14 +198,18 @@ func hasAccess(entry historian.LokiEntry, resources accesscontrol.AccessResource
 	return true
 }
 
-// float64Map converts a simplejson map[string]any to a map[string]float64.
-func float64Map(j *simplejson.Json) (map[string]float64, error) {
+type number interface {
+	constraints.Integer | constraints.Float
+}
+
+// numericMap converts a simplejson map[string]any to a map[string]N, where N is numeric (int or float).
+func numericMap[N number](j *simplejson.Json) (map[string]N, error) {
 	m, err := j.Map()
 	if err != nil {
 		return nil, err
 	}
 
-	values := make(map[string]float64)
+	values := make(map[string]N)
 	for k, v := range m {
 		a, ok := (v).(json.Number)
 		if !ok {
@@ -213,137 +221,56 @@ func float64Map(j *simplejson.Json) (map[string]float64, error) {
 			return nil, err
 		}
 
-		values[k] = f
+		values[k] = N(f)
 	}
 
 	return values, nil
 }
 
-func buildTransitionStub(entry *historian.LokiEntry) (*state.StateTransition, error) {
+func buildState(entry historian.LokiEntry) (*state.State, error) {
 	curState, curStateReason, err := state.ParseFormattedState(entry.Current)
 	if err != nil {
 		return nil, fmt.Errorf("parsing state: %w", err)
 	}
 
-	prevState, prevStateReason, err := state.ParseFormattedState(entry.Previous)
-	if err != nil {
-		return nil, fmt.Errorf("parsing state: %w", err)
-	}
-
-	v, err := float64Map(entry.Values)
+	v, err := numericMap[float64](entry.Values)
 	if err != nil {
 		return nil, fmt.Errorf("parsing entry values: %w", err)
 	}
 
-	transition := &state.StateTransition{
-		PreviousState:       prevState,
-		PreviousStateReason: prevStateReason,
-		State: &state.State{
-			State:       curState,
-			StateReason: curStateReason,
-			Values:      v,
-			Labels:      entry.InstanceLabels,
-		},
+	state := &state.State{
+		State:       curState,
+		StateReason: curStateReason,
+		Values:      v,
+		Labels:      entry.InstanceLabels,
 	}
 	if entry.Error != "" {
-		transition.State.Error = errors.New(entry.Error)
+		state.Error = errors.New(entry.Error)
 	}
 
-	return transition, nil
+	return state, nil
 }
 
-func buildHistoryQuery(ctx context.Context, query *annotations.ItemQuery, dashboards map[string]int64, rc *ruleCache) (ngmodels.HistoryQuery, error) {
+func buildHistoryQuery(ctx context.Context, query *annotations.ItemQuery, dashboards map[string]int64, ruleUID string) ngmodels.HistoryQuery {
 	historyQuery := ngmodels.HistoryQuery{
 		OrgID:        query.OrgID,
 		DashboardUID: query.DashboardUID,
 		PanelID:      query.PanelID,
+		RuleUID:      ruleUID,
 	}
 
 	if historyQuery.DashboardUID == "" && query.DashboardID == 0 {
-		if uid, ok := invertMap(dashboards)[query.DashboardID]; ok {
-			historyQuery.DashboardUID = uid
+		for uid, id := range dashboards {
+			if query.DashboardID == id {
+				historyQuery.DashboardUID = uid
+				break
+			}
 		}
 	}
 
-	if query.AlertID != 0 {
-		rule, err := rc.get(ctx, ruleQuery{OrgID: query.OrgID, ID: query.AlertID})
-		if err != nil {
-			return ngmodels.HistoryQuery{}, err
-		}
-		historyQuery.RuleUID = rule.UID
-	}
-
-	return historyQuery, nil
+	return historyQuery
 }
 
-func invertMap[T comparable, U comparable](m map[T]U) map[U]T {
-	res := make(map[U]T, len(m))
-	for k, v := range m {
-		res[v] = k
-	}
-	return res
-}
-
-func getOrgID(labels map[string]string) (int64, error) {
-	orgIDStr, ok := labels[historian.OrgIDLabel]
-	if !ok {
-		return 0, errors.New("missing orgID label")
-	}
-
-	orgID, err := strconv.ParseInt(orgIDStr, 10, 64)
-	if err != nil {
-		return 0, err
-	}
-
-	return orgID, nil
-}
-
-type ruleQuery struct {
-	OrgID int64
-	UID   string
-	ID    int64
-}
-
-type ruleCache struct {
-	queryFunc func(ctx context.Context, query ruleQuery) (*ngmodels.AlertRule, error)
-	cache     map[string]*ngmodels.AlertRule
-}
-
-func newRuleCache(sql db.DB) *ruleCache {
-	queryFunc := func(ctx context.Context, query ruleQuery) (*ngmodels.AlertRule, error) {
-		bean := &ngmodels.AlertRule{OrgID: query.OrgID, ID: query.ID, UID: query.UID}
-		err := sql.WithDbSession(ctx, func(sess *db.Session) error {
-			exists, err := sess.Get(bean)
-			if err != nil {
-				return err
-			}
-			if !exists {
-				return ErrMissingRule
-			}
-			return nil
-		})
-		return bean, err
-	}
-
-	return &ruleCache{
-		cache:     make(map[string]*ngmodels.AlertRule),
-		queryFunc: queryFunc,
-	}
-}
-
-func (r *ruleCache) get(ctx context.Context, query ruleQuery) (*ngmodels.AlertRule, error) {
-	if rule, ok := r.cache[query.UID]; ok {
-		return rule, nil
-	}
-
-	rule, err := r.queryFunc(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-
-	r.cache[query.UID] = rule
-
-	return rule, nil
 func useStore(cfg setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.FeatureToggles) bool {
 	if !cfg.Enabled {
 		return false

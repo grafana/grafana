@@ -241,7 +241,7 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 
 	samples := make([]Sample, 0, len(states))
 	for _, state := range states {
-		if !ShouldRecord(state) {
+		if !shouldRecord(state) {
 			continue
 		}
 
@@ -300,6 +300,8 @@ type LokiEntry struct {
 	DashboardUID  string           `json:"dashboardUID"`
 	PanelID       int64            `json:"panelID"`
 	Fingerprint   string           `json:"fingerprint"`
+	RuleTitle     string           `json:"ruleTitle"`
+	RuleID        int64            `json:"ruleID"`
 	RuleUID       string           `json:"ruleUID"`
 	// InstanceLabels is exactly the set of labels associated with the alert instance in Alertmanager.
 	// These should not be conflated with labels associated with log streams.
