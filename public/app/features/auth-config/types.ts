@@ -27,7 +27,7 @@ export type SSOProviderSettingsBase = {
   emailAttributePath?: string;
   emptyScopes?: boolean;
   enabled: boolean;
-  extra?: Record<string, any>;
+  extra?: Record<string, unknown>;
   groupsAttributePath?: string;
   hostedDomain?: string;
   icon?: IconName;

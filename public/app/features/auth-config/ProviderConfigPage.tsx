@@ -74,6 +74,10 @@ export const ProviderConfigPage = ({ config, loadSettings, isLoading, provider }
 
 export default connector(ProviderConfigPage);
 
+function isSelectableValue(value: unknown): value is SelectableValue[] {
+  return Array.isArray(value) && value.every((v) => typeof v === 'object' && v !== null && 'value' in v);
+}
+
 interface GitHubConfigProps {
   config?: SSOProvider;
   isLoading?: boolean;
@@ -131,7 +135,8 @@ export const ProviderConfig = ({ config, provider, isLoading }: GitHubConfigProp
           </Field>
         );
       case 'select':
-        const options = watch(name) as SelectableValue[];
+        const watchOptions = watch(name);
+        const options = isSelectableValue(watchOptions) ? watchOptions : [{ label: '', value: '' }];
         return (
           <Field label={fieldData.label} htmlFor={name} key={name}>
             <InputControl
