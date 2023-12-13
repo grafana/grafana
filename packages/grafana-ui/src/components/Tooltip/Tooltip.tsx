@@ -48,6 +48,7 @@ export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
         fallbackAxisSideDirection: 'end',
         // see https://floating-ui.com/docs/flip#combining-with-shift
         crossAxis: false,
+        boundary: document.body,
       }),
       shift(),
       arrow({

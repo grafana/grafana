@@ -51,6 +51,7 @@ export function buildTooltipTheme(
         display: 'inline',
         background: colorManipulator.darken(tooltipBg, 0.1),
         color: tooltipText,
+        whiteSpace: 'normal',
       },
 
       pre: {

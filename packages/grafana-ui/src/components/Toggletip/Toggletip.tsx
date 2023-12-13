@@ -19,6 +19,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { buildTooltipTheme, getPlacement } from '../../utils/tooltipUtils';
 import { IconButton } from '../IconButton/IconButton';
+import { Portal } from '../Portal/Portal';
 
 import { ToggletipContent } from './types';
 
@@ -75,6 +76,7 @@ export const Toggletip = React.memo(
         fallbackAxisSideDirection: 'end',
         // see https://floating-ui.com/docs/flip#combining-with-shift
         crossAxis: false,
+        boundary: document.body,
       }),
       shift(),
       arrow({
@@ -113,33 +115,35 @@ export const Toggletip = React.memo(
           ...getReferenceProps(),
         })}
         {controlledVisible && (
-          <div
-            data-testid="toggletip-content"
-            className={cx(style.container, {
-              [styles.fitContent]: fitContent,
-            })}
-            ref={refs.setFloating}
-            style={floatingStyles}
-            {...getFloatingProps()}
-          >
-            <FloatingArrow className={style.arrow} ref={arrowRef} context={context} />
-            {Boolean(title) && <div className={style.header}>{title}</div>}
-            {closeButton && (
-              <div className={style.headerClose}>
-                <IconButton
-                  tooltip="Close"
-                  name="times"
-                  data-testid="toggletip-header-close"
-                  onClick={() => setControlledVisible(false)}
-                />
+          <Portal>
+            <div
+              data-testid="toggletip-content"
+              className={cx(style.container, {
+                [styles.fitContent]: fitContent,
+              })}
+              ref={refs.setFloating}
+              style={floatingStyles}
+              {...getFloatingProps()}
+            >
+              <FloatingArrow className={style.arrow} ref={arrowRef} context={context} />
+              {Boolean(title) && <div className={style.header}>{title}</div>}
+              {closeButton && (
+                <div className={style.headerClose}>
+                  <IconButton
+                    tooltip="Close"
+                    name="times"
+                    data-testid="toggletip-header-close"
+                    onClick={() => setControlledVisible(false)}
+                  />
+                </div>
+              )}
+              <div className={style.body}>
+                {(typeof content === 'string' || React.isValidElement(content)) && content}
+                {typeof content === 'function' && content({})}
               </div>
-            )}
-            <div className={style.body}>
-              {(typeof content === 'string' || React.isValidElement(content)) && content}
-              {typeof content === 'function' && content({})}
+              {Boolean(footer) && <div className={style.footer}>{footer}</div>}
             </div>
-            {Boolean(footer) && <div className={style.footer}>{footer}</div>}
-          </div>
+          </Portal>
         )}
       </>
     );
