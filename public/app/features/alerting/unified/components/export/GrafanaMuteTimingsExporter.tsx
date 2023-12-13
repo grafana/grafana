@@ -43,7 +43,7 @@ const GrafanaMuteTimingExporterPreview = ({
     format: exportFormat,
     muteTiming: muteTimingName,
   });
-  const downloadFileName = `mute-timings-${new Date().getTime()}`;
+  const downloadFileName = `mute-timing-${muteTimingName}-${new Date().getTime()}`;
 
   if (isFetching) {
     return <LoadingPlaceholder text="Loading...." />;
