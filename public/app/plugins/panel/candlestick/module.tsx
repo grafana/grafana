@@ -141,4 +141,5 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(CandlestickPane
     commonOptionsBuilder.addLegendOptions(builder);
   })
   .setDataSupport({ annotations: true, alertStates: true })
-  .setSuggestionsSupplier(new CandlestickSuggestionsSupplier());
+  .setSuggestionsSupplier(new CandlestickSuggestionsSupplier())
+  .setDataSupport({ annotations: true });
