@@ -114,7 +114,7 @@ export class BigValue extends PureComponent<Props> {
           <div style={valueAndTitleContainerStyles}>
             {textValues.title && <div style={titleStyles}>{textValues.title}</div>}
             <FormattedValueDisplay value={textValues} style={valueStyles} />
-            {!percentChangeNaN && textMode !== BigValueTextMode.Name && textMode !== BigValueTextMode.None && (
+            {!percentChangeNaN && textMode !== BigValueTextMode.None && (
               <div style={percentChangeStyles}>
                 <HorizontalGroup height={metricHeight} align={metricAlignment}>
                   {percentChangeIcon && (
