@@ -63,7 +63,7 @@ These examples show how often and when reminders are sent for a triggered alert.
 ## List of supported notifiers
 
 | Name                                          | Type                      | Supports images    | Supports alert rule tags |
-|-----------------------------------------------|---------------------------| ------------------ | ------------------------ |
+| --------------------------------------------- | ------------------------- | ------------------ | ------------------------ |
 | [DingDing](#dingdingdingtalk)                 | `dingding`                | yes, external only | no                       |
 | [Discord](#discord)                           | `discord`                 | yes                | no                       |
 | [Email](#email)                               | `email`                   | yes                | no                       |

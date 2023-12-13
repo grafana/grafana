@@ -23,16 +23,9 @@ weight: 150
 
 # Contact points
 
-Contact points contain the configuration for sending notifications. A contact point is a list of integrations, each of
-which sends a notification to a particular email address, service or URL. Contact points can have multiple integrations
-of the same kind, or a combination of integrations of different kinds. For example, a contact point could contain a
-Pagerduty integration; an email and Slack integration; or a Pagerduty integration, a Slack integration, and two email
-integrations. You can also configure a contact point with no integrations; in which case no notifications are sent.
+Contact points contain the configuration for sending notifications. A contact point is a list of integrations, each of which sends a notification to a particular email address, service or URL. Contact points can have multiple integrations of the same kind, or a combination of integrations of different kinds. For example, a contact point could contain a Pagerduty integration; an email and Slack integration; or a Pagerduty integration, a Slack integration, and two email integrations. You can also configure a contact point with no integrations; in which case no notifications are sent.
 
-A contact point cannot send notifications until it has been added to a notification policy. A notification policy can
-only send alerts to one contact point, but a contact point can be added to a number of notification policies at the same
-time. When an alert matches a notification policy, the alert is sent to the contact point in that notification policy,
-which then sends a notification to each integration in its configuration.
+A contact point cannot send notifications until it has been added to a notification policy. A notification policy can only send alerts to one contact point, but a contact point can be added to a number of notification policies at the same time. When an alert matches a notification policy, the alert is sent to the contact point in that notification policy, which then sends a notification to each integration in its configuration.
 
 Contact points can be configured for the Grafana Alertmanager as well as external alertmanagers.
 
@@ -40,8 +33,7 @@ You can also use notification templating to customize notification messages for 
 
 **Note:**
 
-If you've created an OnCall contact point in the Grafana OnCall application, you can view it in the Alerting
-application.
+If you've created an OnCall contact point in the Grafana OnCall application, you can view it in the Alerting application.
 
 ## Supported contact point integrations
 
