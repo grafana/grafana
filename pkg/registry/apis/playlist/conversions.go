@@ -123,7 +123,7 @@ func getLegacyID(item *unstructured.Unstructured) int64 {
 	meta := kinds.GrafanaResourceMetadata{
 		Annotations: item.GetAnnotations(),
 	}
-	info := meta.GetOriginInfo()
+	info, _ := meta.GetOriginInfo()
 	if info != nil && info.Name == "SQL" {
 		i, err := strconv.ParseInt(info.Key, 10, 64)
 		if err == nil {
