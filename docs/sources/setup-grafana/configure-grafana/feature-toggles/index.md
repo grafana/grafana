@@ -141,6 +141,7 @@ Experimental features might be changed or removed without prior notice.
 | `externalCorePlugins`                       | Allow core plugins to be loaded as external                                                                                                                                                                                                                                       |
 | `pluginsAPIMetrics`                         | Sends metrics of public grafana packages usage by plugins                                                                                                                                                                                                                         |
 | `httpSLOLevels`                             | Adds SLO level to http request metrics                                                                                                                                                                                                                                            |
+| `idForwarding`                              | Generate signed id token for identity that can be forwarded to plugins and external services                                                                                                                                                                                      |
 | `panelMonitoring`                           | Enables panel monitoring through logs and measurements                                                                                                                                                                                                                            |
 | `enableNativeHTTPHistogram`                 | Enables native HTTP Histograms                                                                                                                                                                                                                                                    |
 | `formatString`                              | Enable format string transformer                                                                                                                                                                                                                                                  |
@@ -173,12 +174,11 @@ Experimental features might be changed or removed without prior notice.
 
 The following toggles require explicitly setting Grafana's [app mode]({{< relref "../_index.md#app_mode" >}}) to 'development' before you can enable this feature toggle. These features tend to be experimental.
 
-| Feature toggle name                   | Description                                                                                  |
-| ------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `unifiedStorage`                      | SQL-based k8s storage                                                                        |
-| `externalServiceAuth`                 | Starts an OAuth2 authentication provider for external services                               |
-| `grafanaAPIServerEnsureKubectlAccess` | Start an additional https handler and write kubectl options                                  |
-| `idForwarding`                        | Generate signed id token for identity that can be forwarded to plugins and external services |
-| `externalServiceAccounts`             | Automatic service account and token setup for plugins                                        |
-| `panelTitleSearchInV1`                | Enable searching for dashboards using panel title in search v1                               |
-| `ssoSettingsApi`                      | Enables the SSO settings API                                                                 |
+| Feature toggle name                   | Description                                                    |
+| ------------------------------------- | -------------------------------------------------------------- |
+| `unifiedStorage`                      | SQL-based k8s storage                                          |
+| `externalServiceAuth`                 | Starts an OAuth2 authentication provider for external services |
+| `grafanaAPIServerEnsureKubectlAccess` | Start an additional https handler and write kubectl options    |
+| `externalServiceAccounts`             | Automatic service account and token setup for plugins          |
+| `panelTitleSearchInV1`                | Enable searching for dashboards using panel title in search v1 |
+| `ssoSettingsApi`                      | Enables the SSO settings API                                   |
