@@ -11,8 +11,6 @@ import { KioskMode } from 'app/types';
 
 import { RouteDescriptor } from '../../navigation/types';
 
-import { ReturnToPreviousProps } from './ReturnToPrevious/ReturnToPrevious';
-
 export type MegaMenuState = 'open' | 'closed' | 'docked';
 
 export interface AppChromeState {
@@ -25,11 +23,6 @@ export interface AppChromeState {
   megaMenuDocked: boolean;
   kioskMode: KioskMode | null;
   layout: PageLayoutType;
-  returnToPrevious: {
-    show: boolean;
-    href: ReturnToPreviousProps['href'];
-    title: ReturnToPreviousProps['title'];
-  };
 }
 
 export const DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.docked';
@@ -56,11 +49,6 @@ export class AppChromeService {
     megaMenuDocked: this.megaMenuDocked,
     kioskMode: null,
     layout: PageLayoutType.Canvas,
-    returnToPrevious: {
-      show: store.get('returnToPrevious'),
-      href: '',
-      title: '',
-    },
   });
   public setMatchedRoute(route: RouteDescriptor) {
     if (this.currentRoute !== route) {
@@ -118,11 +106,6 @@ export class AppChromeService {
   public useState() {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     return useObservable(this.state, this.state.getValue());
-  }
-
-  public setReturnToPrevious(returnToPrevious: AppChromeState['returnToPrevious']) {
-    store.set('returnToPrevious', returnToPrevious.show);
-    this.update({ returnToPrevious });
   }
 
   public setMegaMenuOpen = (newOpenState: boolean) => {

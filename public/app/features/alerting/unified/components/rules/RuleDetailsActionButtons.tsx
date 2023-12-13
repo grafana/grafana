@@ -16,7 +16,7 @@ import {
   Menu,
   useStyles2,
 } from '@grafana/ui';
-import { useGrafana } from 'app/core/context/GrafanaContext';
+// import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useDispatch } from 'app/types';
 import { CombinedRule, RuleIdentifier, RulesSource } from 'app/types/unified-alerting';
@@ -54,7 +54,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
   const { StateHistoryModal, showStateHistoryModal } = useStateHistoryModal();
   const dispatch = useDispatch();
   const location = useLocation();
-  const { chrome } = useGrafana();
+  // const { chrome } = useGrafana();
 
   const notifyApp = useAppNotification();
   const history = useHistory();
@@ -138,18 +138,22 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
     const dashboardUID = rule.annotations[Annotation.dashboardUID];
     if (dashboardUID) {
       buttons.push(
-        <Button
+        <LinkButton
           size="sm"
           key="dashboard"
           variant="primary"
           icon="apps"
           onClick={() => {
-            chrome.setReturnToPrevious({ show: true, href: location.pathname, title: rule.name });
-            history.push(`/d/${encodeURIComponent(dashboardUID)}`);
+            //chrome.setReturnToPrevious({ show: true, href: location.pathname, title: rule.name });
+            history.push(
+              `/d/${encodeURIComponent(dashboardUID)}?&returnToUrl=${encodeURIComponent(
+                location.pathname
+              )}&returnToTitle=${encodeURIComponent(rule.name)}`
+            );
           }}
         >
           Go to dashboard
-        </Button>
+        </LinkButton>
       );
       const panelId = rule.annotations[Annotation.panelID];
       if (panelId) {

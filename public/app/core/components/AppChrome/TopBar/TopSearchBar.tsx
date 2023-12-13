@@ -8,6 +8,7 @@ import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/core';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useSelector } from 'app/types';
 
 import { Branding } from '../../Branding/Branding';
@@ -28,6 +29,9 @@ export const TopSearchBar = React.memo(function TopSearchBar() {
   const location = useLocation();
   const { chrome } = useGrafana();
   const state = chrome.useState();
+  const params = useQueryParams()[0];
+  console.log('params', params);
+  console.log('location', location);
 
   const helpNode = cloneDeep(navIndex['help']);
   const enrichedHelpNode = helpNode ? enrichHelpItem(helpNode) : undefined;
@@ -37,10 +41,8 @@ export const TopSearchBar = React.memo(function TopSearchBar() {
   if (!config.bootData.user.isSignedIn && !config.anonymousEnabled) {
     homeUrl = textUtil.sanitizeUrl(locationUtil.getUrlForPartial(location, { forceLogin: 'true' }));
   }
-  const showReturnToPrevious =
-    state?.returnToPrevious?.show &&
-    state?.returnToPrevious?.href !== '' &&
-    location.pathname !== state?.returnToPrevious?.href;
+  const paramsExist = params?.returnToTitle && params?.returnToUrl;
+  const showReturnToPrevious: boolean = paramsExist && location.pathname !== params?.returnToUrl ? true : false;
   const styles = useStyles2(getStyles, showReturnToPrevious);
 
   return (
@@ -51,10 +53,10 @@ export const TopSearchBar = React.memo(function TopSearchBar() {
         </a>
         <OrganizationSwitcher />
       </TopSearchBarSection>
-      {showReturnToPrevious && (
+      {showReturnToPrevious && paramsExist && (
         <TopSearchBarSection>
-          <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title}>
-            {state.returnToPrevious.title}
+          <ReturnToPrevious href={params.returnToUrl} title={params.returnToTitle}>
+            {params.returnToTitle}
           </ReturnToPrevious>
         </TopSearchBarSection>
       )}
