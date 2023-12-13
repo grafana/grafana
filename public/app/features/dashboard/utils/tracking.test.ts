@@ -34,6 +34,11 @@ describe('trackDashboardLoaded', () => {
       variable_type_query_count: 2,
       variable_type_interval_count: 1,
       version_before_migration: 16,
+      deprecated_graph_panel_count: 0,
+      deprecated_piechart_panel_count: 0,
+      deprecated_stat_panel_count: 0,
+      deprecated_table_panel_count: 0,
+      deprecated_worldmap_panel_count: 0,
     });
   });
 });
