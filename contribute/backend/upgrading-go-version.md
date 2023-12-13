@@ -9,6 +9,8 @@ Example PR: https://github.com/grafana/grafana/pull/79329
 - https://github.com/grafana/grafana/blob/d8ecea4ed93efb2e4d64a5ee24bc08f3805f413d/Makefile#L264
 - https://github.com/grafana/grafana/blob/d8ecea4ed93efb2e4d64a5ee24bc08f3805f413d/Dockerfile#L6
 
+Make sure to run `make drone` so that changes to `.star` files are reflected and `drone.yml` is generated.
+
 ### Additional files to change
 - Take a look in `.github/workflows` folder for what `go` version is being used there in various workflows.
 
