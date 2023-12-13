@@ -277,7 +277,11 @@ describe('VisualMetricQueryEditor', () => {
     const onChange = jest.fn();
     const datasource = createMockDatasource({
       getMetricTypes: jest.fn().mockResolvedValue([createMockMetricDescriptor()]),
-      getLabels: jest.fn().mockResolvedValue({ 'metric.test_groupby_1': '' }),
+      getLabels: jest
+        .fn()
+        .mockResolvedValue(
+          range.raw.from === 'now-6h' ? { 'metric.test_groupby': '' } : { 'metric.test_groupby_1': '' }
+        ),
       templateSrv: getTemplateSrv(),
     });
 
@@ -305,7 +309,8 @@ describe('VisualMetricQueryEditor', () => {
     const groupBy = await screen.findByLabelText('Group by');
     openMenu(groupBy);
     await waitFor(() => expect(document.body).toHaveTextContent('metric.test_groupby'));
-    // timeRange.from ({ from: 'now-12h', to: 'now' });
+    range.from.subtract('6', 'h');
+    range.raw.from = 'now-12h';
     const datasourceUpdated = createMockDatasource({
       getLabels: jest.fn().mockResolvedValue({ 'metric.test_groupby_1': '' }),
     });
