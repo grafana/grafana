@@ -38,6 +38,7 @@ export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
   ({ children, theme, interactive, show, placement, content }, forwardedRef) => {
     const arrowRef = useRef(null);
     const [controlledVisible, setControlledVisible] = useState(show);
+    const isOpen = show ?? controlledVisible;
 
     // the order of middleware is important!
     // `arrow` should almost always be at the end
@@ -57,7 +58,7 @@ export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
     ];
 
     const { context, refs, floatingStyles } = useFloating({
-      open: show ?? controlledVisible,
+      open: isOpen,
       placement: getPlacement(placement),
       onOpenChange: setControlledVisible,
       middleware,
@@ -98,10 +99,10 @@ export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
         {React.cloneElement(children, {
           ref: handleRef,
           tabIndex: 0, // tooltip trigger should be keyboard focusable
-          'aria-describedby': controlledVisible ? tooltipId : undefined,
+          'aria-describedby': isOpen ? tooltipId : undefined,
           ...getReferenceProps(),
         })}
-        {controlledVisible && (
+        {isOpen && (
           <Portal>
             <div ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()}>
               <FloatingArrow className={style.arrow} ref={arrowRef} context={context} />
