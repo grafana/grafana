@@ -145,7 +145,7 @@ func (s *Service) GetConfigMap(ctx context.Context, pluginID string, _ *auth.Ext
 		m[proxy.PluginSecureSocksProxyServerName] = s.cfg.ProxySettings.ServerName
 	}
 
-	// Changes here need to be reflected in https://github.com/grafana/grafana-plugin-sdk-go/tree/main/backend/config.go#L152
+	// Changes here need to be reflected in https://github.com/grafana/grafana-azure-sdk-go/tree/main/azsettings/settings.go#L49
 	azureSettings := s.cfg.Azure
 	if azureSettings != nil && slices.Contains[[]string, string](azureSettings.ForwardSettingsPlugins, pluginID) {
 		if azureSettings.Cloud != "" {
