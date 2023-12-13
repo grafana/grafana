@@ -187,11 +187,9 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           } else {
             displayValue.title = getFieldDisplayName(field, dataFrame, data);
           }
-          if (options.percentChange) {
-            displayValue.percentChange = reduceField({ field: field, reducers: [ReducerID.diffperc] }).diffperc;
-          } else {
-            displayValue.percentChange = undefined;
-          }
+          displayValue.percentChange = options.percentChange
+            ? reduceField({ field: field, reducers: [ReducerID.diffperc] }).diffperc
+            : undefined;
 
           let sparkline: FieldSparkline | undefined = undefined;
           if (options.sparkline) {
