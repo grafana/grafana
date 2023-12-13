@@ -260,7 +260,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.1.1 // @grafana/grafana-delivery
 	github.com/alicebob/miniredis/v2 v2.30.1 // @grafana/alerting-squad-backend
 	github.com/dave/dst v0.27.2 // @grafana/grafana-as-code
-	github.com/go-jose/go-jose/v3 v3.0.1 // @grafana/backend-platform
+	github.com/go-jose/go-jose/v3 v3.0.1 // @grafana/grafana-authnz-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
 	github.com/grafana/dataplane/sdata v0.0.6 // @grafana/observability-metrics
 	github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482 //  @grafana/grafana-as-code
