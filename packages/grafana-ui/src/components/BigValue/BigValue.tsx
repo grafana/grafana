@@ -105,7 +105,7 @@ export class BigValue extends PureComponent<Props> {
     // When there is an outer data link this tooltip will override the outer native tooltip
     const tooltip = hasLinks ? undefined : textValues.tooltip;
     const metricHeight = layout.valueFontSize;
-    const metricAlignment = this.props.width > this.props.height * 2 ? 'center' : 'flex-start';
+    const metricAlignment = panelStyles.flexDirection === 'row' ? 'center' : 'flex-start';
     const iconDim = metricHeight / 2;
 
     if (!onClick) {
