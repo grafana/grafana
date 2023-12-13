@@ -47,12 +47,10 @@ describe('VariablesEditView', () => {
   });
 
   describe('Dashboard Variables actions', () => {
-    let dashboard: DashboardScene;
     let variableView: VariablesEditView;
 
     beforeEach(async () => {
       const result = await buildTestScene();
-      dashboard = result.dashboard;
       variableView = result.variableView;
     });
 
