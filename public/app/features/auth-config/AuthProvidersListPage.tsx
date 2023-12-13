@@ -82,6 +82,7 @@ export const AuthConfigPageUnconnected = ({
                 displayName={provider}
                 enabled={settings.enabled}
                 onClick={() => onProviderCardClick(provider)}
+                //@ts-expect-error Remove legacy types
                 configPath={settings.configPath}
               />
             ))}

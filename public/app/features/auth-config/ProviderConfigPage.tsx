@@ -60,19 +60,19 @@ export type Props = ConnectedProps<typeof connector>;
 /**
  * Separate the Page logic from the Content logic for easier testing.
  */
-export const GitHubConfigPage = ({ config, loadSettings, isLoading, provider }: Props) => {
+export const ProviderConfigPage = ({ config, loadSettings, isLoading, provider }: Props) => {
   const pageNav = getPageNav(config);
   useEffect(() => {
     loadSettings();
   }, [loadSettings]);
   return (
     <Page navId="authentication" pageNav={pageNav}>
-      <GitHubConfig config={config} isLoading={isLoading} provider={provider} />
+      <ProviderConfig config={config} isLoading={isLoading} provider={provider} />
     </Page>
   );
 };
 
-export default connector(GitHubConfigPage);
+export default connector(ProviderConfigPage);
 
 interface GitHubConfigProps {
   config?: SSOProvider;
@@ -80,7 +80,7 @@ interface GitHubConfigProps {
   provider: string;
 }
 
-export const GitHubConfig = ({ config, provider, isLoading }: GitHubConfigProps) => {
+export const ProviderConfig = ({ config, provider, isLoading }: GitHubConfigProps) => {
   const {
     register,
     handleSubmit,

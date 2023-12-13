@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { JSX } from 'react';
 
-import { GitHubConfig } from './GitHubConfigPage';
+import { ProviderConfig } from './ProviderConfigPage';
 
 const putMock = jest.fn(() => Promise.resolve({}));
 jest.mock('@grafana/runtime', () => ({
@@ -50,13 +50,13 @@ function setup(jsx: JSX.Element) {
   };
 }
 
-describe('GitHubConfig', () => {
+describe('ProviderConfig', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it('renders all fields correctly', async () => {
-    setup(<GitHubConfig settings={testSettings} />);
+    setup(<ProviderConfig config={testSettings} provider={testSettings.provider} />);
     expect(screen.getByRole('checkbox', { name: /Enabled/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /Client ID/i })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: /Team IDs/i })).toBeInTheDocument();
@@ -66,7 +66,7 @@ describe('GitHubConfig', () => {
   });
 
   it('should save correct data on form submit', async () => {
-    const { user } = setup(<GitHubConfig settings={emptySettings} />);
+    const { user } = setup(<ProviderConfig config={emptySettings} provider={emptySettings.provider} />);
     await user.type(screen.getByRole('textbox', { name: /Client ID/i }), 'test-client-id');
     await user.type(screen.getByRole('textbox', { name: /Client secret/i }), 'test-client-secret');
     // Type a team name and press enter to select it
@@ -93,7 +93,7 @@ describe('GitHubConfig', () => {
   });
 
   it('should validate required fields', async () => {
-    const { user } = setup(<GitHubConfig settings={emptySettings} />);
+    const { user } = setup(<ProviderConfig config={emptySettings} provider={emptySettings.provider} />);
     await user.click(screen.getByRole('button', { name: /Save/i }));
 
     // Should show 2 alerts for 2 empty fields

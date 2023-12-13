@@ -278,7 +278,8 @@ export function getAppRoutes(): RouteDescriptor[] {
       component:
         config.licenseInfo.enabledFeatures?.saml || config.ldapEnabled || config.featureToggles.ssoSettingsApi
           ? SafeDynamicImport(
-              () => import(/* webpackChunkName: "AdminAuthentication" */ 'app/features/auth-config/AuthConfigPage')
+              () =>
+                import(/* webpackChunkName: "AdminAuthentication" */ '../features/auth-config/AuthProvidersListPage')
             )
           : () => <Redirect to="/admin" />,
     },
@@ -287,7 +288,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       roles: () => contextSrv.evaluatePermission([AccessControlAction.SettingsWrite]),
       component: config.featureToggles.ssoSettingsApi
         ? SafeDynamicImport(
-            () => import(/* webpackChunkName: "AdminAuthentication" */ 'app/features/auth-config/GitHubConfigPage')
+            () => import(/* webpackChunkName: "AdminAuthentication" */ '../features/auth-config/ProviderConfigPage')
           )
         : () => <Redirect to="/admin" />,
     },

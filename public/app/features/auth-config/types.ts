@@ -55,9 +55,6 @@ export type SSOProvider = {
   settings: SSOProviderSettingsBase & {
     teamIds: string;
     allowedOrganizations: string;
-
-    // Legacy fields
-    //configPath?: string;
   };
 };
 
