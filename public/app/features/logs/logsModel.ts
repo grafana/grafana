@@ -533,7 +533,10 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
 
 // Used to add additional information to Line limit meta info
 function adjustMetaInfo(logsModel: LogsModel, visibleRangeMs?: number, requestedRangeMs?: number): LogsMetaItem[] {
-  let logsModelMeta = [...logsModel.meta!];
+  if (!logsModel.meta) {
+    return [];
+  }
+  let logsModelMeta = [...logsModel.meta];
 
   const limitIndex = logsModelMeta.findIndex((meta) => meta.label === LIMIT_LABEL);
   const limit = limitIndex >= 0 && logsModelMeta[limitIndex]?.value;
