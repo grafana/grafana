@@ -245,5 +245,4 @@ func TestAzureSettings(t *testing.T) {
 			})
 		}
 	})
-
 }
