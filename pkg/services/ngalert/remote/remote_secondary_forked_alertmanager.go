@@ -76,19 +76,19 @@ func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, c
 
 		// If the Alertmanager was marked as ready but the sync interval has elapsed, sync the Alertmanagers.
 		if time.Since(fam.lastSync) >= fam.syncInterval {
-			var syncErr bool
 			fam.log.Debug("Syncing configuration and state with the remote Alertmanager", "lastSync", fam.lastSync)
-			if err := fam.remote.CompareAndSendConfiguration(ctx, config); err != nil {
-				fam.log.Error("Unable to upload the configuration to the remote Alertmanager", "err", err)
-				syncErr = true
+			cfgErr := fam.remote.CompareAndSendConfiguration(ctx, config)
+			if cfgErr != nil {
+				fam.log.Error("Unable to upload the configuration to the remote Alertmanager", "err", cfgErr)
 			}
-			if err := fam.remote.CompareAndSendState(ctx); err != nil {
-				fam.log.Error("Unable to upload the state to the remote Alertmanager", "err", err)
-				syncErr = true
+
+			stateErr := fam.remote.CompareAndSendState(ctx)
+			if stateErr != nil {
+				fam.log.Error("Unable to upload the state to the remote Alertmanager", "err", stateErr)
 			}
 			fam.log.Debug("Finished syncing configuration and state with the remote Alertmanager")
 
-			if !syncErr {
+			if cfgErr == nil && stateErr == nil {
 				fam.lastSync = time.Now()
 			}
 		}
