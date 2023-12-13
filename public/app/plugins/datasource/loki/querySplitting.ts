@@ -14,12 +14,12 @@ import {
   TimeRange,
   LoadingState,
 } from '@grafana/data';
+import { combineResponses } from 'app/features/logs/response';
 
 import { LokiDatasource } from './datasource';
 import { splitTimeRange as splitLogsTimeRange } from './logsTimeSplitting';
 import { splitTimeRange as splitMetricTimeRange } from './metricTimeSplitting';
 import { isLogsQuery, isQueryWithRangeVariable } from './queryUtils';
-import { combineResponses } from './responseUtils';
 import { trackGroupedQueries } from './tracking';
 import { LokiGroupedRequest, LokiQuery, LokiQueryType } from './types';
 

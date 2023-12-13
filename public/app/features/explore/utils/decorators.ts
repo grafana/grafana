@@ -16,7 +16,7 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { combineResponses } from 'app/plugins/datasource/loki/responseUtils';
+import { combineResponses } from 'app/features/logs/response';
 
 import { refreshIntervalToSortOrder } from '../../../core/utils/explore';
 import { ExplorePanelData } from '../../../types';
