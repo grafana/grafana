@@ -195,6 +195,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 
 		FeatureToggles:                   hs.Features.GetEnabled(c.Req.Context()),
 		AnonymousEnabled:                 hs.Cfg.AnonymousEnabled,
+		AnonymousDeviceLimit:             hs.Cfg.AnonymousDeviceLimit,
 		RendererAvailable:                hs.RenderService.IsAvailable(c.Req.Context()),
 		RendererVersion:                  hs.RenderService.Version(),
 		SecretsManagerPluginEnabled:      secretsManagerPluginEnabled,
