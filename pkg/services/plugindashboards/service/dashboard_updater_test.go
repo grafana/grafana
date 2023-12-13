@@ -196,7 +196,6 @@ func TestDashboardUpdater(t *testing.T) {
 				require.Equal(t, int64(2), ctx.importDashboardArgs[0].User.GetOrgID())
 				require.Equal(t, org.RoleAdmin, ctx.importDashboardArgs[0].User.GetOrgRole())
 				require.Equal(t, string(""), ctx.importDashboardArgs[0].FolderUid)
-				require.Equal(t, int64(0), ctx.importDashboardArgs[0].OrgId)
 				require.True(t, ctx.importDashboardArgs[0].Overwrite)
 			})
 	})
@@ -324,7 +323,6 @@ func TestDashboardUpdater(t *testing.T) {
 			require.Equal(t, int64(2), ctx.importDashboardArgs[0].User.GetOrgID())
 			require.Equal(t, org.RoleAdmin, ctx.importDashboardArgs[0].User.GetOrgRole())
 			require.Equal(t, string(""), ctx.importDashboardArgs[0].FolderUid)
-			require.Equal(t, int64(0), ctx.importDashboardArgs[0].OrgId)
 			require.True(t, ctx.importDashboardArgs[0].Overwrite)
 
 			require.Equal(t, "test", ctx.importDashboardArgs[1].PluginId)
@@ -332,7 +330,6 @@ func TestDashboardUpdater(t *testing.T) {
 			require.Equal(t, int64(2), ctx.importDashboardArgs[1].User.GetOrgID())
 			require.Equal(t, org.RoleAdmin, ctx.importDashboardArgs[1].User.GetOrgRole())
 			require.Equal(t, string(""), ctx.importDashboardArgs[0].FolderUid)
-			require.Equal(t, int64(0), ctx.importDashboardArgs[0].OrgId)
 			require.True(t, ctx.importDashboardArgs[1].Overwrite)
 
 			require.Equal(t, "test", ctx.importDashboardArgs[2].PluginId)
@@ -340,7 +337,6 @@ func TestDashboardUpdater(t *testing.T) {
 			require.Equal(t, int64(2), ctx.importDashboardArgs[2].User.GetOrgID())
 			require.Equal(t, org.RoleAdmin, ctx.importDashboardArgs[2].User.GetOrgRole())
 			require.Equal(t, string(""), ctx.importDashboardArgs[0].FolderUid)
-			require.Equal(t, int64(0), ctx.importDashboardArgs[0].OrgId)
 			require.True(t, ctx.importDashboardArgs[2].Overwrite)
 		})
 }
