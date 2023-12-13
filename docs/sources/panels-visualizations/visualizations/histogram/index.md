@@ -3,7 +3,7 @@ aliases:
   - ../../features/panels/histogram/
   - ../../panels/visualizations/histogram/
   - ../../visualizations/histogram/
-description: Histogram visualization
+description: Configure options for Grafana's histogram visualization
 keywords:
   - grafana
   - docs

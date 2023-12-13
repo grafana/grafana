@@ -56,7 +56,8 @@ var (
 )
 
 func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager) *SocialGithub {
-	teamIds := mustInts(util.SplitString(info.Extra[teamIdsKey]))
+	teamIdsSplitted := util.SplitString(info.Extra[teamIdsKey])
+	teamIds := mustInts(teamIdsSplitted)
 
 	config := createOAuthConfig(info, cfg, social.GitHubProviderName)
 	provider := &SocialGithub{
@@ -67,6 +68,10 @@ func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings sso
 		skipOrgRoleSync:      cfg.GitHubSkipOrgRoleSync,
 		// FIXME: Move skipOrgRoleSync to OAuthInfo
 		// skipOrgRoleSync: info.SkipOrgRoleSync
+	}
+
+	if len(teamIdsSplitted) != len(teamIds) {
+		provider.log.Warn("Failed to parse team ids. Team ids must be a list of numbers.", "teamIds", teamIdsSplitted)
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
@@ -342,7 +347,6 @@ func mustInts(s []string) []int {
 	for _, v := range s {
 		num, err := strconv.Atoi(v)
 		if err != nil {
-			// TODO: add log here
 			return []int{}
 		}
 		result = append(result, num)

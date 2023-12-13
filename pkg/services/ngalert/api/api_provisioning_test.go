@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"path"
 	"testing"
 	"time"
 
@@ -1150,6 +1151,132 @@ func TestProvisioningApi(t *testing.T) {
 				require.Equal(t, expectedResponse, string(response.Body()))
 			})
 		})
+
+		t.Run("mute timings", func(t *testing.T) {
+			t.Run("are present, GET returns 200", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+
+				response := sut.RouteGetMuteTimingsExport(&rc)
+
+				require.Equal(t, 200, response.Status())
+			})
+
+			t.Run("accept header contains yaml, GET returns text yaml", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Header.Add("Accept", "application/yaml")
+				response := sut.RouteGetMuteTimingsExport(&rc)
+				response.WriteTo(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "text/yaml", rc.Context.Resp.Header().Get("Content-Type"))
+			})
+
+			t.Run("accept header contains json, GET returns json", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Header.Add("Accept", "application/json")
+				response := sut.RouteGetMuteTimingsExport(&rc)
+				response.WriteTo(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "application/json", rc.Context.Resp.Header().Get("Content-Type"))
+			})
+
+			t.Run("accept header contains json and yaml, GET returns json", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Header.Add("Accept", "application/json, application/yaml")
+				response := sut.RouteGetMuteTimingsExport(&rc)
+				response.WriteTo(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "application/json", rc.Context.Resp.Header().Get("Content-Type"))
+			})
+
+			t.Run("query param download=true, GET returns content disposition attachment", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Form.Set("download", "true")
+				response := sut.RouteGetMuteTimingsExport(&rc)
+				response.WriteTo(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Contains(t, rc.Context.Resp.Header().Get("Content-Disposition"), "attachment")
+			})
+
+			t.Run("query param download=false, GET returns empty content disposition", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Form.Set("download", "false")
+				response := sut.RouteGetMuteTimingsExport(&rc)
+				response.WriteTo(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "", rc.Context.Resp.Header().Get("Content-Disposition"))
+			})
+
+			t.Run("query param download not set, GET returns empty content disposition", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+
+				response := sut.RouteGetMuteTimingsExport(&rc)
+				response.WriteTo(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "", rc.Context.Resp.Header().Get("Content-Disposition"))
+			})
+
+			t.Run("json body content is as expected", func(t *testing.T) {
+				expectedResponse, err := testData.ReadFile(path.Join("test-data", "alertmanager_default_mutetimings-export.json"))
+				require.NoError(t, err)
+				sut := createProvisioningSrvSut(t)
+				sut.policies = createFakeNotificationPolicyService()
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Header.Add("Accept", "application/json")
+				response := sut.RouteGetMuteTimingsExport(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.JSONEq(t, string(expectedResponse), string(response.Body()))
+			})
+
+			t.Run("yaml body content is as expected", func(t *testing.T) {
+				expectedResponse, err := testData.ReadFile(path.Join("test-data", "alertmanager_default_mutetimings-export.yaml"))
+				require.NoError(t, err)
+				sut := createProvisioningSrvSut(t)
+				sut.policies = createFakeNotificationPolicyService()
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Header.Add("Accept", "application/yaml")
+
+				response := sut.RouteGetMuteTimingsExport(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, string(expectedResponse), string(response.Body()))
+			})
+
+			t.Run("hcl body content is as expected", func(t *testing.T) {
+				expectedResponse, err := testData.ReadFile(path.Join("test-data", "alertmanager_default_mutetimings-export.hcl"))
+				require.NoError(t, err)
+				sut := createProvisioningSrvSut(t)
+				sut.policies = createFakeNotificationPolicyService()
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Form.Add("format", "hcl")
+
+				response := sut.RouteGetMuteTimingsExport(&rc)
+				t.Log(string(response.Body()))
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, string(expectedResponse), string(response.Body()))
+			})
+		})
 	})
 }
 
@@ -1765,7 +1892,38 @@ var testConfig = `
 		"mute_time_intervals": [{
 			"name": "interval",
 			"time_intervals": []
-		}]
+		}, {
+                "name": "full-interval",
+                "time_intervals": [
+                    {
+                        "times": [
+                            {
+                                "start_time": "10:00",
+                                "end_time": "12:00"
+                            }
+                        ],
+                        "weekdays": [
+                            "monday",
+                            "wednesday",
+                            "friday"
+                        ],
+                        "days_of_month": [
+                            "1",
+                            "14:16",
+                            "20"
+                        ],
+                        "months": [
+                            "1:3",
+                            "7",
+                            "12"
+                        ],
+                        "years": [
+                            "2023:2025"
+                        ],
+                        "location": "America/New_York"
+                    }
+                ]
+            }]
 	}
 }
 `
