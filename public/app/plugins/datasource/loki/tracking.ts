@@ -63,8 +63,8 @@ export const onDashboardLoadedHandler = ({
   try {
     // We only want to track visible Loki queries
     const lokiQueries = queries[pluginJson.id]
-      .filter((query) => !query.hide)
-      .map((query) => getNormalizedLokiQuery(query));
+      ?.filter((query) => !query.hide)
+      ?.map((query) => getNormalizedLokiQuery(query));
 
     if (!lokiQueries?.length) {
       return;
