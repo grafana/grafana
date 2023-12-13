@@ -301,6 +301,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 
 		frontendCfg.SectionID = navtree.NavIDRoot
 		frontendCfg.SortWeight = navtree.WeightFrontend
+		frontendCfg.Icon = "frontend-observability"
 
 		k6Cfg.SectionID = navtree.NavIDTestingAndSynthetics
 		k6Cfg.SortWeight = 1
