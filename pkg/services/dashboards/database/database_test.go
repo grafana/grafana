@@ -689,7 +689,7 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 
 	ac := acimpl.ProvideAccessControl(sqlStore.Cfg)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardStore, folderStore, sqlStore, features)
+	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardStore, folderStore, sqlStore, features, nil)
 
 	user := &user.SignedInUser{
 		OrgID: 1,
@@ -806,7 +806,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 
 	ac := acimpl.ProvideAccessControl(sqlStore.Cfg)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardStore, folderStore, sqlStore, features)
+	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardStore, folderStore, sqlStore, features, nil)
 
 	user := &user.SignedInUser{
 		OrgID: 1,

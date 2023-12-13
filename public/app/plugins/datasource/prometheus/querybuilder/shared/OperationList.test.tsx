@@ -9,10 +9,10 @@ import PromQlLanguageProvider from '../../language_provider';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
 import { PromOptions } from '../../types';
 import { promQueryModeller } from '../PromQueryModeller';
+import { addOperationInQueryBuilder } from '../testUtils';
 import { PromVisualQuery } from '../types';
 
 import { OperationList } from './OperationList';
-import { addOperation } from './OperationList.testUtils';
 
 const defaultQuery: PromVisualQuery = {
   metric: 'random_metric',
@@ -50,7 +50,7 @@ describe('OperationList', () => {
 
   it('adds an operation', async () => {
     const { onChange } = setup();
-    await addOperation('Aggregations', 'Min');
+    await addOperationInQueryBuilder('Aggregations', 'Min');
     expect(onChange).toBeCalledWith({
       labels: [{ label: 'instance', op: '=', value: 'localhost:9090' }],
       metric: 'random_metric',

@@ -527,7 +527,13 @@
     },
     "toolbar": {
       "aria-label": "Ēχpľőřę ŧőőľþäř",
-      "copy-shortened-link": "Cőpy şĥőřŧęŉęđ ľįŉĸ",
+      "copy-link": "Cőpy ŮŖĿ",
+      "copy-link-abs-time": "Cőpy äþşőľūŧę ŮŖĿ",
+      "copy-links-absolute-category": "Ŧįmę-şyŉč ŮŖĿ ľįŉĸş (şĥäřę ŵįŧĥ ŧįmę řäŉģę įŉŧäčŧ)",
+      "copy-links-normal-category": "Ńőřmäľ ŮŖĿ ľįŉĸş",
+      "copy-shortened-link": "Cőpy şĥőřŧęŉęđ ŮŖĿ",
+      "copy-shortened-link-abs-time": "Cőpy äþşőľūŧę şĥőřŧęŉęđ ŮŖĿ",
+      "copy-shortened-link-menu": "Øpęŉ şĥőřŧęŉęđ ľįŉĸ męŉū",
       "refresh-picker-cancel": "Cäŉčęľ",
       "refresh-picker-run": "Ŗūŉ qūęřy",
       "split-close": "Cľőşę",
@@ -810,6 +816,9 @@
     "integrations": {
       "title": "Ĩŉŧęģřäŧįőŉş"
     },
+    "k6": {
+      "title": "Pęřƒőřmäŉčę"
+    },
     "kubernetes": {
       "title": "Ķūþęřŉęŧęş"
     },
@@ -928,6 +937,10 @@
     "teams": {
       "subtitle": "Ğřőūpş őƒ ūşęřş ŧĥäŧ ĥävę čőmmőŉ đäşĥþőäřđ äŉđ pęřmįşşįőŉ ŉęęđş",
       "title": "Ŧęämş"
+    },
+    "testing-and-synthetics": {
+      "subtitle": "Øpŧįmįžę pęřƒőřmäŉčę ŵįŧĥ ĸ6 äŉđ Ŝyŉŧĥęŧįč Mőŉįŧőřįŉģ įŉşįģĥŧş",
+      "title": "Ŧęşŧįŉģ & şyŉŧĥęŧįčş"
     },
     "upgrading": {
       "title": "Ŝŧäŧş äŉđ ľįčęŉşę"
