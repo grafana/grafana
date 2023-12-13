@@ -171,7 +171,7 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 							Tags: []string{"Create"},
 							RequestBody: &spec3.RequestBody{
 								RequestBodyProps: spec3.RequestBodyProps{
-									Description: "dashboard payload",
+									Description: "TODO???? can we get the request+response shapes here",
 								},
 							},
 						},

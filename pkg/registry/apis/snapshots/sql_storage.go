@@ -2,6 +2,7 @@ package snapshots
 
 import (
 	"context"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -48,6 +49,17 @@ func (s *legacyStorage) NewList() runtime.Object {
 	return resourceInfo.NewListFunc()
 }
 
+func (s *legacyStorage) checkEnabled(ns string) error {
+	opts, err := s.options(ns)
+	if err != nil {
+		return err
+	}
+	if !opts.Spec.SnapshotsEnabled {
+		return fmt.Errorf("snapshots not enabled")
+	}
+	return nil
+}
+
 func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
@@ -56,6 +68,9 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	// TODO: handle fetching all available orgs when no namespace is specified
 	// To test: kubectl get playlists --all-namespaces
 	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err == nil {
+		err = s.checkEnabled(info.Value)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -88,6 +103,14 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err == nil {
+		err = s.checkEnabled(info.Value)
+	}
+	if err != nil {
+		return nil, err
+	}
+
 	v, err := s.service.GetDashboardSnapshot(ctx, &dashboardsnapshots.GetDashboardSnapshotQuery{
 		Key: name,
 	})
