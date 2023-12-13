@@ -4,7 +4,7 @@ aliases:
   - ../unified-alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
   - ../unified-alerting/alerting-rules/create-mimir-loki-managed-rule/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-mimir-loki-managed-rule/
-description: Configure data source-managed alert rules
+description: Configure data source-managed alert rules alert for an external Grafana Mimir or Loki instance
 keywords:
   - grafana
   - alerting
@@ -27,6 +27,9 @@ Create alert rules for an external Grafana Mimir or Loki instance that has ruler
 **Note**:
 
 Alert rules for an external Grafana Mimir or Loki instance can be edited or deleted by users with Editor or Admin roles.
+
+If you delete an alerting resource created in the UI, you can no longer retrieve it.
+To make a backup of your configuration and to be able to restore deleted alerting resources, create your alerting resources using file provisioning, Terraform, or the Alerting API.
 
 ## Before you begin
 

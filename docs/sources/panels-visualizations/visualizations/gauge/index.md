@@ -3,7 +3,7 @@ aliases:
   - ../../features/panels/gauge/
   - ../../panels/visualizations/gauge-panel/
   - ../../visualizations/gauge-panel/
-description: Gauge panel docs
+description: Configure options for Grafana's gauge visualization
 keywords:
   - grafana
   - gauge
@@ -21,7 +21,7 @@ weight: 100
 
 Gauges are single-value visualizations that can repeat a gauge for every series, column or row.
 
-{{< figure src="/static/img/docs/v66/gauge_panel_cover.png" max-width="1025px" >}}
+{{< figure src="/static/img/docs/v66/gauge_panel_cover.png" max-width="1025px" alt="A gauge visualization">}}
 
 ## Value options
 
@@ -65,17 +65,32 @@ Controls if threshold values are shown.
 
 Controls if a threshold band is shown outside the inner gauge value band.
 
+### Gauge size
+
+Choose a gauge size mode.
+
+- **Auto -** Grafana determines the best gauge size.
+- **Manual -** Manually configure the gauge size.
+
 ### Min width
 
 Set the minimum width of vertically-oriented gauges.
 
 If you set a minimum width, the x-axis scrollbar is automatically displayed when there's a large amount of data.
 
+{{% admonition type="note" %}}
+This option only applies when gauge size is set to manual.
+{{% /admonition %}}
+
 ### Min height
 
 Set the minimum height of horizontally-oriented gauges.
 
 If you set a minimum height, the y-axis scrollbar is automatically displayed when there's a large amount of data.
+
+{{% admonition type="note" %}}
+This option only applies when gauge size is set to manual.
+{{% /admonition %}}
 
 ### Neutral
 
@@ -89,6 +104,6 @@ Adjust the sizes of the gauge text.
 - **Value -** Enter a numeric value for the gauge value size.
 
 {{% docs/reference %}}
-[Calculation types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
-[Calculation types]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
+[Calculation types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/calculation-types"
+[Calculation types]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types"
 {{% /docs/reference %}}

@@ -3,7 +3,7 @@ aliases:
   - ../high-availability/
   - ../unified-alerting/high-availability/
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/high-availability/
-description: High availability
+description: Learn about high availability in Grafana Alerting
 keywords:
   - grafana
   - alerting

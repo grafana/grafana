@@ -67,36 +67,48 @@ export function GetExplainUserPrompt({
     `;
 }
 
+export const SuggestSystemPrompt = `You are a Prometheus Query Language (PromQL) expert assistant inside Grafana.
+When the user asks a question, respond with a valid PromQL query and only the query.
+
+To help you answer the question, you will receive:
+- List of potentially relevant PromQL templates with descriptions, ranked by semantic search score
+- Prometheus metric
+- Metric type
+- Available Prometheus metric labels
+- User question
+
+Policy:
+- Do not invent labels names, you can only use the available labels
+- For rate queries, use the $__rate_interval variable`;
+
 // rewrite with a type
-export type SuggestSystemPromptParams = {
+export type SuggestUserPromptParams = {
   promql: string;
   question: string;
+  metricType: string;
   labels: string;
   templates: string;
 };
 
-export function GetSuggestSystemPrompt({ promql, question, labels, templates }: SuggestSystemPromptParams): string {
+export function GetSuggestUserPrompt({
+  promql,
+  question,
+  metricType,
+  labels,
+  templates,
+}: SuggestUserPromptParams): string {
   if (templates === '') {
     templates = 'No templates provided.';
+  } else {
+    templates = templates.replace(/\n/g, '\n  ');
   }
-  return `You are an PromQL expert assistant. You will be is given a PromQL expression and a user question.
-You are to edit the PromQL expression so that it answers the user question. Show only the edited PromQL.
-
-The initial PromQL query is
-\`\`\`
-${promql}
-\`\`\`
-The user question is: "${question}"
-
-To help you answer the question, here are 2 pieces of information:
-
-1. List of labels to use: ${labels}
-2. Here is a list of possibly relevant PromQL template expressions with descriptions to help target your answer:
-${templates}
-
-Rules:
-- Do not invent labels names, you must use only the labels provided.
-
-Answer:
-\`\`\``;
+  return `Relevant PromQL templates:
+  ${templates}
+  
+  Prometheus metric: ${promql}
+  Metric type: ${metricType}
+  Available Prometheus metric labels: ${labels}
+  User question: ${question}
+  
+  \`\`\`promql`;
 }

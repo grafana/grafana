@@ -81,9 +81,7 @@
     "manage-folder-nav": {
       "alert-rules": "Alert rules",
       "dashboards": "Dashboards",
-      "panels": "Panels",
-      "permissions": "Permissions",
-      "settings": "Settings"
+      "panels": "Panels"
     },
     "new-folder-form": {
       "cancel-label": "Cancel",
@@ -529,7 +527,13 @@
     },
     "toolbar": {
       "aria-label": "Explore toolbar",
-      "copy-shortened-link": "Copy shortened link",
+      "copy-link": "Copy URL",
+      "copy-link-abs-time": "Copy absolute URL",
+      "copy-links-absolute-category": "Time-sync URL links (share with time range intact)",
+      "copy-links-normal-category": "Normal URL links",
+      "copy-shortened-link": "Copy shortened URL",
+      "copy-shortened-link-abs-time": "Copy absolute shortened URL",
+      "copy-shortened-link-menu": "Open shortened link menu",
       "refresh-picker-cancel": "Cancel",
       "refresh-picker-run": "Run query",
       "split-close": "Close",
@@ -775,6 +779,10 @@
       "title": "Explore"
     },
     "frontend": {
+      "subtitle": "Gain real user monitoring insights",
+      "title": "Frontend"
+    },
+    "frontend-app": {
       "title": "Frontend"
     },
     "global-orgs": {
@@ -802,7 +810,14 @@
       "title": "Incidents"
     },
     "infrastructure": {
+      "subtitle": "Understand your infrastructure's health",
+      "title": "Infrastructure"
+    },
+    "integrations": {
       "title": "Integrations"
+    },
+    "k6": {
+      "title": "Performance"
     },
     "kubernetes": {
       "title": "Kubernetes"
@@ -923,6 +938,10 @@
       "subtitle": "Groups of users that have common dashboard and permission needs",
       "title": "Teams"
     },
+    "testing-and-synthetics": {
+      "subtitle": "Optimize performance with k6 and Synthetic Monitoring insights",
+      "title": "Testing & synthetics"
+    },
     "upgrading": {
       "title": "Stats and license"
     },
@@ -937,7 +956,8 @@
     },
     "megamenu": {
       "close": "Close menu",
-      "dock": "Dock menu"
+      "dock": "Dock menu",
+      "undock": "Undock menu"
     },
     "toolbar": {
       "close-menu": "Close menu",
@@ -1085,15 +1105,6 @@
       "new-dashboard": "New dashboard",
       "new-folder": "New folder"
     },
-    "folder-view": {
-      "go-to-folder": "Go to folder",
-      "select-folder": "Select folder"
-    },
-    "result-kind": {
-      "dashboard": "Dashboard",
-      "folder": "Folder",
-      "panel": "Panel"
-    },
     "results-table": {
       "datasource-header": "Data source",
       "location-header": "Location",
@@ -1106,12 +1117,6 @@
     "search-input": {
       "include-panels-placeholder": "Search for dashboards, folders, and panels",
       "placeholder": "Search for dashboards and folders"
-    }
-  },
-  "search-view": {
-    "no-results": {
-      "clear": "Clear search and filters",
-      "text": "No results found for your query."
     }
   },
   "share-modal": {
@@ -1249,6 +1254,7 @@
     "calendar": {
       "apply-button": "Apply time range",
       "cancel-button": "Cancel",
+      "close": "Close calendar",
       "select-time": "Select a time range"
     },
     "content": {
@@ -1268,6 +1274,7 @@
       "default-error": "Please enter a past date or \"now\"",
       "fiscal-year": "Fiscal year",
       "from-input": "From",
+      "open-input-calendar": "Open calendar",
       "range-error": "\"From\" can't be after \"To\"",
       "to-input": "To"
     },
@@ -1290,6 +1297,12 @@
       "select-search-input": "Type to search (country, city, abbreviation)"
     }
   },
+  "transformations": {
+    "empty": {
+      "add-transformation-body": "Transformations allow data to be changed in various ways before your visualization is shown.<1></1>This includes joining data together, renaming fields, making calculations, formatting data for display, and more.",
+      "add-transformation-header": "Start transforming data"
+    }
+  },
   "user-orgs": {
     "current-org-button": "Current",
     "name-column": "Name",
@@ -1304,6 +1317,9 @@
       "name-error": "Name is required",
       "name-label": "Name",
       "username-label": "Username"
+    },
+    "tabs": {
+      "general": "General"
     }
   },
   "user-session": {

@@ -981,7 +981,7 @@ func readCategorizedStream(iter *jsonitere.Iterator) backend.DataResponse {
 			case "stream":
 				// we need to clear `labels`, because `iter.ReadVal`
 				// only appends to it
-				labels := data.Labels{}
+				labels = data.Labels{}
 				if err = iter.ReadVal(&labels); err != nil {
 					return rspErr(err)
 				}

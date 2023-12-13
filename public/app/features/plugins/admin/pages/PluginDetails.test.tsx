@@ -382,14 +382,14 @@ describe('Plugin details page', () => {
     });
 
     it('should display alert with information about why the plugin is disabled', async () => {
-      const { queryByLabelText } = renderPluginDetails({
+      const { queryByTestId } = renderPluginDetails({
         id,
         isInstalled: true,
         isDisabled: true,
         error: PluginErrorCode.modifiedSignature,
       });
 
-      expect(await queryByLabelText(selectors.pages.PluginPage.disabledInfo)).toBeInTheDocument();
+      expect(queryByTestId(selectors.pages.PluginPage.disabledInfo)).toBeInTheDocument();
     });
 
     it('should display grafana dependencies for a plugin if they are available', async () => {
@@ -744,32 +744,28 @@ describe('Plugin details page', () => {
     });
 
     it('should display a deprecation warning if the plugin is deprecated', async () => {
-      const { queryByText } = renderPluginDetails({
+      const { findByRole } = renderPluginDetails({
         id,
         isInstalled: true,
         isDeprecated: true,
       });
 
-      await waitFor(() =>
-        expect(queryByText(/plugin is deprecated and has been removed from the catalog/i)).toBeInTheDocument()
-      );
+      expect(await findByRole('link', { name: 'deprecated' })).toBeInTheDocument();
     });
 
     it('should not display a deprecation warning in the plugin is not deprecated', async () => {
-      const { queryByText } = renderPluginDetails({
+      const { queryByRole } = renderPluginDetails({
         id,
         isInstalled: true,
         isDeprecated: false,
       });
 
-      await waitFor(() =>
-        expect(queryByText(/plugin is deprecated and has been removed from the catalog/i)).not.toBeInTheDocument()
-      );
+      await waitFor(() => expect(queryByRole('link', { name: 'deprecated' })).not.toBeInTheDocument());
     });
 
     it('should display a custom deprecation message if the plugin has it set', async () => {
       const statusContext = 'A detailed explanation of why this plugin is deprecated.';
-      const { queryByText } = renderPluginDetails({
+      const { findByText, findByRole } = renderPluginDetails({
         id,
         isInstalled: true,
         isDeprecated: true,
@@ -779,9 +775,28 @@ describe('Plugin details page', () => {
         },
       });
 
-      const re = new RegExp(`No further updates will be made to the plugin. More information: ${statusContext}`, 'i');
+      expect(await findByRole('link', { name: 'deprecated' })).toBeInTheDocument();
+      expect(await findByText(statusContext)).toBeInTheDocument();
+    });
 
-      await waitFor(() => expect(queryByText(re)).toBeInTheDocument());
+    it('should be possible to render markdown inside a custom deprecation message', async () => {
+      const statusContext =
+        '**This is a custom deprecation message.** [Link 1](https://grafana.com) <a href="https://grafana.com" target="_blank">Link 2</a>';
+      const { findByText, findByRole } = renderPluginDetails({
+        id,
+        isInstalled: true,
+        isDeprecated: true,
+        details: {
+          statusContext,
+          links: [],
+        },
+      });
+
+      expect(await findByRole('link', { name: 'deprecated' })).toBeInTheDocument();
+      expect(await findByText('This is a custom deprecation message.')).toBeInTheDocument();
+      expect(await findByRole('link', { name: 'Link 1' })).toBeInTheDocument();
+      expect(await findByRole('link', { name: 'Link 2' })).toBeInTheDocument();
+      expect(await findByRole('link', { name: 'Link 2' })).toHaveAttribute('href', 'https://grafana.com');
     });
   });
 

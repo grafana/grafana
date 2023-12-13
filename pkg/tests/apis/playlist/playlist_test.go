@@ -20,6 +20,12 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
+var gvr = schema.GroupVersionResource{
+	Group:    "playlist.grafana.app",
+	Version:  "v0alpha1",
+	Resource: "playlists",
+}
+
 func TestPlaylist(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -76,7 +82,7 @@ func TestPlaylist(t *testing.T) {
 		}))
 	})
 
-	t.Run("with dual write", func(t *testing.T) {
+	t.Run("with dual write (file)", func(t *testing.T) {
 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    true,
 			DisableAnonymous:     true,
@@ -87,15 +93,47 @@ func TestPlaylist(t *testing.T) {
 			},
 		}))
 	})
+
+	t.Run("with dual write (unified storage)", func(t *testing.T) {
+		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    false, // required for  unified storage
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified", // use the entity api tables
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagUnifiedStorage,
+				featuremgmt.FlagGrafanaAPIServer,
+				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+			},
+		}))
+	})
+
+	t.Run("with dual write (etcd)", func(t *testing.T) {
+		// NOTE: running local etcd, that will be wiped clean!
+		t.Skip("local etcd testing")
+
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "etcd", // requires etcd running on localhost:2379
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServer,
+				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+			},
+		})
+
+		// Clear the collection before starting (etcd)
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Admin,
+			GVR:  gvr,
+		})
+		err := client.Resource.DeleteCollection(context.Background(), metav1.DeleteOptions{}, metav1.ListOptions{})
+		require.NoError(t, err)
+
+		doPlaylistTests(t, helper)
+	})
 }
 
 func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper {
-	gvr := schema.GroupVersionResource{
-		Group:    "playlist.grafana.app",
-		Version:  "v0alpha1",
-		Resource: "playlists",
-	}
-
 	t.Run("Check direct List permissions from different org users", func(t *testing.T) {
 		// Check view permissions
 		rsp := helper.List(helper.Org1.Viewer, "default", gvr)
@@ -246,6 +284,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 			Path:   "/api/playlists/" + uid,
 			Body:   []byte(legacyPayload),
 		}, &playlist.PlaylistDTO{})
+		require.Equal(t, 200, dtoResponse.Response.StatusCode)
 		require.Equal(t, uid, dtoResponse.Result.Uid)
 		require.Equal(t, "10m", dtoResponse.Result.Interval)
 
@@ -255,12 +294,13 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 		require.JSONEq(t, expectedResult, client.SanitizeJSON(found))
 
 		// Delete does not return anything
-		_ = apis.DoRequest(helper, apis.RequestParams{
+		deleteResponse := apis.DoRequest(helper, apis.RequestParams{
 			User:   client.Args.User,
 			Method: http.MethodDelete,
 			Path:   "/api/playlists/" + uid,
 			Body:   []byte(legacyPayload),
 		}, &playlist.PlaylistDTO{}) // response is empty
+		require.Equal(t, 200, deleteResponse.Response.StatusCode)
 
 		found, err = client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
 		statusError := helper.AsStatusError(err)

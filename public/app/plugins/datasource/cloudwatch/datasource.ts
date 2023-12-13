@@ -14,7 +14,6 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import { CloudWatchAnnotationSupport } from './annotationSupport';
@@ -22,7 +21,11 @@ import { DEFAULT_METRICS_QUERY, getDefaultLogsQuery } from './defaultQueries';
 import { isCloudWatchAnnotationQuery, isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from './guards';
 import { CloudWatchLogsLanguageProvider } from './language/cloudwatch-logs/CloudWatchLogsLanguageProvider';
 import { SQLCompletionItemProvider } from './language/cloudwatch-sql/completion/CompletionItemProvider';
-import { LogsCompletionItemProvider } from './language/logs/completion/CompletionItemProvider';
+import {
+  LogsCompletionItemProvider,
+  LogsCompletionItemProviderFunc,
+  queryContext,
+} from './language/logs/completion/CompletionItemProvider';
 import { MetricMathCompletionItemProvider } from './language/metric-math/completion/CompletionItemProvider';
 import { CloudWatchAnnotationQueryRunner } from './query-runner/CloudWatchAnnotationQueryRunner';
 import { CloudWatchLogsQueryRunner } from './query-runner/CloudWatchLogsQueryRunner';
@@ -45,7 +48,7 @@ export class CloudWatchDatasource
   languageProvider: CloudWatchLogsLanguageProvider;
   sqlCompletionItemProvider: SQLCompletionItemProvider;
   metricMathCompletionItemProvider: MetricMathCompletionItemProvider;
-  logsCompletionItemProvider: LogsCompletionItemProvider;
+  logsCompletionItemProviderFunc: (queryContext: queryContext) => LogsCompletionItemProvider;
   defaultLogGroups?: string[];
 
   type = 'cloudwatch';
@@ -57,8 +60,7 @@ export class CloudWatchDatasource
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
-    readonly templateSrv: TemplateSrv = getTemplateSrv(),
-    timeSrv: TimeSrv = getTimeSrv()
+    readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
@@ -66,10 +68,14 @@ export class CloudWatchDatasource
     this.languageProvider = new CloudWatchLogsLanguageProvider(this);
     this.sqlCompletionItemProvider = new SQLCompletionItemProvider(this.resources, this.templateSrv);
     this.metricMathCompletionItemProvider = new MetricMathCompletionItemProvider(this.resources, this.templateSrv);
-    this.metricsQueryRunner = new CloudWatchMetricsQueryRunner(instanceSettings, templateSrv);
-    this.logsCompletionItemProvider = new LogsCompletionItemProvider(this.resources, this.templateSrv);
-    this.logsQueryRunner = new CloudWatchLogsQueryRunner(instanceSettings, templateSrv, timeSrv);
-    this.annotationQueryRunner = new CloudWatchAnnotationQueryRunner(instanceSettings, templateSrv);
+    this.metricsQueryRunner = new CloudWatchMetricsQueryRunner(instanceSettings, templateSrv, super.query.bind(this));
+    this.logsCompletionItemProviderFunc = LogsCompletionItemProviderFunc(this.resources, this.templateSrv);
+    this.logsQueryRunner = new CloudWatchLogsQueryRunner(instanceSettings, templateSrv, super.query.bind(this));
+    this.annotationQueryRunner = new CloudWatchAnnotationQueryRunner(
+      instanceSettings,
+      templateSrv,
+      super.query.bind(this)
+    );
     this.variables = new CloudWatchVariableSupport(this.resources);
     this.annotations = CloudWatchAnnotationSupport;
     this.defaultLogGroups = instanceSettings.jsonData.defaultLogGroups;

@@ -58,7 +58,7 @@ func setupTestServer(
 
 	// build api, this will mount the routes at the same time if
 	// featuremgmt.FlagPublicDashboard is enabled
-	ProvideApi(service, rr, ac, features)
+	ProvideApi(service, rr, ac, features, &Middleware{})
 
 	// connect routes to mux
 	rr.Register(m.Router)
