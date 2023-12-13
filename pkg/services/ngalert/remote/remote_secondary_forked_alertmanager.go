@@ -15,8 +15,8 @@ import (
 //go:generate mockery --name remoteAlertmanager --structname RemoteAlertmanagerMock --with-expecter --output mock --outpkg alertmanager_mock
 type remoteAlertmanager interface {
 	notifier.Alertmanager
-	CompareAndSendConfiguration(context.Context, *models.AlertConfiguration) error
-	CompareAndSendState(context.Context) error
+	SendConfiguration(context.Context, *models.AlertConfiguration) error
+	SendState(context.Context) error
 }
 
 type RemoteSecondaryForkedAlertmanager struct {
@@ -77,12 +77,12 @@ func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, c
 		// If the Alertmanager was marked as ready but the sync interval has elapsed, sync the Alertmanagers.
 		if time.Since(fam.lastSync) >= fam.syncInterval {
 			fam.log.Debug("Syncing configuration and state with the remote Alertmanager", "lastSync", fam.lastSync)
-			cfgErr := fam.remote.CompareAndSendConfiguration(ctx, config)
+			cfgErr := fam.remote.SendConfiguration(ctx, config)
 			if cfgErr != nil {
 				fam.log.Error("Unable to upload the configuration to the remote Alertmanager", "err", cfgErr)
 			}
 
-			stateErr := fam.remote.CompareAndSendState(ctx)
+			stateErr := fam.remote.SendState(ctx)
 			if stateErr != nil {
 				fam.log.Error("Unable to upload the state to the remote Alertmanager", "err", stateErr)
 			}

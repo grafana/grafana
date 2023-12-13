@@ -2,7 +2,6 @@ package remote
 
 import (
 	"context"
-	"crypto/md5"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -120,19 +119,19 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 	}
 	am.log.Debug("Completed readiness check for remote Alertmanager", "url", am.url)
 
-	// Send configuration and base64-encoded state if necessary.
+	// Send configuration and base64-encoded state to the remote Alertmanager.
 	am.log.Debug("Start configuration upload to remote Alertmanager", "url", am.url)
-	if err := am.CompareAndSendConfiguration(ctx, config); err != nil {
+	if err := am.SendConfiguration(ctx, config); err != nil {
 		am.log.Error("Unable to upload the configuration to the remote Alertmanager", "err", err)
 	}
 	am.log.Debug("Completed configuration upload to remote Alertmanager", "url", am.url)
 
+	// Send base64-encoded state.
 	am.log.Debug("Start state upload to remote Alertmanager", "url", am.url)
-	if err := am.CompareAndSendState(ctx); err != nil {
+	if err := am.SendState(ctx); err != nil {
 		am.log.Error("Unable to upload the state to the remote Alertmanager", "err", err)
 	}
 	am.log.Debug("Completed state upload to remote Alertmanager", "url", am.url)
-
 	return nil
 }
 
@@ -151,38 +150,25 @@ func (am *Alertmanager) checkReadiness(ctx context.Context) error {
 	return notifier.ErrAlertmanagerNotReady
 }
 
-// CompareAndSendConfiguration checks whether a given configuration is being used by the remote Alertmanager.
-// If not, it sends the configuration to the remote Alertmanager.
-func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
-	if am.shouldSendConfig(ctx, config) {
-		if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
-			ctx,
-			config.AlertmanagerConfiguration,
-			config.ConfigurationHash,
-			config.ID,
-			config.CreatedAt,
-			config.Default,
-		); err != nil {
-			return err
-		}
-	}
-	return nil
+// SendConfiguration sends a configuration to the remote Alertmanager.
+func (am *Alertmanager) SendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
+	return am.mimirClient.CreateGrafanaAlertmanagerConfig(
+		ctx,
+		config.AlertmanagerConfiguration,
+		config.ConfigurationHash,
+		config.ID,
+		config.CreatedAt,
+		config.Default,
+	)
 }
 
-// CompareAndSendState gets the Alertmanager's internal state and compares it with the remote Alertmanager's one.
-// If the states are different, it updates the remote Alertmanager's state with that of the internal Alertmanager.
-func (am *Alertmanager) CompareAndSendState(ctx context.Context) error {
+// SendState gets the Alertmanager's internal state and sends it to the remote Alertmanager.
+func (am *Alertmanager) SendState(ctx context.Context) error {
 	state, err := am.state.GetFullState(ctx, notifier.SilencesFilename, notifier.NotificationLogFilename)
 	if err != nil {
 		return err
 	}
-
-	if am.shouldSendState(ctx, state) {
-		if err := am.mimirClient.CreateGrafanaAlertmanagerState(ctx, state); err != nil {
-			return err
-		}
-	}
-	return nil
+	return am.mimirClient.CreateGrafanaAlertmanagerState(ctx, state)
 }
 
 func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
@@ -346,29 +332,3 @@ func (am *Alertmanager) Ready() bool {
 
 // CleanUp does not have an equivalent in a "remote Alertmanager" context, we don't have files on disk, no-op.
 func (am *Alertmanager) CleanUp() {}
-
-// shouldSendConfig compares the remote Alertmanager configuration with our local one.
-// It returns true if the configurations are different.
-func (am *Alertmanager) shouldSendConfig(ctx context.Context, config *models.AlertConfiguration) bool {
-	rc, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
-	if err != nil {
-		// Log the error and return true so we try to upload our config anyway.
-		am.log.Error("Unable to get the remote Alertmanager Configuration for comparison", "err", err)
-		return true
-	}
-
-	return md5.Sum([]byte(rc.GrafanaAlertmanagerConfig)) != md5.Sum([]byte(config.AlertmanagerConfiguration))
-}
-
-// shouldSendState compares the remote Alertmanager state with our local one.
-// It returns true if the states are different.
-func (am *Alertmanager) shouldSendState(ctx context.Context, state string) bool {
-	rs, err := am.mimirClient.GetGrafanaAlertmanagerState(ctx)
-	if err != nil {
-		// Log the error and return true so we try to upload our state anyway.
-		am.log.Error("Unable to get the remote Alertmanager state for comparison", "err", err)
-		return true
-	}
-
-	return rs.State != state
-}
