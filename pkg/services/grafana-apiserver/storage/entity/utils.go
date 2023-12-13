@@ -31,7 +31,7 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object) error {
 		}
 	}
 
-	metaAccessor.SetName(rsp.Uid)
+	metaAccessor.SetName(rsp.Name)
 	metaAccessor.SetNamespace(rsp.Namespace)
 	metaAccessor.SetUID(types.UID(rsp.Guid))
 	metaAccessor.SetResourceVersion(rsp.Version)
@@ -53,6 +53,7 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object) error {
 		grafanaAccessor.SetUpdatedTimestamp(&updatedAt)
 	}
 	grafanaAccessor.SetSlug(rsp.Slug)
+	grafanaAccessor.SetTitle(rsp.Title)
 
 	if rsp.Origin != nil {
 		originTime := time.UnixMilli(rsp.Origin.Time).UTC()
@@ -108,7 +109,7 @@ func resourceToEntity(key string, res runtime.Object, requestInfo *request.Reque
 		Subresource:  requestInfo.Subresource,
 		Namespace:    metaAccessor.GetNamespace(),
 		Key:          key,
-		Uid:          metaAccessor.GetName(),
+		Name:         metaAccessor.GetName(),
 		Guid:         string(metaAccessor.GetUID()),
 		Version:      metaAccessor.GetResourceVersion(),
 		Folder:       grafanaAccessor.GetFolder(),
@@ -116,6 +117,7 @@ func resourceToEntity(key string, res runtime.Object, requestInfo *request.Reque
 		CreatedBy:    grafanaAccessor.GetCreatedBy(),
 		UpdatedBy:    grafanaAccessor.GetUpdatedBy(),
 		Slug:         grafanaAccessor.GetSlug(),
+		Title:        grafanaAccessor.GetTitle(),
 		Origin: &entityStore.EntityOriginInfo{
 			Source: grafanaAccessor.GetOriginName(),
 			Key:    grafanaAccessor.GetOriginKey(),
@@ -124,11 +126,19 @@ func resourceToEntity(key string, res runtime.Object, requestInfo *request.Reque
 		Labels: metaAccessor.GetLabels(),
 	}
 
-	if t := grafanaAccessor.GetUpdatedTimestamp(); t != nil {
+	t, err := grafanaAccessor.GetUpdatedTimestamp()
+	if err != nil {
+		return nil, err
+	}
+	if t != nil {
 		rsp.UpdatedAt = t.UnixMilli()
 	}
 
-	if t := grafanaAccessor.GetOriginTimestamp(); t != nil {
+	t, err = grafanaAccessor.GetOriginTimestamp()
+	if err != nil {
+		return nil, err
+	}
+	if t != nil {
 		rsp.Origin.Time = t.UnixMilli()
 	}
 

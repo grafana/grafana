@@ -361,21 +361,12 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 	})
 
 	t.Run("Ready", func(tt *testing.T) {
-		// Ready should be called on both Alertmanagers
-		internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
+		// Ready should be called only on the internal Alertmanager.
+		internal, _, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
 		internal.EXPECT().Ready().Return(true).Once()
-		remote.EXPECT().Ready().Return(true).Once()
 		require.True(tt, forked.Ready())
 
-		// If one of the two Alertmanagers is not ready, it returns false.
-		internal, remote, forked = genTestAlertmanagers(tt, modeRemoteSecondary)
 		internal.EXPECT().Ready().Return(false).Maybe()
-		remote.EXPECT().Ready().Return(true).Maybe()
-		require.False(tt, forked.Ready())
-
-		internal, remote, forked = genTestAlertmanagers(tt, modeRemoteSecondary)
-		internal.EXPECT().Ready().Return(true).Maybe()
-		remote.EXPECT().Ready().Return(false).Maybe()
 		require.False(tt, forked.Ready())
 	})
 }
@@ -625,8 +616,15 @@ func genTestAlertmanagersWithSyncInterval(t *testing.T, mode int, syncInterval t
 		configs := map[int64]*models.AlertConfiguration{
 			1: {},
 		}
-		store := notifier.NewFakeConfigStore(t, configs)
-		return internal, remote, NewRemoteSecondaryForkedAlertmanager(log.NewNopLogger(), 1, syncInterval, store, internal, remote)
+		cfg := RemoteSecondaryConfig{
+			Logger:       log.NewNopLogger(),
+			SyncInterval: syncInterval,
+			OrgID:        1,
+			Store:        notifier.NewFakeConfigStore(t, configs),
+		}
+		forked, err := NewRemoteSecondaryForkedAlertmanager(cfg, internal, remote)
+		require.NoError(t, err)
+		return internal, remote, forked
 	}
 	return internal, remote, NewRemotePrimaryForkedAlertmanager(internal, remote)
 }
