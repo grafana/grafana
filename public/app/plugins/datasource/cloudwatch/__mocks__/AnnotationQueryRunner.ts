@@ -16,7 +16,7 @@ export function setupMockedAnnotationQueryRunner({ variables }: { variables?: Cu
   }
 
   const queryMock = jest.fn().mockReturnValue(of({}));
-  const runner = new CloudWatchAnnotationQueryRunner(CloudWatchSettings, templateService, queryMock);
+  const runner = new CloudWatchAnnotationQueryRunner(CloudWatchSettings, templateService);
 
   const request: DataQueryRequest<CloudWatchQuery> = {
     range: TimeRangeMock,
