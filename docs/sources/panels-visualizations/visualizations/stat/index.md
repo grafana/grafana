@@ -122,6 +122,14 @@ Choose an alignment mode.
 - **Auto -** If only a single value is shown (no repeat), then the value is centered. If multiple series or rows are shown, then the value is left-aligned.
 - **Center -** Stat value is centered.
 
+### Show percent change
+
+Set whether percent change is displayed or not. Disabled by default.
+
+{{% admonition type="note" %}}
+Note, this does not apply when value option show is set to all values or text mode is set to none.
+{{% /admonition %}}
+
 ## Text size
 
 Adjust the sizes of the gauge text.
