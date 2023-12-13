@@ -33,6 +33,7 @@ func TestInitializer_envVars(t *testing.T) {
 		}
 
 		envVarsProvider := NewProvider(&config.Cfg{
+			GrafanaAppURL: "https://myorg.com/",
 			PluginSettings: map[string]map[string]string{
 				"test": {
 					"custom_env_var": "customVal",
@@ -41,13 +42,14 @@ func TestInitializer_envVars(t *testing.T) {
 		}, licensing)
 
 		envVars := envVarsProvider.Get(context.Background(), p)
-		assert.Len(t, envVars, 6)
+		assert.Len(t, envVars, 7)
 		assert.Equal(t, "GF_PLUGIN_CUSTOM_ENV_VAR=customVal", envVars[0])
 		assert.Equal(t, "GF_VERSION=", envVars[1])
-		assert.Equal(t, "GF_EDITION=test", envVars[2])
-		assert.Equal(t, "GF_ENTERPRISE_LICENSE_PATH=/path/to/ent/license", envVars[3])
-		assert.Equal(t, "GF_ENTERPRISE_APP_URL=https://myorg.com/", envVars[4])
-		assert.Equal(t, "GF_ENTERPRISE_LICENSE_TEXT=token", envVars[5])
+		assert.Equal(t, "GF_APP_URL=https://myorg.com/", envVars[2])
+		assert.Equal(t, "GF_EDITION=test", envVars[3])
+		assert.Equal(t, "GF_ENTERPRISE_LICENSE_PATH=/path/to/ent/license", envVars[4])
+		assert.Equal(t, "GF_ENTERPRISE_APP_URL=https://myorg.com/", envVars[5])
+		assert.Equal(t, "GF_ENTERPRISE_LICENSE_TEXT=token", envVars[6])
 	})
 }
 
@@ -258,15 +260,16 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 			},
 			plugin: defaultPlugin,
 			exp: func(t *testing.T, envVars []string) {
-				assert.Len(t, envVars, 8)
+				assert.Len(t, envVars, 9)
 				assert.Equal(t, "GF_PLUGIN_TRACING=true", envVars[0])
 				assert.Equal(t, "GF_VERSION=", envVars[1])
-				assert.Equal(t, "GF_INSTANCE_OTLP_ADDRESS=127.0.0.1:4317", envVars[2])
-				assert.Equal(t, "GF_INSTANCE_OTLP_PROPAGATION=w3c", envVars[3])
-				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_TYPE=", envVars[4])
-				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_PARAM=1.000000", envVars[5])
-				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_REMOTE_URL=", envVars[6])
-				assert.Equal(t, "GF_PLUGIN_VERSION=1.0.0", envVars[7])
+				assert.Equal(t, "GF_APP_URL=", envVars[2])
+				assert.Equal(t, "GF_INSTANCE_OTLP_ADDRESS=127.0.0.1:4317", envVars[3])
+				assert.Equal(t, "GF_INSTANCE_OTLP_PROPAGATION=w3c", envVars[4])
+				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_TYPE=", envVars[5])
+				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_PARAM=1.000000", envVars[6])
+				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_REMOTE_URL=", envVars[7])
+				assert.Equal(t, "GF_PLUGIN_VERSION=1.0.0", envVars[8])
 			},
 		},
 		{
@@ -289,15 +292,16 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 			},
 			plugin: defaultPlugin,
 			exp: func(t *testing.T, envVars []string) {
-				assert.Len(t, envVars, 8)
+				assert.Len(t, envVars, 9)
 				assert.Equal(t, "GF_PLUGIN_TRACING=true", envVars[0])
 				assert.Equal(t, "GF_VERSION=", envVars[1])
-				assert.Equal(t, "GF_INSTANCE_OTLP_ADDRESS=127.0.0.1:4317", envVars[2])
-				assert.Equal(t, "GF_INSTANCE_OTLP_PROPAGATION=w3c,jaeger", envVars[3])
-				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_TYPE=", envVars[4])
-				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_PARAM=1.000000", envVars[5])
-				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_REMOTE_URL=", envVars[6])
-				assert.Equal(t, "GF_PLUGIN_VERSION=1.0.0", envVars[7])
+				assert.Equal(t, "GF_APP_URL=", envVars[2])
+				assert.Equal(t, "GF_INSTANCE_OTLP_ADDRESS=127.0.0.1:4317", envVars[3])
+				assert.Equal(t, "GF_INSTANCE_OTLP_PROPAGATION=w3c,jaeger", envVars[4])
+				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_TYPE=", envVars[5])
+				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_PARAM=1.000000", envVars[6])
+				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_REMOTE_URL=", envVars[7])
+				assert.Equal(t, "GF_PLUGIN_VERSION=1.0.0", envVars[8])
 			},
 		},
 		{
@@ -560,7 +564,7 @@ func TestInitalizer_awsEnvVars(t *testing.T) {
 			AWSExternalId:           "mock_external_id",
 		}, nil)
 		envVars := envVarsProvider.Get(context.Background(), p)
-		assert.ElementsMatch(t, []string{"GF_VERSION=", "AWS_AUTH_AssumeRoleEnabled=true", "AWS_AUTH_AllowedAuthProviders=grafana_assume_role,keys", "AWS_AUTH_EXTERNAL_ID=mock_external_id"}, envVars)
+		assert.ElementsMatch(t, []string{"GF_VERSION=", "GF_APP_URL=", "AWS_AUTH_AssumeRoleEnabled=true", "AWS_AUTH_AllowedAuthProviders=grafana_assume_role,keys", "AWS_AUTH_EXTERNAL_ID=mock_external_id"}, envVars)
 	})
 }
 
@@ -578,9 +582,9 @@ func TestInitializer_featureToggleEnvVar(t *testing.T) {
 		}, nil)
 		envVars := envVarsProvider.Get(context.Background(), p)
 
-		assert.Equal(t, 2, len(envVars))
+		assert.Equal(t, 3, len(envVars))
 
-		toggleExpression := strings.Split(envVars[1], "=")
+		toggleExpression := strings.Split(envVars[2], "=")
 		assert.Equal(t, 2, len(toggleExpression))
 
 		assert.Equal(t, "GF_INSTANCE_FEATURE_TOGGLES_ENABLE", toggleExpression[0])

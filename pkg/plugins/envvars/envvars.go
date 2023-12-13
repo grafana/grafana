@@ -55,6 +55,7 @@ func NewProvider(cfg *config.Cfg, license plugins.Licensing) *Service {
 func (s *Service) Get(ctx context.Context, p *plugins.Plugin) []string {
 	hostEnv := []string{
 		fmt.Sprintf("GF_VERSION=%s", s.cfg.BuildVersion),
+		fmt.Sprintf("GF_APP_URL=%s", s.cfg.GrafanaAppURL),
 	}
 
 	if s.license != nil {
@@ -70,7 +71,6 @@ func (s *Service) Get(ctx context.Context, p *plugins.Plugin) []string {
 	if p.ExternalService != nil {
 		hostEnv = append(
 			hostEnv,
-			fmt.Sprintf("GF_APP_URL=%s", s.cfg.GrafanaAppURL),
 			fmt.Sprintf("GF_PLUGIN_APP_CLIENT_ID=%s", p.ExternalService.ClientID),
 			fmt.Sprintf("GF_PLUGIN_APP_CLIENT_SECRET=%s", p.ExternalService.ClientSecret),
 		)
