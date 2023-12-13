@@ -1225,7 +1225,7 @@ By default is the same as used in AAD authentication or can be set to another ap
 
 Set plugins that will receive Azure settings via plugin context.
 
-By default this will include all Grafana Labs owned Azure plugins, or those that make use of Azure settings (Azure Monitor, Azure Data Explorer, Prometheus, MSSQL).
+By default, this will include all Grafana Labs owned Azure plugins or those that use Azure settings (Azure Monitor, Azure Data Explorer, Prometheus, MSSQL).
 
 ## [auth.jwt]
 
