@@ -39,7 +39,7 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
   public onDelete = (identifier: string) => {
     // Find the index of the variable to be deleted
     const variableIndex = this.getVariableIndex(identifier);
-    const { variables } = this._variablesScene.state;
+    const { variables } = this.getVariableSet().state;
     if (variableIndex === -1) {
       // Handle the case where the variable is not found
       console.error('Variable not found');
@@ -50,20 +50,20 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     const updatedVariables = [...variables.slice(0, variableIndex), ...variables.slice(variableIndex + 1)];
 
     // Update the state or the variables array
-    this._variablesScene.setState({ variables: updatedVariables });
+    this.getVariableSet().setState({ variables: updatedVariables });
   };
 
   public getVariables() {
     return this.getVariableSet().state.variables;
-  };
+  }
 
   public getVariablesList = () => {
-    return this._variablesScene?.useState().variables;
+    return this.getVariableSet()?.useState().variables;
   };
 
   public onDuplicated = (identifier: string) => {
     const variableIndex = this.getVariableIndex(identifier);
-    const variables = this._variablesScene.state.variables;
+    const variables = this.getVariableSet().state.variables;
 
     if (variableIndex === -1) {
       console.error('Variable not found');
@@ -92,12 +92,12 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
       ...variables.slice(variableIndex + 1),
     ];
 
-    this._variablesScene.setState({ variables: updatedVariables });
+    this.getVariableSet().setState({ variables: updatedVariables });
   };
 
   public onOrderChanged = (fromIndex: number, toIndex: number) => {
-    const variables = this._variablesScene.state.variables;
-    if (!this._variablesScene) {
+    const variables = this.getVariableSet().state.variables;
+    if (!this.getVariableSet()) {
       return;
     }
     // check the index are within the variables array
@@ -109,7 +109,8 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     // Remove the variable from the array
     const movedItem = updatedVariables.splice(fromIndex, 1);
     updatedVariables.splice(toIndex, 0, movedItem[0]);
-    this._variablesScene.setState({ variables: updatedVariables });
+    const variablesScene = this.getVariableSet();
+    variablesScene.setState({ variables: updatedVariables });
   };
 
   public onEdit = (identifier: string) => {
