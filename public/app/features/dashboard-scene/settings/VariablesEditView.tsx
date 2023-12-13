@@ -57,10 +57,6 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     return this.getVariableSet().state.variables;
   }
 
-  public getVariablesList = () => {
-    return this.getVariableSet()?.useState().variables;
-  };
-
   public onDuplicated = (identifier: string) => {
     const variableIndex = this.getVariableIndex(identifier);
     const variables = this.getVariableSet().state.variables;
