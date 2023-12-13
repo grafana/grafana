@@ -2433,7 +2433,7 @@
           }
         ],
         "responses": {
-          "204": {
+          "202": {
             "description": " The contact point was deleted successfully."
           }
         }
@@ -5082,12 +5082,12 @@
     "MuteTimeIntervalExport": {
       "type": "object",
       "properties": {
-        "OrgID": {
-          "type": "integer",
-          "format": "int64"
-        },
         "name": {
           "type": "string"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
         },
         "time_intervals": {
           "type": "array",
@@ -7576,7 +7576,6 @@
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
-      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -7778,7 +7777,6 @@
       }
     },
     "postableSilence": {
-      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",

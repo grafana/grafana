@@ -49,7 +49,7 @@ import (
 //     - application/json
 //
 //     Responses:
-//       204: description: The contact point was deleted successfully.
+//       202: description: The contact point was deleted successfully.
 
 // swagger:parameters RoutePutContactpoint RouteDeleteContactpoints
 type ContactPointUIDReference struct {

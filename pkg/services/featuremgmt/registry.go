@@ -936,12 +936,11 @@ var (
 			Created:         time.Date(2023, time.September, 22, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:            "idForwarding",
-			Description:     "Generate signed id token for identity that can be forwarded to plugins and external services",
-			Stage:           FeatureStageExperimental,
-			Owner:           identityAccessTeam,
-			RequiresDevMode: true,
-			Created:         time.Date(2023, time.September, 25, 12, 0, 0, 0, time.UTC),
+			Name:        "idForwarding",
+			Description: "Generate signed id token for identity that can be forwarded to plugins and external services",
+			Stage:       FeatureStageExperimental,
+			Owner:       identityAccessTeam,
+			Created:     time.Date(2023, time.September, 25, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "cloudWatchWildCardDimensionValues",
