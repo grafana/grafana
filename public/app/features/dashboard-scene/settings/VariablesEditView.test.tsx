@@ -139,5 +139,10 @@ async function buildTestScene() {
 
   activateFullSceneTree(dashboard);
 
+  await new Promise((r) => setTimeout(r, 1));
+
+  dashboard.onEnterEditMode();
+  variableView.activate();
+
   return { dashboard, variableView };
 }
