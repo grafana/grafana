@@ -117,6 +117,7 @@ func (b *SnapshotsAPIBuilder) GetAPIGroupInfo(
 	legacyStore := &legacyStorage{
 		service:    b.service,
 		namespacer: b.namespacer,
+		options:    b.options,
 	}
 	legacyStore.tableConverter = utils.NewTableConverter(
 		resourceInfo.GroupResource(),
