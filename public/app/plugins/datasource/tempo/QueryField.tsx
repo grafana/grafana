@@ -20,6 +20,7 @@ import { LokiQuery } from '../loki/types';
 import { LokiSearch } from './LokiSearch';
 import NativeSearch from './NativeSearch/NativeSearch';
 import TraceQLSearch from './SearchTraceQLEditor/TraceQLSearch';
+import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
 import { ServiceGraphSection } from './ServiceGraphSection';
 import { TempoQueryType } from './dataquery.gen';
 import { TempoDatasource } from './datasource';
@@ -151,7 +152,6 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
                   });
 
                   this.onClearResults();
-
                   onChange({
                     ...query,
                     queryType: v,
@@ -159,15 +159,41 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
                 }}
                 size="md"
               />
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  this.setState({ uploadModalOpen: true });
-                }}
-              >
-                Import trace
-              </Button>
+              <>
+                {query.queryType === 'traceqlSearch' && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    style={{ marginRight: '10px' }}
+                    onClick={() => {
+                      reportInteraction('grafana_traces_copy_to_traceql_button_clicked', {
+                        datasourceType: 'tempo',
+                        app: app ?? '',
+                        grafana_version: config.buildInfo.version,
+                      });
+
+                      this.onClearResults();
+                      const traceQlQuery = generateQueryFromFilters(query.filters || []);
+                      onChange({
+                        ...query,
+                        query: traceQlQuery,
+                        queryType: 'traceql',
+                      });
+                    }}
+                  >
+                    Copy to TraceQL
+                  </Button>
+                )}
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    this.setState({ uploadModalOpen: true });
+                  }}
+                >
+                  Import trace
+                </Button>
+              </>
             </HorizontalGroup>
           </InlineField>
         </InlineFieldRow>
