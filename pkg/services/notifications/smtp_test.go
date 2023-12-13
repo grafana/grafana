@@ -14,7 +14,7 @@ import (
 func TestBuildMail(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.Smtp.ContentTypes = []string{"text/html", "text/plain"}
-	cfg.Smtp.StaticHeaders = map[string]string{"foo": "foo_value"}
+	cfg.Smtp.StaticHeaders = map[string]string{"Foo-Header": "foo_value"}
 
 	sc, err := NewSmtpClient(cfg.Smtp)
 	require.NoError(t, err)
@@ -32,14 +32,14 @@ func TestBuildMail(t *testing.T) {
 
 	t.Run("Can successfully build mail", func(t *testing.T) {
 		email := sc.buildEmail(message)
-		staticHeader := email.GetHeader("foo")[0]
+		staticHeader := email.GetHeader("Foo-Header")[0]
 		assert.Equal(t, staticHeader, "foo_value")
 
 		buf := new(bytes.Buffer)
 		_, err := email.WriteTo(buf)
 		require.NoError(t, err)
 
-		assert.Contains(t, buf.String(), "foo: foo_value")
+		assert.Contains(t, buf.String(), "Foo-Header: foo_value")
 		assert.Contains(t, buf.String(), "Some HTML body")
 		assert.Contains(t, buf.String(), "Some plain text body")
 		assert.Less(t, strings.Index(buf.String(), "Some plain text body"), strings.Index(buf.String(), "Some HTML body"))
