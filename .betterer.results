@@ -6850,3 +6850,1257 @@ exports[`no undocumented stories`] = {
     ]
   }`
 };
+
+exports[`no gf-form usage`] = {
+  value: `{
+    "e2e/utils/flows/addDataSource.ts:3584836691": [
+      [60, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "packages/grafana-e2e/src/flows/addDataSource.ts:3804856662": [
+      [65, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "packages/grafana-ui/src/components/DataSourceSettings/AlertingSettings.tsx:2097243625": [
+      [18, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [19, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [20, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "packages/grafana-ui/src/components/DataSourceSettings/CustomHeadersSettings.tsx:1076753781": [
+      [199, 23, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [200, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [218, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "packages/grafana-ui/src/components/DataSourceSettings/DataSourceHttpSettings.tsx:715493912": [
+      [137, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [167, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [170, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [171, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [183, 30, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [184, 32, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [187, 32, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [190, 31, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [202, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [203, 30, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [219, 30, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [244, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [245, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [273, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [294, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [320, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "packages/grafana-ui/src/components/DataSourceSettings/HttpProxySettings.tsx:3724387605": [
+      [16, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [39, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [51, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "packages/grafana-ui/src/components/DataSourceSettings/SecureSocksProxySettings.tsx:56753657": [
+      [21, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [22, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [23, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "packages/grafana-ui/src/components/DataSourceSettings/TLSAuthSettings.tsx:135371319": [
+      [51, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [54, 11, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [82, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "packages/grafana-ui/src/components/FormField/FormField.tsx:3416952889": [
+      [49, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "packages/grafana-ui/src/components/FormLabel/FormLabel.tsx:4008883858": [
+      [29, 41, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [30, 5, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [31, 5, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "packages/grafana-ui/src/components/Forms/Legacy/Input/Input.tsx:3904089211": [
+      [78, 39, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "packages/grafana-ui/src/components/Forms/Legacy/Select/NoOptionsMessage.tsx:1995952709": [
+      [14, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [15, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "packages/grafana-ui/src/components/Forms/Legacy/Select/Select.tsx:4054201586": [
+      [126, 41, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [126, 58, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [134, 31, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [224, 41, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [224, 58, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [232, 31, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "packages/grafana-ui/src/components/Forms/Legacy/Select/SelectOption.tsx:2827674168": [
+      [18, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [19, 40, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [20, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [22, 47, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "packages/grafana-ui/src/components/Forms/Legacy/Switch/Switch.tsx:2666160688": [
+      [49, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [49, 73, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [50, 29, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [50, 76, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [53, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [54, 45, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [54, 53, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [73, 29, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "packages/grafana-ui/src/components/SecretFormField/SecretFormField.tsx:3015778562": [
+      [69, 29, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [81, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "packages/grafana-ui/src/components/Segment/Segment.story.tsx:23298739": [
+      [10, 19, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [130, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "packages/grafana-ui/src/components/Segment/SegmentAsync.story.tsx:3113984564": [
+      [11, 19, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [122, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "packages/grafana-ui/src/components/Segment/SegmentInput.story.tsx:2315482331": [
+      [95, 19, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "packages/grafana-ui/src/components/Segment/SegmentInput.tsx:2182094436": [
+      [79, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [79, 29, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "plugins-bundled/internal/input-datasource/src/InputConfigEditor.tsx:1965211525": [
+      [51, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/angular/components/code_editor/code_editor.ts:2516425709": [
+      [99, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/angular/components/form_dropdown/form_dropdown.ts:1679544102": [
+      [63, 25, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [65, 25, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [65, 39, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [251, 9, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/angular/components/info_popover.ts:3727139485": [
+      [17, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [24, 23, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/angular/components/switch.ts:1314357600": [
+      [3, 38, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [4, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [10, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [12, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [18, 38, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [19, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [25, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [27, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/angular/dropdown_typeahead.ts:2863483356": [
+      [8, 13, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [12, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [139, 36, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [157, 38, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/angular/metric_segment.ts:2595530854": [
+      [10, 13, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [14, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [18, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [18, 29, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/angular/misc.ts:2798951435": [
+      [69, 35, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [126, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/angular/panel/partials/query_editor_row.html:3816271397": [
+      [0, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/angular/partials/tls_auth_settings.html:4138404204": [
+      [0, 12, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [1, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [6, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [7, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [7, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [7, 60, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [8, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [8, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [11, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [11, 31, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [17, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [18, 34, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [22, 35, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [32, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [33, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [33, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [33, 60, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [34, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [34, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [37, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [37, 31, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [43, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [44, 34, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [46, 35, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [56, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [57, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [57, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [57, 60, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [58, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [58, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [61, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [61, 31, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [67, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [68, 34, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [70, 35, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/core/components/AccessControl/PermissionList.tsx:1485874833": [
+      [40, 37, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/core/components/AccessControl/Permissions.tsx:4242597884": [
+      [193, 39, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/core/components/PageHeader/PageHeader.tsx:417501623": [
+      [29, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [33, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/admin/UserLdapSyncInfo.tsx:656522845": [
+      [34, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [35, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [61, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/admin/UserOrgs.tsx:1577844789": [
+      [66, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [67, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/admin/UserPermissions.tsx:3512037758": [
+      [42, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [43, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/admin/UserProfile.tsx:176131382": [
+      [84, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [85, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/admin/UserSessions.tsx:1612410720": [
+      [59, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [60, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/admin/ldap/LdapConnectionStatus.tsx:160968761": [
+      [13, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [14, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [40, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/admin/ldap/LdapSyncInfo.tsx:4152193877": [
+      [39, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [40, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/admin/ldap/LdapUserGroups.tsx:1610367353": [
+      [14, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [15, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/admin/ldap/LdapUserInfo.tsx:2189733483": [
+      [26, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [27, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/admin/ldap/LdapUserMappingInfo.tsx:2252399078": [
+      [11, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [12, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/admin/ldap/LdapUserPermissions.tsx:2107658526": [
+      [11, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [12, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/admin/ldap/LdapUserTeams.tsx:183874439": [
+      [14, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [15, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/admin/partials/edit_org.html:1220421699": [
+      [5, 37, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [6, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [7, 19, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [8, 61, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [11, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [29, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [30, 23, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [34, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/admin/partials/styleguide.html:1822126143": [
+      [18, 13, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [19, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [20, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [21, 29, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/alerting/AlertRuleList.tsx:3272921344": [
+      [100, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [100, 36, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [103, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [104, 32, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/alerting/partials/alert_tab.html:1398881893": [
+      [5, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [7, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [8, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [9, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [10, 34, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [10, 57, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [15, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [16, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [18, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [24, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [25, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [28, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [28, 43, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [41, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [42, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [48, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [50, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [51, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [59, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [61, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [63, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [68, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [70, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [72, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [78, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [87, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [94, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [96, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [104, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [105, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [113, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [114, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [127, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [129, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [130, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [131, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [133, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [134, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [135, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [137, 19, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [146, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [147, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [148, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [150, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [151, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [152, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [154, 19, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [165, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [166, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [167, 19, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [169, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [170, 19, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [181, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [189, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [189, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [190, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [192, 13, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [192, 27, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [201, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [202, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [203, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [204, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [205, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [207, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [212, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [218, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [219, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [221, 19, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [227, 19, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [234, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [235, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/annotations/partials/event_editor.html:3199408597": [
+      [16, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [16, 23, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [17, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [18, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [21, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [22, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [27, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/dashboard-scene/sharing/ShareLinkTab.tsx:277901349": [
+      [190, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/dashboard/components/SubMenu/AnnotationPicker.tsx:1954162289": [
+      [79, 7, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [79, 23, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/dashboard/components/SubMenu/DashboardLinks.tsx:921666942": [
+      [57, 36, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/dashboard/components/SubMenu/SubMenuItems.tsx:2143683602": [
+      [28, 34, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/dashboard/components/VersionHistory/VersionHistoryTable.tsx:2176222458": [
+      [16, 33, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/datasources/components/BasicSettings.tsx:730133525": [
+      [18, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [19, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [21, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/datasources/components/ButtonRow.tsx:3621090590": [
+      [15, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/datasources/components/DataSourceLoadError.tsx:1732181441": [
+      [22, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/datasources/components/DataSourcePluginState.tsx:927419076": [
+      [11, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [12, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [13, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [13, 36, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/datasources/components/DataSourceTestingStatus.tsx:4123528796": [
+      [101, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/plugins/admin/components/AppConfigWrapper.tsx:1644686190": [
+      [73, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/plugins/admin/components/PluginDashboards.tsx:2070672893": [
+      [105, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/profile/UserOrganizations.tsx:2686161645": [
+      [32, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/profile/UserSessions.tsx:3806466491": [
+      [29, 32, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/profile/UserTeams.tsx:3190891528": [
+      [25, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/query/components/QueryEditorRow.tsx:952928966": [
+      [515, 7, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/query/components/QueryGroupOptions.tsx:3160244495": [
+      [167, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [168, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [195, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [196, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [220, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [221, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [243, 30, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [244, 30, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [259, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [260, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [283, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [284, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [298, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [299, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [360, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [385, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [409, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/transformers/FilterByValueTransformer/ValueMatchers/RangeMatcherEditor.tsx:1755273834": [
+      [86, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [101, 33, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [108, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/transformers/editors/OrganizeFieldsTransformerEditor.tsx:3963777539": [
+      [153, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [154, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [154, 34, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [155, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [155, 42, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/variables/adhoc/picker/AdHocFilter.tsx:72612066": [
+      [52, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/variables/adhoc/picker/AdHocFilterKey.tsx:595972490": [
+      [22, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [37, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [54, 19, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/variables/adhoc/picker/AdHocFilterRenderer.tsx:3798685457": [
+      [40, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/variables/adhoc/picker/AdHocFilterValue.tsx:2264786031": [
+      [30, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/variables/adhoc/picker/ConditionSegment.tsx:3038593698": [
+      [8, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [9, 23, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/variables/pickers/PickerRenderer.tsx:296918356": [
+      [22, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [43, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [43, 35, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [55, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [55, 31, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/features/variables/pickers/shared/VariableInput.tsx:2342938699": [
+      [37, 19, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/partials/confirm_modal.html:1130691569": [
+      [24, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/partials/reset_password.html:2944253031": [
+      [12, 47, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [13, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [14, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [15, 47, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [17, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [36, 43, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [37, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [38, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [39, 53, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [41, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [42, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [43, 57, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [48, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/partials/signup_invited.html:1057301540": [
+      [9, 43, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [10, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [11, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [12, 43, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [14, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [15, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [16, 41, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [18, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [19, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [20, 45, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [22, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [23, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [24, 49, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [27, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/alertmanager/ConfigEditor.tsx:607806416": [
+      [38, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [39, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [40, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [58, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/cloud-monitoring/components/AnnotationsHelp.tsx:822331291": [
+      [4, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/cloudwatch/components/ConfigEditor/ConfigEditor.tsx:1251192567": [
+      [203, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/cloudwatch/components/ConfigEditor/XrayLinkConfig.tsx:1218770063": [
+      [68, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/cloudwatch/components/QueryEditor/LogsQueryEditor/LogsQueryEditor.tsx:4292407401": [
+      [44, 37, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [55, 37, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/cloudwatch/components/QueryEditor/LogsQueryEditor/LogsQueryField.tsx:773010539": [
+      [94, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [94, 37, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [95, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/cloudwatch/components/QueryEditor/LogsQueryEditor/LogsQueryFieldOld.tsx:1381146402": [
+      [95, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [95, 37, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [96, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [96, 32, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/cloudwatch/components/shared/LogGroups/LegacyLogGroupNamesSelection.tsx:4155391976": [
+      [20, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [20, 29, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/cloudwatch/components/shared/LogGroups/LogGroupsField.tsx:1879578485": [
+      [86, 65, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [86, 73, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/elasticsearch/components/QueryEditor/AnnotationQueryEditor.tsx:2163417067": [
+      [21, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [39, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/elasticsearch/components/QueryEditor/SettingsEditorContainer.tsx:4124884209": [
+      [46, 25, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/elasticsearch/configuration/DataLinks.tsx:2646027328": [
+      [47, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/grafana-pyroscope-datasource/ConfigEditor.tsx:3756778481": [
+      [24, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [25, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [26, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/grafana/components/QueryEditor.tsx:123406409": [
+      [279, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [295, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/graphite/components/AnnotationsEditor.tsx:639248805": [
+      [36, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [37, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [49, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/graphite/components/FunctionEditor.tsx:563090867": [
+      [21, 66, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/graphite/configuration/MappingsConfiguration.tsx:596038531": [
+      [29, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/influxdb/components/editor/annotation/AnnotationEditor.tsx:3979901753": [
+      [26, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [27, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [48, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [49, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [50, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [58, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [66, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [74, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/influxdb/components/editor/config/InfluxSQLConfig.tsx:3599009941": [
+      [73, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [90, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/influxdb/components/editor/query/QueryEditor.tsx:285833911": [
+      [21, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/influxdb/components/editor/query/flux/FluxQueryEditor.tsx:1001425256": [
+      [192, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [210, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [210, 34, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [211, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [211, 42, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/influxdb/components/editor/query/fsql/FSQLEditor.tsx:2504956282": [
+      [103, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [112, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [112, 34, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [113, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [113, 42, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/influxdb/components/editor/query/influxql/visual/PartListSection.tsx:3021587858": [
+      [50, 5, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [53, 9, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [72, 29, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/influxdb/components/editor/query/influxql/visual/TagsSection.tsx:1168802193": [
+      [67, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/influxdb/components/editor/variable/VariableQueryEditor.tsx:737655304": [
+      [52, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [54, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [54, 43, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [59, 27, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/loki/components/AnnotationsQueryEditor.tsx:4285257752": [
+      [52, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/loki/components/LokiOptionFields.tsx:358451173": [
+      [84, 50, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [89, 11, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [113, 11, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/loki/components/LokiQueryField.tsx:1710247321": [
+      [73, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [73, 36, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [76, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/loki/configuration/DerivedField.tsx:3726361220": [
+      [78, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [139, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [166, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/loki/querybuilder/components/LokiQueryCodeEditor.tsx:3198503497": [
+      [78, 7, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/opentsdb/components/AnnotationEditor.tsx:888294469": [
+      [28, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [29, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [38, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/opentsdb/components/DownSample.tsx:1507956077": [
+      [23, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [24, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [49, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [54, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [66, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [81, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [92, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [92, 30, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [93, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [93, 38, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/opentsdb/components/FilterSection.tsx:3318579164": [
+      [120, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [121, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [149, 29, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [155, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [156, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [159, 25, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [181, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [195, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [198, 25, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [223, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [225, 30, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [229, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [240, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [240, 30, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [241, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [241, 38, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/opentsdb/components/MetricSection.tsx:3497988132": [
+      [21, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [22, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [30, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [44, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [50, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [61, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [80, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [80, 30, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [81, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [81, 38, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/opentsdb/components/RateSection.tsx:4270760610": [
+      [15, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [16, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [31, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [47, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [77, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [92, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [92, 30, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [93, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [93, 38, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/opentsdb/components/TagSection.tsx:544443914": [
+      [99, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [100, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [129, 29, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [135, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [136, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [139, 25, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [160, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [163, 25, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [177, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [179, 30, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [184, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [195, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [195, 30, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [196, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [196, 38, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/prometheus/components/PromExploreExtraField.tsx:4063851290": [
+      [51, 56, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [56, 11, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [75, 11, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [92, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/prometheus/components/PromQueryField.tsx:3686066287": [
+      [224, 27, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [224, 42, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [228, 29, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [237, 32, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [237, 40, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [250, 32, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/prometheus/configuration/AlertingSettingsOverhaul.tsx:915788041": [
+      [31, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [32, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [33, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/prometheus/configuration/AzureAuthSettings.tsx:762764600": [
+      [59, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/prometheus/configuration/AzureCredentialsForm.tsx:2451494417": [
+      [177, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [179, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [180, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [197, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [198, 30, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [212, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [213, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [226, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [227, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [241, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [242, 30, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [254, 32, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [257, 67, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [257, 99, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [268, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [269, 30, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [287, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [288, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [304, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [305, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [306, 43, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/prometheus/configuration/ExemplarSetting.tsx:1344152921": [
+      [25, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/prometheus/configuration/PromSettings.tsx:3585779394": [
+      [173, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [175, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [176, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [211, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [212, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [243, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [244, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [264, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [301, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [302, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [303, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [344, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [346, 30, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [373, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [374, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [399, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [400, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [423, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [456, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [457, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [477, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [478, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [479, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [502, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [504, 28, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryCodeEditor.tsx:2650113165": [
+      [42, 7, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/datasource/zipkin/QueryField.tsx:523594514": [
+      [129, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [129, 34, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/panel/graph/axes_editor.html:1825772046": [
+      [1, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [5, 5, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [6, 13, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [11, 7, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [14, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [14, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [15, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [23, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [24, 56, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [25, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [28, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [36, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [37, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [40, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [48, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [49, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [52, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [62, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [63, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [66, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [77, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [78, 58, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [82, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [91, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [93, 5, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [94, 13, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [100, 7, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [101, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [102, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [107, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [118, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [120, 5, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [121, 13, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [126, 7, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [128, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [129, 44, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [130, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [133, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [142, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [143, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [155, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [156, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [159, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [169, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [170, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [171, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [174, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [182, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [183, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [186, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/panel/graph/tab_display.html:3491856173": [
+      [0, 12, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [14, 3, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [15, 11, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [20, 5, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [22, 3, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [23, 11, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [28, 5, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [30, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [31, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [32, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [35, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [43, 3, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [45, 11, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [50, 5, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [52, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [53, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [54, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [57, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [65, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [66, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [67, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [69, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [77, 3, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [78, 11, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [83, 5, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [85, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [86, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [87, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [90, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [98, 3, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [99, 11, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [104, 5, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [107, 12, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [109, 3, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [110, 11, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [116, 4, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [117, 3, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [118, 11, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [125, 4, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [126, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [127, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [128, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [131, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [140, 12, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [142, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [143, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [144, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [147, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [154, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [155, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [156, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [159, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [166, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [167, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [168, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [170, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/panel/graph/tab_legend.html:2693801270": [
+      [1, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [3, 5, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [4, 13, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [11, 6, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [12, 5, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [13, 13, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [19, 6, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [20, 5, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [21, 13, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [27, 6, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [28, 52, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [29, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [32, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [43, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [46, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [47, 7, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [48, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [54, 8, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [56, 7, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [57, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [64, 8, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [67, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [68, 7, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [69, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [75, 8, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [77, 7, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [78, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [85, 8, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [88, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [89, 7, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [90, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [96, 8, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [98, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [99, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [102, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [114, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [116, 5, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [117, 13, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [123, 6, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [124, 5, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [125, 13, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [131, 6, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/panel/graph/tab_series_overrides.html:55649765": [
+      [5, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [6, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [14, 13, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [17, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [22, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [23, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [23, 34, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [36, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [41, 31, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [46, 12, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/panel/graph/thresholds_form.html:1428208839": [
+      [0, 12, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [6, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [7, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [8, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [11, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [12, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [14, 19, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [24, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [31, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [32, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [33, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [35, 19, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [45, 7, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [46, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [51, 9, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [53, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [54, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [55, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [60, 7, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [61, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [66, 9, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [68, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [69, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [70, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [75, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [76, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [77, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [79, 19, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [90, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [91, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [99, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/panel/graph/time_regions_form.html:3332390721": [
+      [0, 12, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [1, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [2, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [3, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [6, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [7, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [8, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [10, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [20, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [24, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [25, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [27, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [37, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [43, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [44, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [45, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [47, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [56, 5, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [56, 27, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [56, 103, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [58, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [59, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [60, 19, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [65, 5, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [65, 27, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [65, 103, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [67, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [68, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [69, 19, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [74, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [75, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [83, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/panel/heatmap/partials/axes_editor.html:2375143975": [
+      [1, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [3, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [4, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [8, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [9, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [10, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [11, 25, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [14, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [15, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [16, 34, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [18, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [19, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [20, 34, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [23, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [24, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [25, 32, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [27, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [28, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [29, 34, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [33, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [34, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [35, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [36, 23, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [42, 5, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [43, 13, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [46, 6, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [49, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [51, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [52, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [53, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [55, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [56, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [57, 36, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [61, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [62, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [63, 36, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [67, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [68, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [70, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [78, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [79, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [80, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [82, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [83, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [84, 36, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [88, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [89, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [90, 34, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [97, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [99, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [100, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [101, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [102, 23, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/panel/heatmap/partials/display_editor.html:2798303756": [
+      [1, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [3, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [4, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [5, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [6, 35, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [11, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [12, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [13, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [17, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [18, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [19, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [20, 37, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [23, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [24, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [25, 36, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [30, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [31, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [32, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [33, 37, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [38, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [43, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [45, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [46, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [47, 66, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [49, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [50, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [51, 66, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [55, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [57, 5, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [57, 27, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [60, 6, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [63, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [65, 5, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [65, 27, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [68, 6, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [69, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [70, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [71, 34, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [73, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [74, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [75, 34, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [79, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [81, 5, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [81, 27, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [84, 6, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [86, 7, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [86, 29, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [89, 8, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [90, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [91, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [92, 36, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/panel/table-old/column_options.html:3026934939": [
+      [1, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [3, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [4, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [4, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [5, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [9, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [21, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [21, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [22, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [25, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [32, 5, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [33, 13, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [38, 7, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [41, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [44, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [44, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [45, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [46, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [48, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [55, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [55, 24, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [56, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [57, 7, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [59, 19, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [65, 8, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [69, 7, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [70, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [76, 9, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [80, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [80, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [81, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [82, 9, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [84, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [95, 7, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [96, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [102, 9, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [106, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [107, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [110, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [111, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [114, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [124, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [127, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [128, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [129, 23, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [132, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [134, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [141, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [142, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [143, 25, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [148, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [153, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [158, 21, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [164, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [165, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [170, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [171, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [172, 25, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [175, 25, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [176, 63, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [177, 25, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [178, 61, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [179, 25, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [180, 63, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [182, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [183, 26, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [192, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [194, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [195, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [201, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [208, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [209, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [210, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [212, 17, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [219, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [220, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [221, 19, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [224, 19, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [227, 19, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [230, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [236, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [238, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [239, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [258, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [265, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [266, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [277, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [284, 5, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [285, 13, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [289, 7, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [293, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ],
+    "public/app/plugins/panel/table-old/editor.html:3814185881": [
+      [0, 12, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [20, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [20, 22, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [21, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [22, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [24, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [31, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [32, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [33, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [35, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [36, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [41, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [48, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [49, 20, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [59, 12, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [61, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [62, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [65, 13, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [73, 14, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [74, 18, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [75, 16, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"],
+      [77, 15, 7, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "2660651999"]
+    ]
+  }`
+};
