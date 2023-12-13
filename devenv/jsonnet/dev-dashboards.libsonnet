@@ -541,6 +541,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('regression-analysis', import '../dev-dashboards/transforms/regression-analysis.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('relative_time_zone_support', import '../dev-dashboards/scenarios/relative_time_zone_support.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
