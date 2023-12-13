@@ -1744,17 +1744,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@betterer/regexp@npm:5.4.0":
-  version: 5.4.0
-  resolution: "@betterer/regexp@npm:5.4.0"
-  dependencies:
-    "@betterer/betterer": "npm:^5.4.0"
-    "@betterer/errors": "npm:^5.3.0"
-    tslib: "npm:^2.3.1"
-  checksum: bcbb2c94aa5673755e21415e41b5d405bb491867606ce7fab1a1e7987ef0231b50966b2e8d419a0b5ec1ca56f01d255580ea25580c92f3f9267fe1fa53a20aef
-  languageName: node
-  linkType: hard
-
 "@betterer/render@npm:^5.3.4":
   version: 5.3.4
   resolution: "@betterer/render@npm:5.3.4"
@@ -17309,7 +17298,6 @@ __metadata:
     "@betterer/betterer": "npm:5.4.0"
     "@betterer/cli": "npm:5.4.0"
     "@betterer/eslint": "npm:5.4.0"
-    "@betterer/regexp": "npm:5.4.0"
     "@cypress/webpack-preprocessor": "npm:6.0.0"
     "@daybrush/utils": "npm:1.13.0"
     "@emotion/css": "npm:11.11.2"
