@@ -357,9 +357,10 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				Description: "Read organization annotations and annotation tags",
 				Group:       "Annotations",
 				Permissions: []ac.Permission{
-					{Action: ac.ActionAnnotationsRead, Scope: ac.ScopeAnnotationsTypeOrganization},
-					// Can remove the following permission when we remove the FlagAnnotationPermissionUpdate
-					{Action: ac.ActionAnnotationsRead, Scope: ac.ScopeAnnotationsTypeDashboard},
+					// Need to leave the permissions as they are, so that the seeder doesn't replace permissions when they have been removed from the basic role by the user
+					// Otherwise we could split this into ac.ScopeAnnotationsTypeOrganization and ac.ScopeAnnotationsTypeDashboard scopes and eventually remove the dashboard scope.
+					// https://github.com/grafana/identity-access-team/issues/524
+					{Action: ac.ActionAnnotationsRead, Scope: ac.ScopeAnnotationsAll},
 				},
 			},
 			Grants: []string{string(org.RoleViewer)},
@@ -373,13 +374,12 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				Description: "Update organization annotations.",
 				Group:       "Annotations",
 				Permissions: []ac.Permission{
-					{Action: ac.ActionAnnotationsCreate, Scope: ac.ScopeAnnotationsTypeOrganization},
-					// Can remove the permissions scoped to ScopeAnnotationsTypeDashboard when we remove the FlagAnnotationPermissionUpdate
-					{Action: ac.ActionAnnotationsCreate, Scope: ac.ScopeAnnotationsTypeDashboard},
-					{Action: ac.ActionAnnotationsDelete, Scope: ac.ScopeAnnotationsTypeOrganization},
-					{Action: ac.ActionAnnotationsDelete, Scope: ac.ScopeAnnotationsTypeDashboard},
-					{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsTypeOrganization},
-					{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsTypeDashboard},
+					// Need to leave the permissions as they are, so that the seeder doesn't replace permissions when they have been removed from the basic role by the user
+					// Otherwise we could split this into ac.ScopeAnnotationsTypeOrganization and ac.ScopeAnnotationsTypeDashboard scopes and eventually remove the dashboard scope.
+					// https://github.com/grafana/identity-access-team/issues/524
+					{Action: ac.ActionAnnotationsCreate, Scope: ac.ScopeAnnotationsAll},
+					{Action: ac.ActionAnnotationsDelete, Scope: ac.ScopeAnnotationsAll},
+					{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsAll},
 				},
 			},
 			Grants: []string{string(org.RoleEditor)},

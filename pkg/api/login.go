@@ -259,8 +259,10 @@ func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 				return
 			}
 		}
-		oauthProvider := hs.SocialService.GetOAuthInfoProvider(authInfo.AuthModule)
-		oauthProviderSignoutRedirectUrl = oauthProvider.SignoutRedirectUrl
+		oauthProvider := hs.SocialService.GetOAuthInfoProvider(strings.TrimPrefix(authInfo.AuthModule, "oauth_"))
+		if oauthProvider != nil {
+			oauthProviderSignoutRedirectUrl = oauthProvider.SignoutRedirectUrl
+		}
 	}
 
 	hs.log.Debug("Logout Redirect url", "auth.SignoutRedirectUrl:", hs.Cfg.SignoutRedirectUrl)

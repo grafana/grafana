@@ -197,6 +197,7 @@ export interface GrafanaConfig {
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
   anonymousEnabled: boolean;
+  anonymousDeviceLimit: number | undefined;
   featureToggles: FeatureToggles;
   licenseInfo: LicenseInfo;
   http2Enabled: boolean;
