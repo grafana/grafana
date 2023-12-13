@@ -177,19 +177,19 @@ func (fam *RemoteSecondaryForkedAlertmanager) StopAndWait() {
 	fam.remote.StopAndWait()
 
 	// Send config and state to the remote Alertmanager.
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	// Using context.TODO() here as we think we want to allow this operation to finish regardless of time.
+	ctx := context.TODO()
 	if err := fam.remote.CompareAndSendState(ctx); err != nil {
-		fam.log.Error("Error sending state to the remote Alertmanager", "err", err)
+		fam.log.Error("Error sending state to the remote Alertmanager while stopping", "err", err)
 	}
 
 	config, err := fam.store.GetLatestAlertmanagerConfiguration(ctx, fam.orgID)
 	if err != nil {
-		fam.log.Error("Error getting latest Alertmanager configuration", "err", err)
+		fam.log.Error("Error getting latest Alertmanager configuration while stopping", "err", err)
 		return
 	}
 	if err := fam.remote.CompareAndSendConfiguration(ctx, config); err != nil {
-		fam.log.Error("Error sending configuration to the remote Alertmanager", "err", err)
+		fam.log.Error("Error sending configuration to the remote Alertmanager while stopping", "err", err)
 	}
 }
 
