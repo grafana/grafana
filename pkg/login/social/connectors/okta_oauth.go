@@ -124,11 +124,11 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 			return nil, err
 		}
 
-		if s.allowAssignGrafanaAdmin {
+		if s.info.AllowAssignGrafanaAdmin {
 			isGrafanaAdmin = &grafanaAdmin
 		}
 	}
-	if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
+	if s.info.AllowAssignGrafanaAdmin && s.skipOrgRoleSync {
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 

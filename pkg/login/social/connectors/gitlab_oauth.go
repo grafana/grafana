@@ -185,7 +185,7 @@ func (s *SocialGitlab) UserInfo(ctx context.Context, client *http.Client, token 
 		return nil, errMissingGroupMembership
 	}
 
-	if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
+	if s.info.AllowAssignGrafanaAdmin && s.skipOrgRoleSync {
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
@@ -231,7 +231,7 @@ func (s *SocialGitlab) extractFromAPI(ctx context.Context, client *http.Client, 
 			return nil, err
 		}
 
-		if s.allowAssignGrafanaAdmin {
+		if s.info.AllowAssignGrafanaAdmin {
 			idData.IsGrafanaAdmin = &grafanaAdmin
 		}
 
@@ -287,7 +287,7 @@ func (s *SocialGitlab) extractFromToken(ctx context.Context, client *http.Client
 			return nil, errRole
 		}
 
-		if s.allowAssignGrafanaAdmin {
+		if s.info.AllowAssignGrafanaAdmin {
 			data.IsGrafanaAdmin = &grafanaAdmin
 		}
 

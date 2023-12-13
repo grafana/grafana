@@ -116,7 +116,7 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 			return nil, errRole
 		}
 
-		if s.allowAssignGrafanaAdmin {
+		if s.info.AllowAssignGrafanaAdmin {
 			userInfo.IsGrafanaAdmin = &grafanaAdmin
 		}
 
@@ -174,7 +174,7 @@ func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) 
 }
 
 func (s *SocialGoogle) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
-	if s.features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) && s.useRefreshToken {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) && s.info.UseRefreshToken {
 		opts = append(opts, oauth2.AccessTypeOffline, oauth2.ApprovalForce)
 	}
 	return s.SocialBase.AuthCodeURL(state, opts...)
