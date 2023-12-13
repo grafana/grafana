@@ -136,9 +136,8 @@ export interface BootData {
   settings: GrafanaConfig;
   navTree: NavLinkDTO[];
   assets: {
-    jsFiles: Array<{ filePath: string }>;
-    dark: string;
     light: string;
+    dark: string;
   };
 }
 
@@ -198,6 +197,7 @@ export interface GrafanaConfig {
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
   anonymousEnabled: boolean;
+  anonymousDeviceLimit: number | undefined;
   featureToggles: FeatureToggles;
   licenseInfo: LicenseInfo;
   http2Enabled: boolean;
