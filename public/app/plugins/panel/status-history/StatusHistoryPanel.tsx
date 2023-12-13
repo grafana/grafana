@@ -223,7 +223,7 @@ export const StatusHistoryPanel = ({
             {data.annotations && (
               <AnnotationsPlugin annotations={data.annotations} config={builder} timeZone={timeZone} />
             )}
-            {config.featureToggles.newVizTooltips && (
+            {config.featureToggles.newVizTooltips ? (
               <>
                 {options.tooltip.mode !== TooltipDisplayMode.None && (
                   <TooltipPlugin2
@@ -247,8 +247,7 @@ export const StatusHistoryPanel = ({
                   />
                 )}
               </>
-            )}
-            {!config.featureToggles.newVizTooltips && (
+            ) : (
               <>
                 <ZoomPlugin config={builder} onZoom={onChangeTimeRange} />
                 {renderTooltip(alignedFrame)}
