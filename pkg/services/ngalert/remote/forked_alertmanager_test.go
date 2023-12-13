@@ -592,7 +592,13 @@ func genTestAlertmanagersWithSyncInterval(t *testing.T, mode int, syncInterval t
 	remote := remote_alertmanager_mock.NewRemoteAlertmanagerMock(t)
 
 	if mode == modeRemoteSecondary {
-		return internal, remote, NewRemoteSecondaryForkedAlertmanager(log.NewNopLogger(), syncInterval, internal, remote)
+		cfg := RemoteSecondaryConfig{
+			Logger:       log.NewNopLogger(),
+			SyncInterval: syncInterval,
+		}
+		forked, err := NewRemoteSecondaryForkedAlertmanager(cfg, internal, remote)
+		require.NoError(t, err)
+		return internal, remote, forked
 	}
 	return internal, remote, NewRemotePrimaryForkedAlertmanager(internal, remote)
 }

@@ -2,6 +2,7 @@ package remote
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -27,13 +28,30 @@ type RemoteSecondaryForkedAlertmanager struct {
 	syncInterval time.Duration
 }
 
-func NewRemoteSecondaryForkedAlertmanager(l log.Logger, syncInterval time.Duration, internal notifier.Alertmanager, remote remoteAlertmanager) *RemoteSecondaryForkedAlertmanager {
+type RemoteSecondaryConfig struct {
+	// SyncInterval determines how often we should attempt to synchronize
+	// state and configuration on the external Alertmanager.
+	SyncInterval time.Duration
+	Logger       log.Logger
+}
+
+func (c *RemoteSecondaryConfig) Validate() error {
+	if c.Logger == nil {
+		return fmt.Errorf("logger cannot be nil")
+	}
+	return nil
+}
+
+func NewRemoteSecondaryForkedAlertmanager(cfg RemoteSecondaryConfig, internal notifier.Alertmanager, remote remoteAlertmanager) (*RemoteSecondaryForkedAlertmanager, error) {
+	if err := cfg.Validate(); err != nil {
+		return nil, err
+	}
 	return &RemoteSecondaryForkedAlertmanager{
-		log:          l,
+		log:          cfg.Logger,
 		internal:     internal,
 		remote:       remote,
-		syncInterval: syncInterval,
-	}
+		syncInterval: cfg.SyncInterval,
+	}, nil
 }
 
 // ApplyConfig will only log errors for the remote Alertmanager and ensure we delegate the call to the internal Alertmanager.
