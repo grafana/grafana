@@ -166,11 +166,11 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 	}, nil
 }
 
-func (s *SocialAzureAD) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
+func (s *SocialAzureAD) Validate(ctx context.Context, settings ssoModels.SSOSettingsDTO) error {
 	return nil
 }
 
-func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettingsDTO) error {
 	return nil
 }
 

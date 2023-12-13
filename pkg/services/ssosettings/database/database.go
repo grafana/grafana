@@ -31,7 +31,7 @@ func ProvideStore(sqlStore db.DB) *SSOSettingsStore {
 
 var _ ssosettings.Store = (*SSOSettingsStore)(nil)
 
-func (s *SSOSettingsStore) Get(ctx context.Context, provider string) (*models.SSOSettings, error) {
+func (s *SSOSettingsStore) Get(ctx context.Context, provider string) (*models.SSOSettingsDTO, error) {
 	result := models.SSOSettingsDTO{Provider: provider}
 	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
@@ -53,19 +53,14 @@ func (s *SSOSettingsStore) Get(ctx context.Context, provider string) (*models.SS
 		return nil, err
 	}
 
-	dto, err := result.ToSSOSettings()
-	if err != nil {
-		return nil, err
-	}
-
-	return dto, nil
+	return &result, nil
 }
 
-func (s *SSOSettingsStore) List(ctx context.Context) ([]*models.SSOSettings, error) {
-	dtos := make([]*models.SSOSettingsDTO, 0)
+func (s *SSOSettingsStore) List(ctx context.Context) ([]*models.SSOSettingsDTO, error) {
+	result := make([]*models.SSOSettingsDTO, 0)
 	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		sess.Table("sso_setting")
-		err := sess.Where("is_deleted = ?", s.sqlStore.GetDialect().BooleanStr(false)).Find(&dtos)
+		err := sess.Where("is_deleted = ?", s.sqlStore.GetDialect().BooleanStr(false)).Find(&result)
 
 		if err != nil {
 			return err
@@ -78,29 +73,13 @@ func (s *SSOSettingsStore) List(ctx context.Context) ([]*models.SSOSettings, err
 		return nil, err
 	}
 
-	settings := make([]*models.SSOSettings, 0)
-	for _, dto := range dtos {
-		item, err := dto.ToSSOSettings()
-		if err != nil {
-			s.log.Warn("Failed to convert DB settings to SSOSettings for provider " + dto.Provider)
-			continue
-		}
-
-		settings = append(settings, item)
-	}
-
-	return settings, nil
+	return result, nil
 }
 
-func (s *SSOSettingsStore) Upsert(ctx context.Context, settings models.SSOSettings) error {
-	dto, err := settings.ToSSOSettingsDTO()
-	if err != nil {
-		return err
-	}
-
+func (s *SSOSettingsStore) Upsert(ctx context.Context, settings models.SSOSettingsDTO) error {
 	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		existing := &models.SSOSettingsDTO{
-			Provider:  dto.Provider,
+			Provider:  settings.Provider,
 			IsDeleted: false,
 		}
 		found, err := sess.UseBool("is_deleted").Exist(existing)
@@ -112,7 +91,7 @@ func (s *SSOSettingsStore) Upsert(ctx context.Context, settings models.SSOSettin
 
 		if found {
 			updated := &models.SSOSettingsDTO{
-				Settings:  dto.Settings,
+				Settings:  settings.Settings,
 				Updated:   now,
 				IsDeleted: false,
 			}
@@ -120,8 +99,8 @@ func (s *SSOSettingsStore) Upsert(ctx context.Context, settings models.SSOSettin
 		} else {
 			_, err = sess.Insert(&models.SSOSettingsDTO{
 				ID:       uuid.New().String(),
-				Provider: dto.Provider,
-				Settings: dto.Settings,
+				Provider: settings.Provider,
+				Settings: settings.Settings,
 				Created:  now,
 				Updated:  now,
 			})

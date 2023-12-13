@@ -58,7 +58,7 @@ func ProvideService(cfg *setting.Cfg,
 		}
 
 		for _, ssoSetting := range allSettings {
-			conn, err := createOAuthConnector(ssoSetting.Provider, ssoSetting.OAuthSettings, cfg, ssoSettings, features, cache)
+			conn, err := createOAuthConnector(ssoSetting.Provider, ssoSetting.Settings, cfg, ssoSettings, features, cache)
 			if err != nil {
 				ss.log.Error("Failed to create OAuth provider", "error", err, "provider", ssoSetting.Provider)
 				continue
@@ -71,21 +71,21 @@ func ProvideService(cfg *setting.Cfg,
 			sec := cfg.Raw.Section("auth." + name)
 
 			settingsKVs := convertIniSectionToMap(sec)
-			info, err := connectors.CreateOAuthInfoFromKeyValues(settingsKVs)
+
+			conn, err := createOAuthConnector(name, settingsKVs, cfg, ssoSettings, features, cache)
 			if err != nil {
 				ss.log.Error("Failed to create OAuthInfo for provider", "error", err, "provider", name)
 				continue
 			}
 
-			if !info.Enabled {
+			info := conn.GetOAuthInfo()
+			if info == nil || !info.Enabled {
 				continue
 			}
 
 			if name == social.GrafanaNetProviderName {
 				name = social.GrafanaComProviderName
 			}
-
-			conn, _ := createOAuthConnector(name, info, cfg, ssoSettings, features, cache)
 
 			ss.socialMap[name] = conn
 		}
@@ -214,7 +214,12 @@ func (ss *SocialService) getUsageStats(ctx context.Context) (map[string]any, err
 	return m, nil
 }
 
-func createOAuthConnector(name string, info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) (social.SocialConnector, error) {
+func createOAuthConnector(name string, settings map[string]any, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) (social.SocialConnector, error) {
+	info, err := connectors.CreateOAuthInfoFromKeyValues(settings)
+	if err != nil {
+		return nil, err
+	}
+
 	switch name {
 	case social.AzureADProviderName:
 		return connectors.NewAzureADProvider(info, cfg, ssoSettings, features, cache), nil

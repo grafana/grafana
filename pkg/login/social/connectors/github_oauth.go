@@ -81,11 +81,11 @@ func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings sso
 	return provider
 }
 
-func (s *SocialGithub) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
+func (s *SocialGithub) Validate(ctx context.Context, settings ssoModels.SSOSettingsDTO) error {
 	return nil
 }
 
-func (s *SocialGithub) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+func (s *SocialGithub) Reload(ctx context.Context, settings ssoModels.SSOSettingsDTO) error {
 	return nil
 }
 

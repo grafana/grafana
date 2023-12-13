@@ -10,8 +10,8 @@ import (
 var _ ssosettings.Store = (*FakeStore)(nil)
 
 type FakeStore struct {
-	ExpectedSSOSetting  *models.SSOSettings
-	ExpectedSSOSettings []*models.SSOSettings
+	ExpectedSSOSetting  *models.SSOSettingsDTO
+	ExpectedSSOSettings []*models.SSOSettingsDTO
 	ExpectedError       error
 }
 
@@ -19,15 +19,15 @@ func NewFakeStore() *FakeStore {
 	return &FakeStore{}
 }
 
-func (f *FakeStore) Get(ctx context.Context, provider string) (*models.SSOSettings, error) {
+func (f *FakeStore) Get(ctx context.Context, provider string) (*models.SSOSettingsDTO, error) {
 	return f.ExpectedSSOSetting, f.ExpectedError
 }
 
-func (f *FakeStore) List(ctx context.Context) ([]*models.SSOSettings, error) {
+func (f *FakeStore) List(ctx context.Context) ([]*models.SSOSettingsDTO, error) {
 	return f.ExpectedSSOSettings, f.ExpectedError
 }
 
-func (f *FakeStore) Upsert(ctx context.Context, settings models.SSOSettings) error {
+func (f *FakeStore) Upsert(ctx context.Context, settings models.SSOSettingsDTO) error {
 	return f.ExpectedError
 }
 

@@ -63,11 +63,11 @@ func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings sso
 	return provider
 }
 
-func (s *SocialGoogle) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
+func (s *SocialGoogle) Validate(ctx context.Context, settings ssoModels.SSOSettingsDTO) error {
 	return nil
 }
 
-func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSettingsDTO) error {
 	return nil
 }
 
