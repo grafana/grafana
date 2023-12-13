@@ -1221,6 +1221,12 @@ Override the AAD application client secret.
 
 By default is the same as used in AAD authentication or can be set to another application (for OBO flow).
 
+### forward_settings_to_plugins
+
+Set any additional plugins that will receive Azure settings via plugin context.
+
+By default this will always include all Grafana Labs owned Azure plugins, or those that make use of Azure settings (Azure Monitor, Azure Data Explorer, Prometheus, MSSQL).
+
 ## [auth.jwt]
 
 Refer to [JWT authentication]({{< relref "../configure-security/configure-authentication/jwt" >}}) for more information.

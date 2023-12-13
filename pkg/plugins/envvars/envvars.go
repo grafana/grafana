@@ -147,8 +147,7 @@ func (s *Service) GetConfigMap(ctx context.Context, pluginID string, _ *auth.Ext
 
 	// Changes here need to be reflected in https://github.com/grafana/grafana-plugin-sdk-go/tree/main/backend/config.go#L152
 	azureSettings := s.cfg.Azure
-	azureDatasources := []string{"grafana-azure-monitor-datasource", "prometheus", "grafana-azure-data-explorer-datasource"}
-	if azureSettings != nil && slices.Contains[[]string, string](azureDatasources, pluginID) {
+	if azureSettings != nil && slices.Contains[[]string, string](azureSettings.ForwardSettingsPlugins, pluginID) {
 		if azureSettings.Cloud != "" {
 			m[azsettings.AzureCloud] = azureSettings.Cloud
 		}

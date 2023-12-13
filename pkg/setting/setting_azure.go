@@ -63,5 +63,12 @@ func (cfg *Cfg) readAzureSettings() {
 		azureSettings.UserIdentityTokenEndpoint = tokenEndpointSettings
 	}
 
+	azurePlugins := []string{"grafana-azure-monitor-datasource", "prometheus", "grafana-azure-data-explorer-datasource", "mssql"}
+	if plugins := azureSection.Key("forward_settings_to_plugins").Strings(","); len(plugins) > 0 {
+		azureSettings.ForwardSettingsPlugins = append(azurePlugins, plugins...)
+	} else {
+		azureSettings.ForwardSettingsPlugins = azurePlugins
+	}
+
 	cfg.Azure = azureSettings
 }
