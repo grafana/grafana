@@ -4,6 +4,8 @@ import (
 	"strings"
 
 	"gopkg.in/ini.v1"
+
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // PluginSettings maps plugin id to map of key/value settings.
@@ -33,15 +35,15 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	cfg.PluginSkipPublicKeyDownload = pluginsSection.Key("public_key_retrieval_disabled").MustBool(false)
 	cfg.PluginForcePublicKeyDownload = pluginsSection.Key("public_key_retrieval_on_startup").MustBool(false)
 
-	cfg.PluginsAllowUnsigned = readPluginIDsList(pluginsSection.Key("allow_loading_unsigned_plugins").MustString(""))
-	cfg.DisablePlugins = readPluginIDsList(pluginsSection.Key("disable_plugins").MustString(""))
-	cfg.HideAngularDeprecation = readPluginIDsList(pluginsSection.Key("hide_angular_deprecation").MustString(""))
-	cfg.ForwardHostEnvVars = readPluginIDsList(pluginsSection.Key("forward_host_env_vars").MustString(""))
+	cfg.PluginsAllowUnsigned = util.SplitString(pluginsSection.Key("allow_loading_unsigned_plugins").MustString(""))
+	cfg.DisablePlugins = util.SplitString(pluginsSection.Key("disable_plugins").MustString(""))
+	cfg.HideAngularDeprecation = util.SplitString(pluginsSection.Key("hide_angular_deprecation").MustString(""))
+	cfg.ForwardHostEnvVars = util.SplitString(pluginsSection.Key("forward_host_env_vars").MustString(""))
 
 	cfg.PluginCatalogURL = pluginsSection.Key("plugin_catalog_url").MustString("https://grafana.com/grafana/plugins/")
 	cfg.PluginAdminEnabled = pluginsSection.Key("plugin_admin_enabled").MustBool(true)
 	cfg.PluginAdminExternalManageEnabled = pluginsSection.Key("plugin_admin_external_manage_enabled").MustBool(false)
-	cfg.PluginCatalogHiddenPlugins = readPluginIDsList(pluginsSection.Key("plugin_catalog_hidden_plugins").MustString(""))
+	cfg.PluginCatalogHiddenPlugins = util.SplitString(pluginsSection.Key("plugin_catalog_hidden_plugins").MustString(""))
 
 	// Pull disabled plugins from the catalog
 	cfg.PluginCatalogHiddenPlugins = append(cfg.PluginCatalogHiddenPlugins, cfg.DisablePlugins...)
@@ -54,19 +56,4 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	cfg.PluginInstallToken = pluginsSection.Key("install_token").MustString("")
 
 	return nil
-}
-
-// readPluginIDsList takes a config value containing a list of plugin ids separated by commas and returns the
-// corresponding slice of strings. Each value has its leading and trailing whitespace removed. Empty values are
-// discarded.
-func readPluginIDsList(configValue string) []string {
-	var r []string
-	for _, id := range strings.Split(configValue, ",") {
-		id = strings.TrimSpace(id)
-		if id == "" {
-			continue
-		}
-		r = append(r, id)
-	}
-	return r
 }
