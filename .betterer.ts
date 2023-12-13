@@ -1,5 +1,4 @@
 import { BettererFileTest } from '@betterer/betterer';
-import { regexp } from '@betterer/regexp';
 import { promises as fs } from 'fs';
 import { ESLint, Linter } from 'eslint';
 import path from 'path';
@@ -38,6 +37,28 @@ function countUndocumentedStories() {
           const file = fileTestResult.addFile(filePath, '');
           // Add the issue to the first character of the file:
           file.addIssue(0, 0, 'No undocumented stories are allowed, please add an .mdx file with some documentation');
+        }
+      })
+    );
+  });
+}
+
+/**
+ *  Generic regexp pattern matcher, similar to @betterer/regexp.
+ * The only difference is that the positions of the errors are not reported.
+ */
+function regexp(pattern: RegExp, issueMessage: string) {
+  return new BettererFileTest(async (filePaths, fileTestResult) => {
+    await Promise.all(
+      filePaths.map(async (filePath) => {
+        const fileText = await fs.readFile(filePath, 'utf8');
+        const matches = fileText.match(pattern);
+        if (matches) {
+          // File contents doesn't matter, since we're nto reporting the position
+          const file = fileTestResult.addFile(filePath, '');
+          matches.forEach(() => {
+            file.addIssue(0, 0, issueMessage);
+          });
         }
       })
     );
