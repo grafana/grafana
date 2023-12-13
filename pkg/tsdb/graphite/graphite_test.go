@@ -291,10 +291,10 @@ func TestConvertResponses(t *testing.T) {
 
 type fakeInstanceManager struct{}
 
-func (f fakeInstanceManager) Get(pluginContext backend.PluginContext) (instancemgmt.Instance, error) {
+func (f fakeInstanceManager) Get(ctx context.Context, pluginContext backend.PluginContext) (instancemgmt.Instance, error) {
 	return datasourceInfo{}, nil
 }
 
-func (f fakeInstanceManager) Do(pluginContext backend.PluginContext, fn instancemgmt.InstanceCallbackFunc) error {
+func (f fakeInstanceManager) Do(ctx context.Context, pluginContext backend.PluginContext, fn instancemgmt.InstanceCallbackFunc) error {
 	return nil
 }

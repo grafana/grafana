@@ -1,6 +1,7 @@
 package cloudwatch
 
 import (
+	"context"
 	"encoding/json"
 	"net/url"
 	"testing"
@@ -15,11 +16,12 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/constants"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestQuery_Regions(t *testing.T) {
@@ -46,6 +48,7 @@ func TestQuery_Regions(t *testing.T) {
 
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 		resp, err := executor.handleGetRegions(
+			context.Background(),
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 			}, url.Values{
@@ -119,6 +122,7 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 		resp, err := executor.handleGetEc2InstanceAttribute(
+			context.Background(),
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 			}, url.Values{
@@ -196,6 +200,7 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 		resp, err := executor.handleGetEbsVolumeIds(
+			context.Background(),
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 			}, url.Values{
@@ -262,6 +267,7 @@ func TestQuery_ResourceARNs(t *testing.T) {
 
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 		resp, err := executor.handleGetResourceArns(
+			context.Background(),
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 			}, url.Values{

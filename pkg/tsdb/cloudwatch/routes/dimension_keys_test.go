@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -8,10 +9,11 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
@@ -32,7 +34,7 @@ func Test_DimensionKeys_Route(t *testing.T) {
 				assert.Contains(t, r.DimensionFilter, &resources.Dimension{Name: "NodeID", Value: "Shared"}) &&
 				assert.Contains(t, r.DimensionFilter, &resources.Dimension{Name: "stage", Value: "QueryCommit"})
 		})).Return([]resources.ResourceResponse[string]{}, nil).Once()
-		newListMetricsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.ListMetricsProvider, error) {
+		newListMetricsService = func(ctx context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.ListMetricsProvider, error) {
 			return &mockListMetricsService, nil
 		}
 		rr := httptest.NewRecorder()
@@ -67,7 +69,7 @@ func Test_DimensionKeys_Route(t *testing.T) {
 	t.Run("return 500 if GetDimensionKeysByDimensionFilter returns an error", func(t *testing.T) {
 		mockListMetricsService := mocks.ListMetricsServiceMock{}
 		mockListMetricsService.On("GetDimensionKeysByDimensionFilter", mock.Anything).Return([]resources.ResourceResponse[string]{}, fmt.Errorf("some error"))
-		newListMetricsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.ListMetricsProvider, error) {
+		newListMetricsService = func(ctx context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.ListMetricsProvider, error) {
 			return &mockListMetricsService, nil
 		}
 		rr := httptest.NewRecorder()

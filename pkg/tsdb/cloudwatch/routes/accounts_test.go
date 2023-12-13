@@ -1,17 +1,19 @@
 package routes
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
-	"github.com/stretchr/testify/assert"
 )
 
 func Test_accounts_route(t *testing.T) {
@@ -30,7 +32,7 @@ func Test_accounts_route(t *testing.T) {
 				IsMonitoringAccount: true,
 			},
 		}}, nil)
-		newAccountsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.AccountsProvider, error) {
+		newAccountsService = func(ctx context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.AccountsProvider, error) {
 			return &mockAccountsService, nil
 		}
 
@@ -63,7 +65,7 @@ func Test_accounts_route(t *testing.T) {
 		mockAccountsService := mocks.AccountsServiceMock{}
 		mockAccountsService.On("GetAccountsForCurrentUserOrRole").Return([]resources.ResourceResponse[resources.Account](nil),
 			fmt.Errorf("%w: %s", services.ErrAccessDeniedException, "some AWS message"))
-		newAccountsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.AccountsProvider, error) {
+		newAccountsService = func(ctx context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.AccountsProvider, error) {
 			return &mockAccountsService, nil
 		}
 
@@ -81,7 +83,7 @@ func Test_accounts_route(t *testing.T) {
 	t.Run("returns 500 when accounts service returns unknown error", func(t *testing.T) {
 		mockAccountsService := mocks.AccountsServiceMock{}
 		mockAccountsService.On("GetAccountsForCurrentUserOrRole").Return([]resources.ResourceResponse[resources.Account](nil), fmt.Errorf("some error"))
-		newAccountsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.AccountsProvider, error) {
+		newAccountsService = func(ctx context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.AccountsProvider, error) {
 			return &mockAccountsService, nil
 		}
 
