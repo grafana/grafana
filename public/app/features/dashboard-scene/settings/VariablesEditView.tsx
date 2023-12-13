@@ -27,12 +27,8 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     return this._dashboard;
   }
 
-  private get _variablesScene(): SceneVariables {
+  public getVariableSet(): SceneVariables {
     return sceneGraph.getVariables(this.getDashboard());
-  }
-
-  public getVariablesScene(): SceneVariables {
-    return this._variablesScene;
   }
 
   private getVariableIndex = (identifier: string) => {
@@ -57,8 +53,8 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     this._variablesScene.setState({ variables: updatedVariables });
   };
 
-  public getVariables = () => {
-    return this._variablesScene.state.variables;
+  public getVariables() {
+    return this.getVariableSet().state.variables;
   };
 
   public getVariablesList = () => {
@@ -126,7 +122,7 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
   // get variables from dashboard state
   const { onDelete, onDuplicated, onOrderChanged, onEdit } = model;
-  const variables = model.getVariablesList();
+  const { variables } = model.getVariableSet().useState();
 
   return (
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
