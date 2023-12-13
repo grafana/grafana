@@ -1,17 +1,16 @@
 import React from 'react';
 
 import { PageLayoutType } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneVariables, sceneGraph } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneVariables, sceneGraph } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
 import { VariableEditorList } from './variables/VariableEditorList';
-export interface VariablesEditViewState extends DashboardEditViewState {
-  dashboardRef: SceneObjectRef<DashboardScene>;
-}
+export interface VariablesEditViewState extends DashboardEditViewState {}
 
 export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> implements DashboardEditView {
   public static Component = VariableEditorSettingsListView;
@@ -21,7 +20,7 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
   }
 
   private get _dashboard(): DashboardScene {
-    return this.state.dashboardRef.resolve();
+    return getDashboardSceneFor(this);
   }
 
   public getDashboard(): DashboardScene {

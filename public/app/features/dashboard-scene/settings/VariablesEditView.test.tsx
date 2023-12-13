@@ -1,4 +1,4 @@
-import { SceneVariableSet, CustomVariable } from '@grafana/scenes';
+import { SceneVariableSet, CustomVariable, SceneGridItem, SceneGridLayout } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
@@ -103,6 +103,7 @@ describe('VariablesEditView', () => {
 });
 
 async function buildTestScene() {
+  const variableView = new VariablesEditView({});
   const dashboard = new DashboardScene({
     title: 'Dashboard with variables',
     uid: 'dash-variables',
@@ -121,18 +122,22 @@ async function buildTestScene() {
         }),
       ],
     }),
-  });
-
-  const variableView = new VariablesEditView({
-    dashboardRef: dashboard.getRef(),
+    body: new SceneGridLayout({
+      children: [
+        new SceneGridItem({
+          key: 'griditem-1',
+          x: 0,
+          y: 0,
+          width: 10,
+          height: 12,
+          body: undefined,
+        }),
+      ],
+    }),
+    editview: variableView,
   });
 
   activateFullSceneTree(dashboard);
-
-  await new Promise((r) => setTimeout(r, 1));
-
-  dashboard.onEnterEditMode();
-  variableView.activate();
 
   return { dashboard, variableView };
 }
