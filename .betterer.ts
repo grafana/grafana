@@ -45,7 +45,7 @@ function countUndocumentedStories() {
 
 /**
  *  Generic regexp pattern matcher, similar to @betterer/regexp.
- * The only difference is that the positions of the errors are not reported.
+ *  The only difference is that the positions of the errors are not reported.
  */
 function regexp(pattern: RegExp, issueMessage: string) {
   return new BettererFileTest(async (filePaths, fileTestResult) => {
