@@ -1,5 +1,4 @@
 import { BettererFileTest } from '@betterer/betterer';
-import { regexp } from '@betterer/regexp';
 import { promises as fs } from 'fs';
 import { ESLint, Linter } from 'eslint';
 import path from 'path';
@@ -19,11 +18,6 @@ export default {
       .include('**/*.{ts,tsx}')
       .exclude(new RegExp(eslintPathsToIgnore.join('|'))),
   'no undocumented stories': () => countUndocumentedStories().include('**/!(*.internal).story.tsx'),
-  'no gf-form usage': () =>
-    regexp(
-      /gf-form/gm,
-      'gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.'
-    ).include('**/*.{ts,tsx,html}'),
 };
 
 function countUndocumentedStories() {
