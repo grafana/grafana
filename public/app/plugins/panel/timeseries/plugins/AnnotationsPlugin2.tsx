@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import uPlot from 'uplot';
+import uPlot, { pxRatio } from 'uplot';
 
 import { DataFrame, GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
@@ -22,6 +22,16 @@ const renderLine = (ctx: CanvasRenderingContext2D, y0: number, y1: number, x: nu
   ctx.stroke();
 };
 
+// const renderUpTriangle = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, color: string) => {
+//   ctx.beginPath();
+//   ctx.moveTo(x - w/2, y + h/2);
+//   ctx.lineTo(x + w/2, y + h/2);
+//   ctx.lineTo(x, y);
+//   ctx.closePath();
+//   ctx.fillStyle = color;
+//   ctx.fill();
+// }
+
 export const AnnotationsPlugin2 = ({ annotations, timeZone, config }: AnnotationsPluginProps) => {
   const [plot, setPlot] = useState<uPlot>();
 
@@ -32,7 +42,7 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config }: Annotation
   annoRef.current = annotations;
 
   useLayoutEffect(() => {
-    config.addHook('init', (u) => {
+    config.addHook('ready', (u) => {
       setPlot(u);
     });
 
@@ -65,14 +75,18 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config }: Annotation
           let x0 = u.valToPos(vals.time[i], 'x', true);
           renderLine(ctx, y0, y1, x0, color);
 
-          if (vals.isRegion[i]) {
+          if (!vals.isRegion[i]) {
+            // renderUpTriangle(ctx, x0, y1, 8 * uPlot.pxRatio, 5 * uPlot.pxRatio, color);
+          } else {
             let x1 = u.valToPos(vals.timeEnd[i], 'x', true);
 
             renderLine(ctx, y0, y1, x1, color);
 
-            ctx.rect(x0, y0, x1 - x0, u.bbox.height);
             ctx.fillStyle = colorManipulator.alpha(color, 0.1);
-            ctx.fill();
+            ctx.fillRect(x0, y0, x1 - x0, u.bbox.height);
+
+            // ctx.fillStyle = color;
+            // ctx.fillRect(x0, y1, x1 - x0, 5);
           }
         }
       });
@@ -82,19 +96,55 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config }: Annotation
   }, [config, getColorByName]);
 
   if (plot) {
-    return createPortal(<div className={styles.annoMarkers}></div>, plot.over);
+    return createPortal(
+      annoRef.current.flatMap((frame) => {
+        let vals: Record<string, any[]> = {};
+        frame.fields.forEach((f) => {
+          vals[f.name] = f.values;
+        });
+
+        let markers: React.ReactNode[] = [];
+
+        for (let i = 0; i < frame.length; i++) {
+          let color = getColorByName(vals.color[i]);
+
+          let left = plot.valToPos(vals.time[i], 'x');
+
+          if (vals.isRegion[i]) {
+            let right = plot.valToPos(vals.timeEnd[i], 'x');
+
+            markers.push(
+              <div className={styles.annoRegion} style={{ left, background: color, width: right - left }}></div>
+            );
+          } else {
+            markers.push(<div className={styles.annoMarker} style={{ left, borderBottomColor: color }}></div>);
+          }
+        }
+
+        return markers;
+      }),
+      plot.root.querySelector('.u-axis')!
+    );
   }
 
   return null;
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  annoMarkers: css({
+  annoMarker: css({
     position: 'absolute',
-    top: '100%',
-    width: '100%',
-    height: '4px',
-    left: 0,
-    background: 'red',
+    width: 0,
+    height: 0,
+    borderLeft: '6px solid transparent',
+    borderRight: '6px solid transparent',
+    borderBottomWidth: '6px',
+    borderBottomStyle: 'solid',
+    transform: 'translateX(-50%)',
+    cursor: 'pointer',
+  }),
+  annoRegion: css({
+    position: 'absolute',
+    height: '5px',
+    cursor: 'pointer',
   }),
 });
