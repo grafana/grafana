@@ -33,14 +33,14 @@ var _ grafanaapiserver.APIGroupBuilder = (*DSAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type DSAPIBuilder struct {
-	apiVersion string
-
 	connectionResourceInfo apis.ResourceInfo
-	plugin                 pluginstore.Plugin
-	client                 plugins.Client
-	dsService              datasources.DataSourceService
-	dataSourceCache        datasources.CacheService
-	namespacer             request.NamespaceMapper
+	configResourceInfo     apis.ResourceInfo
+
+	plugin          pluginstore.Plugin
+	client          plugins.Client
+	dsService       datasources.DataSourceService
+	dataSourceCache datasources.CacheService
+	namespacer      request.NamespaceMapper
 }
 
 func RegisterAPIService(
@@ -70,9 +70,9 @@ func RegisterAPIService(
 		}
 
 		group := getDatasourceGroupNameFromPluginID(ds.ID)
-		info := v0alpha1.GenericConnectionResourceInfo.WithGroupAndShortName(group, ds.ID)
 		builder = &DSAPIBuilder{
-			connectionResourceInfo: info,
+			connectionResourceInfo: v0alpha1.GenericConnectionResourceInfo.WithGroupAndShortName(group, ds.ID+"-conn"),
+			configResourceInfo:     v0alpha1.GenericConfigResourceInfo.WithGroupAndShortName(group, ds.ID),
 			plugin:                 ds,
 			client:                 pluginClient,
 			dsService:              dsService,
@@ -93,6 +93,8 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&v0alpha1.DataSourceConnection{},
 		&v0alpha1.DataSourceConnectionList{},
 		&v0alpha1.HealthCheckResult{},
+		&v0alpha1.DataSourceConfig{},
+		&v0alpha1.DataSourceConfigList{},
 		// Added for subresource hack
 		&metav1.Status{},
 	)
@@ -123,9 +125,37 @@ func (b *DSAPIBuilder) GetAPIGroupInfo(
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
 ) (*genericapiserver.APIGroupInfo, error) {
-	conn := b.connectionResourceInfo
 	storage := map[string]rest.Storage{}
-	storage[conn.StoragePath()] = &connectionStorage{
+	config := b.configResourceInfo
+	storage[config.StoragePath()] = &configAccess{
+		builder:      b,
+		resourceInfo: config,
+		tableConverter: utils.NewTableConverter(
+			config.GroupResource(),
+			// NOTE: interesting fields will depend on the datasource type!
+			[]metav1.TableColumnDefinition{
+				{Name: "Name", Type: "string", Format: "name"},
+				{Name: "Title", Type: "string", Format: "string", Description: "The datasource title"},
+				{Name: "APIVersion", Type: "string", Format: "string", Description: "API Version"},
+				{Name: "Created At", Type: "date"},
+			},
+			func(obj any) ([]interface{}, error) {
+				m, ok := obj.(*v0alpha1.DataSourceConfig)
+				if !ok {
+					return nil, fmt.Errorf("expected connection")
+				}
+				return []interface{}{
+					m.Name,
+					m.Spec.Name,
+					m.APIVersion,
+					m.CreationTimestamp.UTC().Format(time.RFC3339),
+				}, nil
+			},
+		),
+	}
+
+	conn := b.connectionResourceInfo
+	storage[conn.StoragePath()] = &connectionAccess{
 		builder:      b,
 		resourceInfo: conn,
 		tableConverter: utils.NewTableConverter(
