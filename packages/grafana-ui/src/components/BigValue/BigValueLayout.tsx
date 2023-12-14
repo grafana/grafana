@@ -130,7 +130,7 @@ export abstract class BigValueLayout {
       containerStyles.marginTop = -(percentFontSize / 4);
     }
 
-    // This layout mode needs more work
+    // TODO: This layout mode needs more work (especially for horizontal layout)
     if (valueContainerStyles.flexDirection === 'row') {
       containerStyles.alignItems = 'unset';
     }
@@ -139,17 +139,6 @@ export abstract class BigValueLayout {
       case BigValueColorMode.Background:
       case BigValueColorMode.BackgroundSolid:
         containerStyles.color = getTextColorForAlphaBackground(this.valueColor, this.props.theme.isDark);
-
-        // Tried switching color based on contrast but was created too inconsistent results
-
-        //const contrast = colorManipulator.getContrastRatio(color, this.valueColor);
-        //if (contrast < 1.4) {
-        //  containerStyles.color = getTextColorForAlphaBackground(this.valueColor, this.props.theme.isDark);
-        //const shadowDim = Math.max(percentFontSize / 13, 1);
-        //containerStyles.textShadow = `${shadowDim}px ${shadowDim}px ${shadowDim}px black`;
-        // }
-        // console.log('contrast', contrast);
-
         break;
     }
 
