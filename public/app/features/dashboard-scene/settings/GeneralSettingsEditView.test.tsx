@@ -112,6 +112,7 @@ describe('GeneralSettingsEditView', () => {
 });
 
 async function buildTestScene() {
+  const settings = new GeneralSettingsEditView({});
   const dashboard = new DashboardScene({
     $timeRange: new SceneTimeRange({}),
     $behaviors: [new behaviors.CursorSync({ sync: DashboardCursorSync.Off })],
@@ -143,10 +144,7 @@ async function buildTestScene() {
         }),
       ],
     }),
-  });
-
-  const settings = new GeneralSettingsEditView({
-    dashboardRef: dashboard.getRef(),
+    editview: settings,
   });
 
   activateFullSceneTree(dashboard);

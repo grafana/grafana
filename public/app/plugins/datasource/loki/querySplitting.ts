@@ -246,8 +246,12 @@ export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequ
     );
 
     for (const stepMs in stepMsPartition) {
+      const targets = stepMsPartition[stepMs].map((q) => {
+        const { maxLines, ...query } = q;
+        return query;
+      });
       requests.push({
-        request: { ...request, targets: stepMsPartition[stepMs] },
+        request: { ...request, targets },
         partition: partitionTimeRange(false, request.range, Number(stepMs), Number(chunkRangeMs)),
       });
     }

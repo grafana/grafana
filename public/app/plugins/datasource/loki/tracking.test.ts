@@ -1,12 +1,13 @@
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
-import { dateTime } from '@grafana/data';
+import { DashboardLoadedEvent, dateTime } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
 import { QueryEditorMode } from '../prometheus/querybuilder/shared/types';
 
+import pluginJson from './plugin.json';
 import { partitionTimeRange } from './querySplitting';
-import { trackGroupedQueries, trackQuery } from './tracking';
+import { onDashboardLoadedHandler, trackGroupedQueries, trackQuery } from './tracking';
 import { LokiGroupedRequest, LokiQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -63,6 +64,7 @@ beforeAll(() => {
 });
 afterAll(() => {
   jest.useRealTimers();
+  jest.clearAllMocks();
 });
 beforeEach(() => {
   jest.mocked(reportInteraction).mockClear();
@@ -180,5 +182,43 @@ test('Tracks grouped queries', () => {
     time_range_to: '2023-02-10T06:00:00.000Z',
     time_taken: 0,
     predefined_operations_applied: 'n/a',
+  });
+});
+
+describe('onDashboardLoadedHandler', () => {
+  beforeEach(() => {
+    jest.mocked(reportInteraction).mockClear();
+    jest.spyOn(console, 'error');
+  });
+  test('Reports dashboard loaded interactions', () => {
+    const event = new DashboardLoadedEvent({
+      dashboardId: 'test',
+      orgId: 1,
+      userId: 2,
+      grafanaVersion: '11',
+      queries: {
+        [pluginJson.id]: originalRequest.targets,
+      },
+    });
+    onDashboardLoadedHandler(event);
+
+    expect(reportInteraction).toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
+  });
+
+  test('Does not report or fails when the dashboard id has no queries', () => {
+    const event = new DashboardLoadedEvent({
+      dashboardId: 'test',
+      orgId: 1,
+      userId: 2,
+      grafanaVersion: '11',
+      queries: {
+        'not loki': originalRequest.targets,
+      },
+    });
+    onDashboardLoadedHandler(event);
+
+    expect(reportInteraction).not.toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
   });
 });
