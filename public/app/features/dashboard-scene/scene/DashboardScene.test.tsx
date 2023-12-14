@@ -88,6 +88,18 @@ describe('DashboardScene', () => {
       });
 
       // TODO: Make the dashboard to restore the defaults on discard
+      it.skip('A change to time picker visibility settings should set isDirty true', () => {
+        const dashboardControls = dashboardSceneGraph.getDashboardControls(scene)!;
+        const prevState = dashboardControls.state.hideTimeControls;
+        dashboardControls.setState({ hideTimeControls: true });
+
+        expect(scene.state.isDirty).toBe(true);
+
+        scene.onDiscard();
+        expect(dashboardControls.state.hideTimeControls).toEqual(prevState);
+      });
+
+      // TODO: Make the dashboard to restore the defaults on discard
       it.skip('A change to time zone should set isDirty true', () => {
         const timeRange = scene.state.$timeRange!;
         const prevState = timeRange.state.timeZone;

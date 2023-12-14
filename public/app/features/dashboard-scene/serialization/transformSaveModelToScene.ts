@@ -263,16 +263,15 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     controls: [
       new DashboardControls({
         variableControls: [new VariableValueSelectors({}), ...filtersSets, new SceneDataLayerControls()],
-        timeControls: Boolean(oldModel.timepicker.hidden)
-          ? []
-          : [
-              new SceneTimePicker({}),
-              new SceneRefreshPicker({
-                refresh: oldModel.refresh,
-                intervals: oldModel.timepicker.refresh_intervals,
-              }),
-            ],
+        timeControls: [
+          new SceneTimePicker({}),
+          new SceneRefreshPicker({
+            refresh: oldModel.refresh,
+            intervals: oldModel.timepicker.refresh_intervals,
+          }),
+        ],
         linkControls: new DashboardLinksControls({}),
+        hideTimeControls: oldModel.timepicker.hidden,
       }),
     ],
   });

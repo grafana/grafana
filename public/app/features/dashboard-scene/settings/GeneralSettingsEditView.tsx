@@ -1,14 +1,7 @@
 import React, { ChangeEvent } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
-import {
-  behaviors,
-  SceneComponentProps,
-  SceneObjectBase,
-  SceneObjectRef,
-  SceneTimePicker,
-  sceneGraph,
-} from '@grafana/scenes';
+import { behaviors, SceneComponentProps, SceneObjectBase, SceneObjectRef, sceneGraph } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
 import {
   Box,
@@ -83,6 +76,10 @@ export class GeneralSettingsEditView
     return;
   }
 
+  public getDashboardControls() {
+    return dashboardSceneGraph.getDashboardControls(this._dashboard);
+  }
+
   public onTitleChange = (value: string) => {
     this._dashboard.setState({ title: value });
   };
@@ -134,16 +131,9 @@ export class GeneralSettingsEditView
   };
 
   public onHideTimePickerChange = (value: boolean) => {
-    if (this._dashboard.state.controls instanceof DashboardControls) {
-      for (const control of this._dashboard.state.controls.state.timeControls) {
-        if (control instanceof SceneTimePicker) {
-          control.setState({
-            // TODO: Control visibility from DashboardControls
-            // hidden: value,
-          });
-        }
-      }
-    }
+    this.getDashboardControls()?.setState({
+      hideTimeControls: value,
+    });
   };
 
   public onLiveNowChange = (value: boolean) => {
@@ -160,6 +150,7 @@ export class GeneralSettingsEditView
     const { sync: graphTooltip } = model.getCursorSync()?.useState() || {};
     const { timeZone, weekStart } = model.getTimeRange().useState();
     const { intervals } = model.getRefreshPicker()?.useState() || {};
+    const { hideTimeControls } = model.getDashboardControls()?.useState() || {};
 
     return (
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
@@ -240,8 +231,7 @@ export class GeneralSettingsEditView
             onHideTimePickerChange={model.onHideTimePickerChange}
             onLiveNowChange={model.onLiveNowChange}
             refreshIntervals={intervals}
-            // TODO: Control visibility of time picker
-            // timePickerHidden={timepicker?.state?.hidden}
+            timePickerHidden={hideTimeControls}
             // TODO: Implement this in dashboard scene
             // nowDelay={timepicker.nowDelay || ''}
             // TODO: Implement this in dashboard scene
