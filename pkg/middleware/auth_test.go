@@ -220,7 +220,8 @@ func TestRoleAppPluginAuth(t *testing.T) {
 		}
 	})
 
-	middlewareScenario(t, "Plugin is not found returns a 404", func(t *testing.T, sc *scenarioContext) {
+	// We return success in this case because the frontend takes care of rendering the 404 page
+	middlewareScenario(t, "Plugin is not found returns success", func(t *testing.T, sc *scenarioContext) {
 		sc.withIdentity(&authn.Identity{
 			OrgRoles: map[int64]org.RoleType{
 				0: org.RoleViewer,
@@ -233,11 +234,12 @@ func TestRoleAppPluginAuth(t *testing.T) {
 			c.JSON(http.StatusOK, map[string]interface{}{})
 		})
 		sc.fakeReq("GET", "/a/test-app/test").exec()
-		assert.Equal(t, 404, sc.resp.Code)
+		assert.Equal(t, 200, sc.resp.Code)
 		assert.Equal(t, "", sc.resp.Body.String())
 	})
 
-	middlewareScenario(t, "Plugin page is not found returns a 404", func(t *testing.T, sc *scenarioContext) {
+	// We return success in this case because the frontend takes care of rendering the right page based on its router
+	middlewareScenario(t, "Plugin page not found returns success", func(t *testing.T, sc *scenarioContext) {
 		sc.withIdentity(&authn.Identity{
 			OrgRoles: map[int64]org.RoleType{
 				0: org.RoleViewer,
@@ -261,7 +263,7 @@ func TestRoleAppPluginAuth(t *testing.T) {
 			c.JSON(http.StatusOK, map[string]interface{}{})
 		})
 		sc.fakeReq("GET", "/a/test-app/notExistingPath").exec()
-		assert.Equal(t, 404, sc.resp.Code)
+		assert.Equal(t, 200, sc.resp.Code)
 		assert.Equal(t, "", sc.resp.Body.String())
 	})
 

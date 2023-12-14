@@ -101,7 +101,8 @@ func CanAdminPlugins(cfg *setting.Cfg, accessControl ac.AccessControl) func(c *c
 	}
 }
 
-func RoleAppPluginAuthAndSignedIn(accessControl ac.AccessControl, ps pluginstore.Store, features featuremgmt.FeatureToggles, logger log.Logger) func(c *contextmodel.ReqContext) {
+func RoleAppPluginAuthAndSignedIn(accessControl ac.AccessControl, ps pluginstore.Store, features featuremgmt.FeatureToggles,
+	logger log.Logger) func(c *contextmodel.ReqContext) {
 	return func(c *contextmodel.ReqContext) {
 		if !c.IsSignedIn {
 			notAuthorized(c)
@@ -111,14 +112,11 @@ func RoleAppPluginAuthAndSignedIn(accessControl ac.AccessControl, ps pluginstore
 		pluginID := web.Params(c.Req)[":id"]
 		p, exists := ps.Plugin(c.Req.Context(), pluginID)
 		if !exists {
-			c.JsonApiErr(http.StatusNotFound, "Plugin not found", nil)
 			return
 		}
 
-		found := false
-		allowed := false
+		permitted := true
 		path := normalizeIncludePath(c.Req.URL.Path)
-
 		hasAccess := ac.HasAccess(accessControl, c)
 		for _, i := range p.Includes {
 			if i.Type != "page" {
@@ -132,30 +130,19 @@ func RoleAppPluginAuthAndSignedIn(accessControl ac.AccessControl, ps pluginstore
 			}
 
 			if normalizeIncludePath(u.Path) == path {
-				found = true
-
 				useRBAC := features.IsEnabledGlobally(featuremgmt.FlagAccessControlOnCall) && i.RequiresRBACAction()
 				if useRBAC && !hasAccess(ac.EvalPermission(i.Action)) {
-					logger.Debug("Plugin include is covered by RBAC, user doesn't have access",
-						"plugin", pluginID,
-						"include", i.Name)
-					allowed = false
+					logger.Debug("Plugin include is covered by RBAC, user doesn't have access", "plugin", pluginID, "include", i.Name)
+					permitted = false
 					break
 				} else if !useRBAC && !c.HasUserRole(i.Role) {
-					allowed = false
+					permitted = false
 					break
 				}
-				allowed = true
 			}
 		}
 
-		if !found {
-			// This isn't an API request, so we probably shouldn't return a JSON error.
-			c.JsonApiErr(http.StatusNotFound, "Plugin page not found", nil)
-			return
-		}
-
-		if !allowed {
+		if !permitted {
 			accessForbidden(c)
 			return
 		}
