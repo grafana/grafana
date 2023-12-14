@@ -26,6 +26,7 @@ export type FieldData = {
   validation?: {
     required?: boolean;
     message?: string;
+    validate?: (value: string | Array<SelectableValue<string>>) => boolean | string | Promise<boolean | string>;
   };
   multi?: boolean;
   allowCustomValue?: boolean;
@@ -57,6 +58,15 @@ export const fieldMap: Record<string, FieldData> = {
     allowCustomValue: true,
     options: [],
     placeholder: 'Enter team IDs and press Enter to add',
+    validation: {
+      validate: (value) => {
+        if (typeof value === 'string') {
+          return isNumeric(value);
+        }
+        return value.every((v) => v?.value && isNumeric(v.value));
+      },
+      message: 'Team ID must be a number.',
+    },
   },
   allowedOrganizations: {
     label: 'Allowed Organizations',
@@ -116,3 +126,8 @@ export const fieldMap: Record<string, FieldData> = {
     },
   },
 };
+
+// Check if a string contains only numeric values
+function isNumeric(value: string) {
+  return /^-?\d+$/.test(value);
+}

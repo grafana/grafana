@@ -138,16 +138,24 @@ export const ProviderConfig = ({ config, provider, isLoading }: GitHubConfigProp
         const watchOptions = watch(name);
         const options = isSelectableValue(watchOptions) ? watchOptions : [{ label: '', value: '' }];
         return (
-          <Field label={fieldData.label} htmlFor={name} key={name}>
+          <Field
+            label={fieldData.label}
+            htmlFor={name}
+            key={name}
+            invalid={!!errors[name]}
+            error={fieldData.validation?.message}
+          >
             <InputControl
+              rules={fieldData.validation}
               name={name}
               control={control}
-              render={({ field: { ref, onChange, ...fieldProps } }) => {
+              render={({ field: { ref, onChange, ...fieldProps }, fieldState: { invalid } }) => {
                 return (
                   <Select
                     {...fieldProps}
                     placeholder={fieldData.placeholder}
                     isMulti={fieldData.multi}
+                    invalid={invalid}
                     inputId={name}
                     options={options}
                     allowCustomValue
