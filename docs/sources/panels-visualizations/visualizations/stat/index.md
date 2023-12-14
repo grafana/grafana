@@ -127,7 +127,7 @@ Choose an alignment mode.
 Set whether percent change is displayed or not. Disabled by default.
 
 {{% admonition type="note" %}}
-This option is not applicable when the **Show** setting, under **Value options**,  is set to **All values** or **Text mode** is set to **None**.
+This option is not applicable when the **Show** setting, under **Value options**, is set to **All values**.
 {{% /admonition %}}
 
 ## Text size
