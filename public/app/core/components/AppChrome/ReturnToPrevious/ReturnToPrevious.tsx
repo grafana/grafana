@@ -1,8 +1,9 @@
+import { css } from '@emotion/css';
 import React from 'react';
 import { useHistory } from 'react-router-dom';
 
 import { UrlQueryValue } from '@grafana/data';
-import { Button, Tooltip } from '@grafana/ui';
+import { Button, Tooltip, useStyles2 } from '@grafana/ui';
 
 export interface ReturnToPreviousProps {
   href: UrlQueryValue;
@@ -12,16 +13,13 @@ export interface ReturnToPreviousProps {
 
 export const ReturnToPrevious = ({ href, title, children }: ReturnToPreviousProps) => {
   const history = useHistory();
-
+  const styles = useStyles2(getStyles);
   const handleOnClick = () => {
     href && history.push(href.toString());
   };
 
   const titleLength = 15;
-  const shortenTitle =
-    children && children.toString().length > titleLength
-      ? children.toString().slice(0, titleLength).concat('...')
-      : children;
+  const shortenTitle = children && children.toString().length > titleLength ? true : false;
   const button = () => {
     return (
       <Button
@@ -30,13 +28,20 @@ export const ReturnToPrevious = ({ href, title, children }: ReturnToPreviousProp
         variant="secondary"
         onClick={handleOnClick}
         title={title?.toString()}
-        className="return-to-previous"
+        className={styles.returnToPrevious}
       >
-        Back to {children?.toString().slice(0, 15).concat('...')}
+        Back to {children?.toString()}
       </Button>
     );
   };
   return shortenTitle && children ? <Tooltip content={`Back to ${children.toString()}`}>{button()}</Tooltip> : button();
 };
+const getStyles = () => ({
+  returnToPrevious: css({
+    maxWidth: '250px',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  }),
+});
 
 ReturnToPrevious.displayName = 'ReturnToPrevious';
