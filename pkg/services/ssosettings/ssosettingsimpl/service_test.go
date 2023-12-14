@@ -23,19 +23,19 @@ func TestSSOSettingsService_GetForProvider(t *testing.T) {
 	testCases := []struct {
 		name    string
 		setup   func(env testEnv)
-		want    *models.SSOSettingsDTO
+		want    *models.SSOSettings
 		wantErr bool
 	}{
 		{
 			name: "should return successfully",
 			setup: func(env testEnv) {
-				env.store.ExpectedSSOSetting = &models.SSOSettingsDTO{
+				env.store.ExpectedSSOSetting = &models.SSOSettings{
 					Provider: "github",
 					Settings: map[string]any{"enabled": true},
 					Source:   models.DB,
 				}
 			},
-			want: &models.SSOSettingsDTO{
+			want: &models.SSOSettings{
 				Provider: "github",
 				Settings: map[string]any{"enabled": true},
 			},
@@ -54,7 +54,7 @@ func TestSSOSettingsService_GetForProvider(t *testing.T) {
 				env.fallbackStrategy.ExpectedIsMatch = true
 				env.fallbackStrategy.ExpectedConfig = map[string]any{"enabled": true}
 			},
-			want: &models.SSOSettingsDTO{
+			want: &models.SSOSettings{
 				Provider: "github",
 				Settings: map[string]any{"enabled": true},
 				Source:   models.System,
@@ -106,13 +106,13 @@ func TestSSOSettingsService_List(t *testing.T) {
 	testCases := []struct {
 		name    string
 		setup   func(env testEnv)
-		want    []*models.SSOSettingsDTO
+		want    []*models.SSOSettings
 		wantErr bool
 	}{
 		{
 			name: "should return successfully",
 			setup: func(env testEnv) {
-				env.store.ExpectedSSOSettings = []*models.SSOSettingsDTO{
+				env.store.ExpectedSSOSettings = []*models.SSOSettings{
 					{
 						Provider: "github",
 						Settings: map[string]any{"enabled": true},
@@ -127,7 +127,7 @@ func TestSSOSettingsService_List(t *testing.T) {
 				env.fallbackStrategy.ExpectedIsMatch = true
 				env.fallbackStrategy.ExpectedConfig = map[string]any{"enabled": false}
 			},
-			want: []*models.SSOSettingsDTO{
+			want: []*models.SSOSettings{
 				{
 					Provider: "github",
 					Settings: map[string]any{"enabled": true},
@@ -175,11 +175,11 @@ func TestSSOSettingsService_List(t *testing.T) {
 		{
 			name: "should use the fallback strategy if store returns empty list",
 			setup: func(env testEnv) {
-				env.store.ExpectedSSOSettings = []*models.SSOSettingsDTO{}
+				env.store.ExpectedSSOSettings = []*models.SSOSettings{}
 				env.fallbackStrategy.ExpectedIsMatch = true
 				env.fallbackStrategy.ExpectedConfig = map[string]any{"enabled": false}
 			},
-			want: []*models.SSOSettingsDTO{
+			want: []*models.SSOSettings{
 				{
 					Provider: "github",
 					Settings: map[string]any{"enabled": false},
@@ -221,7 +221,7 @@ func TestSSOSettingsService_List(t *testing.T) {
 		{
 			name: "should return error if any of the fallback strategies was not found",
 			setup: func(env testEnv) {
-				env.store.ExpectedSSOSettings = []*models.SSOSettingsDTO{}
+				env.store.ExpectedSSOSettings = []*models.SSOSettings{}
 				env.fallbackStrategy.ExpectedIsMatch = false
 			},
 			want:    nil,
@@ -252,7 +252,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 	t.Run("successfully upsert SSO settings", func(t *testing.T) {
 		env := setupTestEnv(t)
 
-		settings := models.SSOSettingsDTO{
+		settings := models.SSOSettings{
 			Provider: "azuread",
 			Settings: map[string]any{
 				"client_id":     "client-id",
@@ -271,7 +271,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 	t.Run("returns error if secrets encryption failed", func(t *testing.T) {
 		env := setupTestEnv(t)
 
-		settings := models.SSOSettingsDTO{
+		settings := models.SSOSettings{
 			Provider: "azuread",
 			Settings: map[string]any{
 				"client_id":     "client-id",
@@ -290,7 +290,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 	t.Run("returns error if store failed to upsert settings", func(t *testing.T) {
 		env := setupTestEnv(t)
 
-		settings := models.SSOSettingsDTO{
+		settings := models.SSOSettings{
 			Provider: "azuread",
 			Settings: map[string]any{
 				"client_id":     "client-id",

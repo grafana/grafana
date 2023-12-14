@@ -76,11 +76,11 @@ func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettin
 	return provider
 }
 
-func (s *SocialGenericOAuth) Validate(ctx context.Context, settings ssoModels.SSOSettingsDTO) error {
+func (s *SocialGenericOAuth) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
 	return nil
 }
 
-func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOSettingsDTO) error {
+func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
 	return nil
 }
 

@@ -24,7 +24,7 @@ func (s SettingsSource) MarshalJSON() ([]byte, error) {
 	}
 }
 
-type SSOSettingsDTO struct {
+type SSOSettings struct {
 	ID        string         `xorm:"id pk" json:"id"`
 	Provider  string         `xorm:"provider" json:"provider"`
 	Settings  map[string]any `xorm:"settings" json:"settings"`
@@ -35,6 +35,6 @@ type SSOSettingsDTO struct {
 }
 
 // TableName returns the table name (needed for Xorm)
-func (s SSOSettingsDTO) TableName() string {
+func (s SSOSettings) TableName() string {
 	return "sso_setting"
 }

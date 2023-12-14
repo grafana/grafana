@@ -69,11 +69,11 @@ func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssose
 	return provider
 }
 
-func (s *SocialOkta) Validate(ctx context.Context, settings ssoModels.SSOSettingsDTO) error {
+func (s *SocialOkta) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
 	return nil
 }
 
-func (s *SocialOkta) Reload(ctx context.Context, settings ssoModels.SSOSettingsDTO) error {
+func (s *SocialOkta) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
 	return nil
 }
 

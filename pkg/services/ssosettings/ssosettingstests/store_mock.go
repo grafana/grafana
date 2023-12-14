@@ -29,19 +29,19 @@ func (_m *MockStore) Delete(ctx context.Context, provider string) error {
 }
 
 // Get provides a mock function with given fields: ctx, provider
-func (_m *MockStore) Get(ctx context.Context, provider string) (*models.SSOSettingsDTO, error) {
+func (_m *MockStore) Get(ctx context.Context, provider string) (*models.SSOSettings, error) {
 	ret := _m.Called(ctx, provider)
 
-	var r0 *models.SSOSettingsDTO
+	var r0 *models.SSOSettings
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*models.SSOSettingsDTO, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*models.SSOSettings, error)); ok {
 		return rf(ctx, provider)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *models.SSOSettingsDTO); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) *models.SSOSettings); ok {
 		r0 = rf(ctx, provider)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.SSOSettingsDTO)
+			r0 = ret.Get(0).(*models.SSOSettings)
 		}
 	}
 
@@ -55,19 +55,19 @@ func (_m *MockStore) Get(ctx context.Context, provider string) (*models.SSOSetti
 }
 
 // List provides a mock function with given fields: ctx
-func (_m *MockStore) List(ctx context.Context) ([]*models.SSOSettingsDTO, error) {
+func (_m *MockStore) List(ctx context.Context) ([]*models.SSOSettings, error) {
 	ret := _m.Called(ctx)
 
-	var r0 []*models.SSOSettingsDTO
+	var r0 []*models.SSOSettings
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]*models.SSOSettingsDTO, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) ([]*models.SSOSettings, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) []*models.SSOSettingsDTO); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) []*models.SSOSettings); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*models.SSOSettingsDTO)
+			r0 = ret.Get(0).([]*models.SSOSettings)
 		}
 	}
 
@@ -95,11 +95,11 @@ func (_m *MockStore) Patch(ctx context.Context, provider string, data map[string
 }
 
 // Upsert provides a mock function with given fields: ctx, settings
-func (_m *MockStore) Upsert(ctx context.Context, settings models.SSOSettingsDTO) error {
+func (_m *MockStore) Upsert(ctx context.Context, settings models.SSOSettings) error {
 	ret := _m.Called(ctx, settings)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, models.SSOSettingsDTO) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, models.SSOSettings) error); ok {
 		r0 = rf(ctx, settings)
 	} else {
 		r0 = ret.Error(0)

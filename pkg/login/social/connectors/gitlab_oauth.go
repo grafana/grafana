@@ -71,11 +71,11 @@ func NewGitLabProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings sso
 	return provider
 }
 
-func (s *SocialGitlab) Validate(ctx context.Context, settings ssoModels.SSOSettingsDTO) error {
+func (s *SocialGitlab) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
 	return nil
 }
 
-func (s *SocialGitlab) Reload(ctx context.Context, settings ssoModels.SSOSettingsDTO) error {
+func (s *SocialGitlab) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
 	return nil
 }
 

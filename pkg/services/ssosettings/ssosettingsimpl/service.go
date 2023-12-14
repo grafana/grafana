@@ -63,7 +63,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 
 var _ ssosettings.Service = (*SSOSettingsService)(nil)
 
-func (s *SSOSettingsService) GetForProvider(ctx context.Context, provider string) (*models.SSOSettingsDTO, error) {
+func (s *SSOSettingsService) GetForProvider(ctx context.Context, provider string) (*models.SSOSettings, error) {
 	storeSettings, err := s.store.Get(ctx, provider)
 
 	if errors.Is(err, ssosettings.ErrNotFound) {
@@ -84,8 +84,8 @@ func (s *SSOSettingsService) GetForProvider(ctx context.Context, provider string
 	return storeSettings, nil
 }
 
-func (s *SSOSettingsService) List(ctx context.Context) ([]*models.SSOSettingsDTO, error) {
-	result := make([]*models.SSOSettingsDTO, 0, len(ssosettings.AllOAuthProviders))
+func (s *SSOSettingsService) List(ctx context.Context) ([]*models.SSOSettings, error) {
+	result := make([]*models.SSOSettings, 0, len(ssosettings.AllOAuthProviders))
 	storedSettings, err := s.store.List(ctx)
 
 	if err != nil {
@@ -109,7 +109,7 @@ func (s *SSOSettingsService) List(ctx context.Context) ([]*models.SSOSettingsDTO
 	return result, nil
 }
 
-func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSettingsDTO) error {
+func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSettings) error {
 	var err error
 	// TODO: also check whether the provider is configurable
 	// Get the connector for the provider (from the reloadables) and call Validate
@@ -145,7 +145,7 @@ func (s *SSOSettingsService) RegisterFallbackStrategy(providerRegex string, stra
 	s.fbStrategies = append(s.fbStrategies, strategy)
 }
 
-func (s *SSOSettingsService) loadSettingsUsingFallbackStrategy(ctx context.Context, provider string) (*models.SSOSettingsDTO, error) {
+func (s *SSOSettingsService) loadSettingsUsingFallbackStrategy(ctx context.Context, provider string) (*models.SSOSettings, error) {
 	loadStrategy, ok := s.getFallBackstrategyFor(provider)
 	if !ok {
 		return nil, errors.New("no fallback strategy found for provider: " + provider)
@@ -156,15 +156,15 @@ func (s *SSOSettingsService) loadSettingsUsingFallbackStrategy(ctx context.Conte
 		return nil, err
 	}
 
-	return &models.SSOSettingsDTO{
+	return &models.SSOSettings{
 		Provider: provider,
 		Source:   models.System,
 		Settings: settingsFromSystem,
 	}, nil
 }
 
-func getSettingsByProvider(provider string, settings []*models.SSOSettingsDTO) []*models.SSOSettingsDTO {
-	result := make([]*models.SSOSettingsDTO, 0)
+func getSettingsByProvider(provider string, settings []*models.SSOSettings) []*models.SSOSettings {
+	result := make([]*models.SSOSettings, 0)
 	for _, item := range settings {
 		if item.Provider == provider {
 			result = append(result, item)

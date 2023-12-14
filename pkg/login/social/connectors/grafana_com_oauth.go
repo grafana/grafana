@@ -57,11 +57,11 @@ func NewGrafanaComProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings
 	return provider
 }
 
-func (s *SocialGrafanaCom) Validate(ctx context.Context, settings ssoModels.SSOSettingsDTO) error {
+func (s *SocialGrafanaCom) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
 	return nil
 }
 
-func (s *SocialGrafanaCom) Reload(ctx context.Context, settings ssoModels.SSOSettingsDTO) error {
+func (s *SocialGrafanaCom) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
 	return nil
 }
 

@@ -66,13 +66,13 @@ func (api *Api) listAllProvidersSettings(c *contextmodel.ReqContext) response.Re
 	return response.JSON(http.StatusOK, providers)
 }
 
-func (api *Api) getAuthorizedList(ctx context.Context, identity identity.Requester) ([]*models.SSOSettingsDTO, error) {
+func (api *Api) getAuthorizedList(ctx context.Context, identity identity.Requester) ([]*models.SSOSettings, error) {
 	allProviders, err := api.SSOSettingsService.List(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	var authorizedProviders []*models.SSOSettingsDTO
+	var authorizedProviders []*models.SSOSettings
 	for _, provider := range allProviders {
 		ev := ac.EvalPermission(ac.ActionSettingsRead, ac.Scope("settings", "auth."+provider.Provider, "*"))
 		hasAccess, err := api.AccessControl.Evaluate(ctx, identity, ev)
@@ -111,7 +111,7 @@ func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "Missing key", nil)
 	}
 
-	var settings models.SSOSettingsDTO
+	var settings models.SSOSettings
 	if err := web.Bind(c.Req, &settings); err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to parse request body", err)
 	}
