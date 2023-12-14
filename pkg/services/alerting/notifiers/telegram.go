@@ -82,6 +82,10 @@ func NewTelegramNotifier(model *models.AlertNotification, fn alerting.GetDecrypt
 	messageThreadId := model.Settings.Get("messagethreadid").MustString()
 	uploadImage := model.Settings.Get("uploadImage").MustBool()
 
+	if botToken == "" {
+		return nil, alerting.ValidationError{Reason: "Could not find Bot Token in settings"}
+	}
+
 	if chatID == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find Chat Id in settings"}
 	}
