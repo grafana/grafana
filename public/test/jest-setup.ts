@@ -57,6 +57,14 @@ angular.module('grafana.directives', []);
 angular.module('grafana.filters', []);
 angular.module('grafana.routes', ['ngRoute']);
 
+// FloatingFocusManager and @testing-library/user-event don't play nicely together
+// mock requestAnimationFrame to make it synchronous
+// see https://github.com/floating-ui/floating-ui/issues/2488#issuecomment-1727419931
+Object.defineProperty(window, 'requestAnimationFrame', {
+  writable: true,
+  value: (callback: () => void) => callback(),
+});
+
 // mock the intersection observer and just say everything is in view
 const mockIntersectionObserver = jest
   .fn()
