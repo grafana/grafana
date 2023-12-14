@@ -35,7 +35,8 @@ Each feature toggle owner can override its default behavior.
 
 ## Edit feature toggles
 
-Editing feature toggles is only allowed if Grafana is configured with the proper feature management settings, see [Configure Feature Management](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/#configure-feature-management").
+You can only edit feature toggles if Grafana is configured with the proper feature management settings.
+To configure feature management, refer to [Configure feature management](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#configure-feature-management).
 
 Altering the state of a toggle may require restarting your Grafana instance, a process that could take a few minutes to complete.
 
