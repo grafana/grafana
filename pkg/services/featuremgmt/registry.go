@@ -1242,6 +1242,14 @@ var (
 			Created:      time.Date(2023, time.November, 15, 12, 0, 0, 0, time.UTC),
 		},
 		{
+			Name:         "tableSharedCrosshair",
+			Description:  "Enables shared crosshair in table panel",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaBiSquad,
+			Created:      time.Date(2023, time.December, 12, 12, 0, 0, 0, time.UTC),
+		},
+		{
 			Name:         "regressionTransformation",
 			Description:  "Enables regression analysis transformation",
 			Stage:        FeatureStageExperimental,

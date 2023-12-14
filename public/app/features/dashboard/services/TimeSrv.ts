@@ -70,22 +70,6 @@ export class TimeSrv {
     // remember time at load so we can go back to it
     this.timeAtLoad = cloneDeep(this.time);
 
-    const range = rangeUtil.convertRawToRange(
-      this.time,
-      this.timeModel?.getTimezone(),
-      this.timeModel?.fiscalYearStartMonth
-    );
-
-    if (range.to.isBefore(range.from)) {
-      this.setTime(
-        {
-          from: range.raw.to,
-          to: range.raw.from,
-        },
-        false
-      );
-    }
-
     if (this.refresh) {
       this.setAutoRefresh(this.refresh);
     }

@@ -2200,6 +2200,11 @@
             "name": "UID",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "name": "X-Disable-Provenance",
+            "in": "header"
           }
         ],
         "responses": {
@@ -2300,6 +2305,11 @@
             "schema": {
               "$ref": "#/definitions/EmbeddedContactPoint"
             }
+          },
+          {
+            "type": "string",
+            "name": "X-Disable-Provenance",
+            "in": "header"
           }
         ],
         "responses": {
@@ -2396,6 +2406,11 @@
             "schema": {
               "$ref": "#/definitions/EmbeddedContactPoint"
             }
+          },
+          {
+            "type": "string",
+            "name": "X-Disable-Provenance",
+            "in": "header"
           }
         ],
         "responses": {
@@ -2484,6 +2499,11 @@
         "summary": "Update the interval of a rule group.",
         "operationId": "RoutePutAlertRuleGroup",
         "parameters": [
+          {
+            "type": "string",
+            "name": "X-Disable-Provenance",
+            "in": "header"
+          },
           {
             "type": "string",
             "name": "FolderUID",
@@ -2608,6 +2628,11 @@
             "schema": {
               "$ref": "#/definitions/MuteTimeInterval"
             }
+          },
+          {
+            "type": "string",
+            "name": "X-Disable-Provenance",
+            "in": "header"
           }
         ],
         "responses": {
@@ -2719,6 +2744,11 @@
             "schema": {
               "$ref": "#/definitions/MuteTimeInterval"
             }
+          },
+          {
+            "type": "string",
+            "name": "X-Disable-Provenance",
+            "in": "header"
           }
         ],
         "responses": {
@@ -2841,6 +2871,11 @@
             "schema": {
               "$ref": "#/definitions/Route"
             }
+          },
+          {
+            "type": "string",
+            "name": "X-Disable-Provenance",
+            "in": "header"
           }
         ],
         "responses": {
@@ -2976,6 +3011,11 @@
             "schema": {
               "$ref": "#/definitions/NotificationTemplateContent"
             }
+          },
+          {
+            "type": "string",
+            "name": "X-Disable-Provenance",
+            "in": "header"
           }
         ],
         "responses": {
@@ -7576,6 +7616,7 @@
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -7632,7 +7673,6 @@
       "$ref": "#/definitions/gettableSilences"
     },
     "integration": {
-      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",
@@ -7777,6 +7817,7 @@
       }
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",

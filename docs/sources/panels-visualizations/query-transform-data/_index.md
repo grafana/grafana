@@ -19,6 +19,7 @@ labels:
     - enterprise
     - oss
 title: Query and transform data
+description: Query and transform your data
 weight: 40
 ---
 
