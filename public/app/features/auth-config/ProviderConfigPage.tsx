@@ -100,7 +100,10 @@ export const ProviderConfig = ({ config, provider, isLoading }: GitHubConfigProp
     setIsSaving(true);
     const requestData = dtoToData<ProviderData>(data);
     try {
-      await getBackendSrv().put(`/api/v1/sso-settings/${provider}`, requestData);
+      await getBackendSrv().put(`/api/v1/sso-settings/${provider}`, {
+        ...config,
+        settings: { ...config?.settings, ...requestData.settings },
+      });
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
         payload: ['Settings saved'],
