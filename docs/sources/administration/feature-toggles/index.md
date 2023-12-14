@@ -24,7 +24,7 @@ There are different options for visibility and customization depending on the de
 | Stage                | Visibility | Editable |
 | -------------------- | ---------- | -------- |
 | Experimental         | Hidden     | No       |
-| Private preview       | Visible\*  | No       |
+| Private preview      | Visible\*  | No       |
 | Public preview       | Visible\*  | No       |
 | General availability | Visible\*  | Yes\*    |
 
