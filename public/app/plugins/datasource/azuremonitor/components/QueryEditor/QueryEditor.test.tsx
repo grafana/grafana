@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import * as ui from '@grafana/ui';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import createMockDatasource from '../../__mocks__/datasource';
 import { invalidNamespaceError } from '../../__mocks__/errors';

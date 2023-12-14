@@ -3,9 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { UserEvent } from '@testing-library/user-event/dist/types/setup/setup';
 import React from 'react';
 import { of } from 'rxjs';
-import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { CoreApp } from '@grafana/data';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import createMockDatasource from '../../__mocks__/datasource';
 import createMockQuery from '../../__mocks__/query';
