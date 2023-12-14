@@ -1277,6 +1277,18 @@ Either "OpportunisticStartTLS", "MandatoryStartTLS", "NoStartTLS". Default is `e
 
 <hr>
 
+## [smtp.static_headers]
+
+Enter key-value pairs on their own lines to be included as headers on outgoing emails. All keys must be in canonical mail header format. 
+Example: 
+```
+Foo=bar 
+Foo-Header=bar
+```
+
+<hr>
+
+
 ## [emails]
 
 ### welcome_email_on_sign_up
