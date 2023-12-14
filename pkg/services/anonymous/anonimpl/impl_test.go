@@ -9,8 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
@@ -111,16 +113,15 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			store := db.InitTestDB(t)
-			anonDBStore := anonstore.ProvideAnonDBStore(store)
 			anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{},
-				&authntest.FakeService{}, anonDBStore, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil)
+				&authntest.FakeService{}, store, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{})
 
 			for _, req := range tc.req {
 				err := anonService.TagDevice(context.Background(), req.httpReq, req.kind)
 				require.NoError(t, err)
 			}
 
-			devices, err := anonDBStore.ListDevices(context.Background(), nil, nil)
+			devices, err := anonService.anonStore.ListDevices(context.Background(), nil, nil)
 			require.NoError(t, err)
 			require.Len(t, devices, int(tc.expectedAnonUICount))
 			if tc.expectedDevice != nil {
@@ -147,9 +148,8 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 // Ensure that the local cache prevents request from being tagged
 func TestIntegrationAnonDeviceService_localCacheSafety(t *testing.T) {
 	store := db.InitTestDB(t)
-	anonDBStore := anonstore.ProvideAnonDBStore(store)
 	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{},
-		&authntest.FakeService{}, anonDBStore, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil)
+		&authntest.FakeService{}, store, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{})
 
 	req := &http.Request{
 		Header: http.Header{

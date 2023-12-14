@@ -39,13 +39,13 @@ func (mc *Mimir) GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafana
 	return gc, nil
 }
 
-func (mc *Mimir) CreateGrafanaAlertmanagerConfig(ctx context.Context, c, hash string, id, created int64, d bool) error {
+func (mc *Mimir) CreateGrafanaAlertmanagerConfig(ctx context.Context, cfg, hash string, id, createdAt int64, isDefault bool) error {
 	payload, err := json.Marshal(&UserGrafanaConfig{
 		ID:                        id,
-		GrafanaAlertmanagerConfig: c,
+		GrafanaAlertmanagerConfig: cfg,
 		Hash:                      hash,
-		CreatedAt:                 created,
-		Default:                   d,
+		CreatedAt:                 createdAt,
+		Default:                   isDefault,
 	})
 	if err != nil {
 		return err
