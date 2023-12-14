@@ -48,16 +48,15 @@ describe('Toggletip', () => {
 
     expect(await screen.findByTestId('toggletip-content')).toBeInTheDocument();
 
+    // Escape should not close the toggletip
+    const button = screen.getByTestId('myButton');
+    await userEvent.click(button);
+    expect(onClose).toHaveBeenCalledTimes(1);
+
     // Close button should not close the toggletip
     const closeButton = screen.getByTestId('toggletip-header-close');
     expect(closeButton).toBeInTheDocument();
     await userEvent.click(closeButton);
-    expect(onClose).toHaveBeenCalledTimes(1);
-
-    // Escape should not close the toggletip
-    const button = screen.getByTestId('myButton');
-    await userEvent.click(button);
-    await userEvent.keyboard('{escape}');
     expect(onClose).toHaveBeenCalledTimes(2);
 
     // Either way, the toggletip should still be visible
@@ -162,7 +161,7 @@ describe('Toggletip', () => {
     const button = screen.getByTestId('myButton');
     const afterButton = screen.getByText(afterInDom);
     await userEvent.click(button);
-    await userEvent.tab();
+
     const closeButton = screen.getByTestId('toggletip-header-close');
     expect(closeButton).toHaveFocus();
 

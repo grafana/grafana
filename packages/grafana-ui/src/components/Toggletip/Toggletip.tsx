@@ -4,6 +4,7 @@ import {
   autoUpdate,
   flip,
   FloatingArrow,
+  FloatingFocusManager,
   offset,
   shift,
   useClick,
@@ -19,7 +20,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { buildTooltipTheme, getPlacement } from '../../utils/tooltipUtils';
 import { IconButton } from '../IconButton/IconButton';
-import { Portal } from '../Portal/Portal';
 
 import { ToggletipContent } from './types';
 
@@ -66,6 +66,7 @@ export const Toggletip = React.memo(
     const styles = useStyles2(getStyles);
     const style = styles[theme];
     const [controlledVisible, setControlledVisible] = useState(show);
+    const isOpen = show ?? controlledVisible;
 
     // the order of middleware is important!
     // `arrow` should almost always be at the end
@@ -85,7 +86,7 @@ export const Toggletip = React.memo(
     ];
 
     const { context, refs, floatingStyles } = useFloating({
-      open: show ?? controlledVisible,
+      open: isOpen,
       placement: getPlacement(placement),
       onOpenChange: (open) => {
         if (show === undefined) {
@@ -111,11 +112,11 @@ export const Toggletip = React.memo(
         {React.cloneElement(children, {
           ref: refs.setReference,
           tabIndex: 0,
-          'aria-expanded': controlledVisible,
+          'aria-expanded': isOpen,
           ...getReferenceProps(),
         })}
-        {controlledVisible && (
-          <Portal>
+        {isOpen && (
+          <FloatingFocusManager context={context} modal={false} closeOnFocusOut={false}>
             <div
               data-testid="toggletip-content"
               className={cx(style.container, {
@@ -130,10 +131,13 @@ export const Toggletip = React.memo(
               {closeButton && (
                 <div className={style.headerClose}>
                   <IconButton
-                    tooltip="Close"
+                    aria-label="Close"
                     name="times"
                     data-testid="toggletip-header-close"
-                    onClick={() => setControlledVisible(false)}
+                    onClick={() => {
+                      setControlledVisible(false);
+                      onClose?.();
+                    }}
                   />
                 </div>
               )}
@@ -143,7 +147,7 @@ export const Toggletip = React.memo(
               </div>
               {Boolean(footer) && <div className={style.footer}>{footer}</div>}
             </div>
-          </Portal>
+          </FloatingFocusManager>
         )}
       </>
     );
