@@ -159,41 +159,15 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
                 }}
                 size="md"
               />
-              <>
-                {query.queryType === 'traceqlSearch' && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    style={{ marginRight: '10px' }}
-                    onClick={() => {
-                      reportInteraction('grafana_traces_copy_to_traceql_clicked', {
-                        datasourceType: 'tempo',
-                        app: app ?? '',
-                        grafana_version: config.buildInfo.version,
-                      });
-
-                      this.onClearResults();
-                      const traceQlQuery = generateQueryFromFilters(query.filters || []);
-                      onChange({
-                        ...query,
-                        query: traceQlQuery,
-                        queryType: 'traceql',
-                      });
-                    }}
-                  >
-                    Copy to TraceQL
-                  </Button>
-                )}
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => {
-                    this.setState({ uploadModalOpen: true });
-                  }}
-                >
-                  Import trace
-                </Button>
-              </>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  this.setState({ uploadModalOpen: true });
+                }}
+              >
+                Import trace
+              </Button>
             </HorizontalGroup>
           </InlineField>
         </InlineFieldRow>
@@ -231,6 +205,9 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
             query={query}
             onRunQuery={this.props.onRunQuery}
             onChange={onChange}
+            app={app}
+            onClearResults={this.onClearResults}
+            isSearchQueryTheSame={generateQueryFromFilters(query.filters || []) === query.query}
           />
         )}
       </>
