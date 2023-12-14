@@ -89,7 +89,7 @@ func TestRemoteLokiBackend(t *testing.T) {
 			require.NotContains(t, res.Stream, "__private__")
 		})
 
-		t.Run("includes ruleTitle in log line", func(t *testing.T) {
+		t.Run("includes rule data in log line", func(t *testing.T) {
 			rule := createTestRule()
 			l := log.NewNopLogger()
 			states := singleFromNormal(&state.State{
@@ -98,36 +98,10 @@ func TestRemoteLokiBackend(t *testing.T) {
 			})
 
 			res := statesToStream(rule, states, nil, l)
-
 			entry := requireSingleEntry(t, res)
+
 			require.Equal(t, rule.Title, entry.RuleTitle)
-		})
-
-		t.Run("includes ruleID in log line", func(t *testing.T) {
-			rule := createTestRule()
-			l := log.NewNopLogger()
-			states := singleFromNormal(&state.State{
-				State:  eval.Alerting,
-				Labels: data.Labels{"a": "b"},
-			})
-
-			res := statesToStream(rule, states, nil, l)
-
-			entry := requireSingleEntry(t, res)
 			require.Equal(t, rule.ID, entry.RuleID)
-		})
-
-		t.Run("includes ruleUID in log line", func(t *testing.T) {
-			rule := createTestRule()
-			l := log.NewNopLogger()
-			states := singleFromNormal(&state.State{
-				State:  eval.Alerting,
-				Labels: data.Labels{"a": "b"},
-			})
-
-			res := statesToStream(rule, states, nil, l)
-
-			entry := requireSingleEntry(t, res)
 			require.Equal(t, rule.UID, entry.RuleUID)
 		})
 
