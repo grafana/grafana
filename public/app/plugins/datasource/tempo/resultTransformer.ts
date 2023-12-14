@@ -24,7 +24,7 @@ import {
   DataLinkConfigOrigin,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-// import { TraceToProfilesSettings } from '@grafana/traces';
+import { TraceToProfilesSettings } from '@grafana/traces';
 
 import { getDatasourceSrv } from './_importedDependencies/datasource_srv';
 import { SearchTableType } from './dataquery.gen';
@@ -513,8 +513,7 @@ export function transformTrace(
 
   // Get profiles links
   if (config.featureToggles.traceToProfiles) {
-    // const traceToProfilesData: TraceToProfilesSettings.TraceToProfilesData | undefined = instanceSettings?.jsonData;
-    const traceToProfilesData: any | undefined = instanceSettings?.jsonData;
+    const traceToProfilesData: TraceToProfilesSettings.TraceToProfilesData | undefined = instanceSettings?.jsonData;
     const traceToProfilesOptions = traceToProfilesData?.tracesToProfiles;
     let profilesDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
     if (traceToProfilesOptions?.datasourceUid) {

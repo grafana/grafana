@@ -218,12 +218,6 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
     resolve: {
       extensions: ['.ts', '.tsx', '.js', '.jsx'],
       unsafeCache: true,
-      fallback: {
-        stream: require.resolve('stream-browserify'),
-        events: require.resolve('events/'),
-        string_decoder: require.resolve('string_decoder/'),
-        buffer: require.resolve('buffer/'),
-      },
     },
 
     watchOptions: {
