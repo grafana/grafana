@@ -64,24 +64,35 @@ func RegisterAPIService(
 		"prometheus", // has proxy routes!
 	}
 
+	namespacer := request.GetNamespaceMapper(cfg)
 	for _, ds := range all {
 		if !slices.Contains(ids, ds.ID) {
 			continue // skip this one
 		}
 
-		group := getDatasourceGroupNameFromPluginID(ds.ID)
-		builder = &DSAPIBuilder{
-			connectionResourceInfo: v0alpha1.GenericConnectionResourceInfo.WithGroupAndShortName(group, ds.ID+"-conn"),
-			configResourceInfo:     v0alpha1.GenericConfigResourceInfo.WithGroupAndShortName(group, ds.ID),
-			plugin:                 ds,
-			client:                 pluginClient,
-			dsService:              dsService,
-			dataSourceCache:        dataSourceCache,
-			namespacer:             request.GetNamespaceMapper(cfg),
-		}
+		builder = NewDSAPIBuilder(ds, pluginClient, dsService, dataSourceCache, namespacer)
 		apiregistration.RegisterAPI(builder)
 	}
 	return builder // only used for wire
+}
+
+func NewDSAPIBuilder(
+	plugin pluginstore.Plugin,
+	client plugins.Client,
+	dsService datasources.DataSourceService,
+	dataSourceCache datasources.CacheService,
+	namespacer request.NamespaceMapper) *DSAPIBuilder {
+
+	group := getDatasourceGroupNameFromPluginID(plugin.ID)
+	return &DSAPIBuilder{
+		connectionResourceInfo: v0alpha1.GenericConnectionResourceInfo.WithGroupAndShortName(group, plugin.ID+"-conn"),
+		configResourceInfo:     v0alpha1.GenericConfigResourceInfo.WithGroupAndShortName(group, plugin.ID),
+		plugin:                 plugin,
+		client:                 client,
+		dsService:              dsService,
+		dataSourceCache:        dataSourceCache,
+		namespacer:             namespacer,
+	}
 }
 
 func (b *DSAPIBuilder) GetGroupVersion() schema.GroupVersion {
