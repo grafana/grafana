@@ -40,7 +40,7 @@ describe('GeneralSettingsEditView', () => {
 
     it('should return the dashboard refresh picker', () => {
       expect(settings.getRefreshPicker()).toBe(
-        (dashboard.state?.controls?.[0] as DashboardControls)?.state?.timeControls?.[0]
+        (dashboard.state?.controls?.[0] as DashboardControls)?.state?.timeControls?.[1]
       );
     });
 
