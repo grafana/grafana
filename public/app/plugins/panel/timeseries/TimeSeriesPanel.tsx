@@ -18,6 +18,7 @@ import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
 import { getTimezones, prepareGraphableFields, regenerateLinksSupplier } from './utils';
+import { AnnotationsPlugin2 } from './plugins/AnnotationsPlugin2';
 
 interface TimeSeriesPanelProps extends PanelProps<Options> {}
 
@@ -64,6 +65,14 @@ export const TimeSeriesPanel = ({
   }
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
+
+  // which annotation are we editing?
+  // are we adding a new annotation? is annotating?
+  console.log(data.annotations);
+
+  // annotations plugin includes the editor and the renderer
+  // its annotation state is managed here for now
+    // tooltipplugin2 receives render with annotate range, callback should setstate here that gets passed to annotationsplugin as newAnnotaton or editAnnotation
 
   return (
     <TimeSeries
@@ -132,7 +141,8 @@ export const TimeSeriesPanel = ({
             )}
             {/* Renders annotation markers*/}
             {data.annotations && (
-              <AnnotationsPlugin annotations={data.annotations} config={uplotConfig} timeZone={timeZone} />
+              // <AnnotationsPlugin annotations={data.annotations} config={uplotConfig} timeZone={timeZone} />
+              <AnnotationsPlugin2 annotations={data.annotations} config={uplotConfig} timeZone={timeZone} />
             )}
             {/*Enables annotations creation*/}
             {!config.featureToggles.newVizTooltips ? (
