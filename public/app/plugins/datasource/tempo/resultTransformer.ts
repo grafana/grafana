@@ -24,10 +24,10 @@ import {
   DataLinkConfigOrigin,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { TraceToProfilesSettings } from '@grafana/traces';
 
 import { getDatasourceSrv } from './_importedDependencies/datasource_srv';
 import { SearchTableType } from './dataquery.gen';
+import { TraceToProfilesSettings } from './grafana-traces/src';
 import { createGraphFrames } from './graphTransform';
 import { Span, SpanAttributes, Spanset, TempoJsonData, TraceSearchMetadata } from './types';
 

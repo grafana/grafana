@@ -2919,7 +2919,6 @@ __metadata:
     "@grafana/plugin-configs": "npm:10.3.0-pre"
     "@grafana/runtime": "npm:10.3.0-pre"
     "@grafana/schema": "npm:10.3.0-pre"
-    "@grafana/traces": /Users/fabriziocasatigrafana/Documents/github_repos/grafana/packages/grafana-traces/dist
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
     "@grafana/ui": "npm:10.3.0-pre"
     "@lezer/common": "npm:1.0.2"
@@ -3419,24 +3418,6 @@ __metadata:
     typescript: "npm:5.2.2"
   languageName: unknown
   linkType: soft
-
-"@grafana/traces@file:/Users/fabriziocasatigrafana/Documents/github_repos/grafana/packages/grafana-traces/dist::locator=%40grafana-plugins%2Ftempo%40workspace%3Apublic%2Fapp%2Fplugins%2Fdatasource%2Ftempo":
-  version: 0.1.0
-  resolution: "@grafana/traces@file:/Users/fabriziocasatigrafana/Documents/github_repos/grafana/packages/grafana-traces/dist#/Users/fabriziocasatigrafana/Documents/github_repos/grafana/packages/grafana-traces/dist::hash=6cbcda&locator=%40grafana-plugins%2Ftempo%40workspace%3Apublic%2Fapp%2Fplugins%2Fdatasource%2Ftempo"
-  dependencies:
-    "@emotion/css": "npm:11.11.2"
-    "@grafana/data": "npm:10.3.0-pre"
-    "@grafana/experimental": "npm:1.7.4"
-    "@grafana/runtime": "npm:10.3.0-pre"
-    "@grafana/schema": "npm:10.3.0-pre"
-    "@grafana/ui": "npm:10.3.0-pre"
-    react: "npm:18.2.0"
-    react-use: "npm:17.4.0"
-    rxjs: "npm:7.8.1"
-    tslib: "npm:2.6.0"
-  checksum: 734f885016d7d3d76b4c63241fcd44755c910a44c64c4df13efa7191853b8c3c7e9416b71981d916ac7df66cf542e3a05c73e3e96a0eb71a492b3f02f2761cca
-  languageName: node
-  linkType: hard
 
 "@grafana/tsconfig@npm:^1.2.0-rc1":
   version: 1.2.0-rc1

@@ -12,13 +12,13 @@ import {
   DataSourceDescription,
 } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { TraceToLogsSettings, TraceToMetricsSettings, TraceToProfilesSettings } from '@grafana/traces';
 import { SecureSocksProxySettings, useStyles2 } from '@grafana/ui';
 
 import { ConfigDescriptionLink } from '../_importedDependencies/components/ConfigDescriptionLink';
 import { Divider } from '../_importedDependencies/components/Divider';
 import { NodeGraphSection } from '../_importedDependencies/components/NodeGraphSettings';
 import { SpanBarSection } from '../_importedDependencies/components/TraceView/SpanBarSettings';
+import { TraceToLogsSettings, TraceToMetricsSettings, TraceToProfilesSettings } from '../grafana-traces/src';
 
 import { LokiSearchSettings } from './LokiSearchSettings';
 import { QuerySettings } from './QuerySettings';
@@ -29,8 +29,6 @@ export type Props = DataSourcePluginOptionsEditorProps;
 
 export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
   const styles = useStyles2(getStyles);
-
-  console.log('ConfigEditor');
 
   return (
     <div className={styles.container}>

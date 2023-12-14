@@ -1,8 +1,6 @@
 // Libraries
 import React, { PureComponent } from 'react';
 
-import { DatasourceSrv } from '/Users/fabriziocasatigrafana/Documents/github_repos/grafana/public/app/features/plugins/datasource_srv';
-
 // Components
 import {
   DataSourceInstanceSettings,
@@ -14,8 +12,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { ActionMeta, HorizontalGroup, PluginSignatureBadge, Select } from '@grafana/ui';
 
-import { config } from '../config';
-import { getDataSourceSrv, setDataSourceSrv } from '../services/dataSourceSrv';
+import { getDataSourceSrv } from '../services/dataSourceSrv';
 
 import { ExpressionDatasourceRef } from './../utils/DataSourceWithBackend';
 
@@ -85,11 +82,6 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
   }
 
   componentDidMount() {
-    // const dataSourceSrv = new DatasourceSrv();
-    // dataSourceSrv.init(config.datasources, config.defaultDatasource);
-    // setDataSourceSrv(dataSourceSrv);
-    this.dataSourceSrv = getDataSourceSrv();
-    console.log('DataSourcePicker', this.dataSourceSrv, getDataSourceSrv());
     const { current } = this.props;
     const dsSettings = this.dataSourceSrv.getInstanceSettings(current);
     if (!dsSettings) {
@@ -147,8 +139,6 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
     const { alerting, tracing, metrics, mixed, dashboard, variables, annotations, pluginId, type, filter, logs } =
       this.props;
 
-    console.log('getDataSourceOptions', getDataSourceSrv());
-
     const options = this.dataSourceSrv
       .getList({
         alerting,
@@ -185,13 +175,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
       disabled = false,
       isLoading = false,
     } = this.props;
-    if (!this.dataSourceSrv) {
-      const dataSourceSrv = new DatasourceSrv();
-      dataSourceSrv.init(config.datasources, config.defaultDatasource);
-      console.log('DataSourcePicker - render', getDataSourceSrv());
-      setDataSourceSrv(dataSourceSrv);
-      this.dataSourceSrv = getDataSourceSrv();
-    }
+
     const { error } = this.state;
     const options = this.getDataSourceOptions();
     const value = this.getCurrentValue();

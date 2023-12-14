@@ -28,10 +28,10 @@ import {
   getDataSourceSrv,
   getTemplateSrv,
   reportInteraction,
+  setDataSourceSrv,
   TemplateSrv,
 } from '@grafana/runtime';
 import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@grafana/schema';
-import { TraceToLogsSettings } from '@grafana/traces';
 
 import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
 import { TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
@@ -42,6 +42,7 @@ import { LokiOptions } from './_importedDependencies/datasources/loki/types';
 import { PromQuery, PrometheusDatasource } from './_importedDependencies/datasources/prometheus/types';
 import { serializeParams } from './_importedDependencies/utils/fetch';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
+import { TraceToLogsSettings } from './grafana-traces/src';
 import {
   defaultTableFilter,
   durationMetric,
@@ -127,10 +128,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
-
-    // @ts-ignore
-    getDataSourceSrv().defaultName = 'gdev-tempo';
-    console.log('TempoDatasource - constructor', getDataSourceSrv());
 
     this.tracesToLogs = instanceSettings.jsonData.tracesToLogs;
     this.serviceMap = instanceSettings.jsonData.serviceMap;
