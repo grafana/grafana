@@ -255,6 +255,8 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 			DashboardUID:   rule.DashboardUID,
 			PanelID:        rule.PanelID,
 			Fingerprint:    labelFingerprint(sanitizedLabels),
+			RuleTitle:      rule.Title,
+			RuleID:         rule.ID,
 			RuleUID:        rule.UID,
 			InstanceLabels: sanitizedLabels,
 		}
