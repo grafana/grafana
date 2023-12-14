@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import uPlot, { pxRatio } from 'uplot';
+import uPlot from 'uplot';
 
 import { DataFrame, GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
@@ -41,8 +41,11 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config }: Annotation
   const annoRef = useRef(annotations);
   annoRef.current = annotations;
 
+  const xAxisRef = useRef<HTMLDivElement>();
+
   useLayoutEffect(() => {
     config.addHook('ready', (u) => {
+      xAxisRef.current = u.root.querySelector<HTMLDivElement>('.u-axis')!;
       setPlot(u);
     });
 
@@ -123,7 +126,7 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config }: Annotation
 
         return markers;
       }),
-      plot.root.querySelector('.u-axis')!
+      xAxisRef.current!
     );
   }
 
