@@ -33,7 +33,7 @@ Options marked with an asterisk (\*) are defaults for the corresponding feature 
 Each feature toggle owner can override its default behavior.
 {{< /admonition >}}
 
-## Edit Feature Toggles State
+## Edit feature toggles
 
 Editing feature toggles is only allowed if Grafana is configured with the proper feature management settings, see [Configure Feature Management](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/#configure-feature-management").
 
