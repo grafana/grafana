@@ -18,7 +18,7 @@ load(
     "publish_packages_pipeline",
 )
 load(
-    "scripts/drone/pipelines/ci_images.star",    
+    "scripts/drone/pipelines/ci_images.star",
     "publish_ci_windows_test_image_pipeline",
 )
 load(
@@ -49,7 +49,7 @@ def main(_ctx):
             "target": ["test-windows"],
         }, "oss", "testing")] +
         integration_test_pipelines() +
-        publish_ci_windows_test_image_pipeline() +        
+        publish_ci_windows_test_image_pipeline() +
         cronjobs() +
         secrets()
     )
