@@ -558,7 +558,7 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
     "to": "now",
   },
   "timepicker": {
-    "hidden": false,
+    "hidden": true,
     "refresh_intervals": [
       "5m",
       "15m",
