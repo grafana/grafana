@@ -24,8 +24,9 @@ var (
 )
 
 type connectionStorage struct {
-	resourceInfo apis.ResourceInfo
-	builder      *DSAPIBuilder
+	resourceInfo   apis.ResourceInfo
+	tableConverter rest.TableConvertor
+	builder        *DSAPIBuilder
 }
 
 func (s *connectionStorage) New() runtime.Object {
@@ -42,12 +43,16 @@ func (s *connectionStorage) GetSingularName() string {
 	return s.resourceInfo.GetSingularName()
 }
 
+func (s *connectionStorage) ShortNames() []string {
+	return s.resourceInfo.GetShortNames()
+}
+
 func (s *connectionStorage) NewList() runtime.Object {
 	return s.resourceInfo.NewListFunc()
 }
 
 func (s *connectionStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return rest.NewDefaultTableConvertor(s.resourceInfo.GroupResource()).ConvertToTable(ctx, object, tableOptions)
+	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
 func (s *connectionStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {

@@ -2,6 +2,8 @@ package datasource
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -66,7 +69,8 @@ func RegisterAPIService(
 			continue // skip this one
 		}
 
-		info := v0alpha1.GenericConnectionResourceInfo.WithGroup(getDatasourceGroupNameFromPluginID(ds.ID))
+		group := getDatasourceGroupNameFromPluginID(ds.ID)
+		info := v0alpha1.GenericConnectionResourceInfo.WithGroupAndShortName(group, ds.ID)
 		builder = &DSAPIBuilder{
 			connectionResourceInfo: info,
 			plugin:                 ds,
@@ -124,6 +128,27 @@ func (b *DSAPIBuilder) GetAPIGroupInfo(
 	storage[conn.StoragePath()] = &connectionStorage{
 		builder:      b,
 		resourceInfo: conn,
+		tableConverter: utils.NewTableConverter(
+			conn.GroupResource(),
+			[]metav1.TableColumnDefinition{
+				{Name: "Name", Type: "string", Format: "name"},
+				{Name: "Title", Type: "string", Format: "string", Description: "The datasource title"},
+				{Name: "APIVersion", Type: "string", Format: "string", Description: "API Version"},
+				{Name: "Created At", Type: "date"},
+			},
+			func(obj any) ([]interface{}, error) {
+				m, ok := obj.(*v0alpha1.DataSourceConnection)
+				if !ok {
+					return nil, fmt.Errorf("expected connection")
+				}
+				return []interface{}{
+					m.Name,
+					m.Title,
+					m.APIVersion,
+					m.CreationTimestamp.UTC().Format(time.RFC3339),
+				}, nil
+			},
+		),
 	}
 	storage[conn.StoragePath("query")] = &subQueryREST{builder: b}
 	storage[conn.StoragePath("health")] = &subHealthREST{builder: b}
