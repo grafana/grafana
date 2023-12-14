@@ -276,6 +276,17 @@ role_attribute_path = contains(info.roles[*], 'admin') && 'GrafanaAdmin' || cont
 allow_assign_grafana_admin = true
 ```
 
+#### Map one role to all users
+
+In this example, all users will be assigned `Viewer` role regardless of the user information received from the identity provider.
+
+Config:
+
+```ini
+role_attribute_path = "'Viewer'"
+skip_org_role_sync = false
+```
+
 ## Configure team synchronization
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
