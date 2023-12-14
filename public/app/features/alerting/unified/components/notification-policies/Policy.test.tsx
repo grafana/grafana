@@ -77,7 +77,7 @@ describe('Policy', () => {
     expect(editDefaultPolicy).toBeInTheDocument();
     expect(editDefaultPolicy).not.toBeDisabled();
     await user.click(editDefaultPolicy);
-    expect(onEditPolicy).toHaveBeenCalledWith(routeTree, true);
+    expect(onEditPolicy).toHaveBeenCalledWith(routeTree, true, false);
 
     // should not be deletable
     expect(screen.queryByRole('menuitem', { name: 'Delete' })).not.toBeInTheDocument();
