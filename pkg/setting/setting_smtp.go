@@ -26,7 +26,7 @@ type SmtpSettings struct {
 	ContentTypes             []string
 }
 
-// validates smtp headers
+// validates mail headers
 var smtpHeaderRegex = regexp.MustCompile(`^[A-Z][A-Za-z0-9]*(-[A-Z][A-Za-z0-9]*)*$`)
 
 func (cfg *Cfg) readSmtpSettings() error {
@@ -67,7 +67,7 @@ func (cfg *Cfg) readGrafanaSmtpStaticHeaders() error {
 
 	for _, key := range keys {
 		if !validHeader(key.Name()) {
-			return fmt.Errorf("invalid label name %q in [smtp.static_headers] configuration", key.Name())
+			return fmt.Errorf("header %q in [smtp.static_headers] configuration: must follow canonical MIME form", key.Name())
 		}
 
 		cfg.Smtp.StaticHeaders[key.Name()] = key.Value()
