@@ -2,6 +2,20 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	runtime "k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/grafana/grafana/pkg/apis"
+)
+
+const (
+	GROUP   = "*.datasource.grafana.app"
+	VERSION = "v0alpha1"
+)
+
+var GenericConnectionResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
+	"connections", "connection", "Connection",
+	func() runtime.Object { return &DataSourceConnection{} },
+	func() runtime.Object { return &DataSourceConnectionList{} },
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

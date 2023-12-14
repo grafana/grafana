@@ -2,17 +2,16 @@ package datasource
 
 import (
 	"context"
-	"crypto/sha256"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana/pkg/apis"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
@@ -25,13 +24,12 @@ var (
 )
 
 type connectionStorage struct {
-	apiVersion    string
-	groupResource schema.GroupResource
-	builder       *DSAPIBuilder
+	resourceInfo apis.ResourceInfo
+	builder      *DSAPIBuilder
 }
 
 func (s *connectionStorage) New() runtime.Object {
-	return &v0alpha1.DataSourceConnection{}
+	return s.resourceInfo.NewFunc()
 }
 
 func (s *connectionStorage) Destroy() {}
@@ -41,15 +39,15 @@ func (s *connectionStorage) NamespaceScoped() bool {
 }
 
 func (s *connectionStorage) GetSingularName() string {
-	return s.groupResource.Resource
+	return s.resourceInfo.GetSingularName()
 }
 
 func (s *connectionStorage) NewList() runtime.Object {
-	return &v0alpha1.DataSourceConnectionList{}
+	return s.resourceInfo.NewListFunc()
 }
 
 func (s *connectionStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return rest.NewDefaultTableConvertor(s.groupResource).ConvertToTable(ctx, object, tableOptions)
+	return rest.NewDefaultTableConvertor(s.resourceInfo.GroupResource()).ConvertToTable(ctx, object, tableOptions)
 }
 
 func (s *connectionStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
@@ -58,27 +56,6 @@ func (s *connectionStorage) Get(ctx context.Context, name string, options *metav
 		return nil, err
 	}
 	return s.asConnection(ds), nil
-}
-
-func (s *connectionStorage) asConnection(ds *datasources.DataSource) *v0alpha1.DataSourceConnection {
-	h := sha256.New()
-	h.Write([]byte(fmt.Sprintf("%d/%s", ds.Created.UnixMilli(), ds.UID)))
-	uid := fmt.Sprintf("%x", h.Sum(nil))
-
-	return &v0alpha1.DataSourceConnection{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "InstanceInfo",
-			APIVersion: s.apiVersion,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              ds.UID,
-			Namespace:         s.builder.namespacer(ds.OrgID),
-			CreationTimestamp: metav1.NewTime(ds.Created),
-			ResourceVersion:   fmt.Sprintf("%d", ds.Updated.UnixMilli()),
-			UID:               types.UID(uid), // make it different so we don't confuse it with "name"
-		},
-		Title: ds.Name,
-	}
 }
 
 func (s *connectionStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
@@ -92,4 +69,19 @@ func (s *connectionStorage) List(ctx context.Context, options *internalversion.L
 		}
 	}
 	return result, err
+}
+
+func (s *connectionStorage) asConnection(ds *datasources.DataSource) *v0alpha1.DataSourceConnection {
+	meta := kinds.GrafanaResourceMetadata{
+		Name:              ds.UID,
+		Namespace:         s.builder.namespacer(ds.OrgID),
+		CreationTimestamp: metav1.NewTime(ds.Created),
+		ResourceVersion:   fmt.Sprintf("%d", ds.Updated.UnixMilli()),
+	}
+	meta.SetUpdatedTimestamp(&ds.Updated)
+	return &v0alpha1.DataSourceConnection{
+		TypeMeta:   s.resourceInfo.TypeMeta(),
+		ObjectMeta: metav1.ObjectMeta(meta),
+		Title:      ds.Name,
+	}
 }

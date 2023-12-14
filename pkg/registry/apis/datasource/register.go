@@ -14,6 +14,7 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/utils/strings/slices"
 
+	"github.com/grafana/grafana/pkg/apis"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -25,20 +26,18 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const VersionID = "v0alpha1" //
-
 var _ grafanaapiserver.APIGroupBuilder = (*DSAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type DSAPIBuilder struct {
-	groupVersion schema.GroupVersion
-	apiVersion   string
+	apiVersion string
 
-	plugin          pluginstore.Plugin
-	client          plugins.Client
-	dsService       datasources.DataSourceService
-	dataSourceCache datasources.CacheService
-	namespacer      request.NamespaceMapper
+	connectionResourceInfo apis.ResourceInfo
+	plugin                 pluginstore.Plugin
+	client                 plugins.Client
+	dsService              datasources.DataSourceService
+	dataSourceCache        datasources.CacheService
+	namespacer             request.NamespaceMapper
 }
 
 func RegisterAPIService(
@@ -67,18 +66,14 @@ func RegisterAPIService(
 			continue // skip this one
 		}
 
-		groupVersion := schema.GroupVersion{
-			Group:   getDatasourceGroupNameFromPluginID(ds.ID),
-			Version: VersionID,
-		}
+		info := v0alpha1.GenericConnectionResourceInfo.WithGroup(getDatasourceGroupNameFromPluginID(ds.ID))
 		builder = &DSAPIBuilder{
-			groupVersion:    groupVersion,
-			apiVersion:      groupVersion.String(),
-			plugin:          ds,
-			client:          pluginClient,
-			dsService:       dsService,
-			dataSourceCache: dataSourceCache,
-			namespacer:      request.GetNamespaceMapper(cfg),
+			connectionResourceInfo: info,
+			plugin:                 ds,
+			client:                 pluginClient,
+			dsService:              dsService,
+			dataSourceCache:        dataSourceCache,
+			namespacer:             request.GetNamespaceMapper(cfg),
 		}
 		apiregistration.RegisterAPI(builder)
 	}
@@ -86,7 +81,7 @@ func RegisterAPIService(
 }
 
 func (b *DSAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return b.groupVersion
+	return b.connectionResourceInfo.GroupVersion()
 }
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
@@ -100,13 +95,14 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 }
 
 func (b *DSAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	addKnownTypes(scheme, b.groupVersion)
+	gv := b.connectionResourceInfo.GroupVersion()
+	addKnownTypes(scheme, gv)
 
 	// Link this version to the internal representation.
 	// This is used for server-side-apply (PATCH), and avoids the error:
 	//   "no kind is registered for the type"
 	addKnownTypes(scheme, schema.GroupVersion{
-		Group:   b.groupVersion.Group,
+		Group:   gv.Group,
 		Version: runtime.APIVersionInternal,
 	})
 
@@ -114,8 +110,8 @@ func (b *DSAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	// if err := playlist.RegisterConversions(scheme); err != nil {
 	//   return err
 	// }
-	metav1.AddToGroupVersion(scheme, b.groupVersion)
-	return scheme.SetVersionPriority(b.groupVersion)
+	metav1.AddToGroupVersion(scheme, gv)
+	return scheme.SetVersionPriority(gv)
 }
 
 func (b *DSAPIBuilder) GetAPIGroupInfo(
@@ -123,31 +119,28 @@ func (b *DSAPIBuilder) GetAPIGroupInfo(
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
 ) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(
-		b.groupVersion.Group, scheme,
-		metav1.ParameterCodec, codecs)
+	conn := b.connectionResourceInfo
 	storage := map[string]rest.Storage{}
-	// instance is usage access
-	storage["connection"] = &connectionStorage{
-		builder:    b,
-		apiVersion: b.apiVersion,
-		groupResource: schema.GroupResource{
-			Group:    b.groupVersion.Group,
-			Resource: "instance",
-		},
+	storage[conn.StoragePath()] = &connectionStorage{
+		builder:      b,
+		resourceInfo: conn,
 	}
-	storage["connection/query"] = &subQueryREST{builder: b}
-	storage["connection/health"] = &subHealthREST{builder: b}
+	storage[conn.StoragePath("query")] = &subQueryREST{builder: b}
+	storage[conn.StoragePath("health")] = &subHealthREST{builder: b}
 
 	// TODO! only setup this endpoint if it is implemented
-	storage["connection/resource"] = &subResourceREST{builder: b}
+	storage[conn.StoragePath("resource")] = &subResourceREST{builder: b}
 
 	// Frontend proxy
 	if len(b.plugin.Routes) > 0 {
-		storage["connection/proxy"] = &subProxyREST{builder: b}
+		storage[conn.StoragePath("proxy")] = &subProxyREST{builder: b}
 	}
 
-	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage
+	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(
+		conn.GroupResource().Group, scheme,
+		metav1.ParameterCodec, codecs)
+
+	apiGroupInfo.VersionedResourcesStorageMap[conn.GroupVersion().Version] = storage
 	return &apiGroupInfo, nil
 }
 
@@ -210,21 +203,13 @@ func (b *DSAPIBuilder) getDataSource(ctx context.Context, name string) (*datasou
 }
 
 func (b *DSAPIBuilder) getDataSources(ctx context.Context) ([]*datasources.DataSource, error) {
-	info, err := request.NamespaceInfoFrom(ctx, true)
+	orgId, err := request.OrgIDForList(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	vals, err := b.dsService.GetDataSourcesByType(ctx, &datasources.GetDataSourcesByTypeQuery{
-		OrgID: info.OrgID,
+	return b.dsService.GetDataSourcesByType(ctx, &datasources.GetDataSourcesByTypeQuery{
+		OrgID: orgId,
 		Type:  b.plugin.ID,
 	})
-	// HACK!!! See https://github.com/grafana/grafana/issues/76154
-	if err == nil && len(vals) == 0 && len(b.plugin.AliasIDs) > 0 {
-		vals, err = b.dsService.GetDataSourcesByType(ctx, &datasources.GetDataSourcesByTypeQuery{
-			OrgID: info.OrgID,
-			Type:  b.plugin.AliasIDs[0], // "testdata",
-		})
-	}
-	return vals, err
 }

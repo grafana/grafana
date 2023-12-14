@@ -23,6 +23,18 @@ func NewResourceInfo(group, version, resourceName, singularName, kind string,
 	return ResourceInfo{group, version, resourceName, singularName, kind, newObj, newList}
 }
 
+func (info *ResourceInfo) WithGroup(group string) ResourceInfo {
+	return ResourceInfo{
+		group:        group,
+		version:      info.version,
+		resourceName: info.resourceName,
+		singularName: info.singularName,
+		kind:         info.kind,
+		newObj:       info.newObj,
+		newList:      info.newList,
+	}
+}
+
 func (info *ResourceInfo) GetSingularName() string {
 	return info.singularName
 }

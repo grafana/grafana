@@ -11,10 +11,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/klog/v2"
 
 	"github.com/grafana/grafana/pkg/plugins/httpresponsesender"
-	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
 )
 
 type subResourceREST struct {
@@ -31,11 +29,20 @@ func (r *subResourceREST) Destroy() {
 }
 
 func (r *subResourceREST) ConnectMethods() []string {
-	return []string{"GET"}
+	// All for now??? ideally we have a schema for resource and limit this
+	return []string{
+		http.MethodGet,
+		http.MethodHead,
+		http.MethodPost,
+		http.MethodPut,
+		http.MethodPatch,
+		http.MethodDelete,
+		http.MethodOptions,
+	}
 }
 
 func (r *subResourceREST) NewConnectOptions() (runtime.Object, bool, string) {
-	return nil, false, ""
+	return nil, true, ""
 }
 
 func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
@@ -45,35 +52,28 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if false {
-			body, err := io.ReadAll(req.Body)
-			if err != nil {
-				klog.Errorf("CallResourceRequest body was malformed: %s", err)
-				w.WriteHeader(400)
-				_, _ = w.Write([]byte("CallResourceRequest body was malformed"))
-				return
-			}
-
-			idx := strings.LastIndex(req.URL.Path, "/resource")
-			if idx < 0 {
-				w.WriteHeader(400)
-				_, _ = w.Write([]byte("expected resource path"))
-				return
-			}
-			path := req.URL.Path[idx+len("/resource"):]
-
-			err = r.builder.client.CallResource(ctx, &backend.CallResourceRequest{
-				PluginContext: *pluginCtx,
-				Path:          path,
-				Method:        req.Method,
-				Body:          body,
-			}, httpresponsesender.New(w))
-
-			if err != nil {
-				errhttp.Write(ctx, err, w)
-			}
+		body, err := io.ReadAll(req.Body)
+		if err != nil {
+			responder.Error(err)
+			return
 		}
 
-		responder.Error(fmt.Errorf("TODO, resource: " + pluginCtx.PluginID))
+		idx := strings.LastIndex(req.URL.Path, "/resource")
+		if idx < 0 {
+			responder.Error(fmt.Errorf("expected resource path")) // 400?
+			return
+		}
+
+		path := req.URL.Path[idx+len("/resource"):]
+		err = r.builder.client.CallResource(ctx, &backend.CallResourceRequest{
+			PluginContext: *pluginCtx,
+			Path:          path,
+			Method:        req.Method,
+			Body:          body,
+		}, httpresponsesender.New(w))
+
+		if err != nil {
+			responder.Error(err)
+		}
 	}), nil
 }

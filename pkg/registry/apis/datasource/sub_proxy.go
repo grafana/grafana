@@ -20,8 +20,7 @@ func (r *subProxyREST) New() runtime.Object {
 	return &metav1.Status{}
 }
 
-func (r *subProxyREST) Destroy() {
-}
+func (r *subProxyREST) Destroy() {}
 
 func (r *subProxyREST) ConnectMethods() []string {
 	unique := map[string]bool{}
@@ -37,7 +36,7 @@ func (r *subProxyREST) ConnectMethods() []string {
 }
 
 func (r *subProxyREST) NewConnectOptions() (runtime.Object, bool, string) {
-	return nil, false, ""
+	return nil, true, ""
 }
 
 func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
