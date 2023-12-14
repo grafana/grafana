@@ -16,7 +16,6 @@ export const VizTooltipHeaderLabelValue = ({ keyValuePairs }: Props) => (
         value={keyValuePair.value}
         color={keyValuePair.color}
         colorIndicator={keyValuePair.colorIndicator!}
-        colorFirst={false}
         justify={'space-between'}
       />
     ))}

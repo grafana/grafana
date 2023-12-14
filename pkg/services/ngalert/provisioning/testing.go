@@ -70,9 +70,9 @@ func newFakeAMConfigStore(config string) *fakeAMConfigStore {
 	}
 }
 
-func (f *fakeAMConfigStore) GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) (*models.AlertConfiguration, error) {
+func (f *fakeAMConfigStore) GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error) {
 	result := &f.config
-	result.OrgID = query.OrgID
+	result.OrgID = orgID
 	result.ConfigurationHash = fmt.Sprintf("%x", md5.Sum([]byte(f.config.AlertmanagerConfiguration)))
 	return result, nil
 }

@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/infra/usagestats/validator"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/socialimpl"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
@@ -134,8 +135,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/stats/statsimpl"
 	"github.com/grafana/grafana/pkg/services/store"
+	entityDB "github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
-	"github.com/grafana/grafana/pkg/services/store/kind"
 	"github.com/grafana/grafana/pkg/services/store/resolver"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
@@ -253,13 +254,12 @@ var wireBasicSet = wire.NewSet(
 	notifications.ProvideSmtpService,
 	tracing.ProvideService,
 	wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)),
-	metrics.ProvideService,
 	testdatasource.ProvideService,
 	ldapapi.ProvideService,
 	opentsdb.ProvideService,
-	social.ProvideService,
+	socialimpl.ProvideService,
 	influxdb.ProvideService,
-	wire.Bind(new(social.Service), new(*social.SocialService)),
+	wire.Bind(new(social.Service), new(*socialimpl.SocialService)),
 	tempo.ProvideService,
 	loki.ProvideService,
 	graphite.ProvideService,
@@ -342,7 +342,8 @@ var wireBasicSet = wire.NewSet(
 	grpcserver.ProvideHealthService,
 	grpcserver.ProvideReflectionService,
 	interceptors.ProvideAuthenticator,
-	kind.ProvideService, // The registry of known kinds
+	entityDB.ProvideEntityDB,
+	wire.Bind(new(sqlstash.EntityDB), new(*entityDB.EntityDB)),
 	sqlstash.ProvideSQLEntityServer,
 	resolver.ProvideEntityReferenceResolver,
 	teamimpl.ProvideService,
@@ -386,7 +387,7 @@ var wireBasicSet = wire.NewSet(
 
 var wireSet = wire.NewSet(
 	wireBasicSet,
-	metrics.ProvideRegisterer,
+	metrics.WireSet,
 	sqlstore.ProvideService,
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
@@ -401,6 +402,7 @@ var wireSet = wire.NewSet(
 var wireCLISet = wire.NewSet(
 	NewRunner,
 	wireBasicSet,
+	metrics.WireSet,
 	sqlstore.ProvideService,
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
@@ -415,7 +417,7 @@ var wireCLISet = wire.NewSet(
 var wireTestSet = wire.NewSet(
 	wireBasicSet,
 	ProvideTestEnv,
-	metrics.ProvideRegistererForTest,
+	metrics.WireSetForTest,
 	sqlstore.ProvideServiceForTests,
 	ngmetrics.ProvideServiceForTest,
 	notifications.MockNotificationService,

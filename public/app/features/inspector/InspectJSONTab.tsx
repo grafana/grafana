@@ -131,7 +131,7 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
             Apply
           </Button>
         )}
-        {show === ShowContent.DataFrames && (
+        {show === ShowContent.DataFrames && dashboard !== undefined && (
           <Button className={styles.toolbarItem} onClick={onShowHelpWizard}>
             Support
           </Button>

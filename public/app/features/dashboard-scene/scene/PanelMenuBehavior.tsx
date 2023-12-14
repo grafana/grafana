@@ -1,19 +1,37 @@
-import { InterpolateFunction, PanelMenuItem } from '@grafana/data';
-import { config, locationService, reportInteraction } from '@grafana/runtime';
-import { VizPanel, VizPanelMenu, sceneGraph } from '@grafana/scenes';
+import {
+  InterpolateFunction,
+  PanelMenuItem,
+  PluginExtensionPanelContext,
+  PluginExtensionPoints,
+  getTimeZone,
+} from '@grafana/data';
+import { config, getPluginLinkExtensions, locationService } from '@grafana/runtime';
+import {
+  LocalValueVariable,
+  SceneDataTransformer,
+  SceneGridRow,
+  SceneQueryRunner,
+  VizPanel,
+  VizPanelMenu,
+  sceneGraph,
+} from '@grafana/scenes';
+import { DataQuery } from '@grafana/schema';
 import { t } from 'app/core/internationalization';
 import { PanelModel } from 'app/features/dashboard/state';
 import { InspectTab } from 'app/features/inspector/types';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
+import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
 import { addDataTrailPanelAction } from 'app/features/trails/dashboardIntegration';
 
 import { ShareModal } from '../sharing/ShareModal';
+import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { LibraryVizPanel } from './LibraryVizPanel';
 import { VizPanelLinks } from './PanelLinks';
+import { ShareQueryDataProvider } from './ShareQueryDataProvider';
 
 /**
  * Behavior is called when VizPanelMenu is activated (ie when it's opened).
@@ -37,7 +55,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         text: t('panel.header-menu.view', `View`),
         iconClassName: 'eye',
         shortcut: 'v',
-        onClick: () => reportInteraction('dashboards_panelheader_menu', { item: 'view' }),
+        onClick: () => DashboardInteractions.panelMenuItemClicked('view'),
         href: getViewPanelUrl(panel),
       });
 
@@ -48,7 +66,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           text: t('panel.header-menu.edit', `Edit`),
           iconClassName: 'eye',
           shortcut: 'e',
-          onClick: () => reportInteraction('dashboards_panelheader_menu', { item: 'edit' }),
+          onClick: () => () => DashboardInteractions.panelMenuItemClicked('edit'),
           href: getDashboardUrl({
             uid: dashboard.state.uid,
             subPath: `/panel-edit/${panelId}`,
@@ -62,7 +80,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         text: t('panel.header-menu.share', `Share`),
         iconClassName: 'share-alt',
         onClick: () => {
-          reportInteraction('dashboards_panelheader_menu', { item: 'share' });
+          DashboardInteractions.panelMenuItemClicked('share');
           dashboard.showModal(new ShareModal({ panelRef: panel.getRef(), dashboardRef: dashboard.getRef() }));
         },
         shortcut: 'p s',
@@ -75,7 +93,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           text: t('panel.header-menu.create-library-panel', `Create library panel`),
           iconClassName: 'share-alt',
           onClick: () => {
-            reportInteraction('dashboards_panelheader_menu', { item: 'createLibraryPanel' });
+            DashboardInteractions.panelMenuItemClicked('createLibraryPanel');
             dashboard.showModal(
               new ShareModal({
                 panelRef: panel.getRef(),
@@ -98,7 +116,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         text: t('panel.header-menu.explore', `Explore`),
         iconClassName: 'compass',
         shortcut: 'p x',
-        onClick: () => reportInteraction('dashboards_panelheader_menu', { item: 'explore' }),
+        onClick: () => DashboardInteractions.panelMenuItemClicked('explore'),
         href: exploreUrl,
       });
     }
@@ -110,7 +128,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         onClick: (e) => {
           e.preventDefault();
           locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.Data });
-          reportInteraction('dashboards_panelheader_menu', { item: 'inspect', tab: InspectTab.Data });
+          DashboardInteractions.panelMenuInspectClicked(InspectTab.Data);
         },
       });
 
@@ -121,7 +139,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           onClick: (e) => {
             e.preventDefault();
             locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.Query });
-            reportInteraction('dashboards_panelheader_menu', { item: 'inspect', tab: InspectTab.Query });
+            DashboardInteractions.panelMenuInspectClicked(InspectTab.Query);
           },
         });
       }
@@ -133,7 +151,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       onClick: (e) => {
         e.preventDefault();
         locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.JSON });
-        reportInteraction('dashboards_panelheader_menu', { item: 'inspect', tab: InspectTab.JSON });
+        DashboardInteractions.panelMenuInspectClicked(InspectTab.JSON);
       },
     });
 
@@ -145,11 +163,28 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       onClick: (e) => {
         if (!e.isDefaultPrevented()) {
           locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.Data });
-          reportInteraction('dashboards_panelheader_menu', { item: 'inspect', tab: InspectTab.Data });
+          DashboardInteractions.panelMenuInspectClicked(InspectTab.Data);
         }
       },
       subMenu: inspectSubMenu.length > 0 ? inspectSubMenu : undefined,
     });
+
+    if (dashboard instanceof DashboardScene) {
+      const { extensions } = getPluginLinkExtensions({
+        extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
+        context: createExtensionContext(panel, dashboard),
+        limitPerPlugin: 3,
+      });
+
+      if (extensions.length > 0 && !dashboard.state.isEditing) {
+        items.push({
+          text: 'Extensions',
+          iconClassName: 'plug',
+          type: 'submenu',
+          subMenu: createExtensionSubMenu(extensions),
+        });
+      }
+    }
 
     if (moreSubMenu.length) {
       items.push({
@@ -189,10 +224,76 @@ export function getPanelLinksBehavior(panel: PanelModel) {
     const links = panelLinks.map((panelLink) => ({
       ...panelLink,
       onClick: (e: any, origin: any) => {
-        reportInteraction('dashboards_panelheader_datalink_clicked', { has_multiple_links: panelLinks.length > 1 });
+        DashboardInteractions.panelLinkClicked({ has_multiple_links: panelLinks.length > 1 });
         panelLink.onClick?.(e, origin);
       },
     }));
     panelLinksMenu.setState({ links });
+  };
+}
+
+function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): PluginExtensionPanelContext {
+  const timeRange = sceneGraph.getTimeRange(panel);
+  let queryRunner = panel.state.$data;
+  let targets: DataQuery[] = [];
+  const id = getPanelIdForVizPanel(panel);
+
+  if (queryRunner instanceof SceneDataTransformer) {
+    queryRunner = queryRunner.state.$data;
+  }
+
+  if (queryRunner instanceof SceneQueryRunner) {
+    targets = queryRunner.state.queries;
+  }
+
+  if (queryRunner instanceof ShareQueryDataProvider) {
+    targets = [queryRunner.state.query];
+  }
+
+  let scopedVars = {};
+
+  // Handle panel repeats scenario
+  if (panel.state.$variables) {
+    panel.state.$variables.state.variables.forEach((variable) => {
+      if (variable instanceof LocalValueVariable) {
+        scopedVars = {
+          ...scopedVars,
+          [variable.state.name]: { value: variable.getValue(), text: variable.getValueText() },
+        };
+      }
+    });
+  }
+
+  // Handle row repeats scenario
+  if (panel.parent?.parent instanceof SceneGridRow) {
+    const row = panel.parent.parent;
+    if (row.state.$variables) {
+      row.state.$variables.state.variables.forEach((variable) => {
+        if (variable instanceof LocalValueVariable) {
+          scopedVars = {
+            ...scopedVars,
+            [variable.state.name]: { value: variable.getValue(), text: variable.getValueText() },
+          };
+        }
+      });
+    }
+  }
+
+  return {
+    id,
+    pluginId: panel.state.pluginId,
+    title: panel.state.title,
+    timeRange: timeRange.state.value.raw,
+    timeZone: getTimeZone({
+      timeZone: timeRange.getTimeZone(),
+    }),
+    dashboard: {
+      uid: dashboard.state.uid!,
+      title: dashboard.state.title,
+      tags: dashboard.state.tags || [],
+    },
+    targets,
+    scopedVars,
+    data: queryRunner?.state.data,
   };
 }
