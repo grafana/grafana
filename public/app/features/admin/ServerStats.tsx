@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, GrafanaBootConfig } from '@grafana/runtime';
 import { LinkButton, useStyles2 } from '@grafana/ui';
 import { AccessControlAction } from 'app/types';
 
@@ -71,7 +71,7 @@ export const ServerStats = () => {
               content={[{ name: 'Alerts', value: stats?.alerts }]}
               footer={
                 <LinkButton href={'/alerting/list'} variant={'secondary'}>
-                  Alerts
+                  Manage alerts
                 </LinkButton>
               }
             />
@@ -81,22 +81,9 @@ export const ServerStats = () => {
             content={[
               { name: 'Organisations', value: stats?.orgs },
               { name: 'Users total', value: stats?.users },
-              { name: 'Active users in last 30 days', value: stats?.activeUsers },
-              { name: '', value: '' },
-              ...(config.featureToggles.displayAnonymousStats && stats?.activeDevices && config.anonymousDeviceLimit
-                ? [
-                    {
-                      name: 'Active anonymous users',
-                      value: `${Math.floor(stats?.activeDevices / 3)} / ${Math.floor(config.anonymousDeviceLimit / 3)}`,
-                    },
-                    {
-                      name: 'Active anonymous devices',
-                      value: `${stats?.activeDevices} / ${config.anonymousDeviceLimit}`,
-                      tooltip: "Each third of users' devices is counted as one active user.",
-                    },
-                  ]
-                : []),
               { name: 'Active sessions', value: stats?.activeSessions },
+              { name: 'Active users in last 30 days', value: stats?.activeUsers },
+              ...getAnonymousStatsContent(stats, config),
             ]}
             footer={
               hasAccessToAdminUsers && (
@@ -110,6 +97,30 @@ export const ServerStats = () => {
       )}
     </>
   );
+};
+
+const getAnonymousStatsContent = (stats: ServerStat | null, config: GrafanaBootConfig) => {
+  if (!config.featureToggles.displayAnonymousStats || !stats?.activeDevices) {
+    return [];
+  }
+  if (!config.anonymousDeviceLimit) {
+    return [
+      {
+        name: 'Active anonymous devices',
+        value: `${stats.activeDevices}`,
+        tooltip: 'Detected devices that are not logged in, in last 30 days.',
+      },
+    ];
+  } else {
+    return [
+      {
+        name: 'Active anonymous devices',
+        value: `${stats.activeDevices} / ${config.anonymousDeviceLimit}`,
+        tooltip: 'Detected devices that are not logged in, in last 30 days.',
+        highlight: stats.activeDevices > config.anonymousDeviceLimit,
+      },
+    ];
+  }
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
