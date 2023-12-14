@@ -73,7 +73,7 @@ export abstract class BigValueLayout {
     return styles;
   }
 
-  getValueStyles(percentChange?: boolean): CSSProperties {
+  getValueStyles(): CSSProperties {
     const styles: CSSProperties = {
       fontSize: this.valueFontSize,
       fontWeight: VALUE_FONT_WEIGHT,
