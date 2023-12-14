@@ -3,6 +3,7 @@ package notifiers
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -48,6 +49,14 @@ func init() {
 				PropertyName: "chatid",
 				Required:     true,
 			},
+			{
+				Label:        "Message Thread ID",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Description:  "Integer Telegram Message Thread Identifier",
+				PropertyName: "messagethreadid",
+				Required:     false,
+			},
 		},
 	})
 }
@@ -56,10 +65,11 @@ func init() {
 // alert notifications to Telegram.
 type TelegramNotifier struct {
 	NotifierBase
-	BotToken    string
-	ChatID      string
-	UploadImage bool
-	log         log.Logger
+	BotToken        string
+	ChatID          string
+	MessageThreadId string
+	UploadImage     bool
+	log             log.Logger
 }
 
 // NewTelegramNotifier is the constructor for the Telegram notifier
@@ -70,22 +80,20 @@ func NewTelegramNotifier(model *models.AlertNotification, fn alerting.GetDecrypt
 
 	botToken := fn(context.Background(), model.SecureSettings, "bottoken", model.Settings.Get("bottoken").MustString(), setting.SecretKey)
 	chatID := model.Settings.Get("chatid").MustString()
+	messageThreadId := model.Settings.Get("messagethreadid").MustString()
 	uploadImage := model.Settings.Get("uploadImage").MustBool()
-
-	if botToken == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find Bot Token in settings"}
-	}
 
 	if chatID == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find Chat Id in settings"}
 	}
 
 	return &TelegramNotifier{
-		NotifierBase: NewNotifierBase(model, ns),
-		BotToken:     botToken,
-		ChatID:       chatID,
-		UploadImage:  uploadImage,
-		log:          log.New("alerting.notifier.telegram"),
+		NotifierBase:    NewNotifierBase(model, ns),
+		BotToken:        botToken,
+		ChatID:          chatID,
+		MessageThreadId: messageThreadId,
+		UploadImage:     uploadImage,
+		log:             log.New("alerting.notifier.telegram"),
 	}, nil
 }
 
@@ -186,11 +194,23 @@ func (tn *TelegramNotifier) generateTelegramCmd(message string, messageField str
 		return nil, err
 	}
 
+	fw, err = w.CreateFormField("message_thread_id")
+	if err != nil {
+		return nil, err
+	}
+	if _, err := fw.Write([]byte(tn.MessageThreadId)); err != nil {
+		return nil, err
+	}
+
 	fw, err = w.CreateFormField(messageField)
 	if err != nil {
 		return nil, err
 	}
 	if _, err := fw.Write([]byte(message)); err != nil {
+		return nil, err
+	}
+
+	if err = errors.New("fu"); err != nil {
 		return nil, err
 	}
 
@@ -200,7 +220,7 @@ func (tn *TelegramNotifier) generateTelegramCmd(message string, messageField str
 		return nil, err
 	}
 
-	tn.log.Info("Sending telegram notification", "chat_id", tn.ChatID, "bot_token", tn.BotToken, "apiAction", apiAction)
+	tn.log.Info("Sending telegram notification", "chat_id", tn.ChatID, "bot_token", tn.BotToken, "message_thread_id", tn.MessageThreadId, "apiAction", apiAction)
 	url := fmt.Sprintf(telegramAPIURL, tn.BotToken, apiAction)
 
 	cmd := &notifications.SendWebhookSync{
