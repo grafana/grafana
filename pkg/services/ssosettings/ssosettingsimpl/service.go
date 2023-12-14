@@ -3,6 +3,8 @@ package ssosettingsimpl
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -108,10 +110,14 @@ func (s *SSOSettingsService) List(ctx context.Context) ([]*models.SSOSettingsDTO
 }
 
 func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSettingsDTO) error {
+	var err error
 	// TODO: also check whether the provider is configurable
 	// Get the connector for the provider (from the reloadables) and call Validate
 
-	// TODO: encrypt secrets
+	settings.Settings, err = s.encryptSecrets(ctx, settings.Settings)
+	if err != nil {
+		return err
+	}
 
 	return s.store.Upsert(ctx, settings)
 }
@@ -174,4 +180,34 @@ func (s *SSOSettingsService) getFallBackstrategyFor(provider string) (ssosetting
 		}
 	}
 	return nil, false
+}
+
+func (s *SSOSettingsService) encryptSecrets(ctx context.Context, settings map[string]any) (map[string]any, error) {
+	secretFieldPatterns := []string{"secret"}
+
+	isSecret := func(field string) bool {
+		for _, v := range secretFieldPatterns {
+			if strings.Contains(strings.ToLower(field), strings.ToLower(v)) {
+				return true
+			}
+		}
+		return false
+	}
+
+	for k, v := range settings {
+		if isSecret(k) {
+			strValue, ok := v.(string)
+			if !ok {
+				return settings, fmt.Errorf("failed to encrypt %s setting because it is not a string: %v", k, v)
+			}
+
+			encryptedSecret, err := s.secrets.Encrypt(ctx, []byte(strValue), secrets.WithoutScope())
+			if err != nil {
+				return settings, err
+			}
+			settings[k] = string(encryptedSecret)
+		}
+	}
+
+	return settings, nil
 }

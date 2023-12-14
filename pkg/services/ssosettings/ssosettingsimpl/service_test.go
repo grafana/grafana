@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -261,30 +262,30 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 			IsDeleted: false,
 		}
 
-		//env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
+		env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
 
 		err := env.service.Upsert(context.Background(), settings)
 		require.NoError(t, err)
 	})
 
-	//t.Run("returns error if secrets encryption failed", func(t *testing.T) {
-	//	env := setupTestEnv(t)
-	//
-	//	settings := models.SSOSettingsDTO{
-	//		Provider: "azuread",
-	//		Settings: map[string]any{
-	//			"client_id":     "client-id",
-	//			"client_secret": "client-secret",
-	//			"enabled":       true,
-	//		},
-	//		IsDeleted: false,
-	//	}
-	//
-	//	env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return(nil, errors.New("encryption failed")).Once()
-	//
-	//	err := env.service.Upsert(context.Background(), settings)
-	//	require.Error(t, err)
-	//})
+	t.Run("returns error if secrets encryption failed", func(t *testing.T) {
+		env := setupTestEnv(t)
+
+		settings := models.SSOSettingsDTO{
+			Provider: "azuread",
+			Settings: map[string]any{
+				"client_id":     "client-id",
+				"client_secret": "client-secret",
+				"enabled":       true,
+			},
+			IsDeleted: false,
+		}
+
+		env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return(nil, errors.New("encryption failed")).Once()
+
+		err := env.service.Upsert(context.Background(), settings)
+		require.Error(t, err)
+	})
 
 	t.Run("returns error if store failed to upsert settings", func(t *testing.T) {
 		env := setupTestEnv(t)
@@ -299,7 +300,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 			IsDeleted: false,
 		}
 
-		//env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
+		env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
 		env.store.ExpectedError = errors.New("upsert failed")
 
 		err := env.service.Upsert(context.Background(), settings)
