@@ -18,85 +18,83 @@ export function ElasticsearchAnnotationsQueryEditor(props: Props) {
   const onAnnotationChange = props.onAnnotationChange!;
 
   return (
-    <>
-      <Stack direction="column" gap={5}>
-        <div>
-          <ElasticSearchQueryField
-            value={annotation.target?.query}
-            onChange={(query) => {
-              const currentTarget = annotation.target ?? { refId: 'annotation_query' };
-              const newTarget = {
-                ...currentTarget,
-                query,
-              };
+    <Stack direction="column" gap={5}>
+      <div>
+        <ElasticSearchQueryField
+          value={annotation.target?.query}
+          onChange={(query) => {
+            const currentTarget = annotation.target ?? { refId: 'annotation_query' };
+            const newTarget = {
+              ...currentTarget,
+              query,
+            };
 
-              onAnnotationChange({
-                ...annotation,
-                target: newTarget,
-              });
-            }}
-          />
-        </div>
+            onAnnotationChange({
+              ...annotation,
+              target: newTarget,
+            });
+          }}
+        />
+      </div>
 
-        <div>
-          <h6>Field mappings</h6>
-          <EditorRow>
-            <EditorField label="Time">
-              <Input
-                type="text"
-                placeholder="@timestamp"
-                value={annotation.timeField}
-                onChange={(e) => {
-                  onAnnotationChange({
-                    ...annotation,
-                    timeField: e.currentTarget.value,
-                  });
-                }}
-              />
-            </EditorField>
-            <EditorField label="Time End">
-              <Input
-                type="text"
-                value={annotation.timeEndField}
-                onChange={(e) => {
-                  onAnnotationChange({
-                    ...annotation,
-                    timeEndField: e.currentTarget.value,
-                  });
-                }}
-              />
-            </EditorField>
-            <EditorField label="Text">
-              <Input
-                type="text"
-                value={annotation.textField}
-                onChange={(e) => {
-                  onAnnotationChange({
-                    ...annotation,
-                    textField: e.currentTarget.value,
-                  });
-                }}
-              />
-            </EditorField>
-            <EditorField label="Tags">
-              <Input
-                type="text"
-                placeholder="tags"
-                value={annotation.tagsField}
-                onChange={(e) => {
-                  onAnnotationChange({
-                    ...annotation,
-                    tagsField: e.currentTarget.value,
-                  });
-                }}
-              />
-            </EditorField>
-          </EditorRow>
-        </div>
+      <div>
+        <h6>Field mappings</h6>
+        <EditorRow>
+          <EditorField label="Time">
+            <Input
+              type="text"
+              placeholder="@timestamp"
+              value={annotation.timeField}
+              onChange={(e) => {
+                onAnnotationChange({
+                  ...annotation,
+                  timeField: e.currentTarget.value,
+                });
+              }}
+            />
+          </EditorField>
+          <EditorField label="Time End">
+            <Input
+              type="text"
+              value={annotation.timeEndField}
+              onChange={(e) => {
+                onAnnotationChange({
+                  ...annotation,
+                  timeEndField: e.currentTarget.value,
+                });
+              }}
+            />
+          </EditorField>
+          <EditorField label="Text">
+            <Input
+              type="text"
+              value={annotation.textField}
+              onChange={(e) => {
+                onAnnotationChange({
+                  ...annotation,
+                  textField: e.currentTarget.value,
+                });
+              }}
+            />
+          </EditorField>
+          <EditorField label="Tags">
+            <Input
+              type="text"
+              placeholder="tags"
+              value={annotation.tagsField}
+              onChange={(e) => {
+                onAnnotationChange({
+                  ...annotation,
+                  tagsField: e.currentTarget.value,
+                });
+              }}
+            />
+          </EditorField>
+        </EditorRow>
+      </div>
 
       {/*Empty div to preserve the bottom margin */}
       <div />
-      </Stack>
-    </>
+    </Stack>
   );
 }
