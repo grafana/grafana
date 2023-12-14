@@ -167,6 +167,7 @@ export interface FeatureToggles {
   alertingSimplifiedRouting?: boolean;
   logRowsPopoverMenu?: boolean;
   pluginsSkipHostEnvVars?: boolean;
+  tableSharedCrosshair?: boolean;
   regressionTransformation?: boolean;
   displayAnonymousStats?: boolean;
   alertStateHistoryAnnotationsFromLoki?: boolean;

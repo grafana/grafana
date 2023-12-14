@@ -294,13 +294,14 @@ func (s *ServiceImpl) readNavigationSettings() {
 
 		appO11yCfg.SectionID = navtree.NavIDRoot
 		appO11yCfg.SortWeight = navtree.WeightApplication
-		appO11yCfg.Icon = "application-observability"
+		appO11yCfg.Icon = "graph-bar"
 
 		profilesCfg.SectionID = navtree.NavIDExplore
 		profilesCfg.SortWeight = 1
 
 		frontendCfg.SectionID = navtree.NavIDRoot
 		frontendCfg.SortWeight = navtree.WeightFrontend
+		frontendCfg.Icon = "frontend-observability"
 
 		k6Cfg.SectionID = navtree.NavIDTestingAndSynthetics
 		k6Cfg.SortWeight = 1
