@@ -74,11 +74,8 @@ export abstract class BigValueLayout {
   }
 
   getValueStyles(percentChange?: boolean): CSSProperties {
-    const valueFontSize = this.valueFontSize;
-    const fontSize = percentChange ? valueFontSize / 2 : valueFontSize;
-
     const styles: CSSProperties = {
-      fontSize: fontSize,
+      fontSize: this.valueFontSize,
       fontWeight: VALUE_FONT_WEIGHT,
       lineHeight: LINE_HEIGHT,
       position: 'relative',
@@ -103,6 +100,43 @@ export abstract class BigValueLayout {
     }
 
     return styles;
+  }
+
+  getPercentChangeStyles(percentChange: number): PercentChangeStyles {
+    const valueContainerStyles = this.getValueAndTitleContainerStyles();
+    const percentFontSize = Math.max(this.valueFontSize / 2.5, 12);
+
+    const containerStyles: CSSProperties = {
+      fontSize: percentFontSize,
+      fontWeight: VALUE_FONT_WEIGHT,
+      lineHeight: LINE_HEIGHT,
+      position: 'relative',
+      display: 'flex',
+      alignItems: 'center',
+      gap: Math.max(percentFontSize / 3, 4),
+      zIndex: 1,
+      color:
+        percentChange > 0
+          ? this.props.theme.visualization.getColorByName('green')
+          : this.props.theme.visualization.getColorByName('red'),
+    };
+
+    if (this.justifyCenter) {
+      containerStyles.textAlign = 'center';
+    }
+
+    if (valueContainerStyles.flexDirection === 'column') {
+      containerStyles.marginTop = -(percentFontSize / 4);
+    }
+
+    switch (this.props.colorMode) {
+      case BigValueColorMode.Background:
+      case BigValueColorMode.BackgroundSolid:
+        containerStyles.color = getTextColorForAlphaBackground(this.valueColor, this.props.theme.isDark);
+        break;
+    }
+
+    return { containerStyles, iconSize: Math.max(this.valueFontSize / 3, 10) };
   }
 
   getValueAndTitleContainerStyles() {
@@ -527,4 +561,9 @@ function getTextValues(props: Props): BigValueTextValues {
         valueToAlignTo,
       };
   }
+}
+
+export interface PercentChangeStyles {
+  containerStyles: CSSProperties;
+  iconSize: number;
 }

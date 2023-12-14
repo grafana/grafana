@@ -86,7 +86,7 @@ export class BigValue extends PureComponent<Props> {
   };
 
   render() {
-    const { onClick, className, hasLinks, theme, textMode } = this.props;
+    const { onClick, className, hasLinks, theme } = this.props;
     const layout = buildLayout(this.props);
     const panelStyles = layout.getPanelStyles();
     const valueAndTitleContainerStyles = layout.getValueAndTitleContainerStyles();
@@ -94,7 +94,7 @@ export class BigValue extends PureComponent<Props> {
     const titleStyles = layout.getTitleStyles();
     const textValues = layout.textValues;
     const percentChange = this.props.value.percentChange;
-    const percentChangeStyles = layout.getValueStyles(true);
+    const showPercentChange = percentChange != null && !Number.isNaN(percentChange);
 
     // When there is an outer data link this tooltip will override the outer native tooltip
     const tooltip = hasLinks ? undefined : textValues.tooltip;
@@ -105,14 +105,9 @@ export class BigValue extends PureComponent<Props> {
           <div style={valueAndTitleContainerStyles}>
             {textValues.title && <div style={titleStyles}>{textValues.title}</div>}
             <FormattedValueDisplay value={textValues} style={valueStyles} />
-            <PercentChange
-              percentChange={percentChange}
-              percentChangeStyles={percentChangeStyles}
-              valueAndTitleContainerFlexDirection={valueAndTitleContainerStyles.flexDirection}
-              panelStyles={panelStyles}
-              valueFontSize={layout.valueFontSize}
-              textMode={textMode}
-            />
+            {showPercentChange && (
+              <PercentChange percentChange={percentChange} styles={layout.getPercentChangeStyles(percentChange)} />
+            )}
           </div>
           {layout.renderChart()}
         </div>
