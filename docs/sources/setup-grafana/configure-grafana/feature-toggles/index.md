@@ -181,7 +181,8 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 
 **Feature Management** is an Administration page that allows admin users to visualize and toggle the feature flags available in their Grafana instance, for more information, refer to [Feature Management](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/feature-management/).
 
-By default, feature toggles are in read-only mode. Granting admin users the ability to alter the states of feature toggles requires configuring Grafana with the optional [allow_editing](/docs/grafana/latest/setup-grafana/configure-grafana#allow_editing), [update_webhook](/docs/grafana/latest/setup-grafana/configure-grafana#update_webhook) and [update_webhook_token](/docs/grafana/latest/setup-grafana/configure-grafana#update_webhook_token) settings.
+By default, feature toggles are in read-only mode.
+Granting admin users the ability to alter the states of feature toggles requires configuring Grafana with the optional [`allow_editing`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#allow_editing), [`update_webhook`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#update_webhook) and [`update_webhook_token`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#update_webhook_token) settings.
 
 Those configurations allow the Grafana operator to setup a webhook that Grafana must call to propagate the configuration change.
 
