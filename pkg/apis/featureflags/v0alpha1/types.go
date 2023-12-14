@@ -15,9 +15,15 @@ const (
 )
 
 var FeatureFlagResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
-	"playlists", "playlist", "Playlist",
+	"features", "feature", "FeatureFlag",
 	func() runtime.Object { return &FeatureFlag{} },
 	func() runtime.Object { return &FeatureFlagList{} },
+)
+
+var FlagConfigResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
+	"config", "config", "FlagConfig",
+	func() runtime.Object { return &FlagConfig{} },
+	func() runtime.Object { return &FlagConfigList{} },
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

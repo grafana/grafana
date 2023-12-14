@@ -7,9 +7,9 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana/pkg/apis"
 	"github.com/grafana/grafana/pkg/apis/featureflags/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -28,14 +28,14 @@ var (
 var startup = metav1.Now()
 
 type configStorage struct {
-	features                 *featuremgmt.FeatureManager
-	namespacer               request.NamespaceMapper
-	tableconverter           rest.TableConvertor
-	DefaultQualifiedResource schema.GroupResource
+	features       *featuremgmt.FeatureManager
+	namespacer     request.NamespaceMapper
+	tableconverter rest.TableConvertor
+	resourceInfo   apis.ResourceInfo
 }
 
 func (s *configStorage) New() runtime.Object {
-	return &v0alpha1.FlagConfig{}
+	return s.resourceInfo.NewFunc()
 }
 
 func (s *configStorage) Destroy() {}
@@ -45,17 +45,17 @@ func (s *configStorage) NamespaceScoped() bool {
 }
 
 func (s *configStorage) GetSingularName() string {
-	return "config"
+	return s.resourceInfo.GetSingularName()
 }
 
 func (s *configStorage) NewList() runtime.Object {
-	return &v0alpha1.FlagConfigList{}
+	return s.resourceInfo.NewListFunc()
 }
 
 func (s *configStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 	if s.tableconverter == nil {
 		s.tableconverter = utils.NewTableConverter(
-			s.DefaultQualifiedResource,
+			s.resourceInfo.GroupResource(),
 			[]metav1.TableColumnDefinition{
 				{Name: "Name", Type: "string", Format: "name"},
 				{Name: "Flags", Type: "string", Format: "string", Description: "Where is the flag in the dev cycle"},

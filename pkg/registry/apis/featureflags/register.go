@@ -125,10 +125,12 @@ func (b *FeatureFlagAPIBuilder) GetAPIGroupInfo(
 		store:    store,
 		features: b.features,
 	}
-	storage["config"] = &configStorage{
-		namespacer:               b.namespacer,
-		features:                 b.features,
-		DefaultQualifiedResource: b.gv.WithResource("config").GroupResource(),
+
+	cfg := v0alpha1.FlagConfigResourceInfo
+	storage[cfg.StoragePath()] = &configStorage{
+		namespacer:   b.namespacer,
+		features:     b.features,
+		resourceInfo: cfg,
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
