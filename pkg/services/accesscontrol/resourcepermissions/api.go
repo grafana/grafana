@@ -64,14 +64,16 @@ type Assignments struct {
 }
 
 type Description struct {
-	Assignments Assignments `json:"assignments"`
-	Permissions []string    `json:"permissions"`
+	Assignments        Assignments `json:"assignments"`
+	Permissions        []string    `json:"permissions"`
+	FineGrainedActions []string    `json:"fineGrainedActions"`
 }
 
 func (a *api) getDescription(c *contextmodel.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, &Description{
-		Permissions: a.permissions,
-		Assignments: a.service.options.Assignments,
+		Permissions:        a.permissions,
+		Assignments:        a.service.options.Assignments,
+		FineGrainedActions: a.service.options.FineGrainedActions,
 	})
 }
 
