@@ -25,10 +25,8 @@ import {
   config,
   DataSourceWithBackend,
   getBackendSrv,
-  getDataSourceSrv,
   getTemplateSrv,
   reportInteraction,
-  setDataSourceSrv,
   TemplateSrv,
 } from '@grafana/runtime';
 import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@grafana/schema';
