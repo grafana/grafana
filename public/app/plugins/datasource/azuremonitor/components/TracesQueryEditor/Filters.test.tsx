@@ -109,8 +109,9 @@ const addFilter = async (
   await waitFor(() => expect(screen.getByText(property)).toBeInTheDocument());
 
   await waitFor(() => expect(screen.getByText('Property')).toBeInTheDocument());
-  const operationSelect = await screen.getAllByText('=');
-  selectOptionInTest(operationSelect[index], operationLabel);
+  const operationSelect = await screen.findAllByText('=');
+  await userEvent.click(operationSelect[index]);
+  await userEvent.click(screen.getByRole('menuitemradio', { name: operationLabel }));
   await waitFor(() => expect(screen.getByText(operationLabel)).toBeInTheDocument());
 
   const valueSelect = await screen.findByText('Value');
