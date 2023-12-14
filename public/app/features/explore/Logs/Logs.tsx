@@ -916,8 +916,7 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
       maxHeight: `${tableHeight}px`,
     }),
     scrollableLogRows: css({
-      overflowX: 'scroll',
-      overflowY: 'visible',
+      overflowY: 'scroll',
       width: '100%',
       maxHeight: '75vh',
     }),
