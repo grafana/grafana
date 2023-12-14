@@ -1,7 +1,7 @@
 import React, { CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
 
-import { formattedValueToString, DisplayValue, FieldConfig, FieldType } from '@grafana/data';
+import { formattedValueToString, DisplayValue, FieldConfig, FieldType, colorManipulator } from '@grafana/data';
 import { GraphDrawStyle, GraphFieldConfig } from '@grafana/schema';
 
 import { getTextColorForAlphaBackground } from '../../utils';
@@ -105,6 +105,10 @@ export abstract class BigValueLayout {
   getPercentChangeStyles(percentChange: number): PercentChangeStyles {
     const valueContainerStyles = this.getValueAndTitleContainerStyles();
     const percentFontSize = Math.max(this.valueFontSize / 2.5, 12);
+    const color =
+      percentChange > 0
+        ? this.props.theme.visualization.getColorByName('green')
+        : this.props.theme.visualization.getColorByName('red');
 
     const containerStyles: CSSProperties = {
       fontSize: percentFontSize,
@@ -115,24 +119,37 @@ export abstract class BigValueLayout {
       alignItems: 'center',
       gap: Math.max(percentFontSize / 3, 4),
       zIndex: 1,
-      color:
-        percentChange > 0
-          ? this.props.theme.visualization.getColorByName('green')
-          : this.props.theme.visualization.getColorByName('red'),
+      color,
     };
 
     if (this.justifyCenter) {
       containerStyles.textAlign = 'center';
     }
 
-    if (valueContainerStyles.flexDirection === 'column') {
+    if (valueContainerStyles.flexDirection === 'column' && percentFontSize > 12) {
       containerStyles.marginTop = -(percentFontSize / 4);
+    }
+
+    // This layout mode needs more work
+    if (valueContainerStyles.flexDirection === 'row') {
+      containerStyles.alignItems = 'unset';
     }
 
     switch (this.props.colorMode) {
       case BigValueColorMode.Background:
       case BigValueColorMode.BackgroundSolid:
         containerStyles.color = getTextColorForAlphaBackground(this.valueColor, this.props.theme.isDark);
+
+        // Tried switching color based on contrast but was created too inconsistent results
+
+        //const contrast = colorManipulator.getContrastRatio(color, this.valueColor);
+        //if (contrast < 1.4) {
+        //  containerStyles.color = getTextColorForAlphaBackground(this.valueColor, this.props.theme.isDark);
+        //const shadowDim = Math.max(percentFontSize / 13, 1);
+        //containerStyles.textShadow = `${shadowDim}px ${shadowDim}px ${shadowDim}px black`;
+        // }
+        // console.log('contrast', contrast);
+
         break;
     }
 
