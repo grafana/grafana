@@ -14,7 +14,7 @@ import { GrafanaRouteComponentProps, RouteDescriptor } from './types';
 export interface Props extends Omit<GrafanaRouteComponentProps, 'queryParams'> {}
 
 export function GrafanaRoute(props: Props) {
-  const { chrome, keybindings, newAssetsChecker } = useGrafana();
+  const { chrome, keybindings } = useGrafana();
 
   chrome.setMatchedRoute(props.route);
 
@@ -28,7 +28,6 @@ export function GrafanaRoute(props: Props) {
     navigationLogger('GrafanaRoute', false, 'Mounted', props.match);
 
     return () => {
-      newAssetsChecker.reloadIfUpdateDetected();
       navigationLogger('GrafanaRoute', false, 'Unmounted', props.route);
       updateBodyClassNames(props.route, true);
     };
