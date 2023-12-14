@@ -267,11 +267,13 @@ var (
 			Created:        time.Date(2022, time.August, 27, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:        "cloudwatchNewRegionsHandler",
-			Description: "Refactor of /regions endpoint, no user-facing changes",
-			Stage:       FeatureStageExperimental,
-			Owner:       awsDatasourcesSquad,
-			Created:     time.Date(2023, time.September, 25, 12, 0, 0, 0, time.UTC),
+			Name:           "cloudwatchNewRegionsHandler",
+			Description:    "Refactor of /regions endpoint, no user-facing changes",
+			Stage:          FeatureStageGeneralAvailability,
+			Expression:     "true", // enabled by default
+			Owner:          awsDatasourcesSquad,
+			AllowSelfServe: truePtr,
+			Created:        time.Date(2023, time.September, 25, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "showDashboardValidationWarnings",
