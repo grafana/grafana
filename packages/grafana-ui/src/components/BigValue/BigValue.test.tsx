@@ -32,6 +32,7 @@ describe('BigValue', () => {
 
       expect(screen.getByText('25')).toBeInTheDocument();
     });
+
     it('should render with percent change', () => {
       render(
         <BigValue
@@ -43,6 +44,7 @@ describe('BigValue', () => {
 
       expect(screen.getByText('50%')).toBeInTheDocument();
     });
+
     it('should render without percent change', () => {
       render(<BigValue {...getProps()} />);
       expect(screen.queryByText('%')).toBeNull();
