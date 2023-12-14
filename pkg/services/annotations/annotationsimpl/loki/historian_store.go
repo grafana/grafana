@@ -184,7 +184,7 @@ func getRule(ctx context.Context, sql db.DB, orgID int64, ruleID int64) (*ngmode
 }
 
 func hasAccess(entry historian.LokiEntry, resources accesscontrol.AccessResources) bool {
-	if resources.CanAccessOrgAnnotations && entry.DashboardUID == "" {
+	if resources.CanAccessOrgAnnotations && entry.DashboardUID != "" {
 		return false
 	}
 

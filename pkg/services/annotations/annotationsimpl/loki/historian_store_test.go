@@ -208,7 +208,12 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 
 			stream := historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger())
 
-			items := store.annotationsFromStream(context.Background(), stream, rule.OrgID, annotation_ac.AccessResources{})
+			items := store.annotationsFromStream(context.Background(), stream, rule.OrgID, annotation_ac.AccessResources{
+				Dashboards: map[string]int64{
+					dashboard1.UID: dashboard1.ID,
+				},
+				CanAccessDashAnnotations: true,
+			})
 			require.Len(t, items, numTransitions)
 
 			for i := 0; i < numTransitions; i++ {
@@ -287,7 +292,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			require.Len(t, items, numTransitions)
 
 			for _, item := range items {
-				require.Zero(t, item.DashboardUID)
+				require.Zero(t, *item.DashboardUID)
 				require.Zero(t, item.DashboardID)
 			}
 		})
@@ -351,7 +356,7 @@ func TestFloat64Map(t *testing.T) {
 	})
 }
 
-func TestBuildTransitionStub(t *testing.T) {
+func TestBuildState(t *testing.T) {
 	t.Run("should build stub correctly", func(t *testing.T) {
 		values := map[string]float64{
 			"key1": 1.0,
@@ -362,14 +367,10 @@ func TestBuildTransitionStub(t *testing.T) {
 			"key2": "value2",
 		}
 
-		expected := &state.StateTransition{
-			PreviousState:       eval.Error,
-			PreviousStateReason: ngmodels.StateReasonNoData,
-			State: &state.State{
-				State:  eval.Normal,
-				Values: values,
-				Labels: labels,
-			},
+		expected := &state.State{
+			State:  eval.Normal,
+			Values: values,
+			Labels: labels,
 		}
 
 		jsonValues := simplejson.New()
@@ -575,8 +576,6 @@ func withPanelID(panelID int64) ngmodels.AlertRuleMutator {
 }
 
 func compareAnnotationItem(t *testing.T, expected, actual *annotations.ItemDTO) {
-	t.Helper()
-
 	require.Equal(t, expected.AlertID, actual.AlertID)
 	require.Equal(t, expected.AlertName, actual.AlertName)
 	if expected.PanelID != 0 {
@@ -608,7 +607,7 @@ type FakeLokiClient struct {
 func NewFakeLokiClient() *FakeLokiClient {
 	url, _ := url.Parse("http://some.url")
 	req := historian.NewFakeRequester()
-	metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry(), "annotations.test")
+	metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry(), "annotations_test")
 
 	return &FakeLokiClient{
 		client: client.NewTimedClient(req, metrics.WriteDuration),
@@ -629,7 +628,7 @@ func (c *FakeLokiClient) RangeQuery(_ context.Context, _ string, from, to, _ int
 		streams[n].Stream = stream.Stream
 		streams[n].Values = []historian.Sample{}
 		for _, sample := range stream.Values {
-			if sample.T.UnixMilli() < from || sample.T.UnixMilli() >= to { // matches Loki behavior
+			if sample.T.UnixNano() < from || sample.T.UnixNano() >= to { // matches Loki behavior
 				continue
 			}
 			streams[n].Values = append(streams[n].Values, sample)
