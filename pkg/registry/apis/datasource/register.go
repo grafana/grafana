@@ -126,32 +126,34 @@ func (b *DSAPIBuilder) GetAPIGroupInfo(
 	optsGetter generic.RESTOptionsGetter,
 ) (*genericapiserver.APIGroupInfo, error) {
 	storage := map[string]rest.Storage{}
-	config := b.configResourceInfo
-	storage[config.StoragePath()] = &configAccess{
-		builder:      b,
-		resourceInfo: config,
-		tableConverter: utils.NewTableConverter(
-			config.GroupResource(),
-			// NOTE: interesting fields will depend on the datasource type!
-			[]metav1.TableColumnDefinition{
-				{Name: "Name", Type: "string", Format: "name"},
-				{Name: "Title", Type: "string", Format: "string", Description: "The datasource title"},
-				{Name: "APIVersion", Type: "string", Format: "string", Description: "API Version"},
-				{Name: "Created At", Type: "date"},
-			},
-			func(obj any) ([]interface{}, error) {
-				m, ok := obj.(*v0alpha1.DataSourceConfig)
-				if !ok {
-					return nil, fmt.Errorf("expected connection")
-				}
-				return []interface{}{
-					m.Name,
-					m.Spec.Name,
-					m.APIVersion,
-					m.CreationTimestamp.UTC().Format(time.RFC3339),
-				}, nil
-			},
-		),
+	if true { // TODO? additional feature flag for configs since this is way less mature/handwavy
+		config := b.configResourceInfo
+		storage[config.StoragePath()] = &configAccess{
+			builder:      b,
+			resourceInfo: config,
+			tableConverter: utils.NewTableConverter(
+				config.GroupResource(),
+				// NOTE: interesting fields will depend on the datasource type!
+				[]metav1.TableColumnDefinition{
+					{Name: "Name", Type: "string", Format: "name"},
+					{Name: "Title", Type: "string", Format: "string", Description: "The datasource title"},
+					{Name: "APIVersion", Type: "string", Format: "string", Description: "API Version"},
+					{Name: "Created At", Type: "date"},
+				},
+				func(obj any) ([]interface{}, error) {
+					m, ok := obj.(*v0alpha1.DataSourceConfig)
+					if !ok {
+						return nil, fmt.Errorf("expected connection")
+					}
+					return []interface{}{
+						m.Name,
+						m.Spec.Name,
+						m.APIVersion,
+						m.CreationTimestamp.UTC().Format(time.RFC3339),
+					}, nil
+				},
+			),
+		}
 	}
 
 	conn := b.connectionResourceInfo
