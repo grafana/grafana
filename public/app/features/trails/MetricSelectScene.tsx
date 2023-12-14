@@ -25,6 +25,7 @@ import { Input, Text, useStyles2, InlineSwitch } from '@grafana/ui';
 
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { SelectMetricAction } from './SelectMetricAction';
+import { hideEmptyPreviews } from './hideEmptyPreviews';
 import { getVariablesWithMetricConstant, trailDS, VAR_FILTERS_EXPR, VAR_METRIC_NAMES } from './shared';
 import { getColorByIndex, getTrailFor } from './utils';
 
@@ -32,9 +33,9 @@ interface MetricPanel {
   name: string;
   index: number;
   itemRef?: SceneObjectRef<SceneCSSGridItem>;
-  isHidden: boolean;
+  isEmpty?: boolean;
   isPanel?: boolean;
-  loaded: boolean;
+  loaded?: boolean;
 }
 
 export interface MetricSelectSceneState extends SceneObjectState {
@@ -43,13 +44,14 @@ export interface MetricSelectSceneState extends SceneObjectState {
   searchQuery?: string;
   showPreviews?: boolean;
   hideEmpty?: boolean;
-  previewMetricPanels: Record<string, MetricPanel>;
 }
 
 const ROW_PREVIEW_HEIGHT = '175px';
 const ROW_CARD_HEIGHT = '64px';
 
 export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
+  private previewCache: Record<string, MetricPanel> = {};
+
   constructor(state: Partial<MetricSelectSceneState>) {
     super({
       $variables: state.$variables ?? getMetricNamesVariableSet(),
@@ -62,7 +64,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
         }),
       showPreviews: true,
       hideEmpty: true,
-      previewMetricPanels: {},
       ...state,
     });
 
@@ -92,12 +93,12 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   }
 
   private sortedPreviewMetrics() {
-    return Object.values(this.state.previewMetricPanels).sort((a, b) => {
+    return Object.values(this.previewCache).sort((a, b) => {
       if (this.state.hideEmpty) {
-        if (a.isHidden) {
+        if (a.isEmpty) {
           return 1;
         }
-        if (b.isHidden) {
+        if (b.isEmpty) {
           return -1;
         }
       }
@@ -136,10 +137,10 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
         break;
       }
 
-      metricsMap[metricName] = { name: metricName, isHidden: false, index, loaded: false };
+      metricsMap[metricName] = { name: metricName, index, loaded: false };
     }
 
-    this.setState({ previewMetricPanels: metricsMap });
+    this.previewCache = metricsMap;
   }
 
   private buildLayout() {
@@ -159,7 +160,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       return;
     }
 
-    if (!Object.keys(this.state.previewMetricPanels).length) {
+    if (!Object.keys(this.previewCache).length) {
       this.updateMetrics();
     }
 
@@ -181,10 +182,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
           children.push(metric.itemRef.resolve());
           continue;
         }
-        const panel = new SceneCSSGridItem({
-          $variables: getVariablesWithMetricConstant(metric.name),
-          body: getPreviewPanelFor(metric.name, index),
-        });
+        const panel = getPreviewPanelFor(metric.name, index);
         metric.itemRef = panel.getRef();
         metric.isPanel = true;
         children.push(panel);
@@ -205,26 +203,15 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   }
 
   private shouldRebuildLayout = () => {
-    return !Object.values(this.state.previewMetricPanels).some((mp) => mp.isPanel && !mp.loaded);
+    return !Object.values(this.previewCache).some((mp) => mp.isPanel && !mp.loaded);
   };
 
-  public hideMetric = (metric: string) => {
-    const metricPanel = this.state.previewMetricPanels[metric];
+  public updateMetricPanel = (metric: string, isLoaded?: boolean, isEmpty?: boolean) => {
+    const metricPanel = this.previewCache[metric];
     if (metricPanel) {
-      metricPanel.isHidden = true;
-      metricPanel.loaded = true;
-      this.setState({ previewMetricPanels: { ...this.state.previewMetricPanels, [metric]: metricPanel } });
-      if (this.shouldRebuildLayout()) {
-        this.buildLayout();
-      }
-    }
-  };
-
-  public metricHasLoaded = (metric: string) => {
-    const metricPanel = this.state.previewMetricPanels[metric];
-    if (metricPanel) {
-      metricPanel.loaded = true;
-      this.setState({ previewMetricPanels: { ...this.state.previewMetricPanels, [metric]: metricPanel } });
+      metricPanel.isEmpty = isEmpty;
+      metricPanel.loaded = isLoaded;
+      this.previewCache[metric] = metricPanel;
       if (this.shouldRebuildLayout()) {
         this.buildLayout();
       }
@@ -294,41 +281,22 @@ function getMetricNamesVariableSet() {
 function getPreviewPanelFor(metric: string, index: number) {
   const autoQuery = getAutoQueriesForMetric(metric);
 
-  const p = autoQuery.preview
+  const vizPanel = autoQuery.preview
     .vizBuilder(autoQuery.preview)
     .setColor({ mode: 'fixed', fixedColor: getColorByIndex(index) })
     .setHeaderActions(new SelectMetricAction({ metric, title: 'Select' }))
     .build();
 
-  const data = p.state.$data;
-  if (data instanceof SceneQueryRunner) {
-    data.addActivationHandler(() => {
-      data.subscribeToState((state) => {
-        if (state._hasFetchedData) {
-          const scene = sceneGraph.getAncestor(p, MetricSelectScene);
-
-          if (!state.data?.series.length) {
-            scene.hideMetric(metric);
-            return;
-          }
-          const valueField = state.data?.series.at(0)?.fields.at(1);
-          const allNull = !valueField?.values.find((v) => v !== null);
-          if (allNull) {
-            scene.hideMetric(metric);
-            return;
-          }
-          const allZero = !valueField?.values.find((v) => v !== 0);
-          if (allZero) {
-            scene.hideMetric(metric);
-            return;
-          }
-          scene.metricHasLoaded(metric);
-        }
-      });
-    });
-  }
-
-  return p;
+  return new SceneCSSGridItem({
+    $variables: getVariablesWithMetricConstant(metric),
+    $behaviors: [hideEmptyPreviews(metric)],
+    $data: new SceneQueryRunner({
+      datasource: trailDS,
+      maxDataPoints: 200,
+      queries: autoQuery.preview.queries,
+    }),
+    body: vizPanel,
+  });
 }
 
 function getCardPanelFor(metric: string) {
