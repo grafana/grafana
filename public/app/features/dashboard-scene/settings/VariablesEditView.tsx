@@ -19,12 +19,8 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     return 'variables';
   }
 
-  private get _dashboard(): DashboardScene {
-    return getDashboardSceneFor(this);
-  }
-
   public getDashboard(): DashboardScene {
-    return this._dashboard;
+    return getDashboardSceneFor(this);
   }
 
   public getVariableSet(): SceneVariables {
