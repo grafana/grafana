@@ -1,7 +1,7 @@
 import React, { CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
 
-import { formattedValueToString, DisplayValue, FieldConfig, FieldType } from '@grafana/data';
+import { formattedValueToString, DisplayValue, FieldConfig, FieldType, colorManipulator } from '@grafana/data';
 import { GraphDrawStyle, GraphFieldConfig } from '@grafana/schema';
 
 import { getTextColorForAlphaBackground } from '../../utils';
@@ -73,12 +73,9 @@ export abstract class BigValueLayout {
     return styles;
   }
 
-  getValueStyles(percentChange?: boolean): CSSProperties {
-    const valueFontSize = this.valueFontSize;
-    const fontSize = percentChange ? valueFontSize / 2 : valueFontSize;
-
+  getValueStyles(): CSSProperties {
     const styles: CSSProperties = {
-      fontSize: fontSize,
+      fontSize: this.valueFontSize,
       fontWeight: VALUE_FONT_WEIGHT,
       lineHeight: LINE_HEIGHT,
       position: 'relative',
@@ -103,6 +100,49 @@ export abstract class BigValueLayout {
     }
 
     return styles;
+  }
+
+  getPercentChangeStyles(percentChange: number): PercentChangeStyles {
+    const valueContainerStyles = this.getValueAndTitleContainerStyles();
+    const percentFontSize = Math.max(this.valueFontSize / 2.5, 12);
+    const color =
+      percentChange > 0
+        ? this.props.theme.visualization.getColorByName('green')
+        : this.props.theme.visualization.getColorByName('red');
+
+    const containerStyles: CSSProperties = {
+      fontSize: percentFontSize,
+      fontWeight: VALUE_FONT_WEIGHT,
+      lineHeight: LINE_HEIGHT,
+      position: 'relative',
+      display: 'flex',
+      alignItems: 'center',
+      gap: Math.max(percentFontSize / 3, 4),
+      zIndex: 1,
+      color,
+    };
+
+    if (this.justifyCenter) {
+      containerStyles.textAlign = 'center';
+    }
+
+    if (valueContainerStyles.flexDirection === 'column' && percentFontSize > 12) {
+      containerStyles.marginTop = -(percentFontSize / 4);
+    }
+
+    // TODO: This layout mode needs more work (especially for horizontal layout)
+    if (valueContainerStyles.flexDirection === 'row') {
+      containerStyles.alignItems = 'unset';
+    }
+
+    switch (this.props.colorMode) {
+      case BigValueColorMode.Background:
+      case BigValueColorMode.BackgroundSolid:
+        containerStyles.color = getTextColorForAlphaBackground(this.valueColor, this.props.theme.isDark);
+        break;
+    }
+
+    return { containerStyles, iconSize: Math.max(this.valueFontSize / 3, 10) };
   }
 
   getValueAndTitleContainerStyles() {
@@ -527,4 +567,9 @@ function getTextValues(props: Props): BigValueTextValues {
         valueToAlignTo,
       };
   }
+}
+
+export interface PercentChangeStyles {
+  containerStyles: CSSProperties;
+  iconSize: number;
 }
