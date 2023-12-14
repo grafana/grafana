@@ -127,6 +127,7 @@ export const ProviderConfig = ({ config, provider, isLoading }: GitHubConfigProp
   const renderField = (name: keyof SSOProvider['settings'], fieldData: FieldData) => {
     switch (fieldData.type) {
       case 'text':
+      case 'password':
         return (
           <Field
             label={fieldData.label}
@@ -135,7 +136,11 @@ export const ProviderConfig = ({ config, provider, isLoading }: GitHubConfigProp
             error={fieldData.validation?.message}
             key={name}
           >
-            <Input {...register(name, { required: !!fieldData.validation?.required })} type="text" id={name} />
+            <Input
+              {...register(name, { required: !!fieldData.validation?.required })}
+              type={fieldData.type}
+              id={name}
+            />
           </Field>
         );
       case 'select':

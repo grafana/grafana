@@ -45,7 +45,7 @@ export const fieldMap: Record<string, FieldData> = {
   },
   clientSecret: {
     label: 'Client Secret',
-    type: 'text',
+    type: 'password',
     validation: {
       required: true,
       message: 'This field is required',
