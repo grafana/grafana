@@ -67,7 +67,6 @@ export const LogsTableMultiSelect = (props: {
 
         <div className={styles.columnHeader}>Fields</div>
         <LogsTableNavColumn
-          reorderColumn={props.reorderColumn}
           id={'available-fields'}
           toggleColumn={props.toggleColumn}
           labels={props.filteredColumnsWithMeta ?? props.columnsWithMeta}

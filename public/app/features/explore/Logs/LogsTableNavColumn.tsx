@@ -3,8 +3,9 @@ import React, { useCallback } from 'react';
 import { DragDropContext, Draggable, DraggableProvided, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
-import { Checkbox, useTheme2 } from '@grafana/ui/src';
+import { useTheme2 } from '@grafana/ui/src';
 
+import { LogsTableNavField } from './LogsTableNavField';
 import { fieldNameMeta } from './LogsTableWrap';
 
 function getStyles(theme: GrafanaTheme2) {
@@ -61,10 +62,12 @@ function sortLabels(labels: Record<string, fieldNameMeta>) {
     const la = labels[a];
     const lb = labels[b];
 
+    // If there is a user defined index, use that order
     if (la.index != null && lb.index != null) {
       return la.index - lb.index;
     }
 
+    // ...sort by type and alphabetically
     if (la != null && lb != null) {
       return (
         Number(lb.type === 'TIME_FIELD') - Number(la.type === 'TIME_FIELD') ||
@@ -72,6 +75,7 @@ function sortLabels(labels: Record<string, fieldNameMeta>) {
         collator.compare(a, b)
       );
     }
+
     // otherwise do not sort
     return 0;
   };
@@ -82,13 +86,13 @@ export const LogsTableNavColumn = (props: {
   valueFilter: (value: string) => boolean;
   toggleColumn: (columnName: string) => void;
   id: string;
-  reorderColumn: (oldIndex: number, newIndex: number) => void;
+  reorderColumn?: (oldIndex: number, newIndex: number) => void;
 }): JSX.Element => {
   const { reorderColumn } = props;
 
   const onDragEnd = useCallback(
     (result: DropResult) => {
-      if (!result.destination) {
+      if (!result.destination || !reorderColumn) {
         return;
       }
       reorderColumn(result.source.index, result.destination.index);
@@ -101,39 +105,49 @@ export const LogsTableNavColumn = (props: {
   const styles = getStyles(theme);
   const labelKeys = Object.keys(labels).filter((labelName) => valueFilter(labelName));
   if (labelKeys.length) {
+    // If we have a reorderColumn function, we need to wrap the nav items in dnd components
+    if (reorderColumn) {
+      return (
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId={id} direction="vertical">
+            {(provided) => (
+              <div className={styles.columnWrapper} {...provided.droppableProps} ref={provided.innerRef}>
+                {provided.placeholder}
+                {labelKeys.sort(sortLabels(labels)).map((labelName, index) => (
+                  <Draggable draggableId={labelName} key={labelName} index={index}>
+                    {(provided: DraggableProvided) => (
+                      <div
+                        className={cx(styles.wrap)}
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        title={`${labelName} appears in ${labels[labelName]?.percentOfLinesWithLabel}% of log lines`}
+                      >
+                        <LogsTableNavField label={labelName} onChange={() => toggleColumn(labelName)} labels={labels} />
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+      );
+    }
+
+    // Otherwise show list with a hardcoded order
     return (
-      <DragDropContext onDragEnd={onDragEnd}>
-        <Droppable droppableId={id} direction="vertical">
-          {(provided) => (
-            <div className={styles.columnWrapper} {...provided.droppableProps} ref={provided.innerRef}>
-              {provided.placeholder}
-              {labelKeys.sort(sortLabels(labels)).map((labelName, index) => (
-                <Draggable draggableId={labelName} key={labelName} index={index}>
-                  {(provided: DraggableProvided) => (
-                    <div
-                      className={cx(styles.wrap)}
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                      title={`${labelName} appears in ${labels[labelName]?.percentOfLinesWithLabel}% of log lines`}
-                    >
-                      <Checkbox
-                        className={styles.checkboxLabel}
-                        label={labelName}
-                        onChange={() => toggleColumn(labelName)}
-                        checked={labels[labelName]?.active ?? false}
-                      />
-                      <button className={styles.labelCount} onClick={() => toggleColumn(labelName)}>
-                        {labels[labelName]?.percentOfLinesWithLabel}%
-                      </button>
-                    </div>
-                  )}
-                </Draggable>
-              ))}
-            </div>
-          )}
-        </Droppable>
-      </DragDropContext>
+      <div className={styles.columnWrapper}>
+        {labelKeys.sort(sortLabels(labels)).map((labelName, index) => (
+          <div
+            key={labelName}
+            className={cx(styles.wrap)}
+            title={`${labelName} appears in ${labels[labelName]?.percentOfLinesWithLabel}% of log lines`}
+          >
+            <LogsTableNavField label={labelName} onChange={() => toggleColumn(labelName)} labels={labels} />
+          </div>
+        ))}
+      </div>
     );
   }
 

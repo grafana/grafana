@@ -36,7 +36,7 @@ interface Props extends Themeable2 {
 }
 
 type activeFieldMeta = {
-  active: undefined;
+  active: false;
   index: undefined; // if undefined the column is not selected
 };
 
@@ -191,14 +191,14 @@ export function LogsTableWrap(props: Props) {
               } else {
                 labelCardinality.set(label, {
                   percentOfLinesWithLabel: value.percentOfLinesWithLabel + 1,
-                  active: undefined,
+                  active: false,
                   index: undefined,
                 });
               }
             }
             // Otherwise add it
           } else {
-            labelCardinality.set(label, { percentOfLinesWithLabel: 1, active: undefined, index: undefined });
+            labelCardinality.set(label, { percentOfLinesWithLabel: 1, active: false, index: undefined });
           }
         });
       });
@@ -234,7 +234,7 @@ export function LogsTableWrap(props: Props) {
             field.values.filter((value) => value !== null && value !== undefined).length,
             numberOfLogLines
           ),
-          active: undefined,
+          active: false,
           index: undefined,
         };
       }
@@ -295,7 +295,7 @@ export function LogsTableWrap(props: Props) {
     Object.keys(pendingLabelState).forEach((key) => {
       const isDefaultField = !!pendingLabelState[key].type;
       // after reset the only active fields are the special time and body fields
-      pendingLabelState[key].active = isDefaultField ? true : undefined;
+      pendingLabelState[key].active = isDefaultField;
       // reset the index
       pendingLabelState[key].index = isDefaultField ? index++ : undefined;
     });
@@ -382,7 +382,7 @@ export function LogsTableWrap(props: Props) {
         ...columnsWithMeta,
         [columnName]: {
           ...columnsWithMeta[columnName],
-          active: undefined,
+          active: false,
           index: undefined,
         },
       };
@@ -412,7 +412,7 @@ export function LogsTableWrap(props: Props) {
           ...filteredColumnsWithMeta,
           [columnName]: {
             ...filteredColumnsWithMeta[columnName],
-            active: undefined,
+            active: false,
             index: undefined,
           },
         };
