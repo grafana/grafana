@@ -237,7 +237,7 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]ExternalAMcf
 			continue
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-		headers, err := d.datasourceService.CustomHeaders(ctx, ds)
+		header, err := d.datasourceService.CustomHeaders(ctx, ds)
 		cancel()
 		if err != nil {
 			d.logger.Error("Failed to get headers for external alertmanager",
@@ -247,8 +247,8 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]ExternalAMcf
 			continue
 		}
 		alertmanagers = append(alertmanagers, ExternalAMcfg{
-			URL:     amURL,
-			Headers: headers,
+			URL:    amURL,
+			Header: header,
 		})
 	}
 	return alertmanagers, nil
