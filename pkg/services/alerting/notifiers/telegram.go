@@ -3,7 +3,6 @@ package notifiers
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -207,10 +206,6 @@ func (tn *TelegramNotifier) generateTelegramCmd(message string, messageField str
 		return nil, err
 	}
 	if _, err := fw.Write([]byte(message)); err != nil {
-		return nil, err
-	}
-
-	if err = errors.New("fu"); err != nil {
 		return nil, err
 	}
 
