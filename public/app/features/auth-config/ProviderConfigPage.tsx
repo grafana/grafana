@@ -17,8 +17,8 @@ import { SSOProvider, SSOProviderDTO } from './types';
 import { dataToDTO, dtoToData } from './utils';
 
 const appEvents = getAppEvents();
-const getPageNav = (provider?: SSOProvider): NavModelItem => {
-  if (!provider) {
+const getPageNav = (config?: SSOProvider): NavModelItem => {
+  if (!config) {
     return {
       text: 'Authentication',
       subTitle: 'Configure authentication providers',
@@ -28,10 +28,10 @@ const getPageNav = (provider?: SSOProvider): NavModelItem => {
   }
 
   return {
-    text: provider.settings.name || '',
-    subTitle: `To configure ${provider.settings.name} OAuth2 you must register your application with ${provider.settings.name}. ${provider.settings.name} will generate a Client ID and Client Secret for you to use.`,
-    icon: provider.settings.icon || 'shield',
-    id: provider.provider,
+    text: config.settings.name || '',
+    subTitle: `To configure ${config.settings.name} OAuth2 you must register your application with ${config.settings.name}. ${config.settings.name} will generate a Client ID and Client Secret for you to use.`,
+    icon: config.settings.icon || 'shield',
+    id: config.provider,
   };
 };
 
@@ -62,6 +62,7 @@ export type Props = ConnectedProps<typeof connector>;
  */
 export const ProviderConfigPage = ({ config, loadSettings, isLoading, provider }: Props) => {
   const pageNav = getPageNav(config);
+
   useEffect(() => {
     loadSettings();
   }, [loadSettings]);
