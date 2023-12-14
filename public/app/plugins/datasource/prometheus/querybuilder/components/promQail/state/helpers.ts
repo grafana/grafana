@@ -11,15 +11,16 @@ import { PromVisualQuery } from '../../../types';
 import {
   ExplainSystemPrompt,
   GetExplainUserPrompt,
-  GetSuggestSystemPrompt,
-  SuggestSystemPromptParams,
+  SuggestSystemPrompt,
+  GetSuggestUserPrompt,
+  SuggestUserPromptParams,
 } from '../prompts';
 import { Interaction, QuerySuggestion, SuggestionType } from '../types';
 
 import { createInteraction, stateSlice } from './state';
 import { getTemplateSuggestions } from './templates';
 
-const OPENAI_MODEL_NAME = 'gpt-3.5-turbo';
+const OPENAI_MODEL_NAME = 'gpt-3.5-turbo-1106';
 const promQLTemplatesCollection = 'grafana.promql.templates';
 // actions to update the state
 const { updateInteraction } = stateSlice.actions;
@@ -77,8 +78,17 @@ export function getExplainMessage(
   ];
 }
 
-function getSuggestMessage({ promql, question, labels, templates }: SuggestSystemPromptParams): llms.openai.Message[] {
-  return [{ role: 'system', content: GetSuggestSystemPrompt({ promql, question, labels, templates }) }];
+function getSuggestMessages({
+  promql,
+  question,
+  metricType,
+  labels,
+  templates,
+}: SuggestUserPromptParams): llms.openai.Message[] {
+  return [
+    { role: 'system', content: SuggestSystemPrompt },
+    { role: 'user', content: GetSuggestUserPrompt({ promql, question, metricType, labels, templates }) },
+  ];
 }
 
 /**
@@ -343,9 +353,15 @@ export async function promQailSuggest(
       prompt?: string;
     };
 
+    // get all available labels
+    const metricLabels = await datasource.languageProvider.fetchSeriesLabelsMatch(query.metric);
+
     let feedTheAI: SuggestionBody = {
       metric: query.metric,
-      labels: promQueryModeller.renderLabels(query.labels),
+      // drop __name__ label because it's not useful
+      labels: Object.keys(metricLabels)
+        .filter((label) => label !== '__name__')
+        .join(','),
     };
 
     // @ts-ignore llms types issue
@@ -372,13 +388,14 @@ export async function promQailSuggest(
 
     const resultsString = results
       .map((r) => {
-        return `PromQL: ${r.payload.promql}\nDescription: ${r.payload.description}`;
+        return `${r.payload.promql} | ${r.payload.description} (score=${(r.score * 100).toFixed(1)})`;
       })
       .join('\n');
 
-    const promptMessages = getSuggestMessage({
+    const promptMessages = getSuggestMessages({
       promql: query.metric,
       question: interaction ? interaction.prompt : '',
+      metricType: metricType,
       labels: labelNames.join(', '),
       templates: resultsString,
     });
@@ -387,7 +404,7 @@ export async function promQailSuggest(
       .streamChatCompletions({
         model: OPENAI_MODEL_NAME,
         messages: promptMessages,
-        temperature: 0,
+        temperature: 0.5,
       })
       .pipe(llms.openai.accumulateContent())
       .subscribe((response) => {

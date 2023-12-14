@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
@@ -33,13 +34,13 @@ type AnonDeviceService struct {
 }
 
 func ProvideAnonymousDeviceService(usageStats usagestats.Service, authBroker authn.Service,
-	anonStore anonstore.AnonStore, cfg *setting.Cfg, orgService org.Service,
+	sqlStore db.DB, cfg *setting.Cfg, orgService org.Service,
 	serverLockService *serverlock.ServerLockService, accesscontrol accesscontrol.AccessControl, routeRegister routing.RouteRegister,
 ) *AnonDeviceService {
 	a := &AnonDeviceService{
 		log:        log.New("anonymous-session-service"),
 		localCache: localcache.New(29*time.Minute, 15*time.Minute),
-		anonStore:  anonStore,
+		anonStore:  anonstore.ProvideAnonDBStore(sqlStore, cfg.AnonymousDeviceLimit),
 		serverLock: serverLockService,
 	}
 
@@ -57,7 +58,7 @@ func ProvideAnonymousDeviceService(usageStats usagestats.Service, authBroker aut
 		authBroker.RegisterPostLoginHook(a.untagDevice, 100)
 	}
 
-	anonAPI := api.NewAnonDeviceServiceAPI(cfg, anonStore, accesscontrol, routeRegister)
+	anonAPI := api.NewAnonDeviceServiceAPI(cfg, a.anonStore, accesscontrol, routeRegister)
 	anonAPI.RegisterAPIEndpoints()
 
 	return a
@@ -143,6 +144,7 @@ func (a *AnonDeviceService) TagDevice(ctx context.Context, httpReq *http.Request
 	err = a.tagDeviceUI(ctx, httpReq, taggedDevice)
 	if err != nil {
 		a.log.Debug("Failed to tag device for UI", "error", err)
+		return err
 	}
 
 	return nil
