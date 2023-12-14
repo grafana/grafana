@@ -75,40 +75,37 @@ describe('DashboardScene', () => {
         }
       );
 
-      // TODO: Make the dashboard to restore the defaults on discard
       it.skip('A change to refresh picker interval settings should set isDirty true', () => {
         const refreshPicker = dashboardSceneGraph.getRefreshPicker(scene)!;
-        const prevState = refreshPicker.state.intervals;
         refreshPicker.setState({ intervals: ['10s'] });
 
         expect(scene.state.isDirty).toBe(true);
 
-        scene.onDiscard();
-        expect(refreshPicker.state.intervals).toEqual(prevState);
+        // TODO: Make the dashboard to restore the defaults on discard
+        // scene.onDiscard();
+        // expect(refreshPicker.state.intervals).toEqual(prevState);
       });
 
-      // TODO: Make the dashboard to restore the defaults on discard
-      it.skip('A change to time picker visibility settings should set isDirty true', () => {
+      it('A change to time picker visibility settings should set isDirty true', () => {
         const dashboardControls = dashboardSceneGraph.getDashboardControls(scene)!;
-        const prevState = dashboardControls.state.hideTimeControls;
         dashboardControls.setState({ hideTimeControls: true });
 
         expect(scene.state.isDirty).toBe(true);
 
-        scene.onDiscard();
-        expect(dashboardControls.state.hideTimeControls).toEqual(prevState);
+        // TODO: Make the dashboard to restore the defaults on discard
+        // scene.onDiscard();
+        // expect(dashboardControls.state.hideTimeControls).toEqual(prevState);
       });
 
-      // TODO: Make the dashboard to restore the defaults on discard
-      it.skip('A change to time zone should set isDirty true', () => {
+      it('A change to time zone should set isDirty true', () => {
         const timeRange = scene.state.$timeRange!;
-        const prevState = timeRange.state.timeZone;
         timeRange.setState({ timeZone: 'UTC' });
 
         expect(scene.state.isDirty).toBe(true);
 
-        scene.onDiscard();
-        expect(timeRange.state.timeZone).toBe(prevState);
+        // TODO: Make the dashboard to restore the defaults on discard
+        // scene.onDiscard();
+        // expect(timeRange.state.timeZone).toBe(prevState);
       });
     });
   });
