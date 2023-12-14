@@ -285,6 +285,7 @@ require (
 	k8s.io/client-go v0.29.0 // @grafana/grafana-app-platform-squad
 	k8s.io/component-base v0.29.0 // @grafana/grafana-app-platform-squad
 	k8s.io/klog/v2 v2.110.1 // @grafana/grafana-app-platform-squad
+	k8s.io/kube-aggregator v0.29.0 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-openapi v0.0.0-20231010175941-2dd684a91f00 // @grafana/grafana-app-platform-squad
 )
 
@@ -480,6 +481,8 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.0.0 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0 // indirect
+	github.com/moby/spdystream v0.2.0 // indirect
+	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
