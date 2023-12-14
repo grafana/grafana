@@ -61,6 +61,12 @@ type NotificationTemplatePayload struct {
 	Body NotificationTemplateContent
 }
 
+// swagger:parameters RoutePutTemplate
+type NotificationTemplateHeaders struct {
+	// in:header
+	XDisableProvenance string `json:"X-Disable-Provenance"`
+}
+
 func (t *NotificationTemplate) ResourceType() string {
 	return "template"
 }
