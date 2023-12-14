@@ -12,7 +12,7 @@ describe('Auto-migrate graph panel', () => {
     cy.contains(DASHBOARD_NAME).should('be.visible');
     cy.contains('uplot-main-div').should('not.exist');
 
-    e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { '__feature.autoMigrateOldPanels': true } });
+    e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { '__feature.autoMigrateGraphPanel': true } });
 
     e2e.components.Panels.Panel.title('Business Hours')
       .should('exist')
