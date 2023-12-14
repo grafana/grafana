@@ -501,8 +501,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
 
   This transformation provides a convenient way to standardize and tailor the presentation of string data for better visualization and analysis.
 
-  > **Note:** This transformation is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the **formatString** feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
-  `;
+  > **Note:** This transformation is currently in private preview. Grafana Labs offers support on a best-effort basis, and breaking changes might occur prior to the feature being made generally available.`;
     },
   },
   formatTime: {

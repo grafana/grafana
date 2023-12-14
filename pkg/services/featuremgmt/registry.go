@@ -978,7 +978,7 @@ var (
 		{
 			Name:         "formatString",
 			Description:  "Enable format string transformer",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: true,
 			Owner:        grafanaBiSquad,
 			Created:      time.Date(2023, time.October, 13, 12, 0, 0, 0, time.UTC),
