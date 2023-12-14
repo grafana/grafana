@@ -38,3 +38,5 @@ type SSOSettings struct {
 func (s SSOSettings) TableName() string {
 	return "sso_setting"
 }
+
+// TODO: check if we need custom marshalling/unmarshalling functions for converting the settings keys to camelCase
