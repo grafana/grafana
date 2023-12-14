@@ -67,8 +67,9 @@ require (
 	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.19.1 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go v1.9.0 // @grafana/backend-platform
+	github.com/grafana/grafana-plugin-sdk-go v0.197.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform
-	github.com/hashicorp/go-hclog v1.5.0 // @grafana/plugins-platform-backend
+	github.com/hashicorp/go-hclog v1.6.1 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-plugin v1.6.0 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-version v1.6.0 // @grafana/backend-platform
 	github.com/hashicorp/hcl/v2 v2.17.0 // @grafana/alerting-squad-backend
@@ -473,8 +474,6 @@ require (
 	github.com/xlab/treeprint v1.2.0 // @grafana/observability-traces-and-profiling
 	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
 )
-
-require github.com/grafana/grafana-plugin-sdk-go v0.196.1-0.20231205151856-c5479f051888
 
 require (
 	github.com/google/gnostic-models v0.6.8 // indirect
