@@ -28,7 +28,7 @@ unifiedStorage,experimental,@grafana/grafana-app-platform-squad,2022-12-01,true,
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,2022-11-28,false,false,false,false
 redshiftAsyncQueryDataSupport,GA,@grafana/aws-datasources,2022-08-27,false,false,false,false
 athenaAsyncQueryDataSupport,GA,@grafana/aws-datasources,2022-08-27,false,false,false,true
-cloudwatchNewRegionsHandler,experimental,@grafana/aws-datasources,2023-09-25,false,false,false,false
+cloudwatchNewRegionsHandler,GA,@grafana/aws-datasources,2023-09-25,false,false,false,false
 showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,2022-10-14,false,false,false,false
 mysqlAnsiQuotes,experimental,@grafana/backend-platform,2022-10-12,false,false,false,false
 accessControlOnCall,preview,@grafana/identity-access-team,2022-10-19,false,false,false,false
@@ -109,7 +109,7 @@ alertingInsights,GA,@grafana/alerting-squad,2023-09-14,false,false,false,true
 externalCorePlugins,experimental,@grafana/plugins-platform-backend,2023-09-22,false,false,false,false
 pluginsAPIMetrics,experimental,@grafana/plugins-platform-backend,2023-09-21,false,false,false,true
 httpSLOLevels,experimental,@grafana/hosted-grafana-team,2023-09-22,false,false,true,false
-idForwarding,experimental,@grafana/identity-access-team,2023-09-25,true,false,false,false
+idForwarding,experimental,@grafana/identity-access-team,2023-09-25,false,false,false,false
 cloudWatchWildCardDimensionValues,GA,@grafana/aws-datasources,2023-09-27,false,false,false,false
 externalServiceAccounts,experimental,@grafana/identity-access-team,2023-09-28,true,false,false,false
 panelMonitoring,experimental,@grafana/dataviz-squad,2023-10-08,false,false,false,true
@@ -147,6 +147,7 @@ datatrails,experimental,@grafana/dashboards-squad,2023-11-15,false,false,false,t
 alertingSimplifiedRouting,experimental,@grafana/alerting-squad,2023-11-10,false,false,false,false
 logRowsPopoverMenu,experimental,@grafana/observability-logs,2023-11-16,false,false,false,true
 pluginsSkipHostEnvVars,experimental,@grafana/plugins-platform-backend,2023-11-15,false,false,false,false
+tableSharedCrosshair,experimental,@grafana/grafana-bi-squad,2023-12-12,false,false,false,true
 regressionTransformation,experimental,@grafana/grafana-bi-squad,2023-11-24,false,false,false,true
 displayAnonymousStats,GA,@grafana/identity-access-team,2023-11-29,false,false,false,true
 alertStateHistoryAnnotationsFromLoki,experimental,@grafana/alerting-squad,2023-11-30,false,false,true,false

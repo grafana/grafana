@@ -259,11 +259,13 @@ var (
 			Created:        time.Date(2022, time.August, 27, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:        "cloudwatchNewRegionsHandler",
-			Description: "Refactor of /regions endpoint, no user-facing changes",
-			Stage:       FeatureStageExperimental,
-			Owner:       awsDatasourcesSquad,
-			Created:     time.Date(2023, time.September, 25, 12, 0, 0, 0, time.UTC),
+			Name:           "cloudwatchNewRegionsHandler",
+			Description:    "Refactor of /regions endpoint, no user-facing changes",
+			Stage:          FeatureStageGeneralAvailability,
+			Expression:     "true", // enabled by default
+			Owner:          awsDatasourcesSquad,
+			AllowSelfServe: truePtr,
+			Created:        time.Date(2023, time.September, 25, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "showDashboardValidationWarnings",
@@ -936,12 +938,11 @@ var (
 			Created:         time.Date(2023, time.September, 22, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:            "idForwarding",
-			Description:     "Generate signed id token for identity that can be forwarded to plugins and external services",
-			Stage:           FeatureStageExperimental,
-			Owner:           identityAccessTeam,
-			RequiresDevMode: true,
-			Created:         time.Date(2023, time.September, 25, 12, 0, 0, 0, time.UTC),
+			Name:        "idForwarding",
+			Description: "Generate signed id token for identity that can be forwarded to plugins and external services",
+			Stage:       FeatureStageExperimental,
+			Owner:       identityAccessTeam,
+			Created:     time.Date(2023, time.September, 25, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "cloudWatchWildCardDimensionValues",
@@ -1241,6 +1242,14 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
 			Created:      time.Date(2023, time.November, 15, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:         "tableSharedCrosshair",
+			Description:  "Enables shared crosshair in table panel",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaBiSquad,
+			Created:      time.Date(2023, time.December, 12, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "regressionTransformation",

@@ -5,6 +5,7 @@ import Skeleton from 'react-loading-skeleton';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Icon, Link, useStyles2 } from '@grafana/ui';
+import { SkeletonComponent, attachSkeleton } from '@grafana/ui/src/unstable';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { PanelTypeCard } from 'app/features/panel/components/VizTypePicker/PanelTypeCard';
 
@@ -20,7 +21,7 @@ export interface LibraryPanelCardProps {
 
 type Props = LibraryPanelCardProps & { children?: JSX.Element | JSX.Element[] };
 
-export const LibraryPanelCard = ({ libraryPanel, onClick, onDelete, showSecondaryActions }: Props) => {
+const LibraryPanelCardComponent = ({ libraryPanel, onClick, onDelete, showSecondaryActions }: Props) => {
   const [showDeletionModal, setShowDeletionModal] = useState(false);
 
   const onDeletePanel = () => {
@@ -53,17 +54,20 @@ export const LibraryPanelCard = ({ libraryPanel, onClick, onDelete, showSecondar
   );
 };
 
-const LibraryPanelCardSkeleton = ({ showSecondaryActions }: Pick<Props, 'showSecondaryActions'>) => {
+const LibraryPanelCardSkeleton: SkeletonComponent<Pick<Props, 'showSecondaryActions'>> = ({
+  showSecondaryActions,
+  rootProps,
+}) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <PanelTypeCard.Skeleton hasDelete={showSecondaryActions}>
+    <PanelTypeCard.Skeleton hasDelete={showSecondaryActions} {...rootProps}>
       <Skeleton containerClassName={styles.metaContainer} width={80} />
     </PanelTypeCard.Skeleton>
   );
 };
 
-LibraryPanelCard.Skeleton = LibraryPanelCardSkeleton;
+export const LibraryPanelCard = attachSkeleton(LibraryPanelCardComponent, LibraryPanelCardSkeleton);
 
 interface FolderLinkProps {
   libraryPanel: LibraryElementDTO;
