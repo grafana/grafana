@@ -7,7 +7,7 @@ import (
 )
 
 func initEntityTables(mg *migrator.Migrator) string {
-	marker := "Initialize entity tables (v005)" // changing this key wipe+rewrite everything
+	marker := "Initialize entity tables (v007)" // changing this key wipe+rewrite everything
 	mg.AddMigration(marker, &migrator.RawSQLMigration{})
 
 	tables := []migrator.Table{}
@@ -19,12 +19,13 @@ func initEntityTables(mg *migrator.Migrator) string {
 			{Name: "version", Type: migrator.DB_NVarchar, Length: 128, Nullable: false},
 
 			// The entity identifier
-			{Name: "tenant_id", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "key", Type: migrator.DB_Text, Nullable: false},
+			// k8s namespace names must be RFC1123 label names, 63 characters or less
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 63, Nullable: false},
 			{Name: "group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "group_version", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
-			{Name: "kind", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
-			{Name: "uid", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "resource", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "name", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 
 			{Name: "folder", Type: migrator.DB_NVarchar, Length: 190, Nullable: false}, // uid of folder
 
@@ -48,7 +49,7 @@ func initEntityTables(mg *migrator.Migrator) string {
 			{Name: "origin_ts", Type: migrator.DB_BigInt, Nullable: false},
 
 			// Metadata
-			{Name: "name", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "title", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "slug", Type: migrator.DB_NVarchar, Length: 190, Nullable: false}, // from title
 			{Name: "description", Type: migrator.DB_Text, Nullable: true},
 
@@ -59,7 +60,7 @@ func initEntityTables(mg *migrator.Migrator) string {
 			{Name: "errors", Type: migrator.DB_Text, Nullable: true},   // JSON object
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"tenant_id", "kind", "uid"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"namespace", "group", "resource", "name"}, Type: migrator.UniqueIndex},
 			{Cols: []string{"folder"}, Type: migrator.IndexType},
 		},
 	})
@@ -73,12 +74,13 @@ func initEntityTables(mg *migrator.Migrator) string {
 			{Name: "version", Type: migrator.DB_NVarchar, Length: 128, Nullable: false},
 
 			// The entity identifier
-			{Name: "tenant_id", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "key", Type: migrator.DB_Text, Nullable: false},
+			// k8s namespace names must be RFC1123 label names, 63 characters or less
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 63, Nullable: false},
 			{Name: "group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "group_version", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
-			{Name: "kind", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
-			{Name: "uid", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "resource", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "name", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 
 			{Name: "folder", Type: migrator.DB_NVarchar, Length: 190, Nullable: false}, // uid of folder
 			{Name: "access", Type: migrator.DB_Text, Nullable: true},                   // JSON object
@@ -103,7 +105,7 @@ func initEntityTables(mg *migrator.Migrator) string {
 			{Name: "origin_ts", Type: migrator.DB_BigInt, Nullable: false},
 
 			// Metadata
-			{Name: "name", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "title", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "slug", Type: migrator.DB_NVarchar, Length: 190, Nullable: false}, // from title
 			{Name: "description", Type: migrator.DB_Text, Nullable: true},
 
@@ -115,7 +117,7 @@ func initEntityTables(mg *migrator.Migrator) string {
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"guid", "version"}, Type: migrator.UniqueIndex},
-			{Cols: []string{"tenant_id", "kind", "uid", "version"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"namespace", "group", "resource", "name", "version"}, Type: migrator.UniqueIndex},
 		},
 	})
 
@@ -124,7 +126,9 @@ func initEntityTables(mg *migrator.Migrator) string {
 		Name: "entity_folder",
 		Columns: []*migrator.Column{
 			{Name: "guid", Type: migrator.DB_NVarchar, Length: 36, Nullable: false, IsPrimaryKey: true},
-
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 63, Nullable: false},
+			{Name: "name", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "title", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "slug_path", Type: migrator.DB_Text, Nullable: false}, // /slug/slug/slug/
 			{Name: "tree", Type: migrator.DB_Text, Nullable: false},      // JSON []{uid, title}
 			{Name: "depth", Type: migrator.DB_Int, Nullable: false},      // starts at 1
@@ -153,9 +157,10 @@ func initEntityTables(mg *migrator.Migrator) string {
 			{Name: "guid", Type: migrator.DB_NVarchar, Length: 36, Nullable: false},
 
 			// Address (defined in the body, not resolved, may be invalid and change)
-			{Name: "family", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
-			{Name: "type", Type: migrator.DB_NVarchar, Length: 190, Nullable: true},
-			{Name: "id", Type: migrator.DB_NVarchar, Length: 190, Nullable: true},
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 63, Nullable: false},
+			{Name: "group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "resource", Type: migrator.DB_NVarchar, Length: 190, Nullable: true},
+			{Name: "name", Type: migrator.DB_NVarchar, Length: 190, Nullable: true},
 
 			// Runtime calcs (will depend on the system state)
 			{Name: "resolved_ok", Type: migrator.DB_Bool, Nullable: false},
@@ -165,8 +170,7 @@ func initEntityTables(mg *migrator.Migrator) string {
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"guid"}, Type: migrator.IndexType},
-			{Cols: []string{"family"}, Type: migrator.IndexType},
-			{Cols: []string{"type"}, Type: migrator.IndexType},
+			{Cols: []string{"namespace", "group", "resource", "name"}, Type: migrator.IndexType},
 			{Cols: []string{"resolved_to"}, Type: migrator.IndexType},
 		},
 	})
