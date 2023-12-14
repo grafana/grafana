@@ -16,7 +16,7 @@ weight: 900
 Grafana incorporates feature toggles, enabling the introduction of new functionalities safeguarded by a control flag. This allows Grafana administrators the flexibility to determine the appropriate timing for enabling or disabling specific features.
 For detailed insights into particular features and how they operate, refer to [Configure Feature Toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
 
-## Manage Feature Toggles
+## Manage feature toggles
 
 In the Administration page, the Feature Management section enables administrators to see and switch the various features active in their Grafana environment. Based on the development stage of the feature, we establish specific options for visibility and customization.
 
