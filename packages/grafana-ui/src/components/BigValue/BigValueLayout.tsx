@@ -102,9 +102,14 @@ export abstract class BigValueLayout {
     return styles;
   }
 
-  getPercentChangeStyles(percentChange: number): PercentChangeStyles {
+  getPercentChangeStyles(percentChange: number, isTextModeNone: boolean): PercentChangeStyles {
     const valueContainerStyles = this.getValueAndTitleContainerStyles();
     const percentFontSize = Math.max(this.valueFontSize / 2.5, 12);
+
+    if (isTextModeNone) {
+      // TODO: treat styles like a normal value by itself so scaling works
+    }
+
     const color =
       percentChange > 0
         ? this.props.theme.visualization.getColorByName('green')
