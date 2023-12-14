@@ -75,7 +75,7 @@ describe('DashboardScene', () => {
         }
       );
 
-      it.skip('A change to refresh picker interval settings should set isDirty true', () => {
+      it('A change to refresh picker interval settings should set isDirty true', () => {
         const refreshPicker = dashboardSceneGraph.getRefreshPicker(scene)!;
         refreshPicker.setState({ intervals: ['10s'] });
 
