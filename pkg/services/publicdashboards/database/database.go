@@ -91,28 +91,6 @@ func (d *PublicDashboardStoreImpl) FindAllWithPagination(ctx context.Context, qu
 	return resp, nil
 }
 
-// FindDashboard returns a dashboard by orgId and dashboardUid
-func (d *PublicDashboardStoreImpl) FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (*dashboards.Dashboard, error) {
-	dashboard := &dashboards.Dashboard{OrgID: orgId, UID: dashboardUid}
-
-	var found bool
-	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		var err error
-		found, err = sess.Get(dashboard)
-		return err
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	if !found {
-		return nil, nil
-	}
-
-	return dashboard, nil
-}
-
 // Find Returns public dashboard by Uid or nil if not found
 func (d *PublicDashboardStoreImpl) Find(ctx context.Context, uid string) (*PublicDashboard, error) {
 	if uid == "" {

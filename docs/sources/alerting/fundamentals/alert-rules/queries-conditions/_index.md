@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/
-description: Introduction to queries and conditions
+description: Define queries to get the data you want to measure and conditions that need to be met before an alert rule fires
 keywords:
   - grafana
   - alerting

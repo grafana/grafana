@@ -94,6 +94,7 @@ export interface Props {
   cellHeight?: schema.TableCellHeight;
   /** @alpha Used by SparklineCell when provided */
   timeRange?: TimeRange;
+  enableSharedCrosshair?: boolean;
 }
 
 /**

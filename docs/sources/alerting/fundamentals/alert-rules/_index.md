@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/
-description: About Grafana alert rules
+description: Learn about alert rules
 keywords:
   - grafana
   - alerting
