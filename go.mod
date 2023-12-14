@@ -24,10 +24,6 @@ replace (
 // import that instead of v0.X even though v0.X is newer.
 replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.43.0
 
-// Includes https://github.com/kubernetes/kube-openapi/pull/439
-// This will not be required in the next k8s release @v29-with-hook
-replace k8s.io/kube-openapi v0.0.0-20231010175941-2dd684a91f00 => github.com/ryantxu/kube-openapi v0.0.0-20231214032415-63d04c0c9135 // @grafana/grafana-app-platform-squad
-
 // The v0.120.0 is needed for now to be compatible with grafana/thema.
 replace github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.120.0
 
@@ -285,7 +281,7 @@ require (
 	k8s.io/client-go v0.29.0 // @grafana/grafana-app-platform-squad
 	k8s.io/component-base v0.29.0 // @grafana/grafana-app-platform-squad
 	k8s.io/klog/v2 v2.110.1 // @grafana/grafana-app-platform-squad
-	k8s.io/kube-openapi v0.0.0-20231010175941-2dd684a91f00 // @grafana/grafana-app-platform-squad
+	k8s.io/kube-openapi v0.0.0-20231214164306-ab13479f8bf8 // @grafana/grafana-app-platform-squad
 )
 
 require github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 // @grafana/sharing-squad
