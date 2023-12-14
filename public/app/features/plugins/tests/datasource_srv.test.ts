@@ -75,7 +75,7 @@ describe('datasource_srv', () => {
       type: 'test-db',
       name: 'mmm',
       uid: 'uid-code-mmm',
-      meta: { metrics: true, annotations: true } as any,
+      meta: { metrics: true, annotations: true },
     },
     '-- Grafana --': {
       type: 'grafana',
@@ -169,7 +169,7 @@ describe('datasource_srv', () => {
       });
 
       it('Can get by variable', async () => {
-        const ds = (await dataSourceSrv.get('${datasource}')) as any;
+        const ds = await dataSourceSrv.get('${datasource}');
         expect(ds.meta).toBe(dataSourceInit.BBB.meta);
 
         const ds2 = await dataSourceSrv.get('${datasource}', { datasource: { text: 'Prom', value: 'uid-code-aaa' } });

@@ -197,6 +197,7 @@ export interface GrafanaConfig {
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
   anonymousEnabled: boolean;
+  anonymousDeviceLimit: number | undefined;
   featureToggles: FeatureToggles;
   licenseInfo: LicenseInfo;
   http2Enabled: boolean;
@@ -221,6 +222,10 @@ export interface GrafanaConfig {
   rudderstackConfigUrl: string | undefined;
   rudderstackIntegrationsUrl: string | undefined;
   sqlConnectionLimits: SqlConnectionLimits;
+  sharedWithMeFolderUID?: string;
+
+  // The namespace to use for kubernetes apiserver requests
+  namespace: string;
 }
 
 export interface SqlConnectionLimits {

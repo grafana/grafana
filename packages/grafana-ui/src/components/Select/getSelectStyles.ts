@@ -96,6 +96,9 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
       flexWrap: 'wrap',
       display: 'flex',
     }),
+    valueContainerMultiNoWrap: css({
+      flexWrap: 'nowrap',
+    }),
     loadingMessage: css({
       label: 'grafana-select-loading-message',
       padding: theme.spacing(1),
@@ -113,6 +116,8 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
       padding: theme.spacing(0.25, 0, 0.25, 1),
       color: theme.colors.text.primary,
       fontSize: theme.typography.size.sm,
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
 
       '&:hover': {
         background: theme.colors.emphasize(theme.colors.background.secondary),

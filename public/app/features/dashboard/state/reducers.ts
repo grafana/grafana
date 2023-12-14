@@ -65,7 +65,7 @@ export interface SetPanelAngularComponentPayload {
 
 export interface SetPanelInstanceStatePayload {
   panelId: number;
-  value: any;
+  value: unknown;
 }
 
 export const {

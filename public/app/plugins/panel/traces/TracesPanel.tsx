@@ -41,7 +41,6 @@ export const TracesPanel = ({ data, options }: PanelProps<TracesPanelOptions>) =
         dataFrames={data.series}
         scrollElementClass={styles.wrapper}
         traceProp={traceProp}
-        queryResponse={data}
         datasource={dataSource.value}
         topOfViewRef={topOfViewRef}
         createSpanLink={options.createSpanLink}

@@ -157,6 +157,23 @@ func (evalResults Results) HasErrors() bool {
 	return false
 }
 
+// HasNonRetryableErrors returns true if we have at least 1 result with:
+// 1. A `State` of `Error`
+// 2. The `Error` attribute is not nil
+// 3. The `Error` type is of `&invalidEvalResultFormatError`
+// Our thinking with this approach, is that we don't want to retry errors that have relation with invalid alert definition format.
+func (evalResults Results) HasNonRetryableErrors() bool {
+	for _, r := range evalResults {
+		if r.State == Error && r.Error != nil {
+			var nonRetryableError *invalidEvalResultFormatError
+			if errors.As(r.Error, &nonRetryableError) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // HasErrors returns true when Results contains at least one element and all elements are errors
 func (evalResults Results) IsError() bool {
 	for _, r := range evalResults {
@@ -175,6 +192,18 @@ func (evalResults Results) IsNoData() bool {
 		}
 	}
 	return true
+}
+
+// Error returns the aggregated `error` of all results of which state is `Error`.
+func (evalResults Results) Error() error {
+	var errs []error
+	for _, result := range evalResults {
+		if result.State == Error && result.Error != nil {
+			errs = append(errs, result.Error)
+		}
+	}
+
+	return errors.Join(errs...)
 }
 
 // Result contains the evaluated State of an alert instance
@@ -271,7 +300,7 @@ func buildDatasourceHeaders(ctx context.Context) map[string]string {
 // getExprRequest validates the condition, gets the datasource information and creates an expr.Request from it.
 func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheService datasources.CacheService) (*expr.Request, error) {
 	req := &expr.Request{
-		OrgId:   ctx.User.OrgID,
+		OrgId:   ctx.User.GetOrgID(),
 		Headers: buildDatasourceHeaders(ctx.Ctx),
 		User:    ctx.User,
 	}

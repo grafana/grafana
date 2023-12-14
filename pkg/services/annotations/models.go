@@ -44,6 +44,21 @@ type TagsDTO struct {
 	Count int64  `json:"count"`
 }
 
+// sort tags in ascending order by tag string
+type SortedTags []*TagsDTO
+
+func (s SortedTags) Len() int {
+	return len(s)
+}
+
+func (s SortedTags) Less(i, j int) bool {
+	return s[i].Tag < s[j].Tag
+}
+
+func (s SortedTags) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
 // FindTagsResult is the result of a tags search.
 type FindTagsResult struct {
 	Tags []*TagsDTO `json:"tags"`
@@ -108,6 +123,24 @@ type ItemDTO struct {
 	Email        string           `json:"email"`
 	AvatarURL    string           `json:"avatarUrl" xorm:"avatar_url"`
 	Data         *simplejson.Json `json:"data"`
+}
+
+type SortedItems []*ItemDTO
+
+// sort annotations in descending order by end time, then by start time
+func (s SortedItems) Len() int {
+	return len(s)
+}
+
+func (s SortedItems) Less(i, j int) bool {
+	if s[i].TimeEnd != s[j].TimeEnd {
+		return s[i].TimeEnd > s[j].TimeEnd
+	}
+	return s[i].Time > s[j].Time
+}
+
+func (s SortedItems) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
 }
 
 type annotationType int

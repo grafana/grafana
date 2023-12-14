@@ -171,4 +171,22 @@ describe('getQueryHints()', () => {
       },
     });
   });
+
+  it('should not return rate hint for a recorded query', () => {
+    const seriesCount = SUM_HINT_THRESHOLD_COUNT;
+    const series = Array.from({ length: seriesCount }, (_) => ({
+      datapoints: [
+        [0, 0],
+        [0, 0],
+      ],
+    }));
+    let hints = getQueryHints('node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate', series);
+    expect(hints!.length).toBe(0);
+
+    hints = getQueryHints('node_namespace_pod_container:container_cpu_usage_seconds_total', series);
+    expect(hints!.length).toBe(0);
+
+    hints = getQueryHints('container_cpu_usage_seconds_total:irate_total', series);
+    expect(hints!.length).toBe(0);
+  });
 });

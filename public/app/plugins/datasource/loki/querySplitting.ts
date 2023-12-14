@@ -76,7 +76,8 @@ function adjustTargetsFromResponseState(targets: LokiQuery[], response: DataQuer
     .filter((target) => target.maxLines === undefined || target.maxLines > 0);
 }
 export function runSplitGroupedQueries(datasource: LokiDatasource, requests: LokiGroupedRequest[]) {
-  let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming };
+  const responseKey = requests.length ? requests[0].request.queryGroupId : uuidv4();
+  let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming, key: responseKey };
   const totalRequests = Math.max(...requests.map(({ partition }) => partition.length));
   const longestPartition = requests.filter(({ partition }) => partition.length === totalRequests)[0].partition;
 
@@ -245,8 +246,12 @@ export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequ
     );
 
     for (const stepMs in stepMsPartition) {
+      const targets = stepMsPartition[stepMs].map((q) => {
+        const { maxLines, ...query } = q;
+        return query;
+      });
       requests.push({
-        request: { ...request, targets: stepMsPartition[stepMs] },
+        request: { ...request, targets },
         partition: partitionTimeRange(false, request.range, Number(stepMs), Number(chunkRangeMs)),
       });
     }

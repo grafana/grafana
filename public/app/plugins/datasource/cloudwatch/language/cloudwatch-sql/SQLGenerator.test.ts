@@ -62,6 +62,13 @@ describe('SQLGenerator', () => {
         `SELECT COUNT("Bytes-Per-Second") FROM SCHEMA("AWS/EC2")`
       );
     });
+
+    it('should wrap in double quotes if metric name starts with a number ', () => {
+      const select = createFunctionWithParameter('COUNT', ['4xxErrorRate']);
+      expect(new SQLGenerator().expressionToSqlQuery({ ...baseQuery, select })).toEqual(
+        `SELECT COUNT("4xxErrorRate") FROM SCHEMA("AWS/EC2")`
+      );
+    });
   });
 
   describe('from', () => {

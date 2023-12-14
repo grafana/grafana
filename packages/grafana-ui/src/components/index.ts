@@ -100,7 +100,7 @@ export {
 } from './Table/types';
 export { TableInputCSV } from './TableInputCSV/TableInputCSV';
 export { TabsBar } from './Tabs/TabsBar';
-export { Tab } from './Tabs/Tab';
+export { Tab, type TabProps } from './Tabs/Tab';
 export { VerticalTab } from './Tabs/VerticalTab';
 export { TabContent } from './Tabs/TabContent';
 export { Counter } from './Tabs/Counter';
@@ -212,6 +212,7 @@ export { TextLink } from './Link/TextLink';
 export { Text } from './Text/Text';
 export { Box } from './Layout/Box/Box';
 export { Stack } from './Layout/Stack/Stack';
+export { Grid } from './Layout/Grid/Grid';
 
 export { Label } from './Forms/Label';
 export { Field, type FieldProps } from './Forms/Field';
@@ -227,7 +228,6 @@ export { FieldArray } from './Forms/FieldArray';
 // Select
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
 export * from './Select/Select';
-export { DropdownIndicator } from './Select/DropdownIndicator';
 export { getSelectStyles } from './Select/getSelectStyles';
 export * from './Select/types';
 

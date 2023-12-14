@@ -12,6 +12,9 @@ import { trackGroupedQueries } from './tracking';
 import { LokiQuery, LokiQueryType } from './types';
 
 jest.mock('./tracking');
+jest.mock('uuid', () => ({
+  v4: jest.fn().mockReturnValue('uuid'),
+}));
 
 describe('runSplitQuery()', () => {
   let datasource: LokiDatasource;
@@ -36,6 +39,36 @@ describe('runSplitQuery()', () => {
     await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
       // 3 days, 3 chunks, 3 requests.
       expect(datasource.runQuery).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  test('Metric queries with maxLines of 0 will execute', async () => {
+    const request = getQueryOptions<LokiQuery>({
+      targets: [{ expr: 'count_over_time({a="b"}[1m])', refId: 'A', maxLines: 0 }],
+      range,
+    });
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      // 3 days, 3 chunks, 3 requests.
+      expect(datasource.runQuery).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  test('Log queries with maxLines of 0 will NOT execute', async () => {
+    const request = getQueryOptions<LokiQuery>({
+      targets: [{ expr: '{a="b"}', refId: 'A', maxLines: 0 }],
+      range,
+    });
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      // Will not request a log query with maxLines of 0
+      expect(datasource.runQuery).toHaveBeenCalledTimes(0);
+    });
+  });
+
+  test('Returns a DataQueryResponse with the expected attributes', async () => {
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith((response) => {
+      expect(response[0].data).toBeDefined();
+      expect(response[0].state).toBe(LoadingState.Done);
+      expect(response[0].key).toBeDefined();
     });
   });
 
@@ -201,6 +234,7 @@ describe('runSplitQuery()', () => {
           {
             data: [],
             state: LoadingState.Done,
+            key: 'uuid',
           },
           [
             {
@@ -233,6 +267,7 @@ describe('runSplitQuery()', () => {
           {
             data: [],
             state: LoadingState.Done,
+            key: 'uuid',
           },
           [
             {

@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { useEffect, useReducer, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, Checkbox, Input, Spinner, useTheme2 } from '@grafana/ui';
 import store from 'app/core/store';
 
@@ -184,7 +185,10 @@ export const PromQail = (props: PromQailProps) => {
                         const isLoading = true;
                         const suggestionType = SuggestionType.Historical;
                         dispatch(addInteraction({ suggestionType, isLoading }));
-                        //CHECK THIS???
+                        reportInteraction('grafana_prometheus_promqail_know_what_you_want_to_query', {
+                          promVisualQuery: query,
+                          doYouKnow: 'no',
+                        });
                         promQailSuggest(dispatch, 0, query, labelNames, datasource);
                       }}
                     >
@@ -195,6 +199,10 @@ export const PromQail = (props: PromQailProps) => {
                       variant="primary"
                       data-testid={testIds.clickForAi}
                       onClick={() => {
+                        reportInteraction('grafana_prometheus_promqail_know_what_you_want_to_query', {
+                          promVisualQuery: query,
+                          doYouKnow: 'yes',
+                        });
                         const isLoading = false;
                         const suggestionType = SuggestionType.AI;
                         dispatch(addInteraction({ suggestionType, isLoading }));
@@ -271,6 +279,10 @@ export const PromQail = (props: PromQailProps) => {
                                       interaction: newInteraction,
                                     };
 
+                                    reportInteraction('grafana_prometheus_promqail_suggest_query_instead', {
+                                      promVisualQuery: query,
+                                    });
+
                                     dispatch(updateInteraction(payload));
                                     promQailSuggest(dispatch, idx, query, labelNames, datasource, newInteraction);
                                   }}
@@ -291,6 +303,11 @@ export const PromQail = (props: PromQailProps) => {
                                       idx: idx,
                                       interaction: newInteraction,
                                     };
+
+                                    reportInteraction('grafana_prometheus_promqail_prompt_submitted', {
+                                      promVisualQuery: query,
+                                      prompt: interaction.prompt,
+                                    });
 
                                     dispatch(updateInteraction(payload));
                                     // add the suggestions in the API call

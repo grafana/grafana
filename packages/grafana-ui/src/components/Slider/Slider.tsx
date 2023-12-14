@@ -3,7 +3,7 @@ import { Global } from '@emotion/react';
 import SliderComponent from 'rc-slider';
 import React, { useState, useCallback, ChangeEvent, FocusEvent } from 'react';
 
-import { useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Input } from '../Input/Input';
 
 import { getStyles } from './styles';
@@ -26,8 +26,7 @@ export const Slider = ({
   included,
 }: SliderProps) => {
   const isHorizontal = orientation === 'horizontal';
-  const theme = useTheme2();
-  const styles = getStyles(theme, isHorizontal, Boolean(marks));
+  const styles = useStyles2(getStyles, isHorizontal, Boolean(marks));
   const SliderWithTooltip = SliderComponent;
   const [sliderValue, setSliderValue] = useState<number>(value ?? min);
 
