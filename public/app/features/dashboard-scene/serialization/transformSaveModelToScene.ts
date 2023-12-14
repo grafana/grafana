@@ -195,6 +195,11 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     variables = new SceneVariableSet({
       variables: variableObjects,
     });
+  } else {
+    // Create empty variable set
+    variables = new SceneVariableSet({
+      variables: [],
+    });
   }
 
   if (oldModel.annotations?.list?.length) {

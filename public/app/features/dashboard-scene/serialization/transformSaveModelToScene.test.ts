@@ -142,6 +142,25 @@ describe('transformSaveModelToScene', () => {
       expect(scene.state.$behaviors![1]).toBeInstanceOf(behaviors.CursorSync);
       expect((scene.state.$behaviors![1] as behaviors.CursorSync).state.sync).toEqual(DashboardCursorSync.Crosshair);
     });
+
+    it('should initialize the Dashboard Scene with empty template variables', () => {
+      const dash = {
+        ...defaultDashboard,
+        title: 'test empty dashboard with no variables',
+        uid: 'test-uid',
+        time: { from: 'now-10h', to: 'now' },
+        weekStart: 'saturday',
+        fiscalYearStartMonth: 2,
+        timezone: 'America/New_York',
+        templating: {
+          list: [],
+        },
+      };
+      const oldModel = new DashboardModel(dash);
+
+      const scene = createDashboardSceneFromDashboardModel(oldModel);
+      expect(scene.state.$variables?.state.variables).toBeDefined();
+    });
   });
 
   describe('when organizing panels as scene children', () => {

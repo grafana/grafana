@@ -1,7 +1,7 @@
 import React, { ChangeEvent } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
-import { behaviors, SceneComponentProps, SceneObjectBase, SceneObjectRef, sceneGraph } from '@grafana/scenes';
+import { behaviors, SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
 import {
   Box,
@@ -23,12 +23,11 @@ import { DeleteDashboardButton } from 'app/features/dashboard/components/DeleteD
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
 
-export interface GeneralSettingsEditViewState extends DashboardEditViewState {
-  dashboardRef: SceneObjectRef<DashboardScene>;
-}
+export interface GeneralSettingsEditViewState extends DashboardEditViewState {}
 
 const EDITABLE_OPTIONS = [
   { label: 'Editable', value: true },
@@ -46,7 +45,7 @@ export class GeneralSettingsEditView
   implements DashboardEditView
 {
   private get _dashboard(): DashboardScene {
-    return this.state.dashboardRef.resolve();
+    return getDashboardSceneFor(this);
   }
 
   public getUrlKey(): string {
