@@ -3,11 +3,10 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { openMenu } from 'react-select-event';
 
-import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
-
 import createMockDatasource from '../../__mocks__/datasource';
 import createMockPanelData from '../../__mocks__/panelData';
 import createMockQuery from '../../__mocks__/query';
+import { selectOptionInTest } from '../../utils/testUtils';
 
 import DimensionFields from './DimensionFields';
 import { appendDimensionFilter, setDimensionFilterValue } from './setQueryValue';
