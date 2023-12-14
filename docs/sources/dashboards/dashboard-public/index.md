@@ -8,7 +8,7 @@ labels:
     - enterprise
     - oss
 title: Public dashboards
-description: Share your Grafana dashboards with anyone using public dashboards
+description: Make your Grafana dashboards public and share them with anyone
 weight: 8
 ---
 
