@@ -6,7 +6,7 @@ aliases:
   - ../../visualizations/table/
   - ../../visualizations/table/filter-table-columns/
   - /docs/grafana/next/panels/visualizations/table/table-field-options/
-description: Learn about table panel visualization features.
+description: Configure options for Grafana's table visualization
 keywords:
   - grafana
   - dashboard
