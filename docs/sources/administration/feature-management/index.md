@@ -18,7 +18,8 @@ For detailed insights into particular features and how they operate, refer to [C
 
 ## Manage feature toggles
 
-In the Administration page, the Feature Management section enables administrators to see and switch the various features active in their Grafana environment. Based on the development stage of the feature, we establish specific options for visibility and customization.
+In the Administration page, the **Feature Management** section enables administrators to see and edit the various features active in their Grafana environment.
+There are different options for visibility and customization depending on the development stage of the feature
 
 | Stage                | Visibility | Editable |
 | -------------------- | ---------- | -------- |
