@@ -5,7 +5,6 @@ import {
   SceneComponentProps,
   SceneDataTransformer,
   SceneObjectBase,
-  SceneObjectRef,
   SceneObjectState,
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
@@ -16,6 +15,7 @@ import {
 import { Tab, TabContent, TabsBar } from '@grafana/ui';
 import { shouldShowAlertingTab } from 'app/features/dashboard/components/PanelEditor/state/selectors';
 
+import { ShareQueryDataProvider } from '../../scene/ShareQueryDataProvider';
 import { VizPanelManager } from '../VizPanelManager';
 
 import { PanelDataAlertingTab } from './PanelDataAlertingTab';
@@ -24,7 +24,6 @@ import { PanelDataTransformationsTab } from './PanelDataTransformationsTab';
 import { PanelDataPaneTab } from './types';
 
 export interface PanelDataPaneState extends SceneObjectState {
-  panelRef: SceneObjectRef<VizPanelManager>;
   tabs?: PanelDataPaneTab[];
   tab?: string;
 }
@@ -34,6 +33,7 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['tab'] });
   private _initialTabsBuilt = false;
   private panelSubscription: Unsubscribable | undefined;
+  public panelManager: VizPanelManager;
 
   getUrlState() {
     return {
@@ -50,21 +50,19 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
     }
   }
 
-  constructor(state: Omit<PanelDataPaneState, 'tab'> & { tab?: string }) {
+  constructor(panelMgr: VizPanelManager) {
     super({
       tab: 'queries',
-      ...state,
     });
 
-    const { panelRef } = this.state;
-    const panelManager = panelRef.resolve();
-    const panel = panelManager.state.panel;
+    this.panelManager = panelMgr;
+    const panel = this.panelManager.state.panel;
 
     if (panel) {
       // The subscription below is needed because the plugin may not be loaded when this pane is mounted.
       // This can happen i.e. when the user opens the panel editor directly via an URL.
       this._subs.add(
-        panelManager.subscribeToState((n, p) => {
+        this.panelManager.subscribeToState((n, p) => {
           if (n.panel !== p.panel) {
             this.buildTabs();
             this.setupPanelSubscription(n.panel);
@@ -99,14 +97,14 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
       }
     });
   }
-  private getDataObjects(): [SceneQueryRunner | undefined, SceneDataTransformer | undefined] {
-    const { panelRef } = this.state;
-    const dataObj = sceneGraph.getData(panelRef.resolve().state.panel);
 
-    let runner: SceneQueryRunner | undefined;
+  private getDataObjects(): [SceneQueryRunner | ShareQueryDataProvider | undefined, SceneDataTransformer | undefined] {
+    const dataObj = sceneGraph.getData(this.panelManager.state.panel);
+
+    let runner: SceneQueryRunner | ShareQueryDataProvider | undefined;
     let transformer: SceneDataTransformer | undefined;
 
-    if (dataObj instanceof SceneQueryRunner) {
+    if (dataObj instanceof SceneQueryRunner || dataObj instanceof ShareQueryDataProvider) {
       runner = dataObj;
     }
 
@@ -117,16 +115,13 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
       }
     }
 
-    //TODO: handle ShareQueryDataProvider
-
     return [runner, transformer];
   }
 
   private buildTabs() {
-    const { panelRef } = this.state;
-    const panelManager = panelRef.resolve();
+    const panelManager = this.panelManager;
     const panel = panelManager.state.panel;
-    const [runner, transformer] = this.getDataObjects();
+    const [runner] = this.getDataObjects();
     const tabs: PanelDataPaneTab[] = [];
 
     if (panel) {
@@ -141,17 +136,13 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
         return;
       } else {
         if (runner) {
-          tabs.push(new PanelDataQueriesTab({ panelRef: panel.getRef(), dataRef: new SceneObjectRef(runner) }));
+          tabs.push(new PanelDataQueriesTab(this.panelManager));
         }
 
-        if (transformer) {
-          tabs.push(
-            new PanelDataTransformationsTab({ panelRef: panel.getRef(), dataRef: new SceneObjectRef(transformer) })
-          );
-        }
+        tabs.push(new PanelDataTransformationsTab(this.panelManager));
 
         if (shouldShowAlertingTab(plugin)) {
-          tabs.push(new PanelDataAlertingTab({ panelRef: panel.getRef() }));
+          tabs.push(new PanelDataAlertingTab(this.panelManager));
         }
       }
     }

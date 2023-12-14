@@ -14,8 +14,10 @@ import {
   SplitLayout,
   VizPanel,
 } from '@grafana/scenes';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { getDashboardUrl } from '../utils/urlBuilders';
 
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
@@ -54,6 +56,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   }
 
   private _activationHandler() {
+    const oldDashboardWrapper = new DashboardModelCompatibilityWrapper(this.state.dashboardRef.resolve());
+    // @ts-expect-error
+    getDashboardSrv().setCurrent(oldDashboardWrapper);
+
     // Deactivation logic
     return () => {
       getUrlSyncManager().cleanUp(this);
@@ -123,7 +129,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
 export function buildPanelEditScene(dashboard: DashboardScene, panel: VizPanel): PanelEditor {
   const panelClone = panel.clone();
-  const vizPanelMgr = new VizPanelManager(panelClone);
+
+  const vizPanelMgr = new VizPanelManager(panelClone, dashboard.getRef());
   const dashboardStateCloned = sceneUtils.cloneSceneObjectState(dashboard.state);
 
   return new PanelEditor({
@@ -142,7 +149,7 @@ export function buildPanelEditScene(dashboard: DashboardScene, panel: VizPanel):
           children: [vizPanelMgr],
         }),
         secondary: new SceneFlexItem({
-          body: new PanelDataPane({ panelRef: vizPanelMgr.getRef() }),
+          body: new PanelDataPane(vizPanelMgr),
         }),
       }),
       secondary: new SceneFlexLayout({
