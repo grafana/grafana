@@ -42,8 +42,8 @@ type ExternalAlertmanager struct {
 }
 
 type ExternalAMcfg struct {
-	URL     string
-	Headers map[string]string
+	URL    string
+	Header http.Header
 }
 
 type Option func(*ExternalAlertmanager)
@@ -66,15 +66,17 @@ func (cfg *ExternalAMcfg) SHA256() string {
 func (cfg *ExternalAMcfg) headerString() string {
 	var result strings.Builder
 
-	headerKeys := make([]string, 0, len(cfg.Headers))
-	for key := range cfg.Headers {
+	headerKeys := make([]string, 0, len(cfg.Header))
+	for key := range cfg.Header {
 		headerKeys = append(headerKeys, key)
 	}
 
 	sort.Strings(headerKeys)
 
 	for _, key := range headerKeys {
-		result.WriteString(fmt.Sprintf("%s:%s", key, cfg.Headers[key]))
+		for _, value := range cfg.Header.Values(key) {
+			result.WriteString(fmt.Sprintf("%s:%s", key, value))
+		}
 	}
 
 	return result.String()
@@ -177,9 +179,9 @@ func (s *ExternalAlertmanager) DroppedAlertmanagers() []*url.URL {
 	return s.manager.DroppedAlertmanagers()
 }
 
-func buildNotifierConfig(alertmanagers []ExternalAMcfg) (*config.Config, map[string]map[string]string, error) {
+func buildNotifierConfig(alertmanagers []ExternalAMcfg) (*config.Config, map[string]http.Header, error) {
 	amConfigs := make([]*config.AlertmanagerConfig, 0, len(alertmanagers))
-	headers := map[string]map[string]string{}
+	headers := map[string]http.Header{}
 	for i, am := range alertmanagers {
 		u, err := url.Parse(am.URL)
 		if err != nil {
@@ -202,10 +204,10 @@ func buildNotifierConfig(alertmanagers []ExternalAMcfg) (*config.Config, map[str
 			ServiceDiscoveryConfigs: sdConfig,
 		}
 
-		if am.Headers != nil {
+		if am.Header != nil {
 			// The key has the same format as the AlertmanagerConfigs.ToMap() would generate
 			// so we can use it later on when working with the alertmanager config map.
-			headers[fmt.Sprintf("config-%d", i)] = am.Headers
+			headers[fmt.Sprintf("config-%d", i)] = am.Header
 		}
 
 		// Check the URL for basic authentication information first

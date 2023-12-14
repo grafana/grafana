@@ -1192,7 +1192,7 @@ func TestDataSource_CustomHeaders(t *testing.T) {
 		name             string
 		jsonData         *simplejson.Json
 		secureJsonData   map[string][]byte
-		expectedHeaders  map[string]string
+		expectedHeaders  http.Header
 		expectedErrorMsg string
 	}{
 		{
@@ -1203,8 +1203,8 @@ func TestDataSource_CustomHeaders(t *testing.T) {
 			secureJsonData: map[string][]byte{
 				"httpHeaderValue1": encryptedValue,
 			},
-			expectedHeaders: map[string]string{
-				"X-Test-Header1": testValue,
+			expectedHeaders: http.Header{
+				"X-Test-Header1": {testValue},
 			},
 		},
 		{
@@ -1213,7 +1213,7 @@ func TestDataSource_CustomHeaders(t *testing.T) {
 				"httpHeaderName1": "X-Test-Header1",
 			}),
 			secureJsonData:  map[string][]byte{},
-			expectedHeaders: map[string]string{},
+			expectedHeaders: http.Header{},
 		},
 		{
 			name: "non customer header value",
@@ -1221,7 +1221,7 @@ func TestDataSource_CustomHeaders(t *testing.T) {
 				"someotherheader": "X-Test-Header1",
 			}),
 			secureJsonData:  map[string][]byte{},
-			expectedHeaders: map[string]string{},
+			expectedHeaders: http.Header{},
 		},
 	}
 
