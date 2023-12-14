@@ -51,7 +51,7 @@ export function GrafanaRuleQueryViewer({
   return (
     <Stack gap={2} direction="column">
       <div className={styles.maxWidthContainer}>
-        <Stack gap={2} wrap="wrap">
+        <Stack gap={2} wrap="wrap" data-testid="queries-container">
           {dataQueries.map(({ model, relativeTimeRange, refId, datasourceUid }, index) => {
             const dataSource = dsByUid[datasourceUid];
 
@@ -73,7 +73,7 @@ export function GrafanaRuleQueryViewer({
         </Stack>
       </div>
       <div className={styles.maxWidthContainer}>
-        <Stack gap={1} wrap="wrap">
+        <Stack gap={1} wrap="wrap" data-testid="expressions-container">
           {expressions.map(({ model, refId, datasourceUid }, index) => {
             const dataSource = dsByUid[datasourceUid];
 
