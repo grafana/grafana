@@ -27,7 +27,7 @@ type SmtpSettings struct {
 }
 
 // validates mail headers
-var smtpHeaderRegex = regexp.MustCompile(`^[A-Z][A-Za-z0-9]*(-[A-Z][A-Za-z0-9]*)*$`)
+var mailHeaderRegex = regexp.MustCompile(`^[A-Z][A-Za-z0-9]*(-[A-Z][A-Za-z0-9]*)*$`)
 
 func (cfg *Cfg) readSmtpSettings() error {
 	sec := cfg.Raw.Section("smtp")
@@ -57,7 +57,7 @@ func (cfg *Cfg) readSmtpSettings() error {
 }
 
 func validHeader(header string) bool {
-	return smtpHeaderRegex.MatchString(header)
+	return mailHeaderRegex.MatchString(header)
 }
 
 func (cfg *Cfg) readGrafanaSmtpStaticHeaders() error {
