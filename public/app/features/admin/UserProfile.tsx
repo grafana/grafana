@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React, { PureComponent, useRef, useState } from 'react';
 
-import { Button, ConfirmButton, ConfirmModal, Input, LegacyInputStatus } from '@grafana/ui';
+import { Button, ConfirmButton, ConfirmModal, Input, LegacyInputStatus, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, UserDTO } from 'app/types';
 
@@ -82,90 +82,89 @@ export function UserProfile({
   return (
     <>
       <h3 className="page-heading">User information</h3>
-      <div className="gf-form-group">
-        <div className="gf-form">
-          <table className="filter-table form-inline">
-            <tbody>
-              <UserProfileRow
-                label="Name"
-                value={user.name}
-                locked={editLocked}
-                lockMessage={lockMessage}
-                onChange={onUserNameChange}
-              />
-              <UserProfileRow
-                label="Email"
-                value={user.email}
-                locked={editLocked}
-                lockMessage={lockMessage}
-                onChange={onUserEmailChange}
-              />
-              <UserProfileRow
-                label="Username"
-                value={user.login}
-                locked={editLocked}
-                lockMessage={lockMessage}
-                onChange={onUserLoginChange}
-              />
-              <UserProfileRow
-                label="Password"
-                value="********"
-                inputType="password"
-                locked={passwordChangeLocked}
-                lockMessage={lockMessage}
-                onChange={onPasswordChange}
-              />
-            </tbody>
-          </table>
-        </div>
-        <div className={styles.buttonRow}>
-          {canDelete && (
-            <>
-              <Button variant="destructive" onClick={showDeleteUserModal(true)} ref={deleteUserRef}>
-                Delete user
+      <div className={styles.container}>
+        <Stack direction="column" gap={1.5}>
+          <div>
+            <table className="filter-table form-inline">
+              <tbody>
+                <UserProfileRow
+                  label="Name"
+                  value={user.name}
+                  locked={editLocked}
+                  lockMessage={lockMessage}
+                  onChange={onUserNameChange}
+                />
+                <UserProfileRow
+                  label="Email"
+                  value={user.email}
+                  locked={editLocked}
+                  lockMessage={lockMessage}
+                  onChange={onUserEmailChange}
+                />
+                <UserProfileRow
+                  label="Username"
+                  value={user.login}
+                  locked={editLocked}
+                  lockMessage={lockMessage}
+                  onChange={onUserLoginChange}
+                />
+                <UserProfileRow
+                  label="Password"
+                  value="********"
+                  inputType="password"
+                  locked={passwordChangeLocked}
+                  lockMessage={lockMessage}
+                  onChange={onPasswordChange}
+                />
+              </tbody>
+            </table>
+          </div>
+          <Stack gap={2}>
+            {canDelete && (
+              <>
+                <Button variant="destructive" onClick={showDeleteUserModal(true)} ref={deleteUserRef}>
+                  Delete user
+                </Button>
+                <ConfirmModal
+                  isOpen={showDeleteModal}
+                  title="Delete user"
+                  body="Are you sure you want to delete this user?"
+                  confirmText="Delete user"
+                  onConfirm={handleUserDelete}
+                  onDismiss={showDeleteUserModal(false)}
+                />
+              </>
+            )}
+            {user.isDisabled && canEnable && (
+              <Button variant="secondary" onClick={handleUserEnable}>
+                Enable user
               </Button>
-              <ConfirmModal
-                isOpen={showDeleteModal}
-                title="Delete user"
-                body="Are you sure you want to delete this user?"
-                confirmText="Delete user"
-                onConfirm={handleUserDelete}
-                onDismiss={showDeleteUserModal(false)}
-              />
-            </>
-          )}
-          {user.isDisabled && canEnable && (
-            <Button variant="secondary" onClick={handleUserEnable}>
-              Enable user
-            </Button>
-          )}
-          {!user.isDisabled && canDisable && (
-            <>
-              <Button variant="secondary" onClick={showDisableUserModal(true)} ref={disableUserRef}>
-                Disable user
-              </Button>
-              <ConfirmModal
-                isOpen={showDisableModal}
-                title="Disable user"
-                body="Are you sure you want to disable this user?"
-                confirmText="Disable user"
-                onConfirm={handleUserDisable}
-                onDismiss={showDisableUserModal(false)}
-              />
-            </>
-          )}
-        </div>
+            )}
+            {!user.isDisabled && canDisable && (
+              <>
+                <Button variant="secondary" onClick={showDisableUserModal(true)} ref={disableUserRef}>
+                  Disable user
+                </Button>
+                <ConfirmModal
+                  isOpen={showDisableModal}
+                  title="Disable user"
+                  body="Are you sure you want to disable this user?"
+                  confirmText="Disable user"
+                  onConfirm={handleUserDisable}
+                  onDismiss={showDisableUserModal(false)}
+                />
+              </>
+            )}
+          </Stack>
+        </Stack>
       </div>
     </>
   );
 }
 
 const styles = {
-  buttonRow: css`
-    margin-top: 0.8rem;
-    > * {
-      margin-right: 16px;
-    }
+  container: css`
+    margin-bottom: 40px;
   `,
 };
 
