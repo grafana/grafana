@@ -557,8 +557,8 @@ steps:
     token:
       from_secret: drone_token
 - commands:
-  - /src/grafana-build artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64
-    --go-version=1.21.3 --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER
+  - /src/grafana-build artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64 -a targz:grafana:linux/arm/v7
+    --go-version=1.21.4 --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER
     --grafana-dir=$$PWD > packages.txt
   depends_on:
   - yarn-install
@@ -1809,8 +1809,8 @@ steps:
   image: node:20.9.0-alpine
   name: build-frontend-packages
 - commands:
-  - /src/grafana-build artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64
-    --go-version=1.21.3 --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER
+  - /src/grafana-build artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64 -a targz:grafana:linux/arm/v7
+    --go-version=1.21.4 --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER
     --grafana-dir=$$PWD > packages.txt
   depends_on:
   - update-package-json-version

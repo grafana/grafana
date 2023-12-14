@@ -81,6 +81,7 @@ def build_e2e(trigger, ver_mode):
                 artifacts = [
                     "targz:grafana:linux/amd64",
                     "targz:grafana:linux/arm64",
+                    "targz:grafana:linux/arm/v7"
                 ],
                 depends_on = ["update-package-json-version"],
                 file = "packages.txt",
