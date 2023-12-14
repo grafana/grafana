@@ -82,10 +82,18 @@ export const ServerStats = () => {
               { name: 'Organisations', value: stats?.orgs },
               { name: 'Users total', value: stats?.users },
               { name: 'Active users in last 30 days', value: stats?.activeUsers },
-              ...(config.featureToggles.displayAnonymousStats && stats?.activeDevices
+              { name: '', value: '' },
+              ...(config.featureToggles.displayAnonymousStats && stats?.activeDevices && config.anonymousDeviceLimit
                 ? [
-                    { name: 'Active anonymous devices in last 30 days', value: stats?.activeDevices },
-                    { name: 'Active anonymous users in last 30 days', value: Math.floor(stats?.activeDevices / 3) },
+                    {
+                      name: 'Active anonymous users',
+                      value: `${Math.floor(stats?.activeDevices / 3)} / ${Math.floor(config.anonymousDeviceLimit / 3)}`,
+                    },
+                    {
+                      name: 'Active anonymous devices',
+                      value: `${stats?.activeDevices} / ${config.anonymousDeviceLimit}`,
+                      tooltip: "Each third of users' devices is counted as one active user.",
+                    },
                   ]
                 : []),
               { name: 'Active sessions', value: stats?.activeSessions },
