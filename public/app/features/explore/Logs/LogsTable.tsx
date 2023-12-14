@@ -117,6 +117,10 @@ export function LogsTable(props: Props) {
         transformations.push({
           id: 'organize',
           options: {
+            indexByName: {
+              [logsFrame.bodyField.name]: 0,
+              [logsFrame.timeField.name]: 1,
+            },
             includeByName: {
               [logsFrame.bodyField.name]: true,
               [logsFrame.timeField.name]: true,
@@ -211,22 +215,33 @@ function extractFields(dataFrame: DataFrame) {
 
 function buildLabelFilters(columnsWithMeta: Record<string, fieldNameMeta>) {
   // Create object of label filters to include columns selected by the user
-  let labelFilters: Record<string, true> = {};
+  let labelFilters: Record<string, number> = {};
   Object.keys(columnsWithMeta)
     .filter((key) => columnsWithMeta[key].active)
     .forEach((key) => {
-      labelFilters[key] = true;
+      const index = columnsWithMeta[key].index;
+      // Index should always be defined for any active column
+      if (index !== undefined) {
+        labelFilters[key] = index;
+      }
     });
 
   return labelFilters;
 }
 
-function getLabelFiltersTransform(labelFilters: Record<string, true>) {
+function getLabelFiltersTransform(labelFilters: Record<string, number>) {
+  let labelFiltersInclude: Record<string, boolean> = {};
+
+  for (const key in labelFilters) {
+    labelFiltersInclude[key] = true;
+  }
+
   if (Object.keys(labelFilters).length > 0) {
     return {
       id: 'organize',
       options: {
-        includeByName: labelFilters,
+        indexByName: labelFilters,
+        includeByName: labelFiltersInclude,
       },
     };
   }

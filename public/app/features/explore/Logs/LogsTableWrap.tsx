@@ -35,11 +35,23 @@ interface Props extends Themeable2 {
   datasourceType?: string;
 }
 
-export type fieldNameMeta = {
+type activeFieldMeta = {
+  active: undefined;
+  index: undefined; // if undefined the column is not selected
+};
+
+type inactiveFieldMeta = {
+  active: true;
+  index: number; // if undefined the column is not selected
+};
+
+type genericMeta = {
   percentOfLinesWithLabel: number;
-  active: boolean | undefined;
   type?: 'BODY_FIELD' | 'TIME_FIELD';
 };
+
+export type fieldNameMeta = (inactiveFieldMeta | activeFieldMeta) & genericMeta;
+
 type fieldName = string;
 type fieldNameMetaStore = Record<fieldName, fieldNameMeta>;
 
@@ -65,9 +77,10 @@ export function LogsTableWrap(props: Props) {
     (fieldNames: fieldNameMetaStore) => {
       const previouslySelected = props.panelState?.columns;
       if (previouslySelected) {
-        Object.values(previouslySelected).forEach((key) => {
+        Object.values(previouslySelected).forEach((key, index) => {
           if (fieldNames[key]) {
             fieldNames[key].active = true;
+            fieldNames[key].index = index;
           }
         });
       }
@@ -164,19 +177,28 @@ export function LogsTableWrap(props: Props) {
       labels.forEach((labels: Labels) => {
         const labelsArray = Object.keys(labels);
         // Iterate through the label values
-        labelsArray.forEach((label) => {
+        labelsArray.forEach((label, index) => {
           // If it's already in our map, increment the count
           if (labelCardinality.has(label)) {
             const value = labelCardinality.get(label);
             if (value) {
-              labelCardinality.set(label, {
-                percentOfLinesWithLabel: value.percentOfLinesWithLabel + 1,
-                active: value?.active,
-              });
+              if (value?.active) {
+                labelCardinality.set(label, {
+                  percentOfLinesWithLabel: value.percentOfLinesWithLabel + 1,
+                  active: true,
+                  index: value.index,
+                });
+              } else {
+                labelCardinality.set(label, {
+                  percentOfLinesWithLabel: value.percentOfLinesWithLabel + 1,
+                  active: undefined,
+                  index: undefined,
+                });
+              }
             }
             // Otherwise add it
           } else {
-            labelCardinality.set(label, { percentOfLinesWithLabel: 1, active: undefined });
+            labelCardinality.set(label, { percentOfLinesWithLabel: 1, active: undefined, index: undefined });
           }
         });
       });
@@ -195,13 +217,27 @@ export function LogsTableWrap(props: Props) {
 
     // Normalize the other fields
     otherFields.forEach((field) => {
-      pendingLabelState[field.name] = {
-        percentOfLinesWithLabel: normalize(
-          field.values.filter((value) => value !== null && value !== undefined).length,
-          numberOfLogLines
-        ),
-        active: pendingLabelState[field.name]?.active,
-      };
+      const isActive = pendingLabelState[field.name]?.active;
+      const index = pendingLabelState[field.name]?.index;
+      if (isActive && index !== undefined) {
+        pendingLabelState[field.name] = {
+          percentOfLinesWithLabel: normalize(
+            field.values.filter((value) => value !== null && value !== undefined).length,
+            numberOfLogLines
+          ),
+          active: true,
+          index: index,
+        };
+      } else {
+        pendingLabelState[field.name] = {
+          percentOfLinesWithLabel: normalize(
+            field.values.filter((value) => value !== null && value !== undefined).length,
+            numberOfLogLines
+          ),
+          active: undefined,
+          index: undefined,
+        };
+      }
     });
 
     pendingLabelState = getColumnsFromProps(pendingLabelState);
@@ -255,45 +291,55 @@ export function LogsTableWrap(props: Props) {
 
   const clearSelection = () => {
     const pendingLabelState = { ...columnsWithMeta };
+    let index = 0;
     Object.keys(pendingLabelState).forEach((key) => {
-      pendingLabelState[key].active = !!pendingLabelState[key].type;
+      const isDefaultField = !!pendingLabelState[key].type;
+      // after reset the only active fields are the special time and body fields
+      pendingLabelState[key].active = isDefaultField ? true : undefined;
+      // reset the index
+      pendingLabelState[key].index = isDefaultField ? index++ : undefined;
     });
     setColumnsWithMeta(pendingLabelState);
   };
 
-  // Toggle a column on or off when the user interacts with an element in the multi-select sidebar
-  const toggleColumn = (columnName: fieldName) => {
-    if (!columnsWithMeta || !(columnName in columnsWithMeta)) {
-      console.warn('failed to get column', columnsWithMeta);
-      return;
-    }
+  const reorderColumn = (oldIndex: number, newIndex: number) => {
+    const pendingLabelState = { ...columnsWithMeta };
 
-    const pendingLabelState = {
-      ...columnsWithMeta,
-      [columnName]: { ...columnsWithMeta[columnName], active: !columnsWithMeta[columnName]?.active },
-    };
-
-    // Analytics
-    columnFilterEvent(columnName);
+    //swap the indices
+    Object.keys(pendingLabelState).forEach((key) => {
+      const index = columnsWithMeta[key].index;
+      if (index === oldIndex) {
+        pendingLabelState[key].index = newIndex;
+      } else if (index === newIndex) {
+        pendingLabelState[key].index = oldIndex;
+      }
+    });
 
     // Set local state
     setColumnsWithMeta(pendingLabelState);
 
-    // If user is currently filtering, update filtered state
-    if (filteredColumnsWithMeta) {
-      const pendingFilteredLabelState = {
-        ...filteredColumnsWithMeta,
-        [columnName]: { ...filteredColumnsWithMeta[columnName], active: !filteredColumnsWithMeta[columnName]?.active },
-      };
-      setFilteredColumnsWithMeta(pendingFilteredLabelState);
-    }
+    // Sync the explore state
+    updateExploreState(pendingLabelState);
+  };
+
+  function updateExploreState(pendingLabelState: fieldNameMetaStore) {
+    // Get all active columns and sort by index
+    const newColumnsArray = Object.keys(pendingLabelState)
+      // Only include active filters
+      .filter((key) => pendingLabelState[key]?.active)
+      .sort((a, b) => {
+        const pa = pendingLabelState[a];
+        const pb = pendingLabelState[b];
+        if (pa.index !== undefined && pb.index !== undefined) {
+          return pa.index - pb.index; // sort by index
+        }
+        return 0;
+      });
 
     const newColumns: Record<number, string> = Object.assign(
       {},
       // Get the keys of the object as an array
-      Object.keys(pendingLabelState)
-        // Only include active filters
-        .filter((key) => pendingLabelState[key]?.active)
+      newColumnsArray
     );
 
     const defaultColumns = { 0: logsFrame?.timeField.name ?? '', 1: logsFrame?.bodyField.name ?? '' };
@@ -308,6 +354,74 @@ export function LogsTableWrap(props: Props) {
 
     // Update url state
     updatePanelState(newPanelState);
+  }
+
+  // Toggle a column on or off when the user interacts with an element in the multi-select sidebar
+  const toggleColumn = (columnName: fieldName) => {
+    if (!columnsWithMeta || !(columnName in columnsWithMeta)) {
+      console.warn('failed to get column', columnsWithMeta);
+      return;
+    }
+
+    const length = Object.keys(columnsWithMeta).filter((c) => columnsWithMeta[c].active).length;
+
+    const isActive = !columnsWithMeta[columnName]?.active ? true : undefined;
+
+    let pendingLabelState: fieldNameMetaStore;
+    if (isActive) {
+      pendingLabelState = {
+        ...columnsWithMeta,
+        [columnName]: {
+          ...columnsWithMeta[columnName],
+          active: isActive,
+          index: length,
+        },
+      };
+    } else {
+      pendingLabelState = {
+        ...columnsWithMeta,
+        [columnName]: {
+          ...columnsWithMeta[columnName],
+          active: undefined,
+          index: undefined,
+        },
+      };
+    }
+
+    // Analytics
+    columnFilterEvent(columnName);
+
+    // Set local state
+    setColumnsWithMeta(pendingLabelState);
+
+    // If user is currently filtering, update filtered state
+    if (filteredColumnsWithMeta) {
+      const active = !filteredColumnsWithMeta[columnName]?.active;
+      let pendingFilteredLabelState: fieldNameMetaStore;
+      if (active) {
+        pendingFilteredLabelState = {
+          ...filteredColumnsWithMeta,
+          [columnName]: {
+            ...filteredColumnsWithMeta[columnName],
+            active: active,
+            index: length,
+          },
+        };
+      } else {
+        pendingFilteredLabelState = {
+          ...filteredColumnsWithMeta,
+          [columnName]: {
+            ...filteredColumnsWithMeta[columnName],
+            active: undefined,
+            index: undefined,
+          },
+        };
+      }
+
+      setFilteredColumnsWithMeta(pendingFilteredLabelState);
+    }
+
+    updateExploreState(pendingLabelState);
   };
 
   // uFuzzy search dispatcher, adds any matches to the local state
@@ -386,6 +500,7 @@ export function LogsTableWrap(props: Props) {
         <section className={styles.sidebar}>
           <LogsColumnSearch value={searchValue} onChange={onSearchInputChange} />
           <LogsTableMultiSelect
+            reorderColumn={reorderColumn}
             toggleColumn={toggleColumn}
             filteredColumnsWithMeta={filteredColumnsWithMeta}
             columnsWithMeta={columnsWithMeta}

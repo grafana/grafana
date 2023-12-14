@@ -42,6 +42,7 @@ export const LogsTableMultiSelect = (props: {
   filteredColumnsWithMeta: Record<string, fieldNameMeta> | undefined;
   columnsWithMeta: Record<string, fieldNameMeta>;
   clear: () => void;
+  reorderColumn: (oldIndex: number, newIndex: number) => void;
 }) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
@@ -57,6 +58,8 @@ export const LogsTableMultiSelect = (props: {
           </button>
         </div>
         <LogsTableNavColumn
+          reorderColumn={props.reorderColumn}
+          id={'selected-fields'}
           toggleColumn={props.toggleColumn}
           labels={props.filteredColumnsWithMeta ?? props.columnsWithMeta}
           valueFilter={(value) => props.columnsWithMeta[value]?.active ?? false}
@@ -64,6 +67,8 @@ export const LogsTableMultiSelect = (props: {
 
         <div className={styles.columnHeader}>Fields</div>
         <LogsTableNavColumn
+          reorderColumn={props.reorderColumn}
+          id={'available-fields'}
           toggleColumn={props.toggleColumn}
           labels={props.filteredColumnsWithMeta ?? props.columnsWithMeta}
           valueFilter={(value) => !props.columnsWithMeta[value]?.active}

@@ -123,10 +123,10 @@ describe('LogsTable', () => {
     setup({
       dataFrame: getMockElasticFrame(),
       columnsWithMeta: {
-        counter: { active: true, percentOfLinesWithLabel: 3 },
-        level: { active: true, percentOfLinesWithLabel: 3 },
-        line: { active: true, percentOfLinesWithLabel: 3 },
-        '@timestamp': { active: true, percentOfLinesWithLabel: 3 },
+        counter: { active: true, percentOfLinesWithLabel: 3, index: 0 },
+        level: { active: true, percentOfLinesWithLabel: 3, index: 1 },
+        line: { active: true, percentOfLinesWithLabel: 3, index: 2 },
+        '@timestamp': { active: true, percentOfLinesWithLabel: 3, index: 3 },
       },
     });
 
@@ -142,9 +142,9 @@ describe('LogsTable', () => {
   it('should render extracted labels as columns (loki)', async () => {
     setup({
       columnsWithMeta: {
-        foo: { active: true, percentOfLinesWithLabel: 3 },
-        Time: { active: true, percentOfLinesWithLabel: 3 },
-        line: { active: true, percentOfLinesWithLabel: 3 },
+        foo: { active: true, percentOfLinesWithLabel: 3, index: 0 },
+        Time: { active: true, percentOfLinesWithLabel: 3, index: 1 },
+        line: { active: true, percentOfLinesWithLabel: 3, index: 2 },
       },
     });
 
@@ -208,7 +208,7 @@ describe('LogsTable', () => {
         getComponent(
           {
             columnsWithMeta: {
-              traceID: { active: true, percentOfLinesWithLabel: 3 },
+              traceID: { active: true, percentOfLinesWithLabel: 3, index: 0 },
             },
           },
           getMockLokiFrameDataPlane()
@@ -245,9 +245,9 @@ describe('LogsTable', () => {
     it('should render extracted labels as columns (loki dataplane)', async () => {
       setup({
         columnsWithMeta: {
-          foo: { active: true, percentOfLinesWithLabel: 3 },
-          line: { active: true, percentOfLinesWithLabel: 3 },
-          Time: { active: true, percentOfLinesWithLabel: 3 },
+          foo: { active: true, percentOfLinesWithLabel: 3, index: 0 },
+          line: { active: true, percentOfLinesWithLabel: 3, index: 1 },
+          Time: { active: true, percentOfLinesWithLabel: 3, index: 2 },
         },
       });
 
