@@ -94,7 +94,8 @@ export function ElasticsearchAnnotationsQueryEditor(props: Props) {
           </EditorRow>
         </div>
 
-        <div> </div>
+      {/*Empty div to preserve the bottom margin */}
+      <div />
       </Stack>
     </>
   );
