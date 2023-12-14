@@ -1,4 +1,4 @@
-import { defaultAddOperationHandler } from './shared/operationUtils';
+import { defaultAddOperationHandler } from './operationUtils';
 import { QueryBuilderOperation, QueryBuilderOperationDef, QueryBuilderOperationParamDef } from './shared/types';
 import { PromOperationId, PromVisualQueryOperationCategory } from './types';
 

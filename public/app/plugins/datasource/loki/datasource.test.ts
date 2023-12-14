@@ -484,6 +484,21 @@ describe('LokiDatasource', () => {
       return { ds };
     };
 
+    it('should return empty array if /series returns empty', async () => {
+      const ds = createLokiDatasource(templateSrvStub);
+      const spy = jest.spyOn(ds.languageProvider, 'fetchSeriesLabels').mockResolvedValue({});
+
+      const result = await ds.metricFindQuery({
+        refId: 'test',
+        type: LokiVariableQueryType.LabelValues,
+        stream: '{label1="value1"}',
+        label: 'label2',
+      });
+
+      expect(result).toEqual([]);
+      spy.mockClear();
+    });
+
     it('should return label names for Loki', async () => {
       const { ds } = getTestContext();
 

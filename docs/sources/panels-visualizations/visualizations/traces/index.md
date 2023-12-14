@@ -12,6 +12,7 @@ labels:
     - cloud
     - enterprise
     - oss
+description: Configure options for Grafana's traces visualization
 title: Traces
 weight: 100
 ---

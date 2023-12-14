@@ -12,6 +12,7 @@ labels:
     - enterprise
     - oss
 title: Visualizations
+description: Apply visualizations to your data
 weight: 10
 ---
 
