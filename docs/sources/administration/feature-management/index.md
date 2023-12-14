@@ -40,7 +40,7 @@ To configure feature management, refer to [Configure feature management](https:/
 
 Altering the state of a toggle may require restarting your Grafana instance, a process that could take a few minutes to complete.
 
-**To edit a feature toggle:**
+To edit a feature toggle, follow these steps:
 
 1. Sign in to Grafana as a server administrator.
 1. Click **Administration** in the left-side menu, **General**, and then **Feature Toggles**.
