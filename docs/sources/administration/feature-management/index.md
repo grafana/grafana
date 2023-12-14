@@ -43,6 +43,6 @@ Altering the state of a toggle may require restarting your Grafana instance, a p
 **To edit a feature toggle:**
 
 1. Sign in to Grafana as a server administrator.
-2. Click **Administration** in the left-side menu, **General**, and then **Feature Toggles**.
-3. Navigate the list of feature toggles and select your feature state overrides.
-4. Click **Save changes** and wait for your Grafana instance to restart with the updated feature toggles.
+1. Click **Administration** in the left-side menu, **General**, and then **Feature Toggles**.
+1. Navigate the list of feature toggles and select your feature state overrides.
+1. Click **Save changes** and wait for your Grafana instance to restart with the updated feature toggles.
