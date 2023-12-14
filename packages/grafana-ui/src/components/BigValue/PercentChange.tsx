@@ -2,7 +2,6 @@ import React from 'react';
 
 import { BigValueTextMode } from '@grafana/schema';
 
-import { useTheme2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { HorizontalGroup } from '../Layout/Layout';
 
@@ -39,18 +38,13 @@ export const PercentChange = ({
     percentChangeStyles.marginTop = -iconDim / 4;
   }
 
-  const theme = useTheme2();
-  // set percent change color based on value, 0 is neutral and should be theme text color
   if (percentChange && percentChange > 0) {
     percentChangeStyles.color = '#73bf68';
   } else if (percentChange && percentChange < 0) {
     percentChangeStyles.color = '#f2485c';
-  } else {
-    // This edge case has not yet been tested and may need to be adjusted
-    percentChangeStyles.color = theme.colors.primary.text;
   }
 
-  // Adding text shadow to percent change to make it more readable when background does not contrast well
+  // Add text shadow to percent change to make it more readable when background does not contrast well
   percentChangeStyles.textShadow = '1px 1px 0px black';
 
   return (
