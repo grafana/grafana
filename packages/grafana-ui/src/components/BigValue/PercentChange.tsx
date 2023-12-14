@@ -45,13 +45,23 @@ export const PercentChange = ({
   }
 
   // Add text shadow to percent change to make it more readable when background does not contrast well
-  percentChangeStyles.textShadow = '1px 1px 0px black';
+  const shadowDim = metricHeight / 40;
+  const shadowString = `${shadowDim}px ${shadowDim}px ${shadowDim}px black`;
+  percentChangeStyles.textShadow = shadowString;
 
   return (
     showPercentChange && (
       <div style={percentChangeStyles}>
         <HorizontalGroup height={metricHeight} align={metricAlignment}>
-          {percentChangeIcon && <Icon name={percentChangeIcon} height={iconDim} width={iconDim} viewBox="6 6 12 12" />}
+          {percentChangeIcon && (
+            <Icon
+              name={percentChangeIcon}
+              height={iconDim}
+              width={iconDim}
+              viewBox="6 6 12 12"
+              filter={`drop-shadow(${shadowString})`}
+            />
+          )}
           {percentChangeString}
         </HorizontalGroup>
       </div>
