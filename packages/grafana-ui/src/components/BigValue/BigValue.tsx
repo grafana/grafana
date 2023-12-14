@@ -7,10 +7,9 @@ import { VizTextDisplayOptions } from '@grafana/schema';
 import { Themeable2 } from '../../types';
 import { clearButtonStyles } from '../Button';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
-import { Icon } from '../Icon/Icon';
-import { HorizontalGroup } from '../Layout/Layout';
 
 import { buildLayout } from './BigValueLayout';
+import { PercentChange } from './PercentChange';
 
 export enum BigValueColorMode {
   Background = 'background',
@@ -95,23 +94,10 @@ export class BigValue extends PureComponent<Props> {
     const titleStyles = layout.getTitleStyles();
     const textValues = layout.textValues;
     const percentChange = this.props.value.percentChange;
-    const percentChangeNaN = Number.isNaN(percentChange) || percentChange === undefined;
-    const percentChangeString =
-      percentChange?.toLocaleString(undefined, { style: 'percent', maximumSignificantDigits: 3 }) ?? '';
-    const percentChangeIcon =
-      percentChange && (percentChange > 0 ? 'arrow-up' : percentChange < 0 ? 'arrow-down' : undefined);
     const percentChangeStyles = layout.getValueStyles(true);
 
     // When there is an outer data link this tooltip will override the outer native tooltip
     const tooltip = hasLinks ? undefined : textValues.tooltip;
-    const metricHeight = layout.valueFontSize;
-    const metricAlignment = panelStyles.flexDirection === 'row' ? 'center' : 'flex-start';
-    const iconDim = metricHeight / 2;
-    const showPercentChange = !percentChangeNaN && textMode !== BigValueTextMode.None;
-    if (showPercentChange && valueAndTitleContainerStyles.flexDirection === 'column') {
-      valueAndTitleContainerStyles.gap = '0.25ch';
-      percentChangeStyles.marginTop = -iconDim / 4;
-    }
 
     if (!onClick) {
       return (
@@ -119,16 +105,14 @@ export class BigValue extends PureComponent<Props> {
           <div style={valueAndTitleContainerStyles}>
             {textValues.title && <div style={titleStyles}>{textValues.title}</div>}
             <FormattedValueDisplay value={textValues} style={valueStyles} />
-            {showPercentChange && (
-              <div style={percentChangeStyles}>
-                <HorizontalGroup height={metricHeight} align={metricAlignment}>
-                  {percentChangeIcon && (
-                    <Icon name={percentChangeIcon} height={iconDim} width={iconDim} viewBox="6 6 12 12" />
-                  )}
-                  {percentChangeString}
-                </HorizontalGroup>
-              </div>
-            )}
+            <PercentChange
+              percentChange={percentChange}
+              percentChangeStyles={percentChangeStyles}
+              valueAndTitleContainerFlexDirection={valueAndTitleContainerStyles.flexDirection}
+              panelStyles={panelStyles}
+              valueFontSize={layout.valueFontSize}
+              textMode={textMode}
+            />
           </div>
           {layout.renderChart()}
         </div>
