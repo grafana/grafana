@@ -42,7 +42,7 @@ var (
 )
 
 type lokiQueryClient interface {
-	RangeQuery(ctx context.Context, query string, from, to, limit int64) (historian.QueryRes, error)
+	RangeQuery(ctx context.Context, query string, start, end, limit int64) (historian.QueryRes, error)
 }
 
 // LokiHistorianStore is a read store that queries Loki for alert state history.
