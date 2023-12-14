@@ -84,6 +84,7 @@ InfluxDB data source options differ depending on which query language you select
 
 - [InfluxQL](https://docs.influxdata.com/influxdb/v1.8/query_language/explore-data/), a SQL-like language for querying InfluxDB, with statements such as SELECT, FROM, WHERE, and GROUP BY that are familiar to SQL users.
   InfluxQL is available in InfluxDB 1.0 onwards.
+- [SQL](https://www.influxdata.com/products/sql/) native SQL language with support [FlightSQL](https://www.influxdata.com/glossary/apache-arrow-flight-sql/).  
 - [Flux](https://docs.influxdata.com/influxdb/v2.0/query-data/get-started/), which provides significantly broader functionality than InfluxQL. It supports not only queries but also built-in functions for data shaping, string manipulation, and joining to non-InfluxDB data sources, but also processing time-series data.
   It's similar to JavaScript with a functional style.
 
@@ -108,6 +109,16 @@ Configure these options if you select the InfluxQL (classic InfluxDB) query lang
 | **User**            | Sets the username to sign into InfluxDB.                                                                                                                                                            |
 | **Password**        | Defines the token you use to query the bucket defined in **Database**. Copy this from the [Tokens page](https://docs.influxdata.com/influxdb/v2.0/security/tokens/view-tokens/) of the InfluxDB UI. |
 | **HTTP mode**       | Sets the HTTP method used to query your data source. The POST verb allows for larger queries that would return an error using the GET verb. Defaults to GET.                                        |
+
+### Configure SQL
+
+Configure these options if you select the SQL query language:
+
+| Name         | Description                                                                                                                                                                   |
+|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Database** | Sets the ID of the bucket to query. Copy this from the Buckets page of the InfluxDB UI. |
+| **Token**    | API token used for SQL queries. It can be generated on InfluxDB Cloud dashboard under [Load Data > API Tokens](https://docs.influxdata.com/influxdb/cloud-serverless/get-started/setup/#create-an-all-access-api-token) menu.                                                      |
+
 
 ### Configure Flux
 
@@ -180,12 +191,28 @@ datasources:
     access: proxy
     url: http://localhost:8086
     jsonData:
-      # This database should be mapped to a bucket
-      dbName: site
-      httpMode: GET
-      httpHeaderName1: 'Authorization'
+      version: SQL
+      metadata: 
+        - database: <bucket-name>
     secureJsonData:
       httpHeaderValue1: 'Token <token>'
+```
+
+**InfluxDB 3.x for SQL example:**
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: InfluxDB_v2_InfluxQL
+    type: influxdb
+    access: proxy
+    url: http://localhost:8086
+    jsonData:
+      dbName: site
+      httpMode: POST
+    secureJsonData:
+      token: '<api-token>'
 ```
 
 ## Query the data source
