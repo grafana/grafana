@@ -129,7 +129,7 @@ pluginsInstrumentationStatusSource,experimental,@grafana/plugins-platform-backen
 costManagementUi,experimental,@grafana/databases-frontend,2023-10-17,false,false,false,false
 managedPluginsInstall,experimental,@grafana/plugins-platform-backend,2023-10-18,false,false,false,false
 prometheusPromQAIL,experimental,@grafana/observability-metrics,2023-10-19,false,false,false,true
-addFieldFromCalculationStatFunctions,experimental,@grafana/grafana-bi-squad,2023-11-03,false,false,false,true
+addFieldFromCalculationStatFunctions,privatePreview,@grafana/grafana-bi-squad,2023-11-03,false,false,false,true
 alertmanagerRemoteSecondary,experimental,@grafana/alerting-squad,2023-10-30,false,false,false,false
 alertmanagerRemotePrimary,experimental,@grafana/alerting-squad,2023-10-30,false,false,false,false
 alertmanagerRemoteOnly,experimental,@grafana/alerting-squad,2023-10-30,false,false,false,false
