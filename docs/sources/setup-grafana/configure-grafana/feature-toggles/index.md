@@ -177,7 +177,7 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | `panelTitleSearchInV1`    | Enable searching for dashboards using panel title in search v1                               |
 | `ssoSettingsApi`          | Enables the SSO settings API                                                                 |
 
-## Configure Feature Management
+## Configure feature management
 
 Feature Management is an Administration page that allows admin users to visualize and toggle the feature flags available in their Grafana instance, for more information refer to [Feature Management](/docs/grafana/latest/administration/feature-management/").
 
