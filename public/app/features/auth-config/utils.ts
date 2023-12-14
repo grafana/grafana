@@ -4,7 +4,7 @@ import { BASE_PATH } from './constants';
 import { AuthProviderInfo, SSOProvider, SSOProviderDTO } from './types';
 
 export function getProviderUrl(provider: AuthProviderInfo) {
-  return BASE_PATH + (provider.configPath || provider.id);
+  return BASE_PATH + (provider.configPath || `advanced/${provider.id}`);
 }
 
 const strToValue = (str: string) => {

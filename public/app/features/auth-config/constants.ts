@@ -1,1 +1,1 @@
-export const BASE_PATH = 'admin/authentication/advanced/';
+export const BASE_PATH = 'admin/authentication/';
