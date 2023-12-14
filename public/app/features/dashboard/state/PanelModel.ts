@@ -128,7 +128,10 @@ const defaults: any = {
   title: '',
 };
 
+export const explicitlyControlledMigrationPanels = ['graph'];
+
 export const autoMigrateAngular: Record<string, string> = {
+  graph: 'timeseries',
   'table-old': 'table',
   singlestat: 'stat', // also automigrated if dashboard schemaVerion < 27
   'grafana-singlestat-panel': 'stat',

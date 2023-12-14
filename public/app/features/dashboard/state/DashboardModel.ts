@@ -44,7 +44,7 @@ import { getTimeSrv } from '../services/TimeSrv';
 import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
 
 import { DashboardMigrator } from './DashboardMigrator';
-import { PanelModel, autoMigrateAngular } from './PanelModel';
+import { PanelModel, autoMigrateAngular, explicitlyControlledMigrationPanels } from './PanelModel';
 import { TimeModel } from './TimeModel';
 import { deleteScopeVars, isOnTheSameGridRow } from './utils';
 
@@ -173,6 +173,12 @@ export class DashboardModel implements TimeModel {
     if (options?.autoMigrateOldPanels || !config.angularSupportEnabled || config.featureToggles.autoMigrateOldPanels) {
       for (const p of this.panelIterator()) {
         const newType = autoMigrateAngular[p.type];
+
+        // Skip explicitly controlled panels
+        if (explicitlyControlledMigrationPanels.includes(p.type)) {
+          continue;
+        }
+
         if (!p.autoMigrateFrom && newType) {
           p.autoMigrateFrom = p.type;
           p.type = newType;
@@ -180,10 +186,10 @@ export class DashboardModel implements TimeModel {
       }
     }
 
-    // Explicit handling of graph -> time series migration
+    // Explicit handling of graph -> time series migration (and eventually others)
     if (options?.autoMigrateOldPanels || !config.angularSupportEnabled || config.featureToggles.autoMigrateGraphPanel) {
       for (const p of this.panelIterator()) {
-        if (p.type === 'graph') {
+        if (!p.autoMigrateFrom && p.type === 'graph') {
           p.autoMigrateFrom = p.type;
           p.type = 'timeseries';
         }
