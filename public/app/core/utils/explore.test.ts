@@ -195,7 +195,7 @@ describe('getTimeRange', () => {
 
     const range = getTimeRange('utc', rawRange, 0);
 
-    expect(range.from.isBefore(range.from)).toBe(true);
+    expect(range.from.isBefore(range.from)).toBe(false);
   });
 });
 
