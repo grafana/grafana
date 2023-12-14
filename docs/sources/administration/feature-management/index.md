@@ -28,7 +28,10 @@ There are different options for visibility and customization depending on the de
 | Public Preview       | Visible\*  | No       |
 | General Availability | Visible\*  | Yes\*    |
 
-**Note:** Options marked with an asterisk (\*) are defaults for the corresponding feature stage. Each feature toggle owner can override its default behaviour.
+{{< admonition type="note" >}}
+Options marked with an asterisk (\*) are defaults for the corresponding feature stage.
+Each feature toggle owner can override its default behavior.
+{{< /admonition >}}
 
 ## Edit Feature Toggles State
 
