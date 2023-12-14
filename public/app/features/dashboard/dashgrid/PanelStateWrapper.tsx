@@ -5,7 +5,6 @@ import {
   AbsoluteTimeRange,
   AnnotationChangeEvent,
   AnnotationEventUIModel,
-  BusEvent,
   CoreApp,
   DashboardCursorSync,
   DataFrame,
@@ -31,10 +30,7 @@ import {
   SeriesVisibilityChangeMode,
   AdHocFilterItem,
 } from '@grafana/ui';
-import { notifyApp } from 'app/core/actions';
-import { appEvents } from 'app/core/app_events';
 import config from 'app/core/config';
-import { createWarningNotification } from 'app/core/copy/appNotification';
 import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -42,7 +38,7 @@ import { applyFilterFromTable } from 'app/features/variables/adhoc/actions';
 import { onUpdatePanelSnapshotData } from 'app/plugins/datasource/grafana/utils';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
 import { dispatch } from 'app/store/store';
-import { PanelDataSourceIsMultiVar, RenderEvent } from 'app/types/events';
+import { RenderEvent } from 'app/types/events';
 
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annotations/api';
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
