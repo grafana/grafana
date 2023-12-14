@@ -212,7 +212,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     // Subscribe to panel events
     this.subs.add(panel.events.subscribe(RefreshEvent, this.onRefresh));
     this.subs.add(panel.events.subscribe(RenderEvent, this.onRender));
-    appEvents.subscribe(PanelDataSourceIsMultiVar, this.onPanelWarning);
 
     dashboard.panelInitialized(this.props.panel);
 
@@ -386,18 +385,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
   onFieldConfigChange = (config: FieldConfigSource) => {
     this.props.panel.updateFieldConfig(config);
-  };
-
-  onPanelWarning = (event: BusEvent) => {
-    dispatch(
-      notifyApp(
-        createWarningNotification(
-          'Warning: Unsupported Multi DataSource Variable in Non-Repeating Panels',
-          "One or more panels are using a DataSource variable with multiple values without the 'repeat' option enabled. This configuration is not supported."
-        )
-      )
-    );
-    return true;
   };
 
   logPanelChangesOnError() {

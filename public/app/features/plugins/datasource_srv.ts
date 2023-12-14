@@ -17,14 +17,16 @@ import {
   TemplateSrv,
 } from '@grafana/runtime';
 import { ExpressionDatasourceRef, isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { notifyApp } from 'app/core/actions';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
+import { createWarningNotification } from 'app/core/copy/appNotification';
 import {
   dataSource as expressionDatasource,
   instanceSettings as expressionInstanceSettings,
 } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
-import { PanelDataSourceIsMultiVar } from 'app/types/events';
+import { dispatch } from 'app/store/store';
 
 import { importDataSourcePlugin } from './plugin_loader';
 
@@ -363,7 +365,14 @@ export function variableInterpolation<T>(value: T | T[]) {
     if (typeof firstValue === 'string') {
       // Check if we have a multi-variable datasource with more than one option
       if (value.length > 1) {
-        appEvents.publish(new PanelDataSourceIsMultiVar({ variableValue: firstValue }));
+        dispatch(
+          notifyApp(
+            createWarningNotification(
+              'Warning: Unsupported Multi DataSource Variable in Non-Repeating Panels',
+              "One or more panels are using a DataSource variable with multiple values without the 'repeat' option enabled. This configuration is not supported."
+            )
+          )
+        );
       }
       return firstValue;
     } else {

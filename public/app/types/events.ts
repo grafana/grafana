@@ -133,10 +133,6 @@ export class DashboardMetaChangedEvent extends BusEventBase {
   static type = 'dashboard-meta-changed';
 }
 
-export class PanelDataSourceIsMultiVar extends BusEventWithPayload<PanelDataSourceMultiVarEventPayload> {
-  static type = 'panel-datasource-multi-variable';
-}
-
 export class PanelDirectiveReadyEvent extends BusEventBase {
   static type = 'panel-directive-ready';
 }
@@ -170,10 +166,6 @@ export class ShiftTimeEvent extends BusEventWithPayload<ShiftTimeEventPayload> {
 
 interface AbsoluteTimeEventPayload {
   updateUrl: boolean;
-}
-
-interface PanelDataSourceMultiVarEventPayload {
-  variableValue: string;
 }
 
 export class AbsoluteTimeEvent extends BusEventWithPayload<AbsoluteTimeEventPayload> {
