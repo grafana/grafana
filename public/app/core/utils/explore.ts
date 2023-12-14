@@ -20,6 +20,7 @@ import {
   TimeRange,
   TimeZone,
   toURLRange,
+  UrlQueryMap,
   urlUtil,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -58,7 +59,10 @@ export function generateExploreId() {
 /**
  * Returns an Explore-URL that contains a panel's queries and the dashboard time range.
  */
-export async function getExploreUrl(args: GetExploreUrlArguments): Promise<string | undefined> {
+export async function getExploreUrl(
+  args: GetExploreUrlArguments,
+  returnToPreviousParams: UrlQueryMap
+): Promise<string | undefined> {
   const { queries, dsRef, timeRange, scopedVars, adhocFilters } = args;
   const interpolatedQueries = (
     await Promise.allSettled(
@@ -89,7 +93,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
   const exploreState = JSON.stringify({
     [generateExploreId()]: { range: toURLRange(timeRange.raw), queries: interpolatedQueries, datasource: dsRef?.uid },
   });
-  return urlUtil.renderUrl('/explore', { panes: exploreState, schemaVersion: 1 });
+  return urlUtil.renderUrl('/explore', { ...returnToPreviousParams, panes: exploreState, schemaVersion: 1 });
 }
 
 export function buildQueryTransaction(

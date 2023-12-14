@@ -37,6 +37,7 @@ import { getTimeSrv } from '../services/TimeSrv';
 export function getPanelMenu(
   dashboard: DashboardModel,
   panel: PanelModel,
+  pathname: string,
   angularComponent?: AngularComponent | null
 ): PanelMenuItem[] {
   const onViewPanel = (event: React.MouseEvent) => {
@@ -112,6 +113,8 @@ export function getPanelMenu(
       navigateToExplore(panel, {
         timeRange: getTimeSrv().timeRange(),
         getExploreUrl,
+        returnToUrl: pathname,
+        returnToTitle: dashboard.title,
         openInNewWindow,
       }) as any
     );

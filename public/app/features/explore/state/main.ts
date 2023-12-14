@@ -2,7 +2,7 @@ import { createAction } from '@reduxjs/toolkit';
 import { isEqual } from 'lodash';
 import { AnyAction } from 'redux';
 
-import { SplitOpenOptions, TimeRange, EventBusSrv } from '@grafana/data';
+import { SplitOpenOptions, TimeRange, EventBusSrv, UrlQueryMap } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { generateExploreId, GetExploreUrlArguments } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -123,8 +123,10 @@ export const changeCorrelationEditorDetails = createAction<CorrelationEditorDeta
 
 export interface NavigateToExploreDependencies {
   timeRange: TimeRange;
-  getExploreUrl: (args: GetExploreUrlArguments) => Promise<string | undefined>;
+  getExploreUrl: (args: GetExploreUrlArguments, returnToPreviousParams: UrlQueryMap) => Promise<string | undefined>;
   openInNewWindow?: (url: string) => void;
+  returnToUrl?: string;
+  returnToTitle?: string;
 }
 
 export const navigateToExplore = (
@@ -132,15 +134,18 @@ export const navigateToExplore = (
   dependencies: NavigateToExploreDependencies
 ): ThunkResult<void> => {
   return async (dispatch) => {
-    const { timeRange, getExploreUrl, openInNewWindow } = dependencies;
+    const { timeRange, getExploreUrl, openInNewWindow, returnToTitle, returnToUrl } = dependencies;
 
-    const path = await getExploreUrl({
-      queries: panel.targets,
-      dsRef: panel.datasource,
-      scopedVars: panel.scopedVars,
-      timeRange,
-      adhocFilters: getTemplateSrv().getAdhocFilters(panel.datasource?.uid ?? '', true),
-    });
+    const path = await getExploreUrl(
+      {
+        queries: panel.targets,
+        dsRef: panel.datasource,
+        scopedVars: panel.scopedVars,
+        timeRange,
+        adhocFilters: getTemplateSrv().getAdhocFilters(panel.datasource?.uid ?? '', true),
+      },
+      { returnToUrl, returnToTitle }
+    );
 
     if (openInNewWindow && path) {
       openInNewWindow(path);

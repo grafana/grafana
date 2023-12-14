@@ -1,14 +1,14 @@
 import React from 'react';
 import { useHistory } from 'react-router-dom';
-import { UseQueryParam } from 'react-use/lib/useSearchParam';
 
+import { UrlQueryValue } from '@grafana/data';
 import { Button } from '@grafana/ui';
 // import { useGrafana } from 'app/core/context/GrafanaContext';
 
 export interface ReturnToPreviousProps {
-  href: UseQueryParam;
-  title: UseQueryParam;
-  children: UseQueryParam;
+  href: UrlQueryValue;
+  title: UrlQueryValue;
+  children: UrlQueryValue;
 }
 
 export const ReturnToPrevious = ({ href, title, children }: ReturnToPreviousProps) => {
@@ -17,7 +17,7 @@ export const ReturnToPrevious = ({ href, title, children }: ReturnToPreviousProp
 
   const handleOnClick = () => {
     //   chrome.setReturnToPrevious({ show: false, href: '', title: '' });
-    history.push(href.toString());
+    href && history.push(href.toString());
   };
 
   return (
@@ -26,10 +26,10 @@ export const ReturnToPrevious = ({ href, title, children }: ReturnToPreviousProp
       size="sm"
       variant="secondary"
       onClick={handleOnClick}
-      title={title.toString()}
+      title={title?.toString()}
       className="return-to-previous"
     >
-      Back to {children.toString()}
+      Back to {children?.toString()}
     </Button>
   );
 };

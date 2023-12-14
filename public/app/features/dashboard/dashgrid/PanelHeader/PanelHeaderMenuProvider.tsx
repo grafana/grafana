@@ -1,4 +1,5 @@
 import { ReactElement, useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import { LoadingState, PanelMenuItem } from '@grafana/data';
 import { getPanelStateForModel } from 'app/features/panel/state/selectors';
@@ -19,12 +20,13 @@ interface Props {
 }
 
 export function PanelHeaderMenuProvider({ panel, dashboard, loadingState, children }: Props) {
+  const location = useLocation();
   const [items, setItems] = useState<PanelMenuItem[]>([]);
   const angularComponent = useSelector((state) => getPanelStateForModel(state, panel)?.angularComponent);
 
   useEffect(() => {
-    setItems(getPanelMenu(dashboard, panel, angularComponent));
-  }, [dashboard, panel, angularComponent, loadingState, setItems]);
+    setItems(getPanelMenu(dashboard, panel, location.pathname, angularComponent));
+  }, [dashboard, panel, angularComponent, loadingState, setItems, location.pathname, items]);
 
   return children({ items });
 }
