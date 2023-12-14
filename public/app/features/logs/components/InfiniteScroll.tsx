@@ -6,7 +6,7 @@ import { convertRawToRange, isRelativeTime, isRelativeTimeRange } from '@grafana
 import { LogsSortOrder, TimeZone } from '@grafana/schema';
 import { Spinner } from '@grafana/ui';
 
-type Props = {
+export type Props = {
   children: ReactNode;
   loading: boolean;
   loadMoreLogs?: (range: AbsoluteTimeRange) => void;
@@ -178,6 +178,8 @@ function getNextRange(visibleRange: AbsoluteTimeRange, currentRange: TimeRange, 
   return { from: visibleRange.to, to: currentRange.to.valueOf() };
 }
 
+export const SCROLLING_THRESHOLD = 1e3;
+
 // To get more logs, the difference between the visible range and the current range should be 1 second or more.
 function canScrollTop(
   visibleRange: AbsoluteTimeRange,
@@ -188,9 +190,9 @@ function canScrollTop(
   if (sortOrder === LogsSortOrder.Descending) {
     // When requesting new logs, update the current range if using relative time ranges.
     currentRange = updateCurrentRange(currentRange, timeZone);
-    return currentRange.to.valueOf() - visibleRange.to > 1e3;
+    return currentRange.to.valueOf() - visibleRange.to > SCROLLING_THRESHOLD;
   }
-  return Math.abs(currentRange.from.valueOf() - visibleRange.from) > 1e3;
+  return Math.abs(currentRange.from.valueOf() - visibleRange.from) > SCROLLING_THRESHOLD;
 }
 
 function canScrollBottom(
@@ -200,11 +202,11 @@ function canScrollBottom(
   sortOrder: LogsSortOrder
 ) {
   if (sortOrder === LogsSortOrder.Descending) {
-    return Math.abs(currentRange.from.valueOf() - visibleRange.from) > 1e3;
+    return Math.abs(currentRange.from.valueOf() - visibleRange.from) > SCROLLING_THRESHOLD;
   }
   // When requesting new logs, update the current range if using relative time ranges.
   currentRange = updateCurrentRange(currentRange, timeZone);
-  return currentRange.to.valueOf() - visibleRange.to > 1e3;
+  return currentRange.to.valueOf() - visibleRange.to > SCROLLING_THRESHOLD;
 }
 
 // Given a TimeRange, returns a new instance if using relative time, or else the same.
