@@ -7,12 +7,11 @@ labels:
   products:
     - enterprise
     - oss
-title: Feature Toggles Management
+title: Feature toggles
 weight: 900
-menuTitle: Feature Management
 ---
 
-# Feature Toggles
+# Feature toggles
 
 Grafana incorporates feature toggles, enabling the introduction of new functionalities safeguarded by a control flag. This allows Grafana administrators the flexibility to determine the appropriate timing for enabling or disabling specific features.
 For detailed insights into particular features and how they operate, please consult [Configure Feature Toggles](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/").
