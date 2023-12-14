@@ -24,9 +24,9 @@ There are different options for visibility and customization depending on the de
 | Stage                | Visibility | Editable |
 | -------------------- | ---------- | -------- |
 | Experimental         | Hidden     | No       |
-| PrivatePreview       | Visible\*  | No       |
-| Public Preview       | Visible\*  | No       |
-| General Availability | Visible\*  | Yes\*    |
+| Private preview       | Visible\*  | No       |
+| Public preview       | Visible\*  | No       |
+| General availability | Visible\*  | Yes\*    |
 
 {{< admonition type="note" >}}
 Options marked with an asterisk (\*) are defaults for the corresponding feature stage.
