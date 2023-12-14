@@ -62,6 +62,7 @@ import {
   supplementaryQueryTypes,
 } from '../utils/supplementaryQueries';
 
+import { getCorrelations } from './correlations';
 import { saveCorrelationsAction } from './explorePane';
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
 import { changeCorrelationEditorDetails } from './main';
@@ -73,7 +74,6 @@ import {
   getDatasourceUIDs,
   getResultsFromCache,
 } from './utils';
-import { getCorrelations } from './correlations';
 
 /**
  * Derives from explore state if a given Explore pane is waiting for more data to be received
