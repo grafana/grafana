@@ -43,9 +43,43 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config }: Annotation
 
   const xAxisRef = useRef<HTMLDivElement>();
 
+  const isAnnotating = false; // comes from props?
+
+  const [hoveredIdx, setHoveredIdx] = useState(-1);
+
   useLayoutEffect(() => {
     config.addHook('ready', (u) => {
-      xAxisRef.current = u.root.querySelector<HTMLDivElement>('.u-axis')!;
+      let xAxisEl = u.root.querySelector<HTMLDivElement>('.u-axis')!;
+      xAxisRef.current = xAxisEl;
+
+      let annoClasses = `.${styles.annoMarker}, .${styles.annoRegion}`;
+
+      // delegated single listeners for all anno markers
+      xAxisEl.addEventListener(
+        'mouseenter',
+        (e) => {
+          let targ = e.target!;
+
+          if (targ.matches(annoClasses)) {
+            setHoveredIdx(+targ.dataset.index);
+          }
+        },
+        true
+      );
+
+      // delegated single listener for all anno markers
+      xAxisEl.addEventListener(
+        'mouseleave',
+        (e) => {
+          let targ = e.target!;
+
+          if (targ.matches(annoClasses)) {
+            setHoveredIdx(-1);
+          }
+        },
+        true
+      );
+
       setPlot(u);
     });
 
@@ -117,10 +151,24 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config }: Annotation
             let right = plot.valToPos(vals.timeEnd[i], 'x');
 
             markers.push(
-              <div className={styles.annoRegion} style={{ left, background: color, width: right - left }}></div>
+              <div
+                className={styles.annoRegion}
+                style={{ left, background: color, width: right - left }}
+                data-index={i} // only works for one anno frame currently
+              >
+                {hoveredIdx === i && <div className={styles.annoInfo}>{vals.text[i]}</div>}
+              </div>
             );
           } else {
-            markers.push(<div className={styles.annoMarker} style={{ left, borderBottomColor: color }}></div>);
+            markers.push(
+              <div
+                className={styles.annoMarker}
+                style={{ left, borderBottomColor: color }}
+                data-index={i} // only works for one anno frame currently
+              >
+                {hoveredIdx === i && <div className={styles.annoInfo}>{vals.text[i]}</div>}
+              </div>
+            );
           }
         }
 
@@ -149,5 +197,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'absolute',
     height: '5px',
     cursor: 'pointer',
+  }),
+  annoInfo: css({
+    background: 'purple',
+    color: 'white',
+    padding: '10px',
+    position: 'absolute',
+    transform: 'translateX(-50%)',
+    left: '50%',
+    width: '300px',
+    height: '100px',
+    top: '5px',
   }),
 });
