@@ -1489,6 +1489,23 @@ export const grafanaAlertNotifiersMock: NotifierDTO[] = [
         dependsOn: '',
       },
       {
+        element: 'input',
+        inputType: 'text',
+        label: 'Topic ID',
+        description: 'Topic ID',
+        placeholder: '',
+        propertyName: 'threadid',
+        selectOptions: null,
+        showWhen: {
+          field: '',
+          is: '',
+        },
+        required: false,
+        validationRule: '',
+        secure: false,
+        dependsOn: '',
+      },
+      {
         element: 'textarea',
         inputType: '',
         label: 'Message',

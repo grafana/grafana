@@ -36,7 +36,8 @@ func TestTelegramNotifier(t *testing.T) {
 			json := `
 				{
           "bottoken": "abcdefgh0123456789",
-					"chatid": "-1234567890"
+					"chatid": "-1234567890",
+                    "threadid": "1234567890",
 				}`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))

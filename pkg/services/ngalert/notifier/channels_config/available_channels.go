@@ -815,6 +815,14 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					PropertyName: "chatid",
 					Required:     true,
 				},
+				{
+					Label:        "Topic ID",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Description:  "Topic Chat ID",
+					PropertyName: "threadid",
+					Required:     false,
+				},
 				{ // New in 8.0.
 					Label:        "Message",
 					Element:      ElementTypeTextArea,
