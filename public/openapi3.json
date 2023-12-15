@@ -9408,6 +9408,24 @@
         },
         "type": "object"
       },
+      "SSOSettings": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "type": "object"
+          },
+          "source": {
+            "$ref": "#/components/schemas/SettingsSource"
+          }
+        },
+        "type": "object"
+      },
       "Sample": {
         "properties": {
           "H": {
@@ -9782,6 +9800,10 @@
           "type": "object"
         },
         "type": "object"
+      },
+      "SettingsSource": {
+        "format": "int64",
+        "type": "integer"
       },
       "ShareType": {
         "type": "string"
@@ -24168,7 +24190,7 @@
     },
     "/v1/sso-settings/{key}": {
       "delete": {
-        "description": "# Remove an SSO Settings entry by Key\n\nYou need to have a permission with action `settings:write` with scope `settings:auth.\u003cprovider\u003e:*`.",
+        "description": "Removes the SSO Settings for a provider.\n\nYou need to have a permission with action `settings:write` and scope `settings:auth.\u003cprovider\u003e:*`.",
         "operationId": "removeProviderSettings",
         "parameters": [
           {
@@ -24198,6 +24220,52 @@
           }
         },
         "summary": "Remove SSO Settings",
+        "tags": [
+          "sso_settings"
+        ]
+      },
+      "put": {
+        "description": "Inserts or updates the SSO Settings for a provider.\n\nYou need to have a permission with action `settings:write` and scope `settings:auth.\u003cprovider\u003e:*`.",
+        "operationId": "updateProviderSettings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SSOSettings"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Update SSO Settings",
         "tags": [
           "sso_settings"
         ]
