@@ -27,6 +27,7 @@ labels:
     - oss
 menuTitle: Manage dashboards
 title: Manage dashboards
+description: Learn about dashboard folders, generative AI features for dashboards, and troubleshooting
 weight: 8
 ---
 
