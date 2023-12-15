@@ -562,33 +562,3 @@ func mdFilepath(mdFilename string) (string, error) {
 		return "", ErrUnexpectedFileExtension
 	}
 }
-
-func (hs *HTTPServer) CheckEnabled(c *contextmodel.ReqContext) {
-	pluginID := web.Params(c.Req)[":pluginId"]
-	p, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
-	if !exists {
-		c.JsonApiErr(404, "Plugin not found", nil)
-		return
-	}
-	if !p.IsApp() {
-		return
-	}
-
-	ps, err := hs.PluginSettings.GetPluginSettingByPluginID(c.Req.Context(), &pluginsettings.GetByPluginIDArgs{
-		OrgID:    c.OrgID,
-		PluginID: pluginID,
-	})
-	if err != nil {
-		if errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
-			c.JsonApiErr(404, "Plugin not found", nil)
-			return
-		}
-		c.JsonApiErr(500, "Failed to get plugin settings", err)
-		return
-	}
-
-	if !ps.Enabled {
-		c.JsonApiErr(404, "Plugin is not enabled", nil)
-		return
-	}
-}
