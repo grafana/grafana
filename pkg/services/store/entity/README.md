@@ -139,7 +139,7 @@ You can then list the previously-created playlists with:
 kubectl --kubeconfig=./grafana.kubeconfig get playlist
 ```
 
-#### Changing protobuf interface
+## Changing protobuf interface
 
 - install [protoc](https://grpc.io/docs/protoc-installation/)
 - install the protocol compiler plugin for Go
