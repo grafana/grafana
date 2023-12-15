@@ -194,18 +194,6 @@ var (
 			Created:        time.Date(2022, time.June, 1, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			// Some plugins rely on topnav feature flag being enabled, so we cannot remove this until we
-			// can afford the breaking change, or we've detemined no one else is relying on it
-			Name:              "topnav",
-			Description:       "Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.",
-			Stage:             FeatureStageDeprecated,
-			Expression:        "true", // enabled by default
-			Owner:             grafanaFrontendPlatformSquad,
-			Created:           time.Date(2022, time.June, 20, 12, 0, 0, 0, time.UTC),
-			AllowSelfServe:    false,
-			HideFromAdminPage: true, // plugins rely on this so it shouldn't be disabled
-		},
-		{
 			Name:         "dockedMegaMenu",
 			Description:  "Enable support for a persistent (docked) navigation menu",
 			Stage:        FeatureStageExperimental,
@@ -305,14 +293,6 @@ var (
 			Expression:     "true", // enabled by default
 			AllowSelfServe: true,
 			Created:        time.Date(2023, time.July, 24, 12, 0, 0, 0, time.UTC),
-		},
-		{
-			Name:           "accessTokenExpirationCheck",
-			Description:    "Enable OAuth access_token expiration check and token refresh using the refresh_token",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          identityAccessTeam,
-			AllowSelfServe: false,
-			Created:        time.Date(2022, time.November, 14, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:              "emptyDashboardPage",
