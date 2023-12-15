@@ -22,14 +22,12 @@ package apiserver
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 	"sync"
 	"time"
 
 	filestorage "github.com/grafana/grafana/pkg/services/grafana-apiserver/storage/file"
 
-	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -44,7 +42,6 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/component-base/cli"
 	"k8s.io/klog/v2"
 	v1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	v1helper "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1/helper"
@@ -54,7 +51,6 @@ import (
 	apiregistrationclient "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/typed/apiregistration/v1"
 	apiregistrationInformers "k8s.io/kube-aggregator/pkg/client/informers/externalversions/apiregistration/v1"
 	"k8s.io/kube-aggregator/pkg/controllers/autoregister"
-	aggregatoropenapi "k8s.io/kube-aggregator/pkg/generated/openapi"
 	openapicommon "k8s.io/kube-openapi/pkg/common"
 )
 
@@ -251,48 +247,9 @@ type priority struct {
 var apiVersionPriorities = map[schema.GroupVersion]priority{
 	{Group: "", Version: "v1"}: {group: 18000, version: 1},
 	// to my knowledge, nothing below here collides
-	{Group: "apps", Version: "v1"}:                               {group: 17800, version: 15},
-	{Group: "events.k8s.io", Version: "v1"}:                      {group: 17750, version: 15},
-	{Group: "events.k8s.io", Version: "v1beta1"}:                 {group: 17750, version: 5},
-	{Group: "authentication.k8s.io", Version: "v1"}:              {group: 17700, version: 15},
-	{Group: "authentication.k8s.io", Version: "v1beta1"}:         {group: 17700, version: 9},
-	{Group: "authentication.k8s.io", Version: "v1alpha1"}:        {group: 17700, version: 1},
-	{Group: "authorization.k8s.io", Version: "v1"}:               {group: 17600, version: 15},
-	{Group: "autoscaling", Version: "v1"}:                        {group: 17500, version: 15},
-	{Group: "autoscaling", Version: "v2"}:                        {group: 17500, version: 30},
-	{Group: "autoscaling", Version: "v2beta1"}:                   {group: 17500, version: 9},
-	{Group: "autoscaling", Version: "v2beta2"}:                   {group: 17500, version: 1},
-	{Group: "batch", Version: "v1"}:                              {group: 17400, version: 15},
-	{Group: "batch", Version: "v1beta1"}:                         {group: 17400, version: 9},
-	{Group: "batch", Version: "v2alpha1"}:                        {group: 17400, version: 9},
-	{Group: "certificates.k8s.io", Version: "v1"}:                {group: 17300, version: 15},
-	{Group: "certificates.k8s.io", Version: "v1alpha1"}:          {group: 17300, version: 1},
-	{Group: "networking.k8s.io", Version: "v1"}:                  {group: 17200, version: 15},
-	{Group: "networking.k8s.io", Version: "v1alpha1"}:            {group: 17200, version: 1},
-	{Group: "policy", Version: "v1"}:                             {group: 17100, version: 15},
-	{Group: "policy", Version: "v1beta1"}:                        {group: 17100, version: 9},
-	{Group: "rbac.authorization.k8s.io", Version: "v1"}:          {group: 17000, version: 15},
-	{Group: "storage.k8s.io", Version: "v1"}:                     {group: 16800, version: 15},
-	{Group: "storage.k8s.io", Version: "v1beta1"}:                {group: 16800, version: 9},
-	{Group: "storage.k8s.io", Version: "v1alpha1"}:               {group: 16800, version: 1},
-	{Group: "apiextensions.k8s.io", Version: "v1"}:               {group: 16700, version: 15},
 	{Group: "admissionregistration.k8s.io", Version: "v1"}:       {group: 16700, version: 15},
 	{Group: "admissionregistration.k8s.io", Version: "v1beta1"}:  {group: 16700, version: 12},
 	{Group: "admissionregistration.k8s.io", Version: "v1alpha1"}: {group: 16700, version: 9},
-	{Group: "scheduling.k8s.io", Version: "v1"}:                  {group: 16600, version: 15},
-	{Group: "coordination.k8s.io", Version: "v1"}:                {group: 16500, version: 15},
-	{Group: "node.k8s.io", Version: "v1"}:                        {group: 16300, version: 15},
-	{Group: "node.k8s.io", Version: "v1alpha1"}:                  {group: 16300, version: 1},
-	{Group: "node.k8s.io", Version: "v1beta1"}:                   {group: 16300, version: 9},
-	{Group: "discovery.k8s.io", Version: "v1"}:                   {group: 16200, version: 15},
-	{Group: "discovery.k8s.io", Version: "v1beta1"}:              {group: 16200, version: 12},
-	{Group: "flowcontrol.apiserver.k8s.io", Version: "v1"}:       {group: 16100, version: 21},
-	{Group: "flowcontrol.apiserver.k8s.io", Version: "v1beta3"}:  {group: 16100, version: 18},
-	{Group: "flowcontrol.apiserver.k8s.io", Version: "v1beta2"}:  {group: 16100, version: 15},
-	{Group: "flowcontrol.apiserver.k8s.io", Version: "v1beta1"}:  {group: 16100, version: 12},
-	{Group: "flowcontrol.apiserver.k8s.io", Version: "v1alpha1"}: {group: 16100, version: 9},
-	{Group: "internal.apiserver.k8s.io", Version: "v1alpha1"}:    {group: 16000, version: 9},
-	{Group: "resource.k8s.io", Version: "v1alpha2"}:              {group: 15900, version: 9},
 	// Append a new group to the end of the list if unsure.
 	// You can use min(existing group)-100 as the initial value for a group.
 	// Version can be set to 9 (to have space around) for a new group.
@@ -327,77 +284,4 @@ func apiServicesToRegister(delegateAPIServer genericapiserver.DelegationTarget, 
 	}
 
 	return apiServices
-}
-
-func newCommandStartAggregator(serverOptions *APIServerOptions, aggregator *aggregatorapiserver.APIAggregator, stopCh <-chan struct{}) *cobra.Command {
-	devAcknowledgementNotice := "The apiserver command is in heavy development.  The entire setup is subject to change without notice"
-
-	cmd := &cobra.Command{
-		Use:   "aggregator",
-		Short: "Run the grafana apiserver",
-		Long: "Run a standalone kubernetes based aggregator server. " +
-			devAcknowledgementNotice,
-		Example: "grafana aggregator",
-		RunE: func(c *cobra.Command, args []string) error {
-			// Finish the config (a noop for now)
-			prepared, err := aggregator.PrepareRun()
-			if err != nil {
-				fmt.Println(err)
-				return err
-			}
-
-			if err := prepared.Run(stopCh); err != nil {
-				fmt.Println(err)
-				return err
-			}
-			return nil
-		},
-	}
-
-	return cmd
-}
-
-type Config struct {
-	Options    *APIServerOptions
-	Aggregator *aggregatorapiserver.Config
-}
-
-func RunAggregatorCLI() int {
-	delegationTarget := genericapiserver.NewEmptyDelegate()
-
-	serverOptions := newAPIServerOptions(os.Stdout, os.Stderr)
-	// Register standard k8s flags with the command line
-	serverOptions.RecommendedOptions = options.NewRecommendedOptions(
-		defaultAggregatorEtcdPathPrefix,
-		aggregatorscheme.Codecs.LegacyCodec(), // codec is passed to etcd and hence not used
-	)
-
-	sharedConfig, err := serverOptions.Config()
-	if err != nil {
-		fmt.Println(err)
-		return -1
-	}
-
-	time.Sleep(time.Second * 10)
-
-	config, err := createAggregatorConfig(sharedConfig.Config,
-		*serverOptions.RecommendedOptions,
-		[]*runtime.Scheme{aggregatorscheme.Scheme},
-		aggregatoropenapi.GetOpenAPIDefinitions)
-	if err != nil {
-		fmt.Println(err)
-		return -1
-	}
-
-	aggregator, err := createAggregatorServer(*config, delegationTarget)
-	if err != nil {
-		fmt.Println(err)
-		return -1
-	}
-
-	stopCh := genericapiserver.SetupSignalHandler()
-	cmd := newCommandStartAggregator(serverOptions, aggregator, stopCh)
-	serverOptions.RecommendedOptions.AddFlags(cmd.Flags())
-
-	return cli.Run(cmd)
 }
