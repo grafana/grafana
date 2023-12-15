@@ -12,6 +12,7 @@ const eslintPathsToIgnore = [
   'public/app/plugins/panel/graph', // will be removed alongside angular
 ];
 
+// Avoid using functions that report the position of the issues, as this causes a lot of merge conflicts
 export default {
   'better eslint': () =>
     countEslintErrors()
