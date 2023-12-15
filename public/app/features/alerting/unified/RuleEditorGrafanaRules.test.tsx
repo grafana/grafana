@@ -115,7 +115,6 @@ describe('RuleEditor grafana managed rules', () => {
               grafana_alert: {
                 uid: '23',
                 namespace_uid: 'abcd',
-                namespace_id: 1,
                 condition: 'B',
                 data: getDefaultQueries(),
                 exec_err_state: GrafanaAlertStateDecision.Error,
@@ -138,7 +137,6 @@ describe('RuleEditor grafana managed rules', () => {
               grafana_alert: {
                 uid: '23',
                 namespace_uid: 'b',
-                namespace_id: 1,
                 condition: 'B',
                 data: getDefaultQueries(),
                 exec_err_state: GrafanaAlertStateDecision.Error,
