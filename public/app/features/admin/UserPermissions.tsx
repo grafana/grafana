@@ -38,57 +38,53 @@ export function UserPermissions({ isGrafanaAdmin, isExternalUser, lockMessage, o
   const styles = useStyles2(getTooltipStyles);
 
   return (
-    <>
+    <div>
       <h3 className="page-heading">Permissions</h3>
-      <div className="gf-form-group">
-        <div className="gf-form">
-          <table className="filter-table form-inline">
-            <tbody>
-              <tr>
-                <td className="width-16">Grafana Admin</td>
-                {isEditing ? (
-                  <td colSpan={2}>
-                    <RadioButtonGroup
-                      options={adminOptions}
-                      value={currentAdminOption}
-                      onChange={setCurrentAdminOption}
-                      autoFocus
-                    />
-                  </td>
+      <table className="filter-table form-inline">
+        <tbody>
+          <tr>
+            <td className="width-16">Grafana Admin</td>
+            {isEditing ? (
+              <td colSpan={2}>
+                <RadioButtonGroup
+                  options={adminOptions}
+                  value={currentAdminOption}
+                  onChange={setCurrentAdminOption}
+                  autoFocus
+                />
+              </td>
+            ) : (
+              <td colSpan={2}>
+                {isGrafanaAdmin ? (
+                  <>
+                    <Icon name="shield" /> Yes
+                  </>
                 ) : (
-                  <td colSpan={2}>
-                    {isGrafanaAdmin ? (
-                      <>
-                        <Icon name="shield" /> Yes
-                      </>
-                    ) : (
-                      <>No</>
-                    )}
-                  </td>
+                  <>No</>
                 )}
-                <td>
-                  {canChangePermissions && (
-                    <ConfirmButton
-                      onClick={onChangeClick}
-                      onConfirm={handleGrafanaAdminChange}
-                      onCancel={onCancelClick}
-                      confirmText="Change"
-                    >
-                      Change
-                    </ConfirmButton>
-                  )}
-                  {isExternalUser && (
-                    <div className={styles.lockMessageClass}>
-                      <ExternalUserTooltip lockMessage={lockMessage} />
-                    </div>
-                  )}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </>
+              </td>
+            )}
+            <td>
+              {canChangePermissions && (
+                <ConfirmButton
+                  onClick={onChangeClick}
+                  onConfirm={handleGrafanaAdminChange}
+                  onCancel={onCancelClick}
+                  confirmText="Change"
+                >
+                  Change
+                </ConfirmButton>
+              )}
+              {isExternalUser && (
+                <div className={styles.lockMessageClass}>
+                  <ExternalUserTooltip lockMessage={lockMessage} />
+                </div>
+              )}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   );
 }
 
