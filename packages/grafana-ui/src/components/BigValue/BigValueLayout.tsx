@@ -154,7 +154,7 @@ export abstract class BigValueLayout {
         undefined,
         VALUE_FONT_WEIGHT
       );
-      iconSize = containerStyles.fontSize;
+      iconSize = containerStyles.fontSize * 0.8;
     }
 
     return {
@@ -184,7 +184,7 @@ export abstract class BigValueLayout {
     const panelStyles: CSSProperties = {
       width: `${width}px`,
       height: `${height}px`,
-      padding: `${textMode === BigValueTextMode.None ? 0 : this.panelPadding}px`,
+      padding: `${textMode === BigValueTextMode.None ? 2 : this.panelPadding}px`,
       borderRadius: theme.shape.radius.default,
       position: 'relative',
       display: 'flex',
