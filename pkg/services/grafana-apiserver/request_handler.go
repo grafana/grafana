@@ -8,6 +8,8 @@ import (
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type requestHandler struct {
@@ -132,8 +134,8 @@ func GetOpenAPIPostProcessor(builders []APIGroupBuilder) func(*spec3.OpenAPI) (*
 					Version: s.Version,
 					Info: &spec.Info{
 						InfoProps: spec.InfoProps{
-							Title:   gv.Group,
-							Version: gv.Version,
+							Title:   gv.String(),
+							Version: setting.BuildVersion,
 						},
 					},
 					Components:   s.Components,
@@ -153,7 +155,7 @@ func GetOpenAPIPostProcessor(builders []APIGroupBuilder) func(*spec3.OpenAPI) (*
 				}
 
 				for _, route := range routes.Namespace {
-					copy.Paths.Paths[prefix+"/namespaces/{namespace}"+route.Path] = &spec3.Path{
+					copy.Paths.Paths[prefix+"namespaces/{namespace}/"+route.Path] = &spec3.Path{
 						PathProps: *route.Spec,
 					}
 				}
