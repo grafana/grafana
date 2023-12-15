@@ -160,10 +160,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		PublicDashboardAccessToken:          c.PublicDashboardAccessToken,
 		SharedWithMeFolderUID:               folder.SharedWithMeFolderUID,
 
-		Auth: dtos.FrontendSettingsAuthDTO{
-			AuthProxyEnableLoginToken: hs.Cfg.AuthProxyEnableLoginToken,
-		},
-
 		BuildInfo: dtos.FrontendSettingsBuildInfoDTO{
 			HideVersion:   hideVersion,
 			Version:       version,
