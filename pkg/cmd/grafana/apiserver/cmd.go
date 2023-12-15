@@ -3,7 +3,7 @@ package apiserver
 import (
 	"os"
 
-	grafana "github.com/grafana/grafana/pkg"
+	"github.com/grafana/grafana/pkg/aggregator"
 
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -99,7 +99,7 @@ func newCommandStartAggregator(aggregator *aggregatorapiserver.APIAggregator, st
 func RunAggregatorCLI() int {
 	delegationTarget := genericapiserver.NewEmptyDelegate()
 
-	serverOptions := grafana.NewAggregatorServerOptions(os.Stdout, os.Stderr)
+	serverOptions := aggregator.NewAggregatorServerOptions(os.Stdout, os.Stderr)
 	// Register standard k8s flags with the command line
 	serverOptions.RecommendedOptions = options.NewRecommendedOptions(
 		defaultAggregatorEtcdPathPrefix,
@@ -111,7 +111,7 @@ func RunAggregatorCLI() int {
 		return -1
 	}
 
-	config, err := grafana.CreateAggregatorConfig(sharedConfig.Config,
+	config, err := aggregator.CreateAggregatorConfig(sharedConfig.Config,
 		*serverOptions.RecommendedOptions,
 		[]*runtime.Scheme{aggregatorscheme.Scheme},
 		aggregatoropenapi.GetOpenAPIDefinitions)
@@ -119,7 +119,7 @@ func RunAggregatorCLI() int {
 		return -1
 	}
 
-	aggregator, err := grafana.CreateAggregatorServer(*config, delegationTarget)
+	aggregator, err := aggregator.CreateAggregatorServer(*config, delegationTarget)
 	if err != nil {
 		return -1
 	}
