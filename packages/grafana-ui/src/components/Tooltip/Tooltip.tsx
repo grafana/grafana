@@ -94,12 +94,16 @@ export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
       [forwardedRef, refs]
     );
 
+    // if the child has a matching aria-label, this should take precedence over the tooltip content
+    // otherwise we end up double announcing things in e.g. IconButton
+    const childHasMatchingAriaLabel = 'aria-label' in children.props && children.props['aria-label'] === content;
+
     return (
       <>
         {React.cloneElement(children, {
           ref: handleRef,
           tabIndex: 0, // tooltip trigger should be keyboard focusable
-          'aria-describedby': isOpen ? tooltipId : undefined,
+          'aria-describedby': !childHasMatchingAriaLabel && isOpen ? tooltipId : undefined,
           ...getReferenceProps(),
         })}
         {isOpen && (
