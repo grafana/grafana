@@ -703,8 +703,8 @@ export class Scene {
       <TransformWrapper
         doubleClick={{ mode: 'reset' }}
         ref={this.transformComponentRef}
-        onZoom={(r) => {
-          const scale = r.state.scale;
+        onZoom={(zoomPanPinchRef) => {
+          const scale = zoomPanPinchRef.state.scale;
           if (this.moveable && scale > 0) {
             this.moveable.zoom = 1 / scale;
           }
