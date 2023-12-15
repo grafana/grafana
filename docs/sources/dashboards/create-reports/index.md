@@ -114,7 +114,7 @@ The page header of the report displays the time range for the dashboard's data q
 
 #### Report time zones
 
-To avoid confusing time zone behavior in your reports, we recommend against using the **Browser Time** time zone setting in the dashboard from which you're generating a report. Instead, set a specific time zone for the dashboard.
+To avoid confusing time zone behavior in your reports, we recommend against using the **Browser Time** time zone setting in the dashboard from which you're generating a report. Instead, set a specific time zone for the dashboard. That way reports always show the correct time zone regardless of what your default time zone is when you create a report.
 
 If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. To avoid this, set the time zone to UTC for dashboards when using a remote renderer. Each dashboard's time zone setting is visible in the [time range controls][].
 
