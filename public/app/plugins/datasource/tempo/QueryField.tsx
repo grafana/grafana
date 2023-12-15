@@ -150,7 +150,6 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
                   });
 
                   this.onClearResults();
-
                   onChange({
                     ...query,
                     queryType: v,
@@ -204,6 +203,8 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
             query={query}
             onRunQuery={this.props.onRunQuery}
             onChange={onChange}
+            app={app}
+            onClearResults={this.onClearResults}
           />
         )}
       </>

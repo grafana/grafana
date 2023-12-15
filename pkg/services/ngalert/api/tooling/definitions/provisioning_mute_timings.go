@@ -82,6 +82,12 @@ type MuteTimingPayload struct {
 	Body MuteTimeInterval
 }
 
+// swagger:parameters RoutePostMuteTiming RoutePutMuteTiming
+type MuteTimingHeaders struct {
+	// in:header
+	XDisableProvenance string `json:"X-Disable-Provenance"`
+}
+
 // swagger:model
 type MuteTimeInterval struct {
 	config.MuteTimeInterval `json:",inline" yaml:",inline"`

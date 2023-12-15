@@ -158,11 +158,7 @@ func ProvideService(
 	s.RegisterPostAuthHook(userSyncService.EnableUserHook, 20)
 	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgRolesHook, 30)
 	s.RegisterPostAuthHook(userSyncService.SyncLastSeenHook, 120)
-
-	if features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) {
-		s.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService).SyncOauthTokenHook, 60)
-	}
-
+	s.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService).SyncOauthTokenHook, 60)
 	s.RegisterPostAuthHook(userSyncService.FetchSyncedUserHook, 100)
 	s.RegisterPostAuthHook(sync.ProvidePermissionsSync(accessControlService).SyncPermissionsHook, 110)
 

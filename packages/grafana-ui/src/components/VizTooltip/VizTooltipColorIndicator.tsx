@@ -1,21 +1,24 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { FALLBACK_COLOR, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 
-import { ColorIndicator } from './types';
+import { ColorIndicator, DEFAULT_COLOR_INDICATOR } from './types';
 import { getColorIndicatorClass } from './utils';
 
 interface Props {
-  color: string;
-  colorIndicator: ColorIndicator;
+  color?: string;
+  colorIndicator?: ColorIndicator;
 }
 
 export type ColorIndicatorStyles = ReturnType<typeof getStyles>;
 
-export const VizTooltipColorIndicator = ({ color, colorIndicator = ColorIndicator.value }: Props) => {
+export const VizTooltipColorIndicator = ({
+  color = FALLBACK_COLOR,
+  colorIndicator = DEFAULT_COLOR_INDICATOR,
+}: Props) => {
   const styles = useStyles2(getStyles);
 
   return (

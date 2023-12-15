@@ -793,13 +793,11 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 					Name:                    "azuread",
 					ClientId:                "client-id-example",
 					AllowAssignGrafanaAdmin: true,
-					// TODO: use this setting when SkipOrgRoleSync has moved to OAuthInfo
-					//SkipOrgRoleSync:         false,
+					SkipOrgRoleSync:         false,
 				},
 				cfg: &setting.Cfg{
 					AutoAssignOrgRole:          "",
 					OAuthSkipOrgRoleUpdateSync: false,
-					AzureADSkipOrgRoleSync:     false,
 				},
 			},
 			claims: &azureClaims{
@@ -826,13 +824,11 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 					Name:                    "azuread",
 					ClientId:                "client-id-example",
 					AllowAssignGrafanaAdmin: true,
-					// TODO: use this setting when SkipOrgRoleSync has moved to OAuthInfo
-					// SkipOrgRoleSync:         false,
+					SkipOrgRoleSync:         false,
 				},
 				cfg: &setting.Cfg{
 					AutoAssignOrgRole:          "",
 					OAuthSkipOrgRoleUpdateSync: false,
-					AzureADSkipOrgRoleSync:     false,
 				},
 			},
 			claims: &azureClaims{
