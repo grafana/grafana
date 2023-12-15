@@ -1307,4 +1307,4 @@ There are two different models:
 
 {{% /docs/reference %}}
 
-[data frames]: https://grafana.com/developers/plugin-tools/introduction/data-frames/
+[Data frames]: https://grafana.com/developers/plugin-tools/introduction/data-frames/
