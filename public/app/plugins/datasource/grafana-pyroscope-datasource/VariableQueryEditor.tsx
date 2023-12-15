@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { QueryEditorProps, SelectableValue, TimeRange } from '@grafana/data';
 import { InlineField, InlineFieldRow, LoadingPlaceholder, Select } from '@grafana/ui';
 
 import { ProfileTypesCascader, useProfileTypes } from './QueryEditor/ProfileTypesCascader';
@@ -58,6 +58,7 @@ export function VariableQueryEditor(props: QueryEditorProps<PyroscopeDataSource,
       {(props.query.type === 'labelValue' || props.query.type === 'label') && (
         <ProfileTypeRow
           datasource={props.datasource}
+          range={props.range}
           initialValue={props.query.profileTypeId}
           onChange={(val) => {
             // To make TS happy
@@ -131,8 +132,9 @@ function ProfileTypeRow(props: {
   datasource: PyroscopeDataSource;
   onChange: (val: string) => void;
   initialValue?: string;
+  range?: TimeRange;
 }) {
-  const profileTypes = useProfileTypes(props.datasource);
+  const profileTypes = useProfileTypes(props.datasource, props.range);
   return (
     <InlineFieldRow>
       <InlineField

@@ -55,7 +55,9 @@ export function TraceToProfilesSettings({ options, onOptionsChange }: Props) {
       supportedDataSourceTypes.includes(dataSource.type) &&
       dataSource.uid === options.jsonData.tracesToProfiles?.datasourceUid
     ) {
-      dataSource.getProfileTypes().then((profileTypes) => {
+      const end = Date.now();
+      const start = end - 24 * 60 * 60 * 1000; // 1 day ago
+      dataSource.getProfileTypes(start, end).then((profileTypes) => {
         setProfileTypes(profileTypes);
       });
     } else {

@@ -30,7 +30,7 @@ var (
 )
 
 type ProfilingClient interface {
-	ProfileTypes(context.Context) ([]*ProfileType, error)
+	ProfileTypes(ctx context.Context, start int64, end int64) ([]*ProfileType, error)
 	LabelNames(ctx context.Context, labelSelector string, start int64, end int64) ([]string, error)
 	LabelValues(ctx context.Context, label string, labelSelector string, start int64, end int64) ([]string, error)
 	GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64) (*SeriesResponse, error)
@@ -89,7 +89,17 @@ func (d *PyroscopeDatasource) CallResource(ctx context.Context, req *backend.Cal
 
 func (d *PyroscopeDatasource) profileTypes(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	ctxLogger := logger.FromContext(ctx)
-	types, err := d.client.ProfileTypes(ctx)
+
+	u, err := url.Parse(req.URL)
+	if err != nil {
+		ctxLogger.Error("Failed to parse URL", "error", err, "function", logEntrypoint())
+		return err
+	}
+	query := u.Query()
+	start, _ := strconv.ParseInt(query.Get("start"), 10, 64)
+	end, _ := strconv.ParseInt(query.Get("end"), 10, 64)
+
+	types, err := d.client.ProfileTypes(ctx, start, end)
 	if err != nil {
 		ctxLogger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		return err
@@ -231,7 +241,9 @@ func (d *PyroscopeDatasource) CheckHealth(ctx context.Context, _ *backend.CheckH
 	status := backend.HealthStatusOk
 	message := "Data source is working"
 
-	if _, err := d.client.ProfileTypes(ctx); err != nil {
+	start := time.Now().Add(-5 * time.Minute)
+	end := time.Now()
+	if _, err := d.client.ProfileTypes(ctx, start.UnixMilli(), end.UnixMilli()); err != nil {
 		status = backend.HealthStatusError
 		message = err.Error()
 	}
