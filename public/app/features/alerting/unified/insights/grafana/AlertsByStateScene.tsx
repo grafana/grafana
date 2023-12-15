@@ -3,16 +3,20 @@ import React from 'react';
 import { PanelBuilders, SceneDataTransformer, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-import { overrideToFixedColor, PANEL_STYLES } from '../../home/Insights';
+import { INSTANCE_ID, overrideToFixedColor, PANEL_STYLES } from '../../home/Insights';
 import { InsightsRatingModal } from '../RatingModal';
 
 export function getGrafanaInstancesByStateScene(datasource: DataSourceRef, panelTitle: string) {
+  const expr = INSTANCE_ID
+    ? `sum by(state) (grafanacloud_grafana_instance_alerting_alerts{id="${INSTANCE_ID}"})`
+    : 'sum by (state) (grafanacloud_grafana_instance_alerting_alerts)';
+
   const query = new SceneQueryRunner({
     datasource,
     queries: [
       {
         refId: 'A',
-        expr: 'sum by (state) (grafanacloud_grafana_instance_alerting_alerts)',
+        expr,
         range: true,
         legendFormat: '{{state}}',
       },

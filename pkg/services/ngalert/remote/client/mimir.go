@@ -17,11 +17,11 @@ import (
 // MimirClient contains all the methods to query the migration critical endpoints of Mimir instance, it's an interface to allow multiple implementations.
 type MimirClient interface {
 	GetGrafanaAlertmanagerState(ctx context.Context) (*UserGrafanaState, error)
-	CreateGrafanaAlertmanagerState(ctx context.Context, s string) error
+	CreateGrafanaAlertmanagerState(ctx context.Context, state string) error
 	DeleteGrafanaAlertmanagerState(ctx context.Context) error
 
 	GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafanaConfig, error)
-	CreateGrafanaAlertmanagerConfig(ctx context.Context, configuration string, hash string, id int64, at int64, d bool) error
+	CreateGrafanaAlertmanagerConfig(ctx context.Context, configuration, hash string, id, updatedAt int64, isDefault bool) error
 	DeleteGrafanaAlertmanagerConfig(ctx context.Context) error
 }
 
@@ -32,7 +32,7 @@ type Mimir struct {
 }
 
 type Config struct {
-	Address  string
+	URL      *url.URL
 	TenantID string
 	Password string
 
@@ -61,11 +61,6 @@ func (e *errorResponse) Error() string {
 }
 
 func New(cfg *Config) (*Mimir, error) {
-	endpoint, err := url.Parse(cfg.Address)
-	if err != nil {
-		return nil, err
-	}
-
 	rt := &MimirAuthRoundTripper{
 		TenantID: cfg.TenantID,
 		Password: cfg.Password,
@@ -77,7 +72,7 @@ func New(cfg *Config) (*Mimir, error) {
 	}
 
 	return &Mimir{
-		endpoint: endpoint,
+		endpoint: cfg.URL,
 		client:   c,
 		logger:   cfg.Logger,
 	}, nil

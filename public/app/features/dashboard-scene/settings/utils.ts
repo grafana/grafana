@@ -1,7 +1,7 @@
 import { useLocation } from 'react-router-dom';
 
 import { locationUtil, NavModelItem } from '@grafana/data';
-import { SceneObject } from '@grafana/scenes';
+import { SceneObject, SceneObjectState } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { useSelector } from 'app/types';
@@ -9,8 +9,16 @@ import { useSelector } from 'app/types';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { AnnotationsEditView } from './AnnotationsEditView';
-import { GeneralSettingsEditView } from './GeneralSettings';
+import { DashboardLinksEditView } from './DashboardLinksEditView';
+import { GeneralSettingsEditView } from './GeneralSettingsEditView';
 import { VariablesEditView } from './VariablesEditView';
+
+export interface DashboardEditViewState extends SceneObjectState {}
+
+export interface DashboardEditListViewState extends DashboardEditViewState {
+  /** Index of the list item to edit */
+  editIndex?: number;
+}
 
 export interface DashboardEditView extends SceneObject {
   getUrlKey(): string;
@@ -24,6 +32,7 @@ export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditVi
 
   const pageNav: NavModelItem = {
     text: 'Settings',
+    url: locationUtil.getUrlForPartial(location, { editview: 'settings', editIndex: null }),
     children: [
       {
         text: t('dashboard-settings.general.title', 'General'),
@@ -40,6 +49,11 @@ export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditVi
         url: locationUtil.getUrlForPartial(location, { editview: 'variables', editIndex: null }),
         active: currentEditView === 'variables',
       },
+      {
+        text: t('dashboard-settings.links.title', 'Links'),
+        url: locationUtil.getUrlForPartial(location, { editview: 'links', editIndex: null }),
+        active: currentEditView === 'links',
+      },
     ],
     parentItem: dashboardPageNav,
   };
@@ -53,6 +67,8 @@ export function createDashboardEditViewFor(editview: string): DashboardEditView 
       return new AnnotationsEditView({});
     case 'variables':
       return new VariablesEditView({});
+    case 'links':
+      return new DashboardLinksEditView({});
     case 'settings':
     default:
       return new GeneralSettingsEditView({});

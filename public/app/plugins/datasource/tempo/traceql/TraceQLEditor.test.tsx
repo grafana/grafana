@@ -2,9 +2,9 @@ import { computeErrorMessage, getErrorNodes } from './errorHighlighting';
 
 describe('Check for syntax errors in query', () => {
   it.each([
-    ['{span.http.status_code = }', 'Invalid value after comparison or aritmetic operator.'],
+    ['{span.http.status_code = }', 'Invalid value after comparison or arithmetic operator.'],
     ['{span.http.status_code 200}', 'Invalid comparison operator after field expression.'],
-    ['{span.http.status_code ""}', 'Invalid comparison operator after field expression.'],
+    ['{span.http.status_code ""}', 'Invalid operator after field expression.'],
     ['{span.http.status_code @ 200}', 'Invalid comparison operator after field expression.'],
     ['{span.http.status_code span.http.status_code}', 'Invalid operator after field expression.'],
     [
@@ -24,10 +24,10 @@ describe('Check for syntax errors in query', () => {
       '{span.http.status_code = 200} && {span.http.status_code = 200} | avg() > 3',
       'Invalid expression for aggregator operator.',
     ],
-    ['{ 1 + 1 = 2 + }', 'Invalid value after comparison or aritmetic operator.'],
+    ['{ 1 + 1 = 2 + }', 'Invalid value after comparison or arithmetic operator.'],
     ['{ .a && }', 'Invalid value after logical operator.'],
     ['{ .a || }', 'Invalid value after logical operator.'],
-    ['{ .a + }', 'Invalid value after comparison or aritmetic operator.'],
+    ['{ .a + }', 'Invalid value after comparison or arithmetic operator.'],
     ['{ 200 = 200 200 }', 'Invalid comparison operator after field expression.'],
     ['{.foo   300}', 'Invalid comparison operator after field expression.'],
     ['{.foo  300 && .bar = 200}', 'Invalid operator after field expression.'],
@@ -48,8 +48,8 @@ describe('Check for syntax errors in query', () => {
     ['{.}', 'Invalid expression for spanset.'],
     ['{ resource. }', 'Invalid expression for spanset.'],
     ['{ span. }', 'Invalid expression for spanset.'],
-    ['{.foo=}', 'Invalid value after comparison or aritmetic operator.'],
-    ['{.foo="}', 'Invalid value after comparison or aritmetic operator.'],
+    ['{.foo=}', 'Invalid value after comparison or arithmetic operator.'],
+    ['{.foo="}', 'Invalid value after comparison or arithmetic operator.'],
     ['{.foo=300} |', 'Invalid aggregation operator after pipepile operator.'],
     ['{.foo=300} && {.bar=200} |', 'Invalid aggregation operator after pipepile operator.'],
     ['{.foo=300} && {.bar=300} && {.foo=300} |', 'Invalid aggregation operator after pipepile operator.'],
@@ -59,6 +59,7 @@ describe('Check for syntax errors in query', () => {
     ['{.foo=300} && {.foo=300} | avg(.value) =', 'Invalid value after comparison operator.'],
     ['{.foo=300} | max(duration) > 1hs', 'Invalid value after comparison operator.'],
     ['{ span.http.status_code', 'Invalid comparison operator after field expression.'],
+    ['{ .foo = "bar"', 'Invalid comparison operator after field expression.'],
     ['abcxyz', 'Invalid query.'],
   ])('error message for invalid query - %s, %s', (query: string, expectedErrorMessage: string) => {
     const errorNode = getErrorNodes(query)[0];
@@ -80,6 +81,9 @@ describe('Check for syntax errors in query', () => {
       `{ true } /* && { false } && */ && { true } // && { false }
     && { true }`,
     ],
+    ['{span.s"t\\"at"us}'],
+    ['{span.s"t\\\\at"us}'],
+    ['{ span.s"tat"us" = "GET123 }'], // weird query, but technically valid
   ])('valid query - %s', (query: string) => {
     expect(getErrorNodes(query)).toStrictEqual([]);
   });

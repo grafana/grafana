@@ -176,7 +176,7 @@ describe('InfluxDataSource Backend Mode', () => {
     const ds = new InfluxDatasource(getMockDSInstanceSettings(), templateSrv);
 
     function influxChecks(query: InfluxQuery) {
-      expect(templateSrv.replace).toBeCalledTimes(11);
+      expect(templateSrv.replace).toBeCalledTimes(12);
       expect(query.alias).toBe(text);
       expect(query.measurement).toBe(textWithFormatRegex);
       expect(query.policy).toBe(textWithFormatRegex);
