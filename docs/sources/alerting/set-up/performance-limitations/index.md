@@ -3,7 +3,7 @@ aliases:
   - alerting-limitations/
   - alerting/performance-limitations/
 canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/performance-limitations/
-description: Performance considerations and limitations
+description: Learn about performance considerations and limitations
 keywords:
   - grafana
   - alerting
