@@ -12,7 +12,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/prometheus/alertmanager/api/v2/models"
+	"github.com/tyr1k/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"

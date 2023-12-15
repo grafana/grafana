@@ -9,7 +9,7 @@ import (
 
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/grafana/grafana/pkg/infra/log"
-	amclient "github.com/prometheus/alertmanager/api/v2/client"
+	amclient "github.com/tyr1k/alertmanager/api/v2/client"
 )
 
 const alertmanagerAPIMountPath = "/alertmanager"

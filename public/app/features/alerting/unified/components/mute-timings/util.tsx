@@ -11,7 +11,7 @@ import {
   getYearsString,
 } from '../../utils/alertmanager';
 
-// https://github.com/prometheus/alertmanager/blob/9de8ef36755298a68b6ab20244d4369d38bdea99/timeinterval/timeinterval.go#L443
+// https://github.com/tyr1k/alertmanager/blob/9de8ef36755298a68b6ab20244d4369d38bdea99/timeinterval/timeinterval.go#L443
 const TIME_RANGE_REGEX = /^((([01][0-9])|(2[0-3])):[0-5][0-9])$|(^24:00$)/;
 
 const isvalidTimeFormat = (timeString: string): boolean => {

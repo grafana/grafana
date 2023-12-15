@@ -9,7 +9,7 @@ import (
 	"time"
 
 	alertingModels "github.com/grafana/alerting/models"
-	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+	amv2 "github.com/tyr1k/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 

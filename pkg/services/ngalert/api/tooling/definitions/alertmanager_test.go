@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/prometheus/alertmanager/config"
+	"github.com/tyr1k/alertmanager/config"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

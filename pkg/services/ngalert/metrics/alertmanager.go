@@ -3,7 +3,7 @@ package metrics
 import (
 	"fmt"
 
-	"github.com/prometheus/alertmanager/api/metrics"
+	"github.com/tyr1k/alertmanager/api/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

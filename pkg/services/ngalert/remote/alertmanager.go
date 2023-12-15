@@ -14,10 +14,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
-	amalert "github.com/prometheus/alertmanager/api/v2/client/alert"
-	amalertgroup "github.com/prometheus/alertmanager/api/v2/client/alertgroup"
-	amreceiver "github.com/prometheus/alertmanager/api/v2/client/receiver"
-	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
+	amalert "github.com/tyr1k/alertmanager/api/v2/client/alert"
+	amalertgroup "github.com/tyr1k/alertmanager/api/v2/client/alertgroup"
+	amreceiver "github.com/tyr1k/alertmanager/api/v2/client/receiver"
+	amsilence "github.com/tyr1k/alertmanager/api/v2/client/silence"
 )
 
 type stateStore interface {

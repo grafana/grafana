@@ -11,7 +11,7 @@ import (
 
 	"github.com/go-openapi/strfmt"
 	alertingNotify "github.com/grafana/alerting/notify"
-	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+	amv2 "github.com/tyr1k/alertmanager/api/v2/models"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 

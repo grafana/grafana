@@ -10,7 +10,7 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/go-openapi/strfmt"
-	models2 "github.com/prometheus/alertmanager/api/v2/models"
+	models2 "github.com/tyr1k/alertmanager/api/v2/models"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 

@@ -350,7 +350,7 @@ You can see whether or not the alert rule is firing. You can also see a visualiz
 
 When the alert fires, Grafana routes a notification through the policy you defined.
 
-For example, if you chose Slack as a contact point, Grafana’s embedded [Alertmanager](https://github.com/prometheus/alertmanager) automatically posts a message to Slack.
+For example, if you chose Slack as a contact point, Grafana’s embedded [Alertmanager](https://github.com/tyr1k/alertmanager) automatically posts a message to Slack.
 
 {{% docs/reference %}}
 [alerting-rules]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules"

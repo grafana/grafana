@@ -11,8 +11,8 @@ import (
 	"github.com/grafana/alerting/receivers"
 	alertingEmail "github.com/grafana/alerting/receivers/email"
 	alertingTemplates "github.com/grafana/alerting/templates"
-	"github.com/prometheus/alertmanager/template"
-	"github.com/prometheus/alertmanager/types"
+	"github.com/tyr1k/alertmanager/template"
+	"github.com/tyr1k/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 

@@ -24,7 +24,7 @@ import (
 	alertingTelegram "github.com/grafana/alerting/receivers/telegram"
 	alertingThreema "github.com/grafana/alerting/receivers/threema"
 	alertingTemplates "github.com/grafana/alerting/templates"
-	"github.com/prometheus/alertmanager/template"
+	"github.com/tyr1k/alertmanager/template"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 

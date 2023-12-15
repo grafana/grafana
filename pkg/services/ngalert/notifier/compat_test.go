@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	alertingNotify "github.com/grafana/alerting/notify"
-	"github.com/prometheus/alertmanager/config"
+	"github.com/tyr1k/alertmanager/config"
 	"github.com/stretchr/testify/require"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"

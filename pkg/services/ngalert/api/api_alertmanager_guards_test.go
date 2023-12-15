@@ -3,9 +3,9 @@ package api
 import (
 	"testing"
 
-	amConfig "github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/pkg/labels"
-	"github.com/prometheus/alertmanager/timeinterval"
+	amConfig "github.com/tyr1k/alertmanager/config"
+	"github.com/tyr1k/alertmanager/pkg/labels"
+	"github.com/tyr1k/alertmanager/timeinterval"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 

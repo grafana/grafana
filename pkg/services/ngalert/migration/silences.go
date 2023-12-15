@@ -13,7 +13,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/matttproud/golang_protobuf_extensions/pbutil"
-	pb "github.com/prometheus/alertmanager/silence/silencepb"
+	pb "github.com/tyr1k/alertmanager/silence/silencepb"
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"

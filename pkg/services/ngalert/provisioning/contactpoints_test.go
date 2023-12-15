@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/prometheus/alertmanager/config"
+	"github.com/tyr1k/alertmanager/config"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"

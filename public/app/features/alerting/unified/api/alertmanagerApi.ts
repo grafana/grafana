@@ -44,7 +44,7 @@ interface AlertmanagerAlertsFilter {
   matchers?: Matcher[];
 }
 
-// Based on https://github.com/prometheus/alertmanager/blob/main/api/v2/openapi.yaml
+// Based on https://github.com/tyr1k/alertmanager/blob/main/api/v2/openapi.yaml
 export const alertmanagerApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     getAlertmanagerAlerts: build.query<

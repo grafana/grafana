@@ -18,8 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/util"
-	amv2 "github.com/prometheus/alertmanager/api/v2/models"
-	"github.com/prometheus/alertmanager/cluster/clusterpb"
+	amv2 "github.com/tyr1k/alertmanager/api/v2/models"
+	"github.com/tyr1k/alertmanager/cluster/clusterpb"
 	"github.com/stretchr/testify/require"
 )
 

@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/prometheus/alertmanager/cluster"
-	"github.com/prometheus/alertmanager/cluster/clusterpb"
+	"github.com/tyr1k/alertmanager/cluster"
+	"github.com/tyr1k/alertmanager/cluster/clusterpb"
 )
 
 type RedisChannel struct {

@@ -10,8 +10,8 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/google/uuid"
-	"github.com/prometheus/alertmanager/cluster"
-	"github.com/prometheus/alertmanager/cluster/clusterpb"
+	"github.com/tyr1k/alertmanager/cluster"
+	"github.com/tyr1k/alertmanager/cluster/clusterpb"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/redis/go-redis/v9"
@@ -388,7 +388,7 @@ func (p *redisPeer) WaitReady(ctx context.Context) error {
 }
 
 // Settle is mostly copied from upstream.
-// Ref: https://github.com/prometheus/alertmanager/blob/2888649b473970400c0bd375fdd563486dc80481/cluster/cluster.go#L674-L712
+// Ref: https://github.com/tyr1k/alertmanager/blob/2888649b473970400c0bd375fdd563486dc80481/cluster/cluster.go#L674-L712
 func (p *redisPeer) Settle(ctx context.Context, interval time.Duration) {
 	const NumOkayRequired = 3
 	p.logger.Info("Waiting for gossip to settle...", "interval", interval)

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/prometheus/alertmanager/config"
+	"github.com/tyr1k/alertmanager/config"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"

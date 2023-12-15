@@ -8,7 +8,7 @@ import (
 	"sync"
 	"testing"
 
-	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+	amv2 "github.com/tyr1k/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

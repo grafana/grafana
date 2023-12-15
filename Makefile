@@ -52,7 +52,7 @@ swagger-oss-gen: $(SWAGGER) ## Generate API Swagger specification
 	rm -f $(SPEC_TARGET)
 	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m -w pkg/server -o $(SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
-	-x "github.com/prometheus/alertmanager" \
+	-x "github.com/tyr1k/alertmanager" \
 	-i pkg/api/swagger_tags.json \
 	--exclude-tag=alpha \
 	--exclude-tag=enterprise
@@ -68,7 +68,7 @@ swagger-enterprise-gen: $(SWAGGER) ## Generate API Swagger specification
 	rm -f $(ENTERPRISE_SPEC_TARGET)
 	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m -w pkg/server -o $(ENTERPRISE_SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
-	-x "github.com/prometheus/alertmanager" \
+	-x "github.com/tyr1k/alertmanager" \
 	-i pkg/api/swagger_tags.json \
 	--exclude-tag=alpha \
 	--include-tag=enterprise

@@ -8,7 +8,7 @@ import (
 	tmpltext "text/template"
 	"time"
 
-	"github.com/prometheus/alertmanager/template"
+	"github.com/tyr1k/alertmanager/template"
 	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
 )

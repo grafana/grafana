@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/prometheus/alertmanager/cluster/clusterpb"
+	"github.com/tyr1k/alertmanager/cluster/clusterpb"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"

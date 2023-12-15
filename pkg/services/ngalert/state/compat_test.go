@@ -10,7 +10,7 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/go-openapi/strfmt"
 	alertingModels "github.com/grafana/alerting/models"
-	"github.com/prometheus/alertmanager/api/v2/models"
+	"github.com/tyr1k/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 

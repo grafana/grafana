@@ -5,7 +5,7 @@ import (
 
 	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
-	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+	amv2 "github.com/tyr1k/alertmanager/api/v2/models"
 	prometheusModel "github.com/prometheus/common/model"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"

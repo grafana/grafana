@@ -3,7 +3,7 @@ package sender
 import (
 	"testing"
 
-	"github.com/prometheus/alertmanager/api/v2/models"
+	"github.com/tyr1k/alertmanager/api/v2/models"
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/stretchr/testify/require"
 )

@@ -14,7 +14,7 @@ enum TokenType {
 }
 
 // list of available functions in Alertmanager templates
-// see https://cs.github.com/prometheus/alertmanager/blob/805e505288ce82c3e2b625a3ca63aaf2b0aa9cea/template/template.go?q=join#L132-L151
+// see https://cs.github.com/tyr1k/alertmanager/blob/805e505288ce82c3e2b625a3ca63aaf2b0aa9cea/template/template.go?q=join#L132-L151
 export enum AlertmanagerTemplateFunction {
   toUpper = 'toUpper',
   toLower = 'toLower',

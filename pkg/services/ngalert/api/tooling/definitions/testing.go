@@ -7,8 +7,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	amv2 "github.com/prometheus/alertmanager/api/v2/models"
-	"github.com/prometheus/alertmanager/config"
+	amv2 "github.com/tyr1k/alertmanager/api/v2/models"
+	"github.com/tyr1k/alertmanager/config"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/promql"
 )

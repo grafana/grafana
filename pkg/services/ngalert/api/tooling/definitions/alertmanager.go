@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
-	amv2 "github.com/prometheus/alertmanager/api/v2/models"
-	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/pkg/labels"
+	amv2 "github.com/tyr1k/alertmanager/api/v2/models"
+	"github.com/tyr1k/alertmanager/config"
+	"github.com/tyr1k/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
 )
@@ -444,7 +444,7 @@ func NewGettableStatus(cfg *PostableApiAlertingConfig) *GettableStatus {
 type PostableSilence = amv2.PostableSilence
 
 // swagger:model postSilencesOKBody
-type PostSilencesOKBody struct { // vendored from "github.com/prometheus/alertmanager/api/v2/restapi/operations/silence/PostSilencesOKBody" because import brings too many other things
+type PostSilencesOKBody struct { // vendored from "github.com/tyr1k/alertmanager/api/v2/restapi/operations/silence/PostSilencesOKBody" because import brings too many other things
 	// silence ID
 	SilenceID string `json:"silenceID,omitempty"`
 }
@@ -577,7 +577,7 @@ func (c *PostableUserConfig) UnmarshalJSON(b []byte) error {
 }
 
 func (c *PostableUserConfig) validate() error {
-	// Taken from https://github.com/prometheus/alertmanager/blob/master/config/config.go#L170-L191
+	// Taken from https://github.com/tyr1k/alertmanager/blob/master/config/config.go#L170-L191
 	// Check if we have a root route. We cannot check for it in the
 	// UnmarshalYAML method because it won't be called if the input is empty
 	// (e.g. the config file is empty or only contains whitespace).
@@ -1002,7 +1002,7 @@ func (c *PostableApiAlertingConfig) validate() error {
 	}
 
 	if hasGrafReceivers {
-		// Taken from https://github.com/prometheus/alertmanager/blob/master/config/config.go#L170-L191
+		// Taken from https://github.com/tyr1k/alertmanager/blob/master/config/config.go#L170-L191
 		// Check if we have a root route. We cannot check for it in the
 		// UnmarshalYAML method because it won't be called if the input is empty
 		// (e.g. the config file is empty or only contains whitespace).
@@ -1299,7 +1299,7 @@ func (m *ObjectMatchers) UnmarshalYAML(unmarshal func(interface{}) error) error 
 		}
 
 		// When Prometheus serializes a matcher, the value gets wrapped in quotes:
-		// https://github.com/prometheus/alertmanager/blob/main/pkg/labels/matcher.go#L77
+		// https://github.com/tyr1k/alertmanager/blob/main/pkg/labels/matcher.go#L77
 		// Remove these quotes so that we are matching against the right value.
 		//
 		// This is a stop-gap solution which will be superceded by https://github.com/grafana/grafana/issues/50040.

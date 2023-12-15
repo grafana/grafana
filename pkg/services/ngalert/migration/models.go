@@ -1,7 +1,7 @@
 package migration
 
 import (
-	pb "github.com/prometheus/alertmanager/silence/silencepb"
+	pb "github.com/tyr1k/alertmanager/silence/silencepb"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"

@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/timeinterval"
+	"github.com/tyr1k/alertmanager/config"
+	"github.com/tyr1k/alertmanager/timeinterval"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )

@@ -38,8 +38,8 @@ describe('Alertmanager utils', () => {
     // and instead let AM return any errors like (matcher value contains unescaped double quote: bar"baz")
     // and allow the user to update the values to the correct format
     //
-    // see https://github.com/prometheus/alertmanager/blob/4030e3670b359b8814aa8340ea1144f32b1f5ab3/pkg/labels/parse.go#L55-L99
-    // and https://github.com/prometheus/alertmanager/blob/4030e3670b359b8814aa8340ea1144f32b1f5ab3/pkg/labels/parse.go#L101-L178
+    // see https://github.com/tyr1k/alertmanager/blob/4030e3670b359b8814aa8340ea1144f32b1f5ab3/pkg/labels/parse.go#L55-L99
+    // and https://github.com/tyr1k/alertmanager/blob/4030e3670b359b8814aa8340ea1144f32b1f5ab3/pkg/labels/parse.go#L101-L178
     it('should not parse escaped values', () => {
       expect(parseMatcher('foo="^[a-z0-9-]{1}[a-z0-9-]{0,30}$"')).toEqual<Matcher>({
         name: 'foo',
