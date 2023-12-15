@@ -116,7 +116,6 @@ func (a *AnonDeviceService) untagDevice(ctx context.Context,
 	}
 }
 
-// FIXME: Unexport and remove interface
 func (a *AnonDeviceService) TagDevice(ctx context.Context, httpReq *http.Request, kind anonymous.DeviceKind) error {
 	deviceID := httpReq.Header.Get(deviceIDHeader)
 	if deviceID == "" {
