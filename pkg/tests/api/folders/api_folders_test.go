@@ -3,6 +3,7 @@ package folders
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"runtime"
 	"testing"
 
@@ -71,8 +72,10 @@ func TestGetFolders(t *testing.T) {
 		if err != nil {
 			return err
 		}
+		require.Equal(t, http.StatusOK, resp.Code())
 		if job == indexWithoutPermission {
 			tests.RemoveFolderPermission(t, permissionsStore, orgID, org.RoleViewer, resp.Payload.UID)
+			t.Log("Removed viewer permission from folder", resp.Payload.UID)
 		}
 		return nil
 	})
