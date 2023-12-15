@@ -164,7 +164,6 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError }: Prop
           <RecoveryThresholdRow
             isRange={isRange}
             condition={conditionInState}
-            labelWidth={labelWidth}
             onError={onError}
             dispatch={dispatch}
             allowOnblur={allowOnblurFromUnload}
@@ -178,20 +177,12 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError }: Prop
 interface RecoveryThresholdRowProps {
   isRange: boolean;
   condition: ClassicCondition;
-  labelWidth: number | 'auto';
   onError?: (error: string | undefined) => void;
   dispatch: React.Dispatch<AnyAction>;
   allowOnblur: React.MutableRefObject<boolean>;
 }
 
-function RecoveryThresholdRow({
-  isRange,
-  condition,
-  labelWidth,
-  onError,
-  dispatch,
-  allowOnblur,
-}: RecoveryThresholdRowProps) {
+function RecoveryThresholdRow({ isRange, condition, onError, dispatch, allowOnblur }: RecoveryThresholdRowProps) {
   const styles = useStyles2(getStyles);
 
   const onUnloadValueChange = (event: FormEvent<HTMLInputElement>, paramIndex: number) => {
@@ -221,7 +212,7 @@ function RecoveryThresholdRow({
     if (condition.evaluator.type === EvalFunction.IsWithinRange) {
       return (
         <InlineFieldRow className={styles.hysteresis}>
-          <InlineField label="Stop alerting when outside range" labelWidth={labelWidth}>
+          <InlineField label="Stop alerting when outside range" labelWidth={'auto'}>
             <Stack direction="row" gap={0}>
               <div className={styles.range}>
                 <InlineField invalid={Boolean(errorMsgFrom)} error={errorMsgFrom} className={styles.noMargin}>
@@ -251,7 +242,7 @@ function RecoveryThresholdRow({
     } else {
       return (
         <InlineFieldRow className={styles.hysteresis}>
-          <InlineField label="Stop alerting when inside range" labelWidth={labelWidth}>
+          <InlineField label="Stop alerting when inside range" labelWidth={'auto'}>
             <Stack direction="row" gap={0}>
               <div className={styles.range}>
                 <InlineField invalid={Boolean(errorMsgFrom)} error={errorMsgFrom}>
@@ -288,7 +279,7 @@ function RecoveryThresholdRow({
         <InlineFieldRow className={styles.hysteresis}>
           <InlineField
             label="Stop alerting when below"
-            labelWidth={labelWidth}
+            labelWidth={'auto'}
             invalid={Boolean(invalidErrorMsg)}
             error={invalidErrorMsg}
           >
@@ -308,7 +299,7 @@ function RecoveryThresholdRow({
         <InlineFieldRow className={styles.hysteresis}>
           <InlineField
             label="Stop alerting when above"
-            labelWidth={labelWidth}
+            labelWidth={'auto'}
             invalid={Boolean(invalidErrorMsg)}
             error={invalidErrorMsg}
           >
@@ -352,7 +343,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 'min-content',
   }),
   hysteresis: css({
-    marginTop: theme.spacing(0.5),
+    marginTop: theme.spacing(2),
   }),
   switch: css({
     paddingLeft: theme.spacing(1),
