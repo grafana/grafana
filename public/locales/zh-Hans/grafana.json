@@ -25,6 +25,9 @@
       "user": "用户"
     }
   },
+  "bouncing-loader": {
+    "label": ""
+  },
   "browse-dashboards": {
     "action": {
       "cancel-button": "取消",
