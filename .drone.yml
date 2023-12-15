@@ -558,8 +558,8 @@ steps:
       from_secret: drone_token
 - commands:
   - /src/grafana-build artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64
-    --go-version=1.21.5 --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER
-    --grafana-dir=$$PWD > packages.txt
+    -a targz:grafana:linux/arm/v7 --go-version=1.21.5 --yarn-cache=$$YARN_CACHE_FOLDER
+    --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD > packages.txt
   depends_on:
   - yarn-install
   image: grafana/grafana-build:main
@@ -4629,6 +4629,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 132effd41b8fde5e426a2c22dfec793f16fa488ddcf07560e8a8529b19faca53
+hmac: df80b5092eb1332e4cd0ea83df7011790bf745788f7f38a0571cd044319e07af
 
 ...
