@@ -45,6 +45,19 @@ func main() {
 					return nil
 				},
 			},
+			gsrv.ServerCommand(version, commit, enterpriseCommit, buildBranch, buildstamp),
+			{
+				// The kubernetes standalone apiserver service runner
+				Name:  "aggregator",
+				Usage: "run a standalone api service (experimental)",
+				// Skip parsing flags because the command line is actually managed by cobra
+				SkipFlagParsing: true,
+				Action: func(context *cli.Context) error {
+					// exit here because apiserver handles its own error output
+					os.Exit(apiserver.RunAggregatorCLI())
+					return nil
+				},
+			},
 		},
 		CommandNotFound:      cmdNotFound,
 		EnableBashCompletion: true,

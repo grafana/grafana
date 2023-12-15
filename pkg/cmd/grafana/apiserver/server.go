@@ -142,7 +142,7 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 	o.RecommendedOptions.Authorization.RemoteKubeConfigFileOptional = true
 
 	o.RecommendedOptions.Admission = nil
-	o.RecommendedOptions.Etcd = nil
+	// o.RecommendedOptions.Etcd = nil
 
 	if o.RecommendedOptions.CoreAPI.CoreAPIKubeconfigPath == "" {
 		o.RecommendedOptions.CoreAPI = nil
