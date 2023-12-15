@@ -228,7 +228,7 @@ func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 
 func permissionSetResponse(cmd setPermissionCommand) response.Response {
 	message := "Permission updated"
-	if cmd.Permission == "" {
+	if cmd.Permission == "" && len(cmd.Actions) == 0 {
 		message = "Permission removed"
 	}
 	return response.Success(message)
