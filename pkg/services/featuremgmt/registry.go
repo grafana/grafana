@@ -772,6 +772,7 @@ var (
 			Stage:             FeatureStageGeneralAvailability,
 			FrontendOnly:      false,
 			Expression:        "true", // enabled by default
+			AllowSelfServe:    falsePtr,
 			Owner:             identityAccessTeam,
 			RequiresRestart:   true,
 			HideFromAdminPage: true, // This is internal work to speed up dashboard search, and is not ready for wider use
