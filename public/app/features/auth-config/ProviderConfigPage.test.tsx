@@ -85,7 +85,7 @@ describe('ProviderConfig', () => {
           clientId: 'test-client-id',
           clientSecret: 'test-client-secret',
           teamIds: '12324',
-          enabled: false,
+          enabled: true,
         },
       });
     });
