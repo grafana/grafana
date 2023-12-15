@@ -176,7 +176,7 @@ type setPermissionsCommand struct {
 //
 // Set resource permissions for a user.
 //
-// Assigns permissions for a resource by a given type (`:resource`) and `:resourceID` to a user.
+// Assigns permissions for a resource by a given type (`:resource`) and `:resourceID` to a user or a service account.
 // Allowed resources are `datasources`, `teams`, `dashboards`, `folders`, and `serviceaccounts`.
 // Refer to the `/access-control/:resource/description` endpoint for allowed Permissions.
 //
