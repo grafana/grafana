@@ -114,7 +114,7 @@ cloudWatchWildCardDimensionValues,GA,@grafana/aws-datasources,2023-09-27,false,f
 externalServiceAccounts,experimental,@grafana/identity-access-team,2023-09-28,true,false,false,false
 panelMonitoring,experimental,@grafana/dataviz-squad,2023-10-08,false,false,false,true
 enableNativeHTTPHistogram,experimental,@grafana/hosted-grafana-team,2023-10-03,false,false,false,false
-formatString,experimental,@grafana/grafana-bi-squad,2023-10-13,false,false,false,true
+formatString,privatePreview,@grafana/grafana-bi-squad,2023-10-13,false,false,false,true
 transformationsVariableSupport,preview,@grafana/grafana-bi-squad,2023-10-04,false,false,false,true
 kubernetesPlaylists,experimental,@grafana/grafana-app-platform-squad,2023-11-08,false,false,true,false
 kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,2023-12-04,false,false,true,false
