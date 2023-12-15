@@ -78,14 +78,10 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	}
 
 	// TODO??? can the folder service return all folders?
-	hits, err := s.searcher.SearchHandler(ctx, &search.Query{
+	hits, err := s.service.GetChildren(ctx, &folder.GetChildrenQuery{
 		SignedInUser: user,
-		DashboardIds: make([]int64, 0),
-		FolderIds:    make([]int64, 0), // nolint:staticcheck
 		Limit:        limit,
-		OrgId:        orgId,
-		Type:         "dash-folder",
-		Permission:   dashboardaccess.PERMISSION_VIEW,
+		OrgID:        orgId,
 	})
 	if err != nil {
 		return nil, err
