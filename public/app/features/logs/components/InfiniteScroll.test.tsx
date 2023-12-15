@@ -78,7 +78,7 @@ describe('InfiniteScroll', () => {
     (order: LogsSortOrder) => {
       let rows: LogRowModel[];
       beforeEach(() => {
-        rows = createLogRows(absoluteRange.from + (2 * SCROLLING_THRESHOLD), absoluteRange.to - (2 * SCROLLING_THRESHOLD));
+        rows = createLogRows(absoluteRange.from + 2 * SCROLLING_THRESHOLD, absoluteRange.to - 2 * SCROLLING_THRESHOLD);
       });
 
       function setup(loadMoreMock: () => void, startPosition: number) {
@@ -153,6 +153,46 @@ describe('InfiniteScroll', () => {
       });
 
       describe('With absolute range', () => {
+        function setup(loadMoreMock: () => void, startPosition: number, rows: LogRowModel[]) {
+          const { element, events } = getMockElement(startPosition);
+          render(
+            <InfiniteScroll
+              {...defaultProps}
+              sortOrder={order}
+              rows={rows}
+              scrollElement={element as unknown as HTMLDivElement}
+              loadMoreLogs={loadMoreMock}
+            >
+              <div data-testid="contents" style={{ height: 100 }} />
+            </InfiniteScroll>
+          );
+          return { element, events };
+        }
+
+        test.each([
+          ['top', 10, 0],
+          ['bottom', 90, 100],
+        ])(
+          'It does not request more when scrolling %s',
+          async (_: string, startPosition: number, endPosition: number) => {
+            const rows = createLogRows(absoluteRange.from, absoluteRange.to);
+            const loadMoreMock = jest.fn();
+            const { element, events } = setup(loadMoreMock, startPosition, rows);
+
+            expect(await screen.findByTestId('contents')).toBeInTheDocument();
+            element.scrollTop = endPosition;
+
+            act(() => {
+              events['scroll'](new Event('scroll'));
+            });
+
+            expect(loadMoreMock).not.toHaveBeenCalled();
+            expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
+          }
+        );
+      });
+
+      describe('With relative range', () => {
         function setup(loadMoreMock: () => void, startPosition: number, rows: LogRowModel[]) {
           const { element, events } = getMockElement(startPosition);
           render(
