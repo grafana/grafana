@@ -475,7 +475,7 @@ require (
 	github.com/go-errors/errors v1.4.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.0.0 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
-	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79
+	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/backend-platform
 	github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0 // indirect
 )
 
