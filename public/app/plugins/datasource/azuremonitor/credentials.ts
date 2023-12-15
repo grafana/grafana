@@ -4,9 +4,11 @@ import {
   AzureAuthType,
   AzureCloud,
   AzureCredentials,
+  ConcealedSecret,
+} from './components/AzureCredentials';
+import {
   AzureDataSourceInstanceSettings,
   AzureDataSourceSettings,
-  ConcealedSecret,
 } from './types';
 
 const concealed: ConcealedSecret = Symbol('Concealed client secret');
@@ -30,7 +32,6 @@ export function getAuthType(options: AzureDataSourceSettings | AzureDataSourceIn
 function getDefaultAzureCloud(): string {
   switch (config.azure.cloud) {
     case AzureCloud.Public:
-    case AzureCloud.None:
     case undefined:
       return 'azuremonitor';
     case AzureCloud.China:
@@ -64,6 +65,8 @@ export function getAzureCloud(options: AzureDataSourceSettings | AzureDataSource
       return getDefaultAzureCloud();
     case 'clientsecret':
       return options.jsonData.cloudName || getDefaultAzureCloud();
+    default:
+      throw new Error(`The auth type '${authType}' not supported.`);
   }
 }
 
@@ -84,6 +87,8 @@ export function isCredentialsComplete(credentials: AzureCredentials): boolean {
       return true;
     case 'clientsecret':
       return !!(credentials.azureCloud && credentials.tenantId && credentials.clientId && credentials.clientSecret);
+    default:
+      throw new Error(`The auth type '${credentials.authType}' not supported.`);
   }
 }
 
@@ -115,6 +120,8 @@ export function getCredentials(options: AzureDataSourceSettings): AzureCredentia
         clientId: options.jsonData.clientId,
         clientSecret: getSecret(options),
       };
+    default:
+      throw new Error(`The auth type '${authType}' not supported.`);
   }
 }
 
@@ -139,8 +146,7 @@ export function updateCredentials(
           azureAuthType: credentials.authType,
         },
       };
-
-      return options;
+      break;
 
     case 'clientsecret':
       options = {
@@ -161,7 +167,11 @@ export function updateCredentials(
           clientSecret: typeof credentials.clientSecret === 'symbol',
         },
       };
+      break;
 
-      return options;
+    default:
+      throw new Error(`The auth type '${credentials.authType}' not supported.`);
   }
+
+  return options;
 }

@@ -11,6 +11,7 @@ import {
 
 import Datasource from '../datasource';
 
+import { AzureAuthType } from "../components/AzureCredentials";
 import { AzureLogAnalyticsMetadataTable } from './logAnalyticsMetadata';
 import { AzureMonitorQuery, ResultFormat } from './query';
 
@@ -22,45 +23,6 @@ export interface DatasourceValidationResult {
   message: string;
   title?: string;
 }
-
-/**
- * Azure clouds known to Azure Monitor.
- */
-export enum AzureCloud {
-  Public = 'AzureCloud',
-  China = 'AzureChinaCloud',
-  USGovernment = 'AzureUSGovernment',
-  None = '',
-}
-
-export type AzureAuthType = 'msi' | 'clientsecret' | 'workloadidentity';
-
-export type ConcealedSecret = symbol;
-
-interface AzureCredentialsBase {
-  authType: AzureAuthType;
-}
-
-export interface AzureManagedIdentityCredentials extends AzureCredentialsBase {
-  authType: 'msi';
-}
-
-export interface AzureWorkloadIdentityCredentials extends AzureCredentialsBase {
-  authType: 'workloadidentity';
-}
-
-export interface AzureClientSecretCredentials extends AzureCredentialsBase {
-  authType: 'clientsecret';
-  azureCloud?: string;
-  tenantId?: string;
-  clientId?: string;
-  clientSecret?: string | ConcealedSecret;
-}
-
-export type AzureCredentials =
-  | AzureManagedIdentityCredentials
-  | AzureClientSecretCredentials
-  | AzureWorkloadIdentityCredentials;
 
 export interface AzureDataSourceJsonData extends DataSourceJsonData {
   cloudName: string;
