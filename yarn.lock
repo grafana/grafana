@@ -2980,7 +2980,7 @@ __metadata:
     tinycolor2: "npm:1.6.0"
     tslib: "npm:2.6.0"
     typescript: "npm:5.2.2"
-    uplot: "npm:1.6.27"
+    uplot: "leeoniya/uPlot#e5a9747585a8255269ce4a558c59e86db6fd761d"
     xss: "npm:^1.0.14"
   peerDependencies:
     react: ^17.0.0 || ^18.0.0
@@ -3493,7 +3493,7 @@ __metadata:
     tinycolor2: "npm:1.6.0"
     tslib: "npm:2.6.0"
     typescript: "npm:5.2.2"
-    uplot: "npm:1.6.27"
+    uplot: "leeoniya/uPlot#e5a9747585a8255269ce4a558c59e86db6fd761d"
     uuid: "npm:9.0.0"
     webpack: "npm:5.89.0"
   peerDependencies:
@@ -17631,7 +17631,7 @@ __metadata:
     tslib: "npm:2.6.0"
     tween-functions: "npm:^1.2.0"
     typescript: "npm:5.2.2"
-    uplot: "npm:1.6.27"
+    uplot: "leeoniya/uPlot#e5a9747585a8255269ce4a558c59e86db6fd761d"
     uuid: "npm:9.0.0"
     vendor: "link:./public/vendor"
     visjs-network: "npm:4.25.0"
@@ -29933,10 +29933,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uplot@npm:1.6.27":
+"uplot@leeoniya/uPlot#e5a9747585a8255269ce4a558c59e86db6fd761d":
   version: 1.6.27
-  resolution: "uplot@npm:1.6.27"
-  checksum: b46de70804fdec2aa62101d8980aa18517a9a84e94fdeac922baa8121140ddae35685002a7cbdc74bbe6ea2306e341628490f5a5e2fa4b8086ff1643dccf2be9
+  resolution: "uplot@https://github.com/leeoniya/uPlot.git#commit=e5a9747585a8255269ce4a558c59e86db6fd761d"
+  checksum: 3230b5352a037de82125dbe6189de37ec1aea9818c78cf578305201eaea7154b7af7a7298cf71a004c6c127eea5b05a868c68f3124bea12cdd68614c5c3b6ed3
   languageName: node
   linkType: hard
 
