@@ -17364,6 +17364,9 @@
         "isEnabled": {
           "type": "boolean"
         },
+        "slug": {
+          "type": "string"
+        },
         "title": {
           "type": "string"
         },

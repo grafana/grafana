@@ -99,11 +99,6 @@ type BackendFactoryProvider interface {
 	BackendFactory(ctx context.Context, p *Plugin) backendplugin.PluginFactoryFunc
 }
 
-type RendererManager interface {
-	// Renderer returns a renderer plugin.
-	Renderer(ctx context.Context) *Plugin
-}
-
 type SecretsPluginManager interface {
 	// SecretsManager returns a secretsmanager plugin
 	SecretsManager(ctx context.Context) *Plugin

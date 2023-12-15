@@ -104,11 +104,9 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 					ApiUrl:                  server.URL + "/user",
 					RoleAttributePath:       tt.RoleAttributePath,
 					AllowAssignGrafanaAdmin: tt.allowAssignGrafanaAdmin,
-					// TODO: use this setting when SkipOrgRoleSync has moved to OAuthInfo
-					// SkipOrgRoleSync:         tt.settingSkipOrgRoleSync,
+					SkipOrgRoleSync:         tt.settingSkipOrgRoleSync,
 				},
 				&setting.Cfg{
-					OktaSkipOrgRoleSync:        tt.settingSkipOrgRoleSync,
 					AutoAssignOrgRole:          tt.autoAssignOrgRole,
 					OAuthSkipOrgRoleUpdateSync: false,
 				},
