@@ -32,7 +32,7 @@ func TestResourceToEntity(t *testing.T) {
 		expectedKey          string
 		expectedGroupVersion string
 		expectedName         string
-		expectedUID          string
+		expectedTitle        string
 		expectedGuid         string
 		expectedVersion      string
 		expectedFolder       string
@@ -82,6 +82,7 @@ func TestResourceToEntity(t *testing.T) {
 			expectedVersion:      "1",
 			expectedFolder:       "test-folder",
 			expectedCreatedAt:    createdAt.UnixNano() / 1000000,
+			expectedUpdatedAt:    updatedAt.UnixNano() / 1000000,
 			expectedCreatedBy:    "test-created-by",
 			expectedUpdatedBy:    "test-updated-by",
 			expectedSlug:         "test-slug",
@@ -97,7 +98,8 @@ func TestResourceToEntity(t *testing.T) {
 			entity, err := resourceToEntity(tc.key, tc.resource, requestInfo)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedKey, entity.Key)
-			assert.Equal(t, tc.expectedUID, entity.Uid)
+			assert.Equal(t, tc.expectedName, entity.Name)
+			assert.Equal(t, tc.expectedTitle, entity.Title)
 			assert.Equal(t, tc.expectedGroupVersion, entity.GroupVersion)
 			assert.Equal(t, tc.expectedName, entity.Name)
 			assert.Equal(t, tc.expectedGuid, entity.Guid)
@@ -131,6 +133,7 @@ func TestEntityToResource(t *testing.T) {
 		expectedName              string
 		expectedResourceVersion   string
 		expectedUid               string
+		expectedTitle             string
 		expectedAnnotations       map[string]string
 		expectedSpec              any
 	}{
@@ -138,7 +141,8 @@ func TestEntityToResource(t *testing.T) {
 			entity: &entityStore.Entity{
 				Key:          "/playlist.grafana.app/playlists/default/test-uid",
 				GroupVersion: "v0alpha1",
-				Name:         "test-name",
+				Name:         "test-uid",
+				Title:        "test-name",
 				Guid:         "test-guid",
 				Version:      "1",
 				Folder:       "test-folder",
@@ -155,13 +159,15 @@ func TestEntityToResource(t *testing.T) {
 			expectedApiVersion:        "v0alpha1",
 			expectedCreationTimestamp: createdAt,
 			expectedLabels:            map[string]string{"label1": "value1", "label2": "value2"},
-			expectedName:              "test-name",
+			expectedName:              "test-uid",
+			expectedTitle:             "test-name",
 			expectedResourceVersion:   "1",
 			expectedUid:               "test-guid",
 			expectedAnnotations: map[string]string{
 				"grafana.app/createdBy":        "test-created-by",
 				"grafana.app/folder":           "test-folder",
 				"grafana.app/slug":             "test-slug",
+				"grafana.app/title":            "test-name",
 				"grafana.app/updatedBy":        "test-updated-by",
 				"grafana.app/updatedTimestamp": updatedAtStr,
 			},
