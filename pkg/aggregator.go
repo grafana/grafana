@@ -17,10 +17,12 @@ limitations under the License.
 // Package app does all of the work necessary to create a Kubernetes
 // APIServer by binding together the API, master and APIServer infrastructure.
 // It can be configured and called directly or via the hyperkube framework.
-package apiserver
+package pkg
 
 import (
 	"fmt"
+	"io"
+	"net"
 	"net/http"
 	"strings"
 	"sync"
@@ -31,6 +33,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/util/sets"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	genericfeatures "k8s.io/apiserver/pkg/features"
@@ -52,13 +55,96 @@ import (
 	apiregistrationInformers "k8s.io/kube-aggregator/pkg/client/informers/externalversions/apiregistration/v1"
 	"k8s.io/kube-aggregator/pkg/controllers/autoregister"
 	openapicommon "k8s.io/kube-openapi/pkg/common"
+	netutils "k8s.io/utils/net"
 )
 
-const (
-	defaultAggregatorEtcdPathPrefix = "/registry/grafana.aggregator"
-)
+// AggregatorServerOptions contains the state for the aggregator apiserver
+type AggregatorServerOptions struct {
+	RecommendedOptions *options.RecommendedOptions
+	AlternateDNS       []string
 
-func createAggregatorConfig(
+	StdOut io.Writer
+	StdErr io.Writer
+}
+
+func NewAggregatorServerOptions(out, errOut io.Writer) *AggregatorServerOptions {
+	return &AggregatorServerOptions{
+		StdOut: out,
+		StdErr: errOut,
+	}
+}
+
+func (o *AggregatorServerOptions) Config(codecs serializer.CodecFactory) (*genericapiserver.RecommendedConfig, error) {
+	if err := o.RecommendedOptions.SecureServing.MaybeDefaultWithSelfSignedCerts(
+		"localhost", o.AlternateDNS, []net.IP{netutils.ParseIPSloppy("127.0.0.1")},
+	); err != nil {
+		return nil, fmt.Errorf("error creating self-signed certificates: %v", err)
+	}
+
+	o.RecommendedOptions.Authentication.RemoteKubeConfigFileOptional = true
+	o.RecommendedOptions.Authorization.RemoteKubeConfigFileOptional = true
+
+	o.RecommendedOptions.Admission = nil
+
+	if o.RecommendedOptions.CoreAPI.CoreAPIKubeconfigPath == "" {
+		o.RecommendedOptions.CoreAPI = nil
+	}
+
+	serverConfig := genericapiserver.NewRecommendedConfig(codecs)
+
+	if o.RecommendedOptions.CoreAPI == nil {
+		if err := o.ModifiedApplyTo(serverConfig); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := o.RecommendedOptions.ApplyTo(serverConfig); err != nil {
+			return nil, err
+		}
+	}
+
+	return serverConfig, nil
+}
+
+// A copy of ApplyTo in recommended.go, but for >= 0.28, server pkg in apiserver does a bit extra causing
+// a panic when CoreAPI is set to nil
+func (o *AggregatorServerOptions) ModifiedApplyTo(config *genericapiserver.RecommendedConfig) error {
+	if err := o.RecommendedOptions.Etcd.ApplyTo(&config.Config); err != nil {
+		return err
+	}
+	if err := o.RecommendedOptions.EgressSelector.ApplyTo(&config.Config); err != nil {
+		return err
+	}
+	if err := o.RecommendedOptions.Traces.ApplyTo(config.Config.EgressSelector, &config.Config); err != nil {
+		return err
+	}
+	if err := o.RecommendedOptions.SecureServing.ApplyTo(&config.Config.SecureServing, &config.Config.LoopbackClientConfig); err != nil {
+		return err
+	}
+	if err := o.RecommendedOptions.Authentication.ApplyTo(&config.Config.Authentication, config.SecureServing, config.OpenAPIConfig); err != nil {
+		return err
+	}
+	if err := o.RecommendedOptions.Authorization.ApplyTo(&config.Config.Authorization); err != nil {
+		return err
+	}
+	if err := o.RecommendedOptions.Audit.ApplyTo(&config.Config); err != nil {
+		return err
+	}
+	//if err := o.RecommendedOptions.Features.ApplyTo(&config.Config); err != nil {
+	//	return err
+	//}
+
+	if err := o.RecommendedOptions.CoreAPI.ApplyTo(config); err != nil {
+		return err
+	}
+
+	_, err := o.RecommendedOptions.ExtraAdmissionInitializers(config)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func CreateAggregatorConfig(
 	kubeAPIServerConfig genericapiserver.Config,
 	commandOptions options.RecommendedOptions,
 	schemes []*runtime.Scheme,
@@ -128,7 +214,7 @@ func createAggregatorConfig(
 	return aggregatorConfig, nil
 }
 
-func createAggregatorServer(aggregatorConfig aggregatorapiserver.Config, delegateAPIServer genericapiserver.DelegationTarget) (*aggregatorapiserver.APIAggregator, error) {
+func CreateAggregatorServer(aggregatorConfig aggregatorapiserver.Config, delegateAPIServer genericapiserver.DelegationTarget) (*aggregatorapiserver.APIAggregator, error) {
 	aggregatorServer, err := aggregatorConfig.Complete().NewWithDelegate(delegateAPIServer)
 	if err != nil {
 		return nil, err

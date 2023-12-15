@@ -1,8 +1,9 @@
 package apiserver
 
 import (
-	"fmt"
 	"os"
+
+	grafana "github.com/grafana/grafana/pkg"
 
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -12,6 +13,10 @@ import (
 	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
 	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
 	aggregatoropenapi "k8s.io/kube-aggregator/pkg/generated/openapi"
+)
+
+const (
+	defaultAggregatorEtcdPathPrefix = "/registry/grafana.aggregator"
 )
 
 func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}) *cobra.Command {
@@ -78,12 +83,10 @@ func newCommandStartAggregator(aggregator *aggregatorapiserver.APIAggregator, st
 			// Finish the config (a noop for now)
 			prepared, err := aggregator.PrepareRun()
 			if err != nil {
-				fmt.Println(err)
 				return err
 			}
 
 			if err := prepared.Run(stopCh); err != nil {
-				fmt.Println(err)
 				return err
 			}
 			return nil
@@ -96,31 +99,28 @@ func newCommandStartAggregator(aggregator *aggregatorapiserver.APIAggregator, st
 func RunAggregatorCLI() int {
 	delegationTarget := genericapiserver.NewEmptyDelegate()
 
-	serverOptions := newAPIServerOptions(os.Stdout, os.Stderr)
+	serverOptions := grafana.NewAggregatorServerOptions(os.Stdout, os.Stderr)
 	// Register standard k8s flags with the command line
 	serverOptions.RecommendedOptions = options.NewRecommendedOptions(
 		defaultAggregatorEtcdPathPrefix,
 		aggregatorscheme.Codecs.LegacyCodec(), // codec is passed to etcd and hence not used
 	)
 
-	sharedConfig, err := serverOptions.Config()
+	sharedConfig, err := serverOptions.Config(Codecs)
 	if err != nil {
-		fmt.Println(err)
 		return -1
 	}
 
-	config, err := createAggregatorConfig(sharedConfig.Config,
+	config, err := grafana.CreateAggregatorConfig(sharedConfig.Config,
 		*serverOptions.RecommendedOptions,
 		[]*runtime.Scheme{aggregatorscheme.Scheme},
 		aggregatoropenapi.GetOpenAPIDefinitions)
 	if err != nil {
-		fmt.Println(err)
 		return -1
 	}
 
-	aggregator, err := createAggregatorServer(*config, delegationTarget)
+	aggregator, err := grafana.CreateAggregatorServer(*config, delegationTarget)
 	if err != nil {
-		fmt.Println(err)
 		return -1
 	}
 
