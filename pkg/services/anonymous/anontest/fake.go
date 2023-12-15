@@ -11,6 +11,7 @@ import (
 
 type FakeService struct {
 	ExpectedCountDevices int64
+	ExpectedListDevices  []*anonstore.Device
 	ExpectedError        error
 }
 
@@ -18,17 +19,14 @@ func NewFakeService() *FakeService {
 	return &FakeService{}
 }
 
-type FakeAnonymousSessionService struct {
-}
-
 func (f *FakeService) TagDevice(ctx context.Context, httpReq *http.Request, kind anonymous.DeviceKind) error {
-	return nil
+	return f.ExpectedError
 }
 
 func (f *FakeService) CountDevices(ctx context.Context, from time.Time, to time.Time) (int64, error) {
-	return f.ExpectedCountDevices, nil
+	return f.ExpectedCountDevices, f.ExpectedError
 }
 
 func (f *FakeService) ListDevices(ctx context.Context, from *time.Time, to *time.Time) ([]*anonstore.Device, error) {
-	return nil, nil
+	return f.ExpectedListDevices, f.ExpectedError
 }
