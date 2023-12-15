@@ -53,7 +53,7 @@ func LibraryPanelUIDScopeResolver(l *LibraryElementService, folderSvc folder.Ser
 		}
 
 		libElDTO, err := l.getLibraryElementByUid(ctx, user, model.GetLibraryElementCommand{
-			UID:        uid,
+			FolderUID:  uid,
 			FolderName: dashboards.RootFolderName,
 		})
 		if err != nil {
