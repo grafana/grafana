@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 // Copied from: https://github.com/grafana/grafana/blob/main/pkg/api/dtos/models.go#L62
@@ -42,7 +44,7 @@ func readQueries(in []byte) ([]backend.DataQuery, error) {
 		return nil, fmt.Errorf("expected queries")
 	}
 
-	tr := NewDataTimeRange(reqDTO.From, reqDTO.To)
+	tr := legacydata.NewDataTimeRange(reqDTO.From, reqDTO.To)
 	backendTr := backend.TimeRange{
 		From: tr.MustGetFrom(),
 		To:   tr.MustGetTo(),
