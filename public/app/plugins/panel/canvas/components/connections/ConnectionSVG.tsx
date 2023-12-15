@@ -7,7 +7,7 @@ import { config } from 'app/core/config';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
 import { ConnectionState } from '../../types';
-import { calculateCoordinates, getConnectionStyles } from '../../utils';
+import { calculateCoordinates, getConnectionStyles, getTransformObject } from '../../utils';
 
 type Props = {
   setSVGRef: (anchorElement: SVGSVGElement) => void;
@@ -104,10 +104,9 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
       const { source, target, info } = v;
       const sourceRect = source.div?.getBoundingClientRect();
       const parent = source.div?.parentElement;
-      const transformRef = scene.transformComponentRef?.current;
+      const { transformRef, transformScale } = getTransformObject(scene);
 
       const parentRect = transformRef?.instance.contentComponent?.getBoundingClientRect();
-      const transformScale = transformRef?.instance.transformState.scale ?? 1;
 
       if (!sourceRect || !parent || !parentRect) {
         return;

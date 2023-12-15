@@ -239,3 +239,8 @@ export const getConnectionStyles = (info: CanvasConnection, scene: Scene, defaul
   const strokeWidth = info.size ? scene.context.getScale(info.size).get(lastRowIndex) : defaultArrowSize;
   return { strokeColor, strokeWidth };
 };
+
+export const getTransformObject = (scene: Scene) => {
+  const transformRef = scene.transformComponentRef?.current;
+  return { transformRef, transformScale: transformRef?.instance.transformState.scale ?? 1 };
+};

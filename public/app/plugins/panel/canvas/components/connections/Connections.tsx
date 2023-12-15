@@ -7,7 +7,7 @@ import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
 import { ConnectionState } from '../../types';
-import { getConnections, isConnectionSource, isConnectionTarget } from '../../utils';
+import { getConnections, getTransformObject, isConnectionSource, isConnectionTarget } from '../../utils';
 
 import { CONNECTION_ANCHOR_ALT, ConnectionAnchors, CONNECTION_ANCHOR_HIGHLIGHT_OFFSET } from './ConnectionAnchors';
 import { ConnectionSVG } from './ConnectionSVG';
@@ -103,10 +103,9 @@ export class Connections {
     }
 
     const elementBoundingRect = element.div!.getBoundingClientRect();
-    const transformRef = this.scene.transformComponentRef?.current;
+    const { transformRef, transformScale } = getTransformObject(this.scene);
 
     const parentBoundingRect = transformRef?.instance.contentComponent?.getBoundingClientRect();
-    const transformScale = transformRef?.instance.transformState.scale ?? 1;
 
     const relativeTop = elementBoundingRect.top - (parentBoundingRect?.top ?? 0);
     const relativeLeft = elementBoundingRect.left - (parentBoundingRect?.left ?? 0);
@@ -143,10 +142,9 @@ export class Connections {
       return;
     }
 
-    const transformRef = this.scene.transformComponentRef?.current;
+    const { transformRef, transformScale } = getTransformObject(this.scene);
 
     const parentBoundingRect = transformRef?.instance.contentComponent?.getBoundingClientRect();
-    const transformScale = transformRef?.instance.transformState.scale ?? 1;
     const x = event.pageX - parentBoundingRect!.x ?? 0;
     const y = event.pageY - parentBoundingRect!.y ?? 0;
 
@@ -167,10 +165,9 @@ export class Connections {
     if (!event.buttons) {
       if (this.connectionSource && this.connectionSource.div && this.connectionSource.div.parentElement) {
         const sourceRect = this.connectionSource.div.getBoundingClientRect();
-        const transformRef = this.scene.transformComponentRef?.current;
+        const { transformRef, transformScale } = getTransformObject(this.scene);
 
         const parentRect = transformRef?.instance.contentComponent?.getBoundingClientRect();
-        const transformScale = transformRef?.instance.transformState.scale ?? 1;
 
         const sourceVerticalCenter = (sourceRect.top - parentRect!.top + sourceRect.height / 2) / transformScale;
         const sourceHorizontalCenter = (sourceRect.left - parentRect!.left + sourceRect.width / 2) / transformScale;
@@ -251,10 +248,9 @@ export class Connections {
     this.scene.selecto!.rootContainer!.style.cursor = 'crosshair';
     if (this.connectionSVG && this.connectionLine && this.scene.div && this.scene.div.parentElement) {
       const connectionStartTargetBox = selectedTarget.getBoundingClientRect();
-      const transformRef = this.scene.transformComponentRef?.current;
+      const { transformRef, transformScale } = getTransformObject(this.scene);
 
       const parentBoundingRect = transformRef?.instance.contentComponent?.getBoundingClientRect();
-      const transformScale = transformRef?.instance.transformState.scale ?? 1;
 
       const x = connectionStartTargetBox.x - parentBoundingRect!.x + CONNECTION_ANCHOR_HIGHLIGHT_OFFSET;
       const y = connectionStartTargetBox.y - parentBoundingRect!.y + CONNECTION_ANCHOR_HIGHLIGHT_OFFSET;
