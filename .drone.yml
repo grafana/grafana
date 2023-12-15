@@ -3775,6 +3775,8 @@ steps:
   name: wire-install
 - commands:
   - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
+  environment:
+    CGO_ENABLED: 1
   depends_on:
   - wire-install
   image: golang:1.21.5-windowsservercore-1809
