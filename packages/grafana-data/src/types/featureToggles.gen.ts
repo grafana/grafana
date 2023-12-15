@@ -40,6 +40,7 @@ export interface FeatureToggles {
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   dataConnectionsConsole?: boolean;
+  topnav?: boolean;
   dockedMegaMenu?: boolean;
   grpcServer?: boolean;
   unifiedStorage?: boolean;

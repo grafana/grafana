@@ -21,6 +21,7 @@ scenes,experimental,@grafana/dashboards-squad,2022-07-07,false,false,false,true
 disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,2022-07-13,false,false,true,false
 logRequestsInstrumentedAsUnknown,experimental,@grafana/hosted-grafana-team,2022-06-10,false,false,false,false
 dataConnectionsConsole,GA,@grafana/plugins-platform-backend,2022-06-01,false,false,false,false
+topnav,deprecated,@grafana/grafana-frontend-platform,2022-06-20,false,false,false,false
 dockedMegaMenu,experimental,@grafana/grafana-frontend-platform,2023-09-18,false,false,false,true
 grpcServer,preview,@grafana/grafana-app-platform-squad,2022-09-27,false,false,false,false
 unifiedStorage,experimental,@grafana/grafana-app-platform-squad,2022-12-01,true,false,true,false

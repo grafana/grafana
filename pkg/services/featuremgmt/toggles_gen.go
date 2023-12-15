@@ -95,6 +95,10 @@ const (
 	// Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.
 	FlagDataConnectionsConsole = "dataConnectionsConsole"
 
+	// FlagTopnav
+	// Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.
+	FlagTopnav = "topnav"
+
 	// FlagDockedMegaMenu
 	// Enable support for a persistent (docked) navigation menu
 	FlagDockedMegaMenu = "dockedMegaMenu"
