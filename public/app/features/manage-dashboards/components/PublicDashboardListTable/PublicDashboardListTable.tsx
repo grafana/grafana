@@ -106,7 +106,7 @@ const PublicDashboardCard = ({ pd }: { pd: PublicDashboardListResponse }) => {
           icon="cog"
           variant="secondary"
           color={theme.colors.warning.text}
-          href={generatePublicDashboardConfigUrl(pd.dashboardUid)}
+          href={generatePublicDashboardConfigUrl(pd.dashboardUid, pd.slug)}
           key="public-dashboard-config-url"
           tooltip="Configure public dashboard"
           data-testid={selectors.ListItem.configButton}
