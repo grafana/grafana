@@ -1302,8 +1302,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "13"],
       [0, 0, 0, "Styles should be written using objects.", "14"],
       [0, 0, 0, "Styles should be written using objects.", "15"],
-      [0, 0, 0, "Styles should be written using objects.", "16"],
-      [0, 0, 0, "Styles should be written using objects.", "17"]
+      [0, 0, 0, "Styles should be written using objects.", "16"]
     ],
     "public/app/features/admin/UserPermissions.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
@@ -1311,11 +1310,7 @@ exports[`better eslint`] = {
     "public/app/features/admin/UserProfile.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"]
-    ],
-    "public/app/features/admin/UserSessions.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
+      [0, 0, 0, "Styles should be written using objects.", "2"]
     ],
     "public/app/features/alerting/AlertTab.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -5155,9 +5150,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "9"]
     ],
     "public/app/plugins/datasource/graphite/components/AddGraphiteFunction.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
-    "public/app/plugins/datasource/graphite/components/FunctionEditor.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/plugins/datasource/graphite/components/FunctionParamEditor.tsx:5381": [
