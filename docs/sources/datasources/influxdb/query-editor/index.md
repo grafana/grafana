@@ -8,7 +8,7 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Flux support in Grafana
+title: Query Editor
 weight: 200
 ---
 
@@ -22,6 +22,7 @@ For general documentation on querying data sources in Grafana, see [Query and tr
 The InfluxDB data source's query editor has two modes depending on your choice of query language in the [data source configuration]({{< relref "../#configure-the-data-source" >}}):
 
 - [InfluxQL](#influxql-query-editor)
+- [SQL](#sql-query-editor)
 - [Flux](#flux-query-editor)
 
 You also use the query editor to retrieve [log data](#query-logs) and [annotate](#apply-annotations) visualizations.
@@ -118,6 +119,37 @@ You can also use `[[tag_hostname]]` pattern replacement syntax.
 
 For example, entering the value `Host: [[tag_hostname]]` in the ALIAS BY field replaces it with the `hostname` tag value for each legend value.
 An example legend value would be `Host: server1`.
+
+## SQL query editor
+
+Grafana support [SQL querying language](https://docs.influxdata.com/influxdb/cloud-serverless/query-data/sql/) with [InfluxDB v3.0](https://www.influxdata.com/blog/introducing-influxdb-3-0/) and higher.  
+
+### Macros
+
+You can use macros within the query to replace them with the values from Grafana's context. 
+
+| Macro example                         | Replaced with                                                                                                                                                                                                  |
+|---------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `$__timeFrom`                         | The start of the currently active time selection, such as `2020-06-11T13:31:00Z`.                                                                                                                              |
+| `$__timeTo`                           | The end of the currently active time selection, such as `2020-06-11T14:31:00Z`.                                                                                                                                |
+| `$__timeFilter`                       | The time range that applies the start and the end of currently active time selection.                                                                                                                          |
+| `$__interval`                         | An interval string that corresponds to Grafana's calculated interval based on the time range of the active time selection, such as `5s`.                                                                       |
+| `$__dateBin(<column>)`                | Applies [date_bin](https://docs.influxdata.com/influxdb/cloud-serverless/reference/sql/functions/time-and-date/#date_bin) function. Column must be timestamp.                                                  |
+| `$__dateBinAlias(<column>)`           | Applies [date_bin](https://docs.influxdata.com/influxdb/cloud-serverless/reference/sql/functions/time-and-date/#date_bin) function with suffix `_binned`. Column must be timestamp.                            |
+
+
+Examples:
+```
+// with macro
+1. SELECT * FROM cpu WHERE time >= $__timeFrom AND time <= $__timeTo
+2. SELECT * FROM cpu WHERE $__timeFilter(time)
+3. SELECT $__dateBin(time) from cpu 
+
+// interpolated
+1. SELECT * FROM iox.cpu WHERE time >= cast('2023-12-15T12:38:30Z' as timestamp) AND time <= cast('2023-12-15T18:38:30Z' as timestamp) 
+2. SELECT * FROM cpu WHERE time >= '2023-12-15T12:41:28Z' AND time <= '2023-12-15T18:41:28Z' 
+3. SELECT date_bin(interval '15 second', time, timestamp '1970-01-01T00:00:00Z') from cpu
+```
 
 ## Flux query editor
 
