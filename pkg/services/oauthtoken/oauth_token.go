@@ -12,6 +12,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/sync/singleflight"
 
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -30,11 +31,14 @@ var (
 	ErrNotAnOAuthProvider  = errors.New("not an oauth provider")
 )
 
+const maxOAuthTokenCacheTTL = 10 * time.Minute
+
 type Service struct {
 	Cfg               *setting.Cfg
 	SocialService     social.Service
 	AuthInfoService   login.AuthInfoService
 	singleFlightGroup *singleflight.Group
+	cache             *localcache.CacheService
 
 	tokenRefreshDuration *prometheus.HistogramVec
 }
@@ -54,6 +58,7 @@ func ProvideService(socialService social.Service, authInfoService login.AuthInfo
 		AuthInfoService:      authInfoService,
 		singleFlightGroup:    new(singleflight.Group),
 		tokenRefreshDuration: newTokenRefreshDurationMetric(registerer),
+		cache:                localcache.New(maxOAuthTokenCacheTTL, 15*time.Minute),
 	}
 }
 
@@ -216,9 +221,13 @@ func (o *Service) tryGetOrRefreshAccessToken(ctx context.Context, usr *login.Use
 		return persistedToken, nil
 	}
 
-	needRefresh, err := ShouldRefreshToken(logger, persistedToken)
-	if err != nil || !needRefresh {
-		return persistedToken, err
+	needRefresh, err := o.ShouldRefreshToken(usr.UserId, persistedToken)
+	if err != nil {
+		return nil, err
+	}
+	if !needRefresh {
+		logger.Debug("Neither access nor id token have expired yet", "id", usr.UserId)
+		return persistedToken, nil
 	}
 
 	// Force token refresh
@@ -299,25 +308,36 @@ func tokensEq(t1, t2 *oauth2.Token) bool {
 		t1.TokenType == t2.TokenType
 }
 
-func ShouldRefreshToken(logger log.Logger, token *oauth2.Token) (bool, error) {
-	// TODO cache the check ?
+func (o *Service) ShouldRefreshToken(usrID int64, token *oauth2.Token) (bool, error) {
+	// check if we recently assessed token expiry
+	key := fmt.Sprintf("token-check-%v", usrID)
+	if _, ok := o.cache.Get(key); ok {
+		logger.Debug("OAuth token check is cached", "id", key)
+		return false, nil
+	}
+
 	rawTokens := []string{token.AccessToken}
 	if rawIdToken := token.Extra("id_token"); rawIdToken != nil {
 		rawTokens = append(rawTokens, rawIdToken.(string))
 	}
+	expirations := make([]time.Time, 0, 2)
 	for _, tkn := range rawTokens {
 		if tkn == "" {
 			return false, nil
 		}
 
-		_, hasExpired, err := hasTokenExpiredWithSkew(tkn)
+		exp, hasExpired, err := hasTokenExpiredWithSkew(tkn)
 		if err != nil {
 			return false, err
 		}
 		if hasExpired {
 			return true, nil
 		}
+		expirations = append(expirations, exp)
 	}
+
+	o.cache.Set(key, struct{}{}, getOAuthTokenCacheTTL(expirations))
+
 	return false, nil
 }
 
@@ -352,4 +372,18 @@ func getTokenExpiry(tkn string) (time.Time, error) {
 	}
 
 	return time.Unix(claims.Exp, 0), nil
+}
+
+func getOAuthTokenCacheTTL(expirations []time.Time) time.Duration {
+	min := maxOAuthTokenCacheTTL
+	for i := range expirations {
+		if expirations[i].IsZero() {
+			continue
+		}
+		ttl := time.Until(expirations[i])
+		if ttl < maxOAuthTokenCacheTTL {
+			min = ttl
+		}
+	}
+	return min
 }

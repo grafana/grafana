@@ -14,6 +14,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/sync/singleflight"
 
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -242,6 +243,7 @@ func setupOAuthTokenService(t *testing.T) (*Service, *FakeAuthInfoStore, *social
 		AuthInfoService:      authInfoService,
 		singleFlightGroup:    &singleflight.Group{},
 		tokenRefreshDuration: newTokenRefreshDurationMetric(prometheus.NewRegistry()),
+		cache:                localcache.New(maxOAuthTokenCacheTTL, 15*time.Minute),
 	}, authInfoStore, socialConnector
 }
 
