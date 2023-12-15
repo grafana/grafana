@@ -5152,9 +5152,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/graphite/components/AddGraphiteFunction.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
-    "public/app/plugins/datasource/graphite/components/FunctionEditor.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
     "public/app/plugins/datasource/graphite/components/FunctionParamEditor.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
