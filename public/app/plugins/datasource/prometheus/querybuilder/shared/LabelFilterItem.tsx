@@ -7,7 +7,8 @@ import { AccessoryButton, InputGroup } from '@grafana/experimental';
 import { InlineField, Select } from '@grafana/ui';
 import { lokiOperators } from 'app/plugins/datasource/loki/querybuilder/types';
 
-import { isConflictingSelector } from './operationUtils';
+import { isConflictingSelector } from '../operationUtils';
+
 import { QueryBuilderLabelFilter } from './types';
 
 export interface Props {

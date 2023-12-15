@@ -7,6 +7,9 @@ import context "context"
 //-----------------------------------------------------------------------------------------------------
 
 const (
+	FolderGroupName    = "folder.grafana.app"
+	FolderResourceName = "folders"
+
 	StandardKindDashboard = "dashboard"
 	StandardKindPlaylist  = "playlist"
 	StandardKindFolder    = "folder"
