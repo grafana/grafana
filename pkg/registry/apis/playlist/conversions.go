@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 
+	"github.com/grafana/grafana/pkg/apis"
 	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
@@ -80,7 +81,7 @@ func convertToK8sResource(v *playlistsvc.PlaylistDTO, namespacer request.Namespa
 	meta := kinds.GrafanaResourceMetadata{}
 	meta.SetUpdatedTimestampMillis(v.UpdatedAt)
 	if v.Id > 0 {
-		meta.SetOriginInfo(&kinds.ResourceOriginInfo{
+		meta.SetOriginInfo(&apis.ResourceOriginInfo{
 			Name: "SQL",
 			Key:  fmt.Sprintf("%d", v.Id),
 		})

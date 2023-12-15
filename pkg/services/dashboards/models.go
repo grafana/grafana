@@ -6,6 +6,7 @@ import (
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana/pkg/apis"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/kinds"
@@ -101,7 +102,7 @@ func (d *Dashboard) ToResource() kinds.GrafanaResource[simplejson.Json, any] {
 		res.Metadata.SetUpdatedBy(fmt.Sprintf("user:%d", d.UpdatedBy))
 	}
 	if d.PluginID != "" {
-		res.Metadata.SetOriginInfo(&kinds.ResourceOriginInfo{
+		res.Metadata.SetOriginInfo(&apis.ResourceOriginInfo{
 			Name: "plugin",
 			Key:  d.PluginID,
 		})
