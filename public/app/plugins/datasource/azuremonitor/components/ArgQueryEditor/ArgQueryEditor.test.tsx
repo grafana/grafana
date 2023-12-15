@@ -183,7 +183,7 @@ describe('ArgQueryEditor', () => {
     expect(await waitFor(() => screen.getByText('At least one subscription must be chosen.'))).toBeInTheDocument();
   });
 
-  it.skip('should select all subscriptions if select all is chosen from the dropdown', async () => {
+  it('should select all subscriptions if select all is chosen from the dropdown', async () => {
     const onChange = jest.fn();
     const datasource = createMockDatasource({
       getSubscriptions: jest.fn().mockResolvedValue([
@@ -230,6 +230,7 @@ describe('ArgQueryEditor', () => {
         variableOptionGroup={{ label: 'Template Variables', options: [] }}
       />
     );
-    expect(await waitFor(() => screen.getByText('At least one subscription must be chosen.'))).toBeInTheDocument();
+    expect(await waitFor(() => screen.getByText('foo'))).toBeInTheDocument();
+    expect(await waitFor(() => screen.getByText('bar'))).toBeInTheDocument();
   });
 });
