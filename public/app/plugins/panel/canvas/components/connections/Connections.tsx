@@ -168,10 +168,15 @@ export class Connections {
         const { transformRef, transformScale } = getTransformObject(this.scene);
 
         const parentRect = transformRef?.instance.contentComponent?.getBoundingClientRect();
+        const parentRectObj = {
+          top: parentRect?.top ?? 0,
+          left: parentRect?.left ?? 0,
+          height: parentRect?.height ?? 0,
+          width: parentRect?.width ?? 0,
+        };
 
-        const sourceVerticalCenter = (sourceRect.top - (parentRect?.top ?? 0) + sourceRect.height / 2) / transformScale;
-        const sourceHorizontalCenter =
-          (sourceRect.left - (parentRect?.left ?? 0) + sourceRect.width / 2) / transformScale;
+        const sourceVerticalCenter = (sourceRect.top - parentRectObj.top + sourceRect.height / 2) / transformScale;
+        const sourceHorizontalCenter = (sourceRect.left - parentRectObj.left + sourceRect.width / 2) / transformScale;
 
         // Convert from DOM coords to connection coords
         // TODO: Break this out into util function and add tests
@@ -185,18 +190,18 @@ export class Connections {
         if (this.connectionTarget && this.connectionTarget.div) {
           const targetRect = this.connectionTarget.div.getBoundingClientRect();
 
-          const targetVerticalCenter = targetRect.top - (parentRect?.top ?? 0) + targetRect.height / 2;
-          const targetHorizontalCenter = targetRect.left - (parentRect?.left ?? 0) + targetRect.width / 2;
+          const targetVerticalCenter = targetRect.top - parentRectObj.top + targetRect.height / 2;
+          const targetHorizontalCenter = targetRect.left - parentRectObj.left + targetRect.width / 2;
 
           targetX = (x - targetHorizontalCenter) / (targetRect.width / 2);
           targetY = (targetVerticalCenter - y) / (targetRect.height / 2);
           targetName = this.connectionTarget.options.name;
         } else {
-          const parentVerticalCenter = (parentRect?.height ?? 0) / 2;
-          const parentHorizontalCenter = (parentRect?.width ?? 0) / 2;
+          const parentVerticalCenter = parentRectObj.height / 2;
+          const parentHorizontalCenter = parentRectObj.width / 2;
 
-          targetX = (x - parentHorizontalCenter) / ((parentRect?.width ?? 0) / 2);
-          targetY = (parentVerticalCenter - y) / ((parentRect?.height ?? 0) / 2);
+          targetX = (x - parentHorizontalCenter) / (parentRectObj.width / 2);
+          targetY = (parentVerticalCenter - y) / (parentRectObj.height / 2);
         }
 
         const connection = {
