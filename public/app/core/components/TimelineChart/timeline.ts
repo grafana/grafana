@@ -2,7 +2,7 @@ import uPlot, { Series } from 'uplot';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
-import { VisibilityMode, TimelineValueAlignment } from '@grafana/schema';
+import { TimelineValueAlignment, VisibilityMode } from '@grafana/schema';
 import { FIXED_UNIT } from '@grafana/ui';
 import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
 import { pointWithin, Quadtree, Rect } from 'app/plugins/panel/barchart/quadtree';
@@ -440,6 +440,15 @@ export function getConfig(opts: TimelineCoreOptions) {
       }
 
       return hovered[seriesIdx]?.didx;
+    },
+    focus: {
+      prox: 30,
+      dist: (u, seriesIdx, dataIdx, valPos, curPos) => {
+        console.log('focus.dist');
+        valPos = yMids[seriesIdx] - 1;
+
+        return valPos - curPos;
+      },
     },
     points: {
       fill: 'rgba(255,255,255,0.2)',
