@@ -29,8 +29,7 @@ var _ ssosettings.Reloadable = (*SocialGitlab)(nil)
 
 type SocialGitlab struct {
 	*SocialBase
-	apiUrl          string
-	skipOrgRoleSync bool
+	apiUrl string
 }
 
 type apiData struct {
@@ -57,9 +56,8 @@ type userData struct {
 func NewGitLabProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager) *SocialGitlab {
 	config := createOAuthConfig(info, cfg, social.GitlabProviderName)
 	provider := &SocialGitlab{
-		SocialBase:      newSocialBase(social.GitlabProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-		apiUrl:          info.ApiUrl,
-		skipOrgRoleSync: info.SkipOrgRoleSync,
+		SocialBase: newSocialBase(social.GitlabProviderName, config, info, cfg.AutoAssignOrgRole, *features),
+		apiUrl:     info.ApiUrl,
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
@@ -185,7 +183,7 @@ func (s *SocialGitlab) UserInfo(ctx context.Context, client *http.Client, token 
 		return nil, errMissingGroupMembership
 	}
 
-	if s.info.AllowAssignGrafanaAdmin && s.skipOrgRoleSync {
+	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
@@ -224,7 +222,7 @@ func (s *SocialGitlab) extractFromAPI(ctx context.Context, client *http.Client, 
 		Groups: s.getGroups(ctx, client),
 	}
 
-	if !s.skipOrgRoleSync {
+	if !s.info.SkipOrgRoleSync {
 		var grafanaAdmin bool
 		role, grafanaAdmin, err := s.extractRoleAndAdmin(response.Body, idData.Groups)
 		if err != nil {
@@ -281,7 +279,7 @@ func (s *SocialGitlab) extractFromToken(ctx context.Context, client *http.Client
 		data.Groups = userInfo.Groups
 	}
 
-	if !s.skipOrgRoleSync {
+	if !s.info.SkipOrgRoleSync {
 		role, grafanaAdmin, errRole := s.extractRoleAndAdmin(rawJSON, data.Groups)
 		if errRole != nil {
 			return nil, errRole

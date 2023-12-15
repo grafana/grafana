@@ -8255,6 +8255,9 @@
           "isEnabled": {
             "type": "boolean"
           },
+          "slug": {
+            "type": "string"
+          },
           "title": {
             "type": "string"
           },
@@ -11602,7 +11605,6 @@
         "type": "object"
       },
       "alertGroups": {
-        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -11791,7 +11793,6 @@
         "type": "object"
       },
       "gettableAlerts": {
-        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
@@ -14976,6 +14977,13 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -15174,6 +15182,15 @@
       },
       "post": {
         "operationId": "RoutePostContactpoints",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -15315,6 +15332,13 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -15399,6 +15423,13 @@
       "put": {
         "operationId": "RoutePutAlertRuleGroup",
         "parameters": [
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "in": "path",
             "name": "FolderUID",
@@ -15546,6 +15577,15 @@
       },
       "post": {
         "operationId": "RoutePostMuteTiming",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -15703,6 +15743,13 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -15844,6 +15891,15 @@
       },
       "put": {
         "operationId": "RoutePutPolicyTree",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -16003,6 +16059,13 @@
             "in": "path",
             "name": "name",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
             "schema": {
               "type": "string"
             }

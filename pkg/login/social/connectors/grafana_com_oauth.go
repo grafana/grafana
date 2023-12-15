@@ -27,7 +27,6 @@ type SocialGrafanaCom struct {
 	*SocialBase
 	url                  string
 	allowedOrganizations []string
-	skipOrgRoleSync      bool
 }
 
 type OrgRecord struct {
@@ -42,10 +41,9 @@ func NewGrafanaComProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings
 
 	config := createOAuthConfig(info, cfg, social.GrafanaComProviderName)
 	provider := &SocialGrafanaCom{
-		SocialBase:           newSocialBase(social.GrafanaComProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:           newSocialBase(social.GrafanaComProviderName, config, info, cfg.AutoAssignOrgRole, *features),
 		url:                  cfg.GrafanaComURL,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
-		skipOrgRoleSync:      info.SkipOrgRoleSync,
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
@@ -107,7 +105,7 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 
 	// on login we do not want to display the role from the external provider
 	var role roletype.RoleType
-	if !s.skipOrgRoleSync {
+	if !s.info.SkipOrgRoleSync {
 		role = org.RoleType(data.Role)
 	}
 	userInfo := &social.BasicUserInfo{

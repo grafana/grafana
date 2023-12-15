@@ -993,6 +993,7 @@ func (cfg *Cfg) validateStaticRootPath() error {
 	return nil
 }
 
+// nolint:gocyclo
 func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.setHomePath(args)
 
@@ -1164,7 +1165,9 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.handleAWSConfig()
 	cfg.readAzureSettings()
 	cfg.readSessionConfig()
-	cfg.readSmtpSettings()
+	if err := cfg.readSmtpSettings(); err != nil {
+		return err
+	}
 	if err := cfg.readAnnotationSettings(); err != nil {
 		return err
 	}

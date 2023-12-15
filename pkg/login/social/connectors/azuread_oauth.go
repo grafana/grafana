@@ -40,7 +40,6 @@ type SocialAzureAD struct {
 	cache                remotecache.CacheStorage
 	allowedOrganizations []string
 	forceUseGraphAPI     bool
-	skipOrgRoleSync      bool
 }
 
 type azureClaims struct {
@@ -76,11 +75,10 @@ type keySetJWKS struct {
 func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) *SocialAzureAD {
 	config := createOAuthConfig(info, cfg, social.AzureADProviderName)
 	provider := &SocialAzureAD{
-		SocialBase:           newSocialBase(social.AzureADProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:           newSocialBase(social.AzureADProviderName, config, info, cfg.AutoAssignOrgRole, *features),
 		cache:                cache,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 		forceUseGraphAPI:     MustBool(info.Extra[forceUseGraphAPIKey], false),
-		skipOrgRoleSync:      info.SkipOrgRoleSync,
 	}
 
 	if info.UseRefreshToken && features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) {
@@ -118,7 +116,7 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 	// setting the role, grafanaAdmin to empty to reflect that we are not syncronizing with the external provider
 	var role roletype.RoleType
 	var grafanaAdmin bool
-	if !s.skipOrgRoleSync {
+	if !s.info.SkipOrgRoleSync {
 		role, grafanaAdmin, err = s.extractRoleAndAdmin(claims)
 		if err != nil {
 			return nil, err
@@ -149,7 +147,7 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 		isGrafanaAdmin = &grafanaAdmin
 	}
 
-	if s.info.AllowAssignGrafanaAdmin && s.skipOrgRoleSync {
+	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 

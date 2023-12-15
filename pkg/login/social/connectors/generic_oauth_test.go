@@ -455,7 +455,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 	for _, test := range tests {
 		provider.info.RoleAttributePath = test.RoleAttributePath
 		provider.info.AllowAssignGrafanaAdmin = test.AllowAssignGrafanaAdmin
-		provider.skipOrgRoleSync = test.SkipOrgRoleSync
+		provider.info.SkipOrgRoleSync = test.SkipOrgRoleSync
 
 		t.Run(test.Name, func(t *testing.T) {
 			body, err := json.Marshal(test.ResponseBody)

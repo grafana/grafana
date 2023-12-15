@@ -45,13 +45,12 @@ type SocialGenericOAuth struct {
 	teamIdsAttributePath string
 	teamIds              []string
 	allowedGroups        []string
-	skipOrgRoleSync      bool
 }
 
 func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager) *SocialGenericOAuth {
 	config := createOAuthConfig(info, cfg, social.GenericOAuthProviderName)
 	provider := &SocialGenericOAuth{
-		SocialBase:           newSocialBase(social.GenericOAuthProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:           newSocialBase(social.GenericOAuthProviderName, config, info, cfg.AutoAssignOrgRole, *features),
 		apiUrl:               info.ApiUrl,
 		teamsUrl:             info.TeamsUrl,
 		emailAttributeName:   info.EmailAttributeName,
@@ -64,7 +63,6 @@ func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettin
 		teamIds:              util.SplitString(info.Extra[teamIdsKey]),
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 		allowedGroups:        info.AllowedGroups,
-		skipOrgRoleSync:      info.SkipOrgRoleSync,
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
@@ -194,7 +192,7 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 			}
 		}
 
-		if userInfo.Role == "" && !s.skipOrgRoleSync {
+		if userInfo.Role == "" && !s.info.SkipOrgRoleSync {
 			role, grafanaAdmin, err := s.extractRoleAndAdminOptional(data.rawJSON, []string{})
 			if err != nil {
 				s.log.Warn("Failed to extract role", "err", err)
@@ -217,14 +215,14 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 		}
 	}
 
-	if userInfo.Role == "" && !s.skipOrgRoleSync {
+	if userInfo.Role == "" && !s.info.SkipOrgRoleSync {
 		if s.info.RoleAttributeStrict {
 			return nil, errRoleAttributeStrictViolation.Errorf("idP did not return a role attribute")
 		}
 		userInfo.Role = s.defaultRole()
 	}
 
-	if s.info.AllowAssignGrafanaAdmin && s.skipOrgRoleSync {
+	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 

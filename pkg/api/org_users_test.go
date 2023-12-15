@@ -258,9 +258,8 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 				if tt.AuthModule == login.LDAPAuthModule {
 					hs.Cfg.LDAPAuthEnabled = tt.AuthEnabled
 					hs.Cfg.LDAPSkipOrgRoleSync = tt.SkipOrgRoleSync
-				} else if tt.AuthModule == "" {
-					// authmodule empty means basic auth
 				}
+				// AuthModule empty means basic auth
 
 				hs.authInfoService = &authinfotest.FakeService{
 					ExpectedUserAuth: &login.UserAuth{AuthModule: tt.AuthModule},
