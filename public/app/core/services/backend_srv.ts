@@ -22,10 +22,9 @@ import { getConfig } from 'app/core/config';
 import { getSessionExpiry } from 'app/core/utils/auth';
 import { loadUrlToken } from 'app/core/utils/urlToken';
 import { DashboardModel } from 'app/features/dashboard/state';
-import { FolderRequestOptions, getFolderService } from 'app/features/folders/api';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
-import { DashboardDTO } from 'app/types';
+import { DashboardDTO, FolderDTO } from 'app/types';
 
 import { ShowModalReactEvent } from '../../types/events';
 import {
@@ -48,6 +47,10 @@ export interface BackendSrvDependencies {
   appEvents: typeof appEvents;
   contextSrv: ContextSrv;
   logout: () => void;
+}
+
+export interface FolderRequestOptions {
+  withAccessControl?: boolean;
 }
 
 const GRAFANA_TRACEID_HEADER = 'grafana-trace-id';
@@ -521,9 +524,15 @@ export class BackendSrv implements BackendService {
     return this.get<DashboardDTO>(`/api/public/dashboards/${uid}`);
   }
 
-  /** @deprecated */
   getFolderByUid(uid: string, options: FolderRequestOptions = {}) {
-    return getFolderService().getFolderDTOByUid(uid, options);
+    const queryParams = new URLSearchParams();
+    if (options.withAccessControl) {
+      queryParams.set('accesscontrol', 'true');
+    }
+
+    return this.get<FolderDTO>(`/api/folders/${uid}?${queryParams.toString()}`, undefined, undefined, {
+      showErrorAlert: false,
+    });
   }
 }
 

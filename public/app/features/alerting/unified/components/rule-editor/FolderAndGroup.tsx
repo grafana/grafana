@@ -19,7 +19,7 @@ import {
 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
-import { Folder, getFolderService } from 'app/features/folders/api';
+import { createFolder } from 'app/features/manage-dashboards/state/actions';
 import { AccessControlAction, useDispatch } from 'app/types';
 import { CombinedRuleGroup } from 'app/types/unified-alerting';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
@@ -34,7 +34,7 @@ import { isGrafanaRulerRule } from '../../utils/rules';
 import { ProvisioningBadge } from '../Provisioning';
 import { evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
-import { containsSlashes, RuleFolderPicker } from './RuleFolderPicker';
+import { containsSlashes, Folder, RuleFolderPicker } from './RuleFolderPicker';
 import { checkForPathSeparator } from './util';
 
 export const MAX_GROUP_RESULTS = 1000;
@@ -289,7 +289,7 @@ function FolderCreationModal({
 
   const [title, setTitle] = useState('');
   const onSubmit = async () => {
-    const newFolder = await getFolderService().createFolder({ title: title });
+    const newFolder = await createFolder({ title: title });
     if (!newFolder.uid) {
       appEvents.emit(AppEvents.alertError, ['Folder could not be created']);
       return;

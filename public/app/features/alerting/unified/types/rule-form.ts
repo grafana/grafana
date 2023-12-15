@@ -1,5 +1,6 @@
-import { Folder } from 'app/features/folders/api';
 import { AlertQuery, GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
+
+import { Folder } from '../components/rule-editor/RuleFolderPicker';
 
 export enum RuleFormType {
   grafana = 'grafana',

@@ -2,9 +2,9 @@ import { locationUtil } from '@grafana/data';
 import { getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { updateNavIndex } from 'app/core/actions';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { getFolderService } from 'app/features/folders/api';
 import { buildNavModel } from 'app/features/folders/state/navModel';
 import { store } from 'app/store/store';
 import { DashboardDTO, DashboardMeta, DashboardRoutes } from 'app/types';
@@ -162,7 +162,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     // this will be used to populate the full breadcrumb trail
     if (dashboard.meta.folderUid) {
       try {
-        const folder = await getFolderService().getFolderDTOByUid(dashboard.meta.folderUid);
+        const folder = await backendSrv.getFolderByUid(dashboard.meta.folderUid);
         store.dispatch(updateNavIndex(buildNavModel(folder)));
       } catch (err) {
         console.warn('Error fetching parent folder', dashboard.meta.folderUid, 'for dashboard', err);

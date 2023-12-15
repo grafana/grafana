@@ -4,10 +4,14 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Tooltip, useStyles2, Stack } from '@grafana/ui';
 import { OldFolderPicker, Props as FolderPickerProps } from 'app/core/components/Select/OldFolderPicker';
-import { Folder } from 'app/features/folders/api';
 import { PermissionLevelString, SearchQueryType } from 'app/types';
 
 import { FolderWarning, CustomAdd } from '../../../../../core/components/Select/OldFolderPicker';
+
+export interface Folder {
+  title: string;
+  uid: string;
+}
 
 export interface RuleFolderPickerProps extends Omit<FolderPickerProps, 'initialTitle' | 'initialFolderId'> {
   value?: Folder;
