@@ -1,9 +1,4 @@
-import {
-  DataFrame,
-  FieldType,
-  isValidGoDuration,
-  Labels,
-} from '@grafana/data';
+import { DataFrame, FieldType, isValidGoDuration, Labels } from '@grafana/data';
 
 import { isBytesString } from './languageUtils';
 import { isLogLineJSON, isLogLineLogfmt, isLogLinePacked } from './lineParser';
@@ -127,4 +122,3 @@ export function extractLevelLikeLabelFromDataFrame(frame: DataFrame): string | n
   }
   return levelLikeLabel;
 }
-
