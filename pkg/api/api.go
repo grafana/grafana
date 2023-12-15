@@ -403,7 +403,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
 			pluginRoute.Get("/:pluginId/dashboards/", reqOrgAdmin, checkAppEnabled(hs.pluginStore, hs.PluginSettings), routing.Wrap(hs.GetPluginDashboards))
 			pluginRoute.Post("/:pluginId/settings", authorize(ac.EvalPermission(pluginaccesscontrol.ActionWrite, pluginIDScope)), routing.Wrap(hs.UpdatePluginSetting))
-			pluginRoute.Get("/:pluginId/metrics", reqOrgAdmin, checkAppEnabled(hs.pluginStore, hs.PluginSettings), routing.Wrap(hs.CollectPluginMetrics))
+			pluginRoute.Get("/:pluginId/metrics", reqOrgAdmin, routing.Wrap(hs.CollectPluginMetrics))
 		})
 
 		if hs.Features.IsEnabledGlobally(featuremgmt.FlagFeatureToggleAdminPage) {
