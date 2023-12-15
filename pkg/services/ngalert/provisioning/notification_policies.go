@@ -34,10 +34,7 @@ func (nps *NotificationPolicyService) GetAMConfigStore() AMConfigStore {
 }
 
 func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
-	q := models.GetLatestAlertmanagerConfigurationQuery{
-		OrgID: orgID,
-	}
-	alertManagerConfig, err := nps.amStore.GetLatestAlertmanagerConfiguration(ctx, &q)
+	alertManagerConfig, err := nps.amStore.GetLatestAlertmanagerConfiguration(ctx, orgID)
 	if err != nil {
 		return definitions.Route{}, err
 	}
