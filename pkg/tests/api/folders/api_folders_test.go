@@ -72,7 +72,7 @@ func TestGetFolders(t *testing.T) {
 			return err
 		}
 		if job == indexWithoutPermission {
-			tests.RemoveFolderPermission(t, permissionsStore, int64(orgID), org.RoleViewer, resp.Payload.UID)
+			tests.RemoveFolderPermission(t, permissionsStore, orgID, org.RoleViewer, resp.Payload.UID)
 		}
 		return nil
 	})
