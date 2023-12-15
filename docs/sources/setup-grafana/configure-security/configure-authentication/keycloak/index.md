@@ -168,7 +168,8 @@ When a user logs in using an OAuth provider, Grafana verifies that the access to
 
 Grafana uses a refresh token to obtain a new access token without requiring the user to log in again. If a refresh token doesn't exist, Grafana logs the user out of the system after the access token has expired.
 
-To enable a refresh token for Keycloak, do the following: 
-  1. Extend the `scopes` in `[auth.generic_oauth]` with `offline_access`.
-  
-  1. Add `use_refresh_token = true` to `[auth.generic_oauth]` configuration.
+To enable a refresh token for Keycloak, do the following:
+
+1. Extend the `scopes` in `[auth.generic_oauth]` with `offline_access`.
+
+1. Add `use_refresh_token = true` to `[auth.generic_oauth]` configuration.
