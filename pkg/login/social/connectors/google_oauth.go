@@ -28,8 +28,6 @@ var _ ssosettings.Reloadable = (*SocialGoogle)(nil)
 
 type SocialGoogle struct {
 	*SocialBase
-	hostedDomain string
-	apiUrl       string
 }
 
 type googleUserData struct {
@@ -43,9 +41,7 @@ type googleUserData struct {
 func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager) *SocialGoogle {
 	config := createOAuthConfig(info, cfg, social.GoogleProviderName)
 	provider := &SocialGoogle{
-		SocialBase:   newSocialBase(social.GoogleProviderName, config, info, cfg.AutoAssignOrgRole, *features),
-		hostedDomain: info.HostedDomain,
-		apiUrl:       info.ApiUrl,
+		SocialBase: newSocialBase(social.GoogleProviderName, config, info, cfg.AutoAssignOrgRole, *features),
 	}
 
 	if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {
@@ -114,7 +110,7 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 			return nil, errRole
 		}
 
-		if s.allowAssignGrafanaAdmin {
+		if s.info.AllowAssignGrafanaAdmin {
 			userInfo.IsGrafanaAdmin = &grafanaAdmin
 		}
 
@@ -138,9 +134,9 @@ type googleAPIData struct {
 }
 
 func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) (*googleUserData, error) {
-	if strings.HasPrefix(s.apiUrl, legacyAPIURL) {
+	if strings.HasPrefix(s.info.ApiUrl, legacyAPIURL) {
 		data := googleAPIData{}
-		response, err := s.httpGet(ctx, client, s.apiUrl)
+		response, err := s.httpGet(ctx, client, s.info.ApiUrl)
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving legacy user info: %s", err)
 		}
@@ -159,7 +155,7 @@ func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) 
 	}
 
 	data := googleUserData{}
-	response, err := s.httpGet(ctx, client, s.apiUrl)
+	response, err := s.httpGet(ctx, client, s.info.ApiUrl)
 	if err != nil {
 		return nil, fmt.Errorf("error getting user info: %s", err)
 	}
@@ -172,7 +168,7 @@ func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) 
 }
 
 func (s *SocialGoogle) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
-	if s.features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) && s.useRefreshToken {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) && s.info.UseRefreshToken {
 		opts = append(opts, oauth2.AccessTypeOffline, oauth2.ApprovalForce)
 	}
 	return s.SocialBase.AuthCodeURL(state, opts...)
