@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
@@ -125,7 +124,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			Language:                   language,
 			HelpFlags1:                 c.HelpFlags1,
 			HasEditPermissionInFolders: hasEditPerm,
-			Analytics:                  hs.buildUserAnalyticsSettings(c.Req.Context(), c.SignedInUser),
+			Analytics:                  hs.buildUserAnalyticsSettings(c),
 			AuthenticatedBy:            c.SignedInUser.AuthenticatedBy,
 		},
 		Settings:                            settings,
@@ -182,11 +181,16 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	return &data, nil
 }
 
-func (hs *HTTPServer) buildUserAnalyticsSettings(ctx context.Context, signedInUser identity.Requester) dtos.AnalyticsSettings {
-	namespace, id := signedInUser.GetNamespacedID()
+func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dtos.AnalyticsSettings {
+	namespace, id := c.SignedInUser.GetNamespacedID()
+
 	// Anonymous users do not have an email or auth info
 	if namespace != identity.NamespaceUser {
 		return dtos.AnalyticsSettings{Identifier: "@" + setting.AppUrl}
+	}
+
+	if !c.IsSignedIn {
+		return dtos.AnalyticsSettings{}
 	}
 
 	userID, err := identity.IntIdentifier(namespace, id)
@@ -195,9 +199,9 @@ func (hs *HTTPServer) buildUserAnalyticsSettings(ctx context.Context, signedInUs
 		return dtos.AnalyticsSettings{Identifier: "@" + setting.AppUrl}
 	}
 
-	identifier := signedInUser.GetEmail() + "@" + setting.AppUrl
+	identifier := c.SignedInUser.GetEmail() + "@" + setting.AppUrl
 
-	authInfo, err := hs.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: userID})
+	authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &login.GetAuthInfoQuery{UserId: userID})
 	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 		hs.log.Error("Failed to get auth info for analytics", "error", err)
 	}

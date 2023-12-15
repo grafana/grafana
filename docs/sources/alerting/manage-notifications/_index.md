@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/
-description: Manage alert notifications
+description: Manage your alerts by creating silences, mute timings, and more
 keywords:
   - grafana
   - alert

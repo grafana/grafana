@@ -15,9 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const (
-	thirtyDays = 30 * 24 * time.Hour
-)
+const anonymousDeviceExpiration = 30 * 24 * time.Hour
 
 type deviceDTO struct {
 	anonstore.Device
@@ -70,7 +68,7 @@ func (api *AnonDeviceServiceAPI) RegisterAPIEndpoints() {
 //	404: notFoundError
 //	500: internalServerError
 func (api *AnonDeviceServiceAPI) ListDevices(c *contextmodel.ReqContext) response.Response {
-	fromTime := time.Now().Add(-thirtyDays)
+	fromTime := time.Now().Add(-anonymousDeviceExpiration)
 	toTime := time.Now()
 
 	devices, err := api.store.ListDevices(c.Req.Context(), &fromTime, &toTime)
