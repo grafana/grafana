@@ -208,14 +208,13 @@ func (o *Service) tryGetOrRefreshAccessToken(ctx context.Context, usr *login.Use
 		return nil, err
 	}
 
-	client, err := o.SocialService.GetOAuthHttpClient(authProvider)
-	if err != nil {
-		logger.Error("Failed to get oauth http client", "provider", authProvider, "error", err)
-		return nil, err
-	}
-	ctx = context.WithValue(ctx, oauth2.HTTPClient, client)
-
 	persistedToken := BuildOAuthTokenFromAuthInfo(usr)
+
+	currentOAuthInfo := connect.GetOAuthInfo()
+	if currentOAuthInfo != nil && !currentOAuthInfo.UseRefreshToken {
+		logger.Debug("oauth connector does not use refresh tokens", "provider", authProvider)
+		return persistedToken, nil
+	}
 
 	needRefresh, err := ShouldRefreshToken(logger, persistedToken)
 	if err != nil || !needRefresh {
@@ -224,6 +223,13 @@ func (o *Service) tryGetOrRefreshAccessToken(ctx context.Context, usr *login.Use
 
 	// Force token refresh
 	persistedToken.AccessToken = ""
+
+	client, err := o.SocialService.GetOAuthHttpClient(authProvider)
+	if err != nil {
+		logger.Error("Failed to get oauth http client", "provider", authProvider, "error", err)
+		return nil, err
+	}
+	ctx = context.WithValue(ctx, oauth2.HTTPClient, client)
 
 	start := time.Now()
 	// TokenSource handles refreshing the token if it has expired
@@ -295,7 +301,11 @@ func tokensEq(t1, t2 *oauth2.Token) bool {
 
 func ShouldRefreshToken(logger log.Logger, token *oauth2.Token) (bool, error) {
 	// TODO cache the check ?
-	for _, tkn := range []string{token.AccessToken, token.Extra("id_token").(string)} {
+	rawTokens := []string{token.AccessToken}
+	if rawIdToken := token.Extra("id_token"); rawIdToken != nil {
+		rawTokens = append(rawTokens, rawIdToken.(string))
+	}
+	for _, tkn := range rawTokens {
 		if tkn == "" {
 			return false, nil
 		}
@@ -315,6 +325,10 @@ func hasTokenExpiredWithSkew(tkn string) (time.Time, bool, error) {
 	expiry, err := getTokenExpiry(tkn)
 	if err != nil {
 		return time.Time{}, false, err
+	}
+
+	if expiry.IsZero() {
+		return time.Now(), false, nil
 	}
 
 	adjustedExpiry := expiry.Round(0).Add(-ExpiryDelta)

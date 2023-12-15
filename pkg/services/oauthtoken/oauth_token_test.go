@@ -10,9 +10,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 	"golang.org/x/sync/singleflight"
 
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
@@ -112,9 +114,10 @@ func TestService_TryTokenRefresh_ValidToken(t *testing.T) {
 	authInfoStore.ExpectedOAuth = usr
 
 	socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(token))
+	socialConnector.On("GetOAuthInfo").Return(&social.OAuthInfo{UseRefreshToken: true})
 
 	err := srv.TryTokenRefresh(ctx, usr)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	socialConnector.AssertNumberOfCalls(t, "TokenSource", 1)
 
 	authInfoQuery := &login.GetAuthInfoQuery{}
@@ -147,6 +150,7 @@ func TestService_TryTokenRefresh_NoRefreshToken(t *testing.T) {
 	}
 
 	socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(token))
+	socialConnector.On("GetOAuthInfo").Return(&social.OAuthInfo{UseRefreshToken: true})
 
 	err := srv.TryTokenRefresh(ctx, usr)
 
@@ -184,6 +188,7 @@ func TestService_TryTokenRefresh_ExpiredToken(t *testing.T) {
 	authInfoStore.ExpectedOAuth = usr
 
 	socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.ReuseTokenSource(token, oauth2.StaticTokenSource(newToken)), nil)
+	socialConnector.On("GetOAuthInfo").Return(&social.OAuthInfo{UseRefreshToken: true})
 
 	err := srv.TryTokenRefresh(ctx, usr)
 
@@ -211,6 +216,7 @@ func TestService_TryTokenRefresh_DifferentAuthModuleForUser(t *testing.T) {
 	}
 
 	socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(token))
+	socialConnector.On("GetOAuthInfo").Return(&social.OAuthInfo{UseRefreshToken: true})
 
 	err := srv.TryTokenRefresh(ctx, usr)
 
