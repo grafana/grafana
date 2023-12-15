@@ -6,7 +6,13 @@ import { createDataSourceVariableAdapter } from '../datasource/adapter';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { createGraph } from '../state/actions';
 
-import { flattenPanels, getAllAffectedPanelIdsForVariableChange, getPanelVars, getPropsWithVariable, getVariableName } from './utils';
+import {
+  flattenPanels,
+  getAllAffectedPanelIdsForVariableChange,
+  getPanelVars,
+  getPropsWithVariable,
+  getVariableName,
+} from './utils';
 
 describe('getPropsWithVariable', () => {
   it('when called it should return the correct graph', () => {
