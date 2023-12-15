@@ -33,7 +33,6 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (gener
 			Type:                      "file",
 			Prefix:                    r.path,
 			Transport:                 storagebackend.TransportConfig{},
-			Paging:                    false,
 			Codec:                     r.original.Codec,
 			EncodeVersioner:           r.original.EncodeVersioner,
 			Transformer:               r.original.Transformer,
