@@ -61,7 +61,7 @@ var (
 		"auto_login":                 true,
 		"client_id":                  "test_client_id",
 		"client_secret":              "test_client_secret",
-		"scopes":                     []string{"openid", "profile", "email"},
+		"scopes":                     "[\"openid\", \"profile\", \"email\"]",
 		"empty_scopes":               false,
 		"email_attribute_name":       "email:primary",
 		"email_attribute_path":       "email",
@@ -73,8 +73,8 @@ var (
 		"token_url":                  "test_token_url",
 		"api_url":                    "test_api_url",
 		"teams_url":                  "test_teams_url",
-		"allowed_domains":            []string{"domain1.com"},
-		"allowed_groups":             []string{},
+		"allowed_domains":            "domain1.com",
+		"allowed_groups":             "",
 		"tls_skip_verify_insecure":   true,
 		"tls_client_cert":            "",
 		"tls_client_key":             "",
@@ -86,11 +86,11 @@ var (
 		"hosted_domain":              "test_hosted_domain",
 		"skip_org_role_sync":         true,
 		"signout_redirect_url":       "test_signout_redirect_url",
-		"allowed_organizations":      []string{"org1", "org2"},
+		"allowed_organizations":      "org1, org2",
 		"id_token_attribute_name":    "id_token",
 		"login_attribute_path":       "login",
 		"name_attribute_path":        "name",
-		"team_ids":                   []string{"first", "second"},
+		"team_ids":                   "first, second",
 	}
 )
 

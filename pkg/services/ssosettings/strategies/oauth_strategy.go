@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 type OAuthStrategy struct {
@@ -52,7 +51,7 @@ func (s *OAuthStrategy) loadSettingsForProvider(provider string) map[string]any 
 	return map[string]any{
 		"client_id":                  section.Key("client_id").Value(),
 		"client_secret":              section.Key("client_secret").Value(),
-		"scopes":                     util.SplitString(section.Key("scopes").Value()),
+		"scopes":                     section.Key("scopes").Value(),
 		"empty_scopes":               section.Key("empty_scopes").MustBool(false),
 		"auth_style":                 section.Key("auth_style").Value(),
 		"auth_url":                   section.Key("auth_url").Value(),
@@ -66,7 +65,7 @@ func (s *OAuthStrategy) loadSettingsForProvider(provider string) map[string]any 
 		"role_attribute_strict":      section.Key("role_attribute_strict").MustBool(false),
 		"groups_attribute_path":      section.Key("groups_attribute_path").Value(),
 		"team_ids_attribute_path":    section.Key("team_ids_attribute_path").Value(),
-		"allowed_domains":            util.SplitString(section.Key("allowed_domains").Value()),
+		"allowed_domains":            section.Key("allowed_domains").Value(),
 		"hosted_domain":              section.Key("hosted_domain").Value(),
 		"allow_sign_up":              section.Key("allow_sign_up").MustBool(false),
 		"name":                       section.Key("name").Value(),
@@ -80,12 +79,12 @@ func (s *OAuthStrategy) loadSettingsForProvider(provider string) map[string]any 
 		"use_refresh_token":          section.Key("use_refresh_token").MustBool(false),
 		"allow_assign_grafana_admin": section.Key("allow_assign_grafana_admin").MustBool(false),
 		"auto_login":                 section.Key("auto_login").MustBool(false),
-		"allowed_groups":             util.SplitString(section.Key("allowed_groups").Value()),
+		"allowed_groups":             section.Key("allowed_groups").Value(),
 		"signout_redirect_url":       section.Key("signout_redirect_url").Value(),
-		"allowed_organizations":      util.SplitString(section.Key("allowed_organizations").Value()),
+		"allowed_organizations":      section.Key("allowed_organizations").Value(),
 		"id_token_attribute_name":    section.Key("id_token_attribute_name").Value(),
 		"login_attribute_path":       section.Key("login_attribute_path").Value(),
 		"name_attribute_path":        section.Key("name_attribute_path").Value(),
-		"team_ids":                   util.SplitString(section.Key("team_ids").Value()),
+		"team_ids":                   section.Key("team_ids").Value(),
 	}
 }
