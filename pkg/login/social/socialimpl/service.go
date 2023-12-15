@@ -79,6 +79,12 @@ func ProvideService(cfg *setting.Cfg,
 			}
 
 			info := conn.GetOAuthInfo()
+
+			// Workaround for moving the SkipOrgRoleSync setting to the OAuthInfo struct
+			withOverrides := cfg.SectionWithEnvOverrides("auth." + name)
+			info.Enabled = withOverrides.Key("enabled").MustBool(false)
+			info.SkipOrgRoleSync = withOverrides.Key("skip_org_role_sync").MustBool(false)
+
 			if info == nil || !info.Enabled {
 				continue
 			}
@@ -175,7 +181,9 @@ func (ss *SocialService) GetConnector(name string) (social.SocialConnector, erro
 }
 
 func (ss *SocialService) GetOAuthInfoProvider(name string) *social.OAuthInfo {
-	connector, ok := ss.socialMap[name]
+	// The socialMap keys don't have "oauth_" prefix, but everywhere else in the system does
+	provider := strings.TrimPrefix(name, "oauth_")
+	connector, ok := ss.socialMap[provider]
 	if !ok {
 		return nil
 	}

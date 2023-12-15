@@ -4252,7 +4252,6 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -4413,7 +4412,6 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
@@ -4898,6 +4896,11 @@
       "name": "UID",
       "required": true,
       "type": "string"
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -5067,6 +5070,11 @@
       "schema": {
        "$ref": "#/definitions/EmbeddedContactPoint"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -5185,6 +5193,11 @@
       "schema": {
        "$ref": "#/definitions/EmbeddedContactPoint"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -5246,6 +5259,11 @@
     ],
     "operationId": "RoutePutAlertRuleGroup",
     "parameters": [
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
+     },
      {
       "in": "path",
       "name": "FolderUID",
@@ -5367,6 +5385,11 @@
       "schema": {
        "$ref": "#/definitions/MuteTimeInterval"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -5496,6 +5519,11 @@
       "schema": {
        "$ref": "#/definitions/MuteTimeInterval"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -5611,6 +5639,11 @@
       "schema": {
        "$ref": "#/definitions/Route"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -5744,6 +5777,11 @@
       "schema": {
        "$ref": "#/definitions/NotificationTemplateContent"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {

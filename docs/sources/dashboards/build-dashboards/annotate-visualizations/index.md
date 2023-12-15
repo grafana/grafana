@@ -15,6 +15,7 @@ labels:
 menuTitle: Annotate visualizations
 title: Annotate visualizations
 weight: 600
+description: Annotate dashboard visualizations to mark points with rich events
 ---
 
 # Annotate visualizations
