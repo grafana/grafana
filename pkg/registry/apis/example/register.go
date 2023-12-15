@@ -1,16 +1,10 @@
 package example
 
 import (
-	"fmt"
-	"net/http"
-
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
-	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -56,6 +50,7 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&example.DummyResource{},
 		&example.DummyResourceList{},
 		&example.DummySubresource{},
+		&metav1.Status{},
 	)
 }
 
@@ -139,9 +134,7 @@ func (b *TestingAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 						},
 					},
 				},
-				Handler: func(w http.ResponseWriter, r *http.Request) {
-					_, _ = w.Write([]byte("Root level handler (aaa)"))
-				},
+				Connector: &helloREST{txt: "Root level handler (aaa)"},
 			},
 			{
 				Path: "bbb",
@@ -158,9 +151,7 @@ func (b *TestingAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 						},
 					},
 				},
-				Handler: func(w http.ResponseWriter, r *http.Request) {
-					_, _ = w.Write([]byte("Root level handler (bbb)"))
-				},
+				Connector: &helloREST{txt: "Root level handler (bbb)"},
 			},
 		},
 		Namespace: []grafanaapiserver.APIRouteHandler{
@@ -179,18 +170,7 @@ func (b *TestingAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 						},
 					},
 				},
-				Handler: func(w http.ResponseWriter, r *http.Request) {
-					info, ok := request.RequestInfoFrom(r.Context())
-					if !ok {
-						responsewriters.ErrorNegotiated(
-							apierrors.NewInternalError(fmt.Errorf("no RequestInfo found in the context")),
-							b.codecs, schema.GroupVersion{}, w, r,
-						)
-						return
-					}
-
-					_, _ = w.Write([]byte("Custom namespace route ccc: " + info.Namespace))
-				},
+				Connector: &helloREST{txt: "namespace route ccc"},
 			},
 		},
 	}

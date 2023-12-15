@@ -5,6 +5,9 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/handlers"
+	"k8s.io/apiserver/pkg/registry/rest"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -42,7 +45,7 @@ func GetAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, 
 			if err != nil {
 				return nil, err
 			}
-			sub.HandleFunc(route.Path, route.Handler).
+			sub.HandleFunc("/"+route.Path, connectorWrapper(route.Path, route.Connector)).
 				Methods(methods...)
 		}
 
@@ -60,7 +63,7 @@ func GetAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, 
 			if err != nil {
 				return nil, err
 			}
-			sub.HandleFunc(route.Path, route.Handler).
+			sub.HandleFunc("/"+route.Path, connectorWrapper(route.Path, route.Connector)).
 				Methods(methods...)
 		}
 	}
@@ -80,6 +83,13 @@ func GetAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, 
 
 func (h *requestHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	h.router.ServeHTTP(w, req)
+}
+
+func connectorWrapper(restPath string, connector rest.Connecter) func(w http.ResponseWriter, req *http.Request) {
+	scope := &handlers.RequestScope{
+		Namer: &noopNamer{},
+	}
+	return handlers.ConnectResource(connector, scope, nil, restPath, false)
 }
 
 func methodsFromSpec(slug string, props *spec3.PathProps) ([]string, error) {
@@ -165,4 +175,18 @@ func GetOpenAPIPostProcessor(builders []APIGroupBuilder) func(*spec3.OpenAPI) (*
 		}
 		return s, nil
 	}
+}
+
+var _ handlers.ScopeNamer = (*noopNamer)(nil)
+
+type noopNamer struct{}
+
+func (h *noopNamer) Namespace(req *http.Request) (namespace string, err error) {
+	return "x", nil
+}
+func (h *noopNamer) Name(req *http.Request) (namespace, name string, err error) {
+	return "x", "y", nil
+}
+func (h *noopNamer) ObjectName(obj runtime.Object) (namespace, name string, err error) {
+	return "x", "y", nil
 }
