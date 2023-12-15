@@ -166,6 +166,7 @@ export abstract class BigValueLayout {
   getValueAndTitleContainerStyles() {
     const styles: CSSProperties = {
       display: 'flex',
+      flexWrap: 'wrap',
     };
 
     if (this.justifyCenter) {
