@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -27,24 +26,25 @@ func TestIntegrationGetSSOSettings(t *testing.T) {
 		sqlStore = db.InitTestDB(t)
 		ssoSettingsStore = ProvideStore(sqlStore)
 
-		err := insertSSOSetting(ssoSettingsStore, "azuread", nil)
+		template := models.SSOSettings{
+			Settings: map[string]any{"enabled": true},
+		}
+		err := populateSSOSettings(sqlStore, template, "azuread")
 		require.NoError(t, err)
 	}
 
 	t.Run("returns existing SSO settings", func(t *testing.T) {
 		setup()
 
-		expected := &models.SSOSetting{
+		expected := &models.SSOSettings{
 			Provider: "azuread",
-			Settings: map[string]interface{}{
-				"enabled": true,
-			},
+			Settings: map[string]any{"enabled": true},
 		}
 
 		actual, err := ssoSettingsStore.Get(context.Background(), "azuread")
 		require.NoError(t, err)
 
-		require.True(t, maps.Equal(expected.Settings, actual.Settings))
+		require.EqualValues(t, expected.Settings, actual.Settings)
 	})
 
 	t.Run("returns not found if the SSO setting is missing for the specified provider", func(t *testing.T) {
@@ -83,18 +83,21 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 		mockTimeNow(time.Now())
 		defer resetTimeNow()
 
-		provider := "azuread"
-		settings := map[string]interface{}{
-			"enabled":   true,
-			"client_id": "azuread-client",
+		settings := models.SSOSettings{
+			Provider: "azuread",
+			Settings: map[string]any{
+				"enabled":   true,
+				"client_id": "azuread-client",
+			},
 		}
 
-		err := ssoSettingsStore.Upsert(context.Background(), provider, settings)
+		err := ssoSettingsStore.Upsert(context.Background(), settings)
 		require.NoError(t, err)
 
-		actual, err := getSSOSettingsByProvider(sqlStore, provider, false)
+		actual, err := getSSOSettingsByProvider(sqlStore, settings.Provider, false)
 		require.NoError(t, err)
-		require.Equal(t, settings, actual.Settings)
+		require.EqualValues(t, settings.Settings, actual.Settings)
+		require.NotEmpty(t, actual.ID)
 		require.Equal(t, formatTime(timeNow().UTC()), formatTime(actual.Created))
 		require.Equal(t, formatTime(timeNow().UTC()), formatTime(actual.Updated))
 
@@ -111,25 +114,30 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 		defer resetTimeNow()
 
 		provider := "github"
-		settings := map[string]interface{}{
-			"enabled":       true,
-			"client_id":     "github-client",
-			"client_secret": "this-is-a-secret",
+		template := models.SSOSettings{
+			Settings: map[string]any{
+				"enabled":       true,
+				"client_id":     "github-client",
+				"client_secret": "this-is-a-secret",
+			},
 		}
-		err := populateSSOSettings(sqlStore, settings, false, provider)
+		err := populateSSOSettings(sqlStore, template, provider)
 		require.NoError(t, err)
 
-		newSettings := map[string]interface{}{
-			"enabled":       true,
-			"client_id":     "new-github-client",
-			"client_secret": "this-is-a-new-secret",
+		newSettings := models.SSOSettings{
+			Provider: provider,
+			Settings: map[string]any{
+				"enabled":       true,
+				"client_id":     "new-github-client",
+				"client_secret": "this-is-a-new-secret",
+			},
 		}
-		err = ssoSettingsStore.Upsert(context.Background(), provider, newSettings)
+		err = ssoSettingsStore.Upsert(context.Background(), newSettings)
 		require.NoError(t, err)
 
 		actual, err := getSSOSettingsByProvider(sqlStore, provider, false)
 		require.NoError(t, err)
-		require.Equal(t, newSettings, actual.Settings)
+		require.EqualValues(t, newSettings.Settings, actual.Settings)
 		require.Equal(t, formatTime(timeNow().UTC()), formatTime(actual.Updated))
 
 		deleted, notDeleted, err := getSSOSettingsCountByDeleted(sqlStore)
@@ -145,32 +153,38 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 		defer resetTimeNow()
 
 		provider := "azuread"
-		settings := map[string]interface{}{
-			"enabled":       true,
-			"client_id":     "azuread-client",
-			"client_secret": "this-is-a-secret",
+		template := models.SSOSettings{
+			Settings: map[string]any{
+				"enabled":       true,
+				"client_id":     "azuread-client",
+				"client_secret": "this-is-a-secret",
+			},
+			IsDeleted: true,
 		}
-		err := populateSSOSettings(sqlStore, settings, true, provider)
+		err := populateSSOSettings(sqlStore, template, provider)
 		require.NoError(t, err)
 
-		newSettings := map[string]interface{}{
-			"enabled":       true,
-			"client_id":     "new-azuread-client",
-			"client_secret": "this-is-a-new-secret",
+		newSettings := models.SSOSettings{
+			Provider: provider,
+			Settings: map[string]any{
+				"enabled":       true,
+				"client_id":     "new-azuread-client",
+				"client_secret": "this-is-a-new-secret",
+			},
 		}
 
-		err = ssoSettingsStore.Upsert(context.Background(), provider, newSettings)
+		err = ssoSettingsStore.Upsert(context.Background(), newSettings)
 		require.NoError(t, err)
 
 		actual, err := getSSOSettingsByProvider(sqlStore, provider, false)
 		require.NoError(t, err)
-		require.Equal(t, newSettings, actual.Settings)
+		require.EqualValues(t, newSettings.Settings, actual.Settings)
 		require.Equal(t, formatTime(timeNow().UTC()), formatTime(actual.Created))
 		require.Equal(t, formatTime(timeNow().UTC()), formatTime(actual.Updated))
 
 		old, err := getSSOSettingsByProvider(sqlStore, provider, true)
 		require.NoError(t, err)
-		require.Equal(t, settings, old.Settings)
+		require.EqualValues(t, template.Settings, old.Settings)
 	})
 
 	t.Run("replaces the settings only for the specified provider leaving the other provider's settings unchanged", func(t *testing.T) {
@@ -180,31 +194,36 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 		defer resetTimeNow()
 
 		providers := []string{"github", "gitlab", "google"}
-		settings := map[string]interface{}{
-			"enabled":       true,
-			"client_id":     "my-client",
-			"client_secret": "this-is-a-secret",
+		template := models.SSOSettings{
+			Settings: map[string]any{
+				"enabled":       true,
+				"client_id":     "my-client",
+				"client_secret": "this-is-a-secret",
+			},
 		}
-		err := populateSSOSettings(sqlStore, settings, false, providers...)
+		err := populateSSOSettings(sqlStore, template, providers...)
 		require.NoError(t, err)
 
-		newSettings := map[string]interface{}{
-			"enabled":       true,
-			"client_id":     "my-new-client",
-			"client_secret": "this-is-a-new-secret",
+		newSettings := models.SSOSettings{
+			Provider: providers[0],
+			Settings: map[string]any{
+				"enabled":       true,
+				"client_id":     "my-new-client",
+				"client_secret": "this-is-my-new-secret",
+			},
 		}
-		err = ssoSettingsStore.Upsert(context.Background(), providers[0], newSettings)
+		err = ssoSettingsStore.Upsert(context.Background(), newSettings)
 		require.NoError(t, err)
 
 		actual, err := getSSOSettingsByProvider(sqlStore, providers[0], false)
 		require.NoError(t, err)
-		require.Equal(t, newSettings, actual.Settings)
+		require.EqualValues(t, newSettings.Settings, actual.Settings)
 		require.Equal(t, formatTime(timeNow().UTC()), formatTime(actual.Updated))
 
 		for index := 1; index < len(providers); index++ {
 			existing, err := getSSOSettingsByProvider(sqlStore, providers[index], false)
 			require.NoError(t, err)
-			require.Equal(t, settings, existing.Settings)
+			require.EqualValues(t, template.Settings, existing.Settings)
 		}
 	})
 }
@@ -221,14 +240,20 @@ func TestIntegrationListSSOSettings(t *testing.T) {
 		sqlStore = db.InitTestDB(t)
 		ssoSettingsStore = ProvideStore(sqlStore)
 
-		err := insertSSOSetting(ssoSettingsStore, "azuread", map[string]interface{}{
-			"enabled": true,
-		})
+		template := models.SSOSettings{
+			Settings: map[string]any{
+				"enabled": true,
+			},
+		}
+		err := populateSSOSettings(sqlStore, template, "azuread")
 		require.NoError(t, err)
 
-		err = insertSSOSetting(ssoSettingsStore, "okta", map[string]interface{}{
-			"enabled": false,
-		})
+		template = models.SSOSettings{
+			Settings: map[string]any{
+				"enabled": true,
+			},
+		}
+		err = populateSSOSettings(sqlStore, template, "okta")
 		require.NoError(t, err)
 	}
 
@@ -259,8 +284,12 @@ func TestIntegrationDeleteSSOSettings(t *testing.T) {
 		setup()
 
 		providers := []string{"azuread", "github", "google"}
-
-		err := populateSSOSettings(sqlStore, nil, false, providers...)
+		template := models.SSOSettings{
+			Settings: map[string]any{
+				"enabled": true,
+			},
+		}
+		err := populateSSOSettings(sqlStore, template, providers...)
 		require.NoError(t, err)
 
 		err = ssoSettingsStore.Delete(context.Background(), providers[0])
@@ -277,8 +306,12 @@ func TestIntegrationDeleteSSOSettings(t *testing.T) {
 
 		providers := []string{"github", "google", "okta"}
 		invalidProvider := "azuread"
-
-		err := populateSSOSettings(sqlStore, nil, false, providers...)
+		template := models.SSOSettings{
+			Settings: map[string]any{
+				"enabled": true,
+			},
+		}
+		err := populateSSOSettings(sqlStore, template, providers...)
 		require.NoError(t, err)
 
 		err = ssoSettingsStore.Delete(context.Background(), invalidProvider)
@@ -295,8 +328,13 @@ func TestIntegrationDeleteSSOSettings(t *testing.T) {
 		setup()
 
 		providers := []string{"azuread", "github", "google"}
-
-		err := populateSSOSettings(sqlStore, nil, true, providers...)
+		template := models.SSOSettings{
+			Settings: map[string]any{
+				"enabled": true,
+			},
+			IsDeleted: true,
+		}
+		err := populateSSOSettings(sqlStore, template, providers...)
 		require.NoError(t, err)
 
 		err = ssoSettingsStore.Delete(context.Background(), providers[0])
@@ -313,11 +351,15 @@ func TestIntegrationDeleteSSOSettings(t *testing.T) {
 		setup()
 
 		provider := "azuread"
-
+		template := models.SSOSettings{
+			Settings: map[string]any{
+				"enabled": true,
+			},
+		}
 		// insert sso for the same provider 2 times in the database
-		err := populateSSOSettings(sqlStore, nil, false, provider)
+		err := populateSSOSettings(sqlStore, template, provider)
 		require.NoError(t, err)
-		err = populateSSOSettings(sqlStore, nil, false, provider)
+		err = populateSSOSettings(sqlStore, template, provider)
 		require.NoError(t, err)
 
 		err = ssoSettingsStore.Delete(context.Background(), provider)
@@ -330,25 +372,18 @@ func TestIntegrationDeleteSSOSettings(t *testing.T) {
 	})
 }
 
-func insertSSOSetting(ssoSettingsStore ssosettings.Store, provider string, settings map[string]interface{}) error {
-	if settings == nil {
-		settings = map[string]interface{}{
-			"enabled": true,
-		}
-	}
-	return ssoSettingsStore.Upsert(context.Background(), provider, settings)
-}
-
-func populateSSOSettings(sqlStore *sqlstore.SQLStore, settings map[string]interface{}, deleted bool, providers ...string) error {
+func populateSSOSettings(sqlStore *sqlstore.SQLStore, template models.SSOSettings, providers ...string) error {
 	return sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		for _, provider := range providers {
-			_, err := sess.Insert(&models.SSOSetting{
+			settings := models.SSOSettings{
 				ID:        uuid.New().String(),
 				Provider:  provider,
-				Settings:  settings,
+				Settings:  template.Settings,
 				Created:   timeNow().UTC(),
-				IsDeleted: deleted,
-			})
+				IsDeleted: template.IsDeleted,
+			}
+
+			_, err := sess.Insert(settings)
 			if err != nil {
 				return err
 			}
@@ -370,14 +405,18 @@ func getSSOSettingsCountByDeleted(sqlStore *sqlstore.SQLStore) (deleted, notDele
 	return
 }
 
-func getSSOSettingsByProvider(sqlStore *sqlstore.SQLStore, provider string, deleted bool) (*models.SSOSetting, error) {
-	var model models.SSOSetting
+func getSSOSettingsByProvider(sqlStore *sqlstore.SQLStore, provider string, deleted bool) (*models.SSOSettings, error) {
+	var model models.SSOSettings
 	var err error
 
 	err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		_, err = sess.Table("sso_setting").Where("provider = ? AND is_deleted = ?", provider, sqlStore.GetDialect().BooleanStr(deleted)).Get(&model)
 		return err
 	})
+
+	if err != nil {
+		return nil, err
+	}
 
 	return &model, err
 }

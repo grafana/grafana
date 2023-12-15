@@ -2,7 +2,7 @@
 aliases:
   - ../migrating-alerts/ # /docs/grafana/<GRAFANA VERSION>/alerting/migrating-alerts/
 canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/migrating-alerts/
-description: Upgrade Grafana alerts
+description: Upgrade to Grafana Alerting
 labels:
   products:
     - enterprise
@@ -23,7 +23,7 @@ Existing installations that do not use legacy alerting will have Grafana Alertin
 
 Likewise, existing installations that use legacy alerting will be automatically upgraded to Grafana Alerting unless you have opted out of Grafana Alerting before migration takes place. During the upgrade, legacy alerts are migrated to the new alerts type and no alerts or alerting data are lost.
 
-Once the upgrade has taken place, you still have the option to roll back to legacy alerting. However, we do not recommend choosing this option. If you do choose to roll back, Grafana will restore your alerts to the alerts you had at the point in time when the upgrade took place. All new alerts and changes made exclusively in Grafana Alerting will be deleted.
+Once the upgrade has taken place, you still have the option to roll back to legacy alerting. However, we do not recommend choosing this option. If you do choose to roll back, Grafana will restore your alerts to the alerts you had at the point in time when the upgrade took place.
 
 {{% admonition type="note" %}}
 Cloud customers, who do not want to upgrade to Grafana Alerting, should contact customer support.
@@ -91,13 +91,9 @@ If you want to turn alerting back on, you can remove both flags to enable Grafan
 
 Once the upgrade has taken place, you still have the option to roll back to legacy alerting. If you choose to roll back, Grafana will restore your alerts to the alerts you had at the point in time when the upgrade took place.
 
-All new alerts and changes made exclusively in Grafana Alerting will be deleted.
-
 To roll back to legacy alerting, enter the following in your configuration:
 
 ```toml
-force_migration = true
-
 [alerting]
 enabled = true
 
@@ -105,7 +101,14 @@ enabled = true
 enabled = false
 ```
 
-> **Note**: We do not recommend this option. If you choose to roll back, Grafana will restore your alerts to the alerts you had at the point in time when the upgrade took place. All new alerts and changes made exclusively in Grafana Alerting will be deleted.
+> **Note**: The next time you upgrade to Grafana Alerting, Grafana will restore your Grafana Alerting alerts and configuration to those you had before rolling back.
+
+If, after rolling back, you wish to delete any existing Grafana Alerting configuration and upgrade your legacy alerting configuration again from scratch, you can enable the `clean_upgrade` option:
+
+```toml
+[unified_alerting.upgrade]
+clean_upgrade = true
+```
 
 ## Opt in
 

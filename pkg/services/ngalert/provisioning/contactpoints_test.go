@@ -239,10 +239,7 @@ func TestContactPointService(t *testing.T) {
 	t.Run("service respects concurrency token when updating", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 		newCp := createTestContactPoint()
-		q := models.GetLatestAlertmanagerConfigurationQuery{
-			OrgID: 1,
-		}
-		config, err := sut.amStore.GetLatestAlertmanagerConfiguration(context.Background(), &q)
+		config, err := sut.amStore.GetLatestAlertmanagerConfiguration(context.Background(), 1)
 		require.NoError(t, err)
 		expectedConcurrencyToken := config.ConfigurationHash
 

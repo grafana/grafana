@@ -100,13 +100,13 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 		{
 			desc:        "impl=default nested_folders=on get root folders",
 			url:         "/api/folders",
-			expectedLen: LEVEL0_FOLDER_NUM,
+			expectedLen: LEVEL0_FOLDER_NUM + 1, // for shared with me folder
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 		},
 		{
 			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=on get root folders",
 			url:         "/api/folders",
-			expectedLen: LEVEL0_FOLDER_NUM,
+			expectedLen: LEVEL0_FOLDER_NUM + 1, // for shared with me folder
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
@@ -467,7 +467,7 @@ func setupServer(b testing.TB, sc benchScenario, features *featuremgmt.FeatureMa
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.db)
 
 	ac := acimpl.ProvideAccessControl(sc.cfg)
-	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sc.cfg, dashStore, folderStore, sc.db, features)
+	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sc.cfg, dashStore, folderStore, sc.db, features, nil)
 
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
 		features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
@@ -479,7 +479,7 @@ func setupServer(b testing.TB, sc benchScenario, features *featuremgmt.FeatureMa
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
 		sc.cfg, dashStore, folderStore, nil,
 		features, folderPermissions, dashboardPermissions, ac,
-		folderServiceWithFlagOn,
+		folderServiceWithFlagOn, nil,
 	)
 	require.NoError(b, err)
 

@@ -158,11 +158,7 @@ func ProvideService(
 	s.RegisterPostAuthHook(userSyncService.EnableUserHook, 20)
 	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgRolesHook, 30)
 	s.RegisterPostAuthHook(userSyncService.SyncLastSeenHook, 120)
-
-	if features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) {
-		s.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService).SyncOauthTokenHook, 60)
-	}
-
+	s.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService).SyncOauthTokenHook, 60)
 	s.RegisterPostAuthHook(userSyncService.FetchSyncedUserHook, 100)
 	s.RegisterPostAuthHook(sync.ProvidePermissionsSync(accessControlService).SyncPermissionsHook, 110)
 
@@ -190,6 +186,8 @@ type Service struct {
 func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	ctx, span := s.tracer.Start(ctx, "authn.Authenticate")
 	defer span.End()
+
+	r.OrgID = orgIDFromRequest(r)
 
 	var authErr error
 	for _, item := range s.clientQueue.items {
@@ -223,7 +221,6 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 }
 
 func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Request) (*authn.Identity, error) {
-	r.OrgID = orgIDFromRequest(r)
 	identity, err := c.Authenticate(ctx, r)
 	if err != nil {
 		s.errorLogFunc(ctx, err)("Failed to authenticate request", "client", c.Name(), "error", err)
@@ -267,6 +264,8 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 		attribute.String(attributeKeyClient, client),
 	))
 	defer span.End()
+
+	r.OrgID = orgIDFromRequest(r)
 
 	defer func() {
 		for _, hook := range s.postLoginHooks.items {

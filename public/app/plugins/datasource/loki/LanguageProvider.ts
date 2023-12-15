@@ -267,7 +267,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
         refId: 'data-samples',
         maxLines: options?.maxLines || DEFAULT_MAX_LINES_SAMPLE,
       },
-      options?.timeRange
+      options?.timeRange ?? this.getDefaultTimeRange()
     );
 
     if (!series.length) {

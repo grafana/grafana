@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -459,7 +460,6 @@ func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, use
 				continue
 			}
 			namespaceMap[hit.UID] = &folder.Folder{
-				ID:    hit.ID, // nolint:staticcheck
 				UID:   hit.UID,
 				Title: hit.Title,
 			}
@@ -584,6 +584,17 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 
 // DeleteInFolder deletes the rules contained in a given folder along with their associated data.
 func (st DBstore) DeleteInFolder(ctx context.Context, orgID int64, folderUID string, user identity.Requester) error {
+	evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeName(folderUID))
+	canSave, err := st.AccessControl.Evaluate(ctx, user, evaluator)
+	if err != nil {
+		st.Logger.Error("Failed to evaluate access control", "error", err)
+		return err
+	}
+	if !canSave {
+		st.Logger.Error("user is not allowed to delete alert rules in folder", "folder", folderUID, "user")
+		return dashboards.ErrFolderAccessDenied
+	}
+
 	rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
 		OrgID:         orgID,
 		NamespaceUIDs: []string{folderUID},
