@@ -15,10 +15,10 @@ import { getElementTypes, onAddItem } from '../utils';
 type Props = {
   scene: Scene;
   panel: CanvasPanel;
-  visibleFun: (v: boolean) => void;
+  onVisibilityChange: (v: boolean) => void;
 };
 
-export const CanvasContextMenu = ({ scene, panel, visibleFun }: Props) => {
+export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) => {
   const inlineEditorOpen = panel.state.openInlineEdit;
   const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false);
   const [anchorPoint, setAnchorPoint] = useState<AnchorPoint>({ x: 0, y: 0 });
@@ -46,9 +46,9 @@ export const CanvasContextMenu = ({ scene, panel, visibleFun }: Props) => {
       }
       setAnchorPoint({ x: event.pageX, y: event.pageY });
       setIsMenuVisible(true);
-      visibleFun(true);
+      onVisibilityChange(true);
     },
-    [scene, panel, visibleFun]
+    [scene, panel, onVisibilityChange]
   );
 
   useEffect(() => {
@@ -67,7 +67,7 @@ export const CanvasContextMenu = ({ scene, panel, visibleFun }: Props) => {
 
   const closeContextMenu = () => {
     setIsMenuVisible(false);
-    visibleFun(false);
+    onVisibilityChange(false);
   };
 
   const renderMenuItems = () => {

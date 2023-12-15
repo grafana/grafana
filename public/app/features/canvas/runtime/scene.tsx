@@ -79,7 +79,7 @@ export class Scene {
   ignoreDataUpdate = false;
   panel: CanvasPanel;
   contextMenuVisible?: boolean;
-  contextMenuVisibleFun = (visible: boolean) => {
+  contextMenuOnVisibilityChange = (visible: boolean) => {
     this.contextMenuVisible = visible;
     const transformInstance = this.transformComponentRef?.current?.instance;
     if (transformInstance) {
@@ -759,7 +759,11 @@ export class Scene {
             {this.root.render()}
             {canShowContextMenu && (
               <Portal>
-                <CanvasContextMenu scene={this} panel={this.panel} visibleFun={this.contextMenuVisibleFun} />
+                <CanvasContextMenu
+                  scene={this}
+                  panel={this.panel}
+                  onVisibilityChange={this.contextMenuOnVisibilityChange}
+                />
               </Portal>
             )}
             {canShowElementTooltip && (
