@@ -104,8 +104,9 @@ export abstract class BigValueLayout {
   }
 
   getPercentChangeStyles(percentChange: number): PercentChangeStyles {
+    const VALUE_TO_PERCENT_CHANGE_RATIO = 2.5;
     const valueContainerStyles = this.getValueAndTitleContainerStyles();
-    const percentFontSize = Math.max(this.valueFontSize / 2.5, 12);
+    const percentFontSize = Math.max(this.valueFontSize / VALUE_TO_PERCENT_CHANGE_RATIO, 12);
     let iconSize = Math.max(this.valueFontSize / 3, 10);
 
     const color =
@@ -133,9 +134,13 @@ export abstract class BigValueLayout {
       containerStyles.marginTop = -(percentFontSize / 4);
     }
 
-    // TODO: This layout mode needs more work (especially for horizontal layout)
     if (valueContainerStyles.flexDirection === 'row') {
-      containerStyles.alignItems = 'unset';
+      containerStyles.alignItems = 'baseline';
+
+      // Center the percent change vertically relative to the value
+      // This approach seems to work the best for all edge cases
+      // Note: the fixed min font size causes this to be off for a few edge cases
+      containerStyles.lineHeight = LINE_HEIGHT * VALUE_TO_PERCENT_CHANGE_RATIO;
     }
 
     switch (this.props.colorMode) {
