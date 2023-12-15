@@ -336,8 +336,6 @@ func (am *Alertmanager) TestTemplate(ctx context.Context, c apimodels.TestTempla
 // In the context of a "remote Alertmanager" it is a good heuristic for Grafana is about to shut down or we no longer need you.
 func (am *Alertmanager) StopAndWait() {
 	am.sender.Stop()
-
-	// Upload the configuration and state
 }
 
 func (am *Alertmanager) Ready() bool {

@@ -12,6 +12,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 )
 
+type configStore interface {
+	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error)
+}
+
 //go:generate mockery --name remoteAlertmanager --structname RemoteAlertmanagerMock --with-expecter --output mock --outpkg alertmanager_mock
 type remoteAlertmanager interface {
 	notifier.Alertmanager
@@ -20,7 +24,9 @@ type remoteAlertmanager interface {
 }
 
 type RemoteSecondaryForkedAlertmanager struct {
-	log log.Logger
+	log   log.Logger
+	orgID int64
+	store configStore
 
 	internal notifier.Alertmanager
 	remote   remoteAlertmanager
@@ -30,10 +36,13 @@ type RemoteSecondaryForkedAlertmanager struct {
 }
 
 type RemoteSecondaryConfig struct {
+	Logger log.Logger
+	OrgID  int64
+	Store  configStore
+
 	// SyncInterval determines how often we should attempt to synchronize
 	// state and configuration on the external Alertmanager.
 	SyncInterval time.Duration
-	Logger       log.Logger
 }
 
 func (c *RemoteSecondaryConfig) Validate() error {
@@ -49,6 +58,8 @@ func NewRemoteSecondaryForkedAlertmanager(cfg RemoteSecondaryConfig, internal no
 	}
 	return &RemoteSecondaryForkedAlertmanager{
 		log:          cfg.Logger,
+		orgID:        cfg.OrgID,
+		store:        cfg.Store,
 		internal:     internal,
 		remote:       remote,
 		syncInterval: cfg.SyncInterval,
@@ -160,9 +171,26 @@ func (fam *RemoteSecondaryForkedAlertmanager) CleanUp() {
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) StopAndWait() {
+	// Stop the internal Alertmanager.
 	fam.internal.StopAndWait()
+	// Stop our alert senders.
 	fam.remote.StopAndWait()
-	// TODO: send config and state on shutdown.
+
+	// Send config and state to the remote Alertmanager.
+	// Using context.TODO() here as we think we want to allow this operation to finish regardless of time.
+	ctx := context.TODO()
+	if err := fam.remote.CompareAndSendState(ctx); err != nil {
+		fam.log.Error("Error sending state to the remote Alertmanager while stopping", "err", err)
+	}
+
+	config, err := fam.store.GetLatestAlertmanagerConfiguration(ctx, fam.orgID)
+	if err != nil {
+		fam.log.Error("Error getting latest Alertmanager configuration while stopping", "err", err)
+		return
+	}
+	if err := fam.remote.CompareAndSendConfiguration(ctx, config); err != nil {
+		fam.log.Error("Error sending configuration to the remote Alertmanager while stopping", "err", err)
+	}
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) Ready() bool {
