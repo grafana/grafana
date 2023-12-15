@@ -11,7 +11,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apis/folders/v0alpha1"
-	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -138,7 +137,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 
 	p, ok := obj.(*v0alpha1.Folder)
 	if !ok {
-		return nil, fmt.Errorf("expected playlist?")
+		return nil, fmt.Errorf("expected folder?")
 	}
 
 	accessor := kinds.MetaAccessor(p)
@@ -247,9 +246,9 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	if err != nil {
 		return nil, false, err
 	}
-	p, ok := v.(*playlist.Playlist)
+	p, ok := v.(*v0alpha1.Folder)
 	if !ok {
-		return v, false, fmt.Errorf("expected a playlist response from Get")
+		return v, false, fmt.Errorf("expected a folder response from Get")
 	}
 	err = s.service.Delete(ctx, &folder.DeleteFolderCommand{
 		UID:   name,
