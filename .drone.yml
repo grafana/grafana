@@ -3742,6 +3742,7 @@ clone:
   disable: true
 depends_on: []
 environment:
+  CGO_ENABLED: "1"
   EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
@@ -4630,6 +4631,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: e827a184a10924f30f5160a4a7f9b181ac6e3034623a98655d4be507cb413de6
+hmac: cdf3e1acec76c00446ada66e80de122feb63d59a7418a3a304fcf978a819ad37
 
 ...

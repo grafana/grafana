@@ -28,7 +28,7 @@ def windows_test_backend(trigger, edition, ver_mode):
     Returns:
         A single pipeline running backend tests for Windows
     """
-    environment = {"EDITION": edition}
+    environment = {"EDITION": edition, "CGO_ENABLED": "1"}
     steps = [
         clone_step_windows(),
     ]
