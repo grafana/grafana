@@ -50,7 +50,7 @@ func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssose
 		SocialBase: newSocialBase(social.OktaProviderName, config, info, cfg.AutoAssignOrgRole, *features),
 	}
 
-	if info.UseRefreshToken && features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) {
+	if info.UseRefreshToken {
 		appendUniqueScope(config, social.OfflineAccessScope)
 	}
 
