@@ -4,6 +4,7 @@ import React from 'react';
 import {
   DataFrame,
   Field,
+  FieldType,
   getDisplayProcessor,
   getFieldDisplayName,
   GrafanaTheme2,
@@ -12,6 +13,7 @@ import {
 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
+import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
 import { ColorIndicator, ColorPlacement, LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
 import { DEFAULT_TOOLTIP_WIDTH } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
@@ -26,7 +28,6 @@ interface StateTimelineTooltip2Props {
   seriesIdx: number | null | undefined;
   isPinned: boolean;
   timeZone?: TimeZone;
-  onAnnotationAdd?: () => void;
 }
 
 export const StateTimelineTooltip2 = ({
@@ -35,7 +36,7 @@ export const StateTimelineTooltip2 = ({
   dataIdxs,
   seriesIdx,
   timeZone,
-  onAnnotationAdd,
+  isPinned,
 }: StateTimelineTooltip2Props) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
@@ -43,6 +44,24 @@ export const StateTimelineTooltip2 = ({
   const datapointIdx = dataIdxs.find((idx) => idx !== undefined);
 
   if (!data || datapointIdx == null || seriesIdx == null) {
+    return null;
+  }
+
+  const valueFieldsCount = data.reduce(
+    (acc, frame) => acc + frame.fields.filter((field) => field.type !== FieldType.time).length,
+    0
+  );
+
+  /**
+   * There could be a case when the tooltip shows a data from one of a multiple query and the other query finishes first
+   * from refreshing. This causes data to be out of sync. alignedData - 1 because Time field doesn't count.
+   * Render nothing in this case to prevent error.
+   * See https://github.com/grafana/support-escalations/issues/932
+   */
+  if (
+    (!alignedData.meta?.transformations?.length && alignedData.fields.length - 1 !== valueFieldsCount) ||
+    !alignedData.fields[seriesIdx]
+  ) {
     return null;
   }
 
@@ -72,24 +91,10 @@ export const StateTimelineTooltip2 = ({
   }
 
   const stateTs = xField.values[datapointIdx!];
-  const duration = nextStateTs && fmtDuration(nextStateTs - stateTs);
-
-  let toFragment = null;
-  let durationFragment = null;
+  let duration = nextStateTs && fmtDuration(nextStateTs - stateTs);
 
   if (nextStateTs) {
-    const duration = nextStateTs && fmtDuration(nextStateTs - stateTs);
-    durationFragment = (
-      <>
-        <br />
-        <strong>Duration:</strong> {duration}
-      </>
-    );
-    toFragment = (
-      <>
-        {' to'} <strong>{xFieldFmt(xField.values[nextStateIdx!]).text}</strong>
-      </>
-    );
+    duration = nextStateTs && fmtDuration(nextStateTs - stateTs);
   }
 
   const getHeaderLabel = (): LabelValue => {
@@ -98,21 +103,6 @@ export const StateTimelineTooltip2 = ({
       value: xFieldFmt(xField.values[nextStateIdx!]).text ?? xFieldFmt(xField.values[datapointIdx!]).text,
     };
   };
-
-  // const getContentLabelValue = (): LabelValue[] => {
-  //   const fromToInt: LabelValue[] = interval ? [{ label: 'Duration', value: formatMilliseconds(interval) }] : [];
-  //
-  //   return [
-  //     {
-  //       label: getFieldDisplayName(countField, data.heatmap),
-  //       value: data.display!(count),
-  //       color: cellColor ?? '#FFF',
-  //       colorPlacement: ColorPlacement.trailing,
-  //       colorIndicator: ColorIndicator.value,
-  //     },
-  //     ...getContentLabels(),
-  //     ...fromToInt,
-  //   ];
 
   const getContentLabelValue = (): LabelValue[] => {
     const durationEntry: LabelValue[] = duration ? [{ label: 'Duration', value: duration }] : [];
@@ -133,37 +123,8 @@ export const StateTimelineTooltip2 = ({
     <div className={styles.wrapper}>
       <VizTooltipHeader headerLabel={getHeaderLabel()} />
       <VizTooltipContent contentLabelValue={getContentLabelValue()} />
-      {/*{isPinned && <VizTooltipFooter dataLinks={links} canAnnotate={false} />}*/}
+      {isPinned && <VizTooltipFooter dataLinks={links} canAnnotate={false} />}
     </div>
-    // <div>
-    //   <div style={{ fontSize: theme.typography.bodySmall.fontSize }}>
-    //     {fieldDisplayName}
-    //     <br />
-    //     <SeriesTableRow label={display.text} color={display.color || FALLBACK_COLOR} isActive />
-    //     From <strong>{xFieldFmt(xField.values[datapointIdx!]).text}</strong>
-    //     {toFragment}
-    //     {durationFragment}
-    //   </div>
-    //   <div
-    //     style={{
-    //       margin: theme.spacing(1, -1, -1, -1),
-    //       borderTop: `1px solid ${theme.colors.border.weak}`,
-    //     }}
-    //   >
-    //     {onAnnotationAdd && <MenuItem label={'Add annotation'} icon={'comment-alt'} onClick={onAnnotationAdd} />}
-    //     {links.length > 0 &&
-    //       links.map((link, i) => (
-    //         <MenuItem
-    //           key={i}
-    //           icon={'external-link-alt'}
-    //           target={link.target}
-    //           label={link.title}
-    //           url={link.href}
-    //           onClick={link.onClick}
-    //         />
-    //       ))}
-    //   </div>
-    // </div>
   );
 };
 

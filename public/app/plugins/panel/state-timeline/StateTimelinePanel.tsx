@@ -202,7 +202,7 @@ export const StateTimelinePanel = ({
                     config={builder}
                     hoverMode={TooltipHoverMode.xOne}
                     queryZoom={onChangeTimeRange}
-                    render={(u, dataIdxs, seriesIdx, isPinned, dismiss) => {
+                    render={(u, dataIdxs, seriesIdx, isPinned) => {
                       return (
                         <StateTimelineTooltip2
                           data={frames ?? []}
@@ -210,8 +210,6 @@ export const StateTimelinePanel = ({
                           alignedData={alignedFrame}
                           seriesIdx={seriesIdx}
                           timeZone={timeZone}
-                          // mode={options.tooltip.mode}
-                          // sortOrder={options.tooltip.sort}
                           isPinned={isPinned}
                         />
                       );
