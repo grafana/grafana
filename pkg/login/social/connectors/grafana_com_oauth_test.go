@@ -68,7 +68,7 @@ func TestSocialGrafanaCom_UserInfo(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		provider.skipOrgRoleSync = test.Cfg.skipOrgRoleSync
+		provider.info.SkipOrgRoleSync = test.Cfg.skipOrgRoleSync
 
 		t.Run(test.Name, func(t *testing.T) {
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

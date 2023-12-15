@@ -31,6 +31,7 @@ type AnonDeviceService struct {
 	localCache *localcache.CacheService
 	anonStore  anonstore.AnonStore
 	serverLock *serverlock.ServerLockService
+	cfg        *setting.Cfg
 }
 
 func ProvideAnonymousDeviceService(usageStats usagestats.Service, authBroker authn.Service,
@@ -42,6 +43,7 @@ func ProvideAnonymousDeviceService(usageStats usagestats.Service, authBroker aut
 		localCache: localcache.New(29*time.Minute, 15*time.Minute),
 		anonStore:  anonstore.ProvideAnonDBStore(sqlStore, cfg.AnonymousDeviceLimit),
 		serverLock: serverLockService,
+		cfg:        cfg,
 	}
 
 	usageStats.RegisterMetricsFunc(a.usageStatFn)
@@ -53,7 +55,7 @@ func ProvideAnonymousDeviceService(usageStats usagestats.Service, authBroker aut
 		anonDeviceService: a,
 	}
 
-	if anonClient.cfg.AnonymousEnabled {
+	if cfg.AnonymousEnabled {
 		authBroker.RegisterClient(anonClient)
 		authBroker.RegisterPostLoginHook(a.untagDevice, 100)
 	}
@@ -114,7 +116,6 @@ func (a *AnonDeviceService) untagDevice(ctx context.Context,
 	}
 }
 
-// FIXME: Unexport and remove interface
 func (a *AnonDeviceService) TagDevice(ctx context.Context, httpReq *http.Request, kind anonymous.DeviceKind) error {
 	deviceID := httpReq.Header.Get(deviceIDHeader)
 	if deviceID == "" {
@@ -152,11 +153,19 @@ func (a *AnonDeviceService) TagDevice(ctx context.Context, httpReq *http.Request
 
 // ListDevices returns all devices that have been updated between the given times.
 func (a *AnonDeviceService) ListDevices(ctx context.Context, from *time.Time, to *time.Time) ([]*anonstore.Device, error) {
+	if !a.cfg.AnonymousEnabled {
+		return []*anonstore.Device{}, nil
+	}
+
 	return a.anonStore.ListDevices(ctx, from, to)
 }
 
 // CountDevices returns the number of devices that have been updated between the given times.
 func (a *AnonDeviceService) CountDevices(ctx context.Context, from time.Time, to time.Time) (int64, error) {
+	if !a.cfg.AnonymousEnabled {
+		return 0, nil
+	}
+
 	return a.anonStore.CountDevices(ctx, from, to)
 }
 

@@ -4,6 +4,7 @@ import React from 'react';
 
 import {
   DataSourcePluginOptionsEditorProps,
+  GrafanaTheme2,
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceOption,
@@ -11,17 +12,16 @@ import {
   SelectableValue,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { GrafanaTheme2 } from '@grafana/data/src/themes';
 import { Alert, Field, InlineLabel, Input, SecretInput, Select, useStyles2 } from '@grafana/ui';
 
 import { InfluxOptions, InfluxSecureJsonData } from '../../../types';
+
+import { WIDTH_SHORT } from './constants';
 
 const httpModes: SelectableValue[] = [
   { label: 'GET', value: 'GET' },
   { label: 'POST', value: 'POST' },
 ];
-
-const WIDTH_SHORT = 20;
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions, InfluxSecureJsonData>;
 
