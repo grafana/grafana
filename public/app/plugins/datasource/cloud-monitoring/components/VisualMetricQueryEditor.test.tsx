@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { openMenu, select } from 'react-select-event';
 
-import { CustomVariableModel, dateTime, getDefaultTimeRange } from '@grafana/data';
+import { CustomVariableModel, getDefaultTimeRange } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
