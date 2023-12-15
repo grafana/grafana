@@ -112,6 +112,7 @@ func RoleAppPluginAuthAndSignedIn(accessControl ac.AccessControl, ps pluginstore
 		pluginID := web.Params(c.Req)[":id"]
 		p, exists := ps.Plugin(c.Req.Context(), pluginID)
 		if !exists {
+			// The frontend will handle app not found appropriately
 			return
 		}
 
