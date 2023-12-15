@@ -100,13 +100,13 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 		{
 			desc:        "impl=default nested_folders=on get root folders",
 			url:         "/api/folders",
-			expectedLen: LEVEL0_FOLDER_NUM,
+			expectedLen: LEVEL0_FOLDER_NUM + 1, // for shared with me folder
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 		},
 		{
 			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=on get root folders",
 			url:         "/api/folders",
-			expectedLen: LEVEL0_FOLDER_NUM,
+			expectedLen: LEVEL0_FOLDER_NUM + 1, // for shared with me folder
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
