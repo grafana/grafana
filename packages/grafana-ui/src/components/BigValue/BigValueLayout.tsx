@@ -9,6 +9,7 @@ import { calculateFontSize } from '../../utils/measureText';
 import { Sparkline } from '../Sparkline/Sparkline';
 
 import { BigValueColorMode, Props, BigValueJustifyMode, BigValueTextMode } from './BigValue';
+import { percentChangeString } from './PercentChange';
 
 const LINE_HEIGHT = 1.2;
 const MAX_TITLE_SIZE = 30;
@@ -102,13 +103,10 @@ export abstract class BigValueLayout {
     return styles;
   }
 
-  getPercentChangeStyles(percentChange: number, isTextModeNone: boolean): PercentChangeStyles {
+  getPercentChangeStyles(percentChange: number): PercentChangeStyles {
     const valueContainerStyles = this.getValueAndTitleContainerStyles();
     const percentFontSize = Math.max(this.valueFontSize / 2.5, 12);
-
-    if (isTextModeNone) {
-      // TODO: treat styles like a normal value by itself so scaling works
-    }
+    let iconSize = Math.max(this.valueFontSize / 3, 10);
 
     const color =
       percentChange > 0
@@ -147,7 +145,22 @@ export abstract class BigValueLayout {
         break;
     }
 
-    return { containerStyles, iconSize: Math.max(this.valueFontSize / 3, 10) };
+    if (this.props.textMode === BigValueTextMode.None) {
+      containerStyles.fontSize = calculateFontSize(
+        percentChangeString(percentChange),
+        this.maxTextWidth * 0.8,
+        this.maxTextHeight * 0.8,
+        LINE_HEIGHT,
+        undefined,
+        VALUE_FONT_WEIGHT
+      );
+      iconSize = containerStyles.fontSize;
+    }
+
+    return {
+      containerStyles,
+      iconSize: iconSize,
+    };
   }
 
   getValueAndTitleContainerStyles() {
@@ -166,12 +179,12 @@ export abstract class BigValueLayout {
   }
 
   getPanelStyles(): CSSProperties {
-    const { width, height, theme, colorMode } = this.props;
+    const { width, height, theme, colorMode, textMode } = this.props;
 
     const panelStyles: CSSProperties = {
       width: `${width}px`,
       height: `${height}px`,
-      padding: `${this.panelPadding}px`,
+      padding: `${textMode === BigValueTextMode.None ? 0 : this.panelPadding}px`,
       borderRadius: theme.shape.radius.default,
       position: 'relative',
       display: 'flex',

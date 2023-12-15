@@ -10,8 +10,6 @@ export interface Props {
 }
 
 export const PercentChange = ({ percentChange, styles }: Props) => {
-  const percentChangeString =
-    percentChange?.toLocaleString(undefined, { style: 'percent', maximumSignificantDigits: 3 }) ?? '';
   const percentChangeIcon =
     percentChange && (percentChange > 0 ? 'arrow-up' : percentChange < 0 ? 'arrow-down' : undefined);
 
@@ -20,7 +18,11 @@ export const PercentChange = ({ percentChange, styles }: Props) => {
       {percentChangeIcon && (
         <Icon name={percentChangeIcon} height={styles.iconSize} width={styles.iconSize} viewBox="6 6 12 12" />
       )}
-      {percentChangeString}
+      {percentChangeString(percentChange)}
     </div>
   );
+};
+
+export const percentChangeString = (percentChange: number) => {
+  return percentChange?.toLocaleString(undefined, { style: 'percent', maximumSignificantDigits: 3 }) ?? '';
 };

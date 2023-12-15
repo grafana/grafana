@@ -95,7 +95,6 @@ export class BigValue extends PureComponent<Props> {
     const textValues = layout.textValues;
     const percentChange = this.props.value.percentChange;
     const showPercentChange = percentChange != null && !Number.isNaN(percentChange);
-    const isTextModeNone = this.props.textMode === BigValueTextMode.None;
 
     // When there is an outer data link this tooltip will override the outer native tooltip
     const tooltip = hasLinks ? undefined : textValues.tooltip;
@@ -107,10 +106,7 @@ export class BigValue extends PureComponent<Props> {
             {textValues.title && <div style={titleStyles}>{textValues.title}</div>}
             <FormattedValueDisplay value={textValues} style={valueStyles} />
             {showPercentChange && (
-              <PercentChange
-                percentChange={percentChange}
-                styles={layout.getPercentChangeStyles(percentChange, isTextModeNone)}
-              />
+              <PercentChange percentChange={percentChange} styles={layout.getPercentChangeStyles(percentChange)} />
             )}
           </div>
           {layout.renderChart()}
