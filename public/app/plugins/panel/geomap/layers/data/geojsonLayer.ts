@@ -19,7 +19,7 @@ import { ComparisonOperation } from '@grafana/schema';
 import { GeomapStyleRulesEditor } from '../../editor/GeomapStyleRulesEditor';
 import { StyleEditor } from '../../editor/StyleEditor';
 import { polyStyle } from '../../style/markers';
-import { defaultStyleConfig, StyleConfig, StyleConfigState } from '../../style/types';
+import { defaultStyleConfig, StyleConfig, StyleConfigState, StyleConfigValues } from '../../style/types';
 import { getStyleConfigState } from '../../style/utils';
 import { FeatureRuleConfig, FeatureStyleConfig } from '../../types';
 import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesStyleRule';
@@ -77,9 +77,8 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       url: config.src,
       format: new GeoJSON(),
     });
-
+ 
     const features = new ReplaySubject<FeatureLike[]>();
-
     const key = source.on('change', () => {
       //one geojson loads
       if (source.getState() === 'ready') {
@@ -111,7 +110,6 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       source,
       style: (feature: FeatureLike) => {
         const isPoint = feature.getGeometry()?.getType() === 'Point';
-
         for (const check of styles) {
           if (check.rule && !checkFeatureMatchesStyleRule(check.rule, feature)) {
             continue;
@@ -128,6 +126,12 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
             if (isPoint) {
               return check.state.maker(values);
             }
+            return polyStyle(values);
+          }
+          
+          const props = feature.getProperties()
+          if(props.fill || props. stroke){
+            const values: StyleConfigValues = {color: props.fill, stroke: props.stroke }
             return polyStyle(values);
           }
 
@@ -148,6 +152,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       },
     });
 
+
     return {
       init: () => vectorLayer,
       registerOptionsUI: (builder) => {
@@ -156,7 +161,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
           first(),
           rxjsmap((v) => getLayerPropertyInfo(v))
         );
-
+          
         builder
           .addSelect({
             path: 'config.src',

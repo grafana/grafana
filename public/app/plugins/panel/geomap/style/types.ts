@@ -125,6 +125,7 @@ export interface StyleConfigValues {
 
   // Pass though (not value dependant)
   textConfig?: TextStyleConfig;
+  stroke?: number;
 }
 
 /** When the style depends on a field */
