@@ -68,7 +68,7 @@ export const TimeSeriesPanel = ({
 
   // which annotation are we editing?
   // are we adding a new annotation? is annotating?
-  console.log(data.annotations);
+  // console.log(data.annotations);
 
   // annotations plugin includes the editor and the renderer
   // its annotation state is managed here for now

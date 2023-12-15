@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import useDebounce from 'react-use/lib/useDebounce';
 import uPlot from 'uplot';
 
 import { DataFrame, GrafanaTheme2, colorManipulator } from '@grafana/data';
@@ -32,6 +33,17 @@ const renderLine = (ctx: CanvasRenderingContext2D, y0: number, y1: number, x: nu
 //   ctx.fill();
 // }
 
+interface AnnoBoxProps {
+  annoVals: Record<string, any[]>;
+  annoIdx: number;
+}
+
+// infotip & editor container
+export const AnnoBox = ({ annoVals, annoIdx }: AnnoBoxProps) => {
+  const styles = useStyles2(getStyles);
+  return <div className={styles.annoInfo}>{annoVals.text[annoIdx]}</div>;
+};
+
 export const AnnotationsPlugin2 = ({ annotations, timeZone, config }: AnnotationsPluginProps) => {
   const [plot, setPlot] = useState<uPlot>();
 
@@ -51,35 +63,6 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config }: Annotation
     config.addHook('ready', (u) => {
       let xAxisEl = u.root.querySelector<HTMLDivElement>('.u-axis')!;
       xAxisRef.current = xAxisEl;
-
-      let annoClasses = `.${styles.annoMarker}, .${styles.annoRegion}`;
-
-      // delegated single listeners for all anno markers
-      xAxisEl.addEventListener(
-        'mouseenter',
-        (e) => {
-          let targ = e.target!;
-
-          if (targ.matches(annoClasses)) {
-            setHoveredIdx(+targ.dataset.index);
-          }
-        },
-        true
-      );
-
-      // delegated single listener for all anno markers
-      xAxisEl.addEventListener(
-        'mouseleave',
-        (e) => {
-          let targ = e.target!;
-
-          if (targ.matches(annoClasses)) {
-            setHoveredIdx(-1);
-          }
-        },
-        true
-      );
-
       setPlot(u);
     });
 
@@ -132,50 +115,75 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config }: Annotation
     });
   }, [config, getColorByName]);
 
+  // redraw slower-than-series anno queries, since they don't go through setData(), but are drawn in the redraw() hook
+  useDebounce(
+    () => {
+      if (plot) {
+        plot.redraw();
+      }
+    },
+    100,
+    annotations
+  );
+
   if (plot) {
-    return createPortal(
-      annoRef.current.flatMap((frame) => {
-        let vals: Record<string, any[]> = {};
-        frame.fields.forEach((f) => {
-          vals[f.name] = f.values;
-        });
+    let markers = annoRef.current.flatMap((frame) => {
+      let vals: Record<string, any[]> = {};
+      frame.fields.forEach((f) => {
+        vals[f.name] = f.values;
+      });
 
-        let markers: React.ReactNode[] = [];
+      let markers: React.ReactNode[] = [];
 
-        for (let i = 0; i < frame.length; i++) {
-          let color = getColorByName(vals.color[i]);
+      for (let i = 0; i < frame.length; i++) {
+        let color = getColorByName(vals.color[i]);
 
-          let left = plot.valToPos(vals.time[i], 'x');
+        let left = plot.valToPos(vals.time[i], 'x');
+        let style: React.CSSProperties;
+        let className = '';
+        let isVisible = true;
 
-          if (vals.isRegion[i]) {
-            let right = plot.valToPos(vals.timeEnd[i], 'x');
+        if (vals.isRegion[i]) {
+          let right = plot.valToPos(vals.timeEnd[i], 'x');
 
-            markers.push(
-              <div
-                className={styles.annoRegion}
-                style={{ left, background: color, width: right - left }}
-                data-index={i} // only works for one anno frame currently
-              >
-                {hoveredIdx === i && <div className={styles.annoInfo}>{vals.text[i]}</div>}
-              </div>
-            );
-          } else {
-            markers.push(
-              <div
-                className={styles.annoMarker}
-                style={{ left, borderBottomColor: color }}
-                data-index={i} // only works for one anno frame currently
-              >
-                {hoveredIdx === i && <div className={styles.annoInfo}>{vals.text[i]}</div>}
-              </div>
-            );
+          isVisible = left < plot.rect.width && right > 0;
+
+          if (isVisible) {
+            let clampedLeft = Math.max(0, left);
+            let clampedRight = Math.min(plot.rect.width, right);
+
+            style = { left: clampedLeft, background: color, width: clampedRight - clampedLeft };
+            className = styles.annoRegion;
+          }
+        } else {
+          isVisible = left > 0 && left <= plot.rect.width;
+
+          if (isVisible) {
+            style = { left, borderBottomColor: color };
+            className = styles.annoMarker;
           }
         }
 
-        return markers;
-      }),
-      xAxisRef.current!
-    );
+        if (isVisible) {
+          let marker = (
+            <div
+              className={className}
+              style={style!}
+              onMouseEnter={() => setHoveredIdx(i)}
+              onMouseLeave={() => setHoveredIdx(-1)}
+            >
+              {i === hoveredIdx && <AnnoBox annoIdx={i} annoVals={vals} />}
+            </div>
+          );
+
+          markers.push(marker);
+        }
+      }
+
+      return markers;
+    });
+
+    return createPortal(markers, xAxisRef.current!);
   }
 
   return null;
@@ -192,11 +200,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderBottomStyle: 'solid',
     transform: 'translateX(-50%)',
     cursor: 'pointer',
+    zIndex: 1,
   }),
   annoRegion: css({
     position: 'absolute',
     height: '5px',
     cursor: 'pointer',
+    zIndex: 1,
   }),
   annoInfo: css({
     background: 'purple',
