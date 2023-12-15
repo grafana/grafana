@@ -100,6 +100,7 @@ export const Toggletip = React.memo(
       },
       middleware,
       whileElementsMounted: autoUpdate,
+      strategy: 'fixed',
     });
 
     const click = useClick(context);
