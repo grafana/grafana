@@ -48,7 +48,7 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, opts runtime
 			return
 		}
 
-		parents, err := r.service.GetChildren(ctx, &folder.GetChildrenQuery{
+		children, err := r.service.GetChildren(ctx, &folder.GetChildrenQuery{
 			SignedInUser: user,
 			UID:          name,
 			OrgID:        ns.OrgID,
