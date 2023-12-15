@@ -166,7 +166,7 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *contextmodel.ReqContext, nam
 	for groupKey, rules := range ruleGroups {
 		key := getNamespaceKey(namespace)
 		// nolint:staticcheck
-		result[key] = append(result[key], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, namespace.ID, provenanceRecords))
+		result[key] = append(result[key], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, provenanceRecords))
 	}
 
 	return response.JSON(http.StatusAccepted, result)
@@ -196,7 +196,7 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespa
 
 	result := apimodels.RuleGroupConfigResponse{
 		// nolint:staticcheck
-		GettableRuleGroupConfig: toGettableRuleGroupConfig(ruleGroup, rules, namespace.ID, provenanceRecords),
+		GettableRuleGroupConfig: toGettableRuleGroupConfig(ruleGroup, rules, provenanceRecords),
 	}
 	return response.JSON(http.StatusAccepted, result)
 }
@@ -246,7 +246,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 		}
 		key := getNamespaceKey(folder)
 		// nolint:staticcheck
-		result[key] = append(result[key], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, folder.ID, provenanceRecords))
+		result[key] = append(result[key], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, provenanceRecords))
 	}
 	return response.JSON(http.StatusOK, result)
 }
@@ -408,7 +408,7 @@ func changesToResponse(finalChanges *store.GroupDelta) response.Response {
 	return response.JSON(http.StatusAccepted, body)
 }
 
-func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, namespaceID int64, provenanceRecords map[string]ngmodels.Provenance) apimodels.GettableRuleGroupConfig {
+func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, provenanceRecords map[string]ngmodels.Provenance) apimodels.GettableRuleGroupConfig {
 	rules.SortByGroupIndex()
 	ruleNodes := make([]apimodels.GettableExtendedRuleNode, 0, len(rules))
 	var interval time.Duration
@@ -416,7 +416,7 @@ func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, name
 		interval = time.Duration(rules[0].IntervalSeconds) * time.Second
 	}
 	for _, r := range rules {
-		ruleNodes = append(ruleNodes, toGettableExtendedRuleNode(*r, namespaceID, provenanceRecords))
+		ruleNodes = append(ruleNodes, toGettableExtendedRuleNode(*r, provenanceRecords))
 	}
 	return apimodels.GettableRuleGroupConfig{
 		Name:     groupName,
@@ -425,7 +425,7 @@ func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, name
 	}
 }
 
-func toGettableExtendedRuleNode(r ngmodels.AlertRule, namespaceID int64, provenanceRecords map[string]ngmodels.Provenance) apimodels.GettableExtendedRuleNode {
+func toGettableExtendedRuleNode(r ngmodels.AlertRule, provenanceRecords map[string]ngmodels.Provenance) apimodels.GettableExtendedRuleNode {
 	provenance := ngmodels.ProvenanceNone
 	if prov, exists := provenanceRecords[r.ResourceID()]; exists {
 		provenance = prov
@@ -442,7 +442,6 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, namespaceID int64, provena
 			Version:         r.Version,
 			UID:             r.UID,
 			NamespaceUID:    r.NamespaceUID,
-			NamespaceID:     namespaceID,
 			RuleGroup:       r.RuleGroup,
 			NoDataState:     apimodels.NoDataState(r.NoDataState),
 			ExecErrState:    apimodels.ExecutionErrorState(r.ExecErrState),

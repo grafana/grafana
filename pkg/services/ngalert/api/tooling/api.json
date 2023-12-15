@@ -298,6 +298,12 @@
      },
      "type": "array"
     },
+    "muteTimes": {
+     "items": {
+      "$ref": "#/definitions/MuteTimeIntervalExport"
+     },
+     "type": "array"
+    },
     "policies": {
      "items": {
       "$ref": "#/definitions/NotificationPolicyExport"
@@ -1425,11 +1431,6 @@
     "is_paused": {
      "type": "boolean"
     },
-    "namespace_id": {
-     "description": "Deprecated: it will be removed in a future release in favor of NamespaceUID",
-     "format": "int64",
-     "type": "integer"
-    },
     "namespace_uid": {
      "type": "string"
     },
@@ -1919,6 +1920,24 @@
     }
    },
    "title": "MuteTimeInterval represents a named set of time intervals for which a route should be muted.",
+   "type": "object"
+  },
+  "MuteTimeIntervalExport": {
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "orgId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeInterval"
+     },
+     "type": "array"
+    }
+   },
    "type": "object"
   },
   "MuteTimings": {
@@ -3965,6 +3984,7 @@
    "type": "object"
   },
   "URL": {
+   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -4000,7 +4020,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "URL is a custom URL type that allows validation at configuration load time.",
+   "title": "A URL represents a parsed URL (technically, a URI reference).",
    "type": "object"
   },
   "UpdateRuleGroupResponse": {
@@ -4396,7 +4416,6 @@
    "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4633,7 +4652,6 @@
    "type": "object"
   },
   "receiver": {
-   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
@@ -4875,6 +4893,11 @@
       "name": "UID",
       "required": true,
       "type": "string"
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -5044,6 +5067,11 @@
       "schema": {
        "$ref": "#/definitions/EmbeddedContactPoint"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -5134,7 +5162,7 @@
      }
     ],
     "responses": {
-     "204": {
+     "202": {
       "description": " The contact point was deleted successfully."
      }
     },
@@ -5162,6 +5190,11 @@
       "schema": {
        "$ref": "#/definitions/EmbeddedContactPoint"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -5223,6 +5256,11 @@
     ],
     "operationId": "RoutePutAlertRuleGroup",
     "parameters": [
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
+     },
      {
       "in": "path",
       "name": "FolderUID",
@@ -5344,6 +5382,11 @@
       "schema": {
        "$ref": "#/definitions/MuteTimeInterval"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -5361,6 +5404,45 @@
      }
     },
     "summary": "Create a new mute timing.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/v1/provisioning/mute-timings/export": {
+   "get": {
+    "operationId": "RouteExportMuteTimings",
+    "parameters": [
+     {
+      "default": false,
+      "description": "Whether to initiate a download of the file or not.",
+      "in": "query",
+      "name": "download",
+      "type": "boolean"
+     },
+     {
+      "default": "yaml",
+      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "in": "query",
+      "name": "format",
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertingFileExport",
+      "schema": {
+       "$ref": "#/definitions/AlertingFileExport"
+      }
+     },
+     "403": {
+      "description": "PermissionDenied",
+      "schema": {
+       "$ref": "#/definitions/PermissionDenied"
+      }
+     }
+    },
+    "summary": "Export all mute timings in provisioning format.",
     "tags": [
      "provisioning"
     ]
@@ -5434,6 +5516,11 @@
       "schema": {
        "$ref": "#/definitions/MuteTimeInterval"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -5451,6 +5538,52 @@
      }
     },
     "summary": "Replace an existing mute timing.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/v1/provisioning/mute-timings/{name}/export": {
+   "get": {
+    "operationId": "RouteExportMuteTiming",
+    "parameters": [
+     {
+      "default": false,
+      "description": "Whether to initiate a download of the file or not.",
+      "in": "query",
+      "name": "download",
+      "type": "boolean"
+     },
+     {
+      "default": "yaml",
+      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "in": "query",
+      "name": "format",
+      "type": "string"
+     },
+     {
+      "description": "Mute timing name",
+      "in": "path",
+      "name": "name",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertingFileExport",
+      "schema": {
+       "$ref": "#/definitions/AlertingFileExport"
+      }
+     },
+     "403": {
+      "description": "PermissionDenied",
+      "schema": {
+       "$ref": "#/definitions/PermissionDenied"
+      }
+     }
+    },
+    "summary": "Export a mute timing in provisioning format.",
     "tags": [
      "provisioning"
     ]
@@ -5503,6 +5636,11 @@
       "schema": {
        "$ref": "#/definitions/Route"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -5636,6 +5774,11 @@
       "schema": {
        "$ref": "#/definitions/NotificationTemplateContent"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {

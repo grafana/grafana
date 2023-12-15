@@ -7,9 +7,10 @@ import { Button, Icon, InlineField, Tooltip, useTheme2, Stack } from '@grafana/u
 import { isConflictingFilter } from 'app/plugins/datasource/loki/querybuilder/operationUtils';
 import { LokiOperationId } from 'app/plugins/datasource/loki/querybuilder/types';
 
+import { getOperationParamId } from '../operationUtils';
+
 import { OperationHeader } from './OperationHeader';
 import { getOperationParamEditor } from './OperationParamEditor';
-import { getOperationParamId } from './operationUtils';
 import {
   QueryBuilderOperation,
   QueryBuilderOperationDef,

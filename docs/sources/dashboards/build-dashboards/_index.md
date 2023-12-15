@@ -13,6 +13,7 @@ labels:
     - oss
 menuTitle: Build dashboards
 title: Build dashboards
+description: Build dashboards including managing settings, links, and version history
 weight: 2
 ---
 
