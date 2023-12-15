@@ -3774,6 +3774,7 @@ steps:
   image: golang:1.21.5-windowsservercore-1809
   name: wire-install
 - commands:
+  - go env
   - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
@@ -4629,6 +4630,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 04015469da0c5f55005a1b953231fbe9f2841a8d5c4e36b1e6833f255edc82bc
+hmac: 88104339bcf02fb468232899c3a362a6adda1aeacca63251d19e0efbd3a85461
 
 ...
