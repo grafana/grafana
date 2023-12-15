@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { defaults } from 'lodash';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -15,7 +15,6 @@ import { TraceQLEditor } from './TraceQLEditor';
 
 type EditorProps = {
   onClearResults: () => void;
-  isSearchQueryTheSame: boolean;
 };
 
 type Props = EditorProps & QueryEditorProps<TempoDatasource, TempoQuery, MyDataSourceOptions>;
@@ -23,18 +22,14 @@ type Props = EditorProps & QueryEditorProps<TempoDatasource, TempoQuery, MyDataS
 export function QueryEditor(props: Props) {
   const styles = useStyles2(getStyles);
   const query = defaults(props.query, defaultQuery);
-  const [showCopyFromSearchButton, setShowCopyFromSearchButton] = useState(false);
+  const [showCopyFromSearchButton, setShowCopyFromSearchButton] = useState(() => {
+    const genQuery = generateQueryFromFilters(query.filters || []);
+    return genQuery === query.query || genQuery === '{}';
+  });
 
   const onEditorChange = (value: string) => {
     props.onChange({ ...query, query: value });
   };
-
-  useEffect(() => {
-    const genQuery = generateQueryFromFilters(query.filters || []);
-    if (genQuery !== '{}' && !props.isSearchQueryTheSame) {
-      setShowCopyFromSearchButton(true);
-    }
-  }, [props.isSearchQueryTheSame, query.filters]);
 
   return (
     <>
@@ -44,7 +39,7 @@ export function QueryEditor(props: Props) {
           Documentation
         </a>
       </InlineLabel>
-      {showCopyFromSearchButton && (
+      {!showCopyFromSearchButton && (
         <InlineLabel>
           <div>
             Continue editing the query from the Search tab?
@@ -63,7 +58,7 @@ export function QueryEditor(props: Props) {
                   ...query,
                   query: generateQueryFromFilters(query.filters || []),
                 });
-                setShowCopyFromSearchButton(false);
+                setShowCopyFromSearchButton(true);
               }}
               style={{ marginLeft: '10px' }}
             >
