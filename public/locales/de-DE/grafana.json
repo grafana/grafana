@@ -25,6 +25,9 @@
       "user": "Nutzer"
     }
   },
+  "bouncing-loader": {
+    "label": ""
+  },
   "browse-dashboards": {
     "action": {
       "cancel-button": "Abbrechen",

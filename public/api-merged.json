@@ -14733,10 +14733,6 @@
         "is_paused": {
           "type": "boolean"
         },
-        "namespace_id": {
-          "type": "integer",
-          "format": "int64"
-        },
         "namespace_uid": {
           "type": "string"
         },
@@ -17363,6 +17359,9 @@
         },
         "isEnabled": {
           "type": "boolean"
+        },
+        "slug": {
+          "type": "string"
         },
         "title": {
           "type": "string"
@@ -20959,7 +20958,6 @@
       }
     },
     "integration": {
-      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",
