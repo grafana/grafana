@@ -17,7 +17,7 @@ import React, { useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { buildTooltipTheme, getPlacement } from '../../utils/tooltipUtils';
 import { IconButton } from '../IconButton/IconButton';
 
@@ -63,6 +63,7 @@ export const Toggletip = React.memo(
     show,
   }: ToggletipProps) => {
     const arrowRef = useRef(null);
+    const grafanaTheme = useTheme2();
     const styles = useStyles2(getStyles);
     const style = styles[theme];
     const [controlledVisible, setControlledVisible] = useState(show);
@@ -127,7 +128,13 @@ export const Toggletip = React.memo(
               style={floatingStyles}
               {...getFloatingProps()}
             >
-              <FloatingArrow className={style.arrow} ref={arrowRef} context={context} />
+              <FloatingArrow
+                strokeWidth={0.3}
+                stroke={grafanaTheme.colors.border.weak}
+                className={style.arrow}
+                ref={arrowRef}
+                context={context}
+              />
               {Boolean(title) && <div className={style.header}>{title}</div>}
               {closeButton && (
                 <div className={style.headerClose}>

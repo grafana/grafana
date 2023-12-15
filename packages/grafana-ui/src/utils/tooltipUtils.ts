@@ -27,7 +27,7 @@ export function buildTooltipTheme(
 ) {
   return {
     arrow: css({
-      fill: toggletipBorder,
+      fill: tooltipBg,
     }),
     container: css({
       backgroundColor: tooltipBg,
