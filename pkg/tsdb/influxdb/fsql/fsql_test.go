@@ -63,6 +63,7 @@ func (suite *FSQLTestSuite) TestIntegration_QueryData() {
 				DbName:     "influxdb",
 				Version:    "test",
 				HTTPMode:   "proxy",
+				SecureGrpc: false,
 			},
 			backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
