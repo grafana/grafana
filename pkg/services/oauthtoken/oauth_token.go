@@ -202,6 +202,13 @@ func (o *Service) InvalidateOAuthTokens(ctx context.Context, usr *login.UserAuth
 }
 
 func (o *Service) tryGetOrRefreshAccessToken(ctx context.Context, usr *login.UserAuth) (*oauth2.Token, error) {
+	// check if we recently assessed token expiry
+	key := fmt.Sprintf("token-check-%v", usr.UserId)
+	if _, ok := o.cache.Get(key); ok {
+		logger.Debug("OAuth token check is cached", "id", key)
+		return BuildOAuthTokenFromAuthInfo(usr), nil
+	}
+
 	if err := checkOAuthRefreshToken(usr); err != nil {
 		return nil, err
 	}
@@ -217,16 +224,18 @@ func (o *Service) tryGetOrRefreshAccessToken(ctx context.Context, usr *login.Use
 
 	currentOAuthInfo := connect.GetOAuthInfo()
 	if currentOAuthInfo != nil && !currentOAuthInfo.UseRefreshToken {
-		logger.Debug("oauth connector does not use refresh tokens", "provider", authProvider)
+		logger.Debug("OAuth connector does not use refresh tokens", "provider", authProvider)
 		return persistedToken, nil
 	}
 
-	needRefresh, err := o.ShouldRefreshToken(usr.UserId, persistedToken)
+	needRefresh, ttl, err := o.ShouldRefreshToken(usr.UserId, persistedToken)
 	if err != nil {
 		return nil, err
 	}
 	if !needRefresh {
 		logger.Debug("Neither access nor id token have expired yet", "id", usr.UserId)
+		// remember we checked expiration
+		o.cache.Set(key, struct{}{}, ttl)
 		return persistedToken, nil
 	}
 
@@ -308,37 +317,30 @@ func tokensEq(t1, t2 *oauth2.Token) bool {
 		t1.TokenType == t2.TokenType
 }
 
-func (o *Service) ShouldRefreshToken(usrID int64, token *oauth2.Token) (bool, error) {
-	// check if we recently assessed token expiry
-	key := fmt.Sprintf("token-check-%v", usrID)
-	if _, ok := o.cache.Get(key); ok {
-		logger.Debug("OAuth token check is cached", "id", key)
-		return false, nil
-	}
-
+// ShouldRefreshToken checks whether the access_token or the id_token needs to be refreshed and when to check again
+func (o *Service) ShouldRefreshToken(usrID int64, token *oauth2.Token) (bool, time.Duration, error) {
 	rawTokens := []string{token.AccessToken}
 	if rawIdToken := token.Extra("id_token"); rawIdToken != nil {
 		rawTokens = append(rawTokens, rawIdToken.(string))
 	}
-	expirations := make([]time.Time, 0, 2)
+	expirations := make([]time.Time, 0, len(rawTokens))
 	for _, tkn := range rawTokens {
 		if tkn == "" {
-			return false, nil
+			// Skip empty token
+			continue
 		}
 
 		exp, hasExpired, err := hasTokenExpiredWithSkew(tkn)
 		if err != nil {
-			return false, err
+			return false, 0, err
 		}
 		if hasExpired {
-			return true, nil
+			return true, 0, nil
 		}
 		expirations = append(expirations, exp)
 	}
 
-	o.cache.Set(key, struct{}{}, getOAuthTokenCacheTTL(expirations))
-
-	return false, nil
+	return false, getOAuthTokenCacheTTL(expirations), nil
 }
 
 func hasTokenExpiredWithSkew(tkn string) (time.Time, bool, error) {
