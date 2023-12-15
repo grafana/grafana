@@ -557,7 +557,7 @@ steps:
     token:
       from_secret: drone_token
 - commands:
-  - /src/grafana-build artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64 -a targz:grafana:linux/arm/v7
+  - /src/grafana-build artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64
     --go-version=1.21.5 --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER
     --grafana-dir=$$PWD > packages.txt
   depends_on:
@@ -1809,9 +1809,9 @@ steps:
   image: node:20.9.0-alpine
   name: build-frontend-packages
 - commands:
-  - /src/grafana-build artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64 -a targz:grafana:linux/arm/v7
-    --go-version=1.21.5 --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER
-    --grafana-dir=$$PWD > packages.txt
+  - /src/grafana-build artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64
+    -a targz:grafana:linux/arm/v7 --go-version=1.21.5 --yarn-cache=$$YARN_CACHE_FOLDER
+    --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD > packages.txt
   depends_on:
   - update-package-json-version
   image: grafana/grafana-build:main
@@ -4629,6 +4629,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 04015469da0c5f55005a1b953231fbe9f2841a8d5c4e36b1e6833f255edc82bc
+hmac: 132effd41b8fde5e426a2c22dfec793f16fa488ddcf07560e8a8529b19faca53
 
 ...
