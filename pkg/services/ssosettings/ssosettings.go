@@ -46,7 +46,8 @@ type Reloadable interface {
 // using the config file and/or environment variables. Used mostly for backwards compatibility.
 type FallbackStrategy interface {
 	IsMatch(provider string) bool
-	GetProviderConfig(ctx context.Context, provider string) (any, error)
+	// TODO: check if GetProviderConfig can return an error
+	GetProviderConfig(ctx context.Context, provider string) (map[string]any, error)
 }
 
 // Store is a SSO settings store
