@@ -68,7 +68,7 @@ describe('ProviderConfig', () => {
   it('should save correct data on form submit', async () => {
     const { user } = setup(<ProviderConfig config={emptySettings} provider={emptySettings.provider} />);
     await user.type(screen.getByRole('textbox', { name: /Client ID/i }), 'test-client-id');
-    await user.type(screen.getByRole('textbox', { name: /Client secret/i }), 'test-client-secret');
+    await user.type(screen.getByLabelText(/Client secret/i), 'test-client-secret');
     // Type a team name and press enter to select it
     await user.type(screen.getByRole('combobox', { name: /Team IDs/i }), '12324{enter}');
     // Add two orgs
@@ -78,7 +78,9 @@ describe('ProviderConfig', () => {
 
     await waitFor(() => {
       expect(putMock).toHaveBeenCalledWith('/api/v1/sso-settings/github', {
+        ...testSettings,
         settings: {
+          ...testSettings.settings,
           allowedOrganizations: 'test-org1,test-org2',
           clientId: 'test-client-id',
           clientSecret: 'test-client-secret',
