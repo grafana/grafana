@@ -146,7 +146,7 @@ describe('SharePublic', () => {
     expect(screen.getByRole('tablist')).not.toHaveTextContent('Public dashboard');
   });
   it('does not render share panel when public dashboards feature is disabled using feature toggle', async () => {
-    config.featureToggles.publicDashboards = true;
+    config.featureToggles.publicDashboards = false;
     await renderSharePublicDashboard(undefined, false);
 
     expect(screen.getByRole('tablist')).toHaveTextContent('Link');
