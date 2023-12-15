@@ -43,6 +43,7 @@ func ProvideAnonymousDeviceService(usageStats usagestats.Service, authBroker aut
 		localCache: localcache.New(29*time.Minute, 15*time.Minute),
 		anonStore:  anonstore.ProvideAnonDBStore(sqlStore, cfg.AnonymousDeviceLimit),
 		serverLock: serverLockService,
+		cfg:        cfg,
 	}
 
 	usageStats.RegisterMetricsFunc(a.usageStatFn)
