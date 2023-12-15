@@ -58,7 +58,13 @@ func ProvideService(cfg *setting.Cfg,
 		}
 
 		for _, ssoSetting := range allSettings {
-			conn, err := createOAuthConnector(ssoSetting.Provider, ssoSetting.Settings, cfg, ssoSettings, features, cache)
+			info, err := connectors.CreateOAuthInfoFromKeyValues(ssoSetting.Settings)
+			if err != nil {
+				ss.log.Error("Failed to create OAuthInfo for provider", "error", err, "provider", ssoSetting.Provider)
+				continue
+			}
+
+			conn, err := createOAuthConnector(ssoSetting.Provider, info, cfg, ssoSettings, features, cache)
 			if err != nil {
 				ss.log.Error("Failed to create OAuth provider", "error", err, "provider", ssoSetting.Provider)
 				continue
@@ -72,26 +78,26 @@ func ProvideService(cfg *setting.Cfg,
 
 			settingsKVs := convertIniSectionToMap(sec)
 
-			conn, err := createOAuthConnector(name, settingsKVs, cfg, ssoSettings, features, cache)
+			info, err := connectors.CreateOAuthInfoFromKeyValues(settingsKVs)
 			if err != nil {
 				ss.log.Error("Failed to create OAuthInfo for provider", "error", err, "provider", name)
 				continue
 			}
-
-			info := conn.GetOAuthInfo()
 
 			// Workaround for moving the SkipOrgRoleSync setting to the OAuthInfo struct
 			withOverrides := cfg.SectionWithEnvOverrides("auth." + name)
 			info.Enabled = withOverrides.Key("enabled").MustBool(false)
 			info.SkipOrgRoleSync = withOverrides.Key("skip_org_role_sync").MustBool(false)
 
-			if info == nil || !info.Enabled {
+			if !info.Enabled {
 				continue
 			}
 
 			if name == social.GrafanaNetProviderName {
 				name = social.GrafanaComProviderName
 			}
+
+			conn, _ := createOAuthConnector(name, info, cfg, ssoSettings, features, cache)
 
 			ss.socialMap[name] = conn
 		}
@@ -222,12 +228,7 @@ func (ss *SocialService) getUsageStats(ctx context.Context) (map[string]any, err
 	return m, nil
 }
 
-func createOAuthConnector(name string, settings map[string]any, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) (social.SocialConnector, error) {
-	info, err := connectors.CreateOAuthInfoFromKeyValues(settings)
-	if err != nil {
-		return nil, err
-	}
-
+func createOAuthConnector(name string, info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) (social.SocialConnector, error) {
 	switch name {
 	case social.AzureADProviderName:
 		return connectors.NewAzureADProvider(info, cfg, ssoSettings, features, cache), nil
