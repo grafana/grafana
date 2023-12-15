@@ -27,12 +27,6 @@ export function LokiSearchSettings({ options, onOptionsChange }: Props) {
     });
   }
 
-  // console.log('LokiSearchSettings', getDataSourceSrv());
-  // const dataSourceSrv = new DatasourceSrv();
-  // dataSourceSrv.init(config.datasources, config.defaultDatasource);
-  // setDataSourceSrv(dataSourceSrv);
-  // console.log('LokiSearchSettings', getDataSourceSrv());
-
   return (
     <div className={styles.container}>
       <InlineFieldRow className={styles.row}>

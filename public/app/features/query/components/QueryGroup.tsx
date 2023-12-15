@@ -127,7 +127,6 @@ export class QueryGroup extends PureComponent<Props, State> {
         defaultDataSource,
       });
     } catch (error) {
-      console.log(this.dataSourceSrv, options.dataSource);
       console.error('failed to load data source', error);
     }
   }

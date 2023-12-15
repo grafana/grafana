@@ -175,7 +175,6 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
       disabled = false,
       isLoading = false,
     } = this.props;
-
     const { error } = this.state;
     const options = this.getDataSourceOptions();
     const value = this.getCurrentValue();
