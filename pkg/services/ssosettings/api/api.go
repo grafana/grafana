@@ -121,6 +121,20 @@ func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Respons
 	return response.JSON(http.StatusOK, dto)
 }
 
+// swagger:route PUT /v1/sso-settings/{key} sso_settings updateProviderSettings
+//
+// # Update SSO Settings
+//
+// Inserts or updates the SSO Settings for a provider.
+//
+// You need to have a permission with action `settings:write` and scope `settings:auth.<provider>:*`.
+//
+// Responses:
+// 204: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Response {
 	key, ok := web.Params(c.Req)[":key"]
 	if !ok {
@@ -154,9 +168,9 @@ func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Resp
 //
 // # Remove SSO Settings
 //
-// # Remove an SSO Settings entry by Key
+// Removes the SSO Settings for a provider.
 //
-// You need to have a permission with action `settings:write` with scope `settings:auth.<provider>:*`.
+// You need to have a permission with action `settings:write` and scope `settings:auth.<provider>:*`.
 //
 // Responses:
 // 204: okResponse
@@ -181,9 +195,19 @@ func (api *Api) removeProviderSettings(c *contextmodel.ReqContext) response.Resp
 	return response.JSON(http.StatusNoContent, nil)
 }
 
+// swagger:parameters updateProviderSettings
+type UpdateProviderSettingsParams struct {
+	// in:path
+	// required:true
+	Provider string `json:"key"`
+	// in:body
+	// required:true
+	Body models.SSOSettings `json:"body"`
+}
+
 // swagger:parameters removeProviderSettings
 type RemoveProviderSettingsParams struct {
 	// in:path
 	// required:true
-	Key string `json:"key"`
+	Provider string `json:"key"`
 }
