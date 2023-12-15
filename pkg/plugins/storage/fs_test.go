@@ -119,7 +119,7 @@ func TestExtractFiles(t *testing.T) {
 		skipWindows(t)
 
 		pluginID := "plugin-with-absolute-symlink"
-		path, err := i.extractFiles(context.Background(), zipFile(t, filepath.Join("testdata", "/plugin-with-absolute-symlink.zip")), pluginID, SimpleDirNameGeneratorFunc)
+		path, err := i.extractFiles(context.Background(), zipFile(t, filepath.Join("testdata", "plugin-with-absolute-symlink.zip")), pluginID, SimpleDirNameGeneratorFunc)
 		require.Equal(t, filepath.Join(pluginsDir, pluginID), path)
 		require.NoError(t, err)
 
