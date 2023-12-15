@@ -422,7 +422,6 @@ export class Scene {
       },
       origin: false,
       className: this.styles.selected,
-      // rootContainer: this.transformComponentRef?.current?.instance.contentComponent, // TODO why does this not work?
     })
       .on('click', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
