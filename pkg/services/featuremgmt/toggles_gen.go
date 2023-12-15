@@ -24,7 +24,7 @@ const (
 	FlagPanelTitleSearch = "panelTitleSearch"
 
 	// FlagPublicDashboards
-	// [Deprecated] Public dashboards are now enabled by default; to disable them, use the configuration setting. This feature toggle will be removed in v11.0.0.
+	// [Deprecated] Public dashboards are now enabled by default; to disable them, use the configuration setting. This feature toggle will be removed in the next major version.
 	FlagPublicDashboards = "publicDashboards"
 
 	// FlagPublicDashboardsEmailSharing
