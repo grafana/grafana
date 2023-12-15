@@ -207,7 +207,7 @@ func TestSearchJSONForRole(t *testing.T) {
 		}
 
 		for _, test := range tests {
-			provider.roleAttributePath = test.RoleAttributePath
+			provider.info.RoleAttributePath = test.RoleAttributePath
 			t.Run(test.Name, func(t *testing.T) {
 				actualResult, err := provider.searchJSONForStringAttr(test.RoleAttributePath, test.UserInfoJSONResponse)
 				if test.ExpectedError == "" {
@@ -453,9 +453,9 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		provider.roleAttributePath = test.RoleAttributePath
-		provider.allowAssignGrafanaAdmin = test.AllowAssignGrafanaAdmin
-		provider.skipOrgRoleSync = test.SkipOrgRoleSync
+		provider.info.RoleAttributePath = test.RoleAttributePath
+		provider.info.AllowAssignGrafanaAdmin = test.AllowAssignGrafanaAdmin
+		provider.info.SkipOrgRoleSync = test.SkipOrgRoleSync
 
 		t.Run(test.Name, func(t *testing.T) {
 			body, err := json.Marshal(test.ResponseBody)
@@ -466,7 +466,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				_, err = w.Write(body)
 				require.NoError(t, err)
 			}))
-			provider.apiUrl = ts.URL
+			provider.info.ApiUrl = ts.URL
 			staticToken := oauth2.Token{
 				AccessToken:  "",
 				TokenType:    "",
@@ -566,7 +566,7 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 					_, err = w.Write(body)
 					require.NoError(t, err)
 				}))
-				provider.apiUrl = ts.URL
+				provider.info.ApiUrl = ts.URL
 				staticToken := oauth2.Token{
 					AccessToken:  "",
 					TokenType:    "",
@@ -663,7 +663,7 @@ func TestUserInfoSearchesForName(t *testing.T) {
 					_, err = w.Write(body)
 					require.NoError(t, err)
 				}))
-				provider.apiUrl = ts.URL
+				provider.info.ApiUrl = ts.URL
 				staticToken := oauth2.Token{
 					AccessToken:  "",
 					TokenType:    "",
