@@ -17,9 +17,4 @@ type DatasourceInfo struct {
 	DefaultBucket string `json:"defaultBucket"`
 	Organization  string `json:"organization"`
 	MaxSeries     int    `json:"maxSeries"`
-
-	// Flight SQL metadata
-	Metadata []map[string]string `json:"metadata"`
-	// FlightSQL grpc connection
-	SecureGrpc bool `json:"secureGrpc"`
 }
