@@ -7,11 +7,14 @@ export function getProviderUrl(provider: AuthProviderInfo) {
   return BASE_PATH + (provider.configPath || `advanced/${provider.id}`);
 }
 
-const strToValue = (str: string) => {
-  if (!str) {
+const strToValue = (val: string | string[]) => {
+  if (!val?.length) {
     return [];
   }
-  return str.split(',').map((s) => ({ label: s, value: s }));
+  if (Array.isArray(val)) {
+    return val.map((v) => ({ label: v, value: v }));
+  }
+  return val.split(',').map((s) => ({ label: s, value: s }));
 };
 
 export function dataToDTO(data?: SSOProvider): SSOProviderDTO {
@@ -25,14 +28,13 @@ export function dataToDTO(data?: SSOProvider): SSOProviderDTO {
     };
   }
   return {
-    clientId: data.settings.clientId,
-    clientSecret: data.settings.clientSecret,
+    ...data.settings,
     teamIds: strToValue(data.settings.teamIds),
     allowedOrganizations: strToValue(data.settings.allowedOrganizations),
   };
 }
 
-const valuesToArray = (values: Array<SelectableValue<string>>) => {
+const valuesToString = (values: Array<SelectableValue<string>>) => {
   return values.map(({ value }) => value).join(',');
 };
 
@@ -40,8 +42,8 @@ const valuesToArray = (values: Array<SelectableValue<string>>) => {
 export function dtoToData<T extends Partial<SSOProviderDTO>>(dto: T) {
   const settings = {
     ...dto,
-    ...(dto.teamIds ? { teamIds: valuesToArray(dto.teamIds) } : {}),
-    ...(dto.allowedOrganizations ? { allowedOrganizations: valuesToArray(dto.allowedOrganizations) } : {}),
+    ...(dto.teamIds ? { teamIds: valuesToString(dto.teamIds) } : {}),
+    ...(dto.allowedOrganizations ? { allowedOrganizations: valuesToString(dto.allowedOrganizations) } : {}),
   };
   return {
     settings,

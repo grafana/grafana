@@ -140,6 +140,7 @@ export const ProviderConfig = ({ config, provider, isLoading }: GitHubConfigProp
               {...register(name, { required: !!fieldData.validation?.required })}
               type={fieldData.type}
               id={name}
+              autoComplete={'off'}
             />
           </Field>
         );
