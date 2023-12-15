@@ -14,6 +14,7 @@ labels:
     - enterprise
     - oss
 title: JSON model
+description: View your Grafana dashboard JSON object
 weight: 700
 ---
 

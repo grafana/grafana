@@ -245,13 +245,13 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 				&social.OAuthInfo{
 					ApiUrl:            server.URL + "/user",
 					RoleAttributePath: tt.roleAttributePath,
+					SkipOrgRoleSync:   tt.settingSkipOrgRoleSync,
 					Extra: map[string]string{
 						"allowed_organizations": "",
 						"team_ids":              "",
 					},
 				}, &setting.Cfg{
-					AutoAssignOrgRole:     tt.autoAssignOrgRole,
-					GitHubSkipOrgRoleSync: tt.settingSkipOrgRoleSync,
+					AutoAssignOrgRole: tt.autoAssignOrgRole,
 				}, &ssosettingstests.MockService{},
 				featuremgmt.WithFeatures())
 

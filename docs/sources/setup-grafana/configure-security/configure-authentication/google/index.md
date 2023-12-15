@@ -187,3 +187,12 @@ allow_assign_grafana_admin = true
 skip_org_role_sync = false
 role_attribute_path = email=='admin@company.com' && 'GrafanaAdmin' || 'Viewer'
 ```
+
+#### Map one role to all users
+
+In this example, all users will be assigned `Viewer` role regardless of the user information received from the identity provider.
+
+```ini
+role_attribute_path = "'Viewer'"
+skip_org_role_sync = false
+```
