@@ -35,18 +35,7 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData {
 
   // logs
   /** @deprecated Azure Logs credentials */
-  azureLogAnalyticsSameAs?: boolean;
-  /** @deprecated Azure Logs credentials */
-  logAnalyticsTenantId?: string;
-  /** @deprecated Azure Logs credentials */
-  logAnalyticsClientId?: string;
-  /** @deprecated Azure Logs credentials */
-  logAnalyticsSubscriptionId?: string;
-  /** @deprecated Azure Logs credentials */
   logAnalyticsDefaultWorkspace?: string;
-
-  // App Insights
-  appInsightsAppId?: string;
 
   enableSecureSocksProxy?: boolean;
 }
