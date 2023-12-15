@@ -22,7 +22,6 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/services/grafana-apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
-	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -36,14 +35,12 @@ type FolderAPIBuilder struct {
 	features   *featuremgmt.FeatureManager
 	namespacer request.NamespaceMapper
 	folderSvc  folder.Service
-	searcher   search.Service
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
 	features *featuremgmt.FeatureManager,
 	apiregistration grafanaapiserver.APIRegistrar,
 	folderSvc folder.Service,
-	searcher *search.SearchService,
 ) *FolderAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
@@ -54,7 +51,6 @@ func RegisterAPIService(cfg *setting.Cfg,
 		features:   features,
 		namespacer: request.GetNamespaceMapper(cfg),
 		folderSvc:  folderSvc,
-		searcher:   searcher,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -132,7 +128,6 @@ func (b *FolderAPIBuilder) GetAPIGroupInfo(
 		service:        b.folderSvc,
 		namespacer:     b.namespacer,
 		tableConverter: store.TableConvertor,
-		searcher:       b.searcher,
 	}
 
 	storage := map[string]rest.Storage{}

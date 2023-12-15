@@ -15,10 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/search"
 )
 
 var (
@@ -34,7 +32,6 @@ var (
 
 type legacyStorage struct {
 	service        folder.Service
-	searcher       search.Service
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
 }
@@ -78,6 +75,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	}
 
 	// TODO??? can the folder service return all folders?
+	// When nested folders are not enabled, all folders are root folders
 	hits, err := s.service.GetChildren(ctx, &folder.GetChildrenQuery{
 		SignedInUser: user,
 		Limit:        limit,
@@ -89,13 +87,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 
 	list := &v0alpha1.FolderList{}
 	for _, v := range hits {
-		list.Items = append(list.Items, *convertToK8sResource(&folder.Folder{
-			OrgID:     orgId,
-			UID:       v.UID,
-			ParentUID: v.FolderUID,
-			Title:     v.Title,
-			//Description: v.Description,
-		}, s.namespacer))
+		list.Items = append(list.Items, *convertToK8sResource(v, s.namespacer))
 	}
 	if len(list.Items) == int(limit) {
 		list.Continue = "<more>" // TODO?
