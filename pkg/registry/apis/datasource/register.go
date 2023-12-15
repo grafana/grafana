@@ -29,18 +29,18 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ grafanaapiserver.APIGroupBuilder = (*DSAPIBuilder)(nil)
+var _ grafanaapiserver.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
-type DSAPIBuilder struct {
+type DataSourceAPIBuilder struct {
 	connectionResourceInfo apis.ResourceInfo
 	configResourceInfo     apis.ResourceInfo
 
-	plugin          pluginstore.Plugin
-	client          plugins.Client
-	dsService       datasources.DataSourceService
-	dataSourceCache datasources.CacheService
-	namespacer      request.NamespaceMapper
+	plugin     pluginstore.Plugin
+	client     plugins.Client
+	dsService  datasources.DataSourceService
+	dsCache    datasources.CacheService
+	namespacer request.NamespaceMapper
 }
 
 func RegisterAPIService(
@@ -50,13 +50,13 @@ func RegisterAPIService(
 	pluginClient plugins.Client,
 	pluginStore pluginstore.Store,
 	dsService datasources.DataSourceService,
-	dataSourceCache datasources.CacheService,
-) *DSAPIBuilder {
+	dsCache datasources.CacheService,
+) *DataSourceAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
 
-	var builder *DSAPIBuilder
+	var builder *DataSourceAPIBuilder
 	all := pluginStore.Plugins(context.Background(), plugins.TypeDataSource)
 	ids := []string{
 		"grafana-testdata-datasource",
@@ -70,32 +70,31 @@ func RegisterAPIService(
 			continue // skip this one
 		}
 
-		builder = NewDSAPIBuilder(ds, pluginClient, dsService, dataSourceCache, namespacer)
+		builder = NewDataSourceAPIBuilder(ds, pluginClient, dsService, dsCache, namespacer)
 		apiregistration.RegisterAPI(builder)
 	}
 	return builder // only used for wire
 }
 
-func NewDSAPIBuilder(
+func NewDataSourceAPIBuilder(
 	plugin pluginstore.Plugin,
 	client plugins.Client,
 	dsService datasources.DataSourceService,
-	dataSourceCache datasources.CacheService,
-	namespacer request.NamespaceMapper) *DSAPIBuilder {
-
+	dsCache datasources.CacheService,
+	namespacer request.NamespaceMapper) *DataSourceAPIBuilder {
 	group := getDatasourceGroupNameFromPluginID(plugin.ID)
-	return &DSAPIBuilder{
+	return &DataSourceAPIBuilder{
 		connectionResourceInfo: v0alpha1.GenericConnectionResourceInfo.WithGroupAndShortName(group, plugin.ID+"-conn"),
 		configResourceInfo:     v0alpha1.GenericConfigResourceInfo.WithGroupAndShortName(group, plugin.ID),
 		plugin:                 plugin,
 		client:                 client,
 		dsService:              dsService,
-		dataSourceCache:        dataSourceCache,
+		dsCache:                dsCache,
 		namespacer:             namespacer,
 	}
 }
 
-func (b *DSAPIBuilder) GetGroupVersion() schema.GroupVersion {
+func (b *DataSourceAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return b.connectionResourceInfo.GroupVersion()
 }
 
@@ -111,7 +110,7 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	)
 }
 
-func (b *DSAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+func (b *DataSourceAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	gv := b.connectionResourceInfo.GroupVersion()
 	addKnownTypes(scheme, gv)
 
@@ -131,7 +130,7 @@ func (b *DSAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(gv)
 }
 
-func (b *DSAPIBuilder) GetAPIGroupInfo(
+func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
@@ -212,16 +211,16 @@ func (b *DSAPIBuilder) GetAPIGroupInfo(
 	return &apiGroupInfo, nil
 }
 
-func (b *DSAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
+func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return v0alpha1.GetOpenAPIDefinitions
 }
 
 // Register additional routes with the server
-func (b *DSAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+func (b *DataSourceAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	return nil
 }
 
-func (b *DSAPIBuilder) getDataSourcePluginContext(ctx context.Context, name string) (*backend.PluginContext, error) {
+func (b *DataSourceAPIBuilder) getDataSourcePluginContext(ctx context.Context, name string) (*backend.PluginContext, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -231,7 +230,7 @@ func (b *DSAPIBuilder) getDataSourcePluginContext(ctx context.Context, name stri
 	if err != nil {
 		return nil, err
 	}
-	ds, err := b.dataSourceCache.GetDatasourceByUID(ctx, name, user, false)
+	ds, err := b.dsCache.GetDatasourceByUID(ctx, name, user, false)
 	if err != nil {
 		return nil, err
 	}
@@ -262,15 +261,15 @@ func (b *DSAPIBuilder) getDataSourcePluginContext(ctx context.Context, name stri
 	}, nil
 }
 
-func (b *DSAPIBuilder) getDataSource(ctx context.Context, name string) (*datasources.DataSource, error) {
+func (b *DataSourceAPIBuilder) getDataSource(ctx context.Context, name string) (*datasources.DataSource, error) {
 	user, err := appcontext.User(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return b.dataSourceCache.GetDatasourceByUID(ctx, name, user, false)
+	return b.dsCache.GetDatasourceByUID(ctx, name, user, false)
 }
 
-func (b *DSAPIBuilder) getDataSources(ctx context.Context) ([]*datasources.DataSource, error) {
+func (b *DataSourceAPIBuilder) getDataSources(ctx context.Context) ([]*datasources.DataSource, error) {
 	orgId, err := request.OrgIDForList(ctx)
 	if err != nil {
 		return nil, err

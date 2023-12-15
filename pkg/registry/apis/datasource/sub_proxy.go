@@ -11,7 +11,7 @@ import (
 )
 
 type subProxyREST struct {
-	builder *DSAPIBuilder
+	builder *DataSourceAPIBuilder
 }
 
 var _ = rest.Connecter(&subProxyREST{})

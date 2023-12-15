@@ -27,7 +27,7 @@ var (
 type configAccess struct {
 	resourceInfo   apis.ResourceInfo
 	tableConverter rest.TableConvertor
-	builder        *DSAPIBuilder
+	builder        *DataSourceAPIBuilder
 }
 
 func (s *configAccess) New() runtime.Object {

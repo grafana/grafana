@@ -13,7 +13,7 @@ import (
 )
 
 type subHealthREST struct {
-	builder *DSAPIBuilder
+	builder *DataSourceAPIBuilder
 }
 
 var _ = rest.Connecter(&subHealthREST{})

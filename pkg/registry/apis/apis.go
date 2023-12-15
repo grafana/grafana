@@ -20,7 +20,7 @@ type Service struct{}
 func ProvideRegistryServiceSink(
 	_ *playlist.PlaylistAPIBuilder,
 	_ *example.TestingAPIBuilder,
-	_ *datasource.DSAPIBuilder,
+	_ *datasource.DataSourceAPIBuilder,
 ) *Service {
 	return &Service{}
 }

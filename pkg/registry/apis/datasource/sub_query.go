@@ -13,7 +13,7 @@ import (
 )
 
 type subQueryREST struct {
-	builder *DSAPIBuilder
+	builder *DataSourceAPIBuilder
 }
 
 var _ = rest.Connecter(&subQueryREST{})

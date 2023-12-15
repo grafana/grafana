@@ -16,7 +16,7 @@ import (
 )
 
 type subResourceREST struct {
-	builder *DSAPIBuilder
+	builder *DataSourceAPIBuilder
 }
 
 var _ = rest.Connecter(&subResourceREST{})
