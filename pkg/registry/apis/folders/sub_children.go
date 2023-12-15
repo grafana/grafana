@@ -61,7 +61,7 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, opts runtime
 		info := &v0alpha1.FolderInfo{
 			Items: make([]v0alpha1.FolderItem, 0),
 		}
-		for _, parent := range parents {
+		for _, parent := range children {
 			info.Items = append(info.Items, v0alpha1.FolderItem{
 				Name:  parent.UID,
 				Title: parent.Title,
