@@ -56,7 +56,7 @@ jobs:
           path: ./actions
           ref: main
       # Go is required for also updating the schema versions as part of the precommit hook:
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: '1.20'
       - uses: actions/setup-node@v4

@@ -14,7 +14,7 @@ jobs:
         with:
           fetch-depth: 2
       - name: Set go version
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: '1.21.5'
       - name: Build swagger
