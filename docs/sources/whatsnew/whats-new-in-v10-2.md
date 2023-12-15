@@ -1,5 +1,5 @@
 ---
-description: Feature and improvement highlights for Grafana v10.2
+description: Learn about new and updated features in Grafana v10.2
 keywords:
   - grafana
   - new
@@ -327,7 +327,7 @@ The **Add field from calculation** transformation has been updated.
 - **Floor (floor)** - Returns the largest integer less than or equal to a given expression.
 - **Ceiling (ceil)** - Returns the smallest integer greater than or equal to a given expression.
 
-{{< figure src="/media/docs/grafana/transformations/unary-operation.png" >}}
+{{< figure src="/media/docs/grafana/transformations/unary-operation.png" alt="Unary operation options" >}}
 
 Also, **Row index** can now show the index as a percentage.
 

@@ -474,7 +474,7 @@
       "delete-title": "删除",
       "history-time-span": "历史记录时间范围",
       "history-time-span-description": "选择 Grafana 将保存您查询历史记录的时间段。将存储最多 {{MAX_HISTORY_ITEMS}} 个条目。",
-      "only-show-active-datasource": "只显示当前在 Explore 中活动状态数据源的查询",
+      "only-show-active-datasource": "只显示当前在 浏览 中活动状态数据源的查询",
       "query-history-deleted": "查询历史记录已删除",
       "retention-period": {
         "1-week": "1 周",
@@ -521,8 +521,14 @@
       "title-with-name": "表格 - {{name}}"
     },
     "toolbar": {
-      "aria-label": "Explore 工具栏",
+      "aria-label": "浏览 工具栏",
+      "copy-link": "",
+      "copy-link-abs-time": "",
+      "copy-links-absolute-category": "",
+      "copy-links-normal-category": "",
       "copy-shortened-link": "复制短链接",
+      "copy-shortened-link-abs-time": "",
+      "copy-shortened-link-menu": "",
       "refresh-picker-cancel": "取消",
       "refresh-picker-run": "运行查询",
       "split-close": "关闭",
@@ -573,7 +579,7 @@
       "exit-edit/setting-views": "退出编辑/设置视图",
       "expand-all-rows": "展开所有行",
       "go-to-dashboards": "转到仪表板",
-      "go-to-explore": "转到 Explore",
+      "go-to-explore": "转到 浏览",
       "go-to-home-dashboard": "转到主仪表板",
       "go-to-profile": "转到个人资料",
       "make-time-range-permanent": "使时间范围成为绝对/永久",
@@ -767,6 +773,10 @@
       "title": "探索"
     },
     "frontend": {
+      "subtitle": "",
+      "title": "前端"
+    },
+    "frontend-app": {
       "title": "前端"
     },
     "global-orgs": {
@@ -794,7 +804,14 @@
       "title": "事件"
     },
     "infrastructure": {
+      "subtitle": "",
+      "title": ""
+    },
+    "integrations": {
       "title": "集成"
+    },
+    "k6": {
+      "title": ""
     },
     "kubernetes": {
       "title": "Kubernetes"
@@ -914,6 +931,10 @@
     "teams": {
       "subtitle": "具有共同仪表板和权限需求的用户组",
       "title": "团队"
+    },
+    "testing-and-synthetics": {
+      "subtitle": "",
+      "title": ""
     },
     "upgrading": {
       "title": "统计信息和许可证"
@@ -1270,6 +1291,12 @@
       "select-search-input": "输入以搜索(国家、城市、缩写)"
     }
   },
+  "transformations": {
+    "empty": {
+      "add-transformation-body": "",
+      "add-transformation-header": ""
+    }
+  },
   "user-orgs": {
     "current-org-button": "当前",
     "name-column": "姓名",
@@ -1284,6 +1311,9 @@
       "name-error": "姓名是必填项",
       "name-label": "姓名",
       "username-label": "用户名"
+    },
+    "tabs": {
+      "general": "概况"
     }
   },
   "user-session": {

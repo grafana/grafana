@@ -109,7 +109,7 @@ By default, GitLab provides a refresh token.
 
 Refresh token fetching and access token expiration check is enabled by default for the GitLab provider since Grafana v10.1.0 if the `accessTokenExpirationCheck` feature toggle is enabled. If you would like to disable access token expiration check then set the `use_refresh_token` configuration value to `false`.
 
-> **Note:** The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.2.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
+> **Note:** The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.3.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
 
 ### Configure allowed groups
 
@@ -164,6 +164,15 @@ All other users are granted the `Viewer` role.
 
 ```bash
 role_attribute_path = email=='admin@company.com' && 'GrafanaAdmin' || 'Viewer'
+```
+
+#### Map one role to all users
+
+In this example, all users will be assigned `Viewer` role regardless of the user information received from the identity provider.
+
+```ini
+role_attribute_path = "'Viewer'"
+skip_org_role_sync = false
 ```
 
 ## Configure team synchronization

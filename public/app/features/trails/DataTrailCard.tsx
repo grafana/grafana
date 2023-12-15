@@ -3,7 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
-import { useStyles2, Stack } from '@grafana/ui';
+import { useStyles2, Stack, Tooltip, Button } from '@grafana/ui';
 
 import { DataTrail } from './DataTrail';
 import { LOGS_METRIC, VAR_DATASOURCE_EXPR, VAR_FILTERS } from './shared';
@@ -11,9 +11,10 @@ import { LOGS_METRIC, VAR_DATASOURCE_EXPR, VAR_FILTERS } from './shared';
 export interface Props {
   trail: DataTrail;
   onSelect: (trail: DataTrail) => void;
+  onDelete?: () => void;
 }
 
-export function DataTrailCard({ trail, onSelect }: Props) {
+export function DataTrailCard({ trail, onSelect, onDelete }: Props) {
   const styles = useStyles2(getStyles);
 
   const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, trail)!;
@@ -26,7 +27,15 @@ export function DataTrailCard({ trail, onSelect }: Props) {
 
   return (
     <button className={styles.container} onClick={() => onSelect(trail)}>
-      <div className={styles.heading}>{getMetricName(trail.state.metric)}</div>
+      <div className={styles.wrapper}>
+        <div className={styles.heading}>{getMetricName(trail.state.metric)}</div>
+        {onDelete && (
+          <Tooltip content={'Remove bookmark'}>
+            <Button size="sm" icon="trash-alt" variant="destructive" fill="text" onClick={onDelete} />
+          </Tooltip>
+        )}
+      </div>
+
       <Stack gap={1.5}>
         {dsValue && (
           <Stack direction="column" gap={0.5}>
@@ -69,6 +78,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(2),
+      width: '100%',
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
       cursor: 'pointer',
@@ -90,9 +100,17 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(0),
       display: 'flex',
       fontWeight: theme.typography.fontWeightMedium,
+      overflowX: 'hidden',
     }),
     body: css({
       padding: theme.spacing(0),
+    }),
+    wrapper: css({
+      position: 'relative',
+      display: 'flex',
+      gap: theme.spacing.x1,
+      justifyContent: 'space-between',
+      width: '100%',
     }),
   };
 }

@@ -89,7 +89,7 @@ By default, Grafana includes the `access_type=offline` parameter in the authoriz
 
 Refresh token fetching and access token expiration check is enabled by default for the Google provider since Grafana v10.1.0 if the `accessTokenExpirationCheck` feature toggle is enabled. If you would like to disable access token expiration check then set the `use_refresh_token` configuration value to `false`.
 
-> **Note:** The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.2.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
+> **Note:** The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.3.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
 
 ### Configure automatic login
 
@@ -186,4 +186,13 @@ All other users are granted the `Viewer` role.
 allow_assign_grafana_admin = true
 skip_org_role_sync = false
 role_attribute_path = email=='admin@company.com' && 'GrafanaAdmin' || 'Viewer'
+```
+
+#### Map one role to all users
+
+In this example, all users will be assigned `Viewer` role regardless of the user information received from the identity provider.
+
+```ini
+role_attribute_path = "'Viewer'"
+skip_org_role_sync = false
 ```

@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -74,7 +75,7 @@ func TestCondTransMultiCondOnSingleQuery(t *testing.T) {
 	}
 
 	migrationStore := store.NewTestMigrationStore(t, db.InitTestDB(t), &setting.Cfg{})
-	c, err := transConditions(context.Background(), &dashAlert, migrationStore)
+	c, err := transConditions(context.Background(), &logtest.Fake{}, &dashAlert, migrationStore)
 
 	require.NoError(t, err)
 	require.Equal(t, expected, c)
@@ -194,7 +195,7 @@ func TestCondTransExtended(t *testing.T) {
 	}
 
 	migrationStore := store.NewTestMigrationStore(t, db.InitTestDB(t), &setting.Cfg{})
-	c, err := transConditions(context.Background(), &dashAlert, migrationStore)
+	c, err := transConditions(context.Background(), &logtest.Fake{}, &dashAlert, migrationStore)
 
 	require.NoError(t, err)
 	require.Equal(t, expected, c)
