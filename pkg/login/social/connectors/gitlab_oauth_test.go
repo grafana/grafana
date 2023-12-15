@@ -187,7 +187,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 					require.Fail(t, "unexpected request URI: "+r.RequestURI)
 				}
 			}))
-			provider.apiUrl = ts.URL + apiURI
+			provider.info.ApiUrl = ts.URL + apiURI
 			actualResult, err := provider.UserInfo(context.Background(), ts.Client(), &oauth2.Token{})
 			if test.ExpectedError != nil {
 				require.ErrorIs(t, err, test.ExpectedError)

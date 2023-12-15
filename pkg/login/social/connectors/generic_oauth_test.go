@@ -466,7 +466,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				_, err = w.Write(body)
 				require.NoError(t, err)
 			}))
-			provider.apiUrl = ts.URL
+			provider.info.ApiUrl = ts.URL
 			staticToken := oauth2.Token{
 				AccessToken:  "",
 				TokenType:    "",
@@ -566,7 +566,7 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 					_, err = w.Write(body)
 					require.NoError(t, err)
 				}))
-				provider.apiUrl = ts.URL
+				provider.info.ApiUrl = ts.URL
 				staticToken := oauth2.Token{
 					AccessToken:  "",
 					TokenType:    "",
@@ -663,7 +663,7 @@ func TestUserInfoSearchesForName(t *testing.T) {
 					_, err = w.Write(body)
 					require.NoError(t, err)
 				}))
-				provider.apiUrl = ts.URL
+				provider.info.ApiUrl = ts.URL
 				staticToken := oauth2.Token{
 					AccessToken:  "",
 					TokenType:    "",

@@ -23,8 +23,6 @@ var _ ssosettings.Reloadable = (*SocialOkta)(nil)
 
 type SocialOkta struct {
 	*SocialBase
-	apiUrl        string
-	allowedGroups []string
 }
 
 type OktaUserInfoJson struct {
@@ -49,9 +47,7 @@ type OktaClaims struct {
 func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager) *SocialOkta {
 	config := createOAuthConfig(info, cfg, social.OktaProviderName)
 	provider := &SocialOkta{
-		SocialBase:    newSocialBase(social.OktaProviderName, config, info, cfg.AutoAssignOrgRole, *features),
-		apiUrl:        info.ApiUrl,
-		allowedGroups: info.AllowedGroups,
+		SocialBase: newSocialBase(social.OktaProviderName, config, info, cfg.AutoAssignOrgRole, *features),
 	}
 
 	if info.UseRefreshToken && features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) {
@@ -146,9 +142,9 @@ func (s *SocialOkta) GetOAuthInfo() *social.OAuthInfo {
 }
 
 func (s *SocialOkta) extractAPI(ctx context.Context, data *OktaUserInfoJson, client *http.Client) error {
-	rawUserInfoResponse, err := s.httpGet(ctx, client, s.apiUrl)
+	rawUserInfoResponse, err := s.httpGet(ctx, client, s.info.ApiUrl)
 	if err != nil {
-		s.log.Debug("Error getting user info response", "url", s.apiUrl, "error", err)
+		s.log.Debug("Error getting user info response", "url", s.info.ApiUrl, "error", err)
 		return fmt.Errorf("error getting user info response: %w", err)
 	}
 	data.rawJSON = rawUserInfoResponse.Body
@@ -174,11 +170,11 @@ func (s *SocialOkta) GetGroups(data *OktaUserInfoJson) []string {
 
 // TODO: remove this in a separate PR and use the isGroupMember from the social.go
 func (s *SocialOkta) IsGroupMember(groups []string) bool {
-	if len(s.allowedGroups) == 0 {
+	if len(s.info.AllowedGroups) == 0 {
 		return true
 	}
 
-	for _, allowedGroup := range s.allowedGroups {
+	for _, allowedGroup := range s.info.AllowedGroups {
 		for _, group := range groups {
 			if group == allowedGroup {
 				return true

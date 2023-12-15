@@ -29,7 +29,6 @@ var _ ssosettings.Reloadable = (*SocialGitlab)(nil)
 
 type SocialGitlab struct {
 	*SocialBase
-	apiUrl string
 }
 
 type apiData struct {
@@ -57,7 +56,6 @@ func NewGitLabProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings sso
 	config := createOAuthConfig(info, cfg, social.GitlabProviderName)
 	provider := &SocialGitlab{
 		SocialBase: newSocialBase(social.GitlabProviderName, config, info, cfg.AutoAssignOrgRole, *features),
-		apiUrl:     info.ApiUrl,
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
@@ -94,7 +92,7 @@ func (s *SocialGitlab) getGroupsPage(ctx context.Context, client *http.Client, n
 		FullPath string `json:"full_path"`
 	}
 
-	groupURL, err := url.JoinPath(s.apiUrl, "/groups")
+	groupURL, err := url.JoinPath(s.info.ApiUrl, "/groups")
 	if err != nil {
 		s.log.Error("Error joining GitLab API URL", "err", err)
 		return nil, nil
@@ -196,7 +194,7 @@ func (s *SocialGitlab) GetOAuthInfo() *social.OAuthInfo {
 
 func (s *SocialGitlab) extractFromAPI(ctx context.Context, client *http.Client, token *oauth2.Token) (*userData, error) {
 	apiResp := &apiData{}
-	response, err := s.httpGet(ctx, client, s.apiUrl+"/user")
+	response, err := s.httpGet(ctx, client, s.info.ApiUrl+"/user")
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user info: %w", err)
 	}
