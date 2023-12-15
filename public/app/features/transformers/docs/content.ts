@@ -1385,11 +1385,11 @@ export const transformationDocsContent: TransformationDocsContentType = {
   There are two different models:
 
   - **Linear regression** - Fits a linear function to the data.
-  ${buildImageContent(
-    '/static/img/docs/transformations/linear-regression.png',
-    imageRenderType,
-    'A time series visualization with a straight line representing the linear function'
-  )}
+${buildImageContent(
+  '/static/img/docs/transformations/linear-regression.png',
+  imageRenderType,
+  'A time series visualization with a straight line representing the linear function'
+)}
   - **Polynomial regression** - Fits a polynomial function to the data.
   ${buildImageContent(
     '/static/img/docs/transformations/polynomial-regression.png',
@@ -1397,7 +1397,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
     'A time series visualization with a curved line representing the polynomial function'
   )}
 
-  > **Note:** This transformation is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the \`regressionTransformation\` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
+  > **Note:** This transformation is currently in private preview. Grafana Labs offers support on a best-effort basis, and breaking changes might occur prior to the feature being made generally available.
   `;
     },
   },

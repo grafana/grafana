@@ -1256,7 +1256,7 @@ var (
 		{
 			Name:         "regressionTransformation",
 			Description:  "Enables regression analysis transformation",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: true,
 			Owner:        grafanaBiSquad,
 			Created:      time.Date(2023, time.November, 24, 12, 0, 0, 0, time.UTC),
