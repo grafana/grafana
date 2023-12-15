@@ -11,7 +11,7 @@ export function trackDashboardLoaded(dashboard: DashboardModel, versionBeforeMig
       return r;
     }, {});
 
-  // Track number and type of panels in use
+  // Count the different types of panels
   const panels = dashboard.panels
     .map((p) => p.type)
     .reduce((r: Record<string, number>, p) => {
