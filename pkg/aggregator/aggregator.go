@@ -57,6 +57,9 @@ import (
 	"k8s.io/kube-aggregator/pkg/controllers/autoregister"
 	openapicommon "k8s.io/kube-openapi/pkg/common"
 	netutils "k8s.io/utils/net"
+
+	serviceclient "github.com/grafana/grafana/pkg/generated/clientset/versioned"
+	serviceinformers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 )
 
 // AggregatorServerOptions contains the state for the aggregator apiserver
@@ -193,7 +196,16 @@ func CreateAggregatorConfig(
 	} */
 
 	versionedInformers := informers.NewSharedInformerFactory(fake.NewSimpleClientset(), 10*time.Minute)
-	serviceResolver := aggregatorapiserver.NewClusterIPServiceResolver(versionedInformers.Core().V1().Services().Lister())
+
+	serviceClient, err := serviceclient.NewForConfig(genericConfig.LoopbackClientConfig)
+	if err != nil {
+		return nil, err
+	}
+	informerFactory := serviceinformers.NewSharedInformerFactory(
+		serviceClient,
+		5*time.Minute, // this is effectively used as a refresh interval right now.  Might want to do something nicer later on.
+	)
+	serviceResolver := NewExternalNameResolver(informerFactory.Service().V0alpha1().ExternalNames().Lister())
 
 	aggregatorConfig := &aggregatorapiserver.Config{
 		GenericConfig: &genericapiserver.RecommendedConfig{
