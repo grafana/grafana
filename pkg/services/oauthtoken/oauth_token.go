@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/oauth2"
 	"golang.org/x/sync/singleflight"
@@ -80,7 +81,7 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr identity.Request
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			// Not necessarily an error.  User may be logged in another way.
-			logger.Debug("No oauth token for user found", "userId", userID, "username", usr.GetLogin())
+			logger.Debug("No oauth token found for user", "userId", userID, "username", usr.GetLogin())
 		} else {
 			logger.Error("Failed to get oauth token for user", "userId", userID, "username", usr.GetLogin(), "error", err)
 		}
@@ -90,7 +91,7 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr identity.Request
 	token, err := o.tryGetOrRefreshAccessToken(ctx, authInfo)
 	if err != nil {
 		if errors.Is(err, ErrNoRefreshTokenFound) {
-			return buildOAuthTokenFromAuthInfo(authInfo)
+			return BuildOAuthTokenFromAuthInfo(authInfo)
 		}
 
 		return nil
@@ -150,7 +151,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr *login.UserAuth) erro
 	return err
 }
 
-func buildOAuthTokenFromAuthInfo(authInfo *login.UserAuth) *oauth2.Token {
+func BuildOAuthTokenFromAuthInfo(authInfo *login.UserAuth) *oauth2.Token {
 	token := &oauth2.Token{
 		AccessToken:  authInfo.OAuthAccessToken,
 		Expiry:       authInfo.OAuthExpiry,
@@ -214,7 +215,15 @@ func (o *Service) tryGetOrRefreshAccessToken(ctx context.Context, usr *login.Use
 	}
 	ctx = context.WithValue(ctx, oauth2.HTTPClient, client)
 
-	persistedToken := buildOAuthTokenFromAuthInfo(usr)
+	persistedToken := BuildOAuthTokenFromAuthInfo(usr)
+
+	needRefresh, err := ShouldRefreshToken(logger, persistedToken)
+	if err != nil || !needRefresh {
+		return persistedToken, err
+	}
+
+	// Force token refresh
+	persistedToken.AccessToken = ""
 
 	start := time.Now()
 	// TokenSource handles refreshing the token if it has expired
@@ -282,4 +291,51 @@ func tokensEq(t1, t2 *oauth2.Token) bool {
 		t1.RefreshToken == t2.RefreshToken &&
 		t1.Expiry.Equal(t2.Expiry) &&
 		t1.TokenType == t2.TokenType
+}
+
+func ShouldRefreshToken(logger log.Logger, token *oauth2.Token) (bool, error) {
+	// TODO cache the check ?
+	for _, tkn := range []string{token.AccessToken, token.Extra("id_token").(string)} {
+		if tkn == "" {
+			return false, nil
+		}
+
+		_, hasExpired, err := hasTokenExpiredWithSkew(tkn)
+		if err != nil {
+			return false, err
+		}
+		if hasExpired {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func hasTokenExpiredWithSkew(tkn string) (time.Time, bool, error) {
+	expiry, err := getTokenExpiry(tkn)
+	if err != nil {
+		return time.Time{}, false, err
+	}
+
+	adjustedExpiry := expiry.Round(0).Add(-ExpiryDelta)
+	hasTokenExpired := adjustedExpiry.Before(time.Now())
+	return adjustedExpiry, hasTokenExpired, nil
+}
+
+// getIDTokenExpiry extracts the expiry time from the ID token
+func getTokenExpiry(tkn string) (time.Time, error) {
+	parsedToken, err := jwt.ParseSigned(tkn)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("error parsing id token: %w", err)
+	}
+
+	type Claims struct {
+		Exp int64 `json:"exp"`
+	}
+	var claims Claims
+	if err := parsedToken.UnsafeClaimsWithoutVerification(&claims); err != nil {
+		return time.Time{}, fmt.Errorf("error getting claims from id token: %w", err)
+	}
+
+	return time.Unix(claims.Exp, 0), nil
 }

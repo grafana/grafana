@@ -102,7 +102,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 	}
 	// token has not expired, so we don't have to refresh it
 	if !hasAccessTokenExpired && !hasIdTokenExpired {
-		s.log.FromContext(ctx).Debug("Access and id token has not expired yet", "id", identity.ID)
+		s.log.FromContext(ctx).Debug("Neither access nor id token have expired yet", "id", identity.ID)
 		// cache the token check, so we don't perform it on every request
 		s.cache.Set(identity.ID, struct{}{}, getOAuthTokenCacheTTL(accessTokenExpires, idTokenExpires))
 		return nil
