@@ -195,6 +195,9 @@ func CreateAggregatorConfig(
 	versionedInformers := informers.NewSharedInformerFactory(fake.NewSimpleClientset(), 10*time.Minute)
 	serviceResolver := aggregatorapiserver.NewClusterIPServiceResolver(versionedInformers.Core().V1().Services().Lister())
 
+	//genericConfig.DisabledPostStartHooks = genericConfig.DisabledPostStartHooks.Insert("apiservice-status-available-controller")
+	genericConfig.DisabledPostStartHooks = genericConfig.DisabledPostStartHooks.Insert("start-kube-aggregator-informers")
+
 	aggregatorConfig := &aggregatorapiserver.Config{
 		GenericConfig: &genericapiserver.RecommendedConfig{
 			Config:                genericConfig,

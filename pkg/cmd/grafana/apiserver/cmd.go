@@ -4,16 +4,18 @@ import (
 	"os"
 	"path"
 
-	"github.com/grafana/grafana/pkg/aggregator"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
+
+	"github.com/grafana/grafana/pkg/aggregator"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/runtime"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/component-base/cli"
+	"k8s.io/component-base/logs"
 	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
 	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
 	aggregatoropenapi "k8s.io/kube-aggregator/pkg/generated/openapi"
@@ -110,6 +112,11 @@ func RunAggregatorCLI() int {
 		defaultAggregatorEtcdPathPrefix,
 		aggregatorscheme.Codecs.LegacyCodec(), // codec is passed to etcd and hence not used
 	)
+
+	serverOptions.RecommendedOptions.SecureServing.BindPort = 8443
+	if _, err := logs.GlogSetter("10"); err != nil {
+		return -1
+	}
 
 	sharedConfig, err := serverOptions.Config(aggregatorscheme.Codecs)
 	if err != nil {
