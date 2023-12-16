@@ -251,10 +251,22 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
 
       // this handles pinning
       u.over.addEventListener('click', (e) => {
-        // only pinnable tooltip is visible *and* is within proximity to series/point
-        if (_isHovering && closestSeriesIdx != null && !_isPinned && e.target === u.over) {
-          _isPinned = true;
-          scheduleRender(true);
+        if (e.target === u.over) {
+          if (e.ctrlKey || e.metaKey) {
+            let xVal = u.posToVal(u.cursor.left!, 'x');
+
+            selectedRange = {
+              from: xVal,
+              to: xVal,
+            };
+
+            scheduleRender(true);
+          }
+          // only pinnable tooltip is visible *and* is within proximity to series/point
+          else if (_isHovering && closestSeriesIdx != null && !_isPinned) {
+            _isPinned = true;
+            scheduleRender(true);
+          }
         }
       });
     });
