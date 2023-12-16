@@ -29,7 +29,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/registry/apis/service"
+	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	filestorage "github.com/grafana/grafana/pkg/services/grafana-apiserver/storage/file"
+	aggregatoropenapi "k8s.io/kube-aggregator/pkg/generated/openapi"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -55,6 +58,7 @@ import (
 	apiregistrationclient "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/typed/apiregistration/v1"
 	apiregistrationInformers "k8s.io/kube-aggregator/pkg/client/informers/externalversions/apiregistration/v1"
 	"k8s.io/kube-aggregator/pkg/controllers/autoregister"
+	common "k8s.io/kube-openapi/pkg/common"
 	openapicommon "k8s.io/kube-openapi/pkg/common"
 	netutils "k8s.io/utils/net"
 
@@ -64,6 +68,7 @@ import (
 
 // AggregatorServerOptions contains the state for the aggregator apiserver
 type AggregatorServerOptions struct {
+	Builders           []grafanaAPIServer.APIGroupBuilder
 	RecommendedOptions *options.RecommendedOptions
 	AlternateDNS       []string
 
@@ -76,6 +81,20 @@ func NewAggregatorServerOptions(out, errOut io.Writer) *AggregatorServerOptions 
 		StdOut: out,
 		StdErr: errOut,
 	}
+}
+
+func (o *AggregatorServerOptions) LoadAPIGroupBuilders() error {
+	o.Builders = []grafanaAPIServer.APIGroupBuilder{
+		service.NewServiceAPIBuilder(),
+	}
+
+	// Install schemas
+	for _, b := range o.Builders {
+		if err := b.InstallSchema(aggregatorscheme.Scheme); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (o *AggregatorServerOptions) Config(codecs serializer.CodecFactory) (*genericapiserver.RecommendedConfig, error) {
@@ -146,6 +165,18 @@ func (o *AggregatorServerOptions) ModifiedApplyTo(config *genericapiserver.Recom
 		return err
 	}
 	return nil
+}
+
+func (o *AggregatorServerOptions) GetMergedOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+	// Add OpenAPI specs for each group+version
+	prerequisiteAPIs := grafanaAPIServer.GetOpenAPIDefinitions(o.Builders)(ref)
+	aggregatorAPIs := aggregatoropenapi.GetOpenAPIDefinitions(ref)
+
+	for k, v := range prerequisiteAPIs {
+		aggregatorAPIs[k] = v
+	}
+
+	return aggregatorAPIs
 }
 
 func CreateAggregatorConfig(
@@ -229,7 +260,7 @@ func CreateAggregatorConfig(
 	return aggregatorConfig, nil
 }
 
-func CreateAggregatorServer(aggregatorConfig aggregatorapiserver.Config, delegateAPIServer genericapiserver.DelegationTarget) (*aggregatorapiserver.APIAggregator, error) {
+func CreateAggregatorServer(serverOptions AggregatorServerOptions, aggregatorConfig aggregatorapiserver.Config, delegateAPIServer genericapiserver.DelegationTarget) (*aggregatorapiserver.APIAggregator, error) {
 	aggregatorServer, err := aggregatorConfig.Complete().NewWithDelegate(delegateAPIServer)
 	if err != nil {
 		return nil, err
@@ -269,6 +300,21 @@ func CreateAggregatorServer(aggregatorConfig aggregatorapiserver.Config, delegat
 	)
 	if err != nil {
 		return nil, err
+	}
+
+	// Install the API Group+version
+	for _, b := range serverOptions.Builders {
+		g, err := b.GetAPIGroupInfo(aggregatorscheme.Scheme, aggregatorscheme.Codecs, aggregatorConfig.GenericConfig.RESTOptionsGetter)
+		if err != nil {
+			return nil, err
+		}
+		if g == nil || len(g.PrioritizedVersions) < 1 {
+			continue
+		}
+		err = aggregatorServer.GenericAPIServer.InstallAPIGroup(g)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return aggregatorServer, nil

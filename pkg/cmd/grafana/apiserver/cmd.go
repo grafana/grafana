@@ -4,11 +4,10 @@ import (
 	"os"
 	"path"
 
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/klog/v2"
-
 	"github.com/grafana/grafana/pkg/aggregator"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/klog/v2"
 
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -18,7 +17,6 @@ import (
 	"k8s.io/component-base/logs"
 	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
 	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
-	aggregatoropenapi "k8s.io/kube-aggregator/pkg/generated/openapi"
 )
 
 const (
@@ -76,7 +74,7 @@ func RunCLI() int {
 	return cli.Run(cmd)
 }
 
-func newCommandStartAggregator(aggregator *aggregatorapiserver.APIAggregator, stopCh <-chan struct{}) *cobra.Command {
+func newCommandStartAggregator(apiAggregator *aggregatorapiserver.APIAggregator, stopCh <-chan struct{}) *cobra.Command {
 	devAcknowledgementNotice := "The apiserver command is in heavy development.  The entire setup is subject to change without notice"
 
 	cmd := &cobra.Command{
@@ -87,7 +85,7 @@ func newCommandStartAggregator(aggregator *aggregatorapiserver.APIAggregator, st
 		Example: "grafana aggregator",
 		RunE: func(c *cobra.Command, args []string) error {
 			// Finish the config (a noop for now)
-			prepared, err := aggregator.PrepareRun()
+			prepared, err := apiAggregator.PrepareRun()
 			if err != nil {
 				return err
 			}
@@ -103,9 +101,6 @@ func newCommandStartAggregator(aggregator *aggregatorapiserver.APIAggregator, st
 }
 
 func RunAggregatorCLI() int {
-	// time.Sleep(10 * time.Second)
-	delegationTarget := genericapiserver.NewEmptyDelegate()
-
 	serverOptions := aggregator.NewAggregatorServerOptions(os.Stdout, os.Stderr)
 	// Register standard k8s flags with the command line
 	serverOptions.RecommendedOptions = options.NewRecommendedOptions(
@@ -113,7 +108,14 @@ func RunAggregatorCLI() int {
 		aggregatorscheme.Codecs.LegacyCodec(), // codec is passed to etcd and hence not used
 	)
 
+	if err := serverOptions.LoadAPIGroupBuilders(); err != nil {
+		klog.Errorf("Error loading prerequisite APIs: %s", err)
+		return -1
+	}
+
 	serverOptions.RecommendedOptions.SecureServing.BindPort = 8443
+	delegationTarget := genericapiserver.NewEmptyDelegate()
+
 	if _, err := logs.GlogSetter("10"); err != nil {
 		return -1
 	}
@@ -127,16 +129,33 @@ func RunAggregatorCLI() int {
 	config, err := aggregator.CreateAggregatorConfig(sharedConfig.Config,
 		*serverOptions.RecommendedOptions,
 		[]*runtime.Scheme{aggregatorscheme.Scheme},
-		aggregatoropenapi.GetOpenAPIDefinitions)
+		serverOptions.GetMergedOpenAPIDefinitions)
 	if err != nil {
 		klog.Errorf("Error creating aggregator config: %s", err)
 		return -1
 	}
 
-	aggregator, err := aggregator.CreateAggregatorServer(*config, delegationTarget)
+	aggregator, err := aggregator.CreateAggregatorServer(*serverOptions, *config, delegationTarget)
 	if err != nil {
 		klog.Errorf("Error creating aggregator server: %s", err)
 		return -1
+	}
+
+	// Install the API Group+version
+	for _, b := range serverOptions.Builders {
+		g, err := b.GetAPIGroupInfo(Scheme, Codecs, config.GenericConfig.RESTOptionsGetter)
+		if err != nil {
+			klog.Errorf("Error creating aggregator server: %s", err)
+			return -1
+		}
+		if g == nil || len(g.PrioritizedVersions) < 1 {
+			continue
+		}
+		err = aggregator.GenericAPIServer.InstallAPIGroup(g)
+		if err != nil {
+			klog.Errorf("Error creating aggregator server: %s", err)
+			return -1
+		}
 	}
 
 	stopCh := genericapiserver.SetupSignalHandler()
