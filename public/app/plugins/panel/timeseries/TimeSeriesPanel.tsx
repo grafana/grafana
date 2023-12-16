@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { PanelProps, DataFrameType } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
@@ -12,13 +12,19 @@ import { TimeSeriesTooltip } from './TimeSeriesTooltip';
 import { Options } from './panelcfg.gen';
 import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
+import { AnnotationsPlugin2 } from './plugins/AnnotationsPlugin2';
 import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
 import { getTimezones, prepareGraphableFields, regenerateLinksSupplier } from './utils';
-import { AnnotationsPlugin2 } from './plugins/AnnotationsPlugin2';
+
+// (copied from TooltipPlugin2)
+interface TimeRange2 {
+  from: number;
+  to: number;
+}
 
 interface TimeSeriesPanelProps extends PanelProps<Options> {}
 
@@ -50,6 +56,10 @@ export const TimeSeriesPanel = ({
     return undefined;
   }, [frames, id]);
 
+  const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
+  // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
+  const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
+
   if (!frames || suggestions) {
     return (
       <PanelDataErrorView
@@ -64,15 +74,13 @@ export const TimeSeriesPanel = ({
     );
   }
 
-  const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
-
   // which annotation are we editing?
   // are we adding a new annotation? is annotating?
   // console.log(data.annotations);
 
   // annotations plugin includes the editor and the renderer
   // its annotation state is managed here for now
-    // tooltipplugin2 receives render with annotate range, callback should setstate here that gets passed to annotationsplugin as newAnnotaton or editAnnotation
+  // tooltipplugin2 receives render with annotate range, callback should setstate here that gets passed to annotationsplugin as newAnnotaton or editAnnotation
 
   return (
     <TimeSeries
@@ -109,7 +117,13 @@ export const TimeSeriesPanel = ({
                     }
                     queryZoom={onChangeTimeRange}
                     clientZoom={true}
-                    render={(u, dataIdxs, seriesIdx, isPinned = false) => {
+                    render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange) => {
+                      if (timeRange != null) {
+                        setNewAnnotationRange(timeRange);
+                        dismiss();
+                        return;
+                      }
+
                       return (
                         <TimeSeriesTooltip
                           frames={frames}
@@ -142,7 +156,12 @@ export const TimeSeriesPanel = ({
             {/* Renders annotation markers*/}
             {data.annotations && (
               // <AnnotationsPlugin annotations={data.annotations} config={uplotConfig} timeZone={timeZone} />
-              <AnnotationsPlugin2 annotations={data.annotations} config={uplotConfig} timeZone={timeZone} />
+              <AnnotationsPlugin2
+                annotations={data.annotations}
+                config={uplotConfig}
+                timeZone={timeZone}
+                newRange={newAnnotationRange}
+              />
             )}
             {/*Enables annotations creation*/}
             {!config.featureToggles.newVizTooltips ? (

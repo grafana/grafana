@@ -36,7 +36,9 @@ interface TooltipPlugin2Props {
     dataIdxs: Array<number | null>,
     seriesIdx: number | null,
     isPinned: boolean,
-    dismiss: () => void
+    dismiss: () => void,
+    // selected time range (for annotation triggering)
+    timeRange: TimeRange2 | null
   ) => React.ReactNode;
 }
 
@@ -53,6 +55,11 @@ interface TooltipContainerSize {
   observer: ResizeObserver;
   width: number;
   height: number;
+}
+
+interface TimeRange2 {
+  from: number;
+  to: number;
 }
 
 function mergeState(prevState: TooltipContainerState, nextState: Partial<TooltipContainerState>) {
@@ -134,6 +141,7 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
       winHeight = htmlEl.clientHeight - 5;
     });
 
+    let selectedRange: TimeRange2 | null = null;
     let closestSeriesIdx: number | null = null;
 
     let pendingRender = false;
@@ -193,12 +201,14 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
         isPinned: _isPinned,
         isHovering: _isHovering,
         contents: _isHovering
-          ? renderRef.current(_plot!, _plot!.cursor.idxs!, closestSeriesIdx, _isPinned, dismiss)
+          ? renderRef.current(_plot!, _plot!.cursor.idxs!, closestSeriesIdx, _isPinned, dismiss, selectedRange)
           : null,
         dismiss,
       };
 
       setState(state);
+
+      selectedRange = null;
     };
 
     const dismiss = () => {
@@ -277,6 +287,13 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
               yZoomed = false;
             }
           }
+        } else {
+          selectedRange = {
+            from: u.posToVal(u.select.left!, 'x'),
+            to: u.posToVal(u.select.left! + u.select.width, 'x'),
+          };
+
+          scheduleRender(true);
         }
       }
 

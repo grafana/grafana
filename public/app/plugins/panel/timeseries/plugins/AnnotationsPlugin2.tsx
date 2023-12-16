@@ -4,14 +4,21 @@ import { createPortal } from 'react-dom';
 import useDebounce from 'react-use/lib/useDebounce';
 import uPlot from 'uplot';
 
-import { DataFrame, GrafanaTheme2, colorManipulator } from '@grafana/data';
+import { DataFrame, GrafanaTheme2, TimeRange, colorManipulator } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
 import { UPlotConfigBuilder, useStyles2, useTheme2 } from '@grafana/ui';
+
+// (copied from TooltipPlugin2)
+interface TimeRange2 {
+  from: number;
+  to: number;
+}
 
 interface AnnotationsPluginProps {
   config: UPlotConfigBuilder;
   annotations: DataFrame[];
   timeZone: TimeZone;
+  newRange: TimeRange2 | null;
 }
 
 // TODO: batch by color, use Path2D objects
@@ -36,15 +43,91 @@ const renderLine = (ctx: CanvasRenderingContext2D, y0: number, y1: number, x: nu
 interface AnnoBoxProps {
   annoVals: Record<string, any[]>;
   annoIdx: number;
+  style: React.CSSProperties | null;
+  className: string;
+  isWip?: boolean;
 }
 
-// infotip & editor container
-export const AnnoBox = ({ annoVals, annoIdx }: AnnoBoxProps) => {
+function getValsWithNew(frame: DataFrame, newRange: TimeRange2 | null) {
+  let vals: Record<string, any[]> = {};
+  frame.fields.forEach((f) => {
+    vals[f.name] = newRange == null ? f.values : f.values.slice();
+  });
+
+  // append new WIP anno to render
+  if (newRange != null) {
+    let isRegion = newRange.to > newRange.from;
+
+    // ...append new Marker, with newRange and isWip: true
+    for (let name in vals) {
+      let d = vals[name];
+
+      if (name === 'time') {
+        d.push(newRange.from);
+      } else if (name === 'timeEnd') {
+        d.push(isRegion ? newRange.to : null);
+      } else if (name === 'isRegion') {
+        d.push(isRegion);
+      } else if (name === 'color') {
+        d.push('rgba(0, 211, 255, 1)');
+      } else {
+        d.push(null);
+      }
+    }
+  }
+
+  return vals;
+}
+
+export const Marker = ({ annoVals, annoIdx, className, style, isWip }: AnnoBoxProps) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+  const domRef = React.createRef<HTMLDivElement>();
+
+  // similar to TooltipPlugin2, when editing annotation (pinned), it should boost z-index
+  const setIsEditingWrap = (isEditing: boolean) => {
+    domRef.current!.closest<HTMLDivElement>('.react-grid-item')?.classList.toggle('context-menu-open', isEditing);
+    setIsEditing(isEditing);
+  };
+
+  // doesnt work to auto-activate edit mode? :(
+  useLayoutEffect(
+    () => {
+      isWip && setIsEditingWrap(true);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
   const styles = useStyles2(getStyles);
-  return <div className={styles.annoInfo}>{annoVals.text[annoIdx]}</div>;
+
+  const text = annoVals.text[annoIdx];
+
+  return (
+    <div
+      ref={domRef}
+      className={className}
+      style={style!}
+      onMouseEnter={() => !isEditing && setIsHovered(true)}
+      onMouseLeave={() => !isEditing && setIsHovered(false)}
+    >
+      {isHovered && (
+        <div className={styles.annoInfo}>
+          {isEditing ? <textarea value={text} /> : text}
+          <br />
+          {isEditing ? (
+            <button onClick={() => setIsEditingWrap(false)}>Save</button>
+          ) : (
+            <button onClick={() => setIsEditingWrap(true)}>Edit</button>
+          )}
+        </div>
+      )}
+    </div>
+  );
 };
 
-export const AnnotationsPlugin2 = ({ annotations, timeZone, config }: AnnotationsPluginProps) => {
+export const AnnotationsPlugin2 = ({ annotations, timeZone, config, newRange }: AnnotationsPluginProps) => {
   const [plot, setPlot] = useState<uPlot>();
 
   const styles = useStyles2(getStyles);
@@ -52,12 +135,10 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config }: Annotation
 
   const annoRef = useRef(annotations);
   annoRef.current = annotations;
+  const newRangeRef = useRef(newRange);
+  newRangeRef.current = newRange;
 
   const xAxisRef = useRef<HTMLDivElement>();
-
-  const isAnnotating = false; // comes from props?
-
-  const [hoveredIdx, setHoveredIdx] = useState(-1);
 
   useLayoutEffect(() => {
     config.addHook('ready', (u) => {
@@ -84,10 +165,7 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config }: Annotation
       ctx.setLineDash([5, 5]);
 
       annos.forEach((frame) => {
-        let vals: Record<string, any[]> = {};
-        frame.fields.forEach((f) => {
-          vals[f.name] = f.values;
-        });
+        let vals = getValsWithNew(frame, newRangeRef.current);
 
         for (let i = 0; i < frame.length; i++) {
           let color = getColorByName(vals.color[i]);
@@ -128,18 +206,15 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config }: Annotation
 
   if (plot) {
     let markers = annoRef.current.flatMap((frame) => {
-      let vals: Record<string, any[]> = {};
-      frame.fields.forEach((f) => {
-        vals[f.name] = f.values;
-      });
+      let vals = getValsWithNew(frame, newRangeRef.current);
 
       let markers: React.ReactNode[] = [];
 
-      for (let i = 0; i < frame.length; i++) {
+      for (let i = 0; i < vals.time.length; i++) {
         let color = getColorByName(vals.color[i]);
 
         let left = plot.valToPos(vals.time[i], 'x');
-        let style: React.CSSProperties;
+        let style: React.CSSProperties | null = null;
         let className = '';
         let isVisible = true;
 
@@ -165,18 +240,7 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config }: Annotation
         }
 
         if (isVisible) {
-          let marker = (
-            <div
-              className={className}
-              style={style!}
-              onMouseEnter={() => setHoveredIdx(i)}
-              onMouseLeave={() => setHoveredIdx(-1)}
-            >
-              {i === hoveredIdx && <AnnoBox annoIdx={i} annoVals={vals} />}
-            </div>
-          );
-
-          markers.push(marker);
+          markers.push(<Marker annoIdx={i} annoVals={vals} className={className} style={style} />);
         }
       }
 
