@@ -41,9 +41,9 @@ export const StateTimelineTooltip2 = ({
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
 
-  const datapointIdx = dataIdxs.find((idx) => idx !== undefined);
+  const datapointIdx = seriesIdx != null ? dataIdxs[seriesIdx] : dataIdxs.find((idx) => idx != null);
 
-  if (!data || datapointIdx == null || seriesIdx == null) {
+  if (datapointIdx == null || seriesIdx == null) {
     return null;
   }
 
