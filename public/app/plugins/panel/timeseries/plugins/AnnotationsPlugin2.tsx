@@ -104,6 +104,12 @@ export const Marker = ({ annoVals, annoIdx, className, style, isWip }: AnnoBoxPr
 
   const text = annoVals.text[annoIdx];
 
+  let time = new Date(annoVals.time[annoIdx]).toISOString();
+
+  if (annoVals.isRegion[annoIdx]) {
+    time += ' - ' + new Date(annoVals.timeEnd[annoIdx]).toISOString();
+  }
+
   return (
     <div
       ref={domRef}
@@ -114,6 +120,8 @@ export const Marker = ({ annoVals, annoIdx, className, style, isWip }: AnnoBoxPr
     >
       {isHovered && (
         <div className={styles.annoInfo}>
+          {time}
+          <br />
           {isEditing ? <textarea value={text} /> : text}
           <br />
           {isEditing ? (
@@ -279,8 +287,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'absolute',
     transform: 'translateX(-50%)',
     left: '50%',
-    width: '300px',
-    height: '100px',
+    minWidth: '300px',
+    minHeight: '100px',
     top: '5px',
   }),
 });
