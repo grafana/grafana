@@ -175,7 +175,7 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config, newRange }: 
       annos.forEach((frame) => {
         let vals = getValsWithNew(frame, newRangeRef.current);
 
-        for (let i = 0; i < frame.length; i++) {
+        for (let i = 0; i < vals.time.length; i++) {
           let color = getColorByName(vals.color[i]);
 
           let x0 = u.valToPos(vals.time[i], 'x', true);
