@@ -444,9 +444,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     focus: {
       prox: 30,
       dist: (u, seriesIdx, dataIdx, valPos, curPos) => {
-        console.log('focus.dist');
-        valPos = yMids[seriesIdx] - 1;
-
+        valPos = yMids[seriesIdx - 1] / uPlot.pxRatio;
         return valPos - curPos;
       },
     },
