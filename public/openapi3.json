@@ -5625,10 +5625,6 @@
           "is_paused": {
             "type": "boolean"
           },
-          "namespace_id": {
-            "format": "int64",
-            "type": "integer"
-          },
           "namespace_uid": {
             "type": "string"
           },
@@ -11853,7 +11849,6 @@
         "type": "array"
       },
       "integration": {
-        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
