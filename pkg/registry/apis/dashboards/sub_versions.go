@@ -12,7 +12,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
-	dashboards "github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 )
@@ -24,7 +23,7 @@ type VersionsREST struct {
 var _ = rest.Connecter(&VersionsREST{})
 
 func (r *VersionsREST) New() runtime.Object {
-	return &dashboards.DashboardVersionsInfo{}
+	return &v0alpha1.DashboardVersionsInfo{}
 }
 
 func (r *VersionsREST) Destroy() {
@@ -86,9 +85,9 @@ func (r *VersionsREST) Connect(ctx context.Context, uid string, opts runtime.Obj
 			responder.Error(err)
 			return
 		}
-		versions := &dashboards.DashboardVersionsInfo{}
+		versions := &v0alpha1.DashboardVersionsInfo{}
 		for _, v := range rsp {
-			info := dashboards.DashboardVersionInfo{
+			info := v0alpha1.DashboardVersionInfo{
 				Version: v.Version,
 				Created: v.Created.UnixMilli(),
 				Message: v.Message,
