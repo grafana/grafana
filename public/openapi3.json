@@ -2792,6 +2792,12 @@
             },
             "type": "array"
           },
+          "muteTimes": {
+            "items": {
+              "$ref": "#/components/schemas/MuteTimeIntervalExport"
+            },
+            "type": "array"
+          },
           "policies": {
             "items": {
               "$ref": "#/components/schemas/NotificationPolicyExport"
@@ -5619,10 +5625,6 @@
           "is_paused": {
             "type": "boolean"
           },
-          "namespace_id": {
-            "format": "int64",
-            "type": "integer"
-          },
           "namespace_uid": {
             "type": "string"
           },
@@ -6707,6 +6709,24 @@
           }
         },
         "title": "MuteTimeInterval represents a named set of time intervals for which a route should be muted.",
+        "type": "object"
+      },
+      "MuteTimeIntervalExport": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "time_intervals": {
+            "items": {
+              "$ref": "#/components/schemas/TimeInterval"
+            },
+            "type": "array"
+          }
+        },
         "type": "object"
       },
       "MuteTimings": {
@@ -8231,6 +8251,9 @@
           "isEnabled": {
             "type": "boolean"
           },
+          "slug": {
+            "type": "string"
+          },
           "title": {
             "type": "string"
           },
@@ -9048,6 +9071,9 @@
           },
           "displayName": {
             "type": "string"
+          },
+          "global": {
+            "type": "boolean"
           },
           "group": {
             "type": "string"
@@ -11575,7 +11601,6 @@
         "type": "object"
       },
       "alertGroups": {
-        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -11708,6 +11733,7 @@
         "type": "object"
       },
       "gettableAlert": {
+        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -11763,14 +11789,12 @@
         "type": "object"
       },
       "gettableAlerts": {
-        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
         "type": "array"
       },
       "gettableSilence": {
-        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -11819,14 +11843,12 @@
         "type": "object"
       },
       "gettableSilences": {
-        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
         "type": "array"
       },
       "integration": {
-        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -11970,6 +11992,7 @@
         "type": "array"
       },
       "postableSilence": {
+        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -14949,6 +14972,13 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -15147,6 +15177,15 @@
       },
       "post": {
         "operationId": "RoutePostContactpoints",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -15268,7 +15307,7 @@
           }
         ],
         "responses": {
-          "204": {
+          "202": {
             "description": " The contact point was deleted successfully."
           }
         },
@@ -15285,6 +15324,13 @@
             "in": "path",
             "name": "UID",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
             "schema": {
               "type": "string"
             }
@@ -15372,6 +15418,13 @@
       "put": {
         "operationId": "RoutePutAlertRuleGroup",
         "parameters": [
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "in": "path",
             "name": "FolderUID",
@@ -15519,6 +15572,15 @@
       },
       "post": {
         "operationId": "RoutePostMuteTiming",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -15552,6 +15614,57 @@
           }
         },
         "summary": "Create a new mute timing.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/api/v1/provisioning/mute-timings/export": {
+      "get": {
+        "operationId": "RouteExportMuteTimings",
+        "parameters": [
+          {
+            "description": "Whether to initiate a download of the file or not.",
+            "in": "query",
+            "name": "download",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "default": "yaml",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              }
+            },
+            "description": "AlertingFileExport"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              }
+            },
+            "description": "PermissionDenied"
+          }
+        },
+        "summary": "Export all mute timings in provisioning format.",
         "tags": [
           "provisioning"
         ]
@@ -15625,6 +15738,13 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -15660,6 +15780,66 @@
           }
         },
         "summary": "Replace an existing mute timing.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/api/v1/provisioning/mute-timings/{name}/export": {
+      "get": {
+        "operationId": "RouteExportMuteTiming",
+        "parameters": [
+          {
+            "description": "Whether to initiate a download of the file or not.",
+            "in": "query",
+            "name": "download",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "default": "yaml",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Mute timing name",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              }
+            },
+            "description": "AlertingFileExport"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              }
+            },
+            "description": "PermissionDenied"
+          }
+        },
+        "summary": "Export a mute timing in provisioning format.",
         "tags": [
           "provisioning"
         ]
@@ -15706,6 +15886,15 @@
       },
       "put": {
         "operationId": "RoutePutPolicyTree",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -15865,6 +16054,13 @@
             "in": "path",
             "name": "name",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
             "schema": {
               "type": "string"
             }

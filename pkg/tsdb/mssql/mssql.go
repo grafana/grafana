@@ -20,7 +20,7 @@ import (
 	mssql "github.com/microsoft/go-mssqldb"
 	_ "github.com/microsoft/go-mssqldb/azuread"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/utils"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
@@ -40,7 +40,7 @@ const (
 )
 
 func ProvideService(cfg *setting.Cfg) *Service {
-	logger := log.New("tsdb.mssql")
+	logger := backend.NewLoggerWith("logger", "tsdb.mssql")
 	return &Service{
 		im:     datasource.NewInstanceManager(newInstanceSettings(cfg, logger)),
 		logger: logger,
@@ -140,8 +140,16 @@ func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 	}
 }
 
+// ParseURL is called also from pkg/api/datasource/validation.go,
+// which uses a different logging interface,
+// so we have a special minimal interface that is fulfilled by
+// both places.
+type DebugOnlyLogger interface {
+	Debug(msg string, args ...interface{})
+}
+
 // ParseURL tries to parse an MSSQL URL string into a URL object.
-func ParseURL(u string, logger log.Logger) (*url.URL, error) {
+func ParseURL(u string, logger DebugOnlyLogger) (*url.URL, error) {
 	logger.Debug("Parsing MSSQL URL", "url", u)
 
 	// Recognize ODBC connection strings like host\instance:1234

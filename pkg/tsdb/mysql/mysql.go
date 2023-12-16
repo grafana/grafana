@@ -21,8 +21,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng/proxyutil"
@@ -45,7 +45,7 @@ func characterEscape(s string, escapeChar string) string {
 }
 
 func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider) *Service {
-	logger := log.New("tsdb.mysql")
+	logger := backend.NewLoggerWith("logger", "tsdb.mysql")
 	return &Service{
 		im:     datasource.NewInstanceManager(newInstanceSettings(cfg, logger)),
 		logger: logger,

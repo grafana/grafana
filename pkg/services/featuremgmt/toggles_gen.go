@@ -147,10 +147,6 @@ const (
 	// Enables the new folder picker to work with nested folders. Requires the nestedFolders feature toggle
 	FlagNestedFolderPicker = "nestedFolderPicker"
 
-	// FlagAccessTokenExpirationCheck
-	// Enable OAuth access_token expiration check and token refresh using the refresh_token
-	FlagAccessTokenExpirationCheck = "accessTokenExpirationCheck"
-
 	// FlagEmptyDashboardPage
 	// Enable the redesigned user interface of a dashboard page that includes no panels
 	FlagEmptyDashboardPage = "emptyDashboardPage"
@@ -598,6 +594,10 @@ const (
 	// FlagPluginsSkipHostEnvVars
 	// Disables passing host environment variable to plugin processes
 	FlagPluginsSkipHostEnvVars = "pluginsSkipHostEnvVars"
+
+	// FlagTableSharedCrosshair
+	// Enables shared crosshair in table panel
+	FlagTableSharedCrosshair = "tableSharedCrosshair"
 
 	// FlagRegressionTransformation
 	// Enables regression analysis transformation
