@@ -4,10 +4,14 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
 	dashboards "github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
@@ -31,39 +35,72 @@ func (r *VersionsREST) ConnectMethods() []string {
 }
 
 func (r *VersionsREST) NewConnectOptions() (runtime.Object, bool, string) {
-	return nil, false, ""
+	return nil, true, ""
 }
 
-func (r *VersionsREST) Connect(ctx context.Context, id string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+func (r *VersionsREST) Connect(ctx context.Context, uid string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
 	}
 
-	rsp, err := r.builder.dashboardVersionService.List(ctx, &dashver.ListDashboardVersionsQuery{
-		DashboardUID: id,
-		OrgID:        info.OrgID,
-	})
-	if err != nil {
-		return nil, err
-	}
-	versions := &dashboards.DashboardVersionsInfo{}
-	for _, v := range rsp {
-		info := dashboards.DashboardVersionInfo{
-			Version: v.Version,
-			Created: v.Created.UnixMilli(),
-			Message: v.Message,
-		}
-		if v.ParentVersion != v.Version {
-			info.ParentVersion = v.ParentVersion
-		}
-		if v.CreatedBy > 0 {
-			info.CreatedBy = fmt.Sprintf("%d", v.CreatedBy)
-		}
-		versions.Items = append(versions.Items, info)
-	}
-
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		path := req.URL.Path
+		idx := strings.LastIndex(path, "/versions/")
+		if idx > 0 {
+			key := path[strings.LastIndex(path, "/")+1:]
+			version, err := strconv.Atoi(key)
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+
+			dto, err := r.builder.dashboardVersionService.Get(ctx, &dashver.GetDashboardVersionQuery{
+				DashboardUID: uid,
+				OrgID:        info.OrgID,
+				Version:      version,
+			})
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+
+			// Convert the version to a regular dashboard
+			dash := &v0alpha1.Dashboard{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              uid,
+					CreationTimestamp: metav1.NewTime(dto.Created),
+				},
+				Spec: dto.Data,
+			}
+			responder.Object(100, dash)
+			return
+		}
+
+		// Or list versions
+		rsp, err := r.builder.dashboardVersionService.List(ctx, &dashver.ListDashboardVersionsQuery{
+			DashboardUID: uid,
+			OrgID:        info.OrgID,
+		})
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+		versions := &dashboards.DashboardVersionsInfo{}
+		for _, v := range rsp {
+			info := dashboards.DashboardVersionInfo{
+				Version: v.Version,
+				Created: v.Created.UnixMilli(),
+				Message: v.Message,
+			}
+			if v.ParentVersion != v.Version {
+				info.ParentVersion = v.ParentVersion
+			}
+			if v.CreatedBy > 0 {
+				info.CreatedBy = fmt.Sprintf("%d", v.CreatedBy)
+			}
+			versions.Items = append(versions.Items, info)
+		}
 		responder.Object(http.StatusOK, versions)
 	}), nil
 }
