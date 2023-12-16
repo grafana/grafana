@@ -1,0 +1,6 @@
+apiVersion: playlist.grafana.app/v0alpha1
+kind: Playlist
+metadata:
+  name: test-12
+spec:
+  title: Test playlist (replaced from k8s; 22m; 1 items; PUT)
