@@ -151,6 +151,14 @@ func CreateAggregatorConfig(
 	schemes []*runtime.Scheme,
 	getOpenAPIDefinitions func(ref openapicommon.ReferenceCallback) map[string]openapicommon.OpenAPIDefinition,
 ) (*aggregatorapiserver.Config, error) {
+	// copy the etcd options so we don't mutate originals.
+	// we assume that the etcd options have been completed already.  avoid messing with anything outside
+	// of changes to StorageConfig as that may lead to unexpected behavior when the options are applied.
+	etcdOptions := *commandOptions.Etcd
+	etcdOptions.StorageConfig.Codec = aggregatorscheme.Codecs.LegacyCodec(v1.SchemeGroupVersion, v1beta1.SchemeGroupVersion)
+	etcdOptions.StorageConfig.EncodeVersioner = runtime.NewMultiGroupVersioner(v1.SchemeGroupVersion, schema.GroupKind{Group: v1beta1.GroupName})
+	etcdOptions.SkipHealthEndpoints = true // avoid double wiring of health checks
+
 	// make a shallow copy to let us twiddle a few things
 	// most of the config actually remains the same.  We only need to mess with a couple items related to the particulars of the aggregator
 	genericConfig := kubeAPIServerConfig
@@ -178,14 +186,6 @@ func CreateAggregatorConfig(
 		// target resources' storage versions are up-to-date.
 		genericConfig.BuildHandlerChainFunc = genericapiserver.BuildHandlerChainWithStorageVersionPrecondition
 	}
-
-	// copy the etcd options so we don't mutate originals.
-	// we assume that the etcd options have been completed already.  avoid messing with anything outside
-	// of changes to StorageConfig as that may lead to unexpected behavior when the options are applied.
-	etcdOptions := *commandOptions.Etcd
-	etcdOptions.StorageConfig.Codec = aggregatorscheme.Codecs.LegacyCodec(v1.SchemeGroupVersion, v1beta1.SchemeGroupVersion)
-	etcdOptions.StorageConfig.EncodeVersioner = runtime.NewMultiGroupVersioner(v1.SchemeGroupVersion, schema.GroupKind{Group: v1beta1.GroupName})
-	etcdOptions.SkipHealthEndpoints = true // avoid double wiring of health checks
 
 	// Can't call applyTo on Etcd - it replaces our optsGetter
 	/* if err := etcdOptions.ApplyTo(&genericConfig); err != nil {

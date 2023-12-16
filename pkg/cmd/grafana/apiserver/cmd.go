@@ -2,8 +2,11 @@ package apiserver
 
 import (
 	"os"
+	"path"
 
 	"github.com/grafana/grafana/pkg/aggregator"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
+	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -97,6 +100,7 @@ func newCommandStartAggregator(aggregator *aggregatorapiserver.APIAggregator, st
 }
 
 func RunAggregatorCLI() int {
+	// time.Sleep(10 * time.Second)
 	delegationTarget := genericapiserver.NewEmptyDelegate()
 
 	serverOptions := aggregator.NewAggregatorServerOptions(os.Stdout, os.Stderr)
@@ -106,7 +110,7 @@ func RunAggregatorCLI() int {
 		aggregatorscheme.Codecs.LegacyCodec(), // codec is passed to etcd and hence not used
 	)
 
-	sharedConfig, err := serverOptions.Config(Codecs)
+	sharedConfig, err := serverOptions.Config(aggregatorscheme.Codecs)
 	if err != nil {
 		return -1
 	}
@@ -127,6 +131,13 @@ func RunAggregatorCLI() int {
 	stopCh := genericapiserver.SetupSignalHandler()
 	cmd := newCommandStartAggregator(aggregator, stopCh)
 	serverOptions.RecommendedOptions.AddFlags(cmd.Flags())
+
+	if err = clientcmd.WriteToFile(
+		utils.FormatKubeConfig(aggregator.GenericAPIServer.LoopbackClientConfig),
+		path.Join(dataPath, "grafana.kubeconfig"),
+	); err != nil {
+		return -1
+	}
 
 	return cli.Run(cmd)
 }

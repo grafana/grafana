@@ -32,9 +32,11 @@ const (
 var (
 	Scheme = runtime.NewScheme()
 	Codecs = serializer.NewCodecFactory(Scheme)
+)
 
-	unversionedVersion = schema.GroupVersion{Group: "", Version: "v1"}
-	unversionedTypes   = []runtime.Object{
+func init() {
+	unversionedVersion := schema.GroupVersion{Group: "", Version: "v1"}
+	unversionedTypes := []runtime.Object{
 		&metav1.Status{},
 		&metav1.WatchEvent{},
 		&metav1.APIVersions{},
@@ -42,9 +44,6 @@ var (
 		&metav1.APIGroup{},
 		&metav1.APIResourceList{},
 	}
-)
-
-func init() {
 	// we need to add the options to empty v1
 	metav1.AddToGroupVersion(Scheme, schema.GroupVersion{Group: "", Version: "v1"})
 	Scheme.AddUnversionedTypes(unversionedVersion, unversionedTypes...)
