@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"path"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -22,7 +20,7 @@ import (
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/fs"
+	"github.com/grafana/grafana/pkg/infra/db/dbconn"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
@@ -34,7 +32,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // ContextSessionKey is used as key to save values in `context.Context`
@@ -57,10 +54,6 @@ type SQLStore struct {
 }
 
 func ProvideService(cfg *setting.Cfg, migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
-	// This change will make xorm use an empty default schema for postgres and
-	// by that mimic the functionality of how it was functioning before
-	// xorm's changes above.
-	xorm.DefaultPostgresSchema = ""
 	s, err := newSQLStore(cfg, nil, migrations, bus, tracer)
 	if err != nil {
 		return nil, err
@@ -111,9 +104,11 @@ func newSQLStore(cfg *setting.Cfg, engine *xorm.Engine,
 		}
 	}
 
-	if err := ss.initEngine(engine); err != nil {
+	conn, err := dbconn.New(cfg, engine, tracer)
+	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to connect to database", err)
 	}
+	ss.engine = conn.Engine()
 
 	ss.Dialect = migrator.NewDialect(ss.engine.DriverName())
 
@@ -246,217 +241,6 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser(test bool) error {
 	})
 
 	return err
-}
-
-func (ss *SQLStore) buildExtraConnectionString(sep rune) string {
-	if ss.dbCfg.UrlQueryParams == nil {
-		return ""
-	}
-
-	var sb strings.Builder
-	for key, values := range ss.dbCfg.UrlQueryParams {
-		for _, value := range values {
-			sb.WriteRune(sep)
-			sb.WriteString(key)
-			sb.WriteRune('=')
-			sb.WriteString(value)
-		}
-	}
-	return sb.String()
-}
-
-func (ss *SQLStore) buildConnectionString() (string, error) {
-	if err := ss.readConfig(); err != nil {
-		return "", err
-	}
-
-	cnnstr := ss.dbCfg.ConnectionString
-
-	// special case used by integration tests
-	if cnnstr != "" {
-		return cnnstr, nil
-	}
-
-	switch ss.dbCfg.Type {
-	case migrator.MySQL:
-		protocol := "tcp"
-		if strings.HasPrefix(ss.dbCfg.Host, "/") {
-			protocol = "unix"
-		}
-
-		cnnstr = fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true",
-			ss.dbCfg.User, ss.dbCfg.Pwd, protocol, ss.dbCfg.Host, ss.dbCfg.Name)
-
-		if ss.dbCfg.SslMode == "true" || ss.dbCfg.SslMode == "skip-verify" {
-			tlsCert, err := makeCert(ss.dbCfg)
-			if err != nil {
-				return "", err
-			}
-			if err := mysql.RegisterTLSConfig("custom", tlsCert); err != nil {
-				return "", err
-			}
-
-			cnnstr += "&tls=custom"
-		}
-
-		if isolation := ss.dbCfg.IsolationLevel; isolation != "" {
-			val := url.QueryEscape(fmt.Sprintf("'%s'", isolation))
-			cnnstr += fmt.Sprintf("&transaction_isolation=%s", val)
-		}
-
-		// nolint:staticcheck
-		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagMysqlAnsiQuotes) {
-			cnnstr += "&sql_mode='ANSI_QUOTES'"
-		}
-
-		cnnstr += ss.buildExtraConnectionString('&')
-	case migrator.Postgres:
-		addr, err := util.SplitHostPortDefault(ss.dbCfg.Host, "127.0.0.1", "5432")
-		if err != nil {
-			return "", fmt.Errorf("invalid host specifier '%s': %w", ss.dbCfg.Host, err)
-		}
-
-		args := []any{ss.dbCfg.User, addr.Host, addr.Port, ss.dbCfg.Name, ss.dbCfg.SslMode, ss.dbCfg.ClientCertPath,
-			ss.dbCfg.ClientKeyPath, ss.dbCfg.CaCertPath}
-		for i, arg := range args {
-			if arg == "" {
-				args[i] = "''"
-			}
-		}
-		cnnstr = fmt.Sprintf("user=%s host=%s port=%s dbname=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s", args...)
-		if ss.dbCfg.Pwd != "" {
-			cnnstr += fmt.Sprintf(" password=%s", ss.dbCfg.Pwd)
-		}
-
-		cnnstr += ss.buildExtraConnectionString(' ')
-	case migrator.SQLite:
-		// special case for tests
-		if !filepath.IsAbs(ss.dbCfg.Path) {
-			ss.dbCfg.Path = filepath.Join(ss.Cfg.DataPath, ss.dbCfg.Path)
-		}
-		if err := os.MkdirAll(path.Dir(ss.dbCfg.Path), os.ModePerm); err != nil {
-			return "", err
-		}
-
-		cnnstr = fmt.Sprintf("file:%s?cache=%s&mode=rwc", ss.dbCfg.Path, ss.dbCfg.CacheMode)
-
-		if ss.dbCfg.WALEnabled {
-			cnnstr += "&_journal_mode=WAL"
-		}
-
-		cnnstr += ss.buildExtraConnectionString('&')
-	default:
-		return "", fmt.Errorf("unknown database type: %s", ss.dbCfg.Type)
-	}
-
-	return cnnstr, nil
-}
-
-// initEngine initializes ss.engine.
-func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
-	if ss.engine != nil {
-		ss.log.Debug("Already connected to database")
-		return nil
-	}
-
-	connectionString, err := ss.buildConnectionString()
-	if err != nil {
-		return err
-	}
-
-	if ss.Cfg.DatabaseInstrumentQueries {
-		ss.dbCfg.Type = WrapDatabaseDriverWithHooks(ss.dbCfg.Type, ss.tracer)
-	}
-
-	ss.log.Info("Connecting to DB", "dbtype", ss.dbCfg.Type)
-	if ss.dbCfg.Type == migrator.SQLite && strings.HasPrefix(connectionString, "file:") &&
-		!strings.HasPrefix(connectionString, "file::memory:") {
-		exists, err := fs.Exists(ss.dbCfg.Path)
-		if err != nil {
-			return fmt.Errorf("can't check for existence of %q: %w", ss.dbCfg.Path, err)
-		}
-
-		const perms = 0640
-		if !exists {
-			ss.log.Info("Creating SQLite database file", "path", ss.dbCfg.Path)
-			f, err := os.OpenFile(ss.dbCfg.Path, os.O_CREATE|os.O_RDWR, perms)
-			if err != nil {
-				return fmt.Errorf("failed to create SQLite database file %q: %w", ss.dbCfg.Path, err)
-			}
-			if err := f.Close(); err != nil {
-				return fmt.Errorf("failed to create SQLite database file %q: %w", ss.dbCfg.Path, err)
-			}
-		} else {
-			fi, err := os.Lstat(ss.dbCfg.Path)
-			if err != nil {
-				return fmt.Errorf("failed to stat SQLite database file %q: %w", ss.dbCfg.Path, err)
-			}
-			m := fi.Mode() & os.ModePerm
-			if m|perms != perms {
-				ss.log.Warn("SQLite database file has broader permissions than it should",
-					"path", ss.dbCfg.Path, "mode", m, "expected", os.FileMode(perms))
-			}
-		}
-	}
-	if engine == nil {
-		var err error
-		engine, err = xorm.NewEngine(ss.dbCfg.Type, connectionString)
-		if err != nil {
-			return err
-		}
-		// Only for MySQL or MariaDB, verify we can connect with the current connection string's system var for transaction isolation.
-		// If not, create a new engine with a compatible connection string.
-		if ss.dbCfg.Type == migrator.MySQL {
-			engine, err = ss.ensureTransactionIsolationCompatibility(engine, connectionString)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	engine.SetMaxOpenConns(ss.dbCfg.MaxOpenConn)
-	engine.SetMaxIdleConns(ss.dbCfg.MaxIdleConn)
-	engine.SetConnMaxLifetime(time.Second * time.Duration(ss.dbCfg.ConnMaxLifetime))
-
-	// configure sql logging
-	debugSQL := ss.Cfg.Raw.Section("database").Key("log_queries").MustBool(false)
-	if !debugSQL {
-		engine.SetLogger(&xorm.DiscardLogger{})
-	} else {
-		// add stack to database calls to be able to see what repository initiated queries. Top 7 items from the stack as they are likely in the xorm library.
-		engine.SetLogger(NewXormLogger(log.LvlInfo, log.WithSuffix(log.New("sqlstore.xorm"), log.CallerContextKey, log.StackCaller(log.DefaultCallerDepth))))
-		engine.ShowSQL(true)
-		engine.ShowExecTime(true)
-	}
-
-	ss.engine = engine
-	return nil
-}
-
-// The transaction_isolation system variable isn't compatible with MySQL < 5.7.20 or MariaDB. If we get an error saying this
-// system variable is unknown, then replace it with it's older version tx_isolation which is compatible with MySQL < 5.7.20 and MariaDB.
-func (ss *SQLStore) ensureTransactionIsolationCompatibility(engine *xorm.Engine, connectionString string) (*xorm.Engine, error) {
-	var result string
-	_, err := engine.SQL("SELECT 1").Get(&result)
-
-	var mysqlError *mysql.MySQLError
-	if errors.As(err, &mysqlError) {
-		// if there was an error due to transaction isolation
-		if strings.Contains(mysqlError.Message, "Unknown system variable 'transaction_isolation'") {
-			ss.log.Debug("transaction_isolation system var is unknown, overriding in connection string with tx_isolation instead")
-			// replace with compatible system var for transaction isolation
-			connectionString = strings.Replace(connectionString, "&transaction_isolation", "&tx_isolation", -1)
-			// recreate the xorm engine with new connection string that is compatible
-			engine, err = xorm.NewEngine(ss.dbCfg.Type, connectionString)
-			if err != nil {
-				return nil, err
-			}
-		}
-	} else if err != nil {
-		return nil, err
-	}
-
-	return engine, nil
 }
 
 // readConfig initializes the SQLStore from its configuration.

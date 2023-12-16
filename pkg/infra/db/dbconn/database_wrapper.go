@@ -1,4 +1,4 @@
-package sqlstore
+package dbconn
 
 import (
 	"context"
@@ -37,10 +37,10 @@ func init() {
 	prometheus.MustRegister(databaseQueryHistogram)
 }
 
-// WrapDatabaseDriverWithHooks creates a fake database driver that
+// wrapDatabaseDriverWithHooks creates a fake database driver that
 // executes pre and post functions which we use to gather metrics about
 // database queries. It also registers the metrics.
-func WrapDatabaseDriverWithHooks(dbType string, tracer tracing.Tracer) string {
+func wrapDatabaseDriverWithHooks(dbType string, tracer tracing.Tracer) string {
 	drivers := map[string]driver.Driver{
 		migrator.SQLite:   &sqlite3.SQLiteDriver{},
 		migrator.MySQL:    &mysql.MySQLDriver{},
