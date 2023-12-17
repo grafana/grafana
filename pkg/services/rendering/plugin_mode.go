@@ -13,7 +13,7 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, renderKey strin
 	ctx, cancel := context.WithTimeout(ctx, getRequestTimeout(opts.TimeoutOpts))
 	defer cancel()
 
-	filePath, err := rs.getNewFilePath(RenderPNG)
+	filePath, err := rs.getNewFilePath(RenderPNG, opts.Encoding)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (rs *RenderingService) renderCSVViaPlugin(ctx context.Context, renderKey st
 	ctx, cancel := context.WithTimeout(ctx, getRequestTimeout(opts.TimeoutOpts))
 	defer cancel()
 
-	filePath, err := rs.getNewFilePath(RenderCSV)
+	filePath, err := rs.getNewFilePath(RenderCSV, opts.Encoding)
 	if err != nil {
 		return nil, err
 	}

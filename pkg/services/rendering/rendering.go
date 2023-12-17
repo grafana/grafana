@@ -368,10 +368,15 @@ func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts, renderK
 	return rs.renderCSVAction(ctx, renderKey, opts)
 }
 
-func (rs *RenderingService) getNewFilePath(rt RenderType) (string, error) {
+func (rs *RenderingService) getNewFilePath(rt RenderType, encoding string) (string, error) {
 	rand, err := util.GetRandomString(20)
 	if err != nil {
 		return "", err
+	}
+
+	// The image render mode may be PDF
+	if rt == RenderPNG && encoding == "pdf" {
+		rt = RenderPDF
 	}
 
 	ext := "png"
@@ -379,6 +384,10 @@ func (rs *RenderingService) getNewFilePath(rt RenderType) (string, error) {
 	if rt == RenderCSV {
 		ext = "csv"
 		folder = rs.Cfg.CSVsDir
+	}
+	if rt == RenderPDF {
+		ext = "pdf"
+		// ??? folder = rs.Cfg.CSVsDir
 	}
 
 	return filepath.Abs(filepath.Join(folder, fmt.Sprintf("%s.%s", rand, ext)))

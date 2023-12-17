@@ -20,6 +20,7 @@ type RenderType string
 const (
 	RenderCSV RenderType = "csv"
 	RenderPNG RenderType = "png"
+	RenderPDF RenderType = "pdf"
 )
 
 type TimeoutOpts struct {
