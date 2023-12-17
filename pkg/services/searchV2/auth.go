@@ -28,6 +28,7 @@ type simpleAuthService struct {
 	logger        log.Logger
 }
 
+// >>>
 func (a *simpleAuthService) GetDashboardReadFilter(ctx context.Context, orgID int64, user *user.SignedInUser) (ResourceFilter, error) {
 	canReadDashboard, canReadFolder := accesscontrol.Checker(user, dashboards.ActionDashboardsRead), accesscontrol.Checker(user, dashboards.ActionFoldersRead)
 	return func(kind entityKind, uid, parent string) bool {

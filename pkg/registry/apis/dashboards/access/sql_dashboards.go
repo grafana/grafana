@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/kinds"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
@@ -65,7 +66,7 @@ const selector = `SELECT
 
 // GetDashboard implements DashboardAccess.
 func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid string) (*DashboardRow, error) {
-	rows, err := a.sess.Query(ctx, selector+`
+	rows, err := a.doQuery(ctx, selector+`
 		AND dashboard.org_id=$1
 		AND dashboard.uid=$2`, orgId, uid)
 
@@ -75,14 +76,15 @@ func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid 
 
 	defer func() { _ = rows.Close() }()
 
-	if rows.Next() {
-		row, _, err := a.scanRow(rows)
-		if err != nil {
-			return nil, err
-		}
-		return row, err
+	row, err := rows.Next()
+	if err != nil {
+		return nil, err
 	}
-	return nil, k8serrors.NewNotFound(v0alpha1.DashboardResourceInfo.GroupResource(), uid)
+	if row == nil {
+		// NOTE, this may be access control!
+		return nil, k8serrors.NewNotFound(v0alpha1.DashboardResourceInfo.GroupResource(), uid)
+	}
+	return row, nil
 }
 
 // GetDashboards implements DashboardAccess.
@@ -91,17 +93,29 @@ func (a *dashboardSqlAccess) GetDashboards(ctx context.Context, orgId int64, con
 	if err != nil {
 		return nil, err
 	}
-	rows, err := a.sess.Query(ctx, selector+`
+	rows, err := a.doQuery(ctx, selector+`
 		AND dashboard.org_id=$1
 		AND dashboard.created >= $2
 		ORDER BY dashboard.org_id asc,dashboard.updated asc	
 	`, orgId, time.UnixMilli(token.updated))
+	if err == nil {
+		rows.advanceTo(token)
+	}
+	return rows, nil // the caller must Close!
+}
+
+func (a *dashboardSqlAccess) doQuery(ctx context.Context, query string, args ...any) (*rowsWrapper, error) {
+	user, err := appcontext.User(ctx)
 	if err != nil {
 		return nil, err
 	}
-	wrap := &rowsWrapper{rows: rows, a: a}
-	wrap.advanceTo(token)
-	return wrap, nil
+	rows, err := a.sess.Query(ctx, query, args...)
+	return &rowsWrapper{
+		rows: rows,
+		a:    a,
+		// This looks up rules from the permissions on a user
+		canReadDashboard: accesscontrol.Checker(user, dashboards.ActionDashboardsRead),
+	}, err
 }
 
 type rowsWrapper struct {
@@ -109,6 +123,8 @@ type rowsWrapper struct {
 	rows  *sql.Rows
 	idx   int
 	total int64
+
+	canReadDashboard func(scopes ...string) bool
 
 	pending *DashboardRow
 }
@@ -139,15 +155,27 @@ func (r *rowsWrapper) Next() (*DashboardRow, error) {
 		return row, nil
 	}
 
-	if r.rows.Next() {
+	// breaks after first readable value
+	for r.rows.Next() {
+		r.idx++
 		d, token, err := r.a.scanRow(r.rows)
 		if d != nil {
+			// Access control checker
+			scopes := []string{dashboards.ScopeDashboardsProvider.GetResourceScopeUID(d.Dash.Name)}
+			if d.FolderUID != "" { // Copied from searchV2... not sure the logic is right
+				scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(d.FolderUID))
+			}
+			if !r.canReadDashboard(scopes...) {
+				continue
+			}
+
 			token.row = r.idx
 			token.size = r.total
 			d.ContinueToken = token.String()
-			r.idx++
 			r.total += int64(d.Bytes)
 		}
+
+		// returns the first folder it can
 		return d, err
 	}
 	return nil, nil
@@ -208,6 +236,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*DashboardRow, continueTok
 		}
 		if folder_uid.Valid {
 			meta.SetFolder(folder_uid.String)
+			row.FolderUID = folder_uid.String
 		}
 
 		if origin_name.Valid {
@@ -346,7 +375,7 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		UserID:    user.UserID,
 	})
 	if out != nil {
-		created = (out.Created.Unix() == out.Created.Unix()) // and now?
+		created = (out.Created.Unix() == out.Updated.Unix()) // and now?
 		return out.UID, created, err
 	}
 	return "", created, err

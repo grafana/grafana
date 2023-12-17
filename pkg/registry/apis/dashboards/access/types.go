@@ -12,6 +12,8 @@ type DashboardRow struct {
 
 	Title string
 
+	FolderUID string
+
 	Tags []string
 
 	// Size (in bytes) of the dashboard payload

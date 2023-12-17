@@ -11,7 +11,10 @@ func Checker(user *user.SignedInUser, action string) func(scopes ...string) bool
 
 	userScopes, ok := user.Permissions[user.OrgID][action]
 	if !ok {
-		return func(scopes ...string) bool { return false }
+		userScopes, ok = user.Permissions[user.OrgID]["*"] // admin user may have wildcard for action
+		if !ok {
+			return func(scopes ...string) bool { return false }
+		}
 	}
 
 	lookup := make(map[string]bool, len(userScopes))

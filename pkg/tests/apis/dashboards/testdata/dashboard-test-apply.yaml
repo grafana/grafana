@@ -3,4 +3,4 @@ kind: Dashboard
 metadata:
   name: test
 spec:
-  title: Test dashboard (apply from k8s; ??m; ?? items; PATCH)
+  title: Test dashboard (apply from k8s; PATCH) X

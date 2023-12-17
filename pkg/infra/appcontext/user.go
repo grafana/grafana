@@ -50,13 +50,19 @@ func User(ctx context.Context) (*user.SignedInUser, error) {
 			case k8suser.APIServerUser:
 				fallthrough
 			case k8suser.SystemPrivilegedGroup:
+				orgId := int64(1)
 				return &user.SignedInUser{
 					UserID:         1,
-					OrgID:          1,
+					OrgID:          orgId,
 					Name:           k8sUserInfo.GetName(),
 					Login:          k8sUserInfo.GetName(),
 					OrgRole:        roletype.RoleAdmin,
 					IsGrafanaAdmin: true,
+					Permissions: map[int64]map[string][]string{
+						orgId: {
+							"*": {"*"}, // all resources, all scopes
+						},
+					},
 				}, nil
 			}
 		}
