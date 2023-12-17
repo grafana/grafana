@@ -7,11 +7,16 @@ import (
 )
 
 type DashboardRow struct {
+	Title string
+
 	// Dashboard value
 	Dash *v0alpha1.Dashboard
 
-	// Size (in bytes) of the dashbaord payload
+	// Size (in bytes) of the dashboard payload
 	Bytes int
+
+	// Last time the dashboard was updated
+	UpdatedTime int64
 
 	// The token we can use that will start a new connection that includes
 	// this same dashboard

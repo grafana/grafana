@@ -95,7 +95,7 @@ func (a *dashboardSqlAccess) GetDashboards(ctx context.Context, orgId int64, con
 		return nil, err
 	}
 	wrap := &rowsWrapper{rows: rows, a: a}
-	wrap.advanceToUID(token.uid)
+	wrap.advanceTo(token)
 	return wrap, nil
 }
 
@@ -108,14 +108,14 @@ type rowsWrapper struct {
 	pending *DashboardRow
 }
 
-func (r *rowsWrapper) advanceToUID(uid string) {
-	if uid != "" {
+func (r *rowsWrapper) advanceTo(token continueToken) {
+	if token.uid != "" {
 		for {
 			row, err := r.Next()
 			if row == nil || err != nil {
 				return // ??
 			}
-			if row.Dash.Name == uid {
+			if row.Dash.Name == token.uid || row.UpdatedTime > token.updated {
 				r.pending = row
 				return
 			}
@@ -157,7 +157,6 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*DashboardRow, continueTok
 
 	var orgId int64
 	var slug string
-	var title string
 	var folder_uid sql.NullString
 	var updated time.Time
 	var updatedByID int64
@@ -176,7 +175,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*DashboardRow, continueTok
 	var version int64
 
 	err := rows.Scan(&orgId, &dash.Name,
-		&slug, &title, &folder_uid,
+		&slug, &row.Title, &folder_uid,
 		&created, &createdByID, &createdByName,
 		&updated, &updatedByID, &updatedByName,
 		&plugin_id,
@@ -193,6 +192,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*DashboardRow, continueTok
 		meta := kinds.MetaAccessor(dash)
 		meta.SetUpdatedTimestamp(&updated)
 		meta.SetSlug(slug)
+		row.UpdatedTime = updated.UnixMilli()
 		if createdByID > 0 {
 			meta.SetCreatedBy(fmt.Sprintf("user:%d/%s", createdByID, createdByName.String))
 		}
