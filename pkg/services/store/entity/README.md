@@ -147,4 +147,4 @@ kubectl --kubeconfig=./grafana.kubeconfig get playlist
 go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 ```
 - make changes in `.proto` file
-- run `./pkg/services/store/entity/generate.sh` to regenerate definitions in this package.
+- to compile all protobuf files in the repository run `make protobuf` at its top level
