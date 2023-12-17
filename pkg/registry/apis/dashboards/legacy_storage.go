@@ -2,15 +2,14 @@ package dashboards
 
 import (
 	"context"
-	"errors"
 
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	dashboardssvc "github.com/grafana/grafana/pkg/services/dashboards"
+	dashboards "github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 )
 
@@ -19,7 +18,7 @@ var (
 	_ rest.Scoper               = (*legacyStorage)(nil)
 	_ rest.SingularNameProvider = (*legacyStorage)(nil)
 	_ rest.Getter               = (*legacyStorage)(nil)
-	// _ rest.Lister               = (*legacyStorage)(nil)
+	_ rest.Lister               = (*legacyStorage)(nil)
 	// _ rest.Creater              = (*legacyStorage)(nil)
 	// _ rest.Updater              = (*legacyStorage)(nil)
 	// _ rest.GracefulDeleter      = (*legacyStorage)(nil)
@@ -38,7 +37,7 @@ func (s *legacyStorage) New() runtime.Object {
 func (s *legacyStorage) Destroy() {}
 
 func (s *legacyStorage) NamespaceScoped() bool {
-	return true // namespace == org
+	return true
 }
 
 func (s *legacyStorage) GetSingularName() string {
@@ -53,45 +52,40 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 	return s.store.TableConvertor.ConvertToTable(ctx, object, tableOptions)
 }
 
-// func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-// 	// TODO: handle fetching all available orgs when no namespace is specified
-// 	// To test: kubectl get playlists --all-namespaces
-// 	info, err := request.NamespaceInfoFrom(ctx, true)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	orgId, err := request.OrgIDForList(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-// 	user := appcontext.MustUser(ctx)
-// 	limit := int64(1000)
-// 	if options.Limit > 0 {
-// 		limit = options.Limit
-// 	}
-// 	res, err := s.builder.dashboardService.SearchDashboards(ctx, &dashboardssvc.FindPersistedDashboardsQuery{
-// 		SignedInUser: user,
-// 		OrgId:        info.OrgID,
-// 		Limit:        limit,
-// 		// Page: options.Continue, ???
-// 	})
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	maxCount := int(options.Limit)
+	if maxCount < 1 {
+		maxCount = 1000
+	}
+	maxBytes := int64(2 * 1024 * 1024) // 2MB
+	totalSize := int64(0)
+	list := &dashboards.DashboardList{}
+	rows, err := s.builder.access.GetDashboards(ctx, orgId, options.Continue)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+	for {
+		row, err := rows.Next()
+		if err != nil || row == nil {
+			return list, err
+		}
 
-// 	list := &dashboards.DashboardList{}
-// 	for _, v := range res {
-// 		info := dashboards.Dashboard{
-// 			ObjectMeta: metav1.ObjectMeta{
-// 				Name: v.UID,
-// 			},
-// 			// Title: v.Title,
-// 			// Tags:  v.Tags,
-// 		}
-// 		list.Items = append(list.Items, info)
-// 	}
-// 	if len(list.Items) == int(limit) {
-// 		list.Continue = "<more>" // TODO?
-// 	}
-// 	return list, nil
-// }
+		// TODO: check if we have permissions to see this item
+
+		totalSize += int64(row.Bytes)
+		if len(list.Items) > 0 && (totalSize > maxBytes || len(list.Items) >= maxCount) {
+			list.Continue = row.ContinueToken // will skip this one but start here next time
+			return list, err
+		}
+		list.Items = append(list.Items, *row.Dash)
+	}
+}
 
 func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
@@ -99,28 +93,5 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		return nil, err
 	}
 
-	dto, err := s.builder.dashboardService.GetDashboard(ctx, &dashboardssvc.GetDashboardQuery{
-		UID:   name,
-		OrgID: info.OrgID,
-	})
-	if err != nil || dto == nil {
-		if true { // errors.Is(err, playlistsvc.ErrPlaylistNotFound) || err == nil {
-			err = k8serrors.NewNotFound(s.store.SingularQualifiedResource, name)
-		}
-		return nil, err
-	}
-
-	// Check if it is a provisioned resource
-	provisioningData, err := s.builder.provisioningService.GetProvisionedDashboardDataByDashboardUID(ctx, info.OrgID, name)
-	if err != nil && !errors.Is(err, dashboardssvc.ErrProvisionedDashboardNotFound) {
-		return nil, err
-	}
-	//if provisioningData != nil {
-	// TODO? shorten the path based on the full provisioning source
-	// id, err := filepath.Rel(
-	// 	s.provisioningService.GetDashboardProvisionerResolvedPath(provisioningData.Name),
-	// 	provisioningData.ExternalID,
-	// )
-	//}
-	return convertToK8sResource(dto, provisioningData, s.namespacer), nil
+	return s.builder.access.GetDashboard(ctx, info.OrgID, name)
 }

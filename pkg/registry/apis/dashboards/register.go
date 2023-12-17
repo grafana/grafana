@@ -15,7 +15,9 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboards/access"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	dashboardssvc "github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
@@ -38,7 +40,7 @@ type DashboardsAPIBuilder struct {
 	dashboardVersionService dashver.Service
 	accessControl           accesscontrol.AccessControl
 	namespacer              request.NamespaceMapper
-	gv                      schema.GroupVersion
+	access                  access.DashboardAccess
 
 	log log.Logger
 }
@@ -49,18 +51,20 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	dashboardVersionService dashver.Service,
 	provisioningService dashboardssvc.DashboardProvisioningService,
 	accessControl accesscontrol.AccessControl,
+	sql db.DB,
 ) *DashboardsAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
 
+	namespacer := request.GetNamespaceMapper(cfg)
 	builder := &DashboardsAPIBuilder{
 		dashboardService:        dashboardService,
 		provisioningService:     provisioningService,
 		dashboardVersionService: dashboardVersionService,
 		accessControl:           accessControl,
-		namespacer:              request.GetNamespaceMapper(cfg),
-		gv:                      resourceInfo.GroupVersion(),
+		namespacer:              namespacer,
+		access:                  access.NewDashboardAccess(sql, namespacer),
 		log:                     log.New("grafana-apiserver.dashbaords"),
 	}
 	apiregistration.RegisterAPI(builder)
@@ -68,7 +72,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 }
 
 func (b *DashboardsAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return b.gv
+	return resourceInfo.GroupVersion()
 }
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
@@ -82,13 +86,13 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 }
 
 func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	addKnownTypes(scheme, b.gv)
+	addKnownTypes(scheme, resourceInfo.GroupVersion())
 
 	// Link this version to the internal representation.
 	// This is used for server-side-apply (PATCH), and avoids the error:
 	//   "no kind is registered for the type"
 	addKnownTypes(scheme, schema.GroupVersion{
-		Group:   b.gv.Group,
+		Group:   resourceInfo.GroupVersion().Group,
 		Version: runtime.APIVersionInternal,
 	})
 
@@ -96,8 +100,8 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	// if err := playlist.RegisterConversions(scheme); err != nil {
 	//   return err
 	// }
-	metav1.AddToGroupVersion(scheme, b.gv)
-	return scheme.SetVersionPriority(b.gv)
+	metav1.AddToGroupVersion(scheme, resourceInfo.GroupVersion())
+	return scheme.SetVersionPriority(resourceInfo.GroupVersion())
 }
 
 func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
