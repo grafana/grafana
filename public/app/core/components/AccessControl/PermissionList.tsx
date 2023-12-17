@@ -9,13 +9,12 @@ interface Props {
   title: string;
   compareKey: 'builtInRole' | 'userLogin' | 'team';
   items: ResourcePermission[];
-  permissionLevels: string[];
   canSet: boolean;
   onRemove: (item: ResourcePermission) => void;
   onChange: (resourcePermission: ResourcePermission, permission: string) => void;
 }
 
-export const PermissionList = ({ title, items, compareKey, permissionLevels, canSet, onRemove, onChange }: Props) => {
+export const PermissionList = ({ title, items, compareKey, canSet, onRemove, onChange }: Props) => {
   const computed = useMemo(() => {
     const keep: { [key: string]: ResourcePermission } = {};
     for (let item of items) {
@@ -61,7 +60,6 @@ export const PermissionList = ({ title, items, compareKey, permissionLevels, can
               onChange={onChange}
               canSet={canSet}
               key={`${index}-${item.userId}`}
-              permissionLevels={permissionLevels}
             />
           ))}
         </tbody>

@@ -21,6 +21,7 @@ export type SetPermission = {
   builtInRole?: string;
   permission: string;
   target: PermissionTarget;
+  actions?: string[];
 };
 
 export enum PermissionTarget {
@@ -31,8 +32,10 @@ export enum PermissionTarget {
   BuiltInRole = 'builtInRole',
 }
 export type Description = {
+  resource: string;
   assignments: Assignments;
   permissions: string[];
+  fineGrainedActions: string[];
 };
 
 export type Assignments = {

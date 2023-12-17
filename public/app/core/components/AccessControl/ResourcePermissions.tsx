@@ -1,0 +1,2 @@
+export const CUSTOM_RESOURCE_PERMISSION = '__CUSTOM__';
+export const CUSTOM_RESOURCE_PERMISSION_DISPLAY = 'Custom';
