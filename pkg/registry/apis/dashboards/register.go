@@ -19,28 +19,29 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboards/access"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardssvc "github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	grafanaregistry "github.com/grafana/grafana/pkg/services/grafana-apiserver/registry/generic"
+	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ grafanaapiserver.APIGroupBuilder = (*DashboardsAPIBuilder)(nil)
 
-var resourceInfo = v0alpha1.DashboardResourceInfo
-
 // This is used just so wire has something unique to return
 type DashboardsAPIBuilder struct {
-	dashboardService        dashboardssvc.DashboardService
-	provisioningService     dashboardssvc.DashboardProvisioningService
+	dashboardService dashboardssvc.DashboardService
+
 	dashboardVersionService dashver.Service
 	accessControl           accesscontrol.AccessControl
 	namespacer              request.NamespaceMapper
 	access                  access.DashboardAccess
+	dashStore               dashboards.Store
 
 	log log.Logger
 }
@@ -49,8 +50,8 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	apiregistration grafanaapiserver.APIRegistrar,
 	dashboardService dashboardssvc.DashboardService,
 	dashboardVersionService dashver.Service,
-	provisioningService dashboardssvc.DashboardProvisioningService,
 	accessControl accesscontrol.AccessControl,
+	dashStore dashboards.Store,
 	sql db.DB,
 ) *DashboardsAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
@@ -60,11 +61,11 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	namespacer := request.GetNamespaceMapper(cfg)
 	builder := &DashboardsAPIBuilder{
 		dashboardService:        dashboardService,
-		provisioningService:     provisioningService,
 		dashboardVersionService: dashboardVersionService,
+		dashStore:               dashStore,
 		accessControl:           accessControl,
 		namespacer:              namespacer,
-		access:                  access.NewDashboardAccess(sql, namespacer),
+		access:                  access.NewDashboardAccess(sql, namespacer, dashStore),
 		log:                     log.New("grafana-apiserver.dashbaords"),
 	}
 	apiregistration.RegisterAPI(builder)
@@ -72,7 +73,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 }
 
 func (b *DashboardsAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return resourceInfo.GroupVersion()
+	return v0alpha1.DashboardResourceInfo.GroupVersion()
 }
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
@@ -81,11 +82,14 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&v0alpha1.DashboardList{},
 		&v0alpha1.DashboardAccessInfo{},
 		&v0alpha1.DashboardVersionsInfo{},
+		&v0alpha1.DashboardSummary{},
+		&v0alpha1.DashboardSummaryList{},
 		&v0alpha1.VersionsQueryOptions{},
 	)
 }
 
 func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+	resourceInfo := v0alpha1.DashboardResourceInfo
 	addKnownTypes(scheme, resourceInfo.GroupVersion())
 
 	// Link this version to the internal representation.
@@ -111,6 +115,7 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP, scheme, metav1.ParameterCodec, codecs)
 
+	resourceInfo := v0alpha1.DashboardResourceInfo
 	strategy := grafanaregistry.NewStrategy(scheme)
 	store := &genericregistry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
@@ -130,26 +135,29 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 			{Name: "Created At", Type: "date"},
 		},
 		func(obj any) ([]interface{}, error) {
-			r, ok := obj.(*v0alpha1.Dashboard)
+			dash, ok := obj.(*v0alpha1.Dashboard)
 			if ok {
 				return []interface{}{
-					r.Name,
-					r.Spec.Get("title").MustString(),
-					r.CreationTimestamp.UTC().Format(time.RFC3339),
+					dash.Name,
+					dash.Spec.Get("title").MustString(),
+					dash.CreationTimestamp.UTC().Format(time.RFC3339),
 				}, nil
 			}
-			return nil, fmt.Errorf("expected resource or info")
+			summary, ok := obj.(*v0alpha1.DashboardSummary)
+			if ok {
+				return []interface{}{
+					dash.Name,
+					summary.Spec.Title,
+					dash.CreationTimestamp.UTC().Format(time.RFC3339),
+				}, nil
+			}
+			return nil, fmt.Errorf("expected dashboard or summary")
 		})
 
-	// options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: grafanaregistry.GetAttrs}
-	// if err := store.CompleteWithOptions(options); err != nil {
-	// 	return nil, err
-	// }
-
-	legacyStore := &legacyStorage{
-		store:      store,
-		namespacer: b.namespacer,
-		builder:    b,
+	legacyStore := &dashboardStorage{
+		resource:       resourceInfo,
+		access:         b.access,
+		tableConverter: store.TableConvertor,
 	}
 
 	storage := map[string]rest.Storage{}
@@ -159,6 +167,23 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	}
 	storage[resourceInfo.StoragePath("versions")] = &VersionsREST{
 		builder: b,
+	}
+
+	// Dual writes if a RESTOptionsGetter is provided
+	if optsGetter != nil {
+		options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: grafanaregistry.GetAttrs}
+		if err := store.CompleteWithOptions(options); err != nil {
+			return nil, err
+		}
+		storage[resourceInfo.StoragePath()] = grafanarest.NewDualWriter(legacyStore, store)
+	}
+
+	// Summary
+	resourceInfo = v0alpha1.DashboardSummaryResourceInfo
+	storage[resourceInfo.StoragePath()] = &summaryStorage{
+		resource:       resourceInfo,
+		access:         b.access,
+		tableConverter: store.TableConvertor,
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage

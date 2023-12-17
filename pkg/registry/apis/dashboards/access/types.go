@@ -7,10 +7,12 @@ import (
 )
 
 type DashboardRow struct {
-	Title string
-
 	// Dashboard value
 	Dash *v0alpha1.Dashboard
+
+	Title string
+
+	Tags []string
 
 	// Size (in bytes) of the dashboard payload
 	Bytes int
@@ -30,6 +32,8 @@ type DashboardRows interface {
 
 // This does not check if you have permissions!
 type DashboardAccess interface {
-	GetDashboard(ctx context.Context, orgId int64, uid string) (*v0alpha1.Dashboard, error)
-	GetDashboards(ctx context.Context, orgId int64, continueToken string) (DashboardRows, error)
+	GetDashboard(ctx context.Context, orgId int64, uid string) (*DashboardRow, error)
+	GetDashboards(ctx context.Context, orgId int64, continueToken string, skipBody bool) (DashboardRows, error)
+	SaveDashboard(ctx context.Context, orgId int64, dash *v0alpha1.Dashboard) (string, bool, error)
+	DeleteDashboard(ctx context.Context, orgId int64, uid string) (*v0alpha1.Dashboard, bool, error)
 }

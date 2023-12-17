@@ -2,57 +2,136 @@ package dashboards
 
 import (
 	"context"
+	"fmt"
+	"strings"
+	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	dashboards "github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis"
+	"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboards/access"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 )
 
 var (
-	_ rest.Storage              = (*legacyStorage)(nil)
-	_ rest.Scoper               = (*legacyStorage)(nil)
-	_ rest.SingularNameProvider = (*legacyStorage)(nil)
-	_ rest.Getter               = (*legacyStorage)(nil)
-	_ rest.Lister               = (*legacyStorage)(nil)
-	// _ rest.Creater              = (*legacyStorage)(nil)
-	// _ rest.Updater              = (*legacyStorage)(nil)
-	// _ rest.GracefulDeleter      = (*legacyStorage)(nil)
+	_ rest.Storage              = (*dashboardStorage)(nil)
+	_ rest.Scoper               = (*dashboardStorage)(nil)
+	_ rest.SingularNameProvider = (*dashboardStorage)(nil)
+	_ rest.Getter               = (*dashboardStorage)(nil)
+	_ rest.Lister               = (*dashboardStorage)(nil)
+	_ rest.Creater              = (*dashboardStorage)(nil)
+	// _ rest.Updater              = (*dashboardStorage)(nil)
+	_ rest.GracefulDeleter = (*dashboardStorage)(nil)
 )
 
-type legacyStorage struct {
-	store      *genericregistry.Store
-	builder    *DashboardsAPIBuilder
-	namespacer request.NamespaceMapper
+type dashboardStorage struct {
+	resource       apis.ResourceInfo
+	access         access.DashboardAccess
+	tableConverter rest.TableConvertor
 }
 
-func (s *legacyStorage) New() runtime.Object {
-	return resourceInfo.NewFunc()
+func (s *dashboardStorage) New() runtime.Object {
+	return s.resource.NewFunc()
 }
 
-func (s *legacyStorage) Destroy() {}
+func (s *dashboardStorage) Destroy() {}
 
-func (s *legacyStorage) NamespaceScoped() bool {
+func (s *dashboardStorage) NamespaceScoped() bool {
 	return true
 }
 
-func (s *legacyStorage) GetSingularName() string {
-	return resourceInfo.GetSingularName()
+func (s *dashboardStorage) GetSingularName() string {
+	return s.resource.GetSingularName()
 }
 
-func (s *legacyStorage) NewList() runtime.Object {
-	return resourceInfo.NewListFunc()
+func (s *dashboardStorage) NewList() runtime.Object {
+	return s.resource.NewListFunc()
 }
 
-func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return s.store.TableConvertor.ConvertToTable(ctx, object, tableOptions)
+func (s *dashboardStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
-func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+func (s *dashboardStorage) Create(ctx context.Context,
+	obj runtime.Object,
+	createValidation rest.ValidateObjectFunc,
+	options *metav1.CreateOptions,
+) (runtime.Object, error) {
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
+	p, ok := obj.(*v0alpha1.Dashboard)
+	if !ok {
+		return nil, fmt.Errorf("expected dashboard?")
+	}
+
+	// HACK to simplify unique name testing from kubectl
+	t, err := p.Spec.Get("title").String()
+	if err == nil && strings.Contains(t, "${NOW}") {
+		t = strings.ReplaceAll(t, "${NOW}", fmt.Sprintf("%d", time.Now().Unix()))
+		p.Spec.Set("title", t)
+	}
+
+	uid, _, err := s.access.SaveDashboard(ctx, info.OrgID, p)
+	if err != nil {
+		return nil, err
+	}
+	return s.Get(ctx, uid, nil)
+}
+
+func (s *dashboardStorage) Update(ctx context.Context,
+	name string,
+	objInfo rest.UpdatedObjectInfo,
+	createValidation rest.ValidateObjectFunc,
+	updateValidation rest.ValidateObjectUpdateFunc,
+	forceAllowCreate bool,
+	options *metav1.UpdateOptions,
+) (runtime.Object, bool, error) {
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+
+	created := false
+	old, err := s.Get(ctx, name, nil)
+	if err != nil {
+		return old, created, err
+	}
+
+	obj, err := objInfo.UpdatedObject(ctx, old)
+	if err != nil {
+		return old, created, err
+	}
+	p, ok := obj.(*v0alpha1.Dashboard)
+	if !ok {
+		return nil, created, fmt.Errorf("expected playlist after update")
+	}
+
+	_, created, err = s.access.SaveDashboard(ctx, info.OrgID, p)
+	if err == nil {
+		r, err := s.Get(ctx, name, nil)
+		return r, created, err
+	}
+	return nil, created, err
+}
+
+// GracefulDeleter
+func (s *dashboardStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+
+	return s.access.DeleteDashboard(ctx, info.OrgID, name)
+}
+
+func (s *dashboardStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	orgId, err := request.OrgIDForList(ctx)
 	if err != nil {
 		return nil, err
@@ -64,8 +143,8 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	}
 	maxBytes := int64(2 * 1024 * 1024) // 2MB
 	totalSize := int64(0)
-	list := &dashboards.DashboardList{}
-	rows, err := s.builder.access.GetDashboards(ctx, orgId, options.Continue)
+	list := &v0alpha1.DashboardList{}
+	rows, err := s.access.GetDashboards(ctx, orgId, options.Continue, false)
 	if err != nil {
 		return nil, err
 	}
@@ -76,8 +155,6 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 			return list, err
 		}
 
-		// TODO: check if we have permissions to see this item
-
 		totalSize += int64(row.Bytes)
 		if len(list.Items) > 0 && (totalSize > maxBytes || len(list.Items) >= maxCount) {
 			list.Continue = row.ContinueToken // will skip this one but start here next time
@@ -87,11 +164,15 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	}
 }
 
-func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func (s *dashboardStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.builder.access.GetDashboard(ctx, info.OrgID, name)
+	row, err := s.access.GetDashboard(ctx, info.OrgID, name)
+	if err != nil {
+		return nil, err
+	}
+	return row.Dash, nil
 }

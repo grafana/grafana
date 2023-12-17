@@ -1,0 +1,6 @@
+apiVersion: dashboards.grafana.app/v0alpha1
+kind: Dashboard
+metadata:
+  name: test
+spec:
+  title: Test playlist (created from k8s; 2 items; POST)

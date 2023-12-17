@@ -20,6 +20,12 @@ var DashboardResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
 	func() runtime.Object { return &DashboardList{} },
 )
 
+var DashboardSummaryResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
+	"summary", "summary", "DashboardSummary",
+	func() runtime.Object { return &DashboardSummary{} },
+	func() runtime.Object { return &DashboardSummaryList{} },
+)
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type Dashboard struct {
 	metav1.TypeMeta `json:",inline"`
@@ -42,6 +48,29 @@ type DashboardList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	Items []Dashboard `json:"items,omitempty"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type DashboardSummary struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	// The dashboard body
+	Spec DashboardSummarySpec `json:"spec,omitempty"`
+}
+
+type DashboardSummarySpec struct {
+	Title string   `json:"title"`
+	Tags  []string `json:"tags,omitempty"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type DashboardSummaryList struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	Items []DashboardSummary `json:"items,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

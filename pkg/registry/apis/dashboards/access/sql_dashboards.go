@@ -13,8 +13,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/kinds"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/util"
@@ -29,20 +31,21 @@ type dashboardSqlAccess struct {
 	sql        db.DB
 	sess       *session.SessionDB
 	namespacer request.NamespaceMapper
+	dashStore  dashboards.Store
 }
 
-func NewDashboardAccess(sql db.DB, namespacer request.NamespaceMapper) DashboardAccess {
+func NewDashboardAccess(sql db.DB, namespacer request.NamespaceMapper, dashStore dashboards.Store) DashboardAccess {
 	return &dashboardSqlAccess{
 		sql:        sql,
 		sess:       sql.GetSqlxSession(),
 		namespacer: namespacer,
+		dashStore:  dashStore,
 	}
 }
 
 const selector = `SELECT 
-	dashboard.org_id,
-	dashboard.uid,
-	slug,title,
+	dashboard.org_id, dashboard.id,
+	dashboard.uid,slug,
 	dashboard.folder_uid,
 	dashboard.created,dashboard.created_by,CreatedUSER.login,
 	dashboard.updated,dashboard.updated_by,UpdatedUSER.login,
@@ -51,7 +54,9 @@ const selector = `SELECT
 	dashboard_provisioning.external_id as origin_path,
 	dashboard_provisioning.check_sum as origin_key,
 	dashboard_provisioning.updated as origin_ts,
-	dashboard.data,dashboard.version
+	dashboard.version,
+	title,
+	dashboard.data
   FROM dashboard 
   LEFT OUTER JOIN dashboard_provisioning ON dashboard.id = dashboard_provisioning.dashboard_id
   LEFT OUTER JOIN user AS CreatedUSER ON dashboard.created_by = CreatedUSER.id 
@@ -59,7 +64,7 @@ const selector = `SELECT
   WHERE is_folder = false`
 
 // GetDashboard implements DashboardAccess.
-func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid string) (*v0alpha1.Dashboard, error) {
+func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid string) (*DashboardRow, error) {
 	rows, err := a.sess.Query(ctx, selector+`
 		AND dashboard.org_id=$1
 		AND dashboard.uid=$2`, orgId, uid)
@@ -75,13 +80,13 @@ func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid 
 		if err != nil {
 			return nil, err
 		}
-		return row.Dash, err
+		return row, err
 	}
 	return nil, k8serrors.NewNotFound(v0alpha1.DashboardResourceInfo.GroupResource(), uid)
 }
 
 // GetDashboards implements DashboardAccess.
-func (a *dashboardSqlAccess) GetDashboards(ctx context.Context, orgId int64, continueToken string) (DashboardRows, error) {
+func (a *dashboardSqlAccess) GetDashboards(ctx context.Context, orgId int64, continueToken string, skipBody bool) (DashboardRows, error) {
 	token, err := readContinueToken(continueToken)
 	if err != nil {
 		return nil, err
@@ -155,6 +160,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*DashboardRow, continueTok
 	}
 	row := &DashboardRow{Dash: dash}
 
+	var dashboard_id int64
 	var orgId int64
 	var slug string
 	var folder_uid sql.NullString
@@ -174,13 +180,14 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*DashboardRow, continueTok
 	var data []byte // the dashboard JSON
 	var version int64
 
-	err := rows.Scan(&orgId, &dash.Name,
-		&slug, &row.Title, &folder_uid,
+	err := rows.Scan(&orgId, &dashboard_id, &dash.Name,
+		&slug, &folder_uid,
 		&created, &createdByID, &createdByName,
 		&updated, &updatedByID, &updatedByName,
 		&plugin_id,
 		&origin_name, &origin_path, &origin_key, &origin_ts,
-		&data, &version,
+		&version,
+		&row.Title, &data,
 	)
 
 	token := continueToken{orgId: orgId, uid: dash.Name}
@@ -224,7 +231,9 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*DashboardRow, continueTok
 			if err != nil {
 				return row, token, err
 			}
-			dash.Spec.Del("id") // remove the internal ID field
+			dash.Spec.Set("id", dashboard_id) // add it so we can get it from the body later
+			row.Title, _ = dash.Spec.Get("title").String()
+			row.Tags, _ = dash.Spec.Get("tags").StringArray()
 		}
 	}
 	return row, token, err
@@ -278,4 +287,67 @@ func readContinueToken(t string) (continueToken, error) {
 func (r *continueToken) String() string {
 	return fmt.Sprintf("org:%d/updated:%d/uid:%s/row:%d/%s",
 		r.orgId, r.updated, r.uid, r.row, util.ByteCountSI(r.size))
+}
+
+// DeleteDashboard implements DashboardAccess.
+func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, uid string) (*v0alpha1.Dashboard, bool, error) {
+	row, err := a.GetDashboard(ctx, orgId, uid)
+	if err != nil {
+		return nil, false, err
+	}
+
+	id, err := row.Dash.Spec.Get("id").Int64()
+	if err != nil {
+		return nil, false, fmt.Errorf("could not find id in saved body")
+	}
+
+	err = a.dashStore.DeleteDashboard(ctx, &dashboards.DeleteDashboardCommand{
+		OrgID: orgId,
+		ID:    id,
+	})
+	if err != nil {
+		return nil, false, err
+	}
+	return row.Dash, true, nil
+}
+
+// SaveDashboard implements DashboardAccess.
+func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, dash *v0alpha1.Dashboard) (string, bool, error) {
+	created := false
+	user, err := appcontext.User(ctx)
+	if err != nil {
+		return "", created, err
+	}
+	if dash.Name != "" {
+		dash.Spec.Set("uid", dash.Name)
+
+		// Get the previous version to set the internal ID
+		old, _ := a.dashStore.GetDashboard(ctx, &dashboards.GetDashboardQuery{
+			OrgID: orgId,
+			UID:   dash.Name,
+		})
+		if old != nil {
+			dash.Spec.Set("id", old.ID)
+		} else {
+			dash.Spec.Del("id") // existing of "id" makes it an update
+			created = true
+		}
+	} else {
+		dash.Spec.Del("id")
+		dash.Spec.Del("uid")
+	}
+
+	meta := kinds.MetaAccessor(dash)
+	out, err := a.dashStore.SaveDashboard(ctx, dashboards.SaveDashboardCommand{
+		OrgID:     orgId,
+		Dashboard: dash.Spec,
+		FolderUID: meta.GetFolder(),
+		Overwrite: true, // already passed the revisionVersion checks!
+		UserID:    user.UserID,
+	})
+	if out != nil {
+		created = (out.Created.Unix() == out.Created.Unix()) // and now?
+		return out.UID, created, err
+	}
+	return "", created, err
 }
