@@ -2,6 +2,7 @@ import { LRUCache } from 'lru-cache';
 import Prism from 'prismjs';
 
 import { LanguageProvider, AbstractQuery, KeyValue, getDefaultTimeRange, TimeRange } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { extractLabelMatchers, processLabels, toPromLikeExpr } from 'app/plugins/datasource/prometheus/language_utils';
 
 import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
@@ -261,6 +262,18 @@ export default class LokiLanguageProvider extends LanguageProvider {
     streamSelector: string,
     options?: { maxLines?: number; timeRange?: TimeRange }
   ): Promise<ParserAndLabelKeysResult> {
+    const empty = {
+      extractedLabelKeys: [],
+      structuredMetadataKeys: [],
+      unwrapLabelKeys: [],
+      hasJSON: false,
+      hasLogfmt: false,
+      hasPack: false,
+    };
+    if (!config.featureToggles.lokiQueryHints) {
+      return empty;
+    }
+
     const series = await this.datasource.getDataSamples(
       {
         expr: streamSelector,
@@ -271,14 +284,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
     );
 
     if (!series.length) {
-      return {
-        extractedLabelKeys: [],
-        structuredMetadataKeys: [],
-        unwrapLabelKeys: [],
-        hasJSON: false,
-        hasLogfmt: false,
-        hasPack: false,
-      };
+      return empty;
     }
 
     const { hasLogfmt, hasJSON, hasPack } = extractLogParserFromDataFrame(series[0]);
