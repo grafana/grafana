@@ -302,17 +302,26 @@ export function LogsTableWrap(props: Props) {
     setColumnsWithMeta(pendingLabelState);
   };
 
-  const reorderColumn = (oldIndex: number, newIndex: number) => {
+  const reorderColumn = (sourceIndex: number, destinationIndex: number) => {
+    if (sourceIndex === destinationIndex) {
+      return;
+    }
+
     const pendingLabelState = { ...columnsWithMeta };
 
-    //swap the indices
-    Object.keys(pendingLabelState).forEach((key) => {
-      const index = columnsWithMeta[key].index;
-      if (index === oldIndex) {
-        pendingLabelState[key].index = newIndex;
-      } else if (index === newIndex) {
-        pendingLabelState[key].index = oldIndex;
-      }
+    const keys = Object.keys(pendingLabelState)
+      .filter((key) => pendingLabelState[key].active)
+      .map((key) => ({
+        fieldName: key,
+        index: pendingLabelState[key].index ?? 0,
+      }))
+      .sort((a, b) => a.index - b.index);
+
+    const [source] = keys.splice(sourceIndex, 1);
+    keys.splice(destinationIndex, 0, source);
+
+    keys.forEach((key, index) => {
+      pendingLabelState[key.fieldName].index = index;
     });
 
     // Set local state

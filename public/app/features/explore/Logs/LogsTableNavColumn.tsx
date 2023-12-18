@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback } from 'react';
+import React from 'react';
 import { DragDropContext, Draggable, DraggableProvided, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
@@ -86,19 +86,16 @@ export const LogsTableNavColumn = (props: {
   valueFilter: (value: string) => boolean;
   toggleColumn: (columnName: string) => void;
   id: string;
-  reorderColumn?: (oldIndex: number, newIndex: number) => void;
+  reorderColumn?: (sourceIndex: number, destinationIndex: number) => void;
 }): JSX.Element => {
   const { reorderColumn } = props;
 
-  const onDragEnd = useCallback(
-    (result: DropResult) => {
-      if (!result.destination || !reorderColumn) {
-        return;
-      }
-      reorderColumn(result.source.index, result.destination.index);
-    },
-    [reorderColumn]
-  );
+  const onDragEnd = (result: DropResult) => {
+    if (!result.destination || !reorderColumn) {
+      return;
+    }
+    reorderColumn(result.source.index, result.destination.index);
+  };
 
   const { labels, valueFilter, toggleColumn, id } = props;
   const theme = useTheme2();
@@ -112,7 +109,6 @@ export const LogsTableNavColumn = (props: {
           <Droppable droppableId={id} direction="vertical">
             {(provided) => (
               <div className={styles.columnWrapper} {...provided.droppableProps} ref={provided.innerRef}>
-                {provided.placeholder}
                 {labelKeys.sort(sortLabels(labels)).map((labelName, index) => (
                   <Draggable draggableId={labelName} key={labelName} index={index}>
                     {(provided: DraggableProvided) => (
@@ -128,6 +124,7 @@ export const LogsTableNavColumn = (props: {
                     )}
                   </Draggable>
                 ))}
+                {provided.placeholder}
               </div>
             )}
           </Droppable>
