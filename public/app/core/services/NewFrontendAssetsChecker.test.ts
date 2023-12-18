@@ -21,7 +21,7 @@ describe('NewFrontendAssetsChecker', () => {
 
   setBackendSrv({
     get: backendApiGet,
-  } as any as BackendSrv);
+  } as unknown as BackendSrv);
 
   it('Should skip update checks if below interval', () => {
     const checker = new NewFrontendAssetsChecker();
