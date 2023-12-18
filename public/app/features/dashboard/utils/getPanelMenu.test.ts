@@ -519,8 +519,9 @@ describe('getPanelMenu()', () => {
       const angularComponent = { getScope: () => scope } as AngularComponent;
       const panel = new PanelModel({ isViewing: true });
       const dashboard = createDashboardModelFixture({});
+      const testUrl = '/testUrl';
 
-      const menuItems = getPanelMenu(dashboard, panel, angularComponent);
+      const menuItems = getPanelMenu(dashboard, panel, testUrl, angularComponent);
       expect(menuItems).toMatchInlineSnapshot(`
         [
           {
@@ -590,7 +591,7 @@ describe('getPanelMenu()', () => {
     beforeAll(() => {
       const panel = new PanelModel({});
       const dashboard = createDashboardModelFixture({});
-      const menuItems = getPanelMenu(dashboard, panel);
+      const menuItems = getPanelMenu(dashboard, panel, testUrl);
       explore = menuItems.find((item) => item.text === 'Explore') as PanelMenuItem;
       navigateSpy = jest.spyOn(actions, 'navigateToExplore');
       window.open = windowOpen;
@@ -625,13 +626,13 @@ describe('getPanelMenu()', () => {
     });
   });
   describe('Alerting menu', () => {
+    const testUrl = '/testUrl';
     it('should render "New alert rule" menu item if user has permissions to read and update alerts ', () => {
       const panel = new PanelModel({});
-
       const dashboard = createDashboardModelFixture({});
       config.unifiedAlertingEnabled = true;
       grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
-      const menuItems = getPanelMenu(dashboard, panel);
+      const menuItems = getPanelMenu(dashboard, panel, testUrl);
       const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
 
       expect(moreSubMenu).toEqual(
@@ -650,7 +651,7 @@ describe('getPanelMenu()', () => {
       grantUserPermissions([AccessControlAction.AlertingRuleRead]);
       config.unifiedAlertingEnabled = true;
 
-      const menuItems = getPanelMenu(dashboard, panel);
+      const menuItems = getPanelMenu(dashboard, panel, testUrl);
 
       const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
 
@@ -668,8 +669,7 @@ describe('getPanelMenu()', () => {
       const dashboard = createDashboardModelFixture({});
       grantUserPermissions([]);
       config.unifiedAlertingEnabled = true;
-
-      const menuItems = getPanelMenu(dashboard, panel);
+      const menuItems = getPanelMenu(dashboard, panel, testUrl);
 
       const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
       const createAlertOption = moreSubMenu?.find((i) => i.text === 'New alert rule')?.subMenu;
