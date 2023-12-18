@@ -653,10 +653,6 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/MatchersUI/fieldMatchersUI.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "packages/grafana-ui/src/components/Menu/SubMenu.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
-    ],
     "packages/grafana-ui/src/components/Modal/ModalsContext.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
