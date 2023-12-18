@@ -10,6 +10,7 @@ import (
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -223,6 +224,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*DashboardRow, continueTok
 		token.updated = updated.UnixMilli()
 		dash.ResourceVersion = fmt.Sprintf("%d", created.UnixMilli())
 		dash.Namespace = a.namespacer(orgId)
+		dash.UID = types.UID(dash.Name)
 		dash.SetCreationTimestamp(v1.NewTime(created))
 		meta := kinds.MetaAccessor(dash)
 		meta.SetUpdatedTimestamp(&updated)
