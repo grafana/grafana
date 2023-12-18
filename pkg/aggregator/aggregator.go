@@ -183,7 +183,7 @@ func (o *AggregatorServerOptions) GetMergedOpenAPIDefinitions(ref common.Referen
 func CreateAggregatorConfig(
 	kubeAPIServerConfig genericapiserver.Config,
 	commandOptions options.RecommendedOptions,
-	schemes []*runtime.Scheme,
+	openAPISchemes []*runtime.Scheme,
 	getOpenAPIDefinitions func(ref openapicommon.ReferenceCallback) map[string]openapicommon.OpenAPIDefinition,
 ) (*aggregatorapiserver.Config, error) {
 	// make a shallow copy to let us twiddle a few things
@@ -200,7 +200,7 @@ func CreateAggregatorConfig(
 	}
 	genericConfig.MergedResourceConfig = mergedResourceConfig
 
-	namer := openapinamer.NewDefinitionNamer(schemes...)
+	namer := openapinamer.NewDefinitionNamer(openAPISchemes...)
 	genericConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(getOpenAPIDefinitions, namer)
 	genericConfig.OpenAPIV3Config.Info.Title = "Kubernetes"
 	genericConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(getOpenAPIDefinitions, namer)
