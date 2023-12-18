@@ -41,7 +41,7 @@ export function NewsContainer({ className }: NewsContainerProps) {
                   variant="secondary"
                   fill="text"
                   onClick={onToggleShowNewsDrawer}
-                  aria-label={selectors.components.Drawer.General.close}
+                  data-testid={selectors.components.Drawer.General.close}
                 />
               </div>
             </div>
