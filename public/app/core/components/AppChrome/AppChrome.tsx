@@ -102,9 +102,9 @@ export function AppChrome({ children }: Props) {
           ) : (
             <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenuOpen(false)} />
           )}
-          <CommandPalette />
         </>
       )}
+      {!state.chromeless && <CommandPalette />}
     </div>
   );
 }
