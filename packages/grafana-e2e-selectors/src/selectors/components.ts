@@ -382,7 +382,7 @@ export const Components = {
     link: 'data-testid Dashboard link',
   },
   LoadingIndicator: {
-    icon: 'Loading indicator',
+    icon: 'data-testid Loading indicator',
   },
   CallToActionCard: {
     /**
