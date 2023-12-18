@@ -359,9 +359,7 @@ func (s *Service) Logout(ctx context.Context, user identity.Requester, sessionTo
 
 	info, _ := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: userID})
 	if info != nil {
-		println(info.AuthModule)
 		client := authn.ClientWithPrefix(strings.TrimPrefix(info.AuthModule, "oauth_"))
-		println(client)
 
 		c, ok := s.clients[client]
 		if !ok {
