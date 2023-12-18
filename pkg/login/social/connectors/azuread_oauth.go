@@ -81,7 +81,7 @@ func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ss
 		forceUseGraphAPI:     MustBool(info.Extra[forceUseGraphAPIKey], false),
 	}
 
-	if info.UseRefreshToken && features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) {
+	if info.UseRefreshToken {
 		appendUniqueScope(config, social.OfflineAccessScope)
 	}
 

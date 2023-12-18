@@ -38,7 +38,6 @@
         "version": 1,
         "uid": "<dynamic>",
         "namespace_uid": "<dynamic>",
-        "namespace_id": 0,
         "rule_group": "Group2",
         "no_data_state": "NoData",
         "exec_err_state": "Error",

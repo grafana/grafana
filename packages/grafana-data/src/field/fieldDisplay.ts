@@ -72,6 +72,7 @@ export interface GetFieldDisplayValuesOptions {
   fieldConfig: FieldConfigSource;
   replaceVariables: InterpolateFunction;
   sparkline?: boolean; // Calculate the sparkline
+  percentChange?: boolean; // Calculate percent change
   theme: GrafanaTheme2;
   timeZone?: TimeZone;
 }
@@ -186,6 +187,9 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           } else {
             displayValue.title = getFieldDisplayName(field, dataFrame, data);
           }
+          displayValue.percentChange = options.percentChange
+            ? reduceField({ field: field, reducers: [ReducerID.diffperc] }).diffperc
+            : undefined;
 
           let sparkline: FieldSparkline | undefined = undefined;
           if (options.sparkline) {
