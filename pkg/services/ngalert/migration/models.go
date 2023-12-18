@@ -25,7 +25,7 @@ type OrgMigration struct {
 	orgID                      int64
 	silences                   []*pb.MeshSilence
 	titleDeduplicatorForFolder func(folderUID string) *migmodels.Deduplicator
-	channelCache        *ChannelCache
+	channelCache               *ChannelCache
 
 	// Migrated folder for a dashboard based on permissions. Parent Folder ID -> unique dashboard permission -> custom folder.
 	permissionsMap        map[int64]map[permissionHash]*folder.Folder
@@ -54,7 +54,7 @@ func (ms *migrationService) newOrgMigration(orgID int64) *OrgMigration {
 			}
 			return titlededuplicatorPerFolder[folderUID]
 		},
-		channelCache:        &ChannelCache{cache: make(map[any]*legacymodels.AlertNotification)},
+		channelCache: &ChannelCache{cache: make(map[any]*legacymodels.AlertNotification)},
 
 		permissionsMap:        make(map[int64]map[permissionHash]*folder.Folder),
 		folderCache:           make(map[int64]*folder.Folder),
