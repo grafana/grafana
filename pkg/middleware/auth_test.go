@@ -166,21 +166,18 @@ func TestRoleAppPluginAuth(t *testing.T) {
 		tcs := []struct {
 			roleRequired org.RoleType
 			role         org.RoleType
-			signedIn     bool
 			expStatus    int
 			expBody      string
 			expLocation  string
 		}{
-			{signedIn: false, roleRequired: org.RoleViewer, role: org.RoleAdmin, expStatus: http.StatusFound, expBody: "<a href=\"/grafana/login\">Found</a>.\n\n", expLocation: "/grafana/login"},
-			{signedIn: false, roleRequired: org.RoleAdmin, role: org.RoleAdmin, expStatus: http.StatusFound, expBody: "<a href=\"/grafana/login\">Found</a>.\n\n", expLocation: "/grafana/login"},
-			{signedIn: true, roleRequired: org.RoleViewer, role: org.RoleAdmin, expStatus: http.StatusOK, expBody: ""},
-			{signedIn: true, roleRequired: org.RoleAdmin, role: org.RoleAdmin, expStatus: http.StatusOK, expBody: ""},
-			{signedIn: true, roleRequired: org.RoleAdmin, role: org.RoleViewer, expStatus: http.StatusFound, expBody: "<a href=\"/grafana/\">Found</a>.\n\n", expLocation: "/grafana/"},
-			{signedIn: true, roleRequired: "", role: org.RoleViewer, expStatus: http.StatusOK, expBody: ""},
-			{signedIn: true, roleRequired: org.RoleEditor, role: "", expStatus: http.StatusFound, expBody: "<a href=\"/grafana/\">Found</a>.\n\n", expLocation: "/grafana/"},
+			{roleRequired: org.RoleViewer, role: org.RoleAdmin, expStatus: http.StatusOK, expBody: ""},
+			{roleRequired: org.RoleAdmin, role: org.RoleAdmin, expStatus: http.StatusOK, expBody: ""},
+			{roleRequired: org.RoleAdmin, role: org.RoleViewer, expStatus: http.StatusFound, expBody: "<a href=\"/grafana/\">Found</a>.\n\n", expLocation: "/grafana/"},
+			{roleRequired: "", role: org.RoleViewer, expStatus: http.StatusOK, expBody: ""},
+			{roleRequired: org.RoleEditor, role: "", expStatus: http.StatusFound, expBody: "<a href=\"/grafana/\">Found</a>.\n\n", expLocation: "/grafana/"},
 		}
 
-		path := "/a/test-app/test"
+		const path = "/a/test-app/test"
 		for i, tc := range tcs {
 			t.Run(fmt.Sprintf("testcase %d", i), func(t *testing.T) {
 				ps := pluginstore.NewFakePluginStore(pluginstore.Plugin{
@@ -197,18 +194,16 @@ func TestRoleAppPluginAuth(t *testing.T) {
 				})
 
 				middlewareScenario(t, t.Name(), func(t *testing.T, sc *scenarioContext) {
-					if tc.signedIn {
-						sc.withIdentity(&authn.Identity{
-							OrgRoles: map[int64]org.RoleType{
-								0: tc.role,
-							},
-						})
-					}
+					sc.withIdentity(&authn.Identity{
+						OrgRoles: map[int64]org.RoleType{
+							0: tc.role,
+						},
+					})
 					features := featuremgmt.WithFeatures()
 					logger := &logtest.Fake{}
 					ac := &actest.FakeAccessControl{}
 
-					sc.m.Get("/a/:id/*", RoleAppPluginAuthAndSignedIn(ac, ps, features, logger), func(c *contextmodel.ReqContext) {
+					sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, ps, features, logger), func(c *contextmodel.ReqContext) {
 						c.JSON(http.StatusOK, map[string]interface{}{})
 					})
 					sc.fakeReq("GET", path).exec()
@@ -230,7 +225,7 @@ func TestRoleAppPluginAuth(t *testing.T) {
 		features := featuremgmt.WithFeatures()
 		logger := &logtest.Fake{}
 		ac := &actest.FakeAccessControl{}
-		sc.m.Get("/a/:id/*", RoleAppPluginAuthAndSignedIn(ac, &pluginstore.FakePluginStore{}, features, logger), func(c *contextmodel.ReqContext) {
+		sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, &pluginstore.FakePluginStore{}, features, logger), func(c *contextmodel.ReqContext) {
 			c.JSON(http.StatusOK, map[string]interface{}{})
 		})
 		sc.fakeReq("GET", "/a/test-app/test").exec()
@@ -248,7 +243,7 @@ func TestRoleAppPluginAuth(t *testing.T) {
 		features := featuremgmt.WithFeatures()
 		logger := &logtest.Fake{}
 		ac := &actest.FakeAccessControl{}
-		sc.m.Get("/a/:id/*", RoleAppPluginAuthAndSignedIn(ac, pluginstore.NewFakePluginStore(pluginstore.Plugin{
+		sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, pluginstore.NewFakePluginStore(pluginstore.Plugin{
 			JSONData: plugins.JSONData{
 				ID: "test-app",
 				Includes: []*plugins.Includes{
@@ -327,7 +322,7 @@ func TestRoleAppPluginAuth(t *testing.T) {
 					},
 				})
 
-				sc.m.Get("/a/:id/*", RoleAppPluginAuthAndSignedIn(ac, ps, features, logger), func(c *contextmodel.ReqContext) {
+				sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, ps, features, logger), func(c *contextmodel.ReqContext) {
 					c.JSON(http.StatusOK, map[string]interface{}{})
 				})
 				sc.fakeReq("GET", path).exec()

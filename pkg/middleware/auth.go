@@ -101,14 +101,9 @@ func CanAdminPlugins(cfg *setting.Cfg, accessControl ac.AccessControl) func(c *c
 	}
 }
 
-func RoleAppPluginAuthAndSignedIn(accessControl ac.AccessControl, ps pluginstore.Store, features featuremgmt.FeatureToggles,
+func RoleAppPluginAuth(accessControl ac.AccessControl, ps pluginstore.Store, features featuremgmt.FeatureToggles,
 	logger log.Logger) func(c *contextmodel.ReqContext) {
 	return func(c *contextmodel.ReqContext) {
-		if !c.IsSignedIn {
-			notAuthorized(c)
-			return
-		}
-
 		pluginID := web.Params(c.Req)[":id"]
 		p, exists := ps.Plugin(c.Req.Context(), pluginID)
 		if !exists {
