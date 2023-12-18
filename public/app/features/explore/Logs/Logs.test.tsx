@@ -481,8 +481,8 @@ describe('Logs', () => {
     });
 
     it('should use default state from localstorage - table', async () => {
-      localStorage.setItem(visualisationTypeKey, 'table');
       act(() => {
+        localStorage.setItem(visualisationTypeKey, 'table');
         setup({});
       });
 
@@ -491,8 +491,8 @@ describe('Logs', () => {
     });
 
     it('should use default state from localstorage - logs', async () => {
-      localStorage.setItem(visualisationTypeKey, 'logs');
       act(() => {
+        localStorage.setItem(visualisationTypeKey, 'logs');
         setup({});
       });
 
