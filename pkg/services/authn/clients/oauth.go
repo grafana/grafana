@@ -296,7 +296,6 @@ func withIDTokenHint(redirectURL string, idToken string) string {
 	u.RawQuery = q.Encode()
 
 	return u.String()
-
 }
 
 func isOICDLogout(redirectUrl string) bool {

@@ -413,7 +413,6 @@ func TestOAuth_Logout(t *testing.T) {
 			assert.True(t, invalidateTokenCalled)
 		})
 	}
-
 }
 
 type mockConnector struct {

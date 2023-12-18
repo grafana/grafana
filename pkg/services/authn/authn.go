@@ -75,7 +75,7 @@ type Service interface {
 	RegisterPostLoginHook(hook PostLoginHookFn, priority uint)
 	// RedirectURL will generate url that we can use to initiate auth flow for supported clients.
 	RedirectURL(ctx context.Context, client string, r *Request) (*Redirect, error)
-	// Logout revokes session token and do additonal clean up if client used to authenticate suppoerts it
+	// Logout revokes session token and do additional clean up if client used to authenticate suppoerts it
 	Logout(ctx context.Context, user identity.Requester, sessionToken *usertoken.UserToken) (*Redirect, error)
 	// RegisterClient will register a new authn.Client that can be used for authentication
 	RegisterClient(c Client)
@@ -119,7 +119,7 @@ type RedirectClient interface {
 }
 
 // LogoutCLient is and optional interface that auth client can implement.
-// Clients that implements this interface can implement additonal logic
+// Clients that implements this interface can implement additional logic
 // that should happen during logout and supports client specific redirect URL.
 type LogoutClient interface {
 	Client

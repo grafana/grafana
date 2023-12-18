@@ -29,8 +29,6 @@ import (
 const (
 	viewIndex            = "index"
 	loginErrorCookieName = "login_error"
-	// #nosec G101 - this is not a hardcoded secret
-	postLogoutRedirectParam = "post_logout_redirect_uri"
 )
 
 var setIndexViewData = (*HTTPServer).setIndexViewData

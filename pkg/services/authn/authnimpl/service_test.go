@@ -381,7 +381,6 @@ func TestService_Logout(t *testing.T) {
 						return nil
 					},
 				}
-
 			})
 
 			redirect, err := s.Logout(context.Background(), tt.identity, tt.sessionToken)
