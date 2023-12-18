@@ -116,6 +116,27 @@ var DashboardViewActions = []string{dashboards.ActionDashboardsRead}
 var DashboardEditActions = append(DashboardViewActions, []string{dashboards.ActionDashboardsWrite, dashboards.ActionDashboardsDelete}...)
 var DashboardAdminActions = append(DashboardEditActions, []string{dashboards.ActionDashboardsPermissionsRead, dashboards.ActionDashboardsPermissionsWrite}...)
 
+func getDashboardViewActions(features featuremgmt.FeatureToggles) []string {
+	if features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
+		return append(DashboardViewActions, accesscontrol.ActionAnnotationsRead)
+	}
+	return DashboardViewActions
+}
+
+func getDashboardEditActions(features featuremgmt.FeatureToggles) []string {
+	if features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
+		return append(DashboardEditActions, []string{accesscontrol.ActionAnnotationsRead, accesscontrol.ActionAnnotationsWrite, accesscontrol.ActionAnnotationsDelete, accesscontrol.ActionAnnotationsCreate}...)
+	}
+	return DashboardEditActions
+}
+
+func getDashboardAdminActions(features featuremgmt.FeatureToggles) []string {
+	if features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
+		return append(DashboardAdminActions, []string{accesscontrol.ActionAnnotationsRead, accesscontrol.ActionAnnotationsWrite, accesscontrol.ActionAnnotationsDelete, accesscontrol.ActionAnnotationsCreate}...)
+	}
+	return DashboardAdminActions
+}
+
 func ProvideDashboardPermissions(
 	features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
 	license licensing.Licensing, dashboardStore dashboards.Store, folderService folder.Service, service accesscontrol.Service,
@@ -128,12 +149,6 @@ func ProvideDashboardPermissions(
 			return nil, err
 		}
 		return queryResult, nil
-	}
-
-	if features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
-		DashboardViewActions = append(DashboardViewActions, accesscontrol.ActionAnnotationsRead)
-		DashboardEditActions = append(DashboardEditActions, []string{accesscontrol.ActionAnnotationsRead, accesscontrol.ActionAnnotationsWrite, accesscontrol.ActionAnnotationsDelete, accesscontrol.ActionAnnotationsCreate}...)
-		DashboardAdminActions = append(DashboardAdminActions, []string{accesscontrol.ActionAnnotationsRead, accesscontrol.ActionAnnotationsWrite, accesscontrol.ActionAnnotationsDelete, accesscontrol.ActionAnnotationsCreate}...)
 	}
 
 	options := resourcepermissions.Options{
@@ -180,9 +195,9 @@ func ProvideDashboardPermissions(
 			ServiceAccounts: true,
 		},
 		PermissionsToActions: map[string][]string{
-			"View":  DashboardViewActions,
-			"Edit":  DashboardEditActions,
-			"Admin": DashboardAdminActions,
+			"View":  getDashboardViewActions(features),
+			"Edit":  getDashboardEditActions(features),
+			"Admin": getDashboardAdminActions(features),
 		},
 		ReaderRoleName: "Dashboard permission reader",
 		WriterRoleName: "Dashboard permission writer",
@@ -219,12 +234,6 @@ func ProvideFolderPermissions(
 	license licensing.Licensing, dashboardStore dashboards.Store, folderService folder.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service,
 ) (*FolderPermissionsService, error) {
-	if features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
-		DashboardViewActions = append(DashboardViewActions, accesscontrol.ActionAnnotationsRead)
-		DashboardEditActions = append(DashboardEditActions, []string{accesscontrol.ActionAnnotationsRead, accesscontrol.ActionAnnotationsWrite, accesscontrol.ActionAnnotationsDelete, accesscontrol.ActionAnnotationsCreate}...)
-		DashboardAdminActions = append(DashboardAdminActions, []string{accesscontrol.ActionAnnotationsRead, accesscontrol.ActionAnnotationsWrite, accesscontrol.ActionAnnotationsDelete, accesscontrol.ActionAnnotationsCreate}...)
-	}
-
 	options := resourcepermissions.Options{
 		Resource:          "folders",
 		ResourceAttribute: "uid",
@@ -251,9 +260,9 @@ func ProvideFolderPermissions(
 			ServiceAccounts: true,
 		},
 		PermissionsToActions: map[string][]string{
-			"View":  append(DashboardViewActions, FolderViewActions...),
-			"Edit":  append(DashboardEditActions, FolderEditActions...),
-			"Admin": append(DashboardAdminActions, FolderAdminActions...),
+			"View":  append(getDashboardViewActions(features), FolderViewActions...),
+			"Edit":  append(getDashboardEditActions(features), FolderEditActions...),
+			"Admin": append(getDashboardAdminActions(features), FolderAdminActions...),
 		},
 		ReaderRoleName: "Folder permission reader",
 		WriterRoleName: "Folder permission writer",
