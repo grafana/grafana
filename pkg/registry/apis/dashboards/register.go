@@ -226,9 +226,14 @@ func (b *DashboardsAPIBuilder) Authorize(ctx context.Context, attr authorizer.At
 		return authorizer.DecisionNoOpinion, "", nil
 	}
 
-	info, err := request.NamespaceInfoFrom(ctx, false)
+	ns := attr.GetNamespace()
+	if ns == "" {
+		return authorizer.DecisionDeny, "expected namespace", nil
+	}
+
+	info, err := request.ParseNamespace(attr.GetNamespace())
 	if err != nil {
-		return authorizer.DecisionDeny, "", err
+		return authorizer.DecisionDeny, "error reading org from namespace", err
 	}
 
 	// expensive path to lookup permissions for a the single dashboard
@@ -237,7 +242,7 @@ func (b *DashboardsAPIBuilder) Authorize(ctx context.Context, attr authorizer.At
 		OrgID: info.OrgID,
 	})
 	if err != nil {
-		return authorizer.DecisionDeny, "", err
+		return authorizer.DecisionDeny, "error loading dashboard", err
 	}
 
 	ok := false
@@ -257,7 +262,7 @@ func (b *DashboardsAPIBuilder) Authorize(ctx context.Context, attr authorizer.At
 	case "post":
 		ok, err = guardian.CanSave() // vs Edit?
 		if !ok || err != nil {
-			return authorizer.DecisionDeny, "can not view dashboard", err
+			return authorizer.DecisionDeny, "can not save dashboard", err
 		}
 	case "update":
 		fallthrough
@@ -266,16 +271,16 @@ func (b *DashboardsAPIBuilder) Authorize(ctx context.Context, attr authorizer.At
 	case "put":
 		ok, err = guardian.CanEdit() // vs Save
 		if !ok || err != nil {
-			return authorizer.DecisionDeny, "can not view dashboard", err
+			return authorizer.DecisionDeny, "can not edit dashboard", err
 		}
 	case "delete":
 		ok, err = guardian.CanDelete()
 		if !ok || err != nil {
-			return authorizer.DecisionDeny, "can not view dashboard", err
+			return authorizer.DecisionDeny, "can not delete dashboard", err
 		}
 	default:
 		b.log.Info("unknown verb", "verb", attr.GetVerb())
-		return authorizer.DecisionNoOpinion, "", nil // Unknown verb
+		return authorizer.DecisionNoOpinion, "unsupported verb", nil // Unknown verb
 	}
 	return authorizer.DecisionAllow, "", nil
 }
