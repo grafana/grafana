@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -96,6 +97,10 @@ func (b *TestingAPIBuilder) GetAPIGroupInfo(
 
 func (b *TestingAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return example.GetOpenAPIDefinitions
+}
+
+func (b *TestingAPIBuilder) GetAuthorizer() authorizer.Authorizer {
+	return nil
 }
 
 // Register additional routes with the server

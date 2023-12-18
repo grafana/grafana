@@ -7,19 +7,22 @@ import (
 )
 
 type DashboardRow struct {
-	// Dashboard value
+	// Dashboard resource
 	Dash *v0alpha1.Dashboard
 
+	// Title -- this may come from saved metadata rather than the body
 	Title string
 
+	// The folder UID (needed for access control checks)
 	FolderUID string
 
+	// Needed for fast summary access
 	Tags []string
 
 	// Size (in bytes) of the dashboard payload
 	Bytes int
 
-	// Last time the dashboard was updated
+	// Last time the dashboard was updated (used in the continue token)
 	UpdatedTime int64
 
 	// The token we can use that will start a new connection that includes

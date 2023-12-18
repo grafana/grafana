@@ -24,8 +24,8 @@ var (
 	_ rest.Getter               = (*dashboardStorage)(nil)
 	_ rest.Lister               = (*dashboardStorage)(nil)
 	_ rest.Creater              = (*dashboardStorage)(nil)
-	// _ rest.Updater              = (*dashboardStorage)(nil)
-	_ rest.GracefulDeleter = (*dashboardStorage)(nil)
+	_ rest.Updater              = (*dashboardStorage)(nil)
+	_ rest.GracefulDeleter      = (*dashboardStorage)(nil)
 )
 
 type dashboardStorage struct {
@@ -106,11 +106,12 @@ func (s *dashboardStorage) Update(ctx context.Context,
 
 	obj, err := objInfo.UpdatedObject(ctx, old)
 	if err != nil {
+		// ???? WHY not found here ???
 		return old, created, err
 	}
 	p, ok := obj.(*v0alpha1.Dashboard)
 	if !ok {
-		return nil, created, fmt.Errorf("expected playlist after update")
+		return nil, created, fmt.Errorf("expected dashboard after update")
 	}
 
 	_, created, err = s.access.SaveDashboard(ctx, info.OrgID, p)
