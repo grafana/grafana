@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import React from 'react';
 import { useHistory } from 'react-router-dom';
 
-import { UrlQueryValue } from '@grafana/data';
-import { Button, ButtonGroup, IconButton, Tooltip, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, UrlQueryValue } from '@grafana/data';
+import { Button, ButtonGroup, useStyles2 } from '@grafana/ui';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 export interface ReturnToPreviousProps {
   href: UrlQueryValue;
@@ -17,33 +18,43 @@ export const ReturnToPrevious = ({ href, title, children }: ReturnToPreviousProp
   const handleOnClick = () => {
     href && history.push(href.toString());
   };
+  const params = useQueryParams()[0];
+  const closeButton = () => {
+    params.returnToUrl = null;
+    params.returnToTitle = null;
+    history.push({ search: params.toString() });
+  };
 
-  const titleLength = 15;
-  const shortenTitle = children && children.toString().length > titleLength ? true : false;
+  const titleLength = 37;
   const button = () => {
     return (
-      <ButtonGroup>
+      <ButtonGroup className={styles.wrapper}>
         <Button
           icon="angle-left"
           size="sm"
-          variant="secondary"
+          variant="primary"
+          fill="outline"
           onClick={handleOnClick}
           title={title?.toString()}
           className={styles.returnToPrevious}
         >
-          Back to {children?.toString()}
+          Back to {children?.toString().slice(0, titleLength).concat('...')}
         </Button>
-        <IconButton name="times" aria-label="Close" variant="secondary" />
+        <Button icon="times" aria-label="Close" variant="primary" fill="outline" size="sm" onClick={closeButton} />
       </ButtonGroup>
     );
   };
-  return shortenTitle && children ? <Tooltip content={`Back to ${children.toString()}`}>{button()}</Tooltip> : button();
+  return button();
 };
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   returnToPrevious: css({
-    maxWidth: '250px',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
+  }),
+  wrapper: css({
+    backgroundColor: theme.colors.background.secondary,
+    display: 'flex',
+    justifyContent: 'space-between',
   }),
 });
 
