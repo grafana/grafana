@@ -138,3 +138,13 @@ You can then list the previously-created playlists with:
 ```sh
 kubectl --kubeconfig=./grafana.kubeconfig get playlist
 ```
+
+## Changing protobuf interface
+
+- install [protoc](https://grpc.io/docs/protoc-installation/)
+- install the protocol compiler plugin for Go
+```sh
+go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+```
+- make changes in `.proto` file
+- to compile all protobuf files in the repository run `make protobuf` at its top level

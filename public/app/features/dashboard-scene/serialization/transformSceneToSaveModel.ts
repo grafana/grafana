@@ -51,6 +51,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   const variablesSet = state.$variables;
   const body = state.body;
   let refresh_intervals = defaultTimePickerConfig.refresh_intervals;
+  let hideTimePicker: boolean = defaultTimePickerConfig.hidden;
   let panels: Panel[] = [];
   let graphTooltip = defaultDashboard.graphTooltip;
   let variables: VariableModel[] = [];
@@ -87,6 +88,8 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   }
 
   if (state.controls && state.controls[0] instanceof DashboardControls) {
+    hideTimePicker = state.controls[0].state.hideTimeControls ?? hideTimePicker;
+
     const timeControls = state.controls[0].state.timeControls;
     for (const control of timeControls) {
       if (control instanceof SceneRefreshPicker && control.state.intervals) {
@@ -123,6 +126,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     timepicker: {
       ...defaultTimePickerConfig,
       refresh_intervals,
+      hidden: hideTimePicker,
     },
     panels,
     annotations: {

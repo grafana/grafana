@@ -40,7 +40,6 @@ type SocialAzureAD struct {
 	cache                remotecache.CacheStorage
 	allowedOrganizations []string
 	forceUseGraphAPI     bool
-	skipOrgRoleSync      bool
 }
 
 type azureClaims struct {
@@ -76,16 +75,13 @@ type keySetJWKS struct {
 func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) *SocialAzureAD {
 	config := createOAuthConfig(info, cfg, social.AzureADProviderName)
 	provider := &SocialAzureAD{
-		SocialBase:           newSocialBase(social.AzureADProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:           newSocialBase(social.AzureADProviderName, config, info, cfg.AutoAssignOrgRole, *features),
 		cache:                cache,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 		forceUseGraphAPI:     MustBool(info.Extra[forceUseGraphAPIKey], false),
-		skipOrgRoleSync:      cfg.AzureADSkipOrgRoleSync,
-		// FIXME: Move skipOrgRoleSync to OAuthInfo
-		// skipOrgRoleSync: info.SkipOrgRoleSync
 	}
 
-	if info.UseRefreshToken && features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) {
+	if info.UseRefreshToken {
 		appendUniqueScope(config, social.OfflineAccessScope)
 	}
 
@@ -120,7 +116,7 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 	// setting the role, grafanaAdmin to empty to reflect that we are not syncronizing with the external provider
 	var role roletype.RoleType
 	var grafanaAdmin bool
-	if !s.skipOrgRoleSync {
+	if !s.info.SkipOrgRoleSync {
 		role, grafanaAdmin, err = s.extractRoleAndAdmin(claims)
 		if err != nil {
 			return nil, err
@@ -147,11 +143,11 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 	}
 
 	var isGrafanaAdmin *bool = nil
-	if s.allowAssignGrafanaAdmin {
+	if s.info.AllowAssignGrafanaAdmin {
 		isGrafanaAdmin = &grafanaAdmin
 	}
 
-	if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
+	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
@@ -250,7 +246,7 @@ func (claims *azureClaims) extractEmail() string {
 // extractRoleAndAdmin extracts the role from the claims and returns the role and whether the user is a Grafana admin.
 func (s *SocialAzureAD) extractRoleAndAdmin(claims *azureClaims) (org.RoleType, bool, error) {
 	if len(claims.Roles) == 0 {
-		if s.roleAttributeStrict {
+		if s.info.RoleAttributeStrict {
 			return "", false, errRoleAttributeStrictViolation.Errorf("AzureAD OAuth: unset role")
 		}
 		return s.defaultRole(), false, nil
@@ -268,7 +264,7 @@ func (s *SocialAzureAD) extractRoleAndAdmin(claims *azureClaims) (org.RoleType, 
 		}
 	}
 
-	if s.roleAttributeStrict {
+	if s.info.RoleAttributeStrict {
 		return "", false, errRoleAttributeStrictViolation.Errorf("AzureAD OAuth: idP did not return a valid role %q", claims.Roles)
 	}
 
@@ -394,7 +390,7 @@ func (s *SocialAzureAD) groupsGraphAPIURL(claims *azureClaims, token *oauth2.Tok
 func (s *SocialAzureAD) SupportBundleContent(bf *bytes.Buffer) error {
 	bf.WriteString("## AzureAD specific configuration\n\n")
 	bf.WriteString("```ini\n")
-	bf.WriteString(fmt.Sprintf("allowed_groups = %v\n", s.allowedGroups))
+	bf.WriteString(fmt.Sprintf("allowed_groups = %v\n", s.info.AllowedGroups))
 	bf.WriteString(fmt.Sprintf("forceUseGraphAPI = %v\n", s.forceUseGraphAPI))
 	bf.WriteString("```\n\n")
 
