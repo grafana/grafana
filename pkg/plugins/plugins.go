@@ -406,7 +406,6 @@ func (p *Plugin) executablePath(f string) string {
 	if os == "windows" {
 		extension = ".exe"
 	}
-
 	return path.Join(p.FS.Base(), fmt.Sprintf("%s_%s_%s%s", f, os, strings.ToLower(arch), extension))
 }
 
