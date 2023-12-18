@@ -12,6 +12,7 @@ labels:
     - oss
 menuTitle: Create a dashboard
 title: Create a dashboard
+description: Create and edit a dashboard
 weight: 1
 ---
 

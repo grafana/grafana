@@ -22,44 +22,26 @@ import (
 
 type SocialBase struct {
 	*oauth2.Config
-	info                    *social.OAuthInfo
-	log                     log.Logger
-	allowSignup             bool
-	allowAssignGrafanaAdmin bool
-	allowedDomains          []string
-	allowedGroups           []string
-
-	roleAttributePath   string
-	roleAttributeStrict bool
-	autoAssignOrgRole   string
-	skipOrgRoleSync     bool
-	features            featuremgmt.FeatureManager
-	useRefreshToken     bool
+	info              *social.OAuthInfo
+	log               log.Logger
+	autoAssignOrgRole string
+	features          featuremgmt.FeatureManager
 }
 
 func newSocialBase(name string,
 	config *oauth2.Config,
 	info *social.OAuthInfo,
 	autoAssignOrgRole string,
-	skipOrgRoleSync bool,
 	features featuremgmt.FeatureManager,
 ) *SocialBase {
 	logger := log.New("oauth." + name)
 
 	return &SocialBase{
-		Config:                  config,
-		info:                    info,
-		log:                     logger,
-		allowSignup:             info.AllowSignup,
-		allowAssignGrafanaAdmin: info.AllowAssignGrafanaAdmin,
-		allowedDomains:          info.AllowedDomains,
-		allowedGroups:           info.AllowedGroups,
-		roleAttributePath:       info.RoleAttributePath,
-		roleAttributeStrict:     info.RoleAttributeStrict,
-		autoAssignOrgRole:       autoAssignOrgRole,
-		skipOrgRoleSync:         skipOrgRoleSync,
-		features:                features,
-		useRefreshToken:         info.UseRefreshToken,
+		Config:            config,
+		info:              info,
+		log:               logger,
+		autoAssignOrgRole: autoAssignOrgRole,
+		features:          features,
 	}
 }
 
@@ -70,13 +52,13 @@ type groupStruct struct {
 func (s *SocialBase) SupportBundleContent(bf *bytes.Buffer) error {
 	bf.WriteString("## Client configuration\n\n")
 	bf.WriteString("```ini\n")
-	bf.WriteString(fmt.Sprintf("allow_assign_grafana_admin = %v\n", s.allowAssignGrafanaAdmin))
-	bf.WriteString(fmt.Sprintf("allow_sign_up = %v\n", s.allowSignup))
-	bf.WriteString(fmt.Sprintf("allowed_domains = %v\n", s.allowedDomains))
+	bf.WriteString(fmt.Sprintf("allow_assign_grafana_admin = %v\n", s.info.AllowAssignGrafanaAdmin))
+	bf.WriteString(fmt.Sprintf("allow_sign_up = %v\n", s.info.AllowSignup))
+	bf.WriteString(fmt.Sprintf("allowed_domains = %v\n", s.info.AllowedDomains))
 	bf.WriteString(fmt.Sprintf("auto_assign_org_role = %v\n", s.autoAssignOrgRole))
-	bf.WriteString(fmt.Sprintf("role_attribute_path = %v\n", s.roleAttributePath))
-	bf.WriteString(fmt.Sprintf("role_attribute_strict = %v\n", s.roleAttributeStrict))
-	bf.WriteString(fmt.Sprintf("skip_org_role_sync = %v\n", s.skipOrgRoleSync))
+	bf.WriteString(fmt.Sprintf("role_attribute_path = %v\n", s.info.RoleAttributePath))
+	bf.WriteString(fmt.Sprintf("role_attribute_strict = %v\n", s.info.RoleAttributeStrict))
+	bf.WriteString(fmt.Sprintf("skip_org_role_sync = %v\n", s.info.SkipOrgRoleSync))
 	bf.WriteString(fmt.Sprintf("client_id = %v\n", s.Config.ClientID))
 	bf.WriteString(fmt.Sprintf("client_secret = %v ; issue if empty\n", strings.Repeat("*", len(s.Config.ClientSecret))))
 	bf.WriteString(fmt.Sprintf("auth_url = %v\n", s.Config.Endpoint.AuthURL))
@@ -89,8 +71,8 @@ func (s *SocialBase) SupportBundleContent(bf *bytes.Buffer) error {
 }
 
 func (s *SocialBase) extractRoleAndAdminOptional(rawJSON []byte, groups []string) (org.RoleType, bool, error) {
-	if s.roleAttributePath == "" {
-		if s.roleAttributeStrict {
+	if s.info.RoleAttributePath == "" {
+		if s.info.RoleAttributeStrict {
 			return "", false, errRoleAttributePathNotSet.Errorf("role_attribute_path not set and role_attribute_strict is set")
 		}
 		return "", false, nil
@@ -102,7 +84,7 @@ func (s *SocialBase) extractRoleAndAdminOptional(rawJSON []byte, groups []string
 		return "", false, errInvalidRole.Errorf("invalid role: %s", role)
 	}
 
-	if s.roleAttributeStrict {
+	if s.info.RoleAttributeStrict {
 		return "", false, errRoleAttributeStrictViolation.Errorf("idP did not return a role attribute, but role_attribute_strict is set")
 	}
 
@@ -119,13 +101,13 @@ func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string) (org.R
 }
 
 func (s *SocialBase) searchRole(rawJSON []byte, groups []string) (org.RoleType, bool) {
-	role, err := s.searchJSONForStringAttr(s.roleAttributePath, rawJSON)
+	role, err := s.searchJSONForStringAttr(s.info.RoleAttributePath, rawJSON)
 	if err == nil && role != "" {
 		return getRoleFromSearch(role)
 	}
 
 	if groupBytes, err := json.Marshal(groupStruct{groups}); err == nil {
-		role, err := s.searchJSONForStringAttr(s.roleAttributePath, groupBytes)
+		role, err := s.searchJSONForStringAttr(s.info.RoleAttributePath, groupBytes)
 		if err == nil && role != "" {
 			return getRoleFromSearch(role)
 		}
@@ -147,11 +129,11 @@ func (s *SocialBase) defaultRole() org.RoleType {
 }
 
 func (s *SocialBase) isGroupMember(groups []string) bool {
-	if len(s.allowedGroups) == 0 {
+	if len(s.info.AllowedGroups) == 0 {
 		return true
 	}
 
-	for _, allowedGroup := range s.allowedGroups {
+	for _, allowedGroup := range s.info.AllowedGroups {
 		for _, group := range groups {
 			if group == allowedGroup {
 				return true

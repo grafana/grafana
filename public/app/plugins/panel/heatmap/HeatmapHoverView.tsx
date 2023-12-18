@@ -20,7 +20,7 @@ import { useStyles2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
-import { ColorIndicator, LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
+import { ColorIndicator, ColorPlacement, LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
@@ -28,7 +28,7 @@ import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverVi
 
 import { HeatmapData } from './fields';
 import { renderHistogram } from './renderHistogram';
-import { getSparseCellMinMax, formatMilliseconds, getFieldFromData, getHoverCellColor } from './tooltip/utils';
+import { getSparseCellMinMax, getFieldFromData, getHoverCellColor, formatMilliseconds } from './tooltip/utils';
 
 interface Props {
   dataIdxs: Array<number | null>;
@@ -213,37 +213,64 @@ const HeatmapHoverCell = ({
 
   const { cellColor, colorPalette } = getHoverCellColor(data, index);
 
-  const getLabelValue = (): LabelValue[] => {
+  const getContentLabels = (): LabelValue[] => {
+    if (nonNumericOrdinalDisplay) {
+      return [{ label: 'Name', value: nonNumericOrdinalDisplay }];
+    }
+
+    switch (data.yLayout) {
+      case HeatmapCellLayout.unknown:
+        return [{ label: '', value: yDisp(yBucketMin) }];
+    }
+
     return [
       {
-        label: getFieldDisplayName(countField, data.heatmap),
-        value: data.display!(count),
-        color: cellColor ?? '#FFF',
-        colorIndicator: ColorIndicator.value,
+        label: 'Bucket',
+        value: `${yDisp(yBucketMin)}` + '-' + `${yDisp(yBucketMax)}`,
       },
     ];
   };
 
   const getHeaderLabel = (): LabelValue => {
-    if (nonNumericOrdinalDisplay) {
-      return { label: 'Name', value: nonNumericOrdinalDisplay };
-    }
-
-    switch (data.yLayout) {
-      case HeatmapCellLayout.unknown:
-        return { label: '', value: yDisp(yBucketMin) };
-    }
-
     return {
-      label: 'Bucket',
-      value: `${yDisp(yBucketMin)}` + '-' + `${yDisp(yBucketMax)}`,
+      label: '',
+      value: xDisp(xBucketMax)!,
     };
   };
 
-  // Color scale
-  const getCustomValueDisplay = (): ReactElement | null => {
+  const getContentLabelValue = (): LabelValue[] => {
+    const fromToInt: LabelValue[] = interval ? [{ label: 'Duration', value: formatMilliseconds(interval) }] : [];
+
+    return [
+      {
+        label: getFieldDisplayName(countField, data.heatmap),
+        value: data.display!(count),
+        color: cellColor ?? '#FFF',
+        colorPlacement: ColorPlacement.trailing,
+        colorIndicator: ColorIndicator.value,
+      },
+      ...getContentLabels(),
+      ...fromToInt,
+    ];
+  };
+
+  const getCustomContent = () => {
+    let content: ReactElement[] = [];
+    // Histogram
+    if (showHistogram) {
+      content.push(
+        <canvas
+          width={histCanWidth}
+          height={histCanHeight}
+          ref={can}
+          style={{ width: histCssWidth + 'px', height: histCssHeight + 'px' }}
+        />
+      );
+    }
+
+    // Color scale
     if (colorPalette && showColorScale) {
-      return (
+      content.push(
         <ColorScale
           colorPalette={colorPalette}
           min={data.heatmapColors?.minValue!}
@@ -254,42 +281,7 @@ const HeatmapHoverCell = ({
       );
     }
 
-    return null;
-  };
-
-  const getContentLabelValue = (): LabelValue[] => {
-    let fromToInt = [
-      {
-        label: 'From',
-        value: xDisp(xBucketMin)!,
-      },
-    ];
-
-    if (data.xLayout !== HeatmapCellLayout.unknown) {
-      fromToInt.push({ label: 'To', value: xDisp(xBucketMax)! });
-
-      if (interval) {
-        const formattedString = formatMilliseconds(interval);
-        fromToInt.push({ label: 'Interval', value: formattedString });
-      }
-    }
-
-    return fromToInt;
-  };
-
-  const getCustomContent = (): ReactElement | null => {
-    if (showHistogram) {
-      return (
-        <canvas
-          width={histCanWidth}
-          height={histCanHeight}
-          ref={can}
-          style={{ width: histCssWidth + 'px', height: histCssHeight + 'px' }}
-        />
-      );
-    }
-
-    return null;
+    return content;
   };
 
   // @TODO remove this when adding annotations support
@@ -299,11 +291,7 @@ const HeatmapHoverCell = ({
 
   return (
     <div className={styles.wrapper}>
-      <VizTooltipHeader
-        headerLabel={getHeaderLabel()}
-        keyValuePairs={getLabelValue()}
-        customValueDisplay={getCustomValueDisplay()}
-      />
+      <VizTooltipHeader headerLabel={getHeaderLabel()} />
       <VizTooltipContent contentLabelValue={getContentLabelValue()} customContent={getCustomContent()} />
       {isPinned && <VizTooltipFooter dataLinks={links} canAnnotate={canAnnotate} />}
     </div>

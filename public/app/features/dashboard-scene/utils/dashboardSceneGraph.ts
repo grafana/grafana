@@ -4,10 +4,9 @@ import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene } from '../scene/DashboardScene';
 
 function getTimePicker(scene: DashboardScene) {
-  const controls = scene.state.controls;
+  const dashboardControls = getDashboardControls(scene);
 
-  if (controls && controls[0] instanceof DashboardControls) {
-    const dashboardControls = controls[0];
+  if (dashboardControls) {
     const timePicker = dashboardControls.state.timeControls.find((c) => c instanceof SceneTimePicker);
     if (timePicker && timePicker instanceof SceneTimePicker) {
       return timePicker;
@@ -18,8 +17,10 @@ function getTimePicker(scene: DashboardScene) {
 }
 
 function getRefreshPicker(scene: DashboardScene) {
-  if (scene.state.controls?.[0] instanceof DashboardControls) {
-    for (const control of scene.state.controls[0].state.timeControls) {
+  const dashboardControls = getDashboardControls(scene);
+
+  if (dashboardControls) {
+    for (const control of dashboardControls.state.timeControls) {
       if (control instanceof SceneRefreshPicker) {
         return control;
       }
@@ -28,7 +29,15 @@ function getRefreshPicker(scene: DashboardScene) {
   return null;
 }
 
+function getDashboardControls(scene: DashboardScene) {
+  if (scene.state.controls?.[0] instanceof DashboardControls) {
+    return scene.state.controls[0];
+  }
+  return null;
+}
+
 export const dashboardSceneGraph = {
   getTimePicker,
   getRefreshPicker,
+  getDashboardControls,
 };
