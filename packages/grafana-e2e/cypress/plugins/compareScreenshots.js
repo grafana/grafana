@@ -1,34 +1,27 @@
 'use strict';
-const BlinkDiff = require('blink-diff');
+const { writeFileSync } = require('fs');
 const { resolve } = require('path');
+const PNG = require('pngjs').PNG;
+const pixelmatch = require('pixelmatch');
 
-// @todo use npmjs.com/pixelmatch or an available cypress plugin
 const compareScreenshots = async ({ config, screenshotsFolder, specName }) => {
   const name = config.name || config; // @todo use `??`
   const threshold = config.threshold || 0.001; // @todo use `??`
 
   const imageAPath = `${screenshotsFolder}/${specName}/${name}.png`;
+  const imageA = PNG.sync.read(fs.readFileSync(imageAPath));
+
   const imageBPath = resolve(`${screenshotsFolder}/../expected/${specName}/${name}.png`);
+  const imageB = PNG.sync.read(fs.readFileSync(imageBPath));
+
+  const {width, height} = imageA;
+  const diff = new PNG({width, height});
+  const mismatchedPixels = pixelmatch(imageA.data, imageB.data, diff.data, width, height, { threshold });
 
   const imageOutputPath = screenshotsFolder.endsWith('actual') ? imageAPath.replace('.png', '.diff.png') : undefined;
+  writeFileSync(imageOutputPath, PNG.sync.write(diff));
 
-  const { code } = await new Promise((resolve, reject) => {
-    new BlinkDiff({
-      imageAPath,
-      imageBPath,
-      imageOutputPath,
-      threshold,
-      thresholdType: BlinkDiff.THRESHOLD_PERCENT,
-    }).run((error, result) => {
-      if (error) {
-        reject(error);
-      } else {
-        resolve(result);
-      }
-    });
-  });
-
-  if (code <= 1) {
+  if (mismatchedPixels > 0) {
     let msg = `\nThe screenshot [${imageAPath}] differs from [${imageBPath}]`;
     msg += '\n';
     msg += '\nCheck the Artifacts tab in the CircleCi build output for the actual screenshots.';
