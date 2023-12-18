@@ -3742,7 +3742,6 @@ clone:
   disable: true
 depends_on: []
 environment:
-  CGO_ENABLED: "1"
   EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
@@ -3775,7 +3774,6 @@ steps:
   image: golang:1.21.5-windowsservercore-1809
   name: wire-install
 - commands:
-  - go env
   - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
@@ -4631,6 +4629,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: cdf3e1acec76c00446ada66e80de122feb63d59a7418a3a304fcf978a819ad37
+hmac: df80b5092eb1332e4cd0ea83df7011790bf745788f7f38a0571cd044319e07af
 
 ...

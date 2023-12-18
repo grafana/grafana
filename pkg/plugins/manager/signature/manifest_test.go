@@ -365,7 +365,7 @@ func TestFSPathSeparatorFiles(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			pfs, err := newPathSeparatorOverrideFS(
-				tc.sep, plugins.NewInMemoryFS(
+				"/", plugins.NewInMemoryFS(
 					map[string][]byte{"a": nil, strings.Join([]string{"a", "b", "c"}, tc.sep): nil},
 				),
 			)

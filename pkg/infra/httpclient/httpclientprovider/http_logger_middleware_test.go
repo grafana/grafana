@@ -47,8 +47,6 @@ func TestHTTPLoggerMiddleware(t *testing.T) {
 		f, err := os.CreateTemp("", "example_*.har")
 		require.NoError(t, err)
 		defer func() {
-			err = f.Close()
-			require.NoError(t, err)
 			err := os.Remove(f.Name())
 			require.NoError(t, err)
 		}()

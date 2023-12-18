@@ -1,7 +1,6 @@
 package util
 
 import (
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,16 +16,16 @@ func TestCleanRelativePath(t *testing.T) {
 			expectedPath: ".",
 		},
 		{
-			input:        filepath.Join(string(filepath.Separator), "test", "test.txt"),
-			expectedPath: filepath.Join("test", "test.txt"),
+			input:        "/test/test.txt",
+			expectedPath: "test/test.txt",
 		},
 		{
-			input:        filepath.Join("..", string(filepath.Separator), "..", string(filepath.Separator), "test", "test.txt"),
-			expectedPath: filepath.Join("test", "test.txt"),
+			input:        "../../test/test.txt",
+			expectedPath: "test/test.txt",
 		},
 		{
-			input:        filepath.Join(".", string(filepath.Separator), "..", string(filepath.Separator), "test", "test.txt"),
-			expectedPath: filepath.Join("test", "test.txt"),
+			input:        "./../test/test.txt",
+			expectedPath: "test/test.txt",
 		},
 	}
 

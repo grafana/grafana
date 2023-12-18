@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/fs"
 	"path"
-	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
@@ -408,7 +407,7 @@ func (p *Plugin) executablePath(f string) string {
 		extension = ".exe"
 	}
 
-	return path.Join(p.FS.Base(), fmt.Sprintf("%s_%s_%s%s", filepath.FromSlash(f), os, strings.ToLower(arch), extension))
+	return path.Join(p.FS.Base(), fmt.Sprintf("%s_%s_%s%s", f, os, strings.ToLower(arch), extension))
 }
 
 type PluginClient interface {
