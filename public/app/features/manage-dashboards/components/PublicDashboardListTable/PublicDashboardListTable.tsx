@@ -67,9 +67,11 @@ const PublicDashboardCard = ({ pd }: { pd: PublicDashboardListResponse }) => {
     <Card className={styles.card} href={!isOrphaned ? `/d/${pd.dashboardUid}` : undefined}>
       <Card.Heading className={styles.heading}>
         {!isOrphaned ? (
-          <Trans i18nKey="public-dashboard-list-table.public-dashboard.not-orphaned-title">
-            <span>{{ title: pd.title }}</span>
-          </Trans>
+          <span>
+            <Trans i18nKey="public-dashboard-list-table.public-dashboard.not-orphaned-title">
+              {{ title: pd.title }}
+            </Trans>
+          </span>
         ) : (
           <Tooltip
             content={t(
