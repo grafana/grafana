@@ -62,6 +62,10 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 			}
 		}
 
-		responder.Object(200, rsp) // TODO... 200 vs ????
+		statusCode := http.StatusOK
+		if healthResponse.Status != backend.HealthStatusOk {
+			statusCode = http.StatusBadRequest
+		}
+		responder.Object(statusCode, rsp)
 	}), nil
 }
