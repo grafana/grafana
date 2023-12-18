@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboards/access"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	dashboardssvc "github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
@@ -39,7 +38,7 @@ var _ grafanaapiserver.APIGroupBuilder = (*DashboardsAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type DashboardsAPIBuilder struct {
-	dashboardService dashboardssvc.DashboardService
+	dashboardService dashboards.DashboardService
 
 	dashboardVersionService dashver.Service
 	accessControl           accesscontrol.AccessControl
@@ -52,7 +51,7 @@ type DashboardsAPIBuilder struct {
 
 func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	apiregistration grafanaapiserver.APIRegistrar,
-	dashboardService dashboardssvc.DashboardService,
+	dashboardService dashboards.DashboardService,
 	dashboardVersionService dashver.Service,
 	accessControl accesscontrol.AccessControl,
 	dashStore dashboards.Store,
@@ -233,7 +232,7 @@ func (b *DashboardsAPIBuilder) Authorize(ctx context.Context, attr authorizer.At
 	}
 
 	// expensive path to lookup permissions for a the single dashboard
-	dto, err := b.dashboardService.GetDashboard(ctx, &dashboardssvc.GetDashboardQuery{
+	dto, err := b.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{
 		UID:   attr.GetName(),
 		OrgID: info.OrgID,
 	})
@@ -275,6 +274,7 @@ func (b *DashboardsAPIBuilder) Authorize(ctx context.Context, attr authorizer.At
 			return authorizer.DecisionDeny, "can not view dashboard", err
 		}
 	default:
+		b.log.Info("unknown verb", "verb", attr.GetVerb())
 		return authorizer.DecisionNoOpinion, "", nil // Unknown verb
 	}
 	return authorizer.DecisionAllow, "", nil
