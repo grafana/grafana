@@ -7,7 +7,6 @@ import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
 import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useSelector } from 'app/types';
 
 import { Branding } from '../../Branding/Branding';
@@ -15,7 +14,6 @@ import { enrichHelpItem } from '../MegaMenu/utils';
 import { NewsContainer } from '../News/NewsContainer';
 import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitcher';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
-import { ReturnToPrevious } from '../ReturnToPrevious/ReturnToPrevious';
 import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
 import { SignInLink } from './SignInLink';
@@ -26,7 +24,6 @@ import { TopSearchBarSection } from './TopSearchBarSection';
 export const TopSearchBar = React.memo(function TopSearchBar() {
   const navIndex = useSelector((state) => state.navIndex);
   const location = useLocation();
-  const params = useQueryParams()[0];
 
   const helpNode = cloneDeep(navIndex['help']);
   const enrichedHelpNode = helpNode ? enrichHelpItem(helpNode) : undefined;
@@ -36,9 +33,7 @@ export const TopSearchBar = React.memo(function TopSearchBar() {
   if (!config.bootData.user.isSignedIn && !config.anonymousEnabled) {
     homeUrl = textUtil.sanitizeUrl(locationUtil.getUrlForPartial(location, { forceLogin: 'true' }));
   }
-  const paramsExist = params?.returnToTitle && params?.returnToUrl;
-  const showReturnToPrevious: boolean = paramsExist && location.pathname !== params.returnToUrl ? true : false;
-  const styles = useStyles2(getStyles, showReturnToPrevious);
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.layout}>
@@ -48,13 +43,6 @@ export const TopSearchBar = React.memo(function TopSearchBar() {
         </a>
         <OrganizationSwitcher />
       </TopSearchBarSection>
-      {showReturnToPrevious && paramsExist && (
-        <TopSearchBarSection>
-          <ReturnToPrevious href={params.returnToUrl} title={params.returnToTitle}>
-            {params.returnToTitle}
-          </ReturnToPrevious>
-        </TopSearchBarSection>
-      )}
       <TopSearchBarSection>
         <TopSearchBarCommandPaletteTrigger />
       </TopSearchBarSection>
@@ -83,7 +71,7 @@ export const TopSearchBar = React.memo(function TopSearchBar() {
   );
 });
 
-const getStyles = (theme: GrafanaTheme2, showReturnToPrevious: boolean) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   layout: css({
     height: TOP_BAR_LEVEL_HEIGHT,
     display: 'flex',
@@ -94,9 +82,7 @@ const getStyles = (theme: GrafanaTheme2, showReturnToPrevious: boolean) => ({
     justifyContent: 'space-between',
 
     [theme.breakpoints.up('sm')]: {
-      gridTemplateColumns: showReturnToPrevious
-        ? '1.5fr 0.25fr minmax(240px, 1fr) 1.5fr'
-        : '1.5fr minmax(240px, 1fr) 1.5fr', // search should not be smaller than 240px
+      gridTemplateColumns: '1.5fr minmax(240px, 1fr) 1.5fr', // search should not be smaller than 240px
       display: 'grid',
 
       justifyContent: 'flex-start',
