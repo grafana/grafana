@@ -8,12 +8,12 @@ import { useStyles2 } from '../../themes';
 
 interface Props {
   dataLinks: Array<LinkModel<Field>>;
-  canAnnotate: boolean;
+  annotate?: () => void;
 }
 
 export const ADD_ANNOTATION_ID = 'add-annotation-button';
 
-export const VizTooltipFooter = ({ dataLinks, canAnnotate }: Props) => {
+export const VizTooltipFooter = ({ dataLinks, annotate }: Props) => {
   const styles = useStyles2(getStyles);
 
   const renderDataLinks = () => {
@@ -33,9 +33,9 @@ export const VizTooltipFooter = ({ dataLinks, canAnnotate }: Props) => {
   return (
     <div className={styles.wrapper}>
       {dataLinks.length > 0 && <div className={styles.dataLinks}>{renderDataLinks()}</div>}
-      {canAnnotate && (
+      {annotate && (
         <div className={styles.addAnnotations}>
-          <Button icon="comment-alt" variant="secondary" size="sm" id={ADD_ANNOTATION_ID}>
+          <Button icon="comment-alt" variant="secondary" size="sm" id={ADD_ANNOTATION_ID} onClick={annotate}>
             Add annotation
           </Button>
         </div>
