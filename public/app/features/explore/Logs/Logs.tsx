@@ -137,7 +137,7 @@ const DEDUP_OPTIONS = [
   LogsDedupStrategy.signature,
 ];
 
-const visualisationTypeKey = 'grafana.explore.logs.visualisationType';
+export const visualisationTypeKey = 'grafana.explore.logs.visualisationType';
 
 const getDefaultVisualisationType = (): LogsVisualisationType => {
   const visualisationType = window.localStorage.getItem(visualisationTypeKey);
