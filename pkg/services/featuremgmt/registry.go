@@ -1278,7 +1278,8 @@ var (
 			FrontendOnly:   true,
 			Expression:     "true",
 			Owner:          grafanaObservabilityLogsSquad,
-			AllowSelfServe: falsePtr,
+			AllowSelfServe: false,
+			Created:        time.Date(2023, time.December, 18, 12, 0, 0, 0, time.UTC),
 		},
 	}
 )
