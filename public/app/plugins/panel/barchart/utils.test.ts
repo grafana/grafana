@@ -211,19 +211,6 @@ describe('BarChart utils', () => {
           null,
         ]
       `);
-
-      const displayLegendValuesAsc = assertIsDefined('legend' in result ? result : null).legend;
-      const legendField = displayLegendValuesAsc.fields[1];
-
-      expect(legendField.values).toMatchInlineSnapshot(`
-      [
-        -10,
-        null,
-        10,
-        null,
-        null,
-      ]
-    `);
     });
 
     it('should remove unit from legend values when stacking is percent', () => {
@@ -239,7 +226,7 @@ describe('BarChart utils', () => {
       const resultAsc = prepareBarChartDisplayValues([frame], createTheme(), {
         stacking: StackingMode.Percent,
       } as Options);
-      const displayLegendValuesAsc = assertIsDefined('legend' in resultAsc ? resultAsc : null).legend;
+      const displayLegendValuesAsc = assertIsDefined('viz' in resultAsc ? resultAsc : null).viz[0];
 
       expect(displayLegendValuesAsc.fields[1].config.unit).toBeUndefined();
       expect(displayLegendValuesAsc.fields[2].config.unit).toBeUndefined();
