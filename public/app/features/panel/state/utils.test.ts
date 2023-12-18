@@ -9,7 +9,7 @@ describe('panel state utils', () => {
       { id: 'timeseries', name: 'Graph (old)' },
       { id: 'timeline', name: 'Timeline' },
     ] as PanelPluginMeta[];
-    const found = filterPluginList(pluginsList, escapeStringForRegex('gra'), { id: 'xyz' } as PanelPluginMeta);
+    const found = filterPluginList(pluginsList, escapeStringForRegex('gra'), 'xyz');
     expect(found.map((v) => v.id)).toEqual(['graph', 'timeseries']);
   });
 
@@ -20,7 +20,7 @@ describe('panel state utils', () => {
       { id: 'timeline', name: 'Timeline' },
       { id: 'panelwithdashes', name: 'Panel-With-Dashes' },
     ] as PanelPluginMeta[];
-    const found = filterPluginList(pluginsList, escapeStringForRegex('panel-'), { id: 'xyz' } as PanelPluginMeta);
+    const found = filterPluginList(pluginsList, escapeStringForRegex('panel-'), 'xyz');
     expect(found.map((v) => v.id)).toEqual(['panelwithdashes']);
   });
 });

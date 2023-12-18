@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -48,6 +49,78 @@ func TestInitializer_envVars(t *testing.T) {
 		assert.Equal(t, "GF_ENTERPRISE_LICENSE_PATH=/path/to/ent/license", envVars[3])
 		assert.Equal(t, "GF_ENTERPRISE_APP_URL=https://myorg.com/", envVars[4])
 		assert.Equal(t, "GF_ENTERPRISE_LICENSE_TEXT=token", envVars[5])
+	})
+}
+
+func TestInitializer_skipHostEnvVars(t *testing.T) {
+	const (
+		envVarName  = "HTTP_PROXY"
+		envVarValue = "lorem ipsum"
+	)
+
+	t.Setenv(envVarName, envVarValue)
+
+	p := &plugins.Plugin{
+		JSONData: plugins.JSONData{
+			ID: "test",
+		},
+	}
+
+	t.Run("without FlagPluginsSkipHostEnvVars should not populate host env vars", func(t *testing.T) {
+		envVarsProvider := NewProvider(&config.Cfg{Features: featuremgmt.WithFeatures()}, nil)
+		envVars := envVarsProvider.Get(context.Background(), p)
+
+		// We want to test that the envvars.Provider does not add any of the host env vars.
+		// When starting the plugin via go-plugin, ALL host env vars will be added by go-plugin,
+		// but we are testing the envvars.Provider here, so that's outside the scope of this test.
+		_, ok := getEnvVarWithExists(envVars, envVarName)
+		require.False(t, ok, "host env var should not be present")
+	})
+
+	t.Run("with SkipHostEnvVars = true", func(t *testing.T) {
+		p := &plugins.Plugin{
+			JSONData:        plugins.JSONData{ID: "test"},
+			SkipHostEnvVars: true,
+		}
+		envVarsProvider := NewProvider(&config.Cfg{}, nil)
+
+		t.Run("should populate allowed host env vars", func(t *testing.T) {
+			// Set all allowed variables
+			for _, ev := range allowedHostEnvVarNames {
+				t.Setenv(ev, envVarValue)
+			}
+			envVars := envVarsProvider.Get(context.Background(), p)
+
+			// Test against each variable
+			for _, expEvName := range allowedHostEnvVarNames {
+				gotEvValue, ok := getEnvVarWithExists(envVars, expEvName)
+				require.True(t, ok, "host env var should be present")
+				require.Equal(t, envVarValue, gotEvValue)
+			}
+		})
+
+		t.Run("should not populate host env vars that aren't allowed", func(t *testing.T) {
+			// Set all allowed variables
+			for _, ev := range allowedHostEnvVarNames {
+				t.Setenv(ev, envVarValue)
+			}
+			// ...and an extra one, which should not leak
+			const superSecretEnvVariableName = "SUPER_SECRET_VALUE"
+			t.Setenv(superSecretEnvVariableName, "01189998819991197253")
+			envVars := envVarsProvider.Get(context.Background(), p)
+
+			// Super secret should not leak
+			_, ok := getEnvVarWithExists(envVars, superSecretEnvVariableName)
+			require.False(t, ok, "super secret env var should not be leaked")
+
+			// Everything else should be present
+			for _, expEvName := range allowedHostEnvVarNames {
+				var gotEvValue string
+				gotEvValue, ok = getEnvVarWithExists(envVars, expEvName)
+				require.True(t, ok, "host env var should be present")
+				require.Equal(t, envVarValue, gotEvValue)
+			}
+		})
 	})
 }
 
@@ -457,8 +530,8 @@ func TestInitializer_authEnvVars(t *testing.T) {
 	t.Run("backend datasource with auth registration", func(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
-				ID:                          "test",
-				ExternalServiceRegistration: &plugindef.ExternalServiceRegistration{},
+				ID:  "test",
+				IAM: &plugindef.IAM{},
 			},
 			ExternalService: &auth.ExternalService{
 				ClientID:     "clientID",
@@ -526,6 +599,45 @@ func TestInitializer_featureToggleEnvVar(t *testing.T) {
 	})
 }
 
+func TestInitalizer_azureEnvVars(t *testing.T) {
+	t.Run("backend datasource with azure settings", func(t *testing.T) {
+		p := &plugins.Plugin{}
+		envVarsProvider := NewProvider(&config.Cfg{
+			Azure: &azsettings.AzureSettings{
+				Cloud:                   azsettings.AzurePublic,
+				ManagedIdentityEnabled:  true,
+				ManagedIdentityClientId: "mock_managed_identity_client_id",
+				WorkloadIdentityEnabled: true,
+				WorkloadIdentitySettings: &azsettings.WorkloadIdentitySettings{
+					TenantId:  "mock_workload_identity_tenant_id",
+					ClientId:  "mock_workload_identity_client_id",
+					TokenFile: "mock_workload_identity_token_file",
+				},
+				UserIdentityEnabled: true,
+				UserIdentityTokenEndpoint: &azsettings.TokenEndpointSettings{
+					TokenUrl:          "mock_user_identity_token_url",
+					ClientId:          "mock_user_identity_client_id",
+					ClientSecret:      "mock_user_identity_client_secret",
+					UsernameAssertion: true,
+				},
+			},
+		}, nil)
+		envVars := envVarsProvider.Get(context.Background(), p)
+		assert.ElementsMatch(t, []string{"GF_VERSION=", "GFAZPL_AZURE_CLOUD=AzureCloud", "GFAZPL_MANAGED_IDENTITY_ENABLED=true",
+			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID=mock_managed_identity_client_id",
+			"GFAZPL_WORKLOAD_IDENTITY_ENABLED=true",
+			"GFAZPL_WORKLOAD_IDENTITY_TENANT_ID=mock_workload_identity_tenant_id",
+			"GFAZPL_WORKLOAD_IDENTITY_CLIENT_ID=mock_workload_identity_client_id",
+			"GFAZPL_WORKLOAD_IDENTITY_TOKEN_FILE=mock_workload_identity_token_file",
+			"GFAZPL_USER_IDENTITY_ENABLED=true",
+			"GFAZPL_USER_IDENTITY_TOKEN_URL=mock_user_identity_token_url",
+			"GFAZPL_USER_IDENTITY_CLIENT_ID=mock_user_identity_client_id",
+			"GFAZPL_USER_IDENTITY_CLIENT_SECRET=mock_user_identity_client_secret",
+			"GFAZPL_USER_IDENTITY_ASSERTION=username",
+		}, envVars)
+	})
+}
+
 func TestService_GetConfigMap(t *testing.T) {
 	tcs := []struct {
 		name     string
@@ -537,13 +649,14 @@ func TestService_GetConfigMap(t *testing.T) {
 			cfg: &config.Cfg{
 				Features: featuremgmt.WithFeatures("feat-2", "feat-500", "feat-1"),
 				ProxySettings: setting.SecureSocksDSProxySettings{
-					Enabled:      true,
-					ShowUI:       true,
-					ClientCert:   "c3rt",
-					ClientKey:    "k3y",
-					RootCA:       "ca",
-					ProxyAddress: "https://proxy.grafana.com",
-					ServerName:   "secureProxy",
+					Enabled:       true,
+					ShowUI:        true,
+					ClientCert:    "c3rt",
+					ClientKey:     "k3y",
+					RootCA:        "ca",
+					ProxyAddress:  "https://proxy.grafana.com",
+					ServerName:    "secureProxy",
+					AllowInsecure: true,
 				},
 			},
 			expected: map[string]string{
@@ -554,6 +667,7 @@ func TestService_GetConfigMap(t *testing.T) {
 				"GF_SECURE_SOCKS_DATASOURCE_PROXY_ROOT_CA_CERT":   "ca",
 				"GF_SECURE_SOCKS_DATASOURCE_PROXY_PROXY_ADDRESS":  "https://proxy.grafana.com",
 				"GF_SECURE_SOCKS_DATASOURCE_PROXY_SERVER_NAME":    "secureProxy",
+				"GF_SECURE_SOCKS_DATASOURCE_PROXY_ALLOW_INSECURE": "true",
 			},
 		},
 		{
@@ -656,5 +770,79 @@ func TestService_GetConfigMap_appURL(t *testing.T) {
 			},
 		}
 		require.Equal(t, map[string]string{"GF_APP_URL": "https://myorg.com/"}, s.GetConfigMap(context.Background(), "", nil))
+	})
+}
+
+func TestService_GetConfigMap_azure(t *testing.T) {
+	azSettings := &azsettings.AzureSettings{
+		Cloud:                   azsettings.AzurePublic,
+		ManagedIdentityEnabled:  true,
+		ManagedIdentityClientId: "mock_managed_identity_client_id",
+		WorkloadIdentityEnabled: true,
+		WorkloadIdentitySettings: &azsettings.WorkloadIdentitySettings{
+			TenantId:  "mock_workload_identity_tenant_id",
+			ClientId:  "mock_workload_identity_client_id",
+			TokenFile: "mock_workload_identity_token_file",
+		},
+		UserIdentityEnabled: true,
+		UserIdentityTokenEndpoint: &azsettings.TokenEndpointSettings{
+			TokenUrl:          "mock_user_identity_token_url",
+			ClientId:          "mock_user_identity_client_id",
+			ClientSecret:      "mock_user_identity_client_secret",
+			UsernameAssertion: true,
+		},
+		ForwardSettingsPlugins: []string{"grafana-azure-monitor-datasource", "prometheus", "grafana-azure-data-explorer-datasource", "mssql"},
+	}
+
+	t.Run("uses the azure settings for an Azure plugin", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{
+				Azure: azSettings,
+			},
+		}
+		require.Equal(t, map[string]string{
+			"GFAZPL_AZURE_CLOUD": "AzureCloud", "GFAZPL_MANAGED_IDENTITY_ENABLED": "true",
+			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID":   "mock_managed_identity_client_id",
+			"GFAZPL_WORKLOAD_IDENTITY_ENABLED":    "true",
+			"GFAZPL_WORKLOAD_IDENTITY_TENANT_ID":  "mock_workload_identity_tenant_id",
+			"GFAZPL_WORKLOAD_IDENTITY_CLIENT_ID":  "mock_workload_identity_client_id",
+			"GFAZPL_WORKLOAD_IDENTITY_TOKEN_FILE": "mock_workload_identity_token_file",
+			"GFAZPL_USER_IDENTITY_ENABLED":        "true",
+			"GFAZPL_USER_IDENTITY_TOKEN_URL":      "mock_user_identity_token_url",
+			"GFAZPL_USER_IDENTITY_CLIENT_ID":      "mock_user_identity_client_id",
+			"GFAZPL_USER_IDENTITY_CLIENT_SECRET":  "mock_user_identity_client_secret",
+			"GFAZPL_USER_IDENTITY_ASSERTION":      "username",
+		}, s.GetConfigMap(context.Background(), "grafana-azure-monitor-datasource", nil))
+	})
+
+	t.Run("does not use the azure settings for a non-Azure plugin", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{
+				Azure: azSettings,
+			},
+		}
+		require.Equal(t, map[string]string{}, s.GetConfigMap(context.Background(), "", nil))
+	})
+
+	t.Run("uses the azure settings for a non-Azure user-specified plugin", func(t *testing.T) {
+		azSettings.ForwardSettingsPlugins = append(azSettings.ForwardSettingsPlugins, "test-datasource")
+		s := &Service{
+			cfg: &config.Cfg{
+				Azure: azSettings,
+			},
+		}
+		require.Equal(t, map[string]string{
+			"GFAZPL_AZURE_CLOUD": "AzureCloud", "GFAZPL_MANAGED_IDENTITY_ENABLED": "true",
+			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID":   "mock_managed_identity_client_id",
+			"GFAZPL_WORKLOAD_IDENTITY_ENABLED":    "true",
+			"GFAZPL_WORKLOAD_IDENTITY_TENANT_ID":  "mock_workload_identity_tenant_id",
+			"GFAZPL_WORKLOAD_IDENTITY_CLIENT_ID":  "mock_workload_identity_client_id",
+			"GFAZPL_WORKLOAD_IDENTITY_TOKEN_FILE": "mock_workload_identity_token_file",
+			"GFAZPL_USER_IDENTITY_ENABLED":        "true",
+			"GFAZPL_USER_IDENTITY_TOKEN_URL":      "mock_user_identity_token_url",
+			"GFAZPL_USER_IDENTITY_CLIENT_ID":      "mock_user_identity_client_id",
+			"GFAZPL_USER_IDENTITY_CLIENT_SECRET":  "mock_user_identity_client_secret",
+			"GFAZPL_USER_IDENTITY_ASSERTION":      "username",
+		}, s.GetConfigMap(context.Background(), "test-datasource", nil))
 	})
 }

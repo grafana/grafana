@@ -116,7 +116,7 @@ func (f *accessControlDashboardPermissionFilterNoFolderSubquery) buildClauses() 
 
 			permSelector.WriteRune(')')
 
-			switch f.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+			switch f.features.IsEnabledGlobally(featuremgmt.FlagNestedFolders) {
 			case true:
 				if len(permSelectorArgs) > 0 {
 					switch f.recursiveQueriesAreSupported {
@@ -193,7 +193,7 @@ func (f *accessControlDashboardPermissionFilterNoFolderSubquery) buildClauses() 
 			}
 			permSelector.WriteRune(')')
 
-			switch f.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+			switch f.features.IsEnabledGlobally(featuremgmt.FlagNestedFolders) {
 			case true:
 				if len(permSelectorArgs) > 0 {
 					switch f.recursiveQueriesAreSupported {

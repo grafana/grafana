@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -22,6 +23,19 @@ import (
 const (
 	customConfigPrefix = "GF_PLUGIN"
 )
+
+// allowedHostEnvVarNames is the list of environment variables that can be passed from Grafana's process to the
+// plugin's process
+var allowedHostEnvVarNames = []string{
+	// Env vars used by net/http (Go stdlib) for http/https proxy
+	// https://github.com/golang/net/blob/fbaf41277f28102c36926d1368dafbe2b54b4c1d/http/httpproxy/proxy.go#L91-L93
+	"HTTP_PROXY",
+	"http_proxy",
+	"HTTPS_PROXY",
+	"https_proxy",
+	"NO_PROXY",
+	"no_proxy",
+}
 
 type Provider interface {
 	Get(ctx context.Context, p *plugins.Plugin) []string
@@ -72,12 +86,20 @@ func (s *Service) Get(ctx context.Context, p *plugins.Plugin) []string {
 	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(s.cfg.Azure)...)
 	hostEnv = append(hostEnv, s.tracingEnvVars(p)...)
 
+	// If SkipHostEnvVars is enabled, get some allowed variables from the current process and pass
+	// them down to the plugin. If the flag is not set, do not add anything else because ALL env vars
+	// from the current process (os.Environ()) will be forwarded to the plugin's process by go-plugin
+	if p.SkipHostEnvVars {
+		hostEnv = append(hostEnv, s.allowedHostEnvVars()...)
+	}
+
 	ev := getPluginSettings(p.ID, s.cfg).asEnvVar(customConfigPrefix, hostEnv...)
+
 	return ev
 }
 
 // GetConfigMap returns a map of configuration that should be passed in a plugin request.
-func (s *Service) GetConfigMap(ctx context.Context, _ string, _ *auth.ExternalService) map[string]string {
+func (s *Service) GetConfigMap(ctx context.Context, pluginID string, _ *auth.ExternalService) map[string]string {
 	m := make(map[string]string)
 
 	if s.cfg.GrafanaAppURL != "" {
@@ -121,42 +143,59 @@ func (s *Service) GetConfigMap(ctx context.Context, _ string, _ *auth.ExternalSe
 		m[proxy.PluginSecureSocksProxyRootCACert] = s.cfg.ProxySettings.RootCA
 		m[proxy.PluginSecureSocksProxyProxyAddress] = s.cfg.ProxySettings.ProxyAddress
 		m[proxy.PluginSecureSocksProxyServerName] = s.cfg.ProxySettings.ServerName
+		m[proxy.PluginSecureSocksProxyAllowInsecure] = strconv.FormatBool(s.cfg.ProxySettings.AllowInsecure)
 	}
 
-	// TODO add support via plugin SDK
-	//azureSettings := s.cfg.Azure
-	//if azureSettings != nil {
-	//	if azureSettings.Cloud != "" {
-	//		m[azsettings.AzureCloud] = azureSettings.Cloud
-	//	}
-	//
-	//	if azureSettings.ManagedIdentityEnabled {
-	//		m[azsettings.ManagedIdentityEnabled] = "true"
-	//
-	//		if azureSettings.ManagedIdentityClientId != "" {
-	//			m[azsettings.ManagedIdentityClientID] = azureSettings.ManagedIdentityClientId
-	//		}
-	//	}
-	//
-	//	if azureSettings.UserIdentityEnabled {
-	//		m[azsettings.UserIdentityEnabled] = "true"
-	//
-	//		if azureSettings.UserIdentityTokenEndpoint != nil {
-	//			if azureSettings.UserIdentityTokenEndpoint.TokenUrl != "" {
-	//				m[azsettings.UserIdentityTokenURL] = azureSettings.UserIdentityTokenEndpoint.TokenUrl
-	//			}
-	//			if azureSettings.UserIdentityTokenEndpoint.ClientId != "" {
-	//				m[azsettings.UserIdentityClientID] = azureSettings.UserIdentityTokenEndpoint.ClientId
-	//			}
-	//			if azureSettings.UserIdentityTokenEndpoint.ClientSecret != "" {
-	//				m[azsettings.UserIdentityClientSecret] = azureSettings.UserIdentityTokenEndpoint.ClientSecret
-	//			}
-	//			if azureSettings.UserIdentityTokenEndpoint.UsernameAssertion {
-	//				m[azsettings.UserIdentityAssertion] = "username"
-	//			}
-	//		}
-	//	}
-	//}
+	// Settings here will be extracted by grafana-azure-sdk-go from the plugin context
+	azureSettings := s.cfg.Azure
+	if azureSettings != nil && slices.Contains[[]string, string](azureSettings.ForwardSettingsPlugins, pluginID) {
+		if azureSettings.Cloud != "" {
+			m[azsettings.AzureCloud] = azureSettings.Cloud
+		}
+
+		if azureSettings.ManagedIdentityEnabled {
+			m[azsettings.ManagedIdentityEnabled] = "true"
+
+			if azureSettings.ManagedIdentityClientId != "" {
+				m[azsettings.ManagedIdentityClientID] = azureSettings.ManagedIdentityClientId
+			}
+		}
+
+		if azureSettings.UserIdentityEnabled {
+			m[azsettings.UserIdentityEnabled] = "true"
+
+			if azureSettings.UserIdentityTokenEndpoint != nil {
+				if azureSettings.UserIdentityTokenEndpoint.TokenUrl != "" {
+					m[azsettings.UserIdentityTokenURL] = azureSettings.UserIdentityTokenEndpoint.TokenUrl
+				}
+				if azureSettings.UserIdentityTokenEndpoint.ClientId != "" {
+					m[azsettings.UserIdentityClientID] = azureSettings.UserIdentityTokenEndpoint.ClientId
+				}
+				if azureSettings.UserIdentityTokenEndpoint.ClientSecret != "" {
+					m[azsettings.UserIdentityClientSecret] = azureSettings.UserIdentityTokenEndpoint.ClientSecret
+				}
+				if azureSettings.UserIdentityTokenEndpoint.UsernameAssertion {
+					m[azsettings.UserIdentityAssertion] = "username"
+				}
+			}
+		}
+
+		if azureSettings.WorkloadIdentityEnabled {
+			m[azsettings.WorkloadIdentityEnabled] = "true"
+
+			if azureSettings.WorkloadIdentitySettings != nil {
+				if azureSettings.WorkloadIdentitySettings.ClientId != "" {
+					m[azsettings.WorkloadIdentityClientID] = azureSettings.WorkloadIdentitySettings.ClientId
+				}
+				if azureSettings.WorkloadIdentitySettings.TenantId != "" {
+					m[azsettings.WorkloadIdentityTenantID] = azureSettings.WorkloadIdentitySettings.TenantId
+				}
+				if azureSettings.WorkloadIdentitySettings.TokenFile != "" {
+					m[azsettings.WorkloadIdentityTokenFile] = azureSettings.WorkloadIdentitySettings.TokenFile
+				}
+			}
+		}
+	}
 
 	// TODO add support via plugin SDK
 	//ps := getPluginSettings(pluginID, s.cfg)
@@ -233,9 +272,23 @@ func (s *Service) secureSocksProxyEnvVars() []string {
 			proxy.PluginSecureSocksProxyProxyAddress + "=" + s.cfg.ProxySettings.ProxyAddress,
 			proxy.PluginSecureSocksProxyServerName + "=" + s.cfg.ProxySettings.ServerName,
 			proxy.PluginSecureSocksProxyEnabled + "=" + strconv.FormatBool(s.cfg.ProxySettings.Enabled),
+			proxy.PluginSecureSocksProxyAllowInsecure + "=" + strconv.FormatBool(s.cfg.ProxySettings.AllowInsecure),
 		}
 	}
 	return nil
+}
+
+// allowedHostEnvVars returns the variables that can be passed from Grafana's process
+// (current process, also known as: "host") to the plugin process.
+// A string in format "k=v" is returned for each variable in allowedHostEnvVarNames, if it's set.
+func (s *Service) allowedHostEnvVars() []string {
+	var r []string
+	for _, envVarName := range allowedHostEnvVarNames {
+		if envVarValue, ok := os.LookupEnv(envVarName); ok {
+			r = append(r, envVarName+"="+envVarValue)
+		}
+	}
+	return r
 }
 
 type pluginSettings map[string]string

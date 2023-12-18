@@ -88,7 +88,7 @@ const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
       ::after {
         content: '${placeholder}';
         font-family: ${theme.typography.fontFamilyMonospace};
-        opacity: 0.3;
+        opacity: 0.6;
       }
     `,
   };

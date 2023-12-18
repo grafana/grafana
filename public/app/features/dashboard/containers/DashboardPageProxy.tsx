@@ -18,6 +18,10 @@ export type DashboardPageProxyProps = GrafanaRouteComponentProps<
 // This proxy component is used for Dashboard -> Scenes migration.
 // It will render DashboardScenePage if the user is only allowed to view the dashboard.
 function DashboardPageProxy(props: DashboardPageProxyProps) {
+  if (config.featureToggles.dashboardScene) {
+    return <DashboardScenePage {...props} />;
+  }
+
   const stateManager = getDashboardScenePageStateManager();
   const isScenesSupportedRoute = Boolean(
     props.route.routeName === DashboardRoutes.Home ||
@@ -26,6 +30,7 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
 
   // We pre-fetch dashboard to render dashboard page component depending on dashboard permissions.
   // To avoid querying single dashboard multiple times, stateManager.fetchDashboard uses a simple, short-lived cache.
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const dashboard = useAsync(async () => {
     const dashToFetch = props.route.routeName === DashboardRoutes.Home ? props.route.routeName : props.match.params.uid;
 

@@ -13,6 +13,7 @@ labels:
     - cloud
     - enterprise
     - oss
+description: Configure options for Grafana's news visualization
 title: News
 weight: 100
 ---

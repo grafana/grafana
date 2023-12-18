@@ -269,6 +269,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 			am, err := moa.factory(ctx, orgID)
 			if err != nil {
 				moa.logger.Error("Unable to create Alertmanager for org", "org", orgID, "error", err)
+				continue
 			}
 			moa.alertmanagers[orgID] = am
 			alertmanager = am
@@ -356,7 +357,7 @@ func (moa *MultiOrgAlertmanager) cleanupOrphanLocalOrgState(ctx context.Context,
 	// Remove all orphaned items from kvstore by listing all existing items
 	// in our used namespace and comparing them to the currently active
 	// organizations.
-	storedFiles := []string{notificationLogFilename, silencesFilename}
+	storedFiles := []string{NotificationLogFilename, SilencesFilename}
 	for _, fileName := range storedFiles {
 		keys, err := moa.kvStore.Keys(ctx, kvstore.AllOrganizations, KVNamespace, fileName)
 		if err != nil {

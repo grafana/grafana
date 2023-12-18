@@ -26,10 +26,10 @@ var (
 	// ConfigurationPageAccess is used to protect the "Configure > Data sources" tab access
 	ConfigurationPageAccess = accesscontrol.EvalAny(
 		accesscontrol.EvalPermission(accesscontrol.ActionDatasourcesExplore),
+		accesscontrol.EvalPermission(ActionCreate),
 		accesscontrol.EvalAll(
 			accesscontrol.EvalPermission(ActionRead),
 			accesscontrol.EvalAny(
-				accesscontrol.EvalPermission(ActionCreate),
 				accesscontrol.EvalPermission(ActionDelete),
 				accesscontrol.EvalPermission(ActionWrite),
 			),

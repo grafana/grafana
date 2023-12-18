@@ -6,44 +6,49 @@ import { Button, Modal, ModalsController, useStyles2 } from '@grafana/ui/src';
 import { Trans, t } from 'app/core/internationalization';
 import { SessionUser } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 
-const DeleteUserModal = ({ user, onDismiss }: { user: SessionUser; onDismiss: () => void }) => {
+import { useRevokeAllAccessMutation } from '../../dashboard/api/publicDashboardApi';
+
+const DeleteUserModal = ({ user, hideModal }: { user: SessionUser; hideModal: () => void }) => {
+  const [revokeAllAccess] = useRevokeAllAccessMutation();
   const styles = useStyles2(getStyles);
 
+  const onRevokeAccessClick = () => {
+    revokeAllAccess({ email: user.email });
+    hideModal();
+  };
+
   return (
-    <Modal className={styles.modal} isOpen title="Delete" onDismiss={onDismiss}>
+    <Modal className={styles.modal} isOpen title="Revoke access" onDismiss={hideModal}>
+      <p className={styles.description}>Are you sure you want to revoke access for {user.email}?</p>
       <p className={styles.description}>
-        <Trans i18nKey="delete-user-modal-button.public-dashboard.delete-user-desc">
-          The user {{ email: user.email }} is currently present in {{ totalDashboards: user.totalDashboards }} public
-          dashboard(s). If you wish to remove this user, please navigate to the settings of the corresponding public
-          dashboard.
-        </Trans>
+        This action will immediately revoke {user.email}&apos;s access to all public dashboards.
       </p>
       <Modal.ButtonRow>
-        <Button type="button" variant="secondary" onClick={onDismiss} fill="outline">
-          <Trans i18nKey="delete-user-modal-button.public-dashboard.delete-user-close-button">Close</Trans>
+        <Button type="button" variant="secondary" onClick={hideModal} fill="outline">
+          Cancel
+        </Button>
+        <Button type="button" variant="destructive" onClick={onRevokeAccessClick}>
+          Revoke access
         </Button>
       </Modal.ButtonRow>
     </Modal>
   );
 };
 
-export const DeleteUserModalButton = ({ user }: { user: SessionUser }) => {
-  const translatedDeleteUserText = t('delete-user-modal-button.public-dashboard.delete-user-text', 'Delete user');
-  return (
-    <ModalsController>
-      {({ showModal, hideModal }) => (
-        <Button
-          size="sm"
-          variant="destructive"
-          onClick={() => showModal(DeleteUserModal, { user, onDismiss: hideModal })}
-          icon="times"
-          aria-label={translatedDeleteUserText}
-          title={translatedDeleteUserText}
-        />
-      )}
-    </ModalsController>
-  );
-};
+export const DeleteUserModalButton = ({ user }: { user: SessionUser }) => (
+  <ModalsController>
+    {({ showModal, hideModal }) => (
+      <Button
+        size="sm"
+        variant="destructive"
+        onClick={() => showModal(DeleteUserModal, { user, hideModal })}
+        icon="times"
+        aria-label="Delete user"
+        title="Delete user"
+      />
+    )}
+  </ModalsController>
+);
 
 const getStyles = (theme: GrafanaTheme2) => ({
   modal: css`

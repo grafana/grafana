@@ -23,8 +23,8 @@ export const ThemeProvider = ({ children, value }: { children: React.ReactNode; 
   return (
     <ThemeContext.Provider value={theme}>
       <SkeletonTheme
-        baseColor={theme.colors.background.secondary}
-        highlightColor={theme.colors.emphasize(theme.colors.background.secondary)}
+        baseColor={theme.colors.emphasize(theme.colors.background.secondary)}
+        highlightColor={theme.colors.emphasize(theme.colors.background.secondary, 0.1)}
         borderRadius={theme.shape.radius.default}
       >
         {children}

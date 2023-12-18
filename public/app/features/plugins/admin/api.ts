@@ -30,13 +30,24 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
 }
 
 export async function getRemotePlugins(): Promise<RemotePlugin[]> {
-  // We are also fetching deprecated plugins, because we would like to be able to label plugins in the list that are both installed and deprecated.
-  // (We won't show not installed deprecated plugins in the list)
-  const { items: remotePlugins }: { items: RemotePlugin[] } = await getBackendSrv().get(`${GCOM_API_ROOT}/plugins`, {
-    includeDeprecated: true,
-  });
+  try {
+    const { items: remotePlugins }: { items: RemotePlugin[] } = await getBackendSrv().get(`${GCOM_API_ROOT}/plugins`, {
+      // We are also fetching deprecated plugins, because we would like to be able to label plugins in the list that are both installed and deprecated.
+      // (We won't show not installed deprecated plugins in the list)
+      includeDeprecated: true,
+    });
 
-  return remotePlugins.filter(isRemotePluginVisibleByConfig);
+    return remotePlugins.filter(isRemotePluginVisibleByConfig);
+  } catch (error) {
+    if (isFetchError(error)) {
+      // It can happen that GCOM is not available, in that case we show a limited set of information to the user.
+      error.isHandled = true;
+      console.error('Failed to fetch plugins from catalog (default https://grafana.com/api/plugins)');
+      return [];
+    }
+
+    throw error;
+  }
 }
 
 export async function getPluginErrors(): Promise<PluginError[]> {

@@ -2,6 +2,7 @@ package folderimpl
 
 import (
 	"context"
+	"runtime"
 	"strings"
 	"time"
 
@@ -67,7 +68,7 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 		}
 
 		foldr, err = ss.Get(ctx, folder.GetFolderQuery{
-			ID: &lastInsertedID,
+			ID: &lastInsertedID, // nolint:staticcheck
 		})
 		if err != nil {
 			return err
@@ -164,6 +165,7 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 		switch {
 		case q.UID != nil:
 			exists, err = sess.SQL("SELECT * FROM folder WHERE uid = ? AND org_id = ?", q.UID, q.OrgID).Get(foldr)
+		// nolint:staticcheck
 		case q.ID != nil:
 			exists, err = sess.SQL("SELECT * FROM folder WHERE id = ?", q.ID).Get(foldr)
 		case q.Title != nil:
@@ -212,7 +214,7 @@ func (ss *sqlStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([
 			return nil, err
 		}
 
-		if err := concurrency.ForEachJob(ctx, len(folders), len(folders), func(ctx context.Context, idx int) error {
+		if err := concurrency.ForEachJob(ctx, len(folders), runtime.NumCPU(), func(ctx context.Context, idx int) error {
 			folders[idx].WithURL()
 			return nil
 		}); err != nil {
@@ -239,12 +241,24 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) 
 		sql := strings.Builder{}
 		args := make([]any, 0, 2)
 		if q.UID == "" {
-			sql.WriteString("SELECT * FROM folder WHERE parent_uid IS NULL AND org_id=? ORDER BY title ASC")
+			sql.WriteString("SELECT * FROM folder WHERE parent_uid IS NULL AND org_id=?")
 			args = append(args, q.OrgID)
 		} else {
-			sql.WriteString("SELECT * FROM folder WHERE parent_uid=? AND org_id=? ORDER BY title ASC")
+			sql.WriteString("SELECT * FROM folder WHERE parent_uid=? AND org_id=?")
 			args = append(args, q.UID, q.OrgID)
 		}
+
+		if q.FolderUIDs != nil {
+			sql.WriteString(" AND uid IN (?")
+			for range q.FolderUIDs[1:] {
+				sql.WriteString(", ?")
+			}
+			sql.WriteString(")")
+			for _, uid := range q.FolderUIDs {
+				args = append(args, uid)
+			}
+		}
+		sql.WriteString(" ORDER BY title ASC")
 
 		if q.Limit != 0 {
 			var offset int64 = 0
@@ -258,7 +272,7 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) 
 			return folder.ErrDatabaseError.Errorf("failed to get folder children: %w", err)
 		}
 
-		if err := concurrency.ForEachJob(ctx, len(folders), len(folders), func(ctx context.Context, idx int) error {
+		if err := concurrency.ForEachJob(ctx, len(folders), runtime.NumCPU(), func(ctx context.Context, idx int) error {
 			folders[idx].WithURL()
 			return nil
 		}); err != nil {

@@ -303,7 +303,7 @@ export class PanelQueryRunner {
 
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
-      request.filters = this.templateSrv.getAdhocFilters(ds.name);
+      request.filters = this.templateSrv.getAdhocFilters(ds.name, true);
 
       this.lastRequest = request;
 
@@ -336,9 +336,30 @@ export class PanelQueryRunner {
 
     this.subscription = panelData.subscribe({
       next: (data) => {
-        this.lastResult = skipPreProcess ? data : preProcessPanelData(data, this.lastResult);
+        const last = this.lastResult;
+        const next = skipPreProcess ? data : preProcessPanelData(data, last);
+
+        if (last != null) {
+          let sameSeries = compareArrayValues(last.series ?? [], next.series ?? [], (a, b) => a === b);
+          let sameAnnotations = compareArrayValues(last.annotations ?? [], next.annotations ?? [], (a, b) => a === b);
+
+          if (sameSeries) {
+            next.series = last.series;
+          }
+
+          if (sameAnnotations) {
+            next.annotations = last.annotations;
+          }
+
+          if (sameSeries && sameAnnotations) {
+            return;
+          }
+        }
+
+        this.lastResult = next;
+
         // Store preprocessed query results for applying overrides later on in the pipeline
-        this.subject.next(this.lastResult);
+        this.subject.next(next);
       },
     });
   }

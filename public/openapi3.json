@@ -50,25 +50,6 @@
         },
         "description": "AcceptedResponse"
       },
-      "addPermissionResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "message": {
-                  "type": "string"
-                },
-                "permissionId": {
-                  "format": "int64",
-                  "type": "integer"
-                }
-              },
-              "type": "object"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "adminCreateUserResponse": {
         "content": {
           "application/json": {
@@ -525,6 +506,19 @@
         },
         "description": "(empty)"
       },
+      "devicesResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/deviceDTO"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "folderResponse": {
         "content": {
           "application/json": {
@@ -642,16 +636,6 @@
                 "$ref": "#/components/schemas/AlertListItemDTO"
               },
               "type": "array"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "getAllPermissionseResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/DataSourcePermissionsDTO"
             }
           }
         },
@@ -878,6 +862,16 @@
         },
         "description": "(empty)"
       },
+      "getLibraryElementArrayResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/LibraryElementArrayResponse"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "getLibraryElementConnectionsResponse": {
         "content": {
           "application/json": {
@@ -1027,7 +1021,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/Spec"
+              "$ref": "#/components/schemas/Preferences"
             }
           }
         },
@@ -1103,7 +1097,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/ConfigDTO"
+              "$ref": "#/components/schemas/Report"
             }
           }
         },
@@ -1113,7 +1107,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/SettingsDTO"
+              "$ref": "#/components/schemas/ReportSettings"
             }
           }
         },
@@ -1124,7 +1118,7 @@
           "application/json": {
             "schema": {
               "items": {
-                "$ref": "#/components/schemas/ConfigDTO"
+                "$ref": "#/components/schemas/Report"
               },
               "type": "array"
             }
@@ -1434,7 +1428,10 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/TokenDTO"
+              "items": {
+                "$ref": "#/components/schemas/TokenDTO"
+              },
+              "type": "array"
             }
           }
         },
@@ -1937,21 +1934,6 @@
         },
         "description": "(empty)"
       },
-      "validateDashboardResponse": {
-        "description": "(empty)",
-        "headers": {
-          "isValid": {
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          "message": {
-            "schema": {
-              "type": "string"
-            }
-          }
-        }
-      },
       "viewPublicDashboardResponse": {
         "content": {
           "application/json": {
@@ -2003,7 +1985,7 @@
         },
         "type": "object"
       },
-      "AddCommand": {
+      "AddAPIKeyCommand": {
         "properties": {
           "name": {
             "type": "string"
@@ -2112,25 +2094,6 @@
         },
         "type": "object"
       },
-      "AddPermissionDTO": {
-        "properties": {
-          "builtinRole": {
-            "type": "string"
-          },
-          "permission": {
-            "$ref": "#/components/schemas/DsPermissionType"
-          },
-          "teamId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "userId": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      },
       "AddServiceAccountTokenCommand": {
         "properties": {
           "name": {
@@ -2230,6 +2193,10 @@
       "AdminStats": {
         "properties": {
           "activeAdmins": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "activeDevices": {
             "format": "int64",
             "type": "integer"
           },
@@ -2825,6 +2792,12 @@
             },
             "type": "array"
           },
+          "muteTimes": {
+            "items": {
+              "$ref": "#/components/schemas/MuteTimeIntervalExport"
+            },
+            "type": "array"
+          },
           "policies": {
             "items": {
               "$ref": "#/components/schemas/NotificationPolicyExport"
@@ -3307,29 +3280,12 @@
           },
           "username": {
             "type": "string"
+          },
+          "username_file": {
+            "type": "string"
           }
         },
         "title": "BasicAuth contains basic HTTP authentication credentials.",
-        "type": "object"
-      },
-      "BrandingOptionsDTO": {
-        "properties": {
-          "emailFooterLink": {
-            "type": "string"
-          },
-          "emailFooterMode": {
-            "type": "string"
-          },
-          "emailFooterText": {
-            "type": "string"
-          },
-          "emailLogoUrl": {
-            "type": "string"
-          },
-          "reportLogoUrl": {
-            "type": "string"
-          }
-        },
         "type": "object"
       },
       "CalculateDiffTarget": {
@@ -3633,88 +3589,6 @@
           }
         },
         "title": "Config is the top-level configuration for Alertmanager's config files.",
-        "type": "object"
-      },
-      "ConfigDTO": {
-        "description": "ConfigDTO is model representation in transfer",
-        "properties": {
-          "created": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "dashboardId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "dashboardName": {
-            "type": "string"
-          },
-          "dashboardUid": {
-            "type": "string"
-          },
-          "dashboards": {
-            "items": {
-              "$ref": "#/components/schemas/DashboardDTO"
-            },
-            "type": "array"
-          },
-          "enableCsv": {
-            "type": "boolean"
-          },
-          "enableDashboardUrl": {
-            "type": "boolean"
-          },
-          "formats": {
-            "items": {
-              "$ref": "#/components/schemas/Type"
-            },
-            "type": "array"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "message": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "options": {
-            "$ref": "#/components/schemas/ReportOptionsDTO"
-          },
-          "orgId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "recipients": {
-            "type": "string"
-          },
-          "replyTo": {
-            "type": "string"
-          },
-          "scaleFactor": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "schedule": {
-            "$ref": "#/components/schemas/ScheduleDTO"
-          },
-          "state": {
-            "$ref": "#/components/schemas/State"
-          },
-          "templateVars": {
-            "type": "object"
-          },
-          "updated": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "userId": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
         "type": "object"
       },
       "ContactPointExport": {
@@ -4048,7 +3922,7 @@
         },
         "type": "object"
       },
-      "CreateOrUpdateConfigCmd": {
+      "CreateOrUpdateReportConfig": {
         "properties": {
           "dashboardId": {
             "format": "int64",
@@ -4059,7 +3933,7 @@
           },
           "dashboards": {
             "items": {
-              "$ref": "#/components/schemas/DashboardDTO"
+              "$ref": "#/components/schemas/ReportDashboard"
             },
             "type": "array"
           },
@@ -4082,7 +3956,7 @@
             "type": "string"
           },
           "options": {
-            "$ref": "#/components/schemas/ReportOptionsDTO"
+            "$ref": "#/components/schemas/ReportOptions"
           },
           "recipients": {
             "type": "string"
@@ -4095,7 +3969,7 @@
             "type": "integer"
           },
           "schedule": {
-            "$ref": "#/components/schemas/ScheduleDTO"
+            "$ref": "#/components/schemas/ReportSchedule"
           },
           "state": {
             "$ref": "#/components/schemas/State"
@@ -4229,6 +4103,7 @@
             "type": "integer"
           },
           "folderId": {
+            "description": "Deprecated: use FolderUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -4322,20 +4197,6 @@
           "userId": {
             "format": "int64",
             "type": "integer"
-          }
-        },
-        "type": "object"
-      },
-      "DashboardDTO": {
-        "properties": {
-          "dashboard": {
-            "$ref": "#/components/schemas/DashboardReportDTO"
-          },
-          "reportVariables": {
-            "type": "object"
-          },
-          "timeRange": {
-            "$ref": "#/components/schemas/TimeRangeDTO"
           }
         },
         "type": "object"
@@ -4446,21 +4307,6 @@
       "DashboardRedirect": {
         "properties": {
           "redirectUri": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "DashboardReportDTO": {
-        "properties": {
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "name": {
-            "type": "string"
-          },
-          "uid": {
             "type": "string"
           }
         },
@@ -4710,83 +4556,6 @@
           },
           "user": {
             "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "DataSourcePermissionRuleDTO": {
-        "properties": {
-          "builtInRole": {
-            "type": "string"
-          },
-          "created": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "datasourceId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "isManaged": {
-            "type": "boolean"
-          },
-          "permission": {
-            "$ref": "#/components/schemas/DsPermissionType"
-          },
-          "permissionName": {
-            "type": "string"
-          },
-          "team": {
-            "type": "string"
-          },
-          "teamAvatarUrl": {
-            "type": "string"
-          },
-          "teamEmail": {
-            "type": "string"
-          },
-          "teamId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "updated": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "userAvatarUrl": {
-            "type": "string"
-          },
-          "userEmail": {
-            "type": "string"
-          },
-          "userId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "userLogin": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "DataSourcePermissionsDTO": {
-        "properties": {
-          "datasourceId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "enabled": {
-            "type": "boolean"
-          },
-          "permissions": {
-            "items": {
-              "$ref": "#/components/schemas/DataSourcePermissionRuleDTO"
-            },
-            "type": "array"
           }
         },
         "type": "object"
@@ -5109,6 +4878,9 @@
       },
       "EvalQueriesPayload": {
         "properties": {
+          "condition": {
+            "type": "string"
+          },
           "data": {
             "items": {
               "$ref": "#/components/schemas/AlertQuery"
@@ -5393,6 +5165,11 @@
             "type": "boolean"
           },
           "id": {
+            "description": "Deprecated: use UID instead",
+            "format": "int64",
+            "type": "integer"
+          },
+          "orgId": {
             "format": "int64",
             "type": "integer"
           },
@@ -5444,6 +5221,14 @@
           },
           "uid": {
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ForbiddenError": {
+        "properties": {
+          "body": {
+            "$ref": "#/components/schemas/PublicError"
           }
         },
         "type": "object"
@@ -5839,10 +5624,6 @@
           },
           "is_paused": {
             "type": "boolean"
-          },
-          "namespace_id": {
-            "format": "int64",
-            "type": "integer"
           },
           "namespace_uid": {
             "type": "string"
@@ -6567,6 +6348,18 @@
         },
         "type": "object"
       },
+      "LibraryElementArrayResponse": {
+        "properties": {
+          "result": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryElementDTO"
+            },
+            "type": "array"
+          }
+        },
+        "title": "LibraryElementArrayResponse is a response struct for an array of LibraryElementDTO.",
+        "type": "object"
+      },
       "LibraryElementConnectionDTO": {
         "properties": {
           "connectionId": {
@@ -6810,7 +6603,7 @@
       },
       "MatchRegexps": {
         "additionalProperties": {
-          "$ref": "#/components/schemas/Regexp"
+          "type": "string"
         },
         "title": "MatchRegexps represents a map of Regexp.",
         "type": "object"
@@ -6918,6 +6711,24 @@
         "title": "MuteTimeInterval represents a named set of time intervals for which a route should be muted.",
         "type": "object"
       },
+      "MuteTimeIntervalExport": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "time_intervals": {
+            "items": {
+              "$ref": "#/components/schemas/TimeInterval"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "MuteTimings": {
         "items": {
           "$ref": "#/components/schemas/MuteTimeInterval"
@@ -7022,12 +6833,58 @@
       },
       "NotificationPolicyExport": {
         "properties": {
-          "Policy": {
-            "$ref": "#/components/schemas/RouteExport"
+          "continue": {
+            "type": "boolean"
+          },
+          "group_by": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "group_interval": {
+            "type": "string"
+          },
+          "group_wait": {
+            "type": "string"
+          },
+          "match": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Deprecated. Remove before v1.0 release.",
+            "type": "object"
+          },
+          "match_re": {
+            "$ref": "#/components/schemas/MatchRegexps"
+          },
+          "matchers": {
+            "$ref": "#/components/schemas/Matchers"
+          },
+          "mute_time_intervals": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "object_matchers": {
+            "$ref": "#/components/schemas/ObjectMatchers"
           },
           "orgId": {
             "format": "int64",
             "type": "integer"
+          },
+          "receiver": {
+            "type": "string"
+          },
+          "repeat_interval": {
+            "type": "string"
+          },
+          "routes": {
+            "items": {
+              "$ref": "#/components/schemas/RouteExport"
+            },
+            "type": "array"
           }
         },
         "title": "NotificationPolicyExport is the provisioned file export of alerting.NotificiationPolicyV1.",
@@ -8088,6 +7945,38 @@
         },
         "type": "object"
       },
+      "Preferences": {
+        "description": "Spec defines user, team or org Grafana preferences",
+        "properties": {
+          "cookiePreferences": {
+            "$ref": "#/components/schemas/CookiePreferences"
+          },
+          "homeDashboardUID": {
+            "description": "UID for the home dashboard",
+            "type": "string"
+          },
+          "language": {
+            "description": "Selected language (beta)",
+            "type": "string"
+          },
+          "queryHistory": {
+            "$ref": "#/components/schemas/QueryHistoryPreference"
+          },
+          "theme": {
+            "description": "Theme light, dark, empty is default",
+            "type": "string"
+          },
+          "timezone": {
+            "description": "The timezone selection\nTODO: this should use the timezone defined in common",
+            "type": "string"
+          },
+          "weekStart": {
+            "description": "WeekStart day of the week (sunday, monday, etc)",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "PrometheusRemoteWriteTargetJSON": {
         "properties": {
           "data_source_uid": {
@@ -8362,6 +8251,9 @@
           "isEnabled": {
             "type": "boolean"
           },
+          "slug": {
+            "type": "string"
+          },
           "title": {
             "type": "string"
           },
@@ -8388,6 +8280,26 @@
             "type": "array"
           },
           "totalCount": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PublicError": {
+        "description": "PublicError is derived from Error and only contains information\navailable to the end user.",
+        "properties": {
+          "extra": {
+            "additionalProperties": false,
+            "type": "object"
+          },
+          "message": {
+            "type": "string"
+          },
+          "messageId": {
+            "type": "string"
+          },
+          "statusCode": {
             "format": "int64",
             "type": "integer"
           }
@@ -8508,9 +8420,11 @@
       "QueryHistoryPreference": {
         "properties": {
           "homeTab": {
+            "description": "HomeTab one of: '' | 'query' | 'starred';",
             "type": "string"
           }
         },
+        "title": "QueryHistoryPreference defines model for QueryHistoryPreference.",
         "type": "object"
       },
       "QueryHistoryResponse": {
@@ -8815,11 +8729,6 @@
         },
         "type": "object"
       },
-      "Regexp": {
-        "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
-        "title": "Regexp is the representation of a compiled regular expression.",
-        "type": "object"
-      },
       "RelativeTimeRange": {
         "description": "RelativeTimeRange is the per query start and end time\nfor requests.",
         "properties": {
@@ -8845,7 +8754,138 @@
         },
         "type": "object"
       },
-      "ReportEmailDTO": {
+      "Report": {
+        "description": "ConfigDTO is model representation in transfer",
+        "properties": {
+          "created": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "dashboardId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "dashboardName": {
+            "type": "string"
+          },
+          "dashboardUid": {
+            "type": "string"
+          },
+          "dashboards": {
+            "items": {
+              "$ref": "#/components/schemas/ReportDashboard"
+            },
+            "type": "array"
+          },
+          "enableCsv": {
+            "type": "boolean"
+          },
+          "enableDashboardUrl": {
+            "type": "boolean"
+          },
+          "formats": {
+            "items": {
+              "$ref": "#/components/schemas/Type"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "options": {
+            "$ref": "#/components/schemas/ReportOptions"
+          },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "recipients": {
+            "type": "string"
+          },
+          "replyTo": {
+            "type": "string"
+          },
+          "scaleFactor": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/ReportSchedule"
+          },
+          "state": {
+            "$ref": "#/components/schemas/State"
+          },
+          "templateVars": {
+            "type": "object"
+          },
+          "updated": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "userId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "ReportBrandingOptions": {
+        "properties": {
+          "emailFooterLink": {
+            "type": "string"
+          },
+          "emailFooterMode": {
+            "type": "string"
+          },
+          "emailFooterText": {
+            "type": "string"
+          },
+          "emailLogoUrl": {
+            "type": "string"
+          },
+          "reportLogoUrl": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ReportDashboard": {
+        "properties": {
+          "dashboard": {
+            "$ref": "#/components/schemas/ReportDashboardID"
+          },
+          "reportVariables": {
+            "type": "object"
+          },
+          "timeRange": {
+            "$ref": "#/components/schemas/ReportTimeRange"
+          }
+        },
+        "type": "object"
+      },
+      "ReportDashboardID": {
+        "properties": {
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ReportEmail": {
         "properties": {
           "email": {
             "type": "string"
@@ -8866,7 +8906,7 @@
         },
         "type": "object"
       },
-      "ReportOptionsDTO": {
+      "ReportOptions": {
         "properties": {
           "layout": {
             "type": "string"
@@ -8875,7 +8915,81 @@
             "type": "string"
           },
           "timeRange": {
-            "$ref": "#/components/schemas/TimeRangeDTO"
+            "$ref": "#/components/schemas/ReportTimeRange"
+          }
+        },
+        "type": "object"
+      },
+      "ReportSchedule": {
+        "properties": {
+          "day": {
+            "type": "string"
+          },
+          "dayOfMonth": {
+            "type": "string"
+          },
+          "endDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "frequency": {
+            "type": "string"
+          },
+          "hour": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "intervalAmount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "intervalFrequency": {
+            "type": "string"
+          },
+          "minute": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "startDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "workdaysOnly": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "ReportSettings": {
+        "properties": {
+          "branding": {
+            "$ref": "#/components/schemas/ReportBrandingOptions"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "userId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "ReportTimeRange": {
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -8957,6 +9071,9 @@
           },
           "displayName": {
             "type": "string"
+          },
+          "global": {
+            "type": "boolean"
           },
           "group": {
             "type": "string"
@@ -9287,6 +9404,24 @@
         },
         "type": "object"
       },
+      "SSOSettings": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "type": "object"
+          },
+          "source": {
+            "$ref": "#/components/schemas/SettingsSource"
+          }
+        },
+        "type": "object"
+      },
       "Sample": {
         "properties": {
           "H": {
@@ -9336,49 +9471,6 @@
           "userId": {
             "format": "int64",
             "type": "integer"
-          }
-        },
-        "type": "object"
-      },
-      "ScheduleDTO": {
-        "properties": {
-          "day": {
-            "type": "string"
-          },
-          "dayOfMonth": {
-            "type": "string"
-          },
-          "endDate": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "frequency": {
-            "type": "string"
-          },
-          "hour": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "intervalAmount": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "intervalFrequency": {
-            "type": "string"
-          },
-          "minute": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "startDate": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "timeZone": {
-            "type": "string"
-          },
-          "workdaysOnly": {
-            "type": "boolean"
           }
         },
         "type": "object"
@@ -9626,6 +9718,10 @@
             "format": "int64",
             "type": "integer"
           },
+          "requiredBy": {
+            "example": "grafana-app",
+            "type": "string"
+          },
           "role": {
             "example": "Editor",
             "type": "string"
@@ -9701,25 +9797,9 @@
         },
         "type": "object"
       },
-      "SettingsDTO": {
-        "properties": {
-          "branding": {
-            "$ref": "#/components/schemas/BrandingOptionsDTO"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "orgId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "userId": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "type": "object"
+      "SettingsSource": {
+        "format": "int64",
+        "type": "integer"
       },
       "ShareType": {
         "type": "string"
@@ -9913,38 +9993,6 @@
           }
         },
         "title": "A Span defines a continuous sequence of buckets.",
-        "type": "object"
-      },
-      "Spec": {
-        "properties": {
-          "cookiePreferences": {
-            "$ref": "#/components/schemas/CookiePreferences"
-          },
-          "homeDashboardUID": {
-            "description": "UID for the home dashboard",
-            "type": "string"
-          },
-          "language": {
-            "description": "Selected language (beta)",
-            "type": "string"
-          },
-          "queryHistory": {
-            "$ref": "#/components/schemas/QueryHistoryPreference"
-          },
-          "theme": {
-            "description": "Theme light, dark, empty is default",
-            "type": "string"
-          },
-          "timezone": {
-            "description": "The timezone selection\nTODO: this should use the timezone defined in common",
-            "type": "string"
-          },
-          "weekStart": {
-            "description": "WeekStart day of the week (sunday, monday, etc)",
-            "type": "string"
-          }
-        },
-        "title": "Spec defines model for Spec.",
         "type": "object"
       },
       "State": {
@@ -10512,17 +10560,6 @@
           },
           "to": {
             "format": "date-time",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "TimeRangeDTO": {
-        "properties": {
-          "from": {
-            "type": "string"
-          },
-          "to": {
             "type": "string"
           }
         },
@@ -11586,7 +11623,6 @@
         "type": "object"
       },
       "alertGroups": {
-        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -11688,6 +11724,34 @@
         "required": [
           "status"
         ],
+        "type": "object"
+      },
+      "deviceDTO": {
+        "properties": {
+          "avatarUrl": {
+            "type": "string"
+          },
+          "clientIp": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "deviceId": {
+            "type": "string"
+          },
+          "lastSeenAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "userAgent": {
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "gettableAlert": {
@@ -14930,6 +14994,13 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -15128,6 +15199,15 @@
       },
       "post": {
         "operationId": "RoutePostContactpoints",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -15249,7 +15329,7 @@
           }
         ],
         "responses": {
-          "204": {
+          "202": {
             "description": " The contact point was deleted successfully."
           }
         },
@@ -15266,6 +15346,13 @@
             "in": "path",
             "name": "UID",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
             "schema": {
               "type": "string"
             }
@@ -15353,6 +15440,13 @@
       "put": {
         "operationId": "RoutePutAlertRuleGroup",
         "parameters": [
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "in": "path",
             "name": "FolderUID",
@@ -15500,6 +15594,15 @@
       },
       "post": {
         "operationId": "RoutePostMuteTiming",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -15533,6 +15636,57 @@
           }
         },
         "summary": "Create a new mute timing.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/api/v1/provisioning/mute-timings/export": {
+      "get": {
+        "operationId": "RouteExportMuteTimings",
+        "parameters": [
+          {
+            "description": "Whether to initiate a download of the file or not.",
+            "in": "query",
+            "name": "download",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "default": "yaml",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              }
+            },
+            "description": "AlertingFileExport"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              }
+            },
+            "description": "PermissionDenied"
+          }
+        },
+        "summary": "Export all mute timings in provisioning format.",
         "tags": [
           "provisioning"
         ]
@@ -15606,6 +15760,13 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -15641,6 +15802,66 @@
           }
         },
         "summary": "Replace an existing mute timing.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/api/v1/provisioning/mute-timings/{name}/export": {
+      "get": {
+        "operationId": "RouteExportMuteTiming",
+        "parameters": [
+          {
+            "description": "Whether to initiate a download of the file or not.",
+            "in": "query",
+            "name": "download",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "default": "yaml",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Mute timing name",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              }
+            },
+            "description": "AlertingFileExport"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              }
+            },
+            "description": "PermissionDenied"
+          }
+        },
+        "summary": "Export a mute timing in provisioning format.",
         "tags": [
           "provisioning"
         ]
@@ -15687,6 +15908,15 @@
       },
       "put": {
         "operationId": "RoutePutPolicyTree",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -15849,6 +16079,13 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -15934,7 +16171,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AddCommand"
+                "$ref": "#/components/schemas/AddAPIKeyCommand"
               }
             }
           },
@@ -17908,236 +18145,6 @@
         ]
       }
     },
-    "/datasources/{datasourceId}/disable-permissions": {
-      "post": {
-        "description": "Disables permissions for the data source with the given id. All existing permissions will be removed and anyone will be able to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.",
-        "operationId": "disablePermissions",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "datasourceId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/createOrUpdateDatasourceResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Disable permissions for a data source.",
-        "tags": [
-          "datasource_permissions",
-          "enterprise"
-        ]
-      }
-    },
-    "/datasources/{datasourceId}/enable-permissions": {
-      "post": {
-        "description": "Enables permissions for the data source with the given id.\nNo one except Org Admins will be able to query the data source until permissions have been added\nwhich permit certain users or teams to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.",
-        "operationId": "enablePermissions",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "datasourceId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/createOrUpdateDatasourceResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Enable permissions for a data source.",
-        "tags": [
-          "datasource_permissions",
-          "enterprise"
-        ]
-      }
-    },
-    "/datasources/{datasourceId}/permissions": {
-      "get": {
-        "description": "Gets all existing permissions for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.\nDeprecated. Please use GET /api/access-control/datasources/:uid",
-        "operationId": "getAllPermissions",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "datasourceId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getAllPermissionseResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get permissions for a data source.",
-        "tags": [
-          "datasource_permissions",
-          "enterprise"
-        ]
-      },
-      "post": {
-        "description": "You need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.\nDeprecated. Please use POST /api/access-control/datasources/:uid/users/:id, /api/access-control/datasources/:uid/teams/:id or /api/access-control/datasources/:uid/buildInRoles/:id",
-        "operationId": "addPermission",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "userId",
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "teamId",
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "builtinRole",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "permission",
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "path",
-            "name": "datasourceId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/addPermissionResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Add permissions for a data source.",
-        "tags": [
-          "datasource_permissions",
-          "enterprise"
-        ]
-      }
-    },
-    "/datasources/{datasourceId}/permissions/{permissionId}": {
-      "delete": {
-        "description": "Removes the permission with the given permissionId for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:delete` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.\nDeprecated. Please use POST /api/access-control/datasources/:uid/users/:id, /api/access-control/datasources/:uid/teams/:id or /api/access-control/datasources/:uid/buildInRoles/:id",
-        "operationId": "deletePermissions",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "datasourceId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "permissionId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          }
-        },
-        "summary": "Remove permission for a data source.",
-        "tags": [
-          "datasource_permissions",
-          "enterprise"
-        ]
-      }
-    },
     "/datasources/{id}": {
       "delete": {
         "deprecated": true,
@@ -18973,7 +18980,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/components/responses/getLibraryElementResponse"
+            "$ref": "#/components/responses/getLibraryElementArrayResponse"
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
@@ -21419,7 +21426,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateOrUpdateConfigCmd"
+                "$ref": "#/components/schemas/CreateOrUpdateReportConfig"
               }
             }
           },
@@ -21461,7 +21468,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ReportEmailDTO"
+                "$ref": "#/components/schemas/ReportEmail"
               }
             }
           },
@@ -21608,6 +21615,27 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "title",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scaleFactor",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "includeTables",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -21662,7 +21690,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SettingsDTO"
+                "$ref": "#/components/schemas/ReportSettings"
               }
             }
           },
@@ -21701,7 +21729,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateOrUpdateConfigCmd"
+                "$ref": "#/components/schemas/CreateOrUpdateReportConfig"
               }
             }
           },
@@ -21834,7 +21862,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateOrUpdateConfigCmd"
+                "$ref": "#/components/schemas/CreateOrUpdateReportConfig"
               }
             }
           },
@@ -22684,6 +22712,32 @@
         "summary": "Get Snapshot by Key.",
         "tags": [
           "snapshots"
+        ]
+      }
+    },
+    "/stats": {
+      "get": {
+        "operationId": "listDevices",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/devicesResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Lists all devices within the last 30 days",
+        "tags": [
+          "devices"
         ]
       }
     },
@@ -24126,6 +24180,89 @@
         "summary": "Get teams for user.",
         "tags": [
           "users"
+        ]
+      }
+    },
+    "/v1/sso-settings/{key}": {
+      "delete": {
+        "description": "Removes the SSO Settings for a provider.\n\nYou need to have a permission with action `settings:write` and scope `settings:auth.\u003cprovider\u003e:*`.",
+        "operationId": "removeProviderSettings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Remove SSO Settings",
+        "tags": [
+          "sso_settings"
+        ]
+      },
+      "put": {
+        "description": "Inserts or updates the SSO Settings for a provider.\n\nYou need to have a permission with action `settings:write` and scope `settings:auth.\u003cprovider\u003e:*`.",
+        "operationId": "updateProviderSettings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SSOSettings"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Update SSO Settings",
+        "tags": [
+          "sso_settings"
         ]
       }
     }

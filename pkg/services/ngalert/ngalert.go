@@ -177,7 +177,9 @@ func (ng *AlertNG) init() error {
 	if ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Enable {
 		override := notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
 			externalAMCfg := remote.AlertmanagerConfig{}
-			return remote.NewAlertmanager(externalAMCfg, orgID)
+			// We won't be handling files on disk, we can pass an empty string as workingDirPath.
+			stateStore := notifier.NewFileStore(orgID, ng.KVStore, "")
+			return remote.NewAlertmanager(externalAMCfg, orgID, stateStore)
 		})
 
 		overrides = append(overrides, override)
@@ -234,7 +236,7 @@ func (ng *AlertNG) init() error {
 
 	// There are a set of feature toggles available that act as short-circuits for common configurations.
 	// If any are set, override the config accordingly.
-	applyStateHistoryFeatureToggles(&ng.Cfg.UnifiedAlerting.StateHistory, ng.FeatureToggles, ng.Log)
+	ApplyStateHistoryFeatureToggles(&ng.Cfg.UnifiedAlerting.StateHistory, ng.FeatureToggles, ng.Log)
 	history, err := configureHistorianBackend(initCtx, ng.Cfg.UnifiedAlerting.StateHistory, ng.annotationsRepo, ng.dashboardService, ng.store, ng.Metrics.GetHistorianMetrics(), ng.Log)
 	if err != nil {
 		return err
@@ -246,9 +248,9 @@ func (ng *AlertNG) init() error {
 		Images:                         ng.ImageService,
 		Clock:                          clk,
 		Historian:                      history,
-		DoNotSaveNormalState:           ng.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingNoNormalState),
+		DoNotSaveNormalState:           ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingNoNormalState),
 		MaxStateSaveConcurrency:        ng.Cfg.UnifiedAlerting.MaxStateSaveConcurrency,
-		ApplyNoDataAndErrorToAllStates: ng.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingNoDataErrorExecution),
+		ApplyNoDataAndErrorToAllStates: ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingNoDataErrorExecution),
 		Tracer:                         ng.tracer,
 		Log:                            log.New("ngalert.state.manager"),
 	}
@@ -302,16 +304,7 @@ func (ng *AlertNG) init() error {
 	}
 	ng.api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
-	defaultLimits, err := readQuotaConfig(ng.Cfg)
-	if err != nil {
-		return err
-	}
-
-	if err := ng.QuotaService.RegisterQuotaReporter(&quota.NewUsageReporter{
-		TargetSrv:     models.QuotaTargetSrv,
-		DefaultLimits: defaultLimits,
-		Reporter:      ng.api.Usage,
-	}); err != nil {
+	if err := RegisterQuotas(ng.Cfg, ng.QuotaService, ng.store); err != nil {
 		return err
 	}
 
@@ -329,16 +322,13 @@ func (ng *AlertNG) init() error {
 func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleStore) {
 	// if folder title is changed, we update all alert rules in that folder to make sure that all peers (in HA mode) will update folder title and
 	// clean up the current state
-	bus.AddEventListener(func(ctx context.Context, e *events.FolderTitleUpdated) error {
-		// do not block the upstream execution
-		go func(evt *events.FolderTitleUpdated) {
-			logger.Info("Got folder title updated event. updating rules in the folder", "folderUID", evt.UID)
-			_, err := dbStore.IncreaseVersionForAllRulesInNamespace(ctx, evt.OrgID, evt.UID)
-			if err != nil {
-				logger.Error("Failed to update alert rules in the folder after its title was changed", "error", err, "folderUID", evt.UID, "folder", evt.Title)
-				return
-			}
-		}(e)
+	bus.AddEventListener(func(ctx context.Context, evt *events.FolderTitleUpdated) error {
+		logger.Info("Got folder title updated event. updating rules in the folder", "folderUID", evt.UID)
+		_, err := dbStore.IncreaseVersionForAllRulesInNamespace(ctx, evt.OrgID, evt.UID)
+		if err != nil {
+			logger.Error("Failed to update alert rules in the folder after its title was changed", "error", err, "folderUID", evt.UID, "folder", evt.Title)
+			return err
+		}
 		return nil
 	})
 }
@@ -353,9 +343,7 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 	if !ng.shouldRun() {
 		return nil
 	}
-	ng.Log.Debug("Starting")
-
-	ng.stateManager.Warm(ctx, ng.store)
+	ng.Log.Debug("Starting", "execute_alerts", ng.Cfg.UnifiedAlerting.ExecuteAlerts)
 
 	children, subCtx := errgroup.WithContext(ctx)
 
@@ -367,6 +355,17 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 	})
 
 	if ng.Cfg.UnifiedAlerting.ExecuteAlerts {
+		// Only Warm() the state manager if we are actually executing alerts.
+		// Doing so when we are not executing alerts is wasteful and could lead
+		// to misleading rule status queries, as the status returned will be
+		// always based on the state loaded from the database at startup, and
+		// not the most recent evaluation state.
+		//
+		// Also note that this runs synchronously to ensure state is loaded
+		// before rule evaluation begins, hence we use ctx and not subCtx.
+		//
+		ng.stateManager.Warm(ctx, ng.store)
+
 		children.Go(func() error {
 			return ng.schedule.Run(subCtx)
 		})
@@ -383,35 +382,6 @@ func (ng *AlertNG) IsDisabled() bool {
 // is invoked after all other middleware is invoked (authentication, instrumentation).
 func (ng *AlertNG) GetHooks() *api.Hooks {
 	return ng.api.Hooks
-}
-
-func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
-	limits := &quota.Map{}
-
-	if cfg == nil {
-		return limits, nil
-	}
-
-	var alertOrgQuota int64
-	var alertGlobalQuota int64
-
-	if cfg.UnifiedAlerting.IsEnabled() {
-		alertOrgQuota = cfg.Quota.Org.AlertRule
-		alertGlobalQuota = cfg.Quota.Global.AlertRule
-	}
-
-	globalQuotaTag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.GlobalScope)
-	if err != nil {
-		return limits, err
-	}
-	orgQuotaTag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.OrgScope)
-	if err != nil {
-		return limits, err
-	}
-
-	limits.Set(globalQuotaTag, alertGlobalQuota)
-	limits.Set(orgQuotaTag, alertOrgQuota)
-	return limits, nil
 }
 
 type Historian interface {
@@ -476,14 +446,14 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 	return nil, fmt.Errorf("unrecognized state history backend: %s", backend)
 }
 
-// applyStateHistoryFeatureToggles edits state history configuration to comply with currently active feature toggles.
-func applyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.FeatureToggles, logger log.Logger) {
+// ApplyStateHistoryFeatureToggles edits state history configuration to comply with currently active feature toggles.
+func ApplyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.FeatureToggles, logger log.Logger) {
 	backend, _ := historian.ParseBackendType(cfg.Backend)
 	// These feature toggles represent specific, common backend configurations.
 	// If all toggles are enabled, we listen to the state history config as written.
 	// If any of them are disabled, we ignore the configured backend and treat the toggles as an override.
 	// If multiple toggles are disabled, we go with the most "restrictive" one.
-	if !ft.IsEnabled(featuremgmt.FlagAlertStateHistoryLokiSecondary) {
+	if !ft.IsEnabledGlobally(featuremgmt.FlagAlertStateHistoryLokiSecondary) {
 		// If we cannot even treat Loki as a secondary, we must use annotations only.
 		if backend == historian.BackendTypeMultiple || backend == historian.BackendTypeLoki {
 			logger.Info("Forcing Annotation backend due to state history feature toggles")
@@ -493,7 +463,7 @@ func applyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySet
 		}
 		return
 	}
-	if !ft.IsEnabled(featuremgmt.FlagAlertStateHistoryLokiPrimary) {
+	if !ft.IsEnabledGlobally(featuremgmt.FlagAlertStateHistoryLokiPrimary) {
 		// If we're using multiple backends, Loki must be the secondary.
 		if backend == historian.BackendTypeMultiple {
 			logger.Info("Coercing Loki to a secondary backend due to state history feature toggles")
@@ -509,7 +479,7 @@ func applyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySet
 		}
 		return
 	}
-	if !ft.IsEnabled(featuremgmt.FlagAlertStateHistoryLokiOnly) {
+	if !ft.IsEnabledGlobally(featuremgmt.FlagAlertStateHistoryLokiOnly) {
 		// If we're not allowed to use Loki only, make it the primary but keep the annotation writes.
 		if backend == historian.BackendTypeLoki {
 			logger.Info("Forcing dual writes to Loki and Annotations due to state history feature toggles")
