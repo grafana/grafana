@@ -110,8 +110,7 @@ func isFeatureWriteable(flag featuremgmt.FeatureFlag, readOnlyCfg map[string]str
 	if flag.Name == featuremgmt.FlagFeatureToggleAdminPage {
 		return false
 	}
-	allowSelfServe := flag.AllowSelfServe != nil && *flag.AllowSelfServe
-	return flag.Stage == featuremgmt.FeatureStageGeneralAvailability && allowSelfServe || flag.Stage == featuremgmt.FeatureStageDeprecated
+	return (flag.Stage == featuremgmt.FeatureStageGeneralAvailability || flag.Stage == featuremgmt.FeatureStageDeprecated) && flag.AllowSelfServe
 }
 
 // isFeatureEditingAllowed checks if the backend is properly configured to allow feature toggle changes from the UI
