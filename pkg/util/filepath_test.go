@@ -25,7 +25,8 @@ func TestCleanRelativePath(t *testing.T) {
 			expectedPath: filepath.Join("test", "test.txt"),
 		},
 		{
-			input:        filepath.Join(".", "..", "test", "test.txt"),
+			// since filepath.Join will remove the leading dot, we need to build the path manually
+			input:        "." + string(filepath.Separator) + filepath.Join("..", "test", "test.txt"),
 			expectedPath: filepath.Join("test", "test.txt"),
 		},
 	}
