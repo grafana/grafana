@@ -21,11 +21,11 @@ func TestCleanRelativePath(t *testing.T) {
 			expectedPath: filepath.Join("test", "test.txt"),
 		},
 		{
-			input:        filepath.Join("..", string(filepath.Separator), "..", string(filepath.Separator), "test", "test.txt"),
+			input:        filepath.Join("..", "..", "test", "test.txt"),
 			expectedPath: filepath.Join("test", "test.txt"),
 		},
 		{
-			input:        filepath.Join(".", string(filepath.Separator), "..", string(filepath.Separator), "test", "test.txt"),
+			input:        filepath.Join(".", "..", "test", "test.txt"),
 			expectedPath: filepath.Join("test", "test.txt"),
 		},
 	}
