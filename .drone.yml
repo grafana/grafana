@@ -641,6 +641,15 @@ steps:
     repo:
     - grafana/grafana
 - commands:
+  - yarn e2e:plugin
+  depends_on:
+  - grafana-server
+  environment:
+    HOST: grafana-server
+    PORT: "3001"
+  image: mcr.microsoft.com/playwright:v1.40.0-jammy
+  name: playwright-plugin-e2e
+- commands:
   - apt-get update
   - apt-get install -yq zip
   - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
@@ -1892,6 +1901,15 @@ steps:
       - e2e/cloud-plugins-suite/azure-monitor.spec.ts
     repo:
     - grafana/grafana
+- commands:
+  - yarn e2e:plugin
+  depends_on:
+  - grafana-server
+  environment:
+    HOST: grafana-server
+    PORT: "3001"
+  image: mcr.microsoft.com/playwright:v1.40.0-jammy
+  name: playwright-plugin-e2e
 - commands:
   - apt-get update
   - apt-get install -yq zip
@@ -4629,6 +4647,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: d7e383e4bf37190a97d695ef8f91755cb8cb70fb8088a5c1f63262adcf8e4f5e
+hmac: de0a3a1aabbb452e85e342510dbc3b263f62e9f4bb491c68dabcc4ec9953ca2d
 
 ...
