@@ -134,16 +134,16 @@ func populateDB(folderCount, dashboardsPerFolder int, sqlStore *sqlstore.SQLStor
 
 		for u := start; u < end; u++ {
 			dashID := int64(u + offset)
-			folderID := int64((u+offset)%folderCount + 1)
+			folderUID := fmt.Sprintf("folder%v", int64((u+offset)%folderCount+1))
 			dbs = append(dbs, dashboards.Dashboard{
-				ID:       dashID,
-				UID:      fmt.Sprintf("dashboard%v", dashID),
-				Title:    fmt.Sprintf("dashboard%v", dashID),
-				IsFolder: false,
-				FolderID: folderID, // nolint:staticcheck
-				OrgID:    1,
-				Created:  now,
-				Updated:  now,
+				ID:        dashID,
+				UID:       fmt.Sprintf("dashboard%v", dashID),
+				Title:     fmt.Sprintf("dashboard%v", dashID),
+				IsFolder:  false,
+				FolderUID: folderUID,
+				OrgID:     1,
+				Created:   now,
+				Updated:   now,
 			})
 		}
 
