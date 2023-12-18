@@ -1,7 +1,7 @@
 import React, { FC, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-import { AppEvents } from '@grafana/data';
+import { AppEvents, PageLayoutType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import { appEvents } from 'app/core/core';
@@ -67,7 +67,7 @@ const EditRolePage: FC = () => {
   };
 
   return (
-    <Page navId={PMM_ACCESS_ROLES_PAGE.id} pageNav={PMM_ACCESS_ROLE_EDIT_PAGE}>
+    <Page navId={PMM_ACCESS_ROLES_PAGE.id} pageNav={PMM_ACCESS_ROLE_EDIT_PAGE} layout={PageLayoutType.Custom}>
       <AddEditRoleForm
         isLoading={isLoading}
         initialValues={role}

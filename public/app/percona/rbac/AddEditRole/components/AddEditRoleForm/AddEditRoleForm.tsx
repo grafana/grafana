@@ -1,8 +1,8 @@
 import React, { FC, useCallback, useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { useHistory } from 'react-router-dom';
 
-import { Field, Input, useStyles2, HorizontalGroup, Button } from '@grafana/ui';
-import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
+import { Field, Input, useStyles2, PageToolbar, ToolbarButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
@@ -20,6 +20,7 @@ const AddEditRoleForm: FC<AddEditRoleFormProps> = ({
   onCancel,
   submitLabel,
   onSubmit,
+  title,
 }) => {
   const methods = useForm({
     defaultValues: initialValues,
@@ -28,40 +29,34 @@ const AddEditRoleForm: FC<AddEditRoleFormProps> = ({
   const styles = useStyles2(getStyles);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const featureSelector = useCallback(getPerconaSettingFlag('enableAccessControl'), []);
+  const history = useHistory();
 
   useEffect(() => {
     methods.reset(initialValues);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialValues]);
 
+  const handleGoBack = () => {
+    history.push('/roles');
+  };
+
   return (
     <FormProvider {...methods}>
-      <Page.Contents isLoading={isLoading}>
+      <PageToolbar title={title} onGoBack={handleGoBack}>
+        <ToolbarButton data-testid="add-edit-role-cancel" type="button" onClick={onCancel} variant="canvas">
+          {cancelLabel}
+        </ToolbarButton>
+        <ToolbarButton
+          data-testid="add-edit-role-submit"
+          type="submit"
+          variant="primary"
+          onClick={methods.handleSubmit(onSubmit)}
+        >
+          {submitLabel}
+        </ToolbarButton>
+      </PageToolbar>
+      <Page.Contents isLoading={isLoading} className={styles.pageContainer}>
         <FeatureLoader featureSelector={featureSelector}>
-          <AppChromeUpdate
-            actions={
-              <HorizontalGroup height="auto" justify="flex-end">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  data-testid="add-edit-role-cancel"
-                  type="button"
-                  onClick={onCancel}
-                >
-                  {cancelLabel}
-                </Button>
-                <Button
-                  data-testid="add-edit-role-submit"
-                  size="sm"
-                  type="submit"
-                  variant="primary"
-                  onClick={methods.handleSubmit(onSubmit)}
-                >
-                  {submitLabel}
-                </Button>
-              </HorizontalGroup>
-            }
-          />
           <form onSubmit={methods.handleSubmit(onSubmit)}>
             <div className={styles.page}>
               <Field label={Messages.name.label} invalid={!!errors.title} error={errors.title?.message}>

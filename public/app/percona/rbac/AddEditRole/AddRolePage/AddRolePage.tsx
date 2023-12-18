@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 
-import { AppEvents } from '@grafana/data';
+import { AppEvents, PageLayoutType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
@@ -34,7 +34,7 @@ const AddRolePage: FC = () => {
   };
 
   return (
-    <Page navId={PMM_ACCESS_ROLES_PAGE.id} pageNav={PMM_ACCESS_ROLE_CREATE_PAGE}>
+    <Page navId={PMM_ACCESS_ROLES_PAGE.id} pageNav={PMM_ACCESS_ROLE_CREATE_PAGE} layout={PageLayoutType.Custom}>
       <AddEditRoleForm
         title={Messages.title}
         cancelLabel={Messages.cancel}
