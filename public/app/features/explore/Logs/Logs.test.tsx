@@ -483,14 +483,14 @@ describe('Logs', () => {
     it('should use default state from localstorage - table', async () => {
       localStorage.setItem(visualisationTypeKey, 'table');
       setup({});
-      const table = screen.getByTestId('logRowsTable');
+      const table = await screen.findByTestId('logRowsTable');
       expect(table).toBeInTheDocument();
     });
 
     it('should use default state from localstorage - logs', async () => {
       localStorage.setItem(visualisationTypeKey, 'logs');
       setup({});
-      const table = screen.getByTestId('logRows');
+      const table = await screen.findByTestId('logRows');
       expect(table).toBeInTheDocument();
     });
 
