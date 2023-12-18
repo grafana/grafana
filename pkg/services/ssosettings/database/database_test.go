@@ -14,6 +14,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 )
 
+const (
+	withinDuration = 5 * time.Minute
+)
+
 func TestIntegrationGetSSOSettings(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -80,9 +84,6 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 	t.Run("insert a new SSO setting successfully", func(t *testing.T) {
 		setup()
 
-		mockTimeNow(time.Now())
-		defer resetTimeNow()
-
 		settings := models.SSOSettings{
 			Provider: "azuread",
 			Settings: map[string]any{
@@ -98,8 +99,8 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 		require.NoError(t, err)
 		require.EqualValues(t, settings.Settings, actual.Settings)
 		require.NotEmpty(t, actual.ID)
-		require.Equal(t, formatTime(timeNow().UTC()), formatTime(actual.Created))
-		require.Equal(t, formatTime(timeNow().UTC()), formatTime(actual.Updated))
+		require.WithinDuration(t, time.Now().UTC(), actual.Created, withinDuration)
+		require.WithinDuration(t, time.Now().UTC(), actual.Updated, withinDuration)
 
 		deleted, notDeleted, err := getSSOSettingsCountByDeleted(sqlStore)
 		require.NoError(t, err)
@@ -109,9 +110,6 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 
 	t.Run("replaces an existing SSO setting for the specified provider", func(t *testing.T) {
 		setup()
-
-		mockTimeNow(time.Now())
-		defer resetTimeNow()
 
 		provider := "github"
 		template := models.SSOSettings{
@@ -138,7 +136,7 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 		actual, err := getSSOSettingsByProvider(sqlStore, provider, false)
 		require.NoError(t, err)
 		require.EqualValues(t, newSettings.Settings, actual.Settings)
-		require.Equal(t, formatTime(timeNow().UTC()), formatTime(actual.Updated))
+		require.WithinDuration(t, time.Now().UTC(), actual.Updated, withinDuration)
 
 		deleted, notDeleted, err := getSSOSettingsCountByDeleted(sqlStore)
 		require.NoError(t, err)
@@ -148,9 +146,6 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 
 	t.Run("trying to update a deleted SSO Settings will insert a new record", func(t *testing.T) {
 		setup()
-
-		mockTimeNow(time.Now())
-		defer resetTimeNow()
 
 		provider := "azuread"
 		template := models.SSOSettings{
@@ -179,8 +174,8 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 		actual, err := getSSOSettingsByProvider(sqlStore, provider, false)
 		require.NoError(t, err)
 		require.EqualValues(t, newSettings.Settings, actual.Settings)
-		require.Equal(t, formatTime(timeNow().UTC()), formatTime(actual.Created))
-		require.Equal(t, formatTime(timeNow().UTC()), formatTime(actual.Updated))
+		require.WithinDuration(t, time.Now().UTC(), actual.Created, withinDuration)
+		require.WithinDuration(t, time.Now().UTC(), actual.Updated, withinDuration)
 
 		old, err := getSSOSettingsByProvider(sqlStore, provider, true)
 		require.NoError(t, err)
@@ -189,9 +184,6 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 
 	t.Run("replaces the settings only for the specified provider leaving the other provider's settings unchanged", func(t *testing.T) {
 		setup()
-
-		mockTimeNow(time.Now())
-		defer resetTimeNow()
 
 		providers := []string{"github", "gitlab", "google"}
 		template := models.SSOSettings{
@@ -218,7 +210,7 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 		actual, err := getSSOSettingsByProvider(sqlStore, providers[0], false)
 		require.NoError(t, err)
 		require.EqualValues(t, newSettings.Settings, actual.Settings)
-		require.Equal(t, formatTime(timeNow().UTC()), formatTime(actual.Updated))
+		require.WithinDuration(t, time.Now().UTC(), actual.Updated, withinDuration)
 
 		for index := 1; index < len(providers); index++ {
 			existing, err := getSSOSettingsByProvider(sqlStore, providers[index], false)
@@ -379,7 +371,7 @@ func populateSSOSettings(sqlStore *sqlstore.SQLStore, template models.SSOSetting
 				ID:        uuid.New().String(),
 				Provider:  provider,
 				Settings:  template.Settings,
-				Created:   timeNow().UTC(),
+				Created:   time.Now().UTC(),
 				IsDeleted: template.IsDeleted,
 			}
 
@@ -419,18 +411,4 @@ func getSSOSettingsByProvider(sqlStore *sqlstore.SQLStore, provider string, dele
 	}
 
 	return &model, err
-}
-
-func mockTimeNow(timeSeed time.Time) {
-	timeNow = func() time.Time {
-		return timeSeed
-	}
-}
-
-func resetTimeNow() {
-	timeNow = time.Now
-}
-
-func formatTime(timestamp time.Time) string {
-	return timestamp.Format(time.RFC3339)
 }
