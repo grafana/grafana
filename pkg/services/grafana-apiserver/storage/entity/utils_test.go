@@ -18,7 +18,9 @@ func TestResourceToEntity(t *testing.T) {
 	createdAt := metav1.Now()
 	createdAtStr := createdAt.UTC().Format(time.RFC3339)
 
-	updatedAt := createdAt.Add(time.Hour)
+	// truncate here because RFC3339 doesn't support millisecond precision
+	// consider updating accessor to use RFC3339Nano to encode timestamps
+	updatedAt := createdAt.Add(time.Hour).Truncate(time.Second)
 	updatedAtStr := updatedAt.UTC().Format(time.RFC3339)
 
 	apiVersion := "v0alpha1"
@@ -81,8 +83,8 @@ func TestResourceToEntity(t *testing.T) {
 			expectedGuid:         "test-uid",
 			expectedVersion:      "1",
 			expectedFolder:       "test-folder",
-			expectedCreatedAt:    createdAt.UnixNano() / 1000000,
-			expectedUpdatedAt:    updatedAt.UnixNano() / 1000000,
+			expectedCreatedAt:    createdAt.UnixMilli(),
+			expectedUpdatedAt:    updatedAt.UnixMilli(),
 			expectedCreatedBy:    "test-created-by",
 			expectedUpdatedBy:    "test-updated-by",
 			expectedSlug:         "test-slug",
@@ -147,8 +149,8 @@ func TestEntityToResource(t *testing.T) {
 				Version:      "1",
 				Folder:       "test-folder",
 				CreatedBy:    "test-created-by",
-				CreatedAt:    createdAt.UnixNano() / 1000000,
-				UpdatedAt:    updatedAt.UnixNano() / 1000000,
+				CreatedAt:    createdAt.UnixMilli(),
+				UpdatedAt:    updatedAt.UnixMilli(),
 				UpdatedBy:    "test-updated-by",
 				Slug:         "test-slug",
 				Origin:       &entityStore.EntityOriginInfo{},

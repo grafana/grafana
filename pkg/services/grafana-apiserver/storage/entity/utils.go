@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
@@ -18,6 +19,11 @@ import (
 // this is terrible... but just making it work!!!!
 func entityToResource(rsp *entityStore.Entity, res runtime.Object) error {
 	var err error
+
+	res.GetObjectKind().SetGroupVersionKind(schema.GroupVersionKind{
+		Group:   rsp.Group,
+		Version: rsp.GroupVersion,
+	})
 
 	metaAccessor, err := meta.Accessor(res)
 	if err != nil {
