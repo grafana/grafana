@@ -169,4 +169,5 @@ export interface FeatureToggles {
   regressionTransformation?: boolean;
   displayAnonymousStats?: boolean;
   alertStateHistoryAnnotationsFromLoki?: boolean;
+  lokiQueryHints?: boolean;
 }
