@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { AppNotification, AppNotificationSeverity, AppNotificationsState } from 'app/types/';
 
@@ -60,10 +60,12 @@ export const appNotificationsReducer = appNotificationsSlice.reducer;
 // Selectors
 
 export const selectLastReadTimestamp = (state: AppNotificationsState) => state.lastRead;
-export const selectAll = (state: AppNotificationsState) =>
-  Object.values(state.byId).sort((a, b) => b.timestamp - a.timestamp);
-export const selectWarningsAndErrors = (state: AppNotificationsState) => selectAll(state).filter(isAtLeastWarning);
-export const selectVisible = (state: AppNotificationsState) => Object.values(state.byId).filter((n) => n.showing);
+export const selectById = (state: AppNotificationsState) => state.byId;
+export const selectAll = createSelector(selectById, (byId) =>
+  Object.values(byId).sort((a, b) => b.timestamp - a.timestamp)
+);
+export const selectWarningsAndErrors = createSelector(selectAll, (all) => all.filter(isAtLeastWarning));
+export const selectVisible = createSelector(selectById, (byId) => Object.values(byId).filter((n) => n.showing));
 
 // Helper functions
 

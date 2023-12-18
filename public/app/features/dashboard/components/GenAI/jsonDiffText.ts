@@ -135,6 +135,9 @@ export function fillBySimilarity(
           continue;
         }
         if (val1 === val2) {
+          if (key === 'id') {
+            score += 1000; // Can probably be caught earlier in the call tree.
+          }
           score++;
         }
       }
@@ -169,37 +172,99 @@ export function fillBySimilarity(
   }
 }
 
-export function jsonSanitize(obj: Dashboard | DashboardModel | null) {
+function shortenDiff(diffS: string) {
+  const diffLines = diffS.split('\n');
+  let headerEnd = diffS[0].startsWith('Index') ? 4 : 3;
+  let ret = diffLines.slice(0, headerEnd);
+
+  const titleOrBracket = /("title"|Title|\{|\}|\[|\])/i;
+  for (let i = headerEnd; i < diffLines.length; i++) {
+    let line = diffLines[i];
+    if (titleOrBracket.test(line)) {
+      ret.push(line);
+    } else if (line.startsWith('+') || line.startsWith('-')) {
+      ret.push(line);
+    }
+  }
+  return ret.join('\n') + '\n';
+}
+
+export function removeEmptyFields(input: JSONValue): JSONValue {
+  if (input === null || input === '') {
+    return null;
+  }
+
+  if (Array.isArray(input)) {
+    // Filter out empty values and recursively process the non-empty ones
+    const filteredArray = input.map((item) => removeEmptyFields(item)).filter((item) => item !== null);
+
+    return filteredArray.length > 0 ? filteredArray : null;
+  }
+
+  if (typeof input !== 'object') {
+    // If it's not an object, return as is
+    return input;
+  }
+
+  // For objects, recursively process each key-value pair
+  const result: JSONObject = {};
+  for (const key in input) {
+    const processedValue = removeEmptyFields(input[key]);
+
+    if (processedValue !== null) {
+      if (Array.isArray(processedValue) && processedValue.length === 0) {
+        continue;
+      }
+
+      if (typeof processedValue === 'object') {
+        const keys = Object.keys(processedValue);
+        if (keys.length === 0) {
+          continue;
+        }
+      }
+
+      result[key] = processedValue;
+    }
+  }
+
+  return Object.keys(result).length > 0 ? result : null;
+}
+
+function jsonSanitize(obj: Dashboard | DashboardModel | null) {
   return JSON.parse(JSON.stringify(obj, null, 2));
 }
 
-export function getDashboardStringDiff(dashboard: DashboardModel) {
-  const originalDashboard = jsonSanitize(dashboard.getOriginalDashboard());
+export function getDashboardStringDiff(dashboard: DashboardModel): { migrationDiff: string; userDiff: string } {
+  let originalDashboard = jsonSanitize(dashboard.getOriginalDashboard());
   let dashboardAfterMigration = jsonSanitize(new DashboardModel(originalDashboard).getSaveModelClone());
   let currentDashboard = jsonSanitize(dashboard.getSaveModelClone());
 
-  dashboardAfterMigration = orderProperties(originalDashboard, dashboardAfterMigration);
-  currentDashboard = orderProperties(dashboardAfterMigration, currentDashboard);
+  dashboardAfterMigration = removeEmptyFields(orderProperties(originalDashboard, dashboardAfterMigration));
+  currentDashboard = removeEmptyFields(orderProperties(dashboardAfterMigration, currentDashboard));
+  originalDashboard = removeEmptyFields(originalDashboard);
 
-  let migrationDiff = createTwoFilesPatch(
-    originalDashboard.title ?? 'Before migration changes',
-    dashboardAfterMigration.title ?? 'After migration changes',
+  let migrationDiff: string = createTwoFilesPatch(
+    'Before migration changes',
+    'After migration changes',
     JSON.stringify(originalDashboard, null, 2),
     JSON.stringify(dashboardAfterMigration, null, 2),
     '',
     '',
-    { context: 5 }
+    { context: 20 }
   );
 
-  let userDiff = createTwoFilesPatch(
-    dashboardAfterMigration.title ?? 'Before user changes',
-    currentDashboard.title ?? 'After user changes',
+  let userDiff: string = createTwoFilesPatch(
+    'Before user changes',
+    'After user changes',
     JSON.stringify(dashboardAfterMigration, null, 2),
     JSON.stringify(currentDashboard, null, 2),
     '',
     '',
-    { context: 5 }
+    { context: 20 }
   );
+
+  migrationDiff = shortenDiff(migrationDiff);
+  userDiff = shortenDiff(userDiff);
 
   return { migrationDiff, userDiff };
 }

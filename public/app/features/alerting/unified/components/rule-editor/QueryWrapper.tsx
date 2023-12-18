@@ -12,9 +12,8 @@ import {
   RelativeTimeRange,
   ThresholdsConfig,
 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
 import { DataQuery } from '@grafana/schema';
-import { GraphTresholdsStyleMode, Icon, InlineField, Input, Tooltip, useStyles2 } from '@grafana/ui';
+import { GraphTresholdsStyleMode, Icon, InlineField, Input, Tooltip, useStyles2, Stack } from '@grafana/ui';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -214,7 +213,7 @@ export function MaxDataPointsOption({
       <Input
         type="number"
         width={10}
-        placeholder={DEFAULT_MAX_DATA_POINTS.toLocaleString()}
+        placeholder={DEFAULT_MAX_DATA_POINTS.toString()}
         spellCheck={false}
         onBlur={onMaxDataPointsBlur}
         defaultValue={value}

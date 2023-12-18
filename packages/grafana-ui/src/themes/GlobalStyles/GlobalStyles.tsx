@@ -10,6 +10,7 @@ import { getExtraStyles } from './extra';
 import { getFormElementStyles } from './forms';
 import { getMarkdownStyles } from './markdownStyles';
 import { getPageStyles } from './page';
+import { getSkeletonStyles } from './skeletonStyles';
 
 /** @internal */
 export function GlobalStyles() {
@@ -25,6 +26,7 @@ export function GlobalStyles() {
         getCardStyles(theme),
         getAgularPanelStyles(theme),
         getMarkdownStyles(theme),
+        getSkeletonStyles(theme),
       ]}
     />
   );

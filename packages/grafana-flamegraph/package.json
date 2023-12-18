@@ -46,7 +46,7 @@
     "@emotion/css": "11.11.2",
     "@grafana/data": "10.3.0-pre",
     "@grafana/ui": "10.3.0-pre",
-    "@leeoniya/ufuzzy": "1.0.8",
+    "@leeoniya/ufuzzy": "1.0.13",
     "d3": "^7.8.5",
     "lodash": "4.17.21",
     "react": "18.2.0",
@@ -79,7 +79,7 @@
     "rollup-plugin-node-externals": "^5.0.0",
     "ts-jest": "29.1.1",
     "ts-node": "10.9.1",
-    "typescript": "4.8.4"
+    "typescript": "5.2.2"
   },
   "peerDependencies": {
     "react": "^17.0.0 || ^18.0.0",

@@ -19,7 +19,7 @@ exports[`alertmanager abilities should report Create / Update / Delete actions a
     false,
   ],
   "create-silence": [
-    false,
+    true,
     false,
   ],
   "decrypt-secrets": [
@@ -54,6 +54,10 @@ exports[`alertmanager abilities should report Create / Update / Delete actions a
     false,
     false,
   ],
+  "export-mute-timings": [
+    false,
+    false,
+  ],
   "export-notification-policies": [
     false,
     false,
@@ -71,7 +75,7 @@ exports[`alertmanager abilities should report Create / Update / Delete actions a
     false,
   ],
   "update-silence": [
-    false,
+    true,
     false,
   ],
   "view-contact-point": [
@@ -153,11 +157,15 @@ exports[`alertmanager abilities should report everything except exporting for Mi
   ],
   "export-contact-point": [
     false,
+    true,
+  ],
+  "export-mute-timings": [
     false,
+    true,
   ],
   "export-notification-policies": [
     false,
-    false,
+    true,
   ],
   "update-external-configuration": [
     true,
@@ -254,11 +262,15 @@ exports[`alertmanager abilities should report everything is supported for builti
   ],
   "export-contact-point": [
     true,
-    false,
+    true,
+  ],
+  "export-mute-timings": [
+    true,
+    true,
   ],
   "export-notification-policies": [
     true,
-    false,
+    true,
   ],
   "update-external-configuration": [
     true,

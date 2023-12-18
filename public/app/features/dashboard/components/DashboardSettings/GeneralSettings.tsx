@@ -12,8 +12,8 @@ import {
   Label,
   HorizontalGroup,
   TextArea,
+  Box,
 } from '@grafana/ui';
-import { Box } from '@grafana/ui/src/unstable';
 import { Page } from 'app/core/components/Page/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { t, Trans } from 'app/core/internationalization';
@@ -222,7 +222,7 @@ export function GeneralSettingsUnconnected({
           </Field>
         </CollapsableSection>
 
-        <Box marginTop={3}>{dashboard.meta.canDelete && <DeleteDashboardButton dashboard={dashboard} />}</Box>
+        <Box marginTop={3}>{dashboard.meta.canDelete && <DeleteDashboardButton />}</Box>
       </div>
     </Page>
   );

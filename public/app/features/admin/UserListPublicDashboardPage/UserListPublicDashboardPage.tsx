@@ -26,6 +26,7 @@ export const UserListPublicDashboardPage = () => {
                 <Icon name="question-circle" />
               </Tooltip>
             </th>
+            <th>Last active</th>
             <th>Origin</th>
             <th>Role</th>
             <th></th>
@@ -40,6 +41,7 @@ export const UserListPublicDashboardPage = () => {
                 </span>
               </td>
               <td className="max-width-10">{user.firstSeenAtAge}</td>
+              <td className="max-width-10">{user.lastSeenAtAge}</td>
               <td className="max-width-10">
                 <HorizontalGroup spacing="sm">
                   <span>{user.totalDashboards} dashboard(s)</span>

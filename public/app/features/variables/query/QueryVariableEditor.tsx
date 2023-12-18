@@ -4,8 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { DataSourceInstanceSettings, getDataSourceRef, LoadingState, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getTemplateSrv } from '@grafana/runtime';
-import { Field, Text } from '@grafana/ui';
-import { Box } from '@grafana/ui/src/unstable';
+import { Field, Text, Box } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { StoreState } from '../../../types';

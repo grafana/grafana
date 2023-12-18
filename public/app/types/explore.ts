@@ -17,6 +17,7 @@ import {
   SupplementaryQueryType,
   UrlQueryMap,
   ExploreCorrelationHelperData,
+  DataLinkTransformationConfig,
 } from '@grafana/data';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 
@@ -27,21 +28,25 @@ export type ExploreQueryParams = UrlQueryMap;
 export enum CORRELATION_EDITOR_POST_CONFIRM_ACTION {
   CLOSE_PANE,
   CHANGE_DATASOURCE,
+  CLOSE_EDITOR,
 }
 
 export interface CorrelationEditorDetails {
   editorMode: boolean;
-  dirty: boolean;
+  correlationDirty: boolean;
+  queryEditorDirty: boolean;
   isExiting: boolean;
   postConfirmAction?: {
     // perform an action after a confirmation modal instead of exiting editor mode
     exploreId: string;
     action: CORRELATION_EDITOR_POST_CONFIRM_ACTION;
     changeDatasourceUid?: string;
+    isActionLeft: boolean;
   };
   canSave?: boolean;
   label?: string;
   description?: string;
+  transformations?: DataLinkTransformationConfig[];
 }
 
 // updates can have any properties

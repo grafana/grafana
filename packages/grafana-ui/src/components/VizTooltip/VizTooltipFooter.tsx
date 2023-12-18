@@ -49,17 +49,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
+    padding: theme.spacing(0),
   }),
   dataLinks: css({
-    height: 40,
     overflowX: 'auto',
     overflowY: 'hidden',
     whiteSpace: 'nowrap',
-    borderTop: `1px solid ${theme.colors.border.medium}`,
     maskImage: 'linear-gradient(90deg, rgba(0, 0, 0, 1) 80%, transparent)',
+    borderTop: `1px solid ${theme.colors.border.medium}`,
+    padding: theme.spacing(1),
   }),
   addAnnotations: css({
     borderTop: `1px solid ${theme.colors.border.medium}`,
-    paddingTop: theme.spacing(1),
+    padding: theme.spacing(1),
   }),
 });

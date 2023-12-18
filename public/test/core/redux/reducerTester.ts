@@ -2,7 +2,9 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { cloneDeep } from 'lodash';
 import { Action } from 'redux';
 
-type GrafanaReducer<S = any, A extends Action = AnyAction> = (state: S, action: A) => S;
+import { StoreState } from 'app/types';
+
+type GrafanaReducer<S = StoreState, A extends Action = AnyAction> = (state: S, action: A) => S;
 
 export interface Given<State> {
   givenReducer: (
@@ -23,36 +25,29 @@ export interface Then<State> {
   whenActionIsDispatched: (action: AnyAction) => Then<State>;
 }
 
-interface ObjectType extends Object {
-  [key: string]: any;
-}
+const isNotException = (object: unknown, propertyName: string) =>
+  typeof object === 'function'
+    ? propertyName !== 'caller' && propertyName !== 'callee' && propertyName !== 'arguments'
+    : true;
 
 export const deepFreeze = <T>(obj: T): T => {
-  Object.freeze(obj);
+  if (typeof obj === 'object') {
+    for (const key in obj) {
+      const prop = obj[key];
 
-  const isNotException = (object: unknown, propertyName: string) =>
-    typeof object === 'function'
-      ? propertyName !== 'caller' && propertyName !== 'callee' && propertyName !== 'arguments'
-      : true;
-  const hasOwnProp = Object.prototype.hasOwnProperty;
-
-  if (obj && obj instanceof Object) {
-    const object: ObjectType = obj;
-    Object.getOwnPropertyNames(object).forEach((propertyName) => {
-      const objectProperty = object[propertyName];
       if (
-        hasOwnProp.call(object, propertyName) &&
-        isNotException(object, propertyName) &&
-        objectProperty &&
-        (typeof objectProperty === 'object' || typeof objectProperty === 'function') &&
-        Object.isFrozen(objectProperty) === false
+        prop &&
+        Object.hasOwn(obj, key) &&
+        isNotException(obj, key) &&
+        (typeof prop === 'object' || typeof prop === 'function') &&
+        !Object.isFrozen(prop)
       ) {
-        deepFreeze(objectProperty);
+        deepFreeze(prop);
       }
-    });
+    }
   }
 
-  return obj;
+  return Object.freeze(obj);
 };
 
 interface ReducerTester<State> extends Given<State>, When<State>, Then<State> {}

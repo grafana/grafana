@@ -267,7 +267,6 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		SQLStore:         ps.SQLStore,
 		Logger:           ps.log,
 		FolderService:    nil, // we don't use it yet
-		AccessControl:    ps.ac,
 		DashboardService: ps.dashboardService,
 	}
 	ruleService := provisioning.NewAlertRuleService(

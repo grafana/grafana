@@ -307,7 +307,7 @@ func (e *cloudWatchExecutor) handleGetLogGroups(ctx context.Context, pluginCtx b
 		input.LogGroupNamePrefix = aws.String(logGroupNamePrefix)
 	}
 	var response *cloudwatchlogs.DescribeLogGroupsOutput
-	response, err = logsClient.DescribeLogGroups(input)
+	response, err = logsClient.DescribeLogGroupsWithContext(ctx, input)
 	if err != nil || response == nil {
 		return nil, err
 	}

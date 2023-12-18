@@ -59,11 +59,11 @@ To access Search, use the following steps:
 
 1. Sign into Grafana.
 1. Select your Tempo data source.
-1. From the menu, choose Explore and select Query type > Search.
+1. From the menu, choose **Explore** and select **Query type > Search**.
 
 ## Define filters
 
-Using filters, you refine the data returned from the query by selecting Resource Service Name, Span Name, or Duration. The **Duration** represents span time, calculated by subtracting the end time from the start time of the span.
+Using filters, you refine the data returned from the query by selecting **Resource Service Name**, **Span Name**, or **Duration**. The **Duration** represents span time, calculated by subtracting the end time from the start time of the span.
 
 Grafana administrators can change the default filters using the Tempo data source configuration.
 Filters can be limited by the operators. The available operators are determined by the field type.
@@ -110,6 +110,8 @@ Using **Aggregate by**, you can calculate RED metrics (total span count, percent
 This capability is based on the [metrics summary API](/docs/grafana-cloud/monitor-infrastructure/traces/metrics-summary-api/).
 Metrics summary only calculates summaries based on spans received within the last hour.
 
+{{< youtube id="g97CjKOZqT4" >}}
+
 When you use **Aggregate by**, the selections you make determine how the information is reported in the Table. Every combination that matches selections in your data is listed in the table.
 Each aggregate value, for example `intrinsic`:`name`, has a corresponding column in the results table.
 
@@ -146,3 +148,15 @@ Select **Run query** to run the TraceQL query (1 in the screenshot).
 Queries can take a little while to return results. The results appear in a table underneath the query builder. Selecting a Trace ID (2 in the screenshot) displays more detailed information (3 in the screenshot).
 
 {{< figure src="/static/img/docs/queries/screenshot-tempods-query-results.png" class="docs-image--no-shadow" max-width="750px" caption="Tempo Search query type results" >}}
+
+#### Streaming results
+
+The Tempo data source supports streaming responses to TraceQL queries so you can see partial query results as they come in without waiting for the whole query to finish.
+
+{{% admonition type="note" %}}
+To use this experimental feature, enable the `traceQLStreaming` feature toggle. If you’re using Grafana Cloud and would like to enable this feature, please contact customer support.
+{{% /admonition %}}
+
+Streaming is available for both the **Search** and **TraceQL** query types, and you'll get immediate visibility of incoming traces on the results table.
+
+{{< video-embed src="/media/docs/grafana/data-sources/tempo-streaming-v2.mp4" >}}

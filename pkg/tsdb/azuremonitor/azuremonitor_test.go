@@ -155,19 +155,19 @@ func Test_newMux(t *testing.T) {
 		{
 			name:        "creates an Azure Monitor executor",
 			queryType:   azureMonitor,
-			expectedURL: routes[azureMonitorPublic][azureMonitor].URL,
+			expectedURL: routes[azsettings.AzurePublic][azureMonitor].URL,
 			Err:         require.NoError,
 		},
 		{
 			name:        "creates an Azure Log Analytics executor",
 			queryType:   azureLogAnalytics,
-			expectedURL: routes[azureMonitorPublic][azureLogAnalytics].URL,
+			expectedURL: routes[azsettings.AzurePublic][azureLogAnalytics].URL,
 			Err:         require.NoError,
 		},
 		{
 			name:        "creates an Azure Traces executor",
 			queryType:   azureTraces,
-			expectedURL: routes[azureMonitorPublic][azureLogAnalytics].URL,
+			expectedURL: routes[azsettings.AzurePublic][azureLogAnalytics].URL,
 			Err:         require.NoError,
 		},
 	}
@@ -176,10 +176,10 @@ func Test_newMux(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Service{
 				im: &fakeInstance{
-					routes: routes[azureMonitorPublic],
+					routes: routes[azsettings.AzurePublic],
 					services: map[string]types.DatasourceService{
 						tt.queryType: {
-							URL:        routes[azureMonitorPublic][tt.queryType].URL,
+							URL:        routes[azsettings.AzurePublic][tt.queryType].URL,
 							HTTPClient: &http.Client{},
 						},
 					},

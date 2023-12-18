@@ -4,9 +4,8 @@ import { DeepMap, FieldError, FormProvider, useForm, UseFormWatch } from 'react-
 import { Link, useParams } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Button, ConfirmModal, CustomScrollbar, HorizontalGroup, Spinner, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, CustomScrollbar, HorizontalGroup, Spinner, useStyles2, Stack } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';

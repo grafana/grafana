@@ -4,9 +4,18 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useObservable, useToggle } from 'react-use';
 
 import { GrafanaTheme2, LoadingState, PanelData, RelativeTimeRange } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
 import { config, isFetchError } from '@grafana/runtime';
-import { Alert, Button, Collapse, Icon, IconButton, LoadingPlaceholder, useStyles2, VerticalGroup } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  Collapse,
+  Icon,
+  IconButton,
+  LoadingPlaceholder,
+  Stack,
+  VerticalGroup,
+  useStyles2,
+} from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
@@ -69,10 +78,13 @@ export function RuleViewer({ match }: RuleViewerProps) {
         ...q,
         relativeTimeRange: evaluationTimeRanges[q.refId] ?? q.relativeTimeRange,
       }));
-
-      runner.run(evalCustomizedQueries);
+      let condition;
+      if (rule && isGrafanaRulerRule(rule.rulerRule)) {
+        condition = rule.rulerRule.grafana_alert.condition;
+      }
+      runner.run(evalCustomizedQueries, condition ?? 'A');
     }
-  }, [queries, evaluationTimeRanges, runner, allDataSourcesAvailable]);
+  }, [queries, evaluationTimeRanges, runner, allDataSourcesAvailable, rule]);
 
   useEffect(() => {
     const alertQueries = alertRuleToQueries(rule);
@@ -164,7 +176,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
       {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.AlertRule} />}
       <RuleViewerLayoutContent>
         <div>
-          <Stack direction="row" alignItems="center" wrap={false} gap={1}>
+          <Stack direction="row" alignItems="center" gap={1}>
             <Icon name="bell" size="lg" /> <span className={styles.title}>{rule.name}</span>
           </Stack>
           <RuleState rule={rule} isCreating={false} isDeleting={false} />

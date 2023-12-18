@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"golang.org/x/exp/slices"
 	"xorm.io/xorm"
 )
 
@@ -73,6 +74,14 @@ type Dialect interface {
 	Unlock(LockCfg) error
 
 	GetDBName(string) (string, error)
+
+	// InsertQuery accepts a table name and a map of column names to values to insert.
+	// It returns a query string and a slice of parameters that can be executed against the database.
+	InsertQuery(tableName string, row map[string]any) (string, []any, error)
+	// UpdateQuery accepts a table name, a map of column names to values to update, and a map of
+	// column names to values to use in the where clause.
+	// It returns a query string and a slice of parameters that can be executed against the database.
+	UpdateQuery(tableName string, row map[string]any, where map[string]any) (string, []any, error)
 }
 
 type LockCfg struct {
@@ -343,4 +352,72 @@ func (b *BaseDialect) OrderBy(order string) string {
 
 func (b *BaseDialect) GetDBName(_ string) (string, error) {
 	return "", nil
+}
+
+func (b *BaseDialect) InsertQuery(tableName string, row map[string]any) (string, []any, error) {
+	if len(row) < 1 {
+		return "", nil, fmt.Errorf("no columns provided")
+	}
+
+	// allocate slices
+	cols := make([]string, 0, len(row))
+	vals := make([]any, 0, len(row))
+	keys := make([]string, 0, len(row))
+
+	// create sorted list of columns
+	for col := range row {
+		keys = append(keys, col)
+	}
+	slices.Sort[string](keys)
+
+	// build query and values
+	for _, col := range keys {
+		cols = append(cols, b.dialect.Quote(col))
+		vals = append(vals, row[col])
+	}
+
+	return fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", b.dialect.Quote(tableName), strings.Join(cols, ", "), strings.Repeat("?, ", len(row)-1)+"?"), vals, nil
+}
+
+func (b *BaseDialect) UpdateQuery(tableName string, row map[string]any, where map[string]any) (string, []any, error) {
+	if len(row) < 1 {
+		return "", nil, fmt.Errorf("no columns provided")
+	}
+
+	if len(where) < 1 {
+		return "", nil, fmt.Errorf("no where clause provided")
+	}
+
+	// allocate slices
+	cols := make([]string, 0, len(row))
+	whereCols := make([]string, 0, len(where))
+	vals := make([]any, 0, len(row)+len(where))
+	keys := make([]string, 0, len(row))
+
+	// create sorted list of columns to update
+	for col := range row {
+		keys = append(keys, col)
+	}
+	slices.Sort[string](keys)
+
+	// build update query and values
+	for _, col := range keys {
+		cols = append(cols, b.dialect.Quote(col)+"=?")
+		vals = append(vals, row[col])
+	}
+
+	// create sorted list of columns for where clause
+	keys = make([]string, 0, len(where))
+	for col := range where {
+		keys = append(keys, col)
+	}
+	slices.Sort[string](keys)
+
+	// build where clause and values
+	for _, col := range keys {
+		whereCols = append(whereCols, b.dialect.Quote(col)+"=?")
+		vals = append(vals, where[col])
+	}
+
+	return fmt.Sprintf("UPDATE %s SET %s WHERE %s", b.dialect.Quote(tableName), strings.Join(cols, ", "), strings.Join(whereCols, " AND ")), vals, nil
 }

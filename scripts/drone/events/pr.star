@@ -103,6 +103,7 @@ def pr_pipelines():
                     "go.sum",
                     "go.mod",
                     "public/app/plugins/**/plugin.json",
+                    "docs/sources/setup-grafana/configure-grafana/feature-toggles/**",
                     "devenv/**",
                 ],
             ),

@@ -16,7 +16,7 @@ import React, { useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Icon, Spinner, useStyles2 } from '@grafana/ui';
+import { Icon, LoadingBar, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { KBarResults } from './KBarResults';
@@ -58,11 +58,14 @@ export function CommandPalette() {
           <FocusScope contain autoFocus restoreFocus>
             <div {...overlayProps} {...dialogProps}>
               <div className={styles.searchContainer}>
-                {isFetchingSearchResults ? <Spinner className={styles.spinner} /> : <Icon name="search" size="md" />}
+                <Icon name="search" size="md" />
                 <KBarSearch
                   defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search or jump to...')}
                   className={styles.search}
                 />
+                <div className={styles.loadingBarContainer}>
+                  {isFetchingSearchResults && <LoadingBar width={500} delay={0} />}
+                </div>
               </div>
               <div className={styles.resultsContainer}>
                 <RenderResults searchResults={searchResults} />
@@ -161,6 +164,12 @@ const getSearchStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
       boxShadow: theme.shadows.z3,
     }),
+    loadingBarContainer: css({
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+    }),
     searchContainer: css({
       alignItems: 'center',
       background: theme.components.input.background,
@@ -168,6 +177,7 @@ const getSearchStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       gap: theme.spacing(1),
       padding: theme.spacing(1, 2),
+      position: 'relative',
     }),
     search: css({
       fontSize: theme.typography.fontSize,

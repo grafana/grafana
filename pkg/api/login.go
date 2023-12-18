@@ -91,7 +91,7 @@ func (hs *HTTPServer) CookieOptionsFromCfg() cookies.CookieOptions {
 }
 
 func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
-	if hs.Features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagClientTokenRotation) {
 		if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
 			c.Redirect(hs.Cfg.AppSubURL + "/")
 			return
@@ -129,7 +129,9 @@ func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
 
 	if c.IsSignedIn {
 		// Assign login token to auth proxy users if enable_login_token = true
-		if hs.Cfg.AuthProxyEnabled && hs.Cfg.AuthProxyEnableLoginToken {
+		if hs.Cfg.AuthProxyEnabled &&
+			hs.Cfg.AuthProxyEnableLoginToken &&
+			c.SignedInUser.AuthenticatedBy == loginservice.AuthProxyAuthModule {
 			user := &user.User{ID: c.SignedInUser.UserID, Email: c.SignedInUser.Email, Login: c.SignedInUser.Login}
 			err := hs.loginUserWithUser(user, c)
 			if err != nil {
@@ -246,19 +248,31 @@ func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 		hs.log.Error("failed to retrieve user ID", "error", errID)
 	}
 
-	// If SAML is enabled and this is a SAML user use saml logout
-	if hs.samlSingleLogoutEnabled() {
-		getAuthQuery := loginservice.GetAuthInfoQuery{UserId: userID}
-		if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
+	oauthProviderSignoutRedirectUrl := ""
+	getAuthQuery := loginservice.GetAuthInfoQuery{UserId: userID}
+	authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery)
+	if err == nil {
+		// If SAML is enabled and this is a SAML user use saml logout
+		if hs.samlSingleLogoutEnabled() {
 			if authInfo.AuthModule == loginservice.SAMLAuthModule {
 				c.Redirect(hs.Cfg.AppSubURL + "/logout/saml")
 				return
 			}
 		}
+		oauthProvider := hs.SocialService.GetOAuthInfoProvider(strings.TrimPrefix(authInfo.AuthModule, "oauth_"))
+		if oauthProvider != nil {
+			oauthProviderSignoutRedirectUrl = oauthProvider.SignoutRedirectUrl
+		}
 	}
 
+	hs.log.Debug("Logout Redirect url", "auth.SignoutRedirectUrl:", hs.Cfg.SignoutRedirectUrl)
+	hs.log.Debug("Logout Redirect url", "oauth provider redirect url:", oauthProviderSignoutRedirectUrl)
+
+	signOutRedirectUrl := getSignOutRedirectUrl(hs.Cfg.SignoutRedirectUrl, oauthProviderSignoutRedirectUrl)
+
+	hs.log.Debug("Logout Redirect url", "signOurRedirectUrl:", signOutRedirectUrl)
 	idTokenHint := ""
-	oidcLogout := isPostLogoutRedirectConfigured(hs.Cfg.SignoutRedirectUrl)
+	oidcLogout := isPostLogoutRedirectConfigured(signOutRedirectUrl)
 
 	// Invalidate the OAuth tokens in case the User logged in with OAuth or the last external AuthEntry is an OAuth one
 	if entry, exists, _ := hs.oauthTokenService.HasOAuthEntry(c.Req.Context(), c.SignedInUser); exists {
@@ -276,17 +290,17 @@ func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 		}
 	}
 
-	err := hs.AuthTokenService.RevokeToken(c.Req.Context(), c.UserToken, false)
+	err = hs.AuthTokenService.RevokeToken(c.Req.Context(), c.UserToken, false)
 	if err != nil && !errors.Is(err, auth.ErrUserTokenNotFound) {
 		hs.log.Error("failed to revoke auth token", "error", err)
 	}
 
 	authn.DeleteSessionCookie(c.Resp, hs.Cfg)
 
-	rdUrl := hs.Cfg.SignoutRedirectUrl
+	rdUrl := signOutRedirectUrl
 	if rdUrl != "" {
 		if oidcLogout {
-			rdUrl = getPostRedirectUrl(hs.Cfg.SignoutRedirectUrl, idTokenHint)
+			rdUrl = getPostRedirectUrl(signOutRedirectUrl, idTokenHint)
 		}
 		c.Redirect(rdUrl)
 	} else {
@@ -334,7 +348,7 @@ func (hs *HTTPServer) RedirectResponseWithError(c *contextmodel.ReqContext, err 
 
 func (hs *HTTPServer) redirectURLWithErrorCookie(c *contextmodel.ReqContext, err error) string {
 	setCookie := true
-	if hs.Features.IsEnabled(featuremgmt.FlagIndividualCookiePreferences) {
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagIndividualCookiePreferences) {
 		var userID int64
 		if c.SignedInUser != nil && !c.SignedInUser.IsNil() {
 			var errID error
@@ -440,4 +454,13 @@ func getPostRedirectUrl(rdUrl string, tokenHint string) string {
 	u.RawQuery = q.Encode()
 
 	return u.String()
+}
+
+func getSignOutRedirectUrl(gRdUrl string, oauthProviderUrl string) string {
+	if oauthProviderUrl != "" {
+		return oauthProviderUrl
+	} else if gRdUrl != "" {
+		return gRdUrl
+	}
+	return ""
 }

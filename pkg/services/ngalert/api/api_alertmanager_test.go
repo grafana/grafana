@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"crypto/md5"
 	"encoding/json"
 	"math/rand"
 	"net/http"
@@ -230,21 +231,21 @@ func TestAlertmanagerConfig(t *testing.T) {
 		r := sut.RoutePostAlertingConfig(&rc, request)
 		require.Equal(t, 202, r.Status())
 
-		am, err := sut.mam.AlertmanagerFor(1)
-		require.NoError(t, err)
-		hash := am.ConfigHash()
-
 		getResponse := sut.RouteGetAlertingConfig(&rc)
 		require.Equal(t, 200, getResponse.Status())
-		postable, err := notifier.Load(getResponse.Body())
+
+		body := getResponse.Body()
+		hash := md5.Sum(body)
+		postable, err := notifier.Load(body)
 		require.NoError(t, err)
 
 		r = sut.RoutePostAlertingConfig(&rc, *postable)
 		require.Equal(t, 202, r.Status())
 
-		am, err = sut.mam.AlertmanagerFor(1)
-		require.NoError(t, err)
-		newHash := am.ConfigHash()
+		getResponse = sut.RouteGetAlertingConfig(&rc)
+		require.Equal(t, 200, getResponse.Status())
+
+		newHash := md5.Sum(getResponse.Body())
 		require.Equal(t, hash, newHash)
 	})
 
@@ -570,7 +571,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			permissions: map[int64]map[string][]string{
 				1: {},
 			},
-			expectedStatus: http.StatusUnauthorized,
+			expectedStatus: http.StatusForbidden,
 		},
 		{
 			name:    "new silence, role-based access control is enabled, authorized",
@@ -586,7 +587,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			permissions: map[int64]map[string][]string{
 				1: {accesscontrol.ActionAlertingInstanceCreate: {}},
 			},
-			expectedStatus: http.StatusUnauthorized,
+			expectedStatus: http.StatusForbidden,
 		},
 		{
 			name:    "update silence, role-based access control is enabled, authorized",

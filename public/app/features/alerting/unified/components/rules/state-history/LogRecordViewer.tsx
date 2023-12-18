@@ -4,8 +4,7 @@ import { groupBy, uniqueId } from 'lodash';
 import React, { useEffect } from 'react';
 
 import { dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Icon, TagList, useStyles2 } from '@grafana/ui';
+import { Icon, TagList, useStyles2, Stack } from '@grafana/ui';
 
 import { Label } from '../../Label';
 import { AlertStateTag } from '../AlertStateTag';
@@ -64,7 +63,7 @@ export const LogRecordViewerByTimestamp = React.memo(
                     <AlertStateTag state={line.previous} size="sm" muted />
                     <Icon name="arrow-right" size="sm" />
                     <AlertStateTag state={line.current} />
-                    <Stack direction="row">{line.values && <AlertInstanceValues record={line.values} />}</Stack>
+                    <Stack>{line.values && <AlertInstanceValues record={line.values} />}</Stack>
                     <div>
                       {line.labels && (
                         <TagList
@@ -112,7 +111,7 @@ export function LogRecordViewerByInstance({ records, commonLabels }: LogRecordVi
                   <AlertStateTag state={line.previous} size="sm" muted />
                   <Icon name="arrow-right" size="sm" />
                   <AlertStateTag state={line.current} />
-                  <Stack direction="row">{line.values && <AlertInstanceValues record={line.values} />}</Stack>
+                  <Stack>{line.values && <AlertInstanceValues record={line.values} />}</Stack>
                   <div>{dateTimeFormat(timestamp)}</div>
                 </div>
               ))}
@@ -134,7 +133,7 @@ const Timestamp = ({ time }: TimestampProps) => {
 
   return (
     <div className={styles.timestampWrapper}>
-      <Stack direction="row" alignItems="center" gap={1}>
+      <Stack alignItems="center" gap={1}>
         <Icon name="clock-nine" size="sm" />
         <span className={styles.timestampText}>{dateTimeFormat(dateTime)}</span>
         <small>({formatDistanceToNowStrict(dateTime)} ago)</small>

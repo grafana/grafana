@@ -1,19 +1,13 @@
-import Mousetrap from 'mousetrap';
-import React, { PropsWithChildren, useEffect, useState } from 'react';
-import { Features, ToggleFeatures } from 'react-enable';
+import React, { PropsWithChildren } from 'react';
 import { useLocation } from 'react-use';
 
 import { NavModelItem } from '@grafana/data';
 import { Page } from 'app/core/components/Page/Page';
 
-import FEATURES from '../features';
 import { AlertmanagerProvider, useAlertmanager } from '../state/AlertmanagerContext';
 
 import { AlertManagerPicker } from './AlertManagerPicker';
 import { NoAlertManagerWarning } from './NoAlertManagerWarning';
-
-const SHOW_TOGGLES_KEY_COMBO = 'ctrl+1';
-const combokeys = new Mousetrap(document.body);
 
 /**
  * This is the main alerting page wrapper, used by the alertmanager page wrapper and the alert rules list view
@@ -25,25 +19,10 @@ interface AlertingPageWrapperProps extends PropsWithChildren {
   actions?: React.ReactNode;
 }
 export const AlertingPageWrapper = ({ children, pageId, pageNav, actions, isLoading }: AlertingPageWrapperProps) => {
-  const [showFeatureToggle, setShowFeatureToggles] = useState(false);
-
-  useEffect(() => {
-    combokeys.bind(SHOW_TOGGLES_KEY_COMBO, () => {
-      setShowFeatureToggles((show) => !show);
-    });
-
-    return () => {
-      combokeys.unbind(SHOW_TOGGLES_KEY_COMBO);
-    };
-  }, []);
-
   return (
-    <Features features={FEATURES}>
-      <Page pageNav={pageNav} navId={pageId} actions={actions}>
-        <Page.Contents isLoading={isLoading}>{children}</Page.Contents>
-      </Page>
-      {showFeatureToggle ? <ToggleFeatures defaultOpen={true} /> : null}
-    </Features>
+    <Page pageNav={pageNav} navId={pageId} actions={actions}>
+      <Page.Contents isLoading={isLoading}>{children}</Page.Contents>
+    </Page>
   );
 };
 

@@ -24,11 +24,10 @@ describe('TraceTypeField', () => {
       ...props.query,
       azureTraces: {
         ...props.query.azureTraces,
-        traceTypes: [],
       },
     };
+
     render(<TraceTypeField {...props} query={query} />);
-    expect(screen.getByText('Choose event types')).toBeInTheDocument();
 
     const menu = screen.getByLabelText(selectors.components.queryEditor.tracesQueryEditor.traceTypes.select);
     openMenu(menu);

@@ -3,21 +3,22 @@ package grafanaapiserver
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/gorilla/mux"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type requestHandler struct {
 	router *mux.Router
 }
 
-func getAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, builders []APIGroupBuilder) (http.Handler, error) {
+func GetAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, builders []APIGroupBuilder) (http.Handler, error) {
 	useful := false // only true if any routes exist anywhere
 	router := mux.NewRouter()
-	var err error
 
 	for _, builder := range builders {
 		routes := builder.GetAPIRoutes()
@@ -31,11 +32,6 @@ func getAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, 
 		// Root handlers
 		var sub *mux.Router
 		for _, route := range routes.Root {
-			err = validPath(route.Path)
-			if err != nil {
-				return nil, err
-			}
-
 			if sub == nil {
 				sub = router.PathPrefix(prefix).Subrouter()
 				sub.MethodNotAllowedHandler = &methodNotAllowedHandler{}
@@ -54,10 +50,6 @@ func getAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, 
 		sub = nil
 		prefix += "/namespaces/{namespace}"
 		for _, route := range routes.Namespace {
-			err = validPath(route.Path)
-			if err != nil {
-				return nil, err
-			}
 			if sub == nil {
 				sub = router.PathPrefix(prefix).Subrouter()
 				sub.MethodNotAllowedHandler = &methodNotAllowedHandler{}
@@ -70,22 +62,6 @@ func getAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, 
 			}
 			sub.HandleFunc(route.Path, route.Handler).
 				Methods(methods...)
-		}
-
-		//	getter := makeGetter(restConfig)
-		for resource, route := range routes.Resource {
-			err = validPath(route.Path)
-			if err != nil {
-				return nil, err
-			}
-			fmt.Printf("TODO: %s/%v\n", resource, route)
-
-			// get a client for that resource kind
-			//getter := makeGetter(restConfig)
-
-			useful = true
-			// sub.HandleFunc(v.Slug, SubresourceHandlerWrapper(v.Handler, getter)).
-			// 	Methods(methods...)
 		}
 	}
 
@@ -100,17 +76,6 @@ func getAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, 
 	return &requestHandler{
 		router: router,
 	}, nil
-}
-
-// The registered path must start with a slash, and (for now) not have any more
-func validPath(p string) error {
-	if !strings.HasPrefix(p, "/") {
-		return fmt.Errorf("path must start with slash")
-	}
-	if strings.Count(p, "/") > 1 {
-		return fmt.Errorf("path can only have one slash (for now)")
-	}
-	return nil
 }
 
 func (h *requestHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -155,22 +120,33 @@ func (h *methodNotAllowedHandler) ServeHTTP(w http.ResponseWriter, req *http.Req
 // Modify the the OpenAPI spec to include the additional routes.
 // Currently this requires: https://github.com/kubernetes/kube-openapi/pull/420
 // In future k8s release, the hook will use Config3 rather than the same hook for both v2 and v3
-func getOpenAPIPostProcessor(builders []APIGroupBuilder) func(*spec3.OpenAPI) (*spec3.OpenAPI, error) {
+func GetOpenAPIPostProcessor(builders []APIGroupBuilder) func(*spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	return func(s *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 		if s.Paths == nil {
 			return s, nil
 		}
 		for _, builder := range builders {
 			routes := builder.GetAPIRoutes()
-			if routes == nil {
-				continue
-			}
-
 			gv := builder.GetGroupVersion()
-			prefix := "/apis/" + gv.String()
+			prefix := "/apis/" + gv.String() + "/"
 			if s.Paths.Paths[prefix] != nil {
-				copy := *s // will copy the rest of the properties
-				copy.Info.Title = "Grafana API server: " + gv.Group
+				copy := spec3.OpenAPI{
+					Version: s.Version,
+					Info: &spec.Info{
+						InfoProps: spec.InfoProps{
+							Title:   gv.String(),
+							Version: setting.BuildVersion,
+						},
+					},
+					Components:   s.Components,
+					ExternalDocs: s.ExternalDocs,
+					Servers:      s.Servers,
+					Paths:        s.Paths,
+				}
+
+				if routes == nil {
+					routes = &APIRoutes{}
+				}
 
 				for _, route := range routes.Root {
 					copy.Paths.Paths[prefix+route.Path] = &spec3.Path{
@@ -179,13 +155,7 @@ func getOpenAPIPostProcessor(builders []APIGroupBuilder) func(*spec3.OpenAPI) (*
 				}
 
 				for _, route := range routes.Namespace {
-					copy.Paths.Paths[prefix+"/namespaces/{namespace}"+route.Path] = &spec3.Path{
-						PathProps: *route.Spec,
-					}
-				}
-
-				for resource, route := range routes.Resource {
-					copy.Paths.Paths[prefix+"/namespaces/{namespace}/"+resource+"{name}"+route.Path] = &spec3.Path{
+					copy.Paths.Paths[prefix+"namespaces/{namespace}/"+route.Path] = &spec3.Path{
 						PathProps: *route.Spec,
 					}
 				}

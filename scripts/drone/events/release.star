@@ -62,7 +62,7 @@ def retrieve_npm_packages_step():
 def release_npm_packages_step():
     return {
         "name": "release-npm-packages",
-        "image": images["go"],
+        "image": images["node"],
         "depends_on": [
             "compile-build-cmd",
             "retrieve-npm-packages",

@@ -8,6 +8,7 @@ labels:
     - enterprise
     - oss
 title: Public dashboards
+description: Make your Grafana dashboards public and share them with anyone
 weight: 8
 ---
 
@@ -26,27 +27,6 @@ You can see a list of all your public dashboards in one place by navigating to *
 - Public dashboards are read-only.
 - Arbitrary queries **cannot** be run against your data sources through public dashboards. Public dashboards can only execute the
   queries stored on the original dashboard.
-
-## Enable the feature
-
-Add the `publicDashboards` feature toggle to your `custom.ini` file.
-
-```
-[feature_toggles]
-publicDashboards = true
-```
-
-If you are using Docker, use an environment variable to enable public dashboards:
-
-```
---env GF_FEATURE_TOGGLES_ENABLE=publicDashboards
-```
-
-{{% admonition type="note" %}}
-
-For Grafana Cloud, contact support to have the feature enabled.
-
-{{% /admonition %}}
 
 ## Make a dashboard public
 
@@ -159,6 +139,7 @@ guaranteed because plugin developers can override this functionality. The follow
     <td>
       <ul>
         <li>ClickHouse</li>
+        <li>CloudWatch</li>
         <li>Elasticsearch</li>
         <li>Infinity</li>
         <li>InfluxDB</li>
@@ -186,7 +167,6 @@ guaranteed because plugin developers can override this functionality. The follow
   <tr>
     <td>
       <ul>
-        <li>CloudWatch</li>
         <li>Graphite</li>
       </ul>
     </td>
@@ -257,15 +237,13 @@ guaranteed because plugin developers can override this functionality. The follow
 ## Limitations
 
 - Panels that use frontend data sources will fail to fetch data.
-- Template variables are not currently supported, but support is planned in the future.
+- Template variables are not supported.
 - Exemplars will be omitted from the panel.
 - Only annotations that query the `-- Grafana --` data source are supported.
 - Organization annotations are not supported.
 - Grafana Live and real-time event streams are not supported.
-- Library panels are currently not supported, but support is planned in the future.
+- Library panels are not supported.
 - Data sources using Reverse Proxy functionality are not supported.
-
-We're excited to share this enhancement with you and we’d love your feedback! Please check out the [Github](https://github.com/grafana/grafana/discussions/49253) discussion and join the conversation.
 
 ## Custom branding
 

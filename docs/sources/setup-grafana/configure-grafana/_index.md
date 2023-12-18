@@ -148,11 +148,19 @@ Options are `production` and `development`. Default is `production`. _Do not_ ch
 Set the name of the grafana-server instance. Used in logging, internal metrics, and clustering info. Defaults to: `${HOSTNAME}`, which will be replaced with
 environment variable `HOSTNAME`, if that is empty or does not exist Grafana will try to use system calls to get the machine name.
 
-### force_migration
+## force_migration
 
-Force migration will run migrations that might cause data loss. Default is `false`.
+{{% admonition type="note" %}}
+This option is deprecated - [See `clean_upgrade` option]({{< relref "#clean_upgrade" >}}) instead.
+{{% /admonition %}}
 
-Set force_migration=true in your grafana.ini and restart Grafana to roll back and delete Unified Alerting configuration data. Any alert rules created while using Unified Alerting will be deleted by rolling back.
+When you restart Grafana to rollback from Grafana Alerting to legacy alerting, delete any existing Grafana Alerting data, such as alert rules, contact points, and notification policies. Default is `false`.
+
+If `false` or unset, existing Grafana Alerting data is not changed or deleted when rolling back to legacy alerting.
+
+{{% admonition type="note" %}}
+It should be kept false or unset when not needed, as it may cause unintended data loss if left enabled.
+{{% /admonition %}}
 
 <hr />
 
@@ -518,8 +526,7 @@ Sets a custom value for the `User-Agent` header for outgoing data proxy requests
 
 ### enabled
 
-This option is also known as _usage analytics_. When `false`, this option disables the writers that read/write from and to the Grafana databases. The default
-value is `true`.
+This option is also known as _usage analytics_. When `false`, this option disables the writers that write to the Grafana database and the associated features, such as dashboard and data source insights, presence indicators, and advanced dashboard search. The default value is `true`.
 
 ### reporting_enabled
 
@@ -1214,6 +1221,12 @@ Override the AAD application client secret.
 
 By default is the same as used in AAD authentication or can be set to another application (for OBO flow).
 
+### forward_settings_to_plugins
+
+Set plugins that will receive Azure settings via plugin context.
+
+By default, this will include all Grafana Labs owned Azure plugins or those that use Azure settings (Azure Monitor, Azure Data Explorer, Prometheus, MSSQL).
+
 ## [auth.jwt]
 
 Refer to [JWT authentication]({{< relref "../configure-security/configure-authentication/jwt" >}}) for more information.
@@ -1267,6 +1280,13 @@ Name to be used as client identity for EHLO in SMTP dialog, default is `<instanc
 ### startTLS_policy
 
 Either "OpportunisticStartTLS", "MandatoryStartTLS", "NoStartTLS". Default is `empty`.
+
+<hr>
+
+## [smtp.static_headers]
+
+Enter key-value pairs on their own lines to be included as headers on outgoing emails. All keys must be in canonical mail header format.
+Examples: `Foo=bar`, `Foo-Header=bar`.
 
 <hr>
 
@@ -1490,7 +1510,7 @@ For more information about the Grafana alerts, refer to [About Grafana Alerting]
 
 ### enabled
 
-Enable or disable Grafana Alerting. If disabled, all your legacy alerting data will be available again, but the data you created using Grafana Alerting will be deleted. Set force_migration=true to avoid deletion of data. The default value is `true`.
+Enable or disable Grafana Alerting. If disabled, all your legacy alerting data will be available again. The default value is `true`.
 
 Alerting Rules migrated from dashboards and panels will include a link back via the `annotations`.
 
@@ -1509,6 +1529,34 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 Specify the frequency of polling for Alertmanager config changes. The default value is `60s`.
 
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### ha_redis_address
+
+The Redis server address that should be connected to.
+
+### ha_redis_username
+
+The username that should be used to authenticate with the Redis server.
+
+### ha_redis_password
+
+The password that should be used to authenticate with the Redis server.
+
+### ha_redis_db
+
+The Redis database. The default value is `0`.
+
+### ha_redis_prefix
+
+A prefix that is used for every key or channel that is created on the Redis server as part of HA for alerting.
+
+### ha_redis_peer_name
+
+The name of the cluster peer that will be used as an identifier. If none is provided, a random one will be generated.
+
+### ha_redis_max_conns
+
+The maximum number of simultaneous Redis connections.
 
 ### ha_listen_address
 
@@ -1530,6 +1578,10 @@ each instance wait before sending the notification to take into account replicat
 
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
 
+### ha_label
+
+The label is an optional string to include on each packet and stream. It uniquely identifies the cluster and prevents cross-communication issues when sending gossip messages in an environment with multiple clusters.
+
 ### ha_gossip_interval
 
 The interval between sending gossip messages. By lowering this value (more frequent) gossip messages are propagated
@@ -1550,13 +1602,13 @@ Enable or disable alerting rule execution. The default value is `true`. The aler
 
 ### evaluation_timeout
 
-Sets the alert evaluation timeout when fetching data from the datasource. The default value is `30s`. This option has a [legacy version in the alerting section]({{< relref "#evaluation_timeout_seconds" >}}) that takes precedence.
+Sets the alert evaluation timeout when fetching data from the data source. The default value is `30s`. This option has a [legacy version in the alerting section]({{< relref "#evaluation_timeout_seconds" >}}) that takes precedence.
 
 The timeout string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
 
 ### max_attempts
 
-Sets a maximum number of times we'll attempt to evaluate an alert rule before giving up on that evaluation. The default value is `3`. This option has a [legacy version in the alerting section]({{< relref "#max_attempts-1" >}}) that takes precedence.
+Sets a maximum number of times we'll attempt to evaluate an alert rule before giving up on that evaluation. The default value is `1`.
 
 ### min_interval
 
@@ -1595,6 +1647,22 @@ For more information about Grafana Reserved Labels, refer to [Labels in Grafana 
 Comma-separated list of reserved labels added by the Grafana Alerting engine that should be disabled.
 
 For example: `disabled_labels=grafana_folder`
+
+<hr>
+
+## [unified_alerting.upgrade]
+
+For more information about upgrading to Grafana Alerting, refer to [Upgrade Alerting](/docs/grafana/next/alerting/set-up/migrating-alerts/).
+
+### clean_upgrade
+
+When you restart Grafana to upgrade from legacy alerting to Grafana Alerting, delete any existing Grafana Alerting data from a previous upgrade, such as alert rules, contact points, and notification policies. Default is `false`.
+
+If `false` or unset, existing Grafana Alerting data is not changed or deleted when you switch between legacy and Unified Alerting.
+
+{{% admonition type="note" %}}
+It should be kept false when not needed, as it may cause unintended data loss if left enabled.
+{{% /admonition %}}
 
 <hr>
 
@@ -2271,6 +2339,14 @@ Instruct headless browser instance whether to output its debug and error message
 
 It can be useful to set this to `true` when troubleshooting.
 
+### rendering_timing_metrics
+
+> **Note:** Available from grafana-image-renderer v3.9.0+
+
+Instruct a headless browser instance on whether to record metrics for the duration of every rendering step. Default is `false`.
+
+Setting this to `true` when optimizing the rendering mode settings to improve the plugin performance or when troubleshooting can be useful.
+
 ### rendering_args
 
 Additional arguments to pass to the headless browser instance. Defaults are `--no-sandbox,--disable-gpu`. The list of Chromium flags can be found at (https://peter.sh/experiments/chromium-command-line-switches/). Separate multiple arguments with commas.
@@ -2456,9 +2532,9 @@ Refer to [Role-based access control]({{< relref "../../administration/roles-and-
 
 ## [navigation.app_sections]
 
-Move an app plugin (referenced by its id), including all its pages, to a specific navigation section. Format: <pluginId> = <sectionId> <sortWeight>
+Move an app plugin (referenced by its id), including all its pages, to a specific navigation section. Format: `<pluginId> = <sectionId> <sortWeight>`
 
 ## [navigation.app_standalone_pages]
 
 Move an individual app plugin page (referenced by its `path` field) to a specific navigation section.
-Format: <pageUrl> = <sectionId> <sortWeight>
+Format: `<pageUrl> = <sectionId> <sortWeight>`

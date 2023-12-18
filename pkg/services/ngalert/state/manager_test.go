@@ -227,7 +227,7 @@ func TestDashboardAnnotations(t *testing.T) {
 	_, dbstore := tests.SetupTestEnv(t, 1)
 
 	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
-	historianMetrics := metrics.NewHistorianMetrics(prometheus.NewRegistry())
+	historianMetrics := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 	store := historian.NewAnnotationStore(fakeAnnoRepo, &dashboards.FakeDashboardService{}, historianMetrics)
 	hist := historian.NewAnnotationBackend(store, nil, historianMetrics)
 	cfg := state.ManagerCfg{
@@ -1206,7 +1206,7 @@ func TestProcessEvalResults(t *testing.T) {
 			fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
 			reg := prometheus.NewPedanticRegistry()
 			stateMetrics := metrics.NewStateMetrics(reg)
-			m := metrics.NewHistorianMetrics(prometheus.NewRegistry())
+			m := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 			store := historian.NewAnnotationStore(fakeAnnoRepo, &dashboards.FakeDashboardService{}, m)
 			hist := historian.NewAnnotationBackend(store, nil, m)
 			clk := clock.NewMock()

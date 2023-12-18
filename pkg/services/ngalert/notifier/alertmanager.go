@@ -27,8 +27,8 @@ import (
 )
 
 const (
-	notificationLogFilename = "notifications"
-	silencesFilename        = "silences"
+	NotificationLogFilename = "notifications"
+	SilencesFilename        = "silences"
 
 	workingDir = "alerting"
 	// maintenanceNotificationAndSilences how often should we flush and garbage collect notifications
@@ -89,22 +89,22 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 	workingPath := filepath.Join(cfg.DataPath, workingDir, strconv.Itoa(int(orgID)))
 	fileStore := NewFileStore(orgID, kvStore, workingPath)
 
-	nflogFilepath, err := fileStore.FilepathFor(ctx, notificationLogFilename)
+	nflogFilepath, err := fileStore.FilepathFor(ctx, NotificationLogFilename)
 	if err != nil {
 		return nil, err
 	}
-	silencesFilePath, err := fileStore.FilepathFor(ctx, silencesFilename)
+	silencesFilepath, err := fileStore.FilepathFor(ctx, SilencesFilename)
 	if err != nil {
 		return nil, err
 	}
 
 	silencesOptions := maintenanceOptions{
-		filepath:             silencesFilePath,
+		filepath:             silencesFilepath,
 		retention:            retentionNotificationsAndSilences,
 		maintenanceFrequency: silenceMaintenanceInterval,
 		maintenanceFunc: func(state alertingNotify.State) (int64, error) {
 			// Detached context here is to make sure that when the service is shut down the persist operation is executed.
-			return fileStore.Persist(context.Background(), silencesFilename, state)
+			return fileStore.Persist(context.Background(), SilencesFilename, state)
 		},
 	}
 
@@ -114,7 +114,7 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		maintenanceFrequency: notificationLogMaintenanceInterval,
 		maintenanceFunc: func(state alertingNotify.State) (int64, error) {
 			// Detached context here is to make sure that when the service is shut down the persist operation is executed.
-			return fileStore.Persist(context.Background(), notificationLogFilename, state)
+			return fileStore.Persist(context.Background(), NotificationLogFilename, state)
 		},
 	}
 
@@ -393,14 +393,6 @@ func (am *alertmanager) PutAlerts(_ context.Context, postableAlerts apimodels.Po
 	}
 
 	return am.Base.PutAlerts(alerts)
-}
-
-func (am *alertmanager) ConfigHash() [16]byte {
-	return am.Base.ConfigHash()
-}
-
-func (am *alertmanager) OrgID() int64 {
-	return am.orgID
 }
 
 // CleanUp removes the directory containing the alertmanager files from disk.

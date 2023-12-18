@@ -37,7 +37,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger 
 	}
 
 	requestQueries, err := models.ParseMetricDataQueries(req.Queries, startTime, endTime, instance.Settings.Region, logger,
-		e.features.IsEnabled(featuremgmt.FlagCloudWatchCrossAccountQuerying))
+		e.features.IsEnabled(ctx, featuremgmt.FlagCloudWatchCrossAccountQuerying))
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger 
 		region := r
 
 		batches := [][]*models.CloudWatchQuery{regionQueries}
-		if e.features.IsEnabled(featuremgmt.FlagCloudWatchBatchQueries) {
+		if e.features.IsEnabled(ctx, featuremgmt.FlagCloudWatchBatchQueries) {
 			batches = getMetricQueryBatches(regionQueries, logger)
 		}
 
@@ -95,7 +95,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger 
 					return err
 				}
 
-				if e.features.IsEnabled(featuremgmt.FlagCloudWatchWildCardDimensionValues) {
+				if e.features.IsEnabled(ctx, featuremgmt.FlagCloudWatchWildCardDimensionValues) {
 					requestQueries, err = e.getDimensionValuesForWildcards(ctx, req.PluginContext, region, client, requestQueries, instance.tagValueCache, logger)
 					if err != nil {
 						return err

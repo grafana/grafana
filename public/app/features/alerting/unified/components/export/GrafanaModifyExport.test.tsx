@@ -12,7 +12,7 @@ import { TestProvider } from '../../../../../../test/helpers/TestProvider';
 import { AlertmanagerChoice } from '../../../../../plugins/datasource/alertmanager/types';
 import { DashboardSearchItemType } from '../../../../search/types';
 import { mockAlertRuleApi, mockApi, mockExportApi, mockSearchApi, setupMswServer } from '../../mockApi';
-import { getGrafanaRule, mockDataSource } from '../../mocks';
+import { getGrafanaRule, mockDashboardSearchItem, mockDataSource } from '../../mocks';
 import { mockAlertmanagerChoiceResponse } from '../../mocks/alertmanagerApi';
 import { setupDataSources } from '../../testSetup/datasources';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -76,7 +76,6 @@ describe('GrafanaModifyExport', () => {
     uid: 'test-rule-uid',
     title: 'cpu-usage',
     namespace_uid: 'folder-test-uid',
-    namespace_id: 1,
     data: [
       {
         refId: 'A',
@@ -96,14 +95,11 @@ describe('GrafanaModifyExport', () => {
   it('Should render edit form for the specified rule', async () => {
     mockApi(server).eval({ results: { A: { frames: [] } } });
     mockSearchApi(server).search([
-      {
+      mockDashboardSearchItem({
         title: grafanaRule.namespace.name,
         uid: 'folder-test-uid',
-        id: 1,
-        url: '',
-        tags: [],
         type: DashboardSearchItemType.DashFolder,
-      },
+      }),
     ]);
     mockAlertRuleApi(server).rulerRules(GRAFANA_RULES_SOURCE_NAME, {
       [grafanaRule.namespace.name]: [{ name: grafanaRule.group.name, interval: '1m', rules: [grafanaRule.rulerRule!] }],

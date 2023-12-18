@@ -113,7 +113,12 @@ func (u *SignedInUser) GetCacheKey() string {
 	if !u.HasUniqueId() {
 		// Hack use the org role as id for identities that do not have a unique id
 		// e.g. anonymous and render key.
-		id = string(u.GetOrgRole())
+		orgRole := u.GetOrgRole()
+		if orgRole == "" {
+			orgRole = roletype.RoleNone
+		}
+
+		id = string(orgRole)
 	}
 
 	return fmt.Sprintf("%d-%s-%s", u.GetOrgID(), namespace, id)
@@ -162,9 +167,6 @@ func (u *SignedInUser) GetTeams() []int64 {
 
 // GetOrgRole returns the role of the active entity in the active organization
 func (u *SignedInUser) GetOrgRole() roletype.RoleType {
-	if u.OrgRole == "" {
-		return roletype.RoleNone
-	}
 	return u.OrgRole
 }
 

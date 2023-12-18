@@ -205,7 +205,7 @@ export const ContextMenuView = ({
       <MenuGroup key={`${group.label}${index}`} label={group.label}>
         {(group.items || []).map((item) => (
           <MenuItem
-            key={item.label}
+            key={item.url}
             url={item.url}
             label={item.label}
             target={item.target}

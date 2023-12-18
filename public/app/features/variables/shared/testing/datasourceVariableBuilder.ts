@@ -10,7 +10,7 @@ export class DatasourceVariableBuilder<
     return this;
   }
 
-  withRegEx(regex: any) {
+  withRegEx(regex: string) {
     this.variable.regex = regex;
     return this;
   }

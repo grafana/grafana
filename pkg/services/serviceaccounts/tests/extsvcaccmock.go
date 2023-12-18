@@ -14,6 +14,20 @@ type MockExtSvcAccountsService struct {
 	mock.Mock
 }
 
+// EnableExtSvcAccount provides a mock function with given fields: ctx, cmd
+func (_m *MockExtSvcAccountsService) EnableExtSvcAccount(ctx context.Context, cmd *serviceaccounts.EnableExtSvcAccountCmd) error {
+	ret := _m.Called(ctx, cmd)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *serviceaccounts.EnableExtSvcAccountCmd) error); ok {
+		r0 = rf(ctx, cmd)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // ManageExtSvcAccount provides a mock function with given fields: ctx, cmd
 func (_m *MockExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *serviceaccounts.ManageExtSvcAccountCmd) (int64, error) {
 	ret := _m.Called(ctx, cmd)
@@ -36,6 +50,20 @@ func (_m *MockExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cm
 	}
 
 	return r0, r1
+}
+
+// RemoveExtSvcAccount provides a mock function with given fields: ctx, orgID, extSvcSlug
+func (_m *MockExtSvcAccountsService) RemoveExtSvcAccount(ctx context.Context, orgID int64, extSvcSlug string) error {
+	ret := _m.Called(ctx, orgID, extSvcSlug)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) error); ok {
+		r0 = rf(ctx, orgID, extSvcSlug)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // RetrieveExtSvcAccount provides a mock function with given fields: ctx, orgID, saID

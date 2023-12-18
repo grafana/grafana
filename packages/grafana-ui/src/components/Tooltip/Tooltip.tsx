@@ -53,6 +53,18 @@ export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
       onVisibleChange: setControlledVisible,
     });
 
+    const contentIsFunction = typeof content === 'function';
+
+    /**
+     * If content is a function we need to call popper update function to make sure the tooltip is positioned correctly
+     * if it's close to the viewport boundary
+     **/
+    useEffect(() => {
+      if (update && contentIsFunction) {
+        update();
+      }
+    }, [visible, update, contentIsFunction]);
+
     const styles = useStyles2(getStyles);
     const style = styles[theme ?? 'info'];
 
@@ -69,15 +81,12 @@ export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
       [forwardedRef, setTriggerRef]
     );
 
-    // if the child has an aria-label, this should take precedence over the tooltip content
-    const childHasAriaLabel = 'aria-label' in children.props;
-
     return (
       <>
         {React.cloneElement(children, {
           ref: handleRef,
           tabIndex: 0, // tooltip trigger should be keyboard focusable
-          'aria-describedby': !childHasAriaLabel && visible ? tooltipId : undefined,
+          'aria-describedby': visible ? tooltipId : undefined,
         })}
         {visible && (
           <Portal>
@@ -91,7 +100,7 @@ export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
               <div {...getArrowProps({ className: style.arrow })} />
               {typeof content === 'string' && content}
               {React.isValidElement(content) && React.cloneElement(content)}
-              {typeof content === 'function' &&
+              {contentIsFunction &&
                 update &&
                 content({
                   updatePopperPosition: update,

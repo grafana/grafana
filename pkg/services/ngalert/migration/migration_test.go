@@ -14,6 +14,7 @@ import (
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
+
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -32,11 +33,11 @@ import (
 // TestServiceStart tests the wrapper method that decides when to run the migration based on migration status and settings.
 func TestServiceStart(t *testing.T) {
 	tc := []struct {
-		name           string
-		config         *setting.Cfg
-		isMigrationRun bool
-		expectedErr    bool
-		expected       bool
+		name        string
+		config      *setting.Cfg
+		starting    migrationStore.AlertingType
+		expectedErr bool
+		expected    migrationStore.AlertingType
 	}{
 		{
 			name: "when unified alerting enabled and migration not already run, then run migration",
@@ -45,8 +46,54 @@ func TestServiceStart(t *testing.T) {
 					Enabled: pointer(true),
 				},
 			},
-			isMigrationRun: false,
-			expected:       true,
+			starting: migrationStore.Legacy,
+			expected: migrationStore.UnifiedAlerting,
+		},
+		{
+			name: "when unified alerting disabled, migration is already run and CleanUpgrade is enabled, then revert migration",
+			config: &setting.Cfg{
+				UnifiedAlerting: setting.UnifiedAlertingSettings{
+					Enabled: pointer(false),
+					Upgrade: setting.UnifiedAlertingUpgradeSettings{
+						CleanUpgrade: true,
+					},
+				},
+			},
+			starting: migrationStore.UnifiedAlerting,
+			expected: migrationStore.Legacy,
+		},
+		{
+			name: "when unified alerting disabled, migration is already run and CleanUpgrade is disabled, then the migration status should set to false",
+			config: &setting.Cfg{
+				UnifiedAlerting: setting.UnifiedAlertingSettings{
+					Enabled: pointer(false),
+					Upgrade: setting.UnifiedAlertingUpgradeSettings{
+						CleanUpgrade: false,
+					},
+				},
+			},
+			starting: migrationStore.UnifiedAlerting,
+			expected: migrationStore.Legacy,
+		},
+		{
+			name: "when unified alerting enabled and migration is already run, then do nothing",
+			config: &setting.Cfg{
+				UnifiedAlerting: setting.UnifiedAlertingSettings{
+					Enabled: pointer(true),
+				},
+			},
+			starting: migrationStore.UnifiedAlerting,
+			expected: migrationStore.UnifiedAlerting,
+		},
+		{
+			name: "when unified alerting disabled and migration is not already run, then do nothing",
+			config: &setting.Cfg{
+				UnifiedAlerting: setting.UnifiedAlertingSettings{
+					Enabled: pointer(false),
+				},
+			},
+			starting: migrationStore.Legacy,
+			expected: migrationStore.Legacy,
 		},
 		{
 			name: "when unified alerting disabled, migration is already run and force migration is enabled, then revert migration",
@@ -56,40 +103,19 @@ func TestServiceStart(t *testing.T) {
 				},
 				ForceMigration: true,
 			},
-			isMigrationRun: true,
-			expected:       false,
+			starting: migrationStore.UnifiedAlerting,
+			expected: migrationStore.Legacy,
 		},
 		{
-			name: "when unified alerting disabled, migration is already run and force migration is disabled, then the migration should panic",
+			name: "when unified alerting disabled, migration is already run and force migration is disabled, then the migration status should set to false",
 			config: &setting.Cfg{
 				UnifiedAlerting: setting.UnifiedAlertingSettings{
 					Enabled: pointer(false),
 				},
 				ForceMigration: false,
 			},
-			isMigrationRun: true,
-			expected:       true,
-			expectedErr:    true,
-		},
-		{
-			name: "when unified alerting enabled and migration is already run, then do nothing",
-			config: &setting.Cfg{
-				UnifiedAlerting: setting.UnifiedAlertingSettings{
-					Enabled: pointer(true),
-				},
-			},
-			isMigrationRun: true,
-			expected:       true,
-		},
-		{
-			name: "when unified alerting disabled and migration is not already run, then do nothing",
-			config: &setting.Cfg{
-				UnifiedAlerting: setting.UnifiedAlertingSettings{
-					Enabled: pointer(false),
-				},
-			},
-			isMigrationRun: false,
-			expected:       false,
+			starting: migrationStore.UnifiedAlerting,
+			expected: migrationStore.Legacy,
 		},
 	}
 
@@ -99,19 +125,18 @@ func TestServiceStart(t *testing.T) {
 			ctx := context.Background()
 			service := NewTestMigrationService(t, sqlStore, tt.config)
 
-			err := service.migrationStore.SetMigrated(ctx, tt.isMigrationRun)
-			require.NoError(t, err)
+			require.NoError(t, service.migrationStore.SetCurrentAlertingType(ctx, tt.starting))
 
-			err = service.Run(ctx)
+			err := service.Run(ctx)
 			if tt.expectedErr {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
 			}
 
-			migrated, err := service.migrationStore.IsMigrated(ctx)
+			aType, err := service.migrationStore.GetCurrentAlertingType(ctx)
 			require.NoError(t, err)
-			require.Equal(t, tt.expected, migrated)
+			require.Equal(t, tt.expected, aType)
 		})
 	}
 }
@@ -635,16 +660,20 @@ func TestDashAlertQueryMigration(t *testing.T) {
 	x := sqlStore.GetEngine()
 	service := NewTestMigrationService(t, sqlStore, &setting.Cfg{})
 
-	createAlertQuery := func(refId string, ds string, from string, to string) ngModels.AlertQuery {
-		dur, _ := calculateInterval(legacydata.NewDataTimeRange(from, to), simplejson.New(), nil)
-		intervalMs := strconv.FormatInt(dur.Milliseconds(), 10)
+	newQueryModel := `{"datasource":{"type":"prometheus","uid":"gdev-prometheus"},"expr":"up{job=\"fake-data-gen\"}","instant":false,"interval":"%s","intervalMs":%d,"maxDataPoints":1500,"refId":"%s"}`
+	createAlertQueryWithModel := func(refId string, ds string, from string, to string, model string) ngModels.AlertQuery {
 		rel, _ := getRelativeDuration(from, to)
 		return ngModels.AlertQuery{
 			RefID:             refId,
 			RelativeTimeRange: ngModels.RelativeTimeRange{From: rel.From, To: rel.To},
 			DatasourceUID:     ds,
-			Model:             []byte(fmt.Sprintf(`{"datasource":{"type":"prometheus","uid":"gdev-prometheus"},"expr":"up{job=\"fake-data-gen\"}","instant":false,"intervalMs":%s,"maxDataPoints":1500,"refId":"%s"}`, intervalMs, refId)),
+			Model:             []byte(model),
 		}
+	}
+
+	createAlertQuery := func(refId string, ds string, from string, to string) ngModels.AlertQuery {
+		dur, _ := calculateInterval(legacydata.NewDataTimeRange(from, to), simplejson.New(), nil)
+		return createAlertQueryWithModel(refId, ds, from, to, fmt.Sprintf(newQueryModel, "", dur.Milliseconds(), refId))
 	}
 
 	createClassicConditionQuery := func(refId string, conditions []classicConditionJSON) ngModels.AlertQuery {
@@ -713,7 +742,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 			mutator(rule)
 		}
 
-		rule.RuleGroup = fmt.Sprintf("%s - %d", *rule.DashboardUID, *rule.PanelID)
+		rule.RuleGroup = fmt.Sprintf("%s - 1m", *rule.DashboardUID)
 
 		rule.Annotations["__dashboardUid__"] = *rule.DashboardUID
 		rule.Annotations["__panelId__"] = strconv.FormatInt(*rule.PanelID, 10)
@@ -984,7 +1013,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 			expectedFolder: &dashboards.Dashboard{
 				OrgID:    2,
 				Title:    "General Alerting",
-				FolderID: 0,
+				FolderID: 0, // nolint:staticcheck
 				Slug:     "general-alerting",
 			},
 			expected: map[int64][]*ngModels.AlertRule{
@@ -995,6 +1024,50 @@ func TestDashAlertQueryMigration(t *testing.T) {
 						rule.Data = append(rule.Data, createAlertQuery("A", "ds3-2", "5m", "now"))
 						rule.Data = append(rule.Data, createClassicConditionQuery("B", []classicConditionJSON{
 							cond("A", "avg", "gt", 42),
+						}))
+					}),
+				},
+			},
+		},
+		{
+			name: "simple query with interval, calculates intervalMs using it as min interval",
+			alerts: []*models.Alert{
+				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
+					[]migrationStore.DashAlertCondition{
+						withQueryModel(
+							createCondition("A", "max", "gt", 42, 1, "5m", "now"),
+							fmt.Sprintf(queryModel, "A", "1s"),
+						),
+					}),
+			},
+			expected: map[int64][]*ngModels.AlertRule{
+				int64(1): {
+					genAlert(func(rule *ngModels.AlertRule) {
+						rule.Data = append(rule.Data, createAlertQueryWithModel("A", "ds1-1", "5m", "now", fmt.Sprintf(newQueryModel, "1s", 1000, "A")))
+						rule.Data = append(rule.Data, createClassicConditionQuery("B", []classicConditionJSON{
+							cond("A", "max", "gt", 42),
+						}))
+					}),
+				},
+			},
+		},
+		{
+			name: "simple query with interval as variable, calculates intervalMs using default as min interval",
+			alerts: []*models.Alert{
+				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
+					[]migrationStore.DashAlertCondition{
+						withQueryModel(
+							createCondition("A", "max", "gt", 42, 1, "5m", "now"),
+							fmt.Sprintf(queryModel, "A", "$min_interval"),
+						),
+					}),
+			},
+			expected: map[int64][]*ngModels.AlertRule{
+				int64(1): {
+					genAlert(func(rule *ngModels.AlertRule) {
+						rule.Data = append(rule.Data, createAlertQueryWithModel("A", "ds1-1", "5m", "now", fmt.Sprintf(newQueryModel, "$min_interval", 1000, "A")))
+						rule.Data = append(rule.Data, createClassicConditionQuery("B", []classicConditionJSON{
+							cond("A", "max", "gt", 42),
 						}))
 					}),
 				},
@@ -1041,6 +1114,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 						folder := getDashboard(t, x, orgId, r.NamespaceUID)
 						require.Equal(t, tt.expectedFolder.Title, folder.Title)
 						require.Equal(t, tt.expectedFolder.OrgID, folder.OrgID)
+						// nolint:staticcheck
 						require.Equal(t, tt.expectedFolder.FolderID, folder.FolderID)
 					}
 				}
@@ -1106,7 +1180,12 @@ func createAlertNotification(t *testing.T, orgId int64, uid string, channelType 
 	return createAlertNotificationWithReminder(t, orgId, uid, channelType, settings, defaultChannel, false, time.Duration(0))
 }
 
-var queryModel = `{"datasource":{"type":"prometheus","uid":"gdev-prometheus"},"expr":"up{job=\"fake-data-gen\"}","instant":false,"refId":"%s"}`
+func withQueryModel(base migrationStore.DashAlertCondition, model string) migrationStore.DashAlertCondition {
+	base.Query.Model = []byte(model)
+	return base
+}
+
+var queryModel = `{"datasource":{"type":"prometheus","uid":"gdev-prometheus"},"expr":"up{job=\"fake-data-gen\"}","instant":false,"refId":"%s","interval":"%s"}`
 
 func createCondition(refId string, reducer string, evalType string, thresh float64, datasourceId int64, from string, to string) migrationStore.DashAlertCondition {
 	return migrationStore.DashAlertCondition{
@@ -1126,7 +1205,7 @@ func createCondition(refId string, reducer string, evalType string, thresh float
 		}{
 			Params:       []string{refId, from, to},
 			DatasourceID: datasourceId,
-			Model:        []byte(fmt.Sprintf(queryModel, refId)),
+			Model:        []byte(fmt.Sprintf(queryModel, refId, "")),
 		},
 		Reducer: struct {
 			Type string `json:"type"`
@@ -1190,8 +1269,8 @@ func createDashboard(t *testing.T, id int64, orgId int64, uid string, folderId i
 		UID:      uid,
 		Created:  now,
 		Updated:  now,
-		Title:    uid, // Not tested, needed to satisfy constraint.
-		FolderID: folderId,
+		Title:    uid,      // Not tested, needed to satisfy constraint.
+		FolderID: folderId, // nolint:staticcheck
 		Data:     simplejson.New(),
 		Version:  1,
 	}
