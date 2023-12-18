@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { AppEvents, NavModelItem, SelectableValue } from '@grafana/data';
 import { getAppEvents, getBackendSrv, isFetchError } from '@grafana/runtime';
-import { Button, Field, Input, InputControl, LinkButton, Select, Stack, Switch } from '@grafana/ui';
+import { Button, Field, Input, InputControl, LinkButton, SecretInput, Select, Stack, Switch } from '@grafana/ui';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -66,6 +66,10 @@ export const ProviderConfigPage = ({ config, loadSettings, isLoading, provider }
   useEffect(() => {
     loadSettings();
   }, [loadSettings]);
+
+  if (!config) {
+    return null;
+  }
   return (
     <Page navId="authentication" pageNav={pageNav}>
       <ProviderConfig config={config} isLoading={isLoading} provider={provider} />
@@ -92,10 +96,13 @@ export const ProviderConfig = ({ config, provider, isLoading }: GitHubConfigProp
     control,
     reset,
     watch,
+    setValue,
     formState: { errors, isDirty },
   } = useForm({ defaultValues: dataToDTO(config) });
   const [isSaving, setIsSaving] = useState(false);
+  const [isSecretConfigured, setIsSecretConfigured] = useState(!!config?.settings.clientSecret);
   const providerFields = fields[provider];
+
   const onSubmit = async (data: SSOProviderDTO) => {
     setIsSaving(true);
     const requestData = dtoToData<ProviderData>(data);
@@ -127,7 +134,6 @@ export const ProviderConfig = ({ config, provider, isLoading }: GitHubConfigProp
   const renderField = (name: keyof SSOProvider['settings'], fieldData: FieldData) => {
     switch (fieldData.type) {
       case 'text':
-      case 'password':
         return (
           <Field
             label={fieldData.label}
@@ -141,6 +147,36 @@ export const ProviderConfig = ({ config, provider, isLoading }: GitHubConfigProp
               type={fieldData.type}
               id={name}
               autoComplete={'off'}
+            />
+          </Field>
+        );
+      case 'secret':
+        return (
+          <Field
+            label={fieldData.label}
+            required={!!fieldData.validation?.required}
+            invalid={!!errors[name]}
+            error={fieldData.validation?.message}
+            key={name}
+            htmlFor={name}
+          >
+            <InputControl
+              name={name}
+              control={control}
+              rules={fieldData.validation}
+              render={({ field: { ref, value, ...field } }) => (
+                <SecretInput
+                  {...field}
+                  autoComplete={'off'}
+                  id={name}
+                  value={typeof value === 'string' ? value : ''}
+                  isConfigured={isSecretConfigured}
+                  onReset={() => {
+                    setIsSecretConfigured(false);
+                    setValue(name, '');
+                  }}
+                />
+              )}
             />
           </Field>
         );
