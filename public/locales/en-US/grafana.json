@@ -454,9 +454,11 @@
   },
   "delete-user-modal-button": {
     "public-dashboard": {
-      "delete-user-close-button": "Close",
-      "delete-user-desc": "The user {{email}} is currently present in {{totalDashboards}} public dashboard(s). If you wish to remove this user, please navigate to the settings of the corresponding public dashboard.",
-      "delete-user-text": "Delete user"
+      "delete-user-cancel-button": "Cancel",
+      "delete-user-revoke-access-button": "Revoke access",
+      "delete-user-text": "Delete user",
+      "revoke-user-access-desc-line1": "Are you sure you want to revoke access for {{email}}?",
+      "revoke-user-access-desc-line2": "This action will immediately revoke {{email}}&apos;s access to all public dashboards."
     }
   },
   "email-sharing-configuration": {
@@ -1201,6 +1203,21 @@
       "placeholder": "Search for dashboards and folders"
     }
   },
+  "settings-bar-header": {
+    "public-dashboard": {
+      "collapse-tooltip": "Collapse settings",
+      "expand-tooltip": "Expand settings"
+    }
+  },
+  "settings-summary": {
+    "public-dashboard": {
+      "annotations-hidden": "Annotations = hide",
+      "annotations-shown": "Annotations = show",
+      "time-range": "Time range =",
+      "time-range-picker-disabled": "Time range picker = disabled",
+      "time-range-picker-enabled": "Time range picker = enabled"
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "Share"
@@ -1245,7 +1262,7 @@
       "data-src-ack-desc": "Publishing currently only works with a subset of data sources*",
       "data-src-ack-tooltip": "Learn more about public datasources",
       "description": "Currently, we don’t support template variables or frontend data sources",
-      "generate-public-url-button": "  Generate public URL",
+      "generate-public-url-button": "Generate public URL",
       "no-upsert-perm-alert-desc": "Contact your admin to get permission to {{mode}} create public dashboards",
       "no-upsert-perm-alert-title": "You don’t have permission to {{ mode }} a public dashboard",
       "public-ack-desc": "Your entire dashboard will be public*",
@@ -1255,6 +1272,7 @@
       "unsupported-data-source-alert-title": "Unsupported data sources",
       "unsupported-template-variable-alert": "This public dashboard may not work since it uses template variables",
       "unsupported-template-variable-alert-title": "Template variables are not supported",
+      "usage-ack-desc": "Making a dashboard public will cause queries to run each time it is viewed, which may increase costs*",
       "usage-ack-tooltip": "Learn more about query caching",
       "welcome-title": "Welcome to public dashboards!"
     },
@@ -1284,6 +1302,7 @@
       "link": "Link",
       "panel-embed": "Embed",
       "public-dashboard": "Public Dashboard",
+      "public-dashboard-title": "Public dashboard",
       "snapshot": "Snapshot"
     },
     "theme-picker": {
@@ -1401,6 +1420,24 @@
     "empty": {
       "add-transformation-body": "Transformations allow data to be changed in various ways before your visualization is shown.<1></1>This includes joining data together, renaming fields, making calculations, formatting data for display, and more.",
       "add-transformation-header": "Start transforming data"
+    }
+  },
+  "user-list-page": {
+    "public-dashboard": {
+      "all-user": "All users",
+      "org-user": "Organization users",
+      "tab-title": "Public dashboard users",
+      "user": "Users"
+    }
+  },
+  "user-list-public-dashboard-page": {
+    "public-dashboard": {
+      "activated": "Activated",
+      "earliest-active-user-time-desc": "Earliest time user has been an active user to a dashboard",
+      "email": "Email",
+      "last-active": "Last active",
+      "origin": "Origin",
+      "role": "Role"
     }
   },
   "user-orgs": {

@@ -449,9 +449,11 @@
   },
   "delete-user-modal-button": {
     "public-dashboard": {
-      "delete-user-close-button": "",
-      "delete-user-desc": "",
-      "delete-user-text": ""
+      "delete-user-cancel-button": "",
+      "delete-user-revoke-access-button": "",
+      "delete-user-text": "",
+      "revoke-user-access-desc-line1": "",
+      "revoke-user-access-desc-line2": ""
     }
   },
   "email-sharing-configuration": {
@@ -1195,6 +1197,21 @@
       "placeholder": "搜索仪表板"
     }
   },
+  "settings-bar-header": {
+    "public-dashboard": {
+      "collapse-tooltip": "",
+      "expand-tooltip": ""
+    }
+  },
+  "settings-summary": {
+    "public-dashboard": {
+      "annotations-hidden": "",
+      "annotations-shown": "",
+      "time-range": "",
+      "time-range-picker-disabled": "",
+      "time-range-picker-enabled": ""
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "分享"
@@ -1249,6 +1266,7 @@
       "unsupported-data-source-alert-title": "",
       "unsupported-template-variable-alert": "",
       "unsupported-template-variable-alert-title": "",
+      "usage-ack-desc": "",
       "usage-ack-tooltip": "",
       "welcome-title": ""
     },
@@ -1278,6 +1296,7 @@
       "link": "链接",
       "panel-embed": "嵌入",
       "public-dashboard": "公共仪表板",
+      "public-dashboard-title": "",
       "snapshot": "快照"
     },
     "theme-picker": {
@@ -1395,6 +1414,24 @@
     "empty": {
       "add-transformation-body": "",
       "add-transformation-header": ""
+    }
+  },
+  "user-list-page": {
+    "public-dashboard": {
+      "all-user": "",
+      "org-user": "",
+      "tab-title": "",
+      "user": ""
+    }
+  },
+  "user-list-public-dashboard-page": {
+    "public-dashboard": {
+      "activated": "",
+      "earliest-active-user-time-desc": "",
+      "email": "",
+      "last-active": "",
+      "origin": "",
+      "role": ""
     }
   },
   "user-orgs": {

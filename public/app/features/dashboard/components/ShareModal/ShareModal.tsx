@@ -58,7 +58,7 @@ function getTabs(panel?: PanelModel, activeTab?: string) {
 
   if (Boolean(config.featureToggles['publicDashboards'])) {
     tabs.push({
-      label: t('share-modal.tab-title.public-dashboard', 'Public dashboard'),
+      label: t('share-modal.tab-title.public-dashboard-title', 'Public dashboard'),
       value: shareDashboardType.publicDashboard,
       component: SharePublicDashboard,
     });
