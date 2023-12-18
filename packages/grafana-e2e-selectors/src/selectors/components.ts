@@ -345,7 +345,7 @@ export const Components = {
   TraceViewer: {
     spanBar: 'data-testid SpanBar--wrapper',
   },
-  QueryField: { container: 'Query field' },
+  QueryField: { container: 'data-testid Query field' },
   QueryBuilder: {
     queryPatterns: 'Query patterns',
     labelSelect: 'Select label',
