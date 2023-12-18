@@ -18,6 +18,11 @@ import {
 } from '@grafana/ui/src';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 import { Trans, t } from 'app/core/internationalization';
+import {
+  useDeletePublicDashboardMutation,
+  useUpdatePublicDashboardMutation,
+} from 'app/features/dashboard/api/publicDashboardApi';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';

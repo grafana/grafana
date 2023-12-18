@@ -8,9 +8,6 @@ import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 import { Trans, t } from 'app/core/internationalization';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
-import { trackDashboardSharingActionPerType } from '../../analytics';
-import { shareDashboardType } from '../../utils';
-
 import { ConfigPublicDashboardForm } from './ConfigPublicDashboard';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
