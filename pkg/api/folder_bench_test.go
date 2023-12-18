@@ -104,22 +104,10 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 		},
 		{
-			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=on get root folders",
-			url:         "/api/folders",
-			expectedLen: LEVEL0_FOLDER_NUM + 1, // for shared with me folder
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		},
-		{
 			desc:        "impl=default nested_folders=on get subfolders",
 			url:         "/api/folders?parentUid=folder0",
 			expectedLen: LEVEL1_FOLDER_NUM,
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
-		},
-		{
-			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=on get subfolders",
-			url:         "/api/folders?parentUid=folder0",
-			expectedLen: LEVEL1_FOLDER_NUM,
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
 			desc:        "impl=default nested_folders=on list all inherited dashboards",
@@ -162,12 +150,6 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 			url:         "/api/folders?limit=5000",
 			expectedLen: withLimit(LEVEL0_FOLDER_NUM),
 			features:    featuremgmt.WithFeatures(),
-		},
-		{
-			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=off get root folders",
-			url:         "/api/folders?limit=5000",
-			expectedLen: withLimit(LEVEL0_FOLDER_NUM),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
 			desc:        "impl=default nested_folders=off list all dashboards",
