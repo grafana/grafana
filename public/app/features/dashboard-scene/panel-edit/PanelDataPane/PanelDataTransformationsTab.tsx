@@ -23,7 +23,6 @@ export class PanelDataTransformationsTab
   }
 
   getItemsCount() {
-    console.log('TODO PanelDataTransformationsTab getItemsCount');
     return 0;
   }
 

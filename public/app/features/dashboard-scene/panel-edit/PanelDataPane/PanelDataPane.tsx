@@ -56,32 +56,30 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
     });
 
     this.panelManager = panelMgr;
+    this.addActivationHandler(() => this.onActivate());
+  }
+
+  private onActivate() {
     const panel = this.panelManager.state.panel;
+    this.setupPanelSubscription(panel);
+    this.buildTabs();
 
-    if (panel) {
-      // The subscription below is needed because the plugin may not be loaded when this pane is mounted.
-      // This can happen i.e. when the user opens the panel editor directly via an URL.
-      this._subs.add(
-        this.panelManager.subscribeToState((n, p) => {
-          if (n.panel !== p.panel) {
-            this.buildTabs();
-            this.setupPanelSubscription(n.panel);
-          }
-        })
-      );
-
-      this.setupPanelSubscription(panel);
-    }
-
-    this.addActivationHandler(() => () => {
-      this.buildTabs();
-      return () => {
-        if (this.panelSubscription) {
-          this.panelSubscription.unsubscribe();
-          this.panelSubscription = undefined;
+    this._subs.add(
+      // Setup subscription for the case when panel type changed
+      this.panelManager.subscribeToState((n, p) => {
+        if (n.panel !== p.panel) {
+          this.buildTabs();
+          this.setupPanelSubscription(n.panel);
         }
-      };
-    });
+      })
+    );
+
+    return () => {
+      if (this.panelSubscription) {
+        this.panelSubscription.unsubscribe();
+        this.panelSubscription = undefined;
+      }
+    };
   }
 
   private setupPanelSubscription(panel: VizPanel) {
@@ -90,7 +88,7 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
       this.panelSubscription.unsubscribe();
     }
 
-    this.panelSubscription = panel.subscribeToState((n, p) => {
+    this.panelSubscription = panel.subscribeToState(() => {
       if (panel.getPlugin() && !this._initialTabsBuilt) {
         this.buildTabs();
         this._initialTabsBuilt = true;

@@ -120,11 +120,8 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 
     if (dataObj instanceof ShareQueryDataProvider) {
       return [dataObj.state.query];
-    } else if (dataObj instanceof SceneQueryRunner) {
-      return dataObj.state.queries;
     }
-
-    return [];
+    return this._panelManager.queryRunner.state.queries;
   }
 
   get panelManager() {

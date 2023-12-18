@@ -24,6 +24,7 @@ import {
   SceneObject,
   SceneQueryRunner,
   sceneGraph,
+  SceneDataTransformer,
 } from '@grafana/scenes';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { getPluginVersion } from 'app/features/dashboard/state/PanelModel';
@@ -121,15 +122,17 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     }
 
     let datasourceToLoad: DataSourceRef | undefined;
+
     if (dataObj instanceof ShareQueryDataProvider) {
       datasourceToLoad = {
         uid: SHARED_DASHBOARD_QUERY,
         type: DASHBOARD_DATASOURCE_PLUGIN_ID,
       };
+    } else {
+      datasourceToLoad = this.queryRunner.state.datasource;
     }
-    if (dataObj instanceof SceneQueryRunner) {
-      datasourceToLoad = dataObj.state.datasource;
-    }
+    // if (dataObj instanceof SceneQueryRunner) {
+    // }
 
     if (!datasourceToLoad) {
       return;
@@ -207,6 +210,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     }
 
     this.setState({ panel: newPanel });
+    this.setupDataObjectSubscription();
   }
 
   public async changePanelDataSource(
@@ -330,6 +334,10 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     const dataObj = this.state.panel.state.$data;
 
     if (dataObj instanceof ShareQueryDataProvider) {
+      return dataObj.state.$data as SceneQueryRunner;
+    }
+
+    if (dataObj instanceof SceneDataTransformer) {
       return dataObj.state.$data as SceneQueryRunner;
     }
 
