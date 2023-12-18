@@ -29,7 +29,10 @@ export function loadUsers(): ThunkResult<void> {
         accessControlQueryParam({ perpage: perPage, page, query: searchQuery, sort })
       );
 
-      if (contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionUserRolesList)) {
+      if (
+        contextSrv.licensedAccessControlEnabled() &&
+        contextSrv.hasPermission(AccessControlAction.ActionUserRolesList)
+      ) {
         dispatch(rolesFetchBegin());
         const orgId = contextSrv.user.orgId;
         const userIds = users?.orgUsers.map((u: OrgUser) => u.userId);
