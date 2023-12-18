@@ -391,7 +391,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		defer dashboardStore.AssertExpectations(t)
 		// This tests that a valid request returns correct response
 		t.Run("Given a correct request for creating a dashboard", func(t *testing.T) {
-			const folderID int64 = 3
 			folderUID := "Folder"
 			const dashID int64 = 2
 
