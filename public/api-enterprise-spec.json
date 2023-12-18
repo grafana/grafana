@@ -5737,6 +5737,9 @@
         "isEnabled": {
           "type": "boolean"
         },
+        "slug": {
+          "type": "string"
+        },
         "title": {
           "type": "string"
         },
@@ -6368,6 +6371,24 @@
         }
       }
     },
+    "SSOSettings": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "settings": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "source": {
+          "$ref": "#/definitions/SettingsSource"
+        }
+      }
+    },
     "SaveDashboardCommand": {
       "type": "object",
       "properties": {
@@ -6715,6 +6736,10 @@
           "type": "string"
         }
       }
+    },
+    "SettingsSource": {
+      "type": "integer",
+      "format": "int64"
     },
     "ShareType": {
       "type": "string"
