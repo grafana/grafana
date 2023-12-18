@@ -230,7 +230,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
     if (this.props.panelState?.logs?.visualisationType !== prevProps.panelState?.logs?.visualisationType) {
       const visualisationType = this.props.panelState?.logs?.visualisationType ?? getDefaultVisualisationType();
-      console.log('changing visualisation type', visualisationType);
 
       this.setState({
         visualisationType: visualisationType,
@@ -278,7 +277,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
   };
 
   onChangeVisualisation = (visualisation: LogsVisualisationType) => {
-    console.log('changing visualisation onChangeVisualisation');
     this.setState(() => ({
       visualisationType: visualisation,
     }));
