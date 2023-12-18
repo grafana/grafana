@@ -1,8 +1,8 @@
 'use strict';
 const { writeFileSync } = require('fs');
 const { resolve } = require('path');
-const PNG = require('pngjs').PNG;
 const pixelmatch = require('pixelmatch');
+const PNG = require('pngjs').PNG;
 
 const compareScreenshots = async ({ config, screenshotsFolder, specName }) => {
   const name = config.name || config; // @todo use `??`
