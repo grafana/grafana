@@ -173,16 +173,45 @@ func (ng *AlertNG) init() error {
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
 
+	remoteAlertmanagerCfg := ng.Cfg.UnifiedAlerting.RemoteAlertmanager
 	var overrides []notifier.Option
-	if ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Enable {
-		override := notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
-			externalAMCfg := remote.AlertmanagerConfig{}
-			// We won't be handling files on disk, we can pass an empty string as workingDirPath.
-			stateStore := notifier.NewFileStore(orgID, ng.KVStore, "")
-			return remote.NewAlertmanager(externalAMCfg, orgID, stateStore)
-		})
+	if remoteAlertmanagerCfg.Enable {
+		// TODO(santiago): check for different modes, refactor.
+		if ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondary) {
+			fmt.Println("Remote secondary")
+			override := notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
+				// Create internal Alertmanager.
+				m := metrics.NewAlertmanagerMetrics(multiOrgMetrics.GetOrCreateOrgRegistry(orgID))
+				i, err := notifier.NewAlertmanager(ctx, orgID, ng.Cfg, ng.store, ng.KVStore, &notifier.NilPeer{}, decryptFn, ng.NotificationService, m)
+				if err != nil {
+					return nil, err
+				}
 
-		overrides = append(overrides, override)
+				// Create remote Alertmanager.
+				externalAMCfg := remote.AlertmanagerConfig{
+					URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
+					TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
+					BasicAuthPassword: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
+				}
+				// We won't be handling files on disk, we can pass an empty string as workingDirPath.
+				stateStore := notifier.NewFileStore(orgID, ng.KVStore, "")
+				r, err := remote.NewAlertmanager(externalAMCfg, orgID, stateStore)
+				if err != nil {
+					return nil, err
+				}
+
+				// Use both Alertmanager implementations in the forked Alertmanager.
+				cfg := remote.RemoteSecondaryConfig{
+					Logger:       log.New("ngalert.forked-alertmanager.remote-secondary"),
+					OrgID:        orgID,
+					Store:        ng.store,
+					SyncInterval: remoteAlertmanagerCfg.SyncInterval,
+				}
+				return remote.NewRemoteSecondaryForkedAlertmanager(cfg, i, r)
+			})
+
+			overrides = append(overrides, override)
+		}
 	}
 	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, ng.store, ng.store, ng.KVStore, ng.store, decryptFn, multiOrgMetrics, ng.NotificationService, log.New("ngalert.multiorg.alertmanager"), ng.SecretsService, overrides...)
 	if err != nil {
