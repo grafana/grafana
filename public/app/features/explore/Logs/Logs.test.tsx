@@ -481,21 +481,15 @@ describe('Logs', () => {
     });
 
     it('should use default state from localstorage - table', async () => {
-      act(() => {
-        localStorage.setItem(visualisationTypeKey, 'table');
-        setup({});
-      });
-
+      localStorage.setItem(visualisationTypeKey, 'table');
+      setup({});
       const table = screen.getByTestId('logRowsTable');
       expect(table).toBeInTheDocument();
     });
 
     it('should use default state from localstorage - logs', async () => {
-      act(() => {
-        localStorage.setItem(visualisationTypeKey, 'logs');
-        setup({});
-      });
-
+      localStorage.setItem(visualisationTypeKey, 'logs');
+      setup({});
       const table = screen.getByTestId('logRows');
       expect(table).toBeInTheDocument();
     });
