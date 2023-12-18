@@ -225,7 +225,9 @@ func (c *OAuth) Logout(ctx context.Context, user identity.Requester, info *login
 	}
 
 	if isOICDLogout(redirctURL) && token != nil && token.Valid() {
-		redirctURL = withIDTokenHint(redirctURL, token.Extra("id_token").(string))
+		if idToken, ok := token.Extra("id_token").(string); ok {
+			redirctURL = withIDTokenHint(redirctURL, idToken)
+		}
 	}
 
 	return &authn.Redirect{URL: redirctURL}, true
