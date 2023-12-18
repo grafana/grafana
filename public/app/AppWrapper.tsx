@@ -13,6 +13,7 @@ import { AngularRoot } from './angular/AngularRoot';
 import { loadAndInitAngularIfEnabled } from './angular/loadAndInitAngularIfEnabled';
 import { GrafanaApp } from './app';
 import { AppChrome } from './core/components/AppChrome/AppChrome';
+import { ReturnToPreviousWrapper } from './core/components/AppChrome/ReturnToPrevious/ReturnToPreviousWrapper';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { GrafanaContext } from './core/context/GrafanaContext';
 import { GrafanaRoute } from './core/navigation/GrafanaRoute';
@@ -113,6 +114,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                           ))}
                           <AngularRoot />
                           <AppNotificationList />
+                          <ReturnToPreviousWrapper />
                           {ready && this.renderRoutes()}
                           {bodyRenderHooks.map((Hook, index) => (
                             <Hook key={index.toString()} />
