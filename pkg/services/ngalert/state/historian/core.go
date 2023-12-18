@@ -34,15 +34,13 @@ func shouldRecord(transition state.StateTransition) bool {
 	return true
 }
 
-func shouldRecordAnnotation(rule history_model.RuleMeta, t state.StateTransition) bool {
+func shouldRecordAnnotation(t state.StateTransition) bool {
 	if !shouldRecord(t) {
 		return false
 	}
 
-	// If user mapped NoData->OK, do not record transitions between Normal and Normal(NoData) and back.
-	if rule.NoDataState == models.OK &&
-		t.State.State == eval.Normal &&
-		t.PreviousState == eval.Normal {
+	// Do not record transitions between Normal and Normal (NoData)
+	if t.State.State == eval.Normal && t.PreviousState == eval.Normal {
 		if (t.State.StateReason == "" && t.PreviousStateReason == models.StateReasonNoData) ||
 			(t.State.StateReason == models.StateReasonNoData && t.PreviousStateReason == "") {
 			return false
