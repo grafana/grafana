@@ -5,7 +5,6 @@ import { useOverlay } from '@react-aria/overlays';
 import RcDrawer from 'rc-drawer';
 import React, { ReactNode, useEffect } from 'react';
 
-
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -105,7 +104,7 @@ export function Drawer({
     >
       <FocusScope restoreFocus contain autoFocus>
         <div
-           data-testid={
+          aria-label={
             typeof title === 'string'
               ? selectors.components.Drawer.General.title(title)
               : selectors.components.Drawer.General.title('no title')
