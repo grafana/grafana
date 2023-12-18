@@ -15,6 +15,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/apiserver/pkg/util/openapi"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	netutils "k8s.io/utils/net"
 
@@ -115,15 +116,21 @@ func (o *APIServerOptions) ModifiedApplyTo(config *genericapiserver.RecommendedC
 	if err := o.RecommendedOptions.Audit.ApplyTo(&config.Config); err != nil {
 		return err
 	}
-	//if err := o.RecommendedOptions.Features.ApplyTo(&config.Config); err != nil {
-	//	return err
-	//}
+
+	kubeClient, err := kubernetes.NewForConfig(config.ClientConfig)
+	if err != nil {
+		return err
+	}
+
+	if err := o.RecommendedOptions.Features.ApplyTo(&config.Config, kubeClient, config.SharedInformerFactory); err != nil {
+		return err
+	}
 
 	if err := o.RecommendedOptions.CoreAPI.ApplyTo(config); err != nil {
 		return err
 	}
 
-	_, err := o.RecommendedOptions.ExtraAdmissionInitializers(config)
+	_, err = o.RecommendedOptions.ExtraAdmissionInitializers(config)
 	if err != nil {
 		return err
 	}

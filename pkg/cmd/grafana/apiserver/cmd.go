@@ -128,7 +128,7 @@ func RunAggregatorCLI() int {
 
 	config, err := aggregator.CreateAggregatorConfig(sharedConfig.Config,
 		*serverOptions.RecommendedOptions,
-		[]*runtime.Scheme{aggregatorscheme.Scheme},
+		[]*runtime.Scheme{Scheme},
 		serverOptions.GetMergedOpenAPIDefinitions)
 	if err != nil {
 		klog.Errorf("Error creating aggregator config: %s", err)

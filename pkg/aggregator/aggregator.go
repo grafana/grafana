@@ -62,6 +62,7 @@ import (
 	openapicommon "k8s.io/kube-openapi/pkg/common"
 	netutils "k8s.io/utils/net"
 
+	servicev1alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
 	serviceclient "github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	serviceinformers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 )
@@ -218,7 +219,9 @@ func CreateAggregatorConfig(
 	// of changes to StorageConfig as that may lead to unexpected behavior when the options are applied.
 	etcdOptions := *commandOptions.Etcd
 	etcdOptions.StorageConfig.Codec = aggregatorscheme.Codecs.LegacyCodec(v1.SchemeGroupVersion, v1beta1.SchemeGroupVersion)
-	etcdOptions.StorageConfig.EncodeVersioner = runtime.NewMultiGroupVersioner(v1.SchemeGroupVersion, schema.GroupKind{Group: v1beta1.GroupName})
+	etcdOptions.StorageConfig.EncodeVersioner = runtime.NewMultiGroupVersioner(v1.SchemeGroupVersion,
+		schema.GroupKind{Group: v1beta1.GroupName},
+		schema.GroupKind{Group: servicev1alpha1.GROUP})
 	etcdOptions.SkipHealthEndpoints = true // avoid double wiring of health checks
 	if err := etcdOptions.ApplyTo(&genericConfig); err != nil {
 		return nil, err

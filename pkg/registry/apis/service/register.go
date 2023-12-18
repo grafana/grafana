@@ -76,7 +76,11 @@ func (b *ServiceAPIBuilder) GetAPIGroupInfo(
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(b.gv.Group, scheme, metav1.ParameterCodec, codecs)
 
 	storage := map[string]rest.Storage{}
-	storage[service.RuntimeResourceInfo.StoragePath()] = newServiceStorage(b.gv, scheme, "example", "playlist")
+	serviceStorage, err := newStorage(scheme, optsGetter)
+	if err != nil {
+		return nil, err
+	}
+	storage[service.ExternalNameResourceInfo.StoragePath()] = serviceStorage
 	apiGroupInfo.VersionedResourcesStorageMap[b.gv.Version] = storage
 	return &apiGroupInfo, nil
 }

@@ -13,7 +13,7 @@ const (
 	APIVERSION = GROUP + "/" + VERSION
 )
 
-var RuntimeResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
+var ExternalNameResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
 	"externalnames", "externalname", "ExternalName",
 	func() runtime.Object { return &ExternalName{} },
 	func() runtime.Object { return &ExternalNameList{} },
