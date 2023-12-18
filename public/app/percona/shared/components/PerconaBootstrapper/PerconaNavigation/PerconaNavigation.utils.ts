@@ -26,6 +26,7 @@ const DIVIDER: NavModelItem = {
   id: 'divider',
   text: 'Divider',
   hideFromTabs: true,
+  isDivider: true,
 };
 
 export const buildIntegratedAlertingMenuItem = (mainLinks: NavModelItem[]): NavModelItem | undefined => {
@@ -68,10 +69,12 @@ export const buildInventoryAndSettings = (mainLinks: NavModelItem[], settings?: 
   const orgLink: NavModelItem = {
     id: 'main-organization',
     text: 'Organization',
+    isSection: true,
   };
   const pmmLink: NavModelItem = {
     id: 'settings-pmm',
     text: 'PMM',
+    isSection: true,
   };
   const settingsLink: NavModelItem = {
     id: 'settings',
@@ -104,14 +107,14 @@ export const buildInventoryAndSettings = (mainLinks: NavModelItem[], settings?: 
     }
     configNode.url = `${config.appSubUrl}/inventory`;
     configNode.children = [
+      pmmLink,
       PMM_ADD_INSTANCE_PAGE,
       PMM_ADD_INSTANCE_CREATE_PAGE,
       inventoryLink,
       settingsLink,
-      pmmLink,
       DIVIDER,
-      ...configNode.children,
       orgLink,
+      ...configNode.children,
     ];
     if (settings?.enableAccessControl) {
       addAccessRolesLink(configNode);
@@ -123,7 +126,7 @@ export const buildInventoryAndSettings = (mainLinks: NavModelItem[], settings?: 
 
 export const addAccessRolesLink = (configNode: NavModelItem) => {
   if (configNode.children) {
-    const usersIdx = configNode.children.findIndex((item) => item.id === 'users');
+    const usersIdx = configNode.children.findIndex((item) => item.id === 'global-users');
     configNode.children = [
       ...configNode.children.slice(0, usersIdx + 1),
       PMM_ACCESS_ROLES_PAGE,

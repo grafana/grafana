@@ -38,8 +38,6 @@ export function NavBarMenuItemWrapper({
               !childLink.isCreateAction && (
                 <NavBarMenuItem
                   key={`${link.text}-${childLink.text}`}
-                  // @PERCONA
-                  icon={childLink.icon}
                   isActive={isMatchOrChildMatch(childLink, activeItem)}
                   isChild
                   onClick={() => {
@@ -48,6 +46,9 @@ export function NavBarMenuItemWrapper({
                   }}
                   target={childLink.target}
                   url={childLink.url}
+                  // @PERCONA
+                  icon={childLink.icon}
+                  item={childLink}
                 >
                   {childLink.text}
                 </NavBarMenuItem>

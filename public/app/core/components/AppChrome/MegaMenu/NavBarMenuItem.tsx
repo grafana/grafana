@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
+import { Divider, Icon, IconName, Link, useTheme2 } from '@grafana/ui';
 
 export interface Props {
   children: React.ReactNode;
@@ -13,9 +13,10 @@ export interface Props {
   onClick?: () => void;
   target?: HTMLAnchorElement['target'];
   url?: string;
+  item?: NavModelItem;
 }
 
-export function NavBarMenuItem({ children, icon, isActive, isChild, onClick, target, url }: Props) {
+export function NavBarMenuItem({ children, icon, isActive, isChild, onClick, target, url, item }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme, isActive, isChild);
 
@@ -64,6 +65,13 @@ export function NavBarMenuItem({ children, icon, isActive, isChild, onClick, tar
           {linkContent}
         </a>
       );
+  }
+
+  // @PERCONA
+  if (item?.isDivider) {
+    element = <Divider />;
+  } else if (item?.isSection) {
+    element = <div className={cx(styles.element, styles.section)}>{item.text}</div>;
   }
 
   return <li className={styles.listItem}>{element}</li>;
@@ -135,5 +143,14 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isChild: P
     ...(isChild && {
       padding: theme.spacing(0, 2),
     }),
+  }),
+  // @PERCONA
+  section: css({
+    ...theme.typography.bodySmall,
+    '&:hover, &:focus-visible': {
+      textDecoration: 'none',
+      background: 'inherit',
+      color: theme.colors.text.secondary,
+    },
   }),
 });

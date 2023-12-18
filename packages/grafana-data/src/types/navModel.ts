@@ -36,6 +36,10 @@ export interface NavModelItem extends NavLinkDTO {
   tabSuffix?: ComponentType<{ className?: string }>;
   hideFromBreadcrumbs?: boolean;
   emptyMessage?: string;
+
+  // @PERCONA
+  isDivider?: boolean;
+  isHeading?: boolean;
 }
 
 /**
