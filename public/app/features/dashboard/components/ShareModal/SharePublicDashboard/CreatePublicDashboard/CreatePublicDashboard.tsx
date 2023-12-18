@@ -87,7 +87,8 @@ export const CreatePublicDashboardBase = ({
             </div>
             <div className={styles.buttonContainer}>
               <Button type="submit" disabled={disableInputs || !isValid} data-testid={selectors.CreateButton}>
-                Generate public URL {isLoading && <Spinner className={styles.loadingSpinner} />}
+                <Trans i18nKey="share-modal.public-dashboard.generate-public-url-button">Generate public URL</Trans>
+                {isLoading && <Spinner className={styles.loadingSpinner} />}
               </Button>
             </div>
           </>

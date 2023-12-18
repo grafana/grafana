@@ -11,37 +11,6 @@ import { SharePublicDashboardAcknowledgmentInputs } from './CreatePublicDashboar
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
 
-const ACKNOWLEDGES: Acknowledge[] = [
-  {
-    type: 'publicAcknowledgment',
-    description: 'Your entire dashboard will be public*',
-    testId: selectors.WillBePublicCheckbox,
-    info: {
-      href: 'https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/',
-      tooltip: 'Learn more about public dashboards',
-    },
-  },
-  {
-    type: 'dataSourcesAcknowledgment',
-    description: 'Publishing currently only works with a subset of data sources*',
-    testId: selectors.LimitedDSCheckbox,
-    info: {
-      href: 'https://grafana.com/docs/grafana/latest/datasources/',
-      tooltip: 'Learn more about public datasources',
-    },
-  },
-  {
-    type: 'usageAcknowledgment',
-    description:
-      'Making a dashboard public will cause queries to run each time it is viewed, which may increase costs*',
-    testId: selectors.CostIncreaseCheckbox,
-    info: {
-      href: 'https://grafana.com/docs/grafana/latest/enterprise/query-caching/',
-      tooltip: 'Learn more about query caching',
-    },
-  },
-];
-
 export const AcknowledgeCheckboxes = ({
   disabled,
   register,
@@ -98,7 +67,10 @@ export const AcknowledgeCheckboxes = ({
           <HorizontalGroup key="usageAcknowledgment" spacing="none" align="center">
             <Checkbox
               {...register('usageAcknowledgment', { required: true })}
-              label="https://grafana.com/docs/grafana/latest/datasources/"
+              label={t(
+                'share-modal.public-dashboard.usage-ack-desc',
+                'Making a dashboard public will cause queries to run each time it is viewed, which may increase costs*'
+              )}
               data-testid={selectors.CostIncreaseCheckbox}
             />
             <LinkButton

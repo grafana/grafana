@@ -17,6 +17,7 @@ import {
   useStyles2,
 } from '@grafana/ui/src';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
+import { Trans, t } from 'app/core/internationalization';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
@@ -202,7 +203,7 @@ export function ConfigPublicDashboardBase({
             variant="destructive"
             fill="outline"
           >
-            Revoke public URL
+            <Trans i18nKey="config-public-dashboard.public-dashboard.revoke-public-URL">Revoke public URL</Trans>
           </Button>
         </HorizontalGroup>
       </Layout>

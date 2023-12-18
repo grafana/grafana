@@ -19,36 +19,47 @@ const DeleteUserModal = ({ user, hideModal }: { user: SessionUser; hideModal: ()
 
   return (
     <Modal className={styles.modal} isOpen title="Revoke access" onDismiss={hideModal}>
-      <p className={styles.description}>Are you sure you want to revoke access for {user.email}?</p>
       <p className={styles.description}>
-        This action will immediately revoke {user.email}&apos;s access to all public dashboards.
+        <Trans i18nKey="delete-user-modal-button.public-dashboard.revoke-user-access-desc-line1">
+          Are you sure you want to revoke access for {{ email: user.email }}?
+        </Trans>
+      </p>
+      <p className={styles.description}>
+        <Trans i18nKey="delete-user-modal-button.public-dashboard.revoke-user-access-desc-line2">
+          This action will immediately revoke {{ email: user.email }}&apos;s access to all public dashboards.
+        </Trans>
       </p>
       <Modal.ButtonRow>
         <Button type="button" variant="secondary" onClick={hideModal} fill="outline">
-          Cancel
+          <Trans i18nKey="delete-user-modal-button.public-dashboard.delete-user-cancel-button">Cancel</Trans>
         </Button>
         <Button type="button" variant="destructive" onClick={onRevokeAccessClick}>
-          Revoke access
+          <Trans i18nKey="delete-user-modal-button.public-dashboard.delete-user-revoke-access-button">
+            Revoke access
+          </Trans>
         </Button>
       </Modal.ButtonRow>
     </Modal>
   );
 };
 
-export const DeleteUserModalButton = ({ user }: { user: SessionUser }) => (
-  <ModalsController>
-    {({ showModal, hideModal }) => (
-      <Button
-        size="sm"
-        variant="destructive"
-        onClick={() => showModal(DeleteUserModal, { user, hideModal })}
-        icon="times"
-        aria-label="Delete user"
-        title="Delete user"
-      />
-    )}
-  </ModalsController>
-);
+export const DeleteUserModalButton = ({ user }: { user: SessionUser }) => {
+  const translatedDeleteUserText = t('delete-user-modal-button.public-dashboard.delete-user-text', 'Delete user');
+  return (
+    <ModalsController>
+      {({ showModal, hideModal }) => (
+        <Button
+          size="sm"
+          variant="destructive"
+          onClick={() => showModal(DeleteUserModal, { user, hideModal })}
+          icon="times"
+          aria-label={translatedDeleteUserText}
+          title={translatedDeleteUserText}
+        />
+      )}
+    </ModalsController>
+  );
+};
 
 const getStyles = (theme: GrafanaTheme2) => ({
   modal: css`
