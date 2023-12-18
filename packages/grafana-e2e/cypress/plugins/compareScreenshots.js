@@ -9,13 +9,13 @@ const compareScreenshots = async ({ config, screenshotsFolder, specName }) => {
   const threshold = config.threshold || 0.001; // @todo use `??`
 
   const imageAPath = `${screenshotsFolder}/${specName}/${name}.png`;
-  const imageA = PNG.sync.read(fs.readFileSync(imageAPath));
-
   const imageBPath = resolve(`${screenshotsFolder}/../expected/${specName}/${name}.png`);
-  const imageB = PNG.sync.read(fs.readFileSync(imageBPath));
 
-  const {width, height} = imageA;
-  const diff = new PNG({width, height});
+  const imageA = PNG.sync.read(fs.readFileSync(imageAPath));
+  const imageB = PNG.sync.read(fs.readFileSync(imageBPath));
+  const { width, height } = imageA;
+
+  const diff = new PNG({ width, height });
   const mismatchedPixels = pixelmatch(imageA.data, imageB.data, diff.data, width, height, { threshold });
 
   const imageOutputPath = screenshotsFolder.endsWith('actual') ? imageAPath.replace('.png', '.diff.png') : undefined;
