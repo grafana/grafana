@@ -2,8 +2,8 @@
 import React, { MouseEventHandler, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 
-import { HorizontalGroup, Button } from '@grafana/ui';
-import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
+import { PageLayoutType } from '@grafana/data';
+import { PageToolbar, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getPerconaSettings } from 'app/percona/shared/core/selectors';
 import { useSelector } from 'app/types';
@@ -18,6 +18,7 @@ import { Messages } from './components/AddRemoteInstance/AddRemoteInstance.messa
 import AzureDiscovery from './components/AzureDiscovery/Discovery';
 import Discovery from './components/Discovery/Discovery';
 import { ADD_INSTANCE_FORM_NAME } from './panel.constants';
+import { getStyles } from './panel.styles';
 import {
   InstanceTypesExtra,
   InstanceAvailable,
@@ -48,6 +49,7 @@ const AddInstancePanel = () => {
   const [showSelection, setShowSelection] = useState(!instanceType);
   const [submitting, setSubmitting] = useState(false);
   const history = useHistory();
+  const styles = useStyles2(getStyles);
 
   const handleSubmit = async (submitPromise: Promise<void>) => {
     setSubmitting(true);
@@ -116,36 +118,23 @@ const AddInstancePanel = () => {
           ? { text: Messages.selection.sectionTitle, subTitle: Messages.selection.description }
           : { text: getTitle(selectedInstance.type) }
       }
+      layout={PageLayoutType.Custom}
     >
-      <Page.Contents>
+      <PageToolbar
+        title={showSelection ? Messages.pageTitleSelection : Messages.pageTitleConfiguration}
+        onGoBack={history.goBack}
+      >
+        <ToolbarButton onClick={handleCancel} variant="canvas">
+          {showSelection ? Messages.selectionStep.cancel : Messages.configurationStep.cancel}
+        </ToolbarButton>
+        {!showSelection && (
+          <ToolbarButton form={ADD_INSTANCE_FORM_NAME} disabled={submitting} variant="primary">
+            {submitLabel}
+          </ToolbarButton>
+        )}
+      </PageToolbar>
+      <Page.Contents className={styles.page}>
         <FeatureLoader>
-          <AppChromeUpdate
-            actions={
-              <HorizontalGroup height="auto" justify="flex-end">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  data-testid="add-edit-role-cancel"
-                  type="button"
-                  onClick={handleCancel}
-                >
-                  {showSelection ? Messages.selectionStep.cancel : Messages.configurationStep.cancel}
-                </Button>
-                {!showSelection && (
-                  <Button
-                    disabled={submitting}
-                    data-testid="add-edit-role-submit"
-                    form={ADD_INSTANCE_FORM_NAME}
-                    size="sm"
-                    type="submit"
-                    variant="primary"
-                  >
-                    {submitLabel}
-                  </Button>
-                )}
-              </HorizontalGroup>
-            }
-          />
           {showSelection ? (
             <AddInstance
               showAzure={!!azureDiscoverEnabled}

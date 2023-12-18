@@ -14,6 +14,7 @@ import { logger } from 'app/percona/shared/helpers/logger';
 
 import { ADD_INSTANCE_FORM_NAME } from '../../panel.constants';
 import { InstanceTypesExtra, InstanceTypes, INSTANCE_TYPES_LABELS } from '../../panel.types';
+import { getHeader } from '../../panel.utils';
 
 import { ADD_AZURE_CANCEL_TOKEN, ADD_RDS_CANCEL_TOKEN } from './AddRemoteInstance.constants';
 import { Messages } from './AddRemoteInstance.messages';
@@ -143,6 +144,7 @@ const AddRemoteInstance: FC<AddRemoteInstanceProps> = ({
         }}
         render={({ form, handleSubmit }) => (
           <form id={ADD_INSTANCE_FORM_NAME} onSubmit={handleSubmit} data-testid="add-remote-instance-form">
+            <h3 className={styles.addRemoteInstanceTitle}>{getHeader(type)}</h3>
             {formParts(form)}
           </form>
         )}
