@@ -48,8 +48,9 @@ describe('getPanelMenu()', () => {
   it('should return the correct panel menu items', () => {
     const panel = new PanelModel({});
     const dashboard = createDashboardModelFixture({});
+    const testUrl = '/testUrl';
 
-    const menuItems = getPanelMenu(dashboard, panel);
+    const menuItems = getPanelMenu(dashboard, panel, testUrl);
     expect(menuItems).toMatchInlineSnapshot(`
       [
         {
@@ -125,6 +126,7 @@ describe('getPanelMenu()', () => {
   });
 
   describe('when extending panel menu from plugins', () => {
+    const testUrl = '/testUrl';
     it('should contain menu item from link extension', () => {
       getPluginLinkExtensionsMock.mockReturnValue({
         extensions: [
@@ -141,7 +143,7 @@ describe('getPanelMenu()', () => {
 
       const panel = new PanelModel({});
       const dashboard = createDashboardModelFixture({});
-      const menuItems = getPanelMenu(dashboard, panel);
+      const menuItems = getPanelMenu(dashboard, panel, testUrl);
       const extensionsSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
 
       expect(extensionsSubMenu).toEqual(
@@ -170,7 +172,7 @@ describe('getPanelMenu()', () => {
 
       const panel = new PanelModel({});
       const dashboard = createDashboardModelFixture({});
-      const menuItems = getPanelMenu(dashboard, panel);
+      const menuItems = getPanelMenu(dashboard, panel, testUrl);
       const extensionsSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
 
       expect(extensionsSubMenu).toEqual(
@@ -201,7 +203,7 @@ describe('getPanelMenu()', () => {
 
       const panel = new PanelModel({});
       const dashboard = createDashboardModelFixture({});
-      const menuItems = getPanelMenu(dashboard, panel);
+      const menuItems = getPanelMenu(dashboard, panel, testUrl);
       const extensionsSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
       const menuItem = extensionsSubMenu?.find((i) => (i.text = 'Declare incident when...'));
 
@@ -264,7 +266,7 @@ describe('getPanelMenu()', () => {
         title: 'My dashboard',
       });
 
-      getPanelMenu(dashboard, panel);
+      getPanelMenu(dashboard, panel, testUrl);
 
       const context: PluginExtensionPanelContext = {
         pluginId: 'timeseries',
@@ -355,7 +357,7 @@ describe('getPanelMenu()', () => {
         title: 'My dashboard',
       });
 
-      getPanelMenu(dashboard, panel);
+      getPanelMenu(dashboard, panel, testUrl);
 
       const context: PluginExtensionPanelContext = {
         pluginId: 'timeseries',
@@ -408,7 +410,7 @@ describe('getPanelMenu()', () => {
 
       const panel = new PanelModel({});
       const dashboard = createDashboardModelFixture({});
-      const menuItems = getPanelMenu(dashboard, panel);
+      const menuItems = getPanelMenu(dashboard, panel, testUrl);
       const extensionsSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
 
       expect(extensionsSubMenu).toEqual(
@@ -443,7 +445,7 @@ describe('getPanelMenu()', () => {
 
       const panel = new PanelModel({});
       const dashboard = createDashboardModelFixture({});
-      const menuItems = getPanelMenu(dashboard, panel);
+      const menuItems = getPanelMenu(dashboard, panel, testUrl);
       const extensionsSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
 
       expect(extensionsSubMenu).toEqual(
@@ -486,7 +488,7 @@ describe('getPanelMenu()', () => {
 
       const panel = new PanelModel({});
       const dashboard = createDashboardModelFixture({});
-      const menuItems = getPanelMenu(dashboard, panel);
+      const menuItems = getPanelMenu(dashboard, panel, testUrl);
       const extensionsSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
 
       expect(extensionsSubMenu).toEqual(
