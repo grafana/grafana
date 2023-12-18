@@ -219,13 +219,12 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   ) {
     const { panel, dsSettings } = this.state;
     const dataObj = panel.state.$data;
-
     if (!dataObj) {
       return;
     }
 
-    const currentDS = dsSettings ? await getDataSourceSrv().get(dsSettings.uid) : undefined;
-    const nextDS = await getDataSourceSrv().get(newSettings.uid);
+    const currentDS = dsSettings ? await getDataSourceSrv().get({ uid: dsSettings.uid }) : undefined;
+    const nextDS = await getDataSourceSrv().get({ uid: newSettings.uid });
 
     const currentQueries = [];
     if (dataObj instanceof SceneQueryRunner) {
@@ -233,6 +232,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     } else if (dataObj instanceof ShareQueryDataProvider) {
       currentQueries.push(dataObj.state.query);
     }
+
     // dataObj instanceof ShareQueryDataProvider ? [dataObj.state.query] : dataObj.state.queries;
     // We need to pass in newSettings.uid as well here as that can be a variable expression and we want to store that in the query model not the current ds variable value
     const queries = defaultQueries || (await updateQueries(nextDS, newSettings.uid, currentQueries, currentDS));
