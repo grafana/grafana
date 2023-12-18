@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { ComponentProps } from 'react';
 
@@ -482,7 +482,9 @@ describe('Logs', () => {
 
     it('should use default state from localstorage - table', async () => {
       localStorage.setItem(visualisationTypeKey, 'table');
-      setup({});
+      act(() => {
+        setup({});
+      });
 
       const table = screen.getByTestId('logRowsTable');
       expect(table).toBeInTheDocument();
@@ -490,7 +492,9 @@ describe('Logs', () => {
 
     it('should use default state from localstorage - logs', async () => {
       localStorage.setItem(visualisationTypeKey, 'logs');
-      setup({});
+      act(() => {
+        setup({});
+      });
 
       const table = screen.getByTestId('logRows');
       expect(table).toBeInTheDocument();
