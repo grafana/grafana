@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
@@ -19,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl/sync"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
@@ -73,15 +75,16 @@ func ProvideService(
 	signingKeysService signingkeys.Service, oauthServer oauthserver.OAuth2Server,
 ) *Service {
 	s := &Service{
-		log:            log.New("authn.service"),
-		cfg:            cfg,
-		clients:        make(map[string]authn.Client),
-		clientQueue:    newQueue[authn.ContextAwareClient](),
-		tracer:         tracer,
-		metrics:        newMetrics(registerer),
-		sessionService: sessionService,
-		postAuthHooks:  newQueue[authn.PostAuthHookFn](),
-		postLoginHooks: newQueue[authn.PostLoginHookFn](),
+		log:             log.New("authn.service"),
+		cfg:             cfg,
+		clients:         make(map[string]authn.Client),
+		clientQueue:     newQueue[authn.ContextAwareClient](),
+		tracer:          tracer,
+		metrics:         newMetrics(registerer),
+		authInfoService: authInfoService,
+		sessionService:  sessionService,
+		postAuthHooks:   newQueue[authn.PostAuthHookFn](),
+		postLoginHooks:  newQueue[authn.PostLoginHookFn](),
 	}
 
 	usageStats.RegisterMetricsFunc(s.getUsageStats)
@@ -146,7 +149,7 @@ func ProvideService(
 			if errConnector != nil || errHTTPClient != nil {
 				s.log.Error("Failed to configure oauth client", "client", clientName, "err", errors.Join(errConnector, errHTTPClient))
 			} else {
-				s.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthCfg, connector, httpClient))
+				s.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthCfg, connector, httpClient, oauthTokenService))
 			}
 		}
 	}
@@ -179,7 +182,8 @@ type Service struct {
 	tracer  tracing.Tracer
 	metrics *metrics
 
-	sessionService auth.UserTokenService
+	authInfoService login.AuthInfoService
+	sessionService  auth.UserTokenService
 
 	// postAuthHooks are called after a successful authentication. They can modify the identity.
 	postAuthHooks *queue[authn.PostAuthHookFn]
@@ -337,6 +341,53 @@ func (s *Service) RedirectURL(ctx context.Context, client string, r *authn.Reque
 	}
 
 	return redirectClient.RedirectURL(ctx, r)
+}
+
+func (s *Service) Logout(ctx context.Context, user identity.Requester, sessionToken *auth.UserToken) (*authn.Redirect, error) {
+	redirect := &authn.Redirect{URL: s.cfg.AppSubURL + "/login"}
+
+	namespace, id := user.GetNamespacedID()
+
+	if namespace != authn.NamespaceUser {
+		// TODO error or just return default redirect url?
+		return redirect, nil
+	}
+
+	userID, err := identity.IntIdentifier(namespace, id)
+	if err != nil {
+		// TODO error or just return default redirect url?
+		return nil, err
+	}
+
+	// TODO: is it safe to skip error here
+	info, _ := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: userID})
+	if info != nil {
+		client := authn.ClientWithPrefix(strings.TrimPrefix(info.AuthModule, "oauth_"))
+
+		c, ok := s.clients[client]
+		if !ok {
+			goto Default
+		}
+
+		logoutClient, ok := c.(authn.LogoutClient)
+		if !ok {
+			goto Default
+		}
+
+		clientRedirect, ok := logoutClient.Logout(ctx, user, info)
+		if !ok {
+			goto Default
+		}
+
+		redirect = clientRedirect
+	}
+
+Default:
+	if err = s.sessionService.RevokeToken(ctx, sessionToken, false); err != nil {
+		return nil, err
+	}
+
+	return redirect, nil
 }
 
 func (s *Service) RegisterClient(c authn.Client) {

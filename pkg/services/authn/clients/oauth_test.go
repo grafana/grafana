@@ -212,7 +212,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 				ExpectedToken:           &oauth2.Token{},
 				ExpectedIsSignupAllowed: true,
 				ExpectedIsEmailAllowed:  tt.isEmailAllowed,
-			}, nil)
+			}, nil, nil)
 			identity, err := c.Authenticate(context.Background(), tt.req)
 			assert.ErrorIs(t, err, tt.expectedErr)
 
@@ -281,7 +281,7 @@ func TestOAuth_RedirectURL(t *testing.T) {
 					require.Len(t, opts, tt.numCallOptions)
 					return ""
 				},
-			}, nil)
+			}, nil, nil)
 
 			redirect, err := c.RedirectURL(context.Background(), nil)
 			assert.ErrorIs(t, err, tt.expectedErr)
