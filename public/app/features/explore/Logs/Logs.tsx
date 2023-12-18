@@ -140,7 +140,7 @@ const DEDUP_OPTIONS = [
 export const visualisationTypeKey = 'grafana.explore.logs.visualisationType';
 
 const getDefaultVisualisationType = (): LogsVisualisationType => {
-  const visualisationType = window.localStorage.getItem(visualisationTypeKey);
+  const visualisationType = store.get(visualisationTypeKey);
   if (visualisationType === 'table') {
     return 'table';
   }
@@ -234,7 +234,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       this.setState({
         visualisationType: visualisationType,
       });
-      window.localStorage.setItem(visualisationTypeKey, visualisationType);
+      store.set(visualisationTypeKey, visualisationType);
     }
   }
 
