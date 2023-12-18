@@ -81,6 +81,7 @@ const MatchersField: FC<Props> = ({ className }) => {
                       tooltip="Remove matcher"
                       name={'trash-alt'}
                       onClick={() => remove(index)}
+                      type="button"
                     >
                       Remove
                     </IconButton>
