@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -60,7 +61,9 @@ func User(ctx context.Context) (*user.SignedInUser, error) {
 					IsGrafanaAdmin: true,
 					Permissions: map[int64]map[string][]string{
 						orgId: {
-							"*": {"*"}, // all resources, all scopes
+							"*":                            {"*"},
+							dashboards.ActionFoldersCreate: {"*"},                        // all resources, all scopes
+							dashboards.ActionFoldersRead:   {dashboards.ScopeFoldersAll}, // access to read all folders
 						},
 					},
 				}, nil

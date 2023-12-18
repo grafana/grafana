@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 )
 
 func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) *v0alpha1.Folder {
@@ -35,6 +36,7 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 			CreationTimestamp: metav1.NewTime(v.Created),
 			Namespace:         namespacer(v.OrgID),
 			Annotations:       meta.Annotations,
+			UID:               utils.AsK8sUID(v.OrgID, v.UID, "folder"),
 		},
 		Spec: v0alpha1.Spec{
 			Title:       v.Title,

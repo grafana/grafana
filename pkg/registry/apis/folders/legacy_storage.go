@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -63,9 +65,9 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
-	limit := int64(5000)
-	if options.Limit > 0 {
-		limit = options.Limit
+	paging, err := readContinueToken(options)
+	if err != nil {
+		return nil, err
 	}
 
 	user, err := appcontext.User(ctx)
@@ -73,12 +75,12 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
-	// TODO??? can the folder service return all folders?
 	// When nested folders are not enabled, all folders are root folders
 	hits, err := s.service.GetChildren(ctx, &folder.GetChildrenQuery{
 		SignedInUser: user,
-		Limit:        limit,
+		Limit:        paging.page,
 		OrgID:        orgId,
+		Page:         paging.limit,
 	})
 	if err != nil {
 		return nil, err
@@ -88,8 +90,8 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	for _, v := range hits {
 		list.Items = append(list.Items, *convertToK8sResource(v, s.namespacer))
 	}
-	if len(list.Items) == int(limit) {
-		list.Continue = "<more>" // TODO?
+	if len(list.Items) >= int(paging.limit) {
+		list.Continue = paging.GetNextPageToken()
 	}
 	return list, nil
 }
@@ -140,11 +142,14 @@ func (s *legacyStorage) Create(ctx context.Context,
 		return nil, fmt.Errorf("expected folder?")
 	}
 
+	// Simplify creating unique folder names with
+	if p.GenerateName != "" && strings.Contains(p.Spec.Title, "${RAND}") {
+		rand, _ := util.GetRandomString(10)
+		p.Spec.Title = strings.ReplaceAll(p.Spec.Title, "${RAND}", rand)
+	}
+
 	accessor := kinds.MetaAccessor(p)
 	parent := accessor.GetFolder()
-	// if parent == "" {
-	// 	// parent = info.Value // the raw namespace, eg (stack-1234)
-	// }
 
 	out, err := s.service.Create(ctx, &folder.CreateFolderCommand{
 		SignedInUser: user,
