@@ -4,7 +4,7 @@ import React, { FC, useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { DataFrame, dateTimeFormat, GrafanaTheme2, isTimeSeriesFrames, LoadingState, PanelData } from '@grafana/data';
-import { AutoSizeInput, Button, clearButtonStyles, IconButton, useStyles2, Stack } from '@grafana/ui';
+import { AutoSizeInput, Button, clearButtonStyles, IconButton, Stack, useStyles2 } from '@grafana/ui';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
@@ -106,6 +106,7 @@ export const Expression: FC<ExpressionProps> = ({
               labelWidth={'auto'}
               refIds={availableRefIds}
               onError={onQueriesValidationError}
+              useHysteresis={true}
             />
           );
 

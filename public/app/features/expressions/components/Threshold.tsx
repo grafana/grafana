@@ -26,6 +26,7 @@ interface Props {
   query: ExpressionQuery;
   onChange: (query: ExpressionQuery) => void;
   onError?: (error: string | undefined) => void;
+  useHysteresis?: boolean;
 }
 
 const defaultThresholdFunction = EvalFunction.IsAbove;
@@ -45,7 +46,7 @@ const defaultEvaluator: ClassicCondition = {
   },
 };
 
-export const Threshold = ({ labelWidth, onChange, refIds, query, onError }: Props) => {
+export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHysteresis = false }: Props) => {
   const styles = useStyles2(getStyles);
 
   const initialExpression = { ...query, conditions: query.conditions?.length ? query.conditions : [defaultEvaluator] };
@@ -79,7 +80,7 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError }: Prop
     conditionInState.evaluator.type === EvalFunction.IsWithinRange ||
     conditionInState.evaluator.type === EvalFunction.IsOutsideRange;
 
-  const hysteresisEnabled = Boolean(config.featureToggles?.recoveryThreshold);
+  const hysteresisEnabled = Boolean(config.featureToggles?.recoveryThreshold) && useHysteresis;
 
   return (
     <>
