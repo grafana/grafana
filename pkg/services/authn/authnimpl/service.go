@@ -347,30 +347,31 @@ func (s *Service) Logout(ctx context.Context, user identity.Requester, sessionTo
 	redirect := &authn.Redirect{URL: s.cfg.AppSubURL + "/login"}
 
 	namespace, id := user.GetNamespacedID()
-
 	if namespace != authn.NamespaceUser {
-		// TODO error or just return default redirect url?
 		return redirect, nil
 	}
 
 	userID, err := identity.IntIdentifier(namespace, id)
 	if err != nil {
-		// TODO error or just return default redirect url?
-		return nil, err
+		s.log.FromContext(ctx).Debug("Invalid user id", "id", userID, "err", err)
+		return redirect, nil
 	}
 
-	// TODO: is it safe to skip error here
 	info, _ := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: userID})
 	if info != nil {
+		println(info.AuthModule)
 		client := authn.ClientWithPrefix(strings.TrimPrefix(info.AuthModule, "oauth_"))
+		println(client)
 
 		c, ok := s.clients[client]
 		if !ok {
+			s.log.FromContext(ctx).Debug("No client configured for auth module", "client", client)
 			goto Default
 		}
 
 		logoutClient, ok := c.(authn.LogoutClient)
 		if !ok {
+			s.log.FromContext(ctx).Debug("Client do not support specialized logout logic", "client", client)
 			goto Default
 		}
 
