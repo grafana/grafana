@@ -243,6 +243,6 @@ Usage of the above mentioned fields in the templating section is explained below
 | **name**        | name of variable                                                                                        |
 | **options**     | array of variable text/value pairs available for selection on dashboard                                 |
 | **query**       | data source query used to fetch values for a variable                                                   |
-| **refresh**     |                                                                                                         |
-| **regex**       |                                                                                                         |
+| **refresh**     | configures when to refresh a variable                                                                   |
+| **regex**       | extracts part of a series name or metric node segment                                                   |
 | **type**        | type of variable, i.e. `custom`, `query` or `interval`                                                  |
