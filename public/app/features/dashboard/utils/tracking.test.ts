@@ -11,7 +11,7 @@ describe('trackDashboardLoaded', () => {
       title: 'Test Dashboard',
       panels: [
         { id: 1, type: 'row', repeat: 'dc', gridPos: { x: 0, y: 0, h: 1, w: 24 } },
-        { id: 2, repeat: 'app', repeatDirection: 'h', gridPos: { x: 0, y: 1, h: 2, w: 8 } },
+        { id: 2, type: 'stat', repeat: 'app', repeatDirection: 'h', gridPos: { x: 0, y: 1, h: 2, w: 8 } },
         { id: 3, type: 'graph', repeatDirection: 'h', gridPos: { x: 0, y: 1, h: 2, w: 8 } },
         { id: 4, type: 'timeseries', repeatDirection: 'h', gridPos: { x: 0, y: 1, h: 2, w: 8 } },
         { id: 5, type: 'grafana-worldmap-panel', repeatDirection: 'h', gridPos: { x: 0, y: 1, h: 2, w: 8 } },
@@ -40,7 +40,7 @@ describe('trackDashboardLoaded', () => {
       variable_type_interval_count: 1,
       version_before_migration: 16,
       panel_type_row_count: 1,
-      panel_type_undefined_count: 1,
+      panel_type_stat_count: 1,
       panel_type_graph_count: 2,
       panel_type_timeseries_count: 1,
       'panel_type_grafana-worldmap-panel_count': 1,
