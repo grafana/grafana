@@ -81,6 +81,7 @@ type FolderFilter struct {
 func parseFolderFilter(query model.SearchLibraryElementsQuery) FolderFilter {
 	folderIDs := make([]string, 0)
 	folderUIDs := make([]string, 0)
+	// nolint:staticcheck
 	hasFolderFilter := len(strings.TrimSpace(query.FolderFilter)) > 0
 	hasFolderFilterUID := len(strings.TrimSpace(query.FolderFilterUIDs)) > 0
 
@@ -98,6 +99,7 @@ func parseFolderFilter(query model.SearchLibraryElementsQuery) FolderFilter {
 
 	if hasFolderFilter {
 		result.includeGeneralFolder = false
+		// nolint:staticcheck
 		folderIDs = strings.Split(query.FolderFilter, ",")
 		// nolint:staticcheck
 		result.folderIDs = folderIDs

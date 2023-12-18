@@ -463,10 +463,12 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 
 			// nolint:staticcheck
 			libraryElementCmd.FolderID = parent.ID
+			libraryElementCmd.FolderUID = &parent.UID
 			_, err = lps.LibraryElementService.CreateElement(context.Background(), &signedInUser, libraryElementCmd)
 			require.NoError(t, err)
 			// nolint:staticcheck
 			libraryElementCmd.FolderID = subfolder.ID
+			libraryElementCmd.FolderUID = &subfolder.UID
 			_, err = lps.LibraryElementService.CreateElement(context.Background(), &signedInUser, libraryElementCmd)
 			require.NoError(t, err)
 
@@ -712,14 +714,14 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				_, err = lps.LibraryElementService.GetElement(context.Background(), &signedInUser, model.GetLibraryElementCommand{
 					FolderName: parent.Title,
 					FolderID:   parent.ID, // nolint:staticcheck
-					UID:        parentPanel.UID,
+					FolderUID:  parentPanel.UID,
 				})
 				require.ErrorIs(t, err, tc.libPanelParentErr)
 				if tc.depth > 1 {
 					_, err = lps.LibraryElementService.GetElement(context.Background(), &signedInUser, model.GetLibraryElementCommand{
 						FolderName: subfolder.Title,
 						FolderID:   subfolder.ID, // nolint:staticcheck
-						UID:        subPanel.UID,
+						FolderUID:  subPanel.UID,
 					})
 					require.ErrorIs(t, err, tc.libPanelSubErr)
 				}
