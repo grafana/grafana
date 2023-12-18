@@ -53,6 +53,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `alertingInsights`                   | Show the new alerting insights landing page                                                                                                                                                                                  | Yes                |
 | `cloudWatchWildCardDimensionValues`  | Fetches dimension values from CloudWatch to correctly label wildcard dimensions                                                                                                                                              | Yes                |
 | `displayAnonymousStats`              | Enables anonymous stats to be shown in the UI for Grafana                                                                                                                                                                    | Yes                |
+| `lokiQueryHints`                     | Enables query hints for Loki                                                                                                                                                                                                 | Yes                |
 
 ## Preview feature toggles
 

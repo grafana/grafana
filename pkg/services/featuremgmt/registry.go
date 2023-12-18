@@ -1270,5 +1270,16 @@ var (
 			RequiresRestart:   true,
 			Created:           time.Date(2023, time.November, 30, 12, 0, 0, 0, time.UTC),
 		},
+		{
+			// this is mainly used a a way to quickly disable query hints as a safe guard for our infrastructure
+			Name:           "lokiQueryHints",
+			Description:    "Enables query hints for Loki",
+			Stage:          FeatureStageGeneralAvailability,
+			FrontendOnly:   true,
+			Expression:     "true",
+			Owner:          grafanaObservabilityLogsSquad,
+			AllowSelfServe: false,
+			Created:        time.Date(2023, time.December, 18, 12, 0, 0, 0, time.UTC),
+		},
 	}
 )
