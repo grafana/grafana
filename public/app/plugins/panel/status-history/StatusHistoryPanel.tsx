@@ -12,7 +12,7 @@ import {
   VizTooltipContainer,
   ZoomPlugin,
 } from '@grafana/ui';
-import { HoverEvent, addTooltipSupport } from '@grafana/ui/src/components/uPlot/config/addTooltipSupport';
+import { addTooltipSupport, HoverEvent } from '@grafana/ui/src/components/uPlot/config/addTooltipSupport';
 import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
@@ -221,7 +221,12 @@ export const StatusHistoryPanel = ({
         return (
           <>
             {data.annotations && (
-              <AnnotationsPlugin annotations={data.annotations} config={builder} timeZone={timeZone} />
+              <AnnotationsPlugin
+                annotations={data.annotations}
+                config={builder}
+                timeZone={timeZone}
+                disableCanvasRendering={true}
+              />
             )}
             {config.featureToggles.newVizTooltips ? (
               <>
