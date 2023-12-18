@@ -2,10 +2,7 @@ package entity
 
 import (
 	"encoding/json"
-	"fmt"
 	"reflect"
-	"strconv"
-	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -14,101 +11,9 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
-	"github.com/grafana/grafana/pkg/infra/grn"
 	"github.com/grafana/grafana/pkg/kinds"
 	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
 )
-
-type Key struct {
-	Group       string
-	Resource    string
-	Namespace   string
-	Name        string
-	Subresource string
-}
-
-func ParseKey(key string) (*Key, error) {
-	// /<group>/<resource>/<namespace>/<name>(/<subresource>)
-	parts := strings.SplitN(key, "/", 6)
-	if len(parts) != 5 && len(parts) != 6 {
-		return nil, fmt.Errorf("invalid key (expecting 4 or 5 parts) " + key)
-	}
-
-	if parts[0] != "" {
-		return nil, fmt.Errorf("invalid key (expecting leading slash) " + key)
-	}
-
-	k := &Key{
-		Group:     parts[1],
-		Resource:  parts[2],
-		Namespace: parts[3],
-		Name:      parts[4],
-	}
-
-	if len(parts) == 6 {
-		k.Subresource = parts[5]
-	}
-
-	return k, nil
-}
-
-func (k *Key) String() string {
-	if len(k.Subresource) > 0 {
-		return fmt.Sprintf("/%s/%s/%s/%s/%s", k.Group, k.Resource, k.Namespace, k.Name, k.Subresource)
-	}
-	return fmt.Sprintf("/%s/%s/%s/%s", k.Group, k.Resource, k.Namespace, k.Name)
-}
-
-func (k *Key) IsEqual(other *Key) bool {
-	return k.Group == other.Group &&
-		k.Resource == other.Resource &&
-		k.Namespace == other.Namespace &&
-		k.Name == other.Name &&
-		k.Subresource == other.Subresource
-}
-
-func (k *Key) TenantID() (int64, error) {
-	if k.Namespace == "default" {
-		return 1, nil
-	}
-	tid := strings.Split(k.Namespace, "-")
-	if len(tid) != 2 || !(tid[0] == "org" || tid[0] == "tenant") {
-		return 0, fmt.Errorf("invalid namespace, expected org|tenant-${#}")
-	}
-	intVar, err := strconv.ParseInt(tid[1], 10, 64)
-	if err != nil {
-		return 0, fmt.Errorf("invalid namespace, expected number")
-	}
-	return intVar, nil
-}
-
-func (k *Key) ToGRN() (*grn.GRN, error) {
-	tid, err := k.TenantID()
-	if err != nil {
-		return nil, err
-	}
-
-	fullResource := k.Resource
-	if k.Subresource != "" {
-		fullResource = fmt.Sprintf("%s/%s", k.Resource, k.Subresource)
-	}
-
-	return &grn.GRN{
-		ResourceGroup:      k.Group,
-		ResourceKind:       fullResource,
-		ResourceIdentifier: k.Name,
-		TenantID:           tid,
-	}, nil
-}
-
-// Convert an etcd key to GRN style
-func keyToGRN(key string) (*grn.GRN, error) {
-	k, err := ParseKey(key)
-	if err != nil {
-		return nil, err
-	}
-	return k.ToGRN()
-}
 
 // this is terrible... but just making it work!!!!
 func entityToResource(rsp *entityStore.Entity, res runtime.Object) error {
@@ -119,10 +24,6 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object) error {
 		return err
 	}
 
-	if rsp.GRN == nil {
-		return fmt.Errorf("invalid entity, missing GRN")
-	}
-
 	if len(rsp.Meta) > 0 {
 		err = json.Unmarshal(rsp.Meta, res)
 		if err != nil {
@@ -130,12 +31,8 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object) error {
 		}
 	}
 
-	metaAccessor.SetName(rsp.GRN.ResourceIdentifier)
-	if rsp.GRN.TenantID != 1 {
-		metaAccessor.SetNamespace(fmt.Sprintf("tenant-%d", rsp.GRN.TenantID))
-	} else {
-		metaAccessor.SetNamespace("default") // org 1
-	}
+	metaAccessor.SetName(rsp.Name)
+	metaAccessor.SetNamespace(rsp.Namespace)
 	metaAccessor.SetUID(types.UID(rsp.Guid))
 	metaAccessor.SetResourceVersion(rsp.Version)
 	metaAccessor.SetCreationTimestamp(metav1.Unix(rsp.CreatedAt/1000, rsp.CreatedAt%1000*1000000))
@@ -156,6 +53,7 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object) error {
 		grafanaAccessor.SetUpdatedTimestamp(&updatedAt)
 	}
 	grafanaAccessor.SetSlug(rsp.Slug)
+	grafanaAccessor.SetTitle(rsp.Title)
 
 	if rsp.Origin != nil {
 		originTime := time.UnixMilli(rsp.Origin.Time).UTC()
@@ -202,16 +100,14 @@ func resourceToEntity(key string, res runtime.Object, requestInfo *request.Reque
 		return nil, err
 	}
 
-	g, err := keyToGRN(key)
-	if err != nil {
-		return nil, err
-	}
-
 	grafanaAccessor := kinds.MetaAccessor(metaAccessor)
 
 	rsp := &entityStore.Entity{
-		GRN:          g,
+		Group:        requestInfo.APIGroup,
 		GroupVersion: requestInfo.APIVersion,
+		Resource:     requestInfo.Resource,
+		Subresource:  requestInfo.Subresource,
+		Namespace:    metaAccessor.GetNamespace(),
 		Key:          key,
 		Name:         metaAccessor.GetName(),
 		Guid:         string(metaAccessor.GetUID()),
@@ -221,6 +117,7 @@ func resourceToEntity(key string, res runtime.Object, requestInfo *request.Reque
 		CreatedBy:    grafanaAccessor.GetCreatedBy(),
 		UpdatedBy:    grafanaAccessor.GetUpdatedBy(),
 		Slug:         grafanaAccessor.GetSlug(),
+		Title:        grafanaAccessor.GetTitle(),
 		Origin: &entityStore.EntityOriginInfo{
 			Source: grafanaAccessor.GetOriginName(),
 			Key:    grafanaAccessor.GetOriginKey(),
@@ -229,11 +126,19 @@ func resourceToEntity(key string, res runtime.Object, requestInfo *request.Reque
 		Labels: metaAccessor.GetLabels(),
 	}
 
-	if t := grafanaAccessor.GetUpdatedTimestamp(); t != nil {
+	t, err := grafanaAccessor.GetUpdatedTimestamp()
+	if err != nil {
+		return nil, err
+	}
+	if t != nil {
 		rsp.UpdatedAt = t.UnixMilli()
 	}
 
-	if t := grafanaAccessor.GetOriginTimestamp(); t != nil {
+	t, err = grafanaAccessor.GetOriginTimestamp()
+	if err != nil {
+		return nil, err
+	}
+	if t != nil {
 		rsp.Origin.Time = t.UnixMilli()
 	}
 

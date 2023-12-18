@@ -15,14 +15,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng/proxyutil"
 )
 
 func ProvideService(cfg *setting.Cfg) *Service {
-	logger := log.New("tsdb.postgres")
+	logger := backend.NewLoggerWith("logger", "tsdb.postgres")
 	s := &Service{
 		tlsManager: newTLSManager(logger, cfg.DataPath),
 		logger:     logger,
