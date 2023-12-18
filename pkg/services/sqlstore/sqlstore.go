@@ -4,9 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
@@ -45,7 +43,7 @@ type SQLStore struct {
 	dbCfg                        DatabaseConfig
 	engine                       *xorm.Engine
 	log                          log.Logger
-	Dialect                      migrator.Dialect
+	dialect                      migrator.Dialect
 	skipEnsureDefaultOrgAndUser  bool
 	migrations                   registry.DatabaseMigrator
 	tracer                       tracing.Tracer
@@ -110,7 +108,7 @@ func newSQLStore(cfg *setting.Cfg, engine *xorm.Engine,
 	}
 	ss.engine = conn.Engine()
 
-	ss.Dialect = migrator.NewDialect(ss.engine.DriverName())
+	ss.dialect = migrator.NewDialect(ss.engine.DriverName())
 
 	// if err := ss.Reset(); err != nil {
 	// 	return nil, err
@@ -174,7 +172,7 @@ func (ss *SQLStore) Quote(value string) string {
 
 // GetDialect return the dialect
 func (ss *SQLStore) GetDialect() migrator.Dialect {
-	return ss.Dialect
+	return ss.dialect
 }
 
 func (ss *SQLStore) GetDBType() core.DbType {
@@ -206,7 +204,7 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser(test bool) error {
 			var stats stats.SystemUserCountStats
 			// TODO: Should be able to rename "Count" to "count", for more standard SQL style
 			// Just have to make sure it gets deserialized properly into models.SystemUserCountStats
-			rawSQL := `SELECT COUNT(id) AS Count FROM ` + ss.Dialect.Quote("user")
+			rawSQL := `SELECT COUNT(id) AS Count FROM ` + ss.dialect.Quote("user")
 			if _, err := sess.SQL(rawSQL).Get(&stats); err != nil {
 				return fmt.Errorf("could not determine if admin user exists: %w", err)
 			}
@@ -241,62 +239,6 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser(test bool) error {
 	})
 
 	return err
-}
-
-// readConfig initializes the SQLStore from its configuration.
-func (ss *SQLStore) readConfig() error {
-	sec := ss.Cfg.Raw.Section("database")
-
-	cfgURL := sec.Key("url").String()
-	if len(cfgURL) != 0 {
-		dbURL, err := url.Parse(cfgURL)
-		if err != nil {
-			return err
-		}
-		ss.dbCfg.Type = dbURL.Scheme
-		ss.dbCfg.Host = dbURL.Host
-
-		pathSplit := strings.Split(dbURL.Path, "/")
-		if len(pathSplit) > 1 {
-			ss.dbCfg.Name = pathSplit[1]
-		}
-
-		userInfo := dbURL.User
-		if userInfo != nil {
-			ss.dbCfg.User = userInfo.Username()
-			ss.dbCfg.Pwd, _ = userInfo.Password()
-		}
-
-		ss.dbCfg.UrlQueryParams = dbURL.Query()
-	} else {
-		ss.dbCfg.Type = sec.Key("type").String()
-		ss.dbCfg.Host = sec.Key("host").String()
-		ss.dbCfg.Name = sec.Key("name").String()
-		ss.dbCfg.User = sec.Key("user").String()
-		ss.dbCfg.ConnectionString = sec.Key("connection_string").String()
-		ss.dbCfg.Pwd = sec.Key("password").String()
-	}
-
-	ss.dbCfg.MaxOpenConn = sec.Key("max_open_conn").MustInt(0)
-	ss.dbCfg.MaxIdleConn = sec.Key("max_idle_conn").MustInt(2)
-	ss.dbCfg.ConnMaxLifetime = sec.Key("conn_max_lifetime").MustInt(14400)
-
-	ss.dbCfg.SslMode = sec.Key("ssl_mode").String()
-	ss.dbCfg.CaCertPath = sec.Key("ca_cert_path").String()
-	ss.dbCfg.ClientKeyPath = sec.Key("client_key_path").String()
-	ss.dbCfg.ClientCertPath = sec.Key("client_cert_path").String()
-	ss.dbCfg.ServerCertName = sec.Key("server_cert_name").String()
-	ss.dbCfg.Path = sec.Key("path").MustString("data/grafana.db")
-	ss.dbCfg.IsolationLevel = sec.Key("isolation_level").String()
-
-	ss.dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
-	ss.dbCfg.WALEnabled = sec.Key("wal").MustBool(false)
-	ss.dbCfg.SkipMigrations = sec.Key("skip_migrations").MustBool()
-	ss.dbCfg.MigrationLockAttemptTimeout = sec.Key("locking_attempt_timeout_sec").MustInt()
-
-	ss.dbCfg.QueryRetries = sec.Key("query_retries").MustInt()
-	ss.dbCfg.TransactionRetries = sec.Key("transaction_retries").MustInt(5)
-	return nil
 }
 
 func (ss *SQLStore) GetMigrationLockAttemptTimeout() int {
@@ -493,7 +435,7 @@ func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts 
 			return nil, err
 		}
 
-		if err := testSQLStore.Dialect.TruncateDBTables(engine); err != nil {
+		if err := testSQLStore.dialect.TruncateDBTables(engine); err != nil {
 			return nil, err
 		}
 
@@ -522,7 +464,7 @@ func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts 
 		return false
 	}
 
-	if err := testSQLStore.Dialect.TruncateDBTables(testSQLStore.GetEngine()); err != nil {
+	if err := testSQLStore.dialect.TruncateDBTables(testSQLStore.GetEngine()); err != nil {
 		return nil, err
 	}
 	if err := testSQLStore.Reset(); err != nil {

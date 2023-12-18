@@ -626,7 +626,7 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 		},
 		Filters: []interface{}{
 			searchstore.TitleFilter{
-				Dialect: sqlStore.Dialect,
+				Dialect: sqlStore.GetDialect(),
 				Title:   "Beta",
 			},
 		},

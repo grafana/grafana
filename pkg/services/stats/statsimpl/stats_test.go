@@ -42,7 +42,7 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 		assert.Equal(t, int64(0), result.APIKeys)
 		assert.Equal(t, int64(2), result.Correlations)
 		assert.NotNil(t, result.DatabaseCreatedTime)
-		assert.Equal(t, db.Dialect.DriverName(), result.DatabaseDriver)
+		assert.Equal(t, db.GetDialect().DriverName(), result.DatabaseDriver)
 	})
 
 	t.Run("Get system user count stats should not results in error", func(t *testing.T) {
