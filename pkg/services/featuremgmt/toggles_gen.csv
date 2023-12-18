@@ -150,3 +150,4 @@ tableSharedCrosshair,experimental,@grafana/grafana-bi-squad,2023-12-12,false,fal
 regressionTransformation,privatePreview,@grafana/grafana-bi-squad,2023-11-24,false,false,false,true
 displayAnonymousStats,GA,@grafana/identity-access-team,2023-11-29,false,false,false,true
 alertStateHistoryAnnotationsFromLoki,experimental,@grafana/alerting-squad,2023-11-30,false,false,true,false
+lokiQueryHints,GA,@grafana/observability-logs,2023-12-18,false,false,false,true
