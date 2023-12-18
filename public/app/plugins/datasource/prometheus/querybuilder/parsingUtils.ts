@@ -1,8 +1,8 @@
 import { SyntaxNode, TreeCursor } from '@lezer/common';
 
-import { QueryBuilderOperation, QueryBuilderOperationParamValue } from './types';
+import { QueryBuilderOperation, QueryBuilderOperationParamValue } from './shared/types';
 
-// Although 0 isn't explicitly provided in the lezer-promql & @grafana/lezer-logql library as the error node ID, it does appear to be the ID of error nodes within lezer.
+// Although 0 isn't explicitly provided in the lezer-promql library as the error node ID, it does appear to be the ID of error nodes within lezer.
 export const ErrorId = 0;
 
 export function getLeftMostChild(cur: SyntaxNode): SyntaxNode {
@@ -129,76 +129,6 @@ export function getAllByType(expr: string, cur: SyntaxNode, type: number | strin
     child = cur.childAfter(pos);
   }
   return values;
-}
-
-// Debugging function for convenience. Gives you nice output similar to linux tree util.
-// @ts-ignore
-export function log(expr: string, cur?: SyntaxNode) {
-  if (!cur) {
-    console.log('<empty>');
-    return;
-  }
-  const json = toJson(expr, cur);
-  const text = jsonToText(json);
-
-  if (!text) {
-    console.log('<empty>');
-    return;
-  }
-  console.log(text);
-}
-
-function toJson(expr: string, cur: SyntaxNode) {
-  const treeJson: any = {};
-  const name = nodeToString(expr, cur);
-  const children = [];
-
-  let pos = 0;
-  let child = cur.childAfter(pos);
-  while (child) {
-    children.push(toJson(expr, child));
-    pos = child.to;
-    child = cur.childAfter(pos);
-  }
-
-  treeJson.name = name;
-  treeJson.children = children;
-  return treeJson;
-}
-
-type JsonNode = {
-  name: string;
-  children: JsonNode[];
-};
-
-function jsonToText(
-  node: JsonNode,
-  context: { lastChild: boolean; indent: string } = {
-    lastChild: true,
-    indent: '',
-  }
-) {
-  const name = node.name;
-  const { lastChild, indent } = context;
-  const newIndent = indent !== '' ? indent + (lastChild ? '└─' : '├─') : '';
-  let text = newIndent + name;
-
-  const children = node.children;
-  children.forEach((child, index) => {
-    const isLastChild = index === children.length - 1;
-    text +=
-      '\n' +
-      jsonToText(child, {
-        lastChild: isLastChild,
-        indent: indent + (lastChild ? '  ' : '│ '),
-      });
-  });
-
-  return text;
-}
-
-function nodeToString(expr: string, node: SyntaxNode) {
-  return node.name + ': ' + getString(expr, node);
 }
 
 /**
