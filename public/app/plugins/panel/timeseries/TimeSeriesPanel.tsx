@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import { PanelProps, DataFrameType } from '@grafana/data';
+import { PanelProps, DataFrameType, LoadingState } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { KeyboardPlugin, TooltipPlugin, TooltipPlugin2, usePanelContext, ZoomPlugin } from '@grafana/ui';
@@ -35,8 +35,9 @@ export const TimeSeriesPanel = ({
 }: TimeSeriesPanelProps) => {
   const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, showThresholds, dataLinkPostProcessor } =
     usePanelContext();
-
-  const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data.series, timeRange]);
+  const frames = useMemo(() => {
+    return prepareGraphableFields(data.state === LoadingState.Done ? data.series : [], config.theme2, timeRange);
+  }, [data.state, data.series, timeRange]);
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
   const suggestions = useMemo(() => {
     if (frames?.length && frames.every((df) => df.meta?.type === DataFrameType.TimeSeriesLong)) {
