@@ -182,7 +182,9 @@ func (api *API) authorize(method, path string) web.Handler {
 
 	// Grafana-only Provisioning Read Paths
 	case http.MethodGet + "/api/v1/provisioning/policies/export",
-		http.MethodGet + "/api/v1/provisioning/contact-points/export":
+		http.MethodGet + "/api/v1/provisioning/contact-points/export",
+		http.MethodGet + "/api/v1/provisioning/mute-timings/export",
+		http.MethodGet + "/api/v1/provisioning/mute-timings/{name}/export":
 		eval = ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingNotificationsRead),       // organization scope
 			ac.EvalPermission(ac.ActionAlertingProvisioningRead),        // organization scope

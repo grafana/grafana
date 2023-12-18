@@ -4214,7 +4214,11 @@
           "type": "boolean"
         },
         "id": {
-          "description": "Deprecated: use Uid instead",
+          "description": "Deprecated: use UID instead",
+          "type": "integer",
+          "format": "int64"
+        },
+        "orgId": {
           "type": "integer",
           "format": "int64"
         },
@@ -5733,6 +5737,9 @@
         "isEnabled": {
           "type": "boolean"
         },
+        "slug": {
+          "type": "string"
+        },
         "title": {
           "type": "string"
         },
@@ -6333,6 +6340,9 @@
         "displayName": {
           "type": "string"
         },
+        "global": {
+          "type": "boolean"
+        },
         "group": {
           "type": "string"
         },
@@ -6358,6 +6368,24 @@
         "version": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "SSOSettings": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "settings": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "source": {
+          "$ref": "#/definitions/SettingsSource"
         }
       }
     },
@@ -6708,6 +6736,10 @@
           "type": "string"
         }
       }
+    },
+    "SettingsSource": {
+      "type": "integer",
+      "format": "int64"
     },
     "ShareType": {
       "type": "string"

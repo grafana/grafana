@@ -27,11 +27,10 @@ import {
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 
-import { ErrorId, replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
-
 import { placeHolderScopedVars } from './components/monaco-query-field/monaco-completion-provider/validation';
 import { LokiDatasource } from './datasource';
 import { getStreamSelectorPositions, NodePosition } from './modifyQuery';
+import { ErrorId, replaceVariables, returnVariables } from './querybuilder/parsingUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
 /**
