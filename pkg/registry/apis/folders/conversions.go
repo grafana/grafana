@@ -27,8 +27,7 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 	if v.UpdatedBy > 0 {
 		meta.SetUpdatedBy(fmt.Sprintf("user:%d", v.UpdatedBy))
 	}
-
-	return &v0alpha1.Folder{
+	f := &v0alpha1.Folder{
 		TypeMeta: v0alpha1.FolderResourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              v.UID,
@@ -36,11 +35,12 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 			CreationTimestamp: metav1.NewTime(v.Created),
 			Namespace:         namespacer(v.OrgID),
 			Annotations:       meta.Annotations,
-			UID:               utils.AsK8sUID(v.OrgID, v.UID, "folder"),
 		},
 		Spec: v0alpha1.Spec{
 			Title:       v.Title,
 			Description: v.Description,
 		},
 	}
+	f.UID = utils.CalculateClusterWideUID(f)
+	return f
 }
