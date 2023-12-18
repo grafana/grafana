@@ -649,13 +649,14 @@ func TestService_GetConfigMap(t *testing.T) {
 			cfg: &config.Cfg{
 				Features: featuremgmt.WithFeatures("feat-2", "feat-500", "feat-1"),
 				ProxySettings: setting.SecureSocksDSProxySettings{
-					Enabled:      true,
-					ShowUI:       true,
-					ClientCert:   "c3rt",
-					ClientKey:    "k3y",
-					RootCA:       "ca",
-					ProxyAddress: "https://proxy.grafana.com",
-					ServerName:   "secureProxy",
+					Enabled:       true,
+					ShowUI:        true,
+					ClientCert:    "c3rt",
+					ClientKey:     "k3y",
+					RootCA:        "ca",
+					ProxyAddress:  "https://proxy.grafana.com",
+					ServerName:    "secureProxy",
+					AllowInsecure: true,
 				},
 			},
 			expected: map[string]string{
@@ -666,6 +667,7 @@ func TestService_GetConfigMap(t *testing.T) {
 				"GF_SECURE_SOCKS_DATASOURCE_PROXY_ROOT_CA_CERT":   "ca",
 				"GF_SECURE_SOCKS_DATASOURCE_PROXY_PROXY_ADDRESS":  "https://proxy.grafana.com",
 				"GF_SECURE_SOCKS_DATASOURCE_PROXY_SERVER_NAME":    "secureProxy",
+				"GF_SECURE_SOCKS_DATASOURCE_PROXY_ALLOW_INSECURE": "true",
 			},
 		},
 		{

@@ -143,6 +143,7 @@ func (s *Service) GetConfigMap(ctx context.Context, pluginID string, _ *auth.Ext
 		m[proxy.PluginSecureSocksProxyRootCACert] = s.cfg.ProxySettings.RootCA
 		m[proxy.PluginSecureSocksProxyProxyAddress] = s.cfg.ProxySettings.ProxyAddress
 		m[proxy.PluginSecureSocksProxyServerName] = s.cfg.ProxySettings.ServerName
+		m[proxy.PluginSecureSocksProxyAllowInsecure] = strconv.FormatBool(s.cfg.ProxySettings.AllowInsecure)
 	}
 
 	// Settings here will be extracted by grafana-azure-sdk-go from the plugin context
@@ -271,6 +272,7 @@ func (s *Service) secureSocksProxyEnvVars() []string {
 			proxy.PluginSecureSocksProxyProxyAddress + "=" + s.cfg.ProxySettings.ProxyAddress,
 			proxy.PluginSecureSocksProxyServerName + "=" + s.cfg.ProxySettings.ServerName,
 			proxy.PluginSecureSocksProxyEnabled + "=" + strconv.FormatBool(s.cfg.ProxySettings.Enabled),
+			proxy.PluginSecureSocksProxyAllowInsecure + "=" + strconv.FormatBool(s.cfg.ProxySettings.AllowInsecure),
 		}
 	}
 	return nil
