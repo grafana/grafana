@@ -5,10 +5,12 @@ import { useOverlay } from '@react-aria/overlays';
 import RcDrawer from 'rc-drawer';
 import React, { ReactNode, useEffect } from 'react';
 
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes';
+import { t } from '../../utils/i18n';
 import { Button } from '../Button';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Text } from '../Text/Text';
@@ -103,7 +105,7 @@ export function Drawer({
     >
       <FocusScope restoreFocus contain autoFocus>
         <div
-          aria-label={
+           data-testid={
             typeof title === 'string'
               ? selectors.components.Drawer.General.title(title)
               : selectors.components.Drawer.General.title('no title')
@@ -121,7 +123,8 @@ export function Drawer({
                   variant="secondary"
                   fill="text"
                   onClick={onClose}
-                  aria-label={selectors.components.Drawer.General.close}
+                  data-testid={selectors.components.Drawer.General.close}
+                  aria-label={t('selectors.components.Drawer.General.close', 'Close Drawer')}
                 />
               </div>
               <div className={styles.titleWrapper}>
