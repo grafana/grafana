@@ -75,6 +75,12 @@ type ContactPointPayload struct {
 // swagger:model
 type ContactPoints []EmbeddedContactPoint
 
+// swagger:parameters RoutePostContactpoints RoutePutContactpoint
+type ContactPointHeaders struct {
+	// in:header
+	XDisableProvenance string `json:"X-Disable-Provenance"`
+}
+
 // EmbeddedContactPoint is the contact point type that is used
 // by grafanas embedded alertmanager implementation.
 // swagger:model

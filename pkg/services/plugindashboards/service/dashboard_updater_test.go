@@ -195,8 +195,7 @@ func TestDashboardUpdater(t *testing.T) {
 				require.Equal(t, "updated.json", ctx.importDashboardArgs[0].Path)
 				require.Equal(t, int64(2), ctx.importDashboardArgs[0].User.GetOrgID())
 				require.Equal(t, org.RoleAdmin, ctx.importDashboardArgs[0].User.GetOrgRole())
-				// nolint:staticcheck
-				require.Equal(t, int64(0), ctx.importDashboardArgs[0].FolderId)
+				require.Equal(t, string(""), ctx.importDashboardArgs[0].FolderUid)
 				require.True(t, ctx.importDashboardArgs[0].Overwrite)
 			})
 	})
@@ -323,24 +322,21 @@ func TestDashboardUpdater(t *testing.T) {
 			require.Equal(t, "dashboard1.json", ctx.importDashboardArgs[0].Path)
 			require.Equal(t, int64(2), ctx.importDashboardArgs[0].User.GetOrgID())
 			require.Equal(t, org.RoleAdmin, ctx.importDashboardArgs[0].User.GetOrgRole())
-			// nolint:staticcheck
-			require.Equal(t, int64(0), ctx.importDashboardArgs[0].FolderId)
+			require.Equal(t, string(""), ctx.importDashboardArgs[0].FolderUid)
 			require.True(t, ctx.importDashboardArgs[0].Overwrite)
 
 			require.Equal(t, "test", ctx.importDashboardArgs[1].PluginId)
 			require.Equal(t, "dashboard2.json", ctx.importDashboardArgs[1].Path)
 			require.Equal(t, int64(2), ctx.importDashboardArgs[1].User.GetOrgID())
 			require.Equal(t, org.RoleAdmin, ctx.importDashboardArgs[1].User.GetOrgRole())
-			// nolint:staticcheck
-			require.Equal(t, int64(0), ctx.importDashboardArgs[1].FolderId)
+			require.Equal(t, string(""), ctx.importDashboardArgs[0].FolderUid)
 			require.True(t, ctx.importDashboardArgs[1].Overwrite)
 
 			require.Equal(t, "test", ctx.importDashboardArgs[2].PluginId)
 			require.Equal(t, "dashboard3.json", ctx.importDashboardArgs[2].Path)
 			require.Equal(t, int64(2), ctx.importDashboardArgs[2].User.GetOrgID())
 			require.Equal(t, org.RoleAdmin, ctx.importDashboardArgs[2].User.GetOrgRole())
-			// nolint:staticcheck
-			require.Equal(t, int64(0), ctx.importDashboardArgs[2].FolderId)
+			require.Equal(t, string(""), ctx.importDashboardArgs[0].FolderUid)
 			require.True(t, ctx.importDashboardArgs[2].Overwrite)
 		})
 }

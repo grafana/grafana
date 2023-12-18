@@ -11,8 +11,6 @@ import (
 )
 
 var (
-	falsePtr = boolPtr(false)
-	truePtr  = boolPtr(true)
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
@@ -21,7 +19,7 @@ var (
 			Stage:             FeatureStageGeneralAvailability,
 			Owner:             grafanaAsCodeSquad,
 			HideFromAdminPage: true,
-			AllowSelfServe:    falsePtr,
+			AllowSelfServe:    false,
 			Created:           time.Date(2022, time.May, 24, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -54,7 +52,7 @@ var (
 			Stage:          FeatureStageGeneralAvailability,
 			Owner:          grafanaSharingSquad,
 			Expression:     "true", // enabled by default
-			AllowSelfServe: truePtr,
+			AllowSelfServe: true,
 			Created:        time.Date(2022, time.April, 7, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -79,7 +77,7 @@ var (
 			Description:    "Highlight Grafana Enterprise features",
 			Stage:          FeatureStageGeneralAvailability,
 			Owner:          grafanaAsCodeSquad,
-			AllowSelfServe: truePtr,
+			AllowSelfServe: true,
 			Created:        time.Date(2022, time.February, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -110,7 +108,7 @@ var (
 			Owner:          grafanaExploreSquad,
 			Expression:     "true", // enabled by default
 			FrontendOnly:   true,
-			AllowSelfServe: truePtr,
+			AllowSelfServe: true,
 			Created:        time.Date(2023, time.November, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -160,7 +158,7 @@ var (
 			Stage:          FeatureStageGeneralAvailability,
 			FrontendOnly:   true,
 			Owner:          grafanaDatavizSquad,
-			AllowSelfServe: truePtr,
+			AllowSelfServe: true,
 			Created:        time.Date(2023, time.November, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -192,7 +190,7 @@ var (
 			Stage:          FeatureStageGeneralAvailability,
 			Expression:     "true", // turned on by default
 			Owner:          grafanaPluginsPlatformSquad,
-			AllowSelfServe: truePtr,
+			AllowSelfServe: true,
 			Created:        time.Date(2022, time.June, 1, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -236,7 +234,7 @@ var (
 			Stage:          FeatureStageGeneralAvailability,
 			Expression:     "true", // enabled by default
 			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: truePtr,
+			AllowSelfServe: true,
 			Created:        time.Date(2022, time.November, 28, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -245,7 +243,7 @@ var (
 			Stage:          FeatureStageGeneralAvailability,
 			Expression:     "true", // enabled by default
 			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: falsePtr,
+			AllowSelfServe: false,
 			Created:        time.Date(2022, time.August, 27, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -255,15 +253,17 @@ var (
 			Expression:     "true", // enabled by default
 			FrontendOnly:   true,
 			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: falsePtr,
+			AllowSelfServe: false,
 			Created:        time.Date(2022, time.August, 27, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:        "cloudwatchNewRegionsHandler",
-			Description: "Refactor of /regions endpoint, no user-facing changes",
-			Stage:       FeatureStageExperimental,
-			Owner:       awsDatasourcesSquad,
-			Created:     time.Date(2023, time.September, 25, 12, 0, 0, 0, time.UTC),
+			Name:           "cloudwatchNewRegionsHandler",
+			Description:    "Refactor of /regions endpoint, no user-facing changes",
+			Stage:          FeatureStageGeneralAvailability,
+			Expression:     "true", // enabled by default
+			Owner:          awsDatasourcesSquad,
+			AllowSelfServe: true,
+			Created:        time.Date(2023, time.September, 25, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "showDashboardValidationWarnings",
@@ -301,16 +301,8 @@ var (
 			Owner:          grafanaFrontendPlatformSquad,
 			FrontendOnly:   true,
 			Expression:     "true", // enabled by default
-			AllowSelfServe: truePtr,
+			AllowSelfServe: true,
 			Created:        time.Date(2023, time.July, 24, 12, 0, 0, 0, time.UTC),
-		},
-		{
-			Name:           "accessTokenExpirationCheck",
-			Description:    "Enable OAuth access_token expiration check and token refresh using the refresh_token",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          identityAccessTeam,
-			AllowSelfServe: falsePtr,
-			Created:        time.Date(2022, time.November, 14, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:              "emptyDashboardPage",
@@ -319,7 +311,7 @@ var (
 			FrontendOnly:      true,
 			Expression:        "true", // enabled by default
 			Owner:             grafanaDashboardsSquad,
-			AllowSelfServe:    falsePtr,
+			AllowSelfServe:    false,
 			HideFromAdminPage: true,
 			Created:           time.Date(2023, time.March, 28, 12, 0, 0, 0, time.UTC),
 		},
@@ -328,7 +320,7 @@ var (
 			Description:    "Disable Prometheus exemplar sampling",
 			Stage:          FeatureStageGeneralAvailability,
 			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: truePtr,
+			AllowSelfServe: true,
 			Created:        time.Date(2022, time.December, 19, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -362,7 +354,7 @@ var (
 			FrontendOnly:   true,
 			Owner:          grafanaObservabilityLogsSquad,
 			Expression:     "true", // turned on by default
-			AllowSelfServe: truePtr,
+			AllowSelfServe: true,
 			Created:        time.Date(2023, time.January, 27, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -372,7 +364,7 @@ var (
 			FrontendOnly:   true,
 			Owner:          grafanaObservabilityLogsSquad,
 			Expression:     "true", // turned on by default
-			AllowSelfServe: truePtr,
+			AllowSelfServe: true,
 			Created:        time.Date(2023, time.February, 9, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -397,7 +389,7 @@ var (
 			Stage:          FeatureStageGeneralAvailability,
 			FrontendOnly:   true,
 			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: truePtr,
+			AllowSelfServe: true,
 			Created:        time.Date(2023, time.March, 7, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -407,7 +399,7 @@ var (
 			FrontendOnly:   true,
 			Owner:          grafanaObservabilityMetricsSquad,
 			Expression:     "true", // enabled by default
-			AllowSelfServe: falsePtr,
+			AllowSelfServe: false,
 			Created:        time.Date(2023, time.March, 15, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -423,7 +415,7 @@ var (
 			Stage:          FeatureStageGeneralAvailability,
 			Expression:     "true",
 			Owner:          identityAccessTeam,
-			AllowSelfServe: falsePtr,
+			AllowSelfServe: false,
 			Created:        time.Date(2023, time.March, 23, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -432,7 +424,7 @@ var (
 			Expression:     "true",
 			Stage:          FeatureStageGeneralAvailability,
 			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: truePtr,
+			AllowSelfServe: true,
 			Created:        time.Date(2023, time.March, 29, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -441,7 +433,7 @@ var (
 			Stage:          FeatureStageGeneralAvailability,
 			Expression:     "true",
 			Owner:          grafanaObservabilityLogsSquad,
-			AllowSelfServe: truePtr,
+			AllowSelfServe: true,
 			Created:        time.Date(2023, time.April, 13, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -458,7 +450,7 @@ var (
 			FrontendOnly:   true,
 			Expression:     "true",
 			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: truePtr,
+			AllowSelfServe: true,
 			Created:        time.Date(2023, time.April, 24, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -527,7 +519,7 @@ var (
 			Owner:           grafanaOperatorExperienceSquad,
 			RequiresRestart: true,
 			Expression:      "true", // enabled by default
-			AllowSelfServe:  falsePtr,
+			AllowSelfServe:  false,
 			Created:         time.Date(2023, time.April, 12, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -536,7 +528,7 @@ var (
 			Stage:          FeatureStageGeneralAvailability,
 			Owner:          grafanaObservabilityLogsSquad,
 			Expression:     "true", // enabled by default
-			AllowSelfServe: truePtr,
+			AllowSelfServe: true,
 			Created:        time.Date(2023, time.April, 14, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -546,7 +538,7 @@ var (
 			FrontendOnly:      true,
 			Expression:        "true", // enabled by default
 			Owner:             grafanaDashboardsSquad,
-			AllowSelfServe:    falsePtr,
+			AllowSelfServe:    false,
 			HideFromAdminPage: true,
 			Created:           time.Date(2023, time.April, 14, 12, 0, 0, 0, time.UTC),
 		},
@@ -630,7 +622,7 @@ var (
 			FrontendOnly:   true,
 			Expression:     "true", // enabled by default
 			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: truePtr,
+			AllowSelfServe: true,
 			Created:        time.Date(2023, time.June, 12, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -647,7 +639,7 @@ var (
 			Stage:          FeatureStageGeneralAvailability,
 			Expression:     "true",
 			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: falsePtr,
+			AllowSelfServe: false,
 			Created:        time.Date(2023, time.June, 14, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -696,7 +688,7 @@ var (
 			FrontendOnly:   true,
 			Expression:     "true", // enabled by default
 			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: truePtr,
+			AllowSelfServe: true,
 			Created:        time.Date(2023, time.July, 12, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -767,8 +759,9 @@ var (
 		{
 			Name:              "splitScopes",
 			Description:       "Support faster dashboard and folder search by splitting permission scopes into parts",
-			Stage:             FeatureStagePublicPreview,
+			Stage:             FeatureStageGeneralAvailability,
 			FrontendOnly:      false,
+			Expression:        "true", // enabled by default
 			Owner:             identityAccessTeam,
 			RequiresRestart:   true,
 			HideFromAdminPage: true, // This is internal work to speed up dashboard search, and is not ready for wider use
@@ -803,7 +796,7 @@ var (
 			Owner:          grafanaObservabilityMetricsSquad,
 			Stage:          FeatureStageGeneralAvailability,
 			Expression:     "true", // on by default
-			AllowSelfServe: falsePtr,
+			AllowSelfServe: false,
 			Created:        time.Date(2023, time.July, 21, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -907,7 +900,7 @@ var (
 			Stage:             FeatureStageGeneralAvailability,
 			Owner:             grafanaAlertingSquad,
 			Expression:        "true", // enabled by default
-			AllowSelfServe:    falsePtr,
+			AllowSelfServe:    false,
 			HideFromAdminPage: true, // This is moving away from being a feature toggle.
 			Created:           time.Date(2023, time.September, 14, 12, 0, 0, 0, time.UTC),
 		},
@@ -948,7 +941,7 @@ var (
 			Stage:          FeatureStageGeneralAvailability,
 			Expression:     "true", // enabled by default
 			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: truePtr,
+			AllowSelfServe: true,
 			Created:        time.Date(2023, time.September, 27, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -978,7 +971,7 @@ var (
 		{
 			Name:         "formatString",
 			Description:  "Enable format string transformer",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: true,
 			Owner:        grafanaBiSquad,
 			Created:      time.Date(2023, time.October, 13, 12, 0, 0, 0, time.UTC),
@@ -1098,7 +1091,7 @@ var (
 		{
 			Name:         "addFieldFromCalculationStatFunctions",
 			Description:  "Add cumulative and window functions to the add field from calculation transformation",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: true,
 			Owner:        grafanaBiSquad,
 			Created:      time.Date(2023, time.November, 3, 12, 0, 0, 0, time.UTC),
@@ -1242,9 +1235,17 @@ var (
 			Created:      time.Date(2023, time.November, 15, 12, 0, 0, 0, time.UTC),
 		},
 		{
+			Name:         "tableSharedCrosshair",
+			Description:  "Enables shared crosshair in table panel",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaBiSquad,
+			Created:      time.Date(2023, time.December, 12, 12, 0, 0, 0, time.UTC),
+		},
+		{
 			Name:         "regressionTransformation",
 			Description:  "Enables regression analysis transformation",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: true,
 			Owner:        grafanaBiSquad,
 			Created:      time.Date(2023, time.November, 24, 12, 0, 0, 0, time.UTC),
@@ -1256,7 +1257,7 @@ var (
 			FrontendOnly:   true,
 			Owner:          identityAccessTeam,
 			Created:        time.Date(2023, time.November, 29, 12, 0, 0, 0, time.UTC),
-			AllowSelfServe: falsePtr,
+			AllowSelfServe: false,
 			Expression:     "true", // enabled by default
 		},
 		{
@@ -1269,9 +1270,16 @@ var (
 			RequiresRestart:   true,
 			Created:           time.Date(2023, time.November, 30, 12, 0, 0, 0, time.UTC),
 		},
+		{
+			// this is mainly used a a way to quickly disable query hints as a safe guard for our infrastructure
+			Name:           "lokiQueryHints",
+			Description:    "Enables query hints for Loki",
+			Stage:          FeatureStageGeneralAvailability,
+			FrontendOnly:   true,
+			Expression:     "true",
+			Owner:          grafanaObservabilityLogsSquad,
+			AllowSelfServe: false,
+			Created:        time.Date(2023, time.December, 18, 12, 0, 0, 0, time.UTC),
+		},
 	}
 )
-
-func boolPtr(b bool) *bool {
-	return &b
-}
