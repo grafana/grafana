@@ -69,7 +69,7 @@ export function NavBarMenuItem({ children, icon, isActive, isChild, onClick, tar
 
   // @PERCONA
   if (item?.isDivider) {
-    element = <Divider />;
+    element = <Divider spacing={1} />;
   } else if (item?.isSection) {
     element = <div className={cx(styles.element, styles.section)}>{item.text}</div>;
   }

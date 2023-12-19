@@ -53,6 +53,13 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
               </div>
             </FeatureHighlightWrapper>
             <Indent level={Math.max(0, level - 1)} spacing={2} />
+            {/* @PERCONA */}
+            {level > 0 && link.icon && (
+              <>
+                <Icon name={toIconName(link.icon) ?? 'link'} size="lg" />
+                <span className={styles.iconSpacing} />
+              </>
+            )}
             <Text truncate>{link.text}</Text>
           </div>
         </MegaMenuItemText>
@@ -142,6 +149,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
       borderRadius: theme.shape.radius.default,
       backgroundImage: theme.colors.gradients.brandVertical,
     },
+  }),
+  // @PERCONA
+  iconSpacing: css({
+    marginRight: theme.spacing(1),
   }),
 });
 

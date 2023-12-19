@@ -4,6 +4,8 @@ import React from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
+import { MegaMenuItem } from '../DockedMegaMenu/MegaMenuItem';
+
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { NavBarMenuSection } from './NavBarMenuSection';
 import { isMatchOrChildMatch } from './utils';
@@ -34,7 +36,10 @@ export function NavBarMenuItemWrapper({
       {linkHasChildren(link) && (
         <ul className={styles.children}>
           {link.children.map((childLink) => {
-            return (
+            // @PERCONA - add support for nesting
+            return childLink.children ? (
+              <MegaMenuItem link={childLink} onClick={onClose} activeItem={activeItem} key={childLink.text} level={1} />
+            ) : (
               !childLink.isCreateAction && (
                 <NavBarMenuItem
                   key={`${link.text}-${childLink.text}`}
