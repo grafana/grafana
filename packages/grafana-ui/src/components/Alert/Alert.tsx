@@ -14,11 +14,9 @@ import { Text } from '../Text/Text';
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
 export interface Props extends HTMLAttributes<HTMLDivElement> {
-  title: string;
   /** On click handler for alert button, mostly used for dismissing the alert */
   onRemove?: (event: React.MouseEvent) => void;
   severity?: AlertVariant;
-  children?: ReactNode;
   elevated?: boolean;
   buttonContent?: React.ReactNode | string;
   bottomSpacing?: number;

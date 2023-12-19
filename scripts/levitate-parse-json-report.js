@@ -5,7 +5,7 @@ const data = JSON.parse(fs.readFileSync('data.json', 'utf8'));
 const stripAnsi = (string) => string.replace(/\u001b\[.*?m/g, '');
 
 const printSection = (title, items) => {
-  let output = `## ${title}\n\n`;
+  let output = `### ${title}\n\n`;
   items.forEach((item) => {
     output += `**${item.name}**\n`;
     output += `<sub>${item.location}</sub>\n\n`;
@@ -16,7 +16,7 @@ const printSection = (title, items) => {
   return output;
 };
 
-let markdown = '# 🚨 Breaking changes detected 🚨\n\n';
+let markdown = '';
 
 if (data.removals.length > 0) {
   markdown += printSection('Removals', data.removals);
