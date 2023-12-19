@@ -134,7 +134,7 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     // Interpolation here is to support template variable in data source selection
-    nameOrUid = this.templateSrv.replace(nameOrUid, scopedVars, variableInterpolation);
+    nameOrUid = this.templateSrv.replace(nameOrUid, scopedVars, variableInterpolationWithWarning);
 
     if (nameOrUid === 'default' && this.defaultName !== 'default') {
       return this.get(this.defaultName);
@@ -359,7 +359,7 @@ export function getNameOrUid(ref?: string | DataSourceRef | null): string | unde
   return isString ? ref : ref?.uid;
 }
 
-export function variableInterpolation<T>(value: T | T[]) {
+function variableInterpolationWithWarning<T>(value: T | T[]) {
   if (Array.isArray(value)) {
     const firstValue = value[0];
     if (typeof firstValue === 'string') {
@@ -378,6 +378,13 @@ export function variableInterpolation<T>(value: T | T[]) {
     } else {
       return firstValue;
     }
+  }
+  return value;
+}
+
+export function variableInterpolation<T>(value: T | T[]) {
+  if (Array.isArray(value)) {
+    return value[0];
   }
   return value;
 }
