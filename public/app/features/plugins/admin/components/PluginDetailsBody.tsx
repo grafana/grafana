@@ -1,9 +1,8 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { AppPlugin, GrafanaTheme2, PluginContextProvider, UrlQueryMap } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { useStyles2, Stack } from '@grafana/ui';
+import { CellProps, Column, InteractiveTable, useStyles2 } from '@grafana/ui';
 
 import { VersionList } from '../components/VersionList';
 import { usePluginConfig } from '../hooks/usePluginConfig';
@@ -20,8 +19,27 @@ type Props = {
 };
 
 export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.Element {
+  type Cell<T extends keyof Permission = keyof Permission> = CellProps<Permission, Permission[T]>;
+
   const styles = useStyles2(getStyles);
   const { value: pluginConfig } = usePluginConfig(plugin);
+
+  //@ts-expect-error
+  const columns: Array<Column<Permission>> = useMemo(
+    () => [
+      {
+        id: 'action',
+        header: 'Action',
+        cell: ({ cell: { value } }): Cell<'action'> => value,
+      },
+      {
+        id: 'scope',
+        header: 'Scope',
+        cell: ({ cell: { value } }): Cell<'scope'> => value,
+      },
+    ],
+    []
+  );
 
   if (pageId === PluginTabIds.OVERVIEW) {
     return (
@@ -52,30 +70,14 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
 
   // Permissions will be returned in the iam field for installed plugins and in the details.iam field when fetching details from gcom
   const permissions = plugin.iam?.permissions || plugin.details?.iam?.permissions;
-  if (config.featureToggles.externalServiceAccounts && pageId === PluginTabIds.IAM) {
+
+  if (permissions && permissions.length > 0) {
     return (
-      <Stack direction="column">
-        <Stack direction="row">The {plugin.name} plugin requires the following permissions on your instance:</Stack>
-        <Stack direction="row">
-          <table className="filter-table">
-            <thead>
-              <tr>
-                <th className="admin-settings-section">Action</th>
-                <th className="admin-settings-section">Scope</th>
-              </tr>
-            </thead>
-            <tbody>
-              {permissions &&
-                permissions.map((permission: Permission, i: number) => (
-                  <tr key={`property-${i}`}>
-                    <td>{permission.action}</td>
-                    <td>{permission.scope}</td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </Stack>
-      </Stack>
+      <InteractiveTable
+        columns={columns}
+        data={permissions}
+        getRowId={(permission: Permission) => String(permission.action)}
+      />
     );
   }
 
