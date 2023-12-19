@@ -3775,10 +3775,10 @@ steps:
   name: wire-install
 - commands:
   - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
-  environment:
-    CGO_ENABLED: 1
   depends_on:
   - wire-install
+  environment:
+    CGO_ENBABLED: 1
   image: grafana/ci-wix:0.1.1
   name: test-backend
 trigger:
@@ -4631,6 +4631,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: d7e383e4bf37190a97d695ef8f91755cb8cb70fb8088a5c1f63262adcf8e4f5e
+hmac: 168b77f596eb556089649cbdaeb564fa9d54869a573446820fa220523b30c89d
 
 ...
