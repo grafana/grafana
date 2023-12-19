@@ -1,4 +1,4 @@
-package org
+package authorizer
 
 import (
 	"context"
@@ -12,21 +12,21 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
-var _ authorizer.Authorizer = &OrgIDAuthorizer{}
+var _ authorizer.Authorizer = &orgIDAuthorizer{}
 
-type OrgIDAuthorizer struct {
+type orgIDAuthorizer struct {
 	log log.Logger
 	org org.Service
 }
 
-func ProvideOrgIDAuthorizer(orgService org.Service) *OrgIDAuthorizer {
-	return &OrgIDAuthorizer{
+func newOrgIDAuthorizer(orgService org.Service) *orgIDAuthorizer {
+	return &orgIDAuthorizer{
 		log: log.New("grafana-apiserver.authorizer.orgid"),
 		org: orgService,
 	}
 }
 
-func (auth OrgIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
+func (auth orgIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
 	signedInUser, err := appcontext.User(ctx)
 	if err != nil {
 		return authorizer.DecisionDeny, fmt.Sprintf("error getting signed in user: %v", err), nil

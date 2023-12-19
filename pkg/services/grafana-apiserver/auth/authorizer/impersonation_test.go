@@ -1,4 +1,4 @@
-package impersonation_test
+package authorizer
 
 import (
 	"context"
@@ -6,12 +6,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
-
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/auth/authorizer/impersonation"
 )
 
 func TestImpersonationAuthorizer_Authorize(t *testing.T) {
-	auth := impersonation.ImpersonationAuthorizer{}
+	auth := impersonationAuthorizer{}
 
 	t.Run("impersonate verb", func(t *testing.T) {
 		attrs := &fakeAttributes{
