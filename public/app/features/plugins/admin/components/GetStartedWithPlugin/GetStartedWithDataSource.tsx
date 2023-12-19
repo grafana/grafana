@@ -30,14 +30,18 @@ export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement 
     return null;
   }
 
+  const disabledButton =
+    configCore.featureToggles.managedPluginsInstall &&
+    config.pluginAdminExternalManageEnabled &&
+    !plugin.isFullyInstalled;
+
   return (
     <Button
       variant="primary"
       onClick={onAddDataSource}
-      disabled={
-        configCore.featureToggles.managedPluginsInstall &&
-        config.pluginAdminExternalManageEnabled &&
-        !plugin.isFullyInstalled
+      disabled={disabledButton}
+      title={
+        disabledButton ? "The plugin isn't usable yet, it may take some time to complete the installation." : undefined
       }
     >
       Add new data source
