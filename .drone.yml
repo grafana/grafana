@@ -4043,6 +4043,8 @@ steps:
   - docker login -u $$env:DOCKER_USERNAME -p $$env:DOCKER_PASSWORD
   - docker build -t grafana/ci-windows-test:$$env:TAG .
   - docker push grafana/ci-windows-test:$$env:TAG
+  depends_on:
+  - clone
   environment:
     DOCKER_PASSWORD:
       from_secret: docker_password
@@ -4630,6 +4632,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 3d34a66ee2a96faf526e59417a9b58d47b6c43bc0e9f869d8112fa511d17b2e9
+hmac: 58149a37a2e2119df04e70723bad2b9e72be62b4647a906ae64a66c77e6c5fc9
 
 ...
