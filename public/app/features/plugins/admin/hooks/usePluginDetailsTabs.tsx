@@ -41,7 +41,7 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabI
       return navModelChildren;
     }
 
-    if (config.featureToggles.externalServiceAccounts && plugin?.iam) {
+    if (config.featureToggles.externalServiceAccounts && (plugin?.iam || plugin?.details?.iam)) {
       navModelChildren.push({
         text: PluginTabLabels.IAM,
         icon: 'shield',

@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { useMemo } from 'react';
 
 import { AppPlugin, GrafanaTheme2, PluginContextProvider, UrlQueryMap } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { CellProps, Column, InteractiveTable, useStyles2 } from '@grafana/ui';
 
 import { VersionList } from '../components/VersionList';
@@ -18,9 +19,9 @@ type Props = {
   pageId: string;
 };
 
-export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.Element {
-  type Cell<T extends keyof Permission = keyof Permission> = CellProps<Permission, Permission[T]>;
+type Cell<T extends keyof Permission = keyof Permission> = CellProps<Permission, Permission[T]>;
 
+export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.Element {
   const styles = useStyles2(getStyles);
   const { value: pluginConfig } = usePluginConfig(plugin);
 
@@ -71,7 +72,12 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
   // Permissions will be returned in the iam field for installed plugins and in the details.iam field when fetching details from gcom
   const permissions = plugin.iam?.permissions || plugin.details?.iam?.permissions;
 
-  if (permissions && permissions.length > 0) {
+  if (
+    config.featureToggles.externalServiceAccounts &&
+    pageId === PluginTabIds.IAM &&
+    permissions &&
+    permissions.length > 0
+  ) {
     return (
       <InteractiveTable
         columns={columns}
