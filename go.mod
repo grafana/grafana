@@ -290,7 +290,7 @@ require github.com/grafana/pyroscope/api v0.3.0 // @grafana/observability-traces
 
 require github.com/apache/arrow/go/v13 v13.0.0 // @grafana/observability-metrics
 
-replace github.com/apache/arrow/go/v13 => github.com/toddtreece/arrow/go/v13 v13.0.0-20231124161401-6ed0257c1060 // @grafana/observability-metrics
+replace github.com/goccy/go-json => github.com/toddtreece/go-json v0.0.0-20231219023216-edde3fbb48e6 // @grafana/grafana-app-platform-squad
 
 require (
 	cloud.google.com/go v0.110.8 // indirect
