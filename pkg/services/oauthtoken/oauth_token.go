@@ -144,12 +144,11 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) e
 		return nil
 	}
 
-	if _, ok := o.cache.Get(getCheckCacheKey(userID)); ok {
+	lockKey := fmt.Sprintf("oauth-refresh-token-%d", userID)
+	if _, ok := o.cache.Get(lockKey); ok {
 		logger.Debug("Expiration check has been cached, no need to refresh", "userID", userID)
 		return nil
 	}
-
-	lockKey := fmt.Sprintf("oauth-refresh-token-%d", userID)
 	_, err, _ = o.singleFlightGroup.Do(lockKey, func() (any, error) {
 		logger.Debug("Singleflight request for getting a new access token", "key", lockKey)
 
@@ -159,6 +158,12 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) e
 				logger.Warn("Failed to fetch oauth entry", "id", userID, "error", err)
 			}
 			return nil, nil
+		}
+
+		_, needRefresh, ttl := needTokenRefresh(authInfo)
+		if !needRefresh {
+			o.cache.Set(lockKey, struct{}{}, ttl)
+			return buildOAuthTokenFromAuthInfo(authInfo), nil
 		}
 
 		// get the token's auth provider (f.e. azuread)
@@ -171,11 +176,8 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) e
 
 		// if refresh token handling is disabled for this provider, we can skip the refresh
 		if !currentOAuthInfo.UseRefreshToken {
-			// TODO (gamab): problem we don't cache here
-			// Opt1: Use another cache key BUT the TTL would have to be bubbled up or recomputed
-			// Opt2: Pass an additional param to do the UseRefreshToken check in tryGetOrRefreshAccessToken BUT then possible problem with GetCurrentOAuthToken not using that check
 			logger.Debug("Skipping token refresh", "provider", provider)
-			return nil, nil
+			return buildOAuthTokenFromAuthInfo(authInfo), nil
 		}
 
 		return o.tryGetOrRefreshAccessToken(ctx, authInfo)
@@ -184,6 +186,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) e
 	if errors.Is(err, ErrNoRefreshTokenFound) {
 		return nil
 	}
+
 	return err
 }
 
@@ -243,7 +246,7 @@ func (o *Service) tryGetOrRefreshAccessToken(ctx context.Context, usr *login.Use
 		return nil, err
 	}
 
-	persistedToken, refreshNeeded, ttl := o.needTokenRefresh(usr)
+	persistedToken, refreshNeeded, ttl := needTokenRefresh(usr)
 	if !refreshNeeded {
 		o.cache.Set(key, struct{}{}, ttl)
 		return persistedToken, nil
@@ -325,13 +328,15 @@ func newTokenRefreshDurationMetric(registerer prometheus.Registerer) *prometheus
 
 // tokensEq checks for OAuth2 token equivalence given the fields of the struct Grafana is interested in
 func tokensEq(t1, t2 *oauth2.Token) bool {
+	// TODO (gamab) add id_token check
+
 	return t1.AccessToken == t2.AccessToken &&
 		t1.RefreshToken == t2.RefreshToken &&
 		t1.Expiry.Equal(t2.Expiry) &&
 		t1.TokenType == t2.TokenType
 }
 
-func (o *Service) needTokenRefresh(usr *login.UserAuth) (*oauth2.Token, bool, time.Duration) {
+func needTokenRefresh(usr *login.UserAuth) (*oauth2.Token, bool, time.Duration) {
 	var accessTokenExpires, idTokenExpires time.Time
 	var hasAccessTokenExpired, hasIdTokenExpired bool
 
@@ -382,12 +387,12 @@ func getOAuthTokenCacheTTL(accessTokenExpiry, idTokenExpiry time.Time) time.Dura
 }
 
 // getIDTokenExpiry extracts the expiry time from the ID token
-func getIDTokenExpiry(token *login.UserAuth) (time.Time, error) {
-	if token.OAuthIdToken == "" {
+func getIDTokenExpiry(usr *login.UserAuth) (time.Time, error) {
+	if usr.OAuthIdToken == "" {
 		return time.Time{}, nil
 	}
 
-	parsedToken, err := jwt.ParseSigned(token.OAuthIdToken)
+	parsedToken, err := jwt.ParseSigned(usr.OAuthIdToken)
 	if err != nil {
 		return time.Time{}, fmt.Errorf("error parsing id token: %w", err)
 	}
