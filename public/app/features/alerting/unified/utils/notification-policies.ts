@@ -18,14 +18,8 @@ interface LabelMatchResult {
   matcher: ObjectMatcher | null;
 }
 
-export const INHERITABLE_PROPERTIES = [
-  'receiver',
-  'group_by',
-  'group_wait',
-  'group_interval',
-  'repeat_interval',
-] as const;
-export type InheritableKeys = typeof INHERITABLE_PROPERTIES;
+export const INHERITABLE_KEYS = ['receiver', 'group_by', 'group_wait', 'group_interval', 'repeat_interval'] as const;
+export type InheritableKeys = typeof INHERITABLE_KEYS;
 export type InhertitableProperties = Pick<Route, InheritableKeys[number]>;
 
 type LabelsMatch = Map<Label, LabelMatchResult>;
@@ -168,7 +162,7 @@ function getInheritedProperties(
 ) {
   const fullParentProperties = merge({}, parentRoute, propertiesParentInherited);
 
-  const inheritableProperties: InhertitableProperties = pick(fullParentProperties, INHERITABLE_PROPERTIES);
+  const inheritableProperties: InhertitableProperties = pick(fullParentProperties, INHERITABLE_KEYS);
 
   // TODO how to solve this TypeScript mystery?
   const inherited = reduce(
