@@ -32,18 +32,17 @@ describe('NewFrontendAssetsChecker', () => {
     expect(backendApiGet).toHaveBeenCalledTimes(0);
   });
 
-  it('Should do update check when changing section and last check was greater than interval ago', async () => {
-    const checker = new NewFrontendAssetsChecker(5);
+  it('Should do update check when changing dashboard or going home', async () => {
+    const checker = new NewFrontendAssetsChecker(0);
     checker.start();
 
-    locationService.push('/admin');
+    locationService.push('/d/asd');
+    locationService.push('/d/other');
+    locationService.push('/ignored');
+    locationService.push('/ignored?asd');
+    locationService.push('/ignored/sub');
+    locationService.push('/home');
 
-    expect(backendApiGet).toHaveBeenCalledTimes(0);
-
-    await new Promise((resolve) => setTimeout(resolve, 10));
-
-    locationService.push('/alerting');
-
-    expect(backendApiGet).toHaveBeenCalledTimes(1);
+    expect(backendApiGet).toHaveBeenCalledTimes(2);
   });
 });

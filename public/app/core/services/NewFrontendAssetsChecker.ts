@@ -1,10 +1,11 @@
 import { Location } from 'history';
+import { isEqual } from 'lodash';
 
-import { getBackendSrv, getGrafanaLiveSrv, locationService } from '@grafana/runtime';
+import { getBackendSrv, getGrafanaLiveSrv, locationService, reportInteraction } from '@grafana/runtime';
 
 export class NewFrontendAssetsChecker {
   private hasUpdates = false;
-  private previous = '';
+  private previous?: FrontendAssetsAPIDTO;
   private interval: number;
   private checked = Date.now();
   private prevLocationPath = '';
@@ -35,23 +36,32 @@ export class NewFrontendAssetsChecker {
    * Tries to detect some navigation events where it's safe to trigger a reload
    */
   private locationUpdated(location: Location) {
+    if (this.prevLocationPath === location.pathname) {
+      return;
+    }
+
     const newLocationSegments = location.pathname.split('/');
     const prevLocationSegments = this.prevLocationPath.split('/');
 
-    this.prevLocationPath = location.pathname;
-
     // We are going to home
-    if (newLocationSegments[1] === '/') {
-      this.reloadIfUpdateDetected();
-    }
-    // if we are going to a new section (ignore plugin sections for now)
-    else if (newLocationSegments[1] !== prevLocationSegments[1] && newLocationSegments[1] !== '/a') {
+    if (newLocationSegments[1] === '/' && this.prevLocationPath !== '/') {
       this.reloadIfUpdateDetected();
     }
     // Moving to another dashboard
     else if (newLocationSegments[1] === 'd' && newLocationSegments[2] !== prevLocationSegments[2]) {
       this.reloadIfUpdateDetected();
     }
+    // Track potential page change
+    else {
+      if (this.hasUpdates) {
+        reportInteraction('new_frontend_assets_reload_ignored', {
+          newLocation: location.pathname,
+          prevLocation: this.prevLocationPath,
+        });
+      }
+    }
+
+    this.prevLocationPath = location.pathname;
   }
 
   private async _checkForUpdates() {
@@ -66,11 +76,19 @@ export class NewFrontendAssetsChecker {
 
     this.checked = Date.now();
 
-    const resultRaw = await getBackendSrv().get('/api/frontend/assets');
-    const result = JSON.stringify(resultRaw);
+    const previous = this.previous;
+    const result: FrontendAssetsAPIDTO = await getBackendSrv().get('/api/frontend/assets');
 
-    if (this.previous?.length && this.previous !== result) {
+    if (previous && !isEqual(previous, result)) {
       this.hasUpdates = true;
+
+      // Report that we detected new assets
+      reportInteraction('new_frontend_assets_detected', {
+        assets: previous.assets !== result.assets,
+        plugins: previous.plugins !== result.plugins,
+        version: previous.version !== result.version,
+        flags: previous.flags !== result.flags,
+      });
     }
 
     this.previous = result;
@@ -79,10 +97,19 @@ export class NewFrontendAssetsChecker {
   /** This is called on page navigation events */
   public reloadIfUpdateDetected() {
     if (this.hasUpdates) {
+      // Report that we detected new assets
+      reportInteraction('new_frontend_assets_reload', {});
       window.location.reload();
     }
 
     // Async check if the assets have changed
     this._checkForUpdates();
   }
+}
+
+interface FrontendAssetsAPIDTO {
+  assets: string;
+  flags: string;
+  plugins: string;
+  version: string;
 }
