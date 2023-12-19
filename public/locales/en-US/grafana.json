@@ -1424,11 +1424,8 @@
     }
   },
   "user-list-page": {
-    "public-dashboard": {
-      "all-user": "All users",
-      "org-user": "Organization users",
-      "tab-title": "Public dashboard users",
-      "user": "Users"
+    "tab-title": {
+      "public-dashboard-users": "Public dashboard users"
     }
   },
   "user-list-public-dashboard-page": {

@@ -1430,11 +1430,8 @@
     }
   },
   "user-list-page": {
-    "public-dashboard": {
-      "all-user": "",
-      "org-user": "",
-      "tab-title": "",
-      "user": ""
+    "tab-title": {
+      "public-dashboard-users": ""
     }
   },
   "user-list-public-dashboard-page": {

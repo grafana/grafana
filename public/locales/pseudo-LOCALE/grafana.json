@@ -1424,11 +1424,8 @@
     }
   },
   "user-list-page": {
-    "public-dashboard": {
-      "all-user": "Åľľ ūşęřş",
-      "org-user": "Øřģäŉįžäŧįőŉ ūşęřş",
-      "tab-title": "Pūþľįč đäşĥþőäřđ ūşęřş",
-      "user": "Ůşęřş"
+    "tab-title": {
+      "public-dashboard-users": "Pūþľįč đäşĥþőäřđ ūşęřş"
     }
   },
   "user-list-public-dashboard-page": {

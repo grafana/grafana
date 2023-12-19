@@ -28,7 +28,7 @@ const selectors = e2eSelectors.pages.UserListPage;
 
 const PublicDashboardsTab = ({ view, setView }: { view: TabView | null; setView: (v: TabView | null) => void }) => (
   <Tab
-    label={t('user-list-page.public-dashboard.tab-title', 'Public dashboard users')}
+    label={t('user-list-page.tab-title.public-dashboard-users', 'Public dashboard users')}
     active={view === TabView.PUBLIC_DASHBOARDS}
     onChangeTab={() => setView(TabView.PUBLIC_DASHBOARDS)}
     data-testid={selectors.tabs.publicDashboardsUsers}
@@ -68,13 +68,13 @@ export default function UserListPage() {
       {showAdminAndOrgTabs ? (
         <TabsBar className={styles.tabsMargin}>
           <Tab
-            label={t('user-list-page.public-dashboard.all-user', 'All users')}
+            label="All users"
             active={view === TabView.ADMIN}
             onChangeTab={() => setView(TabView.ADMIN)}
             data-testid={selectors.tabs.allUsers}
           />
           <Tab
-            label={t('user-list-page.public-dashboard.org-user', 'Organization users')}
+            label="Organization users"
             active={view === TabView.ORG}
             onChangeTab={() => setView(TabView.ORG)}
             data-testid={selectors.tabs.orgUsers}
@@ -93,7 +93,7 @@ export default function UserListPage() {
         hasEmailSharingEnabled && (
           <TabsBar className={styles.tabsMargin}>
             <Tab
-              label={t('user-list-page.public-dashboard.user', 'Users')}
+              label="Users"
               active={view === TabView.ORG}
               onChangeTab={() => setView(TabView.ORG)}
               data-testid={selectors.tabs.users}
