@@ -816,7 +816,7 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaObservabilityMetricsSquad,
 			RequiresRestart: true,
-			AllowSelfServe:  truePtr,
+			AllowSelfServe:  true,
 			Expression:      "true", // enabled by default
 			Created:         time.Date(2023, time.August, 2, 12, 0, 0, 0, time.UTC),
 		},
