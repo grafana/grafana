@@ -1,6 +1,8 @@
 import { DataQueryResponse, DataFrame, isDataFrame, FieldType, QueryResultMeta, DataQueryError } from '@grafana/data';
+import { TableCellDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
 
 import { getDerivedFields } from './getDerivedFields';
+import { isLogLineJSON } from './lineParser';
 import { makeTableFrames } from './makeTableFrames';
 import { getHighlighterExpressionsFromQuery } from './queryUtils';
 import { dataFrameHasLokiError } from './responseUtils';
@@ -44,6 +46,24 @@ function processStreamFrame(
   };
 
   const newFrame = setFrameMeta(frame, meta);
+  const line = newFrame.fields.find((field) => field.name === 'Line');
+
+  if (line && line.values.length > 0 && line.values[0]) {
+    if (isLogLineJSON(line.values[0])) {
+      line.config = {
+        ...line.config,
+        custom: {
+          ...line.config.custom,
+          cellOptions: {
+            type: TableCellDisplayMode.JSONView,
+          },
+        },
+      };
+    }
+  }
+
+  console.log('line', line);
+
   const derivedFields = getDerivedFields(newFrame, derivedFieldConfigs);
   return {
     ...newFrame,
