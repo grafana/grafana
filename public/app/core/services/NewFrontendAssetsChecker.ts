@@ -32,7 +32,7 @@ export class NewFrontendAssetsChecker {
   }
 
   /**
-   * Detect when we change section or dashboard and check for new assets if we do
+   * Tries to detect some navigation events where it's safe to trigger a reload
    */
   private locationUpdated(location: Location) {
     const newLocationSegments = location.pathname.split('/');
@@ -40,14 +40,17 @@ export class NewFrontendAssetsChecker {
 
     this.prevLocationPath = location.pathname;
 
-    // First check if section (first path segment) has changed
-    if (newLocationSegments[1] !== prevLocationSegments[1]) {
+    // We are going to home
+    if (newLocationSegments[1] === '/') {
       this.reloadIfUpdateDetected();
-    } else {
-      // Special case for dashboard to detect switching between dashboards
-      if (newLocationSegments[1] === 'd' && newLocationSegments[2] !== prevLocationSegments[2]) {
-        this.reloadIfUpdateDetected();
-      }
+    }
+    // if we are going to a new section (ignore plugin sections for now)
+    else if (newLocationSegments[1] !== prevLocationSegments[1] && newLocationSegments[1] !== '/a') {
+      this.reloadIfUpdateDetected();
+    }
+    // Moving to another dashboard
+    else if (newLocationSegments[1] === 'd' && newLocationSegments[2] !== prevLocationSegments[2]) {
+      this.reloadIfUpdateDetected();
     }
   }
 
