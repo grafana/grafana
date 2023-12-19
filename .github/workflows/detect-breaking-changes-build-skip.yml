@@ -20,16 +20,15 @@ jobs:
       - name: Skipping
         run: echo "No modifications in the public API (packages/), skipping."
 
-      #   DO NOT MERGE THESE COMMENTED
-      #   # Build and persist output as a JSON (we need to tell the report workflow that the check has been skipped)
-      # - name: Persisting the check output
-      #   run: |
-      #     mkdir -p ./levitate
-      #     echo "{ \"shouldSkip\": true }" > ./levitate/result.json
-      #
-      # # Upload artifact (so it can be used in the more privileged "report" workflow)
-      # - name: Upload check output as artifact
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: levitate
-      #     path: levitate/
+        # Build and persist output as a JSON (we need to tell the report workflow that the check has been skipped)
+      - name: Persisting the check output
+        run: |
+          mkdir -p ./levitate
+          echo "{ \"shouldSkip\": true }" > ./levitate/result.json
+
+      # Upload artifact (so it can be used in the more privileged "report" workflow)
+      - name: Upload check output as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: levitate
+          path: levitate/
