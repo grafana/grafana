@@ -23,6 +23,7 @@ export function NewsContainer({ className }: NewsContainerProps) {
       <ToolbarButton className={className} onClick={onToggleShowNewsDrawer} iconOnly icon="rss" aria-label="News" />
       {showNewsDrawer && (
         <Drawer
+          subtitle=""
           title={
             <div className={styles.title}>
               <Text element="h3">{t('news.title', 'Latest from the blog')}</Text>

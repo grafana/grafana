@@ -50,7 +50,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
   return (
     <>
       {prometheusPromQAIL && showDrawer && (
-        <Drawer scrollableContent={true} closeOnMaskClick={false} onClose={() => setShowDrawer(false)}>
+        <Drawer scrollableContent={true} subtitle="" closeOnMaskClick={false} onClose={() => setShowDrawer(false)}>
           <PromQail
             query={query}
             closeDrawer={() => setShowDrawer(false)}

@@ -18,7 +18,7 @@ export interface Props {
   /** Title shown at the top of the drawer */
   title?: ReactNode;
   /** Subtitle shown below the title */
-  subtitle?: ReactNode;
+  subtitle: ReactNode;
   /** Should the Drawer be closable by clicking on the mask, defaults to true */
   closeOnMaskClick?: boolean;
   /** @deprecated */

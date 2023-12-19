@@ -5,8 +5,7 @@ import { Unsubscribable, Observable } from 'rxjs';
  * internal interface
  */
 export interface BusEvent {
-  // DO NOT MERGE THIS LINE. TESTING ONLY
-  readonly type: string | 'hola';
+  readonly type: string;
   readonly payload?: any;
   origin?: EventBus;
 }
