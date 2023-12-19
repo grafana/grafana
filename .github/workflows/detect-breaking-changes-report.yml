@@ -103,11 +103,7 @@ jobs:
       with:
         number: ${{ steps.levitate-run.outputs.pr_number }}
         message: |
-          ⚠️ &nbsp;&nbsp;**Possible breaking changes**
-
-          _(Open the links below in a new tab to go to the correct steps)_
-
-          ${{ steps.levitate-run.outputs.message }}
+          ${{ steps.levitate-run.outputs.levitate_markdown }}
 
           [Console output](${{ steps.levitate-run.outputs.job_link }})
           [Read our guideline](https://github.com/grafana/grafana/blob/main/contribute/breaking-changes-guide/breaking-changes-guide.md)
