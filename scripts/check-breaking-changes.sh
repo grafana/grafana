@@ -46,7 +46,7 @@ while IFS=" " read -r -a package; do
   if [ $STATUS -gt 0 ]; then
     EXIT_CODE=1
     GITHUB_MESSAGE="${GITHUB_MESSAGE}**\\\`${PACKAGE_PATH}\\\`** has possible breaking changes ([more info](${GITHUB_JOB_LINK}#step:${GITHUB_STEP_NUMBER}:1))<br />"
-    GITHUB_LEVITATE_MARKDOWN+="##${PACKAGE_PATH}\n"$(node ./scripts/levitate-parse-json-report.js)
+    GITHUB_LEVITATE_MARKDOWN+="##${PACKAGE_PATH}\n"$(node ./scripts/levitate-parse-json-report.js)"\n"
   fi
 
 done <<<"$PACKAGES"
@@ -54,7 +54,7 @@ done <<<"$PACKAGES"
 # "Export" the message to an environment variable that can be used across Github Actions steps
 echo "is_breaking=$EXIT_CODE" >>"$GITHUB_OUTPUT"
 echo "message=$GITHUB_MESSAGE" >>"$GITHUB_OUTPUT"
-echo "levitate_markdown=$GITHUB_LEVITATE_MARKDOWN" >>"$GITHUB_OUTPUT"
+echo "levitate_markdown=$(echo $GITHUB_LEVITATE_MARKDOWN | base64)" >>"$GITHUB_OUTPUT"
 
 # We will exit the workflow accordingly at another step
 exit 0
