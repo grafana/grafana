@@ -239,9 +239,9 @@ func (o *Service) InvalidateOAuthTokens(ctx context.Context, usr *login.UserAuth
 }
 
 func (o *Service) tryGetOrRefreshAccessToken(ctx context.Context, usr *login.UserAuth) (*oauth2.Token, error) {
-	key := getCheckCacheKey(usr.Id)
+	key := getCheckCacheKey(usr.UserId)
 	if _, ok := o.cache.Get(key); ok {
-		logger.Debug("Expiration check has been cached", "userID", usr.Id)
+		logger.Debug("Expiration check has been cached", "userID", usr.UserId)
 		return buildOAuthTokenFromAuthInfo(usr), nil
 	}
 
