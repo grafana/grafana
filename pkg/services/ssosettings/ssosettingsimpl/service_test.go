@@ -344,6 +344,50 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 		require.EqualValues(t, settings, env.store.ActualSSOSettings)
 	})
 
+	t.Run("returns error if provider was not found in reloadables", func(t *testing.T) {
+		env := setupTestEnv(t)
+
+		provider := "azuread"
+		settings := models.SSOSettings{
+			Provider: provider,
+			Settings: map[string]any{
+				"client_id":     "client-id",
+				"client_secret": "client-secret",
+				"enabled":       true,
+			},
+			IsDeleted: false,
+		}
+
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		// the reloadable is available for other provider
+		env.reloadables["github"] = reloadable
+
+		err := env.service.Upsert(context.Background(), settings)
+		require.Error(t, err)
+	})
+
+	t.Run("returns error if validation fails", func(t *testing.T) {
+		env := setupTestEnv(t)
+
+		provider := "azuread"
+		settings := models.SSOSettings{
+			Provider: provider,
+			Settings: map[string]any{
+				"client_id":     "client-id",
+				"client_secret": "client-secret",
+				"enabled":       true,
+			},
+			IsDeleted: false,
+		}
+
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		reloadable.On("Validate", mock.Anything, settings).Return(errors.New("validation failed"))
+		env.reloadables[provider] = reloadable
+
+		err := env.service.Upsert(context.Background(), settings)
+		require.Error(t, err)
+	})
+
 	t.Run("returns error if a fallback strategy is not available for the provider", func(t *testing.T) {
 		env := setupTestEnv(t)
 
