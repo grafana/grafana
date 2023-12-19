@@ -230,9 +230,9 @@ func (s *service) start(ctx context.Context) error {
 		}
 
 		// Optionally register a custom authorizer
-		auth := b.GetAuthorizer(s.authorizer.Wrapper)
+		auth := b.GetAuthorizer()
 		if auth != nil {
-			s.authorizer.Register(b.GetGroupVersion().String(), auth)
+			s.authorizer.Register(b.GetGroupVersion(), auth)
 		}
 	}
 

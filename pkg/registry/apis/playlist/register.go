@@ -132,6 +132,6 @@ func (b *PlaylistAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	return nil // no custom API routes
 }
 
-func (b *PlaylistAPIBuilder) GetAuthorizer(wrap func(authorizer.AuthorizerFunc) authorizer.Authorizer) authorizer.Authorizer {
+func (b *PlaylistAPIBuilder) GetAuthorizer() authorizer.AuthorizerFunc {
 	return nil // default authorizer is fine
 }

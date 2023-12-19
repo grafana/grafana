@@ -35,10 +35,10 @@ type APIGroupBuilder interface {
 	// Get the API routes for each version
 	GetAPIRoutes() *APIRoutes
 
-	// Optionally create a custom authorizer for this api
-	// This is passed a wrapper that will enforce standard grafana constraints -- specifically that
-	// the namespace matches an org|stack that the user belongs to
-	GetAuthorizer(wrapper func(authorizer.AuthorizerFunc) authorizer.Authorizer) authorizer.Authorizer
+	// Optionally add an authorization hook
+	// Standard namespace checking will happen before this is called, specifically
+	// the namespace must matches an org|stack that the user belongs to
+	GetAuthorizer() authorizer.AuthorizerFunc
 }
 
 // This is used to implement dynamic sub-resources like pods/x/logs
