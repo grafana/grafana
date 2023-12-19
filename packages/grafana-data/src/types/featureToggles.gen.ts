@@ -43,7 +43,7 @@ export interface FeatureToggles {
   topnav?: boolean;
   dockedMegaMenu?: boolean;
   grpcServer?: boolean;
-  entityStore?: boolean;
+  unifiedStorage?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
@@ -53,7 +53,6 @@ export interface FeatureToggles {
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
   nestedFolderPicker?: boolean;
-  accessTokenExpirationCheck?: boolean;
   emptyDashboardPage?: boolean;
   disablePrometheusExemplarSampling?: boolean;
   alertingBacktesting?: boolean;
@@ -105,6 +104,7 @@ export interface FeatureToggles {
   metricsSummary?: boolean;
   grafanaAPIServer?: boolean;
   grafanaAPIServerWithExperimentalAPIs?: boolean;
+  grafanaAPIServerEnsureKubectlAccess?: boolean;
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
@@ -135,6 +135,7 @@ export interface FeatureToggles {
   formatString?: boolean;
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
+  kubernetesSnapshots?: boolean;
   cloudWatchBatchQueries?: boolean;
   recoveryThreshold?: boolean;
   lokiStructuredMetadata?: boolean;
@@ -164,6 +165,9 @@ export interface FeatureToggles {
   alertingSimplifiedRouting?: boolean;
   logRowsPopoverMenu?: boolean;
   pluginsSkipHostEnvVars?: boolean;
+  tableSharedCrosshair?: boolean;
   regressionTransformation?: boolean;
   displayAnonymousStats?: boolean;
+  alertStateHistoryAnnotationsFromLoki?: boolean;
+  lokiQueryHints?: boolean;
 }

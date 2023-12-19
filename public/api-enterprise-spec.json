@@ -2665,6 +2665,23 @@
         }
       }
     },
+    "Assignments": {
+      "type": "object",
+      "properties": {
+        "builtInRoles": {
+          "type": "boolean"
+        },
+        "serviceAccounts": {
+          "type": "boolean"
+        },
+        "teams": {
+          "type": "boolean"
+        },
+        "users": {
+          "type": "boolean"
+        }
+      }
+    },
     "AttributeTypeAndValue": {
       "description": "AttributeTypeAndValue mirrors the ASN.1 structure of the same name in\nRFC 5280, Section 4.1.2.4.",
       "type": "object",
@@ -3929,6 +3946,20 @@
         "format": "int64"
       }
     },
+    "Description": {
+      "type": "object",
+      "properties": {
+        "assignments": {
+          "$ref": "#/definitions/Assignments"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "DsAccess": {
       "type": "string"
     },
@@ -4214,7 +4245,11 @@
           "type": "boolean"
         },
         "id": {
-          "description": "Deprecated: use Uid instead",
+          "description": "Deprecated: use UID instead",
+          "type": "integer",
+          "format": "int64"
+        },
+        "orgId": {
           "type": "integer",
           "format": "int64"
         },
@@ -4761,6 +4796,18 @@
         "Version": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "LibraryElementArrayResponse": {
+      "type": "object",
+      "title": "LibraryElementArrayResponse is a response struct for an array of LibraryElementDTO.",
+      "properties": {
+        "result": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LibraryElementDTO"
+          }
         }
       }
     },
@@ -5592,6 +5639,38 @@
         }
       }
     },
+    "Preferences": {
+      "description": "Spec defines user, team or org Grafana preferences",
+      "type": "object",
+      "properties": {
+        "cookiePreferences": {
+          "$ref": "#/definitions/CookiePreferences"
+        },
+        "homeDashboardUID": {
+          "description": "UID for the home dashboard",
+          "type": "string"
+        },
+        "language": {
+          "description": "Selected language (beta)",
+          "type": "string"
+        },
+        "queryHistory": {
+          "$ref": "#/definitions/QueryHistoryPreference"
+        },
+        "theme": {
+          "description": "Theme light, dark, empty is default",
+          "type": "string"
+        },
+        "timezone": {
+          "description": "The timezone selection\nTODO: this should use the timezone defined in common",
+          "type": "string"
+        },
+        "weekStart": {
+          "description": "WeekStart day of the week (sunday, monday, etc)",
+          "type": "string"
+        }
+      }
+    },
     "PrometheusRemoteWriteTargetJSON": {
       "type": "object",
       "properties": {
@@ -5689,6 +5768,9 @@
         "isEnabled": {
           "type": "boolean"
         },
+        "slug": {
+          "type": "string"
+        },
         "title": {
           "type": "string"
         },
@@ -5777,8 +5859,10 @@
     },
     "QueryHistoryPreference": {
       "type": "object",
+      "title": "QueryHistoryPreference defines model for QueryHistoryPreference.",
       "properties": {
         "homeTab": {
+          "description": "HomeTab one of: '' | 'query' | 'starred';",
           "type": "string"
         }
       }
@@ -6287,6 +6371,9 @@
         "displayName": {
           "type": "string"
         },
+        "global": {
+          "type": "boolean"
+        },
         "group": {
           "type": "string"
         },
@@ -6312,6 +6399,24 @@
         "version": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "SSOSettings": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "settings": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "source": {
+          "$ref": "#/definitions/SettingsSource"
         }
       }
     },
@@ -6663,44 +6768,16 @@
         }
       }
     },
+    "SettingsSource": {
+      "type": "integer",
+      "format": "int64"
+    },
     "ShareType": {
       "type": "string"
     },
     "SignatureAlgorithm": {
       "type": "integer",
       "format": "int64"
-    },
-    "Spec": {
-      "type": "object",
-      "title": "Spec defines model for Spec.",
-      "properties": {
-        "cookiePreferences": {
-          "$ref": "#/definitions/CookiePreferences"
-        },
-        "homeDashboardUID": {
-          "description": "UID for the home dashboard",
-          "type": "string"
-        },
-        "language": {
-          "description": "Selected language (beta)",
-          "type": "string"
-        },
-        "queryHistory": {
-          "$ref": "#/definitions/QueryHistoryPreference"
-        },
-        "theme": {
-          "description": "Theme light, dark, empty is default",
-          "type": "string"
-        },
-        "timezone": {
-          "description": "The timezone selection\nTODO: this should use the timezone defined in common",
-          "type": "string"
-        },
-        "weekStart": {
-          "description": "WeekStart day of the week (sunday, monday, etc)",
-          "type": "string"
-        }
-      }
     },
     "State": {
       "type": "string"
@@ -7886,6 +7963,59 @@
           "format": "int64"
         }
       }
+    },
+    "resourcePermissionDTO": {
+      "type": "object",
+      "properties": {
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "builtInRole": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "isInherited": {
+          "type": "boolean"
+        },
+        "isManaged": {
+          "type": "boolean"
+        },
+        "isServiceAccount": {
+          "type": "boolean"
+        },
+        "permission": {
+          "type": "string"
+        },
+        "roleName": {
+          "type": "string"
+        },
+        "team": {
+          "type": "string"
+        },
+        "teamAvatarUrl": {
+          "type": "string"
+        },
+        "teamId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userAvatarUrl": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userLogin": {
+          "type": "string"
+        }
+      }
     }
   },
   "responses": {
@@ -8478,6 +8608,12 @@
         "$ref": "#/definitions/GetHomeDashboardResponse"
       }
     },
+    "getLibraryElementArrayResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/LibraryElementArrayResponse"
+      }
+    },
     "getLibraryElementConnectionsResponse": {
       "description": "",
       "schema": {
@@ -8574,7 +8710,7 @@
     "getPreferencesResponse": {
       "description": "",
       "schema": {
-        "$ref": "#/definitions/Spec"
+        "$ref": "#/definitions/Preferences"
       }
     },
     "getPublicAnnotationsResponse": {
@@ -8637,6 +8773,15 @@
         "type": "array",
         "items": {
           "$ref": "#/definitions/Report"
+        }
+      }
+    },
+    "getResourcePermissionsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/resourcePermissionDTO"
         }
       }
     },
@@ -9047,6 +9192,12 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/ActiveUserStats"
+      }
+    },
+    "resourcePermissionsDescription": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/Description"
       }
     },
     "retrieveServiceAccountResponse": {

@@ -149,7 +149,8 @@ function getRandomLogItem(counter, timestamp) {
     hostname: chooseRandomElement(['hostname1', 'hostname2', 'hostname3', 'hostname4', 'hostname5', 'hostname6']),
     value: counter,
     metric: chooseRandomElement(['cpu', 'memory', 'latency']),
-    description: "this is description"
+    description: "this is description",
+    slash: "Access to the path '\\\\tkasnpo\\KASNPO\\Files\\contacts.xml' is denied."
   };
 }
 

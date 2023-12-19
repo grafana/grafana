@@ -8,6 +8,7 @@ labels:
     - enterprise
     - oss
 title: Configure a legend
+description: Configure a legend for your panel visualization
 weight: 70
 ---
 

@@ -772,7 +772,6 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 								"version": 1,
 								"uid": "",
 								"namespace_uid": %q,
-								"namespace_id": 1,
 								"rule_group": "arulegroup",
 								"no_data_state": "NoData",
 								"exec_err_state": "Alerting"
@@ -1049,7 +1048,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 				},
 				expectedCode: func() int {
 					if setting.IsEnterprise {
-						return http.StatusUnauthorized
+						return http.StatusForbidden
 					}
 					return http.StatusBadRequest
 				}(),
@@ -1250,7 +1249,6 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "version":1,
 						  "uid":"uid",
 						  "namespace_uid":"nsuid",
-						  "namespace_id":1,
 						  "rule_group":"arulegroup",
 						  "no_data_state":"NoData",
 						  "exec_err_state":"Alerting"
@@ -1287,7 +1285,6 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "version":1,
 						  "uid":"uid",
 						  "namespace_uid":"nsuid",
-						  "namespace_id":1,
 						  "rule_group":"arulegroup",
 						  "no_data_state":"Alerting",
 						  "exec_err_state":"Alerting"
@@ -1596,7 +1593,6 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		                  "version":2,
 		                  "uid":"uid",
 		                  "namespace_uid":"nsuid",
-		                  "namespace_id":1,
 		                  "rule_group":"arulegroup",
 		                  "no_data_state":"Alerting",
 		                  "exec_err_state":"Alerting"
@@ -1706,7 +1702,6 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					  "version":3,
 					  "uid":"uid",
 					  "namespace_uid":"nsuid",
-					  "namespace_id":1,
 					  "rule_group":"arulegroup",
 					  "no_data_state":"Alerting",
 					  "exec_err_state":"Alerting"
@@ -1795,7 +1790,6 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					  "version":3,
 					  "uid":"uid",
 					  "namespace_uid":"nsuid",
-					  "namespace_id":1,
 					  "rule_group":"arulegroup",
 					  "no_data_state":"Alerting",
 					  "exec_err_state":"Alerting"
@@ -2102,7 +2096,6 @@ func TestIntegrationQuota(t *testing.T) {
 						  "version":2,
 						  "uid":"uid",
 						  "namespace_uid":"nsuid",
-						  "namespace_id":1,
 						  "rule_group":"arulegroup",
 						  "no_data_state":"NoData",
 						  "exec_err_state":"Alerting"
@@ -2164,6 +2157,7 @@ func TestIntegrationEval(t *testing.T) {
 							}
 						}
 					],
+				"condition": "A",
 				"now": "2021-04-11T14:38:14Z"
 			}
 			`,
@@ -2221,6 +2215,7 @@ func TestIntegrationEval(t *testing.T) {
 							}
 						}
 					],
+				"condition": "A",
 				"now": "2021-04-11T14:38:14Z"
 			}
 			`,
@@ -2276,13 +2271,14 @@ func TestIntegrationEval(t *testing.T) {
 							}
 						}
 					],
+				"condition": "A",
 				"now": "2021-04-11T14:38:14Z"
 			}
 			`,
 			expectedResponse: func() string { return "" },
 			expectedStatusCode: func() int {
 				if setting.IsEnterprise {
-					return http.StatusUnauthorized
+					return http.StatusForbidden
 				}
 				return http.StatusBadRequest
 			},
@@ -2291,6 +2287,63 @@ func TestIntegrationEval(t *testing.T) {
 					return "user is not authorized to access one or many data sources"
 				}
 				return "Failed to build evaluator for queries and expressions: failed to build query 'A': data source not found"
+			},
+		},
+		{
+			desc: "condition is empty",
+			payload: `
+			{
+				"data": [
+						{
+							"refId": "A",
+							"relativeTimeRange": {
+								"from": 18000,
+								"to": 10800
+							},
+							"datasourceUid": "__expr__",
+							"model": {
+								"type":"math",
+								"expression":"1 > 2"
+							}
+						}
+					],
+				"now": "2021-04-11T14:38:14Z"
+			}
+			`,
+			expectedStatusCode: func() int { return http.StatusOK },
+			expectedMessage:    func() string { return "" },
+			expectedResponse: func() string {
+				return `{
+				"results": {
+				  "A": {
+					"status": 200,
+					"frames": [
+					  {
+						"schema": {
+						  "refId": "A",
+						  "fields": [
+							{
+							  "name": "A",
+							  "type": "number",
+							  "typeInfo": {
+								"frame": "float64",
+								"nullable": true
+							  }
+							}
+						  ]
+						},
+						"data": {
+						  "values": [
+							[
+							  0
+							]
+						  ]
+						}
+					  }
+					]
+				  }
+				}
+			}`
 			},
 		},
 	}

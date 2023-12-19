@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { DataSourceApi, getDefaultTimeRange, LoadingState, PanelData, SelectableValue, TimeRange } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import { LabelFilters } from 'app/plugins/datasource/prometheus/querybuilder/shared/LabelFilters';
 import { OperationExplainedBox } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationExplainedBox';
 import { OperationList } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationList';
@@ -105,7 +106,9 @@ export const LokiQueryBuilder = React.memo<Props>(
         setSampleData(sampleData);
       };
 
-      onGetSampleData().catch(console.error);
+      if (config.featureToggles.lokiQueryHints) {
+        onGetSampleData().catch(console.error);
+      }
     }, [datasource, query, timeRange]);
 
     const lang = { grammar: logqlGrammar, name: 'logql' };

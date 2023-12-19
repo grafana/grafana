@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
-import { LogRowModel } from '@grafana/data';
+import { LogRowModel, dateTime } from '@grafana/data';
 
 import { LogContextProvider, SHOULD_INCLUDE_PIPELINE_OPERATIONS } from '../LogContextProvider';
 import { ContextFilter, LokiQuery } from '../types';
@@ -19,6 +19,7 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('app/core/store', () => {
   return {
     set() {},
+    get() {},
     getBool(key: string, defaultValue?: boolean) {
       const item = window.localStorage.getItem(key);
       if (item === null) {
@@ -41,6 +42,7 @@ const setupProps = (): LokiContextUiProps => {
         label1: 'value1',
         label3: 'value3',
       },
+      timeEpochMs: new Date().getTime(),
     } as unknown as LogRowModel,
     onClose: jest.fn(),
     origQuery: {
@@ -125,6 +127,19 @@ describe('LokiContextUi', () => {
 
     await waitFor(() => {
       expect(props.logContextProvider.getInitContextFilters).toHaveBeenCalled();
+    });
+  });
+
+  it('calls `getInitContextFilters` with the right set of parameters', async () => {
+    const props = setupProps();
+    render(<LokiContextUi {...props} />);
+
+    await waitFor(() => {
+      expect(props.logContextProvider.getInitContextFilters).toHaveBeenCalledWith(props.row.labels, props.origQuery, {
+        from: dateTime(props.row.timeEpochMs),
+        to: dateTime(props.row.timeEpochMs),
+        raw: { from: dateTime(props.row.timeEpochMs), to: dateTime(props.row.timeEpochMs) },
+      });
     });
   });
 
