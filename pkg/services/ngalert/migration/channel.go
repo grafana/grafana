@@ -23,6 +23,9 @@ const (
 	DisabledRepeatInterval = model.Duration(time.Duration(8736) * time.Hour) // 1y
 )
 
+// ErrDiscontinued is used for channels that are no longer supported after migration.
+var ErrDiscontinued = errors.New("discontinued")
+
 // migrateChannels creates Alertmanager configs with migrated receivers and routes.
 func (om *OrgMigration) migrateChannels(channels []*legacymodels.AlertNotification) ([]*migmodels.ContactPair, error) {
 	// Create all newly migrated receivers from legacy notification channels.
@@ -30,9 +33,9 @@ func (om *OrgMigration) migrateChannels(channels []*legacymodels.AlertNotificati
 	for _, c := range channels {
 		receiver, err := om.createReceiver(c)
 		if err != nil {
-			om.log.Warn("Failed to create receiver", "type", c.Type, "name", c.Name, "uid", c.UID, "error", err)
 			if errors.Is(err, ErrDiscontinued) {
 				// Don't fail on discontinued channels.
+				om.log.Warn("Failed to create receiver", "type", c.Type, "name", c.Name, "uid", c.UID, "error", err)
 				continue
 			}
 			return nil, fmt.Errorf("channel '%s': %w", c.Name, err)
@@ -40,7 +43,6 @@ func (om *OrgMigration) migrateChannels(channels []*legacymodels.AlertNotificati
 
 		route, err := createRoute(c, receiver.Name)
 		if err != nil {
-			om.log.Warn("Failed to create route", "type", c.Type, "name", c.Name, "uid", c.UID, "error", err)
 			return nil, fmt.Errorf("channel '%s': %w", c.Name, err)
 		}
 		pairs = append(pairs, &migmodels.ContactPair{
@@ -52,8 +54,6 @@ func (om *OrgMigration) migrateChannels(channels []*legacymodels.AlertNotificati
 
 	return pairs, nil
 }
-
-var ErrDiscontinued = errors.New("discontinued")
 
 // createNotifier creates a PostableGrafanaReceiver from a legacy notification channel.
 func (om *OrgMigration) createReceiver(c *legacymodels.AlertNotification) (*apimodels.PostableGrafanaReceiver, error) {
