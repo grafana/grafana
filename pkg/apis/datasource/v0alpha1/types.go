@@ -2,10 +2,10 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/grafana/grafana/pkg/apis"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 const (
@@ -50,9 +50,9 @@ type HealthCheckResult struct {
 	// Explicit status code
 	Code int `json:"code,omitempty"`
 
-	// Optional description for the data source (does not exist yet)
+	// Optional description for the data source
 	Message string `json:"message,omitempty"`
 
-	// Depends on the explicit kind
-	Details *simplejson.Json `json:"details,omitempty"`
+	// Spec depends on the the plugin
+	Details *unstructured.Unstructured `json:"details,omitempty"`
 }

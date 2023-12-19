@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -105,6 +106,7 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&v0alpha1.DataSourceConnection{},
 		&v0alpha1.DataSourceConnectionList{},
 		&v0alpha1.HealthCheckResult{},
+		&unstructured.Unstructured{},
 		// Added for subresource stubs
 		&metav1.Status{},
 	)

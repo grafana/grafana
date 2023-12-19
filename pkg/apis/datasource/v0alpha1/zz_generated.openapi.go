@@ -216,6 +216,8 @@ func schema_pkg_apis_datasource_v0alpha1_HealthCheckResult(ref common.ReferenceC
 					"details": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Depends on the explicit kind",
+							Default:     map[string]interface{}{},
+							// TODO!  Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1/unstructured.Unstructured"),
 						},
 					},
 				},
