@@ -38,15 +38,15 @@ while IFS=" " read -r -a package; do
   # Record the output, maybe with some additional information
   STATUS=$?
 
-  # REMOVE THIS!!
-  cat data.json
+  CURRENT_REPORT=$(node ./scripts/levitate-parse-json-report.js)
+  echo $CURRENT_REPORT
 
   # Final exit code
   # (non-zero if any of the packages failed the checks)
   if [ $STATUS -gt 0 ]; then
     EXIT_CODE=1
     GITHUB_MESSAGE="${GITHUB_MESSAGE}**\\\`${PACKAGE_PATH}\\\`** has possible breaking changes ([more info](${GITHUB_JOB_LINK}#step:${GITHUB_STEP_NUMBER}:1))<br />"
-    GITHUB_LEVITATE_MARKDOWN+="##${PACKAGE_PATH}\n"$(node ./scripts/levitate-parse-json-report.js)"\n"
+    GITHUB_LEVITATE_MARKDOWN+="##${PACKAGE_PATH}\n${CURRENT_REPORT}\n"
   fi
 
 done <<<"$PACKAGES"
