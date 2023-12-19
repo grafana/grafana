@@ -101,7 +101,6 @@ function PanelInspectRenderer({ model }: SceneComponentProps<PanelInspectDrawer>
 
   return (
     <Drawer
-      subtitle=""
       title={model.getDrawerTitle()}
       onClose={model.onClose}
       size="md"
