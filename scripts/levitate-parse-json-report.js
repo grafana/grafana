@@ -7,7 +7,7 @@ const stripAnsi = (string) => string.replace(/\u001b\[.*?m/g, '');
 const printSection = (title, items) => {
   let output = `### ${title}\n\n`;
   items.forEach((item) => {
-    output += `**${item.name}**\n`;
+    output += `#### ${item.name}\n`;
     output += `<sub>${item.location}</sub>\n\n`;
     output += '```' + (item.declaration ? 'typescript' : 'diff typescript') + '\n';
     output += item.declaration ? item.declaration : stripAnsi(item.diff);
