@@ -19,12 +19,6 @@ var GenericConnectionResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
 	func() runtime.Object { return &DataSourceConnectionList{} },
 )
 
-var GenericConfigResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
-	"config", "config", "DataSourceConfig",
-	func() runtime.Object { return &DataSourceConfig{} },
-	func() runtime.Object { return &DataSourceConfigList{} },
-)
-
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DataSourceConnection struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -44,55 +38,6 @@ type DataSourceConnectionList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	Items []DataSourceConnection `json:"items,omitempty"`
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type DataSourceConfig struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	// The generic datasource config
-	Spec ConfigSpec `json:"spec"`
-
-	// Generic secure keys -- this will accept strings as input,
-	// but the results will become keys into a secret store
-	Secure SecureSpec `json:"secure"`
-}
-
-type ConfigSpec struct {
-	Name     string `json:"name"`
-	Access   string `json:"access,omitempty"` // proxy??
-	URL      string `json:"url,omitempty"`
-	ReadOnly bool   `json:"readOnly,omitempty"`
-
-	User            string `json:"user"`
-	Database        string `json:"database"`
-	BasicAuth       bool   `json:"basicAuth,omitempty"`
-	BasicAuthUser   string `json:"basicAuthUser"`
-	WithCredentials bool   `json:"withCredentials,omitempty"` // ???
-
-	// The public generic config data
-	JsonData *simplejson.Json `json:"jsonData"`
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type DataSourceConfigList struct {
-	metav1.TypeMeta `json:",inline"`
-	// +optional
-	metav1.ListMeta `json:"metadata,omitempty"`
-
-	Items []DataSourceConfig `json:"items,omitempty"`
-}
-
-// TODO.. obviously something better
-type SecureSpec struct {
-	// Database password
-	Password string `json:"password,omitempty"`
-
-	// BasicAuthPassword
-	BasicAuthPassword string `json:"basicAuthPassword,omitempty"`
-
-	SecureJsonData map[string]string `json:"json,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

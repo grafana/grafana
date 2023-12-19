@@ -35,7 +35,6 @@ var _ grafanaapiserver.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
 // This is used just so wire has something unique to return
 type DataSourceAPIBuilder struct {
 	connectionResourceInfo apis.ResourceInfo
-	configResourceInfo     apis.ResourceInfo
 
 	plugin        pluginstore.Plugin
 	client        plugins.Client
@@ -88,7 +87,6 @@ func NewDataSourceAPIBuilder(
 	group := getDatasourceGroupNameFromPluginID(plugin.ID)
 	return &DataSourceAPIBuilder{
 		connectionResourceInfo: v0alpha1.GenericConnectionResourceInfo.WithGroupAndShortName(group, plugin.ID+"-connection"),
-		configResourceInfo:     v0alpha1.GenericConfigResourceInfo.WithGroupAndShortName(group, plugin.ID),
 		plugin:                 plugin,
 		client:                 client,
 		dsService:              dsService,
@@ -107,9 +105,7 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&v0alpha1.DataSourceConnection{},
 		&v0alpha1.DataSourceConnectionList{},
 		&v0alpha1.HealthCheckResult{},
-		&v0alpha1.DataSourceConfig{},
-		&v0alpha1.DataSourceConfigList{},
-		// Added for subresource hack
+		// Added for subresource stubs
 		&metav1.Status{},
 	)
 }
