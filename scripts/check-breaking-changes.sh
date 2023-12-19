@@ -41,20 +41,15 @@ while IFS=" " read -r -a package; do
   # REMOVE THIS!!
   cat data.json
 
-  echo "The exit code is: $STATUS"
-
   # Final exit code
   # (non-zero if any of the packages failed the checks)
   if [ $STATUS -gt 0 ]; then
-    echo "I am detecting breaking changes"
     EXIT_CODE=1
     GITHUB_MESSAGE="${GITHUB_MESSAGE}**\\\`${PACKAGE_PATH}\\\`** has possible breaking changes ([more info](${GITHUB_JOB_LINK}#step:${GITHUB_STEP_NUMBER}:1))<br />"
     GITHUB_LEVITATE_MARKDOWN+="##${PACKAGE_PATH}\n"$(node ./scripts/levitate-parse-json-report.js)
   fi
 
 done <<<"$PACKAGES"
-
-echo "the markdown is: $GITHUB_LEVITATE_MARKDOWN"
 
 # "Export" the message to an environment variable that can be used across Github Actions steps
 echo "is_breaking=$EXIT_CODE" >>"$GITHUB_OUTPUT"
