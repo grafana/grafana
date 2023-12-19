@@ -18,7 +18,7 @@ export const NoUpsertPermissionsAlert = ({ mode }: { mode: 'create' | 'edit' }) 
     bottomSpacing={0}
   >
     <Trans i18nKey="share-modal.public-dashboard.no-upsert-perm-alert-desc">
-      Contact your admin to get permission to {{ mode }} create public dashboards
+      Contact your admin to get permission to {{ mode }} public dashboards
     </Trans>
   </Alert>
 );

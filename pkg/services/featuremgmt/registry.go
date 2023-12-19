@@ -48,7 +48,7 @@ var (
 		},
 		{
 			Name:           "publicDashboards",
-			Description:    "Enables public access to dashboards",
+			Description:    "[Deprecated] Public dashboards are now enabled by default; to disable them, use the configuration setting. This feature toggle will be removed in the next major version.",
 			Stage:          FeatureStageGeneralAvailability,
 			Owner:          grafanaSharingSquad,
 			Expression:     "true", // enabled by default
@@ -812,10 +812,12 @@ var (
 		{
 			Name:            "influxdbSqlSupport",
 			Description:     "Enable InfluxDB SQL query language support with new querying UI",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
 			FrontendOnly:    false,
 			Owner:           grafanaObservabilityMetricsSquad,
-			RequiresRestart: false,
+			RequiresRestart: true,
+			AllowSelfServe:  true,
+			Expression:      "true", // enabled by default
 			Created:         time.Date(2023, time.August, 2, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -1269,6 +1271,17 @@ var (
 			HideFromDocs:      true,
 			RequiresRestart:   true,
 			Created:           time.Date(2023, time.November, 30, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			// this is mainly used a a way to quickly disable query hints as a safe guard for our infrastructure
+			Name:           "lokiQueryHints",
+			Description:    "Enables query hints for Loki",
+			Stage:          FeatureStageGeneralAvailability,
+			FrontendOnly:   true,
+			Expression:     "true",
+			Owner:          grafanaObservabilityLogsSquad,
+			AllowSelfServe: false,
+			Created:        time.Date(2023, time.December, 18, 12, 0, 0, 0, time.UTC),
 		},
 	}
 )

@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -129,4 +130,8 @@ func (b *PlaylistAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinition
 
 func (b *PlaylistAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	return nil // no custom API routes
+}
+
+func (b *PlaylistAPIBuilder) GetAuthorizer() authorizer.Authorizer {
+	return nil // default authorizer is fine
 }

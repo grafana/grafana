@@ -7,6 +7,7 @@ import { config, featureEnabled } from '@grafana/runtime';
 import { useStyles2, TabsBar, Tab } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
+import { isPublicDashboardsEnabled } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 
 import { Page } from '../../core/components/Page/Page';
 import { AccessControlAction } from '../../types';
@@ -47,7 +48,7 @@ export default function UserListPage() {
   const hasAccessToAdminUsers = contextSrv.hasPermission(AccessControlAction.UsersRead);
   const hasAccessToOrgUsers = contextSrv.hasPermission(AccessControlAction.OrgUsersRead);
   const hasEmailSharingEnabled =
-    Boolean(config.featureToggles.publicDashboards) &&
+    isPublicDashboardsEnabled() &&
     Boolean(config.featureToggles.publicDashboardsEmailSharing) &&
     featureEnabled('publicDashboardsEmailSharing');
 
