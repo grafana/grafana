@@ -55,7 +55,7 @@ done <<<"$PACKAGES"
 echo "is_breaking=$EXIT_CODE" >>"$GITHUB_OUTPUT"
 echo "message=$GITHUB_MESSAGE" >>"$GITHUB_OUTPUT"
 mkdir -p ./levitate
-echo $GITHUB_LEVITATE_MARKDOWN | base64 >./levitate/levitate.md
+echo $GITHUB_LEVITATE_MARKDOWN >./levitate/levitate.md
 
 # We will exit the workflow accordingly at another step
 exit 0
