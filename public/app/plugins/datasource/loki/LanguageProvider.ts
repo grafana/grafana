@@ -19,6 +19,7 @@ const NS_IN_MS = 1000000;
 export default class LokiLanguageProvider extends LanguageProvider {
   labelKeys: string[];
   started = false;
+  startedTimeRange?: TimeRange;
   datasource: LokiDatasource;
 
   /**
@@ -53,7 +54,13 @@ export default class LokiLanguageProvider extends LanguageProvider {
    */
   start = (timeRange?: TimeRange) => {
     const range = timeRange ?? this.getDefaultTimeRange();
-    if (!this.startTask) {
+    // refetch labels if either there's not already a start task or the time range has changed
+    if (
+      !this.startTask ||
+      this.startedTimeRange?.from.isSame(range.from) === false ||
+      this.startedTimeRange?.to.isSame(range.to) === false
+    ) {
+      this.startedTimeRange = range;
       this.startTask = this.fetchLabels({ timeRange: range }).then(() => {
         this.started = true;
         return [];
