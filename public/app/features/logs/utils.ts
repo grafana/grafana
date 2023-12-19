@@ -169,10 +169,6 @@ export const getLogsVolumeMaximumRange = (dataFrames: DataFrame[]) => {
   let widestRange = { from: Infinity, to: -Infinity };
 
   dataFrames.forEach((dataFrame: DataFrame) => {
-    // Exclude annotations.
-    if (dataFrame.meta?.dataTopic === DataTopic.Annotations) {
-      return;
-    }
     const meta = dataFrame.meta?.custom || {};
     if (meta.absoluteRange?.from && meta.absoluteRange?.to) {
       widestRange = {

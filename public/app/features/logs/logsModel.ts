@@ -659,6 +659,7 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
         } else {
           const framesByRefId = groupBy(dataQueryResponse.data, 'refId');
           logsVolumeData = dataQueryResponse.data.map((dataFrame) => {
+            // Separate possible annotations from data frames
             if (dataFrame.meta?.dataTopic === DataTopic.Annotations) {
               return dataFrame;
             }
