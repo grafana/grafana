@@ -44,16 +44,30 @@ type AlertmanagerConfig struct {
 	BasicAuthPassword string
 }
 
-func NewAlertmanager(cfg AlertmanagerConfig, store stateStore) (*Alertmanager, error) {
+func (cfg *AlertmanagerConfig) Validate() error {
+	if cfg.OrgID == 0 {
+		return fmt.Errorf("orgID for remote Alertmanager not set")
+	}
+
+	if cfg.TenantID == "" {
+		return fmt.Errorf("empty remote Alertmanager tenantID")
+	}
+
 	if cfg.URL == "" {
-		return nil, fmt.Errorf("empty remote Alertmanager URL for tenant '%s'", cfg.TenantID)
+		return fmt.Errorf("empty remote Alertmanager URL for tenant '%s'", cfg.TenantID)
+	}
+	return nil
+}
+
+func NewAlertmanager(cfg AlertmanagerConfig, store stateStore) (*Alertmanager, error) {
+	if err := cfg.Validate(); err != nil {
+		return nil, err
 	}
 
 	u, err := url.Parse(cfg.URL)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse remote Alertmanager URL: %w", err)
 	}
-
 	logger := log.New("ngalert.remote.alertmanager")
 
 	mcCfg := &remoteClient.Config{

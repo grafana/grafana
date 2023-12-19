@@ -95,8 +95,9 @@ func TestApplyConfig(t *testing.T) {
 	// A non-200 response should result in an error.
 	server := httptest.NewServer(errorHandler)
 	cfg := AlertmanagerConfig{
-		OrgID: 1,
-		URL:   server.URL,
+		OrgID:    1,
+		TenantID: "test",
+		URL:      server.URL,
 	}
 
 	ctx := context.Background()
