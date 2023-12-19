@@ -38,7 +38,7 @@ type APIGroupBuilder interface {
 	// Optionally add an authorization hook
 	// Standard namespace checking will happen before this is called, specifically
 	// the namespace must matches an org|stack that the user belongs to
-	GetAuthorizer() authorizer.AuthorizerFunc
+	GetAuthorizer() authorizer.Authorizer
 }
 
 // This is used to implement dynamic sub-resources like pods/x/logs

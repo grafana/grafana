@@ -199,18 +199,19 @@ func (b *TestingAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	}
 }
 
-func (b *TestingAPIBuilder) GetAuthorizer() authorizer.AuthorizerFunc {
-	return func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
-		if !attr.IsResourceRequest() {
-			return authorizer.DecisionNoOpinion, "", nil
-		}
+func (b *TestingAPIBuilder) GetAuthorizer() authorizer.Authorizer {
+	return authorizer.AuthorizerFunc(
+		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
+			if !attr.IsResourceRequest() {
+				return authorizer.DecisionNoOpinion, "", nil
+			}
 
-		// require a user
-		_, err = appcontext.User(ctx)
-		if err != nil {
-			return authorizer.DecisionDeny, "valid user is required", err
-		}
+			// require a user
+			_, err = appcontext.User(ctx)
+			if err != nil {
+				return authorizer.DecisionDeny, "valid user is required", err
+			}
 
-		return authorizer.DecisionNoOpinion, "", err // fallback to org/role logic
-	}
+			return authorizer.DecisionNoOpinion, "", err // fallback to org/role logic
+		})
 }

@@ -14,7 +14,7 @@ import (
 var _ authorizer.Authorizer = (*GrafanaAuthorizer)(nil)
 
 type GrafanaAuthorizer struct {
-	apis map[string]authorizer.AuthorizerFunc
+	apis map[string]authorizer.Authorizer
 	auth authorizer.Authorizer
 }
 
@@ -31,7 +31,7 @@ func NewGrafanaAuthorizer(cfg *setting.Cfg, orgService orgsvc.Service) *GrafanaA
 	}
 
 	// Individual services may have explicit implementations
-	apis := make(map[string]authorizer.AuthorizerFunc)
+	apis := make(map[string]authorizer.Authorizer)
 	authorizers = append(authorizers, &authorizerForAPI{apis})
 
 	// org role is last -- and will return allow for verbs that match expectations
@@ -43,7 +43,7 @@ func NewGrafanaAuthorizer(cfg *setting.Cfg, orgService orgsvc.Service) *GrafanaA
 	}
 }
 
-func (a *GrafanaAuthorizer) Register(gv schema.GroupVersion, fn authorizer.AuthorizerFunc) {
+func (a *GrafanaAuthorizer) Register(gv schema.GroupVersion, fn authorizer.Authorizer) {
 	a.apis[gv.String()] = fn
 }
 
@@ -53,13 +53,13 @@ func (a *GrafanaAuthorizer) Authorize(ctx context.Context, attr authorizer.Attri
 }
 
 type authorizerForAPI struct {
-	apis map[string]authorizer.AuthorizerFunc
+	apis map[string]authorizer.Authorizer
 }
 
 func (a *authorizerForAPI) Authorize(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
 	auth, ok := a.apis[attr.GetAPIGroup()+"/"+attr.GetAPIVersion()]
 	if ok {
-		return auth(ctx, attr)
+		return auth.Authorize(ctx, attr)
 	}
 	return authorizer.DecisionNoOpinion, "", nil
 }
