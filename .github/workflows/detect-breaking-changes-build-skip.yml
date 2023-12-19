@@ -17,8 +17,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Skipping
-        run: echo "No modifications in the public API (packages/), skipping."
+      - name: not Skipping
+        run: echo "Not skipping"
       #
       #   # Build and persist output as a JSON (we need to tell the report workflow that the check has been skipped)
       # - name: Persisting the check output
