@@ -5,6 +5,7 @@ import { DragDropContext, Draggable, DraggableProvided, Droppable, DropResult } 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { useTheme2 } from '@grafana/ui/src';
 
+import { LogsTableEmptyFields } from './LogsTableEmptyFields';
 import { LogsTableNavField } from './LogsTableNavField';
 import { fieldNameMeta } from './LogsTableWrap';
 
@@ -21,11 +22,6 @@ export function getLogsFieldsStyles(theme: GrafanaTheme2) {
       marginBottom: theme.spacing(1.5),
       // need some space or the outline of the checkbox is cut off
       paddingLeft: theme.spacing(0.5),
-    }),
-    empty: css({
-      marginBottom: theme.spacing(2),
-      marginLeft: theme.spacing(1.75),
-      fontSize: theme.typography.fontSize,
     }),
   };
 }
@@ -100,5 +96,5 @@ export const LogsTableActiveFields = (props: {
     );
   }
 
-  return <div className={styles.empty}>No fields</div>;
+  return <LogsTableEmptyFields />;
 };

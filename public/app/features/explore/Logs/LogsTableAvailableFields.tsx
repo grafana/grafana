@@ -3,8 +3,10 @@ import React from 'react';
 import { useTheme2 } from '@grafana/ui/src';
 
 import { getLogsFieldsStyles } from './LogsTableActiveFields';
+import { LogsTableEmptyFields } from './LogsTableEmptyFields';
 import { LogsTableNavField } from './LogsTableNavField';
 import { fieldNameMeta } from './LogsTableWrap';
+
 const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
 function sortLabels(labels: Record<string, fieldNameMeta>) {
@@ -57,5 +59,5 @@ export const LogsTableAvailableFields = (props: {
     );
   }
 
-  return <div className={styles.empty}>No fields</div>;
+  return <LogsTableEmptyFields />;
 };
