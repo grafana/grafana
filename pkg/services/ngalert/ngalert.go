@@ -174,15 +174,15 @@ func (ng *AlertNG) init() error {
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
 
 	remoteAlertmanagerCfg := ng.Cfg.UnifiedAlerting.RemoteAlertmanager
+	moaLogger := log.New("ngalert.multiorg.alertmanager")
 	var overrides []notifier.Option
 	if remoteAlertmanagerCfg.Enable {
 		// TODO(santiago): check for different modes, refactor.
 		if ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondary) {
-			fmt.Println("Remote secondary")
 			override := notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
 				// Create internal Alertmanager.
 				m := metrics.NewAlertmanagerMetrics(multiOrgMetrics.GetOrCreateOrgRegistry(orgID))
-				i, err := notifier.NewAlertmanager(ctx, orgID, ng.Cfg, ng.store, ng.KVStore, &notifier.NilPeer{}, decryptFn, ng.NotificationService, m)
+				internalAM, err := notifier.NewAlertmanager(ctx, orgID, ng.Cfg, ng.store, ng.KVStore, &notifier.NilPeer{}, decryptFn, ng.NotificationService, m)
 				if err != nil {
 					return nil, err
 				}
@@ -195,9 +195,10 @@ func (ng *AlertNG) init() error {
 				}
 				// We won't be handling files on disk, we can pass an empty string as workingDirPath.
 				stateStore := notifier.NewFileStore(orgID, ng.KVStore, "")
-				r, err := remote.NewAlertmanager(externalAMCfg, orgID, stateStore)
+				remoteAM, err := remote.NewAlertmanager(externalAMCfg, orgID, stateStore)
 				if err != nil {
-					return nil, err
+					moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
+					return internalAM, nil
 				}
 
 				// Use both Alertmanager implementations in the forked Alertmanager.
@@ -207,13 +208,13 @@ func (ng *AlertNG) init() error {
 					Store:        ng.store,
 					SyncInterval: remoteAlertmanagerCfg.SyncInterval,
 				}
-				return remote.NewRemoteSecondaryForkedAlertmanager(cfg, i, r)
+				return remote.NewRemoteSecondaryForkedAlertmanager(cfg, internalAM, remoteAM)
 			})
 
 			overrides = append(overrides, override)
 		}
 	}
-	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, ng.store, ng.store, ng.KVStore, ng.store, decryptFn, multiOrgMetrics, ng.NotificationService, log.New("ngalert.multiorg.alertmanager"), ng.SecretsService, overrides...)
+	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, ng.store, ng.store, ng.KVStore, ng.store, decryptFn, multiOrgMetrics, ng.NotificationService, moaLogger, ng.SecretsService, overrides...)
 	if err != nil {
 		return err
 	}
