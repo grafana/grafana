@@ -75,7 +75,7 @@ export const AcknowledgeCheckboxes = ({
             />
             <LinkButton
               variant="primary"
-              href="'https://grafana.com/docs/grafana/latest/enterprise/query-caching/"
+              href="https://grafana.com/docs/grafana/latest/enterprise/query-caching/"
               target="_blank"
               fill="text"
               icon="info-circle"
