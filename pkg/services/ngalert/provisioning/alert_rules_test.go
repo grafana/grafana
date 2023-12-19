@@ -3,14 +3,20 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"math/rand"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 
@@ -580,6 +586,372 @@ func TestCreateAlertRule(t *testing.T) {
 	})
 }
 
+func TestGetAlertRule(t *testing.T) {
+	orgID := rand.Int63()
+	u := &user.SignedInUser{OrgID: orgID}
+	groupKey := models.GenerateGroupKey(orgID)
+	rules := models.GenerateAlertRules(3, models.AlertRuleGen(models.WithGroupKey(groupKey)))
+	rule := rules[0]
+	expectedProvenance := models.ProvenanceAPI
+
+	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *fakeRuleAccessControlService) {
+		service, ruleStore, provenanceStore, ac := initService(t)
+		ruleStore.Rules = map[int64][]*models.AlertRule{
+			orgID: rules,
+		}
+		require.NoError(t, provenanceStore.SetProvenance(context.Background(), rule, orgID, expectedProvenance))
+
+		return service, ruleStore, provenanceStore, ac
+	}
+
+	t.Run("when user cannot read all rules", func(t *testing.T) {
+		t.Run("should request entire group and return error if AuthorizeAccessToRuleGroup returns error", func(t *testing.T) {
+			service, ruleStore, _, ac := initServiceWithData(t)
+
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return false, nil
+			}
+
+			expected := errors.New("test")
+			ac.AuthorizeAccessToRuleGroupFunc = func(ctx context.Context, user identity.Requester, rules models.RulesGroup) error {
+				return expected
+			}
+
+			_, _, err := service.GetAlertRule(context.Background(), u, rule.UID)
+			require.Error(t, err)
+			require.Equal(t, expected, err)
+
+			assert.Len(t, ac.Calls, 2)
+			assert.Equal(t, "CanReadAllRules", ac.Calls[0].Method)
+			assert.Equal(t, u, ac.Calls[0].Args[1])
+
+			assert.Equal(t, "AuthorizeAccessToRuleGroup", ac.Calls[1].Method)
+			assert.Equal(t, u, ac.Calls[1].Args[1])
+			assert.Equal(t, models.RulesGroup(rules), ac.Calls[1].Args[2])
+
+			assert.Len(t, ruleStore.RecordedOps, 1)
+			require.IsType(t, ruleStore.RecordedOps[0], models.GetAlertRulesGroupByRuleUIDQuery{})
+			query := ruleStore.RecordedOps[0].(models.GetAlertRulesGroupByRuleUIDQuery)
+			assert.Equal(t, models.GetAlertRulesGroupByRuleUIDQuery{
+				OrgID: groupKey.OrgID,
+				UID:   rule.UID,
+			}, query)
+		})
+
+		t.Run("should request entire group and return single rule if AuthorizeAccessToRuleGroup passes", func(t *testing.T) {
+			service, _, _, ac := initServiceWithData(t)
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return false, nil
+			}
+			ac.AuthorizeAccessToRuleGroupFunc = func(ctx context.Context, user identity.Requester, rules models.RulesGroup) error {
+				return nil
+			}
+
+			actual, provenance, err := service.GetAlertRule(context.Background(), u, rule.UID)
+			require.NoError(t, err)
+			assert.Equal(t, *rule, actual)
+			assert.Equal(t, expectedProvenance, provenance)
+		})
+
+		t.Run("should return ErrAlertRuleNotFound if rule does not exist", func(t *testing.T) {
+			service, ruleStore, _, ac := initServiceWithData(t)
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return false, nil
+			}
+
+			_, _, err := service.GetAlertRule(context.Background(), u, "no-rule-uid")
+			require.ErrorIs(t, err, models.ErrAlertRuleNotFound)
+
+			assert.Len(t, ac.Calls, 1)
+			assert.Equal(t, "CanReadAllRules", ac.Calls[0].Method)
+			require.IsType(t, ruleStore.RecordedOps[0], models.GetAlertRulesGroupByRuleUIDQuery{})
+			query := ruleStore.RecordedOps[0].(models.GetAlertRulesGroupByRuleUIDQuery)
+			assert.Equal(t, models.GetAlertRulesGroupByRuleUIDQuery{
+				OrgID: orgID,
+				UID:   "no-rule-uid",
+			}, query)
+		})
+	})
+
+	t.Run("when user can read all rules", func(t *testing.T) {
+		t.Run("should query rule by UID and do not check any permissions", func(t *testing.T) {
+			service, ruleStore, _, ac := initServiceWithData(t)
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			actual, provenance, err := service.GetAlertRule(context.Background(), u, rule.UID)
+			require.NoError(t, err)
+			assert.Equal(t, *rule, actual)
+			assert.Equal(t, expectedProvenance, provenance)
+
+			assert.Len(t, ac.Calls, 1)
+			assert.Equal(t, "CanReadAllRules", ac.Calls[0].Method)
+			assert.Equal(t, u, ac.Calls[0].Args[1])
+
+			require.Len(t, ruleStore.RecordedOps, 1)
+			require.IsType(t, ruleStore.RecordedOps[0], models.GetAlertRuleByUIDQuery{})
+			query := ruleStore.RecordedOps[0].(models.GetAlertRuleByUIDQuery)
+			assert.Equal(t, models.GetAlertRuleByUIDQuery{
+				OrgID: rule.OrgID,
+				UID:   rule.UID,
+			}, query)
+		})
+
+		t.Run("should return ErrAlertRuleNotFound if rule does not exist", func(t *testing.T) {
+			service, _, _, ac := initServiceWithData(t)
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			_, _, err := service.GetAlertRule(context.Background(), u, "no-rule-uid")
+			require.ErrorIs(t, err, models.ErrAlertRuleNotFound)
+		})
+	})
+
+	t.Run("return error immediately when CanReadAllRules returns error", func(t *testing.T) {
+		service, ruleStore, _, ac := initServiceWithData(t)
+
+		expectedErr := errors.New("test")
+		ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+			return false, expectedErr
+		}
+
+		_, _, err := service.GetAlertRule(context.Background(), u, rule.UID)
+		require.Error(t, err)
+		require.Equal(t, expectedErr, err)
+
+		assert.Len(t, ac.Calls, 1)
+		assert.Equal(t, "CanReadAllRules", ac.Calls[0].Method)
+
+		assert.Empty(t, ruleStore.RecordedOps)
+	})
+}
+
+func TestGetRuleGroup(t *testing.T) {
+	orgID := rand.Int63()
+	u := &user.SignedInUser{OrgID: orgID}
+	groupKey := models.GenerateGroupKey(orgID)
+	intervalSeconds := int64(30)
+	rules := models.GenerateAlertRules(3, models.AlertRuleGen(models.WithGroupKey(groupKey), models.WithInterval(time.Duration(intervalSeconds)*time.Second)))
+	derefRules := make([]models.AlertRule, 0, len(rules))
+	for _, rule := range rules {
+		derefRules = append(derefRules, *rule)
+	}
+	expectedProvenance := models.ProvenanceAPI
+
+	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *fakeRuleAccessControlService) {
+		service, ruleStore, provenanceStore, ac := initService(t)
+		ruleStore.Rules = map[int64][]*models.AlertRule{
+			orgID: rules,
+		}
+		for _, rule := range rules {
+			require.NoError(t, provenanceStore.SetProvenance(context.Background(), rule, orgID, expectedProvenance))
+		}
+
+		return service, ruleStore, provenanceStore, ac
+	}
+
+	t.Run("return ErrAlertRuleGroupNotFound when rule group does not exist", func(t *testing.T) {
+		service, _, _, ac := initServiceWithData(t)
+
+		_, err := service.GetRuleGroup(context.Background(), u, groupKey.NamespaceUID, "no-rule-group")
+		require.ErrorIs(t, err, models.ErrAlertRuleGroupNotFound)
+		require.Empty(t, ac.Calls)
+	})
+
+	t.Run("when user cannot read all rules", func(t *testing.T) {
+		t.Run("it should check AuthorizeAccessToRuleGroup and propagate error", func(t *testing.T) {
+			service, ruleStore, _, ac := initServiceWithData(t)
+
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return false, nil
+			}
+			expectedErr := errors.New("error")
+			ac.AuthorizeAccessToRuleGroupFunc = func(ctx context.Context, user identity.Requester, rules models.RulesGroup) error {
+				return expectedErr
+			}
+
+			_, err := service.GetRuleGroup(context.Background(), u, groupKey.NamespaceUID, groupKey.RuleGroup)
+			require.Error(t, err)
+			require.Equal(t, expectedErr, err)
+
+			assert.Len(t, ac.Calls, 2)
+			assert.Equal(t, "CanReadAllRules", ac.Calls[0].Method)
+			assert.Equal(t, u, ac.Calls[0].Args[1])
+
+			assert.Equal(t, "AuthorizeAccessToRuleGroup", ac.Calls[1].Method)
+			assert.Equal(t, u, ac.Calls[1].Args[1])
+			assert.Equal(t, models.RulesGroup(rules), ac.Calls[1].Args[2])
+
+			assert.Len(t, ruleStore.RecordedOps, 1)
+			require.IsType(t, ruleStore.RecordedOps[0], models.ListAlertRulesQuery{})
+			query := ruleStore.RecordedOps[0].(models.ListAlertRulesQuery)
+			assert.Equal(t, models.ListAlertRulesQuery{
+				OrgID:         groupKey.OrgID,
+				RuleGroup:     groupKey.RuleGroup,
+				NamespaceUIDs: []string{groupKey.NamespaceUID},
+			}, query)
+		})
+
+		t.Run("should return group if AuthorizeAccessToRuleGroup passes", func(t *testing.T) {
+			service, _, _, ac := initServiceWithData(t)
+
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return false, nil
+			}
+			ac.AuthorizeAccessToRuleGroupFunc = func(ctx context.Context, user identity.Requester, rules models.RulesGroup) error {
+				return nil
+			}
+
+			group, err := service.GetRuleGroup(context.Background(), u, groupKey.NamespaceUID, groupKey.RuleGroup)
+			require.NoError(t, err)
+
+			assert.Equal(t, groupKey.RuleGroup, group.Title)
+			assert.Equal(t, groupKey.NamespaceUID, group.FolderUID)
+			assert.Equal(t, intervalSeconds, group.Interval)
+			assert.Equal(t, derefRules, group.Rules)
+		})
+	})
+
+	t.Run("when user can read all rules", func(t *testing.T) {
+		t.Run("it should skip AuthorizeAccessToRuleGroup", func(t *testing.T) {
+			service, _, _, ac := initServiceWithData(t)
+
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			group, err := service.GetRuleGroup(context.Background(), u, groupKey.NamespaceUID, groupKey.RuleGroup)
+			require.NoError(t, err)
+
+			assert.Len(t, ac.Calls, 1)
+			assert.Equal(t, "CanReadAllRules", ac.Calls[0].Method)
+			assert.Equal(t, u, ac.Calls[0].Args[1])
+
+			assert.Equal(t, groupKey.RuleGroup, group.Title)
+			assert.Equal(t, groupKey.NamespaceUID, group.FolderUID)
+			assert.Equal(t, intervalSeconds, group.Interval)
+			assert.Equal(t, derefRules, group.Rules)
+		})
+	})
+
+	t.Run("return error immediately when CanReadAllRules returns error", func(t *testing.T) {
+		service, _, _, ac := initServiceWithData(t)
+
+		expectedErr := errors.New("test")
+		ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+			return false, expectedErr
+		}
+
+		_, err := service.GetRuleGroup(context.Background(), u, groupKey.NamespaceUID, groupKey.RuleGroup)
+		require.Error(t, err)
+		require.Equal(t, expectedErr, err)
+
+		assert.Len(t, ac.Calls, 1)
+		assert.Equal(t, "CanReadAllRules", ac.Calls[0].Method)
+	})
+}
+
+func TestGetAlertRules(t *testing.T) {
+	orgID := rand.Int63()
+	u := &user.SignedInUser{OrgID: orgID}
+	groupKey1 := models.GenerateGroupKey(orgID)
+	groupKey2 := models.GenerateGroupKey(orgID)
+	rules1 := models.GenerateAlertRules(3, models.AlertRuleGen(models.WithGroupKey(groupKey1)))
+	models.RulesGroup(rules1).SortByGroupIndex()
+	rules2 := models.GenerateAlertRules(4, models.AlertRuleGen(models.WithGroupKey(groupKey2)))
+	models.RulesGroup(rules2).SortByGroupIndex()
+	allRules := append(rules1, rules2...)
+	expectedProvenance := models.ProvenanceAPI
+
+	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *fakeRuleAccessControlService) {
+		service, ruleStore, provenanceStore, ac := initService(t)
+		ruleStore.Rules = map[int64][]*models.AlertRule{
+			orgID: allRules,
+		}
+		for _, rule := range rules1 {
+			require.NoError(t, provenanceStore.SetProvenance(context.Background(), rule, orgID, expectedProvenance))
+		}
+
+		return service, ruleStore, provenanceStore, ac
+	}
+
+	t.Run("return error when CanReadAllRules return error", func(t *testing.T) {
+		service, _, _, ac := initServiceWithData(t)
+		expectedErr := errors.New("test")
+		ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+			return false, expectedErr
+		}
+
+		_, _, err := service.GetAlertRules(context.Background(), u)
+		require.ErrorIs(t, err, expectedErr)
+	})
+
+	t.Run("when user can read all rules", func(t *testing.T) {
+		t.Run("should skip AuthorizeAccessToRuleGroup and return all rules", func(t *testing.T) {
+			service, _, _, ac := initServiceWithData(t)
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			rules, provenance, err := service.GetAlertRules(context.Background(), u)
+			require.NoError(t, err)
+			require.Equal(t, allRules, rules)
+			require.Len(t, provenance, len(rules1))
+
+			assert.Len(t, ac.Calls, 1)
+			assert.Equal(t, "CanReadAllRules", ac.Calls[0].Method)
+		})
+	})
+
+	t.Run("when user cannot read all rules", func(t *testing.T) {
+		t.Run("should group rules and check AuthorizeAccessToRuleGroup and return only available rules", func(t *testing.T) {
+			t.Run("should remove group from output if AuthorizeAccessToRuleGroup returns authorization error", func(t *testing.T) {
+				service, _, _, ac := initServiceWithData(t)
+				ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+					return false, nil
+				}
+				ac.AuthorizeAccessToRuleGroupFunc = func(ctx context.Context, user identity.Requester, rules models.RulesGroup) error {
+					if rules[0].GetGroupKey() == groupKey1 {
+						return accesscontrol.NewAuthorizationErrorGeneric("test")
+					}
+					return nil
+				}
+
+				rules, provenance, err := service.GetAlertRules(context.Background(), u)
+				require.NoError(t, err)
+
+				assert.Equal(t, rules2, rules)
+				assert.Empty(t, provenance)
+
+				assert.Len(t, ac.Calls, 3)
+				assert.Equal(t, "CanReadAllRules", ac.Calls[0].Method)
+				assert.Equal(t, "AuthorizeAccessToRuleGroup", ac.Calls[1].Method)
+				assert.Equal(t, "AuthorizeAccessToRuleGroup", ac.Calls[2].Method)
+
+				group1 := ac.Calls[1].Args[2].(models.RulesGroup)
+				group2 := ac.Calls[2].Args[2].(models.RulesGroup)
+				require.Len(t, append(group1, group2...), len(allRules))
+			})
+
+			t.Run("should immediately exist if AuthorizeAccessToRuleGroup returns another error", func(t *testing.T) {
+				service, _, _, ac := initServiceWithData(t)
+				ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+					return false, nil
+				}
+				expectedErr := errors.New("test")
+				ac.AuthorizeAccessToRuleGroupFunc = func(ctx context.Context, user identity.Requester, rules models.RulesGroup) error {
+					return expectedErr
+				}
+
+				_, _, err := service.GetAlertRules(context.Background(), u)
+				require.ErrorIs(t, err, expectedErr)
+			})
+		})
+	})
+}
+
 func createAlertRuleService(t *testing.T) AlertRuleService {
 	t.Helper()
 	sqlStore := db.InitTestDB(t)
@@ -650,4 +1022,25 @@ func createDummyGroup(title string, orgID int64) models.AlertRuleGroup {
 			dummyRule(title+"-"+"rule-1", orgID),
 		},
 	}
+}
+
+func initService(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *fakeRuleAccessControlService) {
+	t.Helper()
+
+	ac := &fakeRuleAccessControlService{}
+	ruleStore := fakes.NewRuleStore(t)
+	provenanceStore := fakes.NewFakeProvisioningStore()
+
+	service := &AlertRuleService{
+		ruleStore:              ruleStore,
+		provenanceStore:        provenanceStore,
+		quotas:                 &MockQuotaChecker{},
+		xact:                   newNopTransactionManager(),
+		log:                    log.New("testing"),
+		baseIntervalSeconds:    10,
+		defaultIntervalSeconds: 60,
+		authz:                  ac,
+	}
+
+	return service, ruleStore, provenanceStore, ac
 }
