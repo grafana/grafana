@@ -3,7 +3,7 @@ import { Role } from 'app/types';
 
 import { addDisplayNameForFixedRole } from './utils';
 
-export const fetchRoleOptions = async (orgId?: number, query?: string): Promise<Role[]> => {
+export const fetchRoleOptions = async (orgId?: number): Promise<Role[]> => {
   let rolesUrl = '/api/access-control/roles?delegatable=true';
   if (orgId) {
     rolesUrl += `&targetOrgId=${orgId}`;

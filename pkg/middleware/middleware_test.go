@@ -190,6 +190,22 @@ func TestMiddlewareContext(t *testing.T) {
 			"X-Other-Header":  "other-test",
 		}
 	})
+
+	middlewareScenario(t, "middleware should not add Cache-Control header for requests to render pdf", func(
+		t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/api/reports/render/pdf/").exec()
+		assert.Empty(t, sc.resp.Header().Get("Cache-Control"))
+		assert.Empty(t, sc.resp.Header().Get("Pragma"))
+		assert.Empty(t, sc.resp.Header().Get("Expires"))
+	})
+
+	middlewareScenario(t, "middleware should not add Cache-Control header for requests to render panel as image", func(
+		t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/render/d-solo/").exec()
+		assert.Empty(t, sc.resp.Header().Get("Cache-Control"))
+		assert.Empty(t, sc.resp.Header().Get("Pragma"))
+		assert.Empty(t, sc.resp.Header().Get("Expires"))
+	})
 }
 
 func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(*setting.Cfg)) {

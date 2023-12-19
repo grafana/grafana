@@ -95,7 +95,7 @@ A panel's Query tab consists of the following elements:
 - **Expressions:** Uses the expression builder to create alert expressions.
   For more information about expressions, refer to [Use expressions to manipulate data][].
 
-{{< figure src="/static/img/docs/queries/query-editor-7-2.png" class="docs-image--no-shadow" max-width="1000px" >}}
+{{< figure src="/static/img/docs/queries/query-editor-7-2.png" class="docs-image--no-shadow" max-width="1000px" alt="The Query tab of the panel editor" >}}
 
 ## Add a query
 
