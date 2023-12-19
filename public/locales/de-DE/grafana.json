@@ -127,6 +127,7 @@
   },
   "config-public-dashboard": {
     "public-dashboard": {
+      "copy-button": "",
       "field-label": "",
       "pause-sharing-dashboard": "",
       "revoke-public-URL": "",

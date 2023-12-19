@@ -127,6 +127,7 @@
   },
   "config-public-dashboard": {
     "public-dashboard": {
+      "copy-button": "Copy",
       "field-label": "Dashboard URL",
       "pause-sharing-dashboard": "Pause sharing dashboard",
       "revoke-public-URL": "Revoke public URL",

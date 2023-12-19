@@ -143,7 +143,7 @@ export function ConfigPublicDashboardBase({
               getText={() => generatePublicDashboardUrl(publicDashboard!.accessToken!)}
               onClipboardCopy={onCopyURL}
             >
-              Copy
+              <Trans i18nKey="config-public-dashboard.public-dashboard.copy-button">Copy</Trans>
             </ClipboardButton>
           }
         />

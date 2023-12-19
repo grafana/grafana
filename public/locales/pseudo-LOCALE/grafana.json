@@ -127,6 +127,7 @@
   },
   "config-public-dashboard": {
     "public-dashboard": {
+      "copy-button": "Cőpy",
       "field-label": "Đäşĥþőäřđ ŮŖĿ",
       "pause-sharing-dashboard": "Päūşę şĥäřįŉģ đäşĥþőäřđ",
       "revoke-public-URL": "Ŗęvőĸę pūþľįč ŮŖĿ",
