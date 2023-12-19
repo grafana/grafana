@@ -104,7 +104,7 @@ jobs:
           if [ -f "${ARTIFACT_FOLDER}/levitate.md" ]; then
           {
             echo 'levitate_markdown<<EOF'
-            cat ${ARTIFACT_FOLDER}/levitate/levitate.md
+            cat ${ARTIFACT_FOLDER}/levitate.md
             echo EOF
           } >> $GITHUB_OUTPUT
           else
@@ -119,7 +119,7 @@ jobs:
       with:
         number: ${{ steps.levitate-run.outputs.pr_number }}
         message: |
-          ⚠️ &nbsp;&nbsp;**Possible breaking changes**
+          ⚠️ &nbsp;&nbsp;**Possible breaking changes (md version)**
 
           ${{ steps.levitate-markdown.outputs.levitate_markdown }}
 
