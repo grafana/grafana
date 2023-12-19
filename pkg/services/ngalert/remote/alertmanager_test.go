@@ -138,6 +138,7 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 
 	// ApplyConfig performs a readiness check.
 	cfg := AlertmanagerConfig{
+		OrgID:             1,
 		URL:               amURL,
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
@@ -253,6 +254,7 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 	password := os.Getenv("AM_PASSWORD")
 
 	cfg := AlertmanagerConfig{
+		OrgID:             1,
 		URL:               amURL,
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
@@ -332,6 +334,7 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	password := os.Getenv("AM_PASSWORD")
 
 	cfg := AlertmanagerConfig{
+		OrgID:             1,
 		URL:               amURL,
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
@@ -396,6 +399,7 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 	password := os.Getenv("AM_PASSWORD")
 
 	cfg := AlertmanagerConfig{
+		OrgID:             1,
 		URL:               amURL,
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
