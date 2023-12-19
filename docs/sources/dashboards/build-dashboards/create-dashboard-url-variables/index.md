@@ -14,6 +14,7 @@ labels:
     - enterprise
     - oss
 title: Dashboard URL variables
+description: Use variables in dashboard URLs to add more context to your links
 weight: 250
 ---
 

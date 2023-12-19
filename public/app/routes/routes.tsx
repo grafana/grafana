@@ -100,7 +100,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboard/import',
-      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardImport"*/ 'app/features/manage-dashboards/DashboardImportPage')
       ),
@@ -172,8 +171,20 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: () => <NavLandingPage navId="alerts-and-incidents" />,
     },
     {
+      path: '/testing-and-synthetics',
+      component: () => <NavLandingPage navId="testing-and-synthetics" />,
+    },
+    {
       path: '/monitoring',
       component: () => <NavLandingPage navId="monitoring" />,
+    },
+    {
+      path: '/infrastructure',
+      component: () => <NavLandingPage navId="infrastructure" />,
+    },
+    {
+      path: '/frontend',
+      component: () => <NavLandingPage navId="frontend" />,
     },
     {
       path: '/admin/general',
@@ -269,7 +280,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/admin/authentication',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.SettingsWrite]),
       component:
-        config.licenseInfo.enabledFeatures?.saml || config.ldapEnabled
+        config.licenseInfo.enabledFeatures?.saml || config.ldapEnabled || config.featureToggles.ssoSettingsApi
           ? SafeDynamicImport(
               () => import(/* webpackChunkName: "AdminAuthentication" */ 'app/features/auth-config/AuthConfigPage')
             )

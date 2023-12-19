@@ -36,9 +36,13 @@ const QueryResults = ({ rule }: Props) => {
         relativeTimeRange: evaluationTimeRanges[q.refId] ?? q.relativeTimeRange,
       }));
 
-      runner.run(evalCustomizedQueries);
+      let condition;
+      if (rule && isGrafanaRulerRule(rule.rulerRule)) {
+        condition = rule.rulerRule.grafana_alert.condition;
+      }
+      runner.run(evalCustomizedQueries, condition ?? 'A');
     }
-  }, [queries, evaluationTimeRanges, runner, allDataSourcesAvailable]);
+  }, [queries, allDataSourcesAvailable, rule, runner, evaluationTimeRanges]);
 
   useEffect(() => {
     const alertQueries = alertRuleToQueries(rule);

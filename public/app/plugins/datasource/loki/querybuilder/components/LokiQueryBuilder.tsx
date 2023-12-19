@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { DataSourceApi, getDefaultTimeRange, LoadingState, PanelData, SelectableValue, TimeRange } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import { LabelFilters } from 'app/plugins/datasource/prometheus/querybuilder/shared/LabelFilters';
 import { OperationExplainedBox } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationExplainedBox';
 import { OperationList } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationList';
@@ -99,13 +100,16 @@ export const LokiQueryBuilder = React.memo<Props>(
     useEffect(() => {
       const onGetSampleData = async () => {
         const lokiQuery = { expr: lokiQueryModeller.renderQuery(query), refId: 'data-samples' };
-        const series = await datasource.getDataSamples(lokiQuery);
-        const sampleData = { series, state: LoadingState.Done, timeRange: getDefaultTimeRange() };
+        const range = timeRange ?? getDefaultTimeRange();
+        const series = await datasource.getDataSamples(lokiQuery, range);
+        const sampleData = { series, state: LoadingState.Done, timeRange: range };
         setSampleData(sampleData);
       };
 
-      onGetSampleData().catch(console.error);
-    }, [datasource, query]);
+      if (config.featureToggles.lokiQueryHints) {
+        onGetSampleData().catch(console.error);
+      }
+    }, [datasource, query, timeRange]);
 
     const lang = { grammar: logqlGrammar, name: 'logql' };
     return (

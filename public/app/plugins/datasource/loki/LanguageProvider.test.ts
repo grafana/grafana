@@ -1,4 +1,5 @@
 import { AbstractLabelOperator, DataFrame, TimeRange, dateTime, getDefaultTimeRange } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import LanguageProvider from './LanguageProvider';
 import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
@@ -328,6 +329,14 @@ describe('Query imports', () => {
   });
 
   describe('getParserAndLabelKeys()', () => {
+    const queryHintsFeatureToggle = config.featureToggles.lokiQueryHints;
+    beforeAll(() => {
+      config.featureToggles.lokiQueryHints = true;
+    });
+    afterAll(() => {
+      config.featureToggles.lokiQueryHints = queryHintsFeatureToggle;
+    });
+
     let datasource: LokiDatasource, languageProvider: LanguageProvider;
     const extractLogParserFromDataFrameMock = jest.mocked(extractLogParserFromDataFrame);
     const extractedLabelKeys = ['extracted', 'label'];
@@ -407,7 +416,11 @@ describe('Query imports', () => {
           maxLines: DEFAULT_MAX_LINES_SAMPLE,
           refId: 'data-samples',
         },
-        undefined
+        // mocked default time range
+        expect.objectContaining({
+          from: 0,
+          to: 1,
+        })
       );
     });
 
@@ -428,7 +441,11 @@ describe('Query imports', () => {
           maxLines: 5,
           refId: 'data-samples',
         },
-        undefined
+        // mocked default time range
+        expect.objectContaining({
+          from: 0,
+          to: 1,
+        })
       );
     });
 
@@ -443,6 +460,12 @@ describe('Query imports', () => {
         },
         mockTimeRange
       );
+    });
+    it('does not call dataSample with feature toggle disabled', async () => {
+      config.featureToggles.lokiQueryHints = false;
+      jest.spyOn(datasource, 'getDataSamples');
+      languageProvider.getParserAndLabelKeys('{place="luna"}', { timeRange: mockTimeRange });
+      expect(datasource.getDataSamples).not.toHaveBeenCalled();
     });
   });
 });
