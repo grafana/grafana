@@ -11017,8 +11017,49 @@
       }
     },
     "/v1/sso-settings/{key}": {
+      "put": {
+        "description": "Inserts or updates the SSO Settings for a provider.\n\nYou need to have a permission with action `settings:write` and scope `settings:auth.\u003cprovider\u003e:*`.",
+        "tags": [
+          "sso_settings"
+        ],
+        "summary": "Update SSO Settings",
+        "operationId": "updateProviderSettings",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "key",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SSOSettings"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
       "delete": {
-        "description": "# Remove an SSO Settings entry by Key\n\nYou need to have a permission with action `settings:write` with scope `settings:auth.\u003cprovider\u003e:*`.",
+        "description": "Removes the SSO Settings for a provider.\n\nYou need to have a permission with action `settings:write` and scope `settings:auth.\u003cprovider\u003e:*`.",
         "tags": [
           "sso_settings"
         ],
@@ -12295,6 +12336,23 @@
         },
         "record": {
           "type": "string"
+        }
+      }
+    },
+    "Assignments": {
+      "type": "object",
+      "properties": {
+        "builtInRoles": {
+          "type": "boolean"
+        },
+        "serviceAccounts": {
+          "type": "boolean"
+        },
+        "teams": {
+          "type": "boolean"
+        },
+        "users": {
+          "type": "boolean"
         }
       }
     },
@@ -13710,6 +13768,20 @@
         "format": "int64"
       }
     },
+    "Description": {
+      "type": "object",
+      "properties": {
+        "assignments": {
+          "$ref": "#/definitions/Assignments"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "DiscordConfig": {
       "type": "object",
       "title": "DiscordConfig configures notifications via Discord.",
@@ -14732,10 +14804,6 @@
         },
         "is_paused": {
           "type": "boolean"
-        },
-        "namespace_id": {
-          "type": "integer",
-          "format": "int64"
         },
         "namespace_uid": {
           "type": "string"
@@ -17364,6 +17432,9 @@
         "isEnabled": {
           "type": "boolean"
         },
+        "slug": {
+          "type": "string"
+        },
         "title": {
           "type": "string"
         },
@@ -18513,6 +18584,24 @@
         }
       }
     },
+    "SSOSettings": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "settings": {
+          "type": "object",
+          "additionalProperties": false
+        },
+        "source": {
+          "$ref": "#/definitions/SettingsSource"
+        }
+      }
+    },
     "Sample": {
       "type": "object",
       "title": "Sample is a single sample belonging to a metric.",
@@ -18888,6 +18977,10 @@
           "type": "string"
         }
       }
+    },
+    "SettingsSource": {
+      "type": "integer",
+      "format": "int64"
     },
     "ShareType": {
       "type": "string"
@@ -20959,7 +21052,6 @@
       }
     },
     "integration": {
-      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",
@@ -21190,6 +21282,59 @@
         },
         "name": {
           "description": "name",
+          "type": "string"
+        }
+      }
+    },
+    "resourcePermissionDTO": {
+      "type": "object",
+      "properties": {
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "builtInRole": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "isInherited": {
+          "type": "boolean"
+        },
+        "isManaged": {
+          "type": "boolean"
+        },
+        "isServiceAccount": {
+          "type": "boolean"
+        },
+        "permission": {
+          "type": "string"
+        },
+        "roleName": {
+          "type": "string"
+        },
+        "team": {
+          "type": "string"
+        },
+        "teamAvatarUrl": {
+          "type": "string"
+        },
+        "teamId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userAvatarUrl": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userLogin": {
           "type": "string"
         }
       }
@@ -22065,6 +22210,15 @@
         }
       }
     },
+    "getResourcePermissionsResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/resourcePermissionDTO"
+        }
+      }
+    },
     "getRoleAssignmentsResponse": {
       "description": "(empty)",
       "schema": {
@@ -22481,6 +22635,12 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/ActiveUserStats"
+      }
+    },
+    "resourcePermissionsDescription": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/Description"
       }
     },
     "retrieveServiceAccountResponse": {

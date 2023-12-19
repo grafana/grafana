@@ -38,11 +38,11 @@ type httpGetResponse struct {
 }
 
 func (s *SocialBase) IsEmailAllowed(email string) bool {
-	return isEmailAllowed(email, s.allowedDomains)
+	return isEmailAllowed(email, s.info.AllowedDomains)
 }
 
 func (s *SocialBase) IsSignupAllowed() bool {
-	return s.allowSignup
+	return s.info.AllowSignup
 }
 
 func isEmailAllowed(email string, allowedDomains []string) bool {
