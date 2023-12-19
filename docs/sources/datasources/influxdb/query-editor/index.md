@@ -19,7 +19,8 @@ For general documentation on querying data sources in Grafana, see [Query and tr
 
 ## Choose a query editing mode
 
-The InfluxDB data source's query editor has two modes depending on your choice of query language in the [data source configuration]({{< relref "../#configure-the-data-source" >}}):
+The InfluxDB data source's query editor has two modes depending on your choice of query language in
+the [data source configuration]({{< relref "../#configure-the-data-source" >}}):
 
 - [InfluxQL](#influxql-query-editor)
 - [SQL](#sql-query-editor)
@@ -66,7 +67,8 @@ For example:
 This query editor input generates an InfluxDB `SELECT` clause:
 
 ```sql
-SELECT derivative(mean("value"), 10s) /10 AS "REQ/s" FROM ....
+SELECT derivative(mean("value"), 10s) / 10 AS "REQ/s"
+FROM....
 ```
 
 **To select multiple fields:**
@@ -108,7 +110,7 @@ Otherwise, InfluxDB can easily return hundreds of thousands of data points that 
 ### Alias patterns
 
 | Alias pattern     | Replaced with                                                                                                                                                                                      |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|-------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `$m`              | Measurement name.                                                                                                                                                                                  |
 | `$measurement`    | Measurement name.                                                                                                                                                                                  |
 | `$1` - `$9`       | Part of measurement name (if you separate your measurement name with dots).                                                                                                                        |
@@ -117,28 +119,30 @@ Otherwise, InfluxDB can easily return hundreds of thousands of data points that 
 
 You can also use `[[tag_hostname]]` pattern replacement syntax.
 
-For example, entering the value `Host: [[tag_hostname]]` in the ALIAS BY field replaces it with the `hostname` tag value for each legend value.
+For example, entering the value `Host: [[tag_hostname]]` in the ALIAS BY field replaces it with the `hostname` tag value
+for each legend value.
 An example legend value would be `Host: server1`.
 
 ## SQL query editor
 
-Grafana support [SQL querying language](https://docs.influxdata.com/influxdb/cloud-serverless/query-data/sql/) with [InfluxDB v3.0](https://www.influxdata.com/blog/introducing-influxdb-3-0/) and higher.  
+Grafana support [SQL querying language](https://docs.influxdata.com/influxdb/cloud-serverless/query-data/sql/)
+with [InfluxDB v3.0](https://www.influxdata.com/blog/introducing-influxdb-3-0/) and higher.
 
 ### Macros
 
-You can use macros within the query to replace them with the values from Grafana's context. 
+You can use macros within the query to replace them with the values from Grafana's context.
 
-| Macro example                         | Replaced with                                                                                                                                                                                                  |
-|---------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `$__timeFrom`                         | The start of the currently active time selection, such as `2020-06-11T13:31:00Z`.                                                                                                                              |
-| `$__timeTo`                           | The end of the currently active time selection, such as `2020-06-11T14:31:00Z`.                                                                                                                                |
-| `$__timeFilter`                       | The time range that applies the start and the end of currently active time selection.                                                                                                                          |
-| `$__interval`                         | An interval string that corresponds to Grafana's calculated interval based on the time range of the active time selection, such as `5s`.                                                                       |
-| `$__dateBin(<column>)`                | Applies [date_bin](https://docs.influxdata.com/influxdb/cloud-serverless/reference/sql/functions/time-and-date/#date_bin) function. Column must be timestamp.                                                  |
-| `$__dateBinAlias(<column>)`           | Applies [date_bin](https://docs.influxdata.com/influxdb/cloud-serverless/reference/sql/functions/time-and-date/#date_bin) function with suffix `_binned`. Column must be timestamp.                            |
-
+| Macro example               | Replaced with                                                                                                                                                                       |
+|-----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `$__timeFrom`               | The start of the currently active time selection, such as `2020-06-11T13:31:00Z`.                                                                                                   |
+| `$__timeTo`                 | The end of the currently active time selection, such as `2020-06-11T14:31:00Z`.                                                                                                     |
+| `$__timeFilter`             | The time range that applies the start and the end of currently active time selection.                                                                                               |
+| `$__interval`               | An interval string that corresponds to Grafana's calculated interval based on the time range of the active time selection, such as `5s`.                                            |
+| `$__dateBin(<column>)`      | Applies [date_bin](https://docs.influxdata.com/influxdb/cloud-serverless/reference/sql/functions/time-and-date/#date_bin) function. Column must be timestamp.                       |
+| `$__dateBinAlias(<column>)` | Applies [date_bin](https://docs.influxdata.com/influxdb/cloud-serverless/reference/sql/functions/time-and-date/#date_bin) function with suffix `_binned`. Column must be timestamp. |
 
 Examples:
+
 ```
 // with macro
 1. SELECT * FROM cpu WHERE time >= $__timeFrom AND time <= $__timeTo
@@ -154,9 +158,12 @@ Examples:
 ## Flux query editor
 
 Grafana supports Flux when running InfluxDB v1.8 and higher.
-If your data source is [configured for Flux]({{< relref "./#configure-the-data-source" >}}), you can use the [Flux query and scripting language](https://www.influxdata.com/products/flux/) in the query editor, which serves as a text editor for raw Flux queries with macro support.
+If your data source is [configured for Flux]({{< relref "./#configure-the-data-source" >}}), you can use
+the [Flux query and scripting language](https://www.influxdata.com/products/flux/) in the query editor, which serves as
+a text editor for raw Flux queries with macro support.
 
-For more information and connection details, refer to [1.8 compatibility](https://github.com/influxdata/influxdb-client-go/#influxdb-18-api-compatibility).
+For more information and connection details, refer
+to [1.8 compatibility](https://github.com/influxdata/influxdb-client-go/#influxdb-18-api-compatibility).
 
 ### Use macros
 
@@ -164,7 +171,7 @@ You can enter macros in the query to replace them with values from Grafana's con
 Macros support copying and pasting from [Chronograf](https://www.influxdata.com/time-series-platform/chronograf/).
 
 | Macro example      | Replaced with                                                                                                                                                 |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|--------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `v.timeRangeStart` | The start of the currently active time selection, such as `2020-06-11T13:31:00Z`.                                                                             |
 | `v.timeRangeStop`  | The end of the currently active time selection, such as `2020-06-11T14:31:00Z`.                                                                               |
 | `v.windowPeriod`   | An interval string compatible with Flux that corresponds to Grafana's calculated interval based on the time range of the active time selection, such as `5s`. |
@@ -182,7 +189,8 @@ from(bucket: v.defaultBucket)
   |> yield(name: "mean")
 ```
 
-Into this query to send to InfluxDB, with interval and time period values changing according to the active time selection:
+Into this query to send to InfluxDB, with interval and time period values changing according to the active time
+selection:
 
 ```flux
 from(bucket: "grafana")
@@ -203,10 +211,12 @@ Select the InfluxDB data source, then enter a query to display your logs.
 
 ### Create log queries
 
-The Logs Explorer next to the query field, accessed by the **Measurements/Fields** button, lists measurements and fields.
+The Logs Explorer next to the query field, accessed by the **Measurements/Fields** button, lists measurements and
+fields.
 Choose the desired measurement that contains your log data, then choose which field to use to display the log message.
 
-Once InfluxDB returns the result, the log panel lists log rows and displays a bar chart, where the x axis represents the time and the y axis represents the frequency/count.
+Once InfluxDB returns the result, the log panel lists log rows and displays a bar chart, where the x axis represents the
+time and the y axis represents the frequency/count.
 
 ### Filter search
 
@@ -228,12 +238,17 @@ The **Tags** field's value can be a comma-separated string.
 ### Annotation query example
 
 ```sql
-SELECT title, description from events WHERE $timeFilter ORDER BY time ASC
+SELECT title, description
+from events
+WHERE $timeFilter
+ORDER BY time ASC
 ```
 
 {{% docs/reference %}}
-[annotate-visualizations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
-[annotate-visualizations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
+[annotate-visualizations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>
+/dashboards/build-dashboards/annotate-visualizations"
+[annotate-visualizations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>
+/dashboards/build-dashboards/annotate-visualizations"
 
 [explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
 [explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
@@ -245,5 +260,6 @@ SELECT title, description from events WHERE $timeFilter ORDER BY time ASC
 [panel-inspector]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/panel-inspector"
 
 [query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
-[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>
+/panels-visualizations/query-transform-data"
 {{% /docs/reference %}}
