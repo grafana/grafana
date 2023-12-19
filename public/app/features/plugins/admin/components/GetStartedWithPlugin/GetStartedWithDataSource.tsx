@@ -1,10 +1,11 @@
 import React, { useCallback } from 'react';
 
 import { DataSourcePluginMeta } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
+import configCore from 'app/core/config';
 import { useDataSourcesRoutes, addDataSource } from 'app/features/datasources/state';
 import { useDispatch } from 'app/types';
-import config from 'app/core/config';
 
 import { isDataSourceEditor } from '../../permissions';
 import { CatalogPlugin } from '../../types';
@@ -30,7 +31,15 @@ export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement 
   }
 
   return (
-    <Button variant="primary" onClick={onAddDataSource} disabled={config.featureToggles.managedPluginsInstall && !plugin.isFullyInstalled}>
+    <Button
+      variant="primary"
+      onClick={onAddDataSource}
+      disabled={
+        configCore.featureToggles.managedPluginsInstall &&
+        config.pluginAdminExternalManageEnabled &&
+        !plugin.isFullyInstalled
+      }
+    >
       Add new data source
     </Button>
   );
