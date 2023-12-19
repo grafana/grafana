@@ -10,7 +10,6 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/spf13/cobra"
-	"k8s.io/apimachinery/pkg/runtime"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/component-base/cli"
@@ -120,22 +119,13 @@ func RunAggregatorCLI() int {
 		return -1
 	}
 
-	sharedConfig, err := serverOptions.Config(aggregatorscheme.Codecs)
-	if err != nil {
-		klog.Errorf("Error translating server options to config: %s", err)
-		return -1
-	}
-
-	config, err := aggregator.CreateAggregatorConfig(sharedConfig.Config,
-		*serverOptions.RecommendedOptions,
-		[]*runtime.Scheme{aggregatorscheme.Scheme},
-		serverOptions.GetMergedOpenAPIDefinitions)
+	config, err := serverOptions.CreateAggregatorConfig()
 	if err != nil {
 		klog.Errorf("Error creating aggregator config: %s", err)
 		return -1
 	}
 
-	aggregator, err := aggregator.CreateAggregatorServer(*serverOptions, *config, delegationTarget)
+	aggregator, err := serverOptions.CreateAggregatorServer(config, delegationTarget)
 	if err != nil {
 		klog.Errorf("Error creating aggregator server: %s", err)
 		return -1
@@ -145,7 +135,7 @@ func RunAggregatorCLI() int {
 	for _, b := range serverOptions.Builders {
 		g, err := b.GetAPIGroupInfo(Scheme, Codecs, config.GenericConfig.RESTOptionsGetter)
 		if err != nil {
-			klog.Errorf("Error creating aggregator server: %s", err)
+			klog.Errorf("Error getting group info for prerequisite API group: %s", err)
 			return -1
 		}
 		if g == nil || len(g.PrioritizedVersions) < 1 {
@@ -153,7 +143,7 @@ func RunAggregatorCLI() int {
 		}
 		err = aggregator.GenericAPIServer.InstallAPIGroup(g)
 		if err != nil {
-			klog.Errorf("Error creating aggregator server: %s", err)
+			klog.Errorf("Error installing prerequisite API groups for aggregator: %s", err)
 			return -1
 		}
 	}

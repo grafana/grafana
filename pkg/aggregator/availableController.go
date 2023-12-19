@@ -25,10 +25,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apis/service/v0alpha1"
 	informersservicev0alpha1 "github.com/grafana/grafana/pkg/generated/informers/externalversions/service/v0alpha1"
 	listersservicev0alpha1 "github.com/grafana/grafana/pkg/generated/listers/service/v0alpha1"
 
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -69,8 +69,6 @@ type AvailableConditionController struct {
 	// externalNameLister is used to get the IP to create the transport for
 	externalNameLister listersservicev0alpha1.ExternalNameLister
 	servicesSynced     cache.InformerSynced
-
-	endpointsSynced cache.InformerSynced
 
 	// proxyTransportDial specifies the dial function for creating unencrypted TCP connections.
 	proxyTransportDial         *transport.DialHolder
@@ -340,7 +338,7 @@ func (c *AvailableConditionController) Run(workers int, stopCh <-chan struct{}) 
 	// to be called; since the handlers are three different ways of
 	// enqueueing the same thing, waiting for this permits the queue to
 	// maximally de-duplicate the entries.
-	if !controllers.WaitForCacheSync("AvailableConditionController", stopCh, c.apiServiceSynced, c.servicesSynced, c.endpointsSynced) {
+	if !controllers.WaitForCacheSync("AvailableConditionCOverrideController", stopCh, c.apiServiceSynced, c.servicesSynced) {
 		return
 	}
 
@@ -451,57 +449,26 @@ func (c *AvailableConditionController) rebuildAPIServiceCache() {
 // TODO, think of a way to avoid checking on every service manipulation
 
 func (c *AvailableConditionController) addService(obj interface{}) {
-	for _, apiService := range c.getAPIServicesFor(obj.(*v1.Service)) {
+	for _, apiService := range c.getAPIServicesFor(obj.(*v0alpha1.ExternalName)) {
 		c.queue.Add(apiService)
 	}
 }
 
 func (c *AvailableConditionController) updateService(obj, _ interface{}) {
-	for _, apiService := range c.getAPIServicesFor(obj.(*v1.Service)) {
+	for _, apiService := range c.getAPIServicesFor(obj.(*v0alpha1.ExternalName)) {
 		c.queue.Add(apiService)
 	}
 }
 
 func (c *AvailableConditionController) deleteService(obj interface{}) {
-	castObj, ok := obj.(*v1.Service)
+	castObj, ok := obj.(*v0alpha1.ExternalName)
 	if !ok {
 		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
 		if !ok {
 			klog.Errorf("Couldn't get object from tombstone %#v", obj)
 			return
 		}
-		castObj, ok = tombstone.Obj.(*v1.Service)
-		if !ok {
-			klog.Errorf("Tombstone contained object that is not expected %#v", obj)
-			return
-		}
-	}
-	for _, apiService := range c.getAPIServicesFor(castObj) {
-		c.queue.Add(apiService)
-	}
-}
-
-func (c *AvailableConditionController) addEndpoints(obj interface{}) {
-	for _, apiService := range c.getAPIServicesFor(obj.(*v1.Endpoints)) {
-		c.queue.Add(apiService)
-	}
-}
-
-func (c *AvailableConditionController) updateEndpoints(obj, _ interface{}) {
-	for _, apiService := range c.getAPIServicesFor(obj.(*v1.Endpoints)) {
-		c.queue.Add(apiService)
-	}
-}
-
-func (c *AvailableConditionController) deleteEndpoints(obj interface{}) {
-	castObj, ok := obj.(*v1.Endpoints)
-	if !ok {
-		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
-		if !ok {
-			klog.Errorf("Couldn't get object from tombstone %#v", obj)
-			return
-		}
-		castObj, ok = tombstone.Obj.(*v1.Endpoints)
+		castObj, ok = tombstone.Obj.(*v0alpha1.ExternalName)
 		if !ok {
 			klog.Errorf("Tombstone contained object that is not expected %#v", obj)
 			return

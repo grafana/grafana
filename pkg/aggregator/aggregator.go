@@ -29,13 +29,11 @@ import (
 	"sync"
 	"time"
 
-	sharedclientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
-	informersservicev0alpha1 "github.com/grafana/grafana/pkg/generated/informers/externalversions"
+	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
+	serviceclientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
+	informersv0alpha1 "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/pkg/registry/apis/service"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	filestorage "github.com/grafana/grafana/pkg/services/grafana-apiserver/storage/file"
-	apiserviceinformers "k8s.io/kube-aggregator/pkg/client/informers/externalversions"
-	aggregatoropenapi "k8s.io/kube-aggregator/pkg/generated/openapi"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -60,15 +58,12 @@ import (
 	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
 	apiregistrationclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 	apiregistrationclient "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/typed/apiregistration/v1"
+	apiserviceinformers "k8s.io/kube-aggregator/pkg/client/informers/externalversions"
 	apiregistrationInformers "k8s.io/kube-aggregator/pkg/client/informers/externalversions/apiregistration/v1"
 	"k8s.io/kube-aggregator/pkg/controllers/autoregister"
-	common "k8s.io/kube-openapi/pkg/common"
-	openapicommon "k8s.io/kube-openapi/pkg/common"
+	aggregatoropenapi "k8s.io/kube-aggregator/pkg/generated/openapi"
+	"k8s.io/kube-openapi/pkg/common"
 	netutils "k8s.io/utils/net"
-
-	servicev1alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	serviceclient "github.com/grafana/grafana/pkg/generated/clientset/versioned"
-	serviceinformers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 )
 
 // AggregatorServerOptions contains the state for the aggregator apiserver
@@ -76,6 +71,8 @@ type AggregatorServerOptions struct {
 	Builders           []grafanaAPIServer.APIGroupBuilder
 	RecommendedOptions *options.RecommendedOptions
 	AlternateDNS       []string
+
+	sharedInformerFactory informersv0alpha1.SharedInformerFactory
 
 	StdOut io.Writer
 	StdErr io.Writer
@@ -172,7 +169,7 @@ func (o *AggregatorServerOptions) ModifiedApplyTo(config *genericapiserver.Recom
 	return nil
 }
 
-func (o *AggregatorServerOptions) GetMergedOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+func (o *AggregatorServerOptions) getMergedOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	// Add OpenAPI specs for each group+version
 	prerequisiteAPIs := grafanaAPIServer.GetOpenAPIDefinitions(o.Builders)(ref)
 	aggregatorAPIs := aggregatoropenapi.GetOpenAPIDefinitions(ref)
@@ -184,15 +181,19 @@ func (o *AggregatorServerOptions) GetMergedOpenAPIDefinitions(ref common.Referen
 	return aggregatorAPIs
 }
 
-func CreateAggregatorConfig(
-	kubeAPIServerConfig genericapiserver.Config,
-	commandOptions options.RecommendedOptions,
-	openAPISchemes []*runtime.Scheme,
-	getOpenAPIDefinitions func(ref openapicommon.ReferenceCallback) map[string]openapicommon.OpenAPIDefinition,
-) (*aggregatorapiserver.Config, error) {
+func (o *AggregatorServerOptions) CreateAggregatorConfig() (*aggregatorapiserver.Config, error) {
+	sharedConfig, err := o.Config(aggregatorscheme.Codecs)
+	if err != nil {
+		klog.Errorf("Error translating server options to config: %s", err)
+		return nil, err
+	}
+
+	commandOptions := *o.RecommendedOptions
+
 	// make a shallow copy to let us twiddle a few things
 	// most of the config actually remains the same.  We only need to mess with a couple items related to the particulars of the aggregator
-	genericConfig := kubeAPIServerConfig
+	genericConfig := sharedConfig.Config
+
 	genericConfig.PostStartHooks = map[string]genericapiserver.PostStartHookConfigEntry{}
 	genericConfig.RESTOptionsGetter = nil
 	// prevent generic API server from installing the OpenAPI handler. Aggregator server
@@ -204,10 +205,10 @@ func CreateAggregatorConfig(
 	}
 	genericConfig.MergedResourceConfig = mergedResourceConfig
 
-	namer := openapinamer.NewDefinitionNamer(openAPISchemes...)
-	genericConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(getOpenAPIDefinitions, namer)
+	namer := openapinamer.NewDefinitionNamer(aggregatorscheme.Scheme)
+	genericConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(o.getMergedOpenAPIDefinitions, namer)
 	genericConfig.OpenAPIV3Config.Info.Title = "Kubernetes"
-	genericConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(getOpenAPIDefinitions, namer)
+	genericConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(o.getMergedOpenAPIDefinitions, namer)
 	genericConfig.OpenAPIConfig.Info.Title = "Kubernetes"
 
 	if utilfeature.DefaultFeatureGate.Enabled(genericfeatures.StorageVersionAPI) &&
@@ -222,27 +223,30 @@ func CreateAggregatorConfig(
 	// we assume that the etcd options have been completed already.  avoid messing with anything outside
 	// of changes to StorageConfig as that may lead to unexpected behavior when the options are applied.
 	etcdOptions := *commandOptions.Etcd
-	etcdOptions.StorageConfig.Codec = aggregatorscheme.Codecs.LegacyCodec(v1.SchemeGroupVersion, v1beta1.SchemeGroupVersion, servicev1alpha1.SchemeGroupVersion)
+	etcdOptions.StorageConfig.Codec = aggregatorscheme.Codecs.LegacyCodec(v1.SchemeGroupVersion,
+		v1beta1.SchemeGroupVersion,
+		servicev0alpha1.SchemeGroupVersion)
 	etcdOptions.StorageConfig.EncodeVersioner = runtime.NewMultiGroupVersioner(v1.SchemeGroupVersion,
 		schema.GroupKind{Group: v1beta1.GroupName},
-		schema.GroupKind{Group: servicev1alpha1.GROUP})
+		schema.GroupKind{Group: servicev0alpha1.GROUP})
+	etcdOptions.StorageConfig.Transport.ServerList = []string{"127.0.0.1:2379"}
 	etcdOptions.SkipHealthEndpoints = true // avoid double wiring of health checks
 	if err := etcdOptions.ApplyTo(&genericConfig); err != nil {
 		return nil, err
 	}
-	genericConfig.RESTOptionsGetter = filestorage.NewRESTOptionsGetter("/tmp/grafana.aggregator", etcdOptions.StorageConfig)
+	// genericConfig.RESTOptionsGetter = filestorage.NewRESTOptionsGetter("/tmp/grafana.aggregator", etcdOptions.StorageConfig)
 
 	versionedInformers := informers.NewSharedInformerFactory(fake.NewSimpleClientset(), 10*time.Minute)
 
-	serviceClient, err := serviceclient.NewForConfig(genericConfig.LoopbackClientConfig)
+	serviceClient, err := serviceclientset.NewForConfig(genericConfig.LoopbackClientConfig)
 	if err != nil {
 		return nil, err
 	}
-	informerFactory := serviceinformers.NewSharedInformerFactory(
+	o.sharedInformerFactory = informersv0alpha1.NewSharedInformerFactory(
 		serviceClient,
 		5*time.Minute, // this is effectively used as a refresh interval right now.  Might want to do something nicer later on.
 	)
-	serviceResolver := NewExternalNameResolver(informerFactory.Service().V0alpha1().ExternalNames().Lister())
+	serviceResolver := NewExternalNameResolver(o.sharedInformerFactory.Service().V0alpha1().ExternalNames().Lister())
 
 	genericConfig.DisabledPostStartHooks = genericConfig.DisabledPostStartHooks.Insert("apiservice-status-available-controller")
 	genericConfig.DisabledPostStartHooks = genericConfig.DisabledPostStartHooks.Insert("start-kube-aggregator-informers")
@@ -256,10 +260,11 @@ func CreateAggregatorConfig(
 		ExtraConfig: aggregatorapiserver.ExtraConfig{
 			// ProxyClientCertFile:       commandOptions.ProxyClientCertFile,
 			// ProxyClientKeyFile:        commandOptions.ProxyClientKeyFile,
-			ServiceResolver: serviceResolver,
 			// ProxyTransport:  proxyTransport,
 		},
 	}
+
+	aggregatorConfig.ExtraConfig.ServiceResolver = serviceResolver
 
 	// we need to clear the poststarthooks so we don't add them multiple times to all the servers (that fails)
 	aggregatorConfig.GenericConfig.PostStartHooks = map[string]genericapiserver.PostStartHookConfigEntry{}
@@ -267,7 +272,7 @@ func CreateAggregatorConfig(
 	return aggregatorConfig, nil
 }
 
-func CreateAggregatorServer(serverOptions AggregatorServerOptions, aggregatorConfig aggregatorapiserver.Config, delegateAPIServer genericapiserver.DelegationTarget) (*aggregatorapiserver.APIAggregator, error) {
+func (o *AggregatorServerOptions) CreateAggregatorServer(aggregatorConfig *aggregatorapiserver.Config, delegateAPIServer genericapiserver.DelegationTarget) (*aggregatorapiserver.APIAggregator, error) {
 	completedConfig := aggregatorConfig.Complete()
 	aggregatorServer, err := completedConfig.NewWithDelegate(delegateAPIServer)
 	if err != nil {
@@ -319,18 +324,9 @@ func CreateAggregatorServer(serverOptions AggregatorServerOptions, aggregatorCon
 		5*time.Minute, // this is effectively used as a refresh interval right now.  Might want to do something nicer later on.
 	)
 
-	externalNameClient, err := sharedclientset.NewForConfig(completedConfig.GenericConfig.LoopbackClientConfig)
-	if err != nil {
-		return nil, err
-	}
-	externalNameInformerFactory := informersservicev0alpha1.NewSharedInformerFactory(
-		externalNameClient,
-		5*time.Minute, // this is effectively used as a refresh interval right now.  Might want to do something nicer later on.)
-	)
-
 	availableController, err := NewAvailableConditionController(
 		informerFactory.Apiregistration().V1().APIServices(),
-		externalNameInformerFactory.Service().V0alpha1().ExternalNames(),
+		o.sharedInformerFactory.Service().V0alpha1().ExternalNames(),
 		apiregistrationClient.ApiregistrationV1(),
 		nil,
 		(func() ([]byte, []byte))(nil),
@@ -346,8 +342,14 @@ func CreateAggregatorServer(serverOptions AggregatorServerOptions, aggregatorCon
 		return nil
 	})
 
+	aggregatorServer.GenericAPIServer.AddPostStartHookOrDie("start-grafana-aggregator-informers", func(context genericapiserver.PostStartHookContext) error {
+		informerFactory.Start(context.StopCh)
+		o.sharedInformerFactory.Start(context.StopCh)
+		return nil
+	})
+
 	// Install the API Group+version
-	for _, b := range serverOptions.Builders {
+	for _, b := range o.Builders {
 		g, err := b.GetAPIGroupInfo(aggregatorscheme.Scheme, aggregatorscheme.Codecs, aggregatorConfig.GenericConfig.RESTOptionsGetter)
 		if err != nil {
 			return nil, err
