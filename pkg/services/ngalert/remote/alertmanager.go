@@ -38,12 +38,13 @@ type Alertmanager struct {
 }
 
 type AlertmanagerConfig struct {
+	OrgID             int64
 	URL               string
 	TenantID          string
 	BasicAuthPassword string
 }
 
-func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, store stateStore) (*Alertmanager, error) {
+func NewAlertmanager(cfg AlertmanagerConfig, store stateStore) (*Alertmanager, error) {
 	if cfg.URL == "" {
 		return nil, fmt.Errorf("empty remote Alertmanager URL for tenant '%s'", cfg.TenantID)
 	}
@@ -84,7 +85,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, store stateStore) (*Al
 	}
 	s := sender.NewExternalAlertmanagerSender(sender.WithDoFunc(doFunc))
 	s.Run()
-	err = s.ApplyConfig(orgID, 0, []sender.ExternalAMcfg{{URL: cfg.URL + "/alertmanager"}})
+	err = s.ApplyConfig(cfg.OrgID, 0, []sender.ExternalAMcfg{{URL: cfg.URL + "/alertmanager"}})
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +96,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, store stateStore) (*Al
 		state:       store,
 		amClient:    amc,
 		sender:      s,
-		orgID:       orgID,
+		orgID:       cfg.OrgID,
 		tenantID:    cfg.TenantID,
 		url:         cfg.URL,
 	}, nil

@@ -173,29 +173,39 @@ func (ng *AlertNG) init() error {
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
 
+	// If enabled, configure the remote Alertmanager.
+	// Only RemoteSecondary mode is supported at the moment.
 	remoteAlertmanagerCfg := ng.Cfg.UnifiedAlerting.RemoteAlertmanager
 	moaLogger := log.New("ngalert.multiorg.alertmanager")
 	var overrides []notifier.Option
 	if remoteAlertmanagerCfg.Enable {
-		// TODO(santiago): check for different modes, refactor.
 		if ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondary) {
 			override := notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
 				// Create internal Alertmanager.
-				m := metrics.NewAlertmanagerMetrics(multiOrgMetrics.GetOrCreateOrgRegistry(orgID))
-				internalAM, err := notifier.NewAlertmanager(ctx, orgID, ng.Cfg, ng.store, ng.KVStore, &notifier.NilPeer{}, decryptFn, ng.NotificationService, m)
+				internalAM, err := notifier.NewAlertmanager(ctx,
+					orgID,
+					ng.Cfg,
+					ng.store,
+					ng.KVStore,
+					&notifier.NilPeer{},
+					decryptFn,
+					ng.NotificationService,
+					metrics.NewAlertmanagerMetrics(multiOrgMetrics.GetOrCreateOrgRegistry(orgID)),
+				)
 				if err != nil {
 					return nil, err
 				}
 
 				// Create remote Alertmanager.
 				externalAMCfg := remote.AlertmanagerConfig{
-					URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
-					TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
-					BasicAuthPassword: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
+					OrgID:             orgID,
+					URL:               remoteAlertmanagerCfg.URL,
+					TenantID:          remoteAlertmanagerCfg.TenantID,
+					BasicAuthPassword: remoteAlertmanagerCfg.Password,
 				}
 				// We won't be handling files on disk, we can pass an empty string as workingDirPath.
 				stateStore := notifier.NewFileStore(orgID, ng.KVStore, "")
-				remoteAM, err := remote.NewAlertmanager(externalAMCfg, orgID, stateStore)
+				remoteAM, err := remote.NewAlertmanager(externalAMCfg, stateStore)
 				if err != nil {
 					moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
 					return internalAM, nil

@@ -63,11 +63,12 @@ func TestNewAlertmanager(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(tt *testing.T) {
 			cfg := AlertmanagerConfig{
+				OrgID:             test.orgID,
 				URL:               test.url,
 				TenantID:          test.tenantID,
 				BasicAuthPassword: test.password,
 			}
-			am, err := NewAlertmanager(cfg, test.orgID, nil)
+			am, err := NewAlertmanager(cfg, nil)
 			if test.expErr != "" {
 				require.EqualError(tt, err, test.expErr)
 				return
@@ -94,16 +95,17 @@ func TestApplyConfig(t *testing.T) {
 	// A non-200 response should result in an error.
 	server := httptest.NewServer(errorHandler)
 	cfg := AlertmanagerConfig{
-		URL: server.URL,
+		OrgID: 1,
+		URL:   server.URL,
 	}
 
 	ctx := context.Background()
 	store := fakes.NewFakeKVStore(t)
 	fstore := notifier.NewFileStore(1, store, "")
-	require.NoError(t, store.Set(ctx, 1, "alertmanager", notifier.SilencesFilename, "test"))
-	require.NoError(t, store.Set(ctx, 1, "alertmanager", notifier.NotificationLogFilename, "test"))
+	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.SilencesFilename, "test"))
+	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.NotificationLogFilename, "test"))
 
-	am, err := NewAlertmanager(cfg, 1, fstore)
+	am, err := NewAlertmanager(cfg, fstore)
 	require.NoError(t, err)
 
 	config := &ngmodels.AlertConfiguration{}
@@ -135,6 +137,7 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 
 	// ApplyConfig performs a readiness check.
 	cfg := AlertmanagerConfig{
+		OrgID:             1,
 		URL:               amURL,
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
@@ -155,11 +158,11 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 	silences := []byte("test-silences")
 	nflog := []byte("test-notifications")
 	store := fakes.NewFakeKVStore(t)
-	fstore := notifier.NewFileStore(1, store, "")
+	fstore := notifier.NewFileStore(cfg.OrgID, store, "")
 
 	ctx := context.Background()
-	require.NoError(t, store.Set(ctx, 1, "alertmanager", notifier.SilencesFilename, base64.StdEncoding.EncodeToString(silences)))
-	require.NoError(t, store.Set(ctx, 1, "alertmanager", notifier.NotificationLogFilename, base64.StdEncoding.EncodeToString(nflog)))
+	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.SilencesFilename, base64.StdEncoding.EncodeToString(silences)))
+	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.NotificationLogFilename, base64.StdEncoding.EncodeToString(nflog)))
 
 	fs := clusterpb.FullState{
 		Parts: []clusterpb.Part{
@@ -171,7 +174,7 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 	require.NoError(t, err)
 	encodedFullState := base64.StdEncoding.EncodeToString(fullState)
 
-	am, err := NewAlertmanager(cfg, 1, fstore)
+	am, err := NewAlertmanager(cfg, fstore)
 	require.NoError(t, err)
 
 	// We should have no configuration or state at first.
@@ -209,8 +212,8 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 
 	// Calling `ApplyConfig` again with a changed configuration and state yields no effect.
 	{
-		require.NoError(t, store.Set(ctx, 1, "alertmanager", "silences", base64.StdEncoding.EncodeToString([]byte("abc123"))))
-		require.NoError(t, store.Set(ctx, 1, "alertmanager", "notifications", base64.StdEncoding.EncodeToString([]byte("abc123"))))
+		require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", "silences", base64.StdEncoding.EncodeToString([]byte("abc123"))))
+		require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", "notifications", base64.StdEncoding.EncodeToString([]byte("abc123"))))
 		fakeConfig.ID = 30000000000000000
 		require.NoError(t, am.ApplyConfig(ctx, fakeConfig))
 
@@ -250,11 +253,12 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 	password := os.Getenv("AM_PASSWORD")
 
 	cfg := AlertmanagerConfig{
+		OrgID:             1,
 		URL:               amURL,
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
 	}
-	am, err := NewAlertmanager(cfg, 1, nil)
+	am, err := NewAlertmanager(cfg, nil)
 	require.NoError(t, err)
 
 	// We should have no silences at first.
@@ -329,11 +333,12 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	password := os.Getenv("AM_PASSWORD")
 
 	cfg := AlertmanagerConfig{
+		OrgID:             1,
 		URL:               amURL,
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
 	}
-	am, err := NewAlertmanager(cfg, 1, nil)
+	am, err := NewAlertmanager(cfg, nil)
 	require.NoError(t, err)
 
 	// Wait until the Alertmanager is ready to send alerts.
@@ -393,12 +398,13 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 	password := os.Getenv("AM_PASSWORD")
 
 	cfg := AlertmanagerConfig{
+		OrgID:             1,
 		URL:               amURL,
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
 	}
 
-	am, err := NewAlertmanager(cfg, 1, nil)
+	am, err := NewAlertmanager(cfg, nil)
 	require.NoError(t, err)
 
 	// We should start with the default config.
