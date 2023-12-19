@@ -11,6 +11,7 @@ import {
   QueryBuilderOperationParamDef,
   VisualQueryModeller,
 } from '../../prometheus/querybuilder/shared/types';
+import { escapeLabelValueInExactSelector } from '../languageUtils';
 import { FUNCTIONS } from '../syntax';
 
 import { LokiOperationId, LokiOperationOrder, LokiVisualQuery, LokiVisualQueryOperationCategory } from './types';
@@ -296,21 +297,22 @@ export function addNestedQueryHandler(def: QueryBuilderOperationDef, query: Loki
 export function getLineFilterRenderer(operation: string, caseInsensitive?: boolean) {
   return function lineFilterRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
     // Strip out backticks within the string as backticks are used to wrap each param in the output
-    const params =
-      model.params?.map((param) => {
-        if (typeof param === 'string' && param.includes('`')) {
-          return param.replaceAll('`', '');
-        }
-        return param;
-      }) ?? [];
-
-    if (caseInsensitive) {
-      return `${innerExpr} ${operation} \`(?i)${params.join('` or `(?i)')}\``;
+    const hasBackticks = model.params.some((param) => typeof param === 'string' && param.includes('`'));
+    const delimiter = hasBackticks ? '"' : '`';
+    let params;
+    if (hasBackticks) {
+      params = model.params.map((param) =>
+        typeof param === 'string' ? escapeLabelValueInExactSelector(param) : param
+      );
+    } else {
+      params = model.params;
     }
-    return `${innerExpr} ${operation} \`${params.join('` or `')}\``;
+    if (caseInsensitive) {
+      return `${innerExpr} ${operation} ${delimiter}(?i)${params.join(`${delimiter} or ${delimiter}(?i)`)}${delimiter}`;
+    }
+    return `${innerExpr} ${operation} ${delimiter}${params.join(`${delimiter} or ${delimiter}`)}${delimiter}`;
   };
 }
-
 function getRangeVectorParamDef(): QueryBuilderOperationParamDef {
   return {
     name: 'Range',
