@@ -20,8 +20,11 @@ import (
 
 type RuleAccessControlService interface {
 	AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
+	AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
 	// CanReadAllRules returns true if the user has full access to read rules via provisioning API and bypass regular checks
 	CanReadAllRules(ctx context.Context, user identity.Requester) (bool, error)
+	// CanWriteAllRules returns true if the user has full access to write rules via provisioning API and bypass regular checks
+	CanWriteAllRules(ctx context.Context, user identity.Requester) (bool, error)
 }
 
 type NotificationSettingsValidatorProvider interface {
@@ -211,12 +214,32 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 	} else if err := util.ValidateUID(rule.UID); err != nil {
 		return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, fmt.Errorf("cannot create rule with UID '%s': %w", rule.UID, err))
 	}
-	interval, err := service.ruleStore.GetRuleGroupInterval(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup)
-	// if the alert group does not exist we just use the default interval
-	if err != nil && errors.Is(err, models.ErrAlertRuleGroupNotFound) {
-		interval = service.defaultIntervalSeconds
-	} else if err != nil {
+	var interval = service.defaultIntervalSeconds
+	// check if user can bypass fine-grained rule authorization checks. If it cannot, verfiy that the user can add rules to the group
+	canWriteAllRules, err := service.authz.CanWriteAllRules(ctx, user)
+	if err != nil {
 		return models.AlertRule{}, err
+	}
+	if canWriteAllRules {
+		groupInterval, err := service.ruleStore.GetRuleGroupInterval(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup)
+		// if the alert group does not exist we just use the default interval
+		if err == nil {
+			interval = groupInterval
+		} else if !errors.Is(err, models.ErrAlertRuleGroupNotFound) {
+			return models.AlertRule{}, err
+		}
+	} else {
+		delta, err := store.CalculateRuleCreate(ctx, service.ruleStore, &rule)
+		if err != nil {
+			return models.AlertRule{}, fmt.Errorf("failed to calculate delta: %w", err)
+		}
+		if err := service.authz.AuthorizeRuleChanges(ctx, user, delta); err != nil {
+			return models.AlertRule{}, err
+		}
+		existingGroup := delta.AffectedGroups[rule.GetGroupKey()]
+		if len(existingGroup) > 0 {
+			interval = existingGroup[0].IntervalSeconds
+		}
 	}
 	rule.IntervalSeconds = interval
 	err = rule.SetDashboardAndPanelFromAnnotations()
@@ -333,6 +356,38 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, user ident
 				New:      newRule,
 			})
 		}
+
+		// check if user has write access to all rules and can bypass the regular checks.
+		// If it cannot, check that the user is authorized to perform all the changes caused by this request
+		if can, err := service.authz.CanWriteAllRules(ctx, user); !can || err != nil {
+			if err != nil {
+				return err
+			}
+			groupKey := models.AlertRuleGroupKey{
+				OrgID:        user.GetOrgID(),
+				NamespaceUID: namespaceUID,
+				RuleGroup:    ruleGroup,
+			}
+			ruleDeltas := make([]store.RuleDelta, 0, len(ruleList))
+			for _, upd := range updateRules {
+				updNew := upd.New
+				ruleDeltas = append(ruleDeltas, store.RuleDelta{
+					Existing: upd.Existing,
+					New:      &updNew,
+				})
+			}
+			delta := &store.GroupDelta{
+				GroupKey: groupKey,
+				AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
+					groupKey: ruleList,
+				},
+				Update: ruleDeltas,
+			}
+			if err := service.authz.AuthorizeRuleChanges(ctx, user, delta); err != nil {
+				return err
+			}
+		}
+
 		return service.ruleStore.UpdateAlertRules(ctx, updateRules)
 	})
 }
@@ -347,8 +402,18 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, user iden
 		return err
 	}
 
-	if len(delta.New) == 0 && len(delta.Update) == 0 && len(delta.Delete) == 0 {
+	if delta.IsEmpty() {
 		return nil
+	}
+
+	// check if the current user has permissions to all rules and can bypass the regular authorization validation.
+	if can, err := service.authz.CanWriteAllRules(ctx, user); !can || err != nil {
+		if err != nil {
+			return err
+		}
+		if err := service.authz.AuthorizeRuleChanges(ctx, user, delta); err != nil {
+			return err
+		}
 	}
 
 	newOrUpdatedNotificationSettings := delta.NewOrUpdatedNotificationSettings()
@@ -368,35 +433,26 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, user iden
 }
 
 func (service *AlertRuleService) DeleteRuleGroup(ctx context.Context, user identity.Requester, namespaceUID, group string, provenance models.Provenance) error {
-	// List all rules in the group.
-	q := models.ListAlertRulesQuery{
-		OrgID:         user.GetOrgID(),
-		NamespaceUIDs: []string{namespaceUID},
-		RuleGroup:     group,
-	}
-	ruleList, err := service.ruleStore.ListAlertRules(ctx, &q)
+	delta, err := store.CalculateRuleGroupDelete(ctx, service.ruleStore, models.AlertRuleGroupKey{
+		OrgID:        user.GetOrgID(),
+		NamespaceUID: namespaceUID,
+		RuleGroup:    group,
+	})
 	if err != nil {
 		return err
 	}
-	if len(ruleList) == 0 {
-		return models.ErrAlertRuleGroupNotFound.Errorf("")
-	}
 
-	// Check provenance for all rules in the group. Fail to delete if any deletions aren't allowed.
-	for _, rule := range ruleList {
-		storedProvenance, err := service.provenanceStore.GetProvenance(ctx, rule, rule.OrgID)
+	// check if the current user has permissions to all rules and can bypass the regular authorization validation.
+	if can, err := service.authz.CanWriteAllRules(ctx, user); !can || err != nil {
 		if err != nil {
 			return err
 		}
-		if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
-			return fmt.Errorf("cannot delete with provided provenance '%s', needs '%s'", provenance, storedProvenance)
+		if err := service.authz.AuthorizeRuleChanges(ctx, user, delta); err != nil {
+			return err
 		}
 	}
 
-	// Delete all rules.
-	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
-		return service.deleteRules(ctx, user.GetOrgID(), ruleList...)
-	})
+	return service.persistDelta(ctx, user, delta, provenance)
 }
 
 func (service *AlertRuleService) calcDelta(ctx context.Context, user identity.Requester, group models.AlertRuleGroup) (*store.GroupDelta, error) {
@@ -429,7 +485,7 @@ func (service *AlertRuleService) calcDelta(ctx context.Context, user identity.Re
 		NamespaceUID: group.FolderUID,
 		RuleGroup:    group.Title,
 	}
-	rules := make([]*models.AlertRuleWithOptionals, len(group.Rules))
+	rules := make([]*models.AlertRuleWithOptionals, 0, len(group.Rules))
 	group = *syncGroupRuleFields(&group, user.GetOrgID())
 	for i := range group.Rules {
 		if err := group.Rules[i].SetDashboardAndPanelFromAnnotations(); err != nil {
@@ -457,7 +513,7 @@ func (service *AlertRuleService) persistDelta(ctx context.Context, user identity
 					return err
 				}
 				if canUpdate := canUpdateProvenanceInRuleGroup(storedProvenance, provenance); !canUpdate {
-					return fmt.Errorf("cannot update with provided provenance '%s', needs '%s'", provenance, storedProvenance)
+					return fmt.Errorf("cannot delete with provided provenance '%s', needs '%s'", provenance, storedProvenance)
 				}
 			}
 			if err := service.deleteRules(ctx, user.GetOrgID(), delta.Delete...); err != nil {
@@ -513,7 +569,41 @@ func (service *AlertRuleService) persistDelta(ctx context.Context, user identity
 
 // UpdateAlertRule updates an alert rule.
 func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user identity.Requester, rule models.AlertRule, provenance models.Provenance) (models.AlertRule, error) {
-	storedRule, storedProvenance, err := service.GetAlertRule(ctx, user, rule.UID)
+	var storedRule *models.AlertRule
+	// check if the user has full access to all rules and can bypass the regular authorization validations.
+	// If it cannot, calculate the changes to the group caused by this update and authorize them.
+	canWriteAllRules, err := service.authz.CanWriteAllRules(ctx, user)
+	if err != nil {
+		return models.AlertRule{}, err
+	}
+	if canWriteAllRules {
+		query := &models.GetAlertRuleByUIDQuery{
+			OrgID: rule.OrgID,
+			UID:   rule.UID,
+		}
+		existing, err := service.ruleStore.GetAlertRuleByUID(ctx, query)
+		if err != nil {
+			return models.AlertRule{}, err
+		}
+		storedRule = existing
+	} else {
+		delta, err := store.CalculateRuleUpdate(ctx, service.ruleStore, &models.AlertRuleWithOptionals{AlertRule: rule})
+		if err != nil {
+			return models.AlertRule{}, err
+		}
+		if err = service.authz.AuthorizeRuleChanges(ctx, user, delta); err != nil {
+			return models.AlertRule{}, err
+		}
+		for _, d := range delta.Update {
+			if d.Existing.GetKey() == rule.GetKey() {
+				storedRule = d.Existing
+			}
+		}
+		if storedRule == nil { // this should not happen but we better catch it to avoid panic
+			return models.AlertRule{}, fmt.Errorf("cannot find rule in the delta")
+		}
+	}
+	storedProvenance, err := service.provenanceStore.GetProvenance(ctx, storedRule, storedRule.OrgID)
 	if err != nil {
 		return models.AlertRule{}, err
 	}
@@ -541,7 +631,7 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		err := service.ruleStore.UpdateAlertRules(ctx, []models.UpdateRule{
 			{
-				Existing: &storedRule,
+				Existing: storedRule,
 				New:      rule,
 			},
 		})
@@ -569,6 +659,20 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, user ident
 	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
 		return fmt.Errorf("cannot delete with provided provenance '%s', needs '%s'", provenance, storedProvenance)
 	}
+
+	if can, err := service.authz.CanWriteAllRules(ctx, user); !can || err != nil {
+		if err != nil {
+			return err
+		}
+		delta, err := store.CalculateRuleDelete(ctx, service.ruleStore, rule.GetKey())
+		if err != nil {
+			return err
+		}
+		if err = service.authz.AuthorizeRuleChanges(ctx, user, delta); err != nil {
+			return err
+		}
+	}
+
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		return service.deleteRules(ctx, user.GetOrgID(), rule)
 	})
