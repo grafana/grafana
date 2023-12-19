@@ -111,13 +111,17 @@ func (s *SSOSettingsService) List(ctx context.Context) ([]*models.SSOSettings, e
 
 func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSettings) error {
 	// TODO: also check whether the provider is configurable
-	// Get the connector for the provider (from the reloadables) and call Validate
-	systemSettings, err := s.loadSettingsUsingFallbackStrategy(ctx, settings.Provider)
+	reload, ok := s.reloadables[settings.Provider]
+	if !ok {
+		return ssosettings.ErrInvalidProvider.Errorf("provider %s not found in reloadables", settings.Provider)
+	}
+
+	err := reload.Validate(ctx, settings)
 	if err != nil {
 		return err
 	}
 
-	settings.Settings, err = s.encryptSecrets(ctx, settings.Settings)
+	systemSettings, err := s.loadSettingsUsingFallbackStrategy(ctx, settings.Provider)
 	if err != nil {
 		return err
 	}
@@ -125,6 +129,11 @@ func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSett
 	// add the SSO settings from system that are not available in the user input
 	// in order to have a complete set of SSO settings for every provider in the database
 	settings.Settings = mergeSettings(settings.Settings, systemSettings.Settings)
+
+	settings.Settings, err = s.encryptSecrets(ctx, settings.Settings)
+	if err != nil {
+		return err
+	}
 
 	return s.store.Upsert(ctx, settings)
 }

@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
 )
 
 type SocialBase struct {
@@ -198,6 +199,17 @@ func (s *SocialBase) retrieveRawIDToken(idToken any) ([]byte, error) {
 	}
 
 	return rawJSON, nil
+}
+
+func validateInfo(info *social.OAuthInfo) error {
+	if info.ClientId == "" {
+		return ssosettings.ErrEmptyClientId.Errorf("clientId is empty")
+	}
+	if info.ClientSecret == "" {
+		return ssosettings.ErrEmptyClientSecret.Errorf("client secret is empty")
+	}
+
+	return nil
 }
 
 // match grafana admin role and translate to org role and bool.

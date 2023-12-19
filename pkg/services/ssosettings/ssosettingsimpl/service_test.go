@@ -252,8 +252,9 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 	t.Run("successfully upsert SSO settings", func(t *testing.T) {
 		env := setupTestEnv(t)
 
+		provider := "azuread"
 		settings := models.SSOSettings{
-			Provider: "azuread",
+			Provider: provider,
 			Settings: map[string]any{
 				"client_id":     "client-id",
 				"client_secret": "client-secret",
@@ -262,6 +263,9 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 			IsDeleted: false,
 		}
 
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		reloadable.On("Validate", mock.Anything, settings).Return(nil)
+		env.reloadables[provider] = reloadable
 		env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
 
 		err := env.service.Upsert(context.Background(), settings)
@@ -274,8 +278,9 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 	t.Run("successfully upsert SSO settings having system settings", func(t *testing.T) {
 		env := setupTestEnv(t)
 
+		provider := "guthub"
 		settings := models.SSOSettings{
-			Provider: "azuread",
+			Provider: provider,
 			Settings: map[string]any{
 				"client_id":     "client-id",
 				"client_secret": "client-secret",
@@ -288,6 +293,9 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 			"use_refresh_token": true,
 		}
 
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		reloadable.On("Validate", mock.Anything, settings).Return(nil)
+		env.reloadables[provider] = reloadable
 		env.fallbackStrategy.ExpectedConfig = systemSettings
 		env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
 
@@ -303,8 +311,9 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 	t.Run("successfully upsert SSO settings having system settings without overwriting user settings", func(t *testing.T) {
 		env := setupTestEnv(t)
 
+		provider := "gitlab"
 		settings := models.SSOSettings{
-			Provider: "azuread",
+			Provider: provider,
 			Settings: map[string]any{
 				"client_id":     "client-id",
 				"client_secret": "client-secret",
@@ -320,6 +329,9 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 			"use_refresh_token": true,
 		}
 
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		reloadable.On("Validate", mock.Anything, settings).Return(nil)
+		env.reloadables[provider] = reloadable
 		env.fallbackStrategy.ExpectedConfig = systemSettings
 		env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
 
@@ -354,8 +366,9 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 	t.Run("returns error if secrets encryption failed", func(t *testing.T) {
 		env := setupTestEnv(t)
 
+		provider := "okta"
 		settings := models.SSOSettings{
-			Provider: "azuread",
+			Provider: provider,
 			Settings: map[string]any{
 				"client_id":     "client-id",
 				"client_secret": "client-secret",
@@ -364,6 +377,9 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 			IsDeleted: false,
 		}
 
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		reloadable.On("Validate", mock.Anything, settings).Return(nil)
+		env.reloadables[provider] = reloadable
 		env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return(nil, errors.New("encryption failed")).Once()
 
 		err := env.service.Upsert(context.Background(), settings)
@@ -373,8 +389,9 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 	t.Run("returns error if store failed to upsert settings", func(t *testing.T) {
 		env := setupTestEnv(t)
 
+		provider := "azuread"
 		settings := models.SSOSettings{
-			Provider: "azuread",
+			Provider: provider,
 			Settings: map[string]any{
 				"client_id":     "client-id",
 				"client_secret": "client-secret",
@@ -383,6 +400,9 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 			IsDeleted: false,
 		}
 
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		reloadable.On("Validate", mock.Anything, settings).Return(nil)
+		env.reloadables[provider] = reloadable
 		env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
 		env.store.ExpectedError = errors.New("upsert failed")
 
@@ -430,6 +450,7 @@ func setupTestEnv(t *testing.T) testEnv {
 	fallbackStrategy := ssosettingstests.NewFakeFallbackStrategy()
 	secrets := secretsFakes.NewMockService(t)
 	accessControl := acimpl.ProvideAccessControl(setting.NewCfg())
+	reloadables := make(map[string]ssosettings.Reloadable)
 
 	fallbackStrategy.ExpectedIsMatch = true
 
@@ -438,7 +459,7 @@ func setupTestEnv(t *testing.T) testEnv {
 		store:        store,
 		ac:           accessControl,
 		fbStrategies: []ssosettings.FallbackStrategy{fallbackStrategy},
-		reloadables:  make(map[string]ssosettings.Reloadable),
+		reloadables:  reloadables,
 		secrets:      secrets,
 	}
 
@@ -448,6 +469,7 @@ func setupTestEnv(t *testing.T) testEnv {
 		ac:               accessControl,
 		fallbackStrategy: fallbackStrategy,
 		secrets:          secrets,
+		reloadables:      reloadables,
 	}
 }
 
@@ -457,4 +479,5 @@ type testEnv struct {
 	ac               accesscontrol.AccessControl
 	fallbackStrategy *ssosettingstests.FakeFallbackStrategy
 	secrets          *secretsFakes.MockService
+	reloadables      map[string]ssosettings.Reloadable
 }
