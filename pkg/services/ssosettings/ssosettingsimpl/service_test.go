@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	secretsFakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -252,7 +253,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 	t.Run("successfully upsert SSO settings", func(t *testing.T) {
 		env := setupTestEnv(t)
 
-		provider := "azuread"
+		provider := social.AzureADProviderName
 		settings := models.SSOSettings{
 			Provider: provider,
 			Settings: map[string]any{
@@ -279,7 +280,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 	t.Run("successfully upsert SSO settings having system settings", func(t *testing.T) {
 		env := setupTestEnv(t)
 
-		provider := "guthub"
+		provider := social.GitHubProviderName
 		settings := models.SSOSettings{
 			Provider: provider,
 			Settings: map[string]any{
@@ -313,7 +314,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 	t.Run("successfully upsert SSO settings having system settings without overwriting user settings", func(t *testing.T) {
 		env := setupTestEnv(t)
 
-		provider := "gitlab"
+		provider := social.GitlabProviderName
 		settings := models.SSOSettings{
 			Provider: provider,
 			Settings: map[string]any{
@@ -350,7 +351,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 	t.Run("returns error if provider was not found in reloadables", func(t *testing.T) {
 		env := setupTestEnv(t)
 
-		provider := "azuread"
+		provider := social.AzureADProviderName
 		settings := models.SSOSettings{
 			Provider: provider,
 			Settings: map[string]any{
@@ -372,7 +373,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 	t.Run("returns error if validation fails", func(t *testing.T) {
 		env := setupTestEnv(t)
 
-		provider := "azuread"
+		provider := social.AzureADProviderName
 		settings := models.SSOSettings{
 			Provider: provider,
 			Settings: map[string]any{
@@ -395,7 +396,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 		env := setupTestEnv(t)
 
 		settings := models.SSOSettings{
-			Provider: "azuread",
+			Provider: social.AzureADProviderName,
 			Settings: map[string]any{
 				"client_id":     "client-id",
 				"client_secret": "client-secret",
@@ -413,7 +414,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 	t.Run("returns error if secrets encryption failed", func(t *testing.T) {
 		env := setupTestEnv(t)
 
-		provider := "okta"
+		provider := social.OktaProviderName
 		settings := models.SSOSettings{
 			Provider: provider,
 			Settings: map[string]any{
@@ -436,7 +437,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 	t.Run("returns error if store failed to upsert settings", func(t *testing.T) {
 		env := setupTestEnv(t)
 
-		provider := "azuread"
+		provider := social.AzureADProviderName
 		settings := models.SSOSettings{
 			Provider: provider,
 			Settings: map[string]any{
@@ -460,7 +461,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 	t.Run("successfully upsert SSO settings if reload fails", func(t *testing.T) {
 		env := setupTestEnv(t)
 
-		provider := "azuread"
+		provider := social.AzureADProviderName
 		settings := models.SSOSettings{
 			Provider: provider,
 			Settings: map[string]any{
@@ -489,7 +490,7 @@ func TestSSOSettingsService_Delete(t *testing.T) {
 	t.Run("successfully delete SSO settings", func(t *testing.T) {
 		env := setupTestEnv(t)
 
-		provider := "azuread"
+		provider := social.AzureADProviderName
 		env.store.ExpectedError = nil
 
 		err := env.service.Delete(context.Background(), provider)
@@ -499,7 +500,7 @@ func TestSSOSettingsService_Delete(t *testing.T) {
 	t.Run("SSO settings not found for the specified provider", func(t *testing.T) {
 		env := setupTestEnv(t)
 
-		provider := "azuread"
+		provider := social.AzureADProviderName
 		env.store.ExpectedError = ssosettings.ErrNotFound
 
 		err := env.service.Delete(context.Background(), provider)
@@ -510,7 +511,7 @@ func TestSSOSettingsService_Delete(t *testing.T) {
 	t.Run("store fails to delete the SSO settings for the specified provider", func(t *testing.T) {
 		env := setupTestEnv(t)
 
-		provider := "azuread"
+		provider := social.AzureADProviderName
 		env.store.ExpectedError = errors.New("delete sso settings failed")
 
 		err := env.service.Delete(context.Background(), provider)
