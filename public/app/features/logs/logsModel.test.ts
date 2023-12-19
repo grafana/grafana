@@ -1423,7 +1423,7 @@ describe('logs volume', () => {
             meta: {
               dataTopic: DataTopic.Annotations,
             },
-            name: "annotation"
+            name: 'annotation',
           }),
         ],
       });
@@ -1440,7 +1440,7 @@ describe('logs volume', () => {
         ],
       });
     });
-  })
+  });
 });
 
 describe('logs sample', () => {

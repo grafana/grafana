@@ -54,7 +54,8 @@ export const LogsVolumePanelList = ({
   } = useMemo(() => {
     let maximumValue = -Infinity;
     const data = logsVolumeData?.data.filter((frame: DataFrame) => frame.meta?.dataTopic !== DataTopic.Annotations);
-    const annotations = logsVolumeData?.data.filter((frame: DataFrame) => frame.meta?.dataTopic === DataTopic.Annotations) || [];
+    const annotations =
+      logsVolumeData?.data.filter((frame: DataFrame) => frame.meta?.dataTopic === DataTopic.Annotations) || [];
     const sorted = sortBy(data || [], 'meta.custom.datasourceName');
     const grouped = groupBy(sorted, 'meta.custom.datasourceName');
     const logVolumes = mapValues(grouped, (value) => {
