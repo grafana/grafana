@@ -1,10 +1,14 @@
 package dashboards
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -22,6 +26,15 @@ func TestTestDatasource(t *testing.T) {
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
 		},
 	})
+
+	// Create a single datasource
+	ds := helper.CreateDS(&datasources.AddDataSourceCommand{
+		Name:  "test",
+		Type:  datasources.DS_TESTDATA,
+		UID:   "test",
+		OrgID: int64(1),
+	})
+	require.Equal(t, "test", ds.UID)
 
 	t.Run("Check discovery client", func(t *testing.T) {
 		disco := helper.GetGroupVersionInfoJSON("testdata.datasource.grafana.app")
@@ -93,4 +106,41 @@ func TestTestDatasource(t *testing.T) {
 			}
 		  ]`, disco)
 	})
+
+	t.Run("Call subresources", func(t *testing.T) {
+		client := helper.Org1.Admin.Client.Resource(schema.GroupVersionResource{
+			Group:    "testdata.datasource.grafana.app",
+			Version:  "v0alpha1",
+			Resource: "connections",
+		}).Namespace("default")
+		ctx := context.Background()
+
+		list, err := client.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1, "expected a single connection")
+		require.Equal(t, "test", list.Items[0].GetName(), "with the test uid")
+
+		rsp, err := client.Get(ctx, "test", metav1.GetOptions{}, "health")
+		require.NoError(t, err)
+		body, err := rsp.MarshalJSON()
+		require.NoError(t, err)
+		//fmt.Printf("GOT: %v\n", string(body))
+		require.JSONEq(t, `{
+			"apiVersion": "testdata.datasource.grafana.app/v0alpha1",
+			"code": 1,
+			"kind": "HealthCheckResult",
+			"message": "Data source is working",
+			"status": "OK"
+		  }
+		`, string(body))
+
+		// Test connecting to non-JSON marshaled data
+		raw := apis.DoRequest[any](helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: "GET",
+			Path:   "/apis/testdata.datasource.grafana.app/v0alpha1/namespaces/default/connections/test/resource",
+		}, nil)
+		require.Equal(t, `Hello world from test datasource!`, string(raw.Body))
+	})
+
 }
