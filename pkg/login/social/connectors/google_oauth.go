@@ -58,7 +58,7 @@ func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings sso
 func (s *SocialGoogle) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
 	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
 	if err != nil {
-		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted into OAuthInfo: %v", err)
+		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
 	err = validateInfo(info)

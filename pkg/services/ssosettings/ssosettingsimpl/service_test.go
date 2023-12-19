@@ -265,6 +265,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 
 		reloadable := ssosettingstests.NewMockReloadable(t)
 		reloadable.On("Validate", mock.Anything, settings).Return(nil)
+		reloadable.On("Reload", mock.Anything, mock.Anything).Return(nil).Maybe()
 		env.reloadables[provider] = reloadable
 		env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
 
@@ -295,6 +296,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 
 		reloadable := ssosettingstests.NewMockReloadable(t)
 		reloadable.On("Validate", mock.Anything, settings).Return(nil)
+		reloadable.On("Reload", mock.Anything, mock.Anything).Return(nil).Maybe()
 		env.reloadables[provider] = reloadable
 		env.fallbackStrategy.ExpectedConfig = systemSettings
 		env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
@@ -331,6 +333,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 
 		reloadable := ssosettingstests.NewMockReloadable(t)
 		reloadable.On("Validate", mock.Anything, settings).Return(nil)
+		reloadable.On("Reload", mock.Anything, mock.Anything).Return(nil).Maybe()
 		env.reloadables[provider] = reloadable
 		env.fallbackStrategy.ExpectedConfig = systemSettings
 		env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
@@ -452,6 +455,33 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 
 		err := env.service.Upsert(context.Background(), settings)
 		require.Error(t, err)
+	})
+
+	t.Run("successfully upsert SSO settings if reload fails", func(t *testing.T) {
+		env := setupTestEnv(t)
+
+		provider := "azuread"
+		settings := models.SSOSettings{
+			Provider: provider,
+			Settings: map[string]any{
+				"client_id":     "client-id",
+				"client_secret": "client-secret",
+				"enabled":       true,
+			},
+			IsDeleted: false,
+		}
+
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		reloadable.On("Validate", mock.Anything, settings).Return(nil)
+		reloadable.On("Reload", mock.Anything, mock.Anything).Return(errors.New("failed reloading new settings")).Maybe()
+		env.reloadables[provider] = reloadable
+		env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
+
+		err := env.service.Upsert(context.Background(), settings)
+		require.NoError(t, err)
+
+		settings.Settings["client_secret"] = "encrypted-client-secret"
+		require.EqualValues(t, settings, env.store.ActualSSOSettings)
 	})
 }
 

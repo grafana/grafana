@@ -111,12 +111,12 @@ func (s *SSOSettingsService) List(ctx context.Context) ([]*models.SSOSettings, e
 
 func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSettings) error {
 	// TODO: also check whether the provider is configurable
-	reload, ok := s.reloadables[settings.Provider]
+	social, ok := s.reloadables[settings.Provider]
 	if !ok {
 		return ssosettings.ErrInvalidProvider.Errorf("provider %s not found in reloadables", settings.Provider)
 	}
 
-	err := reload.Validate(ctx, settings)
+	err := social.Validate(ctx, settings)
 	if err != nil {
 		return err
 	}
@@ -135,7 +135,19 @@ func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSett
 		return err
 	}
 
-	return s.store.Upsert(ctx, settings)
+	err = s.store.Upsert(ctx, settings)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		err = social.Reload(context.Background(), settings)
+		if err != nil {
+			s.log.Error("failed to reload the provider", "provider", settings.Provider, "error", err)
+		}
+	}()
+
+	return nil
 }
 
 func (s *SSOSettingsService) Patch(ctx context.Context, provider string, data map[string]any) error {
