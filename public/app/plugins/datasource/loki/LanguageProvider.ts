@@ -2,6 +2,7 @@ import { LRUCache } from 'lru-cache';
 import Prism from 'prismjs';
 
 import { LanguageProvider, AbstractQuery, KeyValue, getDefaultTimeRange, TimeRange } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { extractLabelMatchers, processLabels, toPromLikeExpr } from 'app/plugins/datasource/prometheus/language_utils';
 
 import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
@@ -18,6 +19,7 @@ const NS_IN_MS = 1000000;
 export default class LokiLanguageProvider extends LanguageProvider {
   labelKeys: string[];
   started = false;
+  startedTimeRange?: TimeRange;
   datasource: LokiDatasource;
 
   /**
@@ -52,7 +54,13 @@ export default class LokiLanguageProvider extends LanguageProvider {
    */
   start = (timeRange?: TimeRange) => {
     const range = timeRange ?? this.getDefaultTimeRange();
-    if (!this.startTask) {
+    // refetch labels if either there's not already a start task or the time range has changed
+    if (
+      !this.startTask ||
+      this.startedTimeRange?.from.isSame(range.from) === false ||
+      this.startedTimeRange?.to.isSame(range.to) === false
+    ) {
+      this.startedTimeRange = range;
       this.startTask = this.fetchLabels({ timeRange: range }).then(() => {
         this.started = true;
         return [];
@@ -261,6 +269,18 @@ export default class LokiLanguageProvider extends LanguageProvider {
     streamSelector: string,
     options?: { maxLines?: number; timeRange?: TimeRange }
   ): Promise<ParserAndLabelKeysResult> {
+    const empty = {
+      extractedLabelKeys: [],
+      structuredMetadataKeys: [],
+      unwrapLabelKeys: [],
+      hasJSON: false,
+      hasLogfmt: false,
+      hasPack: false,
+    };
+    if (!config.featureToggles.lokiQueryHints) {
+      return empty;
+    }
+
     const series = await this.datasource.getDataSamples(
       {
         expr: streamSelector,
@@ -271,14 +291,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
     );
 
     if (!series.length) {
-      return {
-        extractedLabelKeys: [],
-        structuredMetadataKeys: [],
-        unwrapLabelKeys: [],
-        hasJSON: false,
-        hasLogfmt: false,
-        hasPack: false,
-      };
+      return empty;
     }
 
     const { hasLogfmt, hasJSON, hasPack } = extractLogParserFromDataFrame(series[0]);
