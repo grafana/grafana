@@ -75,6 +75,7 @@ export interface CatalogPluginDetails {
   grafanaDependency?: string;
   pluginDependencies?: PluginDependencies['plugins'];
   statusContext?: string;
+  iam?: IdentityAccessManagement;
 }
 
 export interface CatalogPluginInfo {
