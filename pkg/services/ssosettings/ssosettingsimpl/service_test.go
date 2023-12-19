@@ -266,6 +266,89 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 
 		err := env.service.Upsert(context.Background(), settings)
 		require.NoError(t, err)
+
+		settings.Settings["client_secret"] = "encrypted-client-secret"
+		require.EqualValues(t, settings, env.store.ActualSSOSettings)
+	})
+
+	t.Run("successfully upsert SSO settings having system settings", func(t *testing.T) {
+		env := setupTestEnv(t)
+
+		settings := models.SSOSettings{
+			Provider: "azuread",
+			Settings: map[string]any{
+				"client_id":     "client-id",
+				"client_secret": "client-secret",
+				"enabled":       true,
+			},
+			IsDeleted: false,
+		}
+		systemSettings := map[string]any{
+			"api_url":           "http://api-url",
+			"use_refresh_token": true,
+		}
+
+		env.fallbackStrategy.ExpectedConfig = systemSettings
+		env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
+
+		err := env.service.Upsert(context.Background(), settings)
+		require.NoError(t, err)
+
+		settings.Settings["client_secret"] = "encrypted-client-secret"
+		settings.Settings["api_url"] = systemSettings["api_url"]
+		settings.Settings["use_refresh_token"] = systemSettings["use_refresh_token"]
+		require.EqualValues(t, settings, env.store.ActualSSOSettings)
+	})
+
+	t.Run("successfully upsert SSO settings having system settings without overwriting user settings", func(t *testing.T) {
+		env := setupTestEnv(t)
+
+		settings := models.SSOSettings{
+			Provider: "azuread",
+			Settings: map[string]any{
+				"client_id":     "client-id",
+				"client_secret": "client-secret",
+				"enabled":       true,
+			},
+			IsDeleted: false,
+		}
+		systemSettings := map[string]any{
+			"client_id":         "client-id-from-system",
+			"client_secret":     "client-secret-from-system",
+			"enabled":           false,
+			"api_url":           "http://api-url",
+			"use_refresh_token": true,
+		}
+
+		env.fallbackStrategy.ExpectedConfig = systemSettings
+		env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
+
+		err := env.service.Upsert(context.Background(), settings)
+		require.NoError(t, err)
+
+		settings.Settings["client_secret"] = "encrypted-client-secret"
+		settings.Settings["api_url"] = systemSettings["api_url"]
+		settings.Settings["use_refresh_token"] = systemSettings["use_refresh_token"]
+		require.EqualValues(t, settings, env.store.ActualSSOSettings)
+	})
+
+	t.Run("returns error if a fallback strategy is not available for the provider", func(t *testing.T) {
+		env := setupTestEnv(t)
+
+		settings := models.SSOSettings{
+			Provider: "azuread",
+			Settings: map[string]any{
+				"client_id":     "client-id",
+				"client_secret": "client-secret",
+				"enabled":       true,
+			},
+			IsDeleted: false,
+		}
+
+		env.fallbackStrategy.ExpectedIsMatch = false
+
+		err := env.service.Upsert(context.Background(), settings)
+		require.Error(t, err)
 	})
 
 	t.Run("returns error if secrets encryption failed", func(t *testing.T) {
@@ -347,6 +430,8 @@ func setupTestEnv(t *testing.T) testEnv {
 	fallbackStrategy := ssosettingstests.NewFakeFallbackStrategy()
 	secrets := secretsFakes.NewMockService(t)
 	accessControl := acimpl.ProvideAccessControl(setting.NewCfg())
+
+	fallbackStrategy.ExpectedIsMatch = true
 
 	svc := &SSOSettingsService{
 		log:          log.NewNopLogger(),
