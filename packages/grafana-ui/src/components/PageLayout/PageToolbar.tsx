@@ -91,7 +91,8 @@ export const PageToolbar = React.memo(
                 name="arrow-left"
                 tooltip="Go back (Esc)"
                 tooltipPlacement="bottom"
-                size="xxl"
+                // @PERCONA
+                size="xl"
                 aria-label={selectors.components.BackButton.backArrow}
                 onClick={onGoBack}
               />
