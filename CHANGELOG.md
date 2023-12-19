@@ -395,6 +395,30 @@ Starting with 10.2, `parentRowIndex` is deprecated. It will be removed in a futu
 - **Drawer:** Make content scroll by default. [#75287](https://github.com/grafana/grafana/issues/75287), [@ashharrison90](https://github.com/ashharrison90)
 
 <!-- 10.2.0 END -->
+<!-- 10.1.6 START -->
+
+# 10.1.6 (2023-12-18)
+
+### Features and enhancements
+
+- **Alerting:** Attempt to retry retryable errors. [#79211](https://github.com/grafana/grafana/issues/79211), [@gotjosh](https://github.com/gotjosh)
+- **Unified Alerting:** Set `max_attempts` to 1 by default. [#79102](https://github.com/grafana/grafana/issues/79102), [@gotjosh](https://github.com/gotjosh)
+
+### Bug fixes
+
+- **Alerting:** Fix deleting rules in a folder with matching UID in another organization. [#79007](https://github.com/grafana/grafana/issues/79007), [@papagian](https://github.com/papagian)
+- **Chore:** Fix timeout issues when gathering prometheus datasource stats. [#78858](https://github.com/grafana/grafana/issues/78858), [@DanCech](https://github.com/DanCech)
+- **Provisioning:** Ensure that enterprise provisioning runs [10.1.x]. [#76686](https://github.com/grafana/grafana/issues/76686), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+- **Alerting:** Make shareable alert rule link work if rule name contains forward slashes. [#75950](https://github.com/grafana/grafana/issues/75950), [@domasx2](https://github.com/domasx2)
+- **Loki:** Cache extracted labels. [#75905](https://github.com/grafana/grafana/issues/75905), [@gtk-grafana](https://github.com/gtk-grafana)
+- **DataSourcePicker:** Disable autocomplete for the search input . [#75900](https://github.com/grafana/grafana/issues/75900), [@ivanortegaalba](https://github.com/ivanortegaalba)
+- **Plugins:** Refresh plugin info after installation. [#75225](https://github.com/grafana/grafana/issues/75225), [@oshirohugo](https://github.com/oshirohugo)
+- **LDAP:** FIX Enable users on successfull login . [#75176](https://github.com/grafana/grafana/issues/75176), [@gamab](https://github.com/gamab)
+- **Loki:** Fix filters not being added with multiple expressions and parsers. [#75172](https://github.com/grafana/grafana/issues/75172), [@svennergr](https://github.com/svennergr)
+- **Recorded Queries:** Add org isolation (remote write target per org), and fix cross org Delete/List. (Enterprise)
+- **Auditing and UsageInsights:** FIX Loki configuration to use proxy env variables. (Enterprise)
+
+<!-- 10.1.6 END -->
 <!-- 10.1.5 START -->
 
 # 10.1.5 (2023-10-11)
@@ -872,6 +896,20 @@ Starting with 10.0, changing the folder UID is deprecated. It will be removed in
 - **Grafana/ui:** Fix margin in RadioButtonGroup option when only icon is present. [#68899](https://github.com/grafana/grafana/issues/68899), [@aocenas](https://github.com/aocenas)
 
 <!-- 10.1.0 END -->
+<!-- 10.0.10 START -->
+
+# 10.0.10 (2023-12-18)
+
+### Features and enhancements
+
+- **Alerting:** Attempt to retry retryable errors. [#79210](https://github.com/grafana/grafana/issues/79210), [@gotjosh](https://github.com/gotjosh)
+- **Unified Alerting:** Set `max_attempts` to 1 by default. [#79101](https://github.com/grafana/grafana/issues/79101), [@gotjosh](https://github.com/gotjosh)
+
+### Bug fixes
+
+- **Recorded Queries:** Add org isolation (remote write target per org), and fix cross org Delete/List. (Enterprise)
+
+<!-- 10.0.10 END -->
 <!-- 10.0.9 START -->
 
 # 10.0.9 (2023-10-11)
@@ -1390,6 +1428,20 @@ The `database` field has been deprecated in the Elasticsearch datasource provisi
 - **InteractiveTable:** Updated design and minor tweak to Correlactions page. [#66443](https://github.com/grafana/grafana/issues/66443), [@torkelo](https://github.com/torkelo)
 
 <!-- 10.0.0-preview END -->
+<!-- 9.5.15 START -->
+
+# 9.5.15 (2023-12-18)
+
+### Features and enhancements
+
+- **Alerting:** Attempt to retry retryable errors. [#79209](https://github.com/grafana/grafana/issues/79209), [@gotjosh](https://github.com/gotjosh)
+- **Unified Alerting:** Set to 1 by default. [#79109](https://github.com/grafana/grafana/issues/79109), [@gotjosh](https://github.com/gotjosh)
+
+### Bug fixes
+
+- **Recorded Queries:** Add org isolation (remote write target per org), and fix cross org Delete/List. (Enterprise)
+
+<!-- 9.5.15 END -->
 <!-- 9.5.14 START -->
 
 # 9.5.14 (2023-11-13)
