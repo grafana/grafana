@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { AriaRole, HTMLAttributes, ReactNode } from 'react';
+import React, { AriaRole, HTMLAttributes } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
