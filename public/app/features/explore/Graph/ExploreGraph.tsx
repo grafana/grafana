@@ -1,5 +1,6 @@
 import { identity } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
+import { usePrevious } from 'react-use';
 
 import {
   AbsoluteTimeRange,
@@ -77,17 +78,18 @@ export function ExploreGraph({
   eventBus,
 }: Props) {
   const theme = useTheme2();
-
+  const previousTimeRange = usePrevious(absoluteRange);
+  const baseTimeRange = loadingState === LoadingState.Loading && previousTimeRange ? previousTimeRange : absoluteRange;
   const timeRange = useMemo(
     () => ({
-      from: dateTime(absoluteRange.from),
-      to: dateTime(absoluteRange.to),
+      from: dateTime(baseTimeRange.from),
+      to: dateTime(baseTimeRange.to),
       raw: {
-        from: dateTime(absoluteRange.from),
-        to: dateTime(absoluteRange.to),
+        from: dateTime(baseTimeRange.from),
+        to: dateTime(baseTimeRange.to),
       },
     }),
-    [absoluteRange.from, absoluteRange.to]
+    [baseTimeRange.from, baseTimeRange.to]
   );
 
   const fieldConfigRegistry = useMemo(
@@ -120,18 +122,16 @@ export function ExploreGraph({
   const dataLinkPostProcessor = useExploreDataLinkPostProcessor(splitOpenFn, timeRange);
 
   const dataWithConfig = useMemo(() => {
-    return loadingState === LoadingState.Done
-      ? applyFieldOverrides({
-          fieldConfig: styledFieldConfig,
-          data,
-          timeZone,
-          replaceVariables: (value) => value, // We don't need proper replace here as it is only used in getLinks and we use getFieldLinks
-          theme,
-          fieldConfigRegistry,
-          dataLinkPostProcessor,
-        })
-      : [];
-  }, [loadingState, styledFieldConfig, data, timeZone, theme, fieldConfigRegistry, dataLinkPostProcessor]);
+    return applyFieldOverrides({
+      fieldConfig: styledFieldConfig,
+      data,
+      timeZone,
+      replaceVariables: (value) => value, // We don't need proper replace here as it is only used in getLinks and we use getFieldLinks
+      theme,
+      fieldConfigRegistry,
+      dataLinkPostProcessor,
+    });
+  }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig, dataLinkPostProcessor]);
 
   const annotationsWithConfig = useMemo(() => {
     return applyFieldOverrides({
