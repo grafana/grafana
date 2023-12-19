@@ -27,13 +27,11 @@ type OrgMigration struct {
 	titleDeduplicatorForFolder func(folderUID string) *migmodels.Deduplicator
 	channelCache               *ChannelCache
 
-	// Migrated folder for a dashboard based on permissions. Parent Folder ID -> unique dashboard permission -> custom folder.
-	permissionsMap        map[int64]map[permissionHash]*folder.Folder
+	// Caches used during customer folder creation.
+	permissionsMap        map[int64]map[permissionHash]*folder.Folder   // Parent Folder ID -> unique dashboard permission -> custom folder.
 	folderCache           map[int64]*folder.Folder                      // Folder ID -> Folder.
 	folderPermissionCache map[string][]accesscontrol.ResourcePermission // Folder UID -> Folder Permissions.
 	generalAlertingFolder *folder.Folder
-
-	state *migmodels.OrgMigrationState
 }
 
 // newOrgMigration creates a new OrgMigration for the given orgID.
@@ -59,11 +57,6 @@ func (ms *migrationService) newOrgMigration(orgID int64) *OrgMigration {
 		permissionsMap:        make(map[int64]map[permissionHash]*folder.Folder),
 		folderCache:           make(map[int64]*folder.Folder),
 		folderPermissionCache: make(map[string][]accesscontrol.ResourcePermission),
-
-		state: &migmodels.OrgMigrationState{
-			OrgID:          orgID,
-			CreatedFolders: make([]string, 0),
-		},
 	}
 }
 

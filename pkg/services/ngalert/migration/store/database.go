@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -59,8 +58,8 @@ type Store interface {
 	SetMigrated(ctx context.Context, orgID int64, migrated bool) error
 	GetCurrentAlertingType(ctx context.Context) (AlertingType, error)
 	SetCurrentAlertingType(ctx context.Context, t AlertingType) error
-	GetOrgMigrationState(ctx context.Context, orgID int64) (*migmodels.OrgMigrationState, error)
-	SetOrgMigrationState(ctx context.Context, orgID int64, summary *migmodels.OrgMigrationState) error
+	GetOrgMigrationState(ctx context.Context, orgID int64) (*OrgMigrationState, error)
+	SetOrgMigrationState(ctx context.Context, orgID int64, summary *OrgMigrationState) error
 
 	RevertAllOrgs(ctx context.Context) error
 
@@ -197,8 +196,8 @@ func (ms *migrationStore) SetCurrentAlertingType(ctx context.Context, t Alerting
 	return kv.Set(ctx, typeKey, string(t))
 }
 
-// GetOrgMigrationState returns a summary of a previous migration.
-func (ms *migrationStore) GetOrgMigrationState(ctx context.Context, orgID int64) (*migmodels.OrgMigrationState, error) {
+// GetOrgMigrationState returns the state of the previous migration.
+func (ms *migrationStore) GetOrgMigrationState(ctx context.Context, orgID int64) (*OrgMigrationState, error) {
 	kv := kvstore.WithNamespace(ms.kv, orgID, KVNamespace)
 	content, exists, err := kv.Get(ctx, stateKey)
 	if err != nil {
@@ -206,22 +205,23 @@ func (ms *migrationStore) GetOrgMigrationState(ctx context.Context, orgID int64)
 	}
 
 	if !exists {
-		return &migmodels.OrgMigrationState{OrgID: orgID}, nil
+		return &OrgMigrationState{OrgID: orgID}, nil
 	}
 
-	var summary migmodels.OrgMigrationState
-	err = json.Unmarshal([]byte(content), &summary)
+	var state OrgMigrationState
+	err = json.Unmarshal([]byte(content), &state)
 	if err != nil {
 		return nil, err
 	}
 
-	return &summary, nil
+	return &state, nil
 }
 
 // SetOrgMigrationState sets the summary of a previous migration.
-func (ms *migrationStore) SetOrgMigrationState(ctx context.Context, orgID int64, summary *migmodels.OrgMigrationState) error {
+func (ms *migrationStore) SetOrgMigrationState(ctx context.Context, orgID int64, state *OrgMigrationState) error {
 	kv := kvstore.WithNamespace(ms.kv, orgID, KVNamespace)
-	raw, err := json.Marshal(summary)
+
+	raw, err := json.Marshal(state)
 	if err != nil {
 		return err
 	}

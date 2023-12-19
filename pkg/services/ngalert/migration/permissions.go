@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
-	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -57,13 +56,7 @@ func getMigrationUser(orgID int64) identity.Requester {
 	return accesscontrol.BackgroundUser("ngalert_migration", orgID, org.RoleAdmin, migratorPermissions)
 }
 
-func (om *OrgMigration) migratedFolder(ctx context.Context, log log.Logger, dashID int64) (*migmodels.DashboardUpgradeInfo, error) {
-	dash, err := om.migrationStore.GetDashboard(ctx, om.orgID, dashID)
-	if err != nil {
-		return nil, err
-	}
-	l := log.New("dashboardTitle", dash.Title, "dashboardUid", dash.UID)
-
+func (om *OrgMigration) migratedFolder(ctx context.Context, l log.Logger, dash *dashboards.Dashboard) (*folder.Folder, bool, error) {
 	dashFolder, err := om.getFolder(ctx, dash)
 	if err != nil {
 		// nolint:staticcheck
@@ -75,15 +68,10 @@ func (om *OrgMigration) migratedFolder(ctx context.Context, log log.Logger, dash
 
 	migratedFolder, err := om.getOrCreateMigratedFolder(ctx, l, dash, dashFolder)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
-	return &migmodels.DashboardUpgradeInfo{
-		DashboardUID:  dash.UID,
-		DashboardName: dash.Title,
-		NewFolderUID:  migratedFolder.UID,
-		NewFolderName: migratedFolder.Title,
-	}, nil
+	return migratedFolder, migratedFolder.CreatedBy == newFolder, nil
 }
 
 // getOrCreateMigratedFolder returns the folder that alerts in a given dashboard should migrate to.
@@ -94,7 +82,7 @@ func (om *OrgMigration) getOrCreateMigratedFolder(ctx context.Context, l log.Log
 	// If parentFolder does not exist then the dashboard is an orphan. We migrate the alert to the general alerting folder.
 	// The general alerting folder is only accessible to admins.
 	if parentFolder == nil {
-		l.Warn("Migrating alert to the general alerting folder: original folder not found")
+		l.Debug("Migrating alert to the general alerting folder")
 		f, err := om.getOrCreateGeneralAlertingFolder(ctx, om.orgID)
 		if err != nil {
 			return nil, fmt.Errorf("general alerting folder: %w", err)
@@ -344,7 +332,7 @@ func (om *OrgMigration) getFolder(ctx context.Context, dash *dashboards.Dashboar
 		if err != nil {
 			return nil, fmt.Errorf("get or create general folder: %w", err)
 		}
-		return migratedFolder, err
+		return migratedFolder, nil
 	}
 
 	// nolint:staticcheck
@@ -385,6 +373,10 @@ func (om *OrgMigration) getOrCreateGeneralAlertingFolder(ctx context.Context, or
 	return f, nil
 }
 
+// newFolder is used to as the value of createdBy when the folder has been created by this migration. It is not persisted
+// to the database. -8 is chosen as it's the same value that was used in the original version of migration.
+const newFolder = -8
+
 // createFolder creates a new folder with given permissions.
 func (om *OrgMigration) createFolder(ctx context.Context, orgID int64, title string, newPerms []accesscontrol.SetResourcePermissionCommand) (*folder.Folder, error) {
 	f, err := om.migrationStore.CreateFolder(ctx, &folder.CreateFolderCommand{
@@ -416,7 +408,7 @@ func (om *OrgMigration) createFolder(ctx context.Context, orgID int64, title str
 		}
 	}
 
-	om.state.CreatedFolders = append(om.state.CreatedFolders, f.UID)
+	f.CreatedBy = newFolder // We don't persist this, it's just to let callers know this is a newly created folder.
 
 	return f, nil
 }

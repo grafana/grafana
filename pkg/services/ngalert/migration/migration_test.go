@@ -744,7 +744,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 			ExecErrState:    ngModels.AlertingErrState,
 			For:             60 * time.Second,
 			Annotations: map[string]string{
-				"message": "message",
+				ngModels.MigratedMessageAnnotation: "message",
 			},
 			Labels:   map[string]string{ngModels.MigratedUseLegacyChannelsLabel: "true"},
 			IsPaused: false,
@@ -756,8 +756,8 @@ func TestDashAlertQueryMigration(t *testing.T) {
 
 		rule.RuleGroup = fmt.Sprintf("%s - 1m", *rule.DashboardUID)
 
-		rule.Annotations["__dashboardUid__"] = *rule.DashboardUID
-		rule.Annotations["__panelId__"] = strconv.FormatInt(*rule.PanelID, 10)
+		rule.Annotations[ngModels.DashboardUIDAnnotation] = *rule.DashboardUID
+		rule.Annotations[ngModels.PanelIDAnnotation] = strconv.FormatInt(*rule.PanelID, 10)
 		return rule
 	}
 

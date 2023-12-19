@@ -9,10 +9,11 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
@@ -45,7 +46,7 @@ func addLabelsAndAnnotations(l log.Logger, alert *legacymodels.Alert, dashboardU
 }
 
 // migrateAlert migrates a single dashboard alert from legacy alerting to unified alerting.
-func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, alert *legacymodels.Alert, info migmodels.DashboardUpgradeInfo) (*ngmodels.AlertRule, error) {
+func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, alert *legacymodels.Alert, dashboard *dashboards.Dashboard, newFolderUID string) (*ngmodels.AlertRule, error) {
 	l.Debug("Migrating alert rule to Unified Alerting")
 	rawSettings, err := json.Marshal(alert.Settings)
 	if err != nil {
@@ -63,7 +64,7 @@ func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, alert *l
 
 	channels := om.extractChannels(l, parsedSettings)
 
-	lbls, annotations := addLabelsAndAnnotations(l, alert, info.DashboardUID, channels)
+	lbls, annotations := addLabelsAndAnnotations(l, alert, dashboard.UID, channels)
 
 	data, err := migrateAlertRuleQueries(l, cond.Data)
 	if err != nil {
@@ -76,7 +77,7 @@ func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, alert *l
 	}
 
 	// Here we ensure that the alert rule title is unique within the folder.
-	titleDeduplicator := om.titleDeduplicatorForFolder(info.NewFolderUID)
+	titleDeduplicator := om.titleDeduplicatorForFolder(newFolderUID)
 	name, err := titleDeduplicator.Deduplicate(alert.Name)
 	if err != nil {
 		return nil, err
@@ -85,7 +86,7 @@ func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, alert *l
 		l.Info(fmt.Sprintf("Alert rule title modified to be unique within the folder and fit within the maximum length of %d", store.AlertDefinitionMaxTitleLength), "old", alert.Name, "new", name)
 	}
 
-	dashUID := info.DashboardUID
+	dashUID := dashboard.UID
 	ar := &ngmodels.AlertRule{
 		OrgID:           alert.OrgID,
 		Title:           name,
@@ -94,10 +95,10 @@ func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, alert *l
 		Data:            data,
 		IntervalSeconds: ruleAdjustInterval(alert.Frequency),
 		Version:         1,
-		NamespaceUID:    info.NewFolderUID,
+		NamespaceUID:    newFolderUID,
 		DashboardUID:    &dashUID,
 		PanelID:         &alert.PanelID,
-		RuleGroup:       groupName(ruleAdjustInterval(alert.Frequency), info.DashboardName),
+		RuleGroup:       groupName(ruleAdjustInterval(alert.Frequency), dashboard.Title),
 		For:             alert.For,
 		Updated:         time.Now().UTC(),
 		Annotations:     annotations,

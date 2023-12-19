@@ -30,8 +30,15 @@ func (am *Alertmanager) AddRoute(route *apiModels.Route) {
 }
 
 // AddReceiver adds a receiver to the alertmanager config.
-func (am *Alertmanager) AddReceiver(recv *apiModels.PostableApiReceiver) {
-	am.Config.AlertmanagerConfig.Receivers = append(am.Config.AlertmanagerConfig.Receivers, recv)
+func (am *Alertmanager) AddReceiver(recv *apiModels.PostableGrafanaReceiver) {
+	am.Config.AlertmanagerConfig.Receivers = append(am.Config.AlertmanagerConfig.Receivers, &apiModels.PostableApiReceiver{
+		Receiver: config.Receiver{
+			Name: recv.Name, // Channel name is unique within an Org.
+		},
+		PostableGrafanaReceivers: apiModels.PostableGrafanaReceivers{
+			GrafanaManagedReceivers: []*apiModels.PostableGrafanaReceiver{recv},
+		},
+	})
 }
 
 // createBaseConfig creates an alertmanager config with the root-level route, default receiver, and nested route
