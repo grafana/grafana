@@ -155,7 +155,10 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) e
 		authInfo, exists, err := o.HasOAuthEntry(ctx, usr)
 		if !exists {
 			if err != nil {
-				logger.Warn("Failed to fetch oauth entry", "id", userID, "error", err)
+				logger.Debug("Failed to fetch oauth entry", "id", userID, "error", err)
+			} else {
+				// User is not logged in via OAuth no need to check
+				o.cache.Set(lockKey, struct{}{}, maxOAuthTokenCacheTTL)
 			}
 			return nil, nil
 		}
@@ -163,7 +166,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) e
 		_, needRefresh, ttl := needTokenRefresh(authInfo)
 		if !needRefresh {
 			o.cache.Set(lockKey, struct{}{}, ttl)
-			return buildOAuthTokenFromAuthInfo(authInfo), nil
+			return nil, nil
 		}
 
 		// get the token's auth provider (f.e. azuread)
@@ -177,7 +180,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) e
 		// if refresh token handling is disabled for this provider, we can skip the refresh
 		if !currentOAuthInfo.UseRefreshToken {
 			logger.Debug("Skipping token refresh", "provider", provider)
-			return buildOAuthTokenFromAuthInfo(authInfo), nil
+			return nil, nil
 		}
 
 		return o.tryGetOrRefreshAccessToken(ctx, authInfo)
