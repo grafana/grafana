@@ -86,12 +86,20 @@ export function tryGetExploreUrlForPanel(vizPanel: VizPanel): Promise<string | u
   }
 
   const timeRange = sceneGraph.getTimeRange(vizPanel);
+  const dashboard = vizPanel.getDescription();
+  const currentLocation = locationService.getLocation().pathname;
 
-  return getExploreUrl({
-    queries: queryRunner.state.queries,
-    dsRef: queryRunner.state.datasource,
-    timeRange: timeRange.state.value,
-    scopedVars: { __sceneObject: { value: vizPanel } },
-    adhocFilters: queryRunner.state.data?.request?.filters,
-  });
+  return getExploreUrl(
+    {
+      queries: queryRunner.state.queries,
+      dsRef: queryRunner.state.datasource,
+      timeRange: timeRange.state.value,
+      scopedVars: { __sceneObject: { value: vizPanel } },
+      adhocFilters: queryRunner.state.data?.request?.filters,
+    },
+    {
+      returnToUrl: currentLocation,
+      returnToTitle: dashboard,
+    }
+  );
 }

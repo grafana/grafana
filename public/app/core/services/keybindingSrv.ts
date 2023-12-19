@@ -259,12 +259,20 @@ export class KeybindingSrv {
     if (contextSrv.hasAccessToExplore()) {
       this.bindWithPanelId('p x', async (panelId) => {
         const panel = dashboard.getPanelById(panelId)!;
-        const url = await getExploreUrl({
-          queries: panel.targets,
-          dsRef: panel.datasource,
-          scopedVars: panel.scopedVars,
-          timeRange: getTimeSrv().timeRange(),
-        });
+        const currentLocation = this.locationService.getLocation().pathname;
+        const currentDashboard = dashboard.title;
+        const url = await getExploreUrl(
+          {
+            queries: panel.targets,
+            dsRef: panel.datasource,
+            scopedVars: panel.scopedVars,
+            timeRange: getTimeSrv().timeRange(),
+          },
+          {
+            returnToUrl: currentLocation,
+            returnToTitle: currentDashboard,
+          }
+        );
 
         if (url) {
           const urlWithoutBase = locationUtil.stripBaseFromUrl(url);

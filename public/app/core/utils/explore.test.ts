@@ -98,7 +98,10 @@ describe('getExploreUrl', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
-
+  const testDashboard = {
+    returnToUrl: '/d/test-dashboard',
+    returnToTitle: 'Test Dashboard',
+  };
   const args = {
     queries: [
       { refId: 'A', expr: 'query1', legendFormat: 'legendFormat1' },
@@ -110,10 +113,10 @@ describe('getExploreUrl', () => {
     timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1h', to: 'now' } },
   } as unknown as GetExploreUrlArguments;
   it('should use raw range in explore url', async () => {
-    expect(await getExploreUrl(args)).toMatch(/from%22:%22now-1h%22,%22to%22:%22now/g);
+    expect(await getExploreUrl(args, testDashboard)).toMatch(/from%22:%22now-1h%22,%22to%22:%22now/g);
   });
   it('should omit expression target in explore url', async () => {
-    expect(await getExploreUrl(args)).not.toMatch(/__expr__/g);
+    expect(await getExploreUrl(args, testDashboard)).not.toMatch(/__expr__/g);
   });
   it('should interpolate queries with variables in a non-mixed datasource scenario', async () => {
     // this is not actually valid (see root and query DS being different) but it will test the root DS mock was called
@@ -126,7 +129,7 @@ describe('getExploreUrl', () => {
       timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1h', to: 'now' } },
       scopedVars: {},
     };
-    expect(await getExploreUrl(nonMixedArgs)).toMatch(/replaced%20testDs2%20prom/g);
+    expect(await getExploreUrl(nonMixedArgs, testDashboard)).toMatch(/replaced%20testDs2%20prom/g);
     expect(interpolateMockLoki).not.toBeCalled();
     expect(interpolateMockProm).toBeCalled();
   });
@@ -143,7 +146,7 @@ describe('getExploreUrl', () => {
       timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1h', to: 'now' } },
       scopedVars: {},
     };
-    const url = await getExploreUrl(nonMixedArgs);
+    const url = await getExploreUrl(nonMixedArgs, testDashboard);
     expect(url).toMatch(/replaced%20testDs%20loki/g);
     expect(url).toMatch(/replaced%20testDs2%20prom/g);
     expect(interpolateMockLoki).toBeCalled();
