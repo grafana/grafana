@@ -34,12 +34,12 @@ while IFS=" " read -r -a package; do
   echo "================================================="
   npm exec -- @grafana/levitate compare --prev "$PREV" --current "$CURRENT" --json >data.json
 
-  # REMOVE THIS!!
-  cat data.json
-
   # Check if the comparison returned with a non-zero exit code
   # Record the output, maybe with some additional information
   STATUS=$?
+
+  # REMOVE THIS!!
+  cat data.json
 
   echo "The exit code is: $STATUS"
 
