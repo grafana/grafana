@@ -87,7 +87,7 @@ func NewDataSourceAPIBuilder(
 	namespacer request.NamespaceMapper) *DataSourceAPIBuilder {
 	group := getDatasourceGroupNameFromPluginID(plugin.ID)
 	return &DataSourceAPIBuilder{
-		connectionResourceInfo: v0alpha1.GenericConnectionResourceInfo.WithGroupAndShortName(group, plugin.ID+"-conn"),
+		connectionResourceInfo: v0alpha1.GenericConnectionResourceInfo.WithGroupAndShortName(group, plugin.ID+"-connection"),
 		configResourceInfo:     v0alpha1.GenericConfigResourceInfo.WithGroupAndShortName(group, plugin.ID),
 		plugin:                 plugin,
 		client:                 client,
