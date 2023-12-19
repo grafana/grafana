@@ -328,12 +328,15 @@ func newTokenRefreshDurationMetric(registerer prometheus.Registerer) *prometheus
 
 // tokensEq checks for OAuth2 token equivalence given the fields of the struct Grafana is interested in
 func tokensEq(t1, t2 *oauth2.Token) bool {
-	// TODO (gamab) add id_token check
+	t1IdToken, ok1 := t1.Extra("id_token").(string)
+	t2IdToken, ok2 := t2.Extra("id_token").(string)
 
 	return t1.AccessToken == t2.AccessToken &&
 		t1.RefreshToken == t2.RefreshToken &&
 		t1.Expiry.Equal(t2.Expiry) &&
-		t1.TokenType == t2.TokenType
+		t1.TokenType == t2.TokenType &&
+		ok1 == ok2 &&
+		t1IdToken == t2IdToken
 }
 
 func needTokenRefresh(usr *login.UserAuth) (*oauth2.Token, bool, time.Duration) {
