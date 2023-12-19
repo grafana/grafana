@@ -5,29 +5,25 @@ import (
 	"strings"
 )
 
-func getInvalidGroupName(pluginId string) string {
-	return "*** InvalidGroupName: " + pluginId + "***" // will not register!
+func getInvalidDatasourceGroupName(pluginId string) string {
+	return "*** InvalidDatasourceGroupName: " + pluginId + "***" // will not register!
 }
 
 func getDatasourceGroupNameFromPluginID(pluginId string) string {
+	if pluginId == "" {
+		return getInvalidDatasourceGroupName(pluginId)
+	}
 	parts := strings.Split(pluginId, "-")
-	switch len(parts) {
-	case 3:
-		if parts[2] != "datasource" {
-			return getInvalidGroupName(pluginId)
-		}
-		if parts[0] == "grafana" {
-			return fmt.Sprintf("%s.datasource.grafana.app", parts[1])
-		}
-		return fmt.Sprintf("%s-%s.datasource.grafana.app", parts[0], parts[1])
-	case 2:
-		if parts[1] != "datasource" {
-			return getInvalidGroupName(pluginId)
-		}
-		return fmt.Sprintf("%s.datasource.grafana.app", parts[0])
-	case 1:
-		// only valid for internal core datasources
+	if len(parts) == 1 {
 		return fmt.Sprintf("%s.datasource.grafana.app", parts[0])
 	}
-	return getInvalidGroupName(pluginId)
+
+	last := parts[len(parts)-1]
+	if last != "datasource" {
+		return getInvalidDatasourceGroupName(pluginId)
+	}
+	if parts[0] == "grafana" {
+		parts = parts[1:] // strip the first value
+	}
+	return fmt.Sprintf("%s.datasource.grafana.app", strings.Join(parts[:len(parts)-1], "-"))
 }
