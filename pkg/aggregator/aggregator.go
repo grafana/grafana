@@ -29,9 +29,12 @@ import (
 	"sync"
 	"time"
 
+	sharedclientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
+	informersservicev0alpha1 "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/pkg/registry/apis/service"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	filestorage "github.com/grafana/grafana/pkg/services/grafana-apiserver/storage/file"
+	apiserviceinformers "k8s.io/kube-aggregator/pkg/client/informers/externalversions"
 	aggregatoropenapi "k8s.io/kube-aggregator/pkg/generated/openapi"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -55,6 +58,7 @@ import (
 	"k8s.io/kube-aggregator/pkg/apis/apiregistration/v1beta1"
 	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
 	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
+	apiregistrationclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 	apiregistrationclient "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/typed/apiregistration/v1"
 	apiregistrationInformers "k8s.io/kube-aggregator/pkg/client/informers/externalversions/apiregistration/v1"
 	"k8s.io/kube-aggregator/pkg/controllers/autoregister"
@@ -240,7 +244,7 @@ func CreateAggregatorConfig(
 	)
 	serviceResolver := NewExternalNameResolver(informerFactory.Service().V0alpha1().ExternalNames().Lister())
 
-	//genericConfig.DisabledPostStartHooks = genericConfig.DisabledPostStartHooks.Insert("apiservice-status-available-controller")
+	genericConfig.DisabledPostStartHooks = genericConfig.DisabledPostStartHooks.Insert("apiservice-status-available-controller")
 	genericConfig.DisabledPostStartHooks = genericConfig.DisabledPostStartHooks.Insert("start-kube-aggregator-informers")
 
 	aggregatorConfig := &aggregatorapiserver.Config{
@@ -264,7 +268,8 @@ func CreateAggregatorConfig(
 }
 
 func CreateAggregatorServer(serverOptions AggregatorServerOptions, aggregatorConfig aggregatorapiserver.Config, delegateAPIServer genericapiserver.DelegationTarget) (*aggregatorapiserver.APIAggregator, error) {
-	aggregatorServer, err := aggregatorConfig.Complete().NewWithDelegate(delegateAPIServer)
+	completedConfig := aggregatorConfig.Complete()
+	aggregatorServer, err := completedConfig.NewWithDelegate(delegateAPIServer)
 	if err != nil {
 		return nil, err
 	}
@@ -304,6 +309,42 @@ func CreateAggregatorServer(serverOptions AggregatorServerOptions, aggregatorCon
 	if err != nil {
 		return nil, err
 	}
+
+	apiregistrationClient, err := apiregistrationclientset.NewForConfig(completedConfig.GenericConfig.LoopbackClientConfig)
+	if err != nil {
+		return nil, err
+	}
+	informerFactory := apiserviceinformers.NewSharedInformerFactory(
+		apiregistrationClient,
+		5*time.Minute, // this is effectively used as a refresh interval right now.  Might want to do something nicer later on.
+	)
+
+	externalNameClient, err := sharedclientset.NewForConfig(completedConfig.GenericConfig.LoopbackClientConfig)
+	if err != nil {
+		return nil, err
+	}
+	externalNameInformerFactory := informersservicev0alpha1.NewSharedInformerFactory(
+		externalNameClient,
+		5*time.Minute, // this is effectively used as a refresh interval right now.  Might want to do something nicer later on.)
+	)
+
+	availableController, err := NewAvailableConditionController(
+		informerFactory.Apiregistration().V1().APIServices(),
+		externalNameInformerFactory.Service().V0alpha1().ExternalNames(),
+		apiregistrationClient.ApiregistrationV1(),
+		nil,
+		(func() ([]byte, []byte))(nil),
+		completedConfig.ExtraConfig.ServiceResolver,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	aggregatorServer.GenericAPIServer.AddPostStartHookOrDie("apiservice-status-override-available-controller", func(context genericapiserver.PostStartHookContext) error {
+		// if we end up blocking for long periods of time, we may need to increase workers.
+		go availableController.Run(5, context.StopCh)
+		return nil
+	})
 
 	// Install the API Group+version
 	for _, b := range serverOptions.Builders {
