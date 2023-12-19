@@ -23,11 +23,6 @@ import (
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 )
 
-// GroupName is the group name for this API.
-const GroupName = "example.grafana.app"
-const VersionID = "v0alpha1" //
-const APIVersion = GroupName + "/" + VersionID
-
 var _ grafanaapiserver.APIGroupBuilder = (*TestingAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
@@ -36,14 +31,18 @@ type TestingAPIBuilder struct {
 	gv     schema.GroupVersion
 }
 
+func NewTestingAPIBuilder() *TestingAPIBuilder {
+	return &TestingAPIBuilder{
+		gv: schema.GroupVersion{Group: example.GROUP, Version: example.VERSION},
+	}
+}
+
 func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration grafanaapiserver.APIRegistrar) *TestingAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
-	builder := &TestingAPIBuilder{
-		gv: schema.GroupVersion{Group: GroupName, Version: VersionID},
-	}
-	apiregistration.RegisterAPI(builder)
+	builder := NewTestingAPIBuilder()
+	apiregistration.RegisterAPI(NewTestingAPIBuilder())
 	return builder
 }
 
@@ -85,13 +84,13 @@ func (b *TestingAPIBuilder) GetAPIGroupInfo(
 	optsGetter generic.RESTOptionsGetter,
 ) (*genericapiserver.APIGroupInfo, error) {
 	b.codecs = codecs
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(GroupName, scheme, metav1.ParameterCodec, codecs)
+	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(b.gv.Group, scheme, metav1.ParameterCodec, codecs)
 
 	storage := map[string]rest.Storage{}
-	storage["runtime"] = newDeploymentInfoStorage(b.gv, scheme)
-	storage["dummy"] = newDummyStorage(b.gv, scheme, "test1", "test2", "test3")
-	storage["dummy/sub"] = &dummySubresourceREST{}
-	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage
+	storage[example.RuntimeResourceInfo.StoragePath()] = newDeploymentInfoStorage(b.gv, scheme)
+	storage[example.DummyResourceInfo.StoragePath()] = newDummyStorage(b.gv, scheme, "test1", "test2", "test3")
+	storage[example.DummyResourceInfo.StoragePath("sub")] = &dummySubresourceREST{}
+	apiGroupInfo.VersionedResourcesStorageMap[b.gv.Version] = storage
 	return &apiGroupInfo, nil
 }
 
@@ -104,7 +103,7 @@ func (b *TestingAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	return &grafanaapiserver.APIRoutes{
 		Root: []grafanaapiserver.APIRouteHandler{
 			{
-				Path: "/aaa",
+				Path: "aaa",
 				Spec: &spec3.PathProps{
 					Summary:     "an example at the root level",
 					Description: "longer description here?",
@@ -145,7 +144,7 @@ func (b *TestingAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 				},
 			},
 			{
-				Path: "/bbb",
+				Path: "bbb",
 				Spec: &spec3.PathProps{
 					Summary:     "an example at the root level",
 					Description: "longer description here?",
@@ -166,7 +165,7 @@ func (b *TestingAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 		},
 		Namespace: []grafanaapiserver.APIRouteHandler{
 			{
-				Path: "/ccc",
+				Path: "ccc",
 				Spec: &spec3.PathProps{
 					Summary:     "an example at the root level",
 					Description: "longer description here?",

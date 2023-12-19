@@ -17,6 +17,7 @@ import (
 //
 //     Responses:
 //       202: NamespaceConfigResponse
+//       403: ForbiddenError
 //
 
 // swagger:route Get /api/ruler/grafana/api/v1/export/rules ruler RouteGetRulesForExport
@@ -29,6 +30,7 @@ import (
 //
 //     Responses:
 //       200: AlertingFileExport
+//       403: ForbiddenError
 //       404: description: Not found.
 
 // swagger:route Get /api/ruler/{DatasourceUID}/api/v1/rules ruler RouteGetRulesConfig
@@ -40,6 +42,7 @@ import (
 //
 //     Responses:
 //       202: NamespaceConfigResponse
+//       403: ForbiddenError
 //       404: NotFound
 
 // swagger:route POST /api/ruler/grafana/api/v1/rules/{Namespace} ruler RoutePostNameGrafanaRulesConfig
@@ -52,6 +55,7 @@ import (
 //
 //     Responses:
 //       202: UpdateRuleGroupResponse
+//       403: ForbiddenError
 //
 
 // swagger:route POST /api/ruler/grafana/api/v1/rules/{Namespace}/export ruler RoutePostRulesGroupForExport
@@ -64,6 +68,7 @@ import (
 //
 //     Responses:
 //       200: AlertingFileExport
+//       403: ForbiddenError
 //       404: description: Not found.
 
 // swagger:route POST /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RoutePostNameRulesConfig
@@ -76,6 +81,7 @@ import (
 //
 //     Responses:
 //       202: Ack
+//       403: ForbiddenError
 //       404: NotFound
 
 // swagger:route Get /api/ruler/grafana/api/v1/rules/{Namespace} ruler RouteGetNamespaceGrafanaRulesConfig
@@ -86,6 +92,7 @@ import (
 //     - application/json
 //
 //     Responses:
+//       403: ForbiddenError
 //       202: NamespaceConfigResponse
 
 // swagger:route Get /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RouteGetNamespaceRulesConfig
@@ -97,6 +104,7 @@ import (
 //
 //     Responses:
 //       202: NamespaceConfigResponse
+//       403: ForbiddenError
 //       404: NotFound
 
 // swagger:route Delete /api/ruler/grafana/api/v1/rules/{Namespace} ruler RouteDeleteNamespaceGrafanaRulesConfig
@@ -105,6 +113,7 @@ import (
 //
 //     Responses:
 //       202: Ack
+//       403: ForbiddenError
 
 // swagger:route Delete /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RouteDeleteNamespaceRulesConfig
 //
@@ -112,6 +121,7 @@ import (
 //
 //     Responses:
 //       202: Ack
+//       403: ForbiddenError
 //       404: NotFound
 
 // swagger:route Get /api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname} ruler RouteGetGrafanaRuleGroupConfig
@@ -123,6 +133,7 @@ import (
 //
 //     Responses:
 //       202: RuleGroupConfigResponse
+//       403: ForbiddenError
 
 // swagger:route Get /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname} ruler RouteGetRulegGroupConfig
 //
@@ -133,6 +144,7 @@ import (
 //
 //     Responses:
 //       202: RuleGroupConfigResponse
+//       403: ForbiddenError
 //       404: NotFound
 
 // swagger:route Delete /api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname} ruler RouteDeleteGrafanaRuleGroupConfig
@@ -141,6 +153,7 @@ import (
 //
 //     Responses:
 //       202: Ack
+//       403: ForbiddenError
 
 // swagger:route Delete /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname} ruler RouteDeleteRuleGroupConfig
 //
@@ -148,6 +161,7 @@ import (
 //
 //     Responses:
 //       202: Ack
+//       403: ForbiddenError
 //       404: NotFound
 
 // swagger:parameters RoutePostNameRulesConfig RoutePostNameGrafanaRulesConfig RoutePostRulesGroupForExport
@@ -412,7 +426,6 @@ type GettableGrafanaRule struct {
 	Version         int64               `json:"version" yaml:"version"`
 	UID             string              `json:"uid" yaml:"uid"`
 	NamespaceUID    string              `json:"namespace_uid" yaml:"namespace_uid"`
-	NamespaceID     int64               `json:"namespace_id" yaml:"namespace_id"`
 	RuleGroup       string              `json:"rule_group" yaml:"rule_group"`
 	NoDataState     NoDataState         `json:"no_data_state" yaml:"no_data_state"`
 	ExecErrState    ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`

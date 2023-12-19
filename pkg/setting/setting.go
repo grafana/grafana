@@ -246,7 +246,9 @@ type Cfg struct {
 	PluginForcePublicKeyDownload     bool
 	PluginSkipPublicKeyDownload      bool
 	DisablePlugins                   []string
+	HideAngularDeprecation           []string
 	PluginInstallToken               string
+	ForwardHostEnvVars               []string
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool
@@ -371,6 +373,7 @@ type Cfg struct {
 	AnonymousOrgName     string
 	AnonymousOrgRole     string
 	AnonymousHideVersion bool
+	AnonymousDeviceLimit int64
 
 	DateFormats DateFormats
 
@@ -440,22 +443,6 @@ type Cfg struct {
 	RudderstackIntegrationsURL          string
 	IntercomSecret                      string
 
-	// AzureAD
-	AzureADEnabled         bool
-	AzureADSkipOrgRoleSync bool
-
-	// Google
-	GoogleAuthEnabled     bool
-	GoogleSkipOrgRoleSync bool
-
-	// Gitlab
-	GitLabAuthEnabled     bool
-	GitLabSkipOrgRoleSync bool
-
-	// Generic OAuth
-	GenericOAuthAuthEnabled     bool
-	GenericOAuthSkipOrgRoleSync bool
-
 	// LDAP
 	LDAPAuthEnabled       bool
 	LDAPSkipOrgRoleSync   bool
@@ -494,25 +481,12 @@ type Cfg struct {
 	// then Live uses AppURL as the only allowed origin.
 	LiveAllowedOrigins []string
 
-	// GitHub OAuth
-	GitHubAuthEnabled     bool
-	GitHubSkipOrgRoleSync bool
-
 	// Grafana.com URL, used for OAuth redirect.
 	GrafanaComURL string
 	// Grafana.com API URL. Can be set separately to GrafanaComURL
 	// in case API is not publicly accessible.
 	// Defaults to GrafanaComURL setting + "/api" if unset.
 	GrafanaComAPIURL string
-	// Grafana.com Auth enabled
-	GrafanaComAuthEnabled bool
-	// GrafanaComSkipOrgRoleSync can be set for
-	// letting users set org roles from within Grafana and
-	// skip the org roles coming from GrafanaCom
-	GrafanaComSkipOrgRoleSync bool
-
-	// Grafana.com Auth enabled through [auth.grafananet] config section
-	GrafanaNetAuthEnabled bool
 
 	// Geomap base layer config
 	GeomapDefaultBaseLayerConfig map[string]any
@@ -534,10 +508,6 @@ type Cfg struct {
 	SAMLAuthEnabled            bool
 	SAMLSkipOrgRoleSync        bool
 	SAMLRoleValuesGrafanaAdmin string
-
-	// Okta OAuth
-	OktaAuthEnabled     bool
-	OktaSkipOrgRoleSync bool
 
 	// OAuth2 Server
 	OAuth2ServerEnabled bool
@@ -570,6 +540,9 @@ type Cfg struct {
 	// This needs to be on the global object since its used in the
 	// sqlstore package and HTTP middlewares.
 	DatabaseInstrumentQueries bool
+
+	// Public dashboards
+	PublicDashboardsEnabled bool
 
 	// Feature Management Settings
 	FeatureManagement FeatureMgmtSettings
@@ -1023,6 +996,7 @@ func (cfg *Cfg) validateStaticRootPath() error {
 	return nil
 }
 
+// nolint:gocyclo
 func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.setHomePath(args)
 
@@ -1194,7 +1168,9 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.handleAWSConfig()
 	cfg.readAzureSettings()
 	cfg.readSessionConfig()
-	cfg.readSmtpSettings()
+	if err := cfg.readSmtpSettings(); err != nil {
+		return err
+	}
 	if err := cfg.readAnnotationSettings(); err != nil {
 		return err
 	}
@@ -1281,6 +1257,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.UserFacingDefaultError = logSection.Key("user_facing_default_error").MustString("please inspect Grafana server log for details")
 
 	cfg.readFeatureManagementConfig()
+	cfg.readPublicDashboardsSettings()
 
 	return nil
 }
@@ -1508,52 +1485,6 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 
 	return nil
 }
-func readAuthAzureADSettings(cfg *Cfg) {
-	sec := cfg.SectionWithEnvOverrides("auth.azuread")
-	cfg.AzureADEnabled = sec.Key("enabled").MustBool(false)
-	cfg.AzureADSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
-}
-
-func readAuthGrafanaComSettings(cfg *Cfg) {
-	sec := cfg.SectionWithEnvOverrides("auth.grafana_com")
-	cfg.GrafanaComAuthEnabled = sec.Key("enabled").MustBool(false)
-	cfg.GrafanaComSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
-}
-
-func readAuthGrafanaNetSettings(cfg *Cfg) {
-	sec := cfg.SectionWithEnvOverrides("auth.grafananet")
-	cfg.GrafanaNetAuthEnabled = sec.Key("enabled").MustBool(false)
-}
-
-func readAuthGithubSettings(cfg *Cfg) {
-	sec := cfg.SectionWithEnvOverrides("auth.github")
-	cfg.GitHubAuthEnabled = sec.Key("enabled").MustBool(false)
-	cfg.GitHubSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
-}
-
-func readAuthGoogleSettings(cfg *Cfg) {
-	sec := cfg.SectionWithEnvOverrides("auth.google")
-	cfg.GoogleAuthEnabled = sec.Key("enabled").MustBool(false)
-	cfg.GoogleSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(true)
-}
-
-func readAuthGitlabSettings(cfg *Cfg) {
-	sec := cfg.SectionWithEnvOverrides("auth.gitlab")
-	cfg.GitLabAuthEnabled = sec.Key("enabled").MustBool(false)
-	cfg.GitLabSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
-}
-
-func readGenericOAuthSettings(cfg *Cfg) {
-	sec := cfg.SectionWithEnvOverrides("auth.generic_oauth")
-	cfg.GenericOAuthAuthEnabled = sec.Key("enabled").MustBool(false)
-	cfg.GenericOAuthSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
-}
-
-func readAuthOktaSettings(cfg *Cfg) {
-	sec := cfg.SectionWithEnvOverrides("auth.okta")
-	cfg.OktaAuthEnabled = sec.Key("enabled").MustBool(false)
-	cfg.OktaSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
-}
 
 func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	auth := iniFile.Section("auth")
@@ -1623,32 +1554,13 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 		cfg.IDResponseHeaderNamespaces[namespace] = struct{}{}
 	}
 
-	readAuthAzureADSettings(cfg)
-
-	// Google Auth
-	readAuthGoogleSettings(cfg)
-
-	// GitLab Auth
-	readAuthGitlabSettings(cfg)
-
-	// Generic OAuth
-	readGenericOAuthSettings(cfg)
-
-	// Okta Auth
-	readAuthOktaSettings(cfg)
-
-	// GrafanaCom
-	readAuthGrafanaComSettings(cfg)
-	readAuthGrafanaNetSettings(cfg)
-
-	// Github
-	readAuthGithubSettings(cfg)
-
 	// anonymous access
-	cfg.AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
-	cfg.AnonymousOrgName = valueAsString(iniFile.Section("auth.anonymous"), "org_name", "")
-	cfg.AnonymousOrgRole = valueAsString(iniFile.Section("auth.anonymous"), "org_role", "")
-	cfg.AnonymousHideVersion = iniFile.Section("auth.anonymous").Key("hide_version").MustBool(false)
+	anonSection := iniFile.Section("auth.anonymous")
+	cfg.AnonymousEnabled = anonSection.Key("enabled").MustBool(false)
+	cfg.AnonymousOrgName = valueAsString(anonSection, "org_name", "")
+	cfg.AnonymousOrgRole = valueAsString(anonSection, "org_role", "")
+	cfg.AnonymousHideVersion = anonSection.Key("hide_version").MustBool(false)
+	cfg.AnonymousDeviceLimit = anonSection.Key("device_limit").MustInt64(0)
 
 	// basic auth
 	authBasic := iniFile.Section("auth.basic")
@@ -1988,16 +1900,17 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 }
 
 // GetContentDeliveryURL returns full content delivery URL with /<edition>/<version> added to URL
-func (cfg *Cfg) GetContentDeliveryURL(prefix string) string {
-	if cfg.CDNRootURL != nil {
-		url := *cfg.CDNRootURL
-		preReleaseFolder := ""
-
-		url.Path = path.Join(url.Path, prefix, preReleaseFolder, cfg.BuildVersion)
-		return url.String() + "/"
+func (cfg *Cfg) GetContentDeliveryURL(prefix string) (string, error) {
+	if cfg.CDNRootURL == nil {
+		return "", nil
 	}
+	if cfg.BuildVersion == "" {
+		return "", errors.New("BuildVersion is not set")
+	}
+	url := *cfg.CDNRootURL
 
-	return ""
+	url.Path = path.Join(url.Path, prefix, cfg.BuildVersion)
+	return url.String() + "/", nil
 }
 
 func (cfg *Cfg) readDataSourcesSettings() {
@@ -2055,4 +1968,9 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	}
 	cfg.LiveAllowedOrigins = originPatterns
 	return nil
+}
+
+func (cfg *Cfg) readPublicDashboardsSettings() {
+	publicDashboards := cfg.Raw.Section("public_dashboards")
+	cfg.PublicDashboardsEnabled = publicDashboards.Key("enabled").MustBool(true)
 }

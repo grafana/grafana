@@ -160,7 +160,11 @@ func (rs *RenderingService) sanitizeSVGViaPlugin(ctx context.Context, req *Sanit
 	}
 	rs.log.Debug("Sanitizer - plugin: calling", "filename", req.Filename, "contentLength", len(req.Content))
 
-	rsp, err := rs.pluginInfo.Renderer.Sanitize(ctx, grpcReq)
+	rc, err := rs.plugin.Client()
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := rc.Sanitize(ctx, grpcReq)
 	if err != nil {
 		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			rs.log.Info("Sanitizer - plugin: time out")

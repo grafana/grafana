@@ -9,6 +9,8 @@ import (
 
 // Service is an envelope encryption service in charge of encrypting/decrypting secrets.
 // It is a replacement for encryption.Service
+//
+//go:generate mockery --name Service --structname MockService --outpkg fakes --filename mock_service.go --output ./fakes/
 type Service interface {
 	// Encrypt MUST NOT be used within database transactions, it may cause database locks.
 	// For those specific use cases where the encryption operation cannot be moved outside

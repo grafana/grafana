@@ -63,6 +63,7 @@ export class DashboardModelCompatibilityWrapper {
   public get timepicker() {
     return {
       refresh_intervals: dashboardSceneGraph.getRefreshPicker(this._scene)?.state.intervals,
+      hidden: dashboardSceneGraph.getDashboardControls(this._scene)?.state.hideTimeControls ?? false,
     };
   }
 
