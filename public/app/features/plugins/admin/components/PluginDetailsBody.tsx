@@ -50,6 +50,8 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
     );
   }
 
+  // Permissions will be returned in the iam field for installed plugins and in the details.iam field when fetching details from gcom
+  const permissions = plugin.iam?.permissions || plugin.details?.iam?.permissions;
   if (config.featureToggles.externalServiceAccounts && pageId === PluginTabIds.IAM) {
     return (
       <Stack direction="column">
@@ -63,12 +65,13 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
               </tr>
             </thead>
             <tbody>
-              {plugin.iam?.permissions.map((permission: Permission, i: number) => (
-                <tr key={`property-${i}`}>
-                  <td>{permission.action}</td>
-                  <td>{permission.scope}</td>
-                </tr>
-              ))}
+              {permissions &&
+                permissions.map((permission: Permission, i: number) => (
+                  <tr key={`property-${i}`}>
+                    <td>{permission.action}</td>
+                    <td>{permission.scope}</td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </Stack>
