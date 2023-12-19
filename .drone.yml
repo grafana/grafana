@@ -3779,7 +3779,7 @@ steps:
     CGO_ENABLED: 1
   depends_on:
   - wire-install
-  image: golang:1.21.5-windowsservercore-1809
+  image: grafana/ci-wix:0.1.1
   name: test-backend
 trigger:
   event:
