@@ -22,26 +22,23 @@ export function hideEmptyPreviews(metric: string) {
           return;
         }
 
+        let hasValue = false;
         for (const frame of state.data.series) {
           for (const field of frame.fields) {
             if (field.type !== FieldType.number) {
               continue;
             }
 
-            const hasValue = field.values.find((v) => v != null);
-            if (!hasValue) {
-              scene.updateMetricPanel(metric, true, true);
-              return;
-            }
-
-            const hasNonZeroValue = field.values.find((v) => v !== 0);
-            if (!hasNonZeroValue) {
-              scene.updateMetricPanel(metric, true, true);
-              return;
+            hasValue = field.values.some((v) => v != null && !isNaN(v) && v !== 0);
+            if (hasValue) {
+              break;
             }
           }
+          if (hasValue) {
+            break;
+          }
         }
-        scene.updateMetricPanel(metric, true);
+        scene.updateMetricPanel(metric, true, !hasValue);
       });
     }
 

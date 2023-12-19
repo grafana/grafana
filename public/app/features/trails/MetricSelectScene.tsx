@@ -61,6 +61,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
           children: [],
           templateColumns: 'repeat(auto-fill, minmax(450px, 1fr))',
           autoRows: ROW_PREVIEW_HEIGHT,
+          isLazy: true,
         }),
       showPreviews: true,
       hideEmpty: true,
@@ -95,6 +96,9 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   private sortedPreviewMetrics() {
     return Object.values(this.previewCache).sort((a, b) => {
       if (this.state.hideEmpty) {
+        if (a.isEmpty && b.isEmpty) {
+          return a.index - b.index;
+        }
         if (a.isEmpty) {
           return 1;
         }
@@ -123,7 +127,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     const sortedMetricNames =
       trail.state.metric !== undefined ? sortRelatedMetrics(metricNames, trail.state.metric) : metricNames;
     const metricsMap: Record<string, MetricPanel> = {};
-    const metricsLimit = 100;
+    const metricsLimit = 120;
 
     for (let index = 0; index < sortedMetricNames.length; index++) {
       const metric = sortedMetricNames[index];
@@ -165,23 +169,16 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     }
 
     const children: SceneFlexItem[] = [];
-    const showPreviews = this.state.showPreviews;
-    const previewLimit = 30;
-    const cardLimit = 50;
 
     const metricsList = this.sortedPreviewMetrics();
     for (let index = 0; index < metricsList.length; index++) {
       const metric = metricsList[index];
 
-      if (children.length > cardLimit) {
-        break;
+      if (metric.itemRef && metric.isPanel) {
+        children.push(metric.itemRef.resolve());
+        continue;
       }
-
-      if (showPreviews && children.length < previewLimit) {
-        if (metric.itemRef && metric.isPanel) {
-          children.push(metric.itemRef.resolve());
-          continue;
-        }
+      if (this.state.showPreviews) {
         const panel = getPreviewPanelFor(metric.name, index);
         metric.itemRef = panel.getRef();
         metric.isPanel = true;
@@ -202,19 +199,13 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     this.state.body.setState({ children, autoRows: rowTemplate });
   }
 
-  private shouldRebuildLayout = () => {
-    return !Object.values(this.previewCache).some((mp) => mp.isPanel && !mp.loaded);
-  };
-
   public updateMetricPanel = (metric: string, isLoaded?: boolean, isEmpty?: boolean) => {
     const metricPanel = this.previewCache[metric];
     if (metricPanel) {
       metricPanel.isEmpty = isEmpty;
       metricPanel.loaded = isLoaded;
       this.previewCache[metric] = metricPanel;
-      if (this.shouldRebuildLayout()) {
-        this.buildLayout();
-      }
+      this.buildLayout();
     }
   };
 
