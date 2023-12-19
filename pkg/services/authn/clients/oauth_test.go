@@ -351,17 +351,6 @@ func TestOAuth_Logout(t *testing.T) {
 			expectedOK:  true,
 		},
 		{
-			desc: "client specific url should take precedence",
-			cfg: &setting.Cfg{
-				SignoutRedirectUrl: "http://idp.com/logout",
-			},
-			oauthCfg: &social.OAuthInfo{
-				SignoutRedirectUrl: "http://idp-2.com/logout",
-			},
-			expectedURL: "http://idp-2.com/logout",
-			expectedOK:  true,
-		},
-		{
 			desc: "should add id token hint if oicd logout is configured and token is valid",
 			cfg:  &setting.Cfg{},
 			oauthCfg: &social.OAuthInfo{

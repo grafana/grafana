@@ -344,6 +344,9 @@ func (s *Service) RedirectURL(ctx context.Context, client string, r *authn.Reque
 }
 
 func (s *Service) Logout(ctx context.Context, user identity.Requester, sessionToken *auth.UserToken) (*authn.Redirect, error) {
+	ctx, span := s.tracer.Start(ctx, "authn.Logout")
+	defer span.End()
+
 	redirect := &authn.Redirect{URL: s.cfg.AppSubURL + "/login"}
 
 	namespace, id := user.GetNamespacedID()
