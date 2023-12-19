@@ -221,6 +221,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		SignedInUser: user,
 		UID:          name,
 		OrgID:        info.OrgID,
+		Overwrite:    true,
 	}
 	if f.Spec.Title != old.Spec.Title {
 		cmd.NewTitle = &f.Spec.Title
