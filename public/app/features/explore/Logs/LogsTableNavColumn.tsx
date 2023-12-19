@@ -10,38 +10,13 @@ import { fieldNameMeta } from './LogsTableWrap';
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    labelCount: css({
-      marginLeft: theme.spacing(0.5),
-      marginRight: theme.spacing(0.5),
-      appearance: 'none',
-      background: 'none',
-      border: 'none',
-      fontSize: theme.typography.pxToRem(11),
-    }),
     wrap: css({
-      display: 'flex',
-      alignItems: 'center',
       marginTop: theme.spacing(1),
       marginBottom: theme.spacing(1),
-      justifyContent: 'space-between',
+      display: 'flex',
     }),
     // Making the checkbox sticky and label scrollable for labels that are wider then the container
     // However, the checkbox component does not support this, so we need to do some css hackery for now until the API of that component is updated.
-    checkboxLabel: css({
-      '> :first-child': {
-        position: 'sticky',
-        left: 0,
-        bottom: 0,
-        top: 0,
-      },
-      '> span': {
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-        display: 'block',
-        maxWidth: '100%',
-      },
-    }),
     columnWrapper: css({
       marginBottom: theme.spacing(1.5),
       // need some space or the outline of the checkbox is cut off
@@ -113,13 +88,18 @@ export const LogsTableNavColumn = (props: {
                   <Draggable draggableId={labelName} key={labelName} index={index}>
                     {(provided: DraggableProvided) => (
                       <div
-                        className={cx(styles.wrap)}
+                        className={styles.wrap}
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
                         title={`${labelName} appears in ${labels[labelName]?.percentOfLinesWithLabel}% of log lines`}
                       >
-                        <LogsTableNavField label={labelName} onChange={() => toggleColumn(labelName)} labels={labels} />
+                        <LogsTableNavField
+                          label={labelName}
+                          onChange={() => toggleColumn(labelName)}
+                          labels={labels}
+                          draggable={true}
+                        />
                       </div>
                     )}
                   </Draggable>
@@ -138,7 +118,7 @@ export const LogsTableNavColumn = (props: {
         {labelKeys.sort(sortLabels(labels)).map((labelName, index) => (
           <div
             key={labelName}
-            className={cx(styles.wrap)}
+            className={styles.wrap}
             title={`${labelName} appears in ${labels[labelName]?.percentOfLinesWithLabel}% of log lines`}
           >
             <LogsTableNavField label={labelName} onChange={() => toggleColumn(labelName)} labels={labels} />
