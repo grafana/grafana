@@ -858,6 +858,9 @@ type TimePickerConfig struct {
 	// Whether timepicker is visible or not.
 	Hidden bool `json:"hidden"`
 
+	// Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
+	NowDelay *string `json:"nowDelay,omitempty"`
+
 	// Interval options available in the refresh picker dropdown.
 	RefreshIntervals []string `json:"refresh_intervals"`
 
