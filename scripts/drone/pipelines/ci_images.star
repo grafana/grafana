@@ -3,6 +3,10 @@ This module contains steps and pipelines relating to creating CI Docker images.
 """
 
 load(
+    "scripts/drone/steps/lib_windows.star",
+    "clone_step_windows"
+)
+load(
     "scripts/drone/utils/utils.star",
     "pipeline",
 )
@@ -13,11 +17,6 @@ load(
 load(
     "scripts/drone/vault.star",
     "from_secret",
-)
-
-load(
-    "scripts/drone/steps/lib_windows.star",
-    "clone_step_windows"
 )
 
 def publish_ci_windows_test_image_pipeline():
