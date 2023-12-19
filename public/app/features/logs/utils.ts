@@ -13,7 +13,6 @@ import {
   MutableDataFrame,
   QueryResultMeta,
   LogsVolumeType,
-  DataTopic,
 } from '@grafana/data';
 
 import { getDataframeFields } from './components/logParser';
