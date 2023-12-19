@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { noop } from 'lodash';
 import React from 'react';
@@ -135,12 +135,35 @@ describe('EditNotificationPolicyForm', function () {
       expect.anything()
     );
   });
+  it('should allow render form with all inputs being readonly when isReadonly policy', async function () {
+    const onSubmit = jest.fn();
+    renderRouteForm(
+      {
+        id: '0',
+        receiver: 'default',
+        group_wait: '1m30s',
+        group_interval: '2d4h30m35s',
+        repeat_interval: '1w2d6h',
+      },
+      [{ value: 'default', label: 'Default' }],
+      onSubmit,
+      true
+    );
+
+    screen.getAllByRole('checkbox').forEach((input) => {
+      expect(input).toBeDisabled();
+    });
+    screen.getAllByRole('textbox').forEach((input) => {
+      expect(input).toBeDisabled();
+    });
+  });
 });
 
 function renderRouteForm(
   route: RouteWithID,
   receivers: AmRouteReceiver[] = [],
-  onSubmit: (route: Partial<FormAmRoute>) => void = noop
+  onSubmit: (route: Partial<FormAmRoute>) => void = noop,
+  readOnly = false
 ) {
   render(
     <AlertmanagerProvider accessType="instance">
@@ -149,6 +172,7 @@ function renderRouteForm(
         onSubmit={onSubmit}
         receivers={receivers}
         route={route}
+        isReadOnly={readOnly}
       />
     </AlertmanagerProvider>,
     { wrapper: TestProvider }
