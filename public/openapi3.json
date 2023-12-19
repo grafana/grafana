@@ -1126,6 +1126,19 @@
         },
         "description": "(empty)"
       },
+      "getResourcePermissionsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/resourcePermissionDTO"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "getRoleAssignmentsResponse": {
         "content": {
           "application/json": {
@@ -1695,6 +1708,16 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/ActiveUserStats"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "resourcePermissionsDescription": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Description"
             }
           }
         },
@@ -3191,6 +3214,23 @@
         },
         "type": "object"
       },
+      "Assignments": {
+        "properties": {
+          "builtInRoles": {
+            "type": "boolean"
+          },
+          "serviceAccounts": {
+            "type": "boolean"
+          },
+          "teams": {
+            "type": "boolean"
+          },
+          "users": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
       "AttributeTypeAndValue": {
         "description": "AttributeTypeAndValue mirrors the ASN.1 structure of the same name in\nRFC 5280, Section 4.1.2.4.",
         "properties": {
@@ -4600,6 +4640,20 @@
         "additionalProperties": {
           "format": "int64",
           "type": "integer"
+        },
+        "type": "object"
+      },
+      "Description": {
+        "properties": {
+          "assignments": {
+            "$ref": "#/components/schemas/Assignments"
+          },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
         },
         "type": "object"
       },
@@ -12103,6 +12157,59 @@
           "integrations",
           "name"
         ],
+        "type": "object"
+      },
+      "resourcePermissionDTO": {
+        "properties": {
+          "actions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "builtInRole": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "isInherited": {
+            "type": "boolean"
+          },
+          "isManaged": {
+            "type": "boolean"
+          },
+          "isServiceAccount": {
+            "type": "boolean"
+          },
+          "permission": {
+            "type": "string"
+          },
+          "roleName": {
+            "type": "string"
+          },
+          "team": {
+            "type": "string"
+          },
+          "teamAvatarUrl": {
+            "type": "string"
+          },
+          "teamId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "userAvatarUrl": {
+            "type": "string"
+          },
+          "userId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "userLogin": {
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "silence": {
