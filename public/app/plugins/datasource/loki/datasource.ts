@@ -208,7 +208,7 @@ export class LokiDatasource
     }
 
     const normalizedQuery = getNormalizedLokiQuery(query);
-    const expr = removeCommentsFromQuery(normalizedQuery.expr);
+    let expr = removeCommentsFromQuery(normalizedQuery.expr);
     let isQuerySuitable = false;
 
     switch (options.type) {
@@ -217,6 +217,11 @@ export class LokiDatasource
         isQuerySuitable = !!(expr && isLogsQuery(expr) && normalizedQuery.queryType === LokiQueryType.Range);
         if (!isQuerySuitable) {
           return undefined;
+        }
+
+        const dropErrorExpression = `${expr} | drop __error__`;
+        if (isQueryWithError(this.interpolateString(dropErrorExpression, placeHolderScopedVars)) === false) {
+          expr = dropErrorExpression;
         }
 
         return {
