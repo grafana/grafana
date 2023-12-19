@@ -6,6 +6,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
@@ -33,6 +34,11 @@ type APIGroupBuilder interface {
 
 	// Get the API routes for each version
 	GetAPIRoutes() *APIRoutes
+
+	// Optionally create a custom authorizer for this api
+	// This is passed a wrapper that will enforce standard grafana constraints -- specifically that
+	// the namespace matches an org|stack that the user belongs to
+	GetAuthorizer(wrapper func(authorizer.AuthorizerFunc) authorizer.Authorizer) authorizer.Authorizer
 }
 
 // This is used to implement dynamic sub-resources like pods/x/logs
