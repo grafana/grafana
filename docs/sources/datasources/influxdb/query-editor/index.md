@@ -110,7 +110,7 @@ Otherwise, InfluxDB can easily return hundreds of thousands of data points that 
 ### Alias patterns
 
 | Alias pattern     | Replaced with                                                                                                                                                                                      |
-|-------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `$m`              | Measurement name.                                                                                                                                                                                  |
 | `$measurement`    | Measurement name.                                                                                                                                                                                  |
 | `$1` - `$9`       | Part of measurement name (if you separate your measurement name with dots).                                                                                                                        |
@@ -133,7 +133,7 @@ with [InfluxDB v3.0](https://www.influxdata.com/blog/introducing-influxdb-3-0/) 
 You can use macros within the query to replace them with the values from Grafana's context.
 
 | Macro example               | Replaced with                                                                                                                                                                       |
-|-----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `$__timeFrom`               | The start of the currently active time selection, such as `2020-06-11T13:31:00Z`.                                                                                                   |
 | `$__timeTo`                 | The end of the currently active time selection, such as `2020-06-11T14:31:00Z`.                                                                                                     |
 | `$__timeFilter`             | The time range that applies the start and the end of currently active time selection.                                                                                               |
@@ -147,11 +147,11 @@ Examples:
 // with macro
 1. SELECT * FROM cpu WHERE time >= $__timeFrom AND time <= $__timeTo
 2. SELECT * FROM cpu WHERE $__timeFilter(time)
-3. SELECT $__dateBin(time) from cpu 
+3. SELECT $__dateBin(time) from cpu
 
 // interpolated
-1. SELECT * FROM iox.cpu WHERE time >= cast('2023-12-15T12:38:30Z' as timestamp) AND time <= cast('2023-12-15T18:38:30Z' as timestamp) 
-2. SELECT * FROM cpu WHERE time >= '2023-12-15T12:41:28Z' AND time <= '2023-12-15T18:41:28Z' 
+1. SELECT * FROM iox.cpu WHERE time >= cast('2023-12-15T12:38:30Z' as timestamp) AND time <= cast('2023-12-15T18:38:30Z' as timestamp)
+2. SELECT * FROM cpu WHERE time >= '2023-12-15T12:41:28Z' AND time <= '2023-12-15T18:41:28Z'
 3. SELECT date_bin(interval '15 second', time, timestamp '1970-01-01T00:00:00Z') from cpu
 ```
 
@@ -171,7 +171,7 @@ You can enter macros in the query to replace them with values from Grafana's con
 Macros support copying and pasting from [Chronograf](https://www.influxdata.com/time-series-platform/chronograf/).
 
 | Macro example      | Replaced with                                                                                                                                                 |
-|--------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `v.timeRangeStart` | The start of the currently active time selection, such as `2020-06-11T13:31:00Z`.                                                                             |
 | `v.timeRangeStop`  | The end of the currently active time selection, such as `2020-06-11T14:31:00Z`.                                                                               |
 | `v.windowPeriod`   | An interval string compatible with Flux that corresponds to Grafana's calculated interval based on the time range of the active time selection, such as `5s`. |
