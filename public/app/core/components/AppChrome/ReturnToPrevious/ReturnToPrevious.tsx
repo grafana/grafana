@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import React from 'react';
-import { useHistory } from 'react-router-dom';
 
 import { GrafanaTheme2, UrlQueryValue } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { Button, ButtonGroup, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
@@ -13,19 +13,25 @@ export interface ReturnToPreviousProps {
 }
 
 export const ReturnToPrevious = ({ href, title, children }: ReturnToPreviousProps) => {
-  const history = useHistory();
   const styles = useStyles2(getStyles);
   const handleOnClick = () => {
-    href && history.push(href.toString());
+    href && locationService.push(href.toString());
   };
-  const params = useQueryParams()[0];
+  const [, setParams] = useQueryParams();
   const closeButton = () => {
-    params.returnToUrl = null;
-    params.returnToTitle = null;
-    history.push({ search: params.toString() });
+    setParams({ returnToTitle: null, returnToUrl: null });
+    const currentLocation = locationService.getLocation();
+    locationService.push(currentLocation);
   };
 
-  const titleLength = 37;
+  const shortenTitle = (title: UrlQueryValue) => {
+    const titleLength = 37;
+    if (title && title.toString().length > titleLength) {
+      return title.toString().substring(0, titleLength) + '...';
+    } else {
+      return title;
+    }
+  };
   const button = () => {
     return (
       <ButtonGroup className={styles.wrapper}>
@@ -38,7 +44,7 @@ export const ReturnToPrevious = ({ href, title, children }: ReturnToPreviousProp
           title={title?.toString()}
           className={styles.returnToPrevious}
         >
-          Back to {children?.toString().slice(0, titleLength).concat('...')}
+          Back to {shortenTitle(children)}
         </Button>
         <Button icon="times" aria-label="Close" variant="primary" fill="outline" size="sm" onClick={closeButton} />
       </ButtonGroup>
