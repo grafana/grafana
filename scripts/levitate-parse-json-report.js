@@ -1,4 +1,5 @@
 const fs = require('fs');
+const crypto = require('crypto');
 
 const data = JSON.parse(fs.readFileSync('data.json', 'utf8'));
 
@@ -25,4 +26,9 @@ if (data.changes.length > 0) {
   markdown += printSection('Changes', data.changes);
 }
 
-console.log(markdown);
+console.log(base64Encode(markdown));
+
+function base64Encode(str) {
+  const buffer = Buffer.from(str, 'utf-8');
+  return buffer.toString('base64');
+}
