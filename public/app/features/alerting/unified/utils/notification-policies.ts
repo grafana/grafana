@@ -152,7 +152,7 @@ function findMatchingAlertGroups(
 
 export type InhertitableProperties = Pick<
   Route,
-  'receiver' | 'group_by' | 'group_wait' | 'group_interval' | 'repeat_interval' | 'mute_time_intervals'
+  'receiver' | 'group_by' | 'group_wait' | 'group_interval' | 'repeat_interval'
 >;
 
 // inherited properties are config properties that exist on the parent route (or its inherited properties) but not on the child route
