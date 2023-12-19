@@ -153,13 +153,28 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) e
 	_, err, _ = o.singleFlightGroup.Do(lockKey, func() (any, error) {
 		logger.Debug("Singleflight request for getting a new access token", "key", lockKey)
 
-		// TODO (gamab) handle refresh option
-
 		authInfo, exists, err := o.HasOAuthEntry(ctx, usr)
 		if !exists {
 			if err != nil {
-				logger.Error("Failed to fetch oauth entry", "id", userID, "error", err)
+				logger.Warn("Failed to fetch oauth entry", "id", userID, "error", err)
 			}
+			return nil, nil
+		}
+
+		// get the token's auth provider (f.e. azuread)
+		provider := strings.TrimPrefix(authInfo.AuthModule, "oauth_")
+		currentOAuthInfo := o.SocialService.GetOAuthInfoProvider(provider)
+		if currentOAuthInfo == nil {
+			logger.Warn("OAuth provider not found", "provider", provider)
+			return nil, nil
+		}
+
+		// if refresh token handling is disabled for this provider, we can skip the refresh
+		if !currentOAuthInfo.UseRefreshToken {
+			// TODO (gamab): problem we don't cache here
+			// Opt1: Use another cache key BUT the TTL would have to be bubbled up or recomputed
+			// Opt2: Pass an additional param to do the UseRefreshToken check in tryGetOrRefreshAccessToken BUT then possible problem with GetCurrentOAuthToken not using that check
+			logger.Debug("Skipping token refresh", "provider", provider)
 			return nil, nil
 		}
 
