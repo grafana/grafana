@@ -1,6 +1,5 @@
 import { TypedVariableModel } from '@grafana/data';
-import { DataSourceWithBackend } from '@grafana/runtime';
-import { getConfig } from 'app/core/config';
+import { config, DataSourceWithBackend } from '@grafana/runtime';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { PanelModel } from '../../../state';
@@ -85,7 +84,7 @@ export const getUnsupportedDashboardDatasources = async (panels: PanelModel[]): 
  * @param accessToken
  */
 export const generatePublicDashboardUrl = (accessToken: string): string => {
-  return `${getConfig().appUrl}public-dashboards/${accessToken}`;
+  return `${config.appUrl}public-dashboards/${accessToken}`;
 };
 
 export const generatePublicDashboardConfigUrl = (dashboardUid: string, dashboardName: string): string => {
@@ -93,3 +92,7 @@ export const generatePublicDashboardConfigUrl = (dashboardUid: string, dashboard
 };
 
 export const validEmailRegex = /^[A-Z\d._%+-]+@[A-Z\d.-]+\.[A-Z]{2,}$/i;
+
+export const isPublicDashboardsEnabled = () => {
+  return Boolean(config.featureToggles.publicDashboards) && config.publicDashboardsEnabled;
+};
