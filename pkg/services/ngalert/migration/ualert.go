@@ -31,9 +31,10 @@ func (om *OrgMigration) migrateAlerts(ctx context.Context, l log.Logger, alerts 
 
 func (om *OrgMigration) migrateDashboard(ctx context.Context, dashboard *dashboards.Dashboard, alerts []*legacymodels.Alert) (*migmodels.DashboardUpgrade, error) {
 	du := &migmodels.DashboardUpgrade{
-		ID:             dashboard.ID,
-		UID:            dashboard.UID,
-		Title:          dashboard.Title,
+		ID:    dashboard.ID,
+		UID:   dashboard.UID,
+		Title: dashboard.Title,
+		// nolint:staticcheck
 		FolderID:       dashboard.FolderID,
 		MigratedAlerts: make(map[int64]*migmodels.AlertPair),
 	}
