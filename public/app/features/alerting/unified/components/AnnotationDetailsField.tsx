@@ -2,12 +2,11 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Tooltip, useStyles2 } from '@grafana/ui';
+import { TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { Annotation, annotationLabels } from '../utils/constants';
 
 import { DetailsField } from './DetailsField';
-import { Link } from './ExternalLink';
 import { Tokenize } from './Tokenize';
 import { Well } from './Well';
 
@@ -45,9 +44,9 @@ const AnnotationValue = ({ annotationKey, value, valueLink }: Props) => {
 
   if (valueLink) {
     return (
-      <Link href={valueLink} external>
+      <TextLink href={valueLink} external>
         {value}
-      </Link>
+      </TextLink>
     );
   }
 
@@ -57,9 +56,9 @@ const AnnotationValue = ({ annotationKey, value, valueLink }: Props) => {
 
   if (needsExternalLink) {
     return (
-      <Link href={value} external>
+      <TextLink href={value} external>
         {value}
-      </Link>
+      </TextLink>
     );
   }
 

@@ -2,7 +2,7 @@ import { isEmpty, truncate } from 'lodash';
 import React from 'react';
 
 import { AppEvents, NavModelItem, UrlQueryValue } from '@grafana/data';
-import { Alert, Button, Dropdown, LinkButton, Menu, Stack, TabContent, Text } from '@grafana/ui';
+import { Alert, Button, Dropdown, LinkButton, Menu, Stack, TabContent, Text, TextLink } from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { appEvents } from 'app/core/core';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -26,7 +26,6 @@ import { createUrl } from '../../../utils/url';
 import { AlertLabels } from '../../AlertLabels';
 import { AlertStateDot } from '../../AlertStateDot';
 import { AlertingPageWrapper } from '../../AlertingPageWrapper';
-import { Link } from '../../ExternalLink';
 import MoreButton from '../../MoreButton';
 import { ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
 import { DeclareIncidentMenuItem } from '../../bridges/DeclareIncidentButton';
@@ -206,10 +205,10 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
     metadata.push({
       label: 'Runbook',
       value: (
-        <Link href={runbookUrl} size="sm" external>
+        <TextLink variant="bodySmall" href={runbookUrl} external>
           {/* TODO instead of truncating the string, we should use flex and text overflow properly to allow it to take up all of the horizontal space available */}
           {truncate(runbookUrl, { length: 42 })}
-        </Link>
+        </TextLink>
       ),
     });
   }
@@ -218,18 +217,18 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
     metadata.push({
       label: 'Dashboard and panel',
       value: (
-        <Link href={makePanelLink(dashboardUID, panelID)} size="sm" external>
+        <TextLink variant="bodySmall" href={makePanelLink(dashboardUID, panelID)} external>
           View panel
-        </Link>
+        </TextLink>
       ),
     });
   } else if (hasDashboardWithoutPanel) {
     metadata.push({
       label: 'Dashboard',
       value: (
-        <Link href={makeDashboardLink(dashboardUID)} size="sm" external>
+        <TextLink variant="bodySmall" href={makeDashboardLink(dashboardUID)} external>
           View dashboard
-        </Link>
+        </TextLink>
       ),
     });
   }

@@ -3,12 +3,11 @@ import { formatDistanceToNowStrict } from 'date-fns';
 import React, { useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Text, Stack, useStyles2, ClipboardButton } from '@grafana/ui';
+import { Text, Stack, useStyles2, ClipboardButton, TextLink } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { Annotations } from 'app/types/unified-alerting-dto';
 
 import { isGrafanaRulerRule, isRecordingRulerRule } from '../../../utils/rules';
-import { Link } from '../../ExternalLink';
 import { MetaText } from '../../MetaText';
 import { Tokenize } from '../../Tokenize';
 
@@ -145,9 +144,9 @@ function AnnotationValue({ value }: AnnotationValueProps) {
 
   if (needsExternalLink) {
     return (
-      <Link href={value} size="sm" external>
+      <TextLink variant="bodySmall" href={value} external>
         {value}
-      </Link>
+      </TextLink>
     );
   }
 
