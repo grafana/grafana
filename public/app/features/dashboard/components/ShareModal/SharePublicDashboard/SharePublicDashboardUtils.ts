@@ -1,5 +1,6 @@
 import { TypedVariableModel } from '@grafana/data';
 import { config, DataSourceWithBackend } from '@grafana/runtime';
+import { getConfig } from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { PanelModel } from '../../../state';
@@ -84,7 +85,7 @@ export const getUnsupportedDashboardDatasources = async (panels: PanelModel[]): 
  * @param accessToken
  */
 export const generatePublicDashboardUrl = (accessToken: string): string => {
-  return `${config.appUrl}public-dashboards/${accessToken}`;
+  return `${getConfig().appUrl}public-dashboards/${accessToken}`;
 };
 
 export const generatePublicDashboardConfigUrl = (dashboardUid: string, dashboardName: string): string => {
