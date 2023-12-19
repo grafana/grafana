@@ -33,6 +33,17 @@ type OAuthTokenSync struct {
 }
 
 func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
+	namespace, _ := identity.NamespacedID()
+	// only perform oauth token check if identity is a user
+	if namespace != authn.NamespaceUser {
+		return nil
+	}
+
+	// not authenticated through session tokens, so we can skip this hook
+	if identity.SessionToken == nil {
+		return nil
+	}
+
 	_, err, _ := s.sf.Do(identity.ID, func() (interface{}, error) {
 		s.log.Debug("Singleflight request for OAuth token sync", "key", identity.ID)
 
