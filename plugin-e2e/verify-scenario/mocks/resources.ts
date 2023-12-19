@@ -12,3 +12,8 @@ export const scenarios = [
     stringInput: '',
   },
 ];
+
+export const prometheusLabels = {
+  status: 'success',
+  data: ['__name__', 'action', 'active', 'address'],
+};

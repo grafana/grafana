@@ -1,6 +1,6 @@
 import { expect, test } from '@grafana/plugin-e2e';
 
-import { testDataSuccessfulQuery } from './mocks/queries';
+import { successfulDataQuery } from './mocks/queries';
 import { scenarios } from './mocks/resources';
 
 test.describe('panel edit query data', () => {
@@ -30,7 +30,7 @@ test.describe('panel edit with mocked responses', () => {
   });
 
   test('mocked query data response', async ({ panelEditPage, page, selectors }) => {
-    await panelEditPage.mockQueryDataResponse(testDataSuccessfulQuery, 200);
+    await panelEditPage.mockQueryDataResponse(successfulDataQuery, 200);
     await panelEditPage.datasource.set('gdev-testdata');
     await panelEditPage.setVisualization('Table');
     await panelEditPage.refreshPanel();
