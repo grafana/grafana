@@ -125,6 +125,7 @@ func (api *Api) getAuthorizedList(ctx context.Context, identity identity.Request
 // 400: badRequestError
 // 401: unauthorisedError
 // 403: forbiddenError
+// 404: notFoundError
 // 500: internalServerError
 func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Response {
 	key, ok := web.Params(c.Req)[":key"]
@@ -134,7 +135,10 @@ func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Respons
 
 	provider, err := api.SSOSettingsService.GetForProvider(c.Req.Context(), key)
 	if err != nil {
-		return response.Error(http.StatusNotFound, "The provider was not found", err)
+		if errors.Is(err, ssosettings.ErrNotFound) {
+			return response.Error(http.StatusNotFound, "The provider was not found", err)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to get provider settings", err)
 	}
 
 	dto, err := provider.ToSSOSettingsDTO()
