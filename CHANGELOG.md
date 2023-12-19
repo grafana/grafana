@@ -1411,7 +1411,7 @@ The `database` field has been deprecated in the Elasticsearch datasource provisi
 ### Features and enhancements
 
 - **Alerting:** Attempt to retry retryable errors. [#79209](https://github.com/grafana/grafana/issues/79209), [@gotjosh](https://github.com/gotjosh)
-- **Unified Alerting:** Set  to 1 by default. [#79109](https://github.com/grafana/grafana/issues/79109), [@gotjosh](https://github.com/gotjosh)
+- **Unified Alerting:** Set to 1 by default. [#79109](https://github.com/grafana/grafana/issues/79109), [@gotjosh](https://github.com/gotjosh)
 
 ### Bug fixes
 
