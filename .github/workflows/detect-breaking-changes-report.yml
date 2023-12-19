@@ -117,6 +117,8 @@ jobs:
         message: |
           ⚠️ &nbsp;&nbsp;**Possible breaking changes**
 
+          You should see this updated message
+
           ${{ steps.levitate-markdown.outputs.levitate_markdown }}
 
           [Console output](${{ steps.levitate-run.outputs.job_link }})
