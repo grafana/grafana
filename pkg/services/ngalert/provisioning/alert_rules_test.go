@@ -547,10 +547,96 @@ func TestAlertRuleService(t *testing.T) {
 }
 
 func TestCreateAlertRule(t *testing.T) {
-	ruleService := createAlertRuleService(t)
-	var orgID int64 = 1
+	orgID := rand.Int63()
 	u := &user.SignedInUser{OrgID: orgID}
+	groupKey := models.GenerateGroupKey(orgID)
+	groupIntervalSeconds := int64(30)
+	rules := models.GenerateAlertRules(3, models.AlertRuleGen(models.WithGroupKey(groupKey), models.WithInterval(time.Duration(groupIntervalSeconds)*time.Second)))
+	groupProvenance := models.ProvenanceAPI
 
+	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *fakeRuleAccessControlService) {
+		service, ruleStore, provenanceStore, ac := initService(t)
+		ruleStore.Rules = map[int64][]*models.AlertRule{
+			orgID: rules,
+		}
+		for _, rule := range rules {
+			require.NoError(t, provenanceStore.SetProvenance(context.Background(), rule, orgID, groupProvenance))
+		}
+		return service, ruleStore, provenanceStore, ac
+	}
+
+	t.Run("when user can write all rules", func(t *testing.T) {
+		t.Run("and a new rule creates a new group", func(t *testing.T) {
+			rule := models.AlertRuleGen(models.WithOrgID(orgID))()
+			service, ruleStore, provenanceStore, ac := initServiceWithData(t)
+
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			actualRule, err := service.CreateAlertRule(context.Background(), u, *rule, models.ProvenanceFile)
+			require.NoError(t, err)
+
+			require.Len(t, ac.Calls, 1)
+			assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
+
+			t.Run("it should assign default interval", func(t *testing.T) {
+				require.Equal(t, service.defaultIntervalSeconds, actualRule.IntervalSeconds)
+			})
+
+			t.Run("inserts to database", func(t *testing.T) {
+				inserts := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+					a, ok := cmd.([]models.AlertRule)
+					return a, ok
+				})
+				require.Len(t, inserts, 1)
+				cmd := inserts[0].([]models.AlertRule)
+				require.Len(t, cmd, 1)
+			})
+
+			t.Run("set correct provenance", func(t *testing.T) {
+				p, err := provenanceStore.GetProvenance(context.Background(), &actualRule, orgID)
+				require.NoError(t, err)
+				require.Equal(t, models.ProvenanceFile, p)
+			})
+		})
+		t.Run("and it adds a rule to a group", func(t *testing.T) {
+			rule := models.AlertRuleGen(models.WithGroupKey(groupKey))()
+			service, ruleStore, provenanceStore, ac := initServiceWithData(t)
+
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			actualRule, err := service.CreateAlertRule(context.Background(), u, *rule, models.ProvenanceNone)
+			require.NoError(t, err)
+
+			require.Len(t, ac.Calls, 1)
+			assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
+
+			t.Run("it should assign group interval", func(t *testing.T) {
+				require.Equal(t, groupIntervalSeconds, actualRule.IntervalSeconds)
+			})
+
+			t.Run("inserts to database", func(t *testing.T) {
+				inserts := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+					a, ok := cmd.([]models.AlertRule)
+					return a, ok
+				})
+				require.Len(t, inserts, 1)
+				cmd := inserts[0].([]models.AlertRule)
+				require.Len(t, cmd, 1)
+			})
+
+			t.Run("set correct provenance", func(t *testing.T) {
+				p, err := provenanceStore.GetProvenance(context.Background(), &actualRule, orgID)
+				require.NoError(t, err)
+				require.Equal(t, models.ProvenanceNone, p)
+			})
+		})
+	})
+
+	ruleService := createAlertRuleService(t)
 	t.Run("should return the created id", func(t *testing.T) {
 		rule, err := ruleService.CreateAlertRule(context.Background(), u, dummyRule("test#1", orgID), models.ProvenanceNone)
 		require.NoError(t, err)
@@ -1030,11 +1116,16 @@ func initService(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.Fake
 	ac := &fakeRuleAccessControlService{}
 	ruleStore := fakes.NewRuleStore(t)
 	provenanceStore := fakes.NewFakeProvisioningStore()
+	folderService := foldertest.NewFakeService()
+
+	quotas := MockQuotaChecker{}
+	quotas.EXPECT().LimitOK()
 
 	service := &AlertRuleService{
+		folderService:          folderService,
 		ruleStore:              ruleStore,
 		provenanceStore:        provenanceStore,
-		quotas:                 &MockQuotaChecker{},
+		quotas:                 &quotas,
 		xact:                   newNopTransactionManager(),
 		log:                    log.New("testing"),
 		baseIntervalSeconds:    10,
