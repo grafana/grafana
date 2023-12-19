@@ -13,8 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-// Sync is a helper struct for persisting migration changes to the database.
-type Sync struct {
+// sync is a helper struct for persisting migration changes to the database.
+type sync struct {
 	log   log.Logger
 	orgID int64
 
@@ -23,8 +23,8 @@ type Sync struct {
 }
 
 // newSync creates a new migrationService for the given orgID.
-func (ms *migrationService) newSync(orgID int64) *Sync {
-	return &Sync{
+func (ms *migrationService) newSync(orgID int64) *sync {
+	return &sync{
 		orgID: orgID,
 		log:   ms.log.New("orgID", orgID),
 
@@ -36,7 +36,7 @@ func (ms *migrationService) newSync(orgID int64) *Sync {
 }
 
 // syncAndSaveState persists the given dashboardUpgrades and contactPairs to the database.
-func (sync *Sync) syncAndSaveState(
+func (sync *sync) syncAndSaveState(
 	ctx context.Context,
 	dashboardUpgrades []*migmodels.DashboardUpgrade,
 	contactPairs []*migmodels.ContactPair,
@@ -78,7 +78,7 @@ func createDelta(
 }
 
 // syncDelta persists the given delta to the state and database.
-func (sync *Sync) syncDelta(ctx context.Context, delta StateDelta) (*migrationStore.OrgMigrationState, error) {
+func (sync *sync) syncDelta(ctx context.Context, delta StateDelta) (*migrationStore.OrgMigrationState, error) {
 	state := &migrationStore.OrgMigrationState{
 		OrgID:          sync.orgID,
 		CreatedFolders: make([]string, 0),
@@ -98,7 +98,7 @@ func (sync *Sync) syncDelta(ctx context.Context, delta StateDelta) (*migrationSt
 }
 
 // handleAlertmanager persists the given channel delta to the state and database.
-func (sync *Sync) handleAlertmanager(ctx context.Context, delta StateDelta) error {
+func (sync *sync) handleAlertmanager(ctx context.Context, delta StateDelta) error {
 	amConfig := migmodels.NewAlertmanager()
 
 	if len(delta.ChannelsToAdd) == 0 {
@@ -125,7 +125,7 @@ func (sync *Sync) handleAlertmanager(ctx context.Context, delta StateDelta) erro
 }
 
 // handleAddRules persists the given add rule delta to the state and database.
-func (sync *Sync) handleAddRules(ctx context.Context, state *migrationStore.OrgMigrationState, delta StateDelta) error {
+func (sync *sync) handleAddRules(ctx context.Context, state *migrationStore.OrgMigrationState, delta StateDelta) error {
 	createdFolderUIDs := make(map[string]struct{})
 	if len(delta.DashboardsToAdd) > 0 {
 		for _, duToAdd := range delta.DashboardsToAdd {
@@ -151,7 +151,7 @@ func (sync *Sync) handleAddRules(ctx context.Context, state *migrationStore.OrgM
 }
 
 // validateAlertmanagerConfig validates the alertmanager configuration produced by the migration against the receivers.
-func (sync *Sync) validateAlertmanagerConfig(config *apiModels.PostableUserConfig) error {
+func (sync *sync) validateAlertmanagerConfig(config *apiModels.PostableUserConfig) error {
 	for _, r := range config.AlertmanagerConfig.Receivers {
 		for _, gr := range r.GrafanaManagedReceivers {
 			data, err := gr.Settings.MarshalJSON()

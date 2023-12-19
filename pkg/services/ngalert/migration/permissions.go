@@ -82,7 +82,7 @@ func (om *OrgMigration) getOrCreateMigratedFolder(ctx context.Context, l log.Log
 	// If parentFolder does not exist then the dashboard is an orphan. We migrate the alert to the general alerting folder.
 	// The general alerting folder is only accessible to admins.
 	if parentFolder == nil {
-		l.Debug("Migrating alert to the general alerting folder")
+		l.Info("Migrating alert to the general alerting folder")
 		f, err := om.getOrCreateGeneralAlertingFolder(ctx, om.orgID)
 		if err != nil {
 			return nil, fmt.Errorf("general alerting folder: %w", err)
