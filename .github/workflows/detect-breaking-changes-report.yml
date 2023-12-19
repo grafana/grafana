@@ -103,6 +103,8 @@ jobs:
       run: |
           if [ -f "${ARTIFACT_FOLDER}/levitate.md" ]; then
             echo "levitate_markdown=$(cat ${ARTIFACT_FOLDER}/levitate/levitate.md | base64 --decode)" >> $GITHUB_OUTPUT
+            echo "Just in case this is the message you were looking for:"
+            cat ${ARTIFACT_FOLDER}/levitate/levitate.md | base64 --decode
           else
             echo "levitate_markdown=No breaking changes detected" >> $GITHUB_OUTPUT
           fi
