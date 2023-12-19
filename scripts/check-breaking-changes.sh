@@ -49,7 +49,7 @@ while IFS=" " read -r -a package; do
     echo "I am detecting breaking changes"
     EXIT_CODE=1
     GITHUB_MESSAGE="${GITHUB_MESSAGE}**\\\`${PACKAGE_PATH}\\\`** has possible breaking changes ([more info](${GITHUB_JOB_LINK}#step:${GITHUB_STEP_NUMBER}:1))<br />"
-    GITHUB_LEVITATE_MARKDOWN+="##${PACKAGE_PATH}\n"$(node ./levitate-parse-json-report.js)
+    GITHUB_LEVITATE_MARKDOWN+="##${PACKAGE_PATH}\n"$(node ./scripts/levitate-parse-json-report.js)
   fi
 
 done <<<"$PACKAGES"
