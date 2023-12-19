@@ -7,6 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -154,4 +155,8 @@ func (b *FolderAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions 
 
 func (b *FolderAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	return nil // no custom API routes
+}
+
+func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
+	return nil // TODO: the FGAC rules encoded in the service can be moved here
 }
