@@ -26,7 +26,6 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
 export const Alert = React.forwardRef<HTMLDivElement, Props>(
   (
     {
-      title,
       onRemove,
       children,
       buttonContent,
@@ -40,7 +39,8 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
     ref
   ) => {
     const theme = useTheme2();
-    const hasTitle = Boolean(title);
+    const hasTitle = Boolean(false);
+    const title = '';
     const styles = getStyles(theme, severity, hasTitle, elevated, bottomSpacing, topSpacing);
     const rolesBySeverity: Record<AlertVariant, AriaRole> = {
       error: 'alert',
