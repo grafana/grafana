@@ -151,7 +151,7 @@ jobs:
         run: |
             mkdir -p ./levitate
             echo "{ \"exit_code\": ${{ steps.breaking-changes.outputs.is_breaking }}, \"message\": \"${{ steps.breaking-changes.outputs.message }}\", \"job_link\": \"${{ steps.job.outputs.link }}#step:${GITHUB_STEP_NUMBER}:1\", \"pr_number\": \"${{ github.event.pull_request.number }}\" }" > ./levitate/result.json
-            echo "${{ stesp.breaking-changes.outputs.levitate_markdown }}" > ./levitate/levitate.md
+            echo "${{ steps.breaking-changes.outputs.levitate_markdown }}" > ./levitate/levitate.md
         id: breaking-changes
 
       - name: Upload check output as artifact
