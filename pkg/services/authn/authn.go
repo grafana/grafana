@@ -118,7 +118,7 @@ type RedirectClient interface {
 	RedirectURL(ctx context.Context, r *Request) (*Redirect, error)
 }
 
-// LogoutCLient is and optional interface that auth client can implement.
+// LogoutCLient is an optional interface that auth client can implement.
 // Clients that implements this interface can implement additional logic
 // that should happen during logout and supports client specific redirect URL.
 type LogoutClient interface {
