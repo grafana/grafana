@@ -123,7 +123,7 @@ func TestAddMigrationInfo(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			labels, annotations := addLabelsAndAnnotations(&logtest.Fake{}, tc.alert, tc.dashboard, nil)
+			labels, annotations := addLabelsAndAnnotations(&logtest.Fake{}, tc.alert, tc.dashboard)
 			require.Equal(t, tc.expectedLabels, labels)
 			require.Equal(t, tc.expectedAnnotations, annotations)
 		})
@@ -139,43 +139,10 @@ func TestMakeAlertRule(t *testing.T) {
 			m := service.newOrgMigration(1)
 			da := createTestDashAlert()
 
-			ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard, "newfolderuid")
+			ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard)
 
 			require.NoError(t, err)
 			require.Equal(t, da.Name, ar.Title)
-		})
-
-		t.Run("truncates very long names to max length", func(t *testing.T) {
-			service := NewTestMigrationService(t, sqlStore, nil)
-			m := service.newOrgMigration(1)
-			da := createTestDashAlert()
-			da.Name = strings.Repeat("a", store.AlertDefinitionMaxTitleLength+1)
-
-			ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard, "newfolderuid")
-
-			require.NoError(t, err)
-			require.Len(t, ar.Title, store.AlertDefinitionMaxTitleLength)
-		})
-
-		t.Run("deduplicate names in same org and folder", func(t *testing.T) {
-			service := NewTestMigrationService(t, sqlStore, nil)
-			m := service.newOrgMigration(1)
-			da := createTestDashAlert()
-			da.Name = strings.Repeat("a", store.AlertDefinitionMaxTitleLength+1)
-
-			ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard, "newfolderuid")
-
-			require.NoError(t, err)
-			require.Len(t, ar.Title, store.AlertDefinitionMaxTitleLength)
-
-			da = createTestDashAlert()
-			da.Name = strings.Repeat("a", store.AlertDefinitionMaxTitleLength+1)
-
-			ar, err = m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard, "newfolderuid")
-
-			require.NoError(t, err)
-			require.Len(t, ar.Title, store.AlertDefinitionMaxTitleLength)
-			require.Equal(t, ar.Title, fmt.Sprintf("%s #2", strings.Repeat("a", store.AlertDefinitionMaxTitleLength-3)))
 		})
 	})
 
@@ -184,7 +151,7 @@ func TestMakeAlertRule(t *testing.T) {
 		m := service.newOrgMigration(1)
 		da := createTestDashAlert()
 
-		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard, "newfolderuid")
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard)
 		require.NoError(t, err)
 		require.False(t, ar.IsPaused)
 	})
@@ -195,7 +162,7 @@ func TestMakeAlertRule(t *testing.T) {
 		da := createTestDashAlert()
 		da.State = "paused"
 
-		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard, "newfolderuid")
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard)
 		require.NoError(t, err)
 		require.True(t, ar.IsPaused)
 	})
@@ -206,7 +173,7 @@ func TestMakeAlertRule(t *testing.T) {
 		da := createTestDashAlert()
 		da.Settings.Set("noDataState", uuid.NewString())
 
-		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard, "newfolderuid")
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard)
 		require.Nil(t, err)
 		require.Equal(t, models.NoData, ar.NoDataState)
 	})
@@ -217,7 +184,7 @@ func TestMakeAlertRule(t *testing.T) {
 		da := createTestDashAlert()
 		da.Settings.Set("executionErrorState", uuid.NewString())
 
-		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard, "newfolderuid")
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard)
 		require.Nil(t, err)
 		require.Equal(t, models.ErrorErrState, ar.ExecErrState)
 	})
@@ -228,7 +195,7 @@ func TestMakeAlertRule(t *testing.T) {
 		da := createTestDashAlert()
 		da.Message = "Instance ${instance} is down"
 
-		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard, "newfolderuid")
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard)
 		require.Nil(t, err)
 		expected :=
 			"{{- $mergedLabels := mergeLabelValues $values -}}\n" +
@@ -277,7 +244,7 @@ func TestMakeAlertRule(t *testing.T) {
 			t.Run(fmt.Sprintf("interval %ds should be %s", test.interval, test.expected), func(t *testing.T) {
 				da.Frequency = test.interval
 
-				ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard, "newfolderuid")
+				ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard)
 
 				require.NoError(t, err)
 				require.Equal(t, fmt.Sprintf("%s - %s", dashboard.Title, test.expected), ar.RuleGroup)
@@ -291,7 +258,7 @@ func TestMakeAlertRule(t *testing.T) {
 		da := createTestDashAlert()
 		longNamedDashboard := dashboards.Dashboard{UID: "dashboarduid", Title: strings.Repeat("a", store.AlertRuleMaxRuleGroupNameLength-1)}
 
-		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &longNamedDashboard, "newfolderuid")
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &longNamedDashboard)
 
 		require.NoError(t, err)
 		require.Len(t, ar.RuleGroup, store.AlertRuleMaxRuleGroupNameLength)

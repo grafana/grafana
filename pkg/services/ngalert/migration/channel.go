@@ -31,25 +31,34 @@ func (om *OrgMigration) migrateChannels(channels []*legacymodels.AlertNotificati
 	// Create all newly migrated receivers from legacy notification channels.
 	pairs := make([]*migmodels.ContactPair, 0, len(channels))
 	for _, c := range channels {
+		pair := &migmodels.ContactPair{
+			Channel: c,
+		}
 		receiver, err := om.createReceiver(c)
 		if err != nil {
-			if errors.Is(err, ErrDiscontinued) {
-				// Don't fail on discontinued channels.
-				om.log.Warn("Failed to create receiver", "type", c.Type, "name", c.Name, "uid", c.UID, "error", err)
-				continue
+			if om.failOnError && !errors.Is(err, ErrDiscontinued) {
+				// We don't fail on discontinued channels.
+				return nil, fmt.Errorf("channel '%s': %w", c.Name, err)
 			}
-			return nil, fmt.Errorf("channel '%s': %w", c.Name, err)
+			om.log.Warn("Failed to create receiver", "type", c.Type, "name", c.Name, "uid", c.UID, "error", err)
+			pair.Error = err.Error()
+			pairs = append(pairs, pair)
+			continue
 		}
+		pair.ContactPoint = receiver
 
 		route, err := createRoute(c, receiver.Name)
 		if err != nil {
-			return nil, fmt.Errorf("channel '%s': %w", c.Name, err)
+			if om.failOnError {
+				return nil, fmt.Errorf("channel '%s': %w", c.Name, err)
+			}
+			om.log.Warn("Failed to create route", "type", c.Type, "name", c.Name, "uid", c.UID, "error", err)
+			pair.Error = err.Error()
+			pairs = append(pairs, pair)
+			continue
 		}
-		pairs = append(pairs, &migmodels.ContactPair{
-			Channel:      c,
-			ContactPoint: receiver,
-			Route:        route,
-		})
+		pair.Route = route
+		pairs = append(pairs, pair)
 	}
 
 	return pairs, nil

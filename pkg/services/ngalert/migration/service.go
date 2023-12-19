@@ -171,6 +171,8 @@ func (ms *migrationService) migrateAllOrgs(ctx context.Context) error {
 			continue
 		}
 
+		// The automatic on-startup migration will fail if any error occurs.
+		om.failOnError = true
 		dashboardUpgrades, contactPairs, err := om.migrateOrg(ctx)
 		if err != nil {
 			return fmt.Errorf("migrate org %d: %w", o.ID, err)
