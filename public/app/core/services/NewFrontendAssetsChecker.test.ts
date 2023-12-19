@@ -38,6 +38,7 @@ describe('NewFrontendAssetsChecker', () => {
 
     locationService.push('/d/asd');
     locationService.push('/d/other');
+    locationService.push('/d/other?viewPanel=2');
     locationService.push('/ignored');
     locationService.push('/ignored?asd');
     locationService.push('/ignored/sub');

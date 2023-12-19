@@ -41,24 +41,21 @@ export class NewFrontendAssetsChecker {
     }
 
     const newLocationSegments = location.pathname.split('/');
-    const prevLocationSegments = this.prevLocationPath.split('/');
 
     // We are going to home
     if (newLocationSegments[1] === '/' && this.prevLocationPath !== '/') {
       this.reloadIfUpdateDetected();
     }
-    // Moving to another dashboard
-    else if (newLocationSegments[1] === 'd' && newLocationSegments[2] !== prevLocationSegments[2]) {
+    // Moving to dashboard (or changing dashboards)
+    else if (newLocationSegments[1] === 'd') {
       this.reloadIfUpdateDetected();
     }
     // Track potential page change
-    else {
-      if (this.hasUpdates) {
-        reportInteraction('new_frontend_assets_reload_ignored', {
-          newLocation: location.pathname,
-          prevLocation: this.prevLocationPath,
-        });
-      }
+    else if (this.hasUpdates) {
+      reportInteraction('new_frontend_assets_reload_ignored', {
+        newLocation: location.pathname,
+        prevLocation: this.prevLocationPath,
+      });
     }
 
     this.prevLocationPath = location.pathname;
