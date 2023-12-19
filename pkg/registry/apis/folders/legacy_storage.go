@@ -248,6 +248,10 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	if err != nil {
 		return v, false, err // includes the not-found error
 	}
+	user, err := appcontext.User(ctx)
+	if err != nil {
+		return nil, false, err
+	}
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, false, err
@@ -257,10 +261,12 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 		return v, false, fmt.Errorf("expected a folder response from Get")
 	}
 	err = s.service.Delete(ctx, &folder.DeleteFolderCommand{
-		UID:   name,
-		OrgID: info.OrgID,
-		// ForceDeleteRules: true, ????
-		// SignedInUser: user, ??? authz has already passed
+		UID:          name,
+		OrgID:        info.OrgID,
+		SignedInUser: user,
+
+		// This would cascade delete into alert rules
+		ForceDeleteRules: false,
 	})
 	return p, true, err // true is instant delete
 }
