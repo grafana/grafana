@@ -989,7 +989,10 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	}
 
 	// Only use modified search for non-empty search queries, otherwise it's just listing and new query can't help there yet.
-	if query.Title != "" && len(query.FolderUIDs) == 0 && len(query.FolderIds) == 0 { //nolint:staticcheck
+	if query.Title != "" &&
+		d.features.IsEnabled(ctx, featuremgmt.FlagSplitScopes) &&
+		len(query.FolderUIDs) == 0 &&
+		len(query.FolderIds) == 0 { //nolint:staticcheck
 		results, err := d.findDashboards(ctx, query)
 		if err != nil {
 			d.log.Info("new search failed", "error", err)
@@ -1084,7 +1087,6 @@ p.role_id IN (
 	UNION
 	SELECT br.role_id FROM builtin_role AS br WHERE br.role IN ({{ .Arg .Role }}) AND (br.org_id = {{ .Arg .OrgID }} OR br.org_id = 0)
 ) AND (
-{{ if .HasSplitScopes }}
 	{{- /* This permission check relies on the optimised (indexed) split scope columns in the permission table */ -}}
 	(
 		p.kind = 'dashboards' AND
@@ -1095,17 +1097,6 @@ p.role_id IN (
 		p.action = 'folders:read' AND
 		p.identifier IN (f4.uid, f3.uid, f2.uid, f1.uid, entity.uid)
 	)
-{{ else }}
-	(
-		p.action = 'dashboards:read' AND
-		p.scope LIKE 'dashboards:uid:%' AND
-		substr(p.scope, 16) = entity.uid
-	) OR (
-		p.action = 'folders:read' AND
-		p.scope LIKE 'folders:uid:%' AND
-		substr(p.scope, 13) IN (f4.uid, f3.uid, f2.uid, f1.uid, entity.uid)
-	)
-{{ end }}
 )
 {{ end }}
 LEFT JOIN dashboard_tag ON dashboard_tag.dashboard_id = entity.id
