@@ -4,7 +4,7 @@ This module contains steps and pipelines relating to creating CI Docker images.
 
 load(
     "scripts/drone/steps/lib_windows.star",
-    "clone_step_windows"
+    "clone_step_windows",
 )
 load(
     "scripts/drone/utils/utils.star",
