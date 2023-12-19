@@ -3779,7 +3779,7 @@ steps:
   - wire-install
   environment:
     CGO_ENBABLED: 1
-  image: grafana/ci-wix:0.1.1
+  image: grafana/ci-windows-test
   name: test-backend
 trigger:
   event:
@@ -4031,8 +4031,7 @@ platform:
 services: []
 steps:
 - commands:
-  - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-ci-sandbox.git"
-    .
+  - git clone "https://$$env:GITHUB_TOKEN@github.com/$$env:DRONE_REPO.git" .
   - git checkout -f $$env:DRONE_COMMIT
   environment:
     GITHUB_TOKEN:
@@ -4042,8 +4041,8 @@ steps:
 - commands:
   - cd scripts\build\ci-windows-test
   - docker login -u $$env:DOCKER_USERNAME -p $$env:DOCKER_PASSWORD
-  - docker build -t grafana/grafana-ci-windows-test:$$env:TAG .
-  - docker push grafana/grafana-ci-windows-test:$$env:TAG
+  - docker build -t grafana/ci-windows-test:$$env:TAG .
+  - docker push grafana/ci-windows-test:$$env:TAG
   environment:
     DOCKER_PASSWORD:
       from_secret: docker_password
@@ -4631,6 +4630,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 168b77f596eb556089649cbdaeb564fa9d54869a573446820fa220523b30c89d
+hmac: 3d34a66ee2a96faf526e59417a9b58d47b6c43bc0e9f869d8112fa511d17b2e9
 
 ...

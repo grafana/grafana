@@ -15,6 +15,11 @@ load(
     "from_secret",
 )
 
+load(
+    "scripts/drone/steps/lib_windows.star",
+    "clone_step_windows"
+)
+
 def publish_ci_windows_test_image_pipeline():
     trigger = {
         "event": ["promote"],
@@ -25,17 +30,7 @@ def publish_ci_windows_test_image_pipeline():
         trigger = trigger,
         platform = "windows",
         steps = [
-            {
-                "name": "clone",
-                "image": windows_images["wix"],
-                "environment": {
-                    "GITHUB_TOKEN": from_secret("github_token"),
-                },
-                "commands": [
-                    'git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-ci-sandbox.git" .',
-                    "git checkout -f $$env:DRONE_COMMIT",
-                ],
-            },
+            clone_step_windows(),
             {
                 "name": "build-and-publish",
                 "image": windows_images["windows_server_core"],
@@ -46,8 +41,8 @@ def publish_ci_windows_test_image_pipeline():
                 "commands": [
                     "cd scripts\\build\\ci-windows-test",
                     "docker login -u $$env:DOCKER_USERNAME -p $$env:DOCKER_PASSWORD",
-                    "docker build -t grafana/grafana-ci-windows-test:$$env:TAG .",
-                    "docker push grafana/grafana-ci-windows-test:$$env:TAG",
+                    "docker build -t grafana/ci-windows-test:$$env:TAG .",
+                    "docker push grafana/ci-windows-test:$$env:TAG",
                 ],
                 "volumes": [
                     {

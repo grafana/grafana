@@ -151,7 +151,7 @@ def test_backend_step_windows():
     # otherwise it creates an import cycle.
     return {
         "name": "test-backend",
-        "image": windows_images["wix"],
+        "image": windows_images["ci-windows-test"],
         "environment": {"CGO_ENBABLED": 1},
         "depends_on": [
             "wire-install",

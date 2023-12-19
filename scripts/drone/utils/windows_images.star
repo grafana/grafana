@@ -14,4 +14,5 @@ windows_images = {
     "wix": "grafana/ci-wix:0.1.1",
     "windows_server_core": "docker:windowsservercore-1809",
     "go": "golang:{}-windowsservercore-1809".format(golang_version),
+    "ci-windows-test": "grafana/ci-windows-test",
 }
