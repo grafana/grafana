@@ -32,7 +32,7 @@ export const computeErrorMessage = (errorNode: SyntaxNode) => {
         case Or:
           return 'Invalid value after logical operator.';
         case FieldOp:
-          return 'Invalid value after comparison or aritmetic operator.';
+          return 'Invalid value after comparison or arithmetic operator.';
         default:
           return 'Invalid operator after field expression.';
       }
