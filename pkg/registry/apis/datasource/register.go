@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -21,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
@@ -37,11 +37,12 @@ type DataSourceAPIBuilder struct {
 	connectionResourceInfo apis.ResourceInfo
 	configResourceInfo     apis.ResourceInfo
 
-	plugin     pluginstore.Plugin
-	client     plugins.Client
-	dsService  datasources.DataSourceService
-	dsCache    datasources.CacheService
-	namespacer request.NamespaceMapper
+	plugin        pluginstore.Plugin
+	client        plugins.Client
+	dsService     datasources.DataSourceService
+	dsCache       datasources.CacheService
+	accessControl accesscontrol.AccessControl
+	namespacer    request.NamespaceMapper
 }
 
 func RegisterAPIService(
@@ -52,6 +53,7 @@ func RegisterAPIService(
 	pluginStore pluginstore.Store,
 	dsService datasources.DataSourceService,
 	dsCache datasources.CacheService,
+	accessControl accesscontrol.AccessControl,
 ) *DataSourceAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
@@ -71,7 +73,7 @@ func RegisterAPIService(
 			continue // skip this one
 		}
 
-		builder = NewDataSourceAPIBuilder(ds, pluginClient, dsService, dsCache, namespacer)
+		builder = NewDataSourceAPIBuilder(ds, pluginClient, dsService, dsCache, accessControl, namespacer)
 		apiregistration.RegisterAPI(builder)
 	}
 	return builder // only used for wire
@@ -82,6 +84,7 @@ func NewDataSourceAPIBuilder(
 	client plugins.Client,
 	dsService datasources.DataSourceService,
 	dsCache datasources.CacheService,
+	accessControl accesscontrol.AccessControl,
 	namespacer request.NamespaceMapper) *DataSourceAPIBuilder {
 	group := getDatasourceGroupNameFromPluginID(plugin.ID)
 	return &DataSourceAPIBuilder{
@@ -91,6 +94,7 @@ func NewDataSourceAPIBuilder(
 		client:                 client,
 		dsService:              dsService,
 		dsCache:                dsCache,
+		accessControl:          accessControl,
 		namespacer:             namespacer,
 	}
 }
@@ -219,14 +223,6 @@ func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefiniti
 // Register additional routes with the server
 func (b *DataSourceAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	return nil
-}
-
-func (b *DataSourceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return authorizer.AuthorizerFunc(
-		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
-			// TODO!! hook in access control here
-			return authorizer.DecisionNoOpinion, "", err // fallback to org/role logic
-		})
 }
 
 func (b *DataSourceAPIBuilder) getDataSourcePluginContext(ctx context.Context, name string) (*backend.PluginContext, error) {
