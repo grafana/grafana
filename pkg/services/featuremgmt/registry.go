@@ -48,7 +48,7 @@ var (
 		},
 		{
 			Name:           "publicDashboards",
-			Description:    "Enables public access to dashboards",
+			Description:    "[Deprecated] Public dashboards are now enabled by default; to disable them, use the configuration setting. This feature toggle will be removed in the next major version.",
 			Stage:          FeatureStageGeneralAvailability,
 			Owner:          grafanaSharingSquad,
 			Expression:     "true", // enabled by default
@@ -812,10 +812,12 @@ var (
 		{
 			Name:            "influxdbSqlSupport",
 			Description:     "Enable InfluxDB SQL query language support with new querying UI",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
 			FrontendOnly:    false,
 			Owner:           grafanaObservabilityMetricsSquad,
-			RequiresRestart: false,
+			RequiresRestart: true,
+			AllowSelfServe:  true,
+			Expression:      "true", // enabled by default
 			Created:         time.Date(2023, time.August, 2, 12, 0, 0, 0, time.UTC),
 		},
 		{

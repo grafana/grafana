@@ -22,7 +22,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | Feature toggle name                  | Description                                                                                                                                                                                                                  | Enabled by default |
 | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
 | `disableEnvelopeEncryption`          | Disable envelope encryption (emergency only)                                                                                                                                                                                 |                    |
-| `publicDashboards`                   | Enables public access to dashboards                                                                                                                                                                                          | Yes                |
+| `publicDashboards`                   | [Deprecated] Public dashboards are now enabled by default; to disable them, use the configuration setting. This feature toggle will be removed in the next major version.                                                    | Yes                |
 | `featureHighlights`                  | Highlight Grafana Enterprise features                                                                                                                                                                                        |                    |
 | `exploreContentOutline`              | Content outline sidebar                                                                                                                                                                                                      | Yes                |
 | `newVizTooltips`                     | New visualizations tooltips UX                                                                                                                                                                                               |                    |
@@ -50,6 +50,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `transformationsRedesign`            | Enables the transformations redesign                                                                                                                                                                                         | Yes                |
 | `splitScopes`                        | Support faster dashboard and folder search by splitting permission scopes into parts                                                                                                                                         | Yes                |
 | `prometheusConfigOverhaulAuth`       | Update the Prometheus configuration page with the new auth component                                                                                                                                                         | Yes                |
+| `influxdbSqlSupport`                 | Enable InfluxDB SQL query language support with new querying UI                                                                                                                                                              | Yes                |
 | `alertingInsights`                   | Show the new alerting insights landing page                                                                                                                                                                                  | Yes                |
 | `cloudWatchWildCardDimensionValues`  | Fetches dimension values from CloudWatch to correctly label wildcard dimensions                                                                                                                                              | Yes                |
 | `displayAnonymousStats`              | Enables anonymous stats to be shown in the UI for Grafana                                                                                                                                                                    | Yes                |
@@ -131,7 +132,6 @@ Experimental features might be changed or removed without prior notice.
 | `traceToProfiles`                           | Enables linking between traces and profiles                                                                                                                                                                                                                                       |
 | `tracesEmbeddedFlameGraph`                  | Enables embedding a flame graph in traces                                                                                                                                                                                                                                         |
 | `permissionsFilterRemoveSubquery`           | Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder                                                                                                                                                                       |
-| `influxdbSqlSupport`                        | Enable InfluxDB SQL query language support with new querying UI                                                                                                                                                                                                                   |
 | `angularDeprecationUI`                      | Display new Angular deprecation-related UI features                                                                                                                                                                                                                               |
 | `sseGroupByDatasource`                      | Send query to the same datasource in a single request when using server side expressions                                                                                                                                                                                          |
 | `requestInstrumentationStatusSource`        | Include a status source label for request metrics and logs                                                                                                                                                                                                                        |
@@ -179,3 +179,31 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | `externalServiceAccounts`             | Automatic service account and token setup for plugins          |
 | `panelTitleSearchInV1`                | Enable searching for dashboards using panel title in search v1 |
 | `ssoSettingsApi`                      | Enables the SSO settings API                                   |
+
+## Configure feature management
+
+**Feature toggles** is an Administration page that allows authorized users to view and toggle the feature flags available in their Grafana instance. For more information, refer to [Feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/feature-toggles/).
+
+By default, feature toggles are in read-only mode.
+Granting admin users the ability to alter the states of feature toggles requires configuring Grafana with the optional [`allow_editing`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#allow_editing), [`update_webhook`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#update_webhook) and [`update_webhook_token`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#update_webhook_token) settings.
+
+Those configurations allow the Grafana operator to set up a webhook that Grafana must call to propagate the configuration change.
+
+**Example request**:
+
+```http
+POST $update_webhook
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer $update_webhook_token
+
+{
+  "feature_toggles": [
+    {
+      "featureToggle1": "true",
+      "featureToggle2": "false",
+    }
+  ],
+  "user": "admin@example.test",
+}
+```

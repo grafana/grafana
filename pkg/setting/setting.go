@@ -541,6 +541,9 @@ type Cfg struct {
 	// sqlstore package and HTTP middlewares.
 	DatabaseInstrumentQueries bool
 
+	// Public dashboards
+	PublicDashboardsEnabled bool
+
 	// Feature Management Settings
 	FeatureManagement FeatureMgmtSettings
 }
@@ -1254,6 +1257,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.UserFacingDefaultError = logSection.Key("user_facing_default_error").MustString("please inspect Grafana server log for details")
 
 	cfg.readFeatureManagementConfig()
+	cfg.readPublicDashboardsSettings()
 
 	return nil
 }
@@ -1964,4 +1968,9 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	}
 	cfg.LiveAllowedOrigins = originPatterns
 	return nil
+}
+
+func (cfg *Cfg) readPublicDashboardsSettings() {
+	publicDashboards := cfg.Raw.Section("public_dashboards")
+	cfg.PublicDashboardsEnabled = publicDashboards.Key("enabled").MustBool(true)
 }
