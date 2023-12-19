@@ -54,7 +54,8 @@ done <<<"$PACKAGES"
 # "Export" the message to an environment variable that can be used across Github Actions steps
 echo "is_breaking=$EXIT_CODE" >>"$GITHUB_OUTPUT"
 echo "message=$GITHUB_MESSAGE" >>"$GITHUB_OUTPUT"
-echo "levitate_markdown=$(echo $GITHUB_LEVITATE_MARKDOWN | base64)" >>"$GITHUB_OUTPUT"
+mkdir -p ./levitate
+echo $GITHUB_LEVITATE_MARKDOWN | base64 >./levitate/levitate.md
 
 # We will exit the workflow accordingly at another step
 exit 0
