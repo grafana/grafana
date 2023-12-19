@@ -130,18 +130,22 @@ describe('LogContextProvider', () => {
         direction: LogRowContextQueryDirection.Backward,
       });
       expect(query.expr).toBe('{bar="baz"}');
+      expect(logContextProvider.getInitContextFilters).toHaveBeenCalled();
     });
 
-    it('should not call getInitContextFilters if appliedContextFilters', async () => {
+    it('should also call getInitContextFilters if appliedContextFilters is set', async () => {
+      logContextProvider.getInitContextFilters = jest
+        .fn()
+        .mockResolvedValue([{ value: 'baz', enabled: true, fromParser: false, label: 'bar' }]);
       logContextProvider.appliedContextFilters = [
         { value: 'baz', enabled: true, fromParser: false, label: 'bar' },
         { value: 'abc', enabled: true, fromParser: false, label: 'xyz' },
       ];
-      const query = await logContextProvider.getLogRowContextQuery(defaultLogRow, {
+      await logContextProvider.getLogRowContextQuery(defaultLogRow, {
         limit: 10,
         direction: LogRowContextQueryDirection.Backward,
       });
-      expect(query.expr).toBe('{bar="baz",xyz="abc"}');
+      expect(logContextProvider.getInitContextFilters).toHaveBeenCalled();
     });
   });
 
