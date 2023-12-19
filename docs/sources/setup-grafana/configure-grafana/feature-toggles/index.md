@@ -22,7 +22,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | Feature toggle name                  | Description                                                                                                                                                                                                                  | Enabled by default |
 | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
 | `disableEnvelopeEncryption`          | Disable envelope encryption (emergency only)                                                                                                                                                                                 |                    |
-| `publicDashboards`                   | Enables public access to dashboards                                                                                                                                                                                          | Yes                |
+| `publicDashboards`                   | [Deprecated] Public dashboards are now enabled by default; to disable them, use the configuration setting. This feature toggle will be removed in the next major version.                                                    | Yes                |
 | `featureHighlights`                  | Highlight Grafana Enterprise features                                                                                                                                                                                        |                    |
 | `exploreContentOutline`              | Content outline sidebar                                                                                                                                                                                                      | Yes                |
 | `newVizTooltips`                     | New visualizations tooltips UX                                                                                                                                                                                               |                    |
@@ -32,7 +32,6 @@ Some features are enabled by default. You can disable these feature by setting t
 | `athenaAsyncQueryDataSupport`        | Enable async query data support for Athena                                                                                                                                                                                   | Yes                |
 | `cloudwatchNewRegionsHandler`        | Refactor of /regions endpoint, no user-facing changes                                                                                                                                                                        | Yes                |
 | `nestedFolderPicker`                 | Enables the new folder picker to work with nested folders. Requires the nestedFolders feature toggle                                                                                                                         | Yes                |
-| `accessTokenExpirationCheck`         | Enable OAuth access_token expiration check and token refresh using the refresh_token                                                                                                                                         |                    |
 | `emptyDashboardPage`                 | Enable the redesigned user interface of a dashboard page that includes no panels                                                                                                                                             | Yes                |
 | `disablePrometheusExemplarSampling`  | Disable Prometheus exemplar sampling                                                                                                                                                                                         |                    |
 | `logsContextDatasourceUi`            | Allow datasource to provide custom UI for context view                                                                                                                                                                       | Yes                |
@@ -49,10 +48,13 @@ Some features are enabled by default. You can disable these feature by setting t
 | `cloudWatchLogsMonacoEditor`         | Enables the Monaco editor for CloudWatch Logs queries                                                                                                                                                                        | Yes                |
 | `recordedQueriesMulti`               | Enables writing multiple items from a single query within Recorded Queries                                                                                                                                                   | Yes                |
 | `transformationsRedesign`            | Enables the transformations redesign                                                                                                                                                                                         | Yes                |
+| `splitScopes`                        | Support faster dashboard and folder search by splitting permission scopes into parts                                                                                                                                         | Yes                |
 | `prometheusConfigOverhaulAuth`       | Update the Prometheus configuration page with the new auth component                                                                                                                                                         | Yes                |
+| `influxdbSqlSupport`                 | Enable InfluxDB SQL query language support with new querying UI                                                                                                                                                              | Yes                |
 | `alertingInsights`                   | Show the new alerting insights landing page                                                                                                                                                                                  | Yes                |
 | `cloudWatchWildCardDimensionValues`  | Fetches dimension values from CloudWatch to correctly label wildcard dimensions                                                                                                                                              | Yes                |
 | `displayAnonymousStats`              | Enables anonymous stats to be shown in the UI for Grafana                                                                                                                                                                    | Yes                |
+| `lokiQueryHints`                     | Enables query hints for Loki                                                                                                                                                                                                 | Yes                |
 
 ## Preview feature toggles
 
@@ -73,7 +75,6 @@ Some features are enabled by default. You can disable these feature by setting t
 | `enableDatagridEditing`          | Enables the edit functionality in the datagrid panel                                                                                                                                         |
 | `sqlDatasourceDatabaseSelection` | Enables previous SQL data source dataset dropdown behavior                                                                                                                                   |
 | `awsAsyncQueryCaching`           | Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled     |
-| `splitScopes`                    | Support faster dashboard and folder search by splitting permission scopes into parts                                                                                                         |
 | `dashgpt`                        | Enable AI powered features in dashboards                                                                                                                                                     |
 | `reportingRetries`               | Enables rendering retries for the reporting feature                                                                                                                                          |
 | `transformationsVariableSupport` | Allows using variables in transformations                                                                                                                                                    |
@@ -131,7 +132,6 @@ Experimental features might be changed or removed without prior notice.
 | `traceToProfiles`                           | Enables linking between traces and profiles                                                                                                                                                                                                                                       |
 | `tracesEmbeddedFlameGraph`                  | Enables embedding a flame graph in traces                                                                                                                                                                                                                                         |
 | `permissionsFilterRemoveSubquery`           | Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder                                                                                                                                                                       |
-| `influxdbSqlSupport`                        | Enable InfluxDB SQL query language support with new querying UI                                                                                                                                                                                                                   |
 | `angularDeprecationUI`                      | Display new Angular deprecation-related UI features                                                                                                                                                                                                                               |
 | `sseGroupByDatasource`                      | Send query to the same datasource in a single request when using server side expressions                                                                                                                                                                                          |
 | `requestInstrumentationStatusSource`        | Include a status source label for request metrics and logs                                                                                                                                                                                                                        |
@@ -143,7 +143,6 @@ Experimental features might be changed or removed without prior notice.
 | `idForwarding`                              | Generate signed id token for identity that can be forwarded to plugins and external services                                                                                                                                                                                      |
 | `panelMonitoring`                           | Enables panel monitoring through logs and measurements                                                                                                                                                                                                                            |
 | `enableNativeHTTPHistogram`                 | Enables native HTTP Histograms                                                                                                                                                                                                                                                    |
-| `formatString`                              | Enable format string transformer                                                                                                                                                                                                                                                  |
 | `kubernetesPlaylists`                       | Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s                                                                                                                                                                                     |
 | `kubernetesSnapshots`                       | Use the kubernetes API in the frontend to support playlists                                                                                                                                                                                                                       |
 | `recoveryThreshold`                         | Enables feature recovery threshold (aka hysteresis) for threshold server-side expression                                                                                                                                                                                          |
@@ -155,7 +154,6 @@ Experimental features might be changed or removed without prior notice.
 | `costManagementUi`                          | Toggles the display of the cost management ui plugin                                                                                                                                                                                                                              |
 | `managedPluginsInstall`                     | Install managed plugins directly from plugins catalog                                                                                                                                                                                                                             |
 | `prometheusPromQAIL`                        | Prometheus and AI/ML to assist users in creating a query                                                                                                                                                                                                                          |
-| `addFieldFromCalculationStatFunctions`      | Add cumulative and window functions to the add field from calculation transformation                                                                                                                                                                                              |
 | `alertmanagerRemoteSecondary`               | Enable Grafana to sync configuration and state with a remote Alertmanager.                                                                                                                                                                                                        |
 | `alertmanagerRemotePrimary`                 | Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.                                                                                                                                                                                                |
 | `alertmanagerRemoteOnly`                    | Disable the internal Alertmanager and only use the external one defined.                                                                                                                                                                                                          |
@@ -168,7 +166,6 @@ Experimental features might be changed or removed without prior notice.
 | `logRowsPopoverMenu`                        | Enable filtering menu displayed when text of a log line is selected                                                                                                                                                                                                               |
 | `pluginsSkipHostEnvVars`                    | Disables passing host environment variable to plugin processes                                                                                                                                                                                                                    |
 | `tableSharedCrosshair`                      | Enables shared crosshair in table panel                                                                                                                                                                                                                                           |
-| `regressionTransformation`                  | Enables regression analysis transformation                                                                                                                                                                                                                                        |
 
 ## Development feature toggles
 
@@ -182,3 +179,31 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | `externalServiceAccounts`             | Automatic service account and token setup for plugins          |
 | `panelTitleSearchInV1`                | Enable searching for dashboards using panel title in search v1 |
 | `ssoSettingsApi`                      | Enables the SSO settings API                                   |
+
+## Configure feature management
+
+**Feature toggles** is an Administration page that allows authorized users to view and toggle the feature flags available in their Grafana instance. For more information, refer to [Feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/feature-toggles/).
+
+By default, feature toggles are in read-only mode.
+Granting admin users the ability to alter the states of feature toggles requires configuring Grafana with the optional [`allow_editing`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#allow_editing), [`update_webhook`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#update_webhook) and [`update_webhook_token`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#update_webhook_token) settings.
+
+Those configurations allow the Grafana operator to set up a webhook that Grafana must call to propagate the configuration change.
+
+**Example request**:
+
+```http
+POST $update_webhook
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer $update_webhook_token
+
+{
+  "feature_toggles": [
+    {
+      "featureToggle1": "true",
+      "featureToggle2": "false",
+    }
+  ],
+  "user": "admin@example.test",
+}
+```

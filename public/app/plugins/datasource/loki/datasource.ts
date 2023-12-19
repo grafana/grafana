@@ -48,7 +48,6 @@ import { DataQuery } from '@grafana/schema';
 
 import { queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
 import { getLogLevelFromKey } from '../../../features/logs/utils';
-import { replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
 
 import LanguageProvider from './LanguageProvider';
 import { LiveStreams, LokiLiveTarget } from './LiveStreams';
@@ -86,6 +85,7 @@ import {
   isQueryWithError,
   requestSupportsSplitting,
 } from './queryUtils';
+import { replaceVariables, returnVariables } from './querybuilder/parsingUtils';
 import { convertToWebSocketUrl, doLokiChannelStream } from './streaming';
 import { trackQuery } from './tracking';
 import {
@@ -208,7 +208,7 @@ export class LokiDatasource
     }
 
     const normalizedQuery = getNormalizedLokiQuery(query);
-    const expr = removeCommentsFromQuery(normalizedQuery.expr);
+    let expr = removeCommentsFromQuery(normalizedQuery.expr);
     let isQuerySuitable = false;
 
     switch (options.type) {
@@ -217,6 +217,11 @@ export class LokiDatasource
         isQuerySuitable = !!(expr && isLogsQuery(expr) && normalizedQuery.queryType === LokiQueryType.Range);
         if (!isQuerySuitable) {
           return undefined;
+        }
+
+        const dropErrorExpression = `${expr} | drop __error__`;
+        if (isQueryWithError(this.interpolateString(dropErrorExpression, placeHolderScopedVars)) === false) {
+          expr = dropErrorExpression;
         }
 
         return {

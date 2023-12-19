@@ -1,3 +1,29 @@
+<!-- 10.2.3 START -->
+
+# 10.2.3 (2023-12-18)
+
+### Features and enhancements
+
+- **Auth:** Improve groups claim setup docs for AzureAD. [#79227](https://github.com/grafana/grafana/issues/79227), [@mgyongyosi](https://github.com/mgyongyosi)
+- **Alerting:** Attempt to retry retryable errors. [#79175](https://github.com/grafana/grafana/issues/79175), [@gotjosh](https://github.com/gotjosh)
+- **Unified Alerting:** Set `max_attempts` to 1 by default. [#79103](https://github.com/grafana/grafana/issues/79103), [@gotjosh](https://github.com/gotjosh)
+- **Auth:** Add anonymous users view and stats. [#78965](https://github.com/grafana/grafana/issues/78965), [@Jguer](https://github.com/Jguer)
+
+### Bug fixes
+
+- **Alerting:** Fix deleting rules in a folder with matching UID in another organization. [#79011](https://github.com/grafana/grafana/issues/79011), [@papagian](https://github.com/papagian)
+- **CloudWatch:** Correctly quote metric names with special characters. [#78975](https://github.com/grafana/grafana/issues/78975), [@iwysiu](https://github.com/iwysiu)
+- **DeleteDashboard:** Redirect to home after deleting a dashboard. [#78936](https://github.com/grafana/grafana/issues/78936), [@ivanortegaalba](https://github.com/ivanortegaalba)
+- **Alerting:** Fixes combination of multiple predicates for rule search. [#78912](https://github.com/grafana/grafana/issues/78912), [@gillesdemey](https://github.com/gillesdemey)
+- **CloudWatch:** Fetch Dimension keys correctly from Dimension Picker. [#78831](https://github.com/grafana/grafana/issues/78831), [@iwysiu](https://github.com/iwysiu)
+- **Tempo:** Fix read-only access error. [#78801](https://github.com/grafana/grafana/issues/78801), [@fabrizio-grafana](https://github.com/fabrizio-grafana)
+- **Bug:** Fix broken ui components when angular is disabled. [#78670](https://github.com/grafana/grafana/issues/78670), [@jackw](https://github.com/jackw)
+- **InfluxDB:** Parse data for table view to have parity with frontend parser. [#78551](https://github.com/grafana/grafana/issues/78551), [@itsmylife](https://github.com/itsmylife)
+- **Elasticsearch:** Fix processing of raw_data with not-recognized time format. [#78380](https://github.com/grafana/grafana/issues/78380), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Recorded Queries:** Add org isolation (remote write target per org), and fix cross org Delete/List. (Enterprise)
+- **Auditing:** Fix missing action in alert manager routes. (Enterprise)
+
+<!-- 10.2.3 END -->
 <!-- 10.2.2 START -->
 
 # 10.2.2 (2023-11-20)
