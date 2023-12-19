@@ -133,5 +133,5 @@ func (b *PlaylistAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 }
 
 func (b *PlaylistAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return nil
+	return nil // default authorizer is fine
 }

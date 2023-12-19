@@ -10,6 +10,7 @@ import {
   TimeZone,
   EventBus,
   GrafanaTheme2,
+  DataFrame,
 } from '@grafana/data';
 import { Icon, Tooltip, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
 
@@ -27,6 +28,7 @@ type Props = {
   onLoadLogsVolume: () => void;
   onHiddenSeriesChanged: (hiddenSeries: string[]) => void;
   eventBus: EventBus;
+  annotations: DataFrame[];
 };
 
 export function LogsVolumePanel(props: Props) {
@@ -80,6 +82,7 @@ export function LogsVolumePanel(props: Props) {
         anchorToZero
         yAxisMaximum={allLogsVolumeMaximum}
         eventBus={props.eventBus}
+        annotations={props.annotations}
       />
       {extraInfoComponent && <div className={styles.extraInfoContainer}>{extraInfoComponent}</div>}
     </div>

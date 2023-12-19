@@ -1,6 +1,7 @@
 package example
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -20,6 +21,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 )
@@ -97,10 +99,6 @@ func (b *TestingAPIBuilder) GetAPIGroupInfo(
 
 func (b *TestingAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return example.GetOpenAPIDefinitions
-}
-
-func (b *TestingAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return nil
 }
 
 // Register additional routes with the server
@@ -199,4 +197,21 @@ func (b *TestingAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 			},
 		},
 	}
+}
+
+func (b *TestingAPIBuilder) GetAuthorizer() authorizer.Authorizer {
+	return authorizer.AuthorizerFunc(
+		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
+			if !attr.IsResourceRequest() {
+				return authorizer.DecisionNoOpinion, "", nil
+			}
+
+			// require a user
+			_, err = appcontext.User(ctx)
+			if err != nil {
+				return authorizer.DecisionDeny, "valid user is required", err
+			}
+
+			return authorizer.DecisionNoOpinion, "", err // fallback to org/role logic
+		})
 }

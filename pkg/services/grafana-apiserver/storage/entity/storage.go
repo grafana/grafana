@@ -100,7 +100,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		metaAccessor.SetGenerateName("")
 	}
 
-	e, err := resourceToEntity(key, obj, requestInfo)
+	e, err := resourceToEntity(key, obj, requestInfo, s.codec)
 	if err != nil {
 		return err
 	}
@@ -117,7 +117,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return fmt.Errorf("this was not a create operation... (%s)", rsp.Status.String())
 	}
 
-	err = entityToResource(rsp.Entity, out)
+	err = entityToResource(rsp.Entity, out, s.codec)
 	if err != nil {
 		return apierrors.NewInternalError(err)
 	}
@@ -151,7 +151,7 @@ func (s *Storage) Delete(ctx context.Context, key string, out runtime.Object, pr
 		return err
 	}
 
-	err = entityToResource(rsp.Entity, out)
+	err = entityToResource(rsp.Entity, out, s.codec)
 	if err != nil {
 		return apierrors.NewInternalError(err)
 	}
@@ -193,7 +193,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 		return apierrors.NewNotFound(s.gr, key)
 	}
 
-	err = entityToResource(rsp, objPtr)
+	err = entityToResource(rsp, objPtr, s.codec)
 	if err != nil {
 		return apierrors.NewInternalError(err)
 	}
@@ -232,7 +232,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	for _, r := range rsp.Results {
 		res := s.newFunc()
 
-		err := entityToResource(r, res)
+		err := entityToResource(r, res, s.codec)
 		if err != nil {
 			return apierrors.NewInternalError(err)
 		}
@@ -327,7 +327,7 @@ func (s *Storage) guaranteedUpdate(
 		return apierrors.NewInternalError(fmt.Errorf("could not successfully update object. key=%s, err=%s", key, err.Error()))
 	}
 
-	e, err := resourceToEntity(key, updatedObj, requestInfo)
+	e, err := resourceToEntity(key, updatedObj, requestInfo, s.codec)
 	if err != nil {
 		return err
 	}
@@ -351,7 +351,7 @@ func (s *Storage) guaranteedUpdate(
 		return nil // destination is already set
 	}
 
-	err = entityToResource(rsp.Entity, destination)
+	err = entityToResource(rsp.Entity, destination, s.codec)
 	if err != nil {
 		return apierrors.NewInternalError(err)
 	}

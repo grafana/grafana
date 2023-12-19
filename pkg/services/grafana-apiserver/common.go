@@ -35,7 +35,9 @@ type APIGroupBuilder interface {
 	// Get the API routes for each version
 	GetAPIRoutes() *APIRoutes
 
-	// An authorizer that runs after namespaces have been configured
+	// Optionally add an authorization hook
+	// Standard namespace checking will happen before this is called, specifically
+	// the namespace must matches an org|stack that the user belongs to
 	GetAuthorizer() authorizer.Authorizer
 }
 

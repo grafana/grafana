@@ -229,10 +229,10 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 
-		// Register the custom authorizer
+		// Optionally register a custom authorizer
 		auth := b.GetAuthorizer()
 		if auth != nil {
-			s.authorizer.Register(b.GetGroupVersion().String(), auth)
+			s.authorizer.Register(b.GetGroupVersion(), auth)
 		}
 	}
 
@@ -296,7 +296,7 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 
-		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, nil)
+		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, o.Etcd.StorageConfig.Codec)
 
 	case StorageTypeUnifiedGrpc:
 		// Create a connection to the gRPC server
@@ -312,7 +312,7 @@ func (s *service) start(ctx context.Context) error {
 		// Create a client instance
 		store := entity.NewEntityStoreClientWrapper(conn)
 
-		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, nil)
+		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, o.Etcd.StorageConfig.Codec)
 
 	case StorageTypeFile:
 		serverConfig.RESTOptionsGetter = filestorage.NewRESTOptionsGetter(s.config.dataPath, o.Etcd.StorageConfig)

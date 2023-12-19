@@ -3,12 +3,10 @@ package authorizer
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/authorization/union"
 
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/auth/authorizer/impersonation"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/auth/authorizer/org"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/auth/authorizer/stack"
 	orgsvc "github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -22,14 +20,14 @@ type GrafanaAuthorizer struct {
 
 func NewGrafanaAuthorizer(cfg *setting.Cfg, orgService orgsvc.Service) *GrafanaAuthorizer {
 	authorizers := []authorizer.Authorizer{
-		&impersonation.ImpersonationAuthorizer{},
+		&impersonationAuthorizer{},
 	}
 
 	// In Hosted grafana, the StackID replaces the orgID as a valid namespace
 	if cfg.StackID != "" {
-		authorizers = append(authorizers, stack.ProvideStackIDAuthorizer(cfg))
+		authorizers = append(authorizers, newStackIDAuthorizer(cfg))
 	} else {
-		authorizers = append(authorizers, org.ProvideOrgIDAuthorizer(orgService))
+		authorizers = append(authorizers, newOrgIDAuthorizer(orgService))
 	}
 
 	// Individual services may have explicit implementations
@@ -38,15 +36,15 @@ func NewGrafanaAuthorizer(cfg *setting.Cfg, orgService orgsvc.Service) *GrafanaA
 
 	// org role is last -- and will return allow for verbs that match expectations
 	// The apiVersion flavors will run first and can return early when FGAC has appropriate rules
-	authorizers = append(authorizers, org.ProvideOrgRoleAuthorizer(orgService))
+	authorizers = append(authorizers, newOrgRoleAuthorizer(orgService))
 	return &GrafanaAuthorizer{
 		apis: apis,
 		auth: union.New(authorizers...),
 	}
 }
 
-func (a *GrafanaAuthorizer) Register(apiVersion string, auth authorizer.Authorizer) {
-	a.apis[apiVersion] = auth
+func (a *GrafanaAuthorizer) Register(gv schema.GroupVersion, fn authorizer.Authorizer) {
+	a.apis[gv.String()] = fn
 }
 
 // Authorize implements authorizer.Authorizer.
