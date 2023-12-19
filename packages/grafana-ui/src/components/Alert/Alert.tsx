@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { AriaRole, HTMLAttributes } from 'react';
+import React, { AriaRole, HTMLAttributes, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -14,9 +14,11 @@ import { Text } from '../Text/Text';
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
 export interface Props extends HTMLAttributes<HTMLDivElement> {
+  title: string;
   /** On click handler for alert button, mostly used for dismissing the alert */
   onRemove?: (event: React.MouseEvent) => void;
   severity?: AlertVariant;
+  children?: ReactNode;
   elevated?: boolean;
   buttonContent?: React.ReactNode | string;
   bottomSpacing?: number;
@@ -26,6 +28,7 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
 export const Alert = React.forwardRef<HTMLDivElement, Props>(
   (
     {
+      title,
       onRemove,
       children,
       buttonContent,
@@ -39,8 +42,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
     ref
   ) => {
     const theme = useTheme2();
-    const hasTitle = Boolean(false);
-    const title = '';
+    const hasTitle = Boolean(title);
     const styles = getStyles(theme, severity, hasTitle, elevated, bottomSpacing, topSpacing);
     const rolesBySeverity: Record<AlertVariant, AriaRole> = {
       error: 'alert',
