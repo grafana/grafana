@@ -34,17 +34,16 @@ const mockTimeRange = {
   },
 };
 
-const defaultTimeRange = {
-  from: dateTime(0),
-  to: dateTime(1),
-  raw: {
-    from: dateTime(0),
-    to: dateTime(1),
-  },
-};
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
-  getDefaultTimeRange: jest.fn().mockImplementation(() => defaultTimeRange),
+  getDefaultTimeRange: jest.fn().mockImplementation(() => ({
+    from: dateTime(0),
+    to: dateTime(1),
+    raw: {
+      from: dateTime(0),
+      to: dateTime(1),
+    },
+  })),
 }));
 
 describe('Language completion provider', () => {
@@ -447,7 +446,7 @@ describe('Query imports', () => {
           maxLines: DEFAULT_MAX_LINES_SAMPLE,
           refId: 'data-samples',
         },
-        defaultTimeRange
+        getDefaultTimeRange()
       );
     });
 
@@ -468,7 +467,7 @@ describe('Query imports', () => {
           maxLines: 5,
           refId: 'data-samples',
         },
-        defaultTimeRange
+        getDefaultTimeRange()
       );
     });
 
