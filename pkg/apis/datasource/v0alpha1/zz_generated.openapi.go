@@ -208,22 +208,22 @@ func schema_pkg_apis_datasource_v0alpha1_HealthCheckResult(ref common.ReferenceC
 					},
 					"message": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Optional description for the data source (does not exist yet)",
+							Description: "Optional description for the data source",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"details": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Depends on the explicit kind",
-							Default:     map[string]interface{}{},
-							// TODO!  Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1/unstructured.Unstructured"),
+							Description: "Spec depends on the the plugin",
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1/unstructured.Unstructured"),
 						},
 					},
 				},
 			},
 		},
-		Dependencies: []string{},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured.Unstructured"},
 	}
 }
 
