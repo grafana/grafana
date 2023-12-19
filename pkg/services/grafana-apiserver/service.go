@@ -289,7 +289,7 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 
-		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, nil)
+		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, o.Etcd.StorageConfig.Codec)
 
 	case StorageTypeUnifiedGrpc:
 		// Create a connection to the gRPC server
@@ -305,7 +305,7 @@ func (s *service) start(ctx context.Context) error {
 		// Create a client instance
 		store := entity.NewEntityStoreClientWrapper(conn)
 
-		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, nil)
+		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, o.Etcd.StorageConfig.Codec)
 
 	case StorageTypeFile:
 		serverConfig.RESTOptionsGetter = filestorage.NewRESTOptionsGetter(s.config.dataPath, o.Etcd.StorageConfig)
