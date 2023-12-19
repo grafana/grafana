@@ -69,7 +69,12 @@ export const LogsTableAvailableFields = (props: {
             className={styles.wrap}
             title={`${labelName} appears in ${labels[labelName]?.percentOfLinesWithLabel}% of log lines`}
           >
-            <LogsTableNavField label={labelName} onChange={() => toggleColumn(labelName)} labels={labels} />
+            <LogsTableNavField
+              showCount={true}
+              label={labelName}
+              onChange={() => toggleColumn(labelName)}
+              labels={labels}
+            />
           </div>
         ))}
       </div>

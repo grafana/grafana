@@ -51,6 +51,7 @@ export function LogsTableNavField(props: {
   onChange: () => void;
   labels: Record<string, fieldNameMeta>;
   draggable?: boolean;
+  showCount?: boolean;
 }) {
   const theme = useTheme2();
   const styles = getStyles(theme);
@@ -63,9 +64,11 @@ export function LogsTableNavField(props: {
           onChange={props.onChange}
           checked={props.labels[props.label]?.active ?? false}
         />
-        <button className={styles.labelCount} onClick={props.onChange}>
-          {props.labels[props.label]?.percentOfLinesWithLabel}%
-        </button>
+        {props.showCount && (
+          <button className={styles.labelCount} onClick={props.onChange}>
+            {props.labels[props.label]?.percentOfLinesWithLabel}%
+          </button>
+        )}
       </div>
       {props.draggable && (
         <Icon
