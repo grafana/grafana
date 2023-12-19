@@ -120,16 +120,18 @@ export function ExploreGraph({
   const dataLinkPostProcessor = useExploreDataLinkPostProcessor(splitOpenFn, timeRange);
 
   const dataWithConfig = useMemo(() => {
-    return applyFieldOverrides({
-      fieldConfig: styledFieldConfig,
-      data,
-      timeZone,
-      replaceVariables: (value) => value, // We don't need proper replace here as it is only used in getLinks and we use getFieldLinks
-      theme,
-      fieldConfigRegistry,
-      dataLinkPostProcessor,
-    });
-  }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig, dataLinkPostProcessor]);
+    return loadingState === LoadingState.Done
+      ? applyFieldOverrides({
+          fieldConfig: styledFieldConfig,
+          data,
+          timeZone,
+          replaceVariables: (value) => value, // We don't need proper replace here as it is only used in getLinks and we use getFieldLinks
+          theme,
+          fieldConfigRegistry,
+          dataLinkPostProcessor,
+        })
+      : [];
+  }, [loadingState, styledFieldConfig, data, timeZone, theme, fieldConfigRegistry, dataLinkPostProcessor]);
 
   const annotationsWithConfig = useMemo(() => {
     return applyFieldOverrides({
