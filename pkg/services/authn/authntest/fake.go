@@ -3,6 +3,8 @@ package authntest
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/models/usertoken"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 )
 
@@ -64,6 +66,10 @@ func (f *FakeService) RegisterPostLoginHook(hook authn.PostLoginHookFn, priority
 
 func (f *FakeService) RedirectURL(ctx context.Context, client string, r *authn.Request) (*authn.Redirect, error) {
 	return f.ExpectedRedirect, f.ExpectedErr
+}
+
+func (*FakeService) Logout(_ context.Context, _ identity.Requester, _ *usertoken.UserToken) (*authn.Redirect, error) {
+	panic("unimplemented")
 }
 
 func (f *FakeService) RegisterClient(c authn.Client) {}

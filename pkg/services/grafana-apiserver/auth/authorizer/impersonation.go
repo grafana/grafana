@@ -1,4 +1,4 @@
-package impersonation
+package authorizer
 
 import (
 	"context"
@@ -6,12 +6,12 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
 
-var _ authorizer.Authorizer = (*ImpersonationAuthorizer)(nil)
+var _ authorizer.Authorizer = (*impersonationAuthorizer)(nil)
 
 // ImpersonationAuthorizer denies all impersonation requests.
-type ImpersonationAuthorizer struct{}
+type impersonationAuthorizer struct{}
 
-func (auth ImpersonationAuthorizer) Authorize(ctx context.Context, a authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
+func (auth impersonationAuthorizer) Authorize(ctx context.Context, a authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
 	if a.GetVerb() == "impersonate" {
 		return authorizer.DecisionDeny, "user impersonation is not supported", nil
 	}
