@@ -2,7 +2,7 @@ import { map, of } from 'rxjs';
 
 import { DataQueryRequest, DataSourceApi, LoadingState, PanelData } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { SceneDataTransformer, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { InspectTab } from 'app/features/inspector/types';
@@ -456,7 +456,7 @@ describe('VizPanelManager', () => {
         });
       });
 
-      it('changing from one plugin dashboard data source', async () => {
+      it('changing from a plugin to a dashboard data source', async () => {
         const vizPanelManager = setupTest('panel-1');
         vizPanelManager.activate();
         await Promise.resolve();
@@ -506,6 +506,98 @@ describe('VizPanelManager', () => {
 
         expect(panel.state.$data).toBeInstanceOf(SceneQueryRunner);
         expect((panel.state.$data as SceneQueryRunner).state.datasource).toEqual({
+          uid: 'gdev-prometheus',
+          type: 'grafana-prometheus-datasource',
+        });
+      });
+
+      describe('with transformations', () => {
+        it('changing from one plugin to another', async () => {
+          const vizPanelManager = setupTest('panel-2');
+          vizPanelManager.activate();
+          await Promise.resolve();
+
+          const panel = vizPanelManager.state.panel;
+
+          expect(panel.state.$data).toBeInstanceOf(SceneDataTransformer);
+
+          expect((panel.state.$data?.state.$data as SceneQueryRunner).state.datasource).toEqual({
+            uid: 'gdev-testdata',
+            type: 'grafana-testdata-datasource',
+          });
+
+          await vizPanelManager.changePanelDataSource({
+            name: 'grafana-prometheus',
+            type: 'grafana-prometheus-datasource',
+            uid: 'gdev-prometheus',
+            meta: {
+              name: 'Prometheus',
+              module: 'prometheus',
+              id: 'grafana-prometheus-datasource',
+            },
+          } as any);
+
+          expect(panel.state.$data).toBeInstanceOf(SceneDataTransformer);
+          expect((panel.state.$data?.state.$data as SceneQueryRunner).state.datasource).toEqual({
+            uid: 'gdev-prometheus',
+            type: 'grafana-prometheus-datasource',
+          });
+        });
+      });
+
+      it('changing from a plugin to dashboard data source', async () => {
+        const vizPanelManager = setupTest('panel-2');
+        vizPanelManager.activate();
+        await Promise.resolve();
+
+        const panel = vizPanelManager.state.panel;
+
+        expect(panel.state.$data).toBeInstanceOf(SceneDataTransformer);
+
+        expect((panel.state.$data?.state.$data as SceneQueryRunner).state.datasource).toEqual({
+          uid: 'gdev-testdata',
+          type: 'grafana-testdata-datasource',
+        });
+
+        await vizPanelManager.changePanelDataSource({
+          name: SHARED_DASHBOARD_QUERY,
+          type: 'datasource',
+          uid: SHARED_DASHBOARD_QUERY,
+          meta: {
+            name: 'Prometheus',
+            module: 'prometheus',
+            id: DASHBOARD_DATASOURCE_PLUGIN_ID,
+          },
+        } as any);
+
+        expect(panel.state.$data).toBeInstanceOf(SceneDataTransformer);
+        expect(panel.state.$data?.state.$data).toBeInstanceOf(ShareQueryDataProvider);
+      });
+
+      it('changing from a dashboard data source to a plugin', async () => {
+        const vizPanelManager = setupTest('panel-4');
+        vizPanelManager.activate();
+        await Promise.resolve();
+
+        const panel = vizPanelManager.state.panel;
+
+        expect(panel.state.$data).toBeInstanceOf(SceneDataTransformer);
+        expect(panel.state.$data?.state.$data).toBeInstanceOf(ShareQueryDataProvider);
+
+        await vizPanelManager.changePanelDataSource({
+          name: 'grafana-prometheus',
+          type: 'grafana-prometheus-datasource',
+          uid: 'gdev-prometheus',
+          meta: {
+            name: 'Prometheus',
+            module: 'prometheus',
+            id: 'grafana-prometheus-datasource',
+          },
+        } as any);
+
+        expect(panel.state.$data).toBeInstanceOf(SceneDataTransformer);
+        expect(panel.state.$data?.state.$data).toBeInstanceOf(SceneQueryRunner);
+        expect((panel.state.$data?.state.$data as SceneQueryRunner).state.datasource).toEqual({
           uid: 'gdev-prometheus',
           type: 'grafana-prometheus-datasource',
         });
