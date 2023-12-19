@@ -193,10 +193,10 @@ func TestSocialGoogle_retrieveGroups(t *testing.T) {
 					RoleAttributePath:       "",
 					RoleAttributeStrict:     false,
 					AllowAssignGrafanaAdmin: false,
+					SkipOrgRoleSync:         false,
 				},
 				&setting.Cfg{
-					AutoAssignOrgRole:     "",
-					GoogleSkipOrgRoleSync: false,
+					AutoAssignOrgRole: "",
 				},
 				&ssosettingstests.MockService{},
 				featuremgmt.WithFeatures())
@@ -647,12 +647,9 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 					RoleAttributePath:       tt.fields.roleAttributePath,
 					RoleAttributeStrict:     tt.fields.roleAttributeStrict,
 					AllowAssignGrafanaAdmin: tt.fields.allowAssignGrafanaAdmin,
-					// TODO: use this setting when SkipOrgRoleSync has moved to OAuthInfo
-					// SkipOrgRoleSync: tt.fields.skipOrgRoleSync,
+					SkipOrgRoleSync:         tt.fields.skipOrgRoleSync,
 				},
-				&setting.Cfg{
-					GoogleSkipOrgRoleSync: tt.fields.skipOrgRoleSync,
-				},
+				&setting.Cfg{},
 				&ssosettingstests.MockService{},
 				featuremgmt.WithFeatures())
 

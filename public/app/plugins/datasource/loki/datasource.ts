@@ -48,7 +48,6 @@ import { DataQuery } from '@grafana/schema';
 
 import { queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
 import { getLogLevelFromKey } from '../../../features/logs/utils';
-import { replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
 
 import LanguageProvider from './LanguageProvider';
 import { LiveStreams, LokiLiveTarget } from './LiveStreams';
@@ -86,6 +85,7 @@ import {
   isQueryWithError,
   requestSupportsSplitting,
 } from './queryUtils';
+import { replaceVariables, returnVariables } from './querybuilder/parsingUtils';
 import { convertToWebSocketUrl, doLokiChannelStream } from './streaming';
 import { trackQuery } from './tracking';
 import {
