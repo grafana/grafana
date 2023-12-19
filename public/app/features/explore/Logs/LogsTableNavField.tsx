@@ -29,12 +29,6 @@ function getStyles(theme: GrafanaTheme2) {
     // Making the checkbox sticky and label scrollable for labels that are wider then the container
     // However, the checkbox component does not support this, so we need to do some css hackery for now until the API of that component is updated.
     checkboxLabel: css({
-      '> :first-child': {
-        position: 'sticky',
-        left: 0,
-        bottom: 0,
-        top: 0,
-      },
       '> span': {
         overflow: 'hidden',
         textOverflow: 'ellipsis',

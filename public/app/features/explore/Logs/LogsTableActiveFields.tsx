@@ -8,7 +8,7 @@ import { useTheme2 } from '@grafana/ui/src';
 import { LogsTableNavField } from './LogsTableNavField';
 import { fieldNameMeta } from './LogsTableWrap';
 
-function getStyles(theme: GrafanaTheme2) {
+export function getLogsFieldsStyles(theme: GrafanaTheme2) {
   return {
     wrap: css({
       marginTop: theme.spacing(1),
@@ -63,7 +63,7 @@ export const LogsTableActiveFields = (props: {
 
   const { labels, valueFilter, toggleColumn } = props;
   const theme = useTheme2();
-  const styles = getStyles(theme);
+  const styles = getLogsFieldsStyles(theme);
   const labelKeys = Object.keys(labels).filter((labelName) => valueFilter(labelName));
   if (labelKeys.length) {
     // If we have a reorderColumn function, we need to wrap the nav items in dnd components
