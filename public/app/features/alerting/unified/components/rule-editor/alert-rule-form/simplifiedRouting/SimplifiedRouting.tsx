@@ -51,7 +51,7 @@ export function SimplifiedRouting() {
         alertmanagerSourceName={alertManagerContactPoint.alertManager.name}
         key={alertManagerContactPoint.alertManager.name + index}
       >
-        <AlertManagerManualRouting alertManagerContactPoint={alertManagerContactPoint} />
+        <AlertManagerManualRouting alertManager={alertManagerContactPoint.alertManager} />
       </AlertmanagerProvider>
     );
   });

@@ -14,27 +14,14 @@ import { ContactPointSelector } from './contactPoint/ContactPointSelector';
 import { MuteTimingFields } from './route-settings/MuteTimingFields';
 import { RoutingSettings } from './route-settings/RouteSettings';
 
-interface RouteSettings {
-  muteTimeIntervals: string[];
-  overrideGrouping: boolean;
-  groupBy: string[];
-  overrideTimings: boolean;
-  groupWaitValue: string;
-  groupIntervalValue: string;
-  repeatIntervalValue: string;
-}
 interface AlertManagerManualRoutingProps {
-  alertManagerContactPoint: {
-    alertManager: AlertManagerDataSource;
-    selectedContactPoint: string;
-    routeSettings: RouteSettings;
-  };
+  alertManager: AlertManagerDataSource;
 }
 
-export function AlertManagerManualRouting({ alertManagerContactPoint }: AlertManagerManualRoutingProps) {
+export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRoutingProps) {
   const styles = useStyles2(getStyles);
 
-  const alertManagerName = alertManagerContactPoint.alertManager.name;
+  const alertManagerName = alertManager.name;
   const { isLoading, error: errorInContactPointStatus, contactPoints } = useContactPointsWithStatus();
   const shouldShowAM = true;
   const [selectedContactPointWithMetadata, setSelectedContactPointWithMetadata] = useState<
@@ -54,7 +41,7 @@ export function AlertManagerManualRouting({ alertManagerContactPoint }: AlertMan
           <div className={styles.firstAlertManagerLine}></div>
           <div className={styles.alertManagerName}>
             Alert manager:
-            <img src={alertManagerContactPoint.alertManager.imgUrl} alt="Alert manager logo" className={styles.img} />
+            <img src={alertManager.imgUrl} alt="Alert manager logo" className={styles.img} />
             {alertManagerName}
           </div>
           <div className={styles.secondAlertManagerLine}></div>
