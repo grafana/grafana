@@ -93,7 +93,6 @@ func IntIdentifier(namespace, identifier string) (int64, error) {
 		}
 
 		return id, nil
-
 	}
 
 	return 0, ErrNotIntIdentifier

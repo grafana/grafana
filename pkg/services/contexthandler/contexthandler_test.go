@@ -39,8 +39,9 @@ func TestContextHandler(t *testing.T) {
 			require.Error(t, c.LookupTokenErr)
 		})
 
-		_, err := server.Send(server.NewGetRequest("/api/handler"))
+		res, err := server.Send(server.NewGetRequest("/api/handler"))
 		require.NoError(t, err)
+		require.NoError(t, res.Body.Close())
 	})
 
 	t.Run("should set identity on successful authentication", func(t *testing.T) {
@@ -60,8 +61,9 @@ func TestContextHandler(t *testing.T) {
 			require.NoError(t, c.LookupTokenErr)
 		})
 
-		_, err := server.Send(server.NewGetRequest("/api/handler"))
+		res, err := server.Send(server.NewGetRequest("/api/handler"))
 		require.NoError(t, err)
+		require.NoError(t, res.Body.Close())
 	})
 
 	t.Run("should not set IsSignedIn on anonymous identity", func(t *testing.T) {
@@ -81,8 +83,9 @@ func TestContextHandler(t *testing.T) {
 			require.NoError(t, c.LookupTokenErr)
 		})
 
-		_, err := server.Send(server.NewGetRequest("/api/handler"))
+		res, err := server.Send(server.NewGetRequest("/api/handler"))
 		require.NoError(t, err)
+		require.NoError(t, res.Body.Close())
 	})
 
 	t.Run("should set IsRenderCall when authenticated by render client", func(t *testing.T) {
@@ -103,8 +106,9 @@ func TestContextHandler(t *testing.T) {
 			require.NoError(t, c.LookupTokenErr)
 		})
 
-		_, err := server.Send(server.NewGetRequest("/api/handler"))
+		res, err := server.Send(server.NewGetRequest("/api/handler"))
 		require.NoError(t, err)
+		require.NoError(t, res.Body.Close())
 	})
 
 	t.Run("should delete session cookie on invalid session", func(t *testing.T) {
@@ -176,8 +180,9 @@ func TestContextHandler(t *testing.T) {
 			assert.Contains(t, list.Items, "Authorization")
 		})
 
-		_, err := server.Send(server.NewGetRequest("/api/handler"))
+		res, err := server.Send(server.NewGetRequest("/api/handler"))
 		require.NoError(t, err)
+		require.NoError(t, res.Body.Close())
 	})
 
 	t.Run("id response headers", func(t *testing.T) {
@@ -242,6 +247,5 @@ func TestContextHandler(t *testing.T) {
 			require.Empty(t, res.Header.Get("X-Grafana-Identity-Id"))
 			require.NoError(t, res.Body.Close())
 		})
-
 	})
 }
