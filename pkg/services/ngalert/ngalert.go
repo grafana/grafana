@@ -173,68 +173,63 @@ func (ng *AlertNG) init() error {
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
 
-	// If enabled, configure the remote Alertmanager.
+	// Configure the remote Alertmanager.
 	// Only RemoteSecondary mode is supported at the moment.
-	remoteAlertmanagerCfg := ng.Cfg.UnifiedAlerting.RemoteAlertmanager
-	moaLogger := log.New("ngalert.multiorg.alertmanager")
 	var overrides []notifier.Option
-	if remoteAlertmanagerCfg.Enable {
-		remoteOnly := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteOnly)
-		remotePrimary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemotePrimary)
-		remoteSecondary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondary)
+	moaLogger := log.New("ngalert.multiorg.alertmanager")
+	remoteAlertmanagerMode := DecideRemoteAlertmanagerMode(initCtx, ng.Cfg.UnifiedAlerting.RemoteAlertmanager, ng.FeatureToggles, ng.Log)
 
-		if remoteOnly || remotePrimary {
-			ng.Log.Warn("Only remote secondary mode is supported at the moment, falling back to remote secondary")
-			remoteSecondary = true
-		}
+	switch remoteAlertmanagerMode {
+	case modeInternalOnly:
+		// Nothing to do here, using only the internal Alertmanager.
+		break
+	case modeRemoteSecondary:
+		ng.Log.Debug("Starting Grafana with remote secondary mode enabled")
 
-		if remoteSecondary {
-			ng.Log.Debug("Starting Grafana with remote secondary mode enabled")
-			override := notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
-				// Create internal Alertmanager.
-				internalAM, err := notifier.NewAlertmanager(ctx,
-					orgID,
-					ng.Cfg,
-					ng.store,
-					ng.KVStore,
-					&notifier.NilPeer{},
-					decryptFn,
-					ng.NotificationService,
-					metrics.NewAlertmanagerMetrics(multiOrgMetrics.GetOrCreateOrgRegistry(orgID)),
-				)
-				if err != nil {
-					return nil, err
-				}
+		// This function will be used by the MOA to create new Alertmanagers.
+		override := notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
+			// Create internal Alertmanager.
+			internalAM, err := notifier.NewAlertmanager(ctx,
+				orgID,
+				ng.Cfg,
+				ng.store,
+				ng.KVStore,
+				&notifier.NilPeer{},
+				decryptFn,
+				ng.NotificationService,
+				metrics.NewAlertmanagerMetrics(multiOrgMetrics.GetOrCreateOrgRegistry(orgID)),
+			)
+			if err != nil {
+				return nil, err
+			}
 
-				// Create remote Alertmanager.
-				externalAMCfg := remote.AlertmanagerConfig{
-					OrgID:             orgID,
-					URL:               remoteAlertmanagerCfg.URL,
-					TenantID:          remoteAlertmanagerCfg.TenantID,
-					BasicAuthPassword: remoteAlertmanagerCfg.Password,
-				}
-				// We won't be handling files on disk, we can pass an empty string as workingDirPath.
-				stateStore := notifier.NewFileStore(orgID, ng.KVStore, "")
-				remoteAM, err := remote.NewAlertmanager(externalAMCfg, stateStore)
-				if err != nil {
-					moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
-					return internalAM, nil
-				}
+			// Create remote Alertmanager.
+			remoteAMCfg := ng.Cfg.UnifiedAlerting.RemoteAlertmanager
+			externalAMCfg := remote.AlertmanagerConfig{
+				OrgID:             orgID,
+				URL:               remoteAMCfg.URL,
+				TenantID:          remoteAMCfg.TenantID,
+				BasicAuthPassword: remoteAMCfg.Password,
+			}
+			// We won't be handling files on disk, we can pass an empty string as workingDirPath.
+			stateStore := notifier.NewFileStore(orgID, ng.KVStore, "")
+			remoteAM, err := remote.NewAlertmanager(externalAMCfg, stateStore)
+			if err != nil {
+				moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
+				return internalAM, nil
+			}
 
-				// Use both Alertmanager implementations in the forked Alertmanager.
-				cfg := remote.RemoteSecondaryConfig{
-					Logger:       log.New("ngalert.forked-alertmanager.remote-secondary"),
-					OrgID:        orgID,
-					Store:        ng.store,
-					SyncInterval: remoteAlertmanagerCfg.SyncInterval,
-				}
-				return remote.NewRemoteSecondaryForkedAlertmanager(cfg, internalAM, remoteAM)
-			})
+			// Use both Alertmanager implementations in the forked Alertmanager.
+			cfg := remote.RemoteSecondaryConfig{
+				Logger:       log.New("ngalert.forked-alertmanager.remote-secondary"),
+				OrgID:        orgID,
+				Store:        ng.store,
+				SyncInterval: remoteAMCfg.SyncInterval,
+			}
+			return remote.NewRemoteSecondaryForkedAlertmanager(cfg, internalAM, remoteAM)
+		})
 
-			overrides = append(overrides, override)
-		} else {
-			ng.Log.Error("A mode should be selected when enabling the remote Alertmanager, falling back to using only the internal Alertmanager")
-		}
+		overrides = append(overrides, override)
 	}
 	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, ng.store, ng.store, ng.KVStore, ng.store, decryptFn, multiOrgMetrics, ng.NotificationService, moaLogger, ng.SecretsService, overrides...)
 	if err != nil {
@@ -541,4 +536,37 @@ func ApplyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySet
 		}
 		return
 	}
+}
+
+type alertmanagerMode int
+
+const (
+	modeInternalOnly alertmanagerMode = iota
+	modeRemoteSecondary
+	modeRemotePrimary
+	modeRemoteOnly
+)
+
+// DecideRemoteAlertmanagerMode reads the feature toggles for the three modes and returns which mode we should use to start Grafana.
+// - If several toggles are enabled, the order of precedence is RemoteOnly, RemotePrimary, RemoteSecondary
+// - If no mode is selected, InternalOnly is returned
+// We currently support only remote secondary mode, so in case other toggles are enabled we fall back to RemoteSecondary.
+func DecideRemoteAlertmanagerMode(ctx context.Context, cfg setting.RemoteAlertmanagerSettings, ft featuremgmt.FeatureToggles, logger log.Logger) alertmanagerMode {
+	remoteOnly := ft.IsEnabled(ctx, featuremgmt.FlagAlertmanagerRemoteOnly)
+	remotePrimary := ft.IsEnabled(ctx, featuremgmt.FlagAlertmanagerRemotePrimary)
+	remoteSecondary := ft.IsEnabled(ctx, featuremgmt.FlagAlertmanagerRemoteSecondary)
+
+	if !cfg.Enable {
+		return modeInternalOnly
+	}
+
+	if remoteOnly || remotePrimary {
+		logger.Warn("Only remote secondary mode is supported at the moment, falling back to remote secondary")
+		return modeRemoteSecondary
+	}
+
+	if !remoteSecondary {
+		logger.Error("A mode should be selected when enabling the remote Alertmanager, falling back to using only the internal Alertmanager")
+	}
+	return modeInternalOnly
 }
