@@ -51,7 +51,7 @@ const strToValue = (val: string | string[]): SelectableValue[] => {
   if (Array.isArray(val)) {
     return val.map((v) => ({ label: v, value: v }));
   }
-  return val.split(',').map((s) => ({ label: s, value: s }));
+  return val.split(/[\s,]/).map((s) => ({ label: s, value: s }));
 };
 
 export function dataToDTO(data?: SSOProvider): SSOProviderDTO {
@@ -62,11 +62,7 @@ export function dataToDTO(data?: SSOProvider): SSOProviderDTO {
   const settings = { ...data.settings };
   for (const field of arrayFields) {
     //@ts-expect-error
-    const value = data[field];
-    if (value && isSelectableValue(value)) {
-      //@ts-expect-error
-      settings[field] = strToValue(value);
-    }
+    settings[field] = strToValue(settings[field]);
   }
   //@ts-expect-error
   return settings;
