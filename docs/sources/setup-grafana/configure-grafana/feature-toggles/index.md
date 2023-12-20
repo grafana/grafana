@@ -177,5 +177,4 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | `unifiedStorage`                      | SQL-based k8s storage                                          |
 | `externalServiceAuth`                 | Starts an OAuth2 authentication provider for external services |
 | `grafanaAPIServerEnsureKubectlAccess` | Start an additional https handler and write kubectl options    |
-| `externalServiceAccounts`             | Automatic service account and token setup for plugins          |
 | `panelTitleSearchInV1`                | Enable searching for dashboards using panel title in search v1 |
