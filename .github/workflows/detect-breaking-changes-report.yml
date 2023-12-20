@@ -96,6 +96,22 @@ jobs:
 
           return doesExist ? 1 : 0;
 
+    # put the markdown into a variable
+    - name: Levitate Markdown
+      id: levitate-markdown
+      if: steps.levitate-run.outputs.shouldSkip != 'true'
+      run: |
+          if [ -f "${ARTIFACT_FOLDER}/levitate.md" ]; then
+          {
+            echo 'levitate_markdown<<EOF'
+            cat ${ARTIFACT_FOLDER}/levitate.md
+            echo EOF
+          } >> $GITHUB_OUTPUT
+          else
+            echo "levitate_markdown=No breaking changes detected" >> $GITHUB_OUTPUT
+          fi
+
+
     # Comment on the PR
     - name: Comment on PR
       if: steps.levitate-run.outputs.exit_code == 1 && steps.levitate-run.outputs.shouldSkip != 'true'
@@ -103,11 +119,9 @@ jobs:
       with:
         number: ${{ steps.levitate-run.outputs.pr_number }}
         message: |
-          ⚠️ &nbsp;&nbsp;**Possible breaking changes**
+          ⚠️ &nbsp;&nbsp;**Possible breaking changes (md version)**
 
-          _(Open the links below in a new tab to go to the correct steps)_
-
-          ${{ steps.levitate-run.outputs.message }}
+          ${{ steps.levitate-markdown.outputs.levitate_markdown }}
 
           [Console output](${{ steps.levitate-run.outputs.job_link }})
           [Read our guideline](https://github.com/grafana/grafana/blob/main/contribute/breaking-changes-guide/breaking-changes-guide.md)
