@@ -10,43 +10,34 @@ export function hideEmptyPreviews(metric: string) {
       return;
     }
 
-    function subscribe() {
-      data.subscribeToState((state) => {
-        if (state.data?.state === LoadingState.Loading) {
-          return;
-        }
-        const scene = sceneGraph.getAncestor(gridItem, MetricSelectScene);
+    data.subscribeToState((state) => {
+      if (state.data?.state === LoadingState.Loading) {
+        return;
+      }
+      const scene = sceneGraph.getAncestor(gridItem, MetricSelectScene);
 
-        if (!state.data?.series.length) {
-          scene.updateMetricPanel(metric, true, true);
-          return;
-        }
+      if (!state.data?.series.length) {
+        scene.updateMetricPanel(metric, true, true);
+        return;
+      }
 
-        let hasValue = false;
-        for (const frame of state.data.series) {
-          for (const field of frame.fields) {
-            if (field.type !== FieldType.number) {
-              continue;
-            }
-
-            hasValue = field.values.some((v) => v != null && !isNaN(v) && v !== 0);
-            if (hasValue) {
-              break;
-            }
+      let hasValue = false;
+      for (const frame of state.data.series) {
+        for (const field of frame.fields) {
+          if (field.type !== FieldType.number) {
+            continue;
           }
+
+          hasValue = field.values.some((v) => v != null && !isNaN(v) && v !== 0);
           if (hasValue) {
             break;
           }
         }
-        scene.updateMetricPanel(metric, true, !hasValue);
-      });
-    }
-
-    // Working around an issue in scenes lib where activationHandler is not called if the object is already active.
-    if (data.isActive) {
-      subscribe();
-    } else {
-      data.addActivationHandler(subscribe);
-    }
+        if (hasValue) {
+          break;
+        }
+      }
+      scene.updateMetricPanel(metric, true, !hasValue);
+    });
   };
 }
