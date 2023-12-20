@@ -65,22 +65,28 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
           </Text>
         </div>
       )}
-      {shouldAllowSimplifiedRouting ? (
-        <ManualAndAutomaticRouting shouldAllowSimplifiedRouting={shouldAllowSimplifiedRouting} alertUid={alertUid} />
-      ) : (
-        <AutomaticRooting shouldRenderPreview={shouldRenderpreview} alertUid={alertUid} />
-      )}
+      {shouldAllowSimplifiedRouting ? ( // when simplified routing is enabled and is grafana rule
+        <ManualAndAutomaticRouting alertUid={alertUid} />
+      ) : // when simplified routing is not enabled, render the notification preview as we did before
+      shouldRenderpreview ? (
+        <AutomaticRooting alertUid={alertUid} />
+      ) : null}
     </RuleEditorSection>
   );
 };
 
 /**
- * This component is used to render the section body of the NotificationsStep, depending on the routing option selected.
- * If simplified routing is not enabled, it will render the NotificationPreview component.
- * If simplified routing is enabled, it will render the switch between the manual routing and the notification policy routing.
+ * Preconditions:
+ * - simplified routing is enabled
+ * - the alert rule is a grafana rule
+ *
+ * This component will render the switch between the manual routing and the notification policy routing.
+ * It also renders the section body of the NotificationsStep, depending on the routing option selected.
+ * If manual routing is selected, it will render the SimplifiedRouting component.
+ * If notification policy routing is selected, it will render the AutomaticRouting component.
  *
  */
-function ManualAndAutomaticRouting({ alertUid }: { shouldAllowSimplifiedRouting?: boolean; alertUid?: string }) {
+function ManualAndAutomaticRouting({ alertUid }: { alertUid?: string }) {
   const { watch, setValue } = useFormContext<RuleFormValues>();
   const styles = useStyles2(getStyles);
 
@@ -108,17 +114,16 @@ function ManualAndAutomaticRouting({ alertUid }: { shouldAllowSimplifiedRouting?
 
       <RoutingOptionDescription manualRouting={manualRouting} />
 
-      {manualRouting ? <SimplifiedRouting /> : <AutomaticRooting shouldRenderPreview={true} alertUid={alertUid} />}
+      {manualRouting ? <SimplifiedRouting /> : <AutomaticRooting alertUid={alertUid} />}
     </Stack>
   );
 }
 
 interface AutomaticRootingProps {
-  shouldRenderPreview: boolean;
   alertUid?: string;
 }
 
-function AutomaticRooting({ shouldRenderPreview, alertUid }: AutomaticRootingProps) {
+function AutomaticRooting({ alertUid }: AutomaticRootingProps) {
   const { watch } = useFormContext<RuleFormValues>();
   const [labels, queries, condition, folder, alertName] = watch([
     'labels',
@@ -128,7 +133,7 @@ function AutomaticRooting({ shouldRenderPreview, alertUid }: AutomaticRootingPro
     'name',
     'manualRouting',
   ]);
-  return shouldRenderPreview ? (
+  return (
     <NotificationPreview
       alertQueries={queries}
       customLabels={labels}
@@ -137,7 +142,7 @@ function AutomaticRooting({ shouldRenderPreview, alertUid }: AutomaticRootingPro
       alertName={alertName}
       alertUid={alertUid}
     />
-  ) : null;
+  );
 }
 
 // Auxiliar components to build the texts and descriptions in the NotificationsStep
