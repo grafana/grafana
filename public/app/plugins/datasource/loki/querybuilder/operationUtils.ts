@@ -296,7 +296,6 @@ export function addNestedQueryHandler(def: QueryBuilderOperationDef, query: Loki
 
 export function getLineFilterRenderer(operation: string, caseInsensitive?: boolean) {
   return function lineFilterRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-    // Strip out backticks within the string as backticks are used to wrap each param in the output
     const hasBackticks = model.params.some((param) => typeof param === 'string' && param.includes('`'));
     const delimiter = hasBackticks ? '"' : '`';
     let params;
