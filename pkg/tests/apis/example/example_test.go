@@ -20,7 +20,7 @@ func TestExampleApp(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction: false,
+		AppModeProduction: false, // required for experimental APIs
 		DisableAnonymous:  true,
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServer,
