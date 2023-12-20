@@ -3,7 +3,9 @@ package entity
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"reflect"
+	"strconv"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -36,7 +38,7 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object, codec runtime
 	metaAccessor.SetName(rsp.Name)
 	metaAccessor.SetNamespace(rsp.Namespace)
 	metaAccessor.SetUID(types.UID(rsp.Guid))
-	metaAccessor.SetResourceVersion(rsp.Version)
+	metaAccessor.SetResourceVersion(fmt.Sprintf("%d", rsp.ResourceVersion))
 	metaAccessor.SetCreationTimestamp(metav1.Unix(rsp.CreatedAt/1000, rsp.CreatedAt%1000*1000000))
 
 	grafanaAccessor := kinds.MetaAccessor(metaAccessor)
@@ -101,23 +103,24 @@ func resourceToEntity(key string, res runtime.Object, requestInfo *request.Reque
 	}
 
 	grafanaAccessor := kinds.MetaAccessor(metaAccessor)
+	rv, _ := strconv.ParseInt(metaAccessor.GetResourceVersion(), 10, 64)
 
 	rsp := &entityStore.Entity{
-		Group:        requestInfo.APIGroup,
-		GroupVersion: requestInfo.APIVersion,
-		Resource:     requestInfo.Resource,
-		Subresource:  requestInfo.Subresource,
-		Namespace:    metaAccessor.GetNamespace(),
-		Key:          key,
-		Name:         metaAccessor.GetName(),
-		Guid:         string(metaAccessor.GetUID()),
-		Version:      metaAccessor.GetResourceVersion(),
-		Folder:       grafanaAccessor.GetFolder(),
-		CreatedAt:    metaAccessor.GetCreationTimestamp().Time.UnixMilli(),
-		CreatedBy:    grafanaAccessor.GetCreatedBy(),
-		UpdatedBy:    grafanaAccessor.GetUpdatedBy(),
-		Slug:         grafanaAccessor.GetSlug(),
-		Title:        grafanaAccessor.GetTitle(),
+		Group:           requestInfo.APIGroup,
+		GroupVersion:    requestInfo.APIVersion,
+		Resource:        requestInfo.Resource,
+		Subresource:     requestInfo.Subresource,
+		Namespace:       metaAccessor.GetNamespace(),
+		Key:             key,
+		Name:            metaAccessor.GetName(),
+		Guid:            string(metaAccessor.GetUID()),
+		ResourceVersion: rv,
+		Folder:          grafanaAccessor.GetFolder(),
+		CreatedAt:       metaAccessor.GetCreationTimestamp().Time.UnixMilli(),
+		CreatedBy:       grafanaAccessor.GetCreatedBy(),
+		UpdatedBy:       grafanaAccessor.GetUpdatedBy(),
+		Slug:            grafanaAccessor.GetSlug(),
+		Title:           grafanaAccessor.GetTitle(),
 		Origin: &entityStore.EntityOriginInfo{
 			Source: grafanaAccessor.GetOriginName(),
 			Key:    grafanaAccessor.GetOriginKey(),

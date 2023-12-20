@@ -7,7 +7,7 @@ import (
 )
 
 func initEntityTables(mg *migrator.Migrator) string {
-	marker := "Initialize entity tables (v007)" // changing this key wipe+rewrite everything
+	marker := "Initialize entity tables (v11)" // changing this key wipe+rewrite everything
 	mg.AddMigration(marker, &migrator.RawSQLMigration{})
 
 	tables := []migrator.Table{}
@@ -16,15 +16,16 @@ func initEntityTables(mg *migrator.Migrator) string {
 		Columns: []*migrator.Column{
 			// primary identifier
 			{Name: "guid", Type: migrator.DB_NVarchar, Length: 36, Nullable: false, IsPrimaryKey: true},
-			{Name: "version", Type: migrator.DB_NVarchar, Length: 128, Nullable: false},
+			{Name: "resourceVersion", Type: migrator.DB_BigInt, Nullable: false},
 
-			// The entity identifier
+			// The entity identifier (TODO: remove -- this is a duplicate)
 			{Name: "key", Type: migrator.DB_Text, Nullable: false},
-			// k8s namespace names must be RFC1123 label names, 63 characters or less
-			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 63, Nullable: false},
+
+			// K8s Identity group+(version)+namespace+resource+name
 			{Name: "group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "group_version", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "resource", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 63, Nullable: false},
 			{Name: "name", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 
 			{Name: "folder", Type: migrator.DB_NVarchar, Length: 190, Nullable: false}, // uid of folder
@@ -60,7 +61,7 @@ func initEntityTables(mg *migrator.Migrator) string {
 			{Name: "errors", Type: migrator.DB_Text, Nullable: true},   // JSON object
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"namespace", "group", "resource", "name"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"group", "resource", "namespace", "name"}, Type: migrator.UniqueIndex}, // == key
 			{Cols: []string{"folder"}, Type: migrator.IndexType},
 		},
 	})
@@ -71,15 +72,16 @@ func initEntityTables(mg *migrator.Migrator) string {
 			// only difference from entity table is that we store multiple versions of the same entity
 			// so we have a unique index on guid+version instead of guid as primary key
 			{Name: "guid", Type: migrator.DB_NVarchar, Length: 36, Nullable: false},
-			{Name: "version", Type: migrator.DB_NVarchar, Length: 128, Nullable: false},
+			{Name: "resourceVersion", Type: migrator.DB_BigInt, Nullable: false},
 
-			// The entity identifier
+			// The entity identifier (TODO: remove -- this is a duplicate)
 			{Name: "key", Type: migrator.DB_Text, Nullable: false},
-			// k8s namespace names must be RFC1123 label names, 63 characters or less
-			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 63, Nullable: false},
+
+			// K8s Identity group+(version)+namespace+resource+name
 			{Name: "group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "group_version", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "resource", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 63, Nullable: false},
 			{Name: "name", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 
 			{Name: "folder", Type: migrator.DB_NVarchar, Length: 190, Nullable: false}, // uid of folder
@@ -116,8 +118,8 @@ func initEntityTables(mg *migrator.Migrator) string {
 			{Name: "errors", Type: migrator.DB_Text, Nullable: true},   // JSON object
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"guid", "version"}, Type: migrator.UniqueIndex},
-			{Cols: []string{"namespace", "group", "resource", "name", "version"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"guid", "resourceVersion"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"group", "resource", "namespace", "name", "resourceVersion"}, Type: migrator.UniqueIndex},
 		},
 	})
 
