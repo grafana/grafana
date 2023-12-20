@@ -21,15 +21,13 @@ export const ReturnToPreviousWrapper = () => {
     }
   }, [params]);
 
-  return (
+  return showReturnToPrevious && paramsExist ? (
     <div className={styles.wrapper}>
-      {showReturnToPrevious && paramsExist && (
-        <ReturnToPrevious href={params.returnToUrl} title={params.returnToTitle}>
-          {params.returnToTitle}
-        </ReturnToPrevious>
-      )}
+      <ReturnToPrevious href={params.returnToUrl} title={params.returnToTitle}>
+        {params.returnToTitle}
+      </ReturnToPrevious>
     </div>
-  );
+  ) : null;
 };
 
 ReturnToPreviousWrapper.displayName = 'ReturnToPreviousWrapper';
