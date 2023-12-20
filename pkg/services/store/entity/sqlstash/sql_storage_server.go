@@ -476,7 +476,7 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 		case foldersV0.GROUP:
 			switch current.Resource {
 			case foldersV0.RESOURCE:
-				err = updateFolderTree(ctx, tx, current.Namespace)
+				err = s.updateFolderTree(ctx, tx, current.Namespace)
 				if err != nil {
 					s.log.Error("error updating folder tree", "msg", err.Error())
 					return err
@@ -712,7 +712,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		case foldersV0.GROUP:
 			switch current.Resource {
 			case foldersV0.RESOURCE:
-				err = updateFolderTree(ctx, tx, current.Namespace)
+				err = s.updateFolderTree(ctx, tx, current.Namespace)
 				if err != nil {
 					s.log.Error("error updating folder tree", "msg", err.Error())
 					return err
@@ -830,7 +830,7 @@ func (s *sqlEntityServer) doDelete(ctx context.Context, tx *session.SessionTx, e
 	case foldersV0.GROUP:
 		switch ent.Resource {
 		case foldersV0.RESOURCE:
-			err = updateFolderTree(ctx, tx, ent.Namespace)
+			err = s.updateFolderTree(ctx, tx, ent.Namespace)
 			if err != nil {
 				s.log.Error("error updating folder tree", "msg", err.Error())
 				return err

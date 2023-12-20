@@ -34,7 +34,7 @@ type folderInfo struct {
 // This will replace all entries in `entity_folder`
 // This is pretty heavy weight, but it does give us a sorted folder list
 // NOTE: this could be done async with a mutex/lock?  reconciler pattern
-func updateFolderTree(ctx context.Context, tx *session.SessionTx, namespace string) error {
+func (s *sqlEntityServer) updateFolderTree(ctx context.Context, tx *session.SessionTx, namespace string) error {
 	_, err := tx.Exec(ctx, "DELETE FROM entity_folder WHERE namespace=?", namespace)
 	if err != nil {
 		return err
@@ -42,7 +42,7 @@ func updateFolderTree(ctx context.Context, tx *session.SessionTx, namespace stri
 
 	query := "SELECT guid,name,folder,name,slug" +
 		" FROM entity" +
-		" WHERE `group`=? AND resource=? AND namespace=?" +
+		" WHERE " + s.dialect.Quote("group") + "=? AND resource=? AND namespace=?" +
 		" ORDER BY slug asc"
 	args := []interface{}{foldersV0.GROUP, foldersV0.RESOURCE, namespace}
 
