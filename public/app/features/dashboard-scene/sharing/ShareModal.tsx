@@ -5,6 +5,7 @@ import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel, Scene
 import { Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
+import { isPublicDashboardsEnabled } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardInteractions } from '../utils/interactions';
@@ -61,7 +62,7 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
       }
     }
 
-    if (Boolean(config.featureToggles['publicDashboards'])) {
+    if (isPublicDashboardsEnabled()) {
       tabs.push(new SharePublicDashboardTab({ dashboardRef, modalRef: this.getRef() }));
     }
 
