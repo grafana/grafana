@@ -6,6 +6,7 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config, featureEnabled } from '@grafana/runtime';
 import { useStyles2, TabsBar, Tab } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import { isPublicDashboardsEnabled } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 
 import { Page } from '../../core/components/Page/Page';
 import { AccessControlAction } from '../../types';
@@ -46,7 +47,7 @@ export default function UserListPage() {
   const hasAccessToAdminUsers = contextSrv.hasPermission(AccessControlAction.UsersRead);
   const hasAccessToOrgUsers = contextSrv.hasPermission(AccessControlAction.OrgUsersRead);
   const hasEmailSharingEnabled =
-    Boolean(config.featureToggles.publicDashboards) &&
+    isPublicDashboardsEnabled() &&
     Boolean(config.featureToggles.publicDashboardsEmailSharing) &&
     featureEnabled('publicDashboardsEmailSharing');
 
@@ -77,7 +78,7 @@ export default function UserListPage() {
             onChangeTab={() => setView(TabView.ORG)}
             data-testid={selectors.tabs.orgUsers}
           />
-          {config.featureToggles.displayAnonymousStats && (
+          {config.anonymousEnabled && config.featureToggles.displayAnonymousStats && (
             <Tab
               label="Anonymous devices"
               active={view === TabView.ANON}
