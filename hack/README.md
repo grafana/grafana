@@ -14,6 +14,8 @@ total 0
 lrwxr-xr-x  1 ryan  staff  37 Oct  5 09:34 grafana -> /Users/ryan/workspace/grafana/grafana
 ```
 
+You can clone k8s [code-generator](https://github.com/kubernetes/code-generator) here and use `CODEGEN_PKG=<CODE-GENERATOR-GIT-ROOT>` when running the `update-codegen.sh` script.
+
 The current workflow (sorry!) is to:
 
 1. update the script to point to the group+version you want
