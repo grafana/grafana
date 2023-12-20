@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
-	"github.com/grafana/grafana/pkg/apis"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
 )
 
@@ -39,7 +39,7 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object, codec runtime
 	metaAccessor.SetResourceVersion(rsp.Version)
 	metaAccessor.SetCreationTimestamp(metav1.Unix(rsp.CreatedAt/1000, rsp.CreatedAt%1000*1000000))
 
-	grafanaAccessor, err := apis.MetaAccessor(res)
+	grafanaAccessor, err := utils.MetaAccessor(res)
 	if err != nil {
 		return err
 	}
@@ -61,7 +61,7 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object, codec runtime
 
 	if rsp.Origin != nil {
 		originTime := time.UnixMilli(rsp.Origin.Time).UTC()
-		grafanaAccessor.SetOriginInfo(&apis.ResourceOriginInfo{
+		grafanaAccessor.SetOriginInfo(&utils.ResourceOriginInfo{
 			Name: rsp.Origin.Source,
 			Key:  rsp.Origin.Key,
 			// Path: rsp.Origin.Path,
@@ -102,7 +102,7 @@ func resourceToEntity(key string, res runtime.Object, requestInfo *request.Reque
 		return nil, err
 	}
 
-	grafanaAccessor, err := apis.MetaAccessor(res)
+	grafanaAccessor, err := utils.MetaAccessor(res)
 	if err != nil {
 		return nil, err
 	}

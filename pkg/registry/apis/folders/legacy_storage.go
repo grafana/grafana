@@ -13,10 +13,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/apis/folders/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
-	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -148,7 +148,10 @@ func (s *legacyStorage) Create(ctx context.Context,
 		p.Spec.Title = strings.ReplaceAll(p.Spec.Title, "${RAND}", rand)
 	}
 
-	accessor := kinds.MetaAccessor(p)
+	accessor, err := utils.MetaAccessor(p)
+	if err != nil {
+		return nil, err
+	}
 	parent := accessor.GetFolder()
 
 	out, err := s.service.Create(ctx, &folder.CreateFolderCommand{
@@ -202,8 +205,10 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return nil, created, fmt.Errorf("expected old object to be a folder also")
 	}
 
-	oldParent := kinds.MetaAccessor(old).GetFolder()
-	newParent := kinds.MetaAccessor(f).GetFolder()
+	mOld, _ := utils.MetaAccessor(old)
+	mNew, _ := utils.MetaAccessor(f)
+	oldParent := mOld.GetFolder()
+	newParent := mNew.GetFolder()
 	if oldParent != newParent {
 		_, err = s.service.Move(ctx, &folder.MoveFolderCommand{
 			SignedInUser: user,
