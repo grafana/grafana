@@ -14,6 +14,7 @@ import {
   useStyles2,
   VerticalGroup,
   Stack,
+  Text,
 } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
@@ -27,7 +28,7 @@ import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { AlertLabels } from '../AlertLabels';
 import { DetailsField } from '../DetailsField';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
-import { RuleViewerLayout, RuleViewerLayoutContent } from '../rule-viewer/RuleViewerLayout';
+import { RuleViewerLayout } from '../rule-viewer/RuleViewerLayout';
 import { RuleDetailsActionButtons } from '../rules/RuleDetailsActionButtons';
 import { RuleDetailsAnnotations } from '../rules/RuleDetailsAnnotations';
 import { RuleDetailsDataSources } from '../rules/RuleDetailsDataSources';
@@ -107,7 +108,17 @@ export function RuleViewer({ match }: RuleViewerProps) {
   const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
 
   return (
-    <>
+    <RuleViewerLayout
+      wrapInContent={false}
+      title={pageTitle}
+      renderTitle={() => (
+        <Stack direction="row" alignItems="flex-start" gap={1}>
+          <Icon name="bell" size="xl" />
+          <Text variant="h3">{rule.name}</Text>
+          <RuleState rule={rule} isCreating={false} isDeleting={false} />
+        </Stack>
+      )}
+    >
       {isFederatedRule && (
         <Alert severity="info" title="This rule is part of a federated rule group.">
           <VerticalGroup>
@@ -121,14 +132,8 @@ export function RuleViewer({ match }: RuleViewerProps) {
         </Alert>
       )}
       {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.AlertRule} />}
-      <RuleViewerLayoutContent>
-        <div>
-          <Stack direction="row" alignItems="center" gap={1}>
-            <Icon name="bell" size="lg" /> <span className={styles.title}>{rule.name}</span>
-          </Stack>
-          <RuleState rule={rule} isCreating={false} isDeleting={false} />
-          <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} isViewMode={true} />
-        </div>
+      <>
+        <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} isViewMode={true} />
         <div className={styles.details}>
           <div className={styles.leftSide}>
             {rule.promRule && (
@@ -162,7 +167,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
             />
           </DetailsField>
         </div>
-      </RuleViewerLayoutContent>
+      </>
       <Collapse
         label="Query & Results"
         isOpen={expandQuery}
@@ -172,7 +177,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
       >
         {expandQuery && <QueryResults rule={rule} />}
       </Collapse>
-    </>
+    </RuleViewerLayout>
   );
 }
 

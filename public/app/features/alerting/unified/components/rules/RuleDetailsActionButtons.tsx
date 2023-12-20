@@ -318,7 +318,8 @@ function shouldShowDeclareIncidentButton() {
 
 export const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
-    padding: ${theme.spacing(2)} 0;
+    padding: 0 0 ${theme.spacing(2)} 0;
+    gap: ${theme.spacing(1)};
     display: flex;
     flex-direction: row;
     justify-content: space-between;
