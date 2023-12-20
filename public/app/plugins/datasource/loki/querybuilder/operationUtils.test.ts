@@ -163,7 +163,7 @@ describe('getLineFilterRenderer', () => {
 
   it('lineFilterRenderer returns the correct query for line contains, containing backticks', () => {
     const lineFilterRenderer = getLineFilterRenderer('!~');
-    expect(lineFilterRenderer(MOCK_MODEL_BACKTICKS, MOCK_DEF, MOCK_INNER_EXPR)).toBe('{job="grafana"} !~ `error`');
+    expect(lineFilterRenderer(MOCK_MODEL_BACKTICKS, MOCK_DEF, MOCK_INNER_EXPR)).toBe('{job="grafana"} !~ "`error`"');
   });
 
   it('lineFilterRenderer returns the correct query for line contains case insensitive', () => {
