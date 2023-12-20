@@ -25,9 +25,9 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
   });
 
   builder.addBooleanSwitch({
-    path: 'displayMiniMap',
-    name: 'Mini Map',
-    description: 'Display mini map during zoom',
+    path: 'panZoom',
+    name: 'Pan and Zoom',
+    description: 'Enable pan and zoom',
     defaultValue: false,
     showIf: (opts) => config.featureToggles.canvasPanelPanZoom,
   });

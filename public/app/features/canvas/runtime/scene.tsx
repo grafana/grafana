@@ -2,13 +2,7 @@
 import { css } from '@emotion/css';
 import Moveable from 'moveable';
 import React, { createRef, CSSProperties, RefObject } from 'react';
-import {
-  TransformWrapper,
-  TransformComponent,
-  ReactZoomPanPinchContentRef,
-  MiniMap,
-  ReactZoomPanPinchRef,
-} from 'react-zoom-pan-pinch';
+import { TransformWrapper, TransformComponent, ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
 import { BehaviorSubject, ReplaySubject, Subject, Subscription } from 'rxjs';
 import { first } from 'rxjs/operators';
 import Selecto from 'selecto';
@@ -74,7 +68,7 @@ export class Scene {
   currentLayer?: FrameState;
   isEditingEnabled?: boolean;
   shouldShowAdvancedTypes?: boolean;
-  shouldDisplayMiniMap?: boolean;
+  shouldPanZoom?: boolean;
   skipNextSelectionBroadcast = false;
   ignoreDataUpdate = false;
   panel: CanvasPanel;
@@ -88,14 +82,6 @@ export class Scene {
       } else {
         transformInstance.setup.disabled = false;
       }
-    }
-  };
-
-  checkMiniMap = (ref: ReactZoomPanPinchRef) => {
-    const miniMap = this.minimapComponentWrapperRef?.current;
-    if (miniMap) {
-      const scale = ref.state.scale;
-      miniMap.style.display = scale === 1 ? 'none' : 'block';
     }
   };
 
@@ -114,17 +100,16 @@ export class Scene {
 
   targetsToSelect = new Set<HTMLDivElement>();
   transformComponentRef: RefObject<ReactZoomPanPinchContentRef> | undefined;
-  minimapComponentWrapperRef: RefObject<HTMLDivElement> | undefined;
 
   constructor(
     cfg: CanvasFrameOptions,
     enableEditing: boolean,
     showAdvancedTypes: boolean,
-    displayMiniMap: boolean,
+    panZoom: boolean,
     public onSave: (cfg: CanvasFrameOptions) => void,
     panel: CanvasPanel
   ) {
-    this.root = this.load(cfg, enableEditing, showAdvancedTypes, displayMiniMap);
+    this.root = this.load(cfg, enableEditing, showAdvancedTypes, panZoom);
 
     this.subscription = this.editModeEnabled.subscribe((open) => {
       if (!this.moveable || !this.isEditingEnabled) {
@@ -136,7 +121,6 @@ export class Scene {
     this.panel = panel;
     this.connections = new Connections(this);
     this.transformComponentRef = createRef();
-    this.minimapComponentWrapperRef = createRef();
   }
 
   getNextElementName = (isFrame = false) => {
@@ -158,7 +142,7 @@ export class Scene {
     return !this.byName.has(v);
   };
 
-  load(cfg: CanvasFrameOptions, enableEditing: boolean, showAdvancedTypes: boolean, displayMiniMap: boolean) {
+  load(cfg: CanvasFrameOptions, enableEditing: boolean, showAdvancedTypes: boolean, panZoom: boolean) {
     this.root = new RootElement(
       cfg ?? {
         type: 'frame',
@@ -170,7 +154,7 @@ export class Scene {
 
     this.isEditingEnabled = enableEditing;
     this.shouldShowAdvancedTypes = showAdvancedTypes;
-    this.shouldDisplayMiniMap = displayMiniMap;
+    this.shouldPanZoom = panZoom;
 
     setTimeout(() => {
       if (this.div) {
@@ -709,14 +693,8 @@ export class Scene {
             this.moveable.zoom = 1 / scale;
           }
         }}
-        onInit={(r) => {
-          this.checkMiniMap(r);
-        }}
-        onTransformed={(r) => {
-          this.checkMiniMap(r);
-        }}
         limitToBounds={true}
-        disabled={!config.featureToggles.canvasPanelPanZoom}
+        disabled={!config.featureToggles.canvasPanelPanZoom || !this.shouldPanZoom}
       >
         <div
           style={{
@@ -726,15 +704,7 @@ export class Scene {
             bottom: '0px',
             right: '0px',
           }}
-        >
-          {config.featureToggles.canvasPanelPanZoom && this.shouldDisplayMiniMap && (
-            <div ref={this.minimapComponentWrapperRef}>
-              <MiniMap width={200} borderColor={config.theme2.colors.border.weak}>
-                <></>
-              </MiniMap>
-            </div>
-          )}
-        </div>
+        ></div>
         <TransformComponent>
           <div
             key={this.revId}
