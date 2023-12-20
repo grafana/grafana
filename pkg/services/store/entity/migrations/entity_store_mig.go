@@ -7,7 +7,7 @@ import (
 )
 
 func initEntityTables(mg *migrator.Migrator) string {
-	marker := "Initialize entity tables (v10)" // changing this key wipe+rewrite everything
+	marker := "Initialize entity tables (v12)" // changing this key wipe+rewrite everything
 	mg.AddMigration(marker, &migrator.RawSQLMigration{})
 
 	tables := []migrator.Table{}
@@ -131,7 +131,6 @@ func initEntityTables(mg *migrator.Migrator) string {
 			{Name: "guid", Type: migrator.DB_NVarchar, Length: 36, Nullable: false, IsPrimaryKey: true},
 			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 63, Nullable: false},
 			{Name: "name", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
-			{Name: "title", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "slug_path", Type: migrator.DB_Text, Nullable: false}, // /slug/slug/slug/
 			{Name: "tree", Type: migrator.DB_Text, Nullable: false},      // JSON []{uid, title}
 			{Name: "depth", Type: migrator.DB_Int, Nullable: false},      // starts at 1
