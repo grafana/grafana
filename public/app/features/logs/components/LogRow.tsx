@@ -3,10 +3,20 @@ import { debounce } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React, { PureComponent, MouseEvent } from 'react';
 
-import { Field, LinkModel, LogRowModel, LogsSortOrder, dateTimeFormat, CoreApp, DataFrame } from '@grafana/data';
+import {
+  Field,
+  LinkModel,
+  LogRowModel,
+  LogsSortOrder,
+  dateTimeFormat,
+  CoreApp,
+  DataFrame,
+  LogRowContextOptions,
+} from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { TimeZone } from '@grafana/schema';
+import { DataQuery, TimeZone } from '@grafana/schema';
 import { withTheme2, Themeable2, Icon, Tooltip } from '@grafana/ui';
+import { LokiQuery } from 'app/plugins/datasource/loki/types';
 
 import { checkLogsError, escapeUnescapedString } from '../utils';
 
@@ -39,6 +49,11 @@ interface Props extends Themeable2 {
   onClickHideField?: (key: string) => void;
   onLogRowHover?: (row?: LogRowModel) => void;
   onOpenContext: (row: LogRowModel, onClose: () => void) => void;
+  getRowContextQuery?: (
+    row: LogRowModel,
+    options?: LogRowContextOptions,
+    origQuery?: LokiQuery
+  ) => Promise<DataQuery | null>;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   styles: LogRowStyles;
   permalinkedRowId?: string;
@@ -202,6 +217,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       forceEscape,
       app,
       styles,
+      getRowContextQuery,
     } = this.props;
     const { showDetails, showingContext, permalinked } = this.state;
     const levelStyles = getLogLevelStyles(theme, row.logLevel);
@@ -276,6 +292,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             <LogRowMessage
               row={processedRow}
               showContextToggle={showContextToggle}
+              getRowContextQuery={getRowContextQuery}
               wrapLogMessage={wrapLogMessage}
               prettifyLogMessage={prettifyLogMessage}
               onOpenContext={this.onOpenContext}
