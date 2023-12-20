@@ -179,7 +179,7 @@ func (ng *AlertNG) init() error {
 			externalAMCfg := remote.AlertmanagerConfig{}
 			// We won't be handling files on disk, we can pass an empty string as workingDirPath.
 			stateStore := notifier.NewFileStore(orgID, ng.KVStore, "")
-			return remote.NewAlertmanager(externalAMCfg, orgID, stateStore)
+			return remote.NewAlertmanager(externalAMCfg, stateStore)
 		})
 
 		overrides = append(overrides, override)

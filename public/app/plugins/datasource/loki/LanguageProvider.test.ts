@@ -33,19 +33,49 @@ const mockTimeRange = {
     to: dateTime(1546380000000),
   },
 };
+
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
-  getDefaultTimeRange: jest.fn().mockReturnValue({
-    from: 0,
-    to: 1,
+  getDefaultTimeRange: jest.fn().mockImplementation(() => ({
+    from: dateTime(0),
+    to: dateTime(1),
     raw: {
-      from: 0,
-      to: 1,
+      from: dateTime(0),
+      to: dateTime(1),
     },
-  }),
+  })),
 }));
 
 describe('Language completion provider', () => {
+  describe('start', () => {
+    const datasource = setup({ testkey: ['label1_val1', 'label1_val2'], label2: [] });
+
+    it('should fetch labels on initial start', async () => {
+      const languageProvider = new LanguageProvider(datasource);
+      const fetchSpy = jest.spyOn(languageProvider, 'fetchLabels').mockResolvedValue([]);
+      await languageProvider.start();
+      expect(fetchSpy).toHaveBeenCalled();
+    });
+
+    it('should not again fetch labels on second start', async () => {
+      const languageProvider = new LanguageProvider(datasource);
+      const fetchSpy = jest.spyOn(languageProvider, 'fetchLabels').mockResolvedValue([]);
+      await languageProvider.start();
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      await languageProvider.start();
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should again fetch labels on second start with different timerange', async () => {
+      const languageProvider = new LanguageProvider(datasource);
+      const fetchSpy = jest.spyOn(languageProvider, 'fetchLabels').mockResolvedValue([]);
+      await languageProvider.start();
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      await languageProvider.start(mockTimeRange);
+      expect(fetchSpy).toHaveBeenCalledTimes(2);
+    });
+  });
+
   describe('fetchSeries', () => {
     it('should use match[] parameter', () => {
       const datasource = setup({}, { '{foo="bar"}': [{ label1: 'label_val1' }] });
@@ -416,11 +446,7 @@ describe('Query imports', () => {
           maxLines: DEFAULT_MAX_LINES_SAMPLE,
           refId: 'data-samples',
         },
-        // mocked default time range
-        expect.objectContaining({
-          from: 0,
-          to: 1,
-        })
+        getDefaultTimeRange()
       );
     });
 
@@ -441,11 +467,7 @@ describe('Query imports', () => {
           maxLines: 5,
           refId: 'data-samples',
         },
-        // mocked default time range
-        expect.objectContaining({
-          from: 0,
-          to: 1,
-        })
+        getDefaultTimeRange()
       );
     });
 
