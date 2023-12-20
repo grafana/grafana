@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
+	foldersAPI "github.com/grafana/grafana/pkg/apis/folders/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
-	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
 type folderInfo struct {
@@ -40,11 +40,11 @@ func updateFolderTree(ctx context.Context, tx *session.SessionTx, namespace stri
 		return err
 	}
 
-	query := "SELECT guid,uid,folder,name,slug" +
+	query := "SELECT guid,name,folder,name,slug" +
 		" FROM entity" +
-		" WHERE group=? AND resource=? AND namespace=?" +
+		" WHERE 'group'=? AND resource=? AND namespace=?" +
 		" ORDER BY slug asc"
-	args := []interface{}{entity.FolderGroupName, entity.FolderResourceName, namespace}
+	args := []interface{}{foldersAPI.GROUP, foldersAPI.RESOURCE, namespace}
 
 	all := []*folderInfo{}
 	rows, err := tx.Query(ctx, query, args...)
@@ -141,7 +141,7 @@ func insertFolderInfo(ctx context.Context, tx *session.SessionTx, namespace stri
 	js, _ := json.Marshal(folder.stack)
 	_, err := tx.Exec(ctx,
 		`INSERT INTO entity_folder `+
-			"(guid, namespace, uid, slug_path, tree, depth, lft, rgt, detached) "+
+			"(guid, namespace, name, slug_path, tree, depth, lft, rgt, detached) "+
 			`VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		folder.Guid,
 		namespace,

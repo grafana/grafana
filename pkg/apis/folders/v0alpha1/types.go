@@ -10,11 +10,12 @@ import (
 const (
 	GROUP      = "folders.grafana.app"
 	VERSION    = "v0alpha1"
+	RESOURCE   = "folders"
 	APIVERSION = GROUP + "/" + VERSION
 )
 
 var FolderResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
-	"folders", "folder", "Folder",
+	RESOURCE, "folder", "Folder",
 	func() runtime.Object { return &Folder{} },
 	func() runtime.Object { return &FolderList{} },
 )
