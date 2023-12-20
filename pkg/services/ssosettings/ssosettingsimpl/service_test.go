@@ -348,6 +348,27 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 		require.EqualValues(t, settings, env.store.ActualSSOSettings)
 	})
 
+	t.Run("returns error if provider is not configurable", func(t *testing.T) {
+		env := setupTestEnv(t)
+
+		provider := social.GrafanaComProviderName
+		settings := models.SSOSettings{
+			Provider: provider,
+			Settings: map[string]any{
+				"client_id":     "client-id",
+				"client_secret": "client-secret",
+				"enabled":       true,
+			},
+			IsDeleted: false,
+		}
+
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		env.reloadables[provider] = reloadable
+
+		err := env.service.Upsert(context.Background(), settings)
+		require.Error(t, err)
+	})
+
 	t.Run("returns error if provider was not found in reloadables", func(t *testing.T) {
 		env := setupTestEnv(t)
 

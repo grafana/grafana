@@ -110,7 +110,10 @@ func (s *SSOSettingsService) List(ctx context.Context) ([]*models.SSOSettings, e
 }
 
 func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSettings) error {
-	// TODO: also check whether the provider is configurable
+	if !isProviderConfigurable(settings.Provider) {
+		return ssosettings.ErrInvalidProvider.Errorf("provider %s is not configurable", settings.Provider)
+	}
+
 	social, ok := s.reloadables[settings.Provider]
 	if !ok {
 		return ssosettings.ErrInvalidProvider.Errorf("provider %s not found in reloadables", settings.Provider)
@@ -257,4 +260,14 @@ func mergeSettings(apiSettings, systemSettings map[string]any) map[string]any {
 	}
 
 	return settings
+}
+
+func isProviderConfigurable(provider string) bool {
+	for _, configurable := range ssosettings.ConfigurableOAuthProviders {
+		if provider == configurable {
+			return true
+		}
+	}
+
+	return false
 }
