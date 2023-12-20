@@ -3,7 +3,9 @@ package entity
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"reflect"
+	"strconv"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -21,6 +23,15 @@ import (
 func entityToResource(rsp *entityStore.Entity, res runtime.Object, codec runtime.Codec) error {
 	var err error
 
+	// Read the body first -- it includes old resourceVersion!
+	if len(rsp.Body) > 0 {
+		decoded, _, err := codec.Decode(rsp.Body, &schema.GroupVersionKind{Group: rsp.Group, Version: rsp.GroupVersion}, res)
+		if err != nil {
+			return err
+		}
+		res = decoded
+	}
+
 	metaAccessor, err := meta.Accessor(res)
 	if err != nil {
 		return err
@@ -36,10 +47,10 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object, codec runtime
 	metaAccessor.SetName(rsp.Name)
 	metaAccessor.SetNamespace(rsp.Namespace)
 	metaAccessor.SetUID(types.UID(rsp.Guid))
-	metaAccessor.SetResourceVersion(rsp.Version)
+	metaAccessor.SetResourceVersion(fmt.Sprintf("%d", rsp.ResourceVersion))
 	metaAccessor.SetCreationTimestamp(metav1.Unix(rsp.CreatedAt/1000, rsp.CreatedAt%1000*1000000))
 
-	grafanaAccessor, err := utils.MetaAccessor(res)
+	grafanaAccessor, err := utils.MetaAccessor(metaAccessor)
 	if err != nil {
 		return err
 	}
@@ -75,14 +86,6 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object, codec runtime
 
 	// TODO fields?
 
-	if len(rsp.Body) > 0 {
-		decoded, _, err := codec.Decode(rsp.Body, &schema.GroupVersionKind{Group: rsp.Group, Version: rsp.GroupVersion}, res)
-		if err != nil {
-			return err
-		}
-		res = decoded
-	}
-
 	if len(rsp.Status) > 0 {
 		status := reflect.ValueOf(res).Elem().FieldByName("Status")
 		if status != (reflect.Value{}) && status.CanSet() {
@@ -102,27 +105,28 @@ func resourceToEntity(key string, res runtime.Object, requestInfo *request.Reque
 		return nil, err
 	}
 
-	grafanaAccessor, err := utils.MetaAccessor(res)
+	grafanaAccessor, err := utils.MetaAccessor(metaAccessor)
 	if err != nil {
 		return nil, err
 	}
+	rv, _ := strconv.ParseInt(metaAccessor.GetResourceVersion(), 10, 64)
 
 	rsp := &entityStore.Entity{
-		Group:        requestInfo.APIGroup,
-		GroupVersion: requestInfo.APIVersion,
-		Resource:     requestInfo.Resource,
-		Subresource:  requestInfo.Subresource,
-		Namespace:    metaAccessor.GetNamespace(),
-		Key:          key,
-		Name:         metaAccessor.GetName(),
-		Guid:         string(metaAccessor.GetUID()),
-		Version:      metaAccessor.GetResourceVersion(),
-		Folder:       grafanaAccessor.GetFolder(),
-		CreatedAt:    metaAccessor.GetCreationTimestamp().Time.UnixMilli(),
-		CreatedBy:    grafanaAccessor.GetCreatedBy(),
-		UpdatedBy:    grafanaAccessor.GetUpdatedBy(),
-		Slug:         grafanaAccessor.GetSlug(),
-		Title:        grafanaAccessor.FindTitle(metaAccessor.GetName()),
+		Group:           requestInfo.APIGroup,
+		GroupVersion:    requestInfo.APIVersion,
+		Resource:        requestInfo.Resource,
+		Subresource:     requestInfo.Subresource,
+		Namespace:       metaAccessor.GetNamespace(),
+		Key:             key,
+		Name:            metaAccessor.GetName(),
+		Guid:            string(metaAccessor.GetUID()),
+		ResourceVersion: rv,
+		Folder:          grafanaAccessor.GetFolder(),
+		CreatedAt:       metaAccessor.GetCreationTimestamp().Time.UnixMilli(),
+		CreatedBy:       grafanaAccessor.GetCreatedBy(),
+		UpdatedBy:       grafanaAccessor.GetUpdatedBy(),
+		Slug:            grafanaAccessor.GetSlug(),
+		Title:           grafanaAccessor.FindTitle(metaAccessor.GetName()),
 		Origin: &entityStore.EntityOriginInfo{
 			Source: grafanaAccessor.GetOriginName(),
 			Key:    grafanaAccessor.GetOriginKey(),
