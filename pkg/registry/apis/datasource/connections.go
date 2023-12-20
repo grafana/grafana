@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 )
 
 var (
@@ -77,16 +78,18 @@ func (s *connectionAccess) List(ctx context.Context, options *internalversion.Li
 }
 
 func (s *connectionAccess) asConnection(ds *datasources.DataSource) *v0alpha1.DataSourceConnection {
-	meta := kinds.GrafanaResourceMetadata{
-		Name:              ds.UID,
-		Namespace:         s.builder.namespacer(ds.OrgID),
-		CreationTimestamp: metav1.NewTime(ds.Created),
-		ResourceVersion:   fmt.Sprintf("%d", ds.Updated.UnixMilli()),
+	v := &v0alpha1.DataSourceConnection{
+		TypeMeta: s.resourceInfo.TypeMeta(),
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              ds.UID,
+			Namespace:         s.builder.namespacer(ds.OrgID),
+			CreationTimestamp: metav1.NewTime(ds.Created),
+			ResourceVersion:   fmt.Sprintf("%d", ds.Updated.UnixMilli()),
+		},
+		Title: ds.Name,
 	}
+	v.UID = utils.CalculateClusterWideUID(v) // indicates if the value changed on the server
+	meta := kinds.MetaAccessor(v)
 	meta.SetUpdatedTimestamp(&ds.Updated)
-	return &v0alpha1.DataSourceConnection{
-		TypeMeta:   s.resourceInfo.TypeMeta(),
-		ObjectMeta: metav1.ObjectMeta(meta),
-		Title:      ds.Name,
-	}
+	return v
 }
