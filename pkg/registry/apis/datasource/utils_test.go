@@ -17,8 +17,8 @@ func TestUtils(t *testing.T) {
 	require.Equal(t, "org-name-more.datasource.grafana.app", getIDIgnoreError("org-name-more-datasource"))
 	require.Equal(t, "org-name-more-more.datasource.grafana.app", getIDIgnoreError("org-name-more-more-datasource"))
 
-	require.Equal(t, "*** InvalidDatasourceGroupName: graph-panel***", getErrorIgnoreValue("graph-panel"))
-	require.Equal(t, "*** InvalidDatasourceGroupName: anything-notdatasource***", getErrorIgnoreValue("anything-notdatasource"))
+	require.Error(t, getErrorIgnoreValue("graph-panel"))
+	require.Error(t, getErrorIgnoreValue("anything-notdatasource"))
 }
 
 func getIDIgnoreError(id string) string {

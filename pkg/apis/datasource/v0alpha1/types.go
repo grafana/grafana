@@ -2,7 +2,6 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/grafana/grafana/pkg/apis"
@@ -54,5 +53,5 @@ type HealthCheckResult struct {
 	Message string `json:"message,omitempty"`
 
 	// Spec depends on the the plugin
-	Details *unstructured.Unstructured `json:"details,omitempty"`
+	Details *Unstructured `json:"details,omitempty"`
 }
