@@ -75,7 +75,7 @@ org_role = Viewer
 # Hide the Grafana version text from the footer and help tooltip for unauthenticated users (default: false)
 hide_version = true
 
-# Setting this, a limit on the number of anonymous devices to your instance. Any new anonymous device after the limit is reached will be denied access.
+# Setting this limits the number of anonymous devices in your instance. Any new anonymous devices added after the limit has been reached will be denied access.
 device_limit =
 ```
 
