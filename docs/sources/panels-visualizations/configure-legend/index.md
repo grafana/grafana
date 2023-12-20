@@ -20,14 +20,14 @@ A panel includes a legend that you can use to identify and interpret data displa
 
 Legends are supported for the following visualizations:
 
-- [bar chart][]
-- [candlestick][]
-- [histogram][]
-- [pie chart][]
-- [state timeline][]
-- [status history][]
-- [time series][]
-- [trend][]
+- [Bar chart][bar chart]
+- [Candlestick][candlestick]
+- [Histogram][histogram]
+- [Pie chart][pie chart]
+- [State timeline][state timeline]
+- [Status history][status history]
+- [Time series][time series]
+- [Trend][trend]
 <!-- - xy chart -->
 
 [Geomaps][] and [heatmaps][] also have legends, but they only provide the the choice to display or not display a legend and don't support other legend options.
