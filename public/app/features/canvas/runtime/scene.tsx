@@ -695,6 +695,7 @@ export class Scene {
         }}
         limitToBounds={true}
         disabled={!config.featureToggles.canvasPanelPanZoom || !this.shouldPanZoom}
+        panning={{ allowLeftClickPan: false }}
       >
         <div
           style={{
@@ -719,7 +720,7 @@ export class Scene {
                 e.stopPropagation();
               }
               // If context menu is hidden, ignore left mouse or non-ctrl right mouse for pan
-              if (!this.contextMenuVisible && (e.button === 0 || (e.button === 2 && !e.ctrlKey))) {
+              if (!this.contextMenuVisible && e.button === 2 && !e.ctrlKey) {
                 e.preventDefault();
                 e.stopPropagation();
               }
