@@ -499,3 +499,5 @@ replace xorm.io/xorm => ./pkg/util/xorm
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20231027171310-70c52bf65758
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
+
+replace github.com/microsoft/go-mssqldb => github.com/toddtreece/go-mssqldb v0.0.0-20231220015139-f54e4da2c629 // @grafana/grafana-app-platform-squad
