@@ -3,7 +3,7 @@ import React from 'react';
 import { IconName, isIconName } from '@grafana/data';
 import { Badge, Card, Icon } from '@grafana/ui';
 
-import { getProviderUrl } from '../utils';
+import { getProviderUrl } from '../utils/url';
 
 type Props = {
   providerId: string;

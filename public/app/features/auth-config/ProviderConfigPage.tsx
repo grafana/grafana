@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { AppEvents, NavModelItem, SelectableValue } from '@grafana/data';
+import { AppEvents, NavModelItem } from '@grafana/data';
 import { getAppEvents, getBackendSrv, isFetchError } from '@grafana/runtime';
 import { Button, Field, Input, InputControl, LinkButton, SecretInput, Select, Stack, Switch } from '@grafana/ui';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
@@ -11,10 +11,11 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { StoreState } from '../../types';
 
-import { FieldData, fieldMap, fields } from './fields';
+import { fieldMap, fields } from './fields';
 import { loadSettings } from './state/actions';
-import { SSOProvider, SSOProviderDTO } from './types';
-import { dataToDTO, dtoToData } from './utils';
+import { SSOProvider, SSOProviderDTO, FieldData } from './types';
+import { dataToDTO, dtoToData } from './utils/data';
+import { isSelectableValue } from './utils/guards';
 
 const appEvents = getAppEvents();
 const getPageNav = (config?: SSOProvider): NavModelItem => {
@@ -34,8 +35,6 @@ const getPageNav = (config?: SSOProvider): NavModelItem => {
     id: config.provider,
   };
 };
-
-type ProviderData = Pick<SSOProviderDTO, 'clientId' | 'clientSecret' | 'enabled' | 'teamIds' | 'allowedOrganizations'>;
 
 interface RouteProps extends GrafanaRouteComponentProps<{ provider: string }> {}
 
@@ -79,10 +78,6 @@ export const ProviderConfigPage = ({ config, loadSettings, isLoading, provider }
 
 export default connector(ProviderConfigPage);
 
-function isSelectableValue(value: unknown): value is SelectableValue[] {
-  return Array.isArray(value) && value.every((v) => typeof v === 'object' && v !== null && 'value' in v);
-}
-
 interface GitHubConfigProps {
   config?: SSOProvider;
   isLoading?: boolean;
@@ -105,11 +100,11 @@ export const ProviderConfig = ({ config, provider, isLoading }: GitHubConfigProp
 
   const onSubmit = async (data: SSOProviderDTO) => {
     setIsSaving(true);
-    const requestData = dtoToData<ProviderData>(data);
+    const requestData = dtoToData(data);
     try {
       await getBackendSrv().put(`/api/v1/sso-settings/${provider}`, {
         ...config,
-        settings: { ...config?.settings, ...requestData.settings },
+        settings: { ...config?.settings, ...requestData },
       });
       appEvents.publish({
         type: AppEvents.alertSuccess.name,

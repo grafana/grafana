@@ -1,6 +1,4 @@
-import { SelectableValue } from '@grafana/data';
-
-import { SSOProvider } from './types';
+import { FieldData, SSOProvider } from './types';
 
 /** Map providers to their settings */
 export const fields: Record<SSOProvider['provider'], Array<keyof SSOProvider['settings']>> = {
@@ -20,20 +18,9 @@ export const fields: Record<SSOProvider['provider'], Array<keyof SSOProvider['se
   ],
 };
 
-export type FieldData = {
-  label: string;
-  type: string;
-  validation?: {
-    required?: boolean;
-    message?: string;
-    validate?: (value: string | Array<SelectableValue<string>>) => boolean | string | Promise<boolean | string>;
-  };
-  multi?: boolean;
-  allowCustomValue?: boolean;
-  options?: Array<SelectableValue<string>>;
-  placeholder?: string;
-};
-
+/**
+ * List all the fields that can be used in the form
+ */
 export const fieldMap: Record<string, FieldData> = {
   clientId: {
     label: 'Client Id',

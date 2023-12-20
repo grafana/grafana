@@ -85,3 +85,18 @@ export interface SettingsError {
   message: string;
   errors: string[];
 }
+
+// Data structure used to render form fields
+export type FieldData = {
+  label: string;
+  type: string;
+  validation?: {
+    required?: boolean;
+    message?: string;
+    validate?: (value: string | Array<SelectableValue<string>>) => boolean | string | Promise<boolean | string>;
+  };
+  multi?: boolean;
+  allowCustomValue?: boolean;
+  options?: Array<SelectableValue<string>>;
+  placeholder?: string;
+};
