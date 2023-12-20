@@ -51,7 +51,7 @@ export const LogRowMenuCell = React.memo(
         ) {
           const win = window.open('about:blank');
           const query = await getRowContextQuery(row);
-          if (query) {
+          if (query && win) {
             const url = urlUtil.renderUrl(locationUtil.assureBaseUrl(`${getConfig().appSubUrl}explore`), {
               left: JSON.stringify({
                 datasource: query.datasource,
@@ -59,9 +59,8 @@ export const LogRowMenuCell = React.memo(
                 range: getDefaultTimeRange(),
               }),
             });
-            if (win) {
-              win.location = url;
-            }
+            win.location = url;
+
             return;
           }
           win?.close();
