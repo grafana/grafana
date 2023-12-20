@@ -68,9 +68,7 @@ If you set the legend placement to **Right**, the **Width** option becomes avail
 
 You can add more context to a visualization by adding series data values or [calculations][] to a legend. You can add as many values as you'd like. After you apply your changes, you can scroll the legend to see all values.
 
-![Legend showing values](screenshot-legend-values-10.3.png)
-
-<!-- image to be deleted from local and uploaded to media folder after review -->
+![Legend showing values](/media/docs/grafana/panels-visualizations/screenshot-legend-values-10.3.png)
 
 ## Change a series color
 
@@ -114,11 +112,7 @@ When you format a legend as a table and add values to it, you can sort series in
 
 1. Click the calculation name header in the legend table to sort the values in the table in ascending or descending order.
 
-![Legend formatted as a table showing sorted values](screenshot-legend-sorted-10.3.png)
-
-![Legend formatted as a table showing sorted values](screenshot-legend-sorted-10.3-v2.png)
-
-<!-- images to be deleted from local and uploaded to media folder after review -->
+![Legend formatted as a table showing sorted values](/media/docs/grafana/panels-visualizations/screenshot-legend-sorted-10.3-v2.png)
 
 {{% admonition type="note" %}}
 This feature is only supported for the following visualizations: bar chart, histogram, time series.
