@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/registry/apis/dashboards"
 	"github.com/grafana/grafana/pkg/registry/apis/example"
+	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/playlist"
 )
 
@@ -15,4 +16,5 @@ var WireSet = wire.NewSet(
 	playlist.RegisterAPIService,
 	dashboards.RegisterAPIService,
 	example.RegisterAPIService,
+	folders.RegisterAPIService,
 )

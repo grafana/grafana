@@ -38,21 +38,36 @@ type Alertmanager struct {
 }
 
 type AlertmanagerConfig struct {
+	OrgID             int64
 	URL               string
 	TenantID          string
 	BasicAuthPassword string
 }
 
-func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, store stateStore) (*Alertmanager, error) {
+func (cfg *AlertmanagerConfig) Validate() error {
+	if cfg.OrgID == 0 {
+		return fmt.Errorf("orgID for remote Alertmanager not set")
+	}
+
+	if cfg.TenantID == "" {
+		return fmt.Errorf("empty remote Alertmanager tenantID")
+	}
+
 	if cfg.URL == "" {
-		return nil, fmt.Errorf("empty remote Alertmanager URL for tenant '%s'", cfg.TenantID)
+		return fmt.Errorf("empty remote Alertmanager URL for tenant '%s'", cfg.TenantID)
+	}
+	return nil
+}
+
+func NewAlertmanager(cfg AlertmanagerConfig, store stateStore) (*Alertmanager, error) {
+	if err := cfg.Validate(); err != nil {
+		return nil, err
 	}
 
 	u, err := url.Parse(cfg.URL)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse remote Alertmanager URL: %w", err)
 	}
-
 	logger := log.New("ngalert.remote.alertmanager")
 
 	mcCfg := &remoteClient.Config{
@@ -84,7 +99,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, store stateStore) (*Al
 	}
 	s := sender.NewExternalAlertmanagerSender(sender.WithDoFunc(doFunc))
 	s.Run()
-	err = s.ApplyConfig(orgID, 0, []sender.ExternalAMcfg{{URL: cfg.URL + "/alertmanager"}})
+	err = s.ApplyConfig(cfg.OrgID, 0, []sender.ExternalAMcfg{{URL: cfg.URL + "/alertmanager"}})
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +110,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, store stateStore) (*Al
 		state:       store,
 		amClient:    amc,
 		sender:      s,
-		orgID:       orgID,
+		orgID:       cfg.OrgID,
 		tenantID:    cfg.TenantID,
 		url:         cfg.URL,
 	}, nil
