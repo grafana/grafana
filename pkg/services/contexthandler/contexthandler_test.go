@@ -2,6 +2,7 @@ package contexthandler_test
 
 import (
 	"errors"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -177,5 +178,70 @@ func TestContextHandler(t *testing.T) {
 
 		_, err := server.Send(server.NewGetRequest("/api/handler"))
 		require.NoError(t, err)
+	})
+
+	t.Run("id response headers", func(t *testing.T) {
+		run := func(cfg *setting.Cfg, id string) *http.Response {
+			handler := contexthandler.ProvideService(
+				cfg,
+				tracing.InitializeTracerForTest(),
+				featuremgmt.WithFeatures(),
+				&authntest.FakeService{ExpectedIdentity: &authn.Identity{ID: id}},
+			)
+
+			server := webtest.NewServer(t, routing.NewRouteRegister())
+			server.Mux.Use(handler.Middleware)
+			server.Mux.Get("/api/handler", func(c *contextmodel.ReqContext) {})
+
+			res, err := server.Send(server.NewGetRequest("/api/handler"))
+			require.NoError(t, err)
+
+			return res
+		}
+
+		t.Run("should add id header for user", func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.IDResponseHeaderEnabled = true
+			cfg.IDResponseHeaderPrefix = "X-Grafana"
+			cfg.IDResponseHeaderNamespaces = map[string]struct{}{"user": {}}
+			res := run(cfg, "user:1")
+
+			require.Equal(t, "user:1", res.Header.Get("X-Grafana-Identity-Id"))
+			require.NoError(t, res.Body.Close())
+		})
+
+		t.Run("should not add id header for user when id is 0", func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.IDResponseHeaderEnabled = true
+			cfg.IDResponseHeaderPrefix = "X-Grafana"
+			cfg.IDResponseHeaderNamespaces = map[string]struct{}{"user": {}}
+			res := run(cfg, "user:0")
+
+			require.Empty(t, res.Header.Get("X-Grafana-Identity-Id"))
+			require.NoError(t, res.Body.Close())
+		})
+
+		t.Run("should add id header for service account", func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.IDResponseHeaderEnabled = true
+			cfg.IDResponseHeaderPrefix = "X-Grafana"
+			cfg.IDResponseHeaderNamespaces = map[string]struct{}{"service-account": {}}
+			res := run(cfg, "service-account:1")
+
+			require.Equal(t, "service-account:1", res.Header.Get("X-Grafana-Identity-Id"))
+			require.NoError(t, res.Body.Close())
+		})
+
+		t.Run("should not add id header for service account when not configured", func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.IDResponseHeaderEnabled = true
+			cfg.IDResponseHeaderPrefix = "X-Grafana"
+			cfg.IDResponseHeaderNamespaces = map[string]struct{}{"user": {}}
+			res := run(cfg, "service-account:1")
+
+			require.Empty(t, res.Header.Get("X-Grafana-Identity-Id"))
+			require.NoError(t, res.Body.Close())
+		})
+
 	})
 }
