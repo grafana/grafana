@@ -4,9 +4,11 @@ import { createPortal } from 'react-dom';
 import useDebounce from 'react-use/lib/useDebounce';
 import uPlot from 'uplot';
 
-import { DataFrame, GrafanaTheme2, TimeRange, colorManipulator } from '@grafana/data';
+import { colorManipulator, DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
 import { UPlotConfigBuilder, useStyles2, useTheme2 } from '@grafana/ui';
+
+import { AnnotationMarker2 } from './annotations2/AnnotationMarker2';
 
 // (copied from TooltipPlugin2)
 interface TimeRange2 {
@@ -40,14 +42,6 @@ const renderLine = (ctx: CanvasRenderingContext2D, y0: number, y1: number, x: nu
 //   ctx.fill();
 // }
 
-interface AnnoBoxProps {
-  annoVals: Record<string, any[]>;
-  annoIdx: number;
-  style: React.CSSProperties | null;
-  className: string;
-  isWip?: boolean;
-}
-
 function getValsWithNew(frame: DataFrame, newRange: TimeRange2 | null) {
   let vals: Record<string, any[]> = {};
   frame.fields.forEach((f) => {
@@ -78,62 +72,6 @@ function getValsWithNew(frame: DataFrame, newRange: TimeRange2 | null) {
 
   return vals;
 }
-
-export const Marker = ({ annoVals, annoIdx, className, style, isWip }: AnnoBoxProps) => {
-  const [isHovered, setIsHovered] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-
-  const domRef = React.createRef<HTMLDivElement>();
-
-  // similar to TooltipPlugin2, when editing annotation (pinned), it should boost z-index
-  const setIsEditingWrap = (isEditing: boolean) => {
-    domRef.current!.closest<HTMLDivElement>('.react-grid-item')?.classList.toggle('context-menu-open', isEditing);
-    setIsEditing(isEditing);
-  };
-
-  // doesnt work to auto-activate edit mode? :(
-  useLayoutEffect(
-    () => {
-      isWip && setIsEditingWrap(true);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
-
-  const styles = useStyles2(getStyles);
-
-  const text = annoVals.text[annoIdx];
-
-  let time = new Date(annoVals.time[annoIdx]).toISOString();
-
-  if (annoVals.isRegion[annoIdx]) {
-    time += ' - ' + new Date(annoVals.timeEnd[annoIdx]).toISOString();
-  }
-
-  return (
-    <div
-      ref={domRef}
-      className={className}
-      style={style!}
-      onMouseEnter={() => !isEditing && setIsHovered(true)}
-      onMouseLeave={() => !isEditing && setIsHovered(false)}
-    >
-      {isHovered && (
-        <div className={styles.annoInfo}>
-          {time}
-          <br />
-          {isEditing ? <textarea value={text} /> : text}
-          <br />
-          {isEditing ? (
-            <button onClick={() => setIsEditingWrap(false)}>Save</button>
-          ) : (
-            <button onClick={() => setIsEditingWrap(true)}>Edit</button>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
 
 export const AnnotationsPlugin2 = ({ annotations, timeZone, config, newRange }: AnnotationsPluginProps) => {
   const [plot, setPlot] = useState<uPlot>();
@@ -248,7 +186,16 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config, newRange }: 
         }
 
         if (isVisible) {
-          markers.push(<Marker annoIdx={i} annoVals={vals} className={className} style={style} />);
+          markers.push(
+            <AnnotationMarker2
+              annoIdx={i}
+              annoVals={vals}
+              className={className}
+              style={style}
+              timezone={timeZone}
+              key={i}
+            />
+          );
         }
       }
 
