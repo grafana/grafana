@@ -12,7 +12,6 @@ import { KioskMode } from 'app/types';
 import { RouteDescriptor } from '../../navigation/types';
 
 export type MegaMenuState = 'open' | 'closed' | 'docked';
-
 export interface AppChromeState {
   chromeless?: boolean;
   sectionNav: NavModel;
@@ -50,6 +49,7 @@ export class AppChromeService {
     kioskMode: null,
     layout: PageLayoutType.Canvas,
   });
+
   public setMatchedRoute(route: RouteDescriptor) {
     if (this.currentRoute !== route) {
       this.currentRoute = route;

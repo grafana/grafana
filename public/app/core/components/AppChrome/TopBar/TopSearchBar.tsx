@@ -22,6 +22,7 @@ import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteT
 import { TopSearchBarSection } from './TopSearchBarSection';
 
 export const TopSearchBar = React.memo(function TopSearchBar() {
+  const styles = useStyles2(getStyles);
   const navIndex = useSelector((state) => state.navIndex);
   const location = useLocation();
 
@@ -33,7 +34,6 @@ export const TopSearchBar = React.memo(function TopSearchBar() {
   if (!config.bootData.user.isSignedIn && !config.anonymousEnabled) {
     homeUrl = textUtil.sanitizeUrl(locationUtil.getUrlForPartial(location, { forceLogin: 'true' }));
   }
-  const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.layout}>
@@ -43,6 +43,7 @@ export const TopSearchBar = React.memo(function TopSearchBar() {
         </a>
         <OrganizationSwitcher />
       </TopSearchBarSection>
+
       <TopSearchBarSection>
         <TopSearchBarCommandPaletteTrigger />
       </TopSearchBarSection>

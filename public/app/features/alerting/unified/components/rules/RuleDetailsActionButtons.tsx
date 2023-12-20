@@ -16,7 +16,6 @@ import {
   Menu,
   useStyles2,
 } from '@grafana/ui';
-// import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useDispatch } from 'app/types';
 import { CombinedRule, RuleIdentifier, RulesSource } from 'app/types/unified-alerting';
@@ -54,7 +53,6 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
   const { StateHistoryModal, showStateHistoryModal } = useStateHistoryModal();
   const dispatch = useDispatch();
   const location = useLocation();
-  // const { chrome } = useGrafana();
 
   const notifyApp = useAppNotification();
   const history = useHistory();
@@ -144,7 +142,6 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
           variant="primary"
           icon="apps"
           onClick={() => {
-            //chrome.setReturnToPrevious({ show: true, href: location.pathname, title: rule.name });
             history.push(
               `/d/${encodeURIComponent(dashboardUID)}?&returnToUrl=${encodeURIComponent(
                 location.pathname

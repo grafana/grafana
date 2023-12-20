@@ -36,16 +36,7 @@ export function PanelHeaderMenu({ items }: Props) {
               icon={item.iconClassName}
               childItems={item.subMenu ? renderItems(item.subMenu) : undefined}
               url={item.href}
-              onClick={(e: React.MouseEvent) => {
-                if (item && item.onClick) {
-                  // if (item.text === 'Explore') {
-                  // chrome.setReturnToPrevious({ show: true, href: location.pathname, title: 'Dashboard' });
-                  // console.log('location', location);
-
-                  // }
-                  item.onClick(e);
-                }
-              }}
+              onClick={item.onClick}
               shortcut={item.shortcut}
               testId={selectors.components.Panels.Panel.menuItems(item.text)}
             />
