@@ -83,7 +83,6 @@ export function saveCurrentCorrelation(
         description,
         config: {
           field: targetPane.correlationEditorHelperData.resultField,
-          // @ts-expect-error TODO check the type
           target: targetPane.queries[0],
           type: 'query',
           transformations: transformations,

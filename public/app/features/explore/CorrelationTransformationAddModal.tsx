@@ -3,7 +3,7 @@ import React, { useId, useState, useMemo, useEffect } from 'react';
 import Highlighter from 'react-highlight-words';
 import { useForm } from 'react-hook-form';
 
-import { DataLinkTransformationConfig, ScopedVars, SupportedTransformationType } from '@grafana/data';
+import { DataLinkTransformationConfig, ScopedVars } from '@grafana/data';
 import { Button, Field, Icon, Input, InputControl, Label, Modal, Select, Tooltip, Stack } from '@grafana/ui';
 
 import {
@@ -101,18 +101,21 @@ export const CorrelationTransformationAddModal = ({
         isExpressionValid = !formFieldsVis.expressionDetails.show;
       }
       setIsExpValid(isExpressionValid);
-      const transformationVars = getTransformationVars(
-        {
-          type: formValues.type || SupportedTransformationType.Regex, // TODO does this default value make sense?
-          expression: isExpressionValid ? expression : '',
-          mapValue: formValues.mapValue,
-        },
-        fieldList[formValues.field!] || '',
-        formValues.field!
-      );
+      let transKeys = [];
+      if (formValues.type) {
+        const transformationVars = getTransformationVars(
+          {
+            type: formValues.type,
+            expression: isExpressionValid ? expression : '',
+            mapValue: formValues.mapValue,
+          },
+          fieldList[formValues.field!] || '',
+          formValues.field!
+        );
 
-      const transKeys = Object.keys(transformationVars);
-      setTransformationVars(transKeys.length > 0 ? { ...transformationVars } : {});
+        transKeys = Object.keys(transformationVars);
+        setTransformationVars(transKeys.length > 0 ? { ...transformationVars } : {});
+      }
 
       if (transKeys.length === 0 || !isExpressionValid) {
         setValidToSave(false);

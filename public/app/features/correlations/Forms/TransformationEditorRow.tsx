@@ -63,8 +63,7 @@ const TransformationEditorRow = (props: Props) => {
           </Stack>
         }
         invalid={!!formState.errors?.config?.transformations?.[index]?.type}
-        // @ts-expect-error TODO Figure out how to get proper types here
-        error={formState.errors?.config?.transformations?.[index]?.type?.message}
+        error={formState.errors?.config?.transformations?.[index]?.message}
         validationMessageHorizontalOverflow={true}
       >
         <Select

@@ -1,4 +1,4 @@
-import { DataLink, DataLinkTransformationConfig } from '@grafana/data';
+import { DataLinkTransformationConfig } from '@grafana/data';
 
 export interface AddCorrelationResponse {
   correlation: Correlation;
@@ -30,7 +30,7 @@ type CorrelationConfigType = 'query';
 
 export interface CorrelationConfig {
   field: string;
-  target: DataLink;
+  target: object; // this contains anything that would go in the query editor, so any extension off DataQuery a datasource would have, and needs to be generic
   type: CorrelationConfigType;
   transformations?: DataLinkTransformationConfig[];
 }

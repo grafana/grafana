@@ -84,7 +84,7 @@ export const ConfigureCorrelationSourceForm = () => {
               )}
               htmlFor="source"
               invalid={!!formState.errors.sourceUID}
-              error={String(formState.errors.sourceUID?.message || '')}
+              error={formState.errors.sourceUID?.message}
             >
               <DataSourcePicker
                 onChange={withDsUID(onChange)}

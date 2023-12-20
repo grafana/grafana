@@ -287,7 +287,7 @@ describe('CorrelationsPage', () => {
       await userEvent.click(screen.getByRole('button', { name: /add transformation/i }));
       const typeFilterSelect = screen.getAllByLabelText('Type');
       openMenu(typeFilterSelect[0]);
-      await userEvent.click(screen.getAllByText('Regular expression')[0]);
+      await userEvent.click(screen.getByText('Regular expression'));
       await userEvent.type(screen.getByLabelText(/expression/i), 'test expression');
 
       await userEvent.click(await screen.findByRole('button', { name: /add$/i }));
@@ -363,7 +363,7 @@ describe('CorrelationsPage', () => {
             provisioned: false,
             config: {
               field: 'line',
-              target: { title: '', url: '' },
+              target: {},
               type: 'query',
               transformations: [
                 { type: SupportedTransformationType.Regex, expression: 'url=http[s]?://(S*)', mapValue: 'path' },
@@ -375,7 +375,7 @@ describe('CorrelationsPage', () => {
             targetUID: 'loki',
             uid: '2',
             label: 'Prometheus to Loki',
-            config: { field: 'label', target: { title: '', url: '' }, type: 'query' },
+            config: { field: 'label', target: {}, type: 'query' },
             provisioned: false,
           },
         ]
@@ -538,7 +538,7 @@ describe('CorrelationsPage', () => {
 
       // select Regex, be sure expression field is not disabled and contains the former expression
       openMenu(typeFilterSelect[0]);
-      await userEvent.click(screen.getByText('Regular expression', { selector: 'span' }));
+      await userEvent.click(screen.getByText('Regular expression'));
       expressionInput = screen.queryByLabelText(/expression/i);
       expect(expressionInput).toBeInTheDocument();
       expect(expressionInput).toBeEnabled();
@@ -554,7 +554,8 @@ describe('CorrelationsPage', () => {
       await userEvent.click(screen.getByRole('button', { name: /add transformation/i }));
       typeFilterSelect = screen.getAllByLabelText('Type');
       openMenu(typeFilterSelect[0]);
-      await userEvent.click(screen.getAllByText('Regular expression')[1]);
+      const menu = await screen.findByLabelText('Select options menu');
+      await userEvent.click(within(menu).getByText('Regular expression'));
       expressionInput = screen.queryByLabelText(/expression/i);
       expect(expressionInput).toBeInTheDocument();
       expect(expressionInput).toBeEnabled();
@@ -597,7 +598,7 @@ describe('CorrelationsPage', () => {
             provisioned: false,
             config: {
               field: 'line',
-              target: { title: '', url: '' },
+              target: {},
               type: 'query',
               transformations: [
                 { type: SupportedTransformationType.Regex, expression: 'url=http[s]?://(S*)', mapValue: 'path' },
@@ -612,7 +613,7 @@ describe('CorrelationsPage', () => {
             provisioned: false,
             config: {
               field: 'line',
-              target: { title: '', url: '' },
+              target: {},
               type: 'query',
               transformations: [
                 { type: SupportedTransformationType.Regex, expression: 'url=http[s]?://(S*)', mapValue: 'path' },
@@ -624,7 +625,7 @@ describe('CorrelationsPage', () => {
             targetUID: 'loki',
             uid: '3',
             label: 'Prometheus to Loki',
-            config: { field: 'label', target: { title: '', url: '' }, type: 'query' },
+            config: { field: 'label', target: {}, type: 'query' },
             provisioned: false,
           },
           {
@@ -632,7 +633,7 @@ describe('CorrelationsPage', () => {
             targetUID: 'prometheus',
             uid: '4',
             label: 'Prometheus to Prometheus',
-            config: { field: 'label', target: { title: '', url: '' }, type: 'query' },
+            config: { field: 'label', target: {}, type: 'query' },
             provisioned: false,
           },
         ]
@@ -659,7 +660,7 @@ describe('CorrelationsPage', () => {
         provisioned: true,
         config: {
           field: 'line',
-          target: { title: '', url: '' },
+          target: {},
           type: 'query',
           transformations: [{ type: SupportedTransformationType.Regex, expression: '(?:msg)=' }],
         },
