@@ -25,18 +25,17 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
   const styles = useStyles2(getStyles);
   const { value: pluginConfig } = usePluginConfig(plugin);
 
-  //@ts-expect-error
   const columns: Array<Column<Permission>> = useMemo(
     () => [
       {
         id: 'action',
         header: 'Action',
-        cell: ({ cell: { value } }): Cell<'action'> => value,
+        cell: ({ cell: { value } }: Cell<'action'>) => value,
       },
       {
         id: 'scope',
         header: 'Scope',
-        cell: ({ cell: { value } }): Cell<'scope'> => value,
+        cell: ({ cell: { value } }: Cell<'scope'>) => value,
       },
     ],
     []
@@ -72,12 +71,13 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
   // Permissions will be returned in the iam field for installed plugins and in the details.iam field when fetching details from gcom
   const permissions = plugin.iam?.permissions || plugin.details?.iam?.permissions;
 
-  if (
+  const displayPermissions =
     config.featureToggles.externalServiceAccounts &&
     pageId === PluginTabIds.IAM &&
     permissions &&
-    permissions.length > 0
-  ) {
+    permissions.length > 0;
+
+  if (displayPermissions) {
     return (
       <InteractiveTable
         columns={columns}
