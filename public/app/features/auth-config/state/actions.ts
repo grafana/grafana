@@ -6,7 +6,6 @@ import { AccessControlAction, Settings, ThunkResult, UpdateSettingsQuery } from 
 
 import { getAuthProviderStatus, getRegisteredAuthProviders, SSOProvider } from '..';
 import { AuthProviderStatus, SettingsError } from '../types';
-import { toCamelCase } from '../utils/fieldFormat';
 
 import {
   loadingBegin,
@@ -38,7 +37,7 @@ export function loadProviders(): ThunkResult<Promise<SSOProvider[]>> {
       return [];
     }
     const result = await getBackendSrv().get('/api/v1/sso-settings');
-    dispatch(providersLoaded(result.map(toCamelCase)));
+    dispatch(providersLoaded(result));
     return result;
   };
 }
