@@ -180,6 +180,9 @@ func (ng *AlertNG) init() error {
 	remoteAlertmanagerMode := DecideRemoteAlertmanagerMode(initCtx, ng.Cfg.UnifiedAlerting.RemoteAlertmanager, ng.FeatureToggles, ng.Log)
 
 	switch remoteAlertmanagerMode {
+	case modeRemoteOnly, modeRemotePrimary:
+		// Not yet implemented
+		break
 	case modeInternalOnly:
 		// Nothing to do here, using only the internal Alertmanager.
 		break
