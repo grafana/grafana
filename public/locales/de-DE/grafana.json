@@ -458,8 +458,8 @@
       "delete-user-cancel-button": "",
       "delete-user-revoke-access-button": "",
       "delete-user-text": "",
-      "revoke-user-access-desc-line1": "",
-      "revoke-user-access-desc-line2": ""
+      "revoke-user-access-modal-desc-line1": "",
+      "revoke-user-access-modal-desc-line2": ""
     }
   },
   "email-sharing-configuration": {

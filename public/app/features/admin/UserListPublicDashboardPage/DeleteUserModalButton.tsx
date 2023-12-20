@@ -20,13 +20,13 @@ const DeleteUserModal = ({ user, hideModal }: { user: SessionUser; hideModal: ()
   return (
     <Modal className={styles.modal} isOpen title="Revoke access" onDismiss={hideModal}>
       <p className={styles.description}>
-        <Trans i18nKey="delete-user-modal-button.public-dashboard.revoke-user-access-desc-line1">
+        <Trans i18nKey="delete-user-modal-button.public-dashboard.revoke-user-access-modal-desc-line1">
           Are you sure you want to revoke access for {{ email: user.email }}?
         </Trans>
       </p>
       <p className={styles.description}>
-        <Trans i18nKey="delete-user-modal-button.public-dashboard.revoke-user-access-desc-line2" tOptions={{ interpolation: { escapeValue: true }}}>
-          This action will immediately revoke {{ email: user.email }}&apos;s access to all public dashboards.
+        <Trans i18nKey="delete-user-modal-button.public-dashboard.revoke-user-access-modal-desc-line2" tOptions={{ interpolation: { escapeValue: false }}}>
+        This action will immediately revoke {{ email: user.email }}&apos;s access to all public dashboards.
         </Trans>
       </p>
       <Modal.ButtonRow>

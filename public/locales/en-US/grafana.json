@@ -458,8 +458,8 @@
       "delete-user-cancel-button": "Cancel",
       "delete-user-revoke-access-button": "Revoke access",
       "delete-user-text": "Delete user",
-      "revoke-user-access-desc-line1": "Are you sure you want to revoke access for {{email}}?",
-      "revoke-user-access-desc-line2": "This action will immediately revoke {{email}}&apos;s access to all public dashboards."
+      "revoke-user-access-modal-desc-line1": "Are you sure you want to revoke access for {{email}}?",
+      "revoke-user-access-modal-desc-line2": "This action will immediately revoke {{email}}&apos;s access to all public dashboards."
     }
   },
   "email-sharing-configuration": {
