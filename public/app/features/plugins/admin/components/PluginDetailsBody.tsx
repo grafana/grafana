@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 
 import { AppPlugin, GrafanaTheme2, PluginContextProvider, UrlQueryMap } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { CellProps, Column, InteractiveTable, useStyles2 } from '@grafana/ui';
+import { CellProps, Column, InteractiveTable, Stack, useStyles2 } from '@grafana/ui';
 
 import { VersionList } from '../components/VersionList';
 import { usePluginConfig } from '../hooks/usePluginConfig';
@@ -79,11 +79,16 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
 
   if (displayPermissions) {
     return (
-      <InteractiveTable
-        columns={columns}
-        data={permissions}
-        getRowId={(permission: Permission) => String(permission.action)}
-      />
+      <>
+        <Stack direction="row">
+          The {plugin.name} plugin backend requires the following permissions on your instance:
+        </Stack>
+        <InteractiveTable
+          columns={columns}
+          data={permissions}
+          getRowId={(permission: Permission) => String(permission.action)}
+        />
+      </>
     );
   }
 
