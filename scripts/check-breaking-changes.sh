@@ -37,10 +37,7 @@ while IFS=" " read -r -a package; do
   # Check if the comparison returned with a non-zero exit code
   # Record the output, maybe with some additional information
   STATUS=$?
-
   CURRENT_REPORT=$(node ./scripts/levitate-parse-json-report.js)
-  echo $CURRENT_REPORT
-
   # Final exit code
   # (non-zero if any of the packages failed the checks)
   if [ $STATUS -gt 0 ]; then
