@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/apimachinery/pkg/runtime"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Annotation keys
@@ -16,7 +16,6 @@ const AnnoKeyUpdatedTimestamp = "grafana.app/updatedTimestamp"
 const AnnoKeyUpdatedBy = "grafana.app/updatedBy"
 const AnnoKeyFolder = "grafana.app/folder"
 const AnnoKeySlug = "grafana.app/slug"
-const AnnoKeyTitle = "grafana.app/title"
 
 // Identify where values came from
 
@@ -57,33 +56,43 @@ type GrafanaResourceMetaAccessor interface {
 	SetFolder(uid string)
 	GetSlug() string
 	SetSlug(v string)
-	GetTitle() string
-	SetTitle(v string)
 	GetOriginInfo() (*ResourceOriginInfo, error)
 	SetOriginInfo(info *ResourceOriginInfo)
 	GetOriginName() string
 	GetOriginPath() string
 	GetOriginKey() string
 	GetOriginTimestamp() (*time.Time, error)
+
+	// Find a title in the object
+	// This will reflect the object and try to get:
+	//  * spec.title
+	//  * spec.name
+	//  * title
+	// and return an empty string if nothing was found
+	FindTitle(defaultTitle string) string
 }
 
 var _ GrafanaResourceMetaAccessor = (*grafanaResourceMetaAccessor)(nil)
 
 type grafanaResourceMetaAccessor struct {
-	obj runtime.Object
+	raw interface{} // the original object (it implements metav1.Object)
+	obj metav1.Object
 }
 
-func MetaAccessor(obj runtime.Object) GrafanaResourceMetaAccessor {
-	return &grafanaResourceMetaAccessor{obj}
+// Accessor takes an arbitrary object pointer and returns meta.Interface.
+// obj must be a pointer to an API type. An error is returned if the minimum
+// required fields are missing. Fields that are not required return the default
+// value and are a no-op if set.
+func MetaAccessor(raw interface{}) (GrafanaResourceMetaAccessor, error) {
+	obj, err := meta.Accessor(raw)
+	if err != nil {
+		return nil, err
+	}
+	return &grafanaResourceMetaAccessor{raw, obj}, nil
 }
 
 func (m *grafanaResourceMetaAccessor) set(key string, val string) {
-	acc, err := meta.Accessor(m.obj)
-	if err != nil {
-		return
-	}
-
-	anno := acc.GetAnnotations()
+	anno := m.obj.GetAnnotations()
 	if val == "" {
 		if anno != nil {
 			delete(anno, key)
@@ -94,25 +103,15 @@ func (m *grafanaResourceMetaAccessor) set(key string, val string) {
 		}
 		anno[key] = val
 	}
-	acc.SetAnnotations(anno)
+	m.obj.SetAnnotations(anno)
 }
 
 func (m *grafanaResourceMetaAccessor) get(key string) string {
-	acc, err := meta.Accessor(m.obj)
-	if err != nil {
-		return ""
-	}
-
-	return acc.GetAnnotations()[key]
+	return m.obj.GetAnnotations()[key]
 }
 
 func (m *grafanaResourceMetaAccessor) GetUpdatedTimestamp() (*time.Time, error) {
-	acc, err := meta.Accessor(m.obj)
-	if err != nil {
-		return nil, err
-	}
-
-	v, ok := acc.GetAnnotations()[AnnoKeyUpdatedTimestamp]
+	v, ok := m.obj.GetAnnotations()[AnnoKeyUpdatedTimestamp]
 	if !ok || v == "" {
 		return nil, nil
 	}
@@ -128,13 +127,13 @@ func (m *grafanaResourceMetaAccessor) SetUpdatedTimestampMillis(v int64) {
 		t := time.UnixMilli(v)
 		m.SetUpdatedTimestamp(&t)
 	} else {
-		m.SetUpdatedTimestamp(nil)
+		m.set(AnnoKeyUpdatedTimestamp, "") // will clear the annotation
 	}
 }
 
 func (m *grafanaResourceMetaAccessor) SetUpdatedTimestamp(v *time.Time) {
 	txt := ""
-	if v != nil {
+	if v != nil && v.Unix() != 0 {
 		txt = v.UTC().Format(time.RFC3339)
 	}
 	m.set(AnnoKeyUpdatedTimestamp, txt)
@@ -171,68 +170,14 @@ func (m *grafanaResourceMetaAccessor) GetSlug() string {
 func (m *grafanaResourceMetaAccessor) SetSlug(v string) {
 	m.set(AnnoKeySlug, v)
 }
-func (m *grafanaResourceMetaAccessor) GetTitle() string {
-	// look for Spec.Title or Spec.Name
-	r := reflect.ValueOf(m.obj)
-	if r.Kind() == reflect.Ptr || r.Kind() == reflect.Interface {
-		r = r.Elem()
-	}
-	if r.Kind() == reflect.Struct {
-		spec := r.FieldByName("Spec")
-		if spec.Kind() == reflect.Struct {
-			title := spec.FieldByName("Title")
-			if title.IsValid() && title.Kind() == reflect.String {
-				return title.String()
-			}
-			name := spec.FieldByName("Name")
-			if name.IsValid() && name.Kind() == reflect.String {
-				return name.String()
-			}
-		}
-	}
 
-	// fall back to annotation
-	return m.get(AnnoKeyTitle)
-}
-
-func (m *grafanaResourceMetaAccessor) SetTitle(v string) {
-	// set Spec.Title or Spec.Name if they exist
-	r := reflect.ValueOf(m.obj)
-	if r.Kind() == reflect.Ptr || r.Kind() == reflect.Interface {
-		r = r.Elem()
-	}
-	if r.Kind() == reflect.Struct {
-		spec := r.FieldByName("Spec")
-		if spec.Kind() == reflect.Struct {
-			title := spec.FieldByName("Title")
-			if title.IsValid() && title.Kind() == reflect.String {
-				title.SetString(v)
-				return
-			}
-			name := spec.FieldByName("Name")
-			if name.IsValid() && name.Kind() == reflect.String {
-				name.SetString(v)
-				return
-			}
-		}
-	}
-
-	// fall back to annotation
-	m.set(AnnoKeyTitle, v)
-}
 func (m *grafanaResourceMetaAccessor) SetOriginInfo(info *ResourceOriginInfo) {
-	acc, err := meta.Accessor(m.obj)
-	if err != nil {
-		return
-	}
-
-	anno := acc.GetAnnotations()
+	anno := m.obj.GetAnnotations()
 	if anno == nil {
 		if info == nil {
 			return
 		}
 		anno = make(map[string]string, 0)
-		acc.SetAnnotations(anno)
 	}
 
 	delete(anno, AnnoKeyOriginName)
@@ -251,16 +196,11 @@ func (m *grafanaResourceMetaAccessor) SetOriginInfo(info *ResourceOriginInfo) {
 			anno[AnnoKeyOriginTimestamp] = info.Timestamp.Format(time.RFC3339)
 		}
 	}
-	acc.SetAnnotations(anno)
+	m.obj.SetAnnotations(anno)
 }
 
 func (m *grafanaResourceMetaAccessor) GetOriginInfo() (*ResourceOriginInfo, error) {
-	acc, err := meta.Accessor(m.obj)
-	if err != nil {
-		return nil, err
-	}
-
-	v, ok := acc.GetAnnotations()[AnnoKeyOriginName]
+	v, ok := m.obj.GetAnnotations()[AnnoKeyOriginName]
 	if !ok {
 		return nil, nil
 	}
@@ -286,12 +226,7 @@ func (m *grafanaResourceMetaAccessor) GetOriginKey() string {
 }
 
 func (m *grafanaResourceMetaAccessor) GetOriginTimestamp() (*time.Time, error) {
-	acc, err := meta.Accessor(m.obj)
-	if err != nil {
-		return nil, err
-	}
-
-	v, ok := acc.GetAnnotations()[AnnoKeyOriginTimestamp]
+	v, ok := m.obj.GetAnnotations()[AnnoKeyOriginTimestamp]
 	if !ok || v == "" {
 		return nil, nil
 	}
@@ -300,4 +235,31 @@ func (m *grafanaResourceMetaAccessor) GetOriginTimestamp() (*time.Time, error) {
 		return nil, fmt.Errorf("invalid origin timestamp: %s", err.Error())
 	}
 	return &t, nil
+}
+
+func (m *grafanaResourceMetaAccessor) FindTitle(defaultTitle string) string {
+	// look for Spec.Title or Spec.Name
+	r := reflect.ValueOf(m.raw)
+	if r.Kind() == reflect.Ptr || r.Kind() == reflect.Interface {
+		r = r.Elem()
+	}
+	if r.Kind() == reflect.Struct {
+		spec := r.FieldByName("Spec")
+		if spec.Kind() == reflect.Struct {
+			title := spec.FieldByName("Title")
+			if title.IsValid() && title.Kind() == reflect.String {
+				return title.String()
+			}
+			name := spec.FieldByName("Name")
+			if name.IsValid() && name.Kind() == reflect.String {
+				return name.String()
+			}
+		}
+
+		title := r.FieldByName("Title")
+		if title.IsValid() && title.Kind() == reflect.String {
+			return title.String()
+		}
+	}
+	return defaultTitle
 }
