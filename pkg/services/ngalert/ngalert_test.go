@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -163,4 +164,103 @@ grafana_alerting_state_history_info{backend="noop"} 0
 		err = testutil.GatherAndCompare(reg, exp, "grafana_alerting_state_history_info")
 		require.NoError(t, err)
 	})
+}
+
+type fakeRemoteAMToggles struct {
+	remoteSecondary bool
+	remotePrimary   bool
+	remoteOnly      bool
+}
+
+func (f *fakeRemoteAMToggles) IsEnabled(ctx context.Context, flag string) bool {
+	return f.IsEnabledGlobally(flag)
+}
+
+func (f *fakeRemoteAMToggles) IsEnabledGlobally(flag string) bool {
+	switch flag {
+	case featuremgmt.FlagAlertmanagerRemoteOnly:
+		return f.remoteOnly
+	case featuremgmt.FlagAlertmanagerRemotePrimary:
+		return f.remotePrimary
+	case featuremgmt.FlagAlertmanagerRemoteSecondary:
+		return f.remoteSecondary
+	}
+	return false
+}
+
+func TestDecideRemoteAlertmanagerMode(t *testing.T) {
+	tests := []struct {
+		name       string
+		amSettings setting.RemoteAlertmanagerSettings
+		toggles    featuremgmt.FeatureToggles
+		expMode    alertmanagerMode
+	}{
+		{
+			"remote Alertmanager disabled",
+			setting.RemoteAlertmanagerSettings{
+				Enable: false,
+			},
+			&fakeRemoteAMToggles{
+				remoteSecondary: true,
+			},
+			modeInternalOnly,
+		},
+		{
+			"no feature toggles enabled",
+			setting.RemoteAlertmanagerSettings{
+				Enable: true,
+			},
+			&fakeRemoteAMToggles{},
+			modeInternalOnly,
+		},
+		{
+			"remote only enabled",
+			setting.RemoteAlertmanagerSettings{
+				Enable: true,
+			},
+			&fakeRemoteAMToggles{
+				remoteOnly: true,
+			},
+			modeRemoteSecondary,
+		},
+		{
+			"remote primary enabled",
+			setting.RemoteAlertmanagerSettings{
+				Enable: true,
+			},
+			&fakeRemoteAMToggles{
+				remotePrimary: true,
+			},
+			modeRemoteSecondary,
+		},
+		{
+			"remote secondary enabled",
+			setting.RemoteAlertmanagerSettings{
+				Enable: true,
+			},
+			&fakeRemoteAMToggles{
+				remoteSecondary: true,
+			},
+			modeRemoteSecondary,
+		},
+		{
+			"all toggles enabled enabled",
+			setting.RemoteAlertmanagerSettings{
+				Enable: true,
+			},
+			&fakeRemoteAMToggles{
+				remoteOnly:      true,
+				remotePrimary:   true,
+				remoteSecondary: true,
+			},
+			modeRemoteSecondary,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(tt *testing.T) {
+			mode := DecideRemoteAlertmanagerMode(context.Background(), test.amSettings, test.toggles, log.NewNopLogger())
+			require.Equal(tt, test.expMode, mode)
+		})
+	}
 }

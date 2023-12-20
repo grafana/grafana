@@ -552,13 +552,13 @@ const (
 // - If no mode is selected, InternalOnly is returned
 // We currently support only remote secondary mode, so in case other toggles are enabled we fall back to RemoteSecondary.
 func DecideRemoteAlertmanagerMode(ctx context.Context, cfg setting.RemoteAlertmanagerSettings, ft featuremgmt.FeatureToggles, logger log.Logger) alertmanagerMode {
-	remoteOnly := ft.IsEnabled(ctx, featuremgmt.FlagAlertmanagerRemoteOnly)
-	remotePrimary := ft.IsEnabled(ctx, featuremgmt.FlagAlertmanagerRemotePrimary)
-	remoteSecondary := ft.IsEnabled(ctx, featuremgmt.FlagAlertmanagerRemoteSecondary)
-
 	if !cfg.Enable {
 		return modeInternalOnly
 	}
+
+	remoteOnly := ft.IsEnabled(ctx, featuremgmt.FlagAlertmanagerRemoteOnly)
+	remotePrimary := ft.IsEnabled(ctx, featuremgmt.FlagAlertmanagerRemotePrimary)
+	remoteSecondary := ft.IsEnabled(ctx, featuremgmt.FlagAlertmanagerRemoteSecondary)
 
 	if remoteOnly || remotePrimary {
 		logger.Warn("Only remote secondary mode is supported at the moment, falling back to remote secondary")
@@ -567,6 +567,8 @@ func DecideRemoteAlertmanagerMode(ctx context.Context, cfg setting.RemoteAlertma
 
 	if !remoteSecondary {
 		logger.Error("A mode should be selected when enabling the remote Alertmanager, falling back to using only the internal Alertmanager")
+		return modeInternalOnly
 	}
-	return modeInternalOnly
+
+	return modeRemoteSecondary
 }
