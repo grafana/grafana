@@ -181,7 +181,6 @@ func (ng *AlertNG) init() error {
 		switch {
 		case remoteOnly, remotePrimary:
 			ng.Log.Warn("Only remote secondary mode is supported at the moment, falling back to remote secondary")
-			remoteSecondary = true
 			fallthrough
 
 		case remoteSecondary:
