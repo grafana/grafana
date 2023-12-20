@@ -179,7 +179,17 @@ func (ng *AlertNG) init() error {
 	moaLogger := log.New("ngalert.multiorg.alertmanager")
 	var overrides []notifier.Option
 	if remoteAlertmanagerCfg.Enable {
-		if ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondary) {
+		remoteOnly := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteOnly)
+		remotePrimary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemotePrimary)
+		remoteSecondary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondary)
+
+		if remoteOnly || remotePrimary {
+			ng.Log.Warn("Only remote secondary mode is supported at the moment, falling back to remote secondary")
+			remoteSecondary = true
+		}
+
+		if remoteSecondary {
+			ng.Log.Debug("Starting Grafana with remote secondary mode enabled")
 			override := notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
 				// Create internal Alertmanager.
 				internalAM, err := notifier.NewAlertmanager(ctx,
@@ -222,6 +232,8 @@ func (ng *AlertNG) init() error {
 			})
 
 			overrides = append(overrides, override)
+		} else {
+			ng.Log.Error("A mode should be selected when enabling the remote Alertmanager, falling back to using only the internal Alertmanager")
 		}
 	}
 	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, ng.store, ng.store, ng.KVStore, ng.store, decryptFn, multiOrgMetrics, ng.NotificationService, moaLogger, ng.SecretsService, overrides...)
