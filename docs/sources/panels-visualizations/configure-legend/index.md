@@ -62,7 +62,7 @@ Set where on the visualization a legend is displayed. Choose from:
 
 ### Width
 
-If you set the legend placement to **Right**, the **Width** option becomes available. Leave the field empty to allow Grafana to automatically set the legend width or enter a value in the field. The width is set in [what measurement??].
+If you set the legend placement to **Right**, the **Width** option becomes available. Leave the field empty to allow Grafana to automatically set the legend width or enter a value in the field.
 
 ### Values
 
