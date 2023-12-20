@@ -4,14 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strconv"
-	"strings"
 	"time"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
+	dashboardsV0 "github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -21,13 +20,35 @@ import (
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
 	_ DashboardAccess = (*dashboardSqlAccess)(nil)
-	_ DashboardRows   = (*rowsWrapper)(nil)
 )
+
+type dashboardRow struct {
+	// Dashboard resource
+	Dash *dashboardsV0.Dashboard
+
+	// Title -- this may come from saved metadata rather than the body
+	Title string
+
+	// The folder UID (needed for access control checks)
+	FolderUID string
+
+	// Needed for fast summary access
+	Tags []string
+
+	// Size (in bytes) of the dashboard payload
+	Bytes int
+
+	// Last time the dashboard was updated (used in the continue token)
+	UpdatedTime int64
+
+	// The token we can use that will start a new connection that includes
+	// this same dashboard
+	ContinueToken string
+}
 
 type dashboardSqlAccess struct {
 	sql        db.DB
@@ -66,7 +87,7 @@ const selector = `SELECT
   WHERE is_folder = false`
 
 // GetDashboard implements DashboardAccess.
-func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid string) (*DashboardRow, error) {
+func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid string) (*dashboardsV0.Dashboard, error) {
 	rows, err := a.doQuery(ctx, selector+`
 		AND dashboard.org_id=$1
 		AND dashboard.uid=$2`, orgId, uid)
@@ -82,14 +103,14 @@ func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid 
 		return nil, err
 	}
 	if row == nil {
-		// NOTE, this may be access control!
-		return nil, k8serrors.NewNotFound(v0alpha1.DashboardResourceInfo.GroupResource(), uid)
+		// NOTE, this may be access control rather than not found
+		return nil, k8serrors.NewNotFound(dashboardsV0.DashboardResourceInfo.GroupResource(), uid)
 	}
-	return row, nil
+	return row.Dash, nil
 }
 
 // GetDashboards implements DashboardAccess.
-func (a *dashboardSqlAccess) GetDashboards(ctx context.Context, orgId int64, continueToken string, skipBody bool) (DashboardRows, error) {
+func (a *dashboardSqlAccess) GetDashboards(ctx context.Context, orgId int64, continueToken string, limit int, maxBytes int) (*dashboardsV0.DashboardList, error) {
 	token, err := readContinueToken(continueToken)
 	if err != nil {
 		return nil, err
@@ -102,7 +123,96 @@ func (a *dashboardSqlAccess) GetDashboards(ctx context.Context, orgId int64, con
 	if err == nil {
 		rows.advanceTo(token)
 	}
-	return rows, nil // the caller must Close!
+	defer func() { _ = rows.Close() }()
+
+	totalSize := 0
+	list := &dashboardsV0.DashboardList{}
+	if err != nil {
+		return nil, err
+	}
+	for {
+		row, err := rows.Next()
+		if err != nil || row == nil {
+			return list, err
+		}
+
+		totalSize += row.Bytes
+		if len(list.Items) > 0 && (totalSize > maxBytes || len(list.Items) >= limit) {
+			list.Continue = row.ContinueToken // will skip this one but start here next time
+			return list, err
+		}
+		list.Items = append(list.Items, *row.Dash)
+	}
+}
+
+// GetDashboard implements DashboardAccess.
+func (a *dashboardSqlAccess) GetDashboardSummary(ctx context.Context, orgId int64, uid string) (*dashboardsV0.DashboardSummary, error) {
+	rows, err := a.doQuery(ctx, selector+`
+		AND dashboard.org_id=$1
+		AND dashboard.uid=$2`, orgId, uid)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = rows.Close() }()
+
+	row, err := rows.Next()
+	if err != nil {
+		return nil, err
+	}
+	if row == nil {
+		// NOTE, this may be access control rather than not found
+		return nil, k8serrors.NewNotFound(dashboardsV0.DashboardResourceInfo.GroupResource(), uid)
+	}
+	v := toSummary(row)
+	return &v, nil
+}
+
+// GetDashboards implements DashboardAccess.
+func (a *dashboardSqlAccess) GetDashboardSummaries(ctx context.Context, orgId int64, continueToken string, limit int, maxBytes int) (*dashboardsV0.DashboardSummaryList, error) {
+	token, err := readContinueToken(continueToken)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := a.doQuery(ctx, selector+`
+		AND dashboard.org_id=$1
+		AND dashboard.created >= $2
+		ORDER BY dashboard.org_id asc,dashboard.updated asc	
+	`, orgId, time.UnixMilli(token.updated))
+	if err == nil {
+		rows.advanceTo(token)
+	}
+	defer func() { _ = rows.Close() }()
+
+	totalSize := 0
+	list := &dashboardsV0.DashboardSummaryList{}
+	if err != nil {
+		return nil, err
+	}
+	for {
+		row, err := rows.Next()
+		if err != nil || row == nil {
+			return list, err
+		}
+
+		totalSize += row.Bytes
+		if len(list.Items) > 0 && (totalSize > maxBytes || len(list.Items) >= limit) {
+			list.Continue = row.ContinueToken // will skip this one but start here next time
+			return list, err
+		}
+		list.Items = append(list.Items, toSummary(row))
+	}
+}
+
+func toSummary(row *dashboardRow) v0alpha1.DashboardSummary {
+	return v0alpha1.DashboardSummary{
+		ObjectMeta: row.Dash.ObjectMeta,
+		Spec: v0alpha1.DashboardSummarySpec{
+			Title: row.Title,
+			Tags:  row.Tags,
+		},
+	}
 }
 
 func (a *dashboardSqlAccess) doQuery(ctx context.Context, query string, args ...any) (*rowsWrapper, error) {
@@ -127,7 +237,7 @@ type rowsWrapper struct {
 
 	canReadDashboard func(scopes ...string) bool
 
-	pending *DashboardRow
+	pending *dashboardRow
 }
 
 func (r *rowsWrapper) advanceTo(token continueToken) {
@@ -149,7 +259,7 @@ func (r *rowsWrapper) Close() error {
 	return r.rows.Close()
 }
 
-func (r *rowsWrapper) Next() (*DashboardRow, error) {
+func (r *rowsWrapper) Next() (*dashboardRow, error) {
 	if r.pending != nil {
 		row := r.pending
 		r.pending = nil
@@ -182,12 +292,12 @@ func (r *rowsWrapper) Next() (*DashboardRow, error) {
 	return nil, nil
 }
 
-func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*DashboardRow, continueToken, error) {
-	dash := &v0alpha1.Dashboard{
-		TypeMeta:   v0alpha1.DashboardResourceInfo.TypeMeta(),
+func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, continueToken, error) {
+	dash := &dashboardsV0.Dashboard{
+		TypeMeta:   dashboardsV0.DashboardResourceInfo.TypeMeta(),
 		ObjectMeta: v1.ObjectMeta{Annotations: make(map[string]string)},
 	}
-	row := &DashboardRow{Dash: dash}
+	row := &dashboardRow{Dash: dash}
 
 	var dashboard_id int64
 	var orgId int64
@@ -270,64 +380,14 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*DashboardRow, continueTok
 	return row, token, err
 }
 
-type continueToken struct {
-	orgId   int64
-	updated int64
-	uid     string
-	row     int
-	size    int64
-}
-
-func readContinueToken(t string) (continueToken, error) {
-	var err error
-	token := continueToken{}
-	if t == "" {
-		return token, nil
-	}
-	parts := strings.Split(t, "/")
-	if len(parts) < 3 {
-		return token, fmt.Errorf("invalid continue token (too few parts)")
-	}
-	sub := strings.Split(parts[0], ":")
-	if sub[0] != "org" {
-		return token, fmt.Errorf("expected org in first slug")
-	}
-	token.orgId, err = strconv.ParseInt(sub[1], 10, 64)
-	if err != nil {
-		return token, fmt.Errorf("error parsing orgid")
-	}
-
-	sub = strings.Split(parts[1], ":")
-	if sub[0] != "updated" {
-		return token, fmt.Errorf("expected updated in second slug")
-	}
-	token.updated, err = strconv.ParseInt(sub[1], 10, 64)
-	if err != nil {
-		return token, fmt.Errorf("error parsing updated")
-	}
-
-	sub = strings.Split(parts[2], ":")
-	if sub[0] != "uid" {
-		return token, fmt.Errorf("expected uid in third slug")
-	}
-	token.uid = sub[1]
-
-	return token, err
-}
-
-func (r *continueToken) String() string {
-	return fmt.Sprintf("org:%d/updated:%d/uid:%s/row:%d/%s",
-		r.orgId, r.updated, r.uid, r.row, util.ByteCountSI(r.size))
-}
-
 // DeleteDashboard implements DashboardAccess.
-func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, uid string) (*v0alpha1.Dashboard, bool, error) {
-	row, err := a.GetDashboard(ctx, orgId, uid)
+func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, uid string) (*dashboardsV0.Dashboard, bool, error) {
+	dash, err := a.GetDashboard(ctx, orgId, uid)
 	if err != nil {
 		return nil, false, err
 	}
 
-	id := row.Dash.Spec.GetNestedInt64("id")
+	id := dash.Spec.GetNestedInt64("id")
 	if id == 0 {
 		return nil, false, fmt.Errorf("could not find id in saved body")
 	}
@@ -339,15 +399,15 @@ func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, u
 	if err != nil {
 		return nil, false, err
 	}
-	return row.Dash, true, nil
+	return dash, true, nil
 }
 
 // SaveDashboard implements DashboardAccess.
-func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, dash *v0alpha1.Dashboard) (string, bool, error) {
+func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, dash *dashboardsV0.Dashboard) (*dashboardsV0.Dashboard, bool, error) {
 	created := false
 	user, err := appcontext.User(ctx)
 	if err != nil {
-		return "", created, err
+		return nil, created, err
 	}
 	if dash.Name != "" {
 		dash.Spec.Set("uid", dash.Name)
@@ -376,9 +436,12 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		Overwrite: true, // already passed the revisionVersion checks!
 		UserID:    user.UserID,
 	})
+	if err != nil {
+		return nil, false, err
+	}
 	if out != nil {
 		created = (out.Created.Unix() == out.Updated.Unix()) // and now?
-		return out.UID, created, err
 	}
-	return "", created, err
+	dash, err = a.GetDashboard(ctx, orgId, out.UID)
+	return dash, created, err
 }

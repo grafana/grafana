@@ -9,7 +9,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apis"
-	"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboards/access"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 )
@@ -60,29 +59,9 @@ func (s *summaryStorage) List(ctx context.Context, options *internalversion.List
 	if maxCount < 1 {
 		maxCount = 1000
 	}
-	maxBytes := int64(2 * 1024 * 1024) // 2MB
-	totalSize := int64(0)
-	list := &v0alpha1.DashboardSummaryList{}
-	rows, err := s.access.GetDashboards(ctx, orgId, options.Continue, true)
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = rows.Close() }()
-	for {
-		row, err := rows.Next()
-		if err != nil || row == nil {
-			return list, err
-		}
+	maxBytes := 2 * 1024 * 1024 // 2MB
 
-		totalSize += int64(row.Bytes)
-		if len(list.Items) > 0 && (totalSize > maxBytes || len(list.Items) >= maxCount) {
-			list.Continue = row.ContinueToken // will skip this one but start here next time
-			return list, err
-		}
-
-		summary, _ := toSummary(row, err)
-		list.Items = append(list.Items, *summary)
-	}
+	return s.access.GetDashboardSummaries(ctx, orgId, options.Continue, maxCount, maxBytes)
 }
 
 func (s *summaryStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
@@ -91,18 +70,5 @@ func (s *summaryStorage) Get(ctx context.Context, name string, options *metav1.G
 		return nil, err
 	}
 
-	return toSummary(s.access.GetDashboard(ctx, info.OrgID, name))
-}
-
-func toSummary(row *access.DashboardRow, err error) (*v0alpha1.DashboardSummary, error) {
-	if err != nil {
-		return nil, err
-	}
-	return &v0alpha1.DashboardSummary{
-		ObjectMeta: row.Dash.ObjectMeta,
-		Spec: v0alpha1.DashboardSummarySpec{
-			Title: row.Title,
-			Tags:  row.Tags,
-		},
-	}, nil
+	return s.access.GetDashboardSummary(ctx, info.OrgID, name)
 }

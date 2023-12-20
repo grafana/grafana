@@ -16,15 +16,15 @@ type Unstructured struct {
 	Object map[string]interface{}
 }
 
-func (obj *Unstructured) UnstructuredContent() map[string]interface{} {
-	if obj.Object == nil {
+func (u *Unstructured) UnstructuredContent() map[string]interface{} {
+	if u.Object == nil {
 		return make(map[string]interface{})
 	}
-	return obj.Object
+	return u.Object
 }
 
-func (obj *Unstructured) SetUnstructuredContent(content map[string]interface{}) {
-	obj.Object = content
+func (u *Unstructured) SetUnstructuredContent(content map[string]interface{}) {
+	u.Object = content
 }
 
 // MarshalJSON ensures that the unstructured object produces proper
@@ -58,7 +58,7 @@ func (u *Unstructured) Set(field string, value interface{}) {
 	if u.Object == nil {
 		u.Object = make(map[string]interface{})
 	}
-	unstructured.SetNestedField(u.Object, value, field)
+	_ = unstructured.SetNestedField(u.Object, value, field)
 }
 
 func (u *Unstructured) Remove(fields ...string) {
@@ -72,7 +72,7 @@ func (u *Unstructured) SetNestedField(value interface{}, fields ...string) {
 	if u.Object == nil {
 		u.Object = make(map[string]interface{})
 	}
-	unstructured.SetNestedField(u.Object, value, fields...)
+	_ = unstructured.SetNestedField(u.Object, value, fields...)
 }
 
 func (u *Unstructured) GetNestedString(fields ...string) string {

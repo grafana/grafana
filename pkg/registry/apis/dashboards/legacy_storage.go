@@ -78,11 +78,8 @@ func (s *dashboardStorage) Create(ctx context.Context,
 		p.Spec.Set("title", t)
 	}
 
-	uid, _, err := s.access.SaveDashboard(ctx, info.OrgID, p)
-	if err != nil {
-		return nil, err
-	}
-	return s.Get(ctx, uid, nil)
+	dash, _, err := s.access.SaveDashboard(ctx, info.OrgID, p)
+	return dash, err
 }
 
 func (s *dashboardStorage) Update(ctx context.Context,
@@ -141,27 +138,8 @@ func (s *dashboardStorage) List(ctx context.Context, options *internalversion.Li
 	if maxCount < 1 {
 		maxCount = 1000
 	}
-	maxBytes := int64(2 * 1024 * 1024) // 2MB
-	totalSize := int64(0)
-	list := &v0alpha1.DashboardList{}
-	rows, err := s.access.GetDashboards(ctx, orgId, options.Continue, false)
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = rows.Close() }()
-	for {
-		row, err := rows.Next()
-		if err != nil || row == nil {
-			return list, err
-		}
-
-		totalSize += int64(row.Bytes)
-		if len(list.Items) > 0 && (totalSize > maxBytes || len(list.Items) >= maxCount) {
-			list.Continue = row.ContinueToken // will skip this one but start here next time
-			return list, err
-		}
-		list.Items = append(list.Items, *row.Dash)
-	}
+	maxBytes := 2 * 1024 * 1024 // 2MB
+	return s.access.GetDashboards(ctx, orgId, options.Continue, maxCount, int(maxBytes))
 }
 
 func (s *dashboardStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
@@ -170,9 +148,5 @@ func (s *dashboardStorage) Get(ctx context.Context, name string, options *metav1
 		return nil, err
 	}
 
-	row, err := s.access.GetDashboard(ctx, info.OrgID, name)
-	if err != nil {
-		return nil, err
-	}
-	return row.Dash, nil
+	return s.access.GetDashboard(ctx, info.OrgID, name)
 }
