@@ -250,7 +250,7 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=metric`,
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=metric&time=${raw.to.unix()}`,
         headers: {},
         hideFromInspector: true,
         showErrorAlert: false,
@@ -304,7 +304,7 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=1%2B1`,
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=1%2B1&time=${raw.to.unix()}`,
         headers: {},
         hideFromInspector: true,
         showErrorAlert: false,
