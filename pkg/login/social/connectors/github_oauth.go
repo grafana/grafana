@@ -86,6 +86,8 @@ func (s *SocialGithub) Validate(ctx context.Context, settings ssoModels.SSOSetti
 		return err
 	}
 
+	// add specific validation rules for Github
+
 	return nil
 }
 

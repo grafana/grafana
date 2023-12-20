@@ -66,6 +66,8 @@ func (s *SocialGoogle) Validate(ctx context.Context, settings ssoModels.SSOSetti
 		return err
 	}
 
+	// add specific validation rules for Google
+
 	return nil
 }
 

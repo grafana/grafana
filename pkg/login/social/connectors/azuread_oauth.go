@@ -173,6 +173,8 @@ func (s *SocialAzureAD) Validate(ctx context.Context, settings ssoModels.SSOSett
 		return err
 	}
 
+	// add specific validation rules for AzureAD
+
 	return nil
 }
 

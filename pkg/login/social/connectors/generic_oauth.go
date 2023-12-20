@@ -79,6 +79,8 @@ func (s *SocialGenericOAuth) Validate(ctx context.Context, settings ssoModels.SS
 		return err
 	}
 
+	// add specific validation rules for Generic OAuth
+
 	return nil
 }
 

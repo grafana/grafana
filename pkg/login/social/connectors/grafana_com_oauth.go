@@ -64,6 +64,8 @@ func (s *SocialGrafanaCom) Validate(ctx context.Context, settings ssoModels.SSOS
 		return err
 	}
 
+	// add specific validation rules for GrafanaCom
+
 	return nil
 }
 

@@ -76,6 +76,8 @@ func (s *SocialGitlab) Validate(ctx context.Context, settings ssoModels.SSOSetti
 		return err
 	}
 
+	// add specific validation rules for Gitlab
+
 	return nil
 }
 

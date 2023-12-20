@@ -927,8 +927,7 @@ func TestSocialGenericOAuth_Validate(t *testing.T) {
 			name: "SSOSettings is valid",
 			settings: ssoModels.SSOSettings{
 				Settings: map[string]any{
-					"client_id":     "client-id",
-					"client_secret": "client-secret",
+					"client_id": "client-id",
 				},
 			},
 			expectError: false,
@@ -938,7 +937,6 @@ func TestSocialGenericOAuth_Validate(t *testing.T) {
 			settings: ssoModels.SSOSettings{
 				Settings: map[string]any{
 					"client_id":     "client-id",
-					"client_secret": "client-secret",
 					"invalid_field": []int{1, 2, 3},
 				},
 			},
@@ -948,8 +946,7 @@ func TestSocialGenericOAuth_Validate(t *testing.T) {
 			name: "fails if client id is empty",
 			settings: ssoModels.SSOSettings{
 				Settings: map[string]any{
-					"client_id":     "",
-					"client_secret": "client-secret",
+					"client_id": "",
 				},
 			},
 			expectError: true,
@@ -957,19 +954,7 @@ func TestSocialGenericOAuth_Validate(t *testing.T) {
 		{
 			name: "fails if client id does not exist",
 			settings: ssoModels.SSOSettings{
-				Settings: map[string]any{
-					"client_secret": "client-secret",
-				},
-			},
-			expectError: true,
-		},
-		{
-			name: "fails if client secret is empty",
-			settings: ssoModels.SSOSettings{
-				Settings: map[string]any{
-					"client_id":     "client-id",
-					"client_secret": "",
-				},
+				Settings: map[string]any{},
 			},
 			expectError: true,
 		},

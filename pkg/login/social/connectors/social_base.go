@@ -215,9 +215,6 @@ func validateInfo(info *social.OAuthInfo) error {
 	if info.ClientId == "" {
 		return ssosettings.ErrEmptyClientId.Errorf("clientId is empty")
 	}
-	if info.ClientSecret == "" {
-		return ssosettings.ErrEmptyClientSecret.Errorf("client secret is empty")
-	}
 
 	return nil
 }
