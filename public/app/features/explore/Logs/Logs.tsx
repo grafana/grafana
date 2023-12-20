@@ -791,6 +791,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   onClickFilterLabel={onClickFilterLabel}
                   onClickFilterOutLabel={onClickFilterOutLabel}
                   showContextToggle={showContextToggle}
+                  getRowContextQuery={getRowContextQuery}
                   showLabels={showLabels}
                   showTime={showTime}
                   enableLogDetails={true}
