@@ -34,7 +34,6 @@ var _ ssosettings.Reloadable = (*SocialGenericOAuth)(nil)
 type SocialGenericOAuth struct {
 	*SocialBase
 	allowedOrganizations []string
-	apiUrl               string
 	teamsUrl             string
 	emailAttributeName   string
 	emailAttributePath   string
@@ -44,15 +43,12 @@ type SocialGenericOAuth struct {
 	idTokenAttributeName string
 	teamIdsAttributePath string
 	teamIds              []string
-	allowedGroups        []string
-	skipOrgRoleSync      bool
 }
 
 func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager) *SocialGenericOAuth {
 	config := createOAuthConfig(info, cfg, social.GenericOAuthProviderName)
 	provider := &SocialGenericOAuth{
-		SocialBase:           newSocialBase(social.GenericOAuthProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-		apiUrl:               info.ApiUrl,
+		SocialBase:           newSocialBase(social.GenericOAuthProviderName, config, info, cfg.AutoAssignOrgRole, *features),
 		teamsUrl:             info.TeamsUrl,
 		emailAttributeName:   info.EmailAttributeName,
 		emailAttributePath:   info.EmailAttributePath,
@@ -63,10 +59,6 @@ func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettin
 		teamIdsAttributePath: info.TeamIdsAttributePath,
 		teamIds:              util.SplitString(info.Extra[teamIdsKey]),
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
-		allowedGroups:        info.AllowedGroups,
-		skipOrgRoleSync:      cfg.GenericOAuthSkipOrgRoleSync,
-		// FIXME: Move skipOrgRoleSync to OAuthInfo
-		// skipOrgRoleSync: info.SkipOrgRoleSync
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
@@ -86,11 +78,11 @@ func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOS
 
 // TODOD: remove this in the next PR and use the isGroupMember from social.go
 func (s *SocialGenericOAuth) IsGroupMember(groups []string) bool {
-	if len(s.allowedGroups) == 0 {
+	if len(s.info.AllowedGroups) == 0 {
 		return true
 	}
 
-	for _, allowedGroup := range s.allowedGroups {
+	for _, allowedGroup := range s.info.AllowedGroups {
 		for _, group := range groups {
 			if group == allowedGroup {
 				return true
@@ -196,13 +188,13 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 			}
 		}
 
-		if userInfo.Role == "" && !s.skipOrgRoleSync {
+		if userInfo.Role == "" && !s.info.SkipOrgRoleSync {
 			role, grafanaAdmin, err := s.extractRoleAndAdminOptional(data.rawJSON, []string{})
 			if err != nil {
 				s.log.Warn("Failed to extract role", "err", err)
 			} else {
 				userInfo.Role = role
-				if s.allowAssignGrafanaAdmin {
+				if s.info.AllowAssignGrafanaAdmin {
 					userInfo.IsGrafanaAdmin = &grafanaAdmin
 				}
 			}
@@ -219,14 +211,14 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 		}
 	}
 
-	if userInfo.Role == "" && !s.skipOrgRoleSync {
-		if s.roleAttributeStrict {
+	if userInfo.Role == "" && !s.info.SkipOrgRoleSync {
+		if s.info.RoleAttributeStrict {
 			return nil, errRoleAttributeStrictViolation.Errorf("idP did not return a role attribute")
 		}
 		userInfo.Role = s.defaultRole()
 	}
 
-	if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
+	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
@@ -299,14 +291,14 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 
 func (s *SocialGenericOAuth) extractFromAPI(ctx context.Context, client *http.Client) *UserInfoJson {
 	s.log.Debug("Getting user info from API")
-	if s.apiUrl == "" {
+	if s.info.ApiUrl == "" {
 		s.log.Debug("No api url configured")
 		return nil
 	}
 
-	rawUserInfoResponse, err := s.httpGet(ctx, client, s.apiUrl)
+	rawUserInfoResponse, err := s.httpGet(ctx, client, s.info.ApiUrl)
 	if err != nil {
-		s.log.Debug("Error getting user info from API", "url", s.apiUrl, "error", err)
+		s.log.Debug("Error getting user info from API", "url", s.info.ApiUrl, "error", err)
 		return nil
 	}
 
@@ -422,9 +414,9 @@ func (s *SocialGenericOAuth) FetchPrivateEmail(ctx context.Context, client *http
 		IsConfirmed bool   `json:"is_confirmed"`
 	}
 
-	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.apiUrl+"/emails"))
+	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.info.ApiUrl+"/emails"))
 	if err != nil {
-		s.log.Error("Error getting email address", "url", s.apiUrl+"/emails", "error", err)
+		s.log.Error("Error getting email address", "url", s.info.ApiUrl+"/emails", "error", err)
 		return "", fmt.Errorf("%v: %w", "Error getting email address", err)
 	}
 
@@ -484,9 +476,9 @@ func (s *SocialGenericOAuth) fetchTeamMembershipsFromDeprecatedTeamsUrl(ctx cont
 		Id int `json:"id"`
 	}
 
-	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.apiUrl+"/teams"))
+	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.info.ApiUrl+"/teams"))
 	if err != nil {
-		s.log.Error("Error getting team memberships", "url", s.apiUrl+"/teams", "error", err)
+		s.log.Error("Error getting team memberships", "url", s.info.ApiUrl+"/teams", "error", err)
 		return []string{}, err
 	}
 
@@ -525,9 +517,9 @@ func (s *SocialGenericOAuth) FetchOrganizations(ctx context.Context, client *htt
 		Login string `json:"login"`
 	}
 
-	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.apiUrl+"/orgs"))
+	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.info.ApiUrl+"/orgs"))
 	if err != nil {
-		s.log.Error("Error getting organizations", "url", s.apiUrl+"/orgs", "error", err)
+		s.log.Error("Error getting organizations", "url", s.info.ApiUrl+"/orgs", "error", err)
 		return nil, false
 	}
 
