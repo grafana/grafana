@@ -12,7 +12,7 @@ type ItemQuery struct {
 	UserID       int64    `json:"userId"`
 	AlertID      int64    `json:"alertId"`
 	DashboardID  int64    `json:"dashboardId"`
-	DashboardUID string   `json:"dashboardUID"` // to depprecate dashboardID
+	DashboardUID string   `json:"dashboardUID"`
 	PanelID      int64    `json:"panelId"`
 	AnnotationID int64    `json:"annotationId"`
 	Tags         []string `json:"tags"`
