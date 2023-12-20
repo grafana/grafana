@@ -1,4 +1,4 @@
-package stack
+package authorizer
 
 import (
 	"context"
@@ -12,21 +12,21 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ authorizer.Authorizer = &StackIDAuthorizer{}
+var _ authorizer.Authorizer = &stackIDAuthorizer{}
 
-type StackIDAuthorizer struct {
+type stackIDAuthorizer struct {
 	log     log.Logger
 	stackID string
 }
 
-func ProvideStackIDAuthorizer(cfg *setting.Cfg) *StackIDAuthorizer {
-	return &StackIDAuthorizer{
+func newStackIDAuthorizer(cfg *setting.Cfg) *stackIDAuthorizer {
+	return &stackIDAuthorizer{
 		log:     log.New("grafana-apiserver.authorizer.stackid"),
 		stackID: cfg.StackID, // this lets a single tenant grafana validate stack id (rather than orgs)
 	}
 }
 
-func (auth StackIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
+func (auth stackIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
 	signedInUser, err := appcontext.User(ctx)
 	if err != nil {
 		return authorizer.DecisionDeny, fmt.Sprintf("error getting signed in user: %v", err), nil
