@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
+import { usePrevious } from 'react-use';
 
-import { PanelProps, DataFrameType } from '@grafana/data';
+import { PanelProps, DataFrameType, compareArrayValues } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { KeyboardPlugin, TooltipPlugin, TooltipPlugin2, usePanelContext, ZoomPlugin } from '@grafana/ui';
@@ -36,7 +37,23 @@ export const TimeSeriesPanel = ({
   const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, showThresholds, dataLinkPostProcessor } =
     usePanelContext();
 
-  const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data.series, timeRange]);
+  let prevTimeRange = usePrevious(timeRange);
+  let prevFrames = usePrevious(data.series);
+
+  console.log('sameTimeRange', timeRange === prevTimeRange);
+  console.log('sameFrames', data.series === prevFrames);
+  console.log('compareFrames', compareArrayValues(prevFrames ?? [], data.series, (a, b) => a === b));
+
+  const frames = useMemo(() => {
+    console.log({
+      state: data.state,
+      interval: data.series[0].fields[0].config.interval,
+      timeRange: `${Math.round((timeRange.to.valueOf() - timeRange.from.valueOf()) / 1000 / 3600)} hrs`,
+    });
+
+    return prepareGraphableFields(data.series, config.theme2, timeRange);
+  }, [data.series, timeRange]);
+
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
   const suggestions = useMemo(() => {
     if (frames?.length && frames.every((df) => df.meta?.type === DataFrameType.TimeSeriesLong)) {

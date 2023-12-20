@@ -1,5 +1,5 @@
 import { identity } from 'lodash';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { usePrevious } from 'react-use';
 
 import {
@@ -121,8 +121,15 @@ export function ExploreGraph({
 
   const dataLinkPostProcessor = useExploreDataLinkPostProcessor(splitOpenFn, timeRange);
 
+  // this is here to ensure we use previous frames during Loading state (alongside previous timeRange)
+  const dataWithConfigRef = useRef<DataFrame[]>();
+
   const dataWithConfig = useMemo(() => {
-    return applyFieldOverrides({
+    if (loadingState === LoadingState.Loading && dataWithConfigRef.current) {
+      return dataWithConfigRef.current;
+    }
+
+    return (dataWithConfigRef.current = applyFieldOverrides({
       fieldConfig: styledFieldConfig,
       data,
       timeZone,
@@ -130,8 +137,8 @@ export function ExploreGraph({
       theme,
       fieldConfigRegistry,
       dataLinkPostProcessor,
-    });
-  }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig, dataLinkPostProcessor]);
+    }));
+  }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig, dataLinkPostProcessor, loadingState]);
 
   const annotationsWithConfig = useMemo(() => {
     return applyFieldOverrides({
