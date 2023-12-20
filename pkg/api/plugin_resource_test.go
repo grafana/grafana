@@ -88,6 +88,21 @@ func TestCallResource(t *testing.T) {
 		require.NoError(t, resp.Body.Close())
 		require.Equal(t, 200, resp.StatusCode)
 	})
+
+	t.Run("Test successful response is received for valid request with the colon character", func(t *testing.T) {
+		req := srv.NewPostRequest("/api/plugins/grafana-testdata-datasource/resources/test-*,*:test-*/_mapping", strings.NewReader("{ \"test\": true }"))
+		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
+			1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
+				{Action: pluginaccesscontrol.ActionAppAccess, Scope: pluginaccesscontrol.ScopeProvider.GetResourceAllScope()},
+			}),
+		}})
+		resp, err := srv.SendJSON(req)
+		require.NoError(t, err)
+
+		require.NoError(t, resp.Body.Close())
+		require.Equal(t, 200, resp.StatusCode)
+	})
+
 	pluginRegistry := fakes.NewFakePluginRegistry()
 	require.NoError(t, pluginRegistry.Add(context.Background(), &plugins.Plugin{
 		JSONData: plugins.JSONData{
