@@ -1,10 +1,8 @@
 import React from 'react';
-// import { useLocation } from 'react-router-dom';
 
 import { PanelMenuItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Menu } from '@grafana/ui';
-// import { useGrafana } from 'app/core/context/GrafanaContext';
 
 export interface Props {
   items: PanelMenuItem[];
@@ -14,9 +12,6 @@ export interface Props {
 }
 
 export function PanelHeaderMenu({ items }: Props) {
-  // const location = useLocation();
-  // const { chrome } = useGrafana();
-
   const renderItems = (items: PanelMenuItem[]) => {
     return items.map((item) => {
       switch (item.type) {
