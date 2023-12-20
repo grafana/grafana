@@ -69,7 +69,7 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 				"__dashboardUid__": dashboardUID,
 				"__panelId__":      "1",
 			},
-			Labels:   map[string]string{},
+			Labels:   map[string]string{ngModels.MigratedUseLegacyChannelsLabel: "true"},
 			IsPaused: false,
 		}
 		if len(mutators) > 0 {
@@ -685,8 +685,8 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 						// Remove generated fields.
 						require.NotEqual(t, r.Labels["rule_uid"], "")
 						delete(r.Labels, "rule_uid")
-						require.NotEqual(t, r.Annotations["__alertId__"], "")
-						delete(r.Annotations, "__alertId__")
+						require.NotEqual(t, r.Annotations[ngModels.MigratedAlertIdAnnotation], "")
+						delete(r.Annotations, ngModels.MigratedAlertIdAnnotation)
 
 						folder := getDashboard(t, x, orgId, r.NamespaceUID)
 						rperms, err := service.migrationStore.GetFolderPermissions(context.Background(), getMigrationUser(orgId), folder.UID)
