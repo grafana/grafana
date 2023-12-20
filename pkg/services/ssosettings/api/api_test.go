@@ -123,7 +123,7 @@ func TestSSOSettingsAPI_Update(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			var input models.SSOSettings
-			json.Unmarshal([]byte(tt.body), &input)
+			_ = json.Unmarshal([]byte(tt.body), &input)
 
 			settings := models.SSOSettings{
 				Provider: tt.key,
