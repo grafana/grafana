@@ -54,12 +54,13 @@ func RegisterAPIService(
 	dsService datasources.DataSourceService,
 	dsCache datasources.CacheService,
 	accessControl accesscontrol.AccessControl,
-) *DataSourceAPIBuilder {
+) (*DataSourceAPIBuilder, error) {
 	// This requires devmode!
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		return nil // skip registration unless opting into experimental apis
+		return nil, nil // skip registration unless opting into experimental apis
 	}
 
+	var err error
 	var builder *DataSourceAPIBuilder
 	all := pluginStore.Plugins(context.Background(), plugins.TypeDataSource)
 	ids := []string{
@@ -72,10 +73,13 @@ func RegisterAPIService(
 			continue // skip this one
 		}
 
-		builder = NewDataSourceAPIBuilder(ds, pluginClient, dsService, dsCache, accessControl, namespacer)
+		builder, err = NewDataSourceAPIBuilder(ds, pluginClient, dsService, dsCache, accessControl, namespacer)
+		if err != nil {
+			return nil, err
+		}
 		apiregistration.RegisterAPI(builder)
 	}
-	return builder // only used for wire
+	return builder, nil // only used for wire
 }
 
 func NewDataSourceAPIBuilder(
@@ -84,8 +88,11 @@ func NewDataSourceAPIBuilder(
 	dsService datasources.DataSourceService,
 	dsCache datasources.CacheService,
 	accessControl accesscontrol.AccessControl,
-	namespacer request.NamespaceMapper) *DataSourceAPIBuilder {
-	group := getDatasourceGroupNameFromPluginID(plugin.ID)
+	namespacer request.NamespaceMapper) (*DataSourceAPIBuilder, error) {
+	group, err := getDatasourceGroupNameFromPluginID(plugin.ID)
+	if err != nil {
+		return nil, err
+	}
 	return &DataSourceAPIBuilder{
 		connectionResourceInfo: v0alpha1.GenericConnectionResourceInfo.WithGroupAndShortName(group, plugin.ID+"-connection"),
 		plugin:                 plugin,
@@ -94,7 +101,7 @@ func NewDataSourceAPIBuilder(
 		dsCache:                dsCache,
 		accessControl:          accessControl,
 		namespacer:             namespacer,
-	}
+	}, nil
 }
 
 func (b *DataSourceAPIBuilder) GetGroupVersion() schema.GroupVersion {

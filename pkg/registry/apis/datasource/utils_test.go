@@ -8,15 +8,25 @@ import (
 
 func TestUtils(t *testing.T) {
 	// multiple flavors of the same idea
-	require.Equal(t, "tempo.datasource.grafana.app", getDatasourceGroupNameFromPluginID("tempo"))
-	require.Equal(t, "tempo.datasource.grafana.app", getDatasourceGroupNameFromPluginID("grafana-tempo-datasource"))
-	require.Equal(t, "tempo.datasource.grafana.app", getDatasourceGroupNameFromPluginID("tempo-datasource"))
+	require.Equal(t, "tempo.datasource.grafana.app", getIDIgnoreError("tempo"))
+	require.Equal(t, "tempo.datasource.grafana.app", getIDIgnoreError("grafana-tempo-datasource"))
+	require.Equal(t, "tempo.datasource.grafana.app", getIDIgnoreError("tempo-datasource"))
 
 	// Multiple dashes in the name
-	require.Equal(t, "org-name.datasource.grafana.app", getDatasourceGroupNameFromPluginID("org-name-datasource"))
-	require.Equal(t, "org-name-more.datasource.grafana.app", getDatasourceGroupNameFromPluginID("org-name-more-datasource"))
-	require.Equal(t, "org-name-more-more.datasource.grafana.app", getDatasourceGroupNameFromPluginID("org-name-more-more-datasource"))
+	require.Equal(t, "org-name.datasource.grafana.app", getIDIgnoreError("org-name-datasource"))
+	require.Equal(t, "org-name-more.datasource.grafana.app", getIDIgnoreError("org-name-more-datasource"))
+	require.Equal(t, "org-name-more-more.datasource.grafana.app", getIDIgnoreError("org-name-more-more-datasource"))
 
-	require.Equal(t, "*** InvalidDatasourceGroupName: graph-panel***", getDatasourceGroupNameFromPluginID("graph-panel"))
-	require.Equal(t, "*** InvalidDatasourceGroupName: anything-notdatasource***", getDatasourceGroupNameFromPluginID("anything-notdatasource"))
+	require.Equal(t, "*** InvalidDatasourceGroupName: graph-panel***", getErrorIgnoreValue("graph-panel"))
+	require.Equal(t, "*** InvalidDatasourceGroupName: anything-notdatasource***", getErrorIgnoreValue("anything-notdatasource"))
+}
+
+func getIDIgnoreError(id string) string {
+	v, _ := getDatasourceGroupNameFromPluginID(id)
+	return v
+}
+
+func getErrorIgnoreValue(id string) error {
+	_, err := getDatasourceGroupNameFromPluginID(id)
+	return err
 }

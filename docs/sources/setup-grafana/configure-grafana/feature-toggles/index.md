@@ -176,6 +176,5 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | `externalServiceAuth`                  | Starts an OAuth2 authentication provider for external services |
 | `grafanaAPIServerWithExperimentalAPIs` | Register experimental APIs with the k8s API server             |
 | `grafanaAPIServerEnsureKubectlAccess`  | Start an additional https handler and write kubectl options    |
-| `externalServiceAccounts`              | Automatic service account and token setup for plugins          |
 | `panelTitleSearchInV1`                 | Enable searching for dashboards using panel title in search v1 |
 | `ssoSettingsApi`                       | Enables the SSO settings API                                   |
