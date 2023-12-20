@@ -39,7 +39,10 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object, codec runtime
 	metaAccessor.SetResourceVersion(rsp.Version)
 	metaAccessor.SetCreationTimestamp(metav1.Unix(rsp.CreatedAt/1000, rsp.CreatedAt%1000*1000000))
 
-	grafanaAccessor := apis.MetaAccessor(res)
+	grafanaAccessor, err := apis.MetaAccessor(res)
+	if err != nil {
+		return err
+	}
 
 	if rsp.Folder != "" {
 		grafanaAccessor.SetFolder(rsp.Folder)
@@ -55,7 +58,6 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object, codec runtime
 		grafanaAccessor.SetUpdatedTimestamp(&updatedAt)
 	}
 	grafanaAccessor.SetSlug(rsp.Slug)
-	grafanaAccessor.SetTitle(rsp.Title)
 
 	if rsp.Origin != nil {
 		originTime := time.UnixMilli(rsp.Origin.Time).UTC()
@@ -100,7 +102,10 @@ func resourceToEntity(key string, res runtime.Object, requestInfo *request.Reque
 		return nil, err
 	}
 
-	grafanaAccessor := apis.MetaAccessor(res)
+	grafanaAccessor, err := apis.MetaAccessor(res)
+	if err != nil {
+		return nil, err
+	}
 
 	rsp := &entityStore.Entity{
 		Group:        requestInfo.APIGroup,
@@ -117,7 +122,7 @@ func resourceToEntity(key string, res runtime.Object, requestInfo *request.Reque
 		CreatedBy:    grafanaAccessor.GetCreatedBy(),
 		UpdatedBy:    grafanaAccessor.GetUpdatedBy(),
 		Slug:         grafanaAccessor.GetSlug(),
-		Title:        grafanaAccessor.GetTitle(),
+		Title:        grafanaAccessor.FindTitle(metaAccessor.GetName()),
 		Origin: &entityStore.EntityOriginInfo{
 			Source: grafanaAccessor.GetOriginName(),
 			Key:    grafanaAccessor.GetOriginKey(),
