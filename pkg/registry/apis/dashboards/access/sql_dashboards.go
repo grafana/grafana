@@ -334,7 +334,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, continueTok
 		token.updated = updated.UnixMilli()
 		dash.ResourceVersion = fmt.Sprintf("%d", created.UnixMilli())
 		dash.Namespace = a.namespacer(orgId)
-		dash.UID = utils.CalculateClusterWideUID(dash, "dashboard")
+		dash.UID = utils.CalculateClusterWideUID(dash)
 		dash.SetCreationTimestamp(v1.NewTime(created))
 		meta := kinds.MetaAccessor(dash)
 		meta.SetUpdatedTimestamp(&updated)
