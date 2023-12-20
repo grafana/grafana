@@ -45,9 +45,12 @@ export const LogRowMenuCell = React.memo(
       async (event: SyntheticEvent<HTMLButtonElement, MouseEvent>) => {
         event.stopPropagation();
         // if ctrl or meta key is pressed, open query in new Explore tab
-        if (event.nativeEvent.ctrlKey || event.nativeEvent.metaKey || event.nativeEvent.shiftKey) {
+        if (
+          getRowContextQuery &&
+          (event.nativeEvent.ctrlKey || event.nativeEvent.metaKey || event.nativeEvent.shiftKey)
+        ) {
           const win = window.open('about:blank', '_blank', 'noopener,noreferrer');
-          const query = await getRowContextQuery?.(row);
+          const query = await getRowContextQuery(row);
           if (query && win) {
             const url = urlUtil.renderUrl(locationUtil.assureBaseUrl(`${getConfig().appSubUrl}explore`), {
               left: JSON.stringify({
