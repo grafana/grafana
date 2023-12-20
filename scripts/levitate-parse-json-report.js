@@ -5,13 +5,13 @@ const data = JSON.parse(fs.readFileSync('data.json', 'utf8'));
 const stripAnsi = (string) => string.replace(/\u001b\[.*?m/g, '');
 
 const printSection = (title, items) => {
-  let output = `### ${title}<br>`;
+  let output = `<br>### ${title}<br>`;
   items.forEach((item) => {
     output += `**${item.name}**<br>`;
     output += `<sub>${item.location}</sub><br>`;
-    output += '```' + (item.declaration ? 'typescript' : 'diff typescript') + '<br>';
+    output += '```' + (item.declaration ? 'typescript' : 'diff typescript');
     output += item.declaration ? item.declaration : stripAnsi(item.diff);
-    output += '<br></br>';
+    output += '```<br>';
   });
   return output;
 };
