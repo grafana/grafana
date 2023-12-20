@@ -6,6 +6,7 @@ import { CanvasPanel, InstanceState } from './CanvasPanel';
 import { getConnectionEditor } from './editor/connectionEditor';
 import { getElementEditor } from './editor/element/elementEditor';
 import { getLayerEditor } from './editor/layer/layerEditor';
+import { PanZoomHelp } from './editor/panZoomHelp';
 import { canvasMigrationHandler } from './migrations';
 import { Options } from './panelcfg.gen';
 
@@ -30,6 +31,13 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
     description: 'Enable pan and zoom',
     defaultValue: false,
     showIf: (opts) => config.featureToggles.canvasPanelPanZoom,
+  });
+  builder.addCustomEditor({
+    id: 'panZoomHelp',
+    path: 'panZoomHelp',
+    name: 'More information...',
+    editor: PanZoomHelp,
+    showIf: (opts) => config.featureToggles.canvasPanelPanZoom && opts.panZoom,
   });
 };
 
