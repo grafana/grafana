@@ -7,7 +7,7 @@ import (
 )
 
 func initEntityTables(mg *migrator.Migrator) string {
-	marker := "Initialize entity tables (v11)" // changing this key wipe+rewrite everything
+	marker := "Initialize entity tables (v10)" // changing this key wipe+rewrite everything
 	mg.AddMigration(marker, &migrator.RawSQLMigration{})
 
 	tables := []migrator.Table{}
@@ -16,7 +16,7 @@ func initEntityTables(mg *migrator.Migrator) string {
 		Columns: []*migrator.Column{
 			// primary identifier
 			{Name: "guid", Type: migrator.DB_NVarchar, Length: 36, Nullable: false, IsPrimaryKey: true},
-			{Name: "resourceVersion", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "resource_version", Type: migrator.DB_BigInt, Nullable: false},
 
 			// The entity identifier (TODO: remove -- this is a duplicate)
 			{Name: "key", Type: migrator.DB_Text, Nullable: false},
@@ -61,7 +61,8 @@ func initEntityTables(mg *migrator.Migrator) string {
 			{Name: "errors", Type: migrator.DB_Text, Nullable: true},   // JSON object
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"group", "resource", "namespace", "name"}, Type: migrator.UniqueIndex}, // == key
+			// The keys are ordered for efficiency in mysql queries, not URL consistency
+			{Cols: []string{"namespace", "group", "resource", "name"}, Type: migrator.UniqueIndex}, // == key
 			{Cols: []string{"folder"}, Type: migrator.IndexType},
 		},
 	})
@@ -72,7 +73,7 @@ func initEntityTables(mg *migrator.Migrator) string {
 			// only difference from entity table is that we store multiple versions of the same entity
 			// so we have a unique index on guid+version instead of guid as primary key
 			{Name: "guid", Type: migrator.DB_NVarchar, Length: 36, Nullable: false},
-			{Name: "resourceVersion", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "resource_version", Type: migrator.DB_BigInt, Nullable: false},
 
 			// The entity identifier (TODO: remove -- this is a duplicate)
 			{Name: "key", Type: migrator.DB_Text, Nullable: false},
@@ -118,8 +119,8 @@ func initEntityTables(mg *migrator.Migrator) string {
 			{Name: "errors", Type: migrator.DB_Text, Nullable: true},   // JSON object
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"guid", "resourceVersion"}, Type: migrator.UniqueIndex},
-			{Cols: []string{"group", "resource", "namespace", "name", "resourceVersion"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"guid", "resource_version"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"namespace", "group", "resource", "name", "resource_version"}, Type: migrator.UniqueIndex},
 		},
 	})
 

@@ -167,9 +167,9 @@ func TestIntegrationEntityServer(t *testing.T) {
 		requireVersionMatch(t, createResp.Entity, versionMatcher)
 
 		readResp, err := testCtx.client.Read(ctx, &entity.ReadEntityRequest{
-			Key:      testKey,
-			Version:  0,
-			WithBody: true,
+			Key:             testKey,
+			ResourceVersion: 0,
+			WithBody:        true,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, readResp)
@@ -198,9 +198,9 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.Equal(t, deleteResp.Status, entity.DeleteEntityResponse_DELETED)
 
 		readRespAfterDelete, err := testCtx.client.Read(ctx, &entity.ReadEntityRequest{
-			Key:      testKey,
-			Version:  0,
-			WithBody: true,
+			Key:             testKey,
+			ResourceVersion: 0,
+			WithBody:        true,
 		})
 		require.NoError(t, err)
 		require.Empty(t, readRespAfterDelete.Key)
@@ -267,17 +267,17 @@ func TestIntegrationEntityServer(t *testing.T) {
 			version:      writeResp3.Entity.ResourceVersion,
 		}
 		readRespLatest, err := testCtx.client.Read(ctx, &entity.ReadEntityRequest{
-			Key:      testKey,
-			Version:  0, // latest
-			WithBody: true,
+			Key:             testKey,
+			ResourceVersion: 0, // latest
+			WithBody:        true,
 		})
 		require.NoError(t, err)
 		requireEntityMatch(t, readRespLatest, latestMatcher)
 
 		readRespFirstVer, err := testCtx.client.Read(ctx, &entity.ReadEntityRequest{
-			Key:      testKey,
-			Version:  createResp.Entity.ResourceVersion,
-			WithBody: true,
+			Key:             testKey,
+			ResourceVersion: createResp.Entity.ResourceVersion,
+			WithBody:        true,
 		})
 
 		require.NoError(t, err)

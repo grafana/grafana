@@ -8,8 +8,8 @@ message Entity {
   // Globally unique ID set by the system.  This can not be set explicitly
   string guid = 1;
 
-  // The resourceVersion -- a snowflake id
-  int64 resourceVersion = 2;
+  // The resource version, this is a snowflake id controlled by storage
+  int64 resource_version = 2;
 
   // group
   string group = 24;
@@ -117,7 +117,7 @@ message ReadEntityRequest {
   string key = 1;
 
   // Fetch an explicit version (default is latest)
-  int64 version = 2;
+  int64 resource_version = 2;
 
   // Include the full body
   bool with_body = 4;

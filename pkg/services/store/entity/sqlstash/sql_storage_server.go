@@ -91,7 +91,7 @@ func (s *sqlEntityServer) getReadFields(r *entity.ReadEntityRequest) []string {
 		"guid",
 		"key",
 		"namespace", "group", "group_version", "resource", "name", "folder",
-		"resourceVersion", "size", "etag", "errors", // errors are always returned
+		"resource_version", "size", "etag", "errors", // errors are always returned
 		"created_at", "created_by",
 		"updated_at", "updated_by",
 		"origin", "origin_key", "origin_ts",
@@ -194,10 +194,10 @@ func (s *sqlEntityServer) read(ctx context.Context, tx session.SessionQuerier, r
 	where = append(where, s.dialect.Quote("namespace")+"=?", s.dialect.Quote("group")+"=?", s.dialect.Quote("resource")+"=?", s.dialect.Quote("name")+"=?")
 	args = append(args, key.Namespace, key.Group, key.Resource, key.Name)
 
-	if r.Version != 0 {
+	if r.ResourceVersion != 0 {
 		table = "entity_history"
-		where = append(where, s.dialect.Quote("resourceVersion")+"=?")
-		args = append(args, r.Version)
+		where = append(where, s.dialect.Quote("resource_version")+"=?")
+		args = append(args, r.ResourceVersion)
 	}
 
 	query, err := s.getReadSelect(r)
@@ -248,7 +248,7 @@ func (s *sqlEntityServer) BatchRead(ctx context.Context, b *entity.BatchReadEnti
 		constraints = append(constraints, s.dialect.Quote("key")+"=?")
 		args = append(args, r.Key)
 
-		if r.Version != 0 {
+		if r.ResourceVersion != 0 {
 			return nil, fmt.Errorf("version not supported for batch read (yet?)")
 		}
 	}
@@ -411,34 +411,34 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 		current.ResourceVersion = s.snowflake.Generate().Int64()
 
 		values := map[string]any{
-			"guid":            current.Guid,
-			"key":             current.Key,
-			"namespace":       current.Namespace,
-			"group":           current.Group,
-			"resource":        current.Resource,
-			"name":            current.Name,
-			"created_at":      createdAt,
-			"created_by":      createdBy,
-			"group_version":   current.GroupVersion,
-			"folder":          current.Folder,
-			"slug":            current.Slug,
-			"updated_at":      updatedAt,
-			"updated_by":      updatedBy,
-			"body":            current.Body,
-			"meta":            current.Meta,
-			"status":          current.Status,
-			"size":            current.Size,
-			"etag":            current.ETag,
-			"resourceVersion": current.ResourceVersion,
-			"title":           current.Title,
-			"description":     current.Description,
-			"labels":          labels,
-			"fields":          fields,
-			"errors":          errors,
-			"origin":          current.Origin.Source,
-			"origin_key":      current.Origin.Key,
-			"origin_ts":       current.Origin.Time,
-			"message":         current.Message,
+			"guid":             current.Guid,
+			"key":              current.Key,
+			"namespace":        current.Namespace,
+			"group":            current.Group,
+			"resource":         current.Resource,
+			"name":             current.Name,
+			"created_at":       createdAt,
+			"created_by":       createdBy,
+			"group_version":    current.GroupVersion,
+			"folder":           current.Folder,
+			"slug":             current.Slug,
+			"updated_at":       updatedAt,
+			"updated_by":       updatedBy,
+			"body":             current.Body,
+			"meta":             current.Meta,
+			"status":           current.Status,
+			"size":             current.Size,
+			"etag":             current.ETag,
+			"resource_version": current.ResourceVersion,
+			"title":            current.Title,
+			"description":      current.Description,
+			"labels":           labels,
+			"fields":           fields,
+			"errors":           errors,
+			"origin":           current.Origin.Source,
+			"origin_key":       current.Origin.Key,
+			"origin_ts":        current.Origin.Time,
+			"message":          current.Message,
 		}
 
 		// 1. Add row to the `entity_history` values
@@ -642,26 +642,26 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 			"created_at": current.CreatedAt,
 			"created_by": current.CreatedBy,
 			// below are updated
-			"group_version":   current.GroupVersion,
-			"folder":          current.Folder,
-			"slug":            current.Slug,
-			"updated_at":      updatedAt,
-			"updated_by":      updatedBy,
-			"body":            current.Body,
-			"meta":            current.Meta,
-			"status":          current.Status,
-			"size":            current.Size,
-			"etag":            current.ETag,
-			"resourceVersion": current.ResourceVersion,
-			"title":           current.Title,
-			"description":     current.Description,
-			"labels":          labels,
-			"fields":          fields,
-			"errors":          errors,
-			"origin":          current.Origin.Source,
-			"origin_key":      current.Origin.Key,
-			"origin_ts":       current.Origin.Time,
-			"message":         current.Message,
+			"group_version":    current.GroupVersion,
+			"folder":           current.Folder,
+			"slug":             current.Slug,
+			"updated_at":       updatedAt,
+			"updated_by":       updatedBy,
+			"body":             current.Body,
+			"meta":             current.Meta,
+			"status":           current.Status,
+			"size":             current.Size,
+			"etag":             current.ETag,
+			"resource_version": current.ResourceVersion,
+			"title":            current.Title,
+			"description":      current.Description,
+			"labels":           labels,
+			"fields":           fields,
+			"errors":           errors,
+			"origin":           current.Origin.Source,
+			"origin_key":       current.Origin.Key,
+			"origin_ts":        current.Origin.Time,
+			"message":          current.Message,
 		}
 
 		// 1. Add the `entity_history` values
@@ -886,7 +886,7 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 
 	query += " FROM entity_history" +
 		" WHERE " + strings.Join(where, " AND ") +
-		" ORDER BY resourceVersion DESC" +
+		" ORDER BY resource_version DESC" +
 		// select 1 more than we need to see if there is a next page
 		" LIMIT " + fmt.Sprint(limit+1)
 
@@ -1066,7 +1066,7 @@ func (s *sqlEntityServer) FindReferences(ctx context.Context, r *entity.Referenc
 	fields := []string{
 		"e.guid", "e.guid",
 		"e.namespace", "e.group", "e.group_version", "e.resource", "e.name",
-		"e.resourceVersion", "e.folder", "e.slug", "e.errors", // errors are always returned
+		"e.resource_version", "e.folder", "e.slug", "e.errors", // errors are always returned
 		"e.size", "e.updated_at", "e.updated_by",
 		"e.title", "e.description", "e.meta",
 	}
