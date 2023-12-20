@@ -2,11 +2,10 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { StringSelector, selectors } from '@grafana/e2e-selectors';
+import { StringSelector } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../../themes/mixins';
-import { Tooltip } from '../../Tooltip/Tooltip';
 import { getPropertiesForButtonSize } from '../commonStyles';
 
 export type RadioButtonSize = 'sm' | 'md';
@@ -44,32 +43,20 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
   ) => {
     const styles = useStyles2(getRadioButtonStyles, size, fullWidth);
 
-    const inputRadioButton = (
-      <input
-        type="radio"
-        className={styles.radio}
-        onChange={onChange}
-        onClick={onClick}
-        disabled={disabled}
-        id={id}
-        checked={active}
-        name={name}
-        aria-label={ariaLabel}
-        ref={ref}
-      />
-    );
-    return description ? (
-      <div className={styles.radioOption} data-testid={selectors.components.RadioButton.container}>
-        <Tooltip content={description} placement="bottom">
-          {inputRadioButton}
-        </Tooltip>
-        <label className={styles.radioLabel} htmlFor={id} title={description || ariaLabel}>
-          {children}
-        </label>
-      </div>
-    ) : (
-      <div className={styles.radioOption} data-testid={selectors.components.RadioButton.container}>
-        {inputRadioButton}
+    return (
+      <div className={styles.radioOption}>
+        <input
+          type="radio"
+          className={styles.radio}
+          onChange={onChange}
+          onClick={onClick}
+          disabled={disabled}
+          id={id}
+          checked={active}
+          name={name}
+          aria-label={ariaLabel || description}
+          ref={ref}
+        />
         <label className={styles.radioLabel} htmlFor={id} title={description || ariaLabel}>
           {children}
         </label>
@@ -99,16 +86,15 @@ const getRadioButtonStyles = (theme: GrafanaTheme2, size: RadioButtonSize, fullW
     radio: css({
       position: 'absolute',
       opacity: 0,
-      zIndex: 2,
+      zIndex: -1000,
       width: '100% !important',
       height: '100%',
-      cursor: 'pointer',
 
       '&:checked + label': {
         color: theme.colors.text.primary,
         fontWeight: theme.typography.fontWeightMedium,
         background: theme.colors.action.selected,
-        zIndex: 1,
+        zIndex: 3,
       },
 
       '&:focus + label, &:focus-visible + label': getFocusStyles(theme),
@@ -133,6 +119,7 @@ const getRadioButtonStyles = (theme: GrafanaTheme2, size: RadioButtonSize, fullW
       borderRadius: theme.shape.radius.default,
       background: theme.colors.background.primary,
       cursor: 'pointer',
+      zIndex: 1,
       userSelect: 'none',
       whiteSpace: 'nowrap',
       flexGrow: 1,
