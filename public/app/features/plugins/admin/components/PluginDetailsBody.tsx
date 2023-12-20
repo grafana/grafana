@@ -81,7 +81,8 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
     return (
       <>
         <Stack direction="row">
-          The {plugin.name} plugin backend requires the following permissions on your instance:
+          The {plugin.name} plugin needs a service account to be able to query Grafana. The following list contains the
+          permissions available to the service account:
         </Stack>
         <InteractiveTable
           columns={columns}
