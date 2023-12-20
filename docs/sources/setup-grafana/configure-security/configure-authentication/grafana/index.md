@@ -76,7 +76,7 @@ org_role = Viewer
 hide_version = true
 
 # Setting this, a limit on the number of anonymous devices to your instance. Any new anonymous device after the limit is reached will be denied access.
-device_limit = 
+device_limit =
 ```
 
 If you change your organization name in the Grafana UI this setting needs to be updated to match the new name.
@@ -86,6 +86,7 @@ If you change your organization name in the Grafana UI this setting needs to be 
 Anonymous Devices feature enhances the management and monitoring of anonymous access within Grafana. This feature is an ongoing efforts to provide more control and transparency over usage for your anonymous usage.
 
 Users can now view anonymous usage stats, including the count of devices and users in the last 30 days.
+
 - A new tab in the Administration -> Users page shows anonymous devices tab.
 - A new stat for the usage stats page -> Usage & Stats page shows the active anonymous devices last 30 days.
 
