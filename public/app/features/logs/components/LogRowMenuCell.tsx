@@ -46,8 +46,9 @@ export const LogRowMenuCell = React.memo(
         event.stopPropagation();
         // if ctrl or meta key is pressed, open query in new Explore tab
         if (event.nativeEvent.ctrlKey || event.nativeEvent.metaKey || event.nativeEvent.shiftKey) {
+          const win = window.open('about:blank', '_blank', 'noopener,noreferrer');
           const query = await getRowContextQuery?.(row);
-          if (query) {
+          if (query && win) {
             const url = urlUtil.renderUrl(locationUtil.assureBaseUrl(`${getConfig().appSubUrl}explore`), {
               left: JSON.stringify({
                 datasource: query.datasource,
@@ -55,9 +56,10 @@ export const LogRowMenuCell = React.memo(
                 range: getDefaultTimeRange(),
               }),
             });
-            window.open(url, '_blank', 'noopener,noreferrer');
+            win.location = url;
             return;
           }
+          win?.close();
         }
         onOpenContext(row);
       },
