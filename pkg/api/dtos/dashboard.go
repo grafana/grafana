@@ -3,7 +3,7 @@ package dtos
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
+	dashboardsV0 "github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -27,15 +27,15 @@ type DashboardMeta struct {
 	HasACL     bool      `json:"hasAcl" xorm:"has_acl"`
 	IsFolder   bool      `json:"isFolder"`
 	// Deprecated: use FolderUID instead
-	FolderId               int64                          `json:"folderId"`
-	FolderUid              string                         `json:"folderUid"`
-	FolderTitle            string                         `json:"folderTitle"`
-	FolderUrl              string                         `json:"folderUrl"`
-	Provisioned            bool                           `json:"provisioned"`
-	ProvisionedExternalId  string                         `json:"provisionedExternalId"`
-	AnnotationsPermissions *v0alpha1.AnnotationPermission `json:"annotationsPermissions"`
-	PublicDashboardUID     string                         `json:"publicDashboardUid,omitempty"`
-	PublicDashboardEnabled bool                           `json:"publicDashboardEnabled,omitempty"`
+	FolderId               int64                              `json:"folderId"`
+	FolderUid              string                             `json:"folderUid"`
+	FolderTitle            string                             `json:"folderTitle"`
+	FolderUrl              string                             `json:"folderUrl"`
+	Provisioned            bool                               `json:"provisioned"`
+	ProvisionedExternalId  string                             `json:"provisionedExternalId"`
+	AnnotationsPermissions *dashboardsV0.AnnotationPermission `json:"annotationsPermissions"`
+	PublicDashboardUID     string                             `json:"publicDashboardUid,omitempty"`
+	PublicDashboardEnabled bool                               `json:"publicDashboardEnabled,omitempty"`
 }
 
 type DashboardFullWithMeta struct {
