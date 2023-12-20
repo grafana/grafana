@@ -107,14 +107,6 @@ func (m *GrafanaResourceMetadata) SetSlug(v string) {
 	m.set(apis.AnnoKeySlug, v)
 }
 
-func (m *GrafanaResourceMetadata) GetTitle() string {
-	return m.get(apis.AnnoKeyTitle)
-}
-
-func (m *GrafanaResourceMetadata) SetTitle(v string) {
-	m.set(apis.AnnoKeyTitle, v)
-}
-
 func (m *GrafanaResourceMetadata) SetOriginInfo(info *apis.ResourceOriginInfo) {
 	delete(m.Annotations, apis.AnnoKeyOriginName)
 	delete(m.Annotations, apis.AnnoKeyOriginPath)
