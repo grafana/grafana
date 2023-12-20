@@ -237,8 +237,8 @@ export const objectMatchersToString = (matchers: ObjectMatcher[]): string[] => {
   });
 };
 
-export const repeatIntervalValidator = (repeatInterval: string, groupInterval?: string) => {
-  if (!groupInterval || repeatInterval.length === 0) {
+export const repeatIntervalValidator = (repeatInterval: string, groupInterval = '') => {
+  if (repeatInterval.length === 0) {
     return true;
   }
 
