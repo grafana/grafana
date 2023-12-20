@@ -256,6 +256,9 @@ export class PanelQueryRunner {
       return;
     }
 
+    //check if datasource is a variable datasource and if that variable has multiple values
+    const addErroDSVariable = this.shouldAddErrorWhenDatasourceVariableIsMultiple(datasource, scopedVars);
+
     const request: DataQueryRequest = {
       app: app ?? CoreApp.Dashboard,
       requestId: getNextRequestId(),
@@ -307,7 +310,7 @@ export class PanelQueryRunner {
 
       this.lastRequest = request;
 
-      this.pipeToSubject(runRequest(ds, request), panelId);
+      this.pipeToSubject(runRequest(ds, request), panelId, false, addErroDSVariable);
     } catch (err) {
       this.pipeToSubject(
         of({
@@ -321,7 +324,12 @@ export class PanelQueryRunner {
     }
   }
 
-  private pipeToSubject(observable: Observable<PanelData>, panelId?: number, skipPreProcess = false) {
+  private pipeToSubject(
+    observable: Observable<PanelData>,
+    panelId?: number,
+    skipPreProcess = false,
+    addErroDSVariable = false
+  ) {
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
@@ -357,6 +365,17 @@ export class PanelQueryRunner {
         }
 
         this.lastResult = next;
+
+        //add error message if datasource is a variable and has multiple values
+        if (addErroDSVariable) {
+          next.errors = [
+            {
+              message:
+                'Panel is using a variable datasource with multiple values without repeat option. Please configure the panel to be repeated by the datasource variable.',
+            },
+          ];
+          next.state = LoadingState.Error;
+        }
 
         // Store preprocessed query results for applying overrides later on in the pipeline
         this.subject.next(next);
@@ -429,6 +448,32 @@ export class PanelQueryRunner {
 
   getLastRequest(): DataQueryRequest | undefined {
     return this.lastRequest;
+  }
+
+  shouldAddErrorWhenDatasourceVariableIsMultiple(
+    datasource: DataSourceRef | DataSourceApi | null,
+    scopedVars: ScopedVars | undefined
+  ): boolean {
+    let addWarningMessageMultipleDatasourceVariable = false;
+    if (datasource?.uid?.startsWith('${')) {
+      const variableName = datasource.uid;
+      //sanitize variable name to remove the $ and {} in cases like ${tex}
+      const variableNameSanitized = variableName.replace(/\$\{([^{}]+)\}/g, '$1');
+      const variable = this.templateSrv.getVariables().find((v) => v.name === variableNameSanitized);
+
+      // is variable holding multiple values and is not being repeated (scopedVars)
+
+      if (
+        variable?.type === 'datasource' &&
+        Array.isArray(variable?.current?.value) &&
+        variable?.current?.value?.length > 1 &&
+        (scopedVars === undefined || (scopedVars && !scopedVars[variableNameSanitized]))
+      ) {
+        addWarningMessageMultipleDatasourceVariable = true;
+      }
+    }
+
+    return addWarningMessageMultipleDatasourceVariable;
   }
 }
 

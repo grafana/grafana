@@ -17,16 +17,13 @@ import {
   TemplateSrv,
 } from '@grafana/runtime';
 import { ExpressionDatasourceRef, isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import { notifyApp } from 'app/core/actions';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
-import { createWarningNotification } from 'app/core/copy/appNotification';
 import {
   dataSource as expressionDatasource,
   instanceSettings as expressionInstanceSettings,
 } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
-import { dispatch } from 'app/store/store';
 
 import { importDataSourcePlugin } from './plugin_loader';
 
@@ -134,7 +131,7 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     // Interpolation here is to support template variable in data source selection
-    nameOrUid = this.templateSrv.replace(nameOrUid, scopedVars, variableInterpolationWithWarning);
+    nameOrUid = this.templateSrv.replace(nameOrUid, scopedVars, variableInterpolation);
 
     if (nameOrUid === 'default' && this.defaultName !== 'default') {
       return this.get(this.defaultName);
@@ -357,29 +354,6 @@ export function getNameOrUid(ref?: string | DataSourceRef | null): string | unde
 
   const isString = typeof ref === 'string';
   return isString ? ref : ref?.uid;
-}
-
-function variableInterpolationWithWarning<T>(value: T | T[]) {
-  if (Array.isArray(value)) {
-    const firstValue = value[0];
-    if (typeof firstValue === 'string') {
-      // Check if we have a multi-variable datasource with more than one option
-      if (value.length > 1) {
-        dispatch(
-          notifyApp(
-            createWarningNotification(
-              'Warning: Unsupported Multi DataSource Variable in Non-Repeating Panels',
-              "One or more panels are using a DataSource variable with multiple values without the 'repeat' option enabled. This configuration is not supported."
-            )
-          )
-        );
-      }
-      return firstValue;
-    } else {
-      return firstValue;
-    }
-  }
-  return value;
 }
 
 export function variableInterpolation<T>(value: T | T[]) {
