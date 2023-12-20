@@ -203,8 +203,7 @@ export const DashNav = React.memo<Props>((props) => {
           tooltip={'View as Scene'}
           icon="apps"
           onClick={() => {
-            const location = locationService.getLocation();
-            locationService.push(`/scenes/dashboard/${dashboard.uid}${location.search}`);
+            locationService.partial({ scenes: true });
           }}
         />
       );
