@@ -167,6 +167,13 @@ func (s *SocialAzureAD) Validate(ctx context.Context, settings ssoModels.SSOSett
 }
 
 func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	if err != nil {
+		return fmt.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	s.info = info
+
 	return nil
 }
 
