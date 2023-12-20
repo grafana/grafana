@@ -72,7 +72,7 @@ func (api *Api) QueryPublicDashboard(c *contextmodel.ReqContext) response.Respon
 		return response.Err(err)
 	}
 
-	return toJsonStreamingResponse(c.Req.Context(), api.Features, resp)
+	return toJsonStreamingResponse(c.Req.Context(), api.features, resp)
 }
 
 // swagger:route GET /public/dashboards/{accessToken}/annotations dashboard_public getPublicAnnotations

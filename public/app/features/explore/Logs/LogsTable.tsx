@@ -176,7 +176,9 @@ const isFieldFilterable = (field: Field, logsFrame?: LogsFrame | undefined) => {
   if (logsFrame.timeField.name === field.name) {
     return false;
   }
-  // @todo not currently excluding derived fields from filtering
+  if (field.config.links?.length) {
+    return false;
+  }
 
   return true;
 };

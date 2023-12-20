@@ -29,6 +29,8 @@ import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/Toolt
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
+import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
+
 import { ExemplarModalHeader } from './ExemplarModalHeader';
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { HeatmapHoverView as HeatmapHoverViewOld } from './HeatmapHoverViewOld';
@@ -252,6 +254,14 @@ export const HeatmapPanel = ({
                     />
                   );
                 }}
+              />
+            )}
+            {data.annotations && (
+              <AnnotationsPlugin
+                annotations={data.annotations}
+                config={builder}
+                timeZone={timeZone}
+                disableCanvasRendering={true}
               />
             )}
           </UPlotChart>
