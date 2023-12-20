@@ -11,7 +11,6 @@ import { KioskMode } from 'app/types';
 
 import { RouteDescriptor } from '../../navigation/types';
 
-export type MegaMenuState = 'open' | 'closed' | 'docked';
 export interface AppChromeState {
   chromeless?: boolean;
   sectionNav: NavModel;
