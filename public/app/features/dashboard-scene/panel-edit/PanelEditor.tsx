@@ -14,12 +14,15 @@ import {
   SplitLayout,
   VizPanel,
 } from '@grafana/scenes';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { getDashboardUrl } from '../utils/urlBuilders';
 
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
+import { PanelEditorUrlSync } from './PanelEditorUrlSync';
 import { PanelOptionsPane } from './PanelOptionsPane';
 import { PanelVizTypePicker } from './PanelVizTypePicker';
 import { VizPanelManager } from './VizPanelManager';
@@ -29,9 +32,9 @@ export interface PanelEditorState extends SceneObjectState {
   controls?: SceneObject[];
   isDirty?: boolean;
   /** Panel to inspect */
-  inspectPanelId?: string;
+  inspectPanelKey?: string;
   /** Scene object that handles the current drawer */
-  drawer?: SceneObject;
+  overlay?: SceneObject;
 
   dashboardRef: SceneObjectRef<DashboardScene>;
   sourcePanelRef: SceneObjectRef<VizPanel>;
@@ -41,6 +44,11 @@ export interface PanelEditorState extends SceneObjectState {
 export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   static Component = PanelEditorRenderer;
 
+  /**
+   * Handles url sync
+   */
+  protected _urlSync = new PanelEditorUrlSync(this);
+
   public constructor(state: PanelEditorState) {
     super(state);
 
@@ -48,6 +56,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   }
 
   private _activationHandler() {
+    const oldDashboardWrapper = new DashboardModelCompatibilityWrapper(this.state.dashboardRef.resolve());
+    // @ts-expect-error
+    getDashboardSrv().setCurrent(oldDashboardWrapper);
+
     // Deactivation logic
     return () => {
       getUrlSyncManager().cleanUp(this);
@@ -85,13 +97,15 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private _commitChanges() {
     const dashboard = this.state.dashboardRef.resolve();
     const sourcePanel = this.state.sourcePanelRef.resolve();
-    const panel = this.state.panelRef.resolve();
+
+    const panelMngr = this.state.panelRef.resolve();
 
     if (!dashboard.state.isEditing) {
       dashboard.onEnterEditMode();
     }
 
-    const newState = sceneUtils.cloneSceneObjectState(panel.state);
+    const newState = sceneUtils.cloneSceneObjectState(panelMngr.state.panel.state);
+
     sourcePanel.setState(newState);
 
     // preserve time range and variables state
@@ -107,6 +121,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       getDashboardUrl({
         uid: this.state.dashboardRef.resolve().state.uid,
         currentQueryParams: locationService.getLocation().search,
+        useExperimentalURL: true,
       })
     );
   }
@@ -114,7 +129,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
 export function buildPanelEditScene(dashboard: DashboardScene, panel: VizPanel): PanelEditor {
   const panelClone = panel.clone();
-  const vizPanelMgr = new VizPanelManager(panelClone);
+
+  const vizPanelMgr = new VizPanelManager(panelClone, dashboard.getRef());
   const dashboardStateCloned = sceneUtils.cloneSceneObjectState(dashboard.state);
 
   return new PanelEditor({
@@ -130,10 +146,10 @@ export function buildPanelEditScene(dashboard: DashboardScene, panel: VizPanel):
         direction: 'column',
         primary: new SceneFlexLayout({
           direction: 'column',
-          children: [panelClone],
+          children: [vizPanelMgr],
         }),
         secondary: new SceneFlexItem({
-          body: new PanelDataPane({ panelRef: panelClone.getRef() }),
+          body: new PanelDataPane(vizPanelMgr),
         }),
       }),
       secondary: new SceneFlexLayout({

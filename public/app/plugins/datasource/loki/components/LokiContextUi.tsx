@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { GrafanaTheme2, LogRowModel, renderMarkdown, SelectableValue } from '@grafana/data';
+import { dateTime, GrafanaTheme2, LogRowModel, renderMarkdown, SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import {
   Button,
@@ -199,7 +199,11 @@ export function LokiContextUi(props: LokiContextUiProps) {
 
   useAsync(async () => {
     setLoading(true);
-    const initContextFilters = await logContextProvider.getInitContextFilters(row.labels, origQuery);
+    const initContextFilters = await logContextProvider.getInitContextFilters(row.labels, origQuery, {
+      from: dateTime(row.timeEpochMs),
+      to: dateTime(row.timeEpochMs),
+      raw: { from: dateTime(row.timeEpochMs), to: dateTime(row.timeEpochMs) },
+    });
     setContextFilters(initContextFilters);
 
     setInitialized(true);

@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"bytes"
 	"encoding/json"
 	"reflect"
 	"time"
@@ -8,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
@@ -16,7 +18,7 @@ import (
 )
 
 // this is terrible... but just making it work!!!!
-func entityToResource(rsp *entityStore.Entity, res runtime.Object) error {
+func entityToResource(rsp *entityStore.Entity, res runtime.Object, codec runtime.Codec) error {
 	var err error
 
 	metaAccessor, err := meta.Accessor(res)
@@ -31,7 +33,7 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object) error {
 		}
 	}
 
-	metaAccessor.SetName(rsp.Uid)
+	metaAccessor.SetName(rsp.Name)
 	metaAccessor.SetNamespace(rsp.Namespace)
 	metaAccessor.SetUID(types.UID(rsp.Guid))
 	metaAccessor.SetResourceVersion(rsp.Version)
@@ -53,6 +55,7 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object) error {
 		grafanaAccessor.SetUpdatedTimestamp(&updatedAt)
 	}
 	grafanaAccessor.SetSlug(rsp.Slug)
+	grafanaAccessor.SetTitle(rsp.Title)
 
 	if rsp.Origin != nil {
 		originTime := time.UnixMilli(rsp.Origin.Time).UTC()
@@ -71,13 +74,11 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object) error {
 	// TODO fields?
 
 	if len(rsp.Body) > 0 {
-		spec := reflect.ValueOf(res).Elem().FieldByName("Spec")
-		if spec != (reflect.Value{}) && spec.CanSet() {
-			err = json.Unmarshal(rsp.Body, spec.Addr().Interface())
-			if err != nil {
-				return err
-			}
+		decoded, _, err := codec.Decode(rsp.Body, &schema.GroupVersionKind{Group: rsp.Group, Version: rsp.GroupVersion}, res)
+		if err != nil {
+			return err
 		}
+		res = decoded
 	}
 
 	if len(rsp.Status) > 0 {
@@ -93,7 +94,7 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object) error {
 	return nil
 }
 
-func resourceToEntity(key string, res runtime.Object, requestInfo *request.RequestInfo) (*entityStore.Entity, error) {
+func resourceToEntity(key string, res runtime.Object, requestInfo *request.RequestInfo, codec runtime.Codec) (*entityStore.Entity, error) {
 	metaAccessor, err := meta.Accessor(res)
 	if err != nil {
 		return nil, err
@@ -108,7 +109,7 @@ func resourceToEntity(key string, res runtime.Object, requestInfo *request.Reque
 		Subresource:  requestInfo.Subresource,
 		Namespace:    metaAccessor.GetNamespace(),
 		Key:          key,
-		Uid:          metaAccessor.GetName(),
+		Name:         metaAccessor.GetName(),
 		Guid:         string(metaAccessor.GetUID()),
 		Version:      metaAccessor.GetResourceVersion(),
 		Folder:       grafanaAccessor.GetFolder(),
@@ -116,6 +117,7 @@ func resourceToEntity(key string, res runtime.Object, requestInfo *request.Reque
 		CreatedBy:    grafanaAccessor.GetCreatedBy(),
 		UpdatedBy:    grafanaAccessor.GetUpdatedBy(),
 		Slug:         grafanaAccessor.GetSlug(),
+		Title:        grafanaAccessor.GetTitle(),
 		Origin: &entityStore.EntityOriginInfo{
 			Source: grafanaAccessor.GetOriginName(),
 			Key:    grafanaAccessor.GetOriginKey(),
@@ -124,11 +126,19 @@ func resourceToEntity(key string, res runtime.Object, requestInfo *request.Reque
 		Labels: metaAccessor.GetLabels(),
 	}
 
-	if t := grafanaAccessor.GetUpdatedTimestamp(); t != nil {
+	t, err := grafanaAccessor.GetUpdatedTimestamp()
+	if err != nil {
+		return nil, err
+	}
+	if t != nil {
 		rsp.UpdatedAt = t.UnixMilli()
 	}
 
-	if t := grafanaAccessor.GetOriginTimestamp(); t != nil {
+	t, err = grafanaAccessor.GetOriginTimestamp()
+	if err != nil {
+		return nil, err
+	}
+	if t != nil {
 		rsp.Origin.Time = t.UnixMilli()
 	}
 
@@ -137,14 +147,12 @@ func resourceToEntity(key string, res runtime.Object, requestInfo *request.Reque
 		return nil, err
 	}
 
-	// TODO: store entire object in body?
-	spec := reflect.ValueOf(res).Elem().FieldByName("Spec")
-	if spec != (reflect.Value{}) {
-		rsp.Body, err = json.Marshal(spec.Interface())
-		if err != nil {
-			return nil, err
-		}
+	var buf bytes.Buffer
+	err = codec.Encode(res, &buf)
+	if err != nil {
+		return nil, err
 	}
+	rsp.Body = buf.Bytes()
 
 	status := reflect.ValueOf(res).Elem().FieldByName("Status")
 	if status != (reflect.Value{}) {

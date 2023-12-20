@@ -1126,6 +1126,19 @@
         },
         "description": "(empty)"
       },
+      "getResourcePermissionsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/resourcePermissionDTO"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "getRoleAssignmentsResponse": {
         "content": {
           "application/json": {
@@ -1695,6 +1708,16 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/ActiveUserStats"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "resourcePermissionsDescription": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Description"
             }
           }
         },
@@ -2792,6 +2815,12 @@
             },
             "type": "array"
           },
+          "muteTimes": {
+            "items": {
+              "$ref": "#/components/schemas/MuteTimeIntervalExport"
+            },
+            "type": "array"
+          },
           "policies": {
             "items": {
               "$ref": "#/components/schemas/NotificationPolicyExport"
@@ -3181,6 +3210,23 @@
           },
           "record": {
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Assignments": {
+        "properties": {
+          "builtInRoles": {
+            "type": "boolean"
+          },
+          "serviceAccounts": {
+            "type": "boolean"
+          },
+          "teams": {
+            "type": "boolean"
+          },
+          "users": {
+            "type": "boolean"
           }
         },
         "type": "object"
@@ -4597,6 +4643,20 @@
         },
         "type": "object"
       },
+      "Description": {
+        "properties": {
+          "assignments": {
+            "$ref": "#/components/schemas/Assignments"
+          },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "DiscordConfig": {
         "properties": {
           "http_config": {
@@ -5618,10 +5678,6 @@
           },
           "is_paused": {
             "type": "boolean"
-          },
-          "namespace_id": {
-            "format": "int64",
-            "type": "integer"
           },
           "namespace_uid": {
             "type": "string"
@@ -6707,6 +6763,24 @@
           }
         },
         "title": "MuteTimeInterval represents a named set of time intervals for which a route should be muted.",
+        "type": "object"
+      },
+      "MuteTimeIntervalExport": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "time_intervals": {
+            "items": {
+              "$ref": "#/components/schemas/TimeInterval"
+            },
+            "type": "array"
+          }
+        },
         "type": "object"
       },
       "MuteTimings": {
@@ -8231,6 +8305,9 @@
           "isEnabled": {
             "type": "boolean"
           },
+          "slug": {
+            "type": "string"
+          },
           "title": {
             "type": "string"
           },
@@ -9049,6 +9126,9 @@
           "displayName": {
             "type": "string"
           },
+          "global": {
+            "type": "boolean"
+          },
           "group": {
             "type": "string"
           },
@@ -9374,6 +9454,24 @@
           },
           "topic_arn": {
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SSOSettings": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "type": "object"
+          },
+          "source": {
+            "$ref": "#/components/schemas/SettingsSource"
           }
         },
         "type": "object"
@@ -9752,6 +9850,10 @@
           "type": "object"
         },
         "type": "object"
+      },
+      "SettingsSource": {
+        "format": "int64",
+        "type": "integer"
       },
       "ShareType": {
         "type": "string"
@@ -11575,7 +11677,6 @@
         "type": "object"
       },
       "alertGroups": {
-        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -11708,6 +11809,7 @@
         "type": "object"
       },
       "gettableAlert": {
+        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -11763,14 +11865,12 @@
         "type": "object"
       },
       "gettableAlerts": {
-        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
         "type": "array"
       },
       "gettableSilence": {
-        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -11819,14 +11919,12 @@
         "type": "object"
       },
       "gettableSilences": {
-        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
         "type": "array"
       },
       "integration": {
-        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -11970,6 +12068,7 @@
         "type": "array"
       },
       "postableSilence": {
+        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -12058,6 +12157,59 @@
           "integrations",
           "name"
         ],
+        "type": "object"
+      },
+      "resourcePermissionDTO": {
+        "properties": {
+          "actions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "builtInRole": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "isInherited": {
+            "type": "boolean"
+          },
+          "isManaged": {
+            "type": "boolean"
+          },
+          "isServiceAccount": {
+            "type": "boolean"
+          },
+          "permission": {
+            "type": "string"
+          },
+          "roleName": {
+            "type": "string"
+          },
+          "team": {
+            "type": "string"
+          },
+          "teamAvatarUrl": {
+            "type": "string"
+          },
+          "teamId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "userAvatarUrl": {
+            "type": "string"
+          },
+          "userId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "userLogin": {
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "silence": {
@@ -14949,6 +15101,13 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -15147,6 +15306,15 @@
       },
       "post": {
         "operationId": "RoutePostContactpoints",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -15268,7 +15436,7 @@
           }
         ],
         "responses": {
-          "204": {
+          "202": {
             "description": " The contact point was deleted successfully."
           }
         },
@@ -15285,6 +15453,13 @@
             "in": "path",
             "name": "UID",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
             "schema": {
               "type": "string"
             }
@@ -15372,6 +15547,13 @@
       "put": {
         "operationId": "RoutePutAlertRuleGroup",
         "parameters": [
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "in": "path",
             "name": "FolderUID",
@@ -15519,6 +15701,15 @@
       },
       "post": {
         "operationId": "RoutePostMuteTiming",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -15552,6 +15743,57 @@
           }
         },
         "summary": "Create a new mute timing.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/api/v1/provisioning/mute-timings/export": {
+      "get": {
+        "operationId": "RouteExportMuteTimings",
+        "parameters": [
+          {
+            "description": "Whether to initiate a download of the file or not.",
+            "in": "query",
+            "name": "download",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "default": "yaml",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              }
+            },
+            "description": "AlertingFileExport"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              }
+            },
+            "description": "PermissionDenied"
+          }
+        },
+        "summary": "Export all mute timings in provisioning format.",
         "tags": [
           "provisioning"
         ]
@@ -15625,6 +15867,13 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -15660,6 +15909,66 @@
           }
         },
         "summary": "Replace an existing mute timing.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/api/v1/provisioning/mute-timings/{name}/export": {
+      "get": {
+        "operationId": "RouteExportMuteTiming",
+        "parameters": [
+          {
+            "description": "Whether to initiate a download of the file or not.",
+            "in": "query",
+            "name": "download",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "default": "yaml",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Mute timing name",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              }
+            },
+            "description": "AlertingFileExport"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              }
+            },
+            "description": "PermissionDenied"
+          }
+        },
+        "summary": "Export a mute timing in provisioning format.",
         "tags": [
           "provisioning"
         ]
@@ -15706,6 +16015,15 @@
       },
       "put": {
         "operationId": "RoutePutPolicyTree",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -15865,6 +16183,13 @@
             "in": "path",
             "name": "name",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
             "schema": {
               "type": "string"
             }
@@ -23967,7 +24292,7 @@
     },
     "/v1/sso-settings/{key}": {
       "delete": {
-        "description": "# Remove an SSO Settings entry by Key\n\nYou need to have a permission with action `settings:write` with scope `settings:auth.\u003cprovider\u003e:*`.",
+        "description": "Removes the SSO Settings for a provider.\n\nYou need to have a permission with action `settings:write` and scope `settings:auth.\u003cprovider\u003e:*`.",
         "operationId": "removeProviderSettings",
         "parameters": [
           {
@@ -23997,6 +24322,52 @@
           }
         },
         "summary": "Remove SSO Settings",
+        "tags": [
+          "sso_settings"
+        ]
+      },
+      "put": {
+        "description": "Inserts or updates the SSO Settings for a provider.\n\nYou need to have a permission with action `settings:write` and scope `settings:auth.\u003cprovider\u003e:*`.",
+        "operationId": "updateProviderSettings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SSOSettings"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Update SSO Settings",
         "tags": [
           "sso_settings"
         ]

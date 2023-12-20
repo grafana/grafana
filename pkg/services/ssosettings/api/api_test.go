@@ -13,7 +13,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -146,13 +145,13 @@ func TestSSOSettingsAPI_GetForProvider(t *testing.T) {
 			action: "settings:read",
 			scope:  "settings:auth.azuread:*",
 			expectedResult: &models.SSOSettings{
-				ID:            "1",
-				Provider:      "azuread",
-				OAuthSettings: &social.OAuthInfo{},
-				Created:       time.Now(),
-				Updated:       time.Now(),
-				IsDeleted:     false,
-				Source:        models.DB,
+				ID:        "1",
+				Provider:  "azuread",
+				Settings:  make(map[string]interface{}),
+				Created:   time.Now(),
+				Updated:   time.Now(),
+				IsDeleted: false,
+				Source:    models.DB,
 			},
 			expectedError:       nil,
 			expectedServiceCall: true,

@@ -116,9 +116,9 @@ func (o *APIServerOptions) ModifiedApplyTo(config *genericapiserver.RecommendedC
 	if err := o.RecommendedOptions.Audit.ApplyTo(&config.Config); err != nil {
 		return err
 	}
-	if err := o.RecommendedOptions.Features.ApplyTo(&config.Config); err != nil {
-		return err
-	}
+	//if err := o.RecommendedOptions.Features.ApplyTo(&config.Config); err != nil {
+	//	return err
+	//}
 
 	if err := o.RecommendedOptions.CoreAPI.ApplyTo(config); err != nil {
 		return err
@@ -169,9 +169,6 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 	serverConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(
 		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
 		openapinamer.NewDefinitionNamer(Scheme))
-
-	// Add the custom routes to service discovery
-	serverConfig.OpenAPIV3Config.PostProcessSpec3 = grafanaAPIServer.GetOpenAPIPostProcessor(o.builders)
 
 	return serverConfig, nil
 }

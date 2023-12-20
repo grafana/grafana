@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/services/featuremgmt/strcase"
 )
 
 type SettingsSource int
@@ -44,16 +44,6 @@ func (s *SettingsSource) UnmarshalJSON(data []byte) error {
 }
 
 type SSOSettings struct {
-	ID            string
-	Provider      string
-	OAuthSettings *social.OAuthInfo
-	Created       time.Time
-	Updated       time.Time
-	IsDeleted     bool
-	Source        SettingsSource
-}
-
-type SSOSettingsDTO struct {
 	ID        string         `xorm:"id pk" json:"id"`
 	Provider  string         `xorm:"provider" json:"provider"`
 	Settings  map[string]any `xorm:"settings" json:"settings"`
@@ -64,55 +54,46 @@ type SSOSettingsDTO struct {
 }
 
 // TableName returns the table name (needed for Xorm)
-func (s SSOSettingsDTO) TableName() string {
+func (s SSOSettings) TableName() string {
 	return "sso_setting"
 }
 
-func (s SSOSettingsDTO) ToSSOSettings() (*SSOSettings, error) {
-	settingsEncoded, err := json.Marshal(s.Settings)
-	if err != nil {
-		return nil, err
+// MarshalJSON implements the json.Marshaler interface and converts the s.Settings from map[string]any in snake_case to map[string]any in camelCase
+func (s SSOSettings) MarshalJSON() ([]byte, error) {
+	type Alias SSOSettings
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(&s),
 	}
 
-	var settings social.OAuthInfo
-	err = json.Unmarshal(settingsEncoded, &settings)
-	if err != nil {
-		return nil, err
+	settings := make(map[string]any)
+	for k, v := range aux.Settings {
+		settings[strcase.ToLowerCamel(k)] = v
 	}
 
-	return &SSOSettings{
-		ID:            s.ID,
-		Provider:      s.Provider,
-		OAuthSettings: &settings,
-		Created:       s.Created,
-		Updated:       s.Updated,
-		IsDeleted:     s.IsDeleted,
-	}, nil
+	aux.Settings = settings
+	return json.Marshal(aux)
 }
 
-func (s SSOSettings) ToSSOSettingsDTO() (*SSOSettingsDTO, error) {
-	settingsEncoded, err := json.Marshal(s.OAuthSettings)
-	if err != nil {
-		return nil, err
+// UnmarshalJSON implements the json.Unmarshaler interface and converts the settings from map[string]any camelCase to map[string]interface{} snake_case
+func (s *SSOSettings) UnmarshalJSON(data []byte) error {
+	type Alias SSOSettings
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(s),
 	}
 
-	var settings map[string]any
-	err = json.Unmarshal(settingsEncoded, &settings)
-	if err != nil {
-		return nil, err
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
 	}
 
-	if clientSecret, ok := settings["ClientSecret"].(string); ok && len(clientSecret) > 0 {
-		settings["ClientSecret"] = "*********"
+	settings := make(map[string]any)
+	for k, v := range aux.Settings {
+		settings[strcase.ToSnake(k)] = v
 	}
 
-	return &SSOSettingsDTO{
-		ID:        s.ID,
-		Provider:  s.Provider,
-		Settings:  settings,
-		Created:   s.Created,
-		Updated:   s.Updated,
-		IsDeleted: s.IsDeleted,
-		Source:    s.Source,
-	}, nil
+	s.Settings = settings
+	return nil
 }
