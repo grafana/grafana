@@ -15,7 +15,7 @@ import (
 	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
 
-	foldersAPI "github.com/grafana/grafana/pkg/apis/folders/v0alpha1"
+	foldersV0 "github.com/grafana/grafana/pkg/apis/folders/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -473,9 +473,9 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 		}
 
 		switch current.Group {
-		case foldersAPI.GROUP:
+		case foldersV0.GROUP:
 			switch current.Resource {
-			case foldersAPI.RESOURCE:
+			case foldersV0.RESOURCE:
 				err = updateFolderTree(ctx, tx, current.Namespace)
 				if err != nil {
 					s.log.Error("error updating folder tree", "msg", err.Error())
@@ -709,9 +709,9 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		}
 
 		switch current.Group {
-		case foldersAPI.GROUP:
+		case foldersV0.GROUP:
 			switch current.Resource {
-			case foldersAPI.RESOURCE:
+			case foldersV0.RESOURCE:
 				err = updateFolderTree(ctx, tx, current.Namespace)
 				if err != nil {
 					s.log.Error("error updating folder tree", "msg", err.Error())
@@ -827,9 +827,9 @@ func (s *sqlEntityServer) doDelete(ctx context.Context, tx *session.SessionTx, e
 	}
 
 	switch ent.Group {
-	case foldersAPI.GROUP:
+	case foldersV0.GROUP:
 		switch ent.Resource {
-		case foldersAPI.RESOURCE:
+		case foldersV0.RESOURCE:
 			err = updateFolderTree(ctx, tx, ent.Namespace)
 			if err != nil {
 				s.log.Error("error updating folder tree", "msg", err.Error())

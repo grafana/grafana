@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	foldersAPI "github.com/grafana/grafana/pkg/apis/folders/v0alpha1"
+	foldersV0 "github.com/grafana/grafana/pkg/apis/folders/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 )
 
@@ -44,7 +44,7 @@ func updateFolderTree(ctx context.Context, tx *session.SessionTx, namespace stri
 		" FROM entity" +
 		" WHERE 'group'=? AND resource=? AND namespace=?" +
 		" ORDER BY slug asc"
-	args := []interface{}{foldersAPI.GROUP, foldersAPI.RESOURCE, namespace}
+	args := []interface{}{foldersV0.GROUP, foldersV0.RESOURCE, namespace}
 
 	all := []*folderInfo{}
 	rows, err := tx.Query(ctx, query, args...)
