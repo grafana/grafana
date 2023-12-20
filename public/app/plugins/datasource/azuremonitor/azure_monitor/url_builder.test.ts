@@ -184,7 +184,7 @@ describe('AzureMonitorUrlBuilder', () => {
         },
         templateSrv,
         true,
-        "region"
+        'region'
       );
       expect(url).toBe(
         'baseUrl/subscriptions/sub/resource-uri/resource/providers/microsoft.insights/metricdefinitions?api-version=apiVersion&region=region'
