@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event';
 import React, { JSX } from 'react';
 
 import { ProviderConfig } from './ProviderConfigPage';
+import { SSOProvider } from './types';
+import { emptySettings } from './utils/data';
 
 const putMock = jest.fn(() => Promise.resolve({}));
 jest.mock('@grafana/runtime', () => ({
@@ -28,9 +30,10 @@ jest.mock('app/core/components/FormPrompt/FormPrompt', () => ({
   FormPrompt: () => <></>,
 }));
 
-const testSettings = {
+const testConfig: SSOProvider = {
   provider: 'github',
   settings: {
+    ...emptySettings,
     name: 'GitHub',
     type: 'OAuth',
     clientId: '12345',
@@ -38,10 +41,16 @@ const testSettings = {
     enabled: true,
     teamIds: '',
     allowedOrganizations: '',
+    allowedDomains: '',
+    allowedGroups: '',
+    scopes: '',
   },
 };
 
-const emptySettings = { ...testSettings, settings: { ...testSettings.settings, clientId: '', clientSecret: '' } };
+const emptyConfig = {
+  ...testConfig,
+  settings: { ...testConfig.settings, clientId: '', clientSecret: '' },
+};
 
 function setup(jsx: JSX.Element) {
   return {
@@ -56,7 +65,7 @@ describe('ProviderConfig', () => {
   });
 
   it('renders all fields correctly', async () => {
-    setup(<ProviderConfig config={testSettings} provider={testSettings.provider} />);
+    setup(<ProviderConfig config={testConfig} provider={testConfig.provider} />);
     expect(screen.getByRole('checkbox', { name: /Enabled/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /Client ID/i })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: /Team IDs/i })).toBeInTheDocument();
@@ -66,7 +75,7 @@ describe('ProviderConfig', () => {
   });
 
   it('should save correct data on form submit', async () => {
-    const { user } = setup(<ProviderConfig config={emptySettings} provider={emptySettings.provider} />);
+    const { user } = setup(<ProviderConfig config={emptyConfig} provider={emptyConfig.provider} />);
     await user.type(screen.getByRole('textbox', { name: /Client ID/i }), 'test-client-id');
     await user.type(screen.getByLabelText(/Client secret/i), 'test-client-secret');
     // Type a team name and press enter to select it
@@ -78,21 +87,24 @@ describe('ProviderConfig', () => {
 
     await waitFor(() => {
       expect(putMock).toHaveBeenCalledWith('/api/v1/sso-settings/github', {
-        ...testSettings,
+        ...testConfig,
         settings: {
-          ...testSettings.settings,
+          ...testConfig.settings,
           allowedOrganizations: 'test-org1,test-org2',
           clientId: 'test-client-id',
           clientSecret: 'test-client-secret',
           teamIds: '12324',
           enabled: true,
+          allowedDomains: '',
+          allowedGroups: '',
+          scopes: '',
         },
       });
     });
   });
 
   it('should validate required fields', async () => {
-    const { user } = setup(<ProviderConfig config={emptySettings} provider={emptySettings.provider} />);
+    const { user } = setup(<ProviderConfig config={emptyConfig} provider={emptyConfig.provider} />);
     await user.click(screen.getByRole('button', { name: /Save/i }));
 
     // Should show 2 alerts for 2 empty fields

@@ -78,13 +78,13 @@ export const ProviderConfigPage = ({ config, loadSettings, isLoading, provider }
 
 export default connector(ProviderConfigPage);
 
-interface GitHubConfigProps {
+interface ProviderConfigProps {
   config?: SSOProvider;
   isLoading?: boolean;
   provider: string;
 }
 
-export const ProviderConfig = ({ config, provider, isLoading }: GitHubConfigProps) => {
+export const ProviderConfig = ({ config, provider, isLoading }: ProviderConfigProps) => {
   const {
     register,
     handleSubmit,

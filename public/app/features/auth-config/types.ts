@@ -15,8 +15,7 @@ export type GetStatusHook = () => Promise<AuthProviderStatus>;
 export type SSOProviderSettingsBase = {
   allowAssignGrafanaAdmin?: boolean;
   allowSignup?: boolean;
-  allowedDomains?: Array<SelectableValue<string>>;
-  allowedGroups?: Array<SelectableValue<string>>;
+
   apiUrl?: string;
   authStyle?: string;
   authUrl?: string;
@@ -34,7 +33,6 @@ export type SSOProviderSettingsBase = {
   name?: string;
   roleAttributePath?: string;
   roleAttributeStrict?: boolean;
-  scopes?: Array<SelectableValue<string>>;
   signoutRedirectUrl?: string;
   skipOrgRoleSync?: boolean;
   teamIdsAttributePath?: string;
@@ -55,6 +53,9 @@ export type SSOProvider = {
   settings: SSOProviderSettingsBase & {
     teamIds: string;
     allowedOrganizations: string;
+    allowedDomains?: string;
+    allowedGroups?: string;
+    scopes?: string;
   };
 };
 
@@ -62,6 +63,9 @@ export type SSOProvider = {
 export type SSOProviderDTO = Partial<SSOProviderSettingsBase> & {
   teamIds: Array<SelectableValue<string>>;
   allowedOrganizations: Array<SelectableValue<string>>;
+  allowedDomains?: Array<SelectableValue<string>>;
+  allowedGroups?: Array<SelectableValue<string>>;
+  scopes?: Array<SelectableValue<string>>;
 };
 
 export interface AuthConfigState {
