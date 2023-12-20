@@ -23,6 +23,15 @@ import (
 func entityToResource(rsp *entityStore.Entity, res runtime.Object, codec runtime.Codec) error {
 	var err error
 
+	// Read the body first -- it includes old resourceVersion!
+	if len(rsp.Body) > 0 {
+		decoded, _, err := codec.Decode(rsp.Body, &schema.GroupVersionKind{Group: rsp.Group, Version: rsp.GroupVersion}, res)
+		if err != nil {
+			return err
+		}
+		res = decoded
+	}
+
 	metaAccessor, err := meta.Accessor(res)
 	if err != nil {
 		return err
@@ -74,14 +83,6 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object, codec runtime
 	}
 
 	// TODO fields?
-
-	if len(rsp.Body) > 0 {
-		decoded, _, err := codec.Decode(rsp.Body, &schema.GroupVersionKind{Group: rsp.Group, Version: rsp.GroupVersion}, res)
-		if err != nil {
-			return err
-		}
-		res = decoded
-	}
 
 	if len(rsp.Status) > 0 {
 		status := reflect.ValueOf(res).Elem().FieldByName("Status")
