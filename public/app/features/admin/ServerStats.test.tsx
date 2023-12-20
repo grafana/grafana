@@ -52,6 +52,7 @@ describe('ServerStats', () => {
 
   it('Should render page with anonymous stats', async () => {
     config.featureToggles.displayAnonymousStats = true;
+    config.anonymousEnabled = true;
     config.anonymousDeviceLimit = 10;
     render(<ServerStats />);
     expect(await screen.findByRole('heading', { name: /instance statistics/i })).toBeInTheDocument();
