@@ -138,10 +138,7 @@ export const TimeSeriesPanel = ({
                             // this is the actual cursor timestamp
                             let xVal = u.posToVal(u.cursor.left!, 'x');
 
-                            setNewAnnotationRange({
-                              from: xVal,
-                              to: xVal,
-                            });
+                            setNewAnnotationRange({ from: xVal, to: xVal });
                             dismiss();
                           }}
                         />
