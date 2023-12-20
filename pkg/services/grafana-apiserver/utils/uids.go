@@ -6,18 +6,27 @@ import (
 	"strings"
 	"unicode"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 )
 
 // Create a stable UID that will be unique across a multi-tenant cluster
-func CalculateClusterWideUID(obj metav1.Object, kind string) types.UID {
+// This is useful while we migrate from SQL storage to something where the UID (GUID)
+// is actually baked into the storage engine itself.
+func CalculateClusterWideUID(obj runtime.Object) types.UID {
+	gvk := obj.GetObjectKind().GroupVersionKind()
 	hasher := sha256.New()
-	hasher.Write([]byte(kind))
+	hasher.Write([]byte(gvk.Group))
 	hasher.Write([]byte("|"))
-	hasher.Write([]byte(obj.GetNamespace()))
+	hasher.Write([]byte(gvk.Kind))
 	hasher.Write([]byte("|"))
-	hasher.Write([]byte(obj.GetName()))
+	meta, err := meta.Accessor(obj)
+	if err == nil {
+		hasher.Write([]byte(meta.GetNamespace()))
+		hasher.Write([]byte("|"))
+		hasher.Write([]byte(meta.GetName()))
+	}
 	v := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
 	return types.UID(strings.Map(func(r rune) rune {
 		if !(unicode.IsLetter(r) || unicode.IsDigit(r)) {

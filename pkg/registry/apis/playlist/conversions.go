@@ -97,7 +97,7 @@ func convertToK8sResource(v *playlistsvc.PlaylistDTO, namespacer request.Namespa
 		},
 		Spec: spec,
 	}
-	p.UID = utils.CalculateClusterWideUID(p, "playlists")
+	p.UID = utils.CalculateClusterWideUID(p)
 	return p
 }
 

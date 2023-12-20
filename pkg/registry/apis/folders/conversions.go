@@ -41,6 +41,6 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 			Description: v.Description,
 		},
 	}
-	f.UID = utils.CalculateClusterWideUID(f, "folders")
+	f.UID = utils.CalculateClusterWideUID(f)
 	return f
 }
