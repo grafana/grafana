@@ -43,7 +43,6 @@ export interface MetricSelectSceneState extends SceneObjectState {
   showHeading?: boolean;
   searchQuery?: string;
   showPreviews?: boolean;
-  hideEmpty?: boolean;
 }
 
 const ROW_PREVIEW_HEIGHT = '175px';
@@ -64,7 +63,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
           isLazy: true,
         }),
       showPreviews: true,
-      hideEmpty: true,
       ...state,
     });
 
@@ -95,16 +93,14 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
   private sortedPreviewMetrics() {
     return Object.values(this.previewCache).sort((a, b) => {
-      if (this.state.hideEmpty) {
-        if (a.isEmpty && b.isEmpty) {
-          return a.index - b.index;
-        }
-        if (a.isEmpty) {
-          return 1;
-        }
-        if (b.isEmpty) {
-          return -1;
-        }
+      if (a.isEmpty && b.isEmpty) {
+        return a.index - b.index;
+      }
+      if (a.isEmpty) {
+        return 1;
+      }
+      if (b.isEmpty) {
+        return -1;
       }
       return a.index - b.index;
     });
@@ -220,14 +216,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     this.buildLayout();
   };
 
-  public onToggleHideEmpty = () => {
-    this.setState({ hideEmpty: !this.state.hideEmpty });
-    this.updateMetrics();
-    this.buildLayout();
-  };
-
   public static Component = ({ model }: SceneComponentProps<MetricSelectScene>) => {
-    const { showHeading, searchQuery, showPreviews, hideEmpty } = model.useState();
+    const { showHeading, searchQuery, showPreviews } = model.useState();
     const styles = useStyles2(getStyles);
 
     return (
@@ -239,12 +229,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
         )}
         <div className={styles.header}>
           <Input placeholder="Search metrics" value={searchQuery} onChange={model.onSearchChange} />
-          <InlineSwitch
-            showLabel={true}
-            label="Hide empty panels"
-            value={hideEmpty}
-            onChange={model.onToggleHideEmpty}
-          />
           <InlineSwitch showLabel={true} label="Show previews" value={showPreviews} onChange={model.onTogglePreviews} />
         </div>
         <model.state.body.Component model={model.state.body} />
