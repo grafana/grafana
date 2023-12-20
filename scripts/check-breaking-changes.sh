@@ -46,7 +46,7 @@ while IFS=" " read -r -a package; do
   if [ $STATUS -gt 0 ]; then
     EXIT_CODE=1
     GITHUB_MESSAGE="${GITHUB_MESSAGE}**\\\`${PACKAGE_PATH}\\\`** has possible breaking changes ([more info](${GITHUB_JOB_LINK}#step:${GITHUB_STEP_NUMBER}:1))<br />"
-    GITHUB_LEVITATE_MARKDOWN+="##${PACKAGE_PATH}\n${CURRENT_REPORT}\n"
+    GITHUB_LEVITATE_MARKDOWN+="<h3>${PACKAGE_PATH}</h3>${CURRENT_REPORT}<br>"
   fi
 
 done <<<"$PACKAGES"
