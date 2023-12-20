@@ -214,6 +214,9 @@ func (ng *AlertNG) init() error {
 			})
 
 			overrides = append(overrides, override)
+
+		default:
+			ng.Log.Error("A mode should be selected when enabling the remote Alertmanager, falling back to using only the internal Alertmanager")
 		}
 	}
 
