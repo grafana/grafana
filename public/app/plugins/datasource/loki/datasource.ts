@@ -1085,10 +1085,21 @@ export class LokiDatasource
 
     const exprWithAdHoc = this.addAdHocFilters(target.expr, adhocFilters);
 
+    const variables = {
+      ...rest,
+
+      // pass through for backend interpolation. Need to be in scopedVars for Scenes though
+      __interval: {
+        value: '$__interval',
+      },
+      __interval_ms: {
+        value: '$__interval_ms',
+      },
+    };
     return {
       ...target,
       legendFormat: this.templateSrv.replace(target.legendFormat, rest),
-      expr: this.templateSrv.replace(exprWithAdHoc, rest, this.interpolateQueryExpr),
+      expr: this.templateSrv.replace(exprWithAdHoc, variables, this.interpolateQueryExpr),
     };
   }
 
