@@ -38,7 +38,7 @@ func TestPlaylistConversion(t *testing.T) {
 		"metadata": {
 		  "name": "abc",
 		  "namespace": "org-3",
-		  "uid": "Ik_jZSxBTV42xgQIwUsTiVx68S3RzWnzrCUVhHqvaxM",
+		  "uid": "X46SftXRTtXWj8GfKWMltYJBLVxH4XW07eXxwAbO4z8X",
 		  "resourceVersion": "54321",
 		  "creationTimestamp": "1970-01-01T00:00:12Z",
 		  "annotations": {

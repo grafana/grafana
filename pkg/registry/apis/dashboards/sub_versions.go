@@ -64,13 +64,15 @@ func (r *VersionsREST) Connect(ctx context.Context, uid string, opts runtime.Obj
 				return
 			}
 
+			data, _ := dto.Data.Map()
+
 			// Convert the version to a regular dashboard
 			dash := &v0alpha1.Dashboard{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              uid,
 					CreationTimestamp: metav1.NewTime(dto.Created),
 				},
-				Spec: dto.Data,
+				Spec: v0alpha1.Unstructured{Object: data},
 			}
 			responder.Object(100, dash)
 			return

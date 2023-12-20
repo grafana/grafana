@@ -5,7 +5,6 @@ import (
 	runtime "k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/grafana/grafana/pkg/apis"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 const (
@@ -34,12 +33,9 @@ type Dashboard struct {
 	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	// The dashboard body
-	Spec DashboardBody `json:"spec,omitempty"`
+	// The dashboard body (unstructured for now)
+	Spec Unstructured `json:"spec"`
 }
-
-// TODO: more defined schema/object
-type DashboardBody = *simplejson.Json
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DashboardList struct {

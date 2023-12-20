@@ -27,6 +27,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1.DashboardSummarySpec":  schema_pkg_apis_dashboards_v0alpha1_DashboardSummarySpec(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1.DashboardVersionInfo":  schema_pkg_apis_dashboards_v0alpha1_DashboardVersionInfo(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1.DashboardVersionsInfo": schema_pkg_apis_dashboards_v0alpha1_DashboardVersionsInfo(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1.Unstructured":          schema_pkg_apis_dashboards_v0alpha1_Unstructured(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1.VersionsQueryOptions":  schema_pkg_apis_dashboards_v0alpha1_VersionsQueryOptions(ref),
 		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroup":                                 schema_pkg_apis_meta_v1_APIGroup(ref),
 		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroupList":                             schema_pkg_apis_meta_v1_APIGroupList(ref),
@@ -173,13 +174,17 @@ func schema_pkg_apis_dashboards_v0alpha1_Dashboard(ref common.ReferenceCallback)
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The dashboard body",
+							Description: "The dashboard body (unstructured for now)",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1.Unstructured"),
 						},
 					},
 				},
+				Required: []string{"spec"},
 			},
 		},
-		Dependencies: []string{"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1.Unstructured", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -511,6 +516,35 @@ func schema_pkg_apis_dashboards_v0alpha1_DashboardVersionsInfo(ref common.Refere
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1.DashboardVersionInfo", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_dashboards_v0alpha1_Unstructured(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Unstructured allows objects that do not have Golang structs registered to be manipulated generically.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"Object": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Object is a JSON compatible map with string, float, int, bool, []interface{}, or map[string]interface{} children.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"object"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"Object"},
+			},
+		},
 	}
 }
 

@@ -50,10 +50,7 @@ func (in *Dashboard) DeepCopyInto(out *Dashboard) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
-	if in.Spec != nil {
-		in, out := &in.Spec, &out.Spec
-		*out = (*in).DeepCopy()
-	}
+	in.Spec.DeepCopyInto(&out.Spec)
 	return
 }
 

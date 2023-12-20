@@ -72,8 +72,8 @@ func (s *dashboardStorage) Create(ctx context.Context,
 	}
 
 	// HACK to simplify unique name testing from kubectl
-	t, err := p.Spec.Get("title").String()
-	if err == nil && strings.Contains(t, "${NOW}") {
+	t := p.Spec.GetNestedString("title")
+	if strings.Contains(t, "${NOW}") {
 		t = strings.ReplaceAll(t, "${NOW}", fmt.Sprintf("%d", time.Now().Unix()))
 		p.Spec.Set("title", t)
 	}
