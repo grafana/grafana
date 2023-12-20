@@ -142,5 +142,4 @@ func TestTestDatasource(t *testing.T) {
 		}, nil)
 		require.Equal(t, `Hello world from test datasource!`, string(raw.Body))
 	})
-
 }
