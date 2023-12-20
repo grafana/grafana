@@ -81,6 +81,7 @@ func toK8sForm(flag featuremgmt.FeatureFlag) v0alpha1.FeatureFlag {
 			Owner:           string(flag.Owner),
 			Expression:      flag.Expression,
 			RequiresDevMode: flag.RequiresDevMode,
+			AllowSelfServe:  flag.AllowSelfServe,
 		},
 	}
 }
