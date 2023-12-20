@@ -426,6 +426,16 @@ func (r *xormRepositoryImpl) Delete(ctx context.Context, params *annotations.Del
 				return err
 			}
 
+			// part of deprecating dashboardID in favour dashboardUID
+			if _, err := sess.Exec(annoTagSQL, params.DashboardUID, params.PanelID, params.OrgID); err != nil {
+				return err
+			}
+
+			if _, err := sess.Exec(sql, params.DashboardID, params.PanelID, params.OrgID); err != nil {
+				return err
+			}
+
+			// part of deprecating dashboardID in favour dashboardUID
 			if _, err := sess.Exec(sql, params.DashboardID, params.PanelID, params.OrgID); err != nil {
 				return err
 			}

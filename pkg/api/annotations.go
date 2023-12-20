@@ -147,15 +147,16 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 	}
 
 	item := annotations.Item{
-		OrgID:       c.SignedInUser.GetOrgID(),
-		UserID:      userID,
-		DashboardID: cmd.DashboardId,
-		PanelID:     cmd.PanelId,
-		Epoch:       cmd.Time,
-		EpochEnd:    cmd.TimeEnd,
-		Text:        cmd.Text,
-		Data:        cmd.Data,
-		Tags:        cmd.Tags,
+		OrgID:        c.SignedInUser.GetOrgID(),
+		UserID:       userID,
+		DashboardID:  cmd.DashboardId,
+		DashboardUID: cmd.DashboardId, // to deprecate dashboarID
+		PanelID:      cmd.PanelId,
+		Epoch:        cmd.Time,
+		EpochEnd:     cmd.TimeEnd,
+		Text:         cmd.Text,
+		Data:         cmd.Data,
+		Tags:         cmd.Tags,
 	}
 
 	if err := hs.annotationsRepo.Save(c.Req.Context(), &item); err != nil {
@@ -439,9 +440,10 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *contextmodel.ReqContext) response
 	} else {
 		dashboardId = cmd.DashboardId
 		deleteParams = &annotations.DeleteParams{
-			OrgID:       c.SignedInUser.GetOrgID(),
-			DashboardID: cmd.DashboardId,
-			PanelID:     cmd.PanelId,
+			OrgID:        c.SignedInUser.GetOrgID(),
+			DashboardID:  cmd.DashboardId,
+			DashboardUID: cmd.DashboardId, // to deplrecate dashboard ID
+			PanelID:      cmd.PanelId,
 		}
 	}
 

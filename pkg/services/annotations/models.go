@@ -12,7 +12,7 @@ type ItemQuery struct {
 	UserID       int64    `json:"userId"`
 	AlertID      int64    `json:"alertId"`
 	DashboardID  int64    `json:"dashboardId"`
-	DashboardUID string   `json:"dashboardUID"`
+	DashboardUID string   `json:"dashboardUID"` // to depprecate dashboardID
 	PanelID      int64    `json:"panelId"`
 	AnnotationID int64    `json:"annotationId"`
 	Tags         []string `json:"tags"`
@@ -70,28 +70,30 @@ type GetAnnotationTagsResponse struct {
 }
 
 type DeleteParams struct {
-	OrgID       int64
-	ID          int64
-	DashboardID int64
-	PanelID     int64
+	OrgID        int64
+	ID           int64
+	DashboardID  int64
+	DashboardUID int64 // to depprecate dashboardID
+	PanelID      int64
 }
 
 type Item struct {
-	ID          int64            `json:"id" xorm:"pk autoincr 'id'"`
-	OrgID       int64            `json:"orgId" xorm:"org_id"`
-	UserID      int64            `json:"userId" xorm:"user_id"`
-	DashboardID int64            `json:"dashboardId" xorm:"dashboard_id"`
-	PanelID     int64            `json:"panelId" xorm:"panel_id"`
-	Text        string           `json:"text"`
-	AlertID     int64            `json:"alertId" xorm:"alert_id"`
-	PrevState   string           `json:"prevState"`
-	NewState    string           `json:"newState"`
-	Epoch       int64            `json:"epoch"`
-	EpochEnd    int64            `json:"epochEnd"`
-	Created     int64            `json:"created"`
-	Updated     int64            `json:"updated"`
-	Tags        []string         `json:"tags"`
-	Data        *simplejson.Json `json:"data"`
+	ID           int64            `json:"id" xorm:"pk autoincr 'id'"`
+	OrgID        int64            `json:"orgId" xorm:"org_id"`
+	UserID       int64            `json:"userId" xorm:"user_id"`
+	DashboardID  int64            `json:"dashboardId" xorm:"dashboard_id"`
+	DashboardUID int64            `json:"dashboardUID" xorm:"dashboard_uid"` // to depprecate dashboardID
+	PanelID      int64            `json:"panelId" xorm:"panel_id"`
+	Text         string           `json:"text"`
+	AlertID      int64            `json:"alertId" xorm:"alert_id"`
+	PrevState    string           `json:"prevState"`
+	NewState     string           `json:"newState"`
+	Epoch        int64            `json:"epoch"`
+	EpochEnd     int64            `json:"epochEnd"`
+	Created      int64            `json:"created"`
+	Updated      int64            `json:"updated"`
+	Tags         []string         `json:"tags"`
+	Data         *simplejson.Json `json:"data"`
 
 	// needed until we remove it from db
 	Type  string
