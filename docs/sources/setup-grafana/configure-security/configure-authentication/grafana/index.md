@@ -87,7 +87,7 @@ The anonymous devices feature enhances the management and monitoring of anonymou
 
 Users can now view anonymous usage statistics, including the count of devices and users over the last 30 days.
 
-- A new tab in the Administration -> Users page shows anonymous devices tab.
+- Go to **Administration -> Users** to access the anonymous devices tab.
 - A new stat for the usage stats page -> Usage & Stats page shows the active anonymous devices last 30 days.
 
 The number of anonymous devices is not limited by default. There is a new configuration option `device_limit`, that make it possible for you to enforce a limit of anonymous devices. This enables you to have control over the usage of the instance and keep the usage within the limits of your environment. If the limit is reached, any new devices that try to access Grafana will be denied access.
