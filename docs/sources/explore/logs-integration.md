@@ -130,6 +130,8 @@ You may encounter long lines of text that make it difficult to read and analyze 
 
 The **Open in split view** button allows you to execute the context query for a log entry in a split screen in the Explore view. Clicking this button will open a new Explore pane with the context query displayed alongside the log entry, making it easier to analyze and understand the surrounding context.
 
+Log context can also be opened in a new browser tab by pressing the Cmd/Ctrl button while clicking on the button to open the context modal.
+
 ### Copy log line
 
 You can easily copy the content of a selected log line to your clipboard by clicking on the `Copy log line` button.
