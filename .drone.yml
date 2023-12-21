@@ -3779,7 +3779,7 @@ steps:
   - wire-install
   environment:
     CGO_ENBABLED: 1
-  image: grafana/ci-windows-test
+  image: grafana/ci-windows-test:0.1.0
   name: test-backend
 trigger:
   event:
@@ -4043,8 +4043,6 @@ steps:
   - docker login -u $$env:DOCKER_USERNAME -p $$env:DOCKER_PASSWORD
   - docker build -t grafana/ci-windows-test:$$env:TAG .
   - docker push grafana/ci-windows-test:$$env:TAG
-  depends_on:
-  - clone
   environment:
     DOCKER_PASSWORD:
       from_secret: docker_password
@@ -4632,6 +4630,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 58149a37a2e2119df04e70723bad2b9e72be62b4647a906ae64a66c77e6c5fc9
+hmac: fc004d59873fb6f73d256ae2d87d2856a6fa1eb56822c388d21ed4710a0de77b
 
 ...
