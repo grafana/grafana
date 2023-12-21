@@ -976,6 +976,9 @@
     }
   },
   "news": {
+    "drawer": {
+      "close": ""
+    },
     "title": "Dernières nouvelles sur le blog"
   },
   "notifications": {

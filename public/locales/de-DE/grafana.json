@@ -970,6 +970,9 @@
     }
   },
   "news": {
+    "drawer": {
+      "close": ""
+    },
     "title": "Das Neueste aus dem Blog"
   },
   "notifications": {

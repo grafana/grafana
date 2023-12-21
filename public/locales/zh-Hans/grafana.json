@@ -964,6 +964,9 @@
     }
   },
   "news": {
+    "drawer": {
+      "close": ""
+    },
     "title": "最新博客"
   },
   "notifications": {

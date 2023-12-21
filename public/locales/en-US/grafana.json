@@ -970,6 +970,9 @@
     }
   },
   "news": {
+    "drawer": {
+      "close": "Close Drawer"
+    },
     "title": "Latest from the blog"
   },
   "notifications": {

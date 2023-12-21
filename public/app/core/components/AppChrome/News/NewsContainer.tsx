@@ -41,7 +41,7 @@ export function NewsContainer({ className }: NewsContainerProps) {
                   variant="secondary"
                   onClick={onToggleShowNewsDrawer}
                   data-testid={selectors.components.Drawer.General.close}
-                  tooltip={t(`drawer.close`, 'Close Drawer')}
+                  tooltip={t(`news.drawer.close`, 'Close Drawer')}
                 />
               </div>
             </div>
