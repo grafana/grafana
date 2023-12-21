@@ -4,9 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
-	"github.com/grafana/grafana/pkg/services/dashboardsnapshots/database"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
@@ -25,11 +23,6 @@ func ProvideService(store dashboardsnapshots.Store, secretsService secrets.Servi
 	}
 
 	return s
-}
-
-// Used for the k8s constructor
-func NewService(db db.DB, secretsService secrets.Service) *ServiceImpl {
-	return ProvideService(database.NewStore(db, false), secretsService)
 }
 
 func (s *ServiceImpl) CreateDashboardSnapshot(ctx context.Context, cmd *dashboardsnapshots.CreateDashboardSnapshotCommand) (*dashboardsnapshots.DashboardSnapshot, error) {
