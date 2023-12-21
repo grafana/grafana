@@ -71,7 +71,7 @@ func (b *PlaylistAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	gvk := playlist.PlaylistResourceInfo.GroupVersionKind()
 
 	// Add playlist thing
-	scheme.AddFieldLabelConversionFunc(gvk,
+	_ = scheme.AddFieldLabelConversionFunc(gvk,
 		runtime.FieldLabelConversionFunc(
 			func(label, value string) (string, string, error) {
 				if strings.HasPrefix(label, "grafana.app/") {
