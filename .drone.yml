@@ -122,14 +122,14 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: yarn-install
 - commands:
   - apk add --update git bash
   - yarn betterer ci
   depends_on:
   - yarn-install
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: betterer-frontend
 - commands:
   - apk add --update curl jq bash
@@ -158,7 +158,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: test-frontend
 trigger:
   event:
@@ -222,7 +222,7 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: yarn-install
 - commands:
   - yarn run prettier:check
@@ -232,7 +232,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: lint-frontend
 - commands:
   - apk add --update git
@@ -247,7 +247,7 @@ steps:
   - yarn run i18n:compile
   depends_on:
   - yarn-install
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: verify-i18n
 trigger:
   event:
@@ -530,7 +530,7 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: yarn-install
 - commands:
   - apk add --update jq bash
@@ -541,7 +541,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: build-frontend-packages
 - failure: ignore
   image: grafana/drone-downstream
@@ -679,14 +679,14 @@ steps:
   - build-frontend-packages
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: build-storybook
   when:
     paths:
       include:
       - packages/grafana-ui/**
 - commands:
-  - yarn wait-on http://$HOST:$PORT
+  - npx wait-on@7.0.1 http://$HOST:$PORT
   - pa11y-ci --config .pa11yci-pr.conf.js
   depends_on:
   - grafana-server
@@ -802,8 +802,8 @@ services:
 - commands:
   - /bin/mimir -target=backend
   environment: {}
-  image: grafana/mimir:latest
-  name: mimir
+  image: us.gcr.io/kubernetes-dev/mimir:gotjosh-state-config-grafana-663a0ae78
+  name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -969,16 +969,19 @@ steps:
   image: golang:1.21.5-alpine3.18
   name: memcached-integration-tests
 - commands:
-  - dockerize -wait tcp://mimir:8080 -timeout 120s
+  - dockerize -wait tcp://mimir_backend:8080 -timeout 120s
   image: jwilder/dockerize:0.6.1
   name: wait-for-remote-alertmanager
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go test -run IntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/...
+  - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/...
   depends_on:
   - wire-install
   - wait-for-remote-alertmanager
+  environment:
+    AM_TENANT_ID: test
+    AM_URL: http://mimir_backend:8080
   image: golang:1.21.5-alpine3.18
   name: remote-alertmanager-integration-tests
 trigger:
@@ -1034,7 +1037,7 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: yarn-install
 - commands:
   - pip3 install codespell
@@ -1047,7 +1050,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: lint-docs
 - commands:
   - mkdir -p /hugo/content/docs/grafana/latest
@@ -1132,6 +1135,67 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: pr-swagger-gen
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - apk add --update curl jq bash
+  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
+    | jq .head.repo.fork)
+  - if [ "$is_fork" != false ]; then return 1; fi
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    grafana-enterprise
+  - cd grafana-enterprise
+  - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
+    elif git checkout main; then echo "git checkout main"; else git checkout main;
+    fi
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  failure: ignore
+  image: alpine/git:2.40.1
+  name: clone-enterprise
+- commands:
+  - apk add --update git make
+  - make swagger-clean && make openapi3-gen
+  - for f in public/api-merged.json public/openapi3.json; do git add $f; done
+  - if [ -z "$(git diff --name-only --cached)" ]; then echo "Everything seems up to
+    date!"; else echo "Please ensure the branch is up-to-date, then regenerate the
+    specification by running make swagger-clean && make openapi3-gen" && return 1;
+    fi
+  depends_on:
+  - clone-enterprise
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: golang:1.21.5-alpine3.18
+  name: swagger-gen
+trigger:
+  event:
+  - pull_request
+  paths:
+    exclude:
+    - docs/**
+    - '*.md'
+    include:
+    - pkg/**
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
@@ -1181,8 +1245,8 @@ services:
 - commands:
   - /bin/mimir -target=backend
   environment: {}
-  image: grafana/mimir:latest
-  name: mimir
+  image: us.gcr.io/kubernetes-dev/mimir:gotjosh-state-config-grafana-663a0ae78
+  name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -1328,7 +1392,7 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: yarn-install
 - commands:
   - pip3 install codespell
@@ -1341,7 +1405,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: lint-docs
 - commands:
   - mkdir -p /hugo/content/docs/grafana/latest
@@ -1403,14 +1467,14 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: yarn-install
 - commands:
   - apk add --update git bash
   - yarn betterer ci
   depends_on:
   - yarn-install
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: betterer-frontend
 - commands:
   - yarn run ci:test-frontend
@@ -1418,7 +1482,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: test-frontend
 trigger:
   branch: main
@@ -1460,7 +1524,7 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: yarn-install
 - commands:
   - yarn run prettier:check
@@ -1470,7 +1534,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: lint-frontend
 - commands:
   - apk add --update git
@@ -1485,7 +1549,7 @@ steps:
   - yarn run i18n:compile
   depends_on:
   - yarn-install
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: verify-i18n
 trigger:
   branch: main
@@ -1719,7 +1783,7 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: yarn-install
 - commands:
   - apk add --update jq
@@ -1730,7 +1794,7 @@ steps:
   - yarn install --mode=update-lockfile
   depends_on:
   - yarn-install
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: update-package-json-version
 - commands:
   - apk add --update jq bash
@@ -1742,7 +1806,7 @@ steps:
   - update-package-json-version
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: build-frontend-packages
 - commands:
   - /src/grafana-build artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64
@@ -1867,14 +1931,14 @@ steps:
   - build-frontend-packages
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: build-storybook
   when:
     paths:
       include:
       - packages/grafana-ui/**
 - commands:
-  - yarn wait-on http://$HOST:$PORT
+  - npx wait-on@7.0.1 http://$HOST:$PORT
   - pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json
   depends_on:
   - grafana-server
@@ -1917,7 +1981,7 @@ steps:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
   failure: ignore
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: publish-frontend-metrics
   when:
     repo:
@@ -2001,7 +2065,7 @@ steps:
   environment:
     NPM_TOKEN:
       from_secret: npm_token
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: release-canary-npm-packages
   when:
     paths:
@@ -2109,8 +2173,8 @@ services:
 - commands:
   - /bin/mimir -target=backend
   environment: {}
-  image: grafana/mimir:latest
-  name: mimir
+  image: us.gcr.io/kubernetes-dev/mimir:gotjosh-state-config-grafana-663a0ae78
+  name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -2255,16 +2319,19 @@ steps:
   image: golang:1.21.5-alpine3.18
   name: memcached-integration-tests
 - commands:
-  - dockerize -wait tcp://mimir:8080 -timeout 120s
+  - dockerize -wait tcp://mimir_backend:8080 -timeout 120s
   image: jwilder/dockerize:0.6.1
   name: wait-for-remote-alertmanager
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go test -run IntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/...
+  - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/...
   depends_on:
   - wire-install
   - wait-for-remote-alertmanager
+  environment:
+    AM_TENANT_ID: test
+    AM_URL: http://mimir_backend:8080
   image: golang:1.21.5-alpine3.18
   name: remote-alertmanager-integration-tests
 trigger:
@@ -2338,38 +2405,6 @@ volumes:
 - host:
     path: //./pipe/docker_engine/
   name: docker
----
-clone:
-  retries: 3
-depends_on: []
-kind: pipeline
-name: notify-drone-changes
-platform:
-  arch: amd64
-  os: linux
-steps:
-- image: plugins/slack
-  name: slack
-  settings:
-    channel: slack-webhooks-test
-    template: "`.drone.yml` and `starlark` files have been changed on the OSS repo,
-      by: {{build.author}}. \nBranch: <https://github.com/{{ repo.owner }}/{{ repo.name
-      }}/commits/{{ build.branch }}|{{ build.branch }}>\nCommit hash: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{
-      truncate build.commit 8 }}>"
-    webhook:
-      from_secret: drone-changes-webhook
-trigger:
-  branch: main
-  event:
-  - push
-  paths:
-    exclude:
-    - exclude
-    include:
-    - .drone.yml
-  repo:
-  - grafana/grafana
-type: docker
 ---
 clone:
   retries: 3
@@ -2657,7 +2692,7 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: yarn-install
 - commands:
   - ./bin/build artifacts npm retrieve --tag ${DRONE_TAG}
@@ -2681,7 +2716,7 @@ steps:
     NPM_TOKEN:
       from_secret: npm_token
   failure: ignore
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: release-npm-packages
 trigger:
   event:
@@ -2926,14 +2961,14 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: yarn-install
 - commands:
   - apk add --update git bash
   - yarn betterer ci
   depends_on:
   - yarn-install
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: betterer-frontend
 - commands:
   - yarn run ci:test-frontend
@@ -2941,7 +2976,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: test-frontend
 trigger:
   event:
@@ -3123,14 +3158,12 @@ services: []
 steps:
 - commands:
   - echo $env:DRONE_RUNNER_NAME
-  failure: ignore
   image: mcr.microsoft.com/windows:1809
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.47/windows/grabpl.exe
     -OutFile grabpl.exe
-  failure: ignore
   image: grafana/ci-wix:0.1.1
   name: windows-init
 - commands:
@@ -3155,7 +3188,6 @@ steps:
       from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  failure: ignore
   image: grafana/ci-wix:0.1.1
   name: build-windows-installer
 trigger:
@@ -3345,14 +3377,14 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: yarn-install
 - commands:
   - apk add --update git bash
   - yarn betterer ci
   depends_on:
   - yarn-install
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: betterer-frontend
 - commands:
   - yarn run ci:test-frontend
@@ -3360,7 +3392,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: test-frontend
 trigger:
   cron:
@@ -3810,8 +3842,8 @@ services:
 - commands:
   - /bin/mimir -target=backend
   environment: {}
-  image: grafana/mimir:latest
-  name: mimir
+  image: us.gcr.io/kubernetes-dev/mimir:gotjosh-state-config-grafana-663a0ae78
+  name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -3949,16 +3981,19 @@ steps:
   image: golang:1.21.5-alpine3.18
   name: memcached-integration-tests
 - commands:
-  - dockerize -wait tcp://mimir:8080 -timeout 120s
+  - dockerize -wait tcp://mimir_backend:8080 -timeout 120s
   image: jwilder/dockerize:0.6.1
   name: wait-for-remote-alertmanager
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go test -run IntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/...
+  - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/...
   depends_on:
   - wire-install
   - wait-for-remote-alertmanager
+  environment:
+    AM_TENANT_ID: test
+    AM_URL: http://mimir_backend:8080
   image: golang:1.21.5-alpine3.18
   name: remote-alertmanager-integration-tests
 trigger:
@@ -4313,7 +4348,7 @@ steps:
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine/git:2.40.1
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM golang:1.21.5-alpine3.18
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM node:18.12.0-alpine
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM node:20.9.0-alpine
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM google/cloud-sdk:431.0.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana-ci-deploy:1.3.3
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine:3.18.4
@@ -4322,7 +4357,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM plugins/slack
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM python:3.8
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM postgres:12.3-alpine
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/mimir:latest
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM us.gcr.io/kubernetes-dev/mimir:gotjosh-state-config-grafana-663a0ae78
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:5.7.39
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:8.0.32
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM redis:6.2.11-alpine
@@ -4347,7 +4382,7 @@ steps:
 - commands:
   - trivy --exit-code 1 --severity HIGH,CRITICAL alpine/git:2.40.1
   - trivy --exit-code 1 --severity HIGH,CRITICAL golang:1.21.5-alpine3.18
-  - trivy --exit-code 1 --severity HIGH,CRITICAL node:18.12.0-alpine
+  - trivy --exit-code 1 --severity HIGH,CRITICAL node:20.9.0-alpine
   - trivy --exit-code 1 --severity HIGH,CRITICAL google/cloud-sdk:431.0.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana-ci-deploy:1.3.3
   - trivy --exit-code 1 --severity HIGH,CRITICAL alpine:3.18.4
@@ -4356,7 +4391,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL plugins/slack
   - trivy --exit-code 1 --severity HIGH,CRITICAL python:3.8
   - trivy --exit-code 1 --severity HIGH,CRITICAL postgres:12.3-alpine
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/mimir:latest
+  - trivy --exit-code 1 --severity HIGH,CRITICAL us.gcr.io/kubernetes-dev/mimir:gotjosh-state-config-grafana-663a0ae78
   - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:5.7.39
   - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:8.0.32
   - trivy --exit-code 1 --severity HIGH,CRITICAL redis:6.2.11-alpine
@@ -4594,6 +4629,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 12aac92975fd955960346c22b3997e2e5e8c3a473dfea8585105a280619815f7
+hmac: 1037480721e5ff5c3d4154a03e125043b6ed45a8e658079502d30f89a7325e54
 
 ...
