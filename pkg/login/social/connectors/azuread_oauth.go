@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	jose "github.com/go-jose/go-jose/v3"
@@ -40,6 +41,7 @@ type SocialAzureAD struct {
 	cache                remotecache.CacheStorage
 	allowedOrganizations []string
 	forceUseGraphAPI     bool
+	reloadMutex          sync.Mutex
 }
 
 type azureClaims struct {
@@ -171,6 +173,9 @@ func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettin
 	if err != nil {
 		return fmt.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
+
+	s.reloadMutex.Lock()
+	defer s.reloadMutex.Unlock()
 
 	s.info = info
 
