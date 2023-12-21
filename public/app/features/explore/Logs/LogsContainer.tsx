@@ -175,7 +175,7 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
   getLogRowContextQuery = async (
     row: LogRowModel,
     options?: LogRowContextOptions,
-    forceApplyFilters?: boolean
+    cacheFilters = true
   ): Promise<DataQuery | null> => {
     const { logsQueries } = this.props;
 
@@ -190,7 +190,7 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
 
     const query = this.getQuery(logsQueries, row, ds);
     return query && ds.getLogRowContextQuery
-      ? ds.getLogRowContextQuery(row, options, query, forceApplyFilters)
+      ? ds.getLogRowContextQuery(row, options, query, cacheFilters)
       : Promise.resolve(null);
   };
 

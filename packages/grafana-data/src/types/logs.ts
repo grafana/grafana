@@ -136,12 +136,15 @@ export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = Dat
 
   /**
    * Retrieve the context query object for a given log row. This is currently used to open LogContext queries in a split view.
+   * The `cacheFilters` parameter can be used to force a refetch of the cached applied filters. Default value `true`.
+   * @alpha
+   * @internal
    */
   getLogRowContextQuery?: (
     row: LogRowModel,
     options?: LogRowContextOptions,
     query?: TQuery,
-    initialFilters?: boolean
+    cacheFilters?: boolean
   ) => Promise<TQuery | null>;
 
   /**

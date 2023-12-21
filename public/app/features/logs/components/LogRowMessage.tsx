@@ -20,7 +20,7 @@ interface Props {
   getRowContextQuery?: (
     row: LogRowModel,
     options?: LogRowContextOptions,
-    forceApplyFilters?: boolean
+    cacheFilters?: boolean
   ) => Promise<DataQuery | null>;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;

@@ -132,7 +132,7 @@ interface LogRowContextModalProps {
   getRowContextQuery?: (
     row: LogRowModel,
     options?: LogRowContextOptions,
-    forceApplyFilters?: boolean
+    cacheFilters?: boolean
   ) => Promise<DataQuery | null>;
   logsSortOrder: LogsSortOrder;
   runContextQuery?: () => void;

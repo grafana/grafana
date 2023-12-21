@@ -52,7 +52,7 @@ interface Props extends Themeable2 {
   getRowContextQuery?: (
     row: LogRowModel,
     options?: LogRowContextOptions,
-    origQuery?: LokiQuery
+    cacheFilters?: boolean
   ) => Promise<DataQuery | null>;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   styles: LogRowStyles;

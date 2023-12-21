@@ -55,7 +55,7 @@ export interface Props extends Themeable2 {
   getRowContextQuery?: (
     row: LogRowModel,
     options?: LogRowContextOptions,
-    forceApplyFilters?: boolean
+    cacheFilters?: boolean
   ) => Promise<DataQuery | null>;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   permalinkedRowId?: string;

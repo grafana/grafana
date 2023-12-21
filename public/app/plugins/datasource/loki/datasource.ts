@@ -952,13 +952,13 @@ export class LokiDatasource
     row: LogRowModel,
     options?: LogRowContextOptions,
     origQuery?: DataQuery,
-    forceApplyFilters?: boolean
+    cacheFilters?: boolean
   ): Promise<DataQuery> => {
     return await this.logContextProvider.getLogRowContextQuery(
       row,
       options,
       getLokiQueryFromDataQuery(origQuery),
-      forceApplyFilters
+      cacheFilters
     );
   };
 

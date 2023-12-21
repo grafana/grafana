@@ -15,7 +15,7 @@ interface Props {
   getRowContextQuery?: (
     row: LogRowModel,
     options?: LogRowContextOptions,
-    forceApplyFilters?: boolean
+    cacheFilters?: boolean
   ) => Promise<DataQuery | null>;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
@@ -54,7 +54,8 @@ export const LogRowMenuCell = React.memo(
           (event.nativeEvent.ctrlKey || event.nativeEvent.metaKey || event.nativeEvent.shiftKey)
         ) {
           const win = window.open('about:blank');
-          const query = await getRowContextQuery(row, {}, true);
+          // for this request we don't want to use the cached filters from a context provider, but always want to refetch and clear
+          const query = await getRowContextQuery(row, undefined, false);
           if (query && win) {
             const url = urlUtil.renderUrl(locationUtil.assureBaseUrl(`${getConfig().appSubUrl}explore`), {
               left: JSON.stringify({
