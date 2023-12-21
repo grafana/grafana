@@ -277,17 +277,6 @@ export const DashNav = React.memo<Props>((props) => {
       );
     }
 
-    if (showSettings) {
-      buttons.push(
-        <ToolbarButton
-          tooltip={t('dashboard.toolbar.settings', 'Dashboard settings')}
-          icon="cog"
-          onClick={onOpenSettings}
-          key="button-settings"
-        />
-      );
-    }
-
     if (canSave && !isFullscreen) {
       buttons.push(
         <ModalsController key="button-save">
@@ -305,6 +294,19 @@ export const DashNav = React.memo<Props>((props) => {
             />
           )}
         </ModalsController>
+      );
+    }
+
+    addCustomContent(dynamicDashNavActions.right, buttons);
+
+    if (showSettings) {
+      buttons.push(
+        <ToolbarButton
+          tooltip={t('dashboard.toolbar.settings', 'Dashboard settings')}
+          icon="cog"
+          onClick={onOpenSettings}
+          key="button-settings"
+        />
       );
     }
 
@@ -335,8 +337,6 @@ export const DashNav = React.memo<Props>((props) => {
     }
 
     buttons.push(<NavToolbarSeparator key="toolbar-separator" />);
-
-    addCustomContent(dynamicDashNavActions.right, buttons);
 
     buttons.push(renderTimeControls());
 
