@@ -13,6 +13,7 @@ import {
   toUtc,
   LogRowContextQueryDirection,
   LogRowContextOptions,
+  dateTime,
 } from '@grafana/data';
 import { LabelParser, LabelFilter, LineFilters, PipelineStage, Logfmt, Json } from '@grafana/lezer-logql';
 import { Labels } from '@grafana/schema';
@@ -58,7 +59,13 @@ export class LogContextProvider {
     // This happens only on initial load, when user haven't applied any filters yet
     // We need to get the initial filters from the row labels
     if (this.appliedContextFilters.length === 0) {
-      const filters = (await this.getInitContextFilters(row.labels, origQuery)).filter((filter) => filter.enabled);
+      const filters = (
+        await this.getInitContextFilters(row.labels, origQuery, {
+          from: dateTime(row.timeEpochMs),
+          to: dateTime(row.timeEpochMs),
+          raw: { from: dateTime(row.timeEpochMs), to: dateTime(row.timeEpochMs) },
+        })
+      ).filter((filter) => filter.enabled);
       this.appliedContextFilters = filters;
     }
 
@@ -70,7 +77,13 @@ export class LogContextProvider {
     options?: LogRowContextOptions,
     origQuery?: LokiQuery
   ): Promise<LokiQuery> => {
+    // FIXME: This is a hack to make sure that the context query is created with
+    // the correct set of filters. The whole `appliedContextFilters` property
+    // should be revisted.
+    const cachedFilters = this.appliedContextFilters;
+    this.appliedContextFilters = [];
     const { query } = await this.getQueryAndRange(row, options, origQuery);
+    this.appliedContextFilters = cachedFilters;
 
     return query;
   };
@@ -285,7 +298,7 @@ export class LogContextProvider {
     );
   };
 
-  getInitContextFilters = async (labels: Labels, query?: LokiQuery) => {
+  getInitContextFilters = async (labels: Labels, query?: LokiQuery, timeRange?: TimeRange) => {
     if (!query || isEmpty(labels)) {
       return [];
     }
@@ -296,13 +309,13 @@ export class LogContextProvider {
     if (!isQueryWithParser(query.expr).queryWithParser) {
       // If there is no parser, we use getLabelKeys because it has better caching
       // and all labels should already be fetched
-      await this.datasource.languageProvider.start();
+      await this.datasource.languageProvider.start(timeRange);
       allLabels = this.datasource.languageProvider.getLabelKeys();
     } else {
       // If we have parser, we use fetchSeriesLabels to fetch actual labels for selected stream
       const stream = getStreamSelectorsFromQuery(query.expr);
       // We are using stream[0] as log query can always have just 1 stream selector
-      const series = await this.datasource.languageProvider.fetchSeriesLabels(stream[0]);
+      const series = await this.datasource.languageProvider.fetchSeriesLabels(stream[0], { timeRange });
       allLabels = Object.keys(series);
     }
 

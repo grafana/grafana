@@ -1,3 +1,4 @@
+import { config } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 
 // Maps the ID of the nav item to a translated phrase to later pass to <Trans />
@@ -126,6 +127,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.apps.title', 'Apps');
     case 'alerts-and-incidents':
       return t('nav.alerts-and-incidents.title', 'Alerts & IRM');
+    case 'testing-and-synthetics':
+      return t('nav.testing-and-synthetics.title', 'Testing & synthetics');
     case 'plugin-page-grafana-incident-app':
       return t('nav.incidents.title', 'Incidents');
     case 'plugin-page-grafana-ml-app':
@@ -133,7 +136,9 @@ export function getNavTitle(navId: string | undefined) {
     case 'plugin-page-grafana-slo-app':
       return t('nav.slo.title', 'SLO');
     case 'plugin-page-k6-app':
-      return t('nav.performance-testing.title', 'Performance testing');
+      return config.featureToggles.dockedMegaMenu
+        ? t('nav.k6.title', 'Performance')
+        : t('nav.performance-testing.title', 'Performance testing');
     case 'monitoring':
       return t('nav.observability.title', 'Observability');
     case 'plugin-page-grafana-k8s-app':
@@ -256,6 +261,8 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.frontend.subtitle', 'Gain real user monitoring insights');
     case 'alerts-and-incidents':
       return t('nav.alerts-and-incidents.subtitle', 'Alerting and incident management apps');
+    case 'testing-and-synthetics':
+      return t('nav.testing-and-synthetics.subtitle', 'Optimize performance with k6 and Synthetic Monitoring insights');
     case 'connections-add-new-connection':
       return t('nav.connections.subtitle', 'Browse and create new connections');
     case 'connections-datasources':

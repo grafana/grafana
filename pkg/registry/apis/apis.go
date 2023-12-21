@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/alertrules"
 	"github.com/grafana/grafana/pkg/registry/apis/example"
+	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/playlist"
 )
 
@@ -21,6 +22,7 @@ func ProvideRegistryServiceSink(
 	_ *playlist.PlaylistAPIBuilder,
 	_ *example.TestingAPIBuilder,
 	_ *alertrules.AlertRulesAPIBuilder,
+	_ *folders.FolderAPIBuilder,
 ) *Service {
 	return &Service{}
 }

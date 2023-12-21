@@ -6,7 +6,13 @@ import { createDataSourceVariableAdapter } from '../datasource/adapter';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { createGraph } from '../state/actions';
 
-import { flattenPanels, getAllAffectedPanelIdsForVariableChange, getPanelVars, getPropsWithVariable } from './utils';
+import {
+  flattenPanels,
+  getAllAffectedPanelIdsForVariableChange,
+  getPanelVars,
+  getPropsWithVariable,
+  getVariableName,
+} from './utils';
 
 describe('getPropsWithVariable', () => {
   it('when called it should return the correct graph', () => {
@@ -300,6 +306,20 @@ describe('flattenPanels', () => {
       expect(result[1].getSaveModel()).toEqual(panel2.getSaveModel());
       expect(result[2].getSaveModel()).toEqual(panel3.getSaveModel());
     });
+  });
+});
+
+describe('getVariableName', () => {
+  it('should return undefined if no match is found', () => {
+    expect(getVariableName('no variable here')).toBeUndefined();
+  });
+
+  it('should return undefined if variable matches inherited object prop names', () => {
+    expect(getVariableName('${toString}')).toBeUndefined();
+  });
+
+  it('should return the variable name if it exists and does not match inherited object prop names', () => {
+    expect(getVariableName('${myVariable}')).toBe('myVariable');
   });
 });
 

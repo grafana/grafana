@@ -34,7 +34,7 @@ describe('DashboardModelCompatibilityWrapper', () => {
     expect(wrapper.timepicker.hidden).toEqual(true);
 
     (scene.state.controls![0] as DashboardControls).setState({
-      timeControls: [new SceneTimePicker({})],
+      hideTimeControls: false,
     });
 
     const wrapper2 = new DashboardModelCompatibilityWrapper(scene);
@@ -99,10 +99,12 @@ function setup() {
         variableControls: [],
         linkControls: new DashboardLinksControls({}),
         timeControls: [
+          new SceneTimePicker({}),
           new SceneRefreshPicker({
             intervals: ['1s'],
           }),
         ],
+        hideTimeControls: true,
       }),
     ],
     body: new SceneGridLayout({

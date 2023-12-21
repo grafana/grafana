@@ -53,7 +53,6 @@ export interface FeatureToggles {
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
   nestedFolderPicker?: boolean;
-  accessTokenExpirationCheck?: boolean;
   emptyDashboardPage?: boolean;
   disablePrometheusExemplarSampling?: boolean;
   alertingBacktesting?: boolean;
@@ -166,7 +165,9 @@ export interface FeatureToggles {
   alertingSimplifiedRouting?: boolean;
   logRowsPopoverMenu?: boolean;
   pluginsSkipHostEnvVars?: boolean;
+  tableSharedCrosshair?: boolean;
   regressionTransformation?: boolean;
   displayAnonymousStats?: boolean;
   alertStateHistoryAnnotationsFromLoki?: boolean;
+  lokiQueryHints?: boolean;
 }

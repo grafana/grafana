@@ -7,6 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -160,4 +161,8 @@ func (b *AlertRulesAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefiniti
 
 func (b *AlertRulesAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	return nil // no custom API routes
+}
+
+func (b *AlertRulesAPIBuilder) GetAuthorizer() authorizer.Authorizer {
+	return nil // default authorizer is fine
 }

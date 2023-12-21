@@ -14,6 +14,11 @@ import { Page } from '../Page/Page';
 
 import { AppChrome } from './AppChrome';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getPluginLinkExtensions: jest.fn().mockReturnValue({ extensions: [] }),
+}));
+
 const pageNav: NavModelItem = {
   text: 'pageNav title',
   children: [
