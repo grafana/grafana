@@ -32,7 +32,7 @@ import { CanvasTooltip } from 'app/plugins/panel/canvas/components/CanvasTooltip
 import { CONNECTION_ANCHOR_DIV_ID } from 'app/plugins/panel/canvas/components/connections/ConnectionAnchors';
 import { Connections } from 'app/plugins/panel/canvas/components/connections/Connections';
 import { AnchorPoint, CanvasTooltipPayload, LayerActionID } from 'app/plugins/panel/canvas/types';
-import { getParent } from 'app/plugins/panel/canvas/utils';
+import { getParent, getTransformInstance } from 'app/plugins/panel/canvas/utils';
 
 import appEvents from '../../../core/app_events';
 import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
@@ -77,7 +77,7 @@ export class Scene {
   contextMenuVisible?: boolean;
   contextMenuOnVisibilityChange = (visible: boolean) => {
     this.contextMenuVisible = visible;
-    const transformInstance = this.transformComponentRef?.current?.instance;
+    const transformInstance = getTransformInstance(this);
     if (transformInstance) {
       if (visible) {
         transformInstance.setup.disabled = true;

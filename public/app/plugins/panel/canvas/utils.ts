@@ -248,6 +248,13 @@ export const getParentBoundingClientRect = (scene: Scene) => {
   return scene.div?.getBoundingClientRect();
 };
 
+export const getTransformInstance = (scene: Scene) => {
+  if (config.featureToggles.canvasPanelPanZoom) {
+    return scene.transformComponentRef?.current?.instance;
+  }
+  return undefined;
+};
+
 export const getParent = (scene: Scene) => {
   if (config.featureToggles.canvasPanelPanZoom) {
     return scene.transformComponentRef?.current?.instance.contentComponent;
