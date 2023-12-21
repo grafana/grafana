@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"encoding/json"
-	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -20,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -1007,12 +1007,33 @@ func TestSocialAzureAD_Reload(t *testing.T) {
 				Settings: map[string]any{
 					"client_id":     "new-client-id",
 					"client_secret": "new-client-secret",
+					"auth_url":      "some-new-url",
 				},
 			},
 			expectError: false,
 			expectedInfo: &social.OAuthInfo{
 				ClientId:     "new-client-id",
 				ClientSecret: "new-client-secret",
+				AuthUrl:      "some-new-url",
+			},
+		},
+		{
+			name: "fails if settings contain invalid values",
+			info: &social.OAuthInfo{
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
+			},
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":     "new-client-id",
+					"client_secret": "new-client-secret",
+					"auth_url":      []string{"first", "second"},
+				},
+			},
+			expectError: true,
+			expectedInfo: &social.OAuthInfo{
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
 			},
 		},
 	}
