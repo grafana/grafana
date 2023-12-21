@@ -2,6 +2,8 @@ package playlistimpl
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -136,6 +138,53 @@ func testIntegrationPlaylistDataAccess(t *testing.T, fn getStore) {
 			res, err := playlistStore.List(context.Background(), &qr)
 			require.NoError(t, err)
 			require.Equal(t, 2, len(res))
+		})
+
+		t.Run("With FullList support", func(t *testing.T) {
+			res, err := playlistStore.ListAll(context.Background(), 1)
+			require.NoError(t, err)
+
+			for id := range res {
+				res[id].Uid = fmt.Sprintf("ROW:%d", id)
+			}
+
+			jj, err := json.MarshalIndent(res, "", "  ")
+			require.NoError(t, err)
+			// fmt.Printf("OUT:%s\n", string(jj))
+
+			// Each row has a full payload
+			require.JSONEq(t, `[
+				{
+				  "uid": "ROW:0",
+				  "name": "NICE office",
+				  "interval": "10m",
+				  "items": [
+					{
+					  "type": "dashboard_by_tag",
+					  "value": "graphite"
+					},
+					{
+					  "type": "dashboard_by_id",
+					  "value": "3"
+					}
+				  ]
+				},
+				{
+				  "uid": "ROW:1",
+				  "name": "NYC office",
+				  "interval": "10m",
+				  "items": [
+					{
+					  "type": "dashboard_by_tag",
+					  "value": "graphite"
+					},
+					{
+					  "type": "dashboard_by_id",
+					  "value": "3"
+					}
+				  ]
+				}
+			  ]`, string(jj))
 		})
 	})
 
