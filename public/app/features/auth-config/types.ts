@@ -94,6 +94,7 @@ export interface SettingsError {
 export type FieldData = {
   label: string;
   type: string;
+  description?: string;
   validation?: {
     required?: boolean;
     message?: string;

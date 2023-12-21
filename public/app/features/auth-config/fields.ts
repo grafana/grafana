@@ -18,6 +18,34 @@ export const fields: Record<SSOProvider['provider'], Array<keyof SSOProvider['se
   ],
 };
 
+type Section = Record<
+  SSOProvider['provider'],
+  {
+    name: string;
+    id: string;
+    fields: Array<keyof SSOProvider['settings']>;
+  }
+>;
+
+const sectionFields: Section = {
+  generic_oauth: {
+    name: 'General settings',
+    id: 'general',
+    fields: [
+      'name',
+      'clientId',
+      'clientSecret',
+      'scopes',
+      'authUrl',
+      'tokenUrl',
+      'apiUrl',
+      'allowSignup',
+      'autoLogin',
+      'signoutRedirectUrl',
+    ],
+  },
+};
+
 /**
  * List all the fields that can be used in the form
  */
@@ -25,6 +53,7 @@ export const fieldMap: Record<string, FieldData> = {
   clientId: {
     label: 'Client Id',
     type: 'text',
+    description: 'These values must match the client ID from your OAuth2 app.',
     validation: {
       required: true,
       message: 'This field is required',
@@ -33,6 +62,7 @@ export const fieldMap: Record<string, FieldData> = {
   clientSecret: {
     label: 'Client Secret',
     type: 'secret',
+    description: 'These values must match the client secret from your OAuth2 app.',
     validation: {
       required: true,
       message: 'This field is required',
@@ -111,6 +141,11 @@ export const fieldMap: Record<string, FieldData> = {
     validation: {
       required: false,
     },
+  },
+  name: {
+    label: 'Display name',
+    description: 'Helpful if you use more than one identity providers or SSO protocols',
+    type: 'text',
   },
 };
 
