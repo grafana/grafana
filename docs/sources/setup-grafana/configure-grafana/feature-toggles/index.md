@@ -160,7 +160,6 @@ Experimental features might be changed or removed without prior notice.
 | `extractFieldsNameDeduplication`            | Make sure extracted field names are unique in the dataframe                                                                                                                                                                                                                       |
 | `dashboardSceneForViewers`                  | Enables dashboard rendering using Scenes for viewer roles                                                                                                                                                                                                                         |
 | `dashboardScene`                            | Enables dashboard rendering using scenes for all roles                                                                                                                                                                                                                            |
-| `ssoSettingsApi`                            | Enables the SSO settings API                                                                                                                                                                                                                                                      |
 | `logsInfiniteScrolling`                     | Enables infinite scrolling for the Logs panel in Explore and Dashboards                                                                                                                                                                                                           |
 | `flameGraphItemCollapsing`                  | Allow collapsing of flame graph items                                                                                                                                                                                                                                             |
 | `logRowsPopoverMenu`                        | Enable filtering menu displayed when text of a log line is selected                                                                                                                                                                                                               |
@@ -176,5 +175,6 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | `unifiedStorage`                       | SQL-based k8s storage                                          |
 | `externalServiceAuth`                  | Starts an OAuth2 authentication provider for external services |
 | `grafanaAPIServerWithExperimentalAPIs` | Register experimental APIs with the k8s API server             |
-| `grafanaAPIServerEnsureKubectlAccess` | Start an additional https handler and write kubectl options    |
-| `panelTitleSearchInV1`                | Enable searching for dashboards using panel title in search v1 |
+| `grafanaAPIServerEnsureKubectlAccess`  | Start an additional https handler and write kubectl options    |
+| `panelTitleSearchInV1`                 | Enable searching for dashboards using panel title in search v1 |
+| `ssoSettingsApi`                       | Enables the SSO settings API                                   |
