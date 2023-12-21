@@ -675,9 +675,8 @@ export class Scene {
         style={this.style}
         ref={this.setRef}
         onMouseDown={(e) => {
-          const transformInstance = this.transformComponentRef?.current?.instance;
           // If pan and zoom is disabled and middle mouse or ctrl + right mouse, don't pan
-          if (transformInstance?.setup.disabled && (e.button === 1 || (e.button === 2 && e.ctrlKey))) {
+          if (!this.shouldPanZoom && (e.button === 1 || (e.button === 2 && e.ctrlKey))) {
             e.preventDefault();
             e.stopPropagation();
           }
