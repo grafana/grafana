@@ -1,0 +1,25 @@
+name: Feature Toggle Cleanup
+
+on:
+    repository_dispatch:
+        types: feature-toggle-cleanup
+
+jobs:
+    fetch:
+        runs-on: ubuntu-latest    
+        steps:
+            - name: Check out the code
+              uses: actions/checkout@v3
+            - uses: actions/setup-node@v4
+              with:
+                node-version: "20.x"
+            - run: npm install csv-parse
+            - name: Parse CVS file to see which Feature Toggles should be notified about
+              id: parse-csv-file
+              uses: actions/github-script@v7
+              env:
+                    FEATURE_TOGGLES_CSV_FILE_PATH: "pkg/services/featuremgmt/toggles_gen.csv"
+              with:
+                    script: |
+                        const { default: printStuff } = await import('${{ github.workspace }}/.github/workflows/scripts/feature-toggle-cleanup/feature-toggle-cleanup.js')                        
+                        await script({github, context, core})

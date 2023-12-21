@@ -1,0 +1,9 @@
+{
+  "name": "feature-toggle-cleanup",
+  "version": "1.0.0",
+  "description": "",
+  "type:": "module",
+  "main": "feature-toggle-cleanup.js",
+  "author": "",
+  "license": "ISC"
+}
