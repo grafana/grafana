@@ -84,7 +84,7 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 	}
 	for _, existing := range revision.cfg.AlertmanagerConfig.MuteTimeIntervals {
 		if mt.Name == existing.Name {
-			return nil, ErrMuteTimingExists
+			return nil, ErrMuteTimingExists.Errorf("")
 		}
 	}
 	revision.cfg.AlertmanagerConfig.MuteTimeIntervals = append(revision.cfg.AlertmanagerConfig.MuteTimeIntervals, mt.MuteTimeInterval)
@@ -150,7 +150,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string,
 		return nil
 	}
 	if isMuteTimeInUse(name, []*definitions.Route{revision.cfg.AlertmanagerConfig.Route}) {
-		return ErrMuteTimingInUse
+		return ErrMuteTimingInUse.Errorf("")
 	}
 	for i, existing := range revision.cfg.AlertmanagerConfig.MuteTimeIntervals {
 		if name == existing.Name {
@@ -187,12 +187,12 @@ func isMuteTimeInUse(name string, routes []*definitions.Route) bool {
 
 func getMuteTiming(rev *cfgRevision, name string) (config.MuteTimeInterval, int, error) {
 	if rev.cfg.AlertmanagerConfig.MuteTimeIntervals == nil {
-		return config.MuteTimeInterval{}, -1, ErrMuteTimingsNotFound
+		return config.MuteTimeInterval{}, -1, ErrMuteTimingsNotFound.Errorf("")
 	}
 	for idx, mt := range rev.cfg.AlertmanagerConfig.MuteTimeIntervals {
 		if mt.Name == name {
 			return mt, idx, nil
 		}
 	}
-	return config.MuteTimeInterval{}, -1, ErrMuteTimingsNotFound
+	return config.MuteTimeInterval{}, -1, ErrMuteTimingsNotFound.Errorf("")
 }
