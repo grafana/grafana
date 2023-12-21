@@ -11,6 +11,7 @@ import {
   PanelData,
 } from '@grafana/data';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { ContentOutlineItem } from 'app/features/explore/ContentOutline/ContentOutlineItem';
 
 import { QueryEditorRow } from './QueryEditorRow';
 
@@ -159,26 +160,28 @@ export class QueryEditorRows extends PureComponent<Props> {
                     : undefined;
 
                   return (
-                    <QueryEditorRow
-                      id={query.refId}
-                      index={index}
-                      key={query.refId}
-                      data={data}
-                      query={query}
-                      dataSource={dataSourceSettings}
-                      onChangeDataSource={onChangeDataSourceSettings}
-                      onChange={(query) => this.onChangeQuery(query, index)}
-                      onRemoveQuery={this.onRemoveQuery}
-                      onAddQuery={onAddQuery}
-                      onRunQuery={onRunQueries}
-                      onQueryCopied={onQueryCopied}
-                      onQueryRemoved={onQueryRemoved}
-                      onQueryToggled={onQueryToggled}
-                      queries={queries}
-                      app={app}
-                      history={history}
-                      eventBus={eventBus}
-                    />
+                    <ContentOutlineItem title="Queries" icon="arrow" key={query.refId}>
+                      <QueryEditorRow
+                        id={query.refId}
+                        index={index}
+                        key={query.refId}
+                        data={data}
+                        query={query}
+                        dataSource={dataSourceSettings}
+                        onChangeDataSource={onChangeDataSourceSettings}
+                        onChange={(query) => this.onChangeQuery(query, index)}
+                        onRemoveQuery={this.onRemoveQuery}
+                        onAddQuery={onAddQuery}
+                        onRunQuery={onRunQueries}
+                        onQueryCopied={onQueryCopied}
+                        onQueryRemoved={onQueryRemoved}
+                        onQueryToggled={onQueryToggled}
+                        queries={queries}
+                        app={app}
+                        history={history}
+                        eventBus={eventBus}
+                      />
+                    </ContentOutlineItem>
                   );
                 })}
                 {provided.placeholder}

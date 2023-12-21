@@ -6,6 +6,7 @@ import { ContentOutlineItemBaseProps } from './ContentOutlineItem';
 export interface ContentOutlineItemContextProps extends ContentOutlineItemBaseProps {
   id: string;
   ref: HTMLElement | null;
+  children?: ContentOutlineItemContextProps[];
 }
 
 type RegisterFunction = ({ title, icon, ref }: Omit<ContentOutlineItemContextProps, 'id'>) => string;
@@ -25,19 +26,20 @@ export const ContentOutlineContextProvider = ({ children }: { children: ReactNod
     const id = uniqueId(`${title}-${icon}_`);
 
     setOutlineItems((prevItems) => {
-      const updatedItems = [...prevItems, { id, title, icon, ref }];
+      const parent = prevItems.find((item) => item.title === title);
 
-      return updatedItems.sort((a, b) => {
-        if (a.ref && b.ref) {
-          const diff = a.ref.compareDocumentPosition(b.ref);
-          if (diff === Node.DOCUMENT_POSITION_PRECEDING) {
-            return 1;
-          } else if (diff === Node.DOCUMENT_POSITION_FOLLOWING) {
-            return -1;
-          }
-        }
-        return 0;
-      });
+      let updatedItems = [...prevItems];
+
+      if (parent) {
+        parent.children = parent.children || [];
+        parent.children.push({ id, title, icon, ref });
+        parent.children.sort(sortElementsByDocumentPosition);
+      } else {
+        updatedItems = [...prevItems, { id, title, icon, ref }];
+        updatedItems.sort(sortElementsByDocumentPosition);
+      }
+
+      return updatedItems;
     });
 
     return id;
@@ -53,6 +55,18 @@ export const ContentOutlineContextProvider = ({ children }: { children: ReactNod
     </ContentOutlineContext.Provider>
   );
 };
+
+function sortElementsByDocumentPosition(a: ContentOutlineItemContextProps, b: ContentOutlineItemContextProps) {
+  if (a.ref && b.ref) {
+    const diff = a.ref.compareDocumentPosition(b.ref);
+    if (diff === Node.DOCUMENT_POSITION_PRECEDING) {
+      return 1;
+    } else if (diff === Node.DOCUMENT_POSITION_FOLLOWING) {
+      return -1;
+    }
+  }
+  return 0;
+}
 
 export function useContentOutlineContext() {
   const ctx = useContext(ContentOutlineContext);

@@ -93,9 +93,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       paddingRight: theme.spacing(2),
       marginBottom: theme.spacing(2),
     }),
-    left: css({
-      marginBottom: theme.spacing(2),
-    }),
     wrapper: css({
       position: 'absolute',
       top: 0,
@@ -602,9 +599,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         >
           <div className={styles.wrapper}>
             {contentOutlineVisible && (
-              <div className={styles.left}>
-                <ContentOutline scroller={this.scrollElement} panelId={`content-outline-container-${exploreId}`} />
-              </div>
+              <ContentOutline scroller={this.scrollElement} panelId={`content-outline-container-${exploreId}`} />
             )}
             <CustomScrollbar
               testId={selectors.pages.Explore.General.scrollView}
@@ -614,28 +609,26 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
               <div className={styles.exploreContainer}>
                 {datasourceInstance ? (
                   <>
-                    <ContentOutlineItem title="Queries" icon="arrow">
-                      <PanelContainer className={styles.queryContainer}>
-                        {correlationsBox}
-                        <QueryRows exploreId={exploreId} />
-                        <SecondaryActions
-                          // do not allow people to add queries with potentially different datasources in correlations editor mode
-                          addQueryRowButtonDisabled={
-                            isLive || (isCorrelationsEditorMode && datasourceInstance.meta.mixed)
-                          }
-                          // We cannot show multiple traces at the same time right now so we do not show add query button.
-                          //TODO:unification
-                          addQueryRowButtonHidden={false}
-                          richHistoryRowButtonHidden={richHistoryRowButtonHidden}
-                          richHistoryButtonActive={showRichHistory}
-                          queryInspectorButtonActive={showQueryInspector}
-                          onClickAddQueryRowButton={this.onClickAddQueryRowButton}
-                          onClickRichHistoryButton={this.toggleShowRichHistory}
-                          onClickQueryInspectorButton={this.toggleShowQueryInspector}
-                        />
-                        <ResponseErrorContainer exploreId={exploreId} />
-                      </PanelContainer>
-                    </ContentOutlineItem>
+                    <PanelContainer className={styles.queryContainer}>
+                      {correlationsBox}
+                      <QueryRows exploreId={exploreId} />
+                      <SecondaryActions
+                        // do not allow people to add queries with potentially different datasources in correlations editor mode
+                        addQueryRowButtonDisabled={
+                          isLive || (isCorrelationsEditorMode && datasourceInstance.meta.mixed)
+                        }
+                        // We cannot show multiple traces at the same time right now so we do not show add query button.
+                        //TODO:unification
+                        addQueryRowButtonHidden={false}
+                        richHistoryRowButtonHidden={richHistoryRowButtonHidden}
+                        richHistoryButtonActive={showRichHistory}
+                        queryInspectorButtonActive={showQueryInspector}
+                        onClickAddQueryRowButton={this.onClickAddQueryRowButton}
+                        onClickRichHistoryButton={this.toggleShowRichHistory}
+                        onClickQueryInspectorButton={this.toggleShowQueryInspector}
+                      />
+                      <ResponseErrorContainer exploreId={exploreId} />
+                    </PanelContainer>
                     <AutoSizer onResize={this.onResize} disableHeight>
                       {({ width }) => {
                         if (width === 0) {
