@@ -604,7 +604,14 @@ func TestMuteTimings(t *testing.T) {
 		requireStatusCode(t, http.StatusAccepted, status, response)
 
 		status, response = apiClient.DeleteMuteTimingWithStatus(t, anotherMuteTiming.Name)
-		requireStatusCode(t, http.StatusInternalServerError, status, response) // TODO should be bad request
+		requireStatusCode(t, http.StatusBadRequest, status, response)
+		var validationError errutil.PublicError
+		assert.NoError(t, json.Unmarshal([]byte(response), &validationError))
+		assert.NotEmpty(t, validationError, validationError.Message)
+		assert.Equal(t, "alerting.notifications.mute-timings.used", validationError.MessageID)
+		if t.Failed() {
+			t.Fatalf("response: %s", response)
+		}
 	})
 }
 
