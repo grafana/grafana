@@ -68,8 +68,8 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	}
 
 	list := &playlist.PlaylistList{}
-	for _, v := range res {
-		list.Items = append(list.Items, *convertToK8sResource(&v, s.namespacer))
+	for idx := range res {
+		list.Items = append(list.Items, *convertToK8sResource(&res[idx], s.namespacer))
 	}
 	return list, nil
 }
