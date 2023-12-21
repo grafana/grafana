@@ -227,15 +227,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
     cursor: 'pointer',
     zIndex: 1,
   }),
-  annoInfo: css({
-    background: 'purple',
-    color: 'white',
-    padding: '10px',
-    position: 'absolute',
-    transform: 'translateX(-50%)',
-    left: '50%',
-    minWidth: '300px',
-    minHeight: '100px',
-    top: '5px',
-  }),
 });

@@ -55,7 +55,7 @@ export const AnnotationTooltip2 = ({
   }
 
   return (
-    <>
+    <div className={styles.wrapper}>
       <div className={styles.header}>
         <HorizontalGroup justify={'space-between'} align={'center'} spacing={'md'}>
           <div className={styles.meta}>
@@ -68,26 +68,43 @@ export const AnnotationTooltip2 = ({
           {(canEdit || canDelete) && (
             <div className={styles.editControls}>
               {canEdit && <IconButton name={'pen'} size={'sm'} onClick={onEdit} tooltip="Edit" />}
-              {canDelete && <IconButton name={'trash-alt'} size={'sm'} onClick={onDelete} tooltip="Delete" />}
+              {canDelete && (
+                <IconButton
+                  name={'trash-alt'}
+                  size={'sm'}
+                  onClick={onDelete}
+                  tooltip="Delete"
+                  disabled={!annoVals.id?.[annoIdx]}
+                />
+              )}
             </div>
           )}
         </HorizontalGroup>
       </div>
 
       <div className={styles.body}>
-        {text && <div dangerouslySetInnerHTML={{ __html: textUtil.sanitize(text) }} />}
+        {text && <div className={styles.text} dangerouslySetInnerHTML={{ __html: textUtil.sanitize(text) }} />}
         {alertText}
-        <>
+        <div>
           <HorizontalGroup spacing="xs" wrap>
             {annoVals.tags[annoIdx]?.map((t: string, i: number) => <Tag name={t} key={`${t}-${i}`} />)}
           </HorizontalGroup>
-        </>
+        </div>
       </div>
-    </>
+    </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  wrapper: css({
+    zIndex: theme.zIndex.tooltip,
+    whiteSpace: 'initial',
+    borderRadius: theme.shape.radius.default,
+    background: theme.colors.background.primary,
+    border: `1px solid ${theme.colors.border.weak}`,
+    boxShadow: `0 4px 8px ${theme.colors.background.primary}`,
+    userSelect: 'text',
+  }),
   header: css({
     padding: theme.spacing(0.5, 1),
     borderBottom: `1px solid ${theme.colors.border.weak}`,
@@ -97,6 +114,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   meta: css({
     display: 'flex',
     justifyContent: 'space-between',
+    color: theme.colors.text.primary,
+    fontWeight: 400,
   }),
   editControls: css({
     display: 'flex',
@@ -107,12 +126,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   body: css({
     padding: theme.spacing(1),
+    fontSize: theme.typography.bodySmall.fontSize,
+    color: theme.colors.text.secondary,
+    fontWeight: 400,
     a: {
       color: theme.colors.text.link,
       '&:hover': {
         textDecoration: 'underline',
       },
     },
+  }),
+  text: css({
+    paddingBottom: theme.spacing(1),
   }),
   avatar: css({
     borderRadius: theme.shape.radius.circle,

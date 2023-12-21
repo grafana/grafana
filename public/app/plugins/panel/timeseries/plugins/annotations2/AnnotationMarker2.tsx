@@ -3,8 +3,9 @@ import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import useClickAway from 'react-use/lib/useClickAway';
 
 import { dateTimeFormat, GrafanaTheme2, systemDateFormats, TimeZone } from '@grafana/data';
-import { TextArea, usePanelContext, useStyles2 } from '@grafana/ui';
+import { usePanelContext, useStyles2 } from '@grafana/ui';
 
+import { AnnotationEditor } from './AnnotationEditor';
 import { AnnotationTooltip2 } from './AnnotationTooltip2';
 
 interface AnnoBoxProps {
@@ -94,24 +95,17 @@ export const AnnotationMarker2 = ({ annoVals, annoIdx, className, style, isWip, 
     canDeleteAnnotations,
   ]);
 
-  // @TODO: fix editor
   const renderAnnotationEditor = useCallback(() => {
     return (
-      <div>
-        <TextArea>{annoVals.text[annoIdx]}</TextArea>
-      </div>
-      // <AnnotationEditor
-      //   onDismiss={() => setIsEditing(false)}
-      //   onSave={() => setIsEditing(false)}
-      //   timeFormatter={timeFormatter}
-      //   annoIdx={annoIdx}
-      //   annoVals={annoVals}
-      //   // annotation={annotation}
-      //   // ref={setEditorRef}
-      //   // style={editorPopper.styles.popper}
-      // />
+      <AnnotationEditor
+        onDismiss={() => setIsEditing(false)}
+        onSave={() => setIsEditing(false)}
+        timeFormatter={timeFormatter}
+        annoIdx={annoIdx}
+        annoVals={annoVals}
+      />
     );
-  }, [annoIdx, annoVals]);
+  }, [annoIdx, annoVals, timeFormatter]);
 
   return (
     <div
@@ -132,12 +126,11 @@ export const AnnotationMarker2 = ({ annoVals, annoIdx, className, style, isWip, 
 const getStyles = (theme: GrafanaTheme2) => ({
   annoInfo: css({
     background: theme.colors.background.secondary,
-    color: 'white',
-    position: 'absolute',
-    transform: 'translateX(-50%)',
-    left: '50%',
     minWidth: '300px',
     maxWidth: '400px',
+    position: 'absolute',
     top: '5px',
+    left: '50%',
+    transform: 'translateX(-50%)',
   }),
 });

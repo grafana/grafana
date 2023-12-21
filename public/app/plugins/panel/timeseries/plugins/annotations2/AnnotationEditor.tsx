@@ -40,7 +40,7 @@ export const AnnotationEditor = ({ annoVals, annoIdx, onSave, onDismiss, timeFor
     return result;
   });
 
-  const isUpdatingAnnotation = annoVals.type[annoIdx] !== null;
+  const isUpdatingAnnotation = annoVals.id?.[annoIdx] !== undefined;
   const isRegionAnnotation = annoVals.isRegion[annoIdx];
   const operation = isUpdatingAnnotation ? updateAnnotation : createAnnotation;
   const stateIndicator = isUpdatingAnnotation ? updateAnnotationState : createAnnotationState;
@@ -60,16 +60,11 @@ export const AnnotationEditor = ({ annoVals, annoIdx, onSave, onDismiss, timeFor
 
   // Annotation editor
   const form = (
-    <div
-      // ref={ref}
-      className={styles.editor}
-      // className={cx(styles.editor, className)}
-      {...otherProps}
-    >
+    <div className={styles.editor} {...otherProps}>
       <div className={styles.header}>
         <HorizontalGroup justify={'space-between'} align={'center'}>
-          <div className={styles.title}>{isUpdatingAnnotation ? 'Edit annotation' : 'Add annotation'}</div>
-          <div className={styles.ts}>{time}</div>
+          <div>{isUpdatingAnnotation ? 'Edit annotation' : 'Add annotation'}</div>
+          <div>{time}</div>
         </HorizontalGroup>
       </div>
       <div className={styles.editorForm}>
@@ -122,7 +117,6 @@ export const AnnotationEditor = ({ annoVals, annoIdx, onSave, onDismiss, timeFor
 
   return (
     <>
-      <div className={styles.backdrop} />
       <div>{form}</div>
     </>
   );
@@ -130,27 +124,13 @@ export const AnnotationEditor = ({ annoVals, annoIdx, onSave, onDismiss, timeFor
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    backdrop: css({
-      label: 'backdrop',
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100vw',
-      height: '100vh',
-      overflow: 'hidden',
-      zIndex: theme.zIndex.navbarFixed,
-    }),
-    editorContainer: css({
-      position: 'absolute',
-      top: 'calc(100% + 10px)',
-      transform: 'translate3d(-50%, 0, 0)',
-    }),
     editor: css({
+      // zIndex: theme.zIndex.tooltip,
       background: theme.colors.background.primary,
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
       boxShadow: theme.shadows.z3,
-      zIndex: theme.zIndex.dropdown,
+      userSelect: 'text',
       width: '460px',
     }),
     editorForm: css({
@@ -159,11 +139,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     header: css({
       borderBottom: `1px solid ${theme.colors.border.weak}`,
       padding: theme.spacing(0.5, 1),
-    }),
-    title: css({
       fontWeight: theme.typography.fontWeightMedium,
-    }),
-    ts: css({
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.secondary,
     }),
