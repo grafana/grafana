@@ -522,7 +522,8 @@ cypress.config.js @grafana/grafana-frontend-platform
 /scripts/trigger_windows_build.sh @grafana/grafana-release-guild
 /scripts/cleanup-husky.sh @grafana/frontend-ops
 /scripts/verify-repo-update/ @grafana/grafana-release-guild
-scripts/generate-icon-bundle.js @grafana/plugins-platform-frontend @grafana/grafana-frontend-platform
+/scripts/generate-icon-bundle.js @grafana/plugins-platform-frontend @grafana/grafana-frontend-platform
+/scripts/levitate-parse-json-report.js @grafana/plugins-platform-frontend
 
 /scripts/docs/generate-transformations.ts @grafana/grafana-bi-squad
 /scripts/webpack/ @grafana/frontend-ops
