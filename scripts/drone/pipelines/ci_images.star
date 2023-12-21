@@ -32,7 +32,7 @@ def publish_ci_windows_test_image_pipeline():
             clone_step_windows(),
             {
                 "name": "build-and-publish",
-                "depends_on": ["clone"],
+                "depends_on": ["clone_step_windows"],
                 "image": windows_images["windows_server_core"],
                 "environment": {
                     "DOCKER_USERNAME": from_secret("docker_username"),
