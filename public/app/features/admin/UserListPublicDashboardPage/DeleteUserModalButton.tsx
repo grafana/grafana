@@ -26,7 +26,7 @@ const DeleteUserModal = ({ user, hideModal }: { user: SessionUser; hideModal: ()
       </p>
       <p className={styles.description}>
         <Trans i18nKey="delete-user-modal-button.public-dashboard.revoke-user-access-modal-desc-line2" shouldUnescape>
-        This action will immediately revoke {{ email: user.email }}&apos;s access to all public dashboards.
+          This action will immediately revoke {{ email: user.email }}&apos;s access to all public dashboards.
         </Trans>
       </p>
       <Modal.ButtonRow>
