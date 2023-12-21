@@ -16,7 +16,6 @@ import {
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { withTheme2, Themeable2, Icon, Tooltip } from '@grafana/ui';
-import { LokiQuery } from 'app/plugins/datasource/loki/types';
 
 import { checkLogsError, escapeUnescapedString } from '../utils';
 
