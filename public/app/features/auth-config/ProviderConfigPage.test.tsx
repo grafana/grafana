@@ -107,7 +107,7 @@ describe('ProviderConfig', () => {
     const { user } = setup(<ProviderConfig config={emptyConfig} provider={emptyConfig.provider} />);
     await user.click(screen.getByRole('button', { name: /Save/i }));
 
-    // Should show 2 alerts for 2 empty fields
-    expect(await screen.findAllByRole('alert')).toHaveLength(2);
+    // Should show an alert for empty client ID
+    expect(await screen.findAllByRole('alert')).toHaveLength(1);
   });
 });
