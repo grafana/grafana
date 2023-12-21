@@ -83,7 +83,7 @@ If you change your organization name in the Grafana UI this setting needs to be 
 
 #### Anonymous devices
 
-Anonymous Devices feature enhances the management and monitoring of anonymous access within Grafana. This feature is an ongoing efforts to provide more control and transparency over usage for your anonymous usage.
+The anonymous devices feature enhances the management and monitoring of anonymous access within your Grafana instance. This feature is part of ongoing efforts to provide more control and transparency over anonymous usage.
 
 Users can now view anonymous usage statistics, including the count of devices and users over the last 30 days.
 
