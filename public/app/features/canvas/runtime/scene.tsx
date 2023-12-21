@@ -59,6 +59,7 @@ export class Scene {
 
   width = 0;
   height = 0;
+  scale = 1;
   style: CSSProperties = {};
   data?: PanelData;
   selecto?: Selecto;
@@ -459,11 +460,7 @@ export class Scene {
           const targetedElement = this.findElementByTarget(event.target);
           if (targetedElement) {
             if (targetedElement) {
-              targetedElement.setPlacementFromConstraint(
-                undefined,
-                undefined,
-                this.transformComponentRef?.current?.instance.transformState.scale
-              );
+              targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
             }
           }
         });
@@ -474,11 +471,7 @@ export class Scene {
       .on('dragEnd', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         if (targetedElement) {
-          targetedElement.setPlacementFromConstraint(
-            undefined,
-            undefined,
-            this.transformComponentRef?.current?.instance.transformState.scale
-          );
+          targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
         }
 
         this.moved.next(Date.now());
@@ -494,17 +487,13 @@ export class Scene {
             vertical: VerticalConstraint.Top,
             horizontal: HorizontalConstraint.Left,
           };
-          targetedElement.setPlacementFromConstraint(
-            undefined,
-            undefined,
-            this.transformComponentRef?.current?.instance.transformState.scale
-          );
+          targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
         }
       })
       .on('resize', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         if (targetedElement) {
-          targetedElement.applyResize(event, this.transformComponentRef?.current?.instance.transformState.scale);
+          targetedElement.applyResize(event, this.scale);
 
           if (this.connections.connectionsNeedUpdate(targetedElement) && this.moveableActionCallback) {
             this.moveableActionCallback(true);
@@ -540,11 +529,7 @@ export class Scene {
             targetedElement.tempConstraint = undefined;
           }
 
-          targetedElement.setPlacementFromConstraint(
-            undefined,
-            undefined,
-            this.transformComponentRef?.current?.instance.transformState.scale
-          );
+          targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
         }
       });
 
@@ -683,7 +668,46 @@ export class Scene {
     const isTooltipValid = (this.tooltip?.element?.data?.links?.length ?? 0) > 0;
     const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid;
 
-    return (
+    const sceneDiv = (
+      <div
+        key={this.revId}
+        className={this.styles.wrap}
+        style={this.style}
+        ref={this.setRef}
+        onMouseDown={(e) => {
+          const transformInstance = this.transformComponentRef?.current?.instance;
+          // If pan and zoom is disabled and middle mouse or ctrl + right mouse, don't pan
+          if (transformInstance?.setup.disabled && (e.button === 1 || (e.button === 2 && e.ctrlKey))) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+          // If context menu is hidden, ignore left mouse or non-ctrl right mouse for pan
+          if (!this.contextMenuVisible && e.button === 2 && !e.ctrlKey) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }}
+      >
+        {this.connections.render()}
+        {this.root.render()}
+        {canShowContextMenu && (
+          <Portal>
+            <CanvasContextMenu
+              scene={this}
+              panel={this.panel}
+              onVisibilityChange={this.contextMenuOnVisibilityChange}
+            />
+          </Portal>
+        )}
+        {canShowElementTooltip && (
+          <Portal>
+            <CanvasTooltip scene={this} />
+          </Portal>
+        )}
+      </div>
+    );
+
+    return config.featureToggles.canvasPanelPanZoom ? (
       <TransformWrapper
         doubleClick={{ mode: 'reset' }}
         ref={this.transformComponentRef}
@@ -692,6 +716,10 @@ export class Scene {
           if (this.moveable && scale > 0) {
             this.moveable.zoom = 1 / scale;
           }
+          this.scale = scale;
+        }}
+        onTransformed={(r, s) => {
+          this.scale = s.scale;
         }}
         limitToBounds={true}
         disabled={!config.featureToggles.canvasPanelPanZoom || !this.shouldPanZoom}
@@ -706,45 +734,10 @@ export class Scene {
             right: '0px',
           }}
         ></div>
-        <TransformComponent>
-          <div
-            key={this.revId}
-            className={this.styles.wrap}
-            style={this.style}
-            ref={this.setRef}
-            onMouseDown={(e) => {
-              const transformInstance = this.transformComponentRef?.current?.instance;
-              // If pan and zoom is disabled and middle mouse or ctrl + right mouse, don't pan
-              if (transformInstance?.setup.disabled && (e.button === 1 || (e.button === 2 && e.ctrlKey))) {
-                e.preventDefault();
-                e.stopPropagation();
-              }
-              // If context menu is hidden, ignore left mouse or non-ctrl right mouse for pan
-              if (!this.contextMenuVisible && e.button === 2 && !e.ctrlKey) {
-                e.preventDefault();
-                e.stopPropagation();
-              }
-            }}
-          >
-            {this.connections.render()}
-            {this.root.render()}
-            {canShowContextMenu && (
-              <Portal>
-                <CanvasContextMenu
-                  scene={this}
-                  panel={this.panel}
-                  onVisibilityChange={this.contextMenuOnVisibilityChange}
-                />
-              </Portal>
-            )}
-            {canShowElementTooltip && (
-              <Portal>
-                <CanvasTooltip scene={this} />
-              </Portal>
-            )}
-          </div>
-        </TransformComponent>
+        <TransformComponent>{sceneDiv}</TransformComponent>
       </TransformWrapper>
+    ) : (
+      sceneDiv
     );
   }
 }
