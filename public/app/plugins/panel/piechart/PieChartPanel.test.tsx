@@ -174,6 +174,7 @@ const setup = (propsOverrides?: {}) => {
   const options: Options = {
     pieType: PieChartType.Pie,
     displayLabels: [],
+    showField: true,
     legend: {
       displayMode: LegendDisplayMode.List,
       showLegend: true,

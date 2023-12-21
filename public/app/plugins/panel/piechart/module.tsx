@@ -43,6 +43,12 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(PieChartPanel)
         },
         defaultValue: PieChartType.Pie,
       })
+      .addBooleanSwitch({
+        path: 'showField',
+        name: 'Show Field Name in Legend',
+        description: '',
+        defaultValue: true,
+      })
       .addMultiSelect({
         name: 'Labels',
         path: 'displayLabels',

@@ -50,6 +50,7 @@ export function PieChartPanel(props: Props) {
     theme: theme,
     replaceVariables,
     timeZone,
+    hideField: !options.showField,
   });
 
   if (!hasFrames(fieldDisplayValues)) {

@@ -73,6 +73,7 @@ export interface GetFieldDisplayValuesOptions {
   replaceVariables: InterpolateFunction;
   sparkline?: boolean; // Calculate the sparkline
   percentChange?: boolean; // Calculate percent change
+  hideField?: boolean;
   theme: GrafanaTheme2;
   timeZone?: TimeZone;
 }
@@ -80,7 +81,7 @@ export interface GetFieldDisplayValuesOptions {
 export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
 
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
-  const { replaceVariables, reduceOptions, timeZone, theme } = options;
+  const { replaceVariables, reduceOptions, timeZone, theme, hideField } = options;
   const calcs = reduceOptions.calcs.length ? reduceOptions.calcs : [ReducerID.last];
 
   const values: FieldDisplay[] = [];
@@ -142,7 +143,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
           const scopedVars = getFieldScopedVarsWithDataContexAndRowIndex(field, j);
           const displayValue = display(field.values[j]);
-          const rowName = getSmartDisplayNameForRow(dataFrame, field, j, replaceVariables, scopedVars);
+          const rowName = getSmartDisplayNameForRow(dataFrame, field, j, replaceVariables, scopedVars, hideField);
           const overrideColor = lookupRowColorFromOverride(rowName, options.fieldConfig, theme);
 
           values.push({
@@ -236,7 +237,8 @@ function getSmartDisplayNameForRow(
   field: Field,
   rowIndex: number,
   replaceVariables: InterpolateFunction,
-  scopedVars: ScopedVars | undefined
+  scopedVars: ScopedVars | undefined,
+  hideField = false
 ): string {
   const displayName = field.config.displayName;
 
@@ -268,7 +270,7 @@ function getSmartDisplayNameForRow(
     }
   }
 
-  if (otherNumericFields || parts.length === 0) {
+  if (!hideField && (otherNumericFields || parts.length === 0)) {
     parts.push(getFieldDisplayName(field, frame));
   }
 

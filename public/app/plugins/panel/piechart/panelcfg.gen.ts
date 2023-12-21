@@ -52,6 +52,7 @@ export interface Options extends common.OptionsWithTooltip, common.SingleStatBas
   displayLabels: Array<PieChartLabels>;
   legend: PieChartLegendOptions;
   pieType: PieChartType;
+  showField: boolean;
 }
 
 export const defaultOptions: Partial<Options> = {
