@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
+	authidentity "github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl/sync"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
@@ -287,15 +288,15 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 	}
 
 	namespace, id := identity.GetNamespacedID()
-	intId, err := strconv.ParseInt(id, 10, 64)
-	if err != nil || intId <= 0 {
-		return nil, authn.ErrInvalidIdentityID.Errorf("expected correct identity ID but got: %s", id)
-	}
-
 	// Login is only supported for users
 	if namespace != authn.NamespaceUser {
 		s.metrics.failedLogin.WithLabelValues(client).Inc()
 		return nil, authn.ErrUnsupportedIdentity.Errorf("expected identity of type user but got: %s", namespace)
+	}
+
+	intId, err := authidentity.IntIdentifier(namespace, id)
+	if err != nil {
+		return nil, err
 	}
 
 	addr := web.RemoteAddr(r.HTTPRequest)

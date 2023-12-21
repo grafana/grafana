@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	authidentity "github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -111,12 +111,13 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Iden
 		return nil
 	}
 	namespace, id := identity.GetNamespacedID()
-	userID, err := intIdentifier(id)
-	if err != nil {
-		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id)
+	if namespace != authn.NamespaceUser {
 		return nil
 	}
-	if namespace != authn.NamespaceUser {
+
+	userID, err := authidentity.IntIdentifier(namespace, id)
+	if err != nil {
+		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id, "err", err)
 		return nil
 	}
 
@@ -142,15 +143,14 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 	}
 
 	namespace, id := identity.GetNamespacedID()
-	userID, err := intIdentifier(id)
-	// do not sync invalid users
-	if err != nil || userID <= 0 {
-		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id)
+	if namespace != authn.NamespaceUser && namespace != authn.NamespaceServiceAccount {
 		return nil
 	}
 
-	if namespace != authn.NamespaceUser && namespace != authn.NamespaceServiceAccount {
-		return nil // skip sync
+	userID, err := authidentity.IntIdentifier(namespace, id)
+	if err != nil {
+		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id, "err", err)
+		return nil
 	}
 
 	go func(userID int64) {
@@ -176,12 +176,13 @@ func (s *UserSync) EnableUserHook(ctx context.Context, identity *authn.Identity,
 	}
 
 	namespace, id := identity.GetNamespacedID()
-	userID, err := intIdentifier(id)
-	if err != nil {
-		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id)
+	if namespace != authn.NamespaceUser {
 		return nil
 	}
-	if namespace != authn.NamespaceUser {
+
+	userID, err := authidentity.IntIdentifier(namespace, id)
+	if err != nil {
+		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id, "err", err)
 		return nil
 	}
 
@@ -381,14 +382,6 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 	}
 
 	return usr, nil
-}
-
-func intIdentifier(identifier string) (int64, error) {
-	id, err := strconv.ParseInt(identifier, 10, 64)
-	if err != nil {
-		return -1, err
-	}
-	return id, nil
 }
 
 // syncUserToIdentity syncs a user to an identity.

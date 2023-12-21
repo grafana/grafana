@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	authidentity "github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -140,9 +141,9 @@ func (c *Proxy) Hook(ctx context.Context, identity *authn.Identity, r *authn.Req
 		return nil
 	}
 
-	id, err := strconv.ParseInt(identifier, 10, 64)
+	id, err := authidentity.IntIdentifier(namespace, identifier)
 	if err != nil {
-		c.log.Warn("Failed to cache proxy user", "error", err, "userId", identifier)
+		c.log.Warn("Failed to cache proxy user", "error", err, "userId", identifier, "err", err)
 		return nil
 	}
 	c.log.FromContext(ctx).Debug("Cache proxy user", "userId", id)

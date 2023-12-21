@@ -3,7 +3,7 @@ package clients
 import (
 	"context"
 	"errors"
-	"strconv"
+	idnty "github.com/grafana/grafana/pkg/services/auth/identity"
 	"strings"
 	"time"
 
@@ -178,9 +178,9 @@ func (s *APIKey) Hook(ctx context.Context, identity *authn.Identity, r *authn.Re
 func (s *APIKey) getAPIKeyID(ctx context.Context, identity *authn.Identity, r *authn.Request) (apiKeyID int64, exists bool) {
 	namespace, identifier := identity.GetNamespacedID()
 
-	id, err := strconv.ParseInt(identifier, 10, 64)
+	id, err := idnty.IntIdentifier(namespace, identifier)
 	if err != nil {
-		s.log.Warn("Failed to parse ID from identifier")
+		s.log.Warn("Failed to parse ID from identifier", "err", err)
 		return -1, false
 	}
 	if namespace == authn.NamespaceAPIKey {
