@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/alerting/cluster"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-	"github.com/prometheus/alertmanager/cluster"
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/util"

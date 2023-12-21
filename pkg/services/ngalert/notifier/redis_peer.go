@@ -10,8 +10,8 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/google/uuid"
-	"github.com/prometheus/alertmanager/cluster"
-	"github.com/prometheus/alertmanager/cluster/clusterpb"
+	"github.com/grafana/alerting/cluster"
+	"github.com/grafana/alerting/cluster/clusterpb"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/redis/go-redis/v9"

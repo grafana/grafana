@@ -7,8 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/grafana/alerting/cluster/clusterpb"
 	alertingNotify "github.com/grafana/alerting/notify"
-	"github.com/prometheus/alertmanager/cluster/clusterpb"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"

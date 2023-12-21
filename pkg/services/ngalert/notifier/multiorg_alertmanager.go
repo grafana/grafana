@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/prometheus/alertmanager/cluster"
+	"github.com/grafana/alerting/cluster"
 	"github.com/prometheus/client_golang/prometheus"
 
 	alertingNotify "github.com/grafana/alerting/notify"
