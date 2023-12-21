@@ -251,6 +251,22 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 }
 
 func (b *SnapshotsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
+	// NEED to match, currently we may be more restrictive than the first clause
+	//
+	// https://github.com/grafana/grafana/blob/f63e43c113ac0cf8f78ed96ee2953874139bd2dc/pkg/middleware/auth.go#L203
+	// func SnapshotPublicModeOrSignedIn(cfg *setting.Cfg) web.Handler {
+	// 	return func(c *contextmodel.ReqContext) {
+	// 		if cfg.SnapshotPublicMode {
+	// 			return
+	// 		}
+
+	// 		if !c.IsSignedIn {
+	// 			notAuthorized(c)
+	// 			return
+	// 		}
+	// 	}
+	// }
+
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
 			// TODO -- something more restrictive?

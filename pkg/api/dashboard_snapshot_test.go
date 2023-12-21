@@ -9,13 +9,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/web/webtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/web"
+	"github.com/grafana/grafana/pkg/web/webtest"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
@@ -145,7 +149,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 				d := setUpSnapshotTest(t, 0, ts.URL)
 				hs := buildHttpServer(d, true)
 
-				sc.handlerFunc = hs.DeleteDashboardSnapshotByDeleteKey
+				sc.handlerFunc = wrapDirectHandler(hs.DeleteDashboardSnapshotByDeleteKey)
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{"deleteKey": "12345"}).exec()
 
 				require.Equal(t, 200, sc.resp.Code)
@@ -279,7 +283,7 @@ func TestGetDashboardSnapshotNotFound(t *testing.T) {
 		"/api/snapshots-delete/12345", "/api/snapshots-delete/:deleteKey", org.RoleEditor, func(sc *scenarioContext) {
 			d := setUpSnapshotTest(t)
 			hs := buildHttpServer(d, true)
-			sc.handlerFunc = hs.DeleteDashboardSnapshotByDeleteKey
+			sc.handlerFunc = wrapDirectHandler(hs.DeleteDashboardSnapshotByDeleteKey)
 			sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"deleteKey": "12345"}).exec()
 
 			assert.Equal(t, http.StatusNotFound, sc.resp.Code)
@@ -353,7 +357,7 @@ func TestGetDashboardSnapshotFailure(t *testing.T) {
 		"/api/snapshots-delete/12345", "/api/snapshots-delete/:deleteKey", org.RoleEditor, func(sc *scenarioContext) {
 			d := setUpSnapshotTest(t, true)
 			hs := buildHttpServer(d, true)
-			sc.handlerFunc = hs.DeleteDashboardSnapshotByDeleteKey
+			sc.handlerFunc = wrapDirectHandler(hs.DeleteDashboardSnapshotByDeleteKey)
 			sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"deleteKey": "12345"}).exec()
 
 			assert.Equal(t, http.StatusInternalServerError, sc.resp.Code)
@@ -364,7 +368,7 @@ func TestGetDashboardSnapshotFailure(t *testing.T) {
 		"/api/snapshots-delete/12345", "/api/snapshots-delete/:deleteKey", org.RoleEditor, func(sc *scenarioContext) {
 			d := setUpSnapshotTest(t, false)
 			hs := buildHttpServer(d, false)
-			sc.handlerFunc = hs.DeleteDashboardSnapshotByDeleteKey
+			sc.handlerFunc = wrapDirectHandler(hs.DeleteDashboardSnapshotByDeleteKey)
 			sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"deleteKey": "12345"}).exec()
 
 			assert.Equal(t, http.StatusForbidden, sc.resp.Code)
@@ -407,4 +411,31 @@ func setUpSnapshotTest(t *testing.T, userId int64, deleteUrl string) dashboardsn
 	dashSnapSvc.On("GetDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.GetDashboardSnapshotQuery")).Return(res, nil)
 	dashSnapSvc.On("DeleteDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.DeleteDashboardSnapshotCommand")).Return(nil).Maybe()
 	return dashSnapSvc
+}
+
+type rspWrap struct {
+	rr *httptest.ResponseRecorder
+}
+
+// Body implements response.Response.
+func (r *rspWrap) Body() []byte {
+	return r.rr.Body.Bytes()
+}
+
+// Status implements response.Response.
+func (r *rspWrap) Status() int {
+	return r.rr.Code
+}
+
+// WriteTo implements response.Response.
+func (r *rspWrap) WriteTo(ctx *contextmodel.ReqContext) {
+	ctx.Resp.Write(r.rr.Body.Bytes())
+}
+
+func wrapDirectHandler(fn func(c *contextmodel.ReqContext)) handlerFunc {
+	return func(c *contextmodel.ReqContext) response.Response {
+		rr := httptest.NewRecorder()
+		c.Resp = web.NewResponseWriter(c.Req.Method, rr)
+		return &rspWrap{rr}
+	}
 }
