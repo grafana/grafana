@@ -92,12 +92,11 @@ export const ProviderConfig = ({ config, provider, isLoading }: ProviderConfigPr
     reset,
     watch,
     setValue,
-    formState: { errors, isDirty },
+    formState: { errors, dirtyFields },
   } = useForm({ defaultValues: dataToDTO(config) });
   const [isSaving, setIsSaving] = useState(false);
   const [isSecretConfigured, setIsSecretConfigured] = useState(!!config?.settings.clientSecret);
   const providerFields = fields[provider];
-
   const onSubmit = async (data: SSOProviderDTO) => {
     setIsSaving(true);
     const requestData = dtoToData(data);
@@ -222,7 +221,8 @@ export const ProviderConfig = ({ config, provider, isLoading }: ProviderConfigPr
         <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: '600px' }}>
           <>
             <FormPrompt
-              confirmRedirect={isDirty}
+              // TODO Figure out why isDirty is not working
+              confirmRedirect={!!Object.keys(dirtyFields).length}
               onDiscard={() => {
                 reset();
               }}
