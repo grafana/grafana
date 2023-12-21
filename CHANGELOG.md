@@ -5,9 +5,7 @@
 ### Features and enhancements
 
 - **Auth:** Improve groups claim setup docs for AzureAD. [#79227](https://github.com/grafana/grafana/issues/79227), [@mgyongyosi](https://github.com/mgyongyosi)
-- **Alerting:** Attempt to retry retryable errors. [#79175](https://github.com/grafana/grafana/issues/79175), [@gotjosh](https://github.com/gotjosh)
 - **Alerting:** Attempt to retry retryable errors. [#79161](https://github.com/grafana/grafana/issues/79161), [@gotjosh](https://github.com/gotjosh)
-- **Unified Alerting:** Set `max_attempts` to 1 by default. [#79103](https://github.com/grafana/grafana/issues/79103), [@gotjosh](https://github.com/gotjosh)
 - **Unified Alerting:** Set `max_attempts` to 1 by default. [#79095](https://github.com/grafana/grafana/issues/79095), [@gotjosh](https://github.com/gotjosh)
 - **Auth:** Use SSO settings service to load social connectors + refactor. [#79005](https://github.com/grafana/grafana/issues/79005), [@mgyongyosi](https://github.com/mgyongyosi)
 - **Cloudwatch:** Update error code metrics for ES/OpenSearch. [#78990](https://github.com/grafana/grafana/issues/78990), [@siddhikhapare](https://github.com/siddhikhapare)
@@ -84,7 +82,7 @@
 - **Alerting:** Adds contact point sorting and searching. [#77390](https://github.com/grafana/grafana/issues/77390), [@gillesdemey](https://github.com/gillesdemey)
 - **Loki:** Add backend functionality to parse structured metadata from Loki. [#77361](https://github.com/grafana/grafana/issues/77361), [@svennergr](https://github.com/svennergr)
 - **ValueFormats:** Use plural for time units. [#77337](https://github.com/grafana/grafana/issues/77337), [@utkarshdeepak](https://github.com/utkarshdeepak)
-- **Calculations:** Update First * and Last * reducers to exclude NaNs. [#77323](https://github.com/grafana/grafana/issues/77323), [@nmarrs](https://github.com/nmarrs)
+- **Calculations:** Update First _ and Last _ reducers to exclude NaNs. [#77323](https://github.com/grafana/grafana/issues/77323), [@nmarrs](https://github.com/nmarrs)
 - **Chore:** Upgrade Go to 1.21.3. [#77304](https://github.com/grafana/grafana/issues/77304), [@ryantxu](https://github.com/ryantxu)
 - **Tooltip:** Improved Trend tooltip. [#77251](https://github.com/grafana/grafana/issues/77251), [@adela-almasan](https://github.com/adela-almasan)
 - **Dashboards:** Remove dummy trim dashboard api. [#77249](https://github.com/grafana/grafana/issues/77249), [@ryantxu](https://github.com/ryantxu)
@@ -156,13 +154,11 @@
 ### Bug fixes
 
 - **Alerting:** Fix deleting rules in a folder with matching UID in another organization. [#79011](https://github.com/grafana/grafana/issues/79011), [@papagian](https://github.com/papagian)
-- **CloudWatch:** Correctly quote metric names with special characters. [#78975](https://github.com/grafana/grafana/issues/78975), [@iwysiu](https://github.com/iwysiu)
 - **CloudWatch:** Correctly quote metric names with special characters. [#78958](https://github.com/grafana/grafana/issues/78958), [@iwysiu](https://github.com/iwysiu)
 - **Fix:** Use dashboard time range in prometheus variable editor. [#78950](https://github.com/grafana/grafana/issues/78950), [@itsmylife](https://github.com/itsmylife)
 - **DeleteDashboard:** Redirect to home after deleting a dashboard. [#78936](https://github.com/grafana/grafana/issues/78936), [@ivanortegaalba](https://github.com/ivanortegaalba)
 - **Alerting:** Change create/update permissions for silences. [#78920](https://github.com/grafana/grafana/issues/78920), [@VikaCep](https://github.com/VikaCep)
 - **DeleteDashboard:** Redirect to home after deleting a dashboard. [#78918](https://github.com/grafana/grafana/issues/78918), [@ivanortegaalba](https://github.com/ivanortegaalba)
-- **Alerting:** Fixes combination of multiple predicates for rule search. [#78912](https://github.com/grafana/grafana/issues/78912), [@gillesdemey](https://github.com/gillesdemey)
 - **Alerting:** Fixes combination of multiple predicates for rule search. [#78910](https://github.com/grafana/grafana/issues/78910), [@gillesdemey](https://github.com/gillesdemey)
 - **Timeseries to table transformation:** Fix misaligned table field values if some frames are missing a label. [#78909](https://github.com/grafana/grafana/issues/78909), [@domasx2](https://github.com/domasx2)
 - **CloudWatch:** Fetch Dimension keys correctly from Dimension Picker. [#78831](https://github.com/grafana/grafana/issues/78831), [@iwysiu](https://github.com/iwysiu)
@@ -208,7 +204,7 @@
 - **Alerting:** Apply negative matchers for route matching. [#77292](https://github.com/grafana/grafana/issues/77292), [@gillesdemey](https://github.com/gillesdemey)
 - **Explore:** Fix panes vertical scrollbar not being draggable. [#77284](https://github.com/grafana/grafana/issues/77284), [@Elfo404](https://github.com/Elfo404)
 - **Explore:** Avoid reinitializing graph on every query run. [#77281](https://github.com/grafana/grafana/issues/77281), [@Elfo404](https://github.com/Elfo404)
-- **Prometheus:** Fix $__rate_interval calculation. [#77234](https://github.com/grafana/grafana/issues/77234), [@itsmylife](https://github.com/itsmylife)
+- **Prometheus:** Fix $\_\_rate_interval calculation. [#77234](https://github.com/grafana/grafana/issues/77234), [@itsmylife](https://github.com/itsmylife)
 - **Organize fields transformation:** Fix re-ordering of fields using drag and drop. [#77172](https://github.com/grafana/grafana/issues/77172), [@adela-almasan](https://github.com/adela-almasan)
 - **Bug fix:** Correctly set permissions on provisioned dashboards. [#77155](https://github.com/grafana/grafana/issues/77155), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
 - **InfluxDB:** Fix adhoc filter calls by properly checking optional parameter in metricFindQuery. [#77113](https://github.com/grafana/grafana/issues/77113), [@itsmylife](https://github.com/itsmylife)
@@ -228,7 +224,6 @@
 - **Chore:** Fix timeout issues when gathering prometheus datasource stats. [#74618](https://github.com/grafana/grafana/issues/74618), [@DanCech](https://github.com/DanCech)
 - **Recorded Queries:** Add org isolation (remote write target per org), and fix cross org Delete/List. (Enterprise)
 - **Auditing:** Fix missing action in alert manager routes. (Enterprise)
-- **Auditing:** Fix missing action in alert manager routes. (Enterprise)
 - **Reporting:** Fix report not sent when creating / updating reports. (Enterprise)
 - **Recorded Queries:** Add org isolation (remote write target per org), and fix cross org Delete/List. (Enterprise)
 - **UsageInsights:** Disable frontend features when backend is disabled. (Enterprise)
@@ -240,33 +235,36 @@
 
 In panels using the `extract fields` transformation, where one of the extracted names collides with one of the already existing fields, the extracted field will be renamed. Issue [#77569](https://github.com/grafana/grafana/issues/77569)
 
-For the existing backend mode users who have table visualization might see some inconsistencies on their panels. We have updated the table column naming. This will potentially affect field transformations and/or field overrides.  To resolve this either:
+For the existing backend mode users who have table visualization might see some inconsistencies on their panels. We have updated the table column naming. This will potentially affect field transformations and/or field overrides. To resolve this either:
+
 - Update transformation
 - Update field override Issue [#76899](https://github.com/grafana/grafana/issues/76899)
 
 For the existing backend mode users who have Transformations with the `time` field, **might** see their transformations are not working. Those panels that have broken transformations will fail to render. This is because we changed the field key. See related PR: https://github.com/grafana/grafana/pull/69865
 To resolve this either:
+
 - Remove the affected panel and re-create it
 - Select the `Time` field again
 - Edit the `time` field as `Time` for transformation in `panel.json` or `dashboard.json` Issue [#76641](https://github.com/grafana/grafana/issues/76641)
 
 The following data source permission endpoints have been removed:
-* `GET /datasources/:datasourceId/permissions`
-* `POST /api/datasources/:datasourceId/permissions`
-* `DELETE /datasources/:datasourceId/permissions`
-* `POST /datasources/:datasourceId/enable-permissions`
-* `POST /datasources/:datasourceId/disable-permissions`
+
+- `GET /datasources/:datasourceId/permissions`
+- `POST /api/datasources/:datasourceId/permissions`
+- `DELETE /datasources/:datasourceId/permissions`
+- `POST /datasources/:datasourceId/enable-permissions`
+- `POST /datasources/:datasourceId/disable-permissions`
 
 Please use the following endpoints instead:
-* `GET /api/access-control/datasources/:uid` for listing data source permissions
-* `POST /api/access-control/datasources/:uid/users/:id`, `POST /api/access-control/datasources/:uid/teams/:id` and `POST /api/access-control/datasources/:uid/buildInRoles/:id` for adding or removing data source permissions
+
+- `GET /api/access-control/datasources/:uid` for listing data source permissions
+- `POST /api/access-control/datasources/:uid/users/:id`, `POST /api/access-control/datasources/:uid/teams/:id` and `POST /api/access-control/datasources/:uid/buildInRoles/:id` for adding or removing data source permissions
 
 If you are using Terraform Grafana provider to manage data source permissions, you will need to upgrade your provider to [version 2.6.0](https://registry.terraform.io/providers/grafana/grafana/2.6.0/docs) or newer to ensure that data source permission provisioning keeps working. Issue [#5880](https://github.com/grafana/grafana/issues/5880)
 
 ### Deprecations
 
-Since Grafana 10.3 we're deprecating the `showContextToggle` data source method. To signal support of Logs Context, it is enough to implement the `DataSourceWithLogsContextSupport` interface.
-
+Since Grafana 10.2.3 we're deprecating the `showContextToggle` data source method. To signal support of Logs Context, it is enough to implement the `DataSourceWithLogsContextSupport` interface.
 
 **Which issue(s) does this PR fix?**:
 
