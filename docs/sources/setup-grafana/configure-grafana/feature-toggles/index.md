@@ -127,7 +127,6 @@ Experimental features might be changed or removed without prior notice.
 | `traceQLStreaming`                          | Enables response streaming of TraceQL queries of the Tempo data source                                                                                                                                                                                                            |
 | `metricsSummary`                            | Enables metrics summary queries in the Tempo data source                                                                                                                                                                                                                          |
 | `grafanaAPIServer`                          | Enable Kubernetes API Server for Grafana resources                                                                                                                                                                                                                                |
-| `grafanaAPIServerWithExperimentalAPIs`      | Register experimental APIs with the k8s API server                                                                                                                                                                                                                                |
 | `featureToggleAdminPage`                    | Enable admin page for managing feature toggles from the Grafana front-end                                                                                                                                                                                                         |
 | `traceToProfiles`                           | Enables linking between traces and profiles                                                                                                                                                                                                                                       |
 | `tracesEmbeddedFlameGraph`                  | Enables embedding a flame graph in traces                                                                                                                                                                                                                                         |
@@ -172,9 +171,10 @@ Experimental features might be changed or removed without prior notice.
 
 The following toggles require explicitly setting Grafana's [app mode]({{< relref "../_index.md#app_mode" >}}) to 'development' before you can enable this feature toggle. These features tend to be experimental.
 
-| Feature toggle name                   | Description                                                    |
-| ------------------------------------- | -------------------------------------------------------------- |
-| `unifiedStorage`                      | SQL-based k8s storage                                          |
-| `externalServiceAuth`                 | Starts an OAuth2 authentication provider for external services |
+| Feature toggle name                    | Description                                                    |
+| -------------------------------------- | -------------------------------------------------------------- |
+| `unifiedStorage`                       | SQL-based k8s storage                                          |
+| `externalServiceAuth`                  | Starts an OAuth2 authentication provider for external services |
+| `grafanaAPIServerWithExperimentalAPIs` | Register experimental APIs with the k8s API server             |
 | `grafanaAPIServerEnsureKubectlAccess` | Start an additional https handler and write kubectl options    |
 | `panelTitleSearchInV1`                | Enable searching for dashboards using panel title in search v1 |

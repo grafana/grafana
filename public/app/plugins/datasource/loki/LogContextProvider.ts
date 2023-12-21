@@ -77,7 +77,13 @@ export class LogContextProvider {
     options?: LogRowContextOptions,
     origQuery?: LokiQuery
   ): Promise<LokiQuery> => {
+    // FIXME: This is a hack to make sure that the context query is created with
+    // the correct set of filters. The whole `appliedContextFilters` property
+    // should be revisted.
+    const cachedFilters = this.appliedContextFilters;
+    this.appliedContextFilters = [];
     const { query } = await this.getQueryAndRange(row, options, origQuery);
+    this.appliedContextFilters = cachedFilters;
 
     return query;
   };

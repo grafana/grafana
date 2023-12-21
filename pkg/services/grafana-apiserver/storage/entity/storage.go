@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -138,9 +139,9 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 // current version of the object to avoid read operation from storage to get it.
 // However, the implementations have to retry in case suggestion is stale.
 func (s *Storage) Delete(ctx context.Context, key string, out runtime.Object, preconditions *storage.Preconditions, validateDeletion storage.ValidateObjectFunc, cachedExistingObject runtime.Object) error {
-	previousVersion := ""
+	previousVersion := int64(0)
 	if preconditions != nil && preconditions.ResourceVersion != nil {
-		previousVersion = *preconditions.ResourceVersion
+		previousVersion, _ = strconv.ParseInt(*preconditions.ResourceVersion, 10, 64)
 	}
 
 	rsp, err := s.store.Delete(ctx, &entityStore.DeleteEntityRequest{
@@ -332,9 +333,9 @@ func (s *Storage) guaranteedUpdate(
 		return err
 	}
 
-	previousVersion := ""
+	previousVersion := int64(0)
 	if preconditions != nil && preconditions.ResourceVersion != nil {
-		previousVersion = *preconditions.ResourceVersion
+		previousVersion, _ = strconv.ParseInt(*preconditions.ResourceVersion, 10, 64)
 	}
 
 	req := &entityStore.UpdateEntityRequest{
