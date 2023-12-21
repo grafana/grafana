@@ -223,25 +223,6 @@ func (s *sqlStore) ListAll(ctx context.Context, orgId int64) ([]playlist.Playlis
 		})
 		playlists[idx].Items = items
 	}
-
-	// err := s.db.WithDbSession(ctx, func(dbSess *db.Session) error {
-	// 	sess := dbSess.Limit(1000) // MAX?
-	// 	sess.Where("org_id = ?", orgId)
-	// 	err := sess.Find(&playlists)
-	// 	return err
-	// })
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// playlistItems := make([]playlist.PlaylistItem, 0)
-	// err = s.db.WithDbSession(ctx, func(dbSess *db.Session) error {
-	// 	sess := dbSess.Limit(5000) // items
-	// 	sess.Where("org_id = ?", orgId)
-	// 	err := sess.Find(&playlistItems)
-	// 	return err
-	// })
-
 	return playlists, err
 }
 
