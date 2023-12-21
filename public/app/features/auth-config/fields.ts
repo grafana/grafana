@@ -33,10 +33,6 @@ export const fieldMap: Record<string, FieldData> = {
   clientSecret: {
     label: 'Client Secret',
     type: 'secret',
-    validation: {
-      required: true,
-      message: 'This field is required',
-    },
   },
   teamIds: {
     label: 'Team Ids',
