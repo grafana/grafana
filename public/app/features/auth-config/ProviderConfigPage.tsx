@@ -12,7 +12,7 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { StoreState } from '../../types';
 
 import { fieldMap, fields } from './fields';
-import { loadSettings } from './state/actions';
+import { loadProviders } from './state/actions';
 import { SSOProvider, SSOProviderDTO, FieldData } from './types';
 import { dataToDTO, dtoToData } from './utils/data';
 import { isSelectableValue } from './utils/guards';
@@ -50,7 +50,7 @@ function mapStateToProps(state: StoreState, props: RouteProps) {
 }
 
 const mapDispatchToProps = {
-  loadSettings,
+  loadProviders,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -59,12 +59,12 @@ export type Props = ConnectedProps<typeof connector>;
 /**
  * Separate the Page logic from the Content logic for easier testing.
  */
-export const ProviderConfigPage = ({ config, loadSettings, isLoading, provider }: Props) => {
+export const ProviderConfigPage = ({ config, loadProviders, isLoading, provider }: Props) => {
   const pageNav = getPageNav(config);
 
   useEffect(() => {
-    loadSettings();
-  }, [loadSettings]);
+    loadProviders(provider);
+  }, [loadProviders, provider]);
 
   if (!config) {
     return null;
