@@ -66,10 +66,6 @@ export const fieldMap: Record<string, FieldData> = {
     label: 'Client Secret',
     type: 'secret',
     description: 'These values must match the client secret from your OAuth2 app.',
-    validation: {
-      required: true,
-      message: 'This field is required',
-    },
   },
   teamIds: {
     label: 'Team Ids',

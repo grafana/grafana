@@ -14,7 +14,7 @@ export type GetStatusHook = () => Promise<AuthProviderStatus>;
 // Settings types common to the provider settings data when working with the API and forms
 export type SSOProviderSettingsBase = {
   allowAssignGrafanaAdmin?: boolean;
-  allowSignup?: boolean;
+  allowSignUp?: boolean;
 
   apiUrl?: string;
   authStyle?: string;

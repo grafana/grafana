@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { JSX } from 'react';
 
-import { ProviderConfig } from './ProviderConfigPage';
+import { ProviderConfigForm } from './ProviderConfigForm';
 import { SSOProvider } from './types';
 import { emptySettings } from './utils/data';
 
@@ -23,6 +23,9 @@ jest.mock('@grafana/runtime', () => ({
     publish: jest.fn(),
   }),
   isFetchError: () => true,
+  locationService: {
+    push: jest.fn(),
+  },
 }));
 
 // Mock the FormPrompt component as it requires Router setup to work
@@ -59,13 +62,13 @@ function setup(jsx: JSX.Element) {
   };
 }
 
-describe('ProviderConfig', () => {
+describe('ProviderConfigForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it('renders all fields correctly', async () => {
-    setup(<ProviderConfig config={testConfig} provider={testConfig.provider} />);
+    setup(<ProviderConfigForm config={testConfig} provider={testConfig.provider} />);
     expect(screen.getByRole('checkbox', { name: /Enabled/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /Client ID/i })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: /Team IDs/i })).toBeInTheDocument();
@@ -75,7 +78,7 @@ describe('ProviderConfig', () => {
   });
 
   it('should save correct data on form submit', async () => {
-    const { user } = setup(<ProviderConfig config={emptyConfig} provider={emptyConfig.provider} />);
+    const { user } = setup(<ProviderConfigForm config={emptyConfig} provider={emptyConfig.provider} />);
     await user.type(screen.getByRole('textbox', { name: /Client ID/i }), 'test-client-id');
     await user.type(screen.getByLabelText(/Client secret/i), 'test-client-secret');
     // Type a team name and press enter to select it
@@ -104,10 +107,10 @@ describe('ProviderConfig', () => {
   });
 
   it('should validate required fields', async () => {
-    const { user } = setup(<ProviderConfig config={emptyConfig} provider={emptyConfig.provider} />);
+    const { user } = setup(<ProviderConfigForm config={emptyConfig} provider={emptyConfig.provider} />);
     await user.click(screen.getByRole('button', { name: /Save/i }));
 
-    // Should show 2 alerts for 2 empty fields
-    expect(await screen.findAllByRole('alert')).toHaveLength(2);
+    // Should show an alert for empty client ID
+    expect(await screen.findAllByRole('alert')).toHaveLength(1);
   });
 });

@@ -7,7 +7,7 @@ import { isSelectableValue } from './guards';
 
 export const emptySettings: SSOProviderDTO = {
   allowAssignGrafanaAdmin: false,
-  allowSignup: false,
+  allowSignUp: false,
   allowedDomains: [],
   allowedGroups: [],
   allowedOrganizations: [],
