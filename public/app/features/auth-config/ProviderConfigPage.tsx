@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { AppEvents, NavModelItem } from '@grafana/data';
-import { getAppEvents, getBackendSrv, isFetchError } from '@grafana/runtime';
+import { getAppEvents, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { Button, Field, Input, InputControl, LinkButton, SecretInput, Select, Stack, Switch } from '@grafana/ui';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { Page } from 'app/core/components/Page/Page';
@@ -92,19 +92,30 @@ export const ProviderConfig = ({ config, provider, isLoading }: ProviderConfigPr
     reset,
     watch,
     setValue,
-    formState: { errors, dirtyFields },
+    formState: { errors, dirtyFields, isSubmitted },
   } = useForm({ defaultValues: dataToDTO(config) });
   const [isSaving, setIsSaving] = useState(false);
   const [isSecretConfigured, setIsSecretConfigured] = useState(!!config?.settings.clientSecret);
   const providerFields = fields[provider];
+  const [submitError, setSubmitError] = useState(false);
+  const dataSubmitted = isSubmitted && !submitError;
+
+  useEffect(() => {
+    if (dataSubmitted) {
+      locationService.push(`/admin/authentication`);
+    }
+  }, [dataSubmitted]);
+
   const onSubmit = async (data: SSOProviderDTO) => {
     setIsSaving(true);
+    setSubmitError(false);
     const requestData = dtoToData(data);
     try {
       await getBackendSrv().put(`/api/v1/sso-settings/${provider}`, {
         ...config,
         settings: { ...config?.settings, ...requestData },
       });
+
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
         payload: ['Settings saved'],
@@ -120,6 +131,7 @@ export const ProviderConfig = ({ config, provider, isLoading }: ProviderConfigPr
         type: AppEvents.alertError.name,
         payload: [message],
       });
+      setSubmitError(true);
     } finally {
       setIsSaving(false);
     }
@@ -222,7 +234,7 @@ export const ProviderConfig = ({ config, provider, isLoading }: ProviderConfigPr
           <>
             <FormPrompt
               // TODO Figure out why isDirty is not working
-              confirmRedirect={!!Object.keys(dirtyFields).length}
+              confirmRedirect={!!Object.keys(dirtyFields).length && !dataSubmitted}
               onDiscard={() => {
                 reset();
               }}
