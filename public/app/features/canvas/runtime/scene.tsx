@@ -32,6 +32,7 @@ import { CanvasTooltip } from 'app/plugins/panel/canvas/components/CanvasTooltip
 import { CONNECTION_ANCHOR_DIV_ID } from 'app/plugins/panel/canvas/components/connections/ConnectionAnchors';
 import { Connections } from 'app/plugins/panel/canvas/components/connections/Connections';
 import { AnchorPoint, CanvasTooltipPayload, LayerActionID } from 'app/plugins/panel/canvas/types';
+import { getParent } from 'app/plugins/panel/canvas/utils';
 
 import appEvents from '../../../core/app_events';
 import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
@@ -389,7 +390,7 @@ export class Scene {
 
     this.selecto = new Selecto({
       container: this.div,
-      rootContainer: this.transformComponentRef?.current?.instance.contentComponent,
+      rootContainer: getParent(this),
       selectableTargets: targetElements,
       toggleContinueSelect: 'shift',
       selectFromInside: false,
@@ -717,8 +718,8 @@ export class Scene {
           }
           this.scale = scale;
         }}
-        onTransformed={(r, s) => {
-          this.scale = s.scale;
+        onTransformed={(ref, state) => {
+          this.scale = state.scale;
         }}
         limitToBounds={true}
         disabled={!config.featureToggles.canvasPanelPanZoom || !this.shouldPanZoom}

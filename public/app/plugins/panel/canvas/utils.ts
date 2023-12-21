@@ -240,7 +240,17 @@ export const getConnectionStyles = (info: CanvasConnection, scene: Scene, defaul
   return { strokeColor, strokeWidth };
 };
 
-export const getTransformObject = (scene: Scene) => {
-  const transformRef = scene.transformComponentRef?.current;
-  return { transformRef, transformScale: transformRef?.instance.transformState.scale ?? 1 };
+export const getParentBoundingClientRect = (scene: Scene) => {
+  if (config.featureToggles.canvasPanelPanZoom) {
+    const transformRef = scene.transformComponentRef?.current;
+    return transformRef?.instance.contentComponent?.getBoundingClientRect();
+  }
+  return scene.div?.getBoundingClientRect();
+};
+
+export const getParent = (scene: Scene) => {
+  if (config.featureToggles.canvasPanelPanZoom) {
+    return scene.transformComponentRef?.current?.instance.contentComponent;
+  }
+  return scene.div;
 };

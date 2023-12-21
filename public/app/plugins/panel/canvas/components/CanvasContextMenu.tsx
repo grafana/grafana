@@ -10,7 +10,7 @@ import { Scene } from 'app/features/canvas/runtime/scene';
 
 import { CanvasPanel } from '../CanvasPanel';
 import { AnchorPoint, LayerActionID } from '../types';
-import { getElementTypes, getTransformObject, onAddItem } from '../utils';
+import { getElementTypes, onAddItem } from '../utils';
 
 type Props = {
   scene: Scene;
@@ -117,7 +117,7 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
         let offsetY = anchorPoint.y;
         let offsetX = anchorPoint.x;
         if (scene.div) {
-          const { transformScale } = getTransformObject(scene);
+          const transformScale = scene.scale;
           const sceneContainerDimensions = scene.div.getBoundingClientRect();
           offsetY = (offsetY - sceneContainerDimensions.top) / transformScale;
           offsetX = (offsetX - sceneContainerDimensions.left) / transformScale;
