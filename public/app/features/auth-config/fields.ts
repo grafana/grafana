@@ -40,7 +40,7 @@ export const sectionFields: Section = {
         'authUrl',
         'tokenUrl',
         'apiUrl',
-        'allowSignup',
+        'allowSignUp',
         'autoLogin',
         'signoutRedirectUrl',
       ],

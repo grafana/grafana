@@ -15,7 +15,6 @@ export type GetStatusHook = () => Promise<AuthProviderStatus>;
 export type SSOProviderSettingsBase = {
   allowAssignGrafanaAdmin?: boolean;
   allowSignUp?: boolean;
-
   apiUrl?: string;
   authStyle?: string;
   authUrl?: string;
