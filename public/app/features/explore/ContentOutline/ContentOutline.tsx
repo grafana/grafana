@@ -25,15 +25,39 @@ const getStyles = (theme: GrafanaTheme2) => {
       top: 0,
     }),
     buttonStyles: css({
-      textAlign: 'left',
+      textAlign: 'right',
       width: '100%',
       padding: theme.spacing(0, 1.5),
+      '&:hover': {
+        color: theme.colors.text.primary,
+        textDecoration: 'underline',
+      },
+    }),
+    iconButton: css({
+      justifyContent: 'center',
+      width: theme.spacing(4),
+      '&:hover': {
+        color: theme.colors.text.primary,
+        background: theme.colors.background.secondary,
+        textDecoration: 'underline',
+      },
+    }),
+    sectionWrapper: css({
+      display: 'flex',
+    }),
+    indent: css({
+      paddingLeft: '68px',
+      '&:hover': {
+        color: theme.colors.text.primary,
+        textDecoration: 'underline',
+      },
     }),
   };
 };
 
 export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | undefined; panelId: string }) {
-  const [expanded, toggleExpanded] = useToggle(false);
+  const [contentOutlineExpanded, toggleContentOutlineExpanded] = useToggle(false);
+  const [sectionExpanded, toggleSectionExpanded] = useToggle(false);
   const styles = useStyles2((theme) => getStyles(theme));
   const { outlineItems } = useContentOutlineContext();
 
@@ -60,50 +84,67 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
   };
 
   const toggle = () => {
-    toggleExpanded();
+    toggleContentOutlineExpanded();
     reportInteraction('explore_toolbar_contentoutline_clicked', {
       item: 'outline',
-      type: expanded ? 'minimize' : 'expand',
+      type: contentOutlineExpanded ? 'minimize' : 'expand',
     });
   };
 
-  console.log('outlineItems', outlineItems);
+  const toggleSection = () => {
+    toggleSectionExpanded();
+    reportInteraction('explore_toolbar_contentoutline_clicked', {
+      item: 'section',
+      type: sectionExpanded ? 'minimize' : 'expand',
+    });
+  };
 
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>
       <CustomScrollbar>
         <div className={styles.content}>
           <ContentOutlineItemButton
-            title={expanded ? 'Collapse outline' : undefined}
-            icon={expanded ? 'angle-left' : 'angle-right'}
+            title={contentOutlineExpanded ? 'Collapse outline' : undefined}
+            icon={contentOutlineExpanded ? 'angle-left' : 'angle-right'}
             onClick={toggle}
-            tooltip={!expanded ? 'Expand content outline' : undefined}
+            tooltip={!contentOutlineExpanded ? 'Expand content outline' : undefined}
             className={styles.buttonStyles}
-            aria-expanded={expanded}
+            aria-expanded={contentOutlineExpanded}
           />
 
           {/* TODO: implement a collapsible section if item has children
            */}
           {outlineItems.map((item) => (
             <>
-              <ContentOutlineItemButton
-                key={item.id}
-                title={expanded ? item.title : undefined}
-                className={styles.buttonStyles}
-                icon={item.icon}
-                onClick={() => scrollIntoView(item.ref, item.panelId)}
-                tooltip={!expanded ? item.title : undefined}
-              />
-              {item.children?.map((child) => (
+              <div className={styles.sectionWrapper}>
+                {item.children && (
+                  <ContentOutlineItemButton
+                    key={item.id}
+                    icon={sectionExpanded ? 'angle-down' : 'angle-right'}
+                    className={styles.iconButton}
+                    onClick={toggleSection}
+                  />
+                )}
                 <ContentOutlineItemButton
-                  key={child.id}
-                  title={expanded ? child.title : undefined}
+                  key={item.id}
+                  title={contentOutlineExpanded ? item.title : undefined}
                   className={styles.buttonStyles}
-                  icon={child.icon}
-                  onClick={() => scrollIntoView(child.ref, child.panelId)}
-                  tooltip={!expanded ? child.title : undefined}
+                  icon={item.icon}
+                  onClick={() => scrollIntoView(item.ref, item.panelId)}
+                  tooltip={!contentOutlineExpanded ? item.title : undefined}
                 />
-              ))}
+              </div>
+              {item.children &&
+                sectionExpanded &&
+                item.children.map((child) => (
+                  <ContentOutlineItemButton
+                    key={child.id}
+                    title={contentOutlineExpanded ? child.title : undefined}
+                    className={styles.indent}
+                    onClick={() => scrollIntoView(child.ref, child.panelId)}
+                    tooltip={!contentOutlineExpanded ? child.title : undefined}
+                  />
+                ))}
             </>
           ))}
         </div>

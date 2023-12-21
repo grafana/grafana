@@ -23,17 +23,28 @@ export const ContentOutlineContextProvider = ({ children }: { children: ReactNod
   const [outlineItems, setOutlineItems] = useState<ContentOutlineItemContextProps[]>([]);
 
   const register: RegisterFunction = useCallback(({ panelId, title, icon, ref }) => {
-    const id = uniqueId(`${title}-${icon}_`);
+    const id = uniqueId(`${panelId}-${title}-${icon}_`);
 
     setOutlineItems((prevItems) => {
-      const parent = prevItems.find((item) => item.panelId === panelId);
+      const matchIndex = prevItems.findIndex((item) => item.panelId === panelId);
+      const match = prevItems[matchIndex];
+
+      const matchIsParent = match && match.children && match.children.length > 0;
 
       let updatedItems = [...prevItems];
 
-      if (parent) {
-        parent.children = parent.children || [];
-        parent.children.push({ id, panelId, title, icon, ref });
+      if (matchIsParent) {
+        match.children?.push({ id, panelId, title, icon, ref });
+        match.children?.sort(sortElementsByDocumentPosition);
+      } else if (match) {
+        const parent = {
+          ...match,
+          id: uniqueId(`section-${panelId}-${title}-${icon}_`),
+          title: panelId,
+          children: [match, { id, panelId, title, icon, ref }],
+        };
         parent.children.sort(sortElementsByDocumentPosition);
+        updatedItems.splice(matchIndex, 1, parent);
       } else {
         updatedItems = [...prevItems, { id, panelId, title, icon, ref }];
         updatedItems.sort(sortElementsByDocumentPosition);

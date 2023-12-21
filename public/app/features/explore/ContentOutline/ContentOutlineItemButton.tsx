@@ -6,7 +6,7 @@ import { Icon, useStyles2, Tooltip } from '@grafana/ui';
 
 type CommonProps = {
   title?: string;
-  icon: string;
+  icon?: string;
   tooltip?: string;
   className?: string;
 };
@@ -62,11 +62,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       textOverflow: 'ellipsis',
       overflow: 'hidden',
       whiteSpace: 'nowrap',
-      '&:hover': {
-        color: theme.colors.text.primary,
-        background: theme.colors.background.secondary,
-        textDecoration: 'underline',
-      },
     }),
   };
 };
