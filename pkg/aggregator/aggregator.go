@@ -21,6 +21,7 @@ limitations under the License.
 package aggregator
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net"
@@ -39,6 +40,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/apimachinery/pkg/util/sets"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	genericfeatures "k8s.io/apiserver/pkg/features"
@@ -58,7 +60,6 @@ import (
 	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
 	apiregistrationclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 	apiregistrationclient "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/typed/apiregistration/v1"
-	apiserviceinformers "k8s.io/kube-aggregator/pkg/client/informers/externalversions"
 	apiregistrationInformers "k8s.io/kube-aggregator/pkg/client/informers/externalversions/apiregistration/v1"
 	"k8s.io/kube-aggregator/pkg/controllers/autoregister"
 	aggregatoropenapi "k8s.io/kube-aggregator/pkg/generated/openapi"
@@ -70,7 +71,9 @@ import (
 type AggregatorServerOptions struct {
 	Builders           []grafanaAPIServer.APIGroupBuilder
 	RecommendedOptions *options.RecommendedOptions
-	AlternateDNS       []string
+	// TODO: encapsulate ProxyClientCertFile and ProxyClientCertKey and pass those through CLI args
+	// ExtraOptions       *aggregator.ExtraOptions
+	AlternateDNS []string
 
 	sharedInformerFactory informersv0alpha1.SharedInformerFactory
 
@@ -82,14 +85,13 @@ func NewAggregatorServerOptions(out, errOut io.Writer) *AggregatorServerOptions 
 	return &AggregatorServerOptions{
 		StdOut: out,
 		StdErr: errOut,
+		Builders: []grafanaAPIServer.APIGroupBuilder{
+			service.NewServiceAPIBuilder(),
+		},
 	}
 }
 
 func (o *AggregatorServerOptions) LoadAPIGroupBuilders() error {
-	o.Builders = []grafanaAPIServer.APIGroupBuilder{
-		service.NewServiceAPIBuilder(),
-	}
-
 	// Install schemas
 	for _, b := range o.Builders {
 		if err := b.InstallSchema(aggregatorscheme.Scheme); err != nil {
@@ -258,9 +260,9 @@ func (o *AggregatorServerOptions) CreateAggregatorConfig() (*aggregatorapiserver
 			ClientConfig:          genericConfig.LoopbackClientConfig,
 		},
 		ExtraConfig: aggregatorapiserver.ExtraConfig{
-			// ProxyClientCertFile:       commandOptions.ProxyClientCertFile,
-			// ProxyClientKeyFile:        commandOptions.ProxyClientKeyFile,
-			// ProxyTransport:  proxyTransport,
+			ProxyClientCertFile: "/Users/charandas/go/src/github.com/grafana/grafana/client.crt",
+			ProxyClientKeyFile:  "/Users/charandas/go/src/github.com/grafana/grafana/client.key",
+			ProxyTransport:      createProxyTransport(),
 		},
 	}
 
@@ -284,6 +286,7 @@ func (o *AggregatorServerOptions) CreateAggregatorServer(aggregatorConfig *aggre
 	if err != nil {
 		return nil, err
 	}
+
 	autoRegistrationController := autoregister.NewAutoRegisterController(aggregatorServer.APIRegistrationInformers.Apiregistration().V1().APIServices(), apiRegistrationClient)
 	apiServices := apiServicesToRegister(delegateAPIServer, autoRegistrationController)
 
@@ -319,13 +322,9 @@ func (o *AggregatorServerOptions) CreateAggregatorServer(aggregatorConfig *aggre
 	if err != nil {
 		return nil, err
 	}
-	informerFactory := apiserviceinformers.NewSharedInformerFactory(
-		apiregistrationClient,
-		5*time.Minute, // this is effectively used as a refresh interval right now.  Might want to do something nicer later on.
-	)
 
 	availableController, err := NewAvailableConditionController(
-		informerFactory.Apiregistration().V1().APIServices(),
+		aggregatorServer.APIRegistrationInformers.Apiregistration().V1().APIServices(),
 		o.sharedInformerFactory.Service().V0alpha1().ExternalNames(),
 		apiregistrationClient.ApiregistrationV1(),
 		nil,
@@ -343,8 +342,8 @@ func (o *AggregatorServerOptions) CreateAggregatorServer(aggregatorConfig *aggre
 	})
 
 	aggregatorServer.GenericAPIServer.AddPostStartHookOrDie("start-grafana-aggregator-informers", func(context genericapiserver.PostStartHookContext) error {
-		informerFactory.Start(context.StopCh)
 		o.sharedInformerFactory.Start(context.StopCh)
+		aggregatorServer.APIRegistrationInformers.Start(context.StopCh)
 		return nil
 	})
 
@@ -363,6 +362,7 @@ func (o *AggregatorServerOptions) CreateAggregatorServer(aggregatorConfig *aggre
 		}
 	}
 
+	time.Sleep(time.Second * 10)
 	return aggregatorServer, nil
 }
 
@@ -477,4 +477,16 @@ func apiServicesToRegister(delegateAPIServer genericapiserver.DelegationTarget, 
 	}
 
 	return apiServices
+}
+
+// createProxyTransport creates the dialer infrastructure to connect to the nodes.
+func createProxyTransport() *http.Transport {
+	var proxyDialerFn utilnet.DialFunc
+	// Proxying to pods and services is IP-based... don't expect to be able to verify the hostname
+	proxyTLSClientConfig := &tls.Config{InsecureSkipVerify: true}
+	proxyTransport := utilnet.SetTransportDefaults(&http.Transport{
+		DialContext:     proxyDialerFn,
+		TLSClientConfig: proxyTLSClientConfig,
+	})
+	return proxyTransport
 }

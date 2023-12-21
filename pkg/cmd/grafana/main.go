@@ -54,7 +54,7 @@ func main() {
 				SkipFlagParsing: true,
 				Action: func(context *cli.Context) error {
 					// exit here because apiserver handles its own error output
-					os.Exit(apiserver.RunAggregatorCLI())
+					os.Exit(apiserver.RunCobraWrapper())
 					return nil
 				},
 			},

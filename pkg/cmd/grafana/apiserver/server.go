@@ -145,14 +145,15 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 	}
 
 	o.RecommendedOptions.Authentication.RemoteKubeConfigFileOptional = true
-	o.RecommendedOptions.Authorization.RemoteKubeConfigFileOptional = true
+	// o.RecommendedOptions.Authorization.RemoteKubeConfigFileOptional = true
+	o.RecommendedOptions.Authorization = nil
 
 	o.RecommendedOptions.Admission = nil
 	o.RecommendedOptions.Etcd = nil
 
-	if o.RecommendedOptions.CoreAPI.CoreAPIKubeconfigPath == "" {
+	/* if o.RecommendedOptions.CoreAPI.CoreAPIKubeconfigPath == "" {
 		o.RecommendedOptions.CoreAPI = nil
-	}
+	} */
 
 	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
 
@@ -165,6 +166,9 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 			return nil, err
 		}
 	}
+
+	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("generic-apiserver-start-informers")
+	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("priority-and-fairness-config-consumer")
 
 	// Add OpenAPI specs for each group+version
 	defsGetter := grafanaAPIServer.GetOpenAPIDefinitions(o.builders)
@@ -196,6 +200,7 @@ func (o *APIServerOptions) Complete() error {
 func (o *APIServerOptions) RunAPIServer(config *genericapiserver.RecommendedConfig, stopCh <-chan struct{}) error {
 	delegationTarget := genericapiserver.NewEmptyDelegate()
 	completedConfig := config.Complete()
+
 	server, err := completedConfig.New("example-apiserver", delegationTarget)
 	if err != nil {
 		return err
@@ -216,14 +221,12 @@ func (o *APIServerOptions) RunAPIServer(config *genericapiserver.RecommendedConf
 		}
 	}
 
-	// in standalone mode, write the local config to disk
-	if o.RecommendedOptions.CoreAPI == nil {
-		if err = clientcmd.WriteToFile(
-			utils.FormatKubeConfig(server.LoopbackClientConfig),
-			path.Join(dataPath, "grafana.kubeconfig"),
-		); err != nil {
-			return err
-		}
+	// write the local config to disk
+	if err = clientcmd.WriteToFile(
+		utils.FormatKubeConfig(server.LoopbackClientConfig),
+		path.Join(dataPath, "apiserver.kubeconfig"),
+	); err != nil {
+		return err
 	}
 
 	return server.PrepareRun().Run(stopCh)

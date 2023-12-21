@@ -13,8 +13,6 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/component-base/cli"
-	"k8s.io/component-base/logs"
-	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
 	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
 )
 
@@ -73,7 +71,7 @@ func RunCLI() int {
 	return cli.Run(cmd)
 }
 
-func newCommandStartAggregator(apiAggregator *aggregatorapiserver.APIAggregator, stopCh <-chan struct{}) *cobra.Command {
+func newCommandStartAggregator(o *aggregator.AggregatorServerOptions) *cobra.Command {
 	devAcknowledgementNotice := "The apiserver command is in heavy development.  The entire setup is subject to change without notice"
 
 	cmd := &cobra.Command{
@@ -83,52 +81,35 @@ func newCommandStartAggregator(apiAggregator *aggregatorapiserver.APIAggregator,
 			devAcknowledgementNotice,
 		Example: "grafana aggregator",
 		RunE: func(c *cobra.Command, args []string) error {
-			// Finish the config (a noop for now)
-			prepared, err := apiAggregator.PrepareRun()
-			if err != nil {
-				return err
-			}
-
-			if err := prepared.Run(stopCh); err != nil {
-				return err
-			}
-			return nil
+			return run(o)
 		},
 	}
 
 	return cmd
 }
 
-func RunAggregatorCLI() int {
-	serverOptions := aggregator.NewAggregatorServerOptions(os.Stdout, os.Stderr)
-	// Register standard k8s flags with the command line
-	serverOptions.RecommendedOptions = options.NewRecommendedOptions(
-		defaultAggregatorEtcdPathPrefix,
-		aggregatorscheme.Codecs.LegacyCodec(), // codec is passed to etcd and hence not used
-	)
-
+func run(serverOptions *aggregator.AggregatorServerOptions) error {
 	if err := serverOptions.LoadAPIGroupBuilders(); err != nil {
 		klog.Errorf("Error loading prerequisite APIs: %s", err)
-		return -1
+		return err
 	}
 
+	serverOptions.RecommendedOptions.Authentication.ClientCert = options.ClientCertAuthenticationOptions{
+		ClientCA: "/Users/charandas/go/src/github.com/grafana/grafana/ca.crt",
+	}
 	serverOptions.RecommendedOptions.SecureServing.BindPort = 8443
 	delegationTarget := genericapiserver.NewEmptyDelegate()
-
-	if _, err := logs.GlogSetter("10"); err != nil {
-		return -1
-	}
 
 	config, err := serverOptions.CreateAggregatorConfig()
 	if err != nil {
 		klog.Errorf("Error creating aggregator config: %s", err)
-		return -1
+		return err
 	}
 
 	aggregator, err := serverOptions.CreateAggregatorServer(config, delegationTarget)
 	if err != nil {
 		klog.Errorf("Error creating aggregator server: %s", err)
-		return -1
+		return err
 	}
 
 	// Install the API Group+version
@@ -136,7 +117,7 @@ func RunAggregatorCLI() int {
 		g, err := b.GetAPIGroupInfo(Scheme, Codecs, config.GenericConfig.RESTOptionsGetter)
 		if err != nil {
 			klog.Errorf("Error getting group info for prerequisite API group: %s", err)
-			return -1
+			return err
 		}
 		if g == nil || len(g.PrioritizedVersions) < 1 {
 			continue
@@ -144,21 +125,42 @@ func RunAggregatorCLI() int {
 		err = aggregator.GenericAPIServer.InstallAPIGroup(g)
 		if err != nil {
 			klog.Errorf("Error installing prerequisite API groups for aggregator: %s", err)
-			return -1
+			return err
 		}
 	}
 
-	stopCh := genericapiserver.SetupSignalHandler()
-	cmd := newCommandStartAggregator(aggregator, stopCh)
-	serverOptions.RecommendedOptions.AddFlags(cmd.Flags())
-
-	if err = clientcmd.WriteToFile(
+	if err := clientcmd.WriteToFile(
 		utils.FormatKubeConfig(aggregator.GenericAPIServer.LoopbackClientConfig),
-		path.Join(dataPath, "grafana.kubeconfig"),
+		path.Join(dataPath, "aggregator.kubeconfig"),
 	); err != nil {
-		klog.Errorf("Error persisting grafana.kubeconfig: %s", err)
-		return -1
+		klog.Errorf("Error persisting aggregator.kubeconfig: %s", err)
+		return err
 	}
+
+	// Finish the config (a noop for now)
+	prepared, err := aggregator.PrepareRun()
+	if err != nil {
+		return err
+	}
+
+	stopCh := genericapiserver.SetupSignalHandler()
+	if err := prepared.Run(stopCh); err != nil {
+		return err
+	}
+	return nil
+}
+
+func RunCobraWrapper() int {
+	serverOptions := aggregator.NewAggregatorServerOptions(os.Stdout, os.Stderr)
+	// Register standard k8s flags with the command line
+	serverOptions.RecommendedOptions = options.NewRecommendedOptions(
+		defaultAggregatorEtcdPathPrefix,
+		aggregatorscheme.Codecs.LegacyCodec(), // codec is passed to etcd and hence not used
+	)
+
+	cmd := newCommandStartAggregator(serverOptions)
+
+	serverOptions.RecommendedOptions.AddFlags(cmd.Flags())
 
 	return cli.Run(cmd)
 }
