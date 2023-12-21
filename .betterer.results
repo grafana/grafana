@@ -605,9 +605,6 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/DataLinks/DataLinkInput.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "packages/grafana-ui/src/components/DataLinks/DataLinksContextMenu.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
-    ],
     "packages/grafana-ui/src/components/DataSourceSettings/CustomHeadersSettings.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
@@ -655,10 +652,6 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-ui/src/components/MatchersUI/fieldMatchersUI.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "packages/grafana-ui/src/components/Menu/SubMenu.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
     ],
     "packages/grafana-ui/src/components/Modal/ModalsContext.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -794,10 +787,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "packages/grafana-ui/src/components/ValuePicker/ValuePicker.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
-    ],
-    "packages/grafana-ui/src/components/VizLegend/VizLegendListItem.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "packages/grafana-ui/src/components/VizLegend/types.ts:5381": [
@@ -2361,6 +2350,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "1"],
       [0, 0, 0, "Styles should be written using objects.", "2"]
     ],
+    "public/app/features/auth-config/utils/data.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
     "public/app/features/canvas/element.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -2444,6 +2436,20 @@ exports[`better eslint`] = {
     ],
     "public/app/features/dashboard-scene/inspect/InspectJsonTab.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
+    "public/app/features/dashboard-scene/panel-edit/VizPanelManager.test.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
+    ],
+    "public/app/features/dashboard-scene/panel-edit/VizPanelManager.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
     "public/app/features/dashboard-scene/scene/DashboardScene.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -4183,14 +4189,14 @@ exports[`better eslint`] = {
     ],
     "public/app/features/query/components/QueryGroup.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
       [0, 0, 0, "Styles should be written using objects.", "2"],
       [0, 0, 0, "Styles should be written using objects.", "3"],
       [0, 0, 0, "Styles should be written using objects.", "4"],
       [0, 0, 0, "Styles should be written using objects.", "5"],
       [0, 0, 0, "Styles should be written using objects.", "6"],
       [0, 0, 0, "Styles should be written using objects.", "7"],
-      [0, 0, 0, "Styles should be written using objects.", "8"]
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "8"]
     ],
     "public/app/features/query/components/QueryGroupOptions.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
@@ -5884,9 +5890,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
-    "public/app/plugins/datasource/prometheus/querybuilder/shared/parsingUtils.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/plugins/datasource/prometheus/querybuilder/shared/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -6385,12 +6388,11 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/plugins/panel/piechart/PieChart.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
       [0, 0, 0, "Styles should be written using objects.", "2"],
       [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"],
-      [0, 0, 0, "Styles should be written using objects.", "5"]
+      [0, 0, 0, "Styles should be written using objects.", "4"]
     ],
     "public/app/plugins/panel/piechart/migrations.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -6546,7 +6548,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "11"]
     ],
     "public/app/plugins/panel/timeseries/plugins/ExemplarMarker.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
       [0, 0, 0, "Styles should be written using objects.", "2"],
       [0, 0, 0, "Styles should be written using objects.", "3"],
@@ -6556,8 +6558,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "7"],
       [0, 0, 0, "Styles should be written using objects.", "8"],
       [0, 0, 0, "Styles should be written using objects.", "9"],
-      [0, 0, 0, "Styles should be written using objects.", "10"],
-      [0, 0, 0, "Styles should be written using objects.", "11"]
+      [0, 0, 0, "Styles should be written using objects.", "10"]
     ],
     "public/app/plugins/panel/timeseries/plugins/ThresholdDragHandle.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -7227,15 +7228,6 @@ exports[`no gf-form usage`] = {
     "public/app/features/plugins/admin/components/PluginDashboards.tsx:5381": [
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
-    "public/app/features/profile/UserOrganizations.tsx:5381": [
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
-    "public/app/features/profile/UserSessions.tsx:5381": [
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
-    "public/app/features/profile/UserTeams.tsx:5381": [
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
     "public/app/features/query/components/QueryEditorRow.tsx:5381": [
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
@@ -7400,10 +7392,6 @@ exports[`no gf-form usage`] = {
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
-    "public/app/plugins/datasource/influxdb/components/editor/config/InfluxSQLConfig.tsx:5381": [
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],

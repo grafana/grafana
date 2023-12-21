@@ -55,15 +55,6 @@ import {
 } from '@grafana/lezer-logql';
 
 import {
-  ErrorId,
-  getAllByType,
-  getLeftMostChild,
-  getString,
-  makeBinOp,
-  makeError,
-  replaceVariables,
-} from '../../prometheus/querybuilder/shared/parsingUtils';
-import {
   QueryBuilderLabelFilter,
   QueryBuilderOperation,
   QueryBuilderOperationParamValue,
@@ -71,6 +62,15 @@ import {
 
 import { binaryScalarDefs } from './binaryScalarOperations';
 import { checkParamsAreValid, getDefinitionById } from './operations';
+import {
+  ErrorId,
+  getAllByType,
+  getLeftMostChild,
+  getString,
+  makeBinOp,
+  makeError,
+  replaceVariables,
+} from './parsingUtils';
 import { LokiOperationId, LokiVisualQuery, LokiVisualQueryBinary } from './types';
 
 interface Context {

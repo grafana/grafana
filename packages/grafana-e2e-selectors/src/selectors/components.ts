@@ -64,7 +64,7 @@ export const Components = {
         exemplarsAddButton: 'Add exemplar config button',
         internalLinkSwitch: 'Internal link switch',
       },
-      exemplarMarker: 'Exemplar marker',
+      exemplarMarker: 'data-testid Exemplar marker',
     },
   },
   Menu: {
@@ -72,8 +72,8 @@ export const Components = {
     MenuGroup: (title: string) => `${title} menu group`,
     MenuItem: (title: string) => `${title} menu item`,
     SubMenu: {
-      container: 'SubMenu container',
-      icon: 'SubMenu icon',
+      container: 'data-testid SubMenu container',
+      icon: 'data-testid SubMenu icon',
     },
   },
   Panels: {
@@ -113,7 +113,7 @@ export const Components = {
         valueV2: 'data-testid Bar gauge value',
       },
       PieChart: {
-        svgSlice: 'Pie Chart Slice',
+        svgSlice: 'data testid Pie Chart Slice',
       },
       Text: {
         container: () => '.markdown-html',
@@ -126,7 +126,7 @@ export const Components = {
     },
   },
   VizLegend: {
-    seriesName: (name: string) => `VizLegend series ${name}`,
+    seriesName: (name: string) => `data-testid VizLegend series ${name}`,
   },
   Drawer: {
     General: {
@@ -353,8 +353,8 @@ export const Components = {
     matchOperatorSelect: 'Select match operator',
   },
   ValuePicker: {
-    button: (name: string) => `Value picker button ${name}`,
-    select: (name: string) => `Value picker select ${name}`,
+    button: (name: string) => `data-testid Value picker button ${name}`,
+    select: (name: string) => `data-testid Value picker select ${name}`,
   },
   Search: {
     /**
@@ -392,7 +392,7 @@ export const Components = {
     buttonV2: (name: string) => `data-testid Call to action button ${name}`,
   },
   DataLinksContextMenu: {
-    singleLink: 'Data link',
+    singleLink: 'data-testid Data link',
   },
   CodeEditor: {
     container: 'data-testid Code editor container',
