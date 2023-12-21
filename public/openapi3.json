@@ -1126,6 +1126,19 @@
         },
         "description": "(empty)"
       },
+      "getResourcePermissionsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/resourcePermissionDTO"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "getRoleAssignmentsResponse": {
         "content": {
           "application/json": {
@@ -1695,6 +1708,16 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/ActiveUserStats"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "resourcePermissionsDescription": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Description"
             }
           }
         },
@@ -3191,6 +3214,23 @@
         },
         "type": "object"
       },
+      "Assignments": {
+        "properties": {
+          "builtInRoles": {
+            "type": "boolean"
+          },
+          "serviceAccounts": {
+            "type": "boolean"
+          },
+          "teams": {
+            "type": "boolean"
+          },
+          "users": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
       "AttributeTypeAndValue": {
         "description": "AttributeTypeAndValue mirrors the ASN.1 structure of the same name in\nRFC 5280, Section 4.1.2.4.",
         "properties": {
@@ -4603,6 +4643,20 @@
         },
         "type": "object"
       },
+      "Description": {
+        "properties": {
+          "assignments": {
+            "$ref": "#/components/schemas/Assignments"
+          },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "DiscordConfig": {
         "properties": {
           "http_config": {
@@ -5624,10 +5678,6 @@
           },
           "is_paused": {
             "type": "boolean"
-          },
-          "namespace_id": {
-            "format": "int64",
-            "type": "integer"
           },
           "namespace_uid": {
             "type": "string"
@@ -8255,6 +8305,9 @@
           "isEnabled": {
             "type": "boolean"
           },
+          "slug": {
+            "type": "string"
+          },
           "title": {
             "type": "string"
           },
@@ -9405,6 +9458,24 @@
         },
         "type": "object"
       },
+      "SSOSettings": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "type": "object"
+          },
+          "source": {
+            "$ref": "#/components/schemas/SettingsSource"
+          }
+        },
+        "type": "object"
+      },
       "Sample": {
         "properties": {
           "H": {
@@ -9779,6 +9850,10 @@
           "type": "object"
         },
         "type": "object"
+      },
+      "SettingsSource": {
+        "format": "int64",
+        "type": "integer"
       },
       "ShareType": {
         "type": "string"
@@ -11850,7 +11925,6 @@
         "type": "array"
       },
       "integration": {
-        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -12083,6 +12157,59 @@
           "integrations",
           "name"
         ],
+        "type": "object"
+      },
+      "resourcePermissionDTO": {
+        "properties": {
+          "actions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "builtInRole": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "isInherited": {
+            "type": "boolean"
+          },
+          "isManaged": {
+            "type": "boolean"
+          },
+          "isServiceAccount": {
+            "type": "boolean"
+          },
+          "permission": {
+            "type": "string"
+          },
+          "roleName": {
+            "type": "string"
+          },
+          "team": {
+            "type": "string"
+          },
+          "teamAvatarUrl": {
+            "type": "string"
+          },
+          "teamId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "userAvatarUrl": {
+            "type": "string"
+          },
+          "userId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "userLogin": {
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "silence": {
@@ -24165,7 +24292,7 @@
     },
     "/v1/sso-settings/{key}": {
       "delete": {
-        "description": "# Remove an SSO Settings entry by Key\n\nYou need to have a permission with action `settings:write` with scope `settings:auth.\u003cprovider\u003e:*`.",
+        "description": "Removes the SSO Settings for a provider.\n\nYou need to have a permission with action `settings:write` and scope `settings:auth.\u003cprovider\u003e:*`.",
         "operationId": "removeProviderSettings",
         "parameters": [
           {
@@ -24195,6 +24322,52 @@
           }
         },
         "summary": "Remove SSO Settings",
+        "tags": [
+          "sso_settings"
+        ]
+      },
+      "put": {
+        "description": "Inserts or updates the SSO Settings for a provider.\n\nYou need to have a permission with action `settings:write` and scope `settings:auth.\u003cprovider\u003e:*`.",
+        "operationId": "updateProviderSettings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SSOSettings"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Update SSO Settings",
         "tags": [
           "sso_settings"
         ]

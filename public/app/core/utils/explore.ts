@@ -317,10 +317,6 @@ export const getQueryKeys = (queries: DataQuery[]): string[] => {
 export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange, fiscalYearStartMonth: number): TimeRange => {
   let range = rangeUtil.convertRawToRange(rawRange, timeZone, fiscalYearStartMonth);
 
-  if (range.to.isBefore(range.from)) {
-    range = rangeUtil.convertRawToRange({ from: range.raw.to, to: range.raw.from }, timeZone, fiscalYearStartMonth);
-  }
-
   return range;
 };
 

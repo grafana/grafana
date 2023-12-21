@@ -3,12 +3,13 @@ package grafanaapiserver
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/gorilla/mux"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type requestHandler struct {
@@ -18,7 +19,6 @@ type requestHandler struct {
 func GetAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, builders []APIGroupBuilder) (http.Handler, error) {
 	useful := false // only true if any routes exist anywhere
 	router := mux.NewRouter()
-	var err error
 
 	for _, builder := range builders {
 		routes := builder.GetAPIRoutes()
@@ -32,11 +32,6 @@ func GetAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, 
 		// Root handlers
 		var sub *mux.Router
 		for _, route := range routes.Root {
-			err = validPath(route.Path)
-			if err != nil {
-				return nil, err
-			}
-
 			if sub == nil {
 				sub = router.PathPrefix(prefix).Subrouter()
 				sub.MethodNotAllowedHandler = &methodNotAllowedHandler{}
@@ -47,7 +42,7 @@ func GetAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, 
 			if err != nil {
 				return nil, err
 			}
-			sub.HandleFunc(route.Path, route.Handler).
+			sub.HandleFunc("/"+route.Path, route.Handler).
 				Methods(methods...)
 		}
 
@@ -55,10 +50,6 @@ func GetAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, 
 		sub = nil
 		prefix += "/namespaces/{namespace}"
 		for _, route := range routes.Namespace {
-			err = validPath(route.Path)
-			if err != nil {
-				return nil, err
-			}
 			if sub == nil {
 				sub = router.PathPrefix(prefix).Subrouter()
 				sub.MethodNotAllowedHandler = &methodNotAllowedHandler{}
@@ -69,7 +60,7 @@ func GetAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, 
 			if err != nil {
 				return nil, err
 			}
-			sub.HandleFunc(route.Path, route.Handler).
+			sub.HandleFunc("/"+route.Path, route.Handler).
 				Methods(methods...)
 		}
 	}
@@ -85,14 +76,6 @@ func GetAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, 
 	return &requestHandler{
 		router: router,
 	}, nil
-}
-
-// The registered path must start with a slash, and (for now) not have any more
-func validPath(p string) error {
-	if !strings.HasPrefix(p, "/") {
-		return fmt.Errorf("path must start with slash")
-	}
-	return nil
 }
 
 func (h *requestHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -144,16 +127,15 @@ func GetOpenAPIPostProcessor(builders []APIGroupBuilder) func(*spec3.OpenAPI) (*
 		}
 		for _, builder := range builders {
 			routes := builder.GetAPIRoutes()
-
 			gv := builder.GetGroupVersion()
-			prefix := "/apis/" + gv.String()
+			prefix := "/apis/" + gv.String() + "/"
 			if s.Paths.Paths[prefix] != nil {
 				copy := spec3.OpenAPI{
 					Version: s.Version,
 					Info: &spec.Info{
 						InfoProps: spec.InfoProps{
-							Title:   gv.Group,
-							Version: gv.Version,
+							Title:   gv.String(),
+							Version: setting.BuildVersion,
 						},
 					},
 					Components:   s.Components,
@@ -166,75 +148,21 @@ func GetOpenAPIPostProcessor(builders []APIGroupBuilder) func(*spec3.OpenAPI) (*
 					routes = &APIRoutes{}
 				}
 
-				tags := []string{}
-				for _, v := range s.Paths.Paths {
-					if v.Get != nil && len(v.Get.Tags) > 0 {
-						tags = v.Get.Tags
-						break
-					}
-				}
-				// tags = append(tags, "not-k8s")
-
 				for _, route := range routes.Root {
-					// Use the same tags as the other operations
-					operationVisitor(route.Spec, func(op *spec3.Operation) {
-						if op.Tags == nil {
-							op.Tags = tags
-						}
-					})
-
 					copy.Paths.Paths[prefix+route.Path] = &spec3.Path{
 						PathProps: *route.Spec,
 					}
 				}
 
 				for _, route := range routes.Namespace {
-					// Use the same tags as the other operations
-					operationVisitor(route.Spec, func(op *spec3.Operation) {
-						if op.Tags == nil {
-							op.Tags = tags
-						}
-					})
-
-					copy.Paths.Paths[prefix+"/namespaces/{namespace}"+route.Path] = &spec3.Path{
+					copy.Paths.Paths[prefix+"namespaces/{namespace}/"+route.Path] = &spec3.Path{
 						PathProps: *route.Spec,
 					}
-				}
-
-				if routes.PostProcessSpec3 != nil {
-					return routes.PostProcessSpec3(&copy)
 				}
 
 				return &copy, nil
 			}
 		}
 		return s, nil
-	}
-}
-
-func operationVisitor(p *spec3.PathProps, visitor func(v *spec3.Operation)) {
-	if p.Get != nil {
-		visitor(p.Get)
-	}
-	if p.Delete != nil {
-		visitor(p.Delete)
-	}
-	if p.Put != nil {
-		visitor(p.Put)
-	}
-	if p.Head != nil {
-		visitor(p.Head)
-	}
-	if p.Options != nil {
-		visitor(p.Options)
-	}
-	if p.Post != nil {
-		visitor(p.Post)
-	}
-	if p.Patch != nil {
-		visitor(p.Patch)
-	}
-	if p.Trace != nil {
-		visitor(p.Trace)
 	}
 }

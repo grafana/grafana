@@ -1,6 +1,7 @@
 package snapshots
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -163,7 +165,7 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	return &grafanaapiserver.APIRoutes{
 		Namespace: []grafanaapiserver.APIRouteHandler{
 			{
-				Path: "/dashsnaps/create",
+				Path: "dashsnaps/create",
 				Spec: &spec3.PathProps{
 					Summary:     "an example at the root level",
 					Description: "longer description here?",
@@ -215,7 +217,7 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 				},
 			},
 			{
-				Path: "/dashsnaps/delete/{deleteKey}",
+				Path: "dashsnaps/delete/{deleteKey}",
 				Spec: &spec3.PathProps{
 					Summary:     "an example at the root level",
 					Description: "longer description here?",
@@ -246,4 +248,12 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 			},
 		},
 	}
+}
+
+func (b *SnapshotsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
+	return authorizer.AuthorizerFunc(
+		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
+			// TODO -- something more restrictive?
+			return authorizer.DecisionAllow, "", err
+		})
 }

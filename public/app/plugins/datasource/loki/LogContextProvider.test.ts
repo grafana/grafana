@@ -1,6 +1,13 @@
 import { of } from 'rxjs';
 
-import { DataQueryResponse, FieldType, LogRowContextQueryDirection, LogRowModel, createDataFrame } from '@grafana/data';
+import {
+  DataQueryResponse,
+  FieldType,
+  LogRowContextQueryDirection,
+  LogRowModel,
+  createDataFrame,
+  dateTime,
+} from '@grafana/data';
 
 import LokiLanguageProvider from './LanguageProvider';
 import {
@@ -50,6 +57,7 @@ const defaultLogRow = {
   }),
   labels: { bar: 'baz', foo: 'uniqueParsedLabel', xyz: 'abc' },
   uid: '1',
+  timeEpochMs: new Date().getTime(),
 } as unknown as LogRowModel;
 
 describe('LogContextProvider', () => {
@@ -83,7 +91,12 @@ describe('LogContextProvider', () => {
       expect(logContextProvider.getInitContextFilters).toBeCalled();
       expect(logContextProvider.getInitContextFilters).toHaveBeenCalledWith(
         { bar: 'baz', foo: 'uniqueParsedLabel', xyz: 'abc' },
-        { expr: '{bar="baz"}', refId: 'A' }
+        { expr: '{bar="baz"}', refId: 'A' },
+        {
+          from: dateTime(defaultLogRow.timeEpochMs),
+          to: dateTime(defaultLogRow.timeEpochMs),
+          raw: { from: dateTime(defaultLogRow.timeEpochMs), to: dateTime(defaultLogRow.timeEpochMs) },
+        }
       );
       expect(logContextProvider.appliedContextFilters).toHaveLength(1);
     });
@@ -117,18 +130,22 @@ describe('LogContextProvider', () => {
         direction: LogRowContextQueryDirection.Backward,
       });
       expect(query.expr).toBe('{bar="baz"}');
+      expect(logContextProvider.getInitContextFilters).toHaveBeenCalled();
     });
 
-    it('should not call getInitContextFilters if appliedContextFilters', async () => {
+    it('should also call getInitContextFilters if appliedContextFilters is set', async () => {
+      logContextProvider.getInitContextFilters = jest
+        .fn()
+        .mockResolvedValue([{ value: 'baz', enabled: true, fromParser: false, label: 'bar' }]);
       logContextProvider.appliedContextFilters = [
         { value: 'baz', enabled: true, fromParser: false, label: 'bar' },
         { value: 'abc', enabled: true, fromParser: false, label: 'xyz' },
       ];
-      const query = await logContextProvider.getLogRowContextQuery(defaultLogRow, {
+      await logContextProvider.getLogRowContextQuery(defaultLogRow, {
         limit: 10,
         direction: LogRowContextQueryDirection.Backward,
       });
-      expect(query.expr).toBe('{bar="baz",xyz="abc"}');
+      expect(logContextProvider.getInitContextFilters).toHaveBeenCalled();
     });
   });
 
@@ -371,11 +388,22 @@ describe('LogContextProvider', () => {
     });
   });
 
-  describe('getInitContextFiltersFromLabels', () => {
+  describe('getInitContextFilters', () => {
     describe('query with no parser', () => {
       const queryWithoutParser: LokiQuery = {
         expr: '{bar="baz"}',
         refId: 'A',
+      };
+
+      const queryWithParser: LokiQuery = {
+        expr: '{bar="baz"} | logfmt',
+        refId: 'A',
+      };
+
+      const timeRange = {
+        from: dateTime(defaultLogRow.timeEpochMs),
+        to: dateTime(defaultLogRow.timeEpochMs),
+        raw: { from: dateTime(defaultLogRow.timeEpochMs), to: dateTime(defaultLogRow.timeEpochMs) },
       };
 
       it('should correctly create contextFilters', async () => {
@@ -395,6 +423,21 @@ describe('LogContextProvider', () => {
       it('should return empty contextFilters if no labels', async () => {
         const filters = await logContextProvider.getInitContextFilters({}, queryWithoutParser);
         expect(filters).toEqual([]);
+      });
+
+      it('should call fetchSeriesLabels if parser', async () => {
+        await logContextProvider.getInitContextFilters(defaultLogRow.labels, queryWithParser);
+        expect(defaultLanguageProviderMock.fetchSeriesLabels).toBeCalled();
+      });
+
+      it('should call fetchSeriesLabels with given timerange', async () => {
+        await logContextProvider.getInitContextFilters(defaultLogRow.labels, queryWithParser, timeRange);
+        expect(defaultLanguageProviderMock.fetchSeriesLabels).toBeCalledWith(`{bar="baz"}`, { timeRange });
+      });
+
+      it('should call `languageProvider.start` if no parser  with given timerange', async () => {
+        await logContextProvider.getInitContextFilters(defaultLogRow.labels, queryWithoutParser, timeRange);
+        expect(defaultLanguageProviderMock.start).toBeCalledWith(timeRange);
       });
     });
 
