@@ -58,9 +58,6 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&v0alpha1.FeatureFlag{},
 		&v0alpha1.FeatureFlagList{},
-		&v0alpha1.FlagConfig{},
-		&v0alpha1.FlagConfigList{},
-		&v0alpha1.ConfiguredFlags{},
 	)
 }
 
@@ -124,13 +121,6 @@ func (b *FeatureFlagAPIBuilder) GetAPIGroupInfo(
 	storage[resourceInfo.StoragePath()] = &flagsStorage{
 		store:    store,
 		features: b.features,
-	}
-
-	cfg := v0alpha1.FlagConfigResourceInfo
-	storage[cfg.StoragePath()] = &configStorage{
-		namespacer:   b.namespacer,
-		features:     b.features,
-		resourceInfo: cfg,
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage

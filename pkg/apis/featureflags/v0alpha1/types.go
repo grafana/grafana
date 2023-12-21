@@ -20,12 +20,6 @@ var FeatureFlagResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
 	func() runtime.Object { return &FeatureFlagList{} },
 )
 
-var FlagConfigResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
-	"config", "config", "FlagConfig",
-	func() runtime.Object { return &FlagConfig{} },
-	func() runtime.Object { return &FlagConfigList{} },
-)
-
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type FeatureFlag struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -69,31 +63,4 @@ type FeatureFlagList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	Items []FeatureFlag `json:"items,omitempty"`
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type FlagConfig struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	// Configure which values are set (or unset)
-	Spec map[string]bool `json:"spec"`
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type FlagConfigList struct {
-	metav1.TypeMeta `json:",inline"`
-	// +optional
-	metav1.ListMeta `json:"metadata,omitempty"`
-
-	Items []FlagConfig `json:"items,omitempty"`
-}
-
-// The set of flags that apply for your environment
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type ConfiguredFlags struct {
-	metav1.TypeMeta `json:",inline"`
-
-	// Configure which values are set (or unset)
-	Flags []string `json:"flags"`
 }
