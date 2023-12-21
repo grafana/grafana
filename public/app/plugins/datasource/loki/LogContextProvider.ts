@@ -53,12 +53,17 @@ export class LogContextProvider {
     this.appliedContextFilters = [];
   }
 
-  private async getQueryAndRange(row: LogRowModel, options?: LogRowContextOptions, origQuery?: LokiQuery) {
+  private async getQueryAndRange(
+    row: LogRowModel,
+    options?: LogRowContextOptions,
+    origQuery?: LokiQuery,
+    forceApplyFilters?: boolean
+  ) {
     const direction = (options && options.direction) || LogRowContextQueryDirection.Backward;
     const limit = (options && options.limit) || this.datasource.maxLines;
     // This happens only on initial load, when user haven't applied any filters yet
     // We need to get the initial filters from the row labels
-    if (this.appliedContextFilters.length === 0) {
+    if (this.appliedContextFilters.length === 0 || forceApplyFilters) {
       const filters = (
         await this.getInitContextFilters(row.labels, origQuery, {
           from: dateTime(row.timeEpochMs),
@@ -75,15 +80,17 @@ export class LogContextProvider {
   getLogRowContextQuery = async (
     row: LogRowModel,
     options?: LogRowContextOptions,
-    origQuery?: LokiQuery
+    origQuery?: LokiQuery,
+    forceApplyFilters?: boolean
   ): Promise<LokiQuery> => {
     // FIXME: This is a hack to make sure that the context query is created with
     // the correct set of filters. The whole `appliedContextFilters` property
     // should be revisted.
-    const cachedFilters = this.appliedContextFilters;
-    this.appliedContextFilters = [];
-    const { query } = await this.getQueryAndRange(row, options, origQuery);
-    this.appliedContextFilters = cachedFilters;
+    const { query } = await this.getQueryAndRange(row, options, origQuery, forceApplyFilters);
+
+    if (forceApplyFilters) {
+      this.appliedContextFilters = [];
+    }
 
     return query;
   };

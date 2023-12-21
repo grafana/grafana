@@ -12,7 +12,11 @@ interface Props {
   row: LogRowModel;
   showContextToggle?: (row: LogRowModel) => boolean;
   onOpenContext: (row: LogRowModel) => void;
-  getRowContextQuery?: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQuery | null>;
+  getRowContextQuery?: (
+    row: LogRowModel,
+    options?: LogRowContextOptions,
+    forceApplyFilters?: boolean
+  ) => Promise<DataQuery | null>;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
   onUnpinLine?: (row: LogRowModel) => void;
@@ -50,7 +54,7 @@ export const LogRowMenuCell = React.memo(
           (event.nativeEvent.ctrlKey || event.nativeEvent.metaKey || event.nativeEvent.shiftKey)
         ) {
           const win = window.open('about:blank');
-          const query = await getRowContextQuery(row);
+          const query = await getRowContextQuery(row, {}, true);
           if (query && win) {
             const url = urlUtil.renderUrl(locationUtil.assureBaseUrl(`${getConfig().appSubUrl}explore`), {
               left: JSON.stringify({
