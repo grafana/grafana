@@ -75,7 +75,7 @@ export const AuthConfigPageUnconnected = ({
         ) : (
           <Grid gap={3} minColumnWidth={34}>
             {providerList
-              // Temporarily filter providers that don't have the UI implemented
+              // Temporarily filter out providers that don't have the UI implemented
               .filter(({ provider }) => !['grafana_com'].includes(provider))
               .map(({ provider, settings }) => (
                 <ProviderCard

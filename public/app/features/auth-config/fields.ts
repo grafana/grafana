@@ -146,6 +146,11 @@ export const fieldMap: Record<string, FieldData> = {
     description: 'Helpful if you use more than one identity providers or SSO protocols',
     type: 'text',
   },
+  allowSignUp: {
+    label: 'Allow sign up',
+    description: 'If not enabled, only existing Grafana users can log in using OAuth',
+    type: 'switch',
+  },
 };
 
 // Check if a string contains only numeric values

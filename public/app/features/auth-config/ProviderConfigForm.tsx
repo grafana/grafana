@@ -3,12 +3,23 @@ import { useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
-import { Button, Field, Input, InputControl, LinkButton, SecretInput, Select, Stack, Switch } from '@grafana/ui';
+import {
+  Button,
+  CollapsableSection,
+  Field,
+  Input,
+  InputControl,
+  LinkButton,
+  SecretInput,
+  Select,
+  Stack,
+  Switch,
+} from '@grafana/ui';
 
 import { FormPrompt } from '../../core/components/FormPrompt/FormPrompt';
 import { Page } from '../../core/components/Page/Page';
 
-import { fieldMap, fields } from './fields';
+import { fieldMap, fields, sectionFields } from './fields';
 import { FieldData, SSOProvider, SSOProviderDTO } from './types';
 import { dataToDTO, dtoToData } from './utils/data';
 import { isSelectableValue } from './utils/guards';
@@ -36,6 +47,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
   const providerFields = fields[provider];
   const [submitError, setSubmitError] = useState(false);
   const dataSubmitted = isSubmitted && !submitError;
+  const sections = sectionFields[provider];
 
   useEffect(() => {
     if (dataSubmitted) {
@@ -75,16 +87,19 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
   };
 
   const renderField = (name: keyof SSOProvider['settings'], fieldData: FieldData) => {
+    const fieldProps = {
+      label: fieldData.label,
+      required: !!fieldData.validation?.required,
+      invalid: !!errors[name],
+      error: fieldData.validation?.message,
+      key: name,
+      description: fieldData.description,
+    };
+
     switch (fieldData.type) {
       case 'text':
         return (
-          <Field
-            label={fieldData.label}
-            required={!!fieldData.validation?.required}
-            invalid={!!errors[name]}
-            error={fieldData.validation?.message}
-            key={name}
-          >
+          <Field {...fieldProps}>
             <Input
               {...register(name, { required: !!fieldData.validation?.required })}
               type={fieldData.type}
@@ -95,14 +110,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
         );
       case 'secret':
         return (
-          <Field
-            label={fieldData.label}
-            required={!!fieldData.validation?.required}
-            invalid={!!errors[name]}
-            error={fieldData.validation?.message}
-            key={name}
-            htmlFor={name}
-          >
+          <Field {...fieldProps} htmlFor={name}>
             <InputControl
               name={name}
               control={control}
@@ -127,13 +135,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
         const watchOptions = watch(name);
         const options = isSelectableValue(watchOptions) ? watchOptions : [{ label: '', value: '' }];
         return (
-          <Field
-            label={fieldData.label}
-            htmlFor={name}
-            key={name}
-            invalid={!!errors[name]}
-            error={fieldData.validation?.message}
-          >
+          <Field {...fieldProps} htmlFor={name}>
             <InputControl
               rules={fieldData.validation}
               name={name}
@@ -159,6 +161,12 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
             />
           </Field>
         );
+      case 'switch':
+        return (
+          <Field {...fieldProps}>
+            <Switch {...register(name)} id={name} />
+          </Field>
+        );
       default:
         throw new Error(`Unknown field type: ${fieldData.type}`);
     }
@@ -176,13 +184,32 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
                 reset();
               }}
             />
-            <Field label="Enabled">
-              <Switch {...register('enabled')} id="enabled" label={'Enabled'} />
-            </Field>
-            {providerFields.map((fieldName) => {
-              const field = fieldMap[fieldName];
-              return renderField(fieldName, field);
-            })}
+            {sections ? (
+              sections.map((section, index) => {
+                return (
+                  <CollapsableSection label={section.name} isOpen={index === 0} key={section.name}>
+                    {section.fields.map((fieldName) => {
+                      const field = fieldMap[fieldName];
+                      if (!field) {
+                        console.log('missing field:', fieldName);
+                        return null;
+                      }
+                      return renderField(fieldName, field);
+                    })}
+                  </CollapsableSection>
+                );
+              })
+            ) : (
+              <>
+                <Field label="Enabled">
+                  <Switch {...register('enabled')} id="enabled" label={'Enabled'} />
+                </Field>
+                {providerFields.map((fieldName) => {
+                  const field = fieldMap[fieldName];
+                  return renderField(fieldName, field);
+                })}
+              </>
+            )}
             <Stack gap={2}>
               <Field>
                 <Button type={'submit'}>{isSaving ? 'Saving...' : 'Save'}</Button>
