@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/prometheus/alertmanager/cluster"
+	alertingCluster "github.com/grafana/alerting/cluster"
 	"github.com/prometheus/client_golang/prometheus"
 
 	alertingNotify "github.com/grafana/alerting/notify"
@@ -137,7 +137,7 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 	// We set the settlement timeout to be a multiple of the gossip interval,
 	// ensuring that a sufficient number of broadcasts have occurred, thereby
 	// increasing the probability of success when waiting for the cluster to settle.
-	const settleTimeout = cluster.DefaultGossipInterval * 10
+	const settleTimeout = alertingCluster.DefaultGossipInterval * 10
 	// Redis setup.
 	if cfg.UnifiedAlerting.HARedisAddr != "" {
 		redisPeer, err := newRedisPeer(redisConfig{
@@ -160,7 +160,7 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 	}
 	// Memberlist setup.
 	if len(cfg.UnifiedAlerting.HAPeers) > 0 {
-		peer, err := cluster.Create(
+		peer, err := alertingCluster.Create(
 			clusterLogger,
 			moa.metrics.Registerer,
 			cfg.UnifiedAlerting.HAListenAddr,
@@ -169,9 +169,9 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 			true,
 			cfg.UnifiedAlerting.HAPushPullInterval,
 			cfg.UnifiedAlerting.HAGossipInterval,
-			cluster.DefaultTCPTimeout,
-			cluster.DefaultProbeTimeout,
-			cluster.DefaultProbeInterval,
+			alertingCluster.DefaultTCPTimeout,
+			alertingCluster.DefaultProbeTimeout,
+			alertingCluster.DefaultProbeInterval,
 			nil,
 			true,
 			cfg.UnifiedAlerting.HALabel,
@@ -181,7 +181,7 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 			return fmt.Errorf("unable to initialize gossip mesh: %w", err)
 		}
 
-		err = peer.Join(cluster.DefaultReconnectInterval, cluster.DefaultReconnectTimeout)
+		err = peer.Join(alertingCluster.DefaultReconnectInterval, alertingCluster.DefaultReconnectTimeout)
 		if err != nil {
 			moa.logger.Error("Msg", "Unable to join gossip mesh while initializing cluster for high availability mode", "error", err)
 		}
@@ -269,6 +269,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 			am, err := moa.factory(ctx, orgID)
 			if err != nil {
 				moa.logger.Error("Unable to create Alertmanager for org", "org", orgID, "error", err)
+				continue
 			}
 			moa.alertmanagers[orgID] = am
 			alertmanager = am
@@ -384,7 +385,7 @@ func (moa *MultiOrgAlertmanager) StopAndWait() {
 		am.StopAndWait()
 	}
 
-	p, ok := moa.peer.(*cluster.Peer)
+	p, ok := moa.peer.(*alertingCluster.Peer)
 	if ok {
 		moa.settleCancel()
 		if err := p.Leave(10 * time.Second); err != nil {
@@ -422,7 +423,7 @@ type NilPeer struct{}
 
 func (p *NilPeer) Position() int                   { return 0 }
 func (p *NilPeer) WaitReady(context.Context) error { return nil }
-func (p *NilPeer) AddState(string, cluster.State, prometheus.Registerer) cluster.ClusterChannel {
+func (p *NilPeer) AddState(string, alertingCluster.State, prometheus.Registerer) alertingCluster.ClusterChannel {
 	return &NilChannel{}
 }
 

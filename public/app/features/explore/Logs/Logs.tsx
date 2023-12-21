@@ -137,6 +137,16 @@ const DEDUP_OPTIONS = [
   LogsDedupStrategy.signature,
 ];
 
+export const visualisationTypeKey = 'grafana.explore.logs.visualisationType';
+
+const getDefaultVisualisationType = (): LogsVisualisationType => {
+  const visualisationType = store.get(visualisationTypeKey);
+  if (visualisationType === 'table') {
+    return 'table';
+  }
+  return 'logs';
+};
+
 class UnthemedLogs extends PureComponent<Props, State> {
   flipOrderTimer?: number;
   cancelFlippingTimer?: number;
@@ -157,7 +167,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     contextOpen: false,
     contextRow: undefined,
     tableFrame: undefined,
-    visualisationType: this.props.panelState?.logs?.visualisationType ?? 'logs',
+    visualisationType: this.props.panelState?.logs?.visualisationType ?? getDefaultVisualisationType(),
     logsContainer: undefined,
   };
 
@@ -219,9 +229,12 @@ class UnthemedLogs extends PureComponent<Props, State> {
       );
     }
     if (this.props.panelState?.logs?.visualisationType !== prevProps.panelState?.logs?.visualisationType) {
+      const visualisationType = this.props.panelState?.logs?.visualisationType ?? getDefaultVisualisationType();
+
       this.setState({
-        visualisationType: this.props.panelState?.logs?.visualisationType ?? 'logs',
+        visualisationType: visualisationType,
       });
+      store.set(visualisationTypeKey, visualisationType);
     }
   }
 
@@ -436,7 +449,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     const urlState = getUrlStateFromPaneState(getState().explore.panes[this.props.exploreId]!);
     urlState.panelsState = {
       ...this.props.panelState,
-      logs: { id: row.uid, visualisationType: this.state.visualisationType ?? 'logs' },
+      logs: { id: row.uid, visualisationType: this.state.visualisationType ?? getDefaultVisualisationType() },
     };
     urlState.range = {
       from: new Date(this.props.absoluteRange.from).toISOString(),
@@ -778,6 +791,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   onClickFilterLabel={onClickFilterLabel}
                   onClickFilterOutLabel={onClickFilterOutLabel}
                   showContextToggle={showContextToggle}
+                  getRowContextQuery={getRowContextQuery}
                   showLabels={showLabels}
                   showTime={showTime}
                   enableLogDetails={true}
