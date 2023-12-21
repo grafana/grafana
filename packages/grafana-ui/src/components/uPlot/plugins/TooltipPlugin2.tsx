@@ -10,6 +10,8 @@ import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 import { CloseButton } from './CloseButton';
 
+export const DEFAULT_TOOLTIP_WIDTH = 280;
+
 // todo: barchart? histogram?
 export const enum TooltipHoverMode {
   // Single mode in TimeSeries, Candlestick, Trend, StateTimeline, Heatmap?
