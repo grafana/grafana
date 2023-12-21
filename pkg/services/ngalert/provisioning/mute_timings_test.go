@@ -216,7 +216,7 @@ func TestCreateMuteTimings(t *testing.T) {
 		Provenance:       definitions.Provenance(expectedProvenance),
 	}
 
-	t.Run("returns error if mute timings fail validation", func(t *testing.T) {
+	t.Run("returns ErrMuteTimingInvalid if mute timings fail validation", func(t *testing.T) {
 		sut, _, _ := createMuteTimingSvcSut()
 		timing := definitions.MuteTimeInterval{
 			MuteTimeInterval: config.MuteTimeInterval{
@@ -227,10 +227,10 @@ func TestCreateMuteTimings(t *testing.T) {
 
 		_, err := sut.CreateMuteTiming(context.Background(), timing, orgID)
 
-		require.ErrorIs(t, err, ErrValidation)
+		require.Truef(t, ErrMuteTimingInvalid.Base.Is(err), "expected ErrMuteTimingInvalid but got %s", err)
 	})
 
-	t.Run("returns error if mute timing with the name exists", func(t *testing.T) {
+	t.Run("returns ErrMuteTimingExists if mute timing with the name exists", func(t *testing.T) {
 		sut, store, _ := createMuteTimingSvcSut()
 		store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
 			return &cfgRevision{cfg: initialConfig()}, nil
@@ -244,7 +244,7 @@ func TestCreateMuteTimings(t *testing.T) {
 
 		_, err := sut.CreateMuteTiming(context.Background(), timing, orgID)
 
-		require.ErrorContains(t, err, "a mute timing with this name already exists")
+		require.Truef(t, ErrMuteTimingExists.Is(err), "expected ErrMuteTimingExists but got %s", err)
 	})
 
 	t.Run("saves mute timing and provenance in a transaction", func(t *testing.T) {
@@ -385,7 +385,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 
 		_, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
 
-		require.ErrorIs(t, err, ErrValidation)
+		require.Truef(t, ErrMuteTimingInvalid.Base.Is(err), "expected ErrMuteTimingInvalid but got %s", err)
 	})
 
 	t.Run("returns nil if mute timing does not exist", func(t *testing.T) {
@@ -549,7 +549,7 @@ func TestDeleteMuteTimings(t *testing.T) {
 		prov.AssertCalled(t, "DeleteProvenance", mock.Anything, &definitions.MuteTimeInterval{MuteTimeInterval: config.MuteTimeInterval{Name: "no-timing"}}, orgID)
 	})
 
-	t.Run("returns error if mute timing is used", func(t *testing.T) {
+	t.Run("returns ErrMuteTimingInUse if mute timing is used", func(t *testing.T) {
 		sut, store, _ := createMuteTimingSvcSut()
 		store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
 			return &cfgRevision{cfg: initialConfig()}, nil
@@ -557,11 +557,10 @@ func TestDeleteMuteTimings(t *testing.T) {
 
 		err := sut.DeleteMuteTiming(context.Background(), usedTiming, orgID)
 
-		require.ErrorContains(t, err, "is currently used by a notification policy")
-
 		require.Len(t, store.Calls, 1)
 		require.Equal(t, "Get", store.Calls[0].Method)
 		require.Equal(t, orgID, store.Calls[0].Args[1])
+		require.Truef(t, ErrMuteTimingInUse.Is(err), "expected ErrMuteTimingInUse but got %s", err)
 	})
 
 	t.Run("deletes mute timing and provenance in transaction", func(t *testing.T) {
