@@ -17,7 +17,7 @@ import (
 func TestMuteTimingService(t *testing.T) {
 	t.Run("service returns timings from config file", func(t *testing.T) {
 		sut := createMuteTimingSvcSut()
-		sut.config.(*MockAMConfigStore).EXPECT().
+		sut.config.store.(*MockAMConfigStore).EXPECT().
 			GetsConfig(models.AlertConfiguration{
 				AlertmanagerConfiguration: configWithMuteTimings,
 			})
@@ -31,7 +31,7 @@ func TestMuteTimingService(t *testing.T) {
 
 	t.Run("service returns empty list when config file contains no mute timings", func(t *testing.T) {
 		sut := createMuteTimingSvcSut()
-		sut.config.(*MockAMConfigStore).EXPECT().
+		sut.config.store.(*MockAMConfigStore).EXPECT().
 			GetsConfig(models.AlertConfiguration{
 				AlertmanagerConfiguration: defaultConfig,
 			})
@@ -45,7 +45,7 @@ func TestMuteTimingService(t *testing.T) {
 	t.Run("service propagates errors", func(t *testing.T) {
 		t.Run("when unable to read config", func(t *testing.T) {
 			sut := createMuteTimingSvcSut()
-			sut.config.(*MockAMConfigStore).EXPECT().
+			sut.config.store.(*MockAMConfigStore).EXPECT().
 				GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
 				Return(nil, fmt.Errorf("failed"))
 
@@ -56,25 +56,25 @@ func TestMuteTimingService(t *testing.T) {
 
 		t.Run("when config is invalid", func(t *testing.T) {
 			sut := createMuteTimingSvcSut()
-			sut.config.(*MockAMConfigStore).EXPECT().
+			sut.config.store.(*MockAMConfigStore).EXPECT().
 				GetsConfig(models.AlertConfiguration{
 					AlertmanagerConfiguration: brokenConfig,
 				})
 
 			_, err := sut.GetMuteTimings(context.Background(), 1)
 
-			require.ErrorContains(t, err, "failed to deserialize")
+			require.Truef(t, ErrBadAlertmanagerConfiguration.Base.Is(err), "expected ErrBadAlertmanagerConfiguration but got %s", err.Error())
 		})
 
 		t.Run("when no AM config in current org", func(t *testing.T) {
 			sut := createMuteTimingSvcSut()
-			sut.config.(*MockAMConfigStore).EXPECT().
+			sut.config.store.(*MockAMConfigStore).EXPECT().
 				GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
 				Return(nil, nil)
 
 			_, err := sut.GetMuteTimings(context.Background(), 1)
 
-			require.ErrorContains(t, err, "no alertmanager configuration")
+			require.Truef(t, ErrNoAlertmanagerConfiguration.Is(err), "expected ErrNoAlertmanagerConfiguration but got %s", err.Error())
 		})
 	})
 
@@ -96,7 +96,7 @@ func TestMuteTimingService(t *testing.T) {
 			t.Run("when unable to read config", func(t *testing.T) {
 				sut := createMuteTimingSvcSut()
 				timing := createMuteTiming()
-				sut.config.(*MockAMConfigStore).EXPECT().
+				sut.config.store.(*MockAMConfigStore).EXPECT().
 					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
 					Return(nil, fmt.Errorf("failed"))
 
@@ -108,36 +108,36 @@ func TestMuteTimingService(t *testing.T) {
 			t.Run("when config is invalid", func(t *testing.T) {
 				sut := createMuteTimingSvcSut()
 				timing := createMuteTiming()
-				sut.config.(*MockAMConfigStore).EXPECT().
+				sut.config.store.(*MockAMConfigStore).EXPECT().
 					GetsConfig(models.AlertConfiguration{
 						AlertmanagerConfiguration: brokenConfig,
 					})
 
 				_, err := sut.CreateMuteTiming(context.Background(), timing, 1)
 
-				require.ErrorContains(t, err, "failed to deserialize")
+				require.Truef(t, ErrBadAlertmanagerConfiguration.Base.Is(err), "expected ErrBadAlertmanagerConfiguration but got %s", err.Error())
 			})
 
 			t.Run("when no AM config in current org", func(t *testing.T) {
 				sut := createMuteTimingSvcSut()
 				timing := createMuteTiming()
-				sut.config.(*MockAMConfigStore).EXPECT().
+				sut.config.store.(*MockAMConfigStore).EXPECT().
 					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
 					Return(nil, nil)
 
 				_, err := sut.CreateMuteTiming(context.Background(), timing, 1)
 
-				require.ErrorContains(t, err, "no alertmanager configuration")
+				require.Truef(t, ErrNoAlertmanagerConfiguration.Is(err), "expected ErrNoAlertmanagerConfiguration but got %s", err.Error())
 			})
 
 			t.Run("when provenance fails to save", func(t *testing.T) {
 				sut := createMuteTimingSvcSut()
 				timing := createMuteTiming()
-				sut.config.(*MockAMConfigStore).EXPECT().
+				sut.config.store.(*MockAMConfigStore).EXPECT().
 					GetsConfig(models.AlertConfiguration{
 						AlertmanagerConfiguration: configWithMuteTimings,
 					})
-				sut.config.(*MockAMConfigStore).EXPECT().SaveSucceeds()
+				sut.config.store.(*MockAMConfigStore).EXPECT().SaveSucceeds()
 				sut.prov.(*MockProvisioningStore).EXPECT().
 					SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 					Return(fmt.Errorf("failed to save provenance"))
@@ -150,11 +150,11 @@ func TestMuteTimingService(t *testing.T) {
 			t.Run("when AM config fails to save", func(t *testing.T) {
 				sut := createMuteTimingSvcSut()
 				timing := createMuteTiming()
-				sut.config.(*MockAMConfigStore).EXPECT().
+				sut.config.store.(*MockAMConfigStore).EXPECT().
 					GetsConfig(models.AlertConfiguration{
 						AlertmanagerConfiguration: configWithMuteTimings,
 					})
-				sut.config.(*MockAMConfigStore).EXPECT().
+				sut.config.store.(*MockAMConfigStore).EXPECT().
 					UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
 					Return(fmt.Errorf("failed to save config"))
 				sut.prov.(*MockProvisioningStore).EXPECT().SaveSucceeds()
@@ -184,11 +184,11 @@ func TestMuteTimingService(t *testing.T) {
 			sut := createMuteTimingSvcSut()
 			timing := createMuteTiming()
 			timing.Name = "does not exist"
-			sut.config.(*MockAMConfigStore).EXPECT().
+			sut.config.store.(*MockAMConfigStore).EXPECT().
 				GetsConfig(models.AlertConfiguration{
 					AlertmanagerConfiguration: configWithMuteTimings,
 				})
-			sut.config.(*MockAMConfigStore).EXPECT().SaveSucceeds()
+			sut.config.store.(*MockAMConfigStore).EXPECT().SaveSucceeds()
 			sut.prov.(*MockProvisioningStore).EXPECT().SaveSucceeds()
 
 			updated, err := sut.UpdateMuteTiming(context.Background(), timing, 1)
@@ -202,7 +202,7 @@ func TestMuteTimingService(t *testing.T) {
 				sut := createMuteTimingSvcSut()
 				timing := createMuteTiming()
 				timing.Name = "asdf"
-				sut.config.(*MockAMConfigStore).EXPECT().
+				sut.config.store.(*MockAMConfigStore).EXPECT().
 					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
 					Return(nil, fmt.Errorf("failed"))
 
@@ -215,38 +215,38 @@ func TestMuteTimingService(t *testing.T) {
 				sut := createMuteTimingSvcSut()
 				timing := createMuteTiming()
 				timing.Name = "asdf"
-				sut.config.(*MockAMConfigStore).EXPECT().
+				sut.config.store.(*MockAMConfigStore).EXPECT().
 					GetsConfig(models.AlertConfiguration{
 						AlertmanagerConfiguration: brokenConfig,
 					})
 
 				_, err := sut.UpdateMuteTiming(context.Background(), timing, 1)
 
-				require.ErrorContains(t, err, "failed to deserialize")
+				require.Truef(t, ErrBadAlertmanagerConfiguration.Base.Is(err), "expected ErrBadAlertmanagerConfiguration but got %s", err.Error())
 			})
 
 			t.Run("when no AM config in current org", func(t *testing.T) {
 				sut := createMuteTimingSvcSut()
 				timing := createMuteTiming()
 				timing.Name = "asdf"
-				sut.config.(*MockAMConfigStore).EXPECT().
+				sut.config.store.(*MockAMConfigStore).EXPECT().
 					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
 					Return(nil, nil)
 
 				_, err := sut.UpdateMuteTiming(context.Background(), timing, 1)
 
-				require.ErrorContains(t, err, "no alertmanager configuration")
+				require.Truef(t, ErrNoAlertmanagerConfiguration.Is(err), "expected ErrNoAlertmanagerConfiguration but got %s", err.Error())
 			})
 
 			t.Run("when provenance fails to save", func(t *testing.T) {
 				sut := createMuteTimingSvcSut()
 				timing := createMuteTiming()
 				timing.Name = "asdf"
-				sut.config.(*MockAMConfigStore).EXPECT().
+				sut.config.store.(*MockAMConfigStore).EXPECT().
 					GetsConfig(models.AlertConfiguration{
 						AlertmanagerConfiguration: configWithMuteTimings,
 					})
-				sut.config.(*MockAMConfigStore).EXPECT().SaveSucceeds()
+				sut.config.store.(*MockAMConfigStore).EXPECT().SaveSucceeds()
 				sut.prov.(*MockProvisioningStore).EXPECT().
 					SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 					Return(fmt.Errorf("failed to save provenance"))
@@ -260,11 +260,11 @@ func TestMuteTimingService(t *testing.T) {
 				sut := createMuteTimingSvcSut()
 				timing := createMuteTiming()
 				timing.Name = "asdf"
-				sut.config.(*MockAMConfigStore).EXPECT().
+				sut.config.store.(*MockAMConfigStore).EXPECT().
 					GetsConfig(models.AlertConfiguration{
 						AlertmanagerConfiguration: configWithMuteTimings,
 					})
-				sut.config.(*MockAMConfigStore).EXPECT().
+				sut.config.store.(*MockAMConfigStore).EXPECT().
 					UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
 					Return(fmt.Errorf("failed to save config"))
 				sut.prov.(*MockProvisioningStore).EXPECT().SaveSucceeds()
@@ -279,11 +279,11 @@ func TestMuteTimingService(t *testing.T) {
 	t.Run("deleting mute timings", func(t *testing.T) {
 		t.Run("returns nil if timing does not exist", func(t *testing.T) {
 			sut := createMuteTimingSvcSut()
-			sut.config.(*MockAMConfigStore).EXPECT().
+			sut.config.store.(*MockAMConfigStore).EXPECT().
 				GetsConfig(models.AlertConfiguration{
 					AlertmanagerConfiguration: configWithMuteTimings,
 				})
-			sut.config.(*MockAMConfigStore).EXPECT().SaveSucceeds()
+			sut.config.store.(*MockAMConfigStore).EXPECT().SaveSucceeds()
 			sut.prov.(*MockProvisioningStore).EXPECT().SaveSucceeds()
 
 			err := sut.DeleteMuteTiming(context.Background(), "does not exist", 1)
@@ -294,7 +294,7 @@ func TestMuteTimingService(t *testing.T) {
 		t.Run("propagates errors", func(t *testing.T) {
 			t.Run("when unable to read config", func(t *testing.T) {
 				sut := createMuteTimingSvcSut()
-				sut.config.(*MockAMConfigStore).EXPECT().
+				sut.config.store.(*MockAMConfigStore).EXPECT().
 					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
 					Return(nil, fmt.Errorf("failed"))
 
@@ -305,34 +305,34 @@ func TestMuteTimingService(t *testing.T) {
 
 			t.Run("when config is invalid", func(t *testing.T) {
 				sut := createMuteTimingSvcSut()
-				sut.config.(*MockAMConfigStore).EXPECT().
+				sut.config.store.(*MockAMConfigStore).EXPECT().
 					GetsConfig(models.AlertConfiguration{
 						AlertmanagerConfiguration: brokenConfig,
 					})
 
 				err := sut.DeleteMuteTiming(context.Background(), "asdf", 1)
 
-				require.ErrorContains(t, err, "failed to deserialize")
+				require.Truef(t, ErrBadAlertmanagerConfiguration.Base.Is(err), "expected ErrBadAlertmanagerConfiguration but got %s", err.Error())
 			})
 
 			t.Run("when no AM config in current org", func(t *testing.T) {
 				sut := createMuteTimingSvcSut()
-				sut.config.(*MockAMConfigStore).EXPECT().
+				sut.config.store.(*MockAMConfigStore).EXPECT().
 					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
 					Return(nil, nil)
 
 				err := sut.DeleteMuteTiming(context.Background(), "asdf", 1)
 
-				require.ErrorContains(t, err, "no alertmanager configuration")
+				require.Truef(t, ErrNoAlertmanagerConfiguration.Is(err), "expected ErrNoAlertmanagerConfiguration but got %s", err.Error())
 			})
 
 			t.Run("when provenance fails to save", func(t *testing.T) {
 				sut := createMuteTimingSvcSut()
-				sut.config.(*MockAMConfigStore).EXPECT().
+				sut.config.store.(*MockAMConfigStore).EXPECT().
 					GetsConfig(models.AlertConfiguration{
 						AlertmanagerConfiguration: configWithMuteTimings,
 					})
-				sut.config.(*MockAMConfigStore).EXPECT().SaveSucceeds()
+				sut.config.store.(*MockAMConfigStore).EXPECT().SaveSucceeds()
 				sut.prov.(*MockProvisioningStore).EXPECT().
 					DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).
 					Return(fmt.Errorf("failed to save provenance"))
@@ -344,11 +344,11 @@ func TestMuteTimingService(t *testing.T) {
 
 			t.Run("when AM config fails to save", func(t *testing.T) {
 				sut := createMuteTimingSvcSut()
-				sut.config.(*MockAMConfigStore).EXPECT().
+				sut.config.store.(*MockAMConfigStore).EXPECT().
 					GetsConfig(models.AlertConfiguration{
 						AlertmanagerConfiguration: configWithMuteTimings,
 					})
-				sut.config.(*MockAMConfigStore).EXPECT().
+				sut.config.store.(*MockAMConfigStore).EXPECT().
 					UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
 					Return(fmt.Errorf("failed to save config"))
 				sut.prov.(*MockProvisioningStore).EXPECT().SaveSucceeds()
@@ -360,7 +360,7 @@ func TestMuteTimingService(t *testing.T) {
 
 			t.Run("when mute timing is used in route", func(t *testing.T) {
 				sut := createMuteTimingSvcSut()
-				sut.config.(*MockAMConfigStore).EXPECT().
+				sut.config.store.(*MockAMConfigStore).EXPECT().
 					GetsConfig(models.AlertConfiguration{
 						AlertmanagerConfiguration: configWithMuteTimingsInRoute,
 					})
@@ -375,9 +375,8 @@ func TestMuteTimingService(t *testing.T) {
 
 func createMuteTimingSvcSut() *MuteTimingService {
 	return &MuteTimingService{
-		config: &MockAMConfigStore{},
+		config: &alertmanagerConfigStoreImpl{store: &MockAMConfigStore{}, xact: newNopTransactionManager()},
 		prov:   &MockProvisioningStore{},
-		xact:   newNopTransactionManager(),
 		log:    log.NewNopLogger(),
 	}
 }

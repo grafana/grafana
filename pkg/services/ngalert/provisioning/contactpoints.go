@@ -3,7 +3,6 @@ package provisioning
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
@@ -23,10 +22,9 @@ import (
 )
 
 type ContactPointService struct {
-	amStore           AMConfigStore
+	config            *alertmanagerConfigStoreImpl
 	encryptionService secrets.Service
 	provenanceStore   ProvisioningStore
-	xact              TransactionManager
 	log               log.Logger
 	ac                accesscontrol.AccessControl
 }
@@ -34,10 +32,12 @@ type ContactPointService struct {
 func NewContactPointService(store AMConfigStore, encryptionService secrets.Service,
 	provenanceStore ProvisioningStore, xact TransactionManager, log log.Logger, ac accesscontrol.AccessControl) *ContactPointService {
 	return &ContactPointService{
-		amStore:           store,
+		config: &alertmanagerConfigStoreImpl{
+			store: store,
+			xact:  xact,
+		},
 		encryptionService: encryptionService,
 		provenanceStore:   provenanceStore,
-		xact:              xact,
 		log:               log,
 		ac:                ac,
 	}
@@ -68,7 +68,7 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 	if q.Decrypt && !ecp.canDecryptSecrets(ctx, u) {
 		return nil, fmt.Errorf("%w: user requires Admin role or alert.provisioning.secrets:read permission to view decrypted secure settings", ErrPermissionDenied)
 	}
-	revision, err := getLastConfiguration(ctx, q.OrgID, ecp.amStore)
+	revision, err := ecp.config.Get(ctx, q.OrgID)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 // getContactPointDecrypted is an internal-only function that gets full contact point info, included encrypted fields.
 // nil is returned if no matching contact point exists.
 func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, orgID int64, uid string) (apimodels.EmbeddedContactPoint, error) {
-	revision, err := getLastConfiguration(ctx, orgID, ecp.amStore)
+	revision, err := ecp.config.Get(ctx, orgID)
 	if err != nil {
 		return apimodels.EmbeddedContactPoint{}, err
 	}
@@ -118,7 +118,7 @@ func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, or
 		}
 		embeddedContactPoint, err := PostableGrafanaReceiverToEmbeddedContactPoint(
 			receiver,
-			models.ProvenanceNone,
+			models.ProvenanceNone, // TODO should be correct provenance?
 			ecp.decryptValueOrRedacted(true, receiver.UID),
 		)
 		if err != nil {
@@ -135,7 +135,7 @@ func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID in
 		return apimodels.EmbeddedContactPoint{}, fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
-	revision, err := getLastConfiguration(ctx, orgID, ecp.amStore)
+	revision, err := ecp.config.Get(ctx, orgID)
 	if err != nil {
 		return apimodels.EmbeddedContactPoint{}, err
 	}
@@ -201,28 +201,8 @@ func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID in
 		})
 	}
 
-	data, err := json.Marshal(revision.cfg)
-	if err != nil {
-		return apimodels.EmbeddedContactPoint{}, err
-	}
-
-	err = ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err = PersistConfig(ctx, ecp.amStore, &models.SaveAlertmanagerConfigurationCmd{
-			AlertmanagerConfiguration: string(data),
-			FetchedConfigurationHash:  revision.concurrencyToken,
-			ConfigurationVersion:      revision.version,
-			Default:                   false,
-			OrgID:                     orgID,
-		})
-		if err != nil {
-			return err
-		}
-		err = ecp.provenanceStore.SetProvenance(ctx, &contactPoint, orgID, provenance)
-		if err != nil {
-			return err
-		}
-		contactPoint.Provenance = string(provenance)
-		return nil
+	err = ecp.config.Save(ctx, revision, orgID, func(ctx context.Context) error {
+		return ecp.provenanceStore.SetProvenance(ctx, &contactPoint, orgID, provenance)
 	})
 	if err != nil {
 		return apimodels.EmbeddedContactPoint{}, err
@@ -292,7 +272,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		SecureSettings:        extractedSecrets,
 	}
 	// save to store
-	revision, err := getLastConfiguration(ctx, orgID, ecp.amStore)
+	revision, err := ecp.config.Get(ctx, orgID)
 	if err != nil {
 		return err
 	}
@@ -302,32 +282,18 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		return fmt.Errorf("contact point with uid '%s' not found", mergedReceiver.UID)
 	}
 
-	data, err := json.Marshal(revision.cfg)
+	err = ecp.config.Save(ctx, revision, orgID, func(ctx context.Context) error {
+		return ecp.provenanceStore.SetProvenance(ctx, &contactPoint, orgID, provenance)
+	})
 	if err != nil {
 		return err
 	}
-	return ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err = PersistConfig(ctx, ecp.amStore, &models.SaveAlertmanagerConfigurationCmd{
-			AlertmanagerConfiguration: string(data),
-			FetchedConfigurationHash:  revision.concurrencyToken,
-			ConfigurationVersion:      revision.version,
-			Default:                   false,
-			OrgID:                     orgID,
-		})
-		if err != nil {
-			return err
-		}
-		err = ecp.provenanceStore.SetProvenance(ctx, &contactPoint, orgID, provenance)
-		if err != nil {
-			return err
-		}
-		contactPoint.Provenance = string(provenance)
-		return nil
-	})
+	contactPoint.Provenance = string(provenance) // TODO Can be removed because it mutates a struct passed by value
+	return nil
 }
 
 func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID int64, uid string) error {
-	revision, err := getLastConfiguration(ctx, orgID, ecp.amStore)
+	revision, err := ecp.config.Get(ctx, orgID)
 	if err != nil {
 		return err
 	}
@@ -355,25 +321,12 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 	if fullRemoval && isContactPointInUse(name, []*apimodels.Route{revision.cfg.AlertmanagerConfig.Route}) {
 		return fmt.Errorf("contact point '%s' is currently used by a notification policy", name)
 	}
-	data, err := json.Marshal(revision.cfg)
-	if err != nil {
-		return err
-	}
-	return ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
+
+	return ecp.config.Save(ctx, revision, orgID, func(ctx context.Context) error {
 		target := &apimodels.EmbeddedContactPoint{
 			UID: uid,
 		}
-		err := ecp.provenanceStore.DeleteProvenance(ctx, target, orgID)
-		if err != nil {
-			return err
-		}
-		return PersistConfig(ctx, ecp.amStore, &models.SaveAlertmanagerConfigurationCmd{
-			AlertmanagerConfiguration: string(data),
-			FetchedConfigurationHash:  revision.concurrencyToken,
-			ConfigurationVersion:      revision.version,
-			Default:                   false,
-			OrgID:                     orgID,
-		})
+		return ecp.provenanceStore.DeleteProvenance(ctx, target, orgID)
 	})
 }
 

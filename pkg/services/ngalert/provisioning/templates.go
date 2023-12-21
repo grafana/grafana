@@ -10,23 +10,21 @@ import (
 )
 
 type TemplateService struct {
-	config AMConfigStore
+	config *alertmanagerConfigStoreImpl
 	prov   ProvisioningStore
-	xact   TransactionManager
 	log    log.Logger
 }
 
 func NewTemplateService(config AMConfigStore, prov ProvisioningStore, xact TransactionManager, log log.Logger) *TemplateService {
 	return &TemplateService{
-		config: config,
+		config: &alertmanagerConfigStoreImpl{store: config, xact: xact},
 		prov:   prov,
-		xact:   xact,
 		log:    log,
 	}
 }
 
 func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) (map[string]string, error) {
-	revision, err := getLastConfiguration(ctx, orgID, t.config)
+	revision, err := t.config.Get(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +42,7 @@ func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl def
 		return definitions.NotificationTemplate{}, fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
-	revision, err := getLastConfiguration(ctx, orgID, t.config)
+	revision, err := t.config.Get(ctx, orgID)
 	if err != nil {
 		return definitions.NotificationTemplate{}, err
 	}
@@ -59,27 +57,8 @@ func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl def
 	}
 	revision.cfg.AlertmanagerConfig.Templates = tmpls
 
-	serialized, err := serializeAlertmanagerConfig(*revision.cfg)
-	if err != nil {
-		return definitions.NotificationTemplate{}, err
-	}
-	cmd := models.SaveAlertmanagerConfigurationCmd{
-		AlertmanagerConfiguration: string(serialized),
-		ConfigurationVersion:      revision.version,
-		FetchedConfigurationHash:  revision.concurrencyToken,
-		Default:                   false,
-		OrgID:                     orgID,
-	}
-	err = t.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err = PersistConfig(ctx, t.config, &cmd)
-		if err != nil {
-			return err
-		}
-		err = t.prov.SetProvenance(ctx, &tmpl, orgID, models.Provenance(tmpl.Provenance))
-		if err != nil {
-			return err
-		}
-		return nil
+	err = t.config.Save(ctx, revision, orgID, func(ctx context.Context) error {
+		return t.prov.SetProvenance(ctx, &tmpl, orgID, models.Provenance(tmpl.Provenance))
 	})
 	if err != nil {
 		return definitions.NotificationTemplate{}, err
@@ -89,42 +68,17 @@ func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl def
 }
 
 func (t *TemplateService) DeleteTemplate(ctx context.Context, orgID int64, name string) error {
-	revision, err := getLastConfiguration(ctx, orgID, t.config)
+	revision, err := t.config.Get(ctx, orgID)
 	if err != nil {
 		return err
 	}
 
 	delete(revision.cfg.TemplateFiles, name)
 
-	serialized, err := serializeAlertmanagerConfig(*revision.cfg)
-	if err != nil {
-		return err
-	}
-
-	cmd := models.SaveAlertmanagerConfigurationCmd{
-		AlertmanagerConfiguration: string(serialized),
-		ConfigurationVersion:      revision.version,
-		FetchedConfigurationHash:  revision.concurrencyToken,
-		Default:                   false,
-		OrgID:                     orgID,
-	}
-	err = t.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err = PersistConfig(ctx, t.config, &cmd)
-		if err != nil {
-			return err
-		}
+	return t.config.Save(ctx, revision, orgID, func(ctx context.Context) error {
 		tgt := definitions.NotificationTemplate{
 			Name: name,
 		}
-		err = t.prov.DeleteProvenance(ctx, &tgt, orgID)
-		if err != nil {
-			return err
-		}
-		return nil
+		return t.prov.DeleteProvenance(ctx, &tgt, orgID)
 	})
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
