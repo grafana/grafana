@@ -23,6 +23,9 @@ jest.mock('@grafana/runtime', () => ({
     publish: jest.fn(),
   }),
   isFetchError: () => true,
+  locationService: {
+    push: jest.fn(),
+  },
 }));
 
 // Mock the FormPrompt component as it requires Router setup to work
