@@ -740,6 +740,32 @@ var (
 			Created:           time.Date(2023, time.July, 21, 12, 0, 0, 0, time.UTC),
 		},
 		{
+			Name:              "searchAlt",
+			Description:       "Enable an alternative SQL search query hoping to speed up dashboard and folder search by inverting the query execution order",
+			Stage:             FeatureStageExperimental,
+			FrontendOnly:      false,
+			Owner:             grafanaBackendPlatformSquad,
+			RequiresRestart:   false,
+			HideFromAdminPage: true, // Much like splitScopes, this is internal work
+			Created:           time.Date(2023, time.December, 20, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:         "traceToProfiles",
+			Description:  "Enables linking between traces and profiles",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			Created:      time.Date(2023, time.November, 1, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:         "tracesEmbeddedFlameGraph",
+			Description:  "Enables embedding a flame graph in traces",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			Created:      time.Date(2023, time.November, 2, 12, 0, 0, 0, time.UTC),
+		},
+		{
 			Name:        "permissionsFilterRemoveSubquery",
 			Description: "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",
 			Stage:       FeatureStageExperimental,

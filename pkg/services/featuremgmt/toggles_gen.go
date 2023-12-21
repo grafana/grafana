@@ -355,6 +355,18 @@ const (
 	// Support faster dashboard and folder search by splitting permission scopes into parts
 	FlagSplitScopes = "splitScopes"
 
+	// FlagSearchAlt
+	// Enable an alternative SQL search query hoping to speed up dashboard and folder search by inverting the query execution order
+	FlagSearchAlt = "searchAlt"
+
+	// FlagTraceToProfiles
+	// Enables linking between traces and profiles
+	FlagTraceToProfiles = "traceToProfiles"
+
+	// FlagTracesEmbeddedFlameGraph
+	// Enables embedding a flame graph in traces
+	FlagTracesEmbeddedFlameGraph = "tracesEmbeddedFlameGraph"
+
 	// FlagPermissionsFilterRemoveSubquery
 	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
 	FlagPermissionsFilterRemoveSubquery = "permissionsFilterRemoveSubquery"
