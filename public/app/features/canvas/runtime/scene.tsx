@@ -676,7 +676,7 @@ export class Scene {
         ref={this.setRef}
         onMouseDown={(e) => {
           // If pan and zoom is disabled and middle mouse or ctrl + right mouse, don't pan
-          if (!this.shouldPanZoom && (e.button === 1 || (e.button === 2 && e.ctrlKey))) {
+          if ((!this.shouldPanZoom || this.contextMenuVisible) && (e.button === 1 || (e.button === 2 && e.ctrlKey))) {
             e.preventDefault();
             e.stopPropagation();
           }
