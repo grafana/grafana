@@ -36,8 +36,12 @@ describe('DataTrail', () => {
       expect(trail.state.topScene).toBeInstanceOf(MetricSelectScene);
     });
 
-    it('Should set stepIndex to 0', () => {
-      expect(trail.state.stepIndex).toBe(0);
+    it('Should set history current step to 0', () => {
+      expect(trail.state.history.state.currentStep).toBe(0);
+    });
+
+    it('Should set history step 0 parentIndex to -1', () => {
+      expect(trail.state.history.state.steps[0].parentIndex).toBe(-1);
     });
 
     describe('And metric is selected', () => {
@@ -58,16 +62,24 @@ describe('DataTrail', () => {
         expect(trail.state.history.state.steps[1].type).toBe('metric');
       });
 
-      it('Should set stepIndex to 1', () => {
-        expect(trail.state.stepIndex).toBe(1);
+      it('Should set history current step to 1', () => {
+        expect(trail.state.history.state.currentStep).toBe(1);
+      });
+
+      it('Should set history currentStep to 1', () => {
+        expect(trail.state.history.state.currentStep).toBe(1);
+      });
+
+      it('Should set history step 1 parentIndex to 0', () => {
+        expect(trail.state.history.state.steps[1].parentIndex).toBe(0);
       });
     });
 
-    describe('When going back to history step', () => {
+    describe('When going back to history step 1', () => {
       beforeEach(() => {
         trail.publishEvent(new MetricSelectedEvent('first_metric'));
         trail.publishEvent(new MetricSelectedEvent('second_metric'));
-        trail.goBackToStep(trail.state.history.state.steps[1]);
+        trail.state.history.goBackToStep(1);
       });
 
       it('Should restore state and url', () => {
@@ -75,17 +87,30 @@ describe('DataTrail', () => {
         expect(locationService.getSearchObject().metric).toBe('first_metric');
       });
 
-      it('Should set stepIndex to 1', () => {
-        expect(trail.state.stepIndex).toBe(1);
+      it('Should set history currentStep to 1', () => {
+        expect(trail.state.history.state.currentStep).toBe(1);
       });
 
       it('Should not create another history step', () => {
         expect(trail.state.history.state.steps.length).toBe(3);
       });
 
-      it('But selecting a new metric should create another history step', () => {
-        trail.publishEvent(new MetricSelectedEvent('third_metric'));
-        expect(trail.state.history.state.steps.length).toBe(4);
+      describe('But then selecting a new metric', () => {
+        beforeEach(() => {
+          trail.publishEvent(new MetricSelectedEvent('third_metric'));
+        });
+
+        it('Should create another history step', () => {
+          expect(trail.state.history.state.steps.length).toBe(4);
+        });
+
+        it('Should set history current step to 3', () => {
+          expect(trail.state.history.state.currentStep).toBe(3);
+        });
+
+        it('Should set history step 3 parent index to 1', () => {
+          expect(trail.state.history.state.steps[3].parentIndex).toBe(1);
+        });
       });
     });
   });

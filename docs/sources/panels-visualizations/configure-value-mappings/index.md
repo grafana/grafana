@@ -16,7 +16,8 @@ labels:
     - oss
 menuTitle: Configure value mappings
 title: Configure value mappings
-weight: 600
+description: Configure value mappings to change the visual treatment of data in your visualizations
+weight: 90
 ---
 
 # Configure value mappings

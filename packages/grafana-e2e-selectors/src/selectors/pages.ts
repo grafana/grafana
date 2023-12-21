@@ -8,20 +8,20 @@ import { Components } from './components';
 export const Pages = {
   Login: {
     url: '/login',
-    username: 'Username input field',
-    password: 'Password input field',
-    submit: 'Login button',
-    skip: 'Skip change password button',
+    username: 'data-testid Username input field',
+    password: 'data-testid Password input field',
+    submit: 'data-testid Login button',
+    skip: 'data-testid Skip change password button',
   },
   Home: {
     url: '/',
   },
   DataSource: {
-    name: 'Data source settings page name input field',
+    name: 'data-testid Data source settings page name input field',
     delete: 'Data source settings page Delete button',
-    readOnly: 'Data source settings page read only message',
+    readOnly: 'data-testid Data source settings page read only message',
     saveAndTest: 'data-testid Data source settings page Save and Test button',
-    alert: 'Data source settings page Alert',
+    alert: 'data-testid Data source settings page Alert',
   },
   DataSources: {
     url: '/datasources',
@@ -268,12 +268,12 @@ export const Pages = {
     page: 'Plugins list page',
     list: 'Plugins list',
     listItem: 'Plugins list item',
-    signatureErrorNotice: 'Unsigned plugins notice',
+    signatureErrorNotice: 'data-testid Unsigned plugins notice',
   },
   PluginPage: {
     page: 'Plugin page',
-    signatureInfo: 'Plugin signature info',
-    disabledInfo: 'Plugin disabled info',
+    signatureInfo: 'data-testid Plugin signature info',
+    disabledInfo: 'data-testid Plugin disabled info',
   },
   PlaylistForm: {
     name: 'Playlist name',
@@ -310,6 +310,7 @@ export const Pages = {
     tabs: {
       allUsers: 'data-testid all-users-tab',
       orgUsers: 'data-testid org-users-tab',
+      anonUserDevices: 'data-testid anon-user-devices-tab',
       publicDashboardsUsers: 'data-testid public-dashboards-users-tab',
       users: 'data-testid users-tab',
     },

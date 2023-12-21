@@ -4,10 +4,9 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { ModalsContext, Button } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { ShareModal } from '../ShareModal';
-
-import { trackToolbarShareClick } from './analytics';
 
 export const ShareButton = ({ dashboard }: { dashboard: DashboardModel }) => {
   const [queryParams] = useQueryParams();
@@ -32,7 +31,7 @@ export const ShareButton = ({ dashboard }: { dashboard: DashboardModel }) => {
       variant="primary"
       size="sm"
       onClick={() => {
-        trackToolbarShareClick();
+        DashboardInteractions.toolbarShareClick();
         showModal(ShareModal, {
           dashboard,
           onDismiss: hideModal,

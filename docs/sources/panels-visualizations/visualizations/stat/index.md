@@ -5,7 +5,7 @@ aliases:
   - ../../panels/visualizations/stat-panel/
   - ../../reference/singlestat/
   - ../../visualizations/stat-panel/
-description: Stat panel documentation
+description: Configure options for Grafana's stat visualization
 keywords:
   - grafana
   - docs
@@ -122,6 +122,14 @@ Choose an alignment mode.
 - **Auto -** If only a single value is shown (no repeat), then the value is centered. If multiple series or rows are shown, then the value is left-aligned.
 - **Center -** Stat value is centered.
 
+### Show percent change
+
+Set whether percent change is displayed or not. Disabled by default.
+
+{{% admonition type="note" %}}
+This option is not applicable when the **Show** setting, under **Value options**, is set to **All values**.
+{{% /admonition %}}
+
 ## Text size
 
 Adjust the sizes of the gauge text.
@@ -130,6 +138,6 @@ Adjust the sizes of the gauge text.
 - **Value -** Enter a numeric value for the gauge value size.
 
 {{% docs/reference %}}
-[Calculation types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
-[Calculation types]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
+[Calculation types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/calculation-types"
+[Calculation types]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types"
 {{% /docs/reference %}}

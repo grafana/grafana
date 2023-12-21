@@ -11,16 +11,18 @@ import {
   LogsSortOrder,
   CoreApp,
   DataFrame,
+  LogRowContextOptions,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { withTheme2, Themeable2 } from '@grafana/ui';
 
+import { PopoverMenu } from '../../explore/Logs/PopoverMenu';
 import { UniqueKeyMaker } from '../UniqueKeyMaker';
 import { sortLogRows, targetIsElement } from '../utils';
 
 //Components
 import { LogRow } from './LogRow';
-import { PopoverMenu } from './PopoverMenu';
 import { getLogRowStyles } from './getLogRowStyles';
 
 export const PREVIEW_LIMIT = 100;
@@ -50,6 +52,7 @@ export interface Props extends Themeable2 {
   onUnpinLine?: (row: LogRowModel) => void;
   onLogRowHover?: (row?: LogRowModel) => void;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
+  getRowContextQuery?: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQuery | null>;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   permalinkedRowId?: string;
   scrollIntoView?: (element: HTMLElement) => void;
@@ -97,7 +100,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   };
 
   popoverMenuSupported() {
-    if (!config.featureToggles.logRowsPopoverMenu) {
+    if (!config.featureToggles.logRowsPopoverMenu || this.props.app !== CoreApp.Explore) {
       return false;
     }
     return Boolean(this.props.onClickFilterOutValue || this.props.onClickFilterValue);
