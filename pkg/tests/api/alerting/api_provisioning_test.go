@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func TestIntegrationProvisioning(t *testing.T) {
@@ -491,9 +492,10 @@ func TestMuteTimings(t *testing.T) {
 		_, status, body := apiClient.CreateMuteTimingWithStatus(t, m)
 		t.Log(body)
 		requireStatusCode(t, http.StatusBadRequest, status, body)
-		var validationError map[string]any
+		var validationError errutil.PublicError
 		assert.NoError(t, json.Unmarshal([]byte(body), &validationError))
-		assert.Contains(t, validationError, "message")
+		assert.NotEmpty(t, validationError, validationError.Message)
+		assert.Equal(t, "alerting.notifications.mute-timings.nameExists", validationError.MessageID)
 		if t.Failed() {
 			t.Fatalf("response: %s", body)
 		}
