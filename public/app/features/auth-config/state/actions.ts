@@ -36,7 +36,7 @@ export function loadProviders(provider = ''): ThunkResult<Promise<SSOProvider[]>
     if (!config.featureToggles.ssoSettingsApi) {
       return [];
     }
-    const result = await getBackendSrv().get(`/api/v1/sso-settings/${provider}`);
+    const result = await getBackendSrv().get(`/api/v1/sso-settings${provider ? `/${provider}` : ''}`);
     dispatch(providersLoaded(provider ? [result] : result));
     return result;
   };
