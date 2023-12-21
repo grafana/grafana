@@ -14,6 +14,8 @@ var ErrPermissionDenied = errors.New("permission denied")
 var (
 	ErrNoAlertmanagerConfiguration  = errutil.Internal("alerting.notification.configMissing", errutil.WithPublicMessage("No alertmanager configuration present in this organization"))
 	ErrBadAlertmanagerConfiguration = errutil.Internal("alerting.notification.configCorrupted").MustTemplate("Failed to unmarshal the Alertmanager configuration", errutil.WithPublic("Current Alertmanager configuration in the storage is corrupted. Reset the configuration or rollback to a recent valid one."))
+
+	ErrMuteTimingsNotFound = errutil.NotFound("alerting.notifications.mute-timings.notFound")
 )
 
 func makeErrBadAlertmanagerConfiguration(err error) error {

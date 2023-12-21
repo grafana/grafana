@@ -91,6 +91,94 @@ func TestGetMuteTimings(t *testing.T) {
 	})
 }
 
+func TestGetMuteTiming(t *testing.T) {
+	orgID := int64(1)
+	revision := &cfgRevision{
+		cfg: &definitions.PostableUserConfig{
+			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
+				Config: definitions.Config{
+					MuteTimeIntervals: []config.MuteTimeInterval{
+						{
+							Name:          "Test1",
+							TimeIntervals: nil,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	t.Run("service returns timing by name", func(t *testing.T) {
+		sut, store, prov := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
+			return revision, nil
+		}
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
+
+		result, err := sut.GetMuteTiming(context.Background(), "Test1", orgID)
+
+		require.NoError(t, err)
+
+		require.Equal(t, "Test1", result.Name)
+		require.EqualValues(t, models.ProvenanceAPI, result.Provenance)
+
+		require.Len(t, store.Calls, 1)
+		require.Equal(t, "Get", store.Calls[0].Method)
+		require.Equal(t, orgID, store.Calls[0].Args[1])
+
+		prov.AssertCalled(t, "GetProvenance", mock.Anything, &result, orgID)
+	})
+
+	t.Run("service returns ErrMuteTimingsNotFound if no mute timings", func(t *testing.T) {
+		sut, store, _ := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
+			return &cfgRevision{cfg: &definitions.PostableUserConfig{}}, nil
+		}
+
+		_, err := sut.GetMuteTiming(context.Background(), "Test1", orgID)
+
+		require.Truef(t, ErrMuteTimingsNotFound.Is(err), "expected ErrMuteTimingsNotFound but got %s", err)
+	})
+
+	t.Run("service returns ErrMuteTimingsNotFound if no mute timing by name", func(t *testing.T) {
+		sut, store, _ := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
+			return revision, nil
+		}
+
+		_, err := sut.GetMuteTiming(context.Background(), "Test123", orgID)
+
+		require.Truef(t, ErrMuteTimingsNotFound.Is(err), "expected ErrMuteTimingsNotFound but got %s", err)
+	})
+
+	t.Run("service propagates errors", func(t *testing.T) {
+		t.Run("when unable to read config", func(t *testing.T) {
+			sut, store, _ := createMuteTimingSvcSut()
+			expected := fmt.Errorf("failed")
+			store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
+				return nil, expected
+			}
+
+			_, err := sut.GetMuteTiming(context.Background(), "Test1", orgID)
+
+			require.ErrorIs(t, err, expected)
+		})
+
+		t.Run("when unable to read provenance", func(t *testing.T) {
+			sut, store, prov := createMuteTimingSvcSut()
+			store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
+				return revision, nil
+			}
+			expected := fmt.Errorf("failed")
+			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return("", expected)
+
+			_, err := sut.GetMuteTiming(context.Background(), "Test1", orgID)
+
+			require.ErrorIs(t, err, expected)
+		})
+	})
+}
+
 func TestCreateMuteTimings(t *testing.T) {
 	orgID := int64(1)
 
