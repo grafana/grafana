@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/mail"
 	"strconv"
+	"sync"
 
 	"golang.org/x/oauth2"
 
@@ -43,6 +44,7 @@ type SocialGenericOAuth struct {
 	idTokenAttributeName string
 	teamIdsAttributePath string
 	teamIds              []string
+	reloadMutex          sync.Mutex
 }
 
 func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager) *SocialGenericOAuth {
@@ -73,6 +75,16 @@ func (s *SocialGenericOAuth) Validate(ctx context.Context, settings ssoModels.SS
 }
 
 func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	if err != nil {
+		return fmt.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	s.reloadMutex.Lock()
+	defer s.reloadMutex.Unlock()
+
+	s.info = info
+
 	return nil
 }
 

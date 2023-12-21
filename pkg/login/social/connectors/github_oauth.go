@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 
 	"golang.org/x/oauth2"
 
@@ -31,6 +32,7 @@ type SocialGithub struct {
 	*SocialBase
 	allowedOrganizations []string
 	teamIds              []int
+	reloadMutex          sync.Mutex
 }
 
 type GithubTeam struct {
@@ -80,6 +82,16 @@ func (s *SocialGithub) Validate(ctx context.Context, settings ssoModels.SSOSetti
 }
 
 func (s *SocialGithub) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	if err != nil {
+		return fmt.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	s.reloadMutex.Lock()
+	defer s.reloadMutex.Unlock()
+
+	s.info = info
+
 	return nil
 }
 

@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 
 	"golang.org/x/oauth2"
 
@@ -29,6 +30,7 @@ var _ ssosettings.Reloadable = (*SocialGitlab)(nil)
 
 type SocialGitlab struct {
 	*SocialBase
+	reloadMutex sync.Mutex
 }
 
 type apiData struct {
@@ -70,6 +72,16 @@ func (s *SocialGitlab) Validate(ctx context.Context, settings ssoModels.SSOSetti
 }
 
 func (s *SocialGitlab) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	if err != nil {
+		return fmt.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	s.reloadMutex.Lock()
+	defer s.reloadMutex.Unlock()
+
+	s.info = info
+
 	return nil
 }
 

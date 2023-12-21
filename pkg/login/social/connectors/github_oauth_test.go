@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -338,6 +339,70 @@ func TestSocialGitHub_InitializeExtraFields(t *testing.T) {
 
 			require.Equal(t, tc.want.teamIds, s.teamIds)
 			require.Equal(t, tc.want.allowedOrganizations, s.allowedOrganizations)
+		})
+	}
+}
+
+func TestSocialGitHub_Reload(t *testing.T) {
+	testCases := []struct {
+		name         string
+		info         *social.OAuthInfo
+		settings     ssoModels.SSOSettings
+		expectError  bool
+		expectedInfo *social.OAuthInfo
+	}{
+		{
+			name: "SSO provider successfully updated",
+			info: &social.OAuthInfo{
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
+			},
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":     "new-client-id",
+					"client_secret": "new-client-secret",
+					"auth_url":      "some-new-url",
+				},
+			},
+			expectError: false,
+			expectedInfo: &social.OAuthInfo{
+				ClientId:     "new-client-id",
+				ClientSecret: "new-client-secret",
+				AuthUrl:      "some-new-url",
+			},
+		},
+		{
+			name: "fails if settings contain invalid values",
+			info: &social.OAuthInfo{
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
+			},
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":     "new-client-id",
+					"client_secret": "new-client-secret",
+					"auth_url":      []string{"first", "second"},
+				},
+			},
+			expectError: true,
+			expectedInfo: &social.OAuthInfo{
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := NewGitHubProvider(tc.info, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+
+			err := s.Reload(context.Background(), tc.settings)
+			if tc.expectError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			require.EqualValues(t, tc.expectedInfo, s.info)
 		})
 	}
 }

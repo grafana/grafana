@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/go-jose/go-jose/v3/jwt"
 	"golang.org/x/oauth2"
@@ -23,6 +24,7 @@ var _ ssosettings.Reloadable = (*SocialOkta)(nil)
 
 type SocialOkta struct {
 	*SocialBase
+	reloadMutex sync.Mutex
 }
 
 type OktaUserInfoJson struct {
@@ -66,6 +68,16 @@ func (s *SocialOkta) Validate(ctx context.Context, settings ssoModels.SSOSetting
 }
 
 func (s *SocialOkta) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	if err != nil {
+		return fmt.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	s.reloadMutex.Lock()
+	defer s.reloadMutex.Unlock()
+
+	s.info = info
+
 	return nil
 }
 
