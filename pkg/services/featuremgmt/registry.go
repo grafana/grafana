@@ -1000,7 +1000,8 @@ var (
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
-			Created:         time.Date(2023, time.December, 4, 12, 0, 0, 0, time.UTC),
+			RequiresDevMode: true, // only for development
+			Created:         time.Date(2023, time.December, 21, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "cloudWatchBatchQueries",

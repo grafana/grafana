@@ -161,7 +161,7 @@ func (b *SnapshotsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitio
 
 // Register additional routes with the server
 func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
-	tags := []string{"Non-kubernetes APIs"}
+	tags := []string{"Create and Delete (custom routes)"}
 	return &grafanaapiserver.APIRoutes{
 		Namespace: []grafanaapiserver.APIRouteHandler{
 			{

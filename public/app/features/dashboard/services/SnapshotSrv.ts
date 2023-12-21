@@ -81,7 +81,7 @@ interface K8sDashboardSnapshot {
 }
 
 class K8sAPI implements DashboardSnapshotSrv {
-  readonly apiVersion = 'snapshots.grafana.app/v0alpha1';
+  readonly apiVersion = 'dashsnap.grafana.app/v0alpha1';
   readonly url: string;
 
   constructor() {
