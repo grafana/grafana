@@ -541,6 +541,9 @@ type Cfg struct {
 	// sqlstore package and HTTP middlewares.
 	DatabaseInstrumentQueries bool
 
+	// Public dashboards
+	PublicDashboardsEnabled bool
+
 	// Feature Management Settings
 	FeatureManagement FeatureMgmtSettings
 }
@@ -1254,6 +1257,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.UserFacingDefaultError = logSection.Key("user_facing_default_error").MustString("please inspect Grafana server log for details")
 
 	cfg.readFeatureManagementConfig()
+	cfg.readPublicDashboardsSettings()
 
 	return nil
 }
@@ -1542,7 +1546,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	// ID response header
 	cfg.IDResponseHeaderEnabled = auth.Key("id_response_header_enabled").MustBool(false)
-	cfg.IDResponseHeaderPrefix = auth.Key("id_response_header_prefix").MustString("X-Grafana-")
+	cfg.IDResponseHeaderPrefix = auth.Key("id_response_header_prefix").MustString("X-Grafana")
 
 	idHeaderNamespaces := util.SplitString(auth.Key("id_response_header_namespaces").MustString(""))
 	cfg.IDResponseHeaderNamespaces = make(map[string]struct{}, len(idHeaderNamespaces))
@@ -1964,4 +1968,9 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	}
 	cfg.LiveAllowedOrigins = originPatterns
 	return nil
+}
+
+func (cfg *Cfg) readPublicDashboardsSettings() {
+	publicDashboards := cfg.Raw.Section("public_dashboards")
+	cfg.PublicDashboardsEnabled = publicDashboards.Key("enabled").MustBool(true)
 }
