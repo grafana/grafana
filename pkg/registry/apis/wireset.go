@@ -3,10 +3,10 @@ package apiregistry
 import (
 	"github.com/google/wire"
 
+	"github.com/grafana/grafana/pkg/registry/apis/dashsnap"
 	"github.com/grafana/grafana/pkg/registry/apis/example"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/playlist"
-	"github.com/grafana/grafana/pkg/registry/apis/snapshots"
 )
 
 var WireSet = wire.NewSet(
@@ -15,6 +15,6 @@ var WireSet = wire.NewSet(
 	// Each must be added here *and* in the ServiceSink above
 	playlist.RegisterAPIService,
 	example.RegisterAPIService,
-	snapshots.RegisterAPIService,
+	dashsnap.RegisterAPIService,
 	folders.RegisterAPIService,
 )

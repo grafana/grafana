@@ -1,4 +1,4 @@
-package snapshots
+package dashsnap
 
 import (
 	"fmt"
@@ -6,13 +6,13 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1"
+	dashsnap "github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1"
 	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 )
 
-func convertDTOToSnapshot(v *dashboardsnapshots.DashboardSnapshotDTO, namespacer request.NamespaceMapper) *v0alpha1.DashboardSnapshot {
+func convertDTOToSnapshot(v *dashboardsnapshots.DashboardSnapshotDTO, namespacer request.NamespaceMapper) *dashsnap.DashboardSnapshot {
 	meta := kinds.GrafanaResourceMetadata{}
 	if v.Updated != v.Created {
 		meta.SetUpdatedTimestamp(&v.Updated)
@@ -21,7 +21,7 @@ func convertDTOToSnapshot(v *dashboardsnapshots.DashboardSnapshotDTO, namespacer
 	if v.Expires.After(time.Date(2070, time.January, 0, 0, 0, 0, 0, time.UTC)) {
 		expires = 0 // ignore things expiring long into the future
 	}
-	return &v0alpha1.DashboardSnapshot{
+	return &dashsnap.DashboardSnapshot{
 		TypeMeta: resourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              v.Key,
@@ -30,7 +30,7 @@ func convertDTOToSnapshot(v *dashboardsnapshots.DashboardSnapshotDTO, namespacer
 			Namespace:         namespacer(v.OrgID),
 			Annotations:       meta.Annotations,
 		},
-		Spec: v0alpha1.SnapshotInfo{
+		Spec: dashsnap.SnapshotInfo{
 			Title:       v.Name,
 			ExternalURL: v.ExternalURL,
 			Expires:     expires,
@@ -38,7 +38,7 @@ func convertDTOToSnapshot(v *dashboardsnapshots.DashboardSnapshotDTO, namespacer
 	}
 }
 
-func convertSnapshotToK8sResource(v *dashboardsnapshots.DashboardSnapshot, namespacer request.NamespaceMapper) *v0alpha1.DashboardSnapshot {
+func convertSnapshotToK8sResource(v *dashboardsnapshots.DashboardSnapshot, namespacer request.NamespaceMapper) *dashsnap.DashboardSnapshot {
 	meta := kinds.GrafanaResourceMetadata{}
 	if v.Updated != v.Created {
 		meta.SetUpdatedTimestamp(&v.Updated)
@@ -48,7 +48,7 @@ func convertSnapshotToK8sResource(v *dashboardsnapshots.DashboardSnapshot, names
 		expires = 0 // ignore things expiring long into the future
 	}
 
-	info := v0alpha1.SnapshotInfo{
+	info := dashsnap.SnapshotInfo{
 		Title:       v.Name,
 		ExternalURL: v.ExternalURL,
 		Expires:     expires,
@@ -58,7 +58,7 @@ func convertSnapshotToK8sResource(v *dashboardsnapshots.DashboardSnapshot, names
 		info.OriginalUrl, _ = s.Get("originalUrl").String()
 		info.Timestamp, _ = s.Get("timestamp").String()
 	}
-	return &v0alpha1.DashboardSnapshot{
+	return &dashsnap.DashboardSnapshot{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              v.Key,
 			ResourceVersion:   fmt.Sprintf("%d", v.Updated.UnixMilli()),

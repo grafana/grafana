@@ -13,9 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	uss "github.com/grafana/grafana/pkg/infra/usagestats/service"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/registry/apis/dashsnap"
 	"github.com/grafana/grafana/pkg/registry/apis/example"
 	"github.com/grafana/grafana/pkg/registry/apis/playlist"
-	"github.com/grafana/grafana/pkg/registry/apis/snapshots"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -99,14 +99,14 @@ func initializeExampleAPIBuilder(cfg *setting.Cfg) (*example.TestingAPIBuilder, 
 	return &example.TestingAPIBuilder{}, nil
 }
 
-func initializeSnapshotsAPIBuilder(cfg *setting.Cfg) (*snapshots.SnapshotsAPIBuilder, error) {
+func initializeSnapshotsAPIBuilder(cfg *setting.Cfg) (*dashsnap.SnapshotsAPIBuilder, error) {
 	wire.Build(
 		secretsServiceWireSet,
 		dbWireSet,
 		dashboardSnapshotsWireSet,
-		snapshots.NewSnapshotsAPIBuilder,
+		dashsnap.NewSnapshotsAPIBuilder,
 	)
-	return &snapshots.SnapshotsAPIBuilder{}, nil
+	return &dashsnap.SnapshotsAPIBuilder{}, nil
 }
 
 func initializePlaylistsAPIBuilder(cfg *setting.Cfg) (*playlist.PlaylistAPIBuilder, error) {

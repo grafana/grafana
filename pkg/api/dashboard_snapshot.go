@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1"
+	dashsnap "github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -45,7 +45,7 @@ func (hs *HTTPServer) GetSharingOptions(c *contextmodel.ReqContext) {
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) CreateDashboardSnapshot(c *contextmodel.ReqContext) {
-	dashboardsnapshots.CreateDashboardSnapshot(c, v0alpha1.SnapshotSharingOptions{
+	dashboardsnapshots.CreateDashboardSnapshot(c, dashsnap.SnapshotSharingOptions{
 		SnapshotsEnabled:     hs.Cfg.SnapshotEnabled,
 		ExternalEnabled:      hs.Cfg.ExternalEnabled,
 		ExternalSnapshotName: hs.Cfg.ExternalSnapshotName,

@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/registry/apis/dashsnap"
 	"github.com/grafana/grafana/pkg/registry/apis/example"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/playlist"
-	"github.com/grafana/grafana/pkg/registry/apis/snapshots"
 )
 
 var (
@@ -21,7 +21,7 @@ type Service struct{}
 func ProvideRegistryServiceSink(
 	_ *playlist.PlaylistAPIBuilder,
 	_ *example.TestingAPIBuilder,
-	_ *snapshots.SnapshotsAPIBuilder,
+	_ *dashsnap.SnapshotsAPIBuilder,
 	_ *folders.FolderAPIBuilder,
 ) *Service {
 	return &Service{}

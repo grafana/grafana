@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	GROUP      = "snapshots.grafana.app"
+	GROUP      = "dashsnap.grafana.app"
 	VERSION    = "v0alpha1"
 	APIVERSION = GROUP + "/" + VERSION
 )
@@ -72,8 +72,8 @@ type FullDashboardSnapshot struct {
 	// Snapshot summary info
 	Info SnapshotInfo `json:"info"`
 
-	// The raw dashboard (??? openapi ???)
-	Dashboard *simplejson.Json `json:"dashboard"`
+	// The raw dashboard (unstructured for now)
+	Dashboard Unstructured `json:"dashboard"`
 }
 
 // Each tenant, may have different sharing options

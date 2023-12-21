@@ -1,4 +1,4 @@
-package snapshots
+package dashsnap
 
 import (
 	"context"
@@ -19,7 +19,7 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
-	"github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1"
+	dashsnap "github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -35,7 +35,7 @@ import (
 
 var _ grafanaapiserver.APIGroupBuilder = (*SnapshotsAPIBuilder)(nil)
 
-var resourceInfo = v0alpha1.DashboardSnapshotResourceInfo
+var resourceInfo = dashsnap.DashboardSnapshotResourceInfo
 
 // This is used just so wire has something unique to return
 type SnapshotsAPIBuilder struct {
@@ -79,12 +79,12 @@ func (b *SnapshotsAPIBuilder) GetGroupVersion() schema.GroupVersion {
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
-		&v0alpha1.DashboardSnapshot{},
-		&v0alpha1.DashboardSnapshotList{},
-		&v0alpha1.SharingOptions{},
-		&v0alpha1.SharingOptionsList{},
-		&v0alpha1.FullDashboardSnapshot{},
-		&v0alpha1.DashboardSnapshotWithDeleteKey{},
+		&dashsnap.DashboardSnapshot{},
+		&dashsnap.DashboardSnapshotList{},
+		&dashsnap.SharingOptions{},
+		&dashsnap.SharingOptionsList{},
+		&dashsnap.FullDashboardSnapshot{},
+		&dashsnap.DashboardSnapshotWithDeleteKey{},
 		&metav1.Status{},
 	)
 }
@@ -113,7 +113,7 @@ func (b *SnapshotsAPIBuilder) GetAPIGroupInfo(
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
 ) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP, scheme, metav1.ParameterCodec, codecs)
+	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(dashsnap.GROUP, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
 
 	legacyStore := &legacyStorage{
@@ -129,7 +129,7 @@ func (b *SnapshotsAPIBuilder) GetAPIGroupInfo(
 			{Name: "Created At", Type: "date"},
 		},
 		func(obj any) ([]interface{}, error) {
-			m, ok := obj.(*v0alpha1.DashboardSnapshot)
+			m, ok := obj.(*dashsnap.DashboardSnapshot)
 			if ok {
 				return []interface{}{
 					m.Name,
@@ -151,12 +151,12 @@ func (b *SnapshotsAPIBuilder) GetAPIGroupInfo(
 		tableConverter: legacyStore.tableConverter,
 	}
 
-	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[dashsnap.VERSION] = storage
 	return &apiGroupInfo, nil
 }
 
 func (b *SnapshotsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return v0alpha1.GetOpenAPIDefinitions
+	return dashsnap.GetOpenAPIDefinitions
 }
 
 // Register additional routes with the server
