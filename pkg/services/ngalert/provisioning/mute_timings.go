@@ -101,7 +101,7 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 	return &mt, nil
 }
 
-// UpdateMuteTiming replaces an existing mute timing within the specified org. The replaced mute timing is returned. If the mute timing does not exist, nil is returned and no action is taken.
+// UpdateMuteTiming replaces an existing mute timing within the specified org. The replaced mute timing is returned. If the mute timing does not exist, ErrMuteTimingsNotFound is returned.
 func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (*definitions.MuteTimeInterval, error) {
 	if err := mt.Validate(); err != nil {
 		return nil, MakeErrTimeIntervalInvalid(err)
@@ -115,18 +115,15 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 	if revision.cfg.AlertmanagerConfig.MuteTimeIntervals == nil {
 		return nil, nil
 	}
-	updated := false
-	for i, existing := range revision.cfg.AlertmanagerConfig.MuteTimeIntervals {
-		if mt.Name == existing.Name {
-			revision.cfg.AlertmanagerConfig.MuteTimeIntervals[i] = mt.MuteTimeInterval
-			updated = true
-			break
-		}
-	}
-	if !updated {
-		return nil, nil
-	}
 
+	_, idx, err := getMuteTiming(revision, mt.Name)
+	if err != nil {
+		return nil, err
+	}
+	revision.cfg.AlertmanagerConfig.MuteTimeIntervals[idx] = mt.MuteTimeInterval
+
+	// TODO add diff and noop detection
+	// TODO add fail if different provenance
 	err = svc.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
 			return err

@@ -388,8 +388,8 @@ func TestUpdateMuteTimings(t *testing.T) {
 		require.Truef(t, ErrTimeIntervalInvalid.Base.Is(err), "expected ErrTimeIntervalInvalid but got %s", err)
 	})
 
-	t.Run("returns nil if mute timing does not exist", func(t *testing.T) {
-		sut, store, prov := createMuteTimingSvcSut()
+	t.Run("returns ErrMuteTimingsNotFound if mute timing does not exist", func(t *testing.T) {
+		sut, store, _ := createMuteTimingSvcSut()
 		store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
 			return &cfgRevision{cfg: initialConfig()}, nil
 		}
@@ -401,15 +401,9 @@ func TestUpdateMuteTimings(t *testing.T) {
 			Provenance: definitions.Provenance(models.ProvenanceFile),
 		}
 
-		mt, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
-		require.NoError(t, err)
-		require.Nil(t, mt)
+		_, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
 
-		require.Len(t, store.Calls, 1)
-		require.Equal(t, "Get", store.Calls[0].Method)
-		require.Equal(t, orgID, store.Calls[0].Args[1])
-
-		prov.AssertNotCalled(t, "SetProvenance", mock.Anything, &timing, orgID, expectedProvenance)
+		require.Truef(t, ErrMuteTimingsNotFound.Is(err), "expected ErrMuteTimingsNotFound but got %s", err)
 	})
 
 	t.Run("saves mute timing and provenance in a transaction", func(t *testing.T) {
