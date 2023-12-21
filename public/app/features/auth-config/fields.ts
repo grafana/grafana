@@ -151,6 +151,28 @@ export const fieldMap: Record<string, FieldData> = {
     description: 'If not enabled, only existing Grafana users can log in using OAuth',
     type: 'switch',
   },
+  autoLogin: {
+    label: 'Auto login',
+    description: 'Log in automatically, skipping the login screen',
+    type: 'switch',
+  },
+  signoutRedirectUrl: {
+    label: 'Sign out redirect URL',
+    type: 'text',
+    validation: {
+      required: false,
+    },
+  },
+  emailAttributeName: {
+    label: 'Email attribute name',
+    description: 'Name of the key to use for user email lookup within the attributes map of OAuth2 ID token.',
+    type: 'text',
+  },
+  emailAttributePath: {
+    label: 'Email attribute path',
+    description: 'JMESPath expression to use for user email lookup from the user information.',
+    type: 'text',
+  },
 };
 
 // Check if a string contains only numeric values
