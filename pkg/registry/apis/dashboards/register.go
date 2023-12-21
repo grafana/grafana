@@ -1,7 +1,6 @@
 package dashboards
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -9,7 +8,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -17,7 +15,6 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboards/access"
@@ -30,7 +27,6 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/services/grafana-apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -199,88 +195,4 @@ func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefiniti
 
 func (b *DashboardsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	return nil // no custom API routes
-}
-
-func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return b
-}
-
-// This is only called for the dashboard apiVersion
-func (b *DashboardsAPIBuilder) Authorize(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
-	if !attr.IsResourceRequest() {
-		return authorizer.DecisionNoOpinion, "", nil
-	}
-
-	user, err := appcontext.User(ctx)
-	if err != nil {
-		return authorizer.DecisionDeny, "", err
-	}
-
-	if attr.GetName() == "" {
-		// Discourage use of the "list" command for non super admin users
-		if attr.GetVerb() == "list" && attr.GetResource() == v0alpha1.DashboardResourceInfo.GroupResource().Resource {
-			if !user.IsGrafanaAdmin {
-				return authorizer.DecisionDeny, "list summary objects (or connect GrafanaAdmin)", err
-			}
-		}
-		return authorizer.DecisionNoOpinion, "", nil
-	}
-
-	ns := attr.GetNamespace()
-	if ns == "" {
-		return authorizer.DecisionDeny, "expected namespace", nil
-	}
-
-	info, err := request.ParseNamespace(attr.GetNamespace())
-	if err != nil {
-		return authorizer.DecisionDeny, "error reading org from namespace", err
-	}
-
-	// expensive path to lookup permissions for a the single dashboard
-	dto, err := b.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{
-		UID:   attr.GetName(),
-		OrgID: info.OrgID,
-	})
-	if err != nil {
-		return authorizer.DecisionDeny, "error loading dashboard", err
-	}
-
-	ok := false
-	guardian, err := guardian.NewByDashboard(ctx, dto, info.OrgID, user)
-	if err != nil {
-		return authorizer.DecisionDeny, "", err
-	}
-
-	switch attr.GetVerb() {
-	case "get":
-		ok, err = guardian.CanView()
-		if !ok || err != nil {
-			return authorizer.DecisionDeny, "can not view dashboard", err
-		}
-	case "create":
-		fallthrough
-	case "post":
-		ok, err = guardian.CanSave() // vs Edit?
-		if !ok || err != nil {
-			return authorizer.DecisionDeny, "can not save dashboard", err
-		}
-	case "update":
-		fallthrough
-	case "patch":
-		fallthrough
-	case "put":
-		ok, err = guardian.CanEdit() // vs Save
-		if !ok || err != nil {
-			return authorizer.DecisionDeny, "can not edit dashboard", err
-		}
-	case "delete":
-		ok, err = guardian.CanDelete()
-		if !ok || err != nil {
-			return authorizer.DecisionDeny, "can not delete dashboard", err
-		}
-	default:
-		b.log.Info("unknown verb", "verb", attr.GetVerb())
-		return authorizer.DecisionNoOpinion, "unsupported verb", nil // Unknown verb
-	}
-	return authorizer.DecisionAllow, "", nil
 }

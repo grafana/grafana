@@ -35,10 +35,7 @@ type permissionEvaluator struct {
 func (p permissionEvaluator) Evaluate(permissions map[string][]string) bool {
 	userScopes, ok := permissions[p.Action]
 	if !ok {
-		userScopes, ok = permissions["*"]
-		if !ok {
-			return false
-		}
+		return false
 	}
 
 	if len(p.Scopes) == 0 {
