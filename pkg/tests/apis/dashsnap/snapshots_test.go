@@ -1,4 +1,4 @@
-package playlist
+package dashsnap
 
 import (
 	"testing"
@@ -10,52 +10,50 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
-func TestSnapshotsApp(t *testing.T) {
+func TestDashboardSnapshots(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction: true, // do not start extra port 6443
+		AppModeProduction: false, // required for experimental apis
 		DisableAnonymous:  true,
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServer,
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // required to register dashsnap.grafana.app
 		},
 	})
 
 	t.Run("Check discovery client", func(t *testing.T) {
-		disco := helper.GetGroupVersionInfoJSON("snapshots.grafana.app")
+		disco := helper.GetGroupVersionInfoJSON("dashsnap.grafana.app")
 
-		//fmt.Printf("%s", disco)
+		// fmt.Printf("%s", disco)
 		require.JSONEq(t, `[
 			{
-			  "version": "v0alpha1",
 			  "freshness": "Current",
 			  "resources": [
 				{
-				  "resource": "dashboards",
+				  "resource": "dashsnaps",
 				  "responseKind": {
 					"group": "",
 					"kind": "DashboardSnapshot",
 					"version": ""
 				  },
 				  "scope": "Namespaced",
-				  "singularResource": "dashboard",
+				  "singularResource": "dashsnap",
 				  "subresources": [
 					{
 					  "responseKind": {
 						"group": "",
-						"kind": "Status",
+						"kind": "FullDashboardSnapshot",
 						"version": ""
 					  },
-					  "subresource": "delete",
+					  "subresource": "body",
 					  "verbs": [
-						"delete"
+						"get"
 					  ]
 					}
 				  ],
 				  "verbs": [
-					"create",
 					"delete",
 					"get",
 					"list"
@@ -65,17 +63,18 @@ func TestSnapshotsApp(t *testing.T) {
 				  "resource": "options",
 				  "responseKind": {
 					"group": "",
-					"kind": "SnapshotSharingConfig",
+					"kind": "SharingOptions",
 					"version": ""
 				  },
-				  "scope": "Cluster",
+				  "scope": "Namespaced",
 				  "singularResource": "options",
 				  "verbs": [
 					"get",
 					"list"
 				  ]
 				}
-			  ]
+			  ],
+			  "version": "v0alpha1"
 			}
 		  ]`, disco)
 	})
