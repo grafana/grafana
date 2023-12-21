@@ -20,30 +20,33 @@ export const fields: Record<SSOProvider['provider'], Array<keyof SSOProvider['se
 
 type Section = Record<
   SSOProvider['provider'],
-  {
+  Array<{
     name: string;
     id: string;
     fields: Array<keyof SSOProvider['settings']>;
-  }
+  }>
 >;
 
-const sectionFields: Section = {
-  generic_oauth: {
-    name: 'General settings',
-    id: 'general',
-    fields: [
-      'name',
-      'clientId',
-      'clientSecret',
-      'scopes',
-      'authUrl',
-      'tokenUrl',
-      'apiUrl',
-      'allowSignup',
-      'autoLogin',
-      'signoutRedirectUrl',
-    ],
-  },
+export const sectionFields: Section = {
+  generic_oauth: [
+    {
+      name: 'General settings',
+      id: 'general',
+      fields: [
+        'name',
+        'clientId',
+        'clientSecret',
+        'scopes',
+        'authUrl',
+        'tokenUrl',
+        'apiUrl',
+        'allowSignup',
+        'autoLogin',
+        'signoutRedirectUrl',
+      ],
+    },
+    { name: 'User mapping', id: 'user', fields: ['emailAttributeName', 'emailAttributePath', 'roleAttributePath'] },
+  ],
 };
 
 /**

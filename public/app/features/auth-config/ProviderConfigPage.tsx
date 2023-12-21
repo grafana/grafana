@@ -4,14 +4,25 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { AppEvents, NavModelItem } from '@grafana/data';
 import { getAppEvents, getBackendSrv, isFetchError } from '@grafana/runtime';
-import { Button, Field, Input, InputControl, LinkButton, SecretInput, Select, Stack, Switch } from '@grafana/ui';
+import {
+  Button,
+  CollapsableSection,
+  Field,
+  Input,
+  InputControl,
+  LinkButton,
+  SecretInput,
+  Select,
+  Stack,
+  Switch,
+} from '@grafana/ui';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { StoreState } from '../../types';
 
-import { fieldMap, fields } from './fields';
+import { fieldMap, fields, sectionFields } from './fields';
 import { loadSettings } from './state/actions';
 import { SSOProvider, SSOProviderDTO, FieldData } from './types';
 import { dataToDTO, dtoToData } from './utils/data';
@@ -97,6 +108,7 @@ export const ProviderConfig = ({ config, provider, isLoading }: ProviderConfigPr
   const [isSaving, setIsSaving] = useState(false);
   const [isSecretConfigured, setIsSecretConfigured] = useState(!!config?.settings.clientSecret);
   const providerFields = fields[provider];
+  const advancedFields = sectionFields[provider];
 
   const onSubmit = async (data: SSOProviderDTO) => {
     setIsSaving(true);
@@ -227,13 +239,32 @@ export const ProviderConfig = ({ config, provider, isLoading }: ProviderConfigPr
                 reset();
               }}
             />
-            <Field label="Enabled">
-              <Switch {...register('enabled')} id="enabled" label={'Enabled'} />
-            </Field>
-            {providerFields.map((fieldName) => {
-              const field = fieldMap[fieldName];
-              return renderField(fieldName, field);
-            })}
+            {advancedFields ? (
+              advancedFields.map((section, index) => {
+                return (
+                  <CollapsableSection label={section.name} isOpen={index === 0} key={section.name}>
+                    {section.fields.map((fieldName) => {
+                      const field = fieldMap[fieldName];
+                      if (!field) {
+                        console.log('missing field:', fieldName);
+                        return null;
+                      }
+                      return renderField(fieldName, field);
+                    })}
+                  </CollapsableSection>
+                );
+              })
+            ) : (
+              <>
+                <Field label="Enabled">
+                  <Switch {...register('enabled')} id="enabled" label={'Enabled'} />
+                </Field>
+                {providerFields.map((fieldName) => {
+                  const field = fieldMap[fieldName];
+                  return renderField(fieldName, field);
+                })}
+              </>
+            )}
             <Stack gap={2}>
               <Field>
                 <Button type={'submit'}>{isSaving ? 'Saving...' : 'Save'}</Button>
