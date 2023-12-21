@@ -14,6 +14,8 @@ import {
 } from '@grafana/data/src/transformations/transformers/labelsToFields';
 import { InlineField, InlineFieldRow, RadioButtonGroup, Select, FilterPill, Stack } from '@grafana/ui';
 
+import { getTransformationContent } from '../docs/getTransformationContent';
+
 const modes: Array<SelectableValue<LabelsToFieldsMode>> = [
   { value: LabelsToFieldsMode.Columns, label: 'Columns' },
   { value: LabelsToFieldsMode.Rows, label: 'Rows' },
@@ -124,8 +126,9 @@ export const labelsToFieldsTransformerRegistryItem: TransformerRegistryItem<Labe
   id: DataTransformerID.labelsToFields,
   editor: LabelsAsFieldsTransformerEditor,
   transformation: standardTransformers.labelsToFieldsTransformer,
-  name: 'Labels to fields',
+  name: standardTransformers.labelsToFieldsTransformer.name,
   description: `Groups series by time and return labels or tags as fields.
                 Useful for showing time series with labels in a table where each label key becomes a separate column.`,
   categories: new Set([TransformerCategory.Reformat]),
+  help: getTransformationContent(DataTransformerID.labelsToFields).helperDocs,
 };

@@ -96,6 +96,39 @@ describe('parseLogsFrame should parse different logs-dataframe formats', () => {
     expect(result?.extraFields).toStrictEqual([]);
   });
 
+  it('should parse frames with labels field of type other', () => {
+    const time = makeTime('Time', [1687185711795, 1687185711995]);
+    const line = makeString('Line', ['line1', 'line2']);
+    const id = makeString('id', ['id1', 'id2']);
+    const ns = makeString('tsNs', ['1687185711795123456', '1687185711995987654']);
+    const labels = makeObject('labels', [
+      { counter: '38141', label: 'val2', level: 'warning' },
+      { counter: '38143', label: 'val2', level: 'info' },
+    ]);
+
+    const result = parseLogsFrame({
+      fields: [labels, time, line, ns, id],
+      length: 2,
+    });
+
+    expect(result).not.toBeNull();
+
+    expect(result!.timeField.values[0]).toBe(time.values[0]);
+    expect(result!.bodyField.values[0]).toBe(line.values[0]);
+    expect(result!.idField?.values[0]).toBe(id.values[0]);
+    expect(result!.timeNanosecondField?.values[0]).toBe(ns.values[0]);
+    expect(result!.severityField).toBeNull();
+    expect(result!.getLogFrameLabels()).toStrictEqual([
+      { counter: '38141', label: 'val2', level: 'warning' },
+      { counter: '38143', label: 'val2', level: 'info' },
+    ]);
+    expect(result!.getLogFrameLabelsAsLabels()).toStrictEqual([
+      { counter: '38141', label: 'val2', level: 'warning' },
+      { counter: '38143', label: 'val2', level: 'info' },
+    ]);
+    expect(result?.extraFields).toStrictEqual([]);
+  });
+
   it('should parse a Loki-style frame (single-frame, labels-in-json)', () => {
     const time = makeTime('Time', [1687185711795, 1687185711995]);
     const line = makeString('Line', ['line1', 'line2']);
@@ -145,11 +178,6 @@ describe('parseLogsFrame should parse different logs-dataframe formats', () => {
     const level = makeString('level', ['info', 'error']);
 
     const result = parseLogsFrame({
-      meta: {
-        custom: {
-          frameType: 'LabeledTimeValues',
-        },
-      },
       fields: [time, line, source, level, host],
       length: 2,
     });

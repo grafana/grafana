@@ -6,15 +6,22 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path"
+	goruntime "runtime"
+	"runtime/debug"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
+	"golang.org/x/mod/semver"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apimachinery/pkg/version"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -23,27 +30,38 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/component-base/logs"
 	"k8s.io/klog/v2"
 
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/auth/authorizer"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
+	"github.com/grafana/grafana/pkg/services/org"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	entitystorage "github.com/grafana/grafana/pkg/services/grafana-apiserver/storage/entity"
 	filestorage "github.com/grafana/grafana/pkg/services/grafana-apiserver/storage/file"
+	"github.com/grafana/grafana/pkg/services/store/entity"
+	entityDB "github.com/grafana/grafana/pkg/services/store/entity/db"
+	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type StorageType string
 
 const (
-	StorageTypeFile   StorageType = "file"
-	StorageTypeEtcd   StorageType = "etcd"
-	StorageTypeLegacy StorageType = "legacy"
+	StorageTypeFile        StorageType = "file"
+	StorageTypeEtcd        StorageType = "etcd"
+	StorageTypeLegacy      StorageType = "legacy"
+	StorageTypeUnified     StorageType = "unified"
+	StorageTypeUnifiedGrpc StorageType = "unified-grpc"
 )
 
 var (
@@ -99,31 +117,40 @@ type service struct {
 	config     *config
 	restConfig *clientrest.Config
 
+	cfg      *setting.Cfg
+	features featuremgmt.FeatureToggles
+
 	stopCh    chan struct{}
 	stoppedCh chan error
 
+	db       db.DB
 	rr       routing.RouteRegister
 	handler  http.Handler
 	builders []APIGroupBuilder
 
 	tracing *tracing.TracingService
 
-	authorizer authorizer.Authorizer
+	authorizer *authorizer.GrafanaAuthorizer
 }
 
 func ProvideService(
 	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
 	rr routing.RouteRegister,
-	authz authorizer.Authorizer,
+	orgService org.Service,
 	tracing *tracing.TracingService,
+	db db.DB,
 ) (*service, error) {
 	s := &service{
-		config:     newConfig(cfg),
+		config:     newConfig(cfg, features),
+		cfg:        cfg,
+		features:   features,
 		rr:         rr,
 		stopCh:     make(chan struct{}),
 		builders:   []APIGroupBuilder{},
-		authorizer: authz,
+		authorizer: authorizer.NewGrafanaAuthorizer(cfg, orgService),
 		tracing:    tracing,
+		db:         db, // For Unified storage
 	}
 
 	// This will be used when running as a dskit service
@@ -145,16 +172,10 @@ func ProvideService(
 				req.URL.Path = "/"
 			}
 
-			//TODO: add support for the existing MetricsEndpointBasicAuth config option
+			// TODO: add support for the existing MetricsEndpointBasicAuth config option
 			if req.URL.Path == "/apiserver-metrics" {
 				req.URL.Path = "/metrics"
 			}
-
-			ctx := req.Context()
-			signedInUser := appcontext.MustUser(ctx)
-
-			req.Header.Set("X-Remote-User", strconv.FormatInt(signedInUser.UserID, 10))
-			req.Header.Set("X-Remote-Group", "grafana")
 
 			resp := responsewriter.WrapForHTTP1Or2(c.Resp)
 			s.handler.ServeHTTP(resp, req)
@@ -207,6 +228,12 @@ func (s *service) start(ctx context.Context) error {
 		if err := b.InstallSchema(Scheme); err != nil {
 			return err
 		}
+
+		// Optionally register a custom authorizer
+		auth := b.GetAuthorizer()
+		if auth != nil {
+			s.authorizer.Register(b.GetGroupVersion(), auth)
+		}
 	}
 
 	o := options.NewRecommendedOptions("/registry/grafana.app", Codecs.LegacyCodec(groupVersions...))
@@ -231,12 +258,10 @@ func (s *service) start(ctx context.Context) error {
 		if err := o.Authentication.ApplyTo(&serverConfig.Authentication, serverConfig.SecureServing, serverConfig.OpenAPIConfig); err != nil {
 			return err
 		}
-	}
-
-	// override ExternalAddress and LoopbackClientConfig in prod mode.
-	// in dev mode we want to use the loopback client config
-	// and address provided by SecureServingOptions.
-	if !s.config.devMode {
+	} else {
+		// In production mode, override ExternalAddress and LoopbackClientConfig.
+		// In dev mode we want to use the loopback client config
+		// and address provided by SecureServingOptions.
 		serverConfig.ExternalAddress = s.config.host
 		serverConfig.LoopbackClientConfig = &clientrest.Config{
 			Host: s.config.apiURL,
@@ -246,27 +271,61 @@ func (s *service) start(ctx context.Context) error {
 		}
 	}
 
-	if s.config.storageType == StorageTypeEtcd {
+	switch s.config.storageType {
+	case StorageTypeEtcd:
 		o.Etcd.StorageConfig.Transport.ServerList = s.config.etcdServers
 		if err := o.Etcd.Validate(); len(err) > 0 {
 			return err[0]
 		}
-		if err := o.Etcd.Complete(serverConfig.Config.StorageObjectCountTracker, serverConfig.Config.DrainedNotify(), serverConfig.Config.AddPostStartHook); err != nil {
-			return err
-		}
 		if err := o.Etcd.ApplyTo(&serverConfig.Config); err != nil {
 			return err
 		}
-	}
 
-	if s.config.storageType == StorageTypeFile {
+	case StorageTypeUnified:
+		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
+			return fmt.Errorf("unified storage requires the unifiedStorage feature flag (and app_mode = development)")
+		}
+
+		eDB, err := entityDB.ProvideEntityDB(s.db, s.cfg, s.features)
+		if err != nil {
+			return err
+		}
+
+		store, err := sqlstash.ProvideSQLEntityServer(eDB)
+		if err != nil {
+			return err
+		}
+
+		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, o.Etcd.StorageConfig.Codec)
+
+	case StorageTypeUnifiedGrpc:
+		// Create a connection to the gRPC server
+		// TODO: support configuring the gRPC server address
+		conn, err := grpc.Dial("localhost:10000", grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			return err
+		}
+
+		// TODO: determine when to close the connection, we cannot defer it here
+		// defer conn.Close()
+
+		// Create a client instance
+		store := entity.NewEntityStoreClientWrapper(conn)
+
+		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, o.Etcd.StorageConfig.Codec)
+
+	case StorageTypeFile:
 		serverConfig.RESTOptionsGetter = filestorage.NewRESTOptionsGetter(s.config.dataPath, o.Etcd.StorageConfig)
+
+	case StorageTypeLegacy:
+		// do nothing?
 	}
 
 	serverConfig.Authorization.Authorizer = s.authorizer
+	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
 
 	// Add OpenAPI specs for each group+version
-	defsGetter := getOpenAPIDefinitions(builders)
+	defsGetter := GetOpenAPIDefinitions(builders)
 	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
 		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
 		openapinamer.NewDefinitionNamer(Scheme, scheme.Scheme))
@@ -276,14 +335,18 @@ func (s *service) start(ctx context.Context) error {
 		openapinamer.NewDefinitionNamer(Scheme, scheme.Scheme))
 
 	// Add the custom routes to service discovery
-	serverConfig.OpenAPIV3Config.PostProcessSpec3 = getOpenAPIPostProcessor(builders)
+	serverConfig.OpenAPIV3Config.PostProcessSpec = GetOpenAPIPostProcessor(builders)
+
+	// Set the swagger build versions
+	serverConfig.OpenAPIConfig.Info.Version = setting.BuildVersion
+	serverConfig.OpenAPIV3Config.Info.Version = setting.BuildVersion
 
 	serverConfig.SkipOpenAPIInstallation = false
 	serverConfig.BuildHandlerChainFunc = func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
 		// Call DefaultBuildHandlerChain on the main entrypoint http.Handler
 		// See https://github.com/kubernetes/apiserver/blob/v0.28.0/pkg/server/config.go#L906
 		// DefaultBuildHandlerChain provides many things, notably CORS, HSTS, cache-control, authz and latency tracking
-		requestHandler, err := getAPIHandler(
+		requestHandler, err := GetAPIHandler(
 			delegateHandler,
 			c.LoopbackClientConfig,
 			builders)
@@ -293,7 +356,22 @@ func (s *service) start(ctx context.Context) error {
 		return genericapiserver.DefaultBuildHandlerChain(requestHandler, c)
 	}
 
-	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
+	k8sVersion, err := getK8sApiserverVersion()
+	if err != nil {
+		return err
+	}
+	before, after, _ := strings.Cut(setting.BuildVersion, ".")
+	serverConfig.Version = &version.Info{
+		Major:        before,
+		Minor:        after,
+		GoVersion:    goruntime.Version(),
+		Platform:     fmt.Sprintf("%s/%s", goruntime.GOOS, goruntime.GOARCH),
+		Compiler:     goruntime.Compiler,
+		GitTreeState: setting.BuildBranch,
+		GitCommit:    setting.BuildCommit,
+		BuildDate:    time.Unix(setting.BuildStamp, 0).UTC().Format(time.DateTime),
+		GitVersion:   k8sVersion,
+	}
 
 	// Create the server
 	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegate())
@@ -316,24 +394,22 @@ func (s *service) start(ctx context.Context) error {
 		}
 	}
 
-	s.restConfig = server.LoopbackClientConfig
-
-	// only write kubeconfig in dev mode
-	if s.config.devMode {
-		if err := s.ensureKubeConfig(); err != nil {
-			return err
-		}
-	}
-
 	// Used by the proxy wrapper registered in ProvideService
 	s.handler = server.Handler
+	s.restConfig = server.LoopbackClientConfig
 
-	// skip starting the server in prod mode
+	prepared := server.PrepareRun()
+
+	// When running in production, do not start a standalone https server
 	if !s.config.devMode {
 		return nil
 	}
 
-	prepared := server.PrepareRun()
+	// only write kubeconfig in dev mode
+	if err := s.ensureKubeConfig(); err != nil {
+		return err
+	}
+
 	go func() {
 		s.stoppedCh <- prepared.Run(s.stopCh)
 	}()
@@ -372,34 +448,10 @@ func (s *service) running(ctx context.Context) error {
 }
 
 func (s *service) ensureKubeConfig() error {
-	clusters := make(map[string]*clientcmdapi.Cluster)
-	clusters["default-cluster"] = &clientcmdapi.Cluster{
-		Server:                s.restConfig.Host,
-		InsecureSkipTLSVerify: true,
-	}
-
-	contexts := make(map[string]*clientcmdapi.Context)
-	contexts["default-context"] = &clientcmdapi.Context{
-		Cluster:   "default-cluster",
-		Namespace: "default",
-		AuthInfo:  "default",
-	}
-
-	authinfos := make(map[string]*clientcmdapi.AuthInfo)
-	authinfos["default"] = &clientcmdapi.AuthInfo{
-		Token: s.restConfig.BearerToken,
-	}
-
-	clientConfig := clientcmdapi.Config{
-		Kind:           "Config",
-		APIVersion:     "v1",
-		Clusters:       clusters,
-		Contexts:       contexts,
-		CurrentContext: "default-context",
-		AuthInfos:      authinfos,
-	}
-
-	return clientcmd.WriteToFile(clientConfig, path.Join(s.config.dataPath, "grafana.kubeconfig"))
+	return clientcmd.WriteToFile(
+		utils.FormatKubeConfig(s.restConfig),
+		path.Join(s.config.dataPath, "grafana.kubeconfig"),
+	)
 }
 
 type roundTripperFunc struct {
@@ -408,4 +460,34 @@ type roundTripperFunc struct {
 
 func (f *roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return f.fn(req)
+}
+
+// find the k8s version according to build info
+func getK8sApiserverVersion() (string, error) {
+	bi, ok := debug.ReadBuildInfo()
+	if !ok {
+		return "", fmt.Errorf("debug.ReadBuildInfo() failed")
+	}
+
+	if len(bi.Deps) == 0 {
+		return "v?.?", nil // this is normal while debugging
+	}
+
+	for _, dep := range bi.Deps {
+		if dep.Path == "k8s.io/apiserver" {
+			if !semver.IsValid(dep.Version) {
+				return "", fmt.Errorf("invalid semantic version for k8s.io/apiserver")
+			}
+			// v0 => v1
+			majorVersion := strings.TrimPrefix(semver.Major(dep.Version), "v")
+			majorInt, err := strconv.Atoi(majorVersion)
+			if err != nil {
+				return "", fmt.Errorf("could not convert majorVersion to int. majorVersion: %s", majorVersion)
+			}
+			newMajor := fmt.Sprintf("v%d", majorInt+1)
+			return strings.Replace(dep.Version, semver.Major(dep.Version), newMajor, 1), nil
+		}
+	}
+
+	return "", fmt.Errorf("could not find k8s.io/apiserver in build info")
 }

@@ -90,7 +90,7 @@ func TestInstrumentationMiddleware(t *testing.T) {
 				require.Equal(t, 1, testutil.CollectAndCount(promRegistry, metricRequestDurationMs))
 				require.Equal(t, 1, testutil.CollectAndCount(promRegistry, metricRequestDurationS))
 
-				counter := mw.pluginMetrics.pluginRequestCounter.WithLabelValues(pluginID, tc.expEndpoint, statusOK, string(backendplugin.TargetUnknown))
+				counter := mw.pluginMetrics.pluginRequestCounter.WithLabelValues(pluginID, tc.expEndpoint, requestStatusOK.String(), string(backendplugin.TargetUnknown))
 				require.Equal(t, 1.0, testutil.ToFloat64(counter))
 				for _, m := range []string{metricRequestDurationMs, metricRequestDurationS} {
 					require.NoError(t, checkHistogram(promRegistry, m, map[string]string{
@@ -115,10 +115,16 @@ func TestInstrumentationMiddleware(t *testing.T) {
 
 func TestInstrumentationMiddlewareStatusSource(t *testing.T) {
 	const labelStatusSource = "status_source"
-	queryDataCounterLabels := prometheus.Labels{
+	queryDataOKCounterLabels := prometheus.Labels{
 		"plugin_id": pluginID,
 		"endpoint":  endpointQueryData,
-		"status":    statusOK,
+		"status":    requestStatusOK.String(),
+		"target":    string(backendplugin.TargetUnknown),
+	}
+	queryDataErrorCounterLabels := prometheus.Labels{
+		"plugin_id": pluginID,
+		"endpoint":  endpointQueryData,
+		"status":    requestStatusError.String(),
 		"target":    string(backendplugin.TargetUnknown),
 	}
 	downstreamErrorResponse := backend.DataResponse{
@@ -180,13 +186,13 @@ func TestInstrumentationMiddlewareStatusSource(t *testing.T) {
 			}
 			_, err := cdt.Decorator.QueryData(context.Background(), &backend.QueryDataRequest{PluginContext: pCtx})
 			require.NoError(t, err)
-			counter, err := metricsMw.pluginMetrics.pluginRequestCounter.GetMetricWith(newLabels(queryDataCounterLabels, nil))
+			counter, err := metricsMw.pluginMetrics.pluginRequestCounter.GetMetricWith(newLabels(queryDataErrorCounterLabels, nil))
 			require.NoError(t, err)
 			require.Equal(t, 1.0, testutil.ToFloat64(counter))
 
 			// error_source should not be defined at all
 			_, err = metricsMw.pluginMetrics.pluginRequestCounter.GetMetricWith(newLabels(
-				queryDataCounterLabels,
+				queryDataOKCounterLabels,
 				prometheus.Labels{
 					labelStatusSource: string(backend.ErrorSourceDownstream),
 				}),
@@ -204,7 +210,7 @@ func TestInstrumentationMiddlewareStatusSource(t *testing.T) {
 			_, err := cdt.Decorator.QueryData(context.Background(), &backend.QueryDataRequest{PluginContext: pCtx})
 			require.NoError(t, err)
 			counter, err := metricsMw.pluginMetrics.pluginRequestCounter.GetMetricWith(newLabels(
-				queryDataCounterLabels,
+				queryDataErrorCounterLabels,
 				prometheus.Labels{
 					labelStatusSource: string(backend.ErrorSourceDownstream),
 				}),

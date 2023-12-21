@@ -54,15 +54,9 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
     const ariaLabel = restProps['aria-label'] || title;
 
     return (
-      <div
-        ref={ref}
-        className={cx(styles.wrapper, className)}
-        data-testid={selectors.components.Alert.alertV2(severity)}
-        role={role}
-        aria-label={ariaLabel}
-        {...restProps}
-      >
+      <div ref={ref} className={cx(styles.wrapper, className)} role={role} aria-label={ariaLabel} {...restProps}>
         <Box
+          data-testid={selectors.components.Alert.alertV2(severity)}
           display="flex"
           backgroundColor={severity}
           borderRadius="default"

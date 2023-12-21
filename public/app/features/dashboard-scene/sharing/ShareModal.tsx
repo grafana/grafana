@@ -5,14 +5,18 @@ import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel, Scene
 import { Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
+import { isPublicDashboardsEnabled } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { ShareExportTab } from './ShareExportTab';
+import { ShareLibraryPanelTab } from './ShareLibraryPanelTab';
 import { ShareLinkTab } from './ShareLinkTab';
 import { SharePanelEmbedTab } from './SharePanelEmbedTab';
 import { ShareSnapshotTab } from './ShareSnapshotTab';
+import { SharePublicDashboardTab } from './public-dashboards/SharePublicDashboardTab';
 import { ModalSceneObjectLike, SceneShareTab } from './types';
 
 interface ShareModalState extends SceneObjectState {
@@ -28,10 +32,10 @@ interface ShareModalState extends SceneObjectState {
 export class ShareModal extends SceneObjectBase<ShareModalState> implements ModalSceneObjectLike {
   static Component = SharePanelModalRenderer;
 
-  constructor(state: Omit<ShareModalState, 'activeTab'>) {
+  constructor(state: Omit<ShareModalState, 'activeTab'> & { activeTab?: string }) {
     super({
+      activeTab: 'link',
       ...state,
-      activeTab: 'Link',
     });
 
     this.addActivationHandler(() => this.buildTabs());
@@ -52,36 +56,17 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
 
     if (panelRef) {
       tabs.push(new SharePanelEmbedTab({ panelRef, dashboardRef }));
+
+      if (panelRef.resolve() instanceof VizPanel) {
+        tabs.push(new ShareLibraryPanelTab({ panelRef, dashboardRef, modalRef: this.getRef() }));
+      }
+    }
+
+    if (isPublicDashboardsEnabled()) {
+      tabs.push(new SharePublicDashboardTab({ dashboardRef, modalRef: this.getRef() }));
     }
 
     this.setState({ tabs });
-
-    // if (panel) {
-    //   const embedLabel = t('share-modal.tab-title.embed', 'Embed');
-    //   tabs.push({ label: embedLabel, value: shareDashboardType.embed, component: ShareEmbed });
-
-    //   if (!isPanelModelLibraryPanel(panel)) {
-    //     const libraryPanelLabel = t('share-modal.tab-title.library-panel', 'Library panel');
-    //     tabs.push({ label: libraryPanelLabel, value: shareDashboardType.libraryPanel, component: ShareLibraryPanel });
-    //   }
-    //   tabs.push(...customPanelTabs);
-    // } else {
-    //   const exportLabel = t('share-modal.tab-title.export', 'Export');
-    //   tabs.push({
-    //     label: exportLabel,
-    //     value: shareDashboardType.export,
-    //     component: ShareExport,
-    //   });
-    //   tabs.push(...customDashboardTabs);
-    // }
-
-    // if (Boolean(config.featureToggles['publicDashboards'])) {
-    //   tabs.push({
-    //     label: 'Public dashboard',
-    //     value: shareDashboardType.publicDashboard,
-    //     component: SharePublicDashboard,
-    //   });
-    // }
   }
 
   onDismiss = () => {
@@ -90,6 +75,7 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
   };
 
   onChangeTab: ComponentProps<typeof ModalTabsHeader>['onChangeTab'] = (tab) => {
+    DashboardInteractions.sharingTabChanged({ item: tab.value });
     this.setState({ activeTab: tab.value });
   };
 }
@@ -104,7 +90,7 @@ function SharePanelModalRenderer({ model }: SceneComponentProps<ShareModal>) {
 
   const modalTabs = tabs?.map((tab) => ({
     label: tab.getTabLabel(),
-    value: tab.getTabLabel(),
+    value: tab.tabId,
   }));
 
   const header = (
@@ -117,7 +103,7 @@ function SharePanelModalRenderer({ model }: SceneComponentProps<ShareModal>) {
     />
   );
 
-  const currentTab = tabs.find((t) => t.getTabLabel() === activeTab);
+  const currentTab = tabs.find((t) => t.tabId === activeTab);
 
   return (
     <Modal isOpen={true} title={header} onDismiss={model.onDismiss}>

@@ -14,7 +14,7 @@ export const initialIntervalVariableModelState: IntervalVariableModel = {
   auto: false,
   query: '1m,10m,30m,1h,6h,12h,1d,7d,14d,30d',
   refresh: VariableRefresh.onTimeRangeChanged,
-  current: {} as VariableOption,
+  current: {},
 };
 
 export const intervalVariableSlice = createSlice({

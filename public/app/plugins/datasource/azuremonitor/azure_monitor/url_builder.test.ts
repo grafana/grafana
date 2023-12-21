@@ -174,6 +174,22 @@ describe('AzureMonitorUrlBuilder', () => {
         '/subscriptions/sub/resource-uri/resource/providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=custom%2Fnamespace'
       );
     });
+
+    it('adds a region with multiple resources', () => {
+      const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
+        'baseUrl',
+        'apiVersion',
+        {
+          resourceUri: '/subscriptions/sub/resource-uri/resource',
+        },
+        templateSrv,
+        true,
+        'region'
+      );
+      expect(url).toBe(
+        'baseUrl/subscriptions/sub/resource-uri/resource/providers/microsoft.insights/metricdefinitions?api-version=apiVersion&region=region'
+      );
+    });
   });
 
   describe('Legacy query object', () => {

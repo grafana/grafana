@@ -3,7 +3,7 @@ import { Observable, Subscription } from 'rxjs';
 
 import { expectObservable, forceObservableCompletion } from './utils';
 
-function tryExpectations(received: unknown[], expectations: (received: unknown[]) => void): jest.CustomMatcherResult {
+function tryExpectations<T = unknown>(received: T[], expectations: (received: T[]) => void): jest.CustomMatcherResult {
   try {
     expectations(received);
     return {
@@ -27,9 +27,9 @@ function tryExpectations(received: unknown[], expectations: (received: unknown[]
  * the observable ended (or emitted error). If Observable does not complete within OBSERVABLE_TEST_TIMEOUT_IN_MS the
  * test fails.
  */
-export function toEmitValuesWith(
-  received: Observable<any>,
-  expectations: (actual: any[]) => void
+export function toEmitValuesWith<T = unknown>(
+  received: Observable<T>,
+  expectations: (actual: T[]) => void
 ): Promise<jest.CustomMatcherResult> {
   const failsChecks = expectObservable(received);
   if (failsChecks) {
@@ -37,7 +37,7 @@ export function toEmitValuesWith(
   }
 
   return new Promise((resolve) => {
-    const receivedValues: any[] = [];
+    const receivedValues: T[] = [];
     const subscription = new Subscription();
 
     subscription.add(

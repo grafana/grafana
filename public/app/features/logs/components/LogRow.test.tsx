@@ -30,6 +30,7 @@ const setup = (propOverrides?: Partial<ComponentProps<typeof LogRow>>, rowOverri
     enableLogDetails: false,
     getRows: () => [],
     onOpenContext: () => {},
+    handleTextSelection: jest.fn(),
     prettifyLogMessage: false,
     app: CoreApp.Explore,
     showDuplicates: false,

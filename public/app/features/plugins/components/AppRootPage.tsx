@@ -3,11 +3,21 @@ import { AnyAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { useLocation, useRouteMatch } from 'react-router-dom';
 
-import { AppEvents, AppPlugin, AppPluginMeta, NavModel, NavModelItem, OrgRole, PluginType } from '@grafana/data';
+import {
+  AppEvents,
+  AppPlugin,
+  AppPluginMeta,
+  NavModel,
+  NavModelItem,
+  OrgRole,
+  PluginType,
+  PluginContextProvider,
+} from '@grafana/data';
 import { config, locationSearchToObject } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { appEvents, contextSrv } from 'app/core/core';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/core/navigation/errorModels';
@@ -27,19 +37,20 @@ interface Props {
 
 interface State {
   loading: boolean;
+  loadingError: boolean;
   plugin?: AppPlugin | null;
   // Used to display a tab navigation (used before the new Top Nav)
   pluginNav: NavModel | null;
 }
 
-const initialState: State = { loading: true, pluginNav: null, plugin: null };
+const initialState: State = { loading: true, loadingError: false, pluginNav: null, plugin: null };
 
 export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   const match = useRouteMatch();
   const location = useLocation();
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState);
   const currentUrl = config.appSubUrl + location.pathname + location.search;
-  const { plugin, loading, pluginNav } = state;
+  const { plugin, loading, loadingError, pluginNav } = state;
   const navModel = buildPluginSectionNav(pluginNavSection, pluginNav, currentUrl);
   const queryParams = useMemo(() => locationSearchToObject(location.search), [location.search]);
   const context = useMemo(() => buildPluginPageContext(navModel), [navModel]);
@@ -60,6 +71,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
     return (
       <Page navModel={navModel} pageNav={{ text: '' }} layout={currentLayout}>
         {loading && <PageLoader />}
+        {!loading && loadingError && <EntityNotFound entity="App" />}
       </Page>
     );
   }
@@ -73,13 +85,15 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   }
 
   const pluginRoot = plugin.root && (
-    <plugin.root
-      meta={plugin.meta}
-      basename={match.url}
-      onNavChanged={onNavChanged}
-      query={queryParams}
-      path={location.pathname}
-    />
+    <PluginContextProvider meta={plugin.meta}>
+      <plugin.root
+        meta={plugin.meta}
+        basename={match.url}
+        onNavChanged={onNavChanged}
+        query={queryParams}
+        path={location.pathname}
+      />
+    </PluginContextProvider>
   );
 
   // Because of the fallback at plugin routes, we need to check
@@ -90,7 +104,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
       return true;
     }
 
-    const pluginInclude = plugin.meta?.includes.find((include) => include.path === pluginRoot.props.path);
+    const pluginInclude = plugin.meta?.includes.find((include) => include.path === location.pathname);
     // Check if include configuration contains current path
     if (!pluginInclude) {
       return true;
@@ -167,12 +181,13 @@ async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyActio
       }
       return importAppPlugin(info);
     });
-    dispatch(stateSlice.actions.setState({ plugin: app, loading: false, pluginNav: null }));
+    dispatch(stateSlice.actions.setState({ plugin: app, loading: false, loadingError: false, pluginNav: null }));
   } catch (err) {
     dispatch(
       stateSlice.actions.setState({
         plugin: null,
         loading: false,
+        loadingError: true,
         pluginNav: process.env.NODE_ENV === 'development' ? getExceptionNav(err) : getNotFoundNav(),
       })
     );

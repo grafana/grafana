@@ -4,12 +4,17 @@ package contexthandler
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
+
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -18,8 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, features *featuremgmt.FeatureManager, authnService authn.Service,
@@ -134,13 +137,42 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			attribute.Int64("userId", reqContext.UserID),
 		))
 
+		if h.Cfg.IDResponseHeaderEnabled && reqContext.SignedInUser != nil {
+			reqContext.Resp.Before(h.addIDHeaderEndOfRequestFunc(reqContext.SignedInUser))
+		}
+
 		next.ServeHTTP(w, r)
 	})
 }
 
+func (h *ContextHandler) addIDHeaderEndOfRequestFunc(ident identity.Requester) web.BeforeFunc {
+	return func(w web.ResponseWriter) {
+		if w.Written() {
+			return
+		}
+
+		namespace, id := ident.GetNamespacedID()
+		if !identity.IsNamespace(
+			namespace,
+			identity.NamespaceUser,
+			identity.NamespaceServiceAccount,
+			identity.NamespaceAPIKey,
+		) || id == "0" {
+			return
+		}
+
+		if _, ok := h.Cfg.IDResponseHeaderNamespaces[namespace]; !ok {
+			return
+		}
+
+		headerName := fmt.Sprintf("%s-Identity-Id", h.Cfg.IDResponseHeaderPrefix)
+		w.Header().Add(headerName, fmt.Sprintf("%s:%s", namespace, id))
+	}
+}
+
 func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *contextmodel.ReqContext) web.BeforeFunc {
 	return func(w web.ResponseWriter) {
-		if h.features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
+		if h.features.IsEnabled(reqContext.Req.Context(), featuremgmt.FlagClientTokenRotation) {
 			return
 		}
 

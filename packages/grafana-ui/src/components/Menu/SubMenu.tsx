@@ -49,14 +49,14 @@ export const SubMenu = React.memo(
 
     return (
       <>
-        <div className={styles.iconWrapper} aria-label={selectors.components.Menu.SubMenu.icon}>
-          <Icon name="angle-right" className={styles.icon} aria-hidden />
+        <div className={styles.iconWrapper} aria-hidden data-testid={selectors.components.Menu.SubMenu.icon}>
+          <Icon name="angle-right" className={styles.icon} />
         </div>
         {isOpen && (
           <div
             ref={localRef}
             className={cx(styles.subMenu, { [styles.pushLeft]: pushLeft })}
-            aria-label={selectors.components.Menu.SubMenu.container}
+            data-testid={selectors.components.Menu.SubMenu.container}
             style={customStyle}
           >
             <div tabIndex={-1} className={styles.itemsWrapper} role="menu" onKeyDown={handleKeys}>

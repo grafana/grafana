@@ -82,7 +82,7 @@
     "tracelib": "1.0.1",
     "ts-loader": "8.4.0",
     "tslib": "2.6.0",
-    "typescript": "4.8.4",
+    "typescript": "5.2.2",
     "uuid": "9.0.0",
     "yaml": "^2.0.0"
   }

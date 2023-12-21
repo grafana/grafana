@@ -24,10 +24,9 @@ import {
   useReshareAccessToRecipientMutation,
   useUpdatePublicDashboardMutation,
 } from 'app/features/dashboard/api/publicDashboardApi';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { AccessControlAction, useSelector } from 'app/types';
 
-import { trackDashboardSharingActionPerType } from '../../analytics';
-import { shareDashboardType } from '../../utils';
 import { PublicDashboard, PublicDashboardShareType, validEmailRegex } from '../SharePublicDashboardUtils';
 
 interface EmailSharingConfigurationForm {
@@ -57,13 +56,13 @@ const EmailList = ({
 
   const isLoading = isDeleteLoading || isReshareLoading;
 
-  const onDeleteEmail = (recipientUid: string) => {
-    trackDashboardSharingActionPerType('delete_email', shareDashboardType.publicDashboard);
-    deleteEmail({ recipientUid, dashboardUid: dashboardUid, uid: publicDashboardUid });
+  const onDeleteEmail = (recipientUid: string, recipientEmail: string) => {
+    DashboardInteractions.revokePublicDashboardEmailClicked();
+    deleteEmail({ recipientUid, recipientEmail, dashboardUid: dashboardUid, uid: publicDashboardUid });
   };
 
   const onReshare = (recipientUid: string) => {
-    trackDashboardSharingActionPerType('reshare_email', shareDashboardType.publicDashboard);
+    DashboardInteractions.resendPublicDashboardEmailClicked();
     reshareAccess({ recipientUid, uid: publicDashboardUid });
   };
 
@@ -83,7 +82,7 @@ const EmailList = ({
                   title="Revoke"
                   size="sm"
                   disabled={isLoading}
-                  onClick={() => onDeleteEmail(recipient.uid)}
+                  onClick={() => onDeleteEmail(recipient.uid, recipient.recipient)}
                   data-testid={`${selectors.DeleteEmail}-${idx}`}
                 >
                   Revoke
@@ -151,8 +150,7 @@ export const EmailSharingConfiguration = () => {
   };
 
   const onSubmit = async (data: EmailSharingConfigurationForm) => {
-    //TODO: add if it's domain or not when developed.
-    trackDashboardSharingActionPerType('invite_email', shareDashboardType.publicDashboard);
+    DashboardInteractions.publicDashboardEmailInviteClicked();
     await addEmail({ recipient: data.email, uid: publicDashboard!.uid, dashboardUid: dashboard.uid }).unwrap();
     reset({ email: '', shareType: PublicDashboardShareType.EMAIL });
   };
@@ -172,10 +170,9 @@ export const EmailSharingConfiguration = () => {
                   size={width < 480 ? 'sm' : 'md'}
                   options={options}
                   onChange={(shareType: PublicDashboardShareType) => {
-                    trackDashboardSharingActionPerType(
-                      `share_type_${shareType === PublicDashboardShareType.EMAIL ? 'email' : 'public'}`,
-                      shareDashboardType.publicDashboard
-                    );
+                    DashboardInteractions.publicDashboardShareTypeChange({
+                      shareType: shareType === PublicDashboardShareType.EMAIL ? 'email' : 'public',
+                    });
                     setValue('shareType', shareType);
                     onUpdateShareType(shareType);
                   }}

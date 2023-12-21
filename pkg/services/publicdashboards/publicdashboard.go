@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -52,7 +53,6 @@ type Store interface {
 	Find(ctx context.Context, uid string) (*PublicDashboard, error)
 	FindByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, error)
 	FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
-	FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (*dashboards.Dashboard, error)
 	FindAllWithPagination(ctx context.Context, query *PublicDashboardListQuery) (*PublicDashboardListResponseWithPagination, error)
 	Create(ctx context.Context, cmd SavePublicDashboardCommand) (int64, error)
 	Update(ctx context.Context, cmd SavePublicDashboardCommand) (int64, error)
@@ -63,4 +63,11 @@ type Store interface {
 	ExistsEnabledByAccessToken(ctx context.Context, accessToken string) (bool, error)
 	ExistsEnabledByDashboardUid(ctx context.Context, dashboardUid string) (bool, error)
 	GetMetrics(ctx context.Context) (*Metrics, error)
+}
+
+//go:generate mockery --name Middleware --structname FakePublicDashboardMiddleware --inpackage --filename public_dashboard_middleware_mock.go
+type Middleware interface {
+	HandleApi(c *contextmodel.ReqContext)
+	HandleView(c *contextmodel.ReqContext)
+	HandleAccessView(c *contextmodel.ReqContext)
 }

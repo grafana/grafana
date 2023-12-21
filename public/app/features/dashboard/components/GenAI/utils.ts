@@ -86,11 +86,9 @@ export const getFeedbackMessage = (previousResponse: string, feedback: string | 
  * @returns String for inclusion in prompts stating what the dashboard's panels are
  */
 export function getDashboardPanelPrompt(dashboard: DashboardModel): string {
-  const getPanelString = (panel: PanelModel, idx: number) => `
-  - Panel ${idx}\n
-  - Title: ${panel.title}\n
-  ${panel.description ? `- Description: ${panel.description}` : ''}
-  `;
+  const getPanelString = (panel: PanelModel, idx: number) =>
+    `- Panel ${idx}
+- Title: ${panel.title}${panel.description ? `\n- Description: ${panel.description}` : ''}`;
 
   const panelStrings: string[] = dashboard.panels.map(getPanelString);
   let panelPrompt: string;
@@ -120,4 +118,29 @@ export function getDashboardPanelPrompt(dashboard: DashboardModel): string {
   // Additionally, context windows that are too long degrade performance,
   // So it is possibly that if we can condense it further it would be better
   return panelPrompt;
+}
+
+export function getFilteredPanelString(panel: PanelModel): string {
+  const panelObj = panel.getSaveModel();
+
+  const keysToKeep = new Set([
+    'id',
+    'datasource',
+    'title',
+    'description',
+    'targets',
+    'thresholds',
+    'type',
+    'xaxis',
+    'yaxes',
+  ]);
+
+  const panelObjFiltered = Object.keys(panelObj).reduce((obj: { [key: string]: unknown }, key) => {
+    if (keysToKeep.has(key)) {
+      obj[key] = panelObj[key];
+    }
+    return obj;
+  }, {});
+
+  return JSON.stringify(panelObjFiltered, null, 2);
 }

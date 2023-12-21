@@ -27,8 +27,8 @@ import (
 )
 
 const (
-	notificationLogFilename = "notifications"
-	silencesFilename        = "silences"
+	NotificationLogFilename = "notifications"
+	SilencesFilename        = "silences"
 
 	workingDir = "alerting"
 	// maintenanceNotificationAndSilences how often should we flush and garbage collect notifications
@@ -83,28 +83,28 @@ func (m maintenanceOptions) MaintenanceFunc(state alertingNotify.State) (int64, 
 	return m.maintenanceFunc(state)
 }
 
-func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, kvStore kvstore.KVStore,
+func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, kvStore kvstore.KVStore,
 	peer alertingNotify.ClusterPeer, decryptFn alertingNotify.GetDecryptedValueFn, ns notifications.Service,
 	m *metrics.Alertmanager) (*alertmanager, error) {
 	workingPath := filepath.Join(cfg.DataPath, workingDir, strconv.Itoa(int(orgID)))
 	fileStore := NewFileStore(orgID, kvStore, workingPath)
 
-	nflogFilepath, err := fileStore.FilepathFor(ctx, notificationLogFilename)
+	nflogFilepath, err := fileStore.FilepathFor(ctx, NotificationLogFilename)
 	if err != nil {
 		return nil, err
 	}
-	silencesFilePath, err := fileStore.FilepathFor(ctx, silencesFilename)
+	silencesFilepath, err := fileStore.FilepathFor(ctx, SilencesFilename)
 	if err != nil {
 		return nil, err
 	}
 
 	silencesOptions := maintenanceOptions{
-		filepath:             silencesFilePath,
+		filepath:             silencesFilepath,
 		retention:            retentionNotificationsAndSilences,
 		maintenanceFrequency: silenceMaintenanceInterval,
 		maintenanceFunc: func(state alertingNotify.State) (int64, error) {
 			// Detached context here is to make sure that when the service is shut down the persist operation is executed.
-			return fileStore.Persist(context.Background(), silencesFilename, state)
+			return fileStore.Persist(context.Background(), SilencesFilename, state)
 		},
 	}
 
@@ -114,7 +114,7 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		maintenanceFrequency: notificationLogMaintenanceInterval,
 		maintenanceFunc: func(state alertingNotify.State) (int64, error) {
 			// Detached context here is to make sure that when the service is shut down the persist operation is executed.
-			return fileStore.Persist(context.Background(), notificationLogFilename, state)
+			return fileStore.Persist(context.Background(), NotificationLogFilename, state)
 		},
 	}
 

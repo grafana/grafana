@@ -6,18 +6,21 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config, featureEnabled } from '@grafana/runtime';
 import { useStyles2, TabsBar, Tab } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import { isPublicDashboardsEnabled } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 
 import { Page } from '../../core/components/Page/Page';
 import { AccessControlAction } from '../../types';
 import { UsersListPageContent } from '../users/UsersListPage';
 
 import { UserListAdminPageContent } from './UserListAdminPage';
+import { UserListAnonymousDevicesPageContent } from './UserListAnonymousPage';
 import { UserListPublicDashboardPage } from './UserListPublicDashboardPage/UserListPublicDashboardPage';
 
 enum TabView {
   ADMIN = 'admin',
   ORG = 'org',
   PUBLIC_DASHBOARDS = 'public-dashboards',
+  ANON = 'anon',
 }
 
 const selectors = e2eSelectors.pages.UserListPage;
@@ -35,6 +38,7 @@ const TAB_PAGE_MAP: Record<TabView, React.ReactElement> = {
   [TabView.ADMIN]: <UserListAdminPageContent />,
   [TabView.ORG]: <UsersListPageContent />,
   [TabView.PUBLIC_DASHBOARDS]: <UserListPublicDashboardPage />,
+  [TabView.ANON]: <UserListAnonymousDevicesPageContent />,
 };
 
 export default function UserListPage() {
@@ -43,7 +47,7 @@ export default function UserListPage() {
   const hasAccessToAdminUsers = contextSrv.hasPermission(AccessControlAction.UsersRead);
   const hasAccessToOrgUsers = contextSrv.hasPermission(AccessControlAction.OrgUsersRead);
   const hasEmailSharingEnabled =
-    Boolean(config.featureToggles.publicDashboards) &&
+    isPublicDashboardsEnabled() &&
     Boolean(config.featureToggles.publicDashboardsEmailSharing) &&
     featureEnabled('publicDashboardsEmailSharing');
 
@@ -74,6 +78,14 @@ export default function UserListPage() {
             onChangeTab={() => setView(TabView.ORG)}
             data-testid={selectors.tabs.orgUsers}
           />
+          {config.anonymousEnabled && config.featureToggles.displayAnonymousStats && (
+            <Tab
+              label="Anonymous devices"
+              active={view === TabView.ANON}
+              onChangeTab={() => setView(TabView.ANON)}
+              data-testid={selectors.tabs.anonUserDevices}
+            />
+          )}
           {hasEmailSharingEnabled && <PublicDashboardsTab view={view} setView={setView} />}
         </TabsBar>
       ) : (

@@ -129,7 +129,7 @@ schemas: [{
 
 			// Required Grafana version for this plugin. Validated using
 			// https://github.com/npm/node-semver.
-			grafanaDependency?: =~"^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]+))?$"
+			grafanaDependency?: =~"^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]+))?(\\-[0-9]+)?$"
 
 			// An array of required plugins on which this plugin depends
 			plugins?: [...#Dependency]
@@ -410,12 +410,13 @@ schemas: [{
 			params: [string]: string
 		}
 
-		// External service registration information
-		externalServiceRegistration: #ExternalServiceRegistration
+		// Identity and Access Management information.
+		// Allows the plugin to define the permissions it requires to have on Grafana.
+		iam: #IAM
 
-		// ExternalServiceRegistration allows the service to get a service account token
+		// IAM allows the plugin to get a service account with tailored permissions and a token
 		// (or to use the client_credentials grant if the token provider is the OAuth2 Server)
-		#ExternalServiceRegistration: {
+		#IAM: {
 			// Permissions are the permissions that the external service needs its associated service account to have.
 			permissions?: [...#Permission]
 

@@ -6,6 +6,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
@@ -33,6 +34,11 @@ type APIGroupBuilder interface {
 
 	// Get the API routes for each version
 	GetAPIRoutes() *APIRoutes
+
+	// Optionally add an authorization hook
+	// Standard namespace checking will happen before this is called, specifically
+	// the namespace must matches an org|stack that the user belongs to
+	GetAuthorizer() authorizer.Authorizer
 }
 
 // This is used to implement dynamic sub-resources like pods/x/logs
@@ -42,16 +48,12 @@ type APIRouteHandler struct {
 	Handler http.HandlerFunc // when Level = resource, the resource will be available in context
 }
 
-// APIRoutes define the
+// APIRoutes define explicit HTTP handlers in an apiserver
+// TBD: is this actually necessary -- there may be more k8s native options for this
 type APIRoutes struct {
 	// Root handlers are registered directly after the apiVersion identifier
 	Root []APIRouteHandler
 
 	// Namespace handlers are mounted under the namespace
 	Namespace []APIRouteHandler
-
-	// Resource routes behave the same as pod/logs
-	// it looks like a sub-resource, however the response is backed directly by an http handler
-	// The current resource can be fetched through context
-	Resource map[string]APIRouteHandler
 }

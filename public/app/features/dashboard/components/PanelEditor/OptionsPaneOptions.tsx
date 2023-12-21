@@ -102,7 +102,7 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
   return (
     <div className={styles.wrapper}>
       <div className={styles.formBox}>
-        {panel.isAngularPlugin() && (
+        {panel.isAngularPlugin() && !plugin.meta.angular?.hideDeprecation && (
           <AngularDeprecationPluginNotice
             className={styles.angularDeprecationWrapper}
             showPluginDetailsLink={true}

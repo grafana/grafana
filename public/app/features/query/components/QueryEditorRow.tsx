@@ -33,6 +33,7 @@ import {
   QueryOperationRow,
   QueryOperationRowRenderProps,
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { t, Trans } from 'app/core/internationalization';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -301,7 +302,13 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       }
     }
 
-    return <div>Data source plugin does not export any Query Editor component</div>;
+    return (
+      <div>
+        <Trans i18nKey="query-operation.query-editor-not-exported">
+          Data source plugin does not export any Query Editor component
+        </Trans>
+      </div>
+    );
   };
 
   onToggleEditMode = (e: React.MouseEvent, props: QueryOperationRowRenderProps) => {
@@ -442,7 +449,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       <>
         {hasEditorHelp && (
           <QueryOperationToggleAction
-            title="Show data source help"
+            title={t('query-operation.header.datasource-help', 'Show data source help')}
             icon="question-circle"
             onClick={this.onToggleHelp}
             active={showingHelp}
@@ -450,7 +457,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         )}
         {hasTextEditMode && (
           <QueryOperationAction
-            title="Toggle text edit mode"
+            title={t('query-operation.header.toggle-edit-mode', 'Toggle text edit mode')}
             icon="pen"
             onClick={(e) => {
               this.onToggleEditMode(e, props);
@@ -458,16 +465,24 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           />
         )}
         {this.renderExtraActions()}
-        <QueryOperationAction title="Duplicate query" icon="copy" onClick={this.onCopyQuery} />
+        <QueryOperationAction
+          title={t('query-operation.header.duplicate-query', 'Duplicate query')}
+          icon="copy"
+          onClick={this.onCopyQuery}
+        />
         {!hideDisableQuery ? (
           <QueryOperationToggleAction
-            title="Disable query"
+            title={t('query-operation.header.disable-query', 'Disable query')}
             icon={isDisabled ? 'eye-slash' : 'eye'}
             active={isDisabled}
             onClick={this.onDisableQuery}
           />
         ) : null}
-        <QueryOperationAction title="Remove query" icon="trash-alt" onClick={this.onRemoveQuery} />
+        <QueryOperationAction
+          title={t('query-operation.header.remove-query', 'Remove query')}
+          icon="trash-alt"
+          onClick={this.onRemoveQuery}
+        />
       </>
     );
   };

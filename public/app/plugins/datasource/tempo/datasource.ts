@@ -19,6 +19,7 @@ import {
   rangeUtil,
   ScopedVars,
   TestDataSourceResponse,
+  urlUtil,
 } from '@grafana/data';
 import {
   BackendSrvRequest,
@@ -32,7 +33,6 @@ import {
 import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@grafana/schema';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
-import { serializeParams } from 'app/core/utils/fetch';
 import { SpanBarOptions } from 'app/features/explore/TraceView/components';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
@@ -533,6 +533,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       search: this.templateSrv.replace(query.search ?? '', scopedVars),
       minDuration: this.templateSrv.replace(query.minDuration ?? '', scopedVars),
       maxDuration: this.templateSrv.replace(query.maxDuration ?? '', scopedVars),
+      serviceMapQuery: this.templateSrv.replace(query.serviceMapQuery ?? '', scopedVars),
     };
   }
 
@@ -691,7 +692,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     data?: unknown,
     options?: Partial<BackendSrvRequest>
   ): Observable<Record<string, any>> {
-    const params = data ? serializeParams(data) : '';
+    const params = data ? urlUtil.serializeParams(data) : '';
     const url = `${this.instanceSettings.url}${apiUrl}${params.length ? `?${params}` : ''}`;
     const req = { ...options, url };
 
@@ -723,7 +724,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     if (query.queryType === 'nativeSearch') {
       let result = [];
       for (const key of ['serviceName', 'spanName', 'search', 'minDuration', 'maxDuration', 'limit']) {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         if (query.hasOwnProperty(key) && query[key as keyof TempoQuery]) {
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           result.push(`${startCase(key)}: ${query[key as keyof TempoQuery]}`);
         }
       }
@@ -986,7 +989,7 @@ function makePromLink(title: string, expr: string, datasourceUid: string, instan
         range: !instant,
         exemplar: !instant,
         instant: instant,
-      } as PromQuery,
+      },
       datasourceUid,
       datasourceName: getDatasourceSrv().getDataSourceSettingsByUid(datasourceUid)?.name ?? '',
     },
