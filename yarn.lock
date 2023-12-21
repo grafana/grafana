@@ -2850,7 +2850,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana-plugins/grafana-azure-monitor-datasource@workspace:public/app/plugins/datasource/azuremonitor":
+"@grafana-plugins/grafana-azure-monitor-datasource@workspace:*, @grafana-plugins/grafana-azure-monitor-datasource@workspace:public/app/plugins/datasource/azuremonitor":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/grafana-azure-monitor-datasource@workspace:public/app/plugins/datasource/azuremonitor"
   dependencies:
@@ -17357,6 +17357,7 @@ __metadata:
     "@emotion/react": "npm:11.11.1"
     "@fingerprintjs/fingerprintjs": "npm:^3.4.2"
     "@glideapps/glide-data-grid": "npm:^5.2.1"
+    "@grafana-plugins/grafana-azure-monitor-datasource": "workspace:*"
     "@grafana-plugins/grafana-testdata-datasource": "workspace:*"
     "@grafana/aws-sdk": "npm:0.3.1"
     "@grafana/data": "workspace:*"
