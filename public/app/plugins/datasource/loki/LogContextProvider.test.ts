@@ -96,7 +96,8 @@ describe('LogContextProvider', () => {
           from: dateTime(defaultLogRow.timeEpochMs),
           to: dateTime(defaultLogRow.timeEpochMs),
           raw: { from: dateTime(defaultLogRow.timeEpochMs), to: dateTime(defaultLogRow.timeEpochMs) },
-        }
+        },
+        true
       );
       expect(logContextProvider.cachedContextFilters).toHaveLength(1);
     });
@@ -133,7 +134,7 @@ describe('LogContextProvider', () => {
       expect(logContextProvider.getInitContextFilters).toHaveBeenCalled();
     });
 
-    it('should also call getInitContextFilters if cachedContextFilters is set', async () => {
+    it('should also call getInitContextFilters if cacheFilters is not set', async () => {
       logContextProvider.getInitContextFilters = jest
         .fn()
         .mockResolvedValue([{ value: 'baz', enabled: true, fromParser: false, label: 'bar' }]);
@@ -141,10 +142,15 @@ describe('LogContextProvider', () => {
         { value: 'baz', enabled: true, fromParser: false, label: 'bar' },
         { value: 'abc', enabled: true, fromParser: false, label: 'xyz' },
       ];
-      await logContextProvider.getLogRowContextQuery(defaultLogRow, {
-        limit: 10,
-        direction: LogRowContextQueryDirection.Backward,
-      });
+      await logContextProvider.getLogRowContextQuery(
+        defaultLogRow,
+        {
+          limit: 10,
+          direction: LogRowContextQueryDirection.Backward,
+        },
+        undefined,
+        false
+      );
       expect(logContextProvider.getInitContextFilters).toHaveBeenCalled();
     });
   });
