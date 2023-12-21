@@ -37,12 +37,15 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
   const styles = useStyles2((theme) => getStyles(theme));
   const { outlineItems } = useContentOutlineContext();
 
-  const scrollIntoView = (ref: HTMLElement | null, buttonTitle: string) => {
+  const scrollIntoView = (ref: HTMLElement | null, itemPanelId: string) => {
     let scrollValue = 0;
     let el: HTMLElement | null | undefined = ref;
 
+    // This is to handle ContentOutlineItem wrapping each QueryEditorRow
+    const customOffsetTop = itemPanelId === 'Queries' ? -10 : 0;
+
     do {
-      scrollValue += el?.offsetTop || 0;
+      scrollValue += el?.offsetTop || customOffsetTop;
       el = el?.offsetParent as HTMLElement;
     } while (el && el !== scroller);
 
@@ -52,7 +55,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
     });
     reportInteraction('explore_toolbar_contentoutline_clicked', {
       item: 'select_section',
-      type: buttonTitle,
+      type: itemPanelId,
     });
   };
 
@@ -63,6 +66,8 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
       type: expanded ? 'minimize' : 'expand',
     });
   };
+
+  console.log('outlineItems', outlineItems);
 
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>
@@ -77,15 +82,29 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
             aria-expanded={expanded}
           />
 
+          {/* TODO: implement a collapsible section if item has children
+           */}
           {outlineItems.map((item) => (
-            <ContentOutlineItemButton
-              key={item.id}
-              title={expanded ? item.title : undefined}
-              className={styles.buttonStyles}
-              icon={item.icon}
-              onClick={() => scrollIntoView(item.ref, item.title)}
-              tooltip={!expanded ? item.title : undefined}
-            />
+            <>
+              <ContentOutlineItemButton
+                key={item.id}
+                title={expanded ? item.title : undefined}
+                className={styles.buttonStyles}
+                icon={item.icon}
+                onClick={() => scrollIntoView(item.ref, item.panelId)}
+                tooltip={!expanded ? item.title : undefined}
+              />
+              {item.children?.map((child) => (
+                <ContentOutlineItemButton
+                  key={child.id}
+                  title={expanded ? child.title : undefined}
+                  className={styles.buttonStyles}
+                  icon={child.icon}
+                  onClick={() => scrollIntoView(child.ref, child.panelId)}
+                  tooltip={!expanded ? child.title : undefined}
+                />
+              ))}
+            </>
           ))}
         </div>
       </CustomScrollbar>

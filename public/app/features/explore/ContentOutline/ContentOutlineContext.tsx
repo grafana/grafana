@@ -22,20 +22,20 @@ const ContentOutlineContext = createContext<ContentOutlineContextProps | undefin
 export const ContentOutlineContextProvider = ({ children }: { children: ReactNode }) => {
   const [outlineItems, setOutlineItems] = useState<ContentOutlineItemContextProps[]>([]);
 
-  const register: RegisterFunction = useCallback(({ title, icon, ref }) => {
+  const register: RegisterFunction = useCallback(({ panelId, title, icon, ref }) => {
     const id = uniqueId(`${title}-${icon}_`);
 
     setOutlineItems((prevItems) => {
-      const parent = prevItems.find((item) => item.title === title);
+      const parent = prevItems.find((item) => item.panelId === panelId);
 
       let updatedItems = [...prevItems];
 
       if (parent) {
         parent.children = parent.children || [];
-        parent.children.push({ id, title, icon, ref });
+        parent.children.push({ id, panelId, title, icon, ref });
         parent.children.sort(sortElementsByDocumentPosition);
       } else {
-        updatedItems = [...prevItems, { id, title, icon, ref }];
+        updatedItems = [...prevItems, { id, panelId, title, icon, ref }];
         updatedItems.sort(sortElementsByDocumentPosition);
       }
 
@@ -46,7 +46,16 @@ export const ContentOutlineContextProvider = ({ children }: { children: ReactNod
   }, []);
 
   const unregister = useCallback((id: string) => {
-    setOutlineItems((prevItems) => prevItems.filter((item) => item.id !== id));
+    setOutlineItems((prevItems) =>
+      prevItems
+        .filter((item) => item.id !== id)
+        .map((item) => {
+          if (item.children) {
+            item.children = item.children.filter((child) => child.id !== id);
+          }
+          return item;
+        })
+    );
   }, []);
 
   return (
