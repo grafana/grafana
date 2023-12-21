@@ -429,7 +429,7 @@ func (r *rspWrap) Status() int {
 
 // WriteTo implements response.Response.
 func (r *rspWrap) WriteTo(ctx *contextmodel.ReqContext) {
-	ctx.Resp.Write(r.rr.Body.Bytes())
+	_, _ = ctx.Resp.Write(r.rr.Body.Bytes())
 }
 
 func wrapDirectHandler(fn func(c *contextmodel.ReqContext)) handlerFunc {
