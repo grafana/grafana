@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
+	alertingCluster "github.com/grafana/alerting/cluster"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-	"github.com/prometheus/alertmanager/cluster"
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/util"
@@ -17,8 +17,8 @@ import (
 const (
 	alertmanagerDefaultClusterAddr        = "0.0.0.0:9094"
 	alertmanagerDefaultPeerTimeout        = 15 * time.Second
-	alertmanagerDefaultGossipInterval     = cluster.DefaultGossipInterval
-	alertmanagerDefaultPushPullInterval   = cluster.DefaultPushPullInterval
+	alertmanagerDefaultGossipInterval     = alertingCluster.DefaultGossipInterval
+	alertmanagerDefaultPushPullInterval   = alertingCluster.DefaultPushPullInterval
 	alertmanagerDefaultConfigPollInterval = time.Minute
 	alertmanagerRedisDefaultMaxConns      = 5
 	// To start, the alertmanager needs at least one route defined.
