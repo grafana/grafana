@@ -131,8 +131,7 @@ type FeatureFlag struct {
 	Enabled bool `json:"enabled,omitempty"`
 
 	// These are currently unused
-	DocsURL         string `json:"docsURL,omitempty"`
-	RequiresRestart bool   `json:"requiresRestart,omitempty"` // The server must be initialized with the value
+	RequiresRestart bool `json:"requiresRestart,omitempty"` // The server must be initialized with the value
 }
 
 type UpdateFeatureTogglesCommand struct {

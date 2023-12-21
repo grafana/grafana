@@ -54,7 +54,7 @@ func TestFeatureManager(t *testing.T) {
 		require.False(t, ft.IsEnabledGlobally("c"))
 	})
 
-	t.Run("check description and docs configs", func(t *testing.T) {
+	t.Run("check description", func(t *testing.T) {
 		ft := FeatureManager{
 			flags: map[string]*FeatureFlag{},
 		}
@@ -64,14 +64,8 @@ func TestFeatureManager(t *testing.T) {
 		}, FeatureFlag{
 			Name:        "a",
 			Description: "second",
-		}, FeatureFlag{
-			Name:    "a",
-			DocsURL: "http://something",
-		}, FeatureFlag{
-			Name: "a",
 		})
 		flag := ft.flags["a"]
 		require.Equal(t, "second", flag.Description)
-		require.Equal(t, "http://something", flag.DocsURL)
 	})
 }
