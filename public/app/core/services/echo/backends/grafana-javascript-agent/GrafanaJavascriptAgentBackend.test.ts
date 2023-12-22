@@ -2,7 +2,7 @@ import { BuildInfo } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { BaseTransport, Instrumentation, InternalLoggerLevel } from '@grafana/faro-core';
 import * as faroWebSdkModule from '@grafana/faro-web-sdk';
-import { FetchTransport, initializeFaro, type Faro } from '@grafana/faro-web-sdk';
+import { FetchTransport, initializeFaro } from '@grafana/faro-web-sdk';
 import { EchoEventType, EchoMeta } from '@grafana/runtime';
 
 import { GrafanaJavascriptAgentBackend, GrafanaJavascriptAgentBackendOptions } from './GrafanaJavascriptAgentBackend';
@@ -44,7 +44,13 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
 
   it('will set up FetchTransport if customEndpoint is provided', () => {
     // arrange
-    jest.spyOn(faroWebSdkModule, 'initializeFaro').mockReturnValueOnce({ api: { setUser: jest.fn() } } as Faro);
+    jest.spyOn(faroWebSdkModule, 'initializeFaro').mockReturnValueOnce({
+      ...faroWebSdkModule,
+      api: {
+        ...faroWebSdkModule.api,
+        setUser: jest.fn()
+      }
+    });
 
     //act
     const backend = new GrafanaJavascriptAgentBackend(options);
