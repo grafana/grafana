@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
@@ -25,7 +26,7 @@ func ReadFieldRequirements(selector fields.Selector) (FieldRequirements, error) 
 	if selector != nil {
 		for _, r := range selector.Requirements() {
 			if (r.Operator == selection.Equals) || (r.Operator == selection.DoubleEquals) {
-				return requirements, fmt.Errorf("only equality is supported")
+				return requirements, apierrors.NewBadRequest("only equality is supported in the selectors")
 			}
 			switch r.Field {
 			case folderAnnoKey:
@@ -64,5 +65,7 @@ func RegisterFieldSelectorSupport(scheme *runtime.Scheme) error {
 }
 
 func getBadSelectorError(f string) error {
-	return fmt.Errorf("%q is not a known field selector: only %q works", f, folderAnnoKey)
+	return apierrors.NewBadRequest(
+		fmt.Sprintf("%q is not a known field selector: only %q works", f, folderAnnoKey),
+	)
 }
