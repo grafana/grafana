@@ -8,7 +8,7 @@ import {
   WebVitalsInstrumentation,
   SessionInstrumentation,
   FetchTransport,
-  type Instrumentation
+  type Instrumentation,
 } from '@grafana/faro-web-sdk';
 import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
 
