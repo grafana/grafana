@@ -48,8 +48,8 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
       ...faroWebSdkModule,
       api: {
         ...faroWebSdkModule.api,
-        setUser: jest.fn()
-      }
+        setUser: jest.fn(),
+      },
     });
 
     //act
