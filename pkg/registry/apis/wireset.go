@@ -12,7 +12,6 @@ var WireSet = wire.NewSet(
 	ProvideRegistryServiceSink, // dummy background service that forces registration
 
 	// Each must be added here *and* in the ServiceSink above
-	//	playlistV0.RegisterAPIService,
 	playlist.RegisterAPIService,
 	example.RegisterAPIService,
 	folders.RegisterAPIService,
