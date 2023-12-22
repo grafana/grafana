@@ -2,7 +2,6 @@ import { BuildInfo } from '@grafana/data';
 import { BaseTransport } from '@grafana/faro-core';
 import {
   initializeFaro,
-  defaultMetas,
   BrowserConfig,
   ErrorsInstrumentation,
   ConsoleInstrumentation,
@@ -66,7 +65,6 @@ export class GrafanaJavascriptAgentBackend
         'ResizeObserver loop completed',
         'Non-Error exception captured with keys',
       ],
-      metas: [...defaultMetas],
       sessionTracking: {
         persistent: true,
         generateSessionId() {
