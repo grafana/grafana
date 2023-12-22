@@ -373,23 +373,10 @@ func (s *service) start(ctx context.Context) error {
 		GitVersion:   k8sVersion,
 	}
 
-	// Select folder from the field selector
-	grafanaFieldSupport := runtime.FieldLabelConversionFunc(
-		func(label, value string) (string, string, error) {
-			if strings.HasPrefix(label, "grafana.app/") {
-				return label, value, nil
-			}
-			return "", "", fmt.Errorf("%q is not a known field selector: only %q work", label,
-				"grafana.app/folder")
-		},
-	)
-	for gvk := range Scheme.AllKnownTypes() {
-		if strings.HasSuffix(gvk.Group, ".grafana.app") {
-			err = Scheme.AddFieldLabelConversionFunc(gvk, grafanaFieldSupport)
-			if err != nil {
-				return err
-			}
-		}
+	// support folder selection
+	err = entitystorage.RegisterFieldSelectorSupport(Scheme)
+	if err != nil {
+		return err
 	}
 
 	// Create the server

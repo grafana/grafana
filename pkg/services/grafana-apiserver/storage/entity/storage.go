@@ -241,17 +241,13 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		}
 	}
 
-	// translate grafana.app/folder field selector to folder condition
-	fields := opts.Predicate.Field.Requirements()
-	for _, f := range fields {
-		if f.Field == "grafana.app/folder" {
-			if f.Operator != selection.Equals {
-				return apierrors.NewBadRequest("grafana.app/folder field selector only supports equality")
-			}
-
-			// select items in the spcified folder
-			req.Folder = f.Value
-		}
+	// translate grafana.app/folder field selector to the folder condition
+	fieldRequirements, err := ReadFieldRequirements(opts.Predicate.Field)
+	if err != nil {
+		return err
+	}
+	if fieldRequirements.Folder != nil {
+		req.Folder = fieldRequirements.Folder.Value
 	}
 
 	// use Transform function to remove grafana.app/folder field selector
