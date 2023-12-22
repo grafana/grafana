@@ -24,7 +24,7 @@ func NewRemoteAlertmanagerMetrics(r prometheus.Registerer, subsystem string) *Re
 			Namespace: Namespace,
 			Subsystem: subsystem,
 			Name:      "remote_alertmanager_http_requests_failed",
-			Help:      "Number of HTTP requests sent to the remote Alertmanager that failed.",
+			Help:      "Number of failed attempts to send an HTTP request to the remote Alertmanager.",
 		}, []string{"method", "path"}),
 		HTTPRequestsDuration: instrument.NewHistogramCollector(promauto.With(r).NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: Namespace,
