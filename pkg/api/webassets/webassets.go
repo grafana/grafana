@@ -1,6 +1,7 @@
 package webassets
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -32,7 +33,7 @@ type EntryPointInfo struct {
 
 var entryPointAssetsCache *dtos.EntryPointAssets = nil
 
-func GetWebAssets(cfg *setting.Cfg, license licensing.Licensing) (*dtos.EntryPointAssets, error) {
+func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licensing) (*dtos.EntryPointAssets, error) {
 	if cfg.Env != setting.Dev && entryPointAssetsCache != nil {
 		return entryPointAssetsCache, nil
 	}
@@ -42,7 +43,7 @@ func GetWebAssets(cfg *setting.Cfg, license licensing.Licensing) (*dtos.EntryPoi
 
 	cdn := "" // "https://grafana-assets.grafana.net/grafana/10.3.0-64123/"
 	if cdn != "" {
-		result, err = readWebAssetsFromCDN(cdn)
+		result, err = readWebAssetsFromCDN(ctx, cdn)
 	}
 
 	if result == nil {
@@ -61,36 +62,38 @@ func GetWebAssets(cfg *setting.Cfg, license licensing.Licensing) (*dtos.EntryPoi
 
 func readWebAssetsFromFile(manifestpath string) (*dtos.EntryPointAssets, error) {
 	//nolint:gosec
-	bytes, err := os.ReadFile(manifestpath)
+	f, err := os.Open(manifestpath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load assets-manifest.json %w", err)
 	}
-	return readWebAssets(bytes)
+	defer func() {
+		_ = f.Close()
+	}()
+	return readWebAssets(f)
 }
 
-func readWebAssetsFromCDN(baseURL string) (*dtos.EntryPointAssets, error) {
-	response, err := http.Get(baseURL + "public/build/assets-manifest.json")
+func readWebAssetsFromCDN(ctx context.Context, baseURL string) (*dtos.EntryPointAssets, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+"public/build/assets-manifest.json", nil)
+	if err != nil {
+		return nil, err
+	}
+	response, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer func() {
 		_ = response.Body.Close()
 	}()
-	bytes, err := io.ReadAll(response.Body)
-	if err != nil {
-		return nil, err
-	}
-	dto, err := readWebAssets(bytes)
+	dto, err := readWebAssets(response.Body)
 	if err == nil {
 		dto.SetContentDeliveryURL(baseURL)
 	}
 	return dto, err
 }
 
-func readWebAssets(bytes []byte) (*dtos.EntryPointAssets, error) {
+func readWebAssets(r io.Reader) (*dtos.EntryPointAssets, error) {
 	manifest := map[string]ManifestInfo{}
-	err := json.Unmarshal(bytes, &manifest)
-	if err != nil {
+	if err := json.NewDecoder(r).Decode(&manifest); err != nil {
 		return nil, fmt.Errorf("failed to read assets-manifest.json %w", err)
 	}
 
