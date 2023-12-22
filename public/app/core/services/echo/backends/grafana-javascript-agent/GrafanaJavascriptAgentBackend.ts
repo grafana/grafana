@@ -7,6 +7,7 @@ import {
   ErrorsInstrumentation,
   ConsoleInstrumentation,
   WebVitalsInstrumentation,
+  SessionInstrumentation,
   FetchTransport,
 } from '@grafana/faro-web-sdk';
 import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
@@ -31,8 +32,8 @@ export class GrafanaJavascriptAgentBackend
   transports: BaseTransport[];
 
   constructor(public options: GrafanaJavascriptAgentBackendOptions) {
-    // configure instrumentalizations
-    const instrumentations = [];
+    // configure instrumentations, session instrumentation must be added.
+    const instrumentations = [new SessionInstrumentation()];
     this.transports = [];
 
     if (options.customEndpoint) {
