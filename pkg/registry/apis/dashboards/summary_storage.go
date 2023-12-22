@@ -55,13 +55,13 @@ func (s *summaryStorage) List(ctx context.Context, options *internalversion.List
 		return nil, err
 	}
 
-	maxCount := int(options.Limit)
-	if maxCount < 1 {
-		maxCount = 1000
+	query := &access.DashboardQuery{
+		OrgID:         orgId,
+		Limit:         int(options.Limit),
+		MaxBytes:      2 * 1024 * 1024, // 2MB,
+		ContinueToken: options.Continue,
 	}
-	maxBytes := 2 * 1024 * 1024 // 2MB
-
-	return s.access.GetDashboardSummaries(ctx, orgId, options.Continue, maxCount, maxBytes)
+	return s.access.GetDashboardSummaries(ctx, query)
 }
 
 func (s *summaryStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {

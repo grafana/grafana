@@ -134,12 +134,15 @@ func (s *dashboardStorage) List(ctx context.Context, options *internalversion.Li
 		return nil, err
 	}
 
-	maxCount := int(options.Limit)
-	if maxCount < 1 {
-		maxCount = 1000
+	// fmt.Printf("LIST: %s\n", options.Continue)
+
+	query := &access.DashboardQuery{
+		OrgID:         orgId,
+		Limit:         int(options.Limit),
+		MaxBytes:      2 * 1024 * 1024, // 2MB,
+		ContinueToken: options.Continue,
 	}
-	maxBytes := 2 * 1024 * 1024 // 2MB
-	return s.access.GetDashboards(ctx, orgId, options.Continue, maxCount, int(maxBytes))
+	return s.access.GetDashboards(ctx, query)
 }
 
 func (s *dashboardStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
