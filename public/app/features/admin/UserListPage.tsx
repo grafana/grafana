@@ -78,7 +78,7 @@ export default function UserListPage() {
             onChangeTab={() => setView(TabView.ORG)}
             data-testid={selectors.tabs.orgUsers}
           />
-          {config.featureToggles.displayAnonymousStats && (
+          {config.anonymousEnabled && config.featureToggles.displayAnonymousStats && (
             <Tab
               label="Anonymous devices"
               active={view === TabView.ANON}
