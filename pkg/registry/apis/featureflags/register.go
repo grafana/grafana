@@ -31,6 +31,7 @@ type FeatureFlagAPIBuilder struct {
 	gv         schema.GroupVersion
 	features   *featuremgmt.FeatureManager
 	namespacer request.NamespaceMapper
+	cfg        *setting.Cfg
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
@@ -45,6 +46,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 		gv:         resourceInfo.GroupVersion(),
 		features:   features,
 		namespacer: request.GetNamespaceMapper(cfg),
+		cfg:        cfg,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -121,6 +123,7 @@ func (b *FeatureFlagAPIBuilder) GetAPIGroupInfo(
 	storage[resourceInfo.StoragePath()] = &flagsStorage{
 		store:    store,
 		features: b.features,
+		cfg:      b.cfg,
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage

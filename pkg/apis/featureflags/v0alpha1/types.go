@@ -1,11 +1,12 @@
 package v0alpha1
 
 import (
+	"time"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/grafana/grafana/pkg/apis"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 const (
@@ -25,35 +26,31 @@ type FeatureFlag struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	// TODO, structure so the name is not in spec
 	Spec Spec `json:"spec,omitempty"`
 }
 
 type Spec struct {
-	// Describe the feature toggle
-	Description string `json:"description"`
+	// Properties from featuremgmt.FeatureFlag
+	Description string    `json:"description"`
+	Stage       string    `json:"stage,omitempty"`
+	Created     time.Time `json:"created,omitempty"`
+	Owner       string    `json:"codeowner,omitempty"`
 
-	// How far along in development is this
-	Stage featuremgmt.FeatureFlagStage `json:"stage,omitempty"`
+	AllowSelfServe    bool `json:"allowSelfServe"`
+	HideFromAdminPage bool `json:"hideFromAdminPage"`
 
-	// Additional documentation
-	DocsURL string `json:"docsURL,omitempty"`
+	RequiresDevMode bool `json:"requiresDevMode"`
+	RequiresLicense bool `json:"requiresLicense"`
+	FrontendOnly    bool `json:"frontend"`
+	HideFromDocs    bool `json:"hideFromDocs"`
 
-	// Owner person or team that owns this feature flag
-	Owner string `json:"-"`
+	Enabled bool `json:"enabled"`
 
-	// CEL-GO expression.  Using the value "true" will mean this is on by default
-	Expression string `json:"expression,omitempty"`
+	RequiresRestart bool `json:"requiresRestart"`
 
-	// Special behavior flags
-	RequiresDevMode bool `json:"requiresDevMode,omitempty"` // can not be enabled in production
-	// This flag is currently unused.
-	RequiresRestart   bool `json:"requiresRestart,omitempty"`   // The server must be initialized with the value
-	RequiresLicense   bool `json:"requiresLicense,omitempty"`   // Must be enabled in the license
-	FrontendOnly      bool `json:"frontend,omitempty"`          // change is only seen in the frontend
-	HideFromDocs      bool `json:"hideFromDocs,omitempty"`      // don't add the values to docs
-	HideFromAdminPage bool `json:"hideFromAdminPage,omitempty"` // don't display the feature in the admin page - add a comment with the reasoning
-	AllowSelfServe    bool `json:"allowSelfServe,omitempty"`    // allow admin users to toggle the feature state from the admin page; this is required for GA toggles only
+	// Properties from featuremgmt.FeatureToggleDTO
+	ReadOnly bool `json:"readOnly"`
+	Hidden   bool `json:"hidden"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
