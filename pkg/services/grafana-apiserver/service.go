@@ -385,7 +385,10 @@ func (s *service) start(ctx context.Context) error {
 	)
 	for gvk := range Scheme.AllKnownTypes() {
 		if strings.HasSuffix(gvk.Group, ".grafana.app") {
-			Scheme.AddFieldLabelConversionFunc(gvk, grafanaFieldSupport)
+			err = Scheme.AddFieldLabelConversionFunc(gvk, grafanaFieldSupport)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
