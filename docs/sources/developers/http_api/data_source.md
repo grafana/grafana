@@ -907,15 +907,16 @@ Content-Type: application/json
 {
    "queries":[
       {
+         "expr": "kube_pod_info{container="example"}",
          "refId":"A",
          "scenarioId":"csv_metric_values",
          "datasource":{
             "uid":"PD8C576611E62080A"
          },
-         "format": "table"
+         "format": "table",
          "maxDataPoints":1848,
          "intervalMs":200,
-         "stringInput":"1,20,90,30,5,0",
+         "stringInput":"1,20,90,30,5,0"
       }
    ],
    "from":"now-5m",
@@ -927,6 +928,7 @@ JSON Body schema:
 
 - **from/to** – Specifies the time range for the queries. The time can be either epoch timestamps in milliseconds or relative using Grafana time units. For example, `now-5m`.
 - **queries** – Specifies one or more queries. Must contain at least 1.
+- **queries.expr** – Specifies the expression or query that needs to run against the datasource.
 - **queries.datasource.uid** – Specifies the UID of data source to be queried. Each query in the request must have a unique `datasource`.
 - **queries.refId** – Specifies an identifier of the query. Defaults to "A".
 - **queries.format** – Specifies the format the data should be returned in. Valid options are `time_series` or `table` depending on the data source.
