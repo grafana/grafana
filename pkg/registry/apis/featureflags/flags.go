@@ -54,7 +54,7 @@ func (s *flagsStorage) ConvertToTable(ctx context.Context, object runtime.Object
 func (s *flagsStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	flags := &v0alpha1.FeatureFlagList{}
 	for _, flag := range s.features.GetFlags() {
-		flags.Items = append(flags.Items, toK8sForm(flag, s.cfg))
+		flags.Items = append(flags.Items, toK8sForm(ctx, flag, s.cfg, s.features))
 	}
 	return flags, nil
 }
@@ -62,14 +62,15 @@ func (s *flagsStorage) List(ctx context.Context, options *internalversion.ListOp
 func (s *flagsStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	for _, flag := range s.features.GetFlags() {
 		if name == flag.Name {
-			obj := toK8sForm(flag, s.cfg)
+			obj := toK8sForm(ctx, flag, s.cfg, s.features)
 			return &obj, nil
 		}
 	}
 	return nil, fmt.Errorf("not found")
 }
 
-func toK8sForm(flag featuremgmt.FeatureFlag, cfg *setting.Cfg) v0alpha1.FeatureFlag {
+func toK8sForm(ctx context.Context, flag featuremgmt.FeatureFlag, cfg *setting.Cfg, features *featuremgmt.FeatureManager) v0alpha1.FeatureFlag {
+	enabledFeatures := features.GetEnabled(ctx)
 	return v0alpha1.FeatureFlag{
 		TypeMeta: resourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
@@ -78,7 +79,7 @@ func toK8sForm(flag featuremgmt.FeatureFlag, cfg *setting.Cfg) v0alpha1.FeatureF
 		},
 		Spec: v0alpha1.Spec{
 			Description:       flag.Description,
-			Enabled:           flag.Enabled,
+			Enabled:           enabledFeatures[flag.Name],
 			Stage:             flag.Stage.String(),
 			Created:           flag.Created,
 			Owner:             string(flag.Owner),
