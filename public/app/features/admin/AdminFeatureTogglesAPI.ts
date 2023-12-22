@@ -1,13 +1,15 @@
 import { createApi, BaseQueryFn } from '@reduxjs/toolkit/query/react';
 import { lastValueFrom } from 'rxjs';
 
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, config } from '@grafana/runtime';
 
 type QueryArgs = {
   url: string;
   method?: string;
   body?: { featureToggles: FeatureToggle[] };
 };
+
+const createApiFn = config.featureToggles.kubernetesFeatureToggles ? createK8sAPI : createLegacyAPI;
 
 const backendSrvBaseQuery =
   ({ baseUrl }: { baseUrl: string }): BaseQueryFn<QueryArgs> =>
@@ -26,25 +28,51 @@ const backendSrvBaseQuery =
     }
   };
 
-export const togglesApi = createApi({
-  reducerPath: 'togglesApi',
-  baseQuery: backendSrvBaseQuery({ baseUrl: '/api' }),
-  endpoints: (builder) => ({
-    getManagerState: builder.query<FeatureMgmtState, void>({
-      query: () => ({ url: '/featuremgmt/state' }),
-    }),
-    getFeatureToggles: builder.query<FeatureToggle[], void>({
-      query: () => ({ url: '/featuremgmt' }),
-    }),
-    updateFeatureToggles: builder.mutation<void, FeatureToggle[]>({
-      query: (updatedToggles) => ({
-        url: '/featuremgmt',
-        method: 'POST',
-        body: { featureToggles: updatedToggles },
+export const togglesApi = createApiFn();
+
+function createLegacyAPI() {
+  return createApi({
+    reducerPath: 'togglesApi',
+    baseQuery: backendSrvBaseQuery({ baseUrl: '/api' }),
+    endpoints: (builder) => ({
+      getManagerState: builder.query<FeatureMgmtState, void>({
+        query: () => ({ url: '/featuremgmt/state' }),
+      }),
+      getFeatureToggles: builder.query<FeatureToggle[], void>({
+        query: () => ({ url: '/featuremgmt' }),
+      }),
+      updateFeatureToggles: builder.mutation<void, FeatureToggle[]>({
+        query: (updatedToggles) => ({
+          url: '/featuremgmt',
+          method: 'POST',
+          body: { featureToggles: updatedToggles },
+        }),
       }),
     }),
-  }),
-});
+  });
+}
+
+function createK8sAPI() {
+  return createApi({
+    reducerPath: 'togglesApi',
+    baseQuery: backendSrvBaseQuery({ baseUrl: '/api' }),
+    endpoints: (builder) => ({
+      getManagerState: builder.query<FeatureMgmtState, void>({
+        query: () => ({ url: '/featuremgmt/state' }),
+      }),
+      getFeatureToggles: builder.query<FeatureToggle[], void>({
+        query: () => ({ url: '/featuremgmt' }),
+      }),
+      updateFeatureToggles: builder.mutation<void, FeatureToggle[]>({
+        query: (updatedToggles) => ({
+          url: '/featuremgmt',
+          method: 'POST',
+          body: { featureToggles: updatedToggles },
+        }),
+      }),
+    }),
+  });
+}
 
 type FeatureToggle = {
   name: string;
