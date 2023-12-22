@@ -10,6 +10,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
@@ -26,6 +27,7 @@ type stateStore interface {
 
 type Alertmanager struct {
 	log      log.Logger
+	metrics  *metrics.RemoteAlertmanager
 	orgID    int64
 	ready    bool
 	sender   *sender.ExternalAlertmanager
@@ -59,7 +61,7 @@ func (cfg *AlertmanagerConfig) Validate() error {
 	return nil
 }
 
-func NewAlertmanager(cfg AlertmanagerConfig, store stateStore) (*Alertmanager, error) {
+func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, metrics *metrics.RemoteAlertmanager) (*Alertmanager, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
@@ -76,7 +78,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore) (*Alertmanager, e
 		Password: cfg.BasicAuthPassword,
 		Logger:   logger,
 	}
-	mc, err := remoteClient.New(mcCfg)
+	mc, err := remoteClient.New(mcCfg, metrics)
 	if err != nil {
 		return nil, err
 	}
@@ -105,12 +107,13 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore) (*Alertmanager, e
 	}
 
 	return &Alertmanager{
-		log:         logger,
-		mimirClient: mc,
-		state:       store,
 		amClient:    amc,
-		sender:      s,
+		log:         logger,
+		metrics:     metrics,
+		mimirClient: mc,
 		orgID:       cfg.OrgID,
+		state:       store,
+		sender:      s,
 		tenantID:    cfg.TenantID,
 		url:         cfg.URL,
 	}, nil

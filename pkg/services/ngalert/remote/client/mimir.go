@@ -9,9 +9,12 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/weaveworks/common/http/client"
 )
 
 // MimirClient contains all the methods to query the migration critical endpoints of Mimir instance, it's an interface to allow multiple implementations.
@@ -26,9 +29,10 @@ type MimirClient interface {
 }
 
 type Mimir struct {
+	client   client.Requester
 	endpoint *url.URL
-	client   http.Client
 	logger   log.Logger
+	metrics  *metrics.RemoteAlertmanager
 }
 
 type Config struct {
@@ -60,21 +64,21 @@ func (e *errorResponse) Error() string {
 	return e.Error2
 }
 
-func New(cfg *Config) (*Mimir, error) {
+func New(cfg *Config, metrics *metrics.RemoteAlertmanager) (*Mimir, error) {
 	rt := &MimirAuthRoundTripper{
 		TenantID: cfg.TenantID,
 		Password: cfg.Password,
 		Next:     http.DefaultTransport,
 	}
-
-	c := http.Client{
+	c := &http.Client{
 		Transport: rt,
 	}
 
 	return &Mimir{
 		endpoint: cfg.URL,
-		client:   c,
+		client:   client.NewTimedClient(c, metrics.HTTPRequestsDuration),
 		logger:   cfg.Logger,
+		metrics:  metrics,
 	}, nil
 }
 
@@ -99,6 +103,7 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, ou
 
 	resp, err := mc.client.Do(r)
 	if err != nil {
+		mc.metrics.HTTPRequestsFailed.WithLabelValues(r.Method, endpoint.Path).Inc()
 		msg := "Unable to fulfill request to the Mimir API"
 		mc.logger.Error(msg, "err", err, "url", r.URL.String(), "method", r.Method)
 		return nil, fmt.Errorf("%s: %w", msg, err)
@@ -108,6 +113,7 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, ou
 			mc.logger.Error("Error closing HTTP body", "err", err, "url", r.URL.String(), "method", r.Method)
 		}
 	}()
+	mc.metrics.HTTPRequestsTotal.WithLabelValues(method, endpoint.Path, strconv.Itoa(resp.StatusCode)).Inc()
 
 	ct := resp.Header.Get("Content-Type")
 	if !strings.HasPrefix(ct, "application/json") {
