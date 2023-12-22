@@ -246,8 +246,8 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	if err != nil {
 		return err
 	}
-	if fieldRequirements.Folder != nil {
-		req.Folder = fieldRequirements.Folder.Value
+	if fieldRequirements != nil {
+		req.Folder = fieldRequirements.Folder
 	}
 
 	// use Transform function to remove grafana.app/folder field selector

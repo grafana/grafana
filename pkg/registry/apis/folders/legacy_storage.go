@@ -71,8 +71,8 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	if err != nil {
 		return nil, err
 	}
-	if fieldRequirements.Folder != nil {
-		parentUID = fieldRequirements.Folder.Value
+	if fieldRequirements != nil {
+		parentUID = fieldRequirements.Folder
 	}
 
 	paging, err := readContinueToken(options)

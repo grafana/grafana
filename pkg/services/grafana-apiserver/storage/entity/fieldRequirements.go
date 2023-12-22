@@ -12,30 +12,22 @@ import (
 
 const folderAnnoKey = "grafana.app/folder"
 
-type FieldRequirement struct {
-	Operator selection.Operator
-	Value    string
-}
-
 type FieldRequirements struct {
-	Folder *FieldRequirement
+	Folder string // folder equals
 }
 
-func ReadFieldRequirements(selector fields.Selector) (FieldRequirements, error) {
-	requirements := FieldRequirements{}
+func ReadFieldRequirements(selector fields.Selector) (*FieldRequirements, error) {
+	requirements := &FieldRequirements{}
 	if selector != nil {
 		for _, r := range selector.Requirements() {
 			if (r.Operator == selection.Equals) || (r.Operator == selection.DoubleEquals) {
-				return requirements, apierrors.NewBadRequest("only equality is supported in the selectors")
+				return nil, apierrors.NewBadRequest("only equality is supported in the selectors")
 			}
 			switch r.Field {
 			case folderAnnoKey:
-				requirements.Folder = &FieldRequirement{
-					Operator: r.Operator,
-					Value:    r.Value,
-				}
+				requirements.Folder = r.Value
 			default:
-				return requirements, getBadSelectorError(r.Field)
+				return nil, getBadSelectorError(r.Field)
 			}
 		}
 	}
