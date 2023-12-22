@@ -32,8 +32,9 @@ export class GrafanaJavascriptAgentBackend
   transports: BaseTransport[];
 
   constructor(public options: GrafanaJavascriptAgentBackendOptions) {
-    // configure instrumentations, session instrumentation must be added.
-    const instrumentations: Instrumentation[] = [new SessionInstrumentation()];
+    // configure instrumentations.
+    const instrumentations: Instrumentation[] = [];
+
     this.transports = [];
 
     if (options.customEndpoint) {
@@ -49,6 +50,9 @@ export class GrafanaJavascriptAgentBackend
     if (options.webVitalsInstrumentalizationEnabled) {
       instrumentations.push(new WebVitalsInstrumentation());
     }
+
+    // session instrumentation must be added!
+    instrumentations.push(new SessionInstrumentation());
 
     // initialize GrafanaJavascriptAgent so it can set up its hooks and start collecting errors
     const grafanaJavaScriptAgentOptions: BrowserConfig = {
