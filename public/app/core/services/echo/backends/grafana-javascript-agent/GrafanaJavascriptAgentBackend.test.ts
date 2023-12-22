@@ -1,20 +1,12 @@
 import { BuildInfo } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { BaseTransport, Instrumentation, InternalLoggerLevel } from '@grafana/faro-core';
+import * as faroWebSdkModule from '@grafana/faro-web-sdk';
 import { FetchTransport, initializeFaro } from '@grafana/faro-web-sdk';
 import { EchoEventType, EchoMeta } from '@grafana/runtime';
 
 import { GrafanaJavascriptAgentBackend, GrafanaJavascriptAgentBackendOptions } from './GrafanaJavascriptAgentBackend';
 import { GrafanaJavascriptAgentEchoEvent } from './types';
-
-jest.mock('@grafana/faro-web-sdk', () => {
-  const originalModule = jest.requireActual('@grafana/faro-web-sdk');
-  return {
-    __esModule: true,
-    ...originalModule,
-    initializeFaro: jest.fn(),
-  };
-});
 
 describe('GrafanaJavascriptAgentEchoBackend', () => {
   beforeEach(() => {
@@ -50,10 +42,9 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
     },
   };
 
-  it('will set up FetchTransport if customEndpoint is provided', async () => {
+  it('will set up FetchTransport if customEndpoint is provided', () => {
     // arrange
-    const originalModule = jest.requireActual('@grafana/faro-web-sdk');
-    jest.mocked(initializeFaro).mockImplementation(originalModule.initializeFaro);
+    jest.spyOn(faroWebSdkModule, 'initializeFaro').mockReturnValueOnce({ api: { setUser: jest.fn() } });
 
     //act
     const backend = new GrafanaJavascriptAgentBackend(options);
@@ -63,7 +54,7 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
     expect(backend.transports[0]).toBeInstanceOf(FetchTransport);
   });
 
-  it('will initialize GrafanaJavascriptAgent and set user', async () => {
+  it('will initialize GrafanaJavascriptAgent and set user', () => {
     // arrange
     const mockedSetUser = jest.fn();
     const mockedInstrumentationsForConfig: Instrumentation[] = [];
@@ -159,7 +150,7 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
     });
   });
 
-  it('will forward events to transports', async () => {
+  it('will forward events to transports', () => {
     //arrange
     const mockedSetUser = jest.fn();
     const mockedInstrumentationsForConfig: Instrumentation[] = [];
