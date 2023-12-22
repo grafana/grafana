@@ -1,7 +1,6 @@
-import { PanelBuilders, SceneQueryRunner } from '@grafana/scenes';
+import { PanelBuilders } from '@grafana/scenes';
 import { HeatmapColorMode } from 'app/plugins/panel/heatmap/types';
 
-import { KEY_SQR_METRIC_VIZ_QUERY, trailDS } from '../../shared';
 import { AutoQueryDef } from '../types';
 
 export function heatmapGraphBuilder(def: AutoQueryDef) {
