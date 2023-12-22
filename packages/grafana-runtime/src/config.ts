@@ -36,6 +36,7 @@ export type AppPluginConfig = {
 
 export class GrafanaBootConfig implements GrafanaConfig {
   publicDashboardAccessToken?: string;
+  publicDashboardsEnabled = true;
   snapshotEnabled = true;
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};

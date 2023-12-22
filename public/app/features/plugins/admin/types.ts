@@ -62,6 +62,7 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   // instance plugins may not be fully installed, which means a new instance
   // running the plugin didn't started yet
   isFullyInstalled?: boolean;
+  iam?: IdentityAccessManagement;
 }
 
 export interface CatalogPluginDetails {
@@ -74,6 +75,7 @@ export interface CatalogPluginDetails {
   grafanaDependency?: string;
   pluginDependencies?: PluginDependencies['plugins'];
   statusContext?: string;
+  iam?: IdentityAccessManagement;
 }
 
 export interface CatalogPluginInfo {
@@ -93,6 +95,7 @@ export type RemotePlugin = {
   internal: boolean;
   json?: {
     dependencies: PluginDependencies;
+    iam?: IdentityAccessManagement;
     info: {
       links: Array<{
         name: string;
@@ -175,7 +178,17 @@ export type LocalPlugin = WithAccessControlMetadata & {
   type: PluginType;
   dependencies: PluginDependencies;
   angularDetected: boolean;
+  iam?: IdentityAccessManagement;
 };
+
+interface IdentityAccessManagement {
+  permissions: Permission[];
+}
+
+export interface Permission {
+  action: string;
+  scope: string;
+}
 
 interface Rel {
   name: string;
@@ -231,6 +244,7 @@ export enum PluginTabLabels {
   CONFIG = 'Config',
   DASHBOARDS = 'Dashboards',
   USAGE = 'Usage',
+  IAM = 'IAM',
 }
 
 export enum PluginTabIds {
@@ -239,6 +253,7 @@ export enum PluginTabIds {
   CONFIG = 'config',
   DASHBOARDS = 'dashboards',
   USAGE = 'usage',
+  IAM = 'iam',
 }
 
 export enum RequestStatus {
