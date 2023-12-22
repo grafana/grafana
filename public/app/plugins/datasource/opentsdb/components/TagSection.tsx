@@ -3,7 +3,16 @@ import { has, size } from 'lodash';
 import React, { useState } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { Select, InlineFormLabel, Icon, clearButtonStyles, useStyles2, AsyncSelect } from '@grafana/ui';
+import {
+  Select,
+  InlineFormLabel,
+  Icon,
+  clearButtonStyles,
+  useStyles2,
+  AsyncSelect,
+  Stack,
+  InlineLabel,
+} from '@grafana/ui';
 
 import { OpenTsdbQuery } from '../types';
 
@@ -97,8 +106,8 @@ export function TagSection({
   const tagValueSearch = debounce((query: string) => suggestTagValues(query), 350);
 
   return (
-    <div className="gf-form-inline" data-testid={testIds.section}>
-      <div className="gf-form">
+    <Stack gap={0.5} alignItems="flex-start" data-testid={testIds.section}>
+      <Stack gap={0}>
         <InlineFormLabel
           className="query-keyword"
           width={8}
@@ -131,13 +140,12 @@ export function TagSection({
             <Icon name={'plus'} />
           </button>
         )}
-      </div>
+      </Stack>
       {addTagMode && (
-        <div className="gf-form-inline">
-          <div className="gf-form">
+        <Stack gap={0.5}>
+          <Stack gap={0}>
             <Select
               inputId="opentsdb-suggested-tagk-select"
-              className="gf-form-input"
               value={curTagKey ? toOption('' + curTagKey) : undefined}
               placeholder="key"
               allowCustomValue
@@ -156,9 +164,9 @@ export function TagSection({
                 }
               }}
             />
-          </div>
+          </Stack>
 
-          <div className="gf-form">
+          <Stack gap={0}>
             <AsyncSelect
               inputId="opentsdb-suggested-tagv-select"
               className="gf-form-input"
@@ -173,7 +181,7 @@ export function TagSection({
                 }
               }}
             />
-          </div>
+          </Stack>
 
           <div className="gf-form">
             {errors && (
@@ -191,12 +199,12 @@ export function TagSection({
               </button>
             </div>
           </div>
-        </div>
+        </Stack>
       )}
-      <div className="gf-form gf-form--grow">
-        <div className="gf-form-label gf-form-label--grow"></div>
-      </div>
-    </div>
+      <Stack gap={0} grow={1}>
+        <InlineLabel> </InlineLabel>
+      </Stack>
+    </Stack>
   );
 }
 

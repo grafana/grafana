@@ -12,6 +12,7 @@ import {
   clearButtonStyles,
   useStyles2,
   AsyncSelect,
+  InlineFieldRow,
 } from '@grafana/ui';
 
 import { OpenTsdbFilter, OpenTsdbQuery } from '../types';
@@ -118,7 +119,7 @@ export function FilterSection({
   const tagValueSearch = debounce((query: string) => suggestTagValues(query), 350);
 
   return (
-    <div className="gf-form-inline" data-testid={testIds.section}>
+    <InlineFieldRow data-testid={testIds.section}>
       <div className="gf-form">
         <InlineFormLabel
           className="query-keyword"
@@ -241,7 +242,7 @@ export function FilterSection({
       <div className="gf-form gf-form--grow">
         <div className="gf-form-label gf-form-label--grow"></div>
       </div>
-    </div>
+    </InlineFieldRow>
   );
 }
 
