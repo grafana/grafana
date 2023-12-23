@@ -1,11 +1,12 @@
 package util
 
 import (
+	"fmt"
 	"sync"
 	"testing"
 
 	"cuelang.org/go/pkg/strings"
-	"github.com/google/uuid"
+	"github.com/lithammer/shortuuid"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/util/validation"
 )
@@ -48,10 +49,10 @@ func TestRandomUIDs(t *testing.T) {
 			t.Fatalf("created invalid name: %v", validation)
 		}
 
-		_, err := uuid.Parse(v)
+		_, err := shortuuid.DefaultEncoder.Decode(v)
 		require.NoError(t, err)
 
-		//fmt.Println(v)
+		fmt.Println(v)
 	}
 	// t.FailNow()
 }

@@ -2191,6 +2191,8 @@ github.com/linkedin/goavro/v2 v2.10.0 h1:eTBIRoInBM88gITGXYtUSqqxLTFXfOsJBiX8ZMW
 github.com/linkedin/goavro/v2 v2.10.0/go.mod h1:UgQUb2N/pmueQYH9bfqFioWxzYCZXSfF8Jw03O5sjqA=
 github.com/linode/linodego v1.14.1 h1:uGxQyy0BidoEpLGdvfi4cPgEW+0YUFsEGrLEhcTfjNc=
 github.com/linode/linodego v1.14.1/go.mod h1:NJlzvlNtdMRRkXb0oN6UWzUkj6t+IBsyveHgZ5Ppjyk=
+github.com/lithammer/shortuuid v3.0.0+incompatible h1:NcD0xWW/MZYXEHa6ITy6kaXN5nwm/V115vj2YXfhS0w=
+github.com/lithammer/shortuuid v3.0.0+incompatible/go.mod h1:FR74pbAuElzOUuenUHTK2Tciko1/vKuIKS9dSkDrA4w=
 github.com/luna-duclos/instrumentedsql v0.0.0-20181127104832-b7d587d28109/go.mod h1:PWUIzhtavmOR965zfawVsHXbEuU1G29BPZ/CB3C7jXk=
 github.com/luna-duclos/instrumentedsql v1.1.2/go.mod h1:4LGbEqDnopzNAiyxPPDXhLspyunZxgPTMJBKtC6U0BQ=
 github.com/luna-duclos/instrumentedsql v1.1.3/go.mod h1:9J1njvFds+zN7y85EDhN9XNQLANWwZt2ULeIC8yMNYs=

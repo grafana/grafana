@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lithammer/shortuuid"
 )
 
 const MaxUIDLength = 40
@@ -55,7 +56,7 @@ func GenerateShortUID() string {
 			uid[i] = byte(uidrand.Intn(255))
 		}
 	}
-	uuid := uid.String()
+	uuid := shortuuid.DefaultEncoder.Encode(uid)
 	if rune(uuid[0]) < rune('a') {
 		return string(hexLetters[uidrand.Intn(len(hexLetters))]) + uuid[1:]
 	}
