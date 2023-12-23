@@ -1,7 +1,6 @@
 package util
 
 import (
-	"fmt"
 	"sync"
 	"testing"
 
@@ -52,7 +51,7 @@ func TestRandomUIDs(t *testing.T) {
 		_, err := shortuuid.DefaultEncoder.Decode(v)
 		require.NoError(t, err)
 
-		fmt.Println(v)
+		//fmt.Println(v)
 	}
 	// t.FailNow()
 }
