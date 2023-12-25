@@ -42,11 +42,16 @@ const operatorSelectableValue = (op: string): SelectableValue<string> => {
     case '<=':
       result.description = 'Less or Equal';
       break;
+    case 'expression':
+      result.description =
+        'Bool Expression (Char v represents the column value in the expression, e.g. "v >= 10 && v <= 12")';
+      break;
   }
   return result;
 };
-const OPERATORS = ['contains', '=', '!=', '<', '<=', '>', '>='].map(operatorSelectableValue);
+const OPERATORS = ['contains', '=', '!=', '<', '<=', '>', '>=', 'expression'].map(operatorSelectableValue);
 const REGEX_OPERATOR = OPERATORS.filter((op) => op.value === 'contains')[0];
+const XPR_OPERATOR = OPERATORS.filter((op) => op.value === 'expression')[0];
 
 const comparableValue = (value: string): string | number | Date | boolean => {
   value = value.trim().replace(/\\/g, '');
@@ -85,6 +90,17 @@ export const FilterList = ({ options, values, caseSensitive, showOperators, onCh
             return false;
           }
           return regex.test(option.label);
+        } else if (operator.value === XPR_OPERATOR.value) {
+          if (option.value === undefined) {
+            return false;
+          }
+          try {
+            const xpr = searchFilter.replace(/\\/g, '');
+            const fnc = new Function('v', `'use strict'; return ${xpr};`);
+            const val = comparableValue(option.value);
+            return fnc(val);
+          } catch (_) {}
+          return false;
         } else {
           if (option.value === undefined) {
             return false;

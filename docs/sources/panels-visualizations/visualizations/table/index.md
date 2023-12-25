@@ -195,6 +195,7 @@ Choose from several operators to display column values:
 
 - `contains` operator matches a regex pattern (operator by default)
 - The typical comparison operators (`=`, `!=`, `<`, `<=`, `>`, `>=`)
+- `expression` operator evaluates a bool expression, char v represents the column value in the expression (e.g. "v >= 10 && v <= 12").
 
 ### Clear column filters
 
