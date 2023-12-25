@@ -67,7 +67,13 @@ export const FilterPopup = ({ column: { preFilteredRows, filterValue, setFilter 
               />
             </HorizontalGroup>
             <div className={cx(styles.listDivider)} />
-            <FilterList onChange={setValues} values={values} options={options} caseSensitive={matchCase} />
+            <FilterList
+              onChange={setValues}
+              values={values}
+              options={options}
+              caseSensitive={matchCase}
+              showOperators={true}
+            />
           </VerticalGroup>
           <HorizontalGroup spacing="lg">
             <HorizontalGroup>
