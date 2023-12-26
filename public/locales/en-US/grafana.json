@@ -412,6 +412,9 @@
       "label": "Add new data source"
     }
   },
+  "drawer": {
+    "close": "Close Drawer"
+  },
   "explore": {
     "add-to-dashboard": "Add to dashboard",
     "rich-history": {
