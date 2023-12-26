@@ -106,43 +106,44 @@ export function TagSection({
   const tagValueSearch = debounce((query: string) => suggestTagValues(query), 350);
 
   return (
-    <Stack gap={0.5} alignItems="flex-start" data-testid={testIds.section}>
-      <Stack gap={0}>
-        <InlineFormLabel
-          className="query-keyword"
-          width={8}
-          tooltip={tsdbVersion >= 2 ? <div>Please use filters, tags are deprecated in opentsdb 2.2</div> : undefined}
-        >
-          Tags
-        </InlineFormLabel>
-        {query.tags &&
-          Object.keys(query.tags).map((tagKey: string | number, idx: number) => {
-            const tagValue = query.tags[tagKey];
-            return (
-              <InlineFormLabel key={idx} width="auto" data-testid={testIds.list + idx}>
-                {tagKey}={tagValue}
-                <button type="button" className={buttonStyles} onClick={() => editTag(tagKey, tagValue)}>
-                  <Icon name={'pen'} />
-                </button>
-                <button
-                  type="button"
-                  className={buttonStyles}
-                  onClick={() => removeTag(tagKey)}
-                  data-testid={testIds.remove}
-                >
-                  <Icon name={'times'} />
-                </button>
-              </InlineFormLabel>
-            );
-          })}
-        {!addTagMode && (
-          <button className="gf-form-label" type="button" onClick={changeAddTagMode} aria-label="Add tag">
+    <Stack gap={0} alignItems="flex-start" data-testid={testIds.section}>
+      <InlineFormLabel
+        className="query-keyword"
+        width={8}
+        tooltip={tsdbVersion >= 2 ? <div>Please use filters, tags are deprecated in opentsdb 2.2</div> : undefined}
+      >
+        Tags
+      </InlineFormLabel>
+      {query.tags &&
+        Object.keys(query.tags).map((tagKey: string | number, idx: number) => {
+          const tagValue = query.tags[tagKey];
+          return (
+            <InlineFormLabel key={idx} width="auto" data-testid={testIds.list + idx}>
+              {tagKey}={tagValue}
+              <button type="button" className={buttonStyles} onClick={() => editTag(tagKey, tagValue)}>
+                <Icon name={'pen'} />
+              </button>
+              <button
+                type="button"
+                className={buttonStyles}
+                onClick={() => removeTag(tagKey)}
+                data-testid={testIds.remove}
+              >
+                <Icon name={'times'} />
+              </button>
+            </InlineFormLabel>
+          );
+        })}
+      {!addTagMode && (
+        <InlineFormLabel width={2}>
+          <button type="button" className={buttonStyles} onClick={changeAddTagMode} aria-label="Add tag">
             <Icon name={'plus'} />
           </button>
-        )}
-      </Stack>
+        </InlineFormLabel>
+      )}
+
       {addTagMode && (
-        <Stack gap={0.5}>
+        <Stack gap={0.5} alignItems="center">
           <Stack gap={0}>
             <Select
               inputId="opentsdb-suggested-tagk-select"
@@ -169,7 +170,6 @@ export function TagSection({
           <Stack gap={0}>
             <AsyncSelect
               inputId="opentsdb-suggested-tagv-select"
-              className="gf-form-input"
               value={curTagValue ? toOption(curTagValue) : undefined}
               placeholder="value"
               allowCustomValue
@@ -183,22 +183,22 @@ export function TagSection({
             />
           </Stack>
 
-          <div className="gf-form">
+          <Stack gap={0}>
             {errors && (
-              <div className="gf-form-label" title={errors} data-testid={testIds.error}>
+              <InlineLabel title={errors} data-testid={testIds.error}>
                 <Icon name={'exclamation-triangle'} color={'rgb(229, 189, 28)'} />
-              </div>
+              </InlineLabel>
             )}
 
-            <div className="gf-form-label">
+            <InlineFormLabel width={5.5}>
               <button type="button" className={buttonStyles} onClick={addTag}>
                 add tag
               </button>
               <button type="button" className={buttonStyles} onClick={changeAddTagMode}>
                 <Icon name={'times'} />
               </button>
-            </div>
-          </div>
+            </InlineFormLabel>
+          </Stack>
         </Stack>
       )}
       <Stack gap={0} grow={1}>
