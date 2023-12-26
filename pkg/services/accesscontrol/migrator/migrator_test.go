@@ -77,7 +77,6 @@ func TestIntegrationMigrateScopeSplitTruncation(t *testing.T) {
 			assert.Equal(t, strings.Repeat("a", 40), permissions[i].Kind)
 			assert.Equal(t, strings.Repeat("b", 40), permissions[i].Attribute)
 			assert.Equal(t, strings.Repeat("c", 40), permissions[i].Identifier)
-
 		}
 	}
 }
