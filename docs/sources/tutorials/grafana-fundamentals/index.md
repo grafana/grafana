@@ -271,11 +271,9 @@ Manually annotating your dashboard is fine for those single events. For regularl
    {filename="/var/log/tns-app.log"} |= "error"
    ```
 
-
 1. Click **Apply**. Grafana displays the Annotations list, with your new annotation.
 1. Click on your dashboard name to return to your dashboard.
 1. At the top of your dashboard, there is now a toggle to display the results of the newly created annotation query. Press it if it's not already enabled.
-
 
 The log lines returned by your query are now displayed as annotations in the graph.
 
@@ -310,7 +308,6 @@ Your request bin is now waiting for the first request.
 
 Next, let's configure a Contact Point in Grafana's Alerting UI to send notifications to our Request Bin.
 
-
 1. Return to Grafana. In Grafana's sidebar, hover over the **Alerting** (bell) icon and then click **Contact points**.
 1. Click **+ Add contact point**.
 1. In **Name**, write **RequestBin**.
@@ -326,7 +323,6 @@ We have now created a dummy webhook endpoint and created a new Alerting Contact 
 ### Add an Alert Rule to Grafana
 
 Now that Grafana knows how to notify us, it's time to set up an alert rule:
-
 
 1. In Grafana's sidebar, hover over the **Alerting** (bell) icon and then click **Alert rules**.
 1. Click **+ New alert rule**.
