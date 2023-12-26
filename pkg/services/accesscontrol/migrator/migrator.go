@@ -11,9 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 )
 
-const (
+var (
 	batchSize = 1000
-	maxLen    = 40
+)
+
+const (
+	maxLen = 40
 )
 
 func MigrateScopeSplit(db db.DB, log log.Logger) error {
