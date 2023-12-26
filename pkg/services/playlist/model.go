@@ -28,7 +28,7 @@ type Playlist struct {
 type PlaylistDTO struct {
 	// Unique playlist identifier. Generated on creation, either by the
 	// creator of the playlist of by the application.
-	Uid string `json:"uid"`
+	Uid string `json:"uid" db:"uid"`
 
 	// Name of the playlist.
 	Name string `json:"name"`
@@ -40,16 +40,16 @@ type PlaylistDTO struct {
 	Items []PlaylistItemDTO `json:"items,omitempty"`
 
 	// Returned for k8s
-	CreatedAt int64 `json:"-"`
+	CreatedAt int64 `json:"-" db:"created_at"`
 
 	// Returned for k8s
-	UpdatedAt int64 `json:"-"`
+	UpdatedAt int64 `json:"-" db:"updated_at"`
 
 	// Returned for k8s
-	OrgID int64 `json:"-"`
+	OrgID int64 `json:"-" db:"org_id"`
 
 	// Returned for k8s and added as an annotation
-	Id int64 `json:"-"`
+	Id int64 `json:"-" db:"id"`
 }
 
 type PlaylistItemDTO struct {

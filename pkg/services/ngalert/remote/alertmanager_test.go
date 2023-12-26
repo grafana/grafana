@@ -159,7 +159,7 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 	silences := []byte("test-silences")
 	nflog := []byte("test-notifications")
 	store := fakes.NewFakeKVStore(t)
-	fstore := notifier.NewFileStore(1, store, "")
+	fstore := notifier.NewFileStore(cfg.OrgID, store, "")
 
 	ctx := context.Background()
 	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.SilencesFilename, base64.StdEncoding.EncodeToString(silences)))
