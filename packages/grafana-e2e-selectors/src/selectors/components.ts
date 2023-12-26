@@ -133,7 +133,7 @@ export const Components = {
       title: (title: string) => `Drawer title ${title}`,
       expand: 'Drawer expand',
       contract: 'Drawer contract',
-      close: 'Drawer close',
+      close: 'data-testid Drawer close',
       rcContentWrapper: () => '.rc-drawer-content-wrapper',
     },
   },
