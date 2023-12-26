@@ -86,7 +86,7 @@ func TestIntegrationServerLock_LockExecuteAndReleaseWithRetries(t *testing.T) {
 
 	// Acquire lock so that when `LockExecuteAndReleaseWithRetries` runs, it is forced
 	// to retry
-	err := sl.acquireForRelease(ctx, actionName, lockTimeConfig.MaxInterval)
+	err := sl.locker.AcquireForRelease(ctx, actionName, lockTimeConfig.MaxInterval)
 	require.NoError(t, err)
 
 	wgRetries := sync.WaitGroup{}
@@ -115,7 +115,7 @@ func TestIntegrationServerLock_LockExecuteAndReleaseWithRetries(t *testing.T) {
 
 	// Wait to release the lock until `LockExecuteAndReleaseWithRetries` has retried `expectedRetries` times.
 	wgRetries.Wait()
-	err = sl.releaseLock(ctx, actionName)
+	err = sl.locker.ReleaseLock(ctx, actionName)
 	require.NoError(t, err)
 	wgRelease.Done()
 
